@@ -1,0 +1,77 @@
+buildscript {
+    repositories {
+        jcenter()
+    }
+}
+
+plugins {
+    id "me.tatarka.retrolambda" version "3.2.5"
+}
+
+apply plugin: 'com.android.application'
+apply plugin: 'com.neenbedankt.android-apt'
+
+repositories {
+    maven { url "https://clojars.org/repo/" }   // Used by AutoParcel
+}
+
+android {
+    compileSdkVersion 25
+    buildToolsVersion "25.0.2"
+
+    defaultConfig {
+        applicationId "me.saket.dank"
+        minSdkVersion 21
+        targetSdkVersion 25
+        versionCode 1
+        versionName "1.0"
+        multiDexEnabled true
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    compileOptions {
+        targetCompatibility 1.8
+        sourceCompatibility 1.8
+    }
+
+    packagingOptions {
+        exclude 'META-INF/LICENSE'
+    }
+}
+
+ext {
+    supportLibVersion = '25.1.0'
+}
+
+dependencies {
+    compile "com.android.support:appcompat-v7:${supportLibVersion}"
+    compile "com.android.support:recyclerview-v7:${supportLibVersion}"
+    compile "com.android.support:support-annotations:${supportLibVersion}"
+    compile "com.android.support:design:${supportLibVersion}"
+
+    // Cannot live without these.
+    compile 'com.squareup.moshi:moshi:1.3.1'
+    compile 'com.google.auto.value:auto-value:1.2'
+    apt "com.google.auto.value:auto-value:1.2"
+    apt 'com.ryanharter.auto.value:auto-value-moshi:0.3.2'
+    apt 'frankiesardo:auto-parcel:1.0.3'
+    compile 'com.jakewharton.timber:timber:4.1.2'
+    compile 'com.jakewharton:butterknife:8.0.1'
+    apt 'com.jakewharton:butterknife-compiler:8.0.1'
+    compile 'io.reactivex:rxandroid:1.2.0'
+    compile 'com.jakewharton.rxbinding:rxbinding:1.0.0'
+    compile 'com.google.dagger:dagger:2.2'
+    apt 'com.google.dagger:dagger-compiler:2.2'
+
+    // Included to resolve dependency conflict between butterknife-compiler:8.0.1 and auto-value-moshi:0.3.2.
+    apt 'com.squareup:javapoet:1.7.0'
+
+    // Reddit API wrapper.
+    compile "net.dean.jraw:JRAW:0.9.0"
+}

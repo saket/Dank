@@ -1,0 +1,14 @@
+<resources>
+
+    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
+        <item name="android:colorPrimary">@color/color_primary</item>
+        <item name="android:colorPrimaryDark">@color/color_primary_dark</item>
+        <item name="android:colorAccent">@color/color_accent</item>
+    </style>
+
+    <style name="DankTextAppearance" />
+
+    <style name="DankTextAppearance.Toolbar">
+        <item name="android:textColor">@color/color_accent</item>
+    </style>
+</resources>
