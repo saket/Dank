@@ -6,9 +6,18 @@
         <item name="android:colorAccent">@color/color_accent</item>
     </style>
 
-    <style name="DankTextAppearance" />
+    <style name="DankTextAppearance" parent="@android:style/TextAppearance.Material.Widget.Toolbar.Title" />
 
     <style name="DankTextAppearance.Toolbar">
         <item name="android:textColor">@color/color_accent</item>
+    </style>
+
+    <style name="DankSeparator">
+        <item name="android:background">@color/white_opacity_05</item>
+    </style>
+
+    <style name="DankSeparator.Vertical">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">1dp</item>
     </style>
 </resources>

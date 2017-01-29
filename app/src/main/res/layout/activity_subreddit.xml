@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/activity_main"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="me.saket.dank.ui.subreddits.SubRedditActivity">
+
+    <me.saket.dank.widgets.InboxUI.InboxRecyclerView
+        android:id="@+id/subreddit_submission_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingTop="?android:attr/actionBarSize" />
+
+    <include layout="@layout/include_toolbar" />
+
+    <me.saket.dank.widgets.InboxUI.ExpandablePageLayout
+        android:id="@+id/subreddit_submission_page"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/window_background"
+        android:elevation="20dp" />
+</RelativeLayout>

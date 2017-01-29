@@ -1,2 +1,11 @@
 <resources>
+    <dimen name="textsize12">12sp</dimen>
+    <dimen name="textsize14">14sp</dimen>
+    <dimen name="textsize16">16sp</dimen>
+    <dimen name="textsize18">18sp</dimen>
+
+    <dimen name="spacing8">8dp</dimen>
+    <dimen name="spacing4">4dp</dimen>
+    <dimen name="spacing16">16dp</dimen>
+    <dimen name="spacing24">24dp</dimen>
 </resources>
