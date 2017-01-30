@@ -5,6 +5,8 @@ import static rx.Observable.just;
 
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
+import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toolbar;
 
 import net.dean.jraw.paginators.SubredditPaginator;
@@ -25,6 +27,7 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
     @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
+    @BindView(R.id.subreddit_progress) ProgressBar progressBar;
 
     private SubmissionFragment submissionFragment;
 
@@ -62,6 +65,7 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
                 .authenticateIfNeeded()
                 .flatMap(__ -> just(frontPagePaginator.next()))
                 .compose(RxUtils.applySchedulers())
+                .doOnTerminate(() -> progressBar.setVisibility(View.GONE))
                 .subscribe(submissionsAdapter, logError("Couldn't get front-page"));
         unsubscribeOnDestroy(subscription);
     }

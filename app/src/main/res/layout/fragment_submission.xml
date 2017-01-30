@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include layout="@layout/include_toolbar" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/toolbar"
+        android:orientation="vertical"
+        tools:ignore="UnknownId">
+
+        <TextView
+            android:id="@+id/submission_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-condensed"
+            android:paddingTop="@dimen/spacing16"
+            android:paddingStart="@dimen/spacing16"
+            android:paddingEnd="@dimen/spacing16"
+            android:textColor="@color/gray_100"
+            android:textSize="@dimen/textsize16"
+            tools:text="I did a thing in Photoshop, and am fairly proud of it." />
+
+        <TextView
+            android:id="@+id/submission_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="@dimen/spacing16"
+            android:layout_marginRight="@dimen/spacing16"
+            android:layout_marginTop="@dimen/spacing4"
+            android:fontFamily="sans-serif-smallcaps"
+            android:textColor="@color/gray_600"
+            tools:text="/r/pics" />
+    </LinearLayout>
+</RelativeLayout>
