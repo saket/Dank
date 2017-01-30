@@ -73,4 +73,7 @@ dependencies {
 
     // Reddit API wrapper.
     compile "net.dean.jraw:JRAW:0.9.0"
+
+    // Caching.
+    compile 'com.anupcowkur:reservoir:3.1.0'
 }

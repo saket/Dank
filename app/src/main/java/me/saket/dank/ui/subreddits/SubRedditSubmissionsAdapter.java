@@ -74,7 +74,7 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
 
         public void bind(Submission submission) {
             titleView.setText(submission.getTitle());
-            subTitleView.setText(subTitleView.getResources().getString(R.string.subreddit_with_prefix, submission.getSubredditName()));
+            subTitleView.setText(subTitleView.getResources().getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
         }
     }
 

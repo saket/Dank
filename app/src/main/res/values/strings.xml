@@ -2,5 +2,5 @@
     <string name="app_name">Dank</string>
 
     <!-- Submissions -->
-    <string name="subreddit_with_prefix">/r/%s</string>
+    <string name="subreddit_name_r_prefix">/r/%s</string>
 </resources>
