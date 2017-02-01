@@ -5,5 +5,5 @@
     <color name="color_accent">@color/teal_A400</color>
     <color name="window_background">#303030</color>
 
-    <color name="toolbar">@color/color_primary</color>
+    <color name="toolbar">#262626</color>
 </resources>

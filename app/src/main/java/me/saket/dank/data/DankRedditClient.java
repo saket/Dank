@@ -6,7 +6,9 @@ import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.auth.AuthenticationState;
 import net.dean.jraw.auth.RefreshTokenHandler;
+import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.http.oauth.Credentials;
+import net.dean.jraw.models.Submission;
 import net.dean.jraw.paginators.SubredditPaginator;
 
 import me.saket.dank.di.Dank;
@@ -31,10 +33,6 @@ public class DankRedditClient {
         this.redditAppSecret = redditAppSecret;
         this.redditClient = redditClient;
         this.redditAuthManager = redditAuthManager;
-    }
-
-    public SubredditPaginator frontPagePaginator() {
-        return new SubredditPaginator(redditClient);
     }
 
     /**
@@ -70,4 +68,22 @@ public class DankRedditClient {
         });
     }
 
+    public Observable<Boolean> refreshApiToken() {
+        return Observable.fromCallable(() -> {
+            Credentials credentials = Credentials.userlessApp(redditAppSecret, Dank.sharedPrefs().getDeviceUuid());
+            redditAuthManager.refreshAccessToken(credentials);
+            return true;
+        });
+    }
+
+    public SubredditPaginator frontPagePaginator() {
+        return new SubredditPaginator(redditClient);
+    }
+
+    /**
+     * Get all details of submissions, including comments.
+     */
+    public Submission fullSubmissionData(String submissionId) {
+        return redditClient.getSubmission(new SubmissionRequest.Builder(submissionId).build());
+    }
 }

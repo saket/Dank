@@ -35,7 +35,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     private State currentState;
     private PullToCollapseListener pullToCollapseListener;
     private OnPullToCollapseIntercepter onPullToCollapseIntercepter;
-    private List<ExpandablePageCallbacks> callbacks;
+    private List<Callbacks> callbacks;
     private Map<String, InternalPageCallbacks> internalStateCallbacks = new HashMap<>(2);
 
     private boolean isFullyCoveredByNestedPage;
@@ -64,6 +64,36 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
          * @return True to consume this touch event. False otherwise.
          */
         boolean onInterceptPullToCollapseGesture(MotionEvent event, float downX, float downY, boolean upwardPagePull);
+    }
+
+    /**
+     * Implement this to receive callbacks about an <code>ExpandingPage</code>. Use with
+     * {@link ExpandablePageLayout#addCallbacks(Callbacks...)}. If you use a Fragment
+     * inside your <code>ExpandablePage</code>, it's best to make your Fragment implement this interface.
+     */
+    public interface Callbacks {
+
+        /**
+         * Called when the user has selected an item and the <code>ExpandablePage</code> is going to be expand.
+         */
+        void onPageAboutToExpand(long expandAnimDuration);
+
+        /**
+         * Called when either the <code>ExpandablePage</code>'s expand animation is complete or if the
+         * <code>ExpandablePage</code> was expanded immediately. At this time, the page is fully covering the list.
+         */
+        void onPageExpanded();
+
+        /**
+         * Called when the user has chosen to close the expanded item and the <code>ExpandablePage</code> is going to be collapse.
+         */
+        void onPageAboutToCollapse(long collapseAnimDuration);
+
+        /**
+         * Called when the page's collapse animation is complete. At this time, it's totally invisible to the user.
+         */
+        void onPageCollapsed();
+
     }
 
     // Used internally, by InboxRecyclerView.
@@ -551,7 +581,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         dispatchOnPageFullyCoveredCallback();
 
         if (callbacks != null) {
-            for (final ExpandablePageCallbacks callback : callbacks) {
+            for (final Callbacks callback : callbacks) {
                 callback.onPageExpanded();
             }
         }
@@ -578,7 +608,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         }
 
         if (callbacks != null) {
-            for (final ExpandablePageCallbacks callback : callbacks) {
+            for (final Callbacks callback : callbacks) {
                 callback.onPageAboutToCollapse(InboxRecyclerView.ANIM_DURATION_COLLAPSE);
             }
         }
@@ -595,7 +625,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         }
 
         if (callbacks != null) {
-            for (final ExpandablePageCallbacks callback : callbacks) {
+            for (final Callbacks callback : callbacks) {
                 callback.onPageCollapsed();
             }
         }
@@ -651,14 +681,14 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         return inboxList;
     }
 
-    public void addCallbacks(ExpandablePageCallbacks... expandablePageCallbacks) {
-        if (callbacks == null) {
-            callbacks = new ArrayList<>(4);
+    public void addCallbacks(Callbacks... callbacks) {
+        if (this.callbacks == null) {
+            this.callbacks = new ArrayList<>(4);
         }
-        Collections.addAll(callbacks, expandablePageCallbacks);
+        Collections.addAll(this.callbacks, callbacks);
     }
 
-    public void removeCallbacks(ExpandablePageCallbacks pageCallbacks) {
+    public void removeCallbacks(Callbacks pageCallbacks) {
         callbacks.remove(pageCallbacks);
     }
 

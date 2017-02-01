@@ -64,13 +64,15 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
         dimPaint = new Paint(Paint.ANTI_ALIAS_FLAG);
         dimPaint.setColor(Color.BLACK);
         dimPaint.setAlpha(MAX_DIM);
+    }
 
-        setLayoutManager(new LinearLayoutManager(getContext()) {
+    public LayoutManager createLayoutManager() {
+        return new LinearLayoutManager(getContext()) {
             @Override
             public int scrollVerticallyBy(int dy, Recycler recycler, State state) {
                 return !canScroll() ? 0 : super.scrollVerticallyBy(dy, recycler, state);
             }
-        });
+        };
     }
 
     /**

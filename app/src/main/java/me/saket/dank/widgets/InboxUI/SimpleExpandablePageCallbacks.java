@@ -1,10 +1,10 @@
 package me.saket.dank.widgets.InboxUI;
 
 /**
- * Empty implementations of {@link ExpandablePageCallbacks}. This waiy, any custom listener that cares only about a subset of the
+ * Empty implementations of {@link ExpandablePageLayout.Callbacks}. This waiy, any custom listener that cares only about a subset of the
  * methods of this listener can simply subclass this adapter class instead of implementing the interface directly.
  */
-public abstract class SimpleExpandablePageCallbacks implements ExpandablePageCallbacks {
+public abstract class SimpleExpandablePageCallbacks implements ExpandablePageLayout.Callbacks {
 
     @Override
     public void onPageAboutToExpand(long expandAnimDuration) {

@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?android:selectableItemBackground"
+    android:orientation="vertical"
+    android:paddingBottom="@dimen/spacing8"
+    android:paddingEnd="@dimen/spacing16"
+    android:paddingStart="@dimen/comment_start_padding_per_depth_level"
+    android:paddingTop="@dimen/spacing8">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <TextView
+            android:id="@+id/comment_item_author_username"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing4"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-smallcaps"
+            android:maxLines="1"
+            android:textColor="@color/color_accent"
+            android:textSize="@dimen/textsize12"
+            tools:text="nuckingfuts73" />
+
+        <TextView
+            android:id="@+id/comment_item_author_flair"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing4"
+            android:layout_marginStart="@dimen/spacing8"
+            android:layout_weight="1"
+            android:ellipsize="end"
+            android:fontFamily="sans-serif-smallcaps"
+            android:maxLines="1"
+            android:textSize="@dimen/textsize12"
+            tools:text="nuckingfuts73" />
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/comment_item_body"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="That boss was my favourite. I bought Dark Souls after hearing how crushingly difficult it was from a friend of mine. He kept warning me about that boss and told me to prepare for a really difficult time." />
+</LinearLayout>

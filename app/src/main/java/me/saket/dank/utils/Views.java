@@ -47,8 +47,8 @@ public class Views {
         });
     }
 
-    public static void setPaddingTop(View view, int paddingTop) {
-        view.setPadding(view.getPaddingLeft(), paddingTop, view.getPaddingRight(), view.getPaddingBottom());
+    public static void setPaddingStart(View view, int paddingStart) {
+        view.setPaddingRelative(paddingStart, view.getPaddingTop(), view.getPaddingEnd(), view.getPaddingBottom());
     }
 
 }

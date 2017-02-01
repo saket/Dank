@@ -45,7 +45,7 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
 
     @Override
     protected SubmissionViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-        return new SubmissionViewHolder(inflater.inflate(R.layout.list_item_submission, parent, false));
+        return SubmissionViewHolder.create(parent);
     }
 
     @Override
@@ -76,6 +76,11 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
             titleView.setText(submission.getTitle());
             subTitleView.setText(subTitleView.getResources().getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
         }
+
+        public static SubmissionViewHolder create(ViewGroup parent) {
+            return new SubmissionViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_submission, parent, false));
+        }
+
     }
 
 }
