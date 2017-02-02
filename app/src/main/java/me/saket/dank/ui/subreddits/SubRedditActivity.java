@@ -4,13 +4,11 @@ import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
 
 import android.os.Bundle;
-import android.os.Looper;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.view.View;
 import android.widget.ProgressBar;
 import android.widget.Toolbar;
 
-import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.paginators.SubredditPaginator;
 
 import butterknife.BindView;
@@ -18,13 +16,11 @@ import butterknife.ButterKnife;
 import me.saket.dank.DankActivity;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.submission.SubmissionFragment;
+import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
-import rx.Observable;
 import rx.Subscription;
-import timber.log.Timber;
 
 public class SubRedditActivity extends DankActivity implements SubmissionFragment.Callbacks {
 
@@ -73,22 +69,7 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
         Subscription subscription = Dank.reddit()
                 .authenticateIfNeeded()
                 .flatMap(__ -> just(frontPagePaginator.next()))
-                .retryWhen(errors -> errors.flatMap(error -> {
-                    if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
-                        // Re-try authenticating.
-                        Timber.w("Attempting to refresh token");
-                        return Observable
-                                .just(Dank.reddit().refreshApiToken())
-                                .doOnNext(booleanObservable -> {
-                                    boolean isMainThread = Looper.getMainLooper() == Looper.myLooper();
-                                    Timber.i("isMainThread: %s", isMainThread);
-                                })
-                                .map(__ -> null);
-
-                    } else {
-                        return Observable.error(error);
-                    }
-                }))
+                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
                 .compose(RxUtils.applySchedulers())
                 .doOnTerminate(() -> progressBar.setVisibility(View.GONE))
                 .subscribe(submissionsAdapter, logError("Couldn't get front-page"));

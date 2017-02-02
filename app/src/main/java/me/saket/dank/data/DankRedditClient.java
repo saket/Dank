@@ -1,11 +1,14 @@
 package me.saket.dank.data;
 
 import android.content.Context;
+import android.os.Looper;
+import android.support.annotation.NonNull;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.auth.AuthenticationState;
 import net.dean.jraw.auth.RefreshTokenHandler;
+import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.http.oauth.Credentials;
 import net.dean.jraw.models.Submission;
@@ -14,6 +17,7 @@ import net.dean.jraw.paginators.SubredditPaginator;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.AndroidTokenStore;
 import rx.Observable;
+import rx.functions.Func1;
 import timber.log.Timber;
 
 /**
@@ -68,11 +72,25 @@ public class DankRedditClient {
         });
     }
 
-    public Observable<Boolean> refreshApiToken() {
-        return Observable.fromCallable(() -> {
-            Credentials credentials = Credentials.userlessApp(redditAppSecret, Dank.sharedPrefs().getDeviceUuid());
-            redditAuthManager.refreshAccessToken(credentials);
-            return true;
+    @NonNull
+    public Func1<Observable<? extends Throwable>, Observable<?>> refreshApiTokenAndRetryIfExpired() {
+        return errors -> errors.flatMap(error -> {
+            if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
+                // Re-try authenticating.
+                Timber.w("Attempting to refresh token");
+                return Observable.fromCallable(() -> {
+                    Credentials credentials = Credentials.userlessApp(Dank.reddit().redditAppSecret, Dank.sharedPrefs().getDeviceUuid());
+                    Dank.reddit().redditAuthManager.refreshAccessToken(credentials);
+                    return true;
+
+                }).doOnNext(booleanObservable -> {
+                    boolean isMainThread = Looper.getMainLooper() == Looper.myLooper();
+                    Timber.i("isMainThread: %s", isMainThread);
+                }).map(__ -> null);
+
+            } else {
+                return Observable.error(error);
+            }
         });
     }
 
