@@ -48,7 +48,7 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
 
         submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
             submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId);
-            submissionFragment.populate(submission);
+            submissionFragment.populateUi(submission);
         });
 
         // Setup submission fragment.

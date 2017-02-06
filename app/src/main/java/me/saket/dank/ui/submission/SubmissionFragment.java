@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission;
 
+import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
 
@@ -18,19 +19,13 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toolbar;
 
-import com.google.common.collect.FluentIterable;
-
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import rx.Subscription;
 
@@ -42,9 +37,10 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_comments_list) RecyclerView commentsList;
     @BindView(R.id.submission_comments_progress) ProgressBar loadProgressBar;
 
+    private Submission lastSubmission;
     private CommentsAdapter commentsAdapter;
     private Subscription commentsSubscription;
-    private Submission lastSubmission;
+    private CommentsCollapseHelper commentsCollapseHelper;
 
     public interface Callbacks {
         void onSubmissionToolbarUpClick();
@@ -64,42 +60,46 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         commentsList.setLayoutManager(new LinearLayoutManager(getActivity()));
         commentsList.setItemAnimator(new DefaultItemAnimator());
+
         commentsAdapter = new CommentsAdapter();
+        commentsAdapter.setOnCommentClickListener(comment -> {
+            // Collapse/expand on tap.
+            commentsAdapter.updateData(commentsCollapseHelper.toggleCollapseAndGet(comment));
+        });
         commentsList.setAdapter(commentsAdapter);
 
-        // TODO: 01/02/17 Preload Views for adapter rows.
+        commentsCollapseHelper = new CommentsCollapseHelper();
+
+        // TODO: 01/02/17 Should we preload Views for adapter rows?
 
         return fragmentLayout;
     }
 
-    public void populate(Submission submission) {
+    public void populateUi(Submission submission) {
         if (submission.equals(lastSubmission)) {
             return;
         }
         lastSubmission = submission;
 
+        // Reset everything.
+        commentsCollapseHelper.reset();
+        commentsAdapter.updateData(null);
+
         titleView.setText(submission.getTitle());
         subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
 
-        commentsAdapter.updateData(null);
+        // Load new comments.
         loadProgressBar.setVisibility(View.VISIBLE);
-
-        // Load comments.
         commentsSubscription = Dank.reddit()
                 .authenticateIfNeeded()
                 .flatMap(__ -> just(Dank.reddit().fullSubmissionData(submission.getId())))
                 .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
                 .map(submissionData -> {
-                    // Flatten the comments tree into one list so that it can be displayed in the RecyclerView.
                     CommentNode commentNode = submissionData.getComments();
-                    List<CommentNode> flattenedComments = new ArrayList<>(commentNode.getTotalSize());
-                    FluentIterable<CommentNode> commentNodes = commentNode.walkTree();
-                    for (CommentNode nestedNode : commentNodes) {
-                        flattenedComments.add(nestedNode);
-                    }
-                    return flattenedComments;
+                    commentsCollapseHelper.setupWith(commentNode);
+                    return commentsCollapseHelper.flattenExpandedComments();
                 })
-                .compose(RxUtils.applySchedulers())
+                .compose(applySchedulers())
                 .doOnTerminate(() -> loadProgressBar.setVisibility(View.GONE))
                 .subscribe(commentsAdapter, logError("Couldn't get comments"));
     }

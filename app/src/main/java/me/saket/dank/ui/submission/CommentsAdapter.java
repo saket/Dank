@@ -21,6 +21,16 @@ import rx.functions.Action1;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<CommentNode, CommentsAdapter.CommentViewHolder> implements Action1<List<CommentNode>> {
 
+    private OnCommentClickListener onCommentClickListener;
+
+    interface OnCommentClickListener {
+        void onCommentClick(CommentNode clickedComment);
+    }
+
+    public void setOnCommentClickListener(OnCommentClickListener listener) {
+        onCommentClickListener = listener;
+    }
+
     @Override
     protected CommentViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
         return CommentViewHolder.create(parent);
@@ -28,7 +38,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<CommentNode, Comme
 
     @Override
     public void onBindViewHolder(CommentViewHolder holder, int position) {
-        holder.bind(getItem(position));
+        CommentNode commentNode = getItem(position);
+        holder.bind(commentNode);
+
+        holder.itemView.setOnClickListener(v -> {
+            onCommentClickListener.onCommentClick(commentNode);
+        });
     }
 
     @Override
