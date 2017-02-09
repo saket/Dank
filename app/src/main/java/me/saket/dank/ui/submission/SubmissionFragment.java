@@ -6,8 +6,10 @@ import static rx.Observable.just;
 
 import android.app.Fragment;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -22,6 +24,7 @@ import android.widget.Toolbar;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
+import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
@@ -36,6 +39,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_subtitle) TextView subtitleView;
     @BindView(R.id.submission_comments_list) RecyclerView commentsList;
     @BindView(R.id.submission_comments_progress) ProgressBar loadProgressBar;
+
+    @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
 
     private Submission lastSubmission;
     private CommentsAdapter commentsAdapter;
@@ -56,22 +61,25 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         View fragmentLayout = inflater.inflate(R.layout.fragment_submission, container, false);
         ButterKnife.bind(this, fragmentLayout);
 
+        // Add a close icon to the toolbar.
+        closeIconDrawable = closeIconDrawable.mutate();
+        closeIconDrawable.setTint(ContextCompat.getColor(getActivity(), R.color.gray_500));
+        toolbar.setNavigationIcon(closeIconDrawable);
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onSubmissionToolbarUpClick());
 
-        commentsList.setLayoutManager(new LinearLayoutManager(getActivity()));
-        commentsList.setItemAnimator(new DefaultItemAnimator());
-
+        // Setup comment list and its adapter.
         commentsAdapter = new CommentsAdapter();
         commentsAdapter.setOnCommentClickListener(comment -> {
             // Collapse/expand on tap.
             commentsAdapter.updateData(commentsCollapseHelper.toggleCollapseAndGet(comment));
         });
         commentsList.setAdapter(commentsAdapter);
+        commentsList.setLayoutManager(new LinearLayoutManager(getActivity()));
+        commentsList.setItemAnimator(new DefaultItemAnimator());
 
         commentsCollapseHelper = new CommentsCollapseHelper();
 
         // TODO: 01/02/17 Should we preload Views for adapter rows?
-
         return fragmentLayout;
     }
 
