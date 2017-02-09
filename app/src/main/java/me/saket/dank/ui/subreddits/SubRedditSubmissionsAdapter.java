@@ -4,17 +4,22 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.TextView;
 
 import net.dean.jraw.models.Submission;
 
 import java.util.List;
 
+import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.di.Dank;
+import me.saket.dank.utils.PicassoCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import rx.functions.Action1;
+import timber.log.Timber;
 
 public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubRedditSubmissionsAdapter.SubmissionViewHolder>
         implements Action1<List<Submission>>
@@ -64,8 +69,11 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
     }
 
     public static class SubmissionViewHolder extends RecyclerView.ViewHolder {
+        @BindView(R.id.submission_item_icon) ImageView iconView;
         @BindView(R.id.submission_item_title) TextView titleView;
         @BindView(R.id.submission_item_subtitle) TextView subTitleView;
+
+        @BindColor(R.color.gray_100) int defaultIconsTintColor;
 
         public SubmissionViewHolder(View itemView) {
             super(itemView);
@@ -73,6 +81,39 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
         }
 
         public void bind(Submission submission) {
+            switch (submission.getThumbnailType()) {
+                case NSFW:
+                    // TODO: 08/02/17 NSFW thumbnails
+                case SELF:
+                    iconView.setBackgroundResource(R.drawable.background_submission_self_thumbnail);
+                    iconView.setImageResource(R.drawable.ic_text_fields_black_24dp);
+                    iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                    iconView.setColorFilter(defaultIconsTintColor);
+                    break;
+
+                case DEFAULT:
+                    // Reddit couldn't create a thumbnail. Has to be a URL submission.
+                    iconView.setBackgroundResource(R.drawable.background_submission_self_thumbnail);
+                    iconView.setImageResource(R.drawable.ic_link_black_24dp);
+                    iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                    iconView.setColorFilter(defaultIconsTintColor);
+                    break;
+
+                case URL:
+                    iconView.setColorFilter(null);
+                    iconView.setBackground(null);
+                    iconView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                    Dank.picasso()
+                            .load(submission.getThumbnail())
+                            .transform(new PicassoCircularTransformation())
+                            .into(iconView);
+                    break;
+
+                case NONE:
+                    Timber.w("None thumbnail: %s (%s)", submission.getThumbnail(), submission.getTitle());
+                    break;
+            }
+
             titleView.setText(submission.getTitle());
             subTitleView.setText(subTitleView.getResources().getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
         }

@@ -79,7 +79,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<CommentNode, Comme
 
             // Author name, comment.
             authorNameView.setText(commentNode.getComment().getAuthor());
-            commentBodyView.setText(commentNode.getComment().getBody());
+            commentBodyView.setText(commentNode.getComment().getBody().trim());
 
             // Flair.
             Flair authorFlair = commentNode.getComment().getAuthorFlair();
