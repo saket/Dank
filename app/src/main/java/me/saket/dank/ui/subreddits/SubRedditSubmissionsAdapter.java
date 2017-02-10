@@ -90,6 +90,16 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
                     iconView.setImageResource(R.drawable.ic_text_fields_black_24dp);
                     iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
                     iconView.setColorFilter(defaultIconsTintColor);
+                    iconView.setVisibility(View.VISIBLE);
+                    break;
+
+                case DEFAULT:
+                    // Reddit couldn't create a thumbnail. Has to be a URL submission.
+                    iconView.setBackgroundResource(R.drawable.background_submission_self_thumbnail);
+                    iconView.setImageResource(R.drawable.ic_link_black_24dp);
+                    iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                    iconView.setColorFilter(defaultIconsTintColor);
+                    iconView.setVisibility(View.VISIBLE);
                     break;
 
                 case URL:
@@ -100,16 +110,11 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
                             .load(submission.getThumbnail())
                             .transform(new PicassoCircularTransformation())
                             .into(iconView);
+                    iconView.setVisibility(View.VISIBLE);
                     break;
 
                 case NONE:
-                    Timber.w("None thumbnail: %s (%s)", submission.getThumbnail(), submission.getTitle());
-                case DEFAULT:
-                    // Reddit couldn't create a thumbnail. Has to be a URL submission.
-                    iconView.setBackgroundResource(R.drawable.background_submission_self_thumbnail);
-                    iconView.setImageResource(R.drawable.ic_link_black_24dp);
-                    iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                    iconView.setColorFilter(defaultIconsTintColor);
+                    iconView.setVisibility(View.GONE);
                     break;
             }
 
