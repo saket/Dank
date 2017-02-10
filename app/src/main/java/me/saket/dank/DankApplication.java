@@ -17,7 +17,7 @@ public class DankApplication extends Application {
         }
 
         // Initialize Dagger graph.
-        Dank.initDependencies(this, getString(R.string.reddit_api_secret));
+        Dank.initDependencies(this);
     }
 
 }

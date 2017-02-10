@@ -1,4 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="reddit_api_secret">E-TcdjXmZ4tVXg</string>
+    <string name="reddit_app_client_id">E-TcdjXmZ4tVXg</string>
+    <string name="reddit_app_redirect_url">http://saket.me</string>
 </resources>

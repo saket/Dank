@@ -11,9 +11,12 @@ import net.dean.jraw.auth.RefreshTokenHandler;
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.http.oauth.Credentials;
+import net.dean.jraw.http.oauth.OAuthData;
+import net.dean.jraw.http.oauth.OAuthHelper;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.paginators.SubredditPaginator;
 
+import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.AndroidTokenStore;
 import rx.Observable;
@@ -25,18 +28,18 @@ import timber.log.Timber;
  */
 public class DankRedditClient {
 
-    private final String redditAppSecret;
+    private final Context context;
+    private final String redditAppClientId;
     private final RedditClient redditClient;
     private final AuthenticationManager redditAuthManager;
-    private final Context context;
 
     private boolean authManagerInitialized;
 
-    public DankRedditClient(Context context, String redditAppSecret, RedditClient redditClient, AuthenticationManager redditAuthManager) {
+    public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager) {
         this.context = context;
-        this.redditAppSecret = redditAppSecret;
         this.redditClient = redditClient;
         this.redditAuthManager = redditAuthManager;
+        this.redditAppClientId = context.getString(R.string.reddit_app_client_id);
     }
 
     /**
@@ -49,9 +52,11 @@ public class DankRedditClient {
                 authManagerInitialized = true;
             }
 
+            // TODO: 10/02/17 Update this code for logged in user.
+
             AuthenticationState authState = redditAuthManager.checkAuthState();
             if (authState != AuthenticationState.READY) {
-                Credentials credentials = Credentials.userlessApp(redditAppSecret, Dank.sharedPrefs().getDeviceUuid());
+                Credentials credentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
 
                 switch (authState) {
                     case NONE:
@@ -72,6 +77,14 @@ public class DankRedditClient {
         });
     }
 
+    public UserLoginHelper userLoginHelper() {
+        return new UserLoginHelper();
+    }
+
+    public String authenticatedUserName() {
+        return redditClient.getAuthenticatedUser();
+    }
+
     @NonNull
     public Func1<Observable<? extends Throwable>, Observable<?>> refreshApiTokenAndRetryIfExpired() {
         return errors -> errors.flatMap(error -> {
@@ -79,7 +92,7 @@ public class DankRedditClient {
                 // Re-try authenticating.
                 Timber.w("Attempting to refresh token");
                 return Observable.fromCallable(() -> {
-                    Credentials credentials = Credentials.userlessApp(Dank.reddit().redditAppSecret, Dank.sharedPrefs().getDeviceUuid());
+                    Credentials credentials = Credentials.userlessApp(Dank.reddit().redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
                     Dank.reddit().redditAuthManager.refreshAccessToken(credentials);
                     return true;
 
@@ -104,4 +117,47 @@ public class DankRedditClient {
     public Submission fullSubmissionData(String submissionId) {
         return redditClient.getSubmission(new SubmissionRequest.Builder(submissionId).build());
     }
+
+    public class UserLoginHelper {
+
+        private final Credentials loginCredentials;
+
+        public UserLoginHelper() {
+            loginCredentials = Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
+        }
+
+        public String authorizationUrl() {
+            String[] scopes = {
+                    "account",
+                    "edit",             // For editing comments and submissions
+                    "history",
+                    "identity",
+                    "mysubreddits",
+                    "privatemessages",
+                    "read",
+                    "report",           // For hiding or reporting a thread.
+                    "save",
+                    "submit",
+                    "subscribe",
+                    "vote",
+                    "wikiread"
+            };
+
+            OAuthHelper oAuthHelper = redditClient.getOAuthHelper();
+            return oAuthHelper.getAuthorizationUrl(loginCredentials, true /* permanent */, true /* useMobileSite */, scopes).toString();
+        }
+
+        /**
+         * Emits an item when the app is successfully able to authenticate the user in.
+         */
+        public Observable<Boolean> parseOAuthSuccessUrl(String successUrl) {
+            return Observable.fromCallable(() -> {
+                OAuthData oAuthData = redditClient.getOAuthHelper().onUserChallenge(successUrl, loginCredentials);
+                redditClient.authenticate(oAuthData);
+                return true;
+            });
+        }
+
+    }
+
 }

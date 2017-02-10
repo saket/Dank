@@ -5,9 +5,12 @@ import static rx.Observable.just;
 
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ProgressBar;
-import android.widget.Toolbar;
 
 import net.dean.jraw.paginators.SubredditPaginator;
 
@@ -16,6 +19,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.DankActivity;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -85,6 +89,19 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
     @Override
     public void onSubmissionToolbarUpClick() {
         submissionList.collapse();
+    }
+
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_subreddit, menu);
+
+        // Click listeners for a menu item with an action view must be set manually.
+        MenuItem changeOrderMenuItem = menu.findItem(R.id.action_login);
+        ((ViewGroup) changeOrderMenuItem.getActionView()).getChildAt(0).setOnClickListener(v -> {
+            LoginActivity.start(this);
+        });
+
+        return super.onCreateOptionsMenu(menu);
     }
 
 }

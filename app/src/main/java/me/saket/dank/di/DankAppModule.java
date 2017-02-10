@@ -25,11 +25,9 @@ import timber.log.Timber;
 public class DankAppModule {
 
     private Context appContext;
-    private String redditApiSecret;
 
-    public DankAppModule(Application appContext, String redditApiSecret) {
+    public DankAppModule(Application appContext) {
         this.appContext = appContext;
-        this.redditApiSecret = redditApiSecret;
     }
 
     @Provides
@@ -54,7 +52,7 @@ public class DankAppModule {
     DankRedditClient provideDankRedditClient(UserAgent redditUserAgent, AuthenticationManager authManager) {
         RedditClient redditClient = new RedditClient(redditUserAgent);
         redditClient.setLoggingMode(LoggingMode.ALWAYS);
-        return new DankRedditClient(appContext, redditApiSecret, redditClient, authManager);
+        return new DankRedditClient(appContext, redditClient, authManager);
     }
 
     @Provides

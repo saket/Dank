@@ -10,13 +10,21 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/AppTheme">
+        android:theme="@style/DankTheme">
 
-        <activity android:name=".ui.subreddits.SubRedditActivity">
+        <activity
+            android:name=".ui.subreddits.SubRedditActivity"
+            android:launchMode="singleTop">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.authentication.LoginActivity"
+            android:label="@string/login"
+            android:parentActivityName=".ui.subreddits.SubRedditActivity"
+            android:theme="@style/DankTheme.TransparentBackground" />
     </application>
 </manifest>

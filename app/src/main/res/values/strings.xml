@@ -3,4 +3,10 @@
 
     <!-- Submissions -->
     <string name="subreddit_name_r_prefix">/r/%s</string>
+
+    <!-- Login -->
+    <string name="login">Login</string>
+    <string name="error_login_oauth_permission_rejected">\"You must press \'allow\' to log in with this account\"</string>
+    <string name="error_login_oauth_failed">Failed to login. Please try again.</string>
+    <string name="login_welcome_user">Welcome, %s!</string>
 </resources>

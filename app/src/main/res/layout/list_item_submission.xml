@@ -46,7 +46,7 @@
             android:layout_alignEnd="@+id/submission_item_title"
             android:layout_alignStart="@+id/submission_item_title"
             android:layout_below="@+id/submission_item_title"
-            android:layout_marginBottom="@dimen/spacing24"
+            android:layout_marginBottom="@dimen/spacing16"
             android:layout_marginTop="@dimen/spacing4"
             android:fontFamily="sans-serif-smallcaps"
             android:textColor="@color/gray_600"

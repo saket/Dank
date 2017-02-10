@@ -1,7 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<Toolbar android:id="@id/toolbar"
+<android.support.v7.widget.Toolbar android:id="@id/toolbar"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:background="@color/toolbar"
-    android:titleTextAppearance="@style/DankTextAppearance.Toolbar" />
+    app:titleTextAppearance="@style/DankTextAppearance.Toolbar" />

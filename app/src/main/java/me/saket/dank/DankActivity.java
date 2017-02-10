@@ -1,6 +1,6 @@
 package me.saket.dank;
 
-import android.app.Activity;
+import android.support.v7.app.AppCompatActivity;
 
 import butterknife.ButterKnife;
 import rx.Subscription;
@@ -9,7 +9,7 @@ import rx.subscriptions.CompositeSubscription;
 /**
  * Base class for all activities.
  */
-public class DankActivity extends Activity {
+public class DankActivity extends AppCompatActivity {
 
     private CompositeSubscription onStopSubscriptions;
     private CompositeSubscription onDestroySubscriptions;
@@ -47,10 +47,10 @@ public class DankActivity extends Activity {
     }
 
     protected void findAndSetupToolbar(boolean showUpButton) {
-        setActionBar(ButterKnife.findById(this, R.id.toolbar));
+        setSupportActionBar(ButterKnife.findById(this, R.id.toolbar));
         if (showUpButton) {
             //noinspection ConstantConditions
-            getActionBar().setDisplayHomeAsUpEnabled(true);
+            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
     }
 

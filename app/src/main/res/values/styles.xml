@@ -1,12 +1,17 @@
 <resources>
 
-    <style name="AppTheme" parent="@android:style/Theme.Material.NoActionBar">
-        <item name="android:colorPrimary">@color/color_primary</item>
-        <item name="android:colorPrimaryDark">@color/color_primary_dark</item>
-        <item name="android:colorAccent">@color/color_accent</item>
+    <style name="DankTheme" parent="Theme.AppCompat.NoActionBar">
+        <item name="colorPrimary">@color/color_primary</item>
+        <item name="colorPrimaryDark">@color/color_primary_dark</item>
+        <item name="colorAccent">@color/color_accent</item>
     </style>
 
-    <style name="DankTextAppearance" parent="@android:style/TextAppearance.Material.Widget.Toolbar.Title" />
+    <style name="DankTheme.TransparentBackground">
+        <item name="android:windowIsTranslucent">true</item>
+        <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="DankTextAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title" />
 
     <style name="DankTextAppearance.Toolbar">
         <item name="android:textColor">@color/color_accent</item>
@@ -20,4 +25,20 @@
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">1dp</item>
     </style>
+
+    <style name="Button" />
+
+    <style name="Button.ToolbarMenu">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_gravity">center_vertical</item>
+        <item name="android:minHeight">0dp</item>
+        <item name="android:minWidth">0dp</item>
+        <item name="android:paddingEnd">@dimen/spacing12</item>
+        <item name="android:paddingStart">@dimen/spacing12</item>
+        <item name="android:paddingTop">@dimen/spacing8</item>
+        <item name="android:paddingBottom">@dimen/spacing8</item>
+        <item name="android:textColor">@color/gray_200</item>
+    </style>
+
 </resources>

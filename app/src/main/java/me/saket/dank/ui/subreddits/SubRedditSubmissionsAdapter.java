@@ -1,6 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
 import android.support.v7.widget.RecyclerView;
+import android.text.Html;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -91,14 +92,6 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
                     iconView.setColorFilter(defaultIconsTintColor);
                     break;
 
-                case DEFAULT:
-                    // Reddit couldn't create a thumbnail. Has to be a URL submission.
-                    iconView.setBackgroundResource(R.drawable.background_submission_self_thumbnail);
-                    iconView.setImageResource(R.drawable.ic_link_black_24dp);
-                    iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                    iconView.setColorFilter(defaultIconsTintColor);
-                    break;
-
                 case URL:
                     iconView.setColorFilter(null);
                     iconView.setBackground(null);
@@ -111,10 +104,17 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
 
                 case NONE:
                     Timber.w("None thumbnail: %s (%s)", submission.getThumbnail(), submission.getTitle());
+                case DEFAULT:
+                    // Reddit couldn't create a thumbnail. Has to be a URL submission.
+                    iconView.setBackgroundResource(R.drawable.background_submission_self_thumbnail);
+                    iconView.setImageResource(R.drawable.ic_link_black_24dp);
+                    iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+                    iconView.setColorFilter(defaultIconsTintColor);
                     break;
             }
 
-            titleView.setText(submission.getTitle());
+            //noinspection deprecation
+            titleView.setText(Html.fromHtml(submission.getTitle()));
             subTitleView.setText(subTitleView.getResources().getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
         }
 

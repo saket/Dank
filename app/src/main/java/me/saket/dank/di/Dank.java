@@ -12,9 +12,9 @@ public class Dank {
 
     private static DankAppComponent appComponent;
 
-    public static void initDependencies(Application application, String redditApiSecret) {
+    public static void initDependencies(Application application) {
         appComponent = DaggerDankAppComponent.builder()
-                .dankAppModule(new DankAppModule(application, redditApiSecret))
+                .dankAppModule(new DankAppModule(application))
                 .build();
     }
 
