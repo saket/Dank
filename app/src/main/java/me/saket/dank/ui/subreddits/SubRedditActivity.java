@@ -81,12 +81,6 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
     }
 
     @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        // TODO: 01/02/17 Retain expandable page's state.
-        super.onSaveInstanceState(outState);
-    }
-
-    @Override
     public void onSubmissionToolbarUpClick() {
         submissionList.collapse();
     }

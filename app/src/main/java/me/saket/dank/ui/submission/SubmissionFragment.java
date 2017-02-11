@@ -75,7 +75,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             commentsAdapter.updateData(commentsCollapseHelper.toggleCollapseAndGet(comment));
         });
         commentList.setAdapter(RecyclerAdapterWithHeader.wrap(commentsAdapter, commentListHeaderView));
-
         commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
         commentList.setItemAnimator(new DefaultItemAnimator());
 
@@ -113,6 +112,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 .doOnTerminate(() -> loadProgressBar.setVisibility(View.GONE))
                 .subscribe(commentsAdapter, logError("Couldn't get comments"));
     }
+
+// ======== EXPANDABLE PAGE CALLBACKS ======== //
 
     /**
      * @param upwardPagePull True if the PAGE is being pulled upwards. Remember that upward swipe == downward scroll and vice versa.

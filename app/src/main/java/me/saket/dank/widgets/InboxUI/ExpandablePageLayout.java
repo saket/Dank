@@ -587,6 +587,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         }
     }
 
+    /**
+     * There's a difference between the page fully expanding and fully covering the list.
+     * When the page is fully expanded, it may or may not be covering the list. This is
+     * usually when the user is pulling the page.
+     */
     private void dispatchOnPageFullyCoveredCallback() {
         for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
             if (internalCallback == null) {

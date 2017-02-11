@@ -8,6 +8,7 @@ import android.graphics.Color;
 import android.graphics.Paint;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
@@ -26,13 +27,14 @@ import me.saket.dank.utils.Views;
  */
 public class InboxRecyclerView extends RecyclerView implements ExpandablePageLayout.InternalPageCallbacks {
 
+    private static final String KEY_IS_EXPANDED = "isExpanded";
     private static final float MAX_DIM_FACTOR = 0.2f;                    // [0..1]
     private static final int MAX_DIM = (int) (255 * MAX_DIM_FACTOR);     // [0..255]
+    public static final long ANIM_START_DELAY = 0;
     public static final long ANIM_DURATION_EXPAND = 250;
     public static final long ANIM_DURATION_COLLAPSE = ANIM_DURATION_EXPAND;
     public static TimeInterpolator ANIM_INTERPOLATOR_EXPAND = new FastOutSlowInInterpolator();
     public static TimeInterpolator ANIM_INTERPOLATOR_COLLAPSE = new FastOutSlowInInterpolator();
-    public static final long ANIM_START_DELAY = 0;
 
     private ExpandablePageLayout page;
     private ExpandInfo expandInfo;             // Details about the currently expanded Item
@@ -41,7 +43,6 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     private Drawable activityWindowOrigBackground;
     private boolean pendingItemsOutOfTheWindowAnimation;
     private boolean isFullyCoveredByPage;
-    private boolean isFullyExpanded;
 
     public InboxRecyclerView(Context context) {
         super(context);
@@ -73,6 +74,20 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
                 return !canScroll() ? 0 : super.scrollVerticallyBy(dy, recycler, state);
             }
         };
+    }
+
+    public void handleOnSaveInstance(Bundle outState) {
+        outState.putBoolean(KEY_IS_EXPANDED, page.isExpanded());
+    }
+
+    public void handleOnRestoreInstanceState(Bundle savedInstance) {
+        boolean wasExpanded = savedInstance.getBoolean(KEY_IS_EXPANDED);
+        if (wasExpanded) {
+            if (page == null) {
+                throw new NullPointerException("setExpandablePage() must be called before handleOnRetainInstance()");
+            }
+            page.expandImmediately();
+        }
     }
 
     /**
@@ -313,7 +328,6 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     @Override
     public void onPageAboutToCollapse() {
         onPageBackgroundVisible();
-        isFullyExpanded = false;       // Removes dimming.
         postInvalidate();
     }
 
@@ -349,7 +363,6 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     public void onPageFullyCovered() {
         final boolean invalidate = !isFullyCoveredByPage;
         isFullyCoveredByPage = true;   // Skips draw() until visible again to the user.
-        isFullyExpanded = true;        // Dims the list until collapsed.
         if (invalidate) {
             postInvalidate();
         }
@@ -382,7 +395,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
 
         super.draw(canvas);
 
-        if (isFullyExpanded) {
+        if (page.isExpanded()) {
             canvas.drawRect(0, 0, getRight(), getBottom(), dimPaint);
         }
     }
