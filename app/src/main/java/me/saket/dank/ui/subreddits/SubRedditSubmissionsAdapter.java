@@ -1,5 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
+import android.support.annotation.DrawableRes;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
 import android.view.LayoutInflater;
@@ -21,6 +22,7 @@ import me.saket.dank.R;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import rx.functions.Action1;
+import timber.log.Timber;
 
 public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubRedditSubmissionsAdapter.SubmissionViewHolder>
         implements Action1<List<Submission>>
@@ -70,7 +72,7 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
     }
 
     public static class SubmissionViewHolder extends RecyclerView.ViewHolder {
-        @BindView(R.id.submission_item_icon) ImageView iconView;
+        @BindView(R.id.submission_item_icon) ImageView thumbnailView;
         @BindView(R.id.submission_item_title) TextView titleView;
         @BindView(R.id.submission_item_subtitle) TextView subTitleView;
 
@@ -82,46 +84,64 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
         }
 
         public void bind(Submission submission) {
+            //if ("image".equals(submission.getThumbnail())) {
+                Timber.d("-------------------------------------------");
+                Timber.i("%s", submission.getTitle());
+                Timber.i("Hint: %s, Thumb type: %s", submission.getPostHint(), submission.getThumbnailType());
+                Timber.i("Thumb: %s", submission.getThumbnail());
+                Timber.i("Thumbs: %s", submission.getThumbnails());
+            //}
+
             switch (submission.getThumbnailType()) {
                 case NSFW:
                     // TODO: 08/02/17 NSFW thumbnails
                 case SELF:
-                    iconView.setBackgroundResource(R.drawable.background_submission_self_thumbnail);
-                    iconView.setImageResource(R.drawable.ic_text_fields_black_24dp);
-                    iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                    iconView.setColorFilter(defaultIconsTintColor);
-                    iconView.setVisibility(View.VISIBLE);
+                    loadStaticThumbnail(R.drawable.ic_text_fields_black_24dp);
+                    thumbnailView.setVisibility(View.VISIBLE);
                     break;
 
                 case DEFAULT:
                     // Reddit couldn't create a thumbnail. Has to be a URL submission.
-                    iconView.setBackgroundResource(R.drawable.background_submission_self_thumbnail);
-                    iconView.setImageResource(R.drawable.ic_link_black_24dp);
-                    iconView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
-                    iconView.setColorFilter(defaultIconsTintColor);
-                    iconView.setVisibility(View.VISIBLE);
+                    loadStaticThumbnail(R.drawable.ic_link_black_24dp);
+
+                    // Get the high-res image for this link.
+                    if (submission.getThumbnails() != null) {
+                        loadThumbnailFromUrl(submission.getThumbnails().getSource().getUrl());
+                    }
+                    thumbnailView.setVisibility(View.VISIBLE);
                     break;
 
                 case URL:
-                    Glide.with(itemView.getContext())
-                            .load(submission.getThumbnail())
-                            .bitmapTransform(new GlideCircularTransformation(itemView.getContext()))
-                            .into(iconView);
-
-                    iconView.setColorFilter(null);
-                    iconView.setBackground(null);
-                    iconView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    iconView.setVisibility(View.VISIBLE);
+                    loadThumbnailFromUrl(submission.getThumbnail());
+                    thumbnailView.setVisibility(View.VISIBLE);
                     break;
 
                 case NONE:
-                    iconView.setVisibility(View.GONE);
+                    thumbnailView.setVisibility(View.GONE);
                     break;
             }
 
             //noinspection deprecation
             titleView.setText(Html.fromHtml(submission.getTitle()));
             subTitleView.setText(subTitleView.getResources().getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
+        }
+
+        private void loadStaticThumbnail(@DrawableRes int iconRes) {
+            thumbnailView.setBackgroundResource(R.drawable.background_submission_self_thumbnail);
+            thumbnailView.setImageResource(iconRes);
+            thumbnailView.setScaleType(ImageView.ScaleType.CENTER_INSIDE);
+            thumbnailView.setColorFilter(defaultIconsTintColor);
+        }
+
+        private void loadThumbnailFromUrl(String thumbnailUrl) {
+            Glide.with(itemView.getContext())
+                    .load(thumbnailUrl)
+                    .bitmapTransform(new GlideCircularTransformation(itemView.getContext()))
+                    .into(thumbnailView);
+
+            thumbnailView.setColorFilter(null);
+            thumbnailView.setBackground(null);
+            thumbnailView.setScaleType(ImageView.ScaleType.CENTER_CROP);
         }
 
         public static SubmissionViewHolder create(ViewGroup parent) {

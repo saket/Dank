@@ -18,6 +18,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
@@ -29,12 +30,14 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.subreddits.SubRedditActivity;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import rx.Subscription;
 
 public class SubmissionFragment extends Fragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
     @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.submission_linked_image) ImageView mediaImageView;
     @BindView(R.id.submission_comments_list_header) ViewGroup commentListHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
@@ -84,6 +87,10 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         return fragmentLayout;
     }
 
+    /**
+     * Update the submission to be shown. Since this Fragment is retained by {@link SubRedditActivity},
+     * we only update the UI everytime a new submission is to be shown.
+     */
     public void populateUi(Submission submission) {
         if (submission.equals(lastSubmission) && !commentsSubscription.isUnsubscribed()) {
             return;

@@ -6,6 +6,15 @@
 
     <include layout="@layout/include_toolbar" />
 
+    <!-- TODO: set content-description in code. -->
+    <ImageView
+        android:id="@+id/submission_linked_image"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:ignore="ContentDescription" />
+
+    <!-- During runtime, this ViewGroup is moved to inside the
+         comment list, as the header. -->
     <LinearLayout
         android:id="@+id/submission_comments_list_header"
         android:layout_width="match_parent"
