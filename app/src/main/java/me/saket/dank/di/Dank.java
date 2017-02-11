@@ -3,7 +3,6 @@ package me.saket.dank.di;
 import android.app.Application;
 
 import com.squareup.moshi.Moshi;
-import com.squareup.picasso.Picasso;
 
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
@@ -28,10 +27,6 @@ public class Dank {
 
     public static Moshi moshi() {
         return appComponent.moshi();
-    }
-
-    public static Picasso picasso() {
-        return appComponent.picasso();
     }
 
 }

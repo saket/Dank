@@ -8,6 +8,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+
 import net.dean.jraw.models.Submission;
 
 import java.util.List;
@@ -16,11 +18,9 @@ import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
-import me.saket.dank.di.Dank;
-import me.saket.dank.utils.PicassoCircularTransformation;
+import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import rx.functions.Action1;
-import timber.log.Timber;
 
 public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubRedditSubmissionsAdapter.SubmissionViewHolder>
         implements Action1<List<Submission>>
@@ -103,13 +103,14 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
                     break;
 
                 case URL:
+                    Glide.with(itemView.getContext())
+                            .load(submission.getThumbnail())
+                            .bitmapTransform(new GlideCircularTransformation(itemView.getContext()))
+                            .into(iconView);
+
                     iconView.setColorFilter(null);
                     iconView.setBackground(null);
                     iconView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                    Dank.picasso()
-                            .load(submission.getThumbnail())
-                            .transform(new PicassoCircularTransformation())
-                            .into(iconView);
                     iconView.setVisibility(View.VISIBLE);
                     break;
 

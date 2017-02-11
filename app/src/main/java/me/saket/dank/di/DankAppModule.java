@@ -6,7 +6,6 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 
 import com.squareup.moshi.Moshi;
-import com.squareup.picasso.Picasso;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
@@ -65,12 +64,6 @@ public class DankAppModule {
     @Singleton
     SharedPrefsManager provideSharedPrefsManager() {
         return new SharedPrefsManager(appContext);
-    }
-
-    @Provides
-    @Singleton
-    Picasso providePicasso() {
-        return new Picasso.Builder(appContext).build();
     }
 
 }

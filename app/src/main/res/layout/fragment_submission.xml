@@ -6,12 +6,16 @@
 
     <include layout="@layout/include_toolbar" />
 
+    <ImageView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/toolbar"
         android:orientation="vertical"
-        tools:ignore="UnknownId">
+        tools:ignore="UnknownIdInLayout">
 
         <LinearLayout
             android:layout_width="match_parent"

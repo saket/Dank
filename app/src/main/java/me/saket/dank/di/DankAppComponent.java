@@ -1,7 +1,6 @@
 package me.saket.dank.di;
 
 import com.squareup.moshi.Moshi;
-import com.squareup.picasso.Picasso;
 
 import javax.inject.Singleton;
 
@@ -18,7 +17,5 @@ public interface DankAppComponent {
     SharedPrefsManager sharedPrefs();
 
     Moshi moshi();
-
-    Picasso picasso();
 
 }
