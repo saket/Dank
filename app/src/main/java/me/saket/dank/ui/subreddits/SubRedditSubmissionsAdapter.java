@@ -127,7 +127,6 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
         public static SubmissionViewHolder create(ViewGroup parent) {
             return new SubmissionViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_submission, parent, false));
         }
-
     }
 
 }

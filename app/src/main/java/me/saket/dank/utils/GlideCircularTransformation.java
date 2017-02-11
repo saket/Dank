@@ -13,8 +13,6 @@ import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapResource;
 
-import timber.log.Timber;
-
 public class GlideCircularTransformation implements Transformation<Bitmap> {
 
     private BitmapPool mBitmapPool;
@@ -29,7 +27,6 @@ public class GlideCircularTransformation implements Transformation<Bitmap> {
 
     @Override
     public Resource<Bitmap> transform(Resource<Bitmap> resource, int outWidth, int outHeight) {
-        final long startTime = System.currentTimeMillis();
         Bitmap source = resource.get();
         int size = Math.min(source.getWidth(), source.getHeight());
 
@@ -57,9 +54,7 @@ public class GlideCircularTransformation implements Transformation<Bitmap> {
         float r = size / 2f;
         canvas.drawCircle(r, r, r, paint);
 
-        BitmapResource bitmapResource = BitmapResource.obtain(bitmap, mBitmapPool);
-        Timber.i("Circled in: %sms", System.currentTimeMillis() - startTime);
-        return bitmapResource;
+        return BitmapResource.obtain(bitmap, mBitmapPool);
     }
 
     @Override

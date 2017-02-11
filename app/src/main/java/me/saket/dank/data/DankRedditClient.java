@@ -92,8 +92,8 @@ public class DankRedditClient {
                 // Re-try authenticating.
                 Timber.w("Attempting to refresh token");
                 return Observable.fromCallable(() -> {
-                    Credentials credentials = Credentials.userlessApp(Dank.reddit().redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
-                    Dank.reddit().redditAuthManager.refreshAccessToken(credentials);
+                    Credentials credentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
+                    redditAuthManager.refreshAccessToken(credentials);
                     return true;
 
                 }).doOnNext(booleanObservable -> {

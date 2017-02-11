@@ -27,6 +27,10 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<CommentNode, Comme
         void onCommentClick(CommentNode clickedComment);
     }
 
+    public CommentsAdapter() {
+        setHasStableIds(true);
+    }
+
     public void setOnCommentClickListener(OnCommentClickListener listener) {
         onCommentClickListener = listener;
     }

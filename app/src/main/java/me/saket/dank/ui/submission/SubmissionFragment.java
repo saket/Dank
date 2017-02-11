@@ -35,9 +35,10 @@ import rx.Subscription;
 public class SubmissionFragment extends Fragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
     @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.submission_comments_list_header) ViewGroup commentListHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
-    @BindView(R.id.submission_comments_list) RecyclerView commentsList;
+    @BindView(R.id.submission_comments_list) RecyclerView commentList;
     @BindView(R.id.submission_comments_progress) ProgressBar loadProgressBar;
 
     @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
@@ -73,9 +74,10 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             // Collapse/expand on tap.
             commentsAdapter.updateData(commentsCollapseHelper.toggleCollapseAndGet(comment));
         });
-        commentsList.setAdapter(commentsAdapter);
-        commentsList.setLayoutManager(new LinearLayoutManager(getActivity()));
-        commentsList.setItemAnimator(new DefaultItemAnimator());
+        commentList.setAdapter(RecyclerAdapterWithHeader.wrap(commentsAdapter, commentListHeaderView));
+
+        commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
+        commentList.setItemAnimator(new DefaultItemAnimator());
 
         commentsCollapseHelper = new CommentsCollapseHelper();
 
@@ -119,8 +121,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @Override
     public boolean onInterceptPullToCollapseGesture(MotionEvent event, float downX, float downY, boolean upwardPagePull) {
         Rect commentListBounds = new Rect();
-        commentsList.getGlobalVisibleRect(commentListBounds);
-        return commentListBounds.contains((int) downX, (int) downY) && commentsList.canScrollVertically(upwardPagePull ? 1 : -1);
+        commentList.getGlobalVisibleRect(commentListBounds);
+        return commentListBounds.contains((int) downX, (int) downY) && commentList.canScrollVertically(upwardPagePull ? 1 : -1);
     }
 
     @Override
