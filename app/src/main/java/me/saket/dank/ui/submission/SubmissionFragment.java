@@ -33,6 +33,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import rx.Subscription;
+import timber.log.Timber;
 
 public class SubmissionFragment extends Fragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
@@ -46,7 +47,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
     @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
 
-    private Submission lastSubmission;
     private CommentsAdapter commentsAdapter;
     private Subscription commentsSubscription;
     private CommentsCollapseHelper commentsCollapseHelper;
@@ -92,17 +92,18 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
      * we only update the UI everytime a new submission is to be shown.
      */
     public void populateUi(Submission submission) {
-        if (submission.equals(lastSubmission) && !commentsSubscription.isUnsubscribed()) {
-            return;
-        }
-        lastSubmission = submission;
-
         // Reset everything.
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
 
+        // Update submission information.
         titleView.setText(submission.getTitle());
         subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
+
+        // Load media.
+        Timber.d("-------------------------------------------");
+        Timber.i("%s", submission.getTitle());
+        Timber.i("Post hint: %s", submission.getPostHint());
 
         // Load new comments.
         loadProgressBar.setVisibility(View.VISIBLE);
