@@ -84,7 +84,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     }
 
     public void populateUi(Submission submission) {
-        if (submission.equals(lastSubmission)) {
+        if (submission.equals(lastSubmission) && !commentsSubscription.isUnsubscribed()) {
             return;
         }
         lastSubmission = submission;
