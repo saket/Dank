@@ -22,8 +22,13 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
+
+import java.io.IOException;
 
 import butterknife.BindDrawable;
 import butterknife.BindView;
@@ -37,8 +42,10 @@ import timber.log.Timber;
 
 public class SubmissionFragment extends Fragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
+    private static final String KEY_SUBMISSION_JSON = "submissionJson";
+
     @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.submission_linked_image) ImageView mediaImageView;
+    @BindView(R.id.submission_linked_image) ImageView submissionImageView;
     @BindView(R.id.submission_comments_list_header) ViewGroup commentListHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
@@ -50,6 +57,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private CommentsAdapter commentsAdapter;
     private Subscription commentsSubscription;
     private CommentsCollapseHelper commentsCollapseHelper;
+    private Submission activeSubmission;
 
     public interface Callbacks {
         void onSubmissionToolbarUpClick();
@@ -83,8 +91,34 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         commentsCollapseHelper = new CommentsCollapseHelper();
 
+        if (savedInstanceState != null) {
+            onRestoreSavedInstanceState(savedInstanceState);
+        }
+
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         return fragmentLayout;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if (activeSubmission != null) {
+            JsonNode dataNode = activeSubmission.getDataNode();
+            outState.putString(KEY_SUBMISSION_JSON, dataNode.toString());
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
+        if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
+            try {
+                String submissionJson = savedInstanceState.getString(KEY_SUBMISSION_JSON);
+                JsonNode jsonNode = new ObjectMapper().readTree(submissionJson);
+                populateUi(new Submission(jsonNode));
+
+            } catch (IOException e) {
+                Timber.e(e, "Couldn't deserialize Submission for state restoration");
+            }
+        }
     }
 
     /**
@@ -92,6 +126,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
      * we only update the UI everytime a new submission is to be shown.
      */
     public void populateUi(Submission submission) {
+        activeSubmission = submission;
+
         // Reset everything.
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
@@ -100,10 +136,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         titleView.setText(submission.getTitle());
         subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
 
-        // Load media.
-        Timber.d("-------------------------------------------");
-        Timber.i("%s", submission.getTitle());
-        Timber.i("Post hint: %s", submission.getPostHint());
+        // Load self-text/media/webpage.
+        loadSubmissionContent(submission);
 
         // Load new comments.
         loadProgressBar.setVisibility(View.VISIBLE);
@@ -119,6 +153,30 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 .compose(applySchedulers())
                 .doOnTerminate(() -> loadProgressBar.setVisibility(View.GONE))
                 .subscribe(commentsAdapter, logError("Couldn't get comments"));
+    }
+
+    private void loadSubmissionContent(Submission submission) {
+        Timber.d("-------------------------------------------");
+        Timber.i("%s", submission.getTitle());
+        Timber.i("Post hint: %s", submission.getPostHint());
+
+        switch (submission.getPostHint()) {
+            case IMAGE:
+                Dank.imageLoader().load(getActivity(), submission.getUrl(), submissionImageView);
+                submissionImageView.setVisibility(View.VISIBLE);
+                break;
+
+            case VIDEO:
+            case UNKNOWN:
+            case LINK:
+            case SELF:
+                // TODO: 12/02/17.
+                submissionImageView.setVisibility(View.GONE);
+                break;
+
+            default:
+                throw new UnsupportedOperationException("Unknown post hint: " + submission.getPostHint());
+        }
     }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //

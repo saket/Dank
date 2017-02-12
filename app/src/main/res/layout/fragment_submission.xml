@@ -4,14 +4,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <include layout="@layout/include_toolbar" />
-
     <!-- TODO: set content-description in code. -->
     <ImageView
         android:id="@+id/submission_linked_image"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         tools:ignore="ContentDescription" />
+
+    <include layout="@layout/include_toolbar" />
 
     <!-- During runtime, this ViewGroup is moved to inside the
          comment list, as the header. -->

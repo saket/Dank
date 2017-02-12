@@ -81,6 +81,18 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
     }
 
     @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        submissionList.handleOnSaveInstance(outState);
+        super.onSaveInstanceState(outState);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        submissionList.handleOnRestoreInstanceState(savedInstanceState);
+    }
+
+    @Override
     public void onSubmissionToolbarUpClick() {
         submissionList.collapse();
     }
