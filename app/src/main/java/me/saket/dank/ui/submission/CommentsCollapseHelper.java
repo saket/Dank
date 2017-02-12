@@ -61,7 +61,7 @@ public class CommentsCollapseHelper {
     private List<CommentNode> flattenExpandedComments(List<CommentNode> flattenComments, CommentNode nextNode) {
         List<CommentNode> childCommentsTree = nextNode.getChildren();
 
-        if (childCommentsTree == null || childCommentsTree.isEmpty()) {
+        if (childCommentsTree.isEmpty() && nextNode.getDepth() != 0) {
             flattenComments.add(nextNode);
             return flattenComments;
 
