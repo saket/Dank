@@ -6,6 +6,7 @@ import com.squareup.moshi.Moshi;
 
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
+import me.saket.dank.utils.ImageLoader;
 
 public class Dank {
 
@@ -27,6 +28,10 @@ public class Dank {
 
     public static Moshi moshi() {
         return appComponent.moshi();
+    }
+
+    public static ImageLoader imageLoader() {
+        return appComponent.imageLoader();
     }
 
 }

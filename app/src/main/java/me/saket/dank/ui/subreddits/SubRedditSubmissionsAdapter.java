@@ -9,8 +9,6 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.bumptech.glide.Glide;
-
 import net.dean.jraw.models.Submission;
 
 import java.util.List;
@@ -19,10 +17,9 @@ import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
-import me.saket.dank.utils.GlideCircularTransformation;
+import me.saket.dank.di.Dank;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import rx.functions.Action1;
-import timber.log.Timber;
 
 public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubRedditSubmissionsAdapter.SubmissionViewHolder>
         implements Action1<List<Submission>>
@@ -85,11 +82,11 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
 
         public void bind(Submission submission) {
             //if ("image".equals(submission.getThumbnail())) {
-                Timber.d("-------------------------------------------");
-                Timber.i("%s", submission.getTitle());
-                Timber.i("Hint: %s, Thumb type: %s", submission.getPostHint(), submission.getThumbnailType());
-                Timber.i("Thumb: %s", submission.getThumbnail());
-                Timber.i("Thumbs: %s", submission.getThumbnails());
+//            Timber.d("-------------------------------------------");
+//            Timber.i("%s", submission.getTitle());
+//            Timber.i("Hint: %s, Thumb type: %s", submission.getPostHint(), submission.getThumbnailType());
+//            Timber.i("Thumb: %s", submission.getThumbnail());
+//            Timber.i("Thumbs: %s", submission.getThumbnails());
             //}
 
             switch (submission.getThumbnailType()) {
@@ -134,10 +131,7 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
         }
 
         private void loadThumbnailFromUrl(String thumbnailUrl) {
-            Glide.with(itemView.getContext())
-                    .load(thumbnailUrl)
-                    .bitmapTransform(new GlideCircularTransformation(itemView.getContext()))
-                    .into(thumbnailView);
+            Dank.imageLoader().loadCircular(itemView.getContext(), thumbnailUrl, thumbnailView);
 
             thumbnailView.setColorFilter(null);
             thumbnailView.setBackground(null);

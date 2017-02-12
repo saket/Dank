@@ -18,6 +18,7 @@ import dagger.Module;
 import dagger.Provides;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
+import me.saket.dank.utils.ImageLoader;
 import timber.log.Timber;
 
 @Module
@@ -64,6 +65,12 @@ public class DankAppModule {
     @Singleton
     SharedPrefsManager provideSharedPrefsManager() {
         return new SharedPrefsManager(appContext);
+    }
+
+    @Provides
+    @Singleton
+    ImageLoader provideImageLoader() {
+        return new ImageLoader();
     }
 
 }
