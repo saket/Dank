@@ -53,6 +53,8 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/toolbar"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical"
         tools:ignore="UnknownIdInLayout"
         tools:layout_below="@+id/submission_comments_list_header" />
 

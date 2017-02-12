@@ -11,7 +11,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:clipToPadding="false"
-        android:paddingTop="?android:attr/actionBarSize" />
+        android:paddingTop="?android:attr/actionBarSize"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical" />
 
     <ProgressBar
         android:id="@+id/subreddit_progress"
