@@ -22,6 +22,7 @@ import android.widget.ImageView;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -162,7 +163,10 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         switch (submission.getPostHint()) {
             case IMAGE:
-                Dank.imageLoader().load(getActivity(), submission.getUrl(), submissionImageView);
+                Glide.with(getActivity())
+                        .load(submission.getUrl())
+                        .into(submissionImageView);
+
                 submissionImageView.setVisibility(View.VISIBLE);
                 break;
 

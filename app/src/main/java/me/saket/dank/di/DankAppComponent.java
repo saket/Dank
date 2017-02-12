@@ -7,7 +7,6 @@ import javax.inject.Singleton;
 import dagger.Component;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
-import me.saket.dank.utils.ImageLoader;
 
 @Component(modules = DankAppModule.class)
 @Singleton
@@ -18,7 +17,5 @@ public interface DankAppComponent {
     SharedPrefsManager sharedPrefs();
 
     Moshi moshi();
-
-    ImageLoader imageLoader();
 
 }

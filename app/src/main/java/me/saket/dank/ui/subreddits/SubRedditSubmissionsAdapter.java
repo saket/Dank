@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+
 import net.dean.jraw.models.Submission;
 
 import java.util.List;
@@ -17,7 +19,7 @@ import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
-import me.saket.dank.di.Dank;
+import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import rx.functions.Action1;
 
@@ -131,7 +133,9 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
         }
 
         private void loadThumbnailFromUrl(String thumbnailUrl) {
-            Dank.imageLoader().loadCircular(itemView.getContext(), thumbnailUrl, thumbnailView);
+            Glide.with(itemView.getContext()).load(thumbnailUrl)
+                    .bitmapTransform(new GlideCircularTransformation(itemView.getContext()))
+                    .into(thumbnailView);
 
             thumbnailView.setColorFilter(null);
             thumbnailView.setBackground(null);
