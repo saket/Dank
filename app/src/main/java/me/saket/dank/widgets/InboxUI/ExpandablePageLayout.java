@@ -320,11 +320,13 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         }
 
         // Fire!
-        animatePageExpandCollapse(false /* Collapse */,
-                expandInfo.expandedItemLocationRect.width()  /* target width */,
-                expandInfo.expandedItemLocationRect.height() /* target height */,
-                expandInfo
-        );
+        int targetWidth = expandInfo.expandedItemLocationRect.width();
+        int targetHeight = expandInfo.expandedItemLocationRect.height();
+        if (targetWidth == 0) {
+            // Page must expanded immediately after a state restoration.
+            targetWidth = getWidth();
+        }
+        animatePageExpandCollapse(false /* Collapse */, targetWidth, targetHeight, expandInfo);
 
         // Send callbacks that the city is going to collapse.
         dispatchOnPageAboutToCollapseCallback();
