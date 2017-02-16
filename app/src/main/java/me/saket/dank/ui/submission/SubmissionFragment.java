@@ -204,6 +204,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         }
 
         selfPostTextView.setVisibility(submission.getPostHint() == Submission.PostHint.SELF ? View.VISIBLE : View.GONE);
+        submissionImageView.setVisibility(submission.getPostHint() == Submission.PostHint.IMAGE ? View.VISIBLE : View.GONE);
     }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //

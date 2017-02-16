@@ -25,10 +25,5 @@
             android:label="@string/login"
             android:parentActivityName=".ui.subreddits.SubRedditActivity"
             android:theme="@style/DankTheme.TransparentBackground" />
-        <activity
-            android:name=".ui.NestedScrollingTestActivity"
-            android:label="NestedScrolling"
-            android:parentActivityName=".ui.subreddits.SubRedditActivity" />
     </application>
-
 </manifest>

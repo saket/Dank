@@ -19,7 +19,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.DankActivity;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.NestedScrollingTestActivity;
+import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -104,10 +104,7 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
         // Click listeners for a menu item with an action view must be set manually.
         MenuItem changeOrderMenuItem = menu.findItem(R.id.action_login);
         ((ViewGroup) changeOrderMenuItem.getActionView()).getChildAt(0).setOnClickListener(v -> {
-            //LoginActivity.start(this);
-
-            // TODO: 14/02/17 remove!
-            NestedScrollingTestActivity.start(this);
+            LoginActivity.start(this);
         });
 
         return super.onCreateOptionsMenu(menu);
