@@ -108,7 +108,7 @@ public class DankRedditClient {
     }
 
     public SubredditPaginator frontPagePaginator() {
-        return new SubredditPaginator(redditClient, "aoe2");
+        return new SubredditPaginator(redditClient);
     }
 
     /**
