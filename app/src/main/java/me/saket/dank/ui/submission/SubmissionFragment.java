@@ -20,7 +20,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
-import android.widget.Space;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
@@ -41,8 +40,8 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
-import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
+import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import rx.Subscription;
 import timber.log.Timber;
 
@@ -55,7 +54,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
-    @BindView(R.id.submission_comments_list) RecyclerView commentList;
+    @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
+    @BindView(R.id.submission_comment_list) RecyclerView commentList;
     @BindView(R.id.submission_comments_progress) ProgressBar loadProgressBar;
 
     @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
@@ -94,14 +94,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         commentList.setAdapter(RecyclerAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView));
         commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
         commentList.setItemAnimator(new DefaultItemAnimator());
-
-        Views.executeOnMeasure(commentsHeaderView, () -> {
-            int spacing = commentList.getHeight() - commentsHeaderView.getHeight();
-            Space topSpace = ButterKnife.findById(fragmentLayout, R.id.submission_comments_header_topspace);
-            ViewGroup.LayoutParams params = topSpace.getLayoutParams();
-            params.height = spacing;
-            topSpace.setLayoutParams(params);
-        });
 
         commentsCollapseHelper = new CommentsCollapseHelper();
 
@@ -144,6 +136,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         activeSubmission = submission;
 
         // Reset everything.
+        commentListParentSheet.scrollTo(0, 0);
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
 
@@ -219,9 +212,18 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
      */
     @Override
     public boolean onInterceptPullToCollapseGesture(MotionEvent event, float downX, float downY, boolean upwardPagePull) {
-        Rect commentListBounds = new Rect();
-        commentList.getGlobalVisibleRect(commentListBounds);
-        return commentListBounds.contains((int) downX, (int) downY) && commentList.canScrollVertically(upwardPagePull ? 1 : -1);
+        Rect commentSheetBounds = new Rect();
+        commentListParentSheet.getGlobalVisibleRect(commentSheetBounds);
+        boolean touchInsideCommentsSheet = commentSheetBounds.contains((int) downX, (int) downY);
+
+        //noinspection SimplifiableIfStatement
+        if (touchInsideCommentsSheet) {
+            return upwardPagePull
+                    ? commentListParentSheet.canScrollUpwardsAnyFurther()
+                    : commentListParentSheet.canScrollDownwardsAnyFurther();
+        } else {
+            return false;
+        }
     }
 
     @Override

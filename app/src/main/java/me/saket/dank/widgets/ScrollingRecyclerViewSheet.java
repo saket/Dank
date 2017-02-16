@@ -22,12 +22,29 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     private final int minimumFlingVelocity;
     private final int maximumFlingVelocity;
 
+    private RecyclerView childRecyclerView;
+
     public ScrollingRecyclerViewSheet(Context context, AttributeSet attrs) {
         super(context, attrs);
         flingScroller = new Scroller(context);
         minimumFlingVelocity = ViewConfiguration.get(context).getScaledMinimumFlingVelocity();
         maximumFlingVelocity = ViewConfiguration.get(context).getScaledMaximumFlingVelocity();
     }
+
+    public boolean canScrollDownwardsAnyFurther() {
+        return getCurrentTopY() != getHeight();
+    }
+
+    public boolean canScrollUpwardsAnyFurther() {
+        return getCurrentTopY() != 0 || childRecyclerView.canScrollVertically(1);
+    }
+
+    @Override
+    public void scrollTo(int x, int y) {
+        attemptToConsumeScrollY(getCurrentTopY() - y);
+    }
+
+// ======== INTERNAL ======== //
 
     @Override
     public void addView(View child, int index, ViewGroup.LayoutParams params) {
@@ -39,9 +56,9 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         }
         super.addView(child, index, params);
 
-        RecyclerView recyclerView = (RecyclerView) child;
-        recyclerView.addOnScrollListener(scrollListener);
-        recyclerView.setOverScrollMode(OVER_SCROLL_NEVER);
+        childRecyclerView = (RecyclerView) child;
+        childRecyclerView.addOnScrollListener(scrollListener);
+        childRecyclerView.setOverScrollMode(OVER_SCROLL_NEVER);
     }
 
     private boolean isSheetFullyExpanded() {
@@ -56,11 +73,9 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         return getTranslationY();
     }
 
-    private void adjustOffsetBy(float dy) {
-        setTranslationY(getTranslationY() - dy);
-    }
+// ======== NESTED SCROLLING ======== //
 
-    private float attemptToConsumeScrollY(View target, float dy) {
+    private float attemptToConsumeScrollY(float dy) {
         boolean scrollingDownwards = dy > 0;
         if (scrollingDownwards) {
             if (!isSheetFullyExpanded()) {
@@ -75,7 +90,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
             }
 
         } else {
-            boolean canChildViewScrollDownwardsAnymore = target.canScrollVertically(-1);
+            boolean canChildViewScrollDownwardsAnymore = childRecyclerView.canScrollVertically(-1);
             if (!isSheetFullyHidden() && !canChildViewScrollDownwardsAnymore) {
                 float adjustedDy = dy;
                 if (getCurrentTopY() - dy > getHeight()) {
@@ -91,6 +106,10 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         return 0;
     }
 
+    private void adjustOffsetBy(float dy) {
+        setTranslationY(getTranslationY() - dy);
+    }
+
     @Override
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
         // Always accept nested scroll events from the child. The decision of whether
@@ -101,7 +120,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     @Override
     public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
         flingScroller.forceFinished(true);
-        float consumedY = attemptToConsumeScrollY(target, dy);
+        float consumedY = attemptToConsumeScrollY(dy);
         consumed[1] = (int) consumedY;
     }
 
@@ -123,7 +142,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
                     if (isFlingOngoing) {
                         float dY = flingScroller.getCurrY() - lastY;
                         lastY = flingScroller.getCurrY();
-                        float distanceConsumed = attemptToConsumeScrollY(target, dY);
+                        float distanceConsumed = attemptToConsumeScrollY(dY);
 
                         // As soon as we stop scrolling, transfer the fling to the recyclerView.
                         // This is hacky, but it works.
@@ -132,8 +151,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
                             if (velocityY < 0) {
                                 transferVelocity *= -1;
                             }
-                            RecyclerView recyclerView = (RecyclerView) target;
-                            recyclerView.fling(0, ((int) transferVelocity));
+                            childRecyclerView.fling(0, ((int) transferVelocity));
 
                         } else {
                             // There's still more distance to be covered in this fling. Keep scrolling!

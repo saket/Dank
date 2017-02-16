@@ -24,16 +24,10 @@
         android:orientation="vertical"
         tools:ignore="UnknownIdInLayout">
 
-        <Space
-            android:id="@+id/submission_comments_header_topspace"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
-
         <LinearLayout
             android:id="@+id/submission_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:background="@color/window_background"
             android:clickable="true"
             android:orientation="vertical">
 
@@ -63,16 +57,21 @@
         </LinearLayout>
     </LinearLayout>
 
-    <android.support.v7.widget.RecyclerView
-        android:id="@+id/submission_comments_list"
+    <me.saket.dank.widgets.ScrollingRecyclerViewSheet
+        android:id="@+id/submission_comment_list_parent_sheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/toolbar"
-        android:clipToPadding="false"
-        android:scrollbarStyle="insideOverlay"
-        android:scrollbars="vertical"
         tools:ignore="UnknownIdInLayout"
-        tools:layout_below="@+id/submission_comments_header" />
+        tools:layout_below="@+id/submission_comments_header">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/submission_comment_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:scrollbarStyle="insideOverlay"
+            android:scrollbars="vertical" />
+    </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
 
     <ProgressBar
         android:id="@+id/submission_comments_progress"
