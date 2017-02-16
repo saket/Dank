@@ -51,4 +51,12 @@ public class Views {
         view.setPaddingRelative(paddingStart, view.getPaddingTop(), view.getPaddingEnd(), view.getPaddingBottom());
     }
 
+    public static void setPaddingTop(View view, int paddingTop) {
+        view.setPaddingRelative(view.getPaddingStart(), paddingTop, view.getPaddingEnd(), view.getPaddingBottom());
+    }
+
+    public static void setPaddingBottom(View view, int paddingBottom) {
+        view.setPaddingRelative(view.getPaddingStart(), view.getPaddingTop(), view.getPaddingEnd(), paddingBottom);
+    }
+
 }

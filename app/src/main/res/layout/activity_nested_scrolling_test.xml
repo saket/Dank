@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout android:id="@+id/activity_nested_scrolling_test"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="me.saket.dank.ui.NestedScrollingTestActivity">
+
+    <include layout="@layout/include_toolbar" />
+
+    <me.saket.dank.widgets.ScrollingRecyclerViewSheet
+        android:id="@+id/nestedScrollView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@id/toolbar"
+        android:scrollbarStyle="insideOverlay"
+        android:layout_marginBottom="64dp"
+        android:scrollbars="vertical">
+
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/recyclerView"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
+    </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
+</RelativeLayout>

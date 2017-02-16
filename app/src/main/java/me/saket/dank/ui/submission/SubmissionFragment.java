@@ -20,9 +20,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.ProgressBar;
+import android.widget.Space;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.Target;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -37,6 +41,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import rx.Subscription;
 import timber.log.Timber;
@@ -47,7 +52,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.submission_linked_image) ImageView submissionImageView;
-    @BindView(R.id.submission_comments_list_header) ViewGroup commentListHeaderView;
+    @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
     @BindView(R.id.submission_comments_list) RecyclerView commentList;
@@ -86,12 +91,21 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             // Collapse/expand on tap.
             commentsAdapter.updateData(commentsCollapseHelper.toggleCollapseAndGet(comment));
         });
-        commentList.setAdapter(RecyclerAdapterWithHeader.wrap(commentsAdapter, commentListHeaderView));
+        commentList.setAdapter(RecyclerAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView));
         commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
         commentList.setItemAnimator(new DefaultItemAnimator());
 
+        Views.executeOnMeasure(commentsHeaderView, () -> {
+            int spacing = commentList.getHeight() - commentsHeaderView.getHeight();
+            Space topSpace = ButterKnife.findById(fragmentLayout, R.id.submission_comments_header_topspace);
+            ViewGroup.LayoutParams params = topSpace.getLayoutParams();
+            params.height = spacing;
+            topSpace.setLayoutParams(params);
+        });
+
         commentsCollapseHelper = new CommentsCollapseHelper();
 
+        // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
             onRestoreSavedInstanceState(savedInstanceState);
         }
@@ -160,11 +174,25 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         Timber.d("-------------------------------------------");
         Timber.i("%s", submission.getTitle());
         Timber.i("Post hint: %s", submission.getPostHint());
+        Timber.i("%s", submission.getDataNode().toString());
 
         switch (submission.getPostHint()) {
             case IMAGE:
                 Glide.with(getActivity())
                         .load(submission.getUrl())
+                        .listener(new RequestListener<String, GlideDrawable>() {
+                            @Override
+                            public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
+                                return false;
+                            }
+
+                            @Override
+                            public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
+                                Timber.i("resource.getIntrinsicHeight(): %s", resource.getIntrinsicHeight());
+                                Timber.i("resource.getMinimumHeight(): %s", resource.getMinimumHeight());
+                                return false;
+                            }
+                        })
                         .into(submissionImageView);
 
                 submissionImageView.setVisibility(View.VISIBLE);

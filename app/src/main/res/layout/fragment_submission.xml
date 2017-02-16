@@ -9,43 +9,58 @@
         android:id="@+id/submission_linked_image"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        tools:ignore="ContentDescription" />
+        android:layout_below="@+id/toolbar"
+        tools:ignore="ContentDescription,UnknownIdInLayout" />
 
     <include layout="@layout/include_toolbar" />
 
-    <!-- During runtime, this ViewGroup is moved to inside the
-         comment list, as the header. -->
+    <!-- At runtime, this ViewGroup is moved to inside the
+         comment list as the header and its top-padding is set. -->
     <LinearLayout
-        android:id="@+id/submission_comments_list_header"
+        android:id="@+id/submission_comments_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
-        android:clickable="true"
         android:orientation="vertical"
         tools:ignore="UnknownIdInLayout">
 
-        <TextView
-            android:id="@+id/submission_title"
+        <Space
+            android:id="@+id/submission_comments_header_topspace"
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:fontFamily="sans-serif-condensed"
-            android:paddingEnd="@dimen/spacing16"
-            android:paddingStart="@dimen/spacing16"
-            android:paddingTop="@dimen/spacing16"
-            android:textColor="@color/gray_100"
-            android:textSize="@dimen/textsize16"
-            tools:text="I did a thing in Photoshop, and am fairly proud of it." />
+            android:layout_height="wrap_content" />
 
-        <TextView
-            android:id="@+id/submission_subtitle"
+        <LinearLayout
+            android:id="@+id/submission_description"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginLeft="@dimen/spacing16"
-            android:layout_marginRight="@dimen/spacing16"
-            android:layout_marginTop="@dimen/spacing4"
-            android:fontFamily="sans-serif-smallcaps"
-            android:textColor="@color/gray_600"
-            tools:text="/r/pics" />
+            android:background="@color/window_background"
+            android:clickable="true"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/submission_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:fontFamily="sans-serif-condensed"
+                android:paddingEnd="@dimen/spacing16"
+                android:paddingStart="@dimen/spacing16"
+                android:paddingTop="@dimen/spacing16"
+                android:textColor="@color/gray_100"
+                android:textSize="@dimen/textsize16"
+                tools:text="I did a thing in Photoshop, and am fairly proud of it." />
+
+            <TextView
+                android:id="@+id/submission_subtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginBottom="@dimen/spacing16"
+                android:layout_marginLeft="@dimen/spacing16"
+                android:layout_marginRight="@dimen/spacing16"
+                android:layout_marginTop="@dimen/spacing4"
+                android:fontFamily="sans-serif-smallcaps"
+                android:textColor="@color/gray_600"
+                tools:text="/r/pics" />
+        </LinearLayout>
     </LinearLayout>
 
     <android.support.v7.widget.RecyclerView
@@ -53,10 +68,11 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/toolbar"
+        android:clipToPadding="false"
         android:scrollbarStyle="insideOverlay"
         android:scrollbars="vertical"
         tools:ignore="UnknownIdInLayout"
-        tools:layout_below="@+id/submission_comments_list_header" />
+        tools:layout_below="@+id/submission_comments_header" />
 
     <ProgressBar
         android:id="@+id/submission_comments_progress"
