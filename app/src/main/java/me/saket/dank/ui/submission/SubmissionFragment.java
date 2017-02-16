@@ -51,10 +51,10 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.submission_linked_image) ImageView submissionImageView;
+    @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
-    @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comment_list) RecyclerView commentList;
     @BindView(R.id.submission_comments_progress) ProgressBar loadProgressBar;
 
@@ -97,12 +97,12 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         commentsCollapseHelper = new CommentsCollapseHelper();
 
+        // TODO: 01/02/17 Should we preload Views for adapter rows?
+
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
             onRestoreSavedInstanceState(savedInstanceState);
         }
-
-        // TODO: 01/02/17 Should we preload Views for adapter rows?
         return fragmentLayout;
     }
 
@@ -164,10 +164,10 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     }
 
     private void loadSubmissionContent(Submission submission) {
-        Timber.d("-------------------------------------------");
-        Timber.i("%s", submission.getTitle());
-        Timber.i("Post hint: %s", submission.getPostHint());
-        Timber.i("%s", submission.getDataNode().toString());
+//        Timber.d("-------------------------------------------");
+//        Timber.i("%s", submission.getTitle());
+//        Timber.i("Post hint: %s", submission.getPostHint());
+//        Timber.i("%s", submission.getDataNode().toString());
 
         switch (submission.getPostHint()) {
             case IMAGE:
@@ -181,8 +181,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
                             @Override
                             public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-                                Timber.i("resource.getIntrinsicHeight(): %s", resource.getIntrinsicHeight());
-                                Timber.i("resource.getMinimumHeight(): %s", resource.getMinimumHeight());
+                                //Timber.i("resource.getIntrinsicHeight(): %s", resource.getIntrinsicHeight());
+                                //Timber.i("resource.getMinimumHeight(): %s", resource.getMinimumHeight());
                                 return false;
                             }
                         })
