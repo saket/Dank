@@ -1,9 +1,12 @@
 package me.saket.dank.widgets;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.os.Handler;
+import android.support.annotation.Px;
 import android.support.v4.view.NestedScrollingParent;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
@@ -76,8 +79,17 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     }
 
     @Override
-    public void scrollTo(int x, int y) {
+    public void scrollTo(@Px int x, @Px int y) {
         attemptToConsumeScrollY(currentTopY() - y);
+    }
+
+    public void smoothScrollTo(@Px int x, @Px int y) {
+        ValueAnimator scrollAnimator = ValueAnimator.ofFloat(currentTopY(), y);
+        scrollAnimator.setInterpolator(new FastOutSlowInInterpolator());
+        scrollAnimator.addUpdateListener(animation -> {
+            attemptToConsumeScrollY(currentTopY() - ((Float) animation.getAnimatedValue()));
+        });
+        scrollAnimator.start();
     }
 
 // ======== INTERNAL ======== //

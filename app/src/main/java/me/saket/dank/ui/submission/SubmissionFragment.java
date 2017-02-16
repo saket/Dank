@@ -23,9 +23,8 @@ import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.Target;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -40,6 +39,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
+import me.saket.dank.utils.SimpleGlideRequestListener;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import rx.Subscription;
@@ -55,6 +55,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
+    @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
     @BindView(R.id.submission_comment_list) RecyclerView commentList;
     @BindView(R.id.submission_comments_progress) ProgressBar loadProgressBar;
 
@@ -97,6 +98,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         commentsCollapseHelper = new CommentsCollapseHelper();
 
+        // TODO: 17/02/17 Add ScrollingRecyclerViewSheet.setCollapsible().
         // TODO: 01/02/17 Should we preload Views for adapter rows?
 
         // Restore submission if the Activity was recreated.
@@ -173,17 +175,12 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             case IMAGE:
                 Glide.with(getActivity())
                         .load(submission.getUrl())
-                        .listener(new RequestListener<String, GlideDrawable>() {
+                        .priority(Priority.IMMEDIATE)
+                        .listener(new SimpleGlideRequestListener() {
                             @Override
-                            public boolean onException(Exception e, String model, Target<GlideDrawable> target, boolean isFirstResource) {
-                                return false;
-                            }
-
-                            @Override
-                            public boolean onResourceReady(GlideDrawable resource, String model, Target<GlideDrawable> target, boolean isFromMemoryCache, boolean isFirstResource) {
-                                //Timber.i("resource.getIntrinsicHeight(): %s", resource.getIntrinsicHeight());
-                                //Timber.i("resource.getMinimumHeight(): %s", resource.getMinimumHeight());
-                                return false;
+                            public void onResourceReady(GlideDrawable resource) {
+                                // Scroll the comments sheet to reveal the image.
+                                commentListParentSheet.smoothScrollTo(0, resource.getIntrinsicHeight());
                             }
                         })
                         .into(submissionImageView);
@@ -191,10 +188,13 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 submissionImageView.setVisibility(View.VISIBLE);
                 break;
 
+            case SELF:
+                selfPostTextView.setText(submission.getSelftext());
+                break;
+
             case VIDEO:
             case UNKNOWN:
             case LINK:
-            case SELF:
                 // TODO: 12/02/17.
                 submissionImageView.setVisibility(View.GONE);
                 break;
@@ -202,6 +202,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             default:
                 throw new UnsupportedOperationException("Unknown post hint: " + submission.getPostHint());
         }
+
+        selfPostTextView.setVisibility(submission.getPostHint() == Submission.PostHint.SELF ? View.VISIBLE : View.GONE);
     }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //

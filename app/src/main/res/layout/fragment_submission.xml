@@ -11,6 +11,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
+        android:scaleType="fitStart"
         tools:ignore="ContentDescription,UnknownIdInLayout" />
 
     <include layout="@layout/include_toolbar" />
@@ -23,6 +24,8 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
         android:orientation="vertical"
+        android:paddingEnd="@dimen/spacing16"
+        android:paddingStart="@dimen/spacing16"
         tools:ignore="UnknownIdInLayout">
 
         <LinearLayout
@@ -38,8 +41,6 @@
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/spacing4"
                 android:fontFamily="sans-serif-condensed"
-                android:paddingEnd="@dimen/spacing16"
-                android:paddingStart="@dimen/spacing16"
                 android:paddingTop="@dimen/spacing16"
                 android:textColor="@color/gray_100"
                 android:textSize="@dimen/textsize16"
@@ -50,11 +51,14 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginBottom="@dimen/spacing16"
-                android:layout_marginLeft="@dimen/spacing16"
-                android:layout_marginRight="@dimen/spacing16"
                 android:fontFamily="sans-serif-smallcaps"
                 android:textColor="@color/gray_600"
                 tools:text="/r/pics" />
+
+            <TextView
+                android:id="@+id/submission_selfpost_text"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content" />
         </LinearLayout>
     </LinearLayout>
 
