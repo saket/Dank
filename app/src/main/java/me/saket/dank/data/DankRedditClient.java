@@ -108,7 +108,7 @@ public class DankRedditClient {
     }
 
     public SubredditPaginator frontPagePaginator() {
-        return new SubredditPaginator(redditClient);
+        return new SubredditPaginator(redditClient, "android");
     }
 
     /**

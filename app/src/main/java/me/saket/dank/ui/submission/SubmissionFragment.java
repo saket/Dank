@@ -44,6 +44,7 @@ import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
 import me.saket.dank.utils.DeviceUtils;
+import me.saket.dank.widgets.AnimatableProgressBar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import rx.Subscription;
@@ -54,6 +55,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private static final String KEY_SUBMISSION_JSON = "submissionJson";
 
     @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.submission_content_progress) AnimatableProgressBar contentLoadProgressView;
     @BindView(R.id.submission_webview) WebView contentWebView;
     @BindView(R.id.submission_linked_image) ImageView contentImageView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
@@ -119,7 +121,10 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         contentWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                // TODO: 17/02/17 show progressbar
+                contentLoadProgressView.setVisibility(newProgress < 100 ? View.VISIBLE : View.GONE);
+
+                contentLoadProgressView.setIndeterminate(false);
+                contentLoadProgressView.setProgressWithAnimation(newProgress);
             }
         });
         contentWebView.setWebViewClient(new WebViewClient());
@@ -155,6 +160,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         activeSubmission = submission;
 
         // Reset everything.
+        contentLoadProgressView.setProgress(0);
         commentListParentSheet.scrollTo(0, 0);
         commentListParentSheet.setScrollingEnabled(false);
         commentsCollapseHelper.reset();
@@ -191,6 +197,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         switch (submission.getPostHint()) {
             case IMAGE:
+                contentLoadProgressView.setVisibility(View.VISIBLE);
+
                 Glide.with(this)
                         .load(submission.getUrl())
                         .priority(Priority.IMMEDIATE)
@@ -199,6 +207,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                             protected void setResource(GlideDrawable resource) {
                                 super.setResource(resource);
                                 contentImageView.post(() -> {
+                                    contentLoadProgressView.setVisibility(View.GONE);
+
                                     // Scroll the comments sheet to reveal the image.
                                     commentListParentSheet.smoothScrollTo(Math.min(
                                             contentImageView.getHeight(),
