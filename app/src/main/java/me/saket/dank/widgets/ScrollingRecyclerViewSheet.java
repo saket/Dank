@@ -50,7 +50,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         minimumFlingVelocity = ViewConfiguration.get(context).getScaledMinimumFlingVelocity();
         maximumFlingVelocity = ViewConfiguration.get(context).getScaledMaximumFlingVelocity();
 
-        if (isSheetFullyExpanded()) {
+        if (hasSheetReachedTheTop()) {
             currentState = State.EXPANDED;
         }
 
@@ -67,13 +67,17 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     }
 
     /**
+     * True if either the sheet is fully hidden or at its peek-height.
+     */
+    public boolean isExpanded() {
+        return currentState == State.EXPANDED;
+    }
+
+    /**
      * Whether the sheet (and the list within) can scroll up any further when pulled downwards.
      */
     public boolean canScrollDownwardsAnyFurther() {
-        if (!scrollingEnabled) {
-            return false;
-        }
-        return currentTopY() != maxScrollY();
+        return scrollingEnabled && currentTopY() != maxScrollY();
     }
 
     /**
@@ -129,7 +133,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         childRecyclerView.setOverScrollMode(OVER_SCROLL_NEVER);
     }
 
-    private boolean isSheetFullyExpanded() {
+    private boolean hasSheetReachedTheTop() {
         return currentTopY() <= 0;
     }
 
@@ -149,7 +153,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     private float attemptToConsumeScrollY(float dy) {
         boolean scrollingDownwards = dy > 0;
         if (scrollingDownwards) {
-            if (!isSheetFullyExpanded()) {
+            if (!hasSheetReachedTheTop()) {
                 float adjustedDy = dy;
                 if (currentTopY() - dy < 0) {
                     // Don't let the sheet go beyond its top bounds.
@@ -184,7 +188,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         State newState;
         if (!canScrollDownwardsAnyFurther()) {
             newState = State.COLLAPSED;
-        } else if (isSheetFullyExpanded()) {
+        } else if (hasSheetReachedTheTop()) {
             newState = State.EXPANDED;
         } else {
             newState = State.DRAGGING;
@@ -235,7 +239,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
                         // As soon as we stop scrolling, transfer the fling to the recyclerView.
                         // This is hacky, but it works.
-                        if (distanceConsumed == 0f && isSheetFullyExpanded()) {
+                        if (distanceConsumed == 0f && hasSheetReachedTheTop()) {
                             float transferVelocity = flingScroller.getCurrVelocity();
                             if (velocityY < 0) {
                                 transferVelocity *= -1;

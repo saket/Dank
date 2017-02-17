@@ -110,4 +110,17 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
         return super.onCreateOptionsMenu(menu);
     }
 
+    @Override
+    public void onBackPressed() {
+        if (submissionPage.isExpanded()) {
+            boolean backPressHandled = submissionFragment.handleBackPress();
+            if (!backPressHandled) {
+                submissionList.collapse();
+            }
+            return;
+        }
+
+        super.onBackPressed();
+    }
+
 }

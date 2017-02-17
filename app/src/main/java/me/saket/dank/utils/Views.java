@@ -1,8 +1,12 @@
 package me.saket.dank.utils;
 
+import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.view.View;
 import android.view.ViewTreeObserver;
+import android.webkit.WebBackForwardList;
+import android.webkit.WebHistoryItem;
+import android.webkit.WebView;
 
 /**
  * Utility methods for Views.
@@ -57,6 +61,16 @@ public class Views {
 
     public static void setPaddingBottom(View view, int paddingBottom) {
         view.setPaddingRelative(view.getPaddingStart(), view.getPaddingTop(), view.getPaddingEnd(), paddingBottom);
+    }
+
+    @Nullable
+    public static String previousUrlInHistory(WebView contentWebView) {
+        WebBackForwardList history = contentWebView.copyBackForwardList();
+        if (history.getSize() > 1) {
+            WebHistoryItem previousItem = history.getItemAtIndex(history.getCurrentIndex() - 1);
+            return previousItem.getUrl();
+        }
+        return null;
     }
 
 }

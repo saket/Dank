@@ -44,6 +44,7 @@ import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
 import me.saket.dank.utils.DeviceUtils;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -53,6 +54,7 @@ import timber.log.Timber;
 public class SubmissionFragment extends Fragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
     private static final String KEY_SUBMISSION_JSON = "submissionJson";
+    private static final java.lang.String BLANK_PAGE_URL = "about:blank";
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.submission_content_progress) AnimatableProgressBar contentLoadProgressView;
@@ -71,7 +73,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private CommentsAdapter commentsAdapter;
     private Subscription commentsSubscription;
     private CommentsCollapseHelper commentsCollapseHelper;
-    private Submission activeSubmission;
+    private Submission currentSubmission;
 
     public interface Callbacks {
         void onSubmissionToolbarUpClick();
@@ -107,7 +109,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         setupContentWebView();
 
-        // TODO: 17/02/17 Add ScrollingRecyclerViewSheet.setCollapsible().
         // TODO: 01/02/17 Should we preload Views for adapter rows?
 
         // Restore submission if the Activity was recreated.
@@ -121,10 +122,9 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         contentWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                contentLoadProgressView.setVisibility(newProgress < 100 ? View.VISIBLE : View.GONE);
-
                 contentLoadProgressView.setIndeterminate(false);
                 contentLoadProgressView.setProgressWithAnimation(newProgress);
+                contentLoadProgressView.setVisibility(newProgress < 100 ? View.VISIBLE : View.GONE);
             }
         });
         contentWebView.setWebViewClient(new WebViewClient());
@@ -132,8 +132,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        if (activeSubmission != null) {
-            JsonNode dataNode = activeSubmission.getDataNode();
+        if (currentSubmission != null) {
+            JsonNode dataNode = currentSubmission.getDataNode();
             outState.putString(KEY_SUBMISSION_JSON, dataNode.toString());
         }
         super.onSaveInstanceState(outState);
@@ -157,7 +157,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
      * we only update the UI everytime a new submission is to be shown.
      */
     public void populateUi(Submission submission) {
-        activeSubmission = submission;
+        currentSubmission = submission;
 
         // Reset everything.
         contentLoadProgressView.setProgress(0);
@@ -165,6 +165,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         commentListParentSheet.setScrollingEnabled(false);
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
+        contentWebView.loadUrl(BLANK_PAGE_URL);
 
         // Update submission information.
         titleView.setText(submission.getTitle());
@@ -291,6 +292,23 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         if (commentsSubscription != null) {
             commentsSubscription.unsubscribe();
         }
+    }
+
+// ======== BACK-PRESS ======== //
+
+    /**
+     * @return true if the back press should be intercepted. False otherwise.
+     */
+    public boolean handleBackPress() {
+        if (currentSubmission != null && !commentListParentSheet.isExpanded() && contentWebView.getVisibility() == View.VISIBLE) {
+            if (contentWebView.canGoBack() && !BLANK_PAGE_URL.equals(Views.previousUrlInHistory(contentWebView))) {
+                // WebView is visible and can go back.
+                contentWebView.goBack();
+                return true;
+            }
+        }
+
+        return false;
     }
 
 }
