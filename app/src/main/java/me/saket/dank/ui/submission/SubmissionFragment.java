@@ -244,9 +244,10 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         selfPostTextView.setVisibility(submission.getPostHint() == Submission.PostHint.SELF ? View.VISIBLE : View.GONE);
         contentImageView.setVisibility(submission.getPostHint() == Submission.PostHint.IMAGE ? View.VISIBLE : View.GONE);
-        if (!BuildConfig.DEBUG || !DeviceUtils.isEmulator()) {
-            // WebViews are very expensive and greatly slow down the emulator.
-            contentWebView.setVisibility(submission.getPostHint() == Submission.PostHint.LINK ? View.VISIBLE : View.GONE);
+        // WebView is made visible in onPageExpanded() because it's very heavy and can interfere with this page's open animation
+
+        if (submission.getPostHint() != Submission.PostHint.LINK) {
+            contentWebView.setVisibility(View.GONE);
         }
     }
 
@@ -279,7 +280,11 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
     @Override
     public void onPageExpanded() {
-
+        // Show the WebView only when this page is fully expanded or else it'll interfere with the entry animation.
+        // Also ignore loading the WebView on the emulator. It is very expensive and greatly slow down the emulator.
+        if (!BuildConfig.DEBUG || !DeviceUtils.isEmulator() && currentSubmission.getPostHint() == Submission.PostHint.LINK) {
+            contentWebView.setVisibility(View.VISIBLE);
+        }
     }
 
     @Override
