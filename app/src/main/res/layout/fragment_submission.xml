@@ -11,10 +11,17 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
-        android:scaleType="fitStart"
+        android:adjustViewBounds="true"
         tools:ignore="ContentDescription,UnknownIdInLayout" />
 
     <include layout="@layout/include_toolbar" />
+
+    <android.support.v4.widget.ContentLoadingProgressBar
+        android:id="@+id/submission_content_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/toolbar"
+        tools:ignore="UnknownIdInLayout" />
 
     <!-- At runtime, this ViewGroup is moved to inside the
          comment list as the header and its top-padding is set. -->
@@ -23,6 +30,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
+        android:animateLayoutChanges="true"
         android:orientation="vertical"
         android:paddingEnd="@dimen/spacing16"
         android:paddingStart="@dimen/spacing16"
@@ -50,7 +58,7 @@
                 android:id="@+id/submission_subtitle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing16"
+                android:layout_marginBottom="@dimen/spacing8"
                 android:fontFamily="sans-serif-smallcaps"
                 android:textColor="@color/gray_600"
                 tools:text="/r/pics" />
@@ -59,6 +67,26 @@
                 android:id="@+id/submission_selfpost_text"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
+
+            <LinearLayout
+                android:id="@+id/submission_comments_progress"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="center_vertical"
+                android:orientation="horizontal">
+
+                <ProgressBar
+                    android:layout_width="24dp"
+                    android:layout_height="24dp"
+                    android:indeterminateTint="@color/white_opacity_40" />
+
+                <TextView
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="@dimen/spacing12"
+                    android:text="@string/loading_comments"
+                    android:textColor="@color/white_opacity_40" />
+            </LinearLayout>
         </LinearLayout>
     </LinearLayout>
 
@@ -79,11 +107,4 @@
             android:scrollbarStyle="insideOverlay"
             android:scrollbars="vertical" />
     </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
-
-    <ProgressBar
-        android:id="@+id/submission_comments_progress"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_centerInParent="true"
-        android:layout_gravity="center" />
 </RelativeLayout>

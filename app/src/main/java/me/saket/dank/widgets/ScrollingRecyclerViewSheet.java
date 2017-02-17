@@ -95,7 +95,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         attemptToConsumeScrollY(currentTopY() - y);
     }
 
-    public void smoothScrollTo(@Px int x, @Px int y) {
+    public void smoothScrollTo(@Px int y) {
         ValueAnimator scrollAnimator = ValueAnimator.ofFloat(currentTopY(), y);
         scrollAnimator.setInterpolator(new FastOutSlowInInterpolator());
         scrollAnimator.addUpdateListener(animation -> {

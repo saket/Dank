@@ -19,12 +19,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -39,7 +39,6 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
-import me.saket.dank.utils.SimpleGlideRequestListener;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import rx.Subscription;
@@ -57,7 +56,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_subtitle) TextView subtitleView;
     @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
     @BindView(R.id.submission_comment_list) RecyclerView commentList;
-    @BindView(R.id.submission_comments_progress) ProgressBar loadProgressBar;
+    @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
 
     @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
 
@@ -151,7 +150,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         loadSubmissionContent(submission);
 
         // Load new comments.
-        loadProgressBar.setVisibility(View.VISIBLE);
+        commentsLoadProgressView.setVisibility(View.VISIBLE);
         commentsSubscription = Dank.reddit()
                 .authenticateIfNeeded()
                 .flatMap(__ -> just(Dank.reddit().fullSubmissionData(submission.getId())))
@@ -162,7 +161,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                     return commentsCollapseHelper.flattenExpandedComments();
                 })
                 .compose(applySchedulers())
-                .doOnTerminate(() -> loadProgressBar.setVisibility(View.GONE))
+                .doOnTerminate(() -> commentsLoadProgressView.setVisibility(View.GONE))
                 .subscribe(commentsAdapter, logError("Couldn't get comments"));
     }
 
@@ -174,19 +173,24 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         switch (submission.getPostHint()) {
             case IMAGE:
-                Glide.with(getActivity())
+                Glide.with(this)
                         .load(submission.getUrl())
                         .priority(Priority.IMMEDIATE)
-                        .listener(new SimpleGlideRequestListener() {
+                        .into(new GlideDrawableImageViewTarget(submissionImageView) {
                             @Override
-                            public void onResourceReady(GlideDrawable resource) {
-                                // Scroll the comments sheet to reveal the image.
-                                int imageHeight = resource.getIntrinsicHeight();
-                                commentListParentSheet.smoothScrollTo(0, Math.min(imageHeight, commentListParentSheet.getHeight() / 2));
-                                commentListParentSheet.setScrollingEnabled(true);
+                            protected void setResource(GlideDrawable resource) {
+                                super.setResource(resource);
+                                submissionImageView.post(() -> {
+                                    // Scroll the comments sheet to reveal the image.
+                                    int distanceToReveal = Math.min(submissionImageView.getHeight(), commentListParentSheet.getHeight() / 2);
+                                    commentListParentSheet.smoothScrollTo(distanceToReveal);
+                                    commentListParentSheet.setScrollingEnabled(true);
+
+                                    // TransitionDrawable (used by Glide for fading-in) messes up the scaleType. Set it everytime.
+                                    submissionImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                                });
                             }
-                        })
-                        .into(submissionImageView);
+                        });
                 break;
 
             case SELF:

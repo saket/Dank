@@ -9,4 +9,5 @@
     <string name="error_login_oauth_permission_rejected">\"You must press \'allow\' to log in with this account\"</string>
     <string name="error_login_oauth_failed">Failed to login. Please try again.</string>
     <string name="login_welcome_user">Welcome, %s!</string>
+    <string name="loading_comments">Loading comments…</string>
 </resources>
