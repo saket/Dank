@@ -139,6 +139,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         // Reset everything.
         commentListParentSheet.scrollTo(0, 0);
+        commentListParentSheet.setScrollingEnabled(false);
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
 
@@ -180,12 +181,12 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                             @Override
                             public void onResourceReady(GlideDrawable resource) {
                                 // Scroll the comments sheet to reveal the image.
-                                commentListParentSheet.smoothScrollTo(0, resource.getIntrinsicHeight());
+                                int imageHeight = resource.getIntrinsicHeight();
+                                commentListParentSheet.smoothScrollTo(0, Math.min(imageHeight, commentListParentSheet.getHeight() / 2));
+                                commentListParentSheet.setScrollingEnabled(true);
                             }
                         })
                         .into(submissionImageView);
-
-                submissionImageView.setVisibility(View.VISIBLE);
                 break;
 
             case SELF:
@@ -210,7 +211,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 // ======== EXPANDABLE PAGE CALLBACKS ======== //
 
     /**
-     * @param upwardPagePull True if the PAGE is being pulled upwards. Remember that upward swipe == downward scroll and vice versa.
+     * @param upwardPagePull True if the PAGE is being pulled upwards. Remember that upward pull == downward scroll and vice versa.
      * @return True to consume this touch event. False otherwise.
      */
     @Override
