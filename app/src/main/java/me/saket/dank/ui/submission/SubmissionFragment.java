@@ -18,6 +18,9 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.webkit.WebChromeClient;
+import android.webkit.WebView;
+import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -36,9 +39,11 @@ import java.io.IOException;
 import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
+import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import rx.Subscription;
@@ -49,7 +54,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private static final String KEY_SUBMISSION_JSON = "submissionJson";
 
     @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.submission_linked_image) ImageView submissionImageView;
+    @BindView(R.id.submission_webview) WebView contentWebView;
+    @BindView(R.id.submission_linked_image) ImageView contentImageView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
@@ -97,6 +103,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         commentsCollapseHelper = new CommentsCollapseHelper();
 
+        setupContentWebView();
+
         // TODO: 17/02/17 Add ScrollingRecyclerViewSheet.setCollapsible().
         // TODO: 01/02/17 Should we preload Views for adapter rows?
 
@@ -105,6 +113,16 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             onRestoreSavedInstanceState(savedInstanceState);
         }
         return fragmentLayout;
+    }
+
+    private void setupContentWebView() {
+        contentWebView.setWebChromeClient(new WebChromeClient() {
+            @Override
+            public void onProgressChanged(WebView view, int newProgress) {
+                // TODO: 17/02/17 show progressbar
+            }
+        });
+        contentWebView.setWebViewClient(new WebViewClient());
     }
 
     @Override
@@ -166,28 +184,30 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     }
 
     private void loadSubmissionContent(Submission submission) {
-//        Timber.d("-------------------------------------------");
-//        Timber.i("%s", submission.getTitle());
-//        Timber.i("Post hint: %s", submission.getPostHint());
-//        Timber.i("%s", submission.getDataNode().toString());
+        Timber.d("-------------------------------------------");
+        Timber.i("%s", submission.getTitle());
+        Timber.i("Post hint: %s", submission.getPostHint());
+        Timber.i("%s", submission.getDataNode().toString());
 
         switch (submission.getPostHint()) {
             case IMAGE:
                 Glide.with(this)
                         .load(submission.getUrl())
                         .priority(Priority.IMMEDIATE)
-                        .into(new GlideDrawableImageViewTarget(submissionImageView) {
+                        .into(new GlideDrawableImageViewTarget(contentImageView) {
                             @Override
                             protected void setResource(GlideDrawable resource) {
                                 super.setResource(resource);
-                                submissionImageView.post(() -> {
+                                contentImageView.post(() -> {
                                     // Scroll the comments sheet to reveal the image.
-                                    int distanceToReveal = Math.min(submissionImageView.getHeight(), commentListParentSheet.getHeight() / 2);
-                                    commentListParentSheet.smoothScrollTo(distanceToReveal);
+                                    commentListParentSheet.smoothScrollTo(Math.min(
+                                            contentImageView.getHeight(),
+                                            commentListParentSheet.getHeight() / 2)
+                                    );
                                     commentListParentSheet.setScrollingEnabled(true);
 
                                     // TransitionDrawable (used by Glide for fading-in) messes up the scaleType. Set it everytime.
-                                    submissionImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                                    contentImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                                 });
                             }
                         });
@@ -197,11 +217,14 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 selfPostTextView.setText(submission.getSelftext());
                 break;
 
+            case LINK:
+                contentWebView.loadUrl(submission.getUrl());
+                commentListParentSheet.setScrollingEnabled(true);
+                break;
+
             case VIDEO:
             case UNKNOWN:
-            case LINK:
                 // TODO: 12/02/17.
-                submissionImageView.setVisibility(View.GONE);
                 break;
 
             default:
@@ -209,7 +232,11 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         }
 
         selfPostTextView.setVisibility(submission.getPostHint() == Submission.PostHint.SELF ? View.VISIBLE : View.GONE);
-        submissionImageView.setVisibility(submission.getPostHint() == Submission.PostHint.IMAGE ? View.VISIBLE : View.GONE);
+        contentImageView.setVisibility(submission.getPostHint() == Submission.PostHint.IMAGE ? View.VISIBLE : View.GONE);
+        if (!BuildConfig.DEBUG || !DeviceUtils.isEmulator()) {
+            // WebViews are very expensive and greatly slow down the emulator.
+            contentWebView.setVisibility(submission.getPostHint() == Submission.PostHint.LINK ? View.VISIBLE : View.GONE);
+        }
     }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //

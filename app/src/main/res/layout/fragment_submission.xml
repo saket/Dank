@@ -6,6 +6,7 @@
     android:layout_height="match_parent">
 
     <!-- TODO: set content-description in code. -->
+    <!-- For image/gif. -->
     <ImageView
         android:id="@+id/submission_linked_image"
         android:layout_width="match_parent"
@@ -13,6 +14,13 @@
         android:layout_below="@+id/toolbar"
         android:adjustViewBounds="true"
         tools:ignore="ContentDescription,UnknownIdInLayout" />
+
+    <!-- For URLs. -->
+    <WebView
+        android:id="@+id/submission_webview"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
 
     <include layout="@layout/include_toolbar" />
 
@@ -36,57 +44,49 @@
         android:paddingStart="@dimen/spacing16"
         tools:ignore="UnknownIdInLayout">
 
-        <LinearLayout
-            android:id="@+id/submission_description"
+        <TextView
+            android:id="@+id/submission_title"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:clickable="true"
-            android:orientation="vertical">
+            android:layout_marginBottom="@dimen/spacing4"
+            android:fontFamily="sans-serif-condensed"
+            android:paddingTop="@dimen/spacing16"
+            android:textColor="@color/gray_100"
+            android:textSize="@dimen/textsize16"
+            tools:text="I did a thing in Photoshop, and am fairly proud of it." />
+
+        <TextView
+            android:id="@+id/submission_subtitle"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="@dimen/spacing8"
+            android:fontFamily="sans-serif-smallcaps"
+            android:textColor="@color/gray_600"
+            tools:text="/r/pics" />
+
+        <TextView
+            android:id="@+id/submission_selfpost_text"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content" />
+
+        <LinearLayout
+            android:id="@+id/submission_comments_progress"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <ProgressBar
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:indeterminateTint="@color/white_opacity_40" />
 
             <TextView
-                android:id="@+id/submission_title"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing4"
-                android:fontFamily="sans-serif-condensed"
-                android:paddingTop="@dimen/spacing16"
-                android:textColor="@color/gray_100"
-                android:textSize="@dimen/textsize16"
-                tools:text="I did a thing in Photoshop, and am fairly proud of it." />
-
-            <TextView
-                android:id="@+id/submission_subtitle"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginBottom="@dimen/spacing8"
-                android:fontFamily="sans-serif-smallcaps"
-                android:textColor="@color/gray_600"
-                tools:text="/r/pics" />
-
-            <TextView
-                android:id="@+id/submission_selfpost_text"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content" />
-
-            <LinearLayout
-                android:id="@+id/submission_comments_progress"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:gravity="center_vertical"
-                android:orientation="horizontal">
-
-                <ProgressBar
-                    android:layout_width="24dp"
-                    android:layout_height="24dp"
-                    android:indeterminateTint="@color/white_opacity_40" />
-
-                <TextView
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginStart="@dimen/spacing12"
-                    android:text="@string/loading_comments"
-                    android:textColor="@color/white_opacity_40" />
-            </LinearLayout>
+                android:layout_marginStart="@dimen/spacing12"
+                android:text="@string/loading_comments"
+                android:textColor="@color/white_opacity_40" />
         </LinearLayout>
     </LinearLayout>
 
