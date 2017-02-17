@@ -30,8 +30,9 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
     private OnStateChangeListener stateChangeListener;
     private RecyclerView childRecyclerView;
-    private int peekHeight;
     private State currentState;
+    private int peekHeight;
+    private boolean scrollingEnabled;
 
     public enum State {
         EXPANDED,
@@ -56,17 +57,28 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         TypedArray properties = context.obtainStyledAttributes(attrs, R.styleable.ScrollingRecyclerViewSheet);
         setPeekHeight(properties.getDimensionPixelSize(R.styleable.ScrollingRecyclerViewSheet_peekHeight, 0));
         properties.recycle();
+
+        setScrollingEnabled(true);
     }
 
     public void setOnStateChangeListener(OnStateChangeListener listener) {
-        this.stateChangeListener = listener;
+        stateChangeListener = listener;
         listener.onStateChange(currentState);
     }
 
+    /**
+     * Whether the sheet (and the list within) can scroll up any further when pulled downwards.
+     */
     public boolean canScrollDownwardsAnyFurther() {
+        if (!scrollingEnabled) {
+            return false;
+        }
         return currentTopY() != maxScrollY();
     }
 
+    /**
+     * Whether the sheet (and the list within) can scroll down any further when pulled upwards.
+     */
     public boolean canScrollUpwardsAnyFurther() {
         return currentTopY() != 0 || childRecyclerView.canScrollVertically(1);
     }
@@ -92,7 +104,11 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         scrollAnimator.start();
     }
 
-// ======== INTERNAL ======== //
+    public void setScrollingEnabled(boolean enabled) {
+        scrollingEnabled = enabled;
+    }
+
+// ======== PUBLIC APIs END ======== //
 
     private int maxScrollY() {
         return getHeight() - peekHeight;
@@ -164,13 +180,12 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     private void adjustOffsetBy(float dy) {
         setTranslationY(getTranslationY() - dy);
 
+        // Send a callback if the state changed.
         State newState;
         if (!canScrollDownwardsAnyFurther()) {
             newState = State.COLLAPSED;
-
         } else if (isSheetFullyExpanded()) {
             newState = State.EXPANDED;
-
         } else {
             newState = State.DRAGGING;
         }
@@ -188,7 +203,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
         // Always accept nested scroll events from the child. The decision of whether
         // or not to actually scroll is calculated inside onNestedPreScroll().
-        return true;
+        return scrollingEnabled;
     }
 
     @Override
@@ -203,7 +218,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         flingScroller.forceFinished(true);
 
         float velocityYAbs = Math.abs(velocityY);
-        if (velocityYAbs > minimumFlingVelocity && velocityYAbs < maximumFlingVelocity) {
+        if (scrollingEnabled && velocityYAbs > minimumFlingVelocity && velocityYAbs < maximumFlingVelocity) {
             // Start flinging!
             flingScroller.fling(0, 0, (int) velocityX, (int) velocityY, Integer.MIN_VALUE, Integer.MAX_VALUE, Integer.MIN_VALUE, Integer.MAX_VALUE);
 
@@ -220,7 +235,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
                         // As soon as we stop scrolling, transfer the fling to the recyclerView.
                         // This is hacky, but it works.
-                        if (distanceConsumed == 0f) {
+                        if (distanceConsumed == 0f && isSheetFullyExpanded()) {
                             float transferVelocity = flingScroller.getCurrVelocity();
                             if (velocityY < 0) {
                                 transferVelocity *= -1;
