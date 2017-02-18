@@ -32,6 +32,7 @@
 
     <color name="black_opacity_20">#33000000</color>
     <color name="black_opacity_40">#66000000</color>
+    <color name="black_opacity_50">#80000000</color>
 
     <!--reds-->
     <color name="red_50">#FFEBEE</color>

@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission;
 
+import static butterknife.ButterKnife.findById;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
@@ -26,7 +27,6 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -34,6 +34,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Submission.PostHint;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -51,6 +52,7 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
+import me.saket.dank.widgets.ToolbarShade;
 import rx.Subscription;
 import timber.log.Timber;
 
@@ -60,7 +62,9 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private static final java.lang.String BLANK_PAGE_URL = "about:blank";
 
     @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.submission_toolbar_shade) ToolbarShade toolbarShade;
     @BindView(R.id.submission_content_progress) AnimatableProgressBar contentLoadProgressView;
+    @BindView(R.id.submission_webview_container) ViewGroup contentWebViewContainer;
     @BindView(R.id.submission_webview) WebView contentWebView;
     @BindView(R.id.submission_linked_image) ImageView contentImageView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
@@ -94,16 +98,19 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         View fragmentLayout = inflater.inflate(R.layout.fragment_submission, container, false);
         ButterKnife.bind(this, fragmentLayout);
 
-        submissionPageLayout = ButterKnife.findById(getActivity(), R.id.subreddit_submission_page);
+        submissionPageLayout = findById(getActivity(), R.id.subreddit_submission_page);
         submissionPageLayout.addCallbacks(this);
         submissionPageLayout.setPullToCollapseIntercepter(this);
 
         // Add a close icon to the toolbar.
         closeIconDrawable = closeIconDrawable.mutate();
-        closeIconDrawable.setTint(ContextCompat.getColor(getActivity(), R.color.gray_500));
+        closeIconDrawable.setTint(ContextCompat.getColor(getActivity(), R.color.white));
         toolbar.setNavigationIcon(closeIconDrawable);
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onSubmissionToolbarUpClick());
+        toolbar.setBackground(null);
+        toolbarShade.syncBottomWithViewTop(commentListParentSheet);
 
+        // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.
         commentsAdapter = new CommentsAdapter();
         commentsAdapter.setOnCommentClickListener(comment -> {
@@ -118,7 +125,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         setupContentWebView();
 
-        // TODO: 01/02/17 Should we preload Views for adapter rows?
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
@@ -174,6 +180,9 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         commentListParentSheet.setScrollingEnabled(false);
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
+
+        PostHint postHint = submission.getPostHint();
+        toolbarShade.setEnabled(postHint == PostHint.IMAGE || postHint == PostHint.VIDEO);
 
         // Update submission information.
         titleView.setText(submission.getTitle());
@@ -259,11 +268,11 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 throw new UnsupportedOperationException("Unknown post hint: " + submission.getPostHint());
         }
 
-        selfPostTextView.setVisibility(submission.getPostHint() == Submission.PostHint.SELF ? View.VISIBLE : View.GONE);
-        contentImageView.setVisibility(submission.getPostHint() == Submission.PostHint.IMAGE ? View.VISIBLE : View.GONE);
+        selfPostTextView.setVisibility(submission.getPostHint() == PostHint.SELF ? View.VISIBLE : View.GONE);
+        contentImageView.setVisibility(submission.getPostHint() == PostHint.IMAGE ? View.VISIBLE : View.GONE);
         // WebView is made visible in onPageExpanded() because it's very heavy and can interfere with this page's open animation
 
-        if (submission.getPostHint() == Submission.PostHint.LINK) {
+        if (submission.getPostHint() == PostHint.LINK) {
             // Show the WebView only when this page is fully expanded or else it'll interfere with the entry animation.
             // Also ignore loading the WebView on the emulator. It is very expensive and greatly slow down the emulator.
             if (!BuildConfig.DEBUG || !DeviceUtils.isEmulator()) {
@@ -271,9 +280,11 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                     contentWebView.setVisibility(View.VISIBLE);
                 });
             }
+            contentWebViewContainer.setVisibility(View.VISIBLE);
 
         } else {
             contentWebView.setVisibility(View.GONE);
+            contentWebViewContainer.setVisibility(View.GONE);
         }
     }
 

@@ -28,7 +28,8 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     private final int minimumFlingVelocity;
     private final int maximumFlingVelocity;
 
-    private OnStateChangeListener stateChangeListener;
+    private SheetStateChangeListener stateChangeListener;
+    private SheetScrollChangeListener scrollChangeListener;
     private RecyclerView childRecyclerView;
     private State currentState;
     private int peekHeight;
@@ -40,8 +41,12 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         COLLAPSED,
     }
 
-    public interface OnStateChangeListener {
+    public interface SheetStateChangeListener {
         void onStateChange(State newState);
+    }
+
+    public interface SheetScrollChangeListener {
+        void onScrollChange(float newScrollY);
     }
 
     public ScrollingRecyclerViewSheet(Context context, AttributeSet attrs) {
@@ -61,9 +66,16 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         setScrollingEnabled(true);
     }
 
-    public void setOnStateChangeListener(OnStateChangeListener listener) {
+    public void setOnStateChangeListener(SheetStateChangeListener listener) {
         stateChangeListener = listener;
         listener.onStateChange(currentState);
+    }
+
+    /**
+     * "onSheet..." because {@link #setOnScrollChangeListener(OnScrollChangeListener)} is already a thing.
+     */
+    public void setOnSheetScrollChangeListener(SheetScrollChangeListener listener) {
+        scrollChangeListener = listener;
     }
 
     /**
@@ -208,6 +220,9 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
                 stateChangeListener.onStateChange(newState);
             }
         }
+
+        // Scroll callback.
+        scrollChangeListener.onScrollChange(getTranslationY());
     }
 
     @Override
