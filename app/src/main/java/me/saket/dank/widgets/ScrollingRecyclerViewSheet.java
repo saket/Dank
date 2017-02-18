@@ -77,7 +77,14 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
      * Whether the sheet (and the list within) can scroll up any further when pulled downwards.
      */
     public boolean canScrollDownwardsAnyFurther() {
-        return scrollingEnabled && currentTopY() != maxScrollY();
+        boolean canSheetScrollDownwards = currentTopY() != maxScrollY();
+        boolean canListScrollDownwards = childRecyclerView.canScrollVertically(-1);
+
+        if (scrollingEnabled) {
+            return canSheetScrollDownwards || canListScrollDownwards;
+        } else {
+            return canListScrollDownwards;
+        }
     }
 
     /**
