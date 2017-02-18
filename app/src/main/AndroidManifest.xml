@@ -13,7 +13,8 @@
         android:theme="@style/DankTheme">
         <activity
             android:name=".ui.subreddits.SubRedditActivity"
-            android:launchMode="singleTop">
+            android:launchMode="singleTop"
+            android:theme="@style/DankTheme.DrawsStatusBar">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

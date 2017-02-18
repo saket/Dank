@@ -3,6 +3,7 @@ package me.saket.dank.utils;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebHistoryItem;
@@ -55,22 +56,29 @@ public class Views {
         view.setPaddingRelative(paddingStart, view.getPaddingTop(), view.getPaddingEnd(), view.getPaddingBottom());
     }
 
-    public static void setPaddingTop(View view, int paddingTop) {
-        view.setPaddingRelative(view.getPaddingStart(), paddingTop, view.getPaddingEnd(), view.getPaddingBottom());
+    public static void setHeight(View view, int height) {
+        ViewGroup.LayoutParams params = view.getLayoutParams();
+        params.height = height;
+        view.setLayoutParams(params);
     }
 
-    public static void setPaddingBottom(View view, int paddingBottom) {
-        view.setPaddingRelative(view.getPaddingStart(), view.getPaddingTop(), view.getPaddingEnd(), paddingBottom);
-    }
-
+    /**
+     * Get the previous page's URL in <var>webView</var>'s history.
+     */
     @Nullable
-    public static String previousUrlInHistory(WebView contentWebView) {
-        WebBackForwardList history = contentWebView.copyBackForwardList();
+    public static String previousUrlInHistory(WebView webView) {
+        WebBackForwardList history = webView.copyBackForwardList();
         if (history.getSize() > 1) {
             WebHistoryItem previousItem = history.getItemAtIndex(history.getCurrentIndex() - 1);
             return previousItem.getUrl();
         }
         return null;
+    }
+
+    public static void setMarginTop(View view, int marginTop) {
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        params.topMargin = marginTop;
+        view.setLayoutParams(params);
     }
 
 }

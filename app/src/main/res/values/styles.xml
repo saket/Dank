@@ -6,6 +6,12 @@
         <item name="colorAccent">@color/color_accent</item>
     </style>
 
+    <style name="DankTheme.DrawsStatusBar">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
+        <item name="android:navigationBarColor">@color/gray_900</item>
+    </style>
+
     <style name="DankTheme.TransparentBackground">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>

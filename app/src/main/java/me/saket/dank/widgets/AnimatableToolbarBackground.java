@@ -16,13 +16,13 @@ import me.saket.dank.ui.submission.SubmissionFragment;
  * now this View assumes that it'll be located at the top of its parent and the
  * {@link ScrollingRecyclerViewSheet} will be present below the toolbar.
  */
-public class ToolbarShade extends View {
+public class AnimatableToolbarBackground extends View {
 
-    private ValueAnimator shadeFillAnimator;
+    private ValueAnimator backgroundFillAnimator;
     private Boolean isToolbarFilled;
     private Float currentFillFactor = 0f;
 
-    public ToolbarShade(Context context, AttributeSet attrs) {
+    public AnimatableToolbarBackground(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
@@ -42,7 +42,7 @@ public class ToolbarShade extends View {
     /**
      * When disabled, this View stops scrolling with the View passed in
      * {@link #syncBottomWithViewTop(ScrollingRecyclerViewSheet)} and stays fixed at the top
-     * with the toolbar shade fully filled.
+     * with the toolbar background fully filled.
      */
     @Override
     public void setEnabled(boolean enabled) {
@@ -54,7 +54,7 @@ public class ToolbarShade extends View {
     }
 
     /**
-     * Fill/empty the toolbar's shade.
+     * Fill/empty the toolbar's background.
      */
     private void toggleFill(boolean fill) {
         if (isToolbarFilled != null && isToolbarFilled == fill) {
@@ -64,27 +64,27 @@ public class ToolbarShade extends View {
 
         Float targetFillFactor = fill ? 1f : 0f;
         if (isLaidOut()) {
-            if (shadeFillAnimator != null) {
-                shadeFillAnimator.cancel();
+            if (backgroundFillAnimator != null) {
+                backgroundFillAnimator.cancel();
             }
 
-            shadeFillAnimator = ValueAnimator.ofFloat(currentFillFactor, targetFillFactor);
-            shadeFillAnimator.addUpdateListener(animation -> {
-                setShadeFill((Float) animation.getAnimatedValue());
+            backgroundFillAnimator = ValueAnimator.ofFloat(currentFillFactor, targetFillFactor);
+            backgroundFillAnimator.addUpdateListener(animation -> {
+                setBackgroundFill((Float) animation.getAnimatedValue());
             });
-            shadeFillAnimator.setInterpolator(new FastOutSlowInInterpolator());
-            shadeFillAnimator.setDuration(150);
-            shadeFillAnimator.start();
+            backgroundFillAnimator.setInterpolator(new FastOutSlowInInterpolator());
+            backgroundFillAnimator.setDuration(150);
+            backgroundFillAnimator.start();
 
         } else {
-            setShadeFill(targetFillFactor);
+            setBackgroundFill(targetFillFactor);
         }
     }
 
     /**
-     * Fills the toolbar shade from bottom to top.
+     * Fill the toolbar background from bottom to top.
      */
-    private void setShadeFill(@FloatRange(from = 0, to = 1) Float fillFactor) {
+    private void setBackgroundFill(@FloatRange(from = 0, to = 1) Float fillFactor) {
         currentFillFactor = fillFactor;
         invalidate();
     }

@@ -10,6 +10,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ProgressBar;
 
 import net.dean.jraw.paginators.SubredditPaginator;
@@ -22,6 +23,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import rx.Subscription;
@@ -41,6 +43,13 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
         setContentView(R.layout.activity_subreddit);
         findAndSetupToolbar(false);
         ButterKnife.bind(this);
+
+        // Add top-margin to make room for the status bar.
+        ButterKnife.findById(this, Window.ID_ANDROID_CONTENT).setOnApplyWindowInsetsListener((v, insets) -> {
+            Views.setMarginTop(toolbar, insets.getSystemWindowInsetTop());
+            Views.setMarginTop(submissionList, insets.getSystemWindowInsetTop());
+            return insets;
+        });
 
         // Setup submission list.
         submissionList.setLayoutManager(submissionList.createLayoutManager());

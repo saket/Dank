@@ -50,9 +50,9 @@ import me.saket.dank.ui.subreddits.SubRedditActivity;
 import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
+import me.saket.dank.widgets.AnimatableToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
-import me.saket.dank.widgets.ToolbarShade;
 import rx.Subscription;
 import timber.log.Timber;
 
@@ -62,7 +62,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private static final java.lang.String BLANK_PAGE_URL = "about:blank";
 
     @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.submission_toolbar_shade) ToolbarShade toolbarShade;
+    @BindView(R.id.submission_toolbar_shadow) View toolbarShadows;
+    @BindView(R.id.submission_toolbar_background) AnimatableToolbarBackground toolbarBackground;
     @BindView(R.id.submission_content_progress) AnimatableProgressBar contentLoadProgressView;
     @BindView(R.id.submission_webview_container) ViewGroup contentWebViewContainer;
     @BindView(R.id.submission_webview) WebView contentWebView;
@@ -102,13 +103,22 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         submissionPageLayout.addCallbacks(this);
         submissionPageLayout.setPullToCollapseIntercepter(this);
 
+        fragmentLayout.setOnApplyWindowInsetsListener((v, insets) -> {
+            int statusBarHeight = insets.getSystemWindowInsetTop();
+            Views.setMarginTop(toolbar, statusBarHeight);
+            Views.executeOnMeasure(toolbar, () -> {
+                Views.setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight);
+            });
+            return insets;
+        });
+
         // Add a close icon to the toolbar.
         closeIconDrawable = closeIconDrawable.mutate();
         closeIconDrawable.setTint(ContextCompat.getColor(getActivity(), R.color.white));
         toolbar.setNavigationIcon(closeIconDrawable);
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onSubmissionToolbarUpClick());
         toolbar.setBackground(null);
-        toolbarShade.syncBottomWithViewTop(commentListParentSheet);
+        toolbarBackground.syncBottomWithViewTop(commentListParentSheet);
 
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.
@@ -124,7 +134,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         commentsCollapseHelper = new CommentsCollapseHelper();
 
         setupContentWebView();
-
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
@@ -181,8 +190,9 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
 
-        PostHint postHint = submission.getPostHint();
-        toolbarShade.setEnabled(postHint == PostHint.IMAGE || postHint == PostHint.VIDEO);
+        boolean isImageOrVideoContent = submission.getPostHint() == PostHint.IMAGE || submission.getPostHint() == PostHint.VIDEO;
+        toolbarBackground.setEnabled(isImageOrVideoContent);
+        toolbarShadows.setVisibility(isImageOrVideoContent ? View.VISIBLE : View.GONE);
 
         // Update submission information.
         titleView.setText(submission.getTitle());
