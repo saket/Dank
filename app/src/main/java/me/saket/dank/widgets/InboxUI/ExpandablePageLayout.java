@@ -30,7 +30,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     private static final float MIN_ALPHA = 0f;
 
     private InboxRecyclerView inboxList;
-    private View activityToolbar;                            // Toolbar inside the parent page
+    private View activityToolbar;  // Toolbar inside the parent page, not in this page.
     private ValueAnimator toolbarAnimator;
     private State currentState;
     private PullToCollapseListener pullToCollapseListener;
@@ -162,7 +162,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
     void setup(InboxRecyclerView inboxList, View toolbar) {
         this.inboxList = inboxList;
-        activityToolbar = toolbar;
+        this.activityToolbar = toolbar;
         pullToCollapseListener.setToolbar(toolbar);
     }
 
@@ -301,7 +301,6 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
         // Hide the toolbar as soon as we have its height (as expandImmediately() could have been
         // called before the Views were drawn).
-        // TODO: 29/01/17 Try using activityToolbar.post() instead of using executeOnMeasure().
         Views.executeOnMeasure(activityToolbar, () -> updateToolbarTranslationY(false, 0));
 
         // Let the list know about this so that it dims itself
@@ -407,8 +406,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
         // Show the toolbar fully even if the page is going to collapse behind it
         float targetPageTranslationYForToolbar = targetPageTranslationY;
-        if (!expand && targetPageTranslationYForToolbar < activityToolbar.getHeight()) {
-            targetPageTranslationYForToolbar = activityToolbar.getHeight();
+        if (!expand && targetPageTranslationYForToolbar < activityToolbar.getBottom()) {
+            targetPageTranslationYForToolbar = activityToolbar.getBottom();
         }
 
         // Hide / show the toolbar by pushing it up during expand and pulling it down during collapse.
@@ -426,7 +425,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
             return;
         }
 
-        final float toolbarCurrentBottom = activityToolbar.getHeight() + activityToolbar.getTranslationY();
+        final float toolbarCurrentBottom = activityToolbar.getBottom() + activityToolbar.getTranslationY();
         final float fromTy = Math.max(toolbarCurrentBottom, getTranslationY());
 
         // The hide animation happens a bit too quickly if the page has to travel a large
@@ -451,7 +450,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
      * Helper method for showing / hiding the toolbar depending upon this page's current translationY.
      */
     private void updateToolbarTranslationY(boolean show, float pageTranslationY) {
-        final int toolbarHeight = activityToolbar.getHeight();
+        final int toolbarHeight = activityToolbar.getBottom();
         float targetTranslationY = pageTranslationY - toolbarHeight;
 
         if (show) {
