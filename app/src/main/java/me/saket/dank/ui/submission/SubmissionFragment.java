@@ -148,7 +148,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             public void onProgressChanged(WebView view, int newProgress) {
                 contentLoadProgressView.setIndeterminate(false);
                 contentLoadProgressView.setProgressWithAnimation(newProgress);
-                contentLoadProgressView.setVisibility(newProgress < 100 ? View.VISIBLE : View.GONE);
+                contentLoadProgressView.setVisible(newProgress < 100);
             }
         });
         contentWebView.setWebViewClient(new WebViewClient());
@@ -221,12 +221,13 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         Timber.d("-------------------------------------------");
         Timber.i("%s", submission.getTitle());
         Timber.i("Post hint: %s", submission.getPostHint());
+        Timber.i("URL: %s", submission.getUrl());
         //Timber.i("%s", submission.getDataNode().toString());
 
         switch (submission.getPostHint()) {
             case IMAGE:
                 contentLoadProgressView.setIndeterminate(true);
-                contentLoadProgressView.setVisibility(View.VISIBLE);
+                contentLoadProgressView.show();
 
                 // TODO: 18/02/17 Load a low-quality image first, before loading the HD image.
                 Glide.with(this)
@@ -238,7 +239,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                                 super.setResource(resource);
                                 // TransitionDrawable (used by Glide for fading-in) messes up the scaleType. Set it everytime.
                                 contentImageView.setScaleType(ImageView.ScaleType.FIT_START);
-                                contentLoadProgressView.setVisibility(View.GONE);
+                                contentLoadProgressView.hide();
 
                                 // TODO: 18/02/17 Calculate distanceToReveal according to the Drawable.
                                 int revealDistance = commentListParentSheet.getHeight() * 4 / 10;
@@ -260,10 +261,12 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 break;
 
             case SELF:
+                contentLoadProgressView.hide();
                 selfPostTextView.setText(submission.getSelftext());
                 break;
 
             case LINK:
+                // Reset the page before loading the new submission so that the last submission isn't visible.
                 contentWebView.loadUrl(BLANK_PAGE_URL);
                 contentWebView.loadUrl(submission.getUrl());
                 commentListParentSheet.setScrollingEnabled(true);
@@ -272,6 +275,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             case VIDEO:
             case UNKNOWN:
                 // TODO: 12/02/17.
+                contentLoadProgressView.hide();
                 break;
 
             default:
@@ -280,7 +284,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         selfPostTextView.setVisibility(submission.getPostHint() == PostHint.SELF ? View.VISIBLE : View.GONE);
         contentImageView.setVisibility(submission.getPostHint() == PostHint.IMAGE ? View.VISIBLE : View.GONE);
-        // WebView is made visible in onPageExpanded() because it's very heavy and can interfere with this page's open animation
 
         if (submission.getPostHint() == PostHint.LINK) {
             // Show the WebView only when this page is fully expanded or else it'll interfere with the entry animation.
