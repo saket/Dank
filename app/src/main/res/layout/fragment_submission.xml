@@ -14,6 +14,7 @@
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
         android:adjustViewBounds="true"
+        android:background="@color/gray_800"
         tools:ignore="ContentDescription,UnknownIdInLayout" />
 
     <!-- For URLs. -->
@@ -32,7 +33,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/toolbar"
-        android:animateLayoutChanges="true"
+
         android:orientation="vertical"
         android:paddingEnd="@dimen/spacing16"
         android:paddingStart="@dimen/spacing16"

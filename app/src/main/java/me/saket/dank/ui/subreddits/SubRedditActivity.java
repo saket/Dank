@@ -51,8 +51,14 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
         submissionList.setAdapter(submissionsAdapter);
 
         submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
-            submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId);
             submissionFragment.populateUi(submission);
+            submissionPage.post(() -> {
+                // Posing the expand() call to the page's message queue seems to result in a smoother
+                // expand animation. I assume this is because the expand() call only executes once the
+                // page is done updating out its views for this new submission. This might be a placebo
+                // too and without enough testing I cannot be sure about this.
+                submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId);
+            });
         });
 
         // Setup submission fragment.
@@ -60,8 +66,6 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
         if (submissionFragment == null) {
             submissionFragment = SubmissionFragment.create();
         }
-        submissionPage.addCallbacks(submissionFragment);
-        submissionPage.setPullToCollapseIntercepter(submissionFragment);
 
         getFragmentManager()
                 .beginTransaction()

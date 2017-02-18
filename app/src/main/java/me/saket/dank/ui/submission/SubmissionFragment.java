@@ -26,6 +26,7 @@ import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -35,6 +36,8 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
 import java.io.IOException;
+import java.util.LinkedList;
+import java.util.List;
 
 import butterknife.BindDrawable;
 import butterknife.BindView;
@@ -70,10 +73,12 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
     @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
 
+    private ExpandablePageLayout submissionPageLayout;
     private CommentsAdapter commentsAdapter;
     private Subscription commentsSubscription;
     private CommentsCollapseHelper commentsCollapseHelper;
     private Submission currentSubmission;
+    private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
 
     public interface Callbacks {
         void onSubmissionToolbarUpClick();
@@ -88,6 +93,10 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
         View fragmentLayout = inflater.inflate(R.layout.fragment_submission, container, false);
         ButterKnife.bind(this, fragmentLayout);
+
+        submissionPageLayout = ButterKnife.findById(getActivity(), R.id.subreddit_submission_page);
+        submissionPageLayout.addCallbacks(this);
+        submissionPageLayout.setPullToCollapseIntercepter(this);
 
         // Add a close icon to the toolbar.
         closeIconDrawable = closeIconDrawable.mutate();
@@ -165,7 +174,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         commentListParentSheet.setScrollingEnabled(false);
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
-        contentWebView.loadUrl(BLANK_PAGE_URL);
 
         // Update submission information.
         titleView.setText(submission.getTitle());
@@ -194,12 +202,14 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         Timber.d("-------------------------------------------");
         Timber.i("%s", submission.getTitle());
         Timber.i("Post hint: %s", submission.getPostHint());
-        Timber.i("%s", submission.getDataNode().toString());
+        //Timber.i("%s", submission.getDataNode().toString());
 
         switch (submission.getPostHint()) {
             case IMAGE:
+                contentLoadProgressView.setIndeterminate(true);
                 contentLoadProgressView.setVisibility(View.VISIBLE);
 
+                // TODO: 18/02/17 Load a low-quality image first, before loading the HD image.
                 Glide.with(this)
                         .load(submission.getUrl())
                         .priority(Priority.IMMEDIATE)
@@ -207,19 +217,25 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                             @Override
                             protected void setResource(GlideDrawable resource) {
                                 super.setResource(resource);
-                                contentImageView.post(() -> {
-                                    contentLoadProgressView.setVisibility(View.GONE);
+                                // TransitionDrawable (used by Glide for fading-in) messes up the scaleType. Set it everytime.
+                                contentImageView.setScaleType(ImageView.ScaleType.FIT_START);
+                                contentLoadProgressView.setVisibility(View.GONE);
 
-                                    // Scroll the comments sheet to reveal the image.
-                                    commentListParentSheet.smoothScrollTo(Math.min(
-                                            contentImageView.getHeight(),
-                                            commentListParentSheet.getHeight() / 2)
-                                    );
+                                // TODO: 18/02/17 Calculate distanceToReveal according to the Drawable.
+                                int revealDistance = commentListParentSheet.getHeight() * 4 / 10;
+
+                                if (submissionPageLayout.isExpanded()) {
+                                    // Smoothly reveal the image.
+                                    contentImageView.post(() -> {
+                                        commentListParentSheet.setScrollingEnabled(true);
+                                        commentListParentSheet.smoothScrollTo(revealDistance);
+                                    });
+
+                                } else {
+                                    // User has possibly not seen anything yet. Reveal the image right away.
                                     commentListParentSheet.setScrollingEnabled(true);
-
-                                    // TransitionDrawable (used by Glide for fading-in) messes up the scaleType. Set it everytime.
-                                    contentImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
-                                });
+                                    commentListParentSheet.scrollTo(0, revealDistance);
+                                }
                             }
                         });
                 break;
@@ -229,6 +245,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 break;
 
             case LINK:
+                contentWebView.loadUrl(BLANK_PAGE_URL);
                 contentWebView.loadUrl(submission.getUrl());
                 commentListParentSheet.setScrollingEnabled(true);
                 break;
@@ -246,7 +263,16 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         contentImageView.setVisibility(submission.getPostHint() == Submission.PostHint.IMAGE ? View.VISIBLE : View.GONE);
         // WebView is made visible in onPageExpanded() because it's very heavy and can interfere with this page's open animation
 
-        if (submission.getPostHint() != Submission.PostHint.LINK) {
+        if (submission.getPostHint() == Submission.PostHint.LINK) {
+            // Show the WebView only when this page is fully expanded or else it'll interfere with the entry animation.
+            // Also ignore loading the WebView on the emulator. It is very expensive and greatly slow down the emulator.
+            if (!BuildConfig.DEBUG || !DeviceUtils.isEmulator()) {
+                pendingOnExpandRunnables.add(() -> {
+                    contentWebView.setVisibility(View.VISIBLE);
+                });
+            }
+
+        } else {
             contentWebView.setVisibility(View.GONE);
         }
     }
@@ -275,15 +301,13 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
     @Override
     public void onPageAboutToExpand(long expandAnimDuration) {
-
     }
 
     @Override
     public void onPageExpanded() {
-        // Show the WebView only when this page is fully expanded or else it'll interfere with the entry animation.
-        // Also ignore loading the WebView on the emulator. It is very expensive and greatly slow down the emulator.
-        if (!BuildConfig.DEBUG || !DeviceUtils.isEmulator() && currentSubmission.getPostHint() == Submission.PostHint.LINK) {
-            contentWebView.setVisibility(View.VISIBLE);
+        for (Runnable runnable : pendingOnExpandRunnables) {
+            runnable.run();
+            pendingOnExpandRunnables.remove(runnable);
         }
     }
 
