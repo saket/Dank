@@ -5,6 +5,7 @@ import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
 
+import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -144,7 +145,9 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         return fragmentLayout;
     }
 
+    @SuppressLint("SetJavaScriptEnabled")
     private void setupContentWebView() {
+        contentWebView.getSettings().setJavaScriptEnabled(true);
         contentWebView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
