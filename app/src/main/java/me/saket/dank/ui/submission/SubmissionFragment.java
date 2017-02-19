@@ -24,6 +24,7 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
@@ -34,7 +35,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Submission.PostHint;
 
 import java.io.IOException;
 import java.util.LinkedList;
@@ -45,9 +45,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
+import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
 import me.saket.dank.utils.DeviceUtils;
+import me.saket.dank.utils.SubmissionContentParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
 import me.saket.dank.widgets.AnimatableToolbarBackground;
@@ -190,16 +192,18 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
 
-        boolean isImageOrVideoContent = submission.getPostHint() == PostHint.IMAGE || submission.getPostHint() == PostHint.VIDEO;
-        toolbarBackground.setEnabled(isImageOrVideoContent);
-        toolbarShadows.setVisibility(isImageOrVideoContent ? View.VISIBLE : View.GONE);
+        SubmissionContent submissionContent = SubmissionContentParser.parse(submission);
+
+        // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
+        toolbarBackground.setEnabled(submissionContent.isImageOrVideo());
+        toolbarShadows.setVisibility(submissionContent.isImageOrVideo() ? View.VISIBLE : View.GONE);
 
         // Update submission information.
         titleView.setText(submission.getTitle());
         subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
 
         // Load self-text/media/webpage.
-        loadSubmissionContent(submission);
+        loadSubmissionContent(submission, submissionContent);
 
         // Load new comments.
         commentsLoadProgressView.setVisibility(View.VISIBLE);
@@ -217,28 +221,41 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 .subscribe(commentsAdapter, logError("Couldn't get comments"));
     }
 
-    private void loadSubmissionContent(Submission submission) {
+    private void loadSubmissionContent(Submission submission, SubmissionContent submissionContent) {
         Timber.d("-------------------------------------------");
         Timber.i("%s", submission.getTitle());
         Timber.i("Post hint: %s", submission.getPostHint());
-        Timber.i("URL: %s", submission.getUrl());
-        //Timber.i("%s", submission.getDataNode().toString());
+        Timber.i("Post URL: %s", submission.getUrl());
+        Timber.i("content: %s", submissionContent);
 
-        switch (submission.getPostHint()) {
+        switch (submissionContent.type()) {
             case IMAGE:
+                if (submissionContent.host() == SubmissionContent.Host.IMGUR) {
+                    SubmissionContent.Imgur imgurContent = submissionContent.hostContent();
+                    if (imgurContent.isAlbum()) {
+                        contentLoadProgressView.hide();
+                        Toast.makeText(getActivity(), "Imgur album", Toast.LENGTH_SHORT).show();
+                        break;
+                    }
+                } else if (submissionContent.host() == SubmissionContent.Host.GFYCAT) {
+                    contentLoadProgressView.hide();
+                    Toast.makeText(getActivity(), "GFYCAT", Toast.LENGTH_SHORT).show();
+                    break;
+                }
+
                 contentLoadProgressView.setIndeterminate(true);
                 contentLoadProgressView.show();
 
                 // TODO: 18/02/17 Load a low-quality image first, before loading the HD image.
                 Glide.with(this)
-                        .load(submission.getUrl())
+                        .load(submissionContent.contentUrl())
                         .priority(Priority.IMMEDIATE)
                         .into(new GlideDrawableImageViewTarget(contentImageView) {
                             @Override
                             protected void setResource(GlideDrawable resource) {
                                 super.setResource(resource);
                                 // TransitionDrawable (used by Glide for fading-in) messes up the scaleType. Set it everytime.
-                                contentImageView.setScaleType(ImageView.ScaleType.FIT_START);
+                                contentImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                                 contentLoadProgressView.hide();
 
                                 // TODO: 18/02/17 Calculate distanceToReveal according to the Drawable.
@@ -279,13 +296,13 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 break;
 
             default:
-                throw new UnsupportedOperationException("Unknown post hint: " + submission.getPostHint());
+                throw new UnsupportedOperationException("Unknown content: " + submissionContent);
         }
 
-        selfPostTextView.setVisibility(submission.getPostHint() == PostHint.SELF ? View.VISIBLE : View.GONE);
-        contentImageView.setVisibility(submission.getPostHint() == PostHint.IMAGE ? View.VISIBLE : View.GONE);
+        selfPostTextView.setVisibility(submissionContent.isSelfText() ? View.VISIBLE : View.GONE);
+        contentImageView.setVisibility(submissionContent.isImage() ? View.VISIBLE : View.GONE);
 
-        if (submission.getPostHint() == PostHint.LINK) {
+        if (submissionContent.isLink()) {
             // Show the WebView only when this page is fully expanded or else it'll interfere with the entry animation.
             // Also ignore loading the WebView on the emulator. It is very expensive and greatly slow down the emulator.
             if (!BuildConfig.DEBUG || !DeviceUtils.isEmulator()) {

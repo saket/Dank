@@ -104,6 +104,8 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
                     loadStaticThumbnail(R.drawable.ic_link_black_24dp);
 
                     // Get the high-res image for this link.
+                    // TODO: 19/02/17 Get thumbnails provided by Reddit.
+                    // TODO: 19/02/17 Don't download high-res images on low-data mode.
                     if (submission.getThumbnails() != null) {
                         loadThumbnailFromUrl(submission.getThumbnails().getSource().getUrl());
                     }

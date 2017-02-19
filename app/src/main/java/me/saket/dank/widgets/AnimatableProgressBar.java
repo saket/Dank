@@ -15,7 +15,7 @@ public class AnimatableProgressBar extends ProgressBar {
 
     private ObjectAnimator progressAnimator;
     private boolean visibilityAnimationOngoing;
-    private boolean isVisible;
+    private Boolean isVisible;
 
     public AnimatableProgressBar(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -58,7 +58,7 @@ public class AnimatableProgressBar extends ProgressBar {
 
     public void setVisible(boolean visible) {
         // Ignore if already visible/hidden.
-        if (visible == isVisible) {
+        if (isVisible != null && isVisible == visible) {
             return;
         }
         isVisible = visible;
