@@ -7,6 +7,7 @@ import static rx.Observable.just;
 
 import android.annotation.SuppressLint;
 import android.app.Fragment;
+import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -21,6 +22,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.webkit.WebChromeClient;
+import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.ImageView;
@@ -50,6 +52,7 @@ import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubRedditActivity;
 import me.saket.dank.utils.DeviceUtils;
+import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.SubmissionContentParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
@@ -156,7 +159,28 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 contentLoadProgressView.setVisible(newProgress < 100);
             }
         });
-        contentWebView.setWebViewClient(new WebViewClient());
+
+        contentWebView.setWebViewClient(new WebViewClient() {
+            @Override
+            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                String urlScheme = request.getUrl().normalizeScheme().getScheme();
+                if ("http".equals(urlScheme) || "https".equals(urlScheme)) {
+                    // Let the WebView load this URL.
+                    return false;
+
+                } else {
+                    // A deep-link was clicked. Send an Intent instead.
+                    Intent deepLinkIntent = Intents.createForUrl(request.getUrl().toString());
+                    if (Intents.hasAppToHandleIntent(getActivity(), deepLinkIntent)) {
+                        startActivity(deepLinkIntent);
+
+                    } else {
+                        Toast.makeText(getActivity(), R.string.error_no_app_to_handle_intent, Toast.LENGTH_SHORT).show();
+                    }
+                    return true;
+                }
+            }
+        });
     }
 
     @Override
