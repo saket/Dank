@@ -30,7 +30,9 @@
         android:id="@+id/submission_webview_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/gray_800">
+        android:layout_below="@+id/toolbar"
+        android:background="@color/gray_800"
+        tools:ignore="UnknownIdInLayout">
 
         <WebView
             android:id="@+id/submission_webview"
