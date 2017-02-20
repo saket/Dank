@@ -55,35 +55,56 @@ public class SubmissionContentParser {
      * @param typeSuppliedByReddit Hint supplied by Reddit.
      */
     private static SubmissionContent manuallyParse(Submission submission, Type typeSuppliedByReddit) {
-        Uri contentUri = Uri.parse(submission.getUrl());
-        String urlDomain = contentUri.getHost();
-        String urlPath = contentUri.getPath();    // Path is the part of the URL without the domain. E.g.,: /something/image.jpg.
+        Uri contentURI = Uri.parse(submission.getUrl());
+        String urlDomain = contentURI.getHost();
+        String urlPath = contentURI.getPath();    // Path is the part of the URL without the domain. E.g.,: /something/image.jpg.
 
         if ((urlDomain.contains("imgur.com") || urlDomain.contains("bildgur.de"))) {
-            return SubmissionContent.Imgur.create(contentUri, Host.IMGUR);
+            return createImgurContent(submission);
 
         } else if (urlDomain.contains("gfycat.com") && (typeSuppliedByReddit == Type.VIDEO || typeSuppliedByReddit == Type.IMAGE)) {
-            return SubmissionContent.Gfycat.create(contentUri, Host.GFYCAT);
+            return SubmissionContent.Gfycat.create(contentURI, Host.GFYCAT);
 
         } else if ((urlDomain.contains("reddituploads.com"))) {
             // Reddit sends HTML-escaped URLs. Decode them again.
             //noinspection deprecation
-            contentUri = Uri.parse(Html.fromHtml(submission.getUrl()).toString());
-            return SubmissionContent.create(contentUri, Type.IMAGE /* TODO cam this be video? */ , Host.REDDIT);
+            contentURI = Uri.parse(Html.fromHtml(submission.getUrl()).toString());
+            return SubmissionContent.create(contentURI, Type.IMAGE /* TODO can this be video? */ , Host.REDDIT);
 
         } else if (urlDomain.contains("i.redd.it")) {
-            return SubmissionContent.create(contentUri, typeSuppliedByReddit, Host.REDDIT);
+            return SubmissionContent.create(contentURI, typeSuppliedByReddit, Host.REDDIT);
 
         } else if (isImageUrlPath(urlPath)) {
-            return SubmissionContent.create(contentUri, Type.IMAGE, Host.UNKNOWN);
+            return SubmissionContent.create(contentURI, Type.IMAGE, Host.UNKNOWN);
 
         } else if (urlPath.endsWith(".mp4")) {
             // TODO: 19/02/17 Can we display .webm?
-            return SubmissionContent.create(contentUri, Type.VIDEO, Host.UNKNOWN);
+            return SubmissionContent.create(contentURI, Type.VIDEO, Host.UNKNOWN);
 
         } else {
-            return SubmissionContent.create(contentUri, typeSuppliedByReddit, Host.UNKNOWN);
+            return SubmissionContent.create(contentURI, typeSuppliedByReddit, Host.UNKNOWN);
         }
+    }
+
+    private static SubmissionContent createImgurContent(Submission submission) {
+        // Convert GIFs to MP4s that are insanely light weight in size.
+        String contentUrl = submission.getUrl();
+        if (contentUrl.endsWith(".gif")) {
+            contentUrl += "v";
+        }
+
+        Type imgurContentType = contentUrl.endsWith("gifv") ? Type.VIDEO : Type.IMAGE;
+        Uri contentURI = Uri.parse(contentUrl);
+
+        // Attempt to get direct links to images from Imgur submissions.
+        // For example, convert 'http://imgur.com/djP1IZC' to 'http://i.imgur.com/djP1IZC.jpg'.
+        if (!isImageUrlPath(contentUrl) && !contentUrl.endsWith("gifv")) {
+            // If this happened to be a GIF submission, the user sadly will be forced to see it
+            // instead of its GIFV.
+            contentURI = Uri.parse(contentURI.getScheme() + "://i.imgur.com" + contentURI.getPath() + ".jpg");
+        }
+
+        return SubmissionContent.Imgur.create(contentURI, imgurContentType, Host.IMGUR);
     }
 
     public static boolean isImageUrlPath(String urlPath) {

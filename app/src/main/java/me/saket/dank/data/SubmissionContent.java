@@ -1,7 +1,5 @@
 package me.saket.dank.data;
 
-import static me.saket.dank.utils.SubmissionContentParser.isImageUrlPath;
-
 import android.net.Uri;
 
 import java.util.Arrays;
@@ -127,35 +125,12 @@ public class SubmissionContent {
                 "bildgur.de"
         ));
 
-        public static SubmissionContent create(Uri contentUri, Host contentHost) {
-            Type imgurContentType = contentUri.getPath().endsWith("gifv") ? Type.VIDEO : Type.IMAGE;
-            return new Imgur(contentUri, imgurContentType, contentHost);
+        public static SubmissionContent create(Uri contentUri, Type contentType, Host contentHost) {
+            return new Imgur(contentUri, contentType, contentHost);
         }
 
         private Imgur(Uri contentUri, Type type, Host contentHost) {
             super(contentUri, type, contentHost);
-        }
-
-        /**
-         * Get direct link to images. For e.g., <code>http://imgur.com/Ac8K4Jv</code> will be converted to
-         * <code>http://i.imgur.com/Ac8K4Jv.jpg</code>, where the image can directly be viewed.
-         */
-        @Override
-        public String contentUrl() {
-            if (!isAlbum() && contentURI().getHost().endsWith("imgur.com")) {
-                String urlPath = contentURI().getPath();
-                if (isImageUrlPath(urlPath) || urlPath.endsWith("gifv")) {
-                    return contentURI().toString();
-
-                } else {
-                    // Return a direct URL to the image. If this happened to be a GIF,
-                    // the user will be forced to see its GIF instead.
-                    return contentURI().getScheme() + "://i.imgur.com" + urlPath + ".jpg";
-                }
-
-            } else {
-                return contentURI().toString();
-            }
         }
 
         public boolean isAlbum() {
@@ -185,10 +160,6 @@ public class SubmissionContent {
 
         private Gfycat(Uri contentUri, Type type, Host contentHost) {
             super(contentUri, type, contentHost);
-        }
-
-        private static Type identifyContentType(Uri contentUri) {
-            return null;
         }
 
     }
