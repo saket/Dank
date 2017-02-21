@@ -15,6 +15,9 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.Scroller;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import me.saket.dank.R;
 
 /**
@@ -25,11 +28,11 @@ import me.saket.dank.R;
 public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScrollingParent {
 
     private final Scroller flingScroller;
+    private final List<SheetScrollChangeListener> scrollChangeListeners;
     private final int minimumFlingVelocity;
     private final int maximumFlingVelocity;
 
     private SheetStateChangeListener stateChangeListener;
-    private SheetScrollChangeListener scrollChangeListener;
     private RecyclerView childRecyclerView;
     private State currentState;
     private int peekHeight;
@@ -54,6 +57,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         flingScroller = new Scroller(context);
         minimumFlingVelocity = ViewConfiguration.get(context).getScaledMinimumFlingVelocity();
         maximumFlingVelocity = ViewConfiguration.get(context).getScaledMaximumFlingVelocity();
+        scrollChangeListeners = new ArrayList<>(3);
 
         if (hasSheetReachedTheTop()) {
             currentState = State.EXPANDED;
@@ -74,8 +78,8 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     /**
      * "onSheet..." because {@link #setOnScrollChangeListener(OnScrollChangeListener)} is already a thing.
      */
-    public void setOnSheetScrollChangeListener(SheetScrollChangeListener listener) {
-        scrollChangeListener = listener;
+    public void addOnSheetScrollChangeListener(SheetScrollChangeListener listener) {
+        scrollChangeListeners.add(listener);
     }
 
     /**
@@ -226,7 +230,9 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         }
 
         // Scroll callback.
-        scrollChangeListener.onScrollChange(getTranslationY());
+        for (int i = 0; i < scrollChangeListeners.size(); i++) {
+            scrollChangeListeners.get(i).onScrollChange(getTranslationY());
+        }
     }
 
     @Override

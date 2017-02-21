@@ -9,6 +9,7 @@ import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -28,14 +29,15 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
-import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
+import com.bumptech.glide.request.animation.GlideAnimation;
+import com.bumptech.glide.request.target.ViewTarget;
+import com.davemorrissey.labs.subscaleview.ImageSource;
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -61,6 +63,7 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
 import me.saket.dank.widgets.AnimatableToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
+import me.saket.dank.widgets.InboxUI.ParallaxImageContainer;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import rx.Subscription;
 import timber.log.Timber;
@@ -77,7 +80,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_content_progress) AnimatableProgressBar contentLoadProgressView;
     @BindView(R.id.submission_webview_container) ViewGroup contentWebViewContainer;
     @BindView(R.id.submission_webview) WebView contentWebView;
-    @BindView(R.id.submission_linked_image) ImageView contentImageView;
+    @BindView(R.id.submission_image_container) ParallaxImageContainer contentImageContainer;
+    @BindView(R.id.submission_image) SubsamplingScaleImageView contentImageView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
@@ -130,7 +134,9 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         toolbar.setNavigationIcon(closeIconDrawable);
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onSubmissionToolbarUpClick());
         toolbar.setBackground(null);
+
         toolbarBackground.syncBottomWithViewTop(commentListParentSheet);
+        contentImageContainer.syncParallaxWith(commentListParentSheet);
 
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.
@@ -287,19 +293,23 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
                 Glide.with(this)
                         .load(submissionContent.imageContentUrl(deviceDisplayWidth))
+                        .asBitmap()
                         .priority(Priority.IMMEDIATE)
-                        .into(new GlideDrawableImageViewTarget(contentImageView) {
+                        .into(new ViewTarget<SubsamplingScaleImageView, Bitmap>(contentImageView) {
                             @Override
-                            protected void setResource(GlideDrawable resource) {
-                                super.setResource(resource);
-                                // TransitionDrawable (used by Glide for fading-in) messes up the scaleType. Set it everytime.
-                                contentImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
+                            public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                                contentImageView.setImage(ImageSource.cachedBitmap(resource));
                                 contentLoadProgressView.hide();
 
-                                // Reveal the image smoothly or right away depending upon whether or not
-                                // this page is already expanded and visible.
+                                // Calculate the visible size of the ImageView after the new image is resized and applied.
+                                float widthResizeFactor = 1 - ((resource.getWidth() - deviceDisplayWidth) / (float) resource.getWidth());
+                                int resizedImageHeight = (int) (resource.getHeight() * widthResizeFactor);
+                                contentImageContainer.setParallaxLowerBound(resizedImageHeight);
+
+                                // Reveal the image smoothly or right away depending upon whether or not this page is already
+                                // expanded and visible.
                                 Views.executeOnNextLayout(contentImageView, () -> {
-                                    int revealDistance = contentImageView.getHeight() - toolbar.getBottom();
+                                    int revealDistance = resizedImageHeight - toolbar.getBottom();
                                     if (submissionPageLayout.isExpanded()) {
                                         // Smoothly reveal the image.
                                         commentListParentSheet.setScrollingEnabled(true);

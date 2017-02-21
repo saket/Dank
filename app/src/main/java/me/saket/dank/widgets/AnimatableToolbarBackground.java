@@ -31,7 +31,7 @@ public class AnimatableToolbarBackground extends View {
      * Since {@link ScrollingRecyclerViewSheet} uses translationY changes to scroll, this
      */
     public void syncBottomWithViewTop(ScrollingRecyclerViewSheet sheet) {
-        sheet.setOnSheetScrollChangeListener((translationY) -> {
+        sheet.addOnSheetScrollChangeListener((translationY) -> {
             if (isEnabled()) {
                 setTranslationY(translationY);
                 toggleFill(translationY <= 0);

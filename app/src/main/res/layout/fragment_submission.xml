@@ -5,15 +5,20 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <!-- TODO: set content-description in code. -->
-    <!-- For image/gif. -->
-    <ImageView
-        android:id="@+id/submission_linked_image"
+    <me.saket.dank.widgets.InboxUI.ParallaxImageContainer
+        android:id="@+id/submission_image_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:adjustViewBounds="true"
-        android:background="@color/gray_800"
-        tools:ignore="ContentDescription,UnknownIdInLayout" />
+        android:layout_height="match_parent"
+        android:background="@color/gray_800">
+
+        <!-- TODO: set content-description in code. -->
+        <!-- For image/gif. -->
+        <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+            android:id="@+id/submission_image"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            tools:ignore="ContentDescription" />
+    </me.saket.dank.widgets.InboxUI.ParallaxImageContainer>
 
     <!-- Shadow behind the toolbar so that when the toolbar is transparent (in
          case of photo/video submissions, the toolbar icons are still visible. -->
