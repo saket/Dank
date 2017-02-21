@@ -7,6 +7,7 @@ import static rx.Observable.just;
 
 import android.annotation.SuppressLint;
 import android.app.Fragment;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -17,10 +18,12 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.DisplayMetrics;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebResourceRequest;
 import android.webkit.WebView;
@@ -62,6 +65,7 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import rx.Subscription;
 import timber.log.Timber;
 
+@SuppressLint("SetJavaScriptEnabled")
 public class SubmissionFragment extends Fragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
     private static final String KEY_SUBMISSION_JSON = "submissionJson";
@@ -90,6 +94,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private CommentsCollapseHelper commentsCollapseHelper;
     private Submission currentSubmission;
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
+
+    private int deviceDisplayWidth;
 
     public interface Callbacks {
         void onSubmissionToolbarUpClick();
@@ -141,6 +147,11 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         setupContentWebView();
 
+        // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
+        DisplayMetrics metrics = new DisplayMetrics();
+        ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
+        deviceDisplayWidth = metrics.widthPixels;
+
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
             onRestoreSavedInstanceState(savedInstanceState);
@@ -148,7 +159,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         return fragmentLayout;
     }
 
-    @SuppressLint("SetJavaScriptEnabled")
     private void setupContentWebView() {
         contentWebView.getSettings().setJavaScriptEnabled(true);
         contentWebView.setWebChromeClient(new WebChromeClient() {
@@ -251,9 +261,11 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private void loadSubmissionContent(Submission submission, SubmissionContent submissionContent) {
         Timber.d("-------------------------------------------");
         Timber.i("%s", submission.getTitle());
-        Timber.i("Post hint: %s", submission.getPostHint());
-        Timber.i("Post URL: %s", submission.getUrl());
-        Timber.i("content: %s", submissionContent);
+        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
+        Timber.i("Parsed content: %s", submissionContent);
+        if (submissionContent.type() == SubmissionContent.Type.IMAGE) {
+            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
+        }
 
         switch (submissionContent.type()) {
             case IMAGE:
@@ -273,9 +285,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 contentLoadProgressView.setIndeterminate(true);
                 contentLoadProgressView.show();
 
-                // TODO: 18/02/17 Load a low-quality image first, before loading the HD image.
                 Glide.with(this)
-                        .load(submissionContent.contentUrl())
+                        .load(submissionContent.imageContentUrl(deviceDisplayWidth))
                         .priority(Priority.IMMEDIATE)
                         .into(new GlideDrawableImageViewTarget(contentImageView) {
                             @Override
@@ -285,7 +296,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                                 contentImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                                 contentLoadProgressView.hide();
 
-                                // TODO: 18/02/17 Calculate distanceToReveal according to the Drawable.
+                                // TODO: 18/02/17 Calculate distanceToReveal according to the image width.
                                 int revealDistance = commentListParentSheet.getHeight() * 4 / 10;
 
                                 if (submissionPageLayout.isExpanded()) {

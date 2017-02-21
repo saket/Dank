@@ -15,40 +15,49 @@ import me.saket.dank.data.SubmissionContent.Type;
  * This class exists because Reddit's {@link Submission#getPostHint()} is not very accurate and
  * fails to identify a lot of URLs. For instance, it returns {@link Submission.PostHint#LINK}
  * for its own image hosting domain, redditupload.com images. Use {@link #parse(Submission) to start}.
- *
- * TODO: Store thumbnails provided by Reddit to optimize on data.
  */
 public class SubmissionContentParser {
 
     public static SubmissionContent parse(Submission submission) {
+        SubmissionContent content;
+
         switch (submission.getPostHint()) {
             case SELF:
-                return SubmissionContent.create(Uri.parse(submission.getUrl()), Type.SELF, Host.REDDIT);
+                content = SubmissionContent.create(Uri.parse(submission.getUrl()), Type.SELF, Host.REDDIT);
+                break;
 
             case IMAGE:
                 // This could also be a gif, where we might want to further modify the URL.
                 // For example, Imgur .gif links can be converted to .gifv links.
-                return manuallyParse(submission, Type.IMAGE);
+                content = manuallyParse(submission, Type.IMAGE);
+                break;
 
             case VIDEO:
-                return manuallyParse(submission, Type.VIDEO);
+                content = manuallyParse(submission, Type.VIDEO);
+                break;
 
             case UNKNOWN:
                 if (!TextUtils.isEmpty(submission.getSelftext())) {
                     // Why Reddit? :O
-                    return SubmissionContent.create(Uri.parse(submission.getUrl()), Type.SELF, Host.REDDIT);
+                    content = SubmissionContent.create(Uri.parse(submission.getUrl()), Type.SELF, Host.REDDIT);
+                    break;
 
                 } else {
                     // Treat everything else as links.
-                    return manuallyParse(submission, Type.LINK);
+                    content = manuallyParse(submission, Type.LINK);
+                    break;
                 }
 
             case LINK:
-                return manuallyParse(submission, Type.LINK);
+                content = manuallyParse(submission, Type.LINK);
+                break;
 
             default:
                 throw new UnsupportedOperationException("Unknown post-hint: " + submission.getPostHint());
         }
+
+        content.setRedditSuppliedThumbnails(submission.getThumbnails());
+        return content;
     }
 
     /**
@@ -104,7 +113,13 @@ public class SubmissionContentParser {
             contentURI = Uri.parse(contentURI.getScheme() + "://i.imgur.com" + contentURI.getPath() + ".jpg");
         }
 
-        return SubmissionContent.Imgur.create(contentURI, imgurContentType, Host.IMGUR);
+        SubmissionContent.Imgur imgurContent = SubmissionContent.Imgur.create(contentURI, imgurContentType, Host.IMGUR);
+
+        // Reddit provides its own copies for the content in multiple sizes. Use that only in
+        // case of images because otherwise it'll be a static image for GIFs or videos.
+        imgurContent.setCanUseRedditOptimizedImageUrl(isImageUrlPath(contentUrl) && imgurContentType == Type.IMAGE);
+
+        return imgurContent;
     }
 
     public static boolean isImageUrlPath(String urlPath) {

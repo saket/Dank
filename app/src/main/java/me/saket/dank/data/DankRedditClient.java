@@ -60,17 +60,17 @@ public class DankRedditClient {
 
                 switch (authState) {
                     case NONE:
-                        Timber.d("Authenticating app");
+                        //Timber.d("Authenticating app");
                         redditClient.authenticate(redditClient.getOAuthHelper().easyAuth(credentials));
                         break;
 
                     case NEED_REFRESH:
-                        Timber.d("Refreshing token");
+                        //Timber.d("Refreshing token");
                         redditAuthManager.refreshAccessToken(credentials);
                         break;
                 }
             } else {
-                Timber.d("Already authenticated");
+                //Timber.d("Already authenticated");
             }
 
             return true;
@@ -90,7 +90,7 @@ public class DankRedditClient {
         return errors -> errors.flatMap(error -> {
             if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
                 // Re-try authenticating.
-                Timber.w("Attempting to refresh token");
+                //Timber.w("Attempting to refresh token");
                 return Observable.fromCallable(() -> {
                     Credentials credentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
                     redditAuthManager.refreshAccessToken(credentials);
@@ -108,7 +108,7 @@ public class DankRedditClient {
     }
 
     public SubredditPaginator frontPagePaginator() {
-        return new SubredditPaginator(redditClient);
+        return new SubredditPaginator(redditClient, "pics");
     }
 
     /**

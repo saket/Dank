@@ -1,6 +1,9 @@
 package me.saket.dank.data;
 
 import android.net.Uri;
+import android.text.Html;
+
+import net.dean.jraw.models.Thumbnails;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -16,6 +19,7 @@ public class SubmissionContent {
     private Type type;
     private Host host;
     private Uri contentUri;
+    private Thumbnails redditThumbnails;
 
     public enum Type {
         SELF,
@@ -40,6 +44,18 @@ public class SubmissionContent {
         NONE,
     }
 
+    public enum ImageQuality {
+        /**
+         * Full-res image.
+         */
+        ORIGINAL,
+
+        /**
+         * Image that is closest to user's device display size.
+         */
+        OPTIMIZED_FOR_DISPLAY,
+    }
+
     public static SubmissionContent create(Uri contentUri, Type type, Host contentHost) {
         return new SubmissionContent(contentUri, type, contentHost);
     }
@@ -50,8 +66,8 @@ public class SubmissionContent {
         this.contentUri = contentUri;
     }
 
-    public String contentUrl() {
-        return contentUri.toString();
+    public void setRedditSuppliedThumbnails(Thumbnails thumbnails) {
+        redditThumbnails = thumbnails;
     }
 
     public Type type() {
@@ -60,13 +76,6 @@ public class SubmissionContent {
 
     public Host host() {
         return host;
-    }
-
-    /**
-     * URI in caps so that we don't accidentally use this instead of {@link #contentUrl()}.
-     */
-    Uri contentURI() {
-        return contentUri;
     }
 
     public boolean isImageOrVideo() {
@@ -83,6 +92,56 @@ public class SubmissionContent {
 
     public boolean isLink() {
         return type() == Type.LINK;
+    }
+
+    public String contentUrl() {
+        return contentUri.toString();
+    }
+
+    /**
+     * When {@link #canUseRedditOptimizedImageUrl()} is true, this method checks copies provided by Reddit
+     * and finds the image whose width is closest to user's device display width.
+     * <p>
+     * Use this only for images.
+     */
+    public String imageContentUrl(int optimizeForWidth) {
+        if (canUseRedditOptimizedImageUrl()) {
+            //noinspection deprecation
+            Thumbnails.Image closestImage = redditThumbnails.getSource();
+            int closestDifference = optimizeForWidth - redditThumbnails.getSource().getWidth();
+
+            for (Thumbnails.Image redditCopy : redditThumbnails.getVariations()) {
+                int differenceAbs = Math.abs(optimizeForWidth - redditCopy.getWidth());
+
+                if (differenceAbs < Math.abs(closestDifference)
+                        // If another image is found with the same difference, choose the higher-res image.
+                        || differenceAbs == closestDifference && redditCopy.getWidth() > closestImage.getWidth()) {
+                    closestDifference = optimizeForWidth - redditCopy.getWidth();
+                    closestImage = redditCopy;
+                }
+            }
+
+            //noinspection deprecation
+            return Html.fromHtml(closestImage.getUrl()).toString();
+        }
+
+        return contentUrl();
+    }
+
+    /**
+     * Reddit provides self-hosted copies of the content for images (For GIFs and videos, it provides static
+     * images). When this is true, Reddit's copies will be used instead of the actual URL. This will always
+     * be true for static images and false for GIFs and videos.
+     */
+    boolean canUseRedditOptimizedImageUrl() {
+        return true;
+    }
+
+    /**
+     * URI in caps so that we don't accidentally use this instead of {@link #contentUrl()}.
+     */
+    Uri contentURI() {
+        return contentUri;
     }
 
     /**
@@ -110,13 +169,16 @@ public class SubmissionContent {
     @Override
     public String toString() {
         return "SubmissionContent{" +
-                "type=" + type +
-                ", host=" + host +
+                "type=" + type() +
+                ", host=" + host() +
                 ", contentUrl=" + contentUrl() +
+                ", canUseRedditOptimizedImageUrl=" + canUseRedditOptimizedImageUrl() +
                 '}';
     }
 
     public static class Imgur extends SubmissionContent {
+
+        private boolean canUseRedditOptimizedUrl;
 
         private static final Set<String> DOMAINS = new HashSet<>(Arrays.asList(
                 "imgur.com",        // Link to an Imgur submission.
@@ -125,7 +187,7 @@ public class SubmissionContent {
                 "bildgur.de"
         ));
 
-        public static SubmissionContent create(Uri contentUri, Type contentType, Host contentHost) {
+        public static Imgur create(Uri contentUri, Type contentType, Host contentHost) {
             return new Imgur(contentUri, contentType, contentHost);
         }
 
@@ -136,6 +198,19 @@ public class SubmissionContent {
         public boolean isAlbum() {
             String urlPath = contentURI().getPath();
             return urlPath.startsWith("/a/") || urlPath.startsWith("/gallery/") || urlPath.startsWith("/g/") || urlPath.contains(",");
+        }
+
+        @Override
+        public boolean canUseRedditOptimizedImageUrl() {
+            // Disabled only for GIFs and videos.
+            return canUseRedditOptimizedUrl;
+        }
+
+        /**
+         * See {@link #canUseRedditOptimizedImageUrl()}.
+         */
+        public void setCanUseRedditOptimizedImageUrl(boolean canOptimizeImageUrl) {
+            this.canUseRedditOptimizedUrl = canOptimizeImageUrl;
         }
 
     }
@@ -160,6 +235,12 @@ public class SubmissionContent {
 
         private Gfycat(Uri contentUri, Type type, Host contentHost) {
             super(contentUri, type, contentHost);
+        }
+
+        @Override
+        public boolean canUseRedditOptimizedImageUrl() {
+            // Reddit generates static images for GIFs/videos so ignore.
+            return false;
         }
 
     }
