@@ -323,7 +323,11 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 // Reset the page before loading the new submission so that the last submission isn't visible.
                 contentWebView.loadUrl(BLANK_PAGE_URL);
                 contentWebView.loadUrl(submission.getUrl());
-                commentListParentSheet.setScrollingEnabled(true);
+
+                Views.executeOnMeasure(commentListParentSheet, () -> {
+                    commentListParentSheet.setScrollingEnabled(true);
+                    commentListParentSheet.scrollTo(commentListParentSheet.getHeight() * 3 / 10);
+                });
                 break;
 
             case VIDEO:

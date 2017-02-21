@@ -51,6 +51,8 @@
         tools:background="@color/window_background"
         tools:layout_below="@+id/toolbar">
 
+        <!-- This progressView sits here and not below the toolbar
+             because it otherwise looks odd with a transparent toolbar. -->
         <me.saket.dank.widgets.AnimatableProgressBar
             android:id="@+id/submission_content_progress"
             style="@android:style/Widget.Material.ProgressBar.Horizontal"
