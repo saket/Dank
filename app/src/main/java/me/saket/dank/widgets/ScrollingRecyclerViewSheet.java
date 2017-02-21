@@ -83,10 +83,17 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     }
 
     /**
-     * True if either the sheet is fully hidden or at its peek-height.
+     * True if either the sheet is fully expanded and cannot scroll up any further.
      */
     public boolean isExpanded() {
         return currentState == State.EXPANDED;
+    }
+
+    /**
+     * True if either the sheet is fully hidden or at its peek-height.
+     */
+    public boolean isCollapsed() {
+        return currentState == State.COLLAPSED;
     }
 
     /**
@@ -137,6 +144,10 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
     public void setScrollingEnabled(boolean enabled) {
         scrollingEnabled = enabled;
+    }
+
+    public void collapse() {
+        smoothScrollTo(maxScrollY());
     }
 
 // ======== PUBLIC APIs END ======== //

@@ -20,6 +20,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
+import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -319,6 +320,19 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                                         commentListParentSheet.setScrollingEnabled(true);
                                         commentListParentSheet.scrollTo(revealDistance);
                                     }
+
+                                    // Toggle sheet's collapsed state on click.
+                                    GestureDetector tapDetector = Views.onSingleTapDetector(getActivity(), () -> {
+                                        if (!commentListParentSheet.isCollapsed()) {
+                                            commentListParentSheet.collapse();
+                                        } else {
+                                            commentListParentSheet.smoothScrollTo(revealDistance);
+                                        }
+                                    });
+                                    contentImageView.setOnTouchListener((v, event) -> {
+                                        tapDetector.onTouchEvent(event);
+                                        return false;
+                                    });
                                 });
                             }
                         });
