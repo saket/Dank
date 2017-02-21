@@ -224,7 +224,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         // Reset everything.
         contentLoadProgressView.setProgress(0);
-        commentListParentSheet.scrollTo(0, 0);
+        commentListParentSheet.scrollTo(0);
         commentListParentSheet.setScrollingEnabled(false);
         commentsCollapseHelper.reset();
         commentsAdapter.updateData(null);
@@ -296,21 +296,20 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                                 contentImageView.setScaleType(ImageView.ScaleType.FIT_CENTER);
                                 contentLoadProgressView.hide();
 
-                                // TODO: 18/02/17 Calculate distanceToReveal according to the image width.
-                                int revealDistance = commentListParentSheet.getHeight() * 4 / 10;
-
-                                if (submissionPageLayout.isExpanded()) {
-                                    // Smoothly reveal the image.
-                                    contentImageView.post(() -> {
+                                // Reveal the image smoothly or right away depending upon whether or not
+                                // this page is already expanded and visible.
+                                Views.executeOnNextLayout(contentImageView, () -> {
+                                    int revealDistance = contentImageView.getHeight() - toolbar.getBottom();
+                                    if (submissionPageLayout.isExpanded()) {
+                                        // Smoothly reveal the image.
                                         commentListParentSheet.setScrollingEnabled(true);
                                         commentListParentSheet.smoothScrollTo(revealDistance);
-                                    });
 
-                                } else {
-                                    // User has possibly not seen anything yet. Reveal the image right away.
-                                    commentListParentSheet.setScrollingEnabled(true);
-                                    commentListParentSheet.scrollTo(0, revealDistance);
-                                }
+                                    } else {
+                                        commentListParentSheet.setScrollingEnabled(true);
+                                        commentListParentSheet.scrollTo(revealDistance);
+                                    }
+                                });
                             }
                         });
                 break;

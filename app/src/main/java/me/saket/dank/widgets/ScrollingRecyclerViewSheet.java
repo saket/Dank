@@ -114,7 +114,11 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     }
 
     @Override
-    public void scrollTo(@Px int x, @Px int y) {
+    public void scrollTo(int x, int y) {
+        scrollTo(y);
+    }
+
+    public void scrollTo(@Px int y) {
         attemptToConsumeScrollY(currentTopY() - y);
     }
 
