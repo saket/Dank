@@ -403,6 +403,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         if (commentsSubscription != null) {
             commentsSubscription.unsubscribe();
         }
+
+        contentWebView.stopLoading();
     }
 
 // ======== BACK-PRESS ======== //
