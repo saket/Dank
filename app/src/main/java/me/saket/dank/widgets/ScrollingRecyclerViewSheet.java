@@ -124,6 +124,13 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         this.peekHeight = peekHeight;
     }
 
+    /**
+     * See {@link #setPeekHeight(int)}.
+     */
+    public int getPeekHeight() {
+        return peekHeight;
+    }
+
     @Override
     public void scrollTo(int x, int y) {
         scrollTo(y);

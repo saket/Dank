@@ -1,10 +1,7 @@
 package me.saket.dank.utils;
 
-import android.content.Context;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -82,16 +79,6 @@ public class Views {
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
         params.topMargin = marginTop;
         view.setLayoutParams(params);
-    }
-
-    public static GestureDetector onSingleTapDetector(Context context, Runnable runnable) {
-        return new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onSingleTapUp(MotionEvent e) {
-                runnable.run();
-                return false;
-            }
-        });
     }
 
 }

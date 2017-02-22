@@ -20,7 +20,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
-import android.view.GestureDetector;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -73,7 +72,7 @@ import timber.log.Timber;
 public class SubmissionFragment extends Fragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
     private static final String KEY_SUBMISSION_JSON = "submissionJson";
-    private static final java.lang.String BLANK_PAGE_URL = "about:blank";
+    private static final String BLANK_PAGE_URL = "about:blank";
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.submission_toolbar_shadow) View toolbarShadows;
@@ -101,6 +100,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
 
     private int deviceDisplayWidth;
+    private int commentsTopMarginForImage;
 
     public interface Callbacks {
         void onSubmissionToolbarUpClick();
@@ -151,13 +151,31 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         commentList.setItemAnimator(new DefaultItemAnimator());
 
         commentsCollapseHelper = new CommentsCollapseHelper();
-
         setupContentWebView();
 
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
         DisplayMetrics metrics = new DisplayMetrics();
         ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
         deviceDisplayWidth = metrics.widthPixels;
+
+        // Toggle sheet's collapsed state on image click.
+        contentImageView.setOnClickListener(v -> {
+            if (commentListParentSheet.isCollapsed()) {
+                commentListParentSheet.smoothScrollTo(commentsTopMarginForImage);
+            } else {
+                commentListParentSheet.collapse();
+            }
+        });
+
+        // and on sheet click.
+        commentsHeaderView.setOnClickListener(v -> {
+            if (commentListParentSheet.isCollapsed()) {
+                // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
+                // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
+                int revealDistance = Math.min(commentListParentSheet.getHeight() * 7 / 10, commentsTopMarginForImage);
+                commentListParentSheet.smoothScrollTo(revealDistance);
+            }
+        });
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
@@ -299,7 +317,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                         .into(new ViewTarget<SubsamplingScaleImageView, Bitmap>(contentImageView) {
                             @Override
                             public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
-                                contentImageView.setImage(ImageSource.cachedBitmap(resource));
                                 contentLoadProgressView.hide();
 
                                 // Calculate the visible size of the ImageView after the new image is resized and applied.
@@ -309,8 +326,11 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
                                 // Reveal the image smoothly or right away depending upon whether or not this page is already
                                 // expanded and visible.
+                                contentImageView.setImage(ImageSource.cachedBitmap(resource));
                                 Views.executeOnNextLayout(contentImageView, () -> {
                                     int revealDistance = resizedImageHeight - toolbar.getBottom();
+                                    commentsTopMarginForImage = revealDistance;
+
                                     if (submissionPageLayout.isExpanded()) {
                                         // Smoothly reveal the image.
                                         commentListParentSheet.setScrollingEnabled(true);
@@ -320,19 +340,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                                         commentListParentSheet.setScrollingEnabled(true);
                                         commentListParentSheet.scrollTo(revealDistance);
                                     }
-
-                                    // Toggle sheet's collapsed state on click.
-                                    GestureDetector tapDetector = Views.onSingleTapDetector(getActivity(), () -> {
-                                        if (!commentListParentSheet.isCollapsed()) {
-                                            commentListParentSheet.collapse();
-                                        } else {
-                                            commentListParentSheet.smoothScrollTo(revealDistance);
-                                        }
-                                    });
-                                    contentImageView.setOnTouchListener((v, event) -> {
-                                        tapDetector.onTouchEvent(event);
-                                        return false;
-                                    });
                                 });
                             }
                         });
