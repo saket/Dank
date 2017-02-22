@@ -10,6 +10,7 @@ import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
+import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -136,9 +137,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onSubmissionToolbarUpClick());
         toolbar.setBackground(null);
 
-        toolbarBackground.syncBottomWithViewTop(commentListParentSheet);
-        contentImageContainer.syncParallaxWith(commentListParentSheet);
-
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.
         commentsAdapter = new CommentsAdapter();
@@ -152,30 +150,12 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         commentsCollapseHelper = new CommentsCollapseHelper();
         setupContentWebView();
+        setupCommentsSheet();
 
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
         DisplayMetrics metrics = new DisplayMetrics();
         ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
         deviceDisplayWidth = metrics.widthPixels;
-
-        // Toggle sheet's collapsed state on image click.
-        contentImageView.setOnClickListener(v -> {
-            if (commentListParentSheet.isCollapsed()) {
-                commentListParentSheet.smoothScrollTo(commentsTopMarginForImage);
-            } else {
-                commentListParentSheet.collapse();
-            }
-        });
-
-        // and on sheet click.
-        commentsHeaderView.setOnClickListener(v -> {
-            if (commentListParentSheet.isCollapsed()) {
-                // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
-                // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
-                int revealDistance = Math.min(commentListParentSheet.getHeight() * 7 / 10, commentsTopMarginForImage);
-                commentListParentSheet.smoothScrollTo(revealDistance);
-            }
-        });
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
@@ -214,6 +194,45 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                     }
                     return true;
                 }
+            }
+        });
+    }
+
+    private void setupCommentsSheet() {
+        toolbarBackground.syncBottomWithViewTop(commentListParentSheet);
+        contentImageContainer.syncParallaxWith(commentListParentSheet);
+
+        // Toggle sheet's collapsed state on image click.
+        contentImageView.setOnClickListener(v -> {
+            if (commentListParentSheet.isCollapsed()) {
+                commentListParentSheet.smoothScrollTo(commentsTopMarginForImage);
+            } else {
+                commentListParentSheet.collapse();
+            }
+        });
+
+        // and on submission title click.
+        commentsHeaderView.setOnClickListener(v -> {
+            if (commentListParentSheet.isCollapsed()) {
+                // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
+                // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
+                int revealDistance = Math.min(commentListParentSheet.getHeight() * 7 / 10, commentsTopMarginForImage);
+                commentListParentSheet.smoothScrollTo(revealDistance);
+            }
+        });
+
+        // Collapse the sheet when the image is being zoomed.
+        contentImageView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
+            @Override
+            public void onScaleChanged(float newScale, int origin) {
+                if (newScale > contentImageView.getMinScale() && !commentListParentSheet.isCollapsed()) {
+                    commentListParentSheet.collapse();
+                }
+            }
+
+            @Override
+            public void onCenterChanged(PointF newCenter, int origin) {
+                // The source center has been changed. This can be a result of panning or zooming.
             }
         });
     }
