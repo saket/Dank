@@ -2,21 +2,24 @@ package me.saket.dank.widgets.InboxUI;
 
 import android.content.Context;
 import android.util.AttributeSet;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 
 /**
  * Moves its child View in parallax with respect to a {@link ScrollingRecyclerViewSheet}.
  */
-public class ParallaxImageContainer extends FrameLayout {
+public class SubmissionParallaxImageContainer extends FrameLayout {
 
     private int parallaxLowerBounds;
-    private View childView;
+    private SubsamplingScaleImageView childView;
 
-    public ParallaxImageContainer(Context context, AttributeSet attrs) {
+    public SubmissionParallaxImageContainer(Context context, AttributeSet attrs) {
         super(context, attrs);
     }
 
@@ -25,7 +28,7 @@ public class ParallaxImageContainer extends FrameLayout {
         if (getChildCount() > 1) {
             throw new IllegalStateException("Can only have one child");
         }
-        childView = child;
+        childView = (SubsamplingScaleImageView) child;
         super.addView(child, index, params);
     }
 
@@ -50,6 +53,26 @@ public class ParallaxImageContainer extends FrameLayout {
     private void parallaxOffsetChild(float sheetScrollYFromParentTop) {
         float parallaxAmount = sheetScrollYFromParentTop - parallaxLowerBounds;
         childView.setTranslationY(-(childView.getHeight() / 2 - parallaxLowerBounds / 2) + parallaxAmount / 2);
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent ev) {
+        if (ev.getAction() == MotionEvent.ACTION_MOVE) {
+            //Timber.d("Parent MOVE");
+        }
+        return super.dispatchTouchEvent(ev);
+    }
+
+    @Override
+    public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+        // Bug workaround: SubsamplingScaleImageView blocks parent ViewGroup from receiving touch
+        // events as soon as it receives one. Disallow it from doing so until it's zoomed in.
+        if (childView.getScale() > childView.getMinScale()) {
+            //Timber.w("Letting disallow. Image scale: %s, min. scale: %s", childView.getScale(), childView.getMinScale());
+            super.requestDisallowInterceptTouchEvent(disallowIntercept);
+        //} else {
+            //Timber.i("Blocking disallow. Image scale: %s, min. scale: %s", childView.getScale(), childView.getMinScale());
+        }
     }
 
 }

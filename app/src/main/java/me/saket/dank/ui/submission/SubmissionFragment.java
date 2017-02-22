@@ -64,7 +64,7 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
 import me.saket.dank.widgets.AnimatableToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
-import me.saket.dank.widgets.InboxUI.ParallaxImageContainer;
+import me.saket.dank.widgets.InboxUI.SubmissionParallaxImageContainer;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import rx.Subscription;
 import timber.log.Timber;
@@ -81,7 +81,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_content_progress) AnimatableProgressBar contentLoadProgressView;
     @BindView(R.id.submission_webview_container) ViewGroup contentWebViewContainer;
     @BindView(R.id.submission_webview) WebView contentWebView;
-    @BindView(R.id.submission_image_container) ParallaxImageContainer contentImageContainer;
+    @BindView(R.id.submission_image_container) SubmissionParallaxImageContainer contentImageContainer;
     @BindView(R.id.submission_image) SubsamplingScaleImageView contentImageView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
@@ -223,11 +223,15 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         // Collapse the sheet when the image is being zoomed.
         contentImageView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
+            private float oldScale = contentImageView.getScale();
+
             @Override
             public void onScaleChanged(float newScale, int origin) {
-                if (newScale > contentImageView.getMinScale() && !commentListParentSheet.isCollapsed()) {
+                boolean isZoomingIn = newScale > oldScale;
+                if (isZoomingIn && newScale > contentImageView.getMinScale() && !commentListParentSheet.isCollapsed()) {
                     commentListParentSheet.collapse();
                 }
+                oldScale = newScale;
             }
 
             @Override
@@ -427,6 +431,16 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                     ? commentListParentSheet.canScrollUpwardsAnyFurther()
                     : commentListParentSheet.canScrollDownwardsAnyFurther();
         } else {
+            Rect imageBounds = new Rect();
+            contentImageView.getGlobalVisibleRect(imageBounds);
+            boolean touchInsideImageView = imageBounds.contains((int) downX, (int) downY);
+
+            //noinspection SimplifiableIfStatement
+            if (touchInsideImageView) {
+                // Avoid pulling the page if the image is being zoomed in. This should ideally be handled by SubmissionParallaxImageContainer
+                return contentImageView.getScale() > contentImageView.getMinScale();
+            }
+
             return false;
         }
     }

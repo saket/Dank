@@ -28,8 +28,8 @@ public class PullToCollapseListener implements View.OnTouchListener {
         /**
          * Called when the user is pulling down / up the expandable page or the list.
          *
-         * @param deltaY              Delta translation-Y since the last onPull call
-         * @param currentTranslationY Current translation-Y of the page
+         * @param deltaY              Delta translation-Y since the last onPull call.
+         * @param currentTranslationY Current translation-Y of the page.
          * @param upwardPull          Whether or not the page is being pulled in the upward direction.
          * @param deltaUpwardPull     Whether or not the last delta-pull was made in the upward direction.
          */
@@ -63,7 +63,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
                 return false;
 
             case MotionEvent.ACTION_MOVE: {
-                // Keep ignoring horizontal swipes (Step 2)
+                // Keep ignoring horizontal swipes.
                 if (horizontalSwipingConfirmed != null && horizontalSwipingConfirmed) {
                     return false;
                 }
