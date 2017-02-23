@@ -81,4 +81,10 @@ public class Views {
         view.setLayoutParams(params);
     }
 
+    public static void setMarginBottom(View view, int marginBottom) {
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        params.bottomMargin = marginBottom;
+        view.setLayoutParams(params);
+    }
+
 }

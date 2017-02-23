@@ -38,6 +38,7 @@ import com.bumptech.glide.Priority;
 import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.ViewTarget;
 import com.davemorrissey.labs.subscaleview.ImageSource;
+import com.davemorrissey.labs.subscaleview.ImageViewState;
 import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -101,6 +102,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
 
     private int deviceDisplayWidth;
+    private int deviceDisplayHeight;
     private int commentsTopMarginForImage;
 
     public interface Callbacks {
@@ -151,11 +153,13 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         commentsCollapseHelper = new CommentsCollapseHelper();
         setupContentWebView();
         setupCommentsSheet();
+        Views.setMarginBottom(contentImageContainer, commentListParentSheet.getPeekHeight());
 
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
         DisplayMetrics metrics = new DisplayMetrics();
         ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
         deviceDisplayWidth = metrics.widthPixels;
+        deviceDisplayHeight = metrics.heightPixels;
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
@@ -342,16 +346,29 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                             public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
                                 contentLoadProgressView.hide();
 
-                                // Calculate the visible size of the ImageView after the new image is resized and applied.
-                                float widthResizeFactor = 1 - ((resource.getWidth() - deviceDisplayWidth) / (float) resource.getWidth());
-                                int resizedImageHeight = (int) (resource.getHeight() * widthResizeFactor);
-                                contentImageContainer.setParallaxLowerBound(resizedImageHeight);
+                                int imageMaxVisibleHeight = deviceDisplayHeight - commentListParentSheet.getPeekHeight();
+                                float widthResizeFactor = deviceDisplayWidth / (float) resource.getWidth();
+                                int visibleImageHeight = Math.min((int) (resource.getHeight() * widthResizeFactor), imageMaxVisibleHeight);
+                                contentImageContainer.setThresholdHeightForParallax(visibleImageHeight);
 
-                                // Reveal the image smoothly or right away depending upon whether or not this page is already
-                                // expanded and visible.
-                                contentImageView.setImage(ImageSource.cachedBitmap(resource));
+                                // If the image is longer than the visible window, zoom in automatically.
+                                boolean isImageLongerThanVisibleWindow = imageMaxVisibleHeight < resource.getHeight();
+                                if (isImageLongerThanVisibleWindow && resource.getWidth() <= resource.getHeight()) {
+                                    float initialScale = (float) deviceDisplayWidth / resource.getWidth();
+                                    contentImageView.setDoubleTapZoomScale(initialScale);
+                                    contentImageView.setImage(
+                                            ImageSource.cachedBitmap(resource),
+                                            new ImageViewState(initialScale, new PointF(0, 0), SubsamplingScaleImageView.ORIENTATION_0)
+                                    );
+
+                                } else {
+                                    contentImageView.setImage(ImageSource.cachedBitmap(resource));
+                                }
+
+                                // Reveal the image smoothly or right away depending upon whether or not this
+                                // page is already expanded and visible.
                                 Views.executeOnNextLayout(contentImageView, () -> {
-                                    int revealDistance = resizedImageHeight - toolbar.getBottom();
+                                    int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
                                     commentsTopMarginForImage = revealDistance;
 
                                     if (submissionPageLayout.isExpanded()) {

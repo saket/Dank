@@ -2,7 +2,6 @@ package me.saket.dank.widgets.InboxUI;
 
 import android.content.Context;
 import android.util.AttributeSet;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
@@ -16,7 +15,7 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
  */
 public class SubmissionParallaxImageContainer extends FrameLayout {
 
-    private int parallaxLowerBounds;
+    private int parallaxThresholdHeight;
     private SubsamplingScaleImageView childView;
 
     public SubmissionParallaxImageContainer(Context context, AttributeSet attrs) {
@@ -36,31 +35,23 @@ public class SubmissionParallaxImageContainer extends FrameLayout {
      * Set the minimum value, beyond which no parallax will be performed.
      * In our case, this will be the visible height of the child ImageView.
      */
-    public void setParallaxLowerBound(int bound) {
-        parallaxLowerBounds = bound;
-        parallaxOffsetChild(bound);
+    public void setThresholdHeightForParallax(int heightThreshold) {
+        parallaxThresholdHeight = heightThreshold;
+        parallaxOffsetChild(heightThreshold);
     }
 
     public void syncParallaxWith(ScrollingRecyclerViewSheet sheet) {
         sheet.addOnSheetScrollChangeListener(scrollY -> {
             float sheetScrollYFromParentTop = scrollY + sheet.getTop();
-            if (sheetScrollYFromParentTop > parallaxLowerBounds) {
+            if (sheetScrollYFromParentTop > parallaxThresholdHeight) {
                 parallaxOffsetChild(sheetScrollYFromParentTop);
             }
         });
     }
 
     private void parallaxOffsetChild(float sheetScrollYFromParentTop) {
-        float parallaxAmount = sheetScrollYFromParentTop - parallaxLowerBounds;
-        childView.setTranslationY(-(childView.getHeight() / 2 - parallaxLowerBounds / 2) + parallaxAmount / 2);
-    }
-
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        if (ev.getAction() == MotionEvent.ACTION_MOVE) {
-            //Timber.d("Parent MOVE");
-        }
-        return super.dispatchTouchEvent(ev);
+        float parallaxAmount = sheetScrollYFromParentTop - parallaxThresholdHeight;
+        childView.setTranslationY(-(childView.getHeight() / 2 - parallaxThresholdHeight / 2) + parallaxAmount / 2);
     }
 
     @Override
