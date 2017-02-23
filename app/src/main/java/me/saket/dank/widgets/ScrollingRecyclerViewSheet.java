@@ -35,6 +35,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     private SheetStateChangeListener stateChangeListener;
     private RecyclerView childRecyclerView;
     private State currentState;
+    private ValueAnimator scrollAnimator;
     private int peekHeight;
     private boolean scrollingEnabled;
 
@@ -57,6 +58,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         flingScroller = new Scroller(context);
         minimumFlingVelocity = ViewConfiguration.get(context).getScaledMinimumFlingVelocity();
         maximumFlingVelocity = ViewConfiguration.get(context).getScaledMaximumFlingVelocity();
+
         scrollChangeListeners = new ArrayList<>(3);
 
         if (hasSheetReachedTheTop()) {
@@ -141,12 +143,18 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     }
 
     public void smoothScrollTo(@Px int y) {
-        ValueAnimator scrollAnimator = ValueAnimator.ofFloat(currentTopY(), y);
+        if (scrollAnimator != null) {
+            scrollAnimator.cancel();
+        }
+
+        scrollAnimator = ValueAnimator.ofFloat(currentTopY(), y);
         scrollAnimator.setInterpolator(new FastOutSlowInInterpolator());
-        scrollAnimator.addUpdateListener(animation -> {
-            attemptToConsumeScrollY(currentTopY() - ((Float) animation.getAnimatedValue()));
-        });
+        scrollAnimator.addUpdateListener(animation -> attemptToConsumeScrollY(currentTopY() - ((Float) animation.getAnimatedValue())));
         scrollAnimator.start();
+    }
+
+    public boolean isSmoothScrollingOngoing() {
+        return scrollAnimator != null && scrollAnimator.isStarted();
     }
 
     public void setScrollingEnabled(boolean enabled) {

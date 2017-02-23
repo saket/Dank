@@ -232,8 +232,12 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             @Override
             public void onScaleChanged(float newScale, int origin) {
                 boolean isZoomingIn = newScale > oldScale;
-                if (isZoomingIn && newScale > contentImageView.getMinScale() && !commentListParentSheet.isCollapsed()) {
-                    commentListParentSheet.collapse();
+
+                if (isZoomingIn && newScale > contentImageView.getMinScale() && !commentListParentSheet.isCollapsed()
+                        && !commentListParentSheet.isSmoothScrollingOngoing()) {
+                    commentListParentSheet.post(() -> {
+                        commentListParentSheet.collapse();
+                    });
                 }
                 oldScale = newScale;
             }
