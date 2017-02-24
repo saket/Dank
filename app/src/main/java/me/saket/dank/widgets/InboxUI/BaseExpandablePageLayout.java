@@ -5,14 +5,16 @@ import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Outline;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.widget.RelativeLayout;
 
 /**
- * Created by Saket on 1/12/2015.
  * Handles change in dimensions. This class exists because animating the dimensions (using an
  * ObjectAnimator) of a complex layout isn't very smooth.
  */
@@ -47,6 +49,13 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     private void init() {
         clippedDimensionRect = new RectF();
         path = new Path();
+
+        setOutlineProvider(new ViewOutlineProvider() {
+            @Override
+            public void getOutline(View view, Outline outline) {
+                outline.setRect(0, 0, ((int) clippedDimensionRect.width()), (int) clippedDimensionRect.height());
+            }
+        });
     }
 
     @Override
@@ -89,14 +98,16 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
 // ======== SETTERS ======== //
 
     public void setClippedDimensions(float newClippedWidth, float newClippedHeight) {
-        isClipped = !(newClippedWidth == getWidth() || newClippedHeight == getHeight());
+        isClipped = newClippedWidth != getWidth() || newClippedHeight != getHeight();
 
         clippedDimensionRect.right = newClippedWidth;
         clippedDimensionRect.bottom = newClippedHeight;
 
         path.reset();
         path.addRect(clippedDimensionRect, Path.Direction.CW);
+
         postInvalidate();
+        invalidateOutline();
     }
 
     /**
@@ -104,6 +115,13 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
      */
     public void resetClipping() {
         setClippedDimensions(getWidth(), getHeight());
+    }
+
+    /**
+     * When this is false, the entire page is visible.
+     */
+    public boolean isClipped() {
+        return isClipped;
     }
 
     protected float getClippedWidth() {
