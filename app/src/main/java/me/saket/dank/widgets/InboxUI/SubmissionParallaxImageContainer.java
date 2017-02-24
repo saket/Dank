@@ -42,16 +42,21 @@ public class SubmissionParallaxImageContainer extends FrameLayout {
 
     public void syncParallaxWith(ScrollingRecyclerViewSheet sheet) {
         sheet.addOnSheetScrollChangeListener(scrollY -> {
-            float sheetScrollYFromParentTop = scrollY + sheet.getTop();
-            if (sheetScrollYFromParentTop > parallaxThresholdHeight) {
-                parallaxOffsetChild(sheetScrollYFromParentTop);
+            float offsetY = scrollY + sheet.getTop();
+            if (offsetY < parallaxThresholdHeight) {
+                offsetY = parallaxThresholdHeight;
             }
+            parallaxOffsetChild(offsetY);
         });
     }
 
     private void parallaxOffsetChild(float sheetScrollYFromParentTop) {
         float parallaxAmount = sheetScrollYFromParentTop - parallaxThresholdHeight;
-        childView.setTranslationY(-(childView.getHeight() / 2 - parallaxThresholdHeight / 2) + parallaxAmount / 2);
+        float targetTranslationY = -(childView.getHeight() / 2 - parallaxThresholdHeight / 2) + parallaxAmount / 2;
+
+        if (childView.getTranslationY() != targetTranslationY) {
+            childView.setTranslationY(targetTranslationY);
+        }
     }
 
     @Override
@@ -61,7 +66,7 @@ public class SubmissionParallaxImageContainer extends FrameLayout {
         if (childView.getScale() > childView.getMinScale()) {
             //Timber.w("Letting disallow. Image scale: %s, min. scale: %s", childView.getScale(), childView.getMinScale());
             super.requestDisallowInterceptTouchEvent(disallowIntercept);
-        //} else {
+            //} else {
             //Timber.i("Blocking disallow. Image scale: %s, min. scale: %s", childView.getScale(), childView.getMinScale());
         }
     }
