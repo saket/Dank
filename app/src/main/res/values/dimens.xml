@@ -10,6 +10,9 @@
     <dimen name="spacing16">16dp</dimen>
     <dimen name="spacing24">24dp</dimen>
 
+    <!-- SubReddits -->
+    <dimen name="subreddit_toolbar_sheet_elevation">10dp</dimen>
+
     <!-- Submission -->
     <dimen name="comment_start_padding_for_root_comment">16dp</dimen>
     <dimen name="comment_start_padding_per_depth_level">12dp</dimen>

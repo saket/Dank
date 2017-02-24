@@ -132,4 +132,8 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
         return clippedDimensionRect.height();
     }
 
+    public RectF getClippedRect() {
+        return clippedDimensionRect;
+    }
+
 }

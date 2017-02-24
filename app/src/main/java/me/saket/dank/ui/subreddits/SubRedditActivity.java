@@ -17,6 +17,7 @@ import net.dean.jraw.paginators.SubredditPaginator;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import me.saket.dank.DankActivity;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
@@ -26,13 +27,16 @@ import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
+import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
 
 public class SubRedditActivity extends DankActivity implements SubmissionFragment.Callbacks {
 
     @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.subreddit_toolbar_container) ViewGroup toolbarContainer;
     @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
     @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
+    @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet subredditListContainer;
     @BindView(R.id.subreddit_progress) ProgressBar progressBar;
 
     private SubmissionFragment submissionFragment;
@@ -46,15 +50,18 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
 
         // Add top-margin to make room for the status bar.
         ButterKnife.findById(this, Window.ID_ANDROID_CONTENT).setOnApplyWindowInsetsListener((v, insets) -> {
-            Views.setMarginTop(toolbar, insets.getSystemWindowInsetTop());
+            Views.setMarginTop(toolbarContainer, insets.getSystemWindowInsetTop());
             Views.setMarginTop(submissionList, insets.getSystemWindowInsetTop());
             return insets;
         });
 
+        //noinspection ConstantConditions
+        getSupportActionBar().setDisplayShowTitleEnabled(false);
+
         // Setup submission list.
         submissionList.setLayoutManager(submissionList.createLayoutManager());
         submissionList.setItemAnimator(new DefaultItemAnimator());
-        submissionList.setExpandablePage(submissionPage, toolbar);
+        submissionList.setExpandablePage(submissionPage, toolbarContainer);
 
         SubRedditSubmissionsAdapter submissionsAdapter = new SubRedditSubmissionsAdapter();
         submissionList.setAdapter(submissionsAdapter);
@@ -64,8 +71,8 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
             submissionPage.post(() -> {
                 // Posing the expand() call to the page's message queue seems to result in a smoother
                 // expand animation. I assume this is because the expand() call only executes once the
-                // page is done updating out its views for this new submission. This might be a placebo
-                // too and without enough testing I cannot be sure about this.
+                // page is done updating its views for this new submission. This might be a placebo too
+                // and without enough testing I cannot be sure about this.
                 submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId);
             });
         });
@@ -91,6 +98,8 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
                 .doOnTerminate(() -> progressBar.setVisibility(View.GONE))
                 .subscribe(submissionsAdapter, logError("Couldn't get front-page"));
         unsubscribeOnDestroy(subscription);
+
+        subredditListContainer.setToolbar(toolbar);
     }
 
     @Override
@@ -104,6 +113,13 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
         super.onRestoreInstanceState(savedInstanceState);
         submissionList.handleOnRestoreInstanceState(savedInstanceState);
     }
+
+    @OnClick(R.id.subreddit_toolbar_title)
+    void onClickSubRedditName() {
+        subredditListContainer.toggleVisibility();
+    }
+
+// ======== NAVIGATION ======== //
 
     @Override
     public void onSubmissionToolbarUpClick() {

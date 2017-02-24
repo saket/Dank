@@ -29,7 +29,7 @@
             android:layout_height="match_parent"
             android:layout_below="@+id/toolbar"
             android:visibility="invisible"
-            tools:ignore="UnknownIdInLayout" />
+            tools:ignore="UnknownId,UnknownIdInLayout" />
 
         <ProgressBar
             android:id="@+id/login_progress"

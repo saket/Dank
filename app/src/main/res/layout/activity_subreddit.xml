@@ -1,10 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout android:id="@+id/subreddit_content"
+<RelativeLayout android:id="@+id/subreddit_content"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="me.saket.dank.ui.subreddits.SubRedditActivity">
+    tools:context="me.saket.dank.ui.subreddits.SubRedditActivity"
+    tools:layout_marginTop="25dp">
 
     <me.saket.dank.widgets.InboxUI.InboxRecyclerView
         android:id="@+id/subreddit_submission_list"
@@ -13,20 +14,71 @@
         android:clipToPadding="false"
         android:paddingTop="?android:attr/actionBarSize"
         android:scrollbarStyle="insideOverlay"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        tools:visibility="gone" />
 
     <ProgressBar
         android:id="@+id/subreddit_progress"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_centerInParent="true"
         android:layout_gravity="center" />
 
-    <include layout="@layout/include_toolbar" />
+    <FrameLayout
+        android:id="@+id/subreddit_toolbar_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:elevation="@dimen/subreddit_toolbar_sheet_elevation">
+
+        <include layout="@layout/include_toolbar" />
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:background="@color/toolbar"
+            android:elevation="@dimen/subreddit_toolbar_sheet_elevation">
+
+            <Button
+                android:id="@+id/subreddit_toolbar_title"
+                style="@style/Widget.AppCompat.Button.Borderless"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="-4dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:paddingEnd="32dp"
+                android:paddingStart="20dp"
+                android:text="@string/app_name"
+                android:textAppearance="@style/DankTextAppearance.Toolbar" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_centerVertical="true"
+                android:layout_marginStart="-28dp"
+                android:layout_toEndOf="@+id/subreddit_toolbar_title"
+                android:src="@drawable/ic_arrow_drop_down_black_24dp"
+                android:tint="@color/color_accent"
+                tools:ignore="ContentDescription" />
+        </RelativeLayout>
+    </FrameLayout>
 
     <me.saket.dank.widgets.InboxUI.ExpandablePageLayout
         android:id="@+id/subreddit_submission_page"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/window_background"
-        android:elevation="20dp" />
-</FrameLayout>
+        android:elevation="20dp"
+        tools:visibility="gone" />
+
+    <me.saket.dank.widgets.ToolbarExpandableSheet
+        android:id="@+id/subreddit_toolbar_expandable_sheet"
+        android:layout_width="match_parent"
+        android:layout_height="160dp"
+        android:layout_below="@id/subreddit_toolbar_container"
+        android:background="@color/toolbar"
+        android:clickable="true">
+
+
+    </me.saket.dank.widgets.ToolbarExpandableSheet>
+</RelativeLayout>
