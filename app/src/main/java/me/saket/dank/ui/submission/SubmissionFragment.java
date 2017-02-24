@@ -355,19 +355,16 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                                 int visibleImageHeight = Math.min((int) (resource.getHeight() * widthResizeFactor), imageMaxVisibleHeight);
                                 contentImageContainer.setThresholdHeightForParallax(visibleImageHeight);
 
-                                // If the image is longer than the visible window, zoom in automatically.
+                                // If the image is longer than the visible window, zoom in to fill the width on double tap.
                                 boolean isImageLongerThanVisibleWindow = imageMaxVisibleHeight < resource.getHeight();
                                 if (isImageLongerThanVisibleWindow && resource.getWidth() <= resource.getHeight()) {
-                                    float initialScale = (float) deviceDisplayWidth / resource.getWidth();
-                                    contentImageView.setDoubleTapZoomScale(initialScale);
-                                    contentImageView.setImage(
-                                            ImageSource.cachedBitmap(resource),
-                                            new ImageViewState(initialScale, new PointF(0, 0), SubsamplingScaleImageView.ORIENTATION_0)
-                                    );
-
-                                } else {
-                                    contentImageView.setImage(ImageSource.cachedBitmap(resource));
+                                    contentImageView.setDoubleTapZoomScale(widthResizeFactor);
                                 }
+
+                                contentImageView.setImage(
+                                        ImageSource.cachedBitmap(resource),
+                                        new ImageViewState(widthResizeFactor, new PointF(0, 0), SubsamplingScaleImageView.ORIENTATION_0)
+                                );
 
                                 // Reveal the image smoothly or right away depending upon whether or not this
                                 // page is already expanded and visible.
