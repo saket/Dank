@@ -12,7 +12,7 @@
         android:supportsRtl="true"
         android:theme="@style/DankTheme">
         <activity
-            android:name=".ui.subreddits.SubRedditActivity"
+            android:name=".ui.subreddits.SubredditActivity"
             android:launchMode="singleTop"
             android:theme="@style/DankTheme.DrawsStatusBar">
             <intent-filter>
@@ -24,7 +24,7 @@
         <activity
             android:name=".ui.authentication.LoginActivity"
             android:label="@string/login"
-            android:parentActivityName=".ui.subreddits.SubRedditActivity"
+            android:parentActivityName=".ui.subreddits.SubredditActivity"
             android:theme="@style/DankTheme.TransparentBackground" />
     </application>
 </manifest>

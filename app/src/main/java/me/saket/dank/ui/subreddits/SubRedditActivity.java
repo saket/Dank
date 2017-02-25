@@ -5,6 +5,7 @@ import static rx.Observable.just;
 
 import android.os.Bundle;
 import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -30,13 +31,14 @@ import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
 
-public class SubRedditActivity extends DankActivity implements SubmissionFragment.Callbacks {
+public class SubredditActivity extends DankActivity implements SubmissionFragment.Callbacks {
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.subreddit_toolbar_container) ViewGroup toolbarContainer;
     @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
     @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
     @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet subredditListContainer;
+    @BindView(R.id.subreddit_subreddit_list) RecyclerView subRedditList;
     @BindView(R.id.subreddit_progress) ProgressBar progressBar;
 
     private SubmissionFragment submissionFragment;
@@ -115,7 +117,7 @@ public class SubRedditActivity extends DankActivity implements SubmissionFragmen
     }
 
     @OnClick(R.id.subreddit_toolbar_title)
-    void onClickSubRedditName() {
+    void onClickSubredditName() {
         subredditListContainer.toggleVisibility();
     }
 

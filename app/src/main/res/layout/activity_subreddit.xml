@@ -4,7 +4,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context="me.saket.dank.ui.subreddits.SubRedditActivity"
+    tools:context="me.saket.dank.ui.subreddits.SubredditActivity"
     tools:layout_marginTop="25dp">
 
     <me.saket.dank.widgets.InboxUI.InboxRecyclerView
@@ -33,9 +33,10 @@
         <include layout="@layout/include_toolbar" />
 
         <RelativeLayout
-            android:layout_width="match_parent"
+            android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:background="@color/toolbar"
+            android:paddingEnd="@dimen/spacing16"
             android:elevation="@dimen/subreddit_toolbar_sheet_elevation">
 
             <Button
@@ -79,6 +80,9 @@
         android:background="@color/toolbar"
         android:clickable="true">
 
-
+        <android.support.v7.widget.RecyclerView
+            android:id="@+id/subreddit_subreddit_list"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent" />
     </me.saket.dank.widgets.ToolbarExpandableSheet>
 </RelativeLayout>

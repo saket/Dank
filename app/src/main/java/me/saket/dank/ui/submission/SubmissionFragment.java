@@ -57,7 +57,7 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.subreddits.SubRedditActivity;
+import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.SubmissionContentParser;
@@ -272,7 +272,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     }
 
     /**
-     * Update the submission to be shown. Since this Fragment is retained by {@link SubRedditActivity},
+     * Update the submission to be shown. Since this Fragment is retained by {@link SubredditActivity},
      * we only update the UI everytime a new submission is to be shown.
      */
     public void populateUi(Submission submission) {
