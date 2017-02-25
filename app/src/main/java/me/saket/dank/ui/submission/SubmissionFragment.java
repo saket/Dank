@@ -9,8 +9,6 @@ import android.annotation.SuppressLint;
 import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Bitmap;
-import android.graphics.PointF;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
@@ -21,6 +19,7 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.DisplayMetrics;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -35,11 +34,8 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
-import com.bumptech.glide.request.animation.GlideAnimation;
-import com.bumptech.glide.request.target.ViewTarget;
-import com.davemorrissey.labs.subscaleview.ImageSource;
-import com.davemorrissey.labs.subscaleview.ImageViewState;
-import com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.request.target.ImageViewTarget;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -67,7 +63,9 @@ import me.saket.dank.widgets.AnimatableToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SubmissionParallaxImageContainer;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
+import me.saket.dank.widgets.ZoomableImageView;
 import rx.Subscription;
+import rx.functions.Func1;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -83,7 +81,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_webview_container) ViewGroup contentWebViewContainer;
     @BindView(R.id.submission_webview) WebView contentWebView;
     @BindView(R.id.submission_image_container) SubmissionParallaxImageContainer contentImageContainer;
-    @BindView(R.id.submission_image) SubsamplingScaleImageView contentImageView;
+    @BindView(R.id.submission_image) ZoomableImageView contentImageView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
@@ -152,8 +150,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
         commentsCollapseHelper = new CommentsCollapseHelper();
         setupContentWebView();
+        setupContentImageView();
         setupCommentsSheet();
-        Views.setMarginBottom(contentImageContainer, commentListParentSheet.getPeekHeight());
 
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
         DisplayMetrics metrics = new DisplayMetrics();
@@ -202,14 +200,25 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         });
     }
 
+    private void setupContentImageView() {
+        Views.setMarginBottom(contentImageContainer, commentListParentSheet.getPeekHeight());
+        contentImageView.getController().getSettings().setGravity(Gravity.TOP);
+    }
+
     private void setupCommentsSheet() {
         toolbarBackground.syncBottomWithViewTop(commentListParentSheet);
-        contentImageContainer.syncParallaxWith(commentListParentSheet);
+        //contentImageContainer.syncParallaxWith(commentListParentSheet);
+
+        Func1<?, Integer> revealDistanceFunc = (Func1<Object, Integer>) o -> {
+            // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
+            // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
+            return Math.min(commentListParentSheet.getHeight() * 7 / 10, commentsTopMarginForImage);
+        };
 
         // Toggle sheet's collapsed state on image click.
         contentImageView.setOnClickListener(v -> {
             if (commentListParentSheet.isCollapsed()) {
-                commentListParentSheet.smoothScrollTo(commentsTopMarginForImage);
+                commentListParentSheet.smoothScrollTo(revealDistanceFunc.call(null));
             } else {
                 commentListParentSheet.collapse();
             }
@@ -218,35 +227,32 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         // and on submission title click.
         commentsHeaderView.setOnClickListener(v -> {
             if (commentListParentSheet.isCollapsed()) {
-                // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
-                // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
-                int revealDistance = Math.min(commentListParentSheet.getHeight() * 7 / 10, commentsTopMarginForImage);
-                commentListParentSheet.smoothScrollTo(revealDistance);
+                commentListParentSheet.smoothScrollTo(revealDistanceFunc.call(null));
             }
         });
 
         // Collapse the sheet when the image is being zoomed.
-        contentImageView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
-            private float oldScale = contentImageView.getScale();
-
-            @Override
-            public void onScaleChanged(float newScale, int origin) {
-                boolean isZoomingIn = newScale > oldScale;
-
-                if (isZoomingIn && newScale > contentImageView.getMinScale() && !commentListParentSheet.isCollapsed()
-                        && !commentListParentSheet.isSmoothScrollingOngoing()) {
-                    commentListParentSheet.post(() -> {
-                        commentListParentSheet.collapse();
-                    });
-                }
-                oldScale = newScale;
-            }
-
-            @Override
-            public void onCenterChanged(PointF newCenter, int origin) {
-                // The source center has been changed. This can be a result of panning or zooming.
-            }
-        });
+//        contentImageView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
+//            private float oldScale = contentImageView.getScale();
+//
+//            @Override
+//            public void onScaleChanged(float newScale, int origin) {
+//                boolean isZoomingIn = newScale > oldScale;
+//
+//                if (isZoomingIn && newScale > contentImageView.getMinScale() && !commentListParentSheet.isCollapsed()
+//                        && !commentListParentSheet.isSmoothScrollingOngoing()) {
+//                    commentListParentSheet.post(() -> {
+//                        commentListParentSheet.collapse();
+//                    });
+//                }
+//                oldScale = newScale;
+//            }
+//
+//            @Override
+//            public void onCenterChanged(PointF newCenter, int origin) {
+//                // The source center has been changed. This can be a result of panning or zooming.
+//            }
+//        });
     }
 
     @Override
@@ -343,28 +349,29 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
                 Glide.with(this)
                         .load(submissionContent.imageContentUrl(deviceDisplayWidth))
-                        .asBitmap()
                         .priority(Priority.IMMEDIATE)
-                        .into(new ViewTarget<SubsamplingScaleImageView, Bitmap>(contentImageView) {
+                        .into(new ImageViewTarget<GlideDrawable>(contentImageView) {
                             @Override
-                            public void onResourceReady(Bitmap resource, GlideAnimation<? super Bitmap> glideAnimation) {
+                            protected void setResource(GlideDrawable resource) {
                                 contentLoadProgressView.hide();
 
                                 int imageMaxVisibleHeight = deviceDisplayHeight - commentListParentSheet.getPeekHeight();
-                                float widthResizeFactor = deviceDisplayWidth / (float) resource.getWidth();
-                                int visibleImageHeight = Math.min((int) (resource.getHeight() * widthResizeFactor), imageMaxVisibleHeight);
-                                contentImageContainer.setThresholdHeightForParallax(visibleImageHeight);
+                                float widthResizeFactor = deviceDisplayWidth / (float) resource.getIntrinsicWidth();
+                                int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
+                                //contentImageContainer.setThresholdHeightForParallax(visibleImageHeight);
 
                                 // If the image is longer than the visible window, zoom in to fill the width on double tap.
-                                boolean isImageLongerThanVisibleWindow = imageMaxVisibleHeight < resource.getHeight();
-                                if (isImageLongerThanVisibleWindow && resource.getWidth() <= resource.getHeight()) {
-                                    contentImageView.setDoubleTapZoomScale(widthResizeFactor);
+                                boolean isImageLongerThanVisibleWindow = imageMaxVisibleHeight < resource.getIntrinsicHeight();
+                                if (isImageLongerThanVisibleWindow && resource.getIntrinsicWidth() <= resource.getIntrinsicHeight()) {
+                                    //contentImageView.setDoubleTapZoomScale(widthResizeFactor);
                                 }
 
-                                contentImageView.setImage(
-                                        ImageSource.cachedBitmap(resource),
-                                        new ImageViewState(widthResizeFactor, new PointF(0, 0), SubsamplingScaleImageView.ORIENTATION_0)
-                                );
+                                contentImageView.setImageDrawable(resource);
+
+//                                contentImageView.setImage(
+//                                        ImageSource.cachedBitmap(resource),
+//                                        new ImageViewState(widthResizeFactor, new PointF(0, 0), SubsamplingScaleImageView.ORIENTATION_0)
+//                                );
 
                                 // Reveal the image smoothly or right away depending upon whether or not this
                                 // page is already expanded and visible.
@@ -456,7 +463,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             //noinspection SimplifiableIfStatement
             if (touchInsideImageView) {
                 // Avoid pulling the page if the image is being zoomed in. This should ideally be handled by SubmissionParallaxImageContainer
-                return contentImageView.getScale() > contentImageView.getMinScale();
+                //return contentImageView.getScale() > contentImageView.getMinScale();
+                return true;
             }
 
             return false;

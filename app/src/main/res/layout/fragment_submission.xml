@@ -13,7 +13,7 @@
 
         <!-- TODO: set content-description in code. -->
         <!-- For image/gif. -->
-        <com.davemorrissey.labs.subscaleview.SubsamplingScaleImageView
+        <me.saket.dank.widgets.ZoomableImageView
             android:id="@+id/submission_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
