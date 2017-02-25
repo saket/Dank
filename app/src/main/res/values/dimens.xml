@@ -16,4 +16,5 @@
     <!-- Submission -->
     <dimen name="comment_start_padding_for_root_comment">16dp</dimen>
     <dimen name="comment_start_padding_per_depth_level">12dp</dimen>
+    <dimen name="submission_commentssheet_minimum_visible_height">70dp</dimen>
 </resources>

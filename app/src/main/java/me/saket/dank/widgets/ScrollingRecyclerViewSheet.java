@@ -42,17 +42,17 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     public enum State {
         EXPANDED,
         DRAGGING,
-        COLLAPSED,
+        AT_PEEK_HEIGHT,
     }
 
     public interface SheetStateChangeListener {
+
         void onStateChange(State newState);
     }
-
     public interface SheetScrollChangeListener {
+
         void onScrollChange(float newScrollY);
     }
-
     public ScrollingRecyclerViewSheet(Context context, AttributeSet attrs) {
         super(context, attrs);
         flingScroller = new Scroller(context);
@@ -94,8 +94,8 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     /**
      * True if either the sheet is fully hidden or at its peek-height.
      */
-    public boolean isCollapsed() {
-        return currentState == State.COLLAPSED;
+    public boolean isAtPeekHeightState() {
+        return currentState == State.AT_PEEK_HEIGHT;
     }
 
     /**
@@ -126,9 +126,6 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         this.peekHeight = peekHeight;
     }
 
-    /**
-     * See {@link #setPeekHeight(int)}.
-     */
     public int getPeekHeight() {
         return peekHeight;
     }
@@ -143,8 +140,13 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     }
 
     public void smoothScrollTo(@Px int y) {
-        if (scrollAnimator != null) {
+        if (isSmoothScrollingOngoing()) {
             scrollAnimator.cancel();
+        }
+
+        if (currentTopY() == y) {
+            // Already at the same location.
+            return;
         }
 
         scrollAnimator = ValueAnimator.ofFloat(currentTopY(), y);
@@ -161,13 +163,12 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         scrollingEnabled = enabled;
     }
 
-    public void collapse() {
-        smoothScrollTo(maxScrollY());
-    }
-
 // ======== PUBLIC APIs END ======== //
 
-    private int maxScrollY() {
+    /**
+     * Maximum this sheet can scroll before it reaches its peek height.
+     */
+    public int maxScrollY() {
         return getHeight() - peekHeight;
     }
 
@@ -193,7 +194,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     /**
      * True if the sheet is docked at the bottom and is only peeking.
      */
-    private boolean isSheetPeeking() {
+    private boolean isSheetAtPeekHeight() {
         return currentTopY() >= maxScrollY();
     }
 
@@ -219,7 +220,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
         } else {
             boolean canChildViewScrollDownwardsAnymore = childRecyclerView.canScrollVertically(-1);
-            if (!isSheetPeeking() && !canChildViewScrollDownwardsAnymore) {
+            if (!isSheetAtPeekHeight() && !canChildViewScrollDownwardsAnymore) {
                 float adjustedDy = dy;
                 if (currentTopY() - dy > maxScrollY()) {
                     // Don't let the sheet go beyond its bottom bounds.
@@ -240,7 +241,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         // Send a callback if the state changed.
         State newState;
         if (!canScrollDownwardsAnyFurther()) {
-            newState = State.COLLAPSED;
+            newState = State.AT_PEEK_HEIGHT;
         } else if (hasSheetReachedTheTop()) {
             newState = State.EXPANDED;
         } else {

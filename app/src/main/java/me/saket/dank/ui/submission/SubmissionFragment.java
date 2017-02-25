@@ -32,6 +32,8 @@ import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.alexvasilkov.gestures.GestureController;
+import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
@@ -46,6 +48,7 @@ import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
+import butterknife.BindDimen;
 import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -91,6 +94,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
 
     @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
+    @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
 
     private ExpandablePageLayout submissionPageLayout;
     private CommentsAdapter commentsAdapter;
@@ -101,7 +105,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
     private int deviceDisplayWidth;
     private int deviceDisplayHeight;
-    private int commentsTopMarginForImage;
 
     public interface Callbacks {
         void onSubmissionToolbarUpClick();
@@ -201,58 +204,79 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     }
 
     private void setupContentImageView() {
-        Views.setMarginBottom(contentImageContainer, commentListParentSheet.getPeekHeight());
-        contentImageView.getController().getSettings().setGravity(Gravity.TOP);
+        contentImageView.setGravity(Gravity.TOP);
+        Views.setMarginBottom(contentImageContainer, commentsSheetMinimumVisibleHeight);
     }
+
+    private boolean isCommentSheetBeneathImage;
 
     private void setupCommentsSheet() {
         toolbarBackground.syncBottomWithViewTop(commentListParentSheet);
         //contentImageContainer.syncParallaxWith(commentListParentSheet);
 
-        Func1<?, Integer> revealDistanceFunc = (Func1<Object, Integer>) o -> {
+        Func1<?, Integer> revealDistanceFunc = __ -> {
             // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
             // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
-            return Math.min(commentListParentSheet.getHeight() * 7 / 10, commentsTopMarginForImage);
+            return (int) Math.min(
+                    commentListParentSheet.getHeight() * 8 / 10,
+                    contentImageView.getZoomedImageHeight() - commentListParentSheet.getTop()
+            );
         };
 
         // Toggle sheet's collapsed state on image click.
         contentImageView.setOnClickListener(v -> {
-            if (commentListParentSheet.isCollapsed()) {
-                commentListParentSheet.smoothScrollTo(revealDistanceFunc.call(null));
-            } else {
-                commentListParentSheet.collapse();
-            }
+            commentListParentSheet.smoothScrollTo(revealDistanceFunc.call(null));
         });
 
         // and on submission title click.
         commentsHeaderView.setOnClickListener(v -> {
-            if (commentListParentSheet.isCollapsed()) {
+            if (commentListParentSheet.isAtPeekHeightState()) {
                 commentListParentSheet.smoothScrollTo(revealDistanceFunc.call(null));
             }
         });
 
-        // Collapse the sheet when the image is being zoomed.
-//        contentImageView.setOnStateChangedListener(new SubsamplingScaleImageView.OnStateChangedListener() {
-//            private float oldScale = contentImageView.getScale();
-//
-//            @Override
-//            public void onScaleChanged(float newScale, int origin) {
-//                boolean isZoomingIn = newScale > oldScale;
-//
-//                if (isZoomingIn && newScale > contentImageView.getMinScale() && !commentListParentSheet.isCollapsed()
-//                        && !commentListParentSheet.isSmoothScrollingOngoing()) {
-//                    commentListParentSheet.post(() -> {
-//                        commentListParentSheet.collapse();
-//                    });
-//                }
-//                oldScale = newScale;
-//            }
-//
-//            @Override
-//            public void onCenterChanged(PointF newCenter, int origin) {
-//                // The source center has been changed. This can be a result of panning or zooming.
-//            }
-//        });
+        // TODO: 25/02/17 Document.
+        Func1<?, Boolean> isCommentSheetBeneathImageFunc = __ -> {
+            return (int) commentListParentSheet.getY() == (int) contentImageView.getZoomedImageHeight();
+        };
+
+        // Keep the comments sheet always beneath the image.
+        contentImageView.getController().addOnStateChangeListener(new GestureController.OnStateChangeListener() {
+            float lastZoom = contentImageView.getZoom();
+
+            @Override
+            public void onStateChanged(State state) {
+                if (contentImageView.getDrawable() == null) {
+                    // Image isn't present yet. Ignore.
+                    return;
+                }
+
+                boolean isZoomingOut = lastZoom > state.getZoom();
+                lastZoom = state.getZoom();
+
+                int imageRevealDistance = (int) Math.min(
+                        commentListParentSheet.getHeight() - commentsSheetMinimumVisibleHeight,
+                        contentImageView.getZoomedImageHeight() - commentListParentSheet.getTop()
+                );
+
+                if (isCommentSheetBeneathImage
+                        // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
+                        // it becomes difficult to lock the comments sheet beneath the image.
+                        || (isZoomingOut && contentImageView.getZoomedImageHeight() < commentListParentSheet.getY())) {
+                    commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - imageRevealDistance);
+                    commentListParentSheet.scrollTo(imageRevealDistance);
+                }
+            }
+
+            @Override
+            public void onStateReset(State oldState, State newState) {
+
+            }
+        });
+
+        commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
+            isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.call(null);
+        });
     }
 
     @Override
@@ -355,7 +379,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                             protected void setResource(GlideDrawable resource) {
                                 contentLoadProgressView.hide();
 
-                                int imageMaxVisibleHeight = deviceDisplayHeight - commentListParentSheet.getPeekHeight();
+                                int imageMaxVisibleHeight = deviceDisplayHeight - commentsSheetMinimumVisibleHeight;
                                 float widthResizeFactor = deviceDisplayWidth / (float) resource.getIntrinsicWidth();
                                 int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
                                 //contentImageContainer.setThresholdHeightForParallax(visibleImageHeight);
@@ -375,17 +399,17 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
                                 // Reveal the image smoothly or right away depending upon whether or not this
                                 // page is already expanded and visible.
-                                Views.executeOnNextLayout(contentImageView, () -> {
+                                Views.executeOnNextLayout(commentListParentSheet, () -> {
+                                    commentListParentSheet.setScrollingEnabled(true);
+
+                                    // TODO: 25/02/17 calculate this revealdistance using revealDistanceFunc.
                                     int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
-                                    commentsTopMarginForImage = revealDistance;
+                                    commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
 
                                     if (submissionPageLayout.isExpanded()) {
                                         // Smoothly reveal the image.
-                                        commentListParentSheet.setScrollingEnabled(true);
                                         commentListParentSheet.smoothScrollTo(revealDistance);
-
                                     } else {
-                                        commentListParentSheet.setScrollingEnabled(true);
                                         commentListParentSheet.scrollTo(revealDistance);
                                     }
                                 });
@@ -462,9 +486,9 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
             //noinspection SimplifiableIfStatement
             if (touchInsideImageView) {
-                // Avoid pulling the page if the image is being zoomed in. This should ideally be handled by SubmissionParallaxImageContainer
-                //return contentImageView.getScale() > contentImageView.getMinScale();
-                return true;
+                if (contentImageView.canPanUpwardsAnymore()) {
+                    return true;
+                }
             }
 
             return false;

@@ -16,6 +16,7 @@ public class ZoomableImageView extends GestureImageView {
 
     public ZoomableImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        getController().getSettings().setOverzoomFactor(1.3f);
     }
 
     @Override
@@ -27,6 +28,26 @@ public class ZoomableImageView extends GestureImageView {
                 return true;
             }
         });
+    }
+
+    public void setGravity(int gravity) {
+        getController().getSettings().setGravity(gravity);
+    }
+
+    public int getImageHeight() {
+        return getController().getSettings().getImageH();
+    }
+
+    public float getZoomedImageHeight() {
+        return (float) getImageHeight() * getZoom();
+    }
+
+    public float getZoom() {
+        return getController().getState().getZoom();
+    }
+
+    public boolean canPanUpwardsAnymore() {
+        return getController().getState().getY() != 0f;
     }
 
 }

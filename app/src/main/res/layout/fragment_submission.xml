@@ -129,7 +129,6 @@
         android:layout_height="match_parent"
         android:layout_below="@+id/toolbar"
         android:background="@color/window_background"
-        app:peekHeight="70dp"
         tools:ignore="UnknownIdInLayout"
         tools:layout_below="@+id/submission_comments_header">
 
