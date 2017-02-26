@@ -68,6 +68,7 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
 import rx.Subscription;
+import rx.functions.Func0;
 import rx.functions.Func1;
 import timber.log.Timber;
 
@@ -216,7 +217,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
             return (int) Math.min(
                     commentListParentSheet.getHeight() * 8 / 10,
-                    contentImageView.getZoomedImageHeight() - commentListParentSheet.getTop()
+                    contentImageView.getVisibleZoomedImageHeight() - commentListParentSheet.getTop()
             );
         };
 
@@ -232,9 +233,9 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             }
         });
 
-        // TODO: 25/02/17 Document.
-        Func1<?, Boolean> isCommentSheetBeneathImageFunc = __ -> {
-            return (int) commentListParentSheet.getY() == (int) contentImageView.getZoomedImageHeight();
+        // Calculates if the top of the comment sheet is directly below the image.
+        Func0<Boolean> isCommentSheetBeneathImageFunc = () -> {
+            return (int) commentListParentSheet.getY() == (int) contentImageView.getVisibleZoomedImageHeight();
         };
 
         // Keep the comments sheet always beneath the image.
@@ -251,16 +252,18 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 boolean isZoomingOut = lastZoom > state.getZoom();
                 lastZoom = state.getZoom();
 
-                int imageRevealDistance = (int) Math.min(contentImageView.getHeight(), contentImageView.getZoomedImageHeight())
+                int imageRevealDistance = (int) Math.min(contentImageView.getHeight(), contentImageView.getVisibleZoomedImageHeight())
                         - commentListParentSheet.getTop();
 
                 if (isCommentSheetBeneathImage
                         // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
                         // it becomes difficult to lock the comments sheet beneath the image.
-                        || (isZoomingOut && contentImageView.getZoomedImageHeight() < commentListParentSheet.getY())) {
+                        || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
                     commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - imageRevealDistance);
                     commentListParentSheet.scrollTo(imageRevealDistance);
                 }
+
+                isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.call();
             }
 
             @Override
@@ -270,7 +273,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         });
 
         commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
-            isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.call(null);
+            isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.call();
         });
     }
 
