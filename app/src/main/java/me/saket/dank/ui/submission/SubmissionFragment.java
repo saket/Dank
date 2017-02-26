@@ -33,7 +33,6 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alexvasilkov.gestures.GestureController;
-import com.alexvasilkov.gestures.Settings;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
@@ -383,18 +382,12 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                                     int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
 
                                     // If the image is longer than the visible window, zoom in to fill the width on double tap.
-                                    boolean isImageLongerThanVisibleWindow = imageMaxVisibleHeight < resource.getIntrinsicHeight();
+                                    boolean isImageLongerThanVisibleWindow = imageMaxVisibleHeight < (resource.getIntrinsicHeight() * widthResizeFactor);
                                     if (isImageLongerThanVisibleWindow && resource.getIntrinsicWidth() <= resource.getIntrinsicHeight()) {
-                                        //contentImageView.setDoubleTapZoomScale(widthResizeFactor);
+                                        contentImageView.getController().getSettings().setFillViewport(true);
                                     }
 
-                                    contentImageView.getController().getSettings().setFitMethod(Settings.Fit.HORIZONTAL);
                                     contentImageView.setImageDrawable(resource);
-
-//                                contentImageView.setImage(
-//                                        ImageSource.cachedBitmap(resource),
-//                                        new ImageViewState(widthResizeFactor, new PointF(0, 0), SubsamplingScaleImageView.ORIENTATION_0)
-//                                );
 
                                     // Reveal the image smoothly or right away depending upon whether or not this
                                     // page is already expanded and visible.
