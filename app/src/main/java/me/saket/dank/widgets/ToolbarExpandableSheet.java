@@ -17,7 +17,7 @@ import me.saket.dank.widgets.InboxUI.BaseExpandablePageLayout;
 public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
     @BindDimen(R.dimen.subreddit_toolbar_sheet_elevation) int elevationOnExpand;
-    boolean isVisible;
+    boolean isExpanded;
 
     private StateChangeListener stateChangeListener;
 
@@ -32,7 +32,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
         // Hide on start.
         Views.executeOnMeasure(this, () -> {
             setClippedDimensions(getWidth(), 0);
-            isVisible = false;
+            isExpanded = false;
         });
 
         // Avoid the shadows from showing up above the sheet. This is done by
@@ -47,7 +47,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
     }
 
     public void toggleVisibility() {
-        if (isVisible()) {
+        if (isExpanded()) {
             collapse();
         } else {
             expand();
@@ -55,10 +55,10 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
     }
 
     public void expand() {
-        if (isVisible) {
+        if (isExpanded) {
             return;
         }
-        isVisible = true;
+        isExpanded = true;
 
         animateDimensions(getWidth(), getHeight());
         animate()
@@ -70,10 +70,10 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
     }
 
     public void collapse() {
-        if (!isVisible) {
+        if (!isExpanded) {
             return;
         }
-        isVisible = false;
+        isExpanded = false;
 
         animateDimensions(getWidth(), 0);
         animate()
@@ -84,15 +84,15 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
                 .start();
     }
 
-    public boolean isVisible() {
-        return isVisible;
+    public boolean isExpanded() {
+        return isExpanded;
     }
 
     public void hideOnOutsideTouch(RecyclerView recyclerView) {
         recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
             @Override
             public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-                if (isVisible()) {
+                if (isExpanded()) {
                     collapse();
                 }
                 return super.onInterceptTouchEvent(rv, e);

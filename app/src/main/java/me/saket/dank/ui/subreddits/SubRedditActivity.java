@@ -1,5 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
+import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
 
@@ -13,7 +14,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import net.dean.jraw.paginators.SubredditPaginator;
@@ -43,8 +43,10 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
     @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
     @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
-    @BindView(R.id.subreddit_progress) ProgressBar progressBar;
+    @BindView(R.id.subreddit_progress) View progressView;
+
     private SubmissionFragment submissionFragment;
+    private SubRedditSubmissionsAdapter submissionsAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -69,9 +71,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         submissionList.setItemAnimator(new DefaultItemAnimator());
         submissionList.setExpandablePage(submissionPage, toolbarContainer);
 
-        SubRedditSubmissionsAdapter submissionsAdapter = new SubRedditSubmissionsAdapter();
-        submissionList.setAdapter(submissionsAdapter);
-
+        submissionsAdapter = new SubRedditSubmissionsAdapter();
         submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
             submissionFragment.populateUi(submission);
             submissionPage.post(() -> {
@@ -82,6 +82,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId);
             });
         });
+        submissionList.setAdapter(submissionsAdapter);
 
         // Setup submission fragment.
         submissionFragment = (SubmissionFragment) getFragmentManager().findFragmentById(submissionPage.getId());
@@ -94,28 +95,13 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 .commit();
 
         // Get frontpage submissions.
-        SubredditPaginator frontPagePaginator = Dank.reddit().frontPagePaginator();
-        Subscription subscription = Dank.reddit()
-                .authenticateIfNeeded()
-                .flatMap(__ -> just(frontPagePaginator.next()))
-                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
-                .compose(RxUtils.applySchedulers())
-                .doOnTerminate(() -> progressBar.setVisibility(View.GONE))
-                .subscribe(submissionsAdapter, logError("Couldn't get front-page"));
-        unsubscribeOnDestroy(subscription);
+        loadSubmissions(Dank.reddit().frontPagePaginator());
     }
 
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
-
-        toolbarSheet.hideOnOutsideTouch(submissionList);
-        toolbarSheet.setStateChangeListener(visible -> {
-            if (!visible) {
-                toolbarSheet.removeAllViews();
-                toolbarSheet.collapse();
-            }
-        });
+        setupToolbarSheet();
     }
 
     @Override
@@ -130,14 +116,42 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         submissionList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
+    private void loadSubmissions(SubredditPaginator subredditPaginator) {
+        submissionsAdapter.updateData(null);
+
+        Subscription subscription = Dank.reddit()
+                .authenticateIfNeeded()
+                .flatMap(__ -> just(subredditPaginator.next()))
+                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
+                .compose(RxUtils.applySchedulers())
+                .compose(doOnStartAndFinish(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+                .subscribe(submissionsAdapter, logError("Couldn't get front-page"));
+        unsubscribeOnDestroy(subscription);
+    }
+
+    private void setupToolbarSheet() {
+        toolbarSheet.hideOnOutsideTouch(submissionList);
+        toolbarSheet.setStateChangeListener(visible -> {
+            if (!visible) {
+                toolbarSheet.removeAllViews();
+                toolbarSheet.collapse();
+            }
+        });
+    }
+
     @OnClick(R.id.subreddit_toolbar_title)
     void onClickSubredditPicker() {
-        if (toolbarSheet.isVisible()) {
+        if (toolbarSheet.isExpanded()) {
             toolbarSheet.collapse();
 
         } else {
             SubredditPickerView pickerView = SubredditPickerView.showIn(toolbarSheet);
             pickerView.post(() -> toolbarSheet.expand());
+            pickerView.setOnSubredditClickListener(subreddit -> {
+                toolbarSheet.collapse();
+                setTitle(subreddit.getDisplayName());
+                loadSubmissions(Dank.reddit().subredditPaginator(subreddit.getDisplayName()));
+            });
         }
     }
 
@@ -182,7 +196,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 submissionList.collapse();
             }
 
-        } else if (toolbarSheet.isVisible()) {
+        } else if (toolbarSheet.isExpanded()) {
             toolbarSheet.collapse();
 
         } else {

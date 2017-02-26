@@ -48,7 +48,11 @@ public class DankRedditClient {
     }
 
     public SubredditPaginator frontPagePaginator() {
-        return new SubredditPaginator(redditClient, "pics");
+        return new SubredditPaginator(redditClient);
+    }
+
+    public SubredditPaginator subredditPaginator(String subredditName) {
+        return new SubredditPaginator(redditClient, subredditName);
     }
 
     /**

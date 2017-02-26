@@ -23,10 +23,6 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<Subreddit, Subred
 
     private OnSubredditClickListener clickListener;
 
-    interface OnSubredditClickListener {
-        void onSubredditClick(Subreddit subreddit);
-    }
-
     public SubredditAdapter() {
         setHasStableIds(true);
     }

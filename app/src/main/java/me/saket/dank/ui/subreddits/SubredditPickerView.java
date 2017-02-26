@@ -42,16 +42,12 @@ public class SubredditPickerView extends FrameLayout {
         addView(LayoutInflater.from(context).inflate(R.layout.fragment_subreddit_picker, this, false));
         ButterKnife.bind(this, this);
 
-        // Setup Subreddit list.
         FlexboxLayoutManager flexboxLayoutManager = new FlexboxLayoutManager();
         flexboxLayoutManager.setFlexDirection(FlexDirection.ROW);
         flexboxLayoutManager.setJustifyContent(JustifyContent.FLEX_START);
         subredditList.setLayoutManager(flexboxLayoutManager);
 
         subredditAdapter = new SubredditAdapter();
-        subredditAdapter.setOnSubredditClickListener(subreddit -> {
-            // TODO: 26/02/17 Open subreddit.
-        });
         subredditList.setAdapter(subredditAdapter);
 
         apiSubscription = Dank.reddit()
@@ -62,6 +58,14 @@ public class SubredditPickerView extends FrameLayout {
                 .compose(doOnStartAndFinish(setSubredditLoadProgressVisible()))
                 .subscribe(subredditAdapter, logError("Failed to get subreddits"));
     }
+
+// ======== PUBLIC APIs ======== //
+
+    public void setOnSubredditClickListener(OnSubredditClickListener listener) {
+        subredditAdapter.setOnSubredditClickListener(listener);
+    }
+
+// ======== END PUBLIC APIs ======== //
 
     @Override
     protected void onDetachedFromWindow() {
@@ -86,4 +90,5 @@ public class SubredditPickerView extends FrameLayout {
             }
         };
     }
+
 }
