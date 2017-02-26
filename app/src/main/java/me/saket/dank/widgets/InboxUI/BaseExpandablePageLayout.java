@@ -24,7 +24,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     private Path path;
     private RectF clippedDimensionRect;
     private ValueAnimator dimensionAnimator;
-    private boolean isClipped;
+    private boolean isFullyVisible;
 
     public BaseExpandablePageLayout(Context context) {
         super(context);
@@ -56,6 +56,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
             public void getOutline(View view, Outline outline) {
                 outline.setRect(0, 0, ((int) clippedDimensionRect.width()), (int) clippedDimensionRect.height());
             }
+
         });
     }
 
@@ -63,9 +64,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
 
-        if (!isClipped) {
-            animateDimensions(w, h);
-        } else {
+        if (isFullyVisible) {
             setClippedDimensions(w, h);
         }
     }
@@ -77,9 +76,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     }
 
     protected void animateDimensions(Integer toWidth, Integer toHeight) {
-        if (dimensionAnimator != null) {
-            dimensionAnimator.cancel();
-        }
+        cancelOngoingClipAnimation();
 
         final Float fromWidth = getClippedWidth();
         final Float fromHeight = getClippedHeight();
@@ -107,7 +104,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     }
 
     public void setClippedDimensions(Float newClippedWidth, Float newClippedHeight) {
-        isClipped = newClippedWidth != getWidth() || newClippedHeight != getHeight();
+        isFullyVisible = newClippedWidth > 0 && newClippedHeight > 0 && newClippedWidth == getWidth() && newClippedHeight == getHeight();
 
         clippedDimensionRect.right = newClippedWidth;
         clippedDimensionRect.bottom = newClippedHeight;
@@ -124,13 +121,6 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
      */
     public void resetClipping() {
         setClippedDimensions((float) getWidth(), (float) getHeight());
-    }
-
-    /**
-     * When this is false, the entire page is visible.
-     */
-    public boolean isClipped() {
-        return isClipped;
     }
 
     protected float getClippedWidth() {
@@ -151,6 +141,12 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
 
     protected long getAnimationDuration() {
         return InboxRecyclerView.ANIM_DURATION_EXPAND;
+    }
+
+    protected void cancelOngoingClipAnimation() {
+        if (dimensionAnimator != null) {
+            dimensionAnimator.cancel();
+        }
     }
 
 }

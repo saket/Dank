@@ -5,7 +5,6 @@ import static rx.Observable.just;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
@@ -35,7 +34,6 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
-import timber.log.Timber;
 
 public class SubredditActivity extends DankActivity implements SubmissionFragment.Callbacks {
 
@@ -86,11 +84,11 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         });
 
         // Setup submission fragment.
-        submissionFragment = (SubmissionFragment) getSupportFragmentManager().findFragmentById(submissionPage.getId());
+        submissionFragment = (SubmissionFragment) getFragmentManager().findFragmentById(submissionPage.getId());
         if (submissionFragment == null) {
             submissionFragment = SubmissionFragment.create();
         }
-        getSupportFragmentManager()
+        getFragmentManager()
                 .beginTransaction()
                 .replace(submissionPage.getId(), submissionFragment)
                 .commit();
@@ -112,26 +110,10 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         super.onPostCreate(savedInstanceState);
 
         toolbarSheet.hideOnOutsideTouch(submissionList);
-        toolbarSheet.setStateChangeListener(isVisible -> {
-            Fragment pickerFragment = getSupportFragmentManager().findFragmentByTag(SubredditPickerFragment.TAG);
-            Timber.i("isVisible: %s", isVisible);
-
-            if (isVisible) {
-                if (pickerFragment == null) {
-                    pickerFragment = SubredditPickerFragment.create();
-                }
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .replace(toolbarSheet.getId(), pickerFragment, SubredditPickerFragment.TAG)
-                        .commitNow();
-                toolbarSheet.show();
-
-            } else {
-                getSupportFragmentManager()
-                        .beginTransaction()
-                        .remove(pickerFragment)
-                        .commitNow();
-                toolbarSheet.hide();
+        toolbarSheet.setStateChangeListener(visible -> {
+            if (!visible) {
+                toolbarSheet.removeAllViews();
+                toolbarSheet.collapse();
             }
         });
     }
@@ -150,7 +132,13 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
     @OnClick(R.id.subreddit_toolbar_title)
     void onClickSubredditPicker() {
-        toolbarSheet.toggleVisibility();
+        if (toolbarSheet.isVisible()) {
+            toolbarSheet.collapse();
+
+        } else {
+            SubredditPickerView pickerView = SubredditPickerView.showIn(toolbarSheet);
+            pickerView.post(() -> toolbarSheet.expand());
+        }
     }
 
     @Override
@@ -193,10 +181,13 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
             if (!backPressHandled) {
                 submissionList.collapse();
             }
-            return;
-        }
 
-        super.onBackPressed();
+        } else if (toolbarSheet.isVisible()) {
+            toolbarSheet.collapse();
+
+        } else {
+            super.onBackPressed();
+        }
     }
 
 }

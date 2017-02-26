@@ -17,8 +17,8 @@ import me.saket.dank.widgets.InboxUI.BaseExpandablePageLayout;
 public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
     @BindDimen(R.dimen.subreddit_toolbar_sheet_elevation) int elevationOnExpand;
+    boolean isVisible;
 
-    private boolean isVisible;
     private StateChangeListener stateChangeListener;
 
     public interface StateChangeListener {
@@ -48,13 +48,13 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
     public void toggleVisibility() {
         if (isVisible()) {
-            hide();
+            collapse();
         } else {
-            show();
+            expand();
         }
     }
 
-    public void show() {
+    public void expand() {
         if (isVisible) {
             return;
         }
@@ -69,7 +69,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
                 .start();
     }
 
-    public void hide() {
+    public void collapse() {
         if (!isVisible) {
             return;
         }
@@ -93,7 +93,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
             @Override
             public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
                 if (isVisible()) {
-                    hide();
+                    collapse();
                 }
                 return super.onInterceptTouchEvent(rv, e);
             }
