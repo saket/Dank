@@ -36,6 +36,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<CommentNode, Comme
     }
 
     @Override
+    public void call(List<CommentNode> commentNodes) {
+        updateData(commentNodes);
+    }
+
+    @Override
     protected CommentViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
         return CommentViewHolder.create(parent);
     }
@@ -51,8 +56,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<CommentNode, Comme
     }
 
     @Override
-    public void call(List<CommentNode> commentNodes) {
-        updateData(commentNodes);
+    public long getItemId(int position) {
+        CommentNode commentNode = getItem(position);
+        return commentNode.getComment().getId().hashCode();
     }
 
     public static class CommentViewHolder extends RecyclerView.ViewHolder {
