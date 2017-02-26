@@ -80,8 +80,16 @@ public class ZoomableImageView extends GestureImageView {
         return getController().getState().getZoom();
     }
 
-    public boolean canPanUpwardsAnymore() {
-        return getController().getState().getY() != 0f;
+    /**
+     * Whether the image can be panned anymore vertically, upwards or downwards depending upon <var>upwardPan</var>.
+     */
+    public boolean canPanVertically(boolean upwardPan) {
+        float imageY = getController().getState().getY();
+        if (upwardPan) {
+            return imageY != 0;
+        } else {
+            return getHeight() - getZoomedImageHeight() != imageY;
+        }
     }
 
     @Override

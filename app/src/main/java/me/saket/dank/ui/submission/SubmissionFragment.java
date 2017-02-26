@@ -485,7 +485,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
             boolean touchInsideImageView = imageBounds.contains((int) downX, (int) downY);
 
             //noinspection RedundantIfStatement
-            if (touchInsideImageView && contentImageView.canPanUpwardsAnymore()) {
+            if (touchInsideImageView && contentImageView.canPanVertically(!upwardPagePull)) {
                 return true;
             }
 
