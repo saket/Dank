@@ -4,11 +4,13 @@ import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
 
 import android.os.Bundle;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
@@ -37,7 +39,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     @BindView(R.id.subreddit_toolbar_container) ViewGroup toolbarContainer;
     @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
     @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
-    @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet subredditListContainer;
+    @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
     @BindView(R.id.subreddit_subreddit_list) RecyclerView subRedditList;
     @BindView(R.id.subreddit_progress) ProgressBar progressBar;
 
@@ -100,8 +102,22 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 .doOnTerminate(() -> progressBar.setVisibility(View.GONE))
                 .subscribe(submissionsAdapter, logError("Couldn't get front-page"));
         unsubscribeOnDestroy(subscription);
+    }
 
-        subredditListContainer.setToolbar(toolbar);
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
+
+        // Close the toolbar sheet if anywhere outside is touched.
+        submissionList.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
+            @Override
+            public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
+                if (toolbarSheet.isVisible()) {
+                    toolbarSheet.toggleVisibility();
+                }
+                return super.onInterceptTouchEvent(rv, e);
+            }
+        });
     }
 
     @Override
@@ -118,7 +134,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
     @OnClick(R.id.subreddit_toolbar_title)
     void onClickSubredditName() {
-        subredditListContainer.toggleVisibility();
+        toolbarSheet.toggleVisibility();
     }
 
 // ======== NAVIGATION ======== //

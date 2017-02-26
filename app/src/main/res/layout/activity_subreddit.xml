@@ -37,7 +37,7 @@
             android:layout_height="match_parent"
             android:background="@color/toolbar"
             android:paddingEnd="@dimen/spacing16"
-            android:elevation="@dimen/subreddit_toolbar_sheet_elevation">
+            >
 
             <Button
                 android:id="@+id/subreddit_toolbar_title"
