@@ -33,6 +33,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alexvasilkov.gestures.GestureController;
+import com.alexvasilkov.gestures.Settings;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
@@ -64,7 +65,6 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
 import me.saket.dank.widgets.AnimatableToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
-import me.saket.dank.widgets.InboxUI.SubmissionParallaxImageContainer;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
 import rx.Subscription;
@@ -83,7 +83,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     @BindView(R.id.submission_content_progress) AnimatableProgressBar contentLoadProgressView;
     @BindView(R.id.submission_webview_container) ViewGroup contentWebViewContainer;
     @BindView(R.id.submission_webview) WebView contentWebView;
-    @BindView(R.id.submission_image_container) SubmissionParallaxImageContainer contentImageContainer;
     @BindView(R.id.submission_image) ZoomableImageView contentImageView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
@@ -104,7 +103,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
 
     private int deviceDisplayWidth;
-    private int deviceDisplayHeight;
 
     public interface Callbacks {
         void onSubmissionToolbarUpClick();
@@ -160,7 +158,6 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
         DisplayMetrics metrics = new DisplayMetrics();
         ((WindowManager) getActivity().getSystemService(Context.WINDOW_SERVICE)).getDefaultDisplay().getMetrics(metrics);
         deviceDisplayWidth = metrics.widthPixels;
-        deviceDisplayHeight = metrics.heightPixels;
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
@@ -205,7 +202,7 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
 
     private void setupContentImageView() {
         contentImageView.setGravity(Gravity.TOP);
-        Views.setMarginBottom(contentImageContainer, commentsSheetMinimumVisibleHeight);
+        Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
     }
 
     private boolean isCommentSheetBeneathImage;
@@ -254,10 +251,8 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                 boolean isZoomingOut = lastZoom > state.getZoom();
                 lastZoom = state.getZoom();
 
-                int imageRevealDistance = (int) Math.min(
-                        commentListParentSheet.getHeight() - commentsSheetMinimumVisibleHeight,
-                        contentImageView.getZoomedImageHeight() - commentListParentSheet.getTop()
-                );
+                int imageRevealDistance = (int) Math.min(contentImageView.getHeight(), contentImageView.getZoomedImageHeight())
+                        - commentListParentSheet.getTop();
 
                 if (isCommentSheetBeneathImage
                         // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
@@ -377,41 +372,43 @@ public class SubmissionFragment extends Fragment implements ExpandablePageLayout
                         .into(new ImageViewTarget<GlideDrawable>(contentImageView) {
                             @Override
                             protected void setResource(GlideDrawable resource) {
-                                contentLoadProgressView.hide();
+                                Views.executeOnMeasure(contentImageView, () -> {
+                                    contentLoadProgressView.hide();
 
-                                int imageMaxVisibleHeight = deviceDisplayHeight - commentsSheetMinimumVisibleHeight;
-                                float widthResizeFactor = deviceDisplayWidth / (float) resource.getIntrinsicWidth();
-                                int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
-                                //contentImageContainer.setThresholdHeightForParallax(visibleImageHeight);
+                                    int imageMaxVisibleHeight = contentImageView.getHeight();
+                                    float widthResizeFactor = deviceDisplayWidth / (float) resource.getIntrinsicWidth();
+                                    int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
 
-                                // If the image is longer than the visible window, zoom in to fill the width on double tap.
-                                boolean isImageLongerThanVisibleWindow = imageMaxVisibleHeight < resource.getIntrinsicHeight();
-                                if (isImageLongerThanVisibleWindow && resource.getIntrinsicWidth() <= resource.getIntrinsicHeight()) {
-                                    //contentImageView.setDoubleTapZoomScale(widthResizeFactor);
-                                }
+                                    // If the image is longer than the visible window, zoom in to fill the width on double tap.
+                                    boolean isImageLongerThanVisibleWindow = imageMaxVisibleHeight < resource.getIntrinsicHeight();
+                                    if (isImageLongerThanVisibleWindow && resource.getIntrinsicWidth() <= resource.getIntrinsicHeight()) {
+                                        //contentImageView.setDoubleTapZoomScale(widthResizeFactor);
+                                    }
 
-                                contentImageView.setImageDrawable(resource);
+                                    contentImageView.getController().getSettings().setFitMethod(Settings.Fit.HORIZONTAL);
+                                    contentImageView.setImageDrawable(resource);
 
 //                                contentImageView.setImage(
 //                                        ImageSource.cachedBitmap(resource),
 //                                        new ImageViewState(widthResizeFactor, new PointF(0, 0), SubsamplingScaleImageView.ORIENTATION_0)
 //                                );
 
-                                // Reveal the image smoothly or right away depending upon whether or not this
-                                // page is already expanded and visible.
-                                Views.executeOnNextLayout(commentListParentSheet, () -> {
-                                    commentListParentSheet.setScrollingEnabled(true);
+                                    // Reveal the image smoothly or right away depending upon whether or not this
+                                    // page is already expanded and visible.
+                                    Views.executeOnNextLayout(commentListParentSheet, () -> {
+                                        commentListParentSheet.setScrollingEnabled(true);
 
-                                    // TODO: 25/02/17 calculate this revealdistance using revealDistanceFunc.
-                                    int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
-                                    commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
+                                        // TODO: 25/02/17 calculate this revealdistance using revealDistanceFunc.
+                                        int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
+                                        commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
 
-                                    if (submissionPageLayout.isExpanded()) {
-                                        // Smoothly reveal the image.
-                                        commentListParentSheet.smoothScrollTo(revealDistance);
-                                    } else {
-                                        commentListParentSheet.scrollTo(revealDistance);
-                                    }
+                                        if (submissionPageLayout.isExpanded()) {
+                                            // Smoothly reveal the image.
+                                            commentListParentSheet.smoothScrollTo(revealDistance);
+                                        } else {
+                                            commentListParentSheet.scrollTo(revealDistance);
+                                        }
+                                    });
                                 });
                             }
                         });

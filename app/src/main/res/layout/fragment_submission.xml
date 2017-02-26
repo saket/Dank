@@ -4,9 +4,10 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <me.saket.dank.widgets.InboxUI.SubmissionParallaxImageContainer
+    <FrameLayout
         android:id="@+id/submission_image_container"
         android:layout_width="match_parent"
+        android:background="@color/gray_600"
         android:layout_height="match_parent">
 
         <!-- TODO: set content-description in code. -->
@@ -16,7 +17,7 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             tools:ignore="ContentDescription" />
-    </me.saket.dank.widgets.InboxUI.SubmissionParallaxImageContainer>
+    </FrameLayout>
 
     <!-- Shadow behind the toolbar so that when the toolbar is transparent (in
          case of photo/video submissions, the toolbar icons are still visible. -->
