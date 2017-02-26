@@ -52,9 +52,11 @@ public class ZoomableImageView extends GestureImageView {
                 boolean isZoomingIn = state.getZoom() > lastZoom;
                 if (isZoomingIn) {
                     getController().getSettings().setOverzoomFactor(2f);
-                } else if (state.getZoom() < 1f) {
+                } else {
                     getController().getSettings().setOverzoomFactor(1f);
                 }
+
+                lastZoom = state.getZoom();
             }
 
             @Override
