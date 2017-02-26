@@ -3,9 +3,11 @@ package me.saket.dank.widgets;
 import android.content.Context;
 import android.support.annotation.NonNull;
 import android.util.AttributeSet;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 
 import com.alexvasilkov.gestures.GestureController;
+import com.alexvasilkov.gestures.State;
 import com.alexvasilkov.gestures.views.GestureImageView;
 
 /**
@@ -14,18 +16,50 @@ import com.alexvasilkov.gestures.views.GestureImageView;
  */
 public class ZoomableImageView extends GestureImageView {
 
+    private GestureDetector gestureDetector;
+
     public ZoomableImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
-        getController().getSettings().setOverzoomFactor(1.3f);
-    }
 
-    @Override
-    public void setOnClickListener(OnClickListener listener) {
         getController().setOnGesturesListener(new GestureController.SimpleOnGestureListener() {
             @Override
             public boolean onSingleTapConfirmed(@NonNull MotionEvent event) {
-                listener.onClick(ZoomableImageView.this);
+                performClick();
                 return true;
+            }
+        });
+
+        // Bug workarounds: GestureImageView doesn't request parent ViewGroups to stop intercepting touch
+        // events when it starts consuming them to zoom.
+        gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+            @Override
+            public boolean onDoubleTapEvent(MotionEvent e) {
+                getParent().requestDisallowInterceptTouchEvent(true);
+                return super.onDoubleTapEvent(e);
+            }
+        });
+
+        getController().addOnStateChangeListener(new GestureController.OnStateChangeListener() {
+            public float lastZoom = -1;
+
+            @Override
+            public void onStateChanged(State state) {
+                if (lastZoom == -1) {
+                    lastZoom = state.getZoom();
+                }
+
+                // Overscroll only when zooming in.
+                boolean isZoomingIn = state.getZoom() > lastZoom;
+                if (isZoomingIn) {
+                    getController().getSettings().setOverzoomFactor(2f);
+                } else if (state.getZoom() < 1f) {
+                    getController().getSettings().setOverzoomFactor(1f);
+                }
+            }
+
+            @Override
+            public void onStateReset(State oldState, State newState) {
+
             }
         });
     }
@@ -48,6 +82,18 @@ public class ZoomableImageView extends GestureImageView {
 
     public boolean canPanUpwardsAnymore() {
         return getController().getState().getY() != 0f;
+    }
+
+    @Override
+    public boolean onTouchEvent(@NonNull MotionEvent event) {
+        gestureDetector.onTouchEvent(event);
+
+        if (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() == 2) {
+            // Two-finger zoom is probably going to start. Disallow parent from intercepting this gesture.
+            getParent().requestDisallowInterceptTouchEvent(true);
+        }
+
+        return super.onTouchEvent(event);
     }
 
 }
