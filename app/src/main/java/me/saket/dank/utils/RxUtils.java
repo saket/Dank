@@ -31,4 +31,10 @@ public class RxUtils {
         return error -> Timber.e(error, errorMessage);
     }
 
+    public static <T> Observable.Transformer<T, T> doOnStartAndFinish(Action1<Boolean> isOngoingAction) {
+        return observable -> observable
+                .doOnSubscribe(() -> isOngoingAction.call(true))
+                .doOnUnsubscribe(() -> isOngoingAction.call(false));
+    }
+
 }

@@ -6,7 +6,6 @@ import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
 
 import android.annotation.SuppressLint;
-import android.app.Fragment;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -53,6 +52,7 @@ import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.BuildConfig;
+import me.saket.dank.DankFragment;
 import me.saket.dank.R;
 import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;
@@ -72,7 +72,7 @@ import rx.functions.Func1;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class SubmissionFragment extends Fragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
+public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
     private static final String KEY_SUBMISSION_JSON = "submissionJson";
     private static final String BLANK_PAGE_URL = "about:blank";

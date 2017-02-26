@@ -1,6 +1,7 @@
 package me.saket.dank.widgets.InboxUI;
 
 import android.animation.ObjectAnimator;
+import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
@@ -61,7 +62,10 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     @Override
     protected void onSizeChanged(int w, int h, int oldw, int oldh) {
         super.onSizeChanged(w, h, oldw, oldh);
+
         if (!isClipped) {
+            animateDimensions(w, h);
+        } else {
             setClippedDimensions(w, h);
         }
     }
@@ -72,14 +76,13 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
         super.draw(canvas);
     }
 
-    protected void animateDimensions(int toWidth, int toHeight) {
+    protected void animateDimensions(Integer toWidth, Integer toHeight) {
         if (dimensionAnimator != null) {
             dimensionAnimator.cancel();
         }
 
         final Float fromWidth = getClippedWidth();
         final Float fromHeight = getClippedHeight();
-        final boolean isExpanding = toHeight > fromHeight;
 
         dimensionAnimator = ObjectAnimator.ofFloat(0f, 1f);
         dimensionAnimator.addUpdateListener(animation -> {
@@ -89,15 +92,21 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
             setClippedDimensions(newWidth, newHeight);
         });
 
-        dimensionAnimator.setDuration(isExpanding ? InboxRecyclerView.ANIM_DURATION_EXPAND : InboxRecyclerView.ANIM_DURATION_COLLAPSE);
-        dimensionAnimator.setInterpolator(isExpanding ? InboxRecyclerView.ANIM_INTERPOLATOR_EXPAND : InboxRecyclerView.ANIM_INTERPOLATOR_COLLAPSE);
+        dimensionAnimator.setDuration(getAnimationDuration());
+        dimensionAnimator.setInterpolator(getAnimationInterpolator());
         dimensionAnimator.setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
         dimensionAnimator.start();
     }
 
-// ======== SETTERS ======== //
+// ======== GETTERS & SETTERS ======== //
 
+    // This method exists so that animateDimensions() can animate dimensions without
+    // thrashing Float objects (due to auto-boxing) on every frame.
     public void setClippedDimensions(float newClippedWidth, float newClippedHeight) {
+        setClippedDimensions((Float) newClippedWidth, (Float) newClippedHeight);
+    }
+
+    public void setClippedDimensions(Float newClippedWidth, Float newClippedHeight) {
         isClipped = newClippedWidth != getWidth() || newClippedHeight != getHeight();
 
         clippedDimensionRect.right = newClippedWidth;
@@ -114,7 +123,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
      * Immediately resets the clipping so that the whole layout becomes visible
      */
     public void resetClipping() {
-        setClippedDimensions(getWidth(), getHeight());
+        setClippedDimensions((float) getWidth(), (float) getHeight());
     }
 
     /**
@@ -134,6 +143,14 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
 
     public RectF getClippedRect() {
         return clippedDimensionRect;
+    }
+
+    protected TimeInterpolator getAnimationInterpolator() {
+        return InboxRecyclerView.ANIM_INTERPOLATOR_EXPAND;
+    }
+
+    protected long getAnimationDuration() {
+        return InboxRecyclerView.ANIM_DURATION_EXPAND;
     }
 
 }

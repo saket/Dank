@@ -110,11 +110,7 @@ public class DankRedditClient {
     }
 
     public boolean isUserLoggedIn() {
-        boolean hasActiveUserContext = redditClient.hasActiveUserContext();
-        Timber.i("hasActiveUserContext: %s", hasActiveUserContext);
-        boolean authenticated = redditClient.isAuthenticated();
-        Timber.i("authenticated: %s", authenticated);
-        return authenticated && hasActiveUserContext;
+        return redditClient.isAuthenticated() && redditClient.hasActiveUserContext();
     }
 
     public UserLoginHelper userLoginHelper() {

@@ -1,28 +1,25 @@
 package me.saket.dank.ui.subreddits;
 
-import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.Fragment;
 import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.ProgressBar;
-
-import com.google.android.flexbox.FlexDirection;
-import com.google.android.flexbox.FlexboxLayoutManager;
-import com.google.android.flexbox.JustifyContent;
+import android.widget.TextView;
 
 import net.dean.jraw.paginators.SubredditPaginator;
+
+import java.util.Locale;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -38,17 +35,17 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
+import timber.log.Timber;
 
 public class SubredditActivity extends DankActivity implements SubmissionFragment.Callbacks {
 
     @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
     @BindView(R.id.subreddit_toolbar_container) ViewGroup toolbarContainer;
     @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
     @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
     @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
-    @BindView(R.id.subreddit_subreddit_list) RecyclerView subredditList;
     @BindView(R.id.subreddit_progress) ProgressBar progressBar;
-
     private SubmissionFragment submissionFragment;
 
     @Override
@@ -67,6 +64,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
         //noinspection ConstantConditions
         getSupportActionBar().setDisplayShowTitleEnabled(false);
+        setTitle(getString(R.string.app_name).toLowerCase(Locale.ENGLISH));
 
         // Setup submission list.
         submissionList.setLayoutManager(submissionList.createLayoutManager());
@@ -88,12 +86,11 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         });
 
         // Setup submission fragment.
-        submissionFragment = (SubmissionFragment) getFragmentManager().findFragmentById(submissionPage.getId());
+        submissionFragment = (SubmissionFragment) getSupportFragmentManager().findFragmentById(submissionPage.getId());
         if (submissionFragment == null) {
             submissionFragment = SubmissionFragment.create();
         }
-
-        getFragmentManager()
+        getSupportFragmentManager()
                 .beginTransaction()
                 .replace(submissionPage.getId(), submissionFragment)
                 .commit();
@@ -114,36 +111,29 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
-        // Close the toolbar sheet if anywhere outside is touched.
-        submissionList.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
-            @Override
-            public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-                if (toolbarSheet.isVisible()) {
-                    toolbarSheet.toggleVisibility();
+        toolbarSheet.hideOnOutsideTouch(submissionList);
+        toolbarSheet.setStateChangeListener(isVisible -> {
+            Fragment pickerFragment = getSupportFragmentManager().findFragmentByTag(SubredditPickerFragment.TAG);
+            Timber.i("isVisible: %s", isVisible);
+
+            if (isVisible) {
+                if (pickerFragment == null) {
+                    pickerFragment = SubredditPickerFragment.create();
                 }
-                return super.onInterceptTouchEvent(rv, e);
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .replace(toolbarSheet.getId(), pickerFragment, SubredditPickerFragment.TAG)
+                        .commitNow();
+                toolbarSheet.show();
+
+            } else {
+                getSupportFragmentManager()
+                        .beginTransaction()
+                        .remove(pickerFragment)
+                        .commitNow();
+                toolbarSheet.hide();
             }
         });
-
-        // Setup Subreddit list.
-        FlexboxLayoutManager flexboxLayoutManager = new FlexboxLayoutManager();
-        flexboxLayoutManager.setFlexDirection(FlexDirection.ROW);
-        flexboxLayoutManager.setJustifyContent(JustifyContent.FLEX_START);
-        subredditList.setLayoutManager(flexboxLayoutManager);
-
-        SubredditAdapter subredditAdapter = new SubredditAdapter();
-        subredditAdapter.setOnSubredditClickListener(subreddit -> {
-            // TODO: 26/02/17 Open subreddit.
-            toolbarSheet.toggleVisibility();
-        });
-        subredditList.setAdapter(subredditAdapter);
-
-        // TODO: 26/02/17 Get default subreddits
-
-        // TODO: 26/02/17 If we fail to get subreddits, get them again on every sheet open. Maybe that will also refresh them
-        Dank.reddit().userSubreddits()
-                .compose(applySchedulers())
-                .subscribe(subredditAdapter, logError("Failed to get subreddits"));
     }
 
     @Override
@@ -159,8 +149,13 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     }
 
     @OnClick(R.id.subreddit_toolbar_title)
-    void onClickSubredditName() {
+    void onClickSubredditPicker() {
         toolbarSheet.toggleVisibility();
+    }
+
+    @Override
+    public void setTitle(CharSequence title) {
+        toolbarTitleView.setText(title);
     }
 
 // ======== NAVIGATION ======== //

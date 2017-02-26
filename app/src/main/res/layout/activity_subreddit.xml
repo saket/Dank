@@ -47,6 +47,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginStart="-4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
+                android:fontFamily="sans-serif-condensed"
                 android:paddingEnd="32dp"
                 android:paddingStart="20dp"
                 android:text="@string/app_name"
@@ -77,15 +78,5 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@id/subreddit_toolbar_container"
-        android:background="@color/toolbar"
-        android:clickable="true"
-        android:paddingBottom="@dimen/spacing16">
-
-        <android.support.v7.widget.RecyclerView
-            android:id="@+id/subreddit_subreddit_list"
-            android:layout_width="match_parent"
-            android:layout_height="156dp"
-            android:layout_marginEnd="@dimen/spacing12"
-            android:layout_marginStart="@dimen/spacing12" />
-    </me.saket.dank.widgets.ToolbarExpandableSheet>
+        android:background="@color/toolbar" />
 </RelativeLayout>

@@ -7,8 +7,8 @@
     <FrameLayout
         android:id="@+id/submission_image_container"
         android:layout_width="match_parent"
-        android:background="@color/gray_600"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:background="@color/gray_600">
 
         <!-- TODO: set content-description in code. -->
         <!-- For image/gif. -->
@@ -59,11 +59,7 @@
              because it otherwise looks odd with a transparent toolbar. -->
         <me.saket.dank.widgets.AnimatableProgressBar
             android:id="@+id/submission_content_progress"
-            style="@android:style/Widget.Material.ProgressBar.Horizontal"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="-7dp"
-            android:indeterminate="true" />
+            style="@style/DankProgressBar.Horizontal.TopAligned" />
 
         <TextView
             android:id="@+id/submission_title"
