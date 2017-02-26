@@ -14,7 +14,11 @@ import net.dean.jraw.http.oauth.Credentials;
 import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthHelper;
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.SubredditPaginator;
+import net.dean.jraw.paginators.UserSubredditsPaginator;
+
+import java.util.List;
 
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
@@ -32,6 +36,7 @@ public class DankRedditClient {
     private final String redditAppClientId;
     private final RedditClient redditClient;
     private final AuthenticationManager redditAuthManager;
+    private Credentials loginCredentials;
 
     private boolean authManagerInitialized;
 
@@ -41,6 +46,29 @@ public class DankRedditClient {
         this.redditAuthManager = redditAuthManager;
         this.redditAppClientId = context.getString(R.string.reddit_app_client_id);
     }
+
+    public SubredditPaginator frontPagePaginator() {
+        return new SubredditPaginator(redditClient, "pics");
+    }
+
+    /**
+     * Get all details of submissions, including comments.
+     */
+    public Submission fullSubmissionData(String submissionId) {
+        return redditClient.getSubmission(new SubmissionRequest.Builder(submissionId).build());
+    }
+
+    /**
+     * Subreddits user has subscribed to.
+     */
+    public Observable<List<Subreddit>> userSubreddits() {
+        return Observable.fromCallable(() -> {
+            UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
+            return subredditsPaginator.accumulateMergedAllSorted();
+        });
+    }
+
+// ======== AUTHENTICATION ======== //
 
     /**
      * Get a new API token if we haven't already or refresh the existing API token if the last one has expired.
@@ -77,12 +105,20 @@ public class DankRedditClient {
         });
     }
 
-    public UserLoginHelper userLoginHelper() {
-        return new UserLoginHelper();
+    public String loggedInUserName() {
+        return redditClient.getAuthenticatedUser();
     }
 
-    public String authenticatedUserName() {
-        return redditClient.getAuthenticatedUser();
+    public boolean isUserLoggedIn() {
+        boolean hasActiveUserContext = redditClient.hasActiveUserContext();
+        Timber.i("hasActiveUserContext: %s", hasActiveUserContext);
+        boolean authenticated = redditClient.isAuthenticated();
+        Timber.i("authenticated: %s", authenticated);
+        return authenticated && hasActiveUserContext;
+    }
+
+    public UserLoginHelper userLoginHelper() {
+        return new UserLoginHelper();
     }
 
     @NonNull
@@ -107,23 +143,21 @@ public class DankRedditClient {
         });
     }
 
-    public SubredditPaginator frontPagePaginator() {
-        return new SubredditPaginator(redditClient, "pics");
+    public void logout() {
+        redditClient.getOAuthHelper().revokeAccessToken(getLoginCredentials());
+        redditClient.deauthenticate();
     }
 
-    /**
-     * Get all details of submissions, including comments.
-     */
-    public Submission fullSubmissionData(String submissionId) {
-        return redditClient.getSubmission(new SubmissionRequest.Builder(submissionId).build());
+    private Credentials getLoginCredentials() {
+        if (loginCredentials == null) {
+            loginCredentials = Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
+        }
+        return loginCredentials;
     }
 
     public class UserLoginHelper {
 
-        private final Credentials loginCredentials;
-
         public UserLoginHelper() {
-            loginCredentials = Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
         }
 
         public String authorizationUrl() {
@@ -144,7 +178,7 @@ public class DankRedditClient {
             };
 
             OAuthHelper oAuthHelper = redditClient.getOAuthHelper();
-            return oAuthHelper.getAuthorizationUrl(loginCredentials, true /* permanent */, true /* useMobileSite */, scopes).toString();
+            return oAuthHelper.getAuthorizationUrl(getLoginCredentials(), true /* permanent */, true /* useMobileSite */, scopes).toString();
         }
 
         /**
@@ -152,7 +186,7 @@ public class DankRedditClient {
          */
         public Observable<Boolean> parseOAuthSuccessUrl(String successUrl) {
             return Observable.fromCallable(() -> {
-                OAuthData oAuthData = redditClient.getOAuthHelper().onUserChallenge(successUrl, loginCredentials);
+                OAuthData oAuthData = redditClient.getOAuthHelper().onUserChallenge(successUrl, getLoginCredentials());
                 redditClient.authenticate(oAuthData);
                 return true;
             });

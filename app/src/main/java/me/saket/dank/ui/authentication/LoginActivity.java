@@ -85,7 +85,7 @@ public class LoginActivity extends DankActivity {
 
         // TODO: 10/02/17 Test error cases here.
         userLoginHelper.parseOAuthSuccessUrl(successUrl)
-                .map(__ -> Dank.reddit().authenticatedUserName())
+                .map(__ -> Dank.reddit().loggedInUserName())
                 .compose(applySchedulers())
                 .subscribe(userName -> {
                     Toast.makeText(LoginActivity.this, getString(R.string.login_welcome_user, userName), Toast.LENGTH_SHORT).show();

@@ -37,7 +37,7 @@
             android:layout_height="match_parent"
             android:background="@color/toolbar"
             android:paddingEnd="@dimen/spacing16"
-            >
+            tools:ignore="RtlSymmetry">
 
             <Button
                 android:id="@+id/subreddit_toolbar_title"
@@ -75,14 +75,17 @@
     <me.saket.dank.widgets.ToolbarExpandableSheet
         android:id="@+id/subreddit_toolbar_expandable_sheet"
         android:layout_width="match_parent"
-        android:layout_height="160dp"
+        android:layout_height="wrap_content"
         android:layout_below="@id/subreddit_toolbar_container"
         android:background="@color/toolbar"
-        android:clickable="true">
+        android:clickable="true"
+        android:paddingBottom="@dimen/spacing16">
 
         <android.support.v7.widget.RecyclerView
             android:id="@+id/subreddit_subreddit_list"
             android:layout_width="match_parent"
-            android:layout_height="match_parent" />
+            android:layout_height="156dp"
+            android:layout_marginEnd="@dimen/spacing12"
+            android:layout_marginStart="@dimen/spacing12" />
     </me.saket.dank.widgets.ToolbarExpandableSheet>
 </RelativeLayout>

@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical">
-
-
-
-</LinearLayout>
+<Button android:id="@+id/item_subreddit_name"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:backgroundTint="@color/color_primary_dark"
+    android:textColor="@color/gray_400"
+    android:layout_marginTop="-4dp"
+    android:gravity="start|center"
+    android:minHeight="0dp"
+    android:paddingBottom="@dimen/spacing12"
+    android:paddingTop="@dimen/spacing12"
+    android:minWidth="0dp"
+    android:textAllCaps="false"
+    tools:text="Frontpage" />

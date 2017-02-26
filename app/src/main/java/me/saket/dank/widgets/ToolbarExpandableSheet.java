@@ -12,6 +12,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.BaseExpandablePageLayout;
+import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 
 public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
@@ -41,6 +42,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
         animate()
                 .translationZ(showSheet ? elevationOnExpand : 0)
+                .setInterpolator(InboxRecyclerView.ANIM_INTERPOLATOR_EXPAND)
                 .start();
     }
 

@@ -1,5 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
+import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
 
@@ -14,7 +15,12 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
+import android.widget.Button;
 import android.widget.ProgressBar;
+
+import com.google.android.flexbox.FlexDirection;
+import com.google.android.flexbox.FlexboxLayoutManager;
+import com.google.android.flexbox.JustifyContent;
 
 import net.dean.jraw.paginators.SubredditPaginator;
 
@@ -40,7 +46,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
     @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
     @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
-    @BindView(R.id.subreddit_subreddit_list) RecyclerView subRedditList;
+    @BindView(R.id.subreddit_subreddit_list) RecyclerView subredditList;
     @BindView(R.id.subreddit_progress) ProgressBar progressBar;
 
     private SubmissionFragment submissionFragment;
@@ -118,6 +124,26 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 return super.onInterceptTouchEvent(rv, e);
             }
         });
+
+        // Setup Subreddit list.
+        FlexboxLayoutManager flexboxLayoutManager = new FlexboxLayoutManager();
+        flexboxLayoutManager.setFlexDirection(FlexDirection.ROW);
+        flexboxLayoutManager.setJustifyContent(JustifyContent.FLEX_START);
+        subredditList.setLayoutManager(flexboxLayoutManager);
+
+        SubredditAdapter subredditAdapter = new SubredditAdapter();
+        subredditAdapter.setOnSubredditClickListener(subreddit -> {
+            // TODO: 26/02/17 Open subreddit.
+            toolbarSheet.toggleVisibility();
+        });
+        subredditList.setAdapter(subredditAdapter);
+
+        // TODO: 26/02/17 Get default subreddits
+
+        // TODO: 26/02/17 If we fail to get subreddits, get them again on every sheet open. Maybe that will also refresh them
+        Dank.reddit().userSubreddits()
+                .compose(applySchedulers())
+                .subscribe(subredditAdapter, logError("Failed to get subreddits"));
     }
 
     @Override
@@ -150,8 +176,16 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
         // Click listeners for a menu item with an action view must be set manually.
         MenuItem changeOrderMenuItem = menu.findItem(R.id.action_login);
-        ((ViewGroup) changeOrderMenuItem.getActionView()).getChildAt(0).setOnClickListener(v -> {
-            LoginActivity.start(this);
+        Button button = (Button) ((ViewGroup) changeOrderMenuItem.getActionView()).getChildAt(0);
+        button.setText(Dank.reddit().isUserLoggedIn() ? R.string.logout : R.string.login);
+        button.setOnClickListener(v -> {
+            if (Dank.reddit().isUserLoggedIn()) {
+                Dank.reddit().logout();
+                button.setText(R.string.login);
+
+            } else {
+                LoginActivity.start(this);
+            }
         });
 
         return super.onCreateOptionsMenu(menu);
