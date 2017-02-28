@@ -88,7 +88,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         });
         submissionList.setAdapter(submissionsAdapter);
 
-        // Setup submission fragment.
+        // Setup submission page.
         submissionFragment = (SubmissionFragment) getFragmentManager().findFragmentById(submissionPage.getId());
         if (submissionFragment == null) {
             submissionFragment = SubmissionFragment.create();
@@ -148,8 +148,14 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         toolbarSheet.hideOnOutsideTouch(submissionList);
         toolbarSheet.setStateChangeListener(state -> {
             switch (state) {
+                case EXPANDING:
+                    // When sub-reddits are showing, we'll show a "configure subreddits" button in the toolbar.
+                    invalidateOptionsMenu();
+                    break;
+
                 case COLLAPSING:
                     Keyboards.hide(this, toolbarSheet);
+                    invalidateOptionsMenu();
                     break;
 
                 case COLLAPSED:
@@ -169,8 +175,8 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
             SubredditPickerView pickerView = SubredditPickerView.showIn(toolbarSheet);
             pickerView.post(() -> toolbarSheet.expand());
             pickerView.setOnSubredditClickListener(subreddit -> {
+                toolbarSheet.collapse();
                 if (!subreddit.equals(activeSubreddit)) {
-                    toolbarSheet.collapse();
                     loadSubmissions(subreddit);
                 }
             });
@@ -186,21 +192,31 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(R.menu.menu_subreddit, menu);
+        if (toolbarSheet.isExpandedOrExpanding()) {
+            getMenuInflater().inflate(R.menu.menu_subreddit_picker, menu);
 
-        // Click listeners for a menu item with an action view must be set manually.
-        MenuItem changeOrderMenuItem = menu.findItem(R.id.action_login);
-        Button button = (Button) ((ViewGroup) changeOrderMenuItem.getActionView()).getChildAt(0);
-        button.setText(Dank.reddit().isUserLoggedIn() ? R.string.logout : R.string.login);
-        button.setOnClickListener(v -> {
-            if (Dank.reddit().isUserLoggedIn()) {
-                Dank.reddit().logout();
-                button.setText(R.string.login);
+            // Click listeners for a menu item with an action view must be set manually.
+            MenuItem changeOrderMenuItem = menu.findItem(R.id.action_manage_subreddits);
+            Button button = (Button) ((ViewGroup) changeOrderMenuItem.getActionView()).getChildAt(0);
+            button.setText(R.string.manage);
 
-            } else {
-                LoginActivity.start(this);
-            }
-        });
+        } else {
+            getMenuInflater().inflate(R.menu.menu_subreddit, menu);
+
+            MenuItem changeOrderMenuItem = menu.findItem(R.id.action_login);
+            Button button = (Button) ((ViewGroup) changeOrderMenuItem.getActionView()).getChildAt(0);
+
+            button.setText(Dank.reddit().isUserLoggedIn() ? R.string.logout : R.string.login);
+            button.setOnClickListener(v -> {
+                if (Dank.reddit().isUserLoggedIn()) {
+                    Dank.reddit().logout();
+                    button.setText(R.string.login);
+
+                } else {
+                    LoginActivity.start(this);
+                }
+            });
+        }
 
         return super.onCreateOptionsMenu(menu);
     }

@@ -131,12 +131,23 @@ public class SubredditPickerView extends FrameLayout {
                         return userSubreddits;
                     }
 
+                    boolean unknownSubreddit = false;
+
                     List<String> filteredSubreddits = new ArrayList<>(userSubreddits.size());
                     for (String userSubreddit : userSubreddits) {
                         if (userSubreddit.toLowerCase(Locale.ENGLISH).contains(searchTerm.toLowerCase())) {
                             filteredSubreddits.add(userSubreddit);
+
+                            if (userSubreddit.equalsIgnoreCase(searchTerm)) {
+                                unknownSubreddit = true;
+                            }
                         }
                     }
+
+                    if (!unknownSubreddit) {
+                        filteredSubreddits.add(searchTerm);
+                    }
+
                     return filteredSubreddits;
                 })
                 .observeOn(AndroidSchedulers.mainThread())

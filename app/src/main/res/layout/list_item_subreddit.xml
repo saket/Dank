@@ -14,5 +14,5 @@
     android:paddingTop="@dimen/spacing12"
     android:textAllCaps="false"
     android:textColor="@color/gray_400"
-    android:textSize="@dimen/textsize16"
+    android:textSize="@dimen/textsize18"
     tools:text="Frontpage" />
