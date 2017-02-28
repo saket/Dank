@@ -14,7 +14,8 @@
         <activity
             android:name=".ui.subreddits.SubredditActivity"
             android:launchMode="singleTop"
-            android:theme="@style/DankTheme.DrawsStatusBar">
+            android:theme="@style/DankTheme.DrawsStatusBar"
+            android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

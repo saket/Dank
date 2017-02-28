@@ -63,4 +63,10 @@
         <item name="android:layout_marginBottom">-7dp</item>
     </style>
 
+    <!-- Subreddit -->
+    <style name="SubredditPickerSearchFieldTheme">
+        <item name="android:colorControlNormal">@color/gray_800</item>
+        <item name="android:colorControlActivated">@color/gray_500</item>
+    </style>
+
 </resources>

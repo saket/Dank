@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="304dp">
+
+    <EditText
+        android:id="@+id/subredditpicker_search"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing4"
+        android:layout_marginEnd="14dp"
+        android:layout_marginStart="14dp"
+        android:layout_marginTop="-8dp"
+        android:hint="@string/search_subreddits"
+        android:imeOptions="actionSearch"
+        android:inputType="textCapWords"
+        android:textColor="@color/gray_300"
+        android:textColorHint="@color/gray_700"
+        android:theme="@style/SubredditPickerSearchFieldTheme" />
+
+    <android.support.v7.widget.RecyclerView
+        android:id="@+id/subredditpicker_subreddit_list"
+        android:layout_width="match_parent"
+        android:layout_height="264dp"
+        android:layout_below="@+id/subredditpicker_search"
+        android:layout_marginEnd="@dimen/spacing12"
+        android:layout_marginStart="@dimen/spacing12"
+        android:clipToPadding="true"
+        android:paddingBottom="@dimen/spacing16" />
+
+    <FrameLayout
+        android:id="@+id/subredditpicker_load_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/subredditpicker_subreddit_list"
+        android:layout_alignTop="@+id/subredditpicker_search"
+        android:background="@color/toolbar">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center"
+            android:indeterminateTint="@color/gray_700" />
+    </FrameLayout>
+
+    <ProgressBar
+        android:id="@+id/subredditpicker_refresh_progress"
+        style="@style/DankProgressBar.Horizontal.BottomAligned"
+        android:layout_alignParentBottom="true"
+        android:layout_below="@+id/subredditpicker_subreddit_list"
+        android:indeterminateTint="@color/black_opacity_50"
+        android:visibility="gone" />
+</RelativeLayout>

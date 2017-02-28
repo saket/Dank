@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -28,6 +29,7 @@ import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -36,6 +38,8 @@ import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
 
 public class SubredditActivity extends DankActivity implements SubmissionFragment.Callbacks {
+
+    private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
@@ -47,6 +51,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
+    private String activeSubreddit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -64,7 +69,6 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
         //noinspection ConstantConditions
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-        setTitle(getString(R.string.app_name).toLowerCase(Locale.ENGLISH));
 
         // Setup submission list.
         submissionList.setLayoutManager(submissionList.createLayoutManager());
@@ -94,8 +98,11 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 .replace(submissionPage.getId(), submissionFragment)
                 .commit();
 
-        // Get frontpage submissions.
-        loadSubmissions(Dank.reddit().frontPagePaginator());
+        // Get frontpage (or retained subreddit's) submissions.
+        if (savedInstanceState != null) {
+            activeSubreddit = savedInstanceState.getString(KEY_ACTIVE_SUBREDDIT);
+        }
+        loadSubmissions(activeSubreddit);
     }
 
     @Override
@@ -107,6 +114,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         submissionList.handleOnSaveInstance(outState);
+        outState.putString(KEY_ACTIVE_SUBREDDIT, activeSubreddit);
         super.onSaveInstanceState(outState);
     }
 
@@ -116,9 +124,16 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         submissionList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
-    private void loadSubmissions(SubredditPaginator subredditPaginator) {
+    private void loadSubmissions(String subreddit) {
+        activeSubreddit = subreddit;
         submissionsAdapter.updateData(null);
 
+        String activityTitle = TextUtils.isEmpty(subreddit) || subreddit.equals(getString(R.string.frontpage_subreddit_name))
+                ? getString(R.string.app_name)
+                : getString(R.string.subreddit_name_r_prefix, subreddit);
+        toolbarTitleView.setText(activityTitle.toLowerCase(Locale.ENGLISH));
+
+        SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subreddit);
         Subscription subscription = Dank.reddit()
                 .authenticateIfNeeded()
                 .flatMap(__ -> just(subredditPaginator.next()))
@@ -131,33 +146,35 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
     private void setupToolbarSheet() {
         toolbarSheet.hideOnOutsideTouch(submissionList);
-        toolbarSheet.setStateChangeListener(visible -> {
-            if (!visible) {
-                toolbarSheet.removeAllViews();
-                toolbarSheet.collapse();
+        toolbarSheet.setStateChangeListener(state -> {
+            switch (state) {
+                case COLLAPSING:
+                    Keyboards.hide(this, toolbarSheet);
+                    break;
+
+                case COLLAPSED:
+                    toolbarSheet.removeAllViews();
+                    toolbarSheet.collapse();
+                    break;
             }
         });
     }
 
     @OnClick(R.id.subreddit_toolbar_title)
     void onClickSubredditPicker() {
-        if (toolbarSheet.isExpanded()) {
+        if (toolbarSheet.isExpandedOrExpanding()) {
             toolbarSheet.collapse();
 
         } else {
             SubredditPickerView pickerView = SubredditPickerView.showIn(toolbarSheet);
             pickerView.post(() -> toolbarSheet.expand());
             pickerView.setOnSubredditClickListener(subreddit -> {
-                toolbarSheet.collapse();
-                setTitle(subreddit.getDisplayName());
-                loadSubmissions(Dank.reddit().subredditPaginator(subreddit.getDisplayName()));
+                if (!subreddit.equals(activeSubreddit)) {
+                    toolbarSheet.collapse();
+                    loadSubmissions(subreddit);
+                }
             });
         }
-    }
-
-    @Override
-    public void setTitle(CharSequence title) {
-        toolbarTitleView.setText(title);
     }
 
 // ======== NAVIGATION ======== //
@@ -196,7 +213,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 submissionList.collapse();
             }
 
-        } else if (toolbarSheet.isExpanded()) {
+        } else if (toolbarSheet.isExpandedOrExpanding()) {
             toolbarSheet.collapse();
 
         } else {

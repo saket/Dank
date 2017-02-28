@@ -6,8 +6,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
-import net.dean.jraw.models.Subreddit;
-
 import java.util.List;
 
 import butterknife.BindView;
@@ -19,7 +17,7 @@ import rx.functions.Action1;
 /**
  * Adapter for displaying a list of subreddits.
  */
-public class SubredditAdapter extends RecyclerViewArrayAdapter<Subreddit, SubredditAdapter.SubredditViewHolder> implements Action1<List<Subreddit>> {
+public class SubredditAdapter extends RecyclerViewArrayAdapter<String, SubredditAdapter.SubredditViewHolder> implements Action1<List<String>> {
 
     private OnSubredditClickListener clickListener;
 
@@ -32,7 +30,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<Subreddit, Subred
     }
 
     @Override
-    public void call(List<Subreddit> subreddits) {
+    public void call(List<String> subreddits) {
         updateData(subreddits);
     }
 
@@ -43,7 +41,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<Subreddit, Subred
 
     @Override
     public void onBindViewHolder(SubredditViewHolder holder, int position) {
-        Subreddit subreddit = getItem(position);
+        String subreddit = getItem(position);
         holder.bind(subreddit);
 
         holder.itemView.setOnClickListener(v -> {
@@ -53,7 +51,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<Subreddit, Subred
 
     @Override
     public long getItemId(int position) {
-        return getItem(position).getId().hashCode();
+        return getItem(position).hashCode();
     }
 
     static class SubredditViewHolder extends RecyclerView.ViewHolder {
@@ -69,8 +67,8 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<Subreddit, Subred
             ButterKnife.bind(this, itemView);
         }
 
-        public void bind(Subreddit subreddit) {
-            subredditNameView.setText(subreddit.getDisplayName());
+        public void bind(String subreddit) {
+            subredditNameView.setText(subreddit);
         }
 
     }

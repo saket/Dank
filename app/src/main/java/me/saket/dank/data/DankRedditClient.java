@@ -47,10 +47,6 @@ public class DankRedditClient {
         this.redditAppClientId = context.getString(R.string.reddit_app_client_id);
     }
 
-    public SubredditPaginator frontPagePaginator() {
-        return new SubredditPaginator(redditClient);
-    }
-
     public SubredditPaginator subredditPaginator(String subredditName) {
         return new SubredditPaginator(redditClient, subredditName);
     }
@@ -68,6 +64,7 @@ public class DankRedditClient {
     public Observable<List<Subreddit>> userSubreddits() {
         return Observable.fromCallable(() -> {
             UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
+            subredditsPaginator.setLimit(200);
             return subredditsPaginator.accumulateMergedAllSorted();
         });
     }

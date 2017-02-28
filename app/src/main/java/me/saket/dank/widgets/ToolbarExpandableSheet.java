@@ -17,12 +17,19 @@ import me.saket.dank.widgets.InboxUI.BaseExpandablePageLayout;
 public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
     @BindDimen(R.dimen.subreddit_toolbar_sheet_elevation) int elevationOnExpand;
-    boolean isExpanded;
 
     private StateChangeListener stateChangeListener;
+    private State currentState;
+
+    public enum State {
+        COLLAPSING,
+        COLLAPSED,
+        EXPANDING,
+        EXPANDED
+    }
 
     public interface StateChangeListener {
-        void onExpandOrCollapse(boolean visible);
+        void onStateChange(State newState);
     }
 
     public ToolbarExpandableSheet(Context context, AttributeSet attrs) {
@@ -30,9 +37,9 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
         ButterKnife.bind(this, this);
 
         // Hide on start.
+        currentState = State.COLLAPSED;
         Views.executeOnMeasure(this, () -> {
             setClippedDimensions(getWidth(), 0);
-            isExpanded = false;
         });
 
         // Avoid the shadows from showing up above the sheet. This is done by
@@ -46,8 +53,12 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
         });
     }
 
+    public boolean isExpandedOrExpanding() {
+        return currentState == State.EXPANDED || currentState == State.EXPANDING;
+    }
+
     public void toggleVisibility() {
-        if (isExpanded()) {
+        if (isExpandedOrExpanding()) {
             collapse();
         } else {
             expand();
@@ -55,44 +66,40 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
     }
 
     public void expand() {
-        if (isExpanded) {
+        if (currentState == State.EXPANDED || currentState == State.EXPANDING) {
             return;
         }
-        isExpanded = true;
 
         animateDimensions(getWidth(), getHeight());
         animate()
                 .translationZ(elevationOnExpand)
                 .setDuration(getAnimationDuration())
                 .setInterpolator(getAnimationInterpolator())
-                .withStartAction(() -> stateChangeListener.onExpandOrCollapse(true))
+                .withStartAction(() -> dispatchStateChangeCallback(State.EXPANDING))
+                .withEndAction(() -> dispatchStateChangeCallback(State.EXPANDED))
                 .start();
     }
 
     public void collapse() {
-        if (!isExpanded) {
+        if (currentState == State.COLLAPSED || currentState == State.COLLAPSING) {
             return;
         }
-        isExpanded = false;
 
         animateDimensions(getWidth(), 0);
         animate()
                 .translationZ(0)
                 .setDuration(getAnimationDuration())
                 .setInterpolator(getAnimationInterpolator())
-                .withEndAction(() -> stateChangeListener.onExpandOrCollapse(false))
+                .withStartAction(() -> dispatchStateChangeCallback(State.COLLAPSING))
+                .withEndAction(() -> dispatchStateChangeCallback(State.COLLAPSED))
                 .start();
-    }
-
-    public boolean isExpanded() {
-        return isExpanded;
     }
 
     public void hideOnOutsideTouch(RecyclerView recyclerView) {
         recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
             @Override
             public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
-                if (isExpanded()) {
+                if (isExpandedOrExpanding()) {
                     collapse();
                 }
                 return super.onInterceptTouchEvent(rv, e);
@@ -106,10 +113,15 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
 // ======== PUBLIC APIs END ======== //
 
+    private void dispatchStateChangeCallback(State state) {
+        currentState = state;
+        stateChangeListener.onStateChange(state);
+    }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         boolean touchLiesInsideVisibleRect = getClippedRect().contains(ev.getX(), ev.getY());
-        return touchLiesInsideVisibleRect && super.dispatchTouchEvent(ev);
+        return (ev.getAction() != MotionEvent.ACTION_DOWN || touchLiesInsideVisibleRect) && super.dispatchTouchEvent(ev);
     }
 
 }

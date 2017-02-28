@@ -11,6 +11,8 @@
 
     <!-- Submission list -->
     <string name="subreddit_name_r_prefix">/r/%s</string>
+    <string name="search_subreddits">Search subreddits…</string>
+    <string name="frontpage_subreddit_name">Frontpage</string>
 
     <!-- Submission -->
     <string name="error_no_app_to_handle_intent">No app found to handle this link</string>
