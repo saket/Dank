@@ -11,7 +11,7 @@
 
     <!-- Submission list -->
     <string name="subreddit_name_r_prefix">/r/%s</string>
-    <string name="search_subreddits">Search subreddits…</string>
+    <string name="go_to_subreddit">Go to subreddit…</string>
     <string name="frontpage_subreddit_name">Frontpage</string>
 
     <!-- Submission -->

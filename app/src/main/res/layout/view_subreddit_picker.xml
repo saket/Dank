@@ -1,7 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="304dp">
+
+    <!-- Using a separate ImageView instead a compound drawable
+         in EditText so that we can control the icon size. -->
+    <ImageView
+        android:id="@+id/subredditpicker_search_icon"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_marginStart="@dimen/spacing16"
+        android:layout_marginTop="6dp"
+        android:contentDescription="@string/go_to_subreddit"
+        android:src="@drawable/ic_search_black_18px"
+        android:tint="@color/gray_700" />
 
     <EditText
         android:id="@+id/subredditpicker_search"
@@ -11,12 +24,14 @@
         android:layout_marginEnd="14dp"
         android:layout_marginStart="14dp"
         android:layout_marginTop="-8dp"
-        android:hint="@string/search_subreddits"
+        android:hint="@string/go_to_subreddit"
         android:imeOptions="actionSearch"
         android:inputType="textCapWords"
+        android:paddingStart="32dp"
         android:textColor="@color/gray_300"
         android:textColorHint="@color/gray_700"
-        android:theme="@style/SubredditPickerSearchFieldTheme" />
+        android:theme="@style/SubredditPickerSearchFieldTheme"
+        tools:ignore="RtlSymmetry" />
 
     <android.support.v7.widget.RecyclerView
         android:id="@+id/subredditpicker_subreddit_list"
@@ -34,7 +49,8 @@
         android:layout_height="wrap_content"
         android:layout_alignBottom="@+id/subredditpicker_subreddit_list"
         android:layout_alignTop="@+id/subredditpicker_search"
-        android:background="@color/toolbar">
+        android:background="@color/toolbar"
+        tools:visibility="gone">
 
         <ProgressBar
             android:layout_width="wrap_content"
