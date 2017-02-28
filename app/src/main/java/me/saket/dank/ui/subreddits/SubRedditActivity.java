@@ -19,8 +19,6 @@ import android.widget.TextView;
 
 import net.dean.jraw.paginators.SubredditPaginator;
 
-import java.util.Locale;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -128,10 +126,9 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         activeSubreddit = subreddit;
         submissionsAdapter.updateData(null);
 
-        String activityTitle = TextUtils.isEmpty(subreddit) || subreddit.equals(getString(R.string.frontpage_subreddit_name))
+        toolbarTitleView.setText(TextUtils.isEmpty(subreddit) || subreddit.equals(getString(R.string.frontpage_subreddit_name))
                 ? getString(R.string.app_name)
-                : getString(R.string.subreddit_name_r_prefix, subreddit);
-        toolbarTitleView.setText(activityTitle.toLowerCase(Locale.ENGLISH));
+                : getString(R.string.subreddit_name_r_prefix, subreddit));
 
         SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subreddit);
         Subscription subscription = Dank.reddit()
