@@ -2,7 +2,7 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="304dp">
+    android:layout_height="280dp">
 
     <!-- Using a separate ImageView instead a compound drawable
          in EditText so that we can control the icon size. -->
@@ -36,7 +36,7 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/subredditpicker_subreddit_list"
         android:layout_width="match_parent"
-        android:layout_height="264dp"
+        android:layout_height="240dp"
         android:layout_below="@+id/subredditpicker_search"
         android:layout_marginEnd="@dimen/spacing12"
         android:layout_marginStart="@dimen/spacing12"

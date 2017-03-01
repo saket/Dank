@@ -18,9 +18,8 @@ import com.google.android.flexbox.FlexWrap;
 import com.google.android.flexbox.FlexboxLayoutManager;
 import com.jakewharton.rxbinding.widget.RxTextView;
 
-import net.dean.jraw.models.Subreddit;
-
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
@@ -29,13 +28,14 @@ import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
+import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
-import timber.log.Timber;
 
 public class SubredditPickerView extends FrameLayout {
 
@@ -44,13 +44,13 @@ public class SubredditPickerView extends FrameLayout {
     @BindView(R.id.subredditpicker_load_progress) View subredditsLoadProgressView;
     @BindView(R.id.subredditpicker_refresh_progress) View subredditsRefreshProgressView;
 
-    @BindString(R.string.frontpage_subreddit_name) String frontpageSubreddit;
+    @BindString(R.string.frontpage_subreddit_name) String frontpageSubredditName;
 
     private SubredditAdapter subredditAdapter;
     private CompositeSubscription subscriptions = new CompositeSubscription();
 
     // TODO: 28/02/17 Cache this somewhere else.
-    private static List<String> userSubreddits;
+    private static List<DankSubreddit> userSubreddits;
 
     public static SubredditPickerView showIn(ToolbarExpandableSheet toolbarSheet) {
         SubredditPickerView subredditPickerView = new SubredditPickerView(toolbarSheet.getContext());
@@ -87,21 +87,11 @@ public class SubredditPickerView extends FrameLayout {
             subredditAdapter.updateData(userSubreddits);
 
         } else {
-            Subscription apiSubscription = Dank.reddit()
-                    .authenticateIfNeeded()
-                    .flatMap(__ -> Dank.reddit().userSubreddits())
-                    .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
-                    .compose(applySchedulers())
+            Subscription apiSubscription = (Dank.reddit().isUserLoggedIn() ? loggedInSubreddits() : loggedOutSubreddits())
                     .compose(doOnStartAndFinish(setSubredditLoadProgressVisible()))
                     .map(subreddits -> {
-                        final long startTime = System.currentTimeMillis();
-                        ArrayList<String> subredditNames = new ArrayList<>(subreddits.size() + 1);
-                        subredditNames.add(frontpageSubreddit);
-                        for (Subreddit subreddit : subreddits) {
-                            subredditNames.add(subreddit.getDisplayName());
-                        }
-                        Timber.i("Constructed subreddits in: %sms", System.currentTimeMillis() - startTime);
-                        return subredditNames;
+                        subreddits.add(0, DankSubreddit.createFrontpage(frontpageSubredditName));
+                        return subreddits;
                     })
                     .doOnNext(subreddits -> userSubreddits = subreddits)
                     .subscribe(subredditAdapter, logError("Failed to get subreddits"));
@@ -116,6 +106,23 @@ public class SubredditPickerView extends FrameLayout {
     }
 
 // ======== END PUBLIC APIs ======== //
+
+    private Observable<List<DankSubreddit>> loggedInSubreddits() {
+        return Dank.reddit()
+                .authenticateIfNeeded()
+                .flatMap(__ -> Dank.reddit().userSubreddits())
+                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
+                .compose(applySchedulers());
+    }
+
+    public Observable<List<DankSubreddit>> loggedOutSubreddits() {
+        List<String> defaultSubreddits = Arrays.asList(getResources().getStringArray(R.array.default_subreddits));
+        ArrayList<DankSubreddit> dankSubreddits = new ArrayList<>();
+        for (String subredditName : defaultSubreddits) {
+            dankSubreddits.add(DankSubreddit.create(subredditName));
+        }
+        return Observable.just(dankSubreddits);
+    }
 
     private void setupSearch() {
         Subscription subscription = RxTextView.textChanges(searchView)
@@ -133,19 +140,19 @@ public class SubredditPickerView extends FrameLayout {
 
                     boolean unknownSubreddit = false;
 
-                    List<String> filteredSubreddits = new ArrayList<>(userSubreddits.size());
-                    for (String userSubreddit : userSubreddits) {
-                        if (userSubreddit.toLowerCase(Locale.ENGLISH).contains(searchTerm.toLowerCase())) {
+                    List<DankSubreddit> filteredSubreddits = new ArrayList<>(userSubreddits.size());
+                    for (DankSubreddit userSubreddit : userSubreddits) {
+                        if (userSubreddit.displayName().toLowerCase(Locale.ENGLISH).contains(searchTerm.toLowerCase())) {
                             filteredSubreddits.add(userSubreddit);
 
-                            if (userSubreddit.equalsIgnoreCase(searchTerm)) {
+                            if (userSubreddit.displayName().equalsIgnoreCase(searchTerm)) {
                                 unknownSubreddit = true;
                             }
                         }
                     }
 
                     if (!unknownSubreddit) {
-                        filteredSubreddits.add(searchTerm);
+                        filteredSubreddits.add(DankSubreddit.create(searchTerm));
                     }
 
                     return filteredSubreddits;

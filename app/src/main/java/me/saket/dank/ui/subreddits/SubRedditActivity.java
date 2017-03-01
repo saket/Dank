@@ -8,7 +8,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.Toolbar;
-import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -24,6 +23,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.DankActivity;
 import me.saket.dank.R;
+import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
@@ -47,9 +47,10 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
     @BindView(R.id.subreddit_progress) View progressView;
 
+    DankSubreddit activeSubreddit;
+
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
-    private String activeSubreddit;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -97,9 +98,9 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 .commit();
 
         // Get frontpage (or retained subreddit's) submissions.
-        if (savedInstanceState != null) {
-            activeSubreddit = savedInstanceState.getString(KEY_ACTIVE_SUBREDDIT);
-        }
+        activeSubreddit = savedInstanceState != null
+                ? savedInstanceState.getParcelable(KEY_ACTIVE_SUBREDDIT)
+                : DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
         loadSubmissions(activeSubreddit);
     }
 
@@ -112,7 +113,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         submissionList.handleOnSaveInstance(outState);
-        outState.putString(KEY_ACTIVE_SUBREDDIT, activeSubreddit);
+        outState.putParcelable(KEY_ACTIVE_SUBREDDIT, activeSubreddit);
         super.onSaveInstanceState(outState);
     }
 
@@ -122,15 +123,15 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         submissionList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
-    private void loadSubmissions(String subreddit) {
+    private void loadSubmissions(DankSubreddit subreddit) {
         activeSubreddit = subreddit;
         submissionsAdapter.updateData(null);
 
-        toolbarTitleView.setText(TextUtils.isEmpty(subreddit) || subreddit.equals(getString(R.string.frontpage_subreddit_name))
+        toolbarTitleView.setText(subreddit.isFrontpage()
                 ? getString(R.string.app_name)
-                : getString(R.string.subreddit_name_r_prefix, subreddit));
+                : getString(R.string.subreddit_name_r_prefix, subreddit.displayName()));
 
-        SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subreddit);
+        SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subreddit.name());
         Subscription subscription = Dank.reddit()
                 .authenticateIfNeeded()
                 .flatMap(__ -> just(subredditPaginator.next()))

@@ -18,6 +18,7 @@ import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import me.saket.dank.R;
@@ -61,11 +62,16 @@ public class DankRedditClient {
     /**
      * Subreddits user has subscribed to.
      */
-    public Observable<List<Subreddit>> userSubreddits() {
+    public Observable<List<DankSubreddit>> userSubreddits() {
         return Observable.fromCallable(() -> {
             UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
             subredditsPaginator.setLimit(200);
-            return subredditsPaginator.accumulateMergedAllSorted();
+            List<Subreddit> subreddits = subredditsPaginator.accumulateMergedAllSorted();
+            List<DankSubreddit> dankSubreddits = new ArrayList<>(subreddits.size());
+            for (Subreddit subreddit : subreddits) {
+                dankSubreddits.add(DankSubreddit.create(subreddit.getDisplayName()));
+            }
+            return dankSubreddits;
         });
     }
 

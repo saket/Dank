@@ -1,5 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
+import me.saket.dank.data.DankSubreddit;
+
 interface OnSubredditClickListener {
-    void onSubredditClick(String subreddit);
+    void onSubredditClick(DankSubreddit subreddit);
 }

@@ -11,13 +11,14 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import rx.functions.Action1;
 
 /**
  * Adapter for displaying a list of subreddits.
  */
-public class SubredditAdapter extends RecyclerViewArrayAdapter<String, SubredditAdapter.SubredditViewHolder> implements Action1<List<String>> {
+public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, SubredditAdapter.SubredditViewHolder> implements Action1<List<DankSubreddit>> {
 
     private OnSubredditClickListener clickListener;
 
@@ -30,7 +31,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<String, Subreddit
     }
 
     @Override
-    public void call(List<String> subreddits) {
+    public void call(List<DankSubreddit> subreddits) {
         updateData(subreddits);
     }
 
@@ -41,7 +42,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<String, Subreddit
 
     @Override
     public void onBindViewHolder(SubredditViewHolder holder, int position) {
-        String subreddit = getItem(position);
+        DankSubreddit subreddit = getItem(position);
         holder.bind(subreddit);
 
         holder.itemView.setOnClickListener(v -> {
@@ -67,8 +68,8 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<String, Subreddit
             ButterKnife.bind(this, itemView);
         }
 
-        public void bind(String subreddit) {
-            subredditNameView.setText(subreddit);
+        public void bind(DankSubreddit subreddit) {
+            subredditNameView.setText(subreddit.displayName());
         }
 
     }
