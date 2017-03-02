@@ -19,7 +19,6 @@
     <string name="preferences">Preferences</string>
 
     <!-- User profile -->
-    <string name="messages">Messages</string>
     <string name="comments">Comments</string>
     <string name="submissions">Submissions</string>
     <string name="karma_count">%s karma</string>
@@ -27,6 +26,11 @@
     <string name="error_user_karma_load">Couldn\'t get karma</string>
     <string name="confirm_logout">Confirm logout?</string>
     <string name="logging_out">Logging out…</string>
+
+    <string name="messages">Messages</string>
+    <string name="unread_messages_count_single">%d new message</string>
+    <string name="unread_messages_count_99_or_less">%d new messages</string>
+    <string name="unread_messages_count_99_plus">99+ new messages</string>
 
     <!-- Submission -->
     <string name="error_no_app_to_handle_intent">No app found to handle this link</string>

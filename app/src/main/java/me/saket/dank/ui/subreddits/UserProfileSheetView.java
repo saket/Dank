@@ -7,8 +7,11 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
 
+import net.dean.jraw.paginators.Paginator;
+
 import java.util.concurrent.TimeUnit;
 
+import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -23,10 +26,15 @@ import timber.log.Timber;
 public class UserProfileSheetView extends FrameLayout {
 
     @BindView(R.id.userprofilesheet_karma) TextView karmaView;
+    @BindView(R.id.userprofilesheet_messages) TextView messagesView;
+
+    @BindColor(R.color.userprofile_no_messages) int noMessagesTextColor;
+    @BindColor(R.color.userprofile_unread_messages) int unreadMessagesTextColor;
 
     private ToolbarExpandableSheet parentSheet;
-    private Subscription confirmLogoutTimer;
+    private Subscription confirmLogoutTimer = Subscriptions.unsubscribed();
     private Subscription logoutSubscription = Subscriptions.empty();
+    private Subscription userInfoSubscription = Subscriptions.empty();
 
     public static UserProfileSheetView showIn(ToolbarExpandableSheet toolbarSheet) {
         UserProfileSheetView subredditPickerView = new UserProfileSheetView(toolbarSheet.getContext());
@@ -43,9 +51,11 @@ public class UserProfileSheetView extends FrameLayout {
         // TODO: 02/03/17 Cache user account.
 
         karmaView.setText(R.string.loading_karma);
-        Dank.reddit().loggedInUserAccount()
+
+        userInfoSubscription = Dank.reddit().loggedInUserAccount()
                 .compose(applySchedulers())
                 .subscribe(loggedInUser -> {
+                    // Populate karma.
                     Integer commentKarma = loggedInUser.getCommentKarma();
                     Integer linkKarma = loggedInUser.getLinkKarma();
                     int karmaCount = commentKarma + linkKarma;
@@ -60,6 +70,22 @@ public class UserProfileSheetView extends FrameLayout {
                     }
                     karmaView.setText(getResources().getString(R.string.karma_count, compactKarma));
 
+                    // Populate message count.
+                    Integer inboxCount = loggedInUser.getInboxCount();
+                    if (inboxCount == 0) {
+                        messagesView.setText(R.string.messages);
+
+                    } else if (inboxCount == 1) {
+                        messagesView.setText(getResources().getString(R.string.unread_messages_count_single, (int) inboxCount));
+
+                    } else if (inboxCount < Paginator.RECOMMENDED_MAX_LIMIT) {
+                        messagesView.setText(getResources().getString(R.string.unread_messages_count_99_or_less, (int) inboxCount));
+
+                    } else {
+                        messagesView.setText(R.string.unread_messages_count_99_plus);
+                    }
+                    messagesView.setTextColor(inboxCount > 0 ? unreadMessagesTextColor : noMessagesTextColor);
+
                 }, error -> {
                     Timber.e(error, "Couldn't get logged in user info");
                     karmaView.setText(R.string.error_user_karma_load);
@@ -70,6 +96,7 @@ public class UserProfileSheetView extends FrameLayout {
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
         logoutSubscription.unsubscribe();
+        userInfoSubscription.unsubscribe();
     }
 
     public void setParentSheet(ToolbarExpandableSheet parentSheet) {
@@ -96,7 +123,7 @@ public class UserProfileSheetView extends FrameLayout {
 
     @OnClick(R.id.userprofilesheet_logout)
     void onClickLogout(TextView logoutButton) {
-        if (confirmLogoutTimer == null || confirmLogoutTimer.isUnsubscribed()) {
+        if (confirmLogoutTimer.isUnsubscribed()) {
             logoutButton.setText(R.string.confirm_logout);
             confirmLogoutTimer = Observable.timer(5, TimeUnit.SECONDS)
                     .compose(applySchedulers())

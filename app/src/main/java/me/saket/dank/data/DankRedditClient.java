@@ -14,9 +14,10 @@ import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.http.oauth.Credentials;
 import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthHelper;
-import net.dean.jraw.models.Account;
+import net.dean.jraw.models.LoggedInAccount;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Subreddit;
+import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
 
@@ -209,8 +210,12 @@ public class DankRedditClient {
         return redditClient.isAuthenticated() && redditClient.hasActiveUserContext();
     }
 
-    public Observable<Account> loggedInUserAccount() {
+    public Observable<LoggedInAccount> loggedInUserAccount() {
         return Observable.fromCallable(() -> redditClient.me());
+    }
+
+    public InboxPaginator unreadMessagesAndReplies() {
+        return new InboxPaginator(redditClient, "unread");
     }
 
 }

@@ -44,4 +44,10 @@ public class TintableCompoundDrawableTextView extends AppCompatTextView {
         textView.setCompoundDrawablesRelativeWithIntrinsicBounds(drawables[0], drawables[1], drawables[2], drawables[3]);
     }
 
+    @Override
+    public void setTextColor(int color) {
+        super.setTextColor(color);
+        applyColorTintToCompoundDrawables(this, color);
+    }
+
 }
