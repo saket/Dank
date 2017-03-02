@@ -8,7 +8,7 @@
     <dimen name="spacing4">4dp</dimen>
     <dimen name="spacing12">12dp</dimen>
     <dimen name="spacing16">16dp</dimen>
-    <dimen name="spacing18">18dp</dimen>
+    <dimen name="spacing20">20dp</dimen>
     <dimen name="spacing24">24dp</dimen>
 
     <!-- SubReddits -->

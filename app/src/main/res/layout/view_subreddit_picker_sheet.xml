@@ -13,7 +13,7 @@
         android:layout_marginStart="@dimen/spacing16"
         android:layout_marginTop="6dp"
         android:contentDescription="@string/go_to_subreddit"
-        android:src="@drawable/ic_search_black_18px"
+        android:src="@drawable/ic_search_18px"
         android:tint="@color/gray_700" />
 
     <EditText

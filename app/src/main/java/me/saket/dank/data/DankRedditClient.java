@@ -8,11 +8,13 @@ import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.auth.AuthenticationState;
 import net.dean.jraw.auth.RefreshTokenHandler;
+import net.dean.jraw.http.LoggingMode;
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.http.oauth.Credentials;
 import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthHelper;
+import net.dean.jraw.models.Account;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.SubredditPaginator;
@@ -112,14 +114,6 @@ public class DankRedditClient {
         });
     }
 
-    public String loggedInUserName() {
-        return redditClient.getAuthenticatedUser();
-    }
-
-    public boolean isUserLoggedIn() {
-        return redditClient.isAuthenticated() && redditClient.hasActiveUserContext();
-    }
-
     public UserLoginHelper userLoginHelper() {
         return new UserLoginHelper();
     }
@@ -146,9 +140,17 @@ public class DankRedditClient {
         });
     }
 
-    public void logout() {
-        redditClient.getOAuthHelper().revokeAccessToken(getLoginCredentials());
-        redditClient.deauthenticate();
+    public Observable<Boolean> logout() {
+        return Observable.fromCallable(() -> {
+            // Bug workaround: revokeAccessToken() method crashes if logging is enabled.
+            LoggingMode originalMode = redditClient.getLoggingMode();
+            redditClient.setLoggingMode(LoggingMode.NEVER);
+
+            redditClient.getOAuthHelper().revokeAccessToken(getLoginCredentials());
+
+            redditClient.setLoggingMode(originalMode);
+            return true;
+        });
     }
 
     private Credentials getLoginCredentials() {
@@ -195,6 +197,20 @@ public class DankRedditClient {
             });
         }
 
+    }
+
+// ======== USER ACCOUNT ======== //
+
+    public String loggedInUserName() {
+        return redditClient.getAuthenticatedUser();
+    }
+
+    public boolean isUserLoggedIn() {
+        return redditClient.isAuthenticated() && redditClient.hasActiveUserContext();
+    }
+
+    public Observable<Account> loggedInUserAccount() {
+        return Observable.fromCallable(() -> redditClient.me());
     }
 
 }

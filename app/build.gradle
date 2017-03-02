@@ -80,4 +80,6 @@ dependencies {
     compile 'com.alexvasilkov:gesture-views:2.2.0'
 
     compile 'com.google.android:flexbox:0.3.0-alpha2'
+    compile 'com.robinhood.ticker:ticker:1.1.1'
+
 }

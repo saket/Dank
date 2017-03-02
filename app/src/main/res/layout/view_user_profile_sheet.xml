@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <TextView
+        android:id="@+id/userprofilesheet_karma"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing16"
+        android:layout_marginEnd="@dimen/spacing16"
+        android:layout_marginStart="@dimen/spacing16"
+        android:fontFamily="sans-serif-light"
+        android:text="@string/karma_count"
+        android:textSize="32sp" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        android:id="@+id/userprofilesheet_messages"
+        style="@style/Button.UserProfileSheet"
+        android:drawableStart="@drawable/ic_mail_18px"
+        android:text="@string/messages" />
+
+    <View style="@style/DankSeparator.Vertical" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        android:id="@+id/userprofilesheet_comments"
+        style="@style/Button.UserProfileSheet"
+        android:drawableStart="@drawable/ic_reply_18px"
+        android:text="@string/comments" />
+
+    <View style="@style/DankSeparator.Vertical" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        android:id="@+id/userprofilesheet_submissions"
+        style="@style/Button.UserProfileSheet"
+        android:drawableStart="@drawable/ic_submission_18px"
+        android:text="@string/submissions" />
+
+    <View style="@style/DankSeparator.Vertical" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        android:id="@+id/userprofilesheet_logout"
+        style="@style/Button.UserProfileSheet"
+        android:drawableStart="@drawable/ic_logout_18px"
+        android:paddingBottom="@dimen/spacing16"
+        android:text="@string/logout" />
+</LinearLayout>

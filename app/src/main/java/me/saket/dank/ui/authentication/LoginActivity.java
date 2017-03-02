@@ -2,7 +2,7 @@ package me.saket.dank.ui.authentication;
 
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 
-import android.content.Context;
+import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
@@ -31,10 +31,12 @@ public class LoginActivity extends DankActivity {
     @BindView(R.id.login_progress) View progressView;
 
     @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
-    private DankRedditClient.UserLoginHelper userLoginHelper;
 
-    public static void start(Context context) {
-        context.startActivity(new Intent(context, LoginActivity.class));
+    private DankRedditClient.UserLoginHelper userLoginHelper;
+    private boolean loggedIn;
+
+    public static void startForResult(Activity activity, int requestCode) {
+        activity.startActivityForResult(new Intent(activity, LoginActivity.class), requestCode);
     }
 
     @Override
@@ -57,8 +59,10 @@ public class LoginActivity extends DankActivity {
         webView.setWebChromeClient(new WebChromeClient() {
             @Override
             public void onProgressChanged(WebView view, int newProgress) {
-                boolean shouldShowProgress = newProgress < 75;
-                setProgressVisible(shouldShowProgress);
+                if (!loggedIn) {
+                    boolean shouldShowProgress = newProgress < 75;
+                    setProgressVisible(shouldShowProgress);
+                }
             }
         });
         webView.setWebViewClient(new WebViewClient() {
@@ -66,6 +70,8 @@ public class LoginActivity extends DankActivity {
             public void onPageStarted(WebView view, String url, Bitmap favicon) {
                 if (url.contains("code=")) {
                     // We've detected the redirect URL.
+                    webView.stopLoading();
+                    loggedIn = true;
                     handleOnPermissionGranted(url);
 
                 } else if (url.contains("error=")) {
@@ -80,7 +86,6 @@ public class LoginActivity extends DankActivity {
     }
 
     private void handleOnPermissionGranted(String successUrl) {
-        webView.stopLoading();
         setProgressVisible(true);
 
         // TODO: 10/02/17 Test error cases here.
@@ -89,6 +94,7 @@ public class LoginActivity extends DankActivity {
                 .compose(applySchedulers())
                 .subscribe(userName -> {
                     Toast.makeText(LoginActivity.this, getString(R.string.login_welcome_user, userName), Toast.LENGTH_SHORT).show();
+                    setResult(RESULT_OK);
                     finish();
 
                 }, error -> {

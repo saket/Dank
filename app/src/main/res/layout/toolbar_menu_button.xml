@@ -8,8 +8,11 @@
     tools:ignore="RtlSymmetry">
 
     <Button
-        style="@style/Button.ToolbarMenu"
-        android:backgroundTint="@color/gray_800"
-        android:fontFamily="sans-serif-smallcaps"
+        style="@style/Button.SubredditPicker"
+        android:paddingTop="8dp"
+        android:paddingBottom="8dp"
+        android:layout_gravity="center_vertical"
+        android:textAllCaps="true"
+        android:textSize="@dimen/textsize14"
         android:text="@string/login" />
 </FrameLayout>

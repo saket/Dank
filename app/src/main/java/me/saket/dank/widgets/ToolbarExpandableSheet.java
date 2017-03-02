@@ -57,6 +57,10 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
         return currentState == State.EXPANDED || currentState == State.EXPANDING;
     }
 
+    public boolean isCollapsed() {
+        return currentState == State.COLLAPSED;
+    }
+
     public void toggleVisibility() {
         if (isExpandedOrExpanding()) {
             collapse();
@@ -120,8 +124,9 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
-        boolean touchLiesInsideVisibleRect = getClippedRect().contains(ev.getX(), ev.getY());
-        return (ev.getAction() != MotionEvent.ACTION_DOWN || touchLiesInsideVisibleRect) && super.dispatchTouchEvent(ev);
+        boolean touchLiesInsideVisibleSheet = getClippedRect().contains(ev.getX(), ev.getY());
+        boolean handledBySuper = super.dispatchTouchEvent(ev);
+        return touchLiesInsideVisibleSheet || handledBySuper;
     }
 
 }

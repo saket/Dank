@@ -11,9 +11,22 @@
 
     <!-- Submission list -->
     <string name="subreddit_name_r_prefix">/r/%s</string>
+    <string name="user_name_u_prefix">/u/%s</string>
     <string name="go_to_subreddit">Go to subreddit…</string>
     <string name="frontpage_subreddit_name">Frontpage</string>
     <string name="manage">Manage</string>
+    <string name="profile">Profile</string>
+    <string name="preferences">Preferences</string>
+
+    <!-- User profile -->
+    <string name="messages">Messages</string>
+    <string name="comments">Comments</string>
+    <string name="submissions">Submissions</string>
+    <string name="karma_count">%s karma</string>
+    <string name="loading_karma">Loading karma…</string>
+    <string name="error_user_karma_load">Couldn\'t get karma</string>
+    <string name="confirm_logout">Confirm logout?</string>
+    <string name="logging_out">Logging out…</string>
 
     <!-- Submission -->
     <string name="error_no_app_to_handle_intent">No app found to handle this link</string>

@@ -4,6 +4,7 @@ import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.just;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -37,10 +38,12 @@ import rx.Subscription;
 
 public class SubredditActivity extends DankActivity implements SubmissionFragment.Callbacks {
 
+    private static final int REQUEST_CODE_LOGIN = 100;
     private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
+    @BindView(R.id.subreddit_toolbar_title_container) ViewGroup toolbarTitleContainer;
     @BindView(R.id.subreddit_toolbar_container) ViewGroup toolbarContainer;
     @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
     @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
@@ -123,13 +126,22 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         submissionList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
+    @Override
+    public void setTitle(CharSequence title) {
+        toolbarTitleView.setText(title);
+    }
+
+    public void setTitle(DankSubreddit subreddit) {
+        setTitle(subreddit.isFrontpage()
+                ? getString(R.string.app_name)
+                : getString(R.string.subreddit_name_r_prefix, subreddit.displayName()));
+    }
+
     private void loadSubmissions(DankSubreddit subreddit) {
         activeSubreddit = subreddit;
         submissionsAdapter.updateData(null);
 
-        toolbarTitleView.setText(subreddit.isFrontpage()
-                ? getString(R.string.app_name)
-                : getString(R.string.subreddit_name_r_prefix, subreddit.displayName()));
+        setTitle(subreddit);
 
         SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subreddit.name());
         Subscription subscription = Dank.reddit()
@@ -147,13 +159,26 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         toolbarSheet.setStateChangeListener(state -> {
             switch (state) {
                 case EXPANDING:
-                    // When sub-reddits are showing, we'll show a "configure subreddits" button in the toolbar.
-                    invalidateOptionsMenu();
+                    if (isSubredditPickerVisible()) {
+                        // When subreddit picker is showing, we'll show a "configure subreddits" button in the toolbar.
+                        invalidateOptionsMenu();
+
+                    } else if (isUserProfileSheetVisible()) {
+                        setTitle(getString(R.string.user_name_u_prefix, Dank.reddit().loggedInUserName()));
+                    }
+                    break;
+
+                case EXPANDED:
                     break;
 
                 case COLLAPSING:
-                    Keyboards.hide(this, toolbarSheet);
-                    invalidateOptionsMenu();
+                    if (isSubredditPickerVisible()) {
+                        Keyboards.hide(this, toolbarSheet);
+                        invalidateOptionsMenu();
+
+                    } else if (isUserProfileSheetVisible()) {
+                        setTitle(activeSubreddit);
+                    }
                     break;
 
                 case COLLAPSED:
@@ -162,23 +187,6 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                     break;
             }
         });
-    }
-
-    @OnClick(R.id.subreddit_toolbar_title)
-    void onClickSubredditPicker() {
-        if (toolbarSheet.isExpandedOrExpanding()) {
-            toolbarSheet.collapse();
-
-        } else {
-            SubredditPickerView pickerView = SubredditPickerView.showIn(toolbarSheet);
-            pickerView.post(() -> toolbarSheet.expand());
-            pickerView.setOnSubredditClickListener(subreddit -> {
-                toolbarSheet.collapse();
-                if (!subreddit.equals(activeSubreddit)) {
-                    loadSubmissions(subreddit);
-                }
-            });
-        }
     }
 
 // ======== NAVIGATION ======== //
@@ -190,7 +198,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (toolbarSheet.isExpandedOrExpanding()) {
+        if (isSubredditPickerExpanded()) {
             getMenuInflater().inflate(R.menu.menu_subreddit_picker, menu);
 
             // Click listeners for a menu item with an action view must be set manually.
@@ -200,23 +208,76 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
         } else {
             getMenuInflater().inflate(R.menu.menu_subreddit, menu);
-
-            MenuItem changeOrderMenuItem = menu.findItem(R.id.action_login);
-            Button button = (Button) ((ViewGroup) changeOrderMenuItem.getActionView()).getChildAt(0);
-
-            button.setText(Dank.reddit().isUserLoggedIn() ? R.string.logout : R.string.login);
-            button.setOnClickListener(v -> {
-                if (Dank.reddit().isUserLoggedIn()) {
-                    Dank.reddit().logout();
-                    button.setText(R.string.login);
-
-                } else {
-                    LoginActivity.start(this);
-                }
-            });
         }
 
         return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_user_profile:
+                if (Dank.reddit().isUserLoggedIn()) {
+                    onClickUserProfileMenu();
+                } else {
+                    LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
+                }
+                return true;
+
+            case R.id.action_preferences:
+                onClickUserPreferencesMenu();
+                return true;
+        }
+        return super.onOptionsItemSelected(item);
+    }
+
+    @OnClick(R.id.subreddit_toolbar_title)
+    void onClickSubredditPicker() {
+        if (toolbarSheet.isExpandedOrExpanding()) {
+            toolbarSheet.collapse();
+
+        } else {
+            SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet);
+            pickerSheet.post(() -> toolbarSheet.expand());
+            pickerSheet.setOnSubredditClickListener(subreddit -> {
+                toolbarSheet.collapse();
+                if (!subreddit.equals(activeSubreddit)) {
+                    loadSubmissions(subreddit);
+                }
+            });
+        }
+    }
+
+    void onClickUserProfileMenu() {
+        if (toolbarSheet.isExpandedOrExpanding()) {
+            toolbarSheet.collapse();
+
+        } else {
+            UserProfileSheetView pickerSheet = UserProfileSheetView.showIn(toolbarSheet);
+            pickerSheet.post(() -> toolbarSheet.expand());
+        }
+    }
+
+    private void onClickUserPreferencesMenu() {
+
+    }
+
+    /**
+     * Whether the subreddit picker is visible, albeit partially.
+     */
+    private boolean isSubredditPickerVisible() {
+        return !toolbarSheet.isCollapsed() && toolbarSheet.getChildAt(0) instanceof SubredditPickerSheetView;
+    }
+
+    /**
+     * Whether the subreddit picker is "fully" visible.
+     */
+    private boolean isSubredditPickerExpanded() {
+        return toolbarSheet.isExpandedOrExpanding() && toolbarSheet.getChildAt(0) instanceof SubredditPickerSheetView;
+    }
+
+    private boolean isUserProfileSheetVisible() {
+        return !toolbarSheet.isCollapsed() && toolbarSheet.getChildAt(0) instanceof UserProfileSheetView;
     }
 
     @Override
@@ -227,11 +288,27 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 submissionList.collapse();
             }
 
-        } else if (toolbarSheet.isExpandedOrExpanding()) {
+        } else if (!toolbarSheet.isCollapsed()) {
             toolbarSheet.collapse();
 
         } else {
             super.onBackPressed();
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        if (requestCode == REQUEST_CODE_LOGIN && resultCode == RESULT_OK) {
+            // Show user's profile.
+            onClickUserProfileMenu();
+
+            // Reload submissions if we're on the frontpage.
+            if (activeSubreddit.isFrontpage()) {
+                loadSubmissions(activeSubreddit);
+            }
+
+        } else {
+            super.onActivityResult(requestCode, resultCode, data);
         }
     }
 

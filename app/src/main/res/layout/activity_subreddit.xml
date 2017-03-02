@@ -34,11 +34,13 @@
         android:id="@+id/subreddit_toolbar_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:animateLayoutChanges="true"
         android:elevation="@dimen/subreddit_toolbar_sheet_elevation">
 
         <include layout="@layout/include_toolbar" />
 
         <RelativeLayout
+            android:id="@+id/subreddit_toolbar_title_container"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:background="@color/toolbar"
@@ -65,7 +67,7 @@
                 android:layout_centerVertical="true"
                 android:layout_marginStart="-28dp"
                 android:layout_toEndOf="@+id/subreddit_toolbar_title"
-                android:src="@drawable/ic_arrow_drop_down_black_24dp"
+                android:src="@drawable/ic_arrow_drop_down_24dp"
                 android:tint="@color/color_accent"
                 tools:ignore="ContentDescription" />
         </RelativeLayout>

@@ -6,7 +6,6 @@ import static me.saket.dank.utils.RxUtils.logError;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.EditText;
@@ -37,7 +36,7 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
 
-public class SubredditPickerView extends FrameLayout {
+public class SubredditPickerSheetView extends FrameLayout {
 
     @BindView(R.id.subredditpicker_search) EditText searchView;
     @BindView(R.id.subredditpicker_subreddit_list) RecyclerView subredditList;
@@ -52,19 +51,15 @@ public class SubredditPickerView extends FrameLayout {
     // TODO: 28/02/17 Cache this somewhere else.
     private static List<DankSubreddit> userSubreddits;
 
-    public static SubredditPickerView showIn(ToolbarExpandableSheet toolbarSheet) {
-        SubredditPickerView subredditPickerView = new SubredditPickerView(toolbarSheet.getContext());
+    public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet) {
+        SubredditPickerSheetView subredditPickerView = new SubredditPickerSheetView(toolbarSheet.getContext());
         toolbarSheet.addView(subredditPickerView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         return subredditPickerView;
     }
 
-    public SubredditPickerView(Context context) {
+    public SubredditPickerSheetView(Context context) {
         super(context);
-        View pickerView = LayoutInflater.from(context).inflate(R.layout.view_subreddit_picker, this, false);
-
-        ViewGroup.LayoutParams params = pickerView.getLayoutParams();
-        params.width = ViewGroup.LayoutParams.MATCH_PARENT;
-        addView(pickerView, params);
+        inflate(context, R.layout.view_subreddit_picker_sheet, this);
         ButterKnife.bind(this, this);
     }
 
