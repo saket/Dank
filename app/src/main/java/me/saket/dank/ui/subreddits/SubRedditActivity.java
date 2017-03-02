@@ -28,9 +28,9 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.authentication.LoginActivity;
+import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.utils.Keyboards;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
@@ -224,7 +224,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 return true;
 
             case R.id.action_preferences:
-                onClickUserPreferencesMenu();
+                UserPreferencesActivity.start(this);
                 return true;
         }
         return super.onOptionsItemSelected(item);
@@ -255,10 +255,6 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
             UserProfileSheetView pickerSheet = UserProfileSheetView.showIn(toolbarSheet);
             pickerSheet.post(() -> toolbarSheet.expand());
         }
-    }
-
-    private void onClickUserPreferencesMenu() {
-
     }
 
     /**

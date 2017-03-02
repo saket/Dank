@@ -75,7 +75,7 @@ public class LoginActivity extends DankActivity {
                     handleOnPermissionGranted(url);
 
                 } else if (url.contains("error=")) {
-                    Toast.makeText(LoginActivity.this, R.string.error_login_oauth_permission_rejected, Toast.LENGTH_LONG).show();
+                    Toast.makeText(LoginActivity.this, R.string.login_error_oauth_permission_rejected, Toast.LENGTH_LONG).show();
                     webView.stopLoading();
                 }
             }
@@ -99,7 +99,7 @@ public class LoginActivity extends DankActivity {
 
                 }, error -> {
                     setProgressVisible(false);
-                    Toast.makeText(LoginActivity.this, R.string.error_login_oauth_failed, Toast.LENGTH_LONG).show();
+                    Toast.makeText(LoginActivity.this, R.string.login_error_oauth_failed, Toast.LENGTH_LONG).show();
                 });
     }
 

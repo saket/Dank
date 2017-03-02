@@ -4,8 +4,8 @@
     <!-- Login -->
     <string name="login">Login</string>
     <string name="logout">Logout</string>
-    <string name="error_login_oauth_permission_rejected">\"You must press \'allow\' to log in with this account\"</string>
-    <string name="error_login_oauth_failed">Failed to login. Please try again.</string>
+    <string name="login_error_oauth_permission_rejected">You must press \'allow\' to log in with this account</string>
+    <string name="login_error_oauth_failed">Failed to login. Please try again.</string>
     <string name="login_welcome_user">Welcome, %s!</string>
     <string name="loading_comments">Loading comments…</string>
 
@@ -34,4 +34,7 @@
 
     <!-- Submission -->
     <string name="error_no_app_to_handle_intent">No app found to handle this link</string>
+
+    <!-- User Preferences -->
+    <string name="activity_user_preferences">Preferences</string>
 </resources>

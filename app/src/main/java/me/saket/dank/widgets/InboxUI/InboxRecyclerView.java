@@ -97,7 +97,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
      */
     public void setExpandablePage(ExpandablePageLayout expandablePage, View toolbar) {
         page = expandablePage;
-        expandablePage.setup(this, toolbar);
+        expandablePage.setup(toolbar);
         expandablePage.setInternalCallbacksList(this);
     }
 

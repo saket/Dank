@@ -14,8 +14,8 @@ public class PullToCollapseListener implements View.OnTouchListener {
     private final int touchSlop;
 
     private ExpandablePageLayout expandablePage;
-    private View toolbar;
     private OnPullListener onPullListener;
+    private int collapseDistanceThreshold;
     private float downX;
     private float downY;
     private float lastMoveY;
@@ -24,7 +24,6 @@ public class PullToCollapseListener implements View.OnTouchListener {
     private Boolean interceptedUntilNextGesture;
 
     interface OnPullListener {
-
         /**
          * Called when the user is pulling down / up the expandable page or the list.
          *
@@ -41,13 +40,19 @@ public class PullToCollapseListener implements View.OnTouchListener {
          * @param collapseEligible Whether or not the pull distance was enough to trigger a collapse.
          */
         void onRelease(boolean collapseEligible);
-
     }
 
     public PullToCollapseListener(Context context, ExpandablePageLayout expandablePage, OnPullListener onPullListener) {
         touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
         this.expandablePage = expandablePage;
         this.onPullListener = onPullListener;
+    }
+
+    /**
+     * The distance after which the page can collapse when pulled.
+     */
+    public void setCollapseDistanceThreshold(int threshold) {
+        collapseDistanceThreshold = threshold;
     }
 
     @Override
@@ -120,7 +125,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
 
                 // If the gesture has covered a distance >= the toolbar height, mark this gesture eligible
                 // for collapsible when the finger is lifted
-                int collapseThresholdDistance = (int) (toolbar.getHeight() * COLLAPSE_THRESHOLD_DISTANCE_FACTOR);
+                int collapseThresholdDistance = (int) (collapseDistanceThreshold * COLLAPSE_THRESHOLD_DISTANCE_FACTOR);
                 eligibleForCollapse = upwardSwipe
                         ? expandablePage.getTranslationY() <= -collapseThresholdDistance
                         : expandablePage.getTranslationY() >= collapseThresholdDistance;
@@ -130,7 +135,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
                 // page / list is being overscrolled. This will also prevent the user
                 // to swipe all the way down or up
                 if (eligibleForCollapse && expandablePage.getTranslationY() != 0f) {
-                    float extraResistance = toolbar.getHeight() / Math.abs(expandablePage.getTranslationY());
+                    float extraResistance = collapseDistanceThreshold / Math.abs(expandablePage.getTranslationY());
                     resistedDeltaY *= extraResistance / 2;
                 }
 
@@ -167,10 +172,6 @@ public class PullToCollapseListener implements View.OnTouchListener {
 
     private void cancelAnyOngoingAnimations() {
         expandablePage.stopAnyOngoingPageAnimation();
-    }
-
-    public void setToolbar(View toolbar) {
-        this.toolbar = toolbar;
     }
 
 }

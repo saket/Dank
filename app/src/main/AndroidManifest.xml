@@ -11,6 +11,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/DankTheme">
+
         <activity
             android:name=".ui.subreddits.SubredditActivity"
             android:launchMode="singleTop"
@@ -18,10 +19,16 @@
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <activity
+            android:name=".ui.preferences.UserPreferencesActivity"
+            android:label="@string/activity_user_preferences"
+            android:parentActivityName=".ui.subreddits.SubredditActivity"
+            android:theme="@style/DankTheme.TransparentBackground" />
+
         <activity
             android:name=".ui.authentication.LoginActivity"
             android:label="@string/login"
