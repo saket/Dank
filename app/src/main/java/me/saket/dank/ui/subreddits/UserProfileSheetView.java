@@ -52,7 +52,9 @@ public class UserProfileSheetView extends FrameLayout {
 
         karmaView.setText(R.string.loading_karma);
 
-        userInfoSubscription = Dank.reddit().loggedInUserAccount()
+        userInfoSubscription = Dank.reddit().authenticateIfNeeded()
+                .flatMap(__ -> Dank.reddit().loggedInUserAccount())
+                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
                 .compose(applySchedulers())
                 .subscribe(loggedInUser -> {
                     // Populate karma.

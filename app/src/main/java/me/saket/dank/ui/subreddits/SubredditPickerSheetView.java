@@ -77,11 +77,11 @@ public class SubredditPickerSheetView extends FrameLayout {
         subredditList.setAdapter(subredditAdapter);
         subredditList.setItemAnimator(null);
 
-        if (userSubreddits != null) {
-            setSubredditLoadProgressVisible().call(false);
-            subredditAdapter.updateData(userSubreddits);
-
-        } else {
+//        if (userSubreddits != null) {
+//            setSubredditLoadProgressVisible().call(false);
+//            subredditAdapter.updateData(userSubreddits);
+//
+//        } else {
             Subscription apiSubscription = (Dank.reddit().isUserLoggedIn() ? loggedInSubreddits() : loggedOutSubreddits())
                     .compose(doOnStartAndFinish(setSubredditLoadProgressVisible()))
                     .map(subreddits -> {
@@ -91,7 +91,7 @@ public class SubredditPickerSheetView extends FrameLayout {
                     .doOnNext(subreddits -> userSubreddits = subreddits)
                     .subscribe(subredditAdapter, logError("Failed to get subreddits"));
             subscriptions.add(apiSubscription);
-        }
+//        }
 
         setupSearch();
     }

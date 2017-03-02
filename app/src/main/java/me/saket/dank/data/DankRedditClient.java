@@ -1,7 +1,6 @@
 package me.saket.dank.data;
 
 import android.content.Context;
-import android.os.Looper;
 import android.support.annotation.NonNull;
 
 import net.dean.jraw.RedditClient;
@@ -17,7 +16,6 @@ import net.dean.jraw.http.oauth.OAuthHelper;
 import net.dean.jraw.models.LoggedInAccount;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Subreddit;
-import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
 
@@ -29,7 +27,6 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.utils.AndroidTokenStore;
 import rx.Observable;
 import rx.functions.Func1;
-import timber.log.Timber;
 
 /**
  * Wrapper around {@link RedditClient}.
@@ -40,7 +37,6 @@ public class DankRedditClient {
     private final String redditAppClientId;
     private final RedditClient redditClient;
     private final AuthenticationManager redditAuthManager;
-    private Credentials loginCredentials;
 
     private boolean authManagerInitialized;
 
@@ -94,22 +90,23 @@ public class DankRedditClient {
 
             AuthenticationState authState = redditAuthManager.checkAuthState();
             if (authState != AuthenticationState.READY) {
-                Credentials credentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
 
                 switch (authState) {
                     case NONE:
                         //Timber.d("Authenticating app");
-                        redditClient.authenticate(redditClient.getOAuthHelper().easyAuth(credentials));
+                        Credentials userlessAppCredentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
+                        redditClient.authenticate(redditClient.getOAuthHelper().easyAuth(userlessAppCredentials));
                         break;
 
                     case NEED_REFRESH:
                         //Timber.d("Refreshing token");
-                        redditAuthManager.refreshAccessToken(credentials);
+                        redditAuthManager.refreshAccessToken(loginCredentials());
                         break;
                 }
-            } else {
-                //Timber.d("Already authenticated");
             }
+            //else {
+                //Timber.d("Already authenticated");
+            //}
 
             return true;
         });
@@ -130,10 +127,7 @@ public class DankRedditClient {
                     redditAuthManager.refreshAccessToken(credentials);
                     return true;
 
-                }).doOnNext(booleanObservable -> {
-                    boolean isMainThread = Looper.getMainLooper() == Looper.myLooper();
-                    Timber.i("isMainThread: %s", isMainThread);
-                }).map(__ -> null);
+                });
 
             } else {
                 return Observable.error(error);
@@ -144,21 +138,18 @@ public class DankRedditClient {
     public Observable<Boolean> logout() {
         return Observable.fromCallable(() -> {
             // Bug workaround: revokeAccessToken() method crashes if logging is enabled.
-            LoggingMode originalMode = redditClient.getLoggingMode();
+            LoggingMode modeBackup = redditClient.getLoggingMode();
             redditClient.setLoggingMode(LoggingMode.NEVER);
 
-            redditClient.getOAuthHelper().revokeAccessToken(getLoginCredentials());
+            redditClient.getOAuthHelper().revokeAccessToken(loginCredentials());
 
-            redditClient.setLoggingMode(originalMode);
+            redditClient.setLoggingMode(modeBackup);
             return true;
         });
     }
 
-    private Credentials getLoginCredentials() {
-        if (loginCredentials == null) {
-            loginCredentials = Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
-        }
-        return loginCredentials;
+    private Credentials loginCredentials() {
+        return Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
     }
 
     public class UserLoginHelper {
@@ -184,7 +175,7 @@ public class DankRedditClient {
             };
 
             OAuthHelper oAuthHelper = redditClient.getOAuthHelper();
-            return oAuthHelper.getAuthorizationUrl(getLoginCredentials(), true /* permanent */, true /* useMobileSite */, scopes).toString();
+            return oAuthHelper.getAuthorizationUrl(loginCredentials(), true /* permanent */, true /* useMobileSite */, scopes).toString();
         }
 
         /**
@@ -192,7 +183,7 @@ public class DankRedditClient {
          */
         public Observable<Boolean> parseOAuthSuccessUrl(String successUrl) {
             return Observable.fromCallable(() -> {
-                OAuthData oAuthData = redditClient.getOAuthHelper().onUserChallenge(successUrl, getLoginCredentials());
+                OAuthData oAuthData = redditClient.getOAuthHelper().onUserChallenge(successUrl, loginCredentials());
                 redditClient.authenticate(oAuthData);
                 return true;
             });
@@ -212,10 +203,6 @@ public class DankRedditClient {
 
     public Observable<LoggedInAccount> loggedInUserAccount() {
         return Observable.fromCallable(() -> redditClient.me());
-    }
-
-    public InboxPaginator unreadMessagesAndReplies() {
-        return new InboxPaginator(redditClient, "unread");
     }
 
 }
