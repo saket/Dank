@@ -3,7 +3,7 @@ package me.saket.dank.ui.submission;
 import static butterknife.ButterKnife.findById;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
-import static rx.Observable.just;
+import static rx.Observable.fromCallable;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -328,9 +328,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         // Load new comments.
         commentsLoadProgressView.setVisibility(View.VISIBLE);
         commentsSubscription = Dank.reddit()
-                .authenticateIfNeeded()
-                .flatMap(__ -> just(Dank.reddit().fullSubmissionData(submission.getId())))
-                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
+                .withAuth(fromCallable(() -> Dank.reddit().fullSubmissionData(submission.getId())))
                 .map(submissionData -> {
                     CommentNode commentNode = submissionData.getComments();
                     commentsCollapseHelper.setupWith(commentNode);

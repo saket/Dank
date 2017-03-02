@@ -34,9 +34,10 @@ import rx.functions.Func1;
 public class DankRedditClient {
 
     private final Context context;
-    private final String redditAppClientId;
     private final RedditClient redditClient;
     private final AuthenticationManager redditAuthManager;
+    private final Credentials loggedInUserCredentials;
+    private final Credentials userlessAppCredentials;
 
     private boolean authManagerInitialized;
 
@@ -44,7 +45,10 @@ public class DankRedditClient {
         this.context = context;
         this.redditClient = redditClient;
         this.redditAuthManager = redditAuthManager;
-        this.redditAppClientId = context.getString(R.string.reddit_app_client_id);
+
+        String redditAppClientId = context.getString(R.string.reddit_app_client_id);
+        loggedInUserCredentials = Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
+        userlessAppCredentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
     }
 
     public SubredditPaginator subredditPaginator(String subredditName) {
@@ -77,9 +81,19 @@ public class DankRedditClient {
 // ======== AUTHENTICATION ======== //
 
     /**
+     * Ensures that the app is authorized to make Reddit API calls and execute <var>wrappedObservable</var> to be specific.
+     */
+    public <T> Observable<T> withAuth(Observable<T> wrappedObservable) {
+        return Dank.reddit()
+                .authenticateIfNeeded()
+                .flatMap(__ -> wrappedObservable)
+                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired());
+    }
+
+    /**
      * Get a new API token if we haven't already or refresh the existing API token if the last one has expired.
      */
-    public Observable<Boolean> authenticateIfNeeded() {
+    private Observable<Boolean> authenticateIfNeeded() {
         return Observable.fromCallable(() -> {
             if (!authManagerInitialized) {
                 redditAuthManager.init(redditClient, new RefreshTokenHandler(new AndroidTokenStore(context), redditClient));
@@ -94,13 +108,12 @@ public class DankRedditClient {
                 switch (authState) {
                     case NONE:
                         //Timber.d("Authenticating app");
-                        Credentials userlessAppCredentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
                         redditClient.authenticate(redditClient.getOAuthHelper().easyAuth(userlessAppCredentials));
                         break;
 
                     case NEED_REFRESH:
                         //Timber.d("Refreshing token");
-                        redditAuthManager.refreshAccessToken(loginCredentials());
+                        redditAuthManager.refreshAccessToken(loggedInUserCredentials);
                         break;
                 }
             }
@@ -112,21 +125,21 @@ public class DankRedditClient {
         });
     }
 
-    public UserLoginHelper userLoginHelper() {
-        return new UserLoginHelper();
-    }
-
+    /**
+     * Although refreshing token is already handled by {@link #authenticateIfNeeded()}, it is possible that the
+     * token expires right after it returns and a Reddit API call is made. Or it is also possible that the access
+     * token got revoked somehow and the server is returning a 401. In both cases, this method attempts to
+     * re-authenticate.
+     */
     @NonNull
-    public Func1<Observable<? extends Throwable>, Observable<?>> refreshApiTokenAndRetryIfExpired() {
+    private Func1<Observable<? extends Throwable>, Observable<?>> refreshApiTokenAndRetryIfExpired() {
         return errors -> errors.flatMap(error -> {
             if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
                 // Re-try authenticating.
                 //Timber.w("Attempting to refresh token");
                 return Observable.fromCallable(() -> {
-                    Credentials credentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
-                    redditAuthManager.refreshAccessToken(credentials);
+                    redditAuthManager.refreshAccessToken(isUserLoggedIn() ? loggedInUserCredentials : userlessAppCredentials);
                     return true;
-
                 });
 
             } else {
@@ -135,21 +148,21 @@ public class DankRedditClient {
         });
     }
 
+    public UserLoginHelper userLoginHelper() {
+        return new UserLoginHelper();
+    }
+
     public Observable<Boolean> logout() {
         return Observable.fromCallable(() -> {
             // Bug workaround: revokeAccessToken() method crashes if logging is enabled.
             LoggingMode modeBackup = redditClient.getLoggingMode();
             redditClient.setLoggingMode(LoggingMode.NEVER);
 
-            redditClient.getOAuthHelper().revokeAccessToken(loginCredentials());
+            redditClient.getOAuthHelper().revokeAccessToken(loggedInUserCredentials);
 
             redditClient.setLoggingMode(modeBackup);
             return true;
         });
-    }
-
-    private Credentials loginCredentials() {
-        return Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
     }
 
     public class UserLoginHelper {
@@ -175,7 +188,7 @@ public class DankRedditClient {
             };
 
             OAuthHelper oAuthHelper = redditClient.getOAuthHelper();
-            return oAuthHelper.getAuthorizationUrl(loginCredentials(), true /* permanent */, true /* useMobileSite */, scopes).toString();
+            return oAuthHelper.getAuthorizationUrl(loggedInUserCredentials, true /* permanent */, true /* useMobileSite */, scopes).toString();
         }
 
         /**
@@ -183,7 +196,7 @@ public class DankRedditClient {
          */
         public Observable<Boolean> parseOAuthSuccessUrl(String successUrl) {
             return Observable.fromCallable(() -> {
-                OAuthData oAuthData = redditClient.getOAuthHelper().onUserChallenge(successUrl, loginCredentials());
+                OAuthData oAuthData = redditClient.getOAuthHelper().onUserChallenge(successUrl, loggedInUserCredentials);
                 redditClient.authenticate(oAuthData);
                 return true;
             });

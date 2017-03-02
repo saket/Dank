@@ -104,9 +104,7 @@ public class SubredditPickerSheetView extends FrameLayout {
 
     private Observable<List<DankSubreddit>> loggedInSubreddits() {
         return Dank.reddit()
-                .authenticateIfNeeded()
-                .flatMap(__ -> Dank.reddit().userSubreddits())
-                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
+                .withAuth(Dank.reddit().userSubreddits())
                 .compose(applySchedulers());
     }
 

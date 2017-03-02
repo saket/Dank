@@ -1,8 +1,9 @@
 package me.saket.dank.ui.subreddits;
 
+import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
-import static rx.Observable.just;
+import static rx.Observable.fromCallable;
 
 import android.content.Intent;
 import android.os.Bundle;
@@ -145,10 +146,8 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
         SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subreddit.name());
         Subscription subscription = Dank.reddit()
-                .authenticateIfNeeded()
-                .flatMap(__ -> just(subredditPaginator.next()))
-                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired())
-                .compose(RxUtils.applySchedulers())
+                .withAuth(fromCallable(() -> subredditPaginator.next()))
+                .compose(applySchedulers())
                 .compose(doOnStartAndFinish(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
                 .subscribe(submissionsAdapter, logError("Couldn't get front-page"));
         unsubscribeOnDestroy(subscription);
