@@ -43,6 +43,11 @@ android {
     packagingOptions {
         exclude 'META-INF/LICENSE'
     }
+
+    dexOptions {
+        preDexLibraries true
+        maxProcessCount 8
+    }
 }
 
 ext {
