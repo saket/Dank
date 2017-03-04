@@ -11,17 +11,20 @@ import com.alexvasilkov.gestures.State;
 import com.alexvasilkov.gestures.views.GestureImageView;
 
 /**
- * This wrapper exists so that we can easily change libraries in the future.
- * It has happened once so far and can happen again.
+ * This wrapper exists so that we can easily change libraries in the future. It has happened once so far
+ * and can happen again.
  */
 public class ZoomableImageView extends GestureImageView {
+
+    private static final float MAX_OVER_ZOOM = 4f;
+    private static final float MIN_OVER_ZOOM = 1f;
 
     private GestureDetector gestureDetector;
 
     public ZoomableImageView(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        getController().getSettings().setOverzoomFactor(1f);
+        getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
         getController().getSettings().setFillViewport(true);
 
         getController().setOnGesturesListener(new GestureController.SimpleOnGestureListener() {
@@ -29,6 +32,13 @@ public class ZoomableImageView extends GestureImageView {
             public boolean onSingleTapConfirmed(@NonNull MotionEvent event) {
                 performClick();
                 return true;
+            }
+
+            @Override
+            public void onUpOrCancel(@NonNull MotionEvent event) {
+                // Bug workaround: Image zoom stops working after first overzoom. Resetting it when the
+                // finger is lifted seems to solve the problem.
+                getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
             }
         });
 
@@ -54,9 +64,9 @@ public class ZoomableImageView extends GestureImageView {
                 // Overscroll only when zooming in.
                 boolean isZoomingIn = state.getZoom() > lastZoom;
                 if (isZoomingIn) {
-                    getController().getSettings().setOverzoomFactor(2f);
+                    getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
                 } else {
-                    getController().getSettings().setOverzoomFactor(1f);
+                    getController().getSettings().setOverzoomFactor(Math.max(MIN_OVER_ZOOM, state.getZoom()));
                 }
 
                 lastZoom = state.getZoom();

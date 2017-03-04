@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission;
 
 import static butterknife.ButterKnife.findById;
+import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.fromCallable;
@@ -35,8 +36,6 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
-import com.bumptech.glide.request.target.ImageViewTarget;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
@@ -368,37 +367,32 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 Glide.with(this)
                         .load(submissionContent.imageContentUrl(deviceDisplayWidth))
                         .priority(Priority.IMMEDIATE)
-                        .into(new ImageViewTarget<GlideDrawable>(contentImageView) {
-                            @Override
-                            protected void setResource(GlideDrawable resource) {
-                                Views.executeOnMeasure(contentImageView, () -> {
-                                    contentLoadProgressView.hide();
+                        .into(simpleImageViewTarget(contentImageView, resource -> {
+                            Views.executeOnMeasure(contentImageView, () -> {
+                                contentLoadProgressView.hide();
 
-                                    int imageMaxVisibleHeight = contentImageView.getHeight();
-                                    float widthResizeFactor = deviceDisplayWidth / (float) resource.getIntrinsicWidth();
-                                    int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
+                                int imageMaxVisibleHeight = contentImageView.getHeight();
+                                float widthResizeFactor = deviceDisplayWidth / (float) resource.getMinimumWidth();
+                                int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
 
-                                    contentImageView.setImageDrawable(resource);
+                                contentImageView.setImageDrawable(resource);
 
-                                    // Reveal the image smoothly or right away depending upon whether or not this
-                                    // page is already expanded and visible.
-                                    Views.executeOnNextLayout(commentListParentSheet, () -> {
-                                        commentListParentSheet.setScrollingEnabled(true);
+                                // Reveal the image smoothly or right away depending upon whether or not this
+                                // page is already expanded and visible.
+                                Views.executeOnNextLayout(commentListParentSheet, () -> {
+                                    int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
+                                    commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
 
-                                        // TODO: 25/02/17 calculate this revealdistance using revealDistanceFunc.
-                                        int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
-                                        commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
-
-                                        if (submissionPageLayout.isExpanded()) {
-                                            // Smoothly reveal the image.
-                                            commentListParentSheet.smoothScrollTo(revealDistance);
-                                        } else {
-                                            commentListParentSheet.scrollTo(revealDistance);
-                                        }
-                                    });
+                                    commentListParentSheet.setScrollingEnabled(true);
+                                    if (submissionPageLayout.isExpanded()) {
+                                        // Smoothly reveal the image.
+                                        commentListParentSheet.smoothScrollTo(revealDistance);
+                                    } else {
+                                        commentListParentSheet.scrollTo(revealDistance);
+                                    }
                                 });
-                            }
-                        });
+                            });
+                        }));
                 break;
 
             case SELF:
