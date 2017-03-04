@@ -40,25 +40,22 @@ public class UserPreferencesActivity extends DankActivity {
         findAndSetupToolbar(true);
 
         setupActivityExpandablePage();
+    }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
 
         preferenceList.setLayoutManager(preferenceList.createLayoutManager());
         preferenceList.setItemAnimator(new DefaultItemAnimator());
         preferenceList.setExpandablePage(preferencesPage, toolbar);
         preferenceList.setHasFixedSize(true);
 
-        List<DankPreferenceGroup> preferenceGroups = new ArrayList<>();
-        preferenceGroups.add(DankPreferenceGroup.create(
-                R.drawable.ic_style_24dp,
-                R.string.userpreferences_look_and_feel,
-                R.string.userpreferences_look_and_feel_subtitle)
-        );
-
-        PreferencesAdapter preferencesAdapter = new PreferencesAdapter(preferenceGroups);
+        PreferencesAdapter preferencesAdapter = new PreferencesAdapter(constructPreferenceGroups());
         preferencesAdapter.setOnPreferenceGroupClickListener((preferenceGroup, submissionItemView, submissionId) -> {
             preferenceList.expandItem(preferenceList.indexOfChild(submissionItemView), submissionId);
-
-            // TODO: 04/03/17
             preferencesPage.post(() -> {
+                // TODO: 04/03/17 Load preference page.
             });
         });
         preferenceList.setAdapter(preferencesAdapter);
@@ -84,6 +81,46 @@ public class UserPreferencesActivity extends DankActivity {
             }
         });
         activityContentPage.setNestedExpandablePage(preferencesPage);
+    }
+
+    private List<DankPreferenceGroup> constructPreferenceGroups() {
+        List<DankPreferenceGroup> preferenceGroups = new ArrayList<>();
+
+        // Look & feel.
+        preferenceGroups.add(DankPreferenceGroup.create(
+                R.drawable.ic_look_and_feel_24dp,
+                R.string.userpreferences_look_and_feel,
+                R.string.userpreferences_look_and_feel_subtitle)
+        );
+
+        // Manage subreddits.
+        preferenceGroups.add(DankPreferenceGroup.create(
+                R.drawable.ic_subreddits_24dp,
+                R.string.userpreferences_manage_subreddits,
+                R.string.userpreferences_manage_subreddits_subtitle)
+        );
+
+        // Filters.
+        preferenceGroups.add(DankPreferenceGroup.create(
+                R.drawable.ic_visibility_off_24dp,
+                R.string.userpreferences_filters,
+                R.string.userpreferences_filters_subtitle)
+        );
+
+        // Data usage.
+        preferenceGroups.add(DankPreferenceGroup.create(
+                R.drawable.ic_data_setting_24dp,
+                R.string.userpreferences_data_usage,
+                R.string.userpreferences_data_usage_subtitle)
+        );
+
+        // About.
+        preferenceGroups.add(DankPreferenceGroup.create(
+                R.drawable.ic_adb_24dp,
+                R.string.userpreferences_about,
+                R.string.userpreferences_about_subtitle)
+        );
+        return preferenceGroups;
     }
 
     @Override

@@ -16,7 +16,7 @@
         android:layout_marginEnd="@dimen/spacing12"
         android:layout_marginStart="@dimen/spacing4"
         android:padding="@dimen/spacing16"
-        android:src="@drawable/ic_style_24dp" />
+        android:src="@drawable/ic_look_and_feel_24dp" />
 
     <TextView
         android:id="@+id/item_preferencegroup_title"
@@ -36,7 +36,7 @@
         android:layout_alignStart="@+id/item_preferencegroup_title"
         android:layout_below="@+id/item_preferencegroup_title"
         android:layout_marginBottom="@dimen/spacing12"
-        android:fontFamily="sans-serif-smallcaps"
+        android:fontFamily="sans-serif-condensed"
         android:textColor="@color/gray_600"
         tools:text="@string/userpreferences_look_and_feel_subtitle" />
 

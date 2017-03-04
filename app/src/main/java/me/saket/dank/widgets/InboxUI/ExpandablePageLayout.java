@@ -652,7 +652,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
      */
     @SuppressWarnings("SimplifiableIfStatement")
     boolean handleOnPullToCollapseIntercept(MotionEvent event, float downX, float downY, boolean deltaUpwardSwipe) {
-        if (nestedPage != null && nestedPage.getClippedRect().contains(downX, downY)) {
+        if (nestedPage != null && nestedPage.isExpandedOrExpanding() && nestedPage.getClippedRect().contains(downX, downY)) {
             // Block this pull if it's being made inside a nested page. We should use nested scrolling
             // in the future to make this smarter.
             nestedPage.handleOnPullToCollapseIntercept(event, downX, downY, deltaUpwardSwipe);

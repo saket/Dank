@@ -25,7 +25,7 @@
 
         <activity
             android:name=".ui.preferences.UserPreferencesActivity"
-            android:label="@string/activity_user_preferences"
+            android:label="@string/activity_userpreferences"
             android:parentActivityName=".ui.subreddits.SubredditActivity"
             android:theme="@style/DankTheme.TransparentBackground" />
 

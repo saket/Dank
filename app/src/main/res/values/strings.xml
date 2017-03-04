@@ -36,9 +36,15 @@
     <string name="error_no_app_to_handle_intent">No app found to handle this link</string>
 
     <!-- User Preferences -->
-    <string name="activity_user_preferences">Preferences</string>
+    <string name="activity_userpreferences">Preferences</string>
     <string name="userpreferences_look_and_feel">Look &amp; feel</string>
-    <string name="userpreferences_look_and_feel_subtitle">Appearance and gestures</string>
+    <string name="userpreferences_look_and_feel_subtitle">Customize appearance and gestures</string>
     <string name="userpreferences_manage_subreddits">Manage subreddits</string>
-    <string name="userpreferences_manage_subreddits_subtitles">Sort order and favorites</string>
+    <string name="userpreferences_manage_subreddits_subtitle">Change order and pin favorites</string>
+    <string name="userpreferences_data_usage">Data usage</string>
+    <string name="userpreferences_data_usage_subtitle">Balance data consumption and quality</string>
+    <string name="userpreferences_filters">Filters</string>
+    <string name="userpreferences_filters_subtitle">NSFW and other content filters</string>
+    <string name="userpreferences_about">About Dank</string>
+    <string name="userpreferences_about_subtitle">The team behind</string>
 </resources>
