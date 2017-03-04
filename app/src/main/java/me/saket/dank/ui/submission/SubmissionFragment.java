@@ -175,6 +175,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             }
         });
 
+        // TODO: 04/03/17 How do we find out if there's a registered app for certain URLs?
         contentWebView.setWebViewClient(new WebViewClient() {
             @Override
             public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
@@ -376,12 +377,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                                     int imageMaxVisibleHeight = contentImageView.getHeight();
                                     float widthResizeFactor = deviceDisplayWidth / (float) resource.getIntrinsicWidth();
                                     int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
-
-                                    // If the image is longer than the visible window, zoom in to fill the width on double tap.
-                                    boolean isImageLongerThanVisibleWindow = imageMaxVisibleHeight < (resource.getIntrinsicHeight() * widthResizeFactor);
-                                    if (isImageLongerThanVisibleWindow && resource.getIntrinsicWidth() <= resource.getIntrinsicHeight()) {
-                                        contentImageView.getController().getSettings().setFillViewport(true);
-                                    }
 
                                     contentImageView.setImageDrawable(resource);
 

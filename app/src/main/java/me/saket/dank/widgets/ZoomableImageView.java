@@ -22,6 +22,7 @@ public class ZoomableImageView extends GestureImageView {
         super(context, attrs);
 
         getController().getSettings().setOverzoomFactor(1f);
+        getController().getSettings().setFillViewport(true);
 
         getController().setOnGesturesListener(new GestureController.SimpleOnGestureListener() {
             @Override
