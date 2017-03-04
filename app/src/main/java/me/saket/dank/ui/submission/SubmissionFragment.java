@@ -258,7 +258,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                         || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
                     commentListParentSheet.scrollTo(imageRevealDistance);
                 }
-
                 isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.call();
             }
 
@@ -406,6 +405,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
                 Views.executeOnMeasure(commentListParentSheet, () -> {
                     commentListParentSheet.setScrollingEnabled(true);
+                    commentListParentSheet.setPeekHeight(commentsSheetMinimumVisibleHeight);
                     commentListParentSheet.scrollTo(commentListParentSheet.getHeight() * 3 / 10);
                 });
                 break;
