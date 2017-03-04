@@ -159,7 +159,12 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
 
         // Store these details so that they can be used later for restoring the original state.
         View child = getChildAt(viewPositionToExpand);
-        final Rect itemRect = new Rect(child.getLeft(), child.getTop(), child.getRight(), child.getBottom());
+        final Rect itemRect = new Rect(
+                getLeft() + child.getLeft(),
+                getTop() + child.getTop(),
+                (getWidth() - getRight()) + child.getRight(),
+                getTop() + child.getBottom()
+        );
 
         if (itemRect.width() == 0) {
             // Should expand from full width even when expanding from arbitrary location (that is, item to expand is null).
