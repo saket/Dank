@@ -2,9 +2,10 @@ package me.saket.dank.utils;
 
 import android.net.Uri;
 import android.text.Html;
-import android.text.TextUtils;
 
 import net.dean.jraw.models.Submission;
+
+import java.util.Locale;
 
 import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.data.SubmissionContent.Host;
@@ -37,16 +38,13 @@ public class SubmissionContentParser {
                 break;
 
             case UNKNOWN:
-                if (!TextUtils.isEmpty(submission.getSelftext())) {
-                    // Why Reddit? :O
-                    content = SubmissionContent.create(Uri.parse(submission.getUrl()), Type.SELF, Host.REDDIT);
-                    break;
-
-                } else {
-                    // Treat everything else as links.
-                    content = manuallyParse(submission, Type.LINK);
-                    break;
-                }
+                Uri contentURI = Uri.parse(submission.getUrl());
+                String selfTextPathPrefix = "/r/" + submission.getSubredditName().toLowerCase(Locale.ENGLISH);
+                boolean isSelfText = contentURI.getPath().toLowerCase(Locale.ENGLISH).startsWith(selfTextPathPrefix);
+                content = isSelfText
+                        ? SubmissionContent.create(Uri.parse(submission.getUrl()), Type.SELF, Host.REDDIT)
+                        : manuallyParse(submission, Type.LINK);
+                break;
 
             case LINK:
                 content = manuallyParse(submission, Type.LINK);
