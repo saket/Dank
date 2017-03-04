@@ -245,18 +245,17 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                     // Image isn't present yet. Ignore.
                     return;
                 }
-
                 boolean isZoomingOut = lastZoom > state.getZoom();
                 lastZoom = state.getZoom();
 
-                int imageRevealDistance = (int) Math.min(contentImageView.getHeight(), contentImageView.getVisibleZoomedImageHeight())
-                        - commentListParentSheet.getTop();
+                int boundedVisibleImageHeight = (int) Math.min(contentImageView.getHeight(), contentImageView.getVisibleZoomedImageHeight());
+                int imageRevealDistance = boundedVisibleImageHeight - commentListParentSheet.getTop();
+                commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - imageRevealDistance);
 
                 if (isCommentSheetBeneathImage
                         // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
                         // it becomes difficult to lock the comments sheet beneath the image.
                         || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
-                    commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - imageRevealDistance);
                     commentListParentSheet.scrollTo(imageRevealDistance);
                 }
 
