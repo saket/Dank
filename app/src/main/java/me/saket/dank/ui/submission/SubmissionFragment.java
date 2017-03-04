@@ -18,6 +18,7 @@ import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.Html;
 import android.util.DisplayMetrics;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -315,7 +316,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         toolbarShadows.setVisibility(submissionContent.isImageOrVideo() ? View.VISIBLE : View.GONE);
 
         // Update submission information.
-        titleView.setText(submission.getTitle());
+        //noinspection deprecation
+        titleView.setText(Html.fromHtml(submission.getTitle()));
         subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
 
         // Load self-text/media/webpage.
