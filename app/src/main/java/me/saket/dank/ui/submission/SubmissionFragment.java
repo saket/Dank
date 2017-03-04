@@ -105,7 +105,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private int deviceDisplayWidth;
 
     public interface Callbacks {
-        void onSubmissionToolbarUpClick();
+        void onClickSubmissionToolbarUp();
     }
 
     public static SubmissionFragment create() {
@@ -122,20 +122,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         submissionPageLayout.addCallbacks(this);
         submissionPageLayout.setPullToCollapseIntercepter(this);
 
-        fragmentLayout.setOnApplyWindowInsetsListener((v, insets) -> {
-            int statusBarHeight = insets.getSystemWindowInsetTop();
+        Views.getStatusBarHeight(fragmentLayout, statusBarHeight -> {
             Views.setMarginTop(toolbar, statusBarHeight);
             Views.executeOnMeasure(toolbar, () -> {
                 Views.setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight);
             });
-            return insets;
         });
 
         // Add a close icon to the toolbar.
         closeIconDrawable = closeIconDrawable.mutate();
         closeIconDrawable.setTint(ContextCompat.getColor(getActivity(), R.color.white));
         toolbar.setNavigationIcon(closeIconDrawable);
-        toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onSubmissionToolbarUpClick());
+        toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
         toolbar.setBackground(null);
 
         // TODO: 01/02/17 Should we preload Views for adapter rows?
@@ -340,13 +338,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     private void loadSubmissionContent(Submission submission, SubmissionContent submissionContent) {
-        Timber.d("-------------------------------------------");
-        Timber.i("%s", submission.getTitle());
-        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
-        Timber.i("Parsed content: %s", submissionContent);
-        if (submissionContent.type() == SubmissionContent.Type.IMAGE) {
-            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
-        }
+//        Timber.d("-------------------------------------------");
+//        Timber.i("%s", submission.getTitle());
+//        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
+//        Timber.i("Parsed content: %s", submissionContent);
+//        if (submissionContent.type() == SubmissionContent.Type.IMAGE) {
+//            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
+//        }
 
         switch (submissionContent.type()) {
             case IMAGE:

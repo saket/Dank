@@ -4,12 +4,12 @@
         <item name="colorPrimary">@color/color_primary</item>
         <item name="colorPrimaryDark">@color/color_primary_dark</item>
         <item name="colorAccent">@color/color_accent</item>
+        <item name="android:navigationBarColor">@color/gray_900</item>
     </style>
 
     <style name="DankTheme.DrawsStatusBar">
         <item name="android:windowDrawsSystemBarBackgrounds">true</item>
         <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:navigationBarColor">@color/gray_900</item>
     </style>
 
     <style name="DankTheme.TransparentBackground">

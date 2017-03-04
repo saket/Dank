@@ -18,7 +18,7 @@
     <me.saket.dank.widgets.TintableCompoundDrawableTextView
         android:id="@+id/userprofilesheet_messages"
         style="@style/Button.UserProfileSheet"
-        android:drawableStart="@drawable/ic_mail_18px"
+        android:drawableStart="@drawable/ic_mail_24dp"
         android:text="@string/messages" />
 
     <View style="@style/DankSeparator.Vertical" />
@@ -26,7 +26,7 @@
     <me.saket.dank.widgets.TintableCompoundDrawableTextView
         android:id="@+id/userprofilesheet_comments"
         style="@style/Button.UserProfileSheet"
-        android:drawableStart="@drawable/ic_reply_18px"
+        android:drawableStart="@drawable/ic_reply_24dp"
         android:text="@string/comments" />
 
     <View style="@style/DankSeparator.Vertical" />
@@ -34,7 +34,7 @@
     <me.saket.dank.widgets.TintableCompoundDrawableTextView
         android:id="@+id/userprofilesheet_submissions"
         style="@style/Button.UserProfileSheet"
-        android:drawableStart="@drawable/ic_submission_18px"
+        android:drawableStart="@drawable/ic_submission_24dp"
         android:text="@string/submissions" />
 
     <View style="@style/DankSeparator.Vertical" />
@@ -42,7 +42,7 @@
     <me.saket.dank.widgets.TintableCompoundDrawableTextView
         android:id="@+id/userprofilesheet_logout"
         style="@style/Button.UserProfileSheet"
-        android:drawableStart="@drawable/ic_logout_18px"
+        android:drawableStart="@drawable/ic_logout_24dp"
         android:paddingBottom="@dimen/spacing16"
         android:text="@string/logout" />
 </LinearLayout>

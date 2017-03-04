@@ -27,7 +27,7 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
 
     public IndependentExpandablePageLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        expandImmediately();
+        setCollapsedAlpha(1f);
     }
 
     /**
@@ -69,7 +69,15 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
         });
     }
 
-    public void collapse() {
+    /**
+     * Expands this page (with animation) so that it fills the whole screen.
+     */
+    public void expandFromBelowToolbar() {
+        setClippedDimensions(getWidth(), 0);
+        expand(new InboxRecyclerView.ExpandInfo(-1, -1, new Rect(0, parentToolbarHeight, getWidth(), 0)));
+    }
+
+    public void collapseBelowToolbar() {
         collapse(new InboxRecyclerView.ExpandInfo(-1, -1, new Rect(0, parentToolbarHeight, getWidth(), 0)));
     }
 

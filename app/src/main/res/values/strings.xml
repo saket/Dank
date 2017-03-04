@@ -37,4 +37,8 @@
 
     <!-- User Preferences -->
     <string name="activity_user_preferences">Preferences</string>
+    <string name="userpreferences_look_and_feel">Look &amp; feel</string>
+    <string name="userpreferences_look_and_feel_subtitle">Appearance and gestures</string>
+    <string name="userpreferences_manage_subreddits">Manage subreddits</string>
+    <string name="userpreferences_manage_subreddits_subtitles">Sort order and favorites</string>
 </resources>

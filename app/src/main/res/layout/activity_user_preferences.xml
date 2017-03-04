@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout
-    android:id="@+id/userpreferences_root_page"
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/userpreferences_root_page"
     xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -8,6 +7,25 @@
     android:elevation="20dp"
     android:orientation="vertical">
 
+    <me.saket.dank.widgets.InboxUI.InboxRecyclerView
+        android:id="@+id/userpreferences_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:clipToPadding="false"
+        android:paddingTop="?android:attr/actionBarSize"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical" />
+
     <include layout="@layout/include_toolbar" />
 
+    <me.saket.dank.widgets.InboxUI.ExpandablePageLayout
+        android:id="@+id/userpreferences_preferences_page"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@color/window_background">
+
+        <include
+            android:id="@+id/userpreferences_preference_toolbar"
+            layout="@layout/include_toolbar" />
+    </me.saket.dank.widgets.InboxUI.ExpandablePageLayout>
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

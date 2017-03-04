@@ -14,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 
@@ -64,10 +63,9 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         ButterKnife.bind(this);
 
         // Add top-margin to make room for the status bar.
-        ButterKnife.findById(this, Window.ID_ANDROID_CONTENT).setOnApplyWindowInsetsListener((v, insets) -> {
-            Views.setMarginTop(toolbarContainer, insets.getSystemWindowInsetTop());
-            Views.setMarginTop(submissionList, insets.getSystemWindowInsetTop());
-            return insets;
+        Views.getStatusBarHeight(this, statusBarHeight -> {
+            Views.setMarginTop(toolbarContainer, statusBarHeight);
+            Views.setMarginTop(submissionList, statusBarHeight);
         });
 
         //noinspection ConstantConditions
@@ -191,7 +189,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 // ======== NAVIGATION ======== //
 
     @Override
-    public void onSubmissionToolbarUpClick() {
+    public void onClickSubmissionToolbarUp() {
         submissionList.collapse();
     }
 

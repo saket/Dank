@@ -1,13 +1,17 @@
 package me.saket.dank.utils;
 
+import android.app.Activity;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
+import android.view.Window;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebHistoryItem;
 import android.webkit.WebView;
+
+import butterknife.ButterKnife;
 
 /**
  * Utility methods for Views.
@@ -50,6 +54,21 @@ public class Views {
                 }
             }
         });
+    }
+
+    public interface OnStatusBarHeightCalculateListener{
+        void onStatusBarHeightCalculated(int statusBarHeight);
+    }
+
+    public static void getStatusBarHeight(View rootViewGroup, OnStatusBarHeightCalculateListener listener) {
+        rootViewGroup.setOnApplyWindowInsetsListener((v, insets) -> {
+            listener.onStatusBarHeightCalculated(insets.getSystemWindowInsetTop());
+            return insets;
+        });
+    }
+
+    public static void getStatusBarHeight(Activity activity, OnStatusBarHeightCalculateListener listener) {
+        getStatusBarHeight(ButterKnife.findById(activity, Window.ID_ANDROID_CONTENT), listener);
     }
 
     public static void setPaddingStart(View view, int paddingStart) {

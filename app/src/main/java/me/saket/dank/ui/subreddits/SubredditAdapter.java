@@ -46,7 +46,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, Su
         holder.bind(subreddit);
 
         holder.itemView.setOnClickListener(v -> {
-            clickListener.onSubredditClick(subreddit);
+            clickListener.onClickSubreddit(subreddit);
         });
     }
 

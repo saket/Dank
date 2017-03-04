@@ -110,13 +110,14 @@ public class PullToCollapseListener implements View.OnTouchListener {
 
                 boolean deltaUpwardSwipe = deltaY < 0;
 
-                // Avoid registering this gesture if the page doesn't want us to.
-                // Mostly used when the page also has a scrollable child
-                ExpandablePageLayout.OnPullToCollapseIntercepter callbacks = expandablePage.getPullToCollapseIntercepter();
-                if (interceptedUntilNextGesture == null && callbacks != null) {
-                    interceptedUntilNextGesture = callbacks.onInterceptPullToCollapseGesture(event, downX, downY, deltaUpwardSwipe);
+                // Avoid registering this gesture if the page doesn't want us to. Mostly used when the page also
+                // has a scrollable child.
+                if (interceptedUntilNextGesture == null) {
+                    interceptedUntilNextGesture = expandablePage.handleOnPullToCollapseIntercept(event, downX, downY, deltaUpwardSwipe);
                     if (interceptedUntilNextGesture) {
                         return false;
+                    } else {
+                        expandablePage.getParent().requestDisallowInterceptTouchEvent(true);
                     }
                 }
 

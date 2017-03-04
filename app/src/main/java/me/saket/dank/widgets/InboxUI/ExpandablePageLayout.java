@@ -4,10 +4,8 @@ import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.os.Build;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -28,19 +26,19 @@ import timber.log.Timber;
  */
 public class ExpandablePageLayout extends BaseExpandablePageLayout implements PullToCollapseListener.OnPullListener {
 
-    private static final float MAX_ALPHA = 1f;
-    private static final float MIN_ALPHA = 0f;
-
     @Nullable private View activityToolbar;  // Toolbar inside the parent page, not in this page.
+    @Nullable ExpandablePageLayout nestedPage;
 
     private ValueAnimator toolbarAnimator;
+    private float expandedAlpha;
+    private float collapsedAlpha;
+    private boolean isFullyCoveredByNestedPage;
+
     private State currentState;
     private PullToCollapseListener pullToCollapseListener;
     private OnPullToCollapseIntercepter onPullToCollapseIntercepter;
     private List<Callbacks> callbacks;
     private Map<String, InternalPageCallbacks> internalStateCallbacks = new HashMap<>(2);
-
-    private boolean isFullyCoveredByNestedPage;
 
     public enum State {
         COLLAPSING,
@@ -126,30 +124,13 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         void onPageRelease(boolean collapseEligible);
     }
 
-    public ExpandablePageLayout(Context context) {
-        super(context);
-        init();
-    }
-
     public ExpandablePageLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
-        init();
-    }
+        expandedAlpha = 1f;
+        collapsedAlpha = 0f;
 
-    public ExpandablePageLayout(Context context, AttributeSet attrs, int defStyleAttr) {
-        super(context, attrs, defStyleAttr);
-        init();
-    }
-
-    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-    public ExpandablePageLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-        super(context, attrs, defStyleAttr, defStyleRes);
-        init();
-    }
-
-    private void init() {
         // Hidden on start
-        setAlpha(ExpandablePageLayout.MAX_ALPHA);
+        setAlpha(expandedAlpha);
         setVisibility(View.INVISIBLE);
         changeState(State.COLLAPSED);
 
@@ -237,7 +218,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
             // 2. Expand page again
             if (getTranslationY() != 0f) {
                 animate().translationY(0f)
-                        .alpha(MAX_ALPHA)
+                        .alpha(expandedAlpha)
                         .setDuration(InboxRecyclerView.ANIM_DURATION_COLLAPSE)
                         .setInterpolator(InboxRecyclerView.ANIM_INTERPOLATOR_COLLAPSE)
                         .setListener(new AnimatorListenerAdapter() {
@@ -308,7 +289,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         }
 
         setVisibility(VISIBLE);
-        setAlpha(MAX_ALPHA);
+        setAlpha(expandedAlpha);
 
         // Hide the toolbar as soon as we have its height (as expandImmediately() could have been
         // called before the Views were drawn).
@@ -383,10 +364,10 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         }
 
         // Alpha and translation.
-        setAlpha(expand ? MIN_ALPHA : MAX_ALPHA);
+        setAlpha(expand ? collapsedAlpha : expandedAlpha);
         stopAnyOngoingPageAnimation();
         animate()
-                .alpha(expand ? MAX_ALPHA : MIN_ALPHA)
+                .alpha(expand ? expandedAlpha : collapsedAlpha)
                 .translationY(targetPageTranslationY)
                 .translationX(targetPageTranslationX)
                 .setDuration(expand ? InboxRecyclerView.ANIM_DURATION_EXPAND : InboxRecyclerView.ANIM_DURATION_COLLAPSE)
@@ -510,6 +491,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
      * minimize overdraw.
      */
     public void setNestedExpandablePage(ExpandablePageLayout nestedPage) {
+        this.nestedPage = nestedPage;
+
         nestedPage.setInternalCallbacksNestedPage(new InternalPageCallbacks() {
             @Override
             public void onPageAboutToCollapse() {
@@ -553,17 +536,21 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
     @Override
     public void draw(Canvas canvas) {
-        // Minimize overdraw by not drawing anything while this page is totally covered by another
-        // nested page.
-        if (isFullyCoveredByNestedPage) {
-            return;
-        }
-
         // Or if the page is collapsed.
         if (currentState == State.COLLAPSED) {
             return;
         }
         super.draw(canvas);
+    }
+
+    @Override
+    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+        // When this page is fully covered by a nested ExpandablePage, avoid drawing any other child Views.
+        //noinspection SimplifiableIfStatement
+        if (isFullyCoveredByNestedPage && !(child instanceof ExpandablePageLayout)) {
+            return false;
+        }
+        return super.drawChild(canvas, child, drawingTime);
     }
 
 // ======== CALLBACKS ======== //
@@ -660,6 +647,28 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     }
 
     /**
+     * Offer a pull-to-collapse to a listener if it wants to block it. If a nested page is registered
+     * and the touch was made on it, block it right away.
+     */
+    @SuppressWarnings("SimplifiableIfStatement")
+    boolean handleOnPullToCollapseIntercept(MotionEvent event, float downX, float downY, boolean deltaUpwardSwipe) {
+        if (nestedPage != null && nestedPage.getClippedRect().contains(downX, downY)) {
+            // Block this pull if it's being made inside a nested page. We should use nested scrolling
+            // in the future to make this smarter.
+            nestedPage.handleOnPullToCollapseIntercept(event, downX, downY, deltaUpwardSwipe);
+            return true;
+
+        } else if (onPullToCollapseIntercepter != null) {
+            return onPullToCollapseIntercepter.onInterceptPullToCollapseGesture(event, downX, downY, deltaUpwardSwipe);
+
+        } else {
+            return false;
+        }
+    }
+
+// ======== SETTERS & GETTERS ======== //
+
+    /**
      * Calls for the associated InboxList.
      */
     void setInternalCallbacksList(InternalPageCallbacks listCallbacks) {
@@ -717,8 +726,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         onPullToCollapseIntercepter = intercepter;
     }
 
-    OnPullToCollapseIntercepter getPullToCollapseIntercepter() {
-        return onPullToCollapseIntercepter;
+    /**
+     * Alpha of this page when it's collapsed.
+     */
+    public void setCollapsedAlpha(float collapsedAlpha) {
+        this.collapsedAlpha = collapsedAlpha;
     }
 
 }

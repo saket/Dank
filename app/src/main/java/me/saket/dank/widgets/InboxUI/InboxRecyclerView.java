@@ -186,6 +186,8 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
 
     /**
      * Expands from arbitrary location. Presently the top.
+     *
+     * @deprecated This will possibly crash in expandItem(). Fix before using.
      */
     public void expandFromTop() {
         expandItem(-1, -1);

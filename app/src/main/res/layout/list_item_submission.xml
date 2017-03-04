@@ -50,7 +50,7 @@
             android:layout_marginTop="@dimen/spacing4"
             android:fontFamily="sans-serif-smallcaps"
             android:textColor="@color/gray_600"
-            tools:text="/r/todayilearned" />
+            tools:text="/r/TodayILearned" />
     </RelativeLayout>
 
     <View
