@@ -2,8 +2,10 @@ package me.saket.dank.ui.preferences;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.Toolbar;
 import android.view.MenuItem;
@@ -38,6 +40,11 @@ public class UserPreferencesActivity extends DankActivity {
         setContentView(R.layout.activity_user_preferences);
         ButterKnife.bind(this);
         findAndSetupToolbar(true);
+
+        //noinspection ConstantConditions
+        Drawable closeIconDrawable = getDrawable(R.drawable.ic_close_24dp).mutate();
+        closeIconDrawable.setTint(ContextCompat.getColor(this, R.color.white));
+        toolbar.setNavigationIcon(closeIconDrawable);
 
         setupActivityExpandablePage();
     }

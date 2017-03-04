@@ -17,7 +17,9 @@
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
-    <style name="DankTextAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title" />
+    <style name="DankTextAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+        <item name="android:fontFamily">sans-serif-condensed</item>
+    </style>
 
     <style name="DankTextAppearance.Toolbar">
         <item name="android:textColor">@color/color_accent</item>

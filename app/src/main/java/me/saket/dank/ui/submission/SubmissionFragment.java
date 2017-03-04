@@ -92,7 +92,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.submission_comment_list) RecyclerView commentList;
     @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
 
-    @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
+    @BindDrawable(R.drawable.ic_close_24dp) Drawable closeIconDrawable;
     @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
 
     private ExpandablePageLayout submissionPageLayout;
@@ -130,7 +130,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         });
 
         // Add a close icon to the toolbar.
-        closeIconDrawable = closeIconDrawable.mutate();
+        //noinspection ConstantConditions
+        Drawable closeIconDrawable = getActivity().getDrawable(R.drawable.ic_close_24dp).mutate();
         closeIconDrawable.setTint(ContextCompat.getColor(getActivity(), R.color.white));
         toolbar.setNavigationIcon(closeIconDrawable);
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());

@@ -55,7 +55,6 @@
                 android:layout_centerVertical="true"
                 android:layout_marginStart="-4dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:fontFamily="sans-serif-condensed"
                 android:paddingEnd="32dp"
                 android:paddingStart="20dp"
                 android:text="@string/app_name"

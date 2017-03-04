@@ -30,7 +30,7 @@ public class LoginActivity extends DankActivity {
     @BindView(R.id.login_webview) WebView webView;
     @BindView(R.id.login_progress) View progressView;
 
-    @BindDrawable(R.drawable.ic_close_black_24dp) Drawable closeIconDrawable;
+    @BindDrawable(R.drawable.ic_close_24dp) Drawable closeIconDrawable;
 
     private DankRedditClient.UserLoginHelper userLoginHelper;
     private boolean loggedIn;
