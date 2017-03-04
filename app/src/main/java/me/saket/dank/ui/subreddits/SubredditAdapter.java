@@ -30,6 +30,10 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, Su
         clickListener = listener;
     }
 
+    public OnSubredditClickListener getOnSubredditClickListener() {
+        return clickListener;
+    }
+
     @Override
     public void call(List<DankSubreddit> subreddits) {
         updateData(subreddits);

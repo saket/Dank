@@ -8,6 +8,7 @@ import android.content.Context;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 
@@ -26,6 +27,7 @@ import java.util.concurrent.TimeUnit;
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnEditorAction;
 import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
@@ -96,6 +98,14 @@ public class SubredditPickerSheetView extends FrameLayout {
         setupSearch();
     }
 
+    @Override
+    protected void onDetachedFromWindow() {
+        if (subscriptions != null) {
+            subscriptions.clear();
+        }
+        super.onDetachedFromWindow();
+    }
+
     public void setOnSubredditClickListener(OnSubredditClickListener listener) {
         subredditAdapter.setOnSubredditClickListener(listener);
     }
@@ -115,6 +125,15 @@ public class SubredditPickerSheetView extends FrameLayout {
             dankSubreddits.add(DankSubreddit.create(subredditName));
         }
         return Observable.just(dankSubreddits);
+    }
+
+    @OnEditorAction(R.id.subredditpicker_search)
+    boolean onClickSearchFieldEnterKey(int actionId) {
+        if (actionId == EditorInfo.IME_ACTION_GO) {
+            subredditAdapter.getOnSubredditClickListener().onClickSubreddit(DankSubreddit.create(searchView.getText().toString()));
+            return true;
+        }
+        return false;
     }
 
     private void setupSearch() {
@@ -153,14 +172,6 @@ public class SubredditPickerSheetView extends FrameLayout {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subredditAdapter, logError("Search error"));
         subscriptions.add(subscription);
-    }
-
-    @Override
-    protected void onDetachedFromWindow() {
-        if (subscriptions != null) {
-            subscriptions.clear();
-        }
-        super.onDetachedFromWindow();
     }
 
     private Action1<Boolean> setSubredditLoadProgressVisible() {
