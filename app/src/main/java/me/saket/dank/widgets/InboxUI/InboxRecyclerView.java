@@ -402,7 +402,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
 
         super.draw(canvas);
 
-        if (page.isExpanded()) {
+        if (page != null && page.isExpanded()) {
             canvas.drawRect(0, 0, getRight(), getBottom(), dimPaint);
         }
     }

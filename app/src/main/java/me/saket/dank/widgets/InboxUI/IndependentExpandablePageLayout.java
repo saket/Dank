@@ -30,6 +30,16 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
         setCollapsedAlpha(1f);
     }
 
+    @Override
+    protected void onLayout(boolean changed, int l, int t, int r, int b) {
+        super.onLayout(changed, l, t, r, b);
+
+        if (isInEditMode()) {
+            expandImmediately();
+            setClippedDimensions(r, b);
+        }
+    }
+
     /**
      * Used for two things: calculating the pull-to-collapse distance threshold and the
      * location where this page collapses to (so that it appears to collapse below the
