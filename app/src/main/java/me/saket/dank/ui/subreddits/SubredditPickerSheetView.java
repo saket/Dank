@@ -130,7 +130,8 @@ public class SubredditPickerSheetView extends FrameLayout {
     @OnEditorAction(R.id.subredditpicker_search)
     boolean onClickSearchFieldEnterKey(int actionId) {
         if (actionId == EditorInfo.IME_ACTION_GO) {
-            subredditAdapter.getOnSubredditClickListener().onClickSubreddit(DankSubreddit.create(searchView.getText().toString()));
+            String searchTerm = searchView.getText().toString().trim();
+            subredditAdapter.getOnSubredditClickListener().onClickSubreddit(DankSubreddit.create(searchTerm));
             return true;
         }
         return false;
@@ -143,7 +144,7 @@ public class SubredditPickerSheetView extends FrameLayout {
                 .map(searchTerm -> {
                     // Since CharSequence is mutable, it's important
                     // to create a copy before doing a debounce().
-                    return searchTerm.toString();
+                    return searchTerm.toString().trim();
                 })
                 .map(searchTerm -> {
                     if (searchTerm.isEmpty()) {
