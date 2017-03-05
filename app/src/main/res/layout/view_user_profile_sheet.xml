@@ -12,14 +12,14 @@
         android:layout_marginEnd="@dimen/spacing16"
         android:layout_marginStart="@dimen/spacing16"
         android:fontFamily="sans-serif-light"
-        android:text="@string/karma_count"
+        android:text="@string/userprofile_karma_count"
         android:textSize="32sp" />
 
     <me.saket.dank.widgets.TintableCompoundDrawableTextView
         android:id="@+id/userprofilesheet_messages"
         style="@style/Button.UserProfileSheet"
         android:drawableStart="@drawable/ic_mail_24dp"
-        android:text="@string/messages" />
+        android:text="@string/userprofile_messages" />
 
     <View style="@style/DankSeparator.Vertical" />
 
@@ -27,7 +27,7 @@
         android:id="@+id/userprofilesheet_comments"
         style="@style/Button.UserProfileSheet"
         android:drawableStart="@drawable/ic_reply_24dp"
-        android:text="@string/comments" />
+        android:text="@string/userprofile_comments" />
 
     <View style="@style/DankSeparator.Vertical" />
 
@@ -35,7 +35,7 @@
         android:id="@+id/userprofilesheet_submissions"
         style="@style/Button.UserProfileSheet"
         android:drawableStart="@drawable/ic_submission_24dp"
-        android:text="@string/submissions" />
+        android:text="@string/userprofile_submissions" />
 
     <View style="@style/DankSeparator.Vertical" />
 
@@ -44,5 +44,5 @@
         style="@style/Button.UserProfileSheet"
         android:drawableStart="@drawable/ic_logout_24dp"
         android:paddingBottom="@dimen/spacing16"
-        android:text="@string/logout" />
+        android:text="@string/login_logout" />
 </LinearLayout>

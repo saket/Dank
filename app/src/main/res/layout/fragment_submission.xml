@@ -113,7 +113,7 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginStart="@dimen/spacing12"
-                android:text="@string/loading_comments"
+                android:text="@string/login_loading_comments"
                 android:textColor="@color/white_opacity_40" />
         </LinearLayout>
     </RelativeLayout>

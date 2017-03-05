@@ -6,11 +6,11 @@
 
     <!-- Login -->
     <string name="login">Login</string>
-    <string name="logout">Logout</string>
+    <string name="login_logout">Logout</string>
     <string name="login_error_oauth_permission_rejected">You must press \'allow\' to log in with this account</string>
     <string name="login_error_oauth_failed">Failed to login. Please try again.</string>
     <string name="login_welcome_user">Welcome, %s!</string>
-    <string name="loading_comments">Loading comments…</string>
+    <string name="login_loading_comments">Loading comments…</string>
 
     <!-- Submission list -->
     <string name="subreddit_go_to_subreddit">Go to subreddit…</string>
@@ -19,18 +19,17 @@
     <string name="subreddit_manage_subreddits">Manage subreddits</string>
 
     <!-- User profile -->
-    <string name="comments">Comments</string>
-    <string name="submissions">Submissions</string>
-    <string name="karma_count">%s karma</string>
-    <string name="loading_karma">Loading karma…</string>
-    <string name="error_user_karma_load">Couldn\'t get karma</string>
-    <string name="confirm_logout">Confirm logout?</string>
-    <string name="logging_out">Logging out…</string>
-
-    <string name="messages">Messages</string>
-    <string name="unread_messages_count_single">%d new message</string>
-    <string name="unread_messages_count_99_or_less">%d new messages</string>
-    <string name="unread_messages_count_99_plus">99+ new messages</string>
+    <string name="userprofile_comments">Comments</string>
+    <string name="userprofile_submissions">Submissions</string>
+    <string name="userprofile_karma_count">%s karma</string>
+    <string name="userprofile_loading_karma">Loading karma…</string>
+    <string name="userprofile_error_user_karma_load">Couldn\'t get karma</string>
+    <string name="userprofile_confirm_logout">Confirm logout?</string>
+    <string name="userprofile_logging_out">Logging out…</string>
+    <string name="userprofile_messages">Messages</string>
+    <string name="userprofile_unread_messages_count_single">%d new message</string>
+    <string name="userprofile_unread_messages_count_99_or_less">%d new messages</string>
+    <string name="userprofile_unread_messages_count_99_plus">99+ new messages</string>
 
     <!-- Submission -->
     <string name="error_no_app_to_handle_intent">No app found to handle this link</string>

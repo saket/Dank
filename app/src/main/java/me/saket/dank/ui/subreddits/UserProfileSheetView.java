@@ -56,7 +56,7 @@ public class UserProfileSheetView extends FrameLayout {
 
         // TODO: 02/03/17 Cache user account.
 
-        karmaView.setText(R.string.loading_karma);
+        karmaView.setText(R.string.userprofile_loading_karma);
 
         userInfoSubscription = Dank.reddit()
                 .withAuth(Dank.reddit().loggedInUserAccount())
@@ -67,7 +67,7 @@ public class UserProfileSheetView extends FrameLayout {
 
                 }, error -> {
                     Timber.e(error, "Couldn't get logged in user info");
-                    karmaView.setText(R.string.error_user_karma_load);
+                    karmaView.setText(R.string.userprofile_error_user_karma_load);
                 });
     }
 
@@ -84,22 +84,22 @@ public class UserProfileSheetView extends FrameLayout {
         } else {
             compactKarma = karmaCount / 1_000_000 + "m";
         }
-        karmaView.setText(getResources().getString(R.string.karma_count, compactKarma));
+        karmaView.setText(getResources().getString(R.string.userprofile_karma_count, compactKarma));
     }
 
     private void populateUnreadMessageCount(LoggedInAccount loggedInUser) {
         int inboxCount = loggedInUser.getInboxCount();
         if (inboxCount == 0) {
-            messagesView.setText(R.string.messages);
+            messagesView.setText(R.string.userprofile_messages);
 
         } else if (inboxCount == 1) {
-            messagesView.setText(getResources().getString(R.string.unread_messages_count_single, inboxCount));
+            messagesView.setText(getResources().getString(R.string.userprofile_unread_messages_count_single, inboxCount));
 
         } else if (inboxCount < Paginator.RECOMMENDED_MAX_LIMIT) {
-            messagesView.setText(getResources().getString(R.string.unread_messages_count_99_or_less, inboxCount));
+            messagesView.setText(getResources().getString(R.string.userprofile_unread_messages_count_99_or_less, inboxCount));
 
         } else {
-            messagesView.setText(R.string.unread_messages_count_99_plus);
+            messagesView.setText(R.string.userprofile_unread_messages_count_99_plus);
         }
         messagesView.setTextColor(inboxCount > 0 ? unreadMessagesTextColor : noMessagesTextColor);
     }
@@ -136,18 +136,18 @@ public class UserProfileSheetView extends FrameLayout {
     @OnClick(R.id.userprofilesheet_logout)
     void onClickLogout(TextView logoutButton) {
         if (confirmLogoutTimer.isUnsubscribed()) {
-            logoutButton.setText(R.string.confirm_logout);
+            logoutButton.setText(R.string.userprofile_confirm_logout);
             confirmLogoutTimer = Observable.timer(5, TimeUnit.SECONDS)
                     .compose(applySchedulers())
                     .subscribe(__ -> {
-                        logoutButton.setText(R.string.logout);
+                        logoutButton.setText(R.string.login_logout);
                     });
 
         } else {
             // Confirm logout was visible when this button was clicked. Logout the user for real.
             confirmLogoutTimer.unsubscribe();
             logoutSubscription.unsubscribe();
-            logoutButton.setText(R.string.logging_out);
+            logoutButton.setText(R.string.userprofile_logging_out);
 
             logoutSubscription = Dank.reddit()
                     .logout()
@@ -156,7 +156,7 @@ public class UserProfileSheetView extends FrameLayout {
                         parentSheet.collapse();
 
                     }, error -> {
-                        logoutButton.setText(R.string.logout);
+                        logoutButton.setText(R.string.login_logout);
                         Timber.e(error, "Logout failure");
                     });
         }
