@@ -11,6 +11,8 @@
     <dimen name="spacing20">20dp</dimen>
     <dimen name="spacing24">24dp</dimen>
 
+    <dimen name="elevation_toolbar">2dp</dimen>
+
     <!-- SubReddits -->
     <dimen name="subreddit_toolbar_sheet_elevation">10dp</dimen>
 

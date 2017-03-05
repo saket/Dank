@@ -8,7 +8,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 
-import butterknife.BindDimen;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.utils.Views;
@@ -16,16 +15,15 @@ import me.saket.dank.widgets.InboxUI.BaseExpandablePageLayout;
 
 public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
-    @BindDimen(R.dimen.subreddit_toolbar_sheet_elevation) int elevationOnExpand;
-
     private StateChangeListener stateChangeListener;
     private State currentState;
+    private float elevationOnExpand;
 
     public enum State {
         COLLAPSING,
         COLLAPSED,
         EXPANDING,
-        EXPANDED
+        EXPANDED;
     }
 
     public interface StateChangeListener {
@@ -35,6 +33,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
     public ToolbarExpandableSheet(Context context, AttributeSet attrs) {
         super(context, attrs);
         ButterKnife.bind(this, this);
+        elevationOnExpand = context.getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_sheet_elevation) - getElevation();
 
         // Hide on start.
         currentState = State.COLLAPSED;
@@ -61,14 +60,6 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
         return currentState == State.COLLAPSED;
     }
 
-    public void toggleVisibility() {
-        if (isExpandedOrExpanding()) {
-            collapse();
-        } else {
-            expand();
-        }
-    }
-
     public void expand() {
         if (currentState == State.EXPANDED || currentState == State.EXPANDING) {
             return;
@@ -91,7 +82,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
         animateDimensions(getWidth(), 0);
         animate()
-                .translationZ(0)
+                .translationZ(0f)
                 .setDuration(getAnimationDuration())
                 .setInterpolator(getAnimationInterpolator())
                 .withStartAction(() -> dispatchStateChangeCallback(State.COLLAPSING))

@@ -21,9 +21,13 @@ public class AnimatableToolbarBackground extends View {
     private ValueAnimator backgroundFillAnimator;
     private Boolean isToolbarFilled;
     private Float currentFillFactor = 0f;
+    private final float onVisibleTranslationZ;
 
     public AnimatableToolbarBackground(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        onVisibleTranslationZ = getTranslationZ();
+        setTranslationZ(0f);
     }
 
     /**
@@ -70,7 +74,9 @@ public class AnimatableToolbarBackground extends View {
 
             backgroundFillAnimator = ValueAnimator.ofFloat(currentFillFactor, targetFillFactor);
             backgroundFillAnimator.addUpdateListener(animation -> {
-                setBackgroundFill((Float) animation.getAnimatedValue());
+                Float factor = (Float) animation.getAnimatedValue();
+                setTranslationZ(onVisibleTranslationZ * factor);
+                setBackgroundFill(factor);
             });
             backgroundFillAnimator.setInterpolator(new FastOutSlowInInterpolator());
             backgroundFillAnimator.setDuration(150);

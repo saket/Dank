@@ -141,6 +141,7 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/toolbar"
+        android:translationZ="@dimen/elevation_toolbar"
         tools:ignore="UnknownIdInLayout" />
 
     <include

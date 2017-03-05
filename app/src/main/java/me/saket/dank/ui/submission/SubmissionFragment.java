@@ -136,6 +136,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         toolbar.setNavigationIcon(closeIconDrawable);
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
         toolbar.setBackground(null);
+        toolbarShadows.setElevation(toolbar.getElevation());
 
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.

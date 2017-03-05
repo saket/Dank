@@ -152,6 +152,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     }
 
     private void setupToolbarSheet() {
+        toolbar.setBackground(null);
         toolbarSheet.hideOnOutsideTouch(submissionList);
         toolbarSheet.setStateChangeListener(state -> {
             switch (state) {
