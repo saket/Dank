@@ -13,6 +13,8 @@ import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.http.oauth.Credentials;
 import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthHelper;
+import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.LoggedInAccount;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Subreddit;
@@ -57,9 +59,31 @@ public class DankRedditClient {
 
     /**
      * Get all details of submissions, including comments.
+     * TODO: add support for comments sort mode.
      */
-    public Submission fullSubmissionData(String submissionId) {
-        return redditClient.getSubmission(new SubmissionRequest.Builder(submissionId).build());
+    public Observable<Submission> fullSubmissionData(Submission submission) {
+        return Observable.fromCallable(() -> {
+            CommentSort suggestedSort = submission.getSuggestedSort();
+            if (suggestedSort == null) {
+                suggestedSort = CommentSort.TOP;
+            }
+
+            return redditClient.getSubmission(
+                    new SubmissionRequest.Builder(submission.getId())
+                            .sort(suggestedSort)
+                            .build()
+            );
+        });
+    }
+
+    /**
+     * Load more replies of a comment node.
+     */
+    public Observable<Boolean> loadMoreComments(CommentNode commentNode) {
+        return Observable.fromCallable(() -> {
+            commentNode.loadMoreComments(redditClient);
+            return true;
+        });
     }
 
     /**
@@ -104,7 +128,6 @@ public class DankRedditClient {
 
             AuthenticationState authState = redditAuthManager.checkAuthState();
             if (authState != AuthenticationState.READY) {
-
                 switch (authState) {
                     case NONE:
                         //Timber.d("Authenticating app");
@@ -118,7 +141,7 @@ public class DankRedditClient {
                 }
             }
             //else {
-                //Timber.d("Already authenticated");
+            //Timber.d("Already authenticated");
             //}
 
             return true;

@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout style="@style/DankSubmissionCommentItem"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:background="@null">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackground"
+        android:foreground="@color/black_opacity_05"
+        android:paddingBottom="@dimen/spacing8"
+        android:paddingStart="@dimen/spacing8"
+        android:paddingTop="@dimen/spacing8"
+        tools:ignore="RtlSymmetry">
+
+        <TextView
+            android:id="@+id/item_loadmorecomments_load_more"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:fontFamily="sans-serif-condensed"
+            android:text="@string/submission_load_more_comments"
+            android:textColor="@color/teal_400" />
+
+        <TextView
+            android:id="@+id/item_loadmorecomments_reply_count"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/spacing8"
+            android:fontFamily="sans-serif-condensed"
+            android:text="@string/submission_loadmorecomments_reply_count" />
+    </LinearLayout>
+</RelativeLayout>

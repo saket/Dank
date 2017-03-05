@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
     private static final int VIEW_TYPE_HEADER = 0;
-    private static final int VIEW_TYPE_NORMAL_ROW = 1;
 
     private RecyclerView.Adapter adapterToWrap;
     private View headerView;
@@ -72,7 +71,7 @@ public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView
 
     @Override
     public int getItemViewType(int position) {
-        return position == 0 ? VIEW_TYPE_HEADER : VIEW_TYPE_NORMAL_ROW;
+        return position == 0 ? VIEW_TYPE_HEADER : adapterToWrap.getItemViewType(position - 1);
     }
 
     @Override

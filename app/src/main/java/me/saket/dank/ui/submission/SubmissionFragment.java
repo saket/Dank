@@ -4,7 +4,6 @@ import static butterknife.ButterKnife.findById;
 import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
-import static rx.Observable.fromCallable;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -102,6 +101,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
 
     private int deviceDisplayWidth;
+    private boolean isCommentSheetBeneathImage;
 
     public interface Callbacks {
         void onClickSubmissionToolbarUp();
@@ -131,10 +131,24 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.
-        commentsAdapter = new CommentsAdapter();
-        commentsAdapter.setOnCommentClickListener(comment -> {
-            // Collapse/expand on tap.
-            commentsAdapter.updateData(commentsCollapseHelper.toggleCollapseAndGet(comment));
+        commentsAdapter = new CommentsAdapter(getResources());
+        commentsAdapter.setClickListeners(new CommentsAdapter.ClickListeners() {
+            @Override
+            public void onCommentClick(CommentNode commentNode) {
+                // Collapse/expand on tap.
+                commentsAdapter.updateData(commentsCollapseHelper.toggleCollapseAndGet(commentNode));
+            }
+
+            @Override
+            public void onLoadMoreCommentsClick(CommentNode parentCommentNode) {
+                // TODO Show indicator.
+                Dank.reddit()
+                        .loadMoreComments(parentCommentNode)
+                        .compose(applySchedulers())
+                        .subscribe(__ -> {
+                            commentsAdapter.updateData(commentsCollapseHelper.flattenExpandedComments());
+                        }, logError("Failed to load more comments"));
+            }
         });
         commentList.setAdapter(RecyclerAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView));
         commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -184,7 +198,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                         startActivity(deepLinkIntent);
 
                     } else {
-                        Toast.makeText(getActivity(), R.string.error_no_app_to_handle_intent, Toast.LENGTH_SHORT).show();
+                        Toast.makeText(getActivity(), R.string.submission_error_no_app_to_handle_intent, Toast.LENGTH_SHORT).show();
                     }
                     return true;
                 }
@@ -196,8 +210,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         contentImageView.setGravity(Gravity.TOP);
         Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
     }
-
-    private boolean isCommentSheetBeneathImage;
 
     private void setupCommentsSheet() {
         toolbarBackground.syncBottomWithViewTop(commentListParentSheet);
@@ -319,7 +331,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         // Load new comments.
         commentsLoadProgressView.setVisibility(View.VISIBLE);
         commentsSubscription = Dank.reddit()
-                .withAuth(fromCallable(() -> Dank.reddit().fullSubmissionData(submission.getId())))
+                .withAuth(Dank.reddit().fullSubmissionData(submission))
                 .map(submissionData -> {
                     CommentNode commentNode = submissionData.getComments();
                     commentsCollapseHelper.setupWith(commentNode);

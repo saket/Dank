@@ -12,7 +12,9 @@ import java.util.List;
 public class CommentsCollapseHelper {
 
     private CommentNode rootCommentNode;
-    private List<CommentNode> collapsedCommentNodes = new LinkedList<>();
+
+    // TODO: Replace this with comment IDs.
+    private List<CommentNode> collapsedCommentNodes = new LinkedList<>();    // Note: !CommentNode.hashCode() crashes so using a Set isn't possible.
 
     /**
      * @param rootCommentNode Root comment of a submission.
@@ -26,21 +28,12 @@ public class CommentsCollapseHelper {
         collapsedCommentNodes.clear();
     }
 
-    public List<CommentNode> toggleCollapseAndGet(CommentNode commentNode) {
+    public List<SubmissionCommentItem> toggleCollapseAndGet(CommentNode commentNode) {
         if (isCollapsed(commentNode)) {
-            return expandAndGet(commentNode);
+            collapsedCommentNodes.remove(commentNode);
         } else {
-            return collapseAndGet(commentNode);
+            collapsedCommentNodes.add(commentNode);
         }
-    }
-
-    private List<CommentNode> collapseAndGet(CommentNode commentNode) {
-        collapsedCommentNodes.add(commentNode);
-        return flattenExpandedComments();
-    }
-
-    private List<CommentNode> expandAndGet(CommentNode commentNode) {
-        collapsedCommentNodes.remove(commentNode);
         return flattenExpandedComments();
     }
 
@@ -51,34 +44,46 @@ public class CommentsCollapseHelper {
     /**
      * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
      */
-    public List<CommentNode> flattenExpandedComments() {
+    public List<SubmissionCommentItem> flattenExpandedComments() {
         return flattenExpandedComments(new ArrayList<>(rootCommentNode.getTotalSize()), rootCommentNode);
     }
 
     /**
      * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
      */
-    private List<CommentNode> flattenExpandedComments(List<CommentNode> flattenComments, CommentNode nextNode) {
-        List<CommentNode> childCommentsTree = nextNode.getChildren();
+    private List<SubmissionCommentItem> flattenExpandedComments(List<SubmissionCommentItem> flattenComments, CommentNode nextNode) {
+        String indentation = "";
+        if (nextNode.getDepth() != 0) {
+            for (int step = 0; step < nextNode.getDepth(); step++) {
+                indentation += "  ";
+            }
+        }
 
-        if (childCommentsTree.isEmpty() && nextNode.getDepth() != 0) {
-            flattenComments.add(nextNode);
+        boolean isCommentNodeCollapsed = isCollapsed(nextNode);
+        if (nextNode.getDepth() != 0) {
+//            Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
+            flattenComments.add(DankUserCommentNode.create(nextNode, isCommentNodeCollapsed));
+        }
+
+        if (nextNode.isEmpty() && !nextNode.hasMoreComments()) {
             return flattenComments;
 
         } else {
-            // Ignore the root node. It is the root of all top-level comments,
-            // but doesn't have any comment of its own.
-            if (nextNode.getDepth() != 0) {
-                flattenComments.add(nextNode);
-            }
-
             // Ignore collapsed children.
-            if (!isCollapsed(nextNode)) {
+            if (!isCommentNodeCollapsed) {
+                List<CommentNode> childCommentsTree = nextNode.getChildren();
                 for (CommentNode node : childCommentsTree) {
                     flattenExpandedComments(flattenComments, node);
                 }
-            }
 
+                if (nextNode.hasMoreComments()) {
+//                    Timber.d("%s(%s) %s has %d MORE ---------->",
+//                            indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getMoreChildren().getCount()
+//                    );
+//                    Timber.d("%s %s", indentation, nextNode.getMoreChildren().getChildrenIds());
+                    flattenComments.add(LoadMoreCommentsItem.create(nextNode));
+                }
+            }
             return flattenComments;
         }
     }

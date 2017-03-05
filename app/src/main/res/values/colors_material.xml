@@ -30,6 +30,7 @@
     <color name="white_opacity_60">#99FFFFFF</color>
     <color name="white_opacity_80">#CCFFFFFF</color>
 
+    <color name="black_opacity_05">#1A000000</color>
     <color name="black_opacity_20">#33000000</color>
     <color name="black_opacity_40">#66000000</color>
     <color name="black_opacity_50">#80000000</color>

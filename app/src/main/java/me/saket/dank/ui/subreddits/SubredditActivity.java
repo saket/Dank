@@ -52,8 +52,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
     @BindView(R.id.subreddit_progress) View progressView;
 
-    DankSubreddit activeSubreddit;
-
+    private DankSubreddit activeSubreddit;
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
 

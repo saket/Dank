@@ -98,4 +98,12 @@
         <item name="android:textSize">@dimen/textsize16</item>
     </style>
 
+    <!-- Submission -->
+    <style name="DankSubmissionCommentItem">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">?android:selectableItemBackground</item>
+        <item name="android:paddingStart">@dimen/comment_start_padding_per_depth_level</item>
+    </style>
+
 </resources>

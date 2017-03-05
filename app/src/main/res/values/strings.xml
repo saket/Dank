@@ -31,9 +31,6 @@
     <string name="userprofile_unread_messages_count_99_or_less">%d new messages</string>
     <string name="userprofile_unread_messages_count_99_plus">99+ new messages</string>
 
-    <!-- Submission -->
-    <string name="error_no_app_to_handle_intent">No app found to handle this link</string>
-
     <!-- User Preferences -->
     <string name="activity_userpreferences">Preferences</string>
     <string name="userpreferences_look_and_feel">Look &amp; feel</string>
@@ -46,4 +43,9 @@
     <string name="userpreferences_filters_subtitle">NSFW and other content filters</string>
     <string name="userpreferences_about">About Dank</string>
     <string name="userpreferences_about_subtitle">The team behind</string>
+
+    <!-- Submission -->
+    <string name="submission_error_no_app_to_handle_intent">No app found to handle this link</string>
+    <string name="submission_load_more_comments">Load more comments</string>
+    <string name="submission_loadmorecomments_reply_count">(%d replies)</string>
 </resources>

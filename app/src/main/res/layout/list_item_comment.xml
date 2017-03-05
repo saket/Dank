@@ -1,48 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout style="@style/DankSubmissionCommentItem"
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:foreground="?android:selectableItemBackground"
     android:orientation="vertical"
-    android:paddingBottom="@dimen/spacing8"
-    android:paddingEnd="@dimen/spacing16"
-    android:paddingStart="@dimen/comment_start_padding_per_depth_level"
     android:paddingTop="@dimen/spacing8">
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing16">
 
         <TextView
-            android:id="@+id/comment_item_author_username"
+            android:id="@+id/item_comment_author_username"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/spacing4"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-smallcaps"
+            android:fontFamily="sans-serif-condensed"
             android:maxLines="1"
-            android:textColor="@color/color_accent"
+            android:textColor="@color/gray_500"
             android:textSize="@dimen/textsize12"
             tools:text="nuckingfuts73" />
 
         <TextView
-            android:id="@+id/comment_item_author_flair"
+            android:id="@+id/item_comment_author_flair"
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/spacing4"
             android:layout_marginStart="@dimen/spacing8"
             android:layout_weight="1"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-smallcaps"
+            android:fontFamily="sans-serif-condensed"
             android:maxLines="1"
             android:textSize="@dimen/textsize12"
             tools:text="nuckingfuts73" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/comment_item_body"
+        android:id="@+id/item_comment_body"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing16"
+        android:fontFamily="sans-serif-condensed"
+        android:textColor="@color/gray_200"
         tools:text="That boss was my favourite. I bought Dark Souls after hearing how crushingly difficult it was from a friend of mine. He kept warning me about that boss and told me to prepare for a really difficult time." />
+
+    <View
+        style="@style/DankSeparator.Vertical"
+        android:layout_marginTop="@dimen/spacing12" />
 </LinearLayout>
