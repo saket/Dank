@@ -4,7 +4,7 @@
 
     <item
         android:id="@+id/action_manage_subreddits"
-        android:title="@string/manage"
-        app:actionLayout="@layout/toolbar_menu_button"
-        app:showAsAction="always" />
+        android:icon="@drawable/ic_edit_24dp"
+        android:title="@string/subreddit_manage_subreddits"
+        app:showAsAction="ifRoom" />
 </menu>

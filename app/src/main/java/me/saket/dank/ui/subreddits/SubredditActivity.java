@@ -14,7 +14,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import com.github.zagum.expandicon.ExpandIconView;
@@ -203,18 +202,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        if (isSubredditPickerExpanded()) {
-            getMenuInflater().inflate(R.menu.menu_subreddit_picker, menu);
-
-            // Click listeners for a menu item with an action view must be set manually.
-            MenuItem changeOrderMenuItem = menu.findItem(R.id.action_manage_subreddits);
-            Button button = (Button) ((ViewGroup) changeOrderMenuItem.getActionView()).getChildAt(0);
-            button.setText(R.string.manage);
-
-        } else {
-            getMenuInflater().inflate(R.menu.menu_subreddit, menu);
-        }
-
+        getMenuInflater().inflate(isSubredditPickerExpanded() ? R.menu.menu_subreddit_picker : R.menu.menu_subreddit, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -231,6 +219,10 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
             case R.id.action_preferences:
                 UserPreferencesActivity.start(this);
+                return true;
+
+            case R.id.action_manage_subreddits:
+                // TODO: 05/03/17 Open Manage-Subreddits preferences screen.
                 return true;
         }
         return super.onOptionsItemSelected(item);

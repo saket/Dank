@@ -4,13 +4,13 @@
 
     <item
         android:id="@+id/action_user_profile"
-        android:title="@string/profile"
+        android:title="@string/subreddit_profile"
         android:icon="@drawable/ic_profile_24dp"
         app:showAsAction="ifRoom" />
 
     <item
         android:id="@+id/action_preferences"
         android:icon="@drawable/ic_settings_24dp"
-        android:title="@string/preferences"
+        android:title="@string/subreddit_preferences"
         app:showAsAction="ifRoom" />
 </menu>

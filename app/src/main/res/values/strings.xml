@@ -1,5 +1,8 @@
 <resources>
     <string name="app_name">Dank</string>
+    <string name="subreddit_name_r_prefix">/r/%s</string>
+    <string name="user_name_u_prefix">/u/%s</string>
+    <string name="frontpage_subreddit_name">Frontpage</string>
 
     <!-- Login -->
     <string name="login">Login</string>
@@ -10,13 +13,10 @@
     <string name="loading_comments">Loading comments…</string>
 
     <!-- Submission list -->
-    <string name="subreddit_name_r_prefix">/r/%s</string>
-    <string name="user_name_u_prefix">/u/%s</string>
-    <string name="go_to_subreddit">Go to subreddit…</string>
-    <string name="frontpage_subreddit_name">Frontpage</string>
-    <string name="manage">Manage</string>
-    <string name="profile">Profile</string>
-    <string name="preferences">Preferences</string>
+    <string name="subreddit_go_to_subreddit">Go to subreddit…</string>
+    <string name="subreddit_profile">Profile</string>
+    <string name="subreddit_preferences">Preferences</string>
+    <string name="subreddit_manage_subreddits">Manage subreddits</string>
 
     <!-- User profile -->
     <string name="comments">Comments</string>
