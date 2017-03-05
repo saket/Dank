@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout android:id="@+id/subreddit_content"
     xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -62,15 +63,14 @@
                 android:text="@string/app_name"
                 android:textAppearance="@style/DankTextAppearance.Toolbar" />
 
-            <ImageView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
+            <com.github.zagum.expandicon.ExpandIconView
+                android:id="@+id/subreddit_toolbar_title_arrow"
+                android:layout_width="24dp"
+                android:layout_height="24dp"
                 android:layout_centerVertical="true"
                 android:layout_marginStart="-28dp"
                 android:layout_toEndOf="@+id/subreddit_toolbar_title"
-                android:src="@drawable/ic_arrow_drop_down_24dp"
-                android:tint="@color/color_accent"
-                tools:ignore="ContentDescription" />
+                app:eiv_color="@color/color_accent" />
         </RelativeLayout>
     </FrameLayout>
 

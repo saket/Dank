@@ -13,6 +13,7 @@ apply plugin: 'com.neenbedankt.android-apt'
 
 repositories {
     maven { url "https://clojars.org/repo/" }   // Used by AutoParcel
+    maven { url 'https://jitpack.io' }
 }
 
 android {
@@ -86,5 +87,6 @@ dependencies {
 
     compile 'com.google.android:flexbox:0.3.0-alpha2'
     compile 'com.robinhood.ticker:ticker:1.1.1'
+    compile 'com.github.zagum:Android-ExpandIcon:1.1.1'
 
 }

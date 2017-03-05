@@ -17,6 +17,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.github.zagum.expandicon.ExpandIconView;
+
 import net.dean.jraw.paginators.SubredditPaginator;
 
 import butterknife.BindView;
@@ -43,6 +45,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
+    @BindView(R.id.subreddit_toolbar_title_arrow) ExpandIconView toolbarTitleArrowView;
     @BindView(R.id.subreddit_toolbar_title_container) ViewGroup toolbarTitleContainer;
     @BindView(R.id.subreddit_toolbar_container) ViewGroup toolbarContainer;
     @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
@@ -164,6 +167,8 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                     } else if (isUserProfileSheetVisible()) {
                         setTitle(getString(R.string.user_name_u_prefix, Dank.reddit().loggedInUserName()));
                     }
+
+                    toolbarTitleArrowView.setState(ExpandIconView.LESS, true);
                     break;
 
                 case EXPANDED:
@@ -177,6 +182,8 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                     } else if (isUserProfileSheetVisible()) {
                         setTitle(activeSubreddit);
                     }
+
+                    toolbarTitleArrowView.setState(ExpandIconView.MORE, true);
                     break;
 
                 case COLLAPSED:
