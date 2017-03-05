@@ -3,4 +3,9 @@
     <declare-styleable name="ScrollingRecyclerViewSheet">
         <attr name="peekHeight" format="dimension" />
     </declare-styleable>
+
+    <declare-styleable name="DankToolbar">
+        <attr name="navigationIcon" format="reference" />
+        <attr name="navigationIconTint" format="color" />
+    </declare-styleable>
 </resources>

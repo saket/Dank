@@ -52,6 +52,14 @@
         <item name="android:layout_marginBottom">-7dp</item>
     </style>
 
+    <style name="DankToolbar">
+        <item name="titleTextAppearance">@style/DankTextAppearance.Toolbar</item>
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">@color/toolbar</item>
+        <item name="android:elevation">@dimen/elevation_toolbar</item>
+    </style>
+
     <!-- Subreddit -->
     <style name="SubredditPickerSearchFieldTheme">
         <item name="android:colorControlNormal">@color/gray_800</item>

@@ -13,7 +13,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -92,7 +91,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.submission_comment_list) RecyclerView commentList;
     @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
 
-    @BindDrawable(R.drawable.ic_close_24dp) Drawable closeIconDrawable;
+    @BindDrawable(R.drawable.ic_toolbar_close_24dp) Drawable closeIconDrawable;
     @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
 
     private ExpandablePageLayout submissionPageLayout;
@@ -128,15 +127,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 Views.setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight);
             });
         });
-
-        // Add a close icon to the toolbar.
-        //noinspection ConstantConditions
-        Drawable closeIconDrawable = getActivity().getDrawable(R.drawable.ic_close_24dp).mutate();
-        closeIconDrawable.setTint(ContextCompat.getColor(getActivity(), R.color.white));
-        toolbar.setNavigationIcon(closeIconDrawable);
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
-        toolbar.setBackground(null);
-        toolbarShadows.setElevation(toolbar.getElevation());
 
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
@@ -34,9 +35,8 @@
         android:id="@+id/submission_webview_container"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/toolbar"
-        android:background="@color/gray_800"
-        tools:ignore="UnknownIdInLayout">
+        android:layout_below="@id/toolbar"
+        android:background="@color/gray_800">
 
         <WebView
             android:id="@+id/submission_webview"
@@ -122,9 +122,8 @@
         android:id="@+id/submission_comment_list_parent_sheet"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/toolbar"
+        android:layout_below="@id/toolbar"
         android:background="@color/window_background"
-        tools:ignore="UnknownIdInLayout"
         tools:layout_below="@+id/submission_comments_header">
 
         <android.support.v7.widget.RecyclerView
@@ -141,12 +140,13 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/toolbar"
-        android:translationZ="@dimen/elevation_toolbar"
-        tools:ignore="UnknownIdInLayout" />
+        android:translationZ="@dimen/elevation_toolbar" />
 
-    <include
-        layout="@layout/include_toolbar"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:background="@color/transparent" />
+    <!-- Note: the elevation to this toolbar is set on AnimatableToolbarBackground instead. -->
+    <me.saket.dank.widgets.DankToolbar
+        android:id="@id/toolbar"
+        style="@style/DankToolbar"
+        android:background="@color/transparent"
+        app:navigationIcon="@drawable/ic_toolbar_close_24dp"
+        app:navigationIconTint="@color/white" />
 </RelativeLayout>

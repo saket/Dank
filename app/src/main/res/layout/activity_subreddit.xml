@@ -37,7 +37,9 @@
         android:background="@color/toolbar"
         android:elevation="@dimen/elevation_toolbar">
 
-        <include layout="@layout/include_toolbar" />
+        <me.saket.dank.widgets.DankToolbar
+            android:id="@id/toolbar"
+            style="@style/DankToolbar" />
 
         <RelativeLayout
             android:id="@+id/subreddit_toolbar_title_container"

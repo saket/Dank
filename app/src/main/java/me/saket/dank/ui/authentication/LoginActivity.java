@@ -5,9 +5,7 @@ import static me.saket.dank.utils.RxUtils.applySchedulers;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Bitmap;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -16,7 +14,6 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
-import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.DankActivity;
@@ -29,8 +26,6 @@ public class LoginActivity extends DankActivity {
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.login_webview) WebView webView;
     @BindView(R.id.login_progress) View progressView;
-
-    @BindDrawable(R.drawable.ic_close_24dp) Drawable closeIconDrawable;
 
     private DankRedditClient.UserLoginHelper userLoginHelper;
     private boolean loggedIn;
@@ -45,11 +40,6 @@ public class LoginActivity extends DankActivity {
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
         findAndSetupToolbar(true);
-
-        // Show a close icon.
-        closeIconDrawable = closeIconDrawable.mutate();
-        closeIconDrawable.setTint(ContextCompat.getColor(this, R.color.gray_500));
-        toolbar.setNavigationIcon(closeIconDrawable);
 
         toolbar.setBackground(null);
         toolbar.setTitle(R.string.login);

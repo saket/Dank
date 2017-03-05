@@ -41,9 +41,9 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
             setClippedDimensions(getWidth(), 0);
         });
 
-        // Avoid the shadows from showing up above the sheet. This is done by
-        // passing in the center location of this sheet as the top-location
-        // for the shadow, essentially hiding it behind this sheet.
+        // Avoid the shadows from showing up above the sheet. This is done by passing in the
+        // center location of this sheet as the top-location for the shadow, essentially hiding
+        // it behind this sheet.
         setOutlineProvider(new ViewOutlineProvider() {
             @Override
             public void getOutline(View view, Outline outline) {
