@@ -135,7 +135,7 @@
     </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
 
     <!-- Acts as the toolbar's background. -->
-    <me.saket.dank.widgets.AnimatableToolbarBackground
+    <me.saket.dank.widgets.AnimatedToolbarBackground
         android:id="@+id/submission_toolbar_background"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"

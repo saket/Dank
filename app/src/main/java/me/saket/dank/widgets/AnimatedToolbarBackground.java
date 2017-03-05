@@ -16,14 +16,14 @@ import me.saket.dank.ui.submission.SubmissionFragment;
  * now this View assumes that it'll be located at the top of its parent and the
  * {@link ScrollingRecyclerViewSheet} will be present below the toolbar.
  */
-public class AnimatableToolbarBackground extends View {
+public class AnimatedToolbarBackground extends View {
 
     private ValueAnimator backgroundFillAnimator;
     private Boolean isToolbarFilled;
     private Float currentFillFactor = 0f;
     private final float onVisibleTranslationZ;
 
-    public AnimatableToolbarBackground(Context context, AttributeSet attrs) {
+    public AnimatedToolbarBackground(Context context, AttributeSet attrs) {
         super(context, attrs);
 
         onVisibleTranslationZ = getTranslationZ();

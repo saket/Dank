@@ -61,7 +61,7 @@ import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.SubmissionContentParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
-import me.saket.dank.widgets.AnimatableToolbarBackground;
+import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
@@ -78,7 +78,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.submission_toolbar_shadow) View toolbarShadows;
-    @BindView(R.id.submission_toolbar_background) AnimatableToolbarBackground toolbarBackground;
+    @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
     @BindView(R.id.submission_content_progress) AnimatableProgressBar contentLoadProgressView;
     @BindView(R.id.submission_webview_container) ViewGroup contentWebViewContainer;
     @BindView(R.id.submission_webview) WebView contentWebView;
