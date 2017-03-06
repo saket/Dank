@@ -79,11 +79,11 @@ public class DankRedditClient {
     /**
      * Load more replies of a comment node.
      */
-    public Observable<Boolean> loadMoreComments(CommentNode commentNode) {
-        return Observable.fromCallable(() -> {
+    public Func1<CommentNode, CommentNode> loadMoreComments() {
+        return commentNode -> {
             commentNode.loadMoreComments(redditClient);
-            return true;
-        });
+            return commentNode;
+        };
     }
 
     /**

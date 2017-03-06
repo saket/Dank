@@ -5,7 +5,7 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.CommentNode;
 
 @AutoValue
-public abstract class DankUserCommentNode implements SubmissionCommentItem {
+public abstract class DankCommentNode implements SubmissionCommentsRow {
 
     public abstract CommentNode commentNode();
 
@@ -15,13 +15,13 @@ public abstract class DankUserCommentNode implements SubmissionCommentItem {
     public abstract long id();
 
     @Override
-    public SubmissionCommentItem.Type type() {
+    public SubmissionCommentsRow.Type type() {
         return Type.USER_COMMENT;
     }
 
-    public static DankUserCommentNode create(CommentNode commentNode, boolean isCollapsed) {
+    public static DankCommentNode create(CommentNode commentNode, boolean isCollapsed) {
         int commentId = commentNode.getComment().getId().hashCode();
-        return new AutoValue_DankUserCommentNode(commentNode, isCollapsed, commentId);
+        return new AutoValue_DankCommentNode(commentNode, isCollapsed, commentId);
     }
 
 }

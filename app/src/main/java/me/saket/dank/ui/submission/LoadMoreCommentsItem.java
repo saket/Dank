@@ -8,7 +8,7 @@ import net.dean.jraw.models.CommentNode;
  * An item in a submission comments that can load more comments for its parent.
  */
 @AutoValue
-public abstract class LoadMoreCommentsItem implements SubmissionCommentItem {
+public abstract class LoadMoreCommentsItem implements SubmissionCommentsRow {
 
     /**
      * The comment node for which more comments can be fetched.

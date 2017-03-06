@@ -28,13 +28,21 @@ public class CommentsCollapseHelper {
         collapsedCommentNodes.clear();
     }
 
-    public List<SubmissionCommentItem> toggleCollapseAndGet(CommentNode commentNode) {
+    public List<SubmissionCommentsRow> toggleCollapseAndGet(CommentNode commentNode) {
         if (isCollapsed(commentNode)) {
             collapsedCommentNodes.remove(commentNode);
         } else {
             collapsedCommentNodes.add(commentNode);
         }
         return flattenExpandedComments();
+    }
+
+    public void toggleCollapse(CommentNode commentNode) {
+        if (isCollapsed(commentNode)) {
+            collapsedCommentNodes.remove(commentNode);
+        } else {
+            collapsedCommentNodes.add(commentNode);
+        }
     }
 
     private boolean isCollapsed(CommentNode commentNode) {
@@ -44,14 +52,14 @@ public class CommentsCollapseHelper {
     /**
      * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
      */
-    public List<SubmissionCommentItem> flattenExpandedComments() {
+    public List<SubmissionCommentsRow> flattenExpandedComments() {
         return flattenExpandedComments(new ArrayList<>(rootCommentNode.getTotalSize()), rootCommentNode);
     }
 
     /**
      * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
      */
-    private List<SubmissionCommentItem> flattenExpandedComments(List<SubmissionCommentItem> flattenComments, CommentNode nextNode) {
+    private List<SubmissionCommentsRow> flattenExpandedComments(List<SubmissionCommentsRow> flattenComments, CommentNode nextNode) {
         String indentation = "";
         if (nextNode.getDepth() != 0) {
             for (int step = 0; step < nextNode.getDepth(); step++) {
@@ -62,7 +70,7 @@ public class CommentsCollapseHelper {
         boolean isCommentNodeCollapsed = isCollapsed(nextNode);
         if (nextNode.getDepth() != 0) {
 //            Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
-            flattenComments.add(DankUserCommentNode.create(nextNode, isCommentNodeCollapsed));
+            flattenComments.add(DankCommentNode.create(nextNode, isCommentNodeCollapsed));
         }
 
         if (nextNode.isEmpty() && !nextNode.hasMoreComments()) {

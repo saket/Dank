@@ -18,9 +18,11 @@ import me.saket.dank.R;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Views;
 import rx.functions.Action1;
+import rx.subjects.PublishSubject;
+import rx.subjects.Subject;
 
-public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentItem, RecyclerView.ViewHolder>
-        implements Action1<List<SubmissionCommentItem>>
+public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentsRow, RecyclerView.ViewHolder>
+        implements Action1<List<SubmissionCommentsRow>>
 {
 
     private static final int VIEW_TYPE_USER_COMMENT = 100;
@@ -29,7 +31,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentI
     private static int startPaddingForRootComment;
     private static int startPaddingPerDepthLevel;
 
-    private ClickListeners clickListeners;
+    private Subject<CommentNode, CommentNode> commentClickSubject = PublishSubject.create();
+    private Subject<CommentNode, CommentNode> loadMoreCommentsClickSubject = PublishSubject.create();
 
     interface ClickListeners {
         /**
@@ -49,26 +52,35 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentI
         startPaddingPerDepthLevel = resources.getDimensionPixelSize(R.dimen.comment_start_padding_per_depth_level);
     }
 
-    public void setClickListeners(ClickListeners listener) {
-        clickListeners = listener;
+    /**
+     * Emits a CommentNodes when it's clicked.
+     */
+    public Subject<CommentNode, CommentNode> commentClicks() {
+        return commentClickSubject;
+    }
+
+    /**
+     * Emits a CommentNode whose "load more comments" is clicked.
+     */
+    public Subject<CommentNode, CommentNode> loadMoreCommentsClicks() {
+        return loadMoreCommentsClickSubject;
     }
 
     @Override
-    public void call(List<SubmissionCommentItem> commentNodes) {
+    public void call(List<SubmissionCommentsRow> commentNodes) {
         updateData(commentNodes);
     }
 
     @Override
     public int getItemViewType(int position) {
-        SubmissionCommentItem commentItem = getItem(position);
-        return commentItem.type() == SubmissionCommentItem.Type.USER_COMMENT ? VIEW_TYPE_USER_COMMENT : VIEW_TYPE_LOAD_MORE;
+        SubmissionCommentsRow commentItem = getItem(position);
+        return commentItem.type() == SubmissionCommentsRow.Type.USER_COMMENT ? VIEW_TYPE_USER_COMMENT : VIEW_TYPE_LOAD_MORE;
     }
 
     @Override
     protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
         if (viewType == VIEW_TYPE_USER_COMMENT) {
             return UserCommentViewHolder.create(inflater, parent);
-
         } else {
             return LoadMoreCommentViewHolder.create(inflater, parent);
         }
@@ -76,14 +88,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentI
 
     @Override
     public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-        SubmissionCommentItem commentItem = getItem(position);
+        SubmissionCommentsRow commentItem = getItem(position);
 
-        if (commentItem.type() == SubmissionCommentItem.Type.USER_COMMENT) {
-            CommentNode commentNode = ((DankUserCommentNode) commentItem).commentNode();
+        if (commentItem.type() == SubmissionCommentsRow.Type.USER_COMMENT) {
+            CommentNode commentNode = ((DankCommentNode) commentItem).commentNode();
             ((UserCommentViewHolder) holder).bind(commentNode);
 
             holder.itemView.setOnClickListener(__ -> {
-                clickListeners.onCommentClick(commentNode);
+                commentClickSubject.onNext(commentNode);
             });
 
         } else {
@@ -91,7 +103,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentI
             ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
 
             holder.itemView.setOnClickListener(__ -> {
-                clickListeners.onLoadMoreCommentsClick(loadMoreItem.parentCommentNode());
+                loadMoreCommentsClickSubject.onNext(loadMoreItem.parentCommentNode());
             });
         }
     }
