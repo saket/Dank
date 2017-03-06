@@ -25,9 +25,9 @@ public class AnimatedToolbarBackground extends View {
 
     public AnimatedToolbarBackground(Context context, AttributeSet attrs) {
         super(context, attrs);
-
         onVisibleTranslationZ = getTranslationZ();
         setTranslationZ(0f);
+        toggleFill(true);
     }
 
     /**
@@ -84,6 +84,7 @@ public class AnimatedToolbarBackground extends View {
 
         } else {
             setBackgroundFill(targetFillFactor);
+            setTranslationZ(onVisibleTranslationZ * targetFillFactor);
         }
     }
 
