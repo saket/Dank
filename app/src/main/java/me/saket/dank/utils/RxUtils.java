@@ -1,6 +1,9 @@
 package me.saket.dank.utils;
 
+import android.os.Looper;
+
 import rx.Observable;
+import rx.Scheduler;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
@@ -35,6 +38,10 @@ public class RxUtils {
         return observable -> observable
                 .doOnSubscribe(() -> isOngoingAction.call(true))
                 .doOnUnsubscribe(() -> isOngoingAction.call(false));
+    }
+
+    public static Scheduler ioIfNeeded() {
+        return Looper.myLooper() == Looper.getMainLooper() ? Schedulers.io() : Schedulers.trampoline();
     }
 
 }

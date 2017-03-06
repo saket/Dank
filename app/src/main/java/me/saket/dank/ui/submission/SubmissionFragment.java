@@ -4,7 +4,6 @@ import static butterknife.ButterKnife.findById;
 import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
-import static rx.android.schedulers.AndroidSchedulers.mainThread;
 import static rx.schedulers.Schedulers.io;
 
 import android.annotation.SuppressLint;
@@ -37,7 +36,6 @@ import com.bumptech.glide.Priority;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
 import java.io.IOException;
@@ -66,8 +64,6 @@ import me.saket.dank.widgets.ZoomableImageView;
 import rx.Subscription;
 import rx.functions.Func0;
 import rx.functions.Func1;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -100,7 +96,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private CommentsCollapseHelper commentsCollapseHelper;
     private Submission currentSubmission;
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
-    private Subject<Void, Void> commentUpdates = PublishSubject.create();
 
     private int deviceDisplayWidth;
     private boolean isCommentSheetBeneathImage;
@@ -134,34 +129,27 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.
         commentsAdapter = new CommentsAdapter(getResources());
-        commentsAdapter
-                .commentClicks()
-                .subscribe(commentNode -> {
-                    commentsCollapseHelper.toggleCollapse(commentNode);
-                    commentUpdates.onNext(null);
-                });
-
-        commentsAdapter
-                .loadMoreCommentsClicks()
-                .observeOn(io())
-                .map(Dank.reddit().loadMoreComments())
-                .subscribe(__ -> commentUpdates.onNext(null), logError("Failed to load more comments"));
-
         commentList.setAdapter(RecyclerAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView));
-
         commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
         commentList.setItemAnimator(new DefaultItemAnimator());
 
         commentsCollapseHelper = new CommentsCollapseHelper();
+        commentsAdapter
+                .commentClicks()
+                .doOnNext(commentsCollapseHelper.toggleCollapse())
+                .flatMap(commentsCollapseHelper.constructComments())
+                .subscribe(commentsAdapter);
+        commentsAdapter
+                .loadMoreCommentsClicks()
+                .observeOn(io())
+                .map(Dank.reddit().loadMoreComments())
+                .flatMap(commentsCollapseHelper.constructComments())
+                .subscribe(commentsAdapter, logError("Failed to load more comments"));
+        // ^ Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
+
         setupContentWebView();
         setupContentImageView();
         setupCommentsSheet();
-
-        commentUpdates
-                .observeOn(io())
-                .map(__ -> commentsCollapseHelper.flattenExpandedComments())
-                .observeOn(mainThread())
-                .subscribe(commentsAdapter, logError("Couldn't get comments"));
 
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
         deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
@@ -331,16 +319,14 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         // Load new comments.
         commentsLoadProgressView.setVisibility(View.VISIBLE);
+
         commentsSubscription = Dank.reddit()
                 .withAuth(Dank.reddit().fullSubmissionData(submission))
-                .map(submissionData -> {
-                    CommentNode commentNode = submissionData.getComments();
-                    commentsCollapseHelper.setupWith(commentNode);
-                    return commentsCollapseHelper.flattenExpandedComments();
-                })
+                .doOnNext(commentsCollapseHelper.setupWith())
+                .flatMap(commentsCollapseHelper.constructComments())
                 .compose(applySchedulers())
                 .doOnTerminate(() -> commentsLoadProgressView.setVisibility(View.GONE))
-                .subscribe(__ -> commentUpdates.onNext(null), logError("Couldn't get comments"));
+                .subscribe(commentsAdapter, logError("Couldn't get comments"));
     }
 
     private void loadSubmissionContent(Submission submission, SubmissionContent submissionContent) {

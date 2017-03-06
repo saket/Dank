@@ -1,10 +1,18 @@
 package me.saket.dank.ui.submission;
 
+import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.ioIfNeeded;
+
 import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+
+import rx.Observable;
+import rx.functions.Action1;
+import rx.functions.Func1;
 
 /**
  * Helps in flattening a comments tree with collapsed child comments ignored.
@@ -17,10 +25,12 @@ public class CommentsCollapseHelper {
     private List<CommentNode> collapsedCommentNodes = new LinkedList<>();    // Note: !CommentNode.hashCode() crashes so using a Set isn't possible.
 
     /**
-     * @param rootCommentNode Root comment of a submission.
+     * Set the root comment of a submission.
      */
-    public void setupWith(CommentNode rootCommentNode) {
-        this.rootCommentNode = rootCommentNode;
+    public Action1<Submission> setupWith() {
+        return submission -> {
+            this.rootCommentNode = submission.getComments();
+        };
     }
 
     public void reset() {
@@ -28,21 +38,14 @@ public class CommentsCollapseHelper {
         collapsedCommentNodes.clear();
     }
 
-    public List<SubmissionCommentsRow> toggleCollapseAndGet(CommentNode commentNode) {
-        if (isCollapsed(commentNode)) {
-            collapsedCommentNodes.remove(commentNode);
-        } else {
-            collapsedCommentNodes.add(commentNode);
-        }
-        return flattenExpandedComments();
-    }
-
-    public void toggleCollapse(CommentNode commentNode) {
-        if (isCollapsed(commentNode)) {
-            collapsedCommentNodes.remove(commentNode);
-        } else {
-            collapsedCommentNodes.add(commentNode);
-        }
+    public Action1<CommentNode> toggleCollapse() {
+        return commentNode -> {
+            if (isCollapsed(commentNode)) {
+                collapsedCommentNodes.remove(commentNode);
+            } else {
+                collapsedCommentNodes.add(commentNode);
+            }
+        };
     }
 
     private boolean isCollapsed(CommentNode commentNode) {
@@ -52,14 +55,17 @@ public class CommentsCollapseHelper {
     /**
      * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
      */
-    public List<SubmissionCommentsRow> flattenExpandedComments() {
-        return flattenExpandedComments(new ArrayList<>(rootCommentNode.getTotalSize()), rootCommentNode);
+    public Func1<Object, Observable<List<SubmissionCommentsRow>>> constructComments() {
+        return __ -> Observable
+                .fromCallable(() -> constructComments(new ArrayList<>(rootCommentNode.getTotalSize()), rootCommentNode))
+                .subscribeOn(ioIfNeeded())
+                .compose(applySchedulers());
     }
 
     /**
      * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
      */
-    private List<SubmissionCommentsRow> flattenExpandedComments(List<SubmissionCommentsRow> flattenComments, CommentNode nextNode) {
+    private List<SubmissionCommentsRow> constructComments(List<SubmissionCommentsRow> flattenComments, CommentNode nextNode) {
         String indentation = "";
         if (nextNode.getDepth() != 0) {
             for (int step = 0; step < nextNode.getDepth(); step++) {
@@ -81,7 +87,7 @@ public class CommentsCollapseHelper {
             if (!isCommentNodeCollapsed) {
                 List<CommentNode> childCommentsTree = nextNode.getChildren();
                 for (CommentNode node : childCommentsTree) {
-                    flattenExpandedComments(flattenComments, node);
+                    constructComments(flattenComments, node);
                 }
 
                 if (nextNode.hasMoreComments()) {
