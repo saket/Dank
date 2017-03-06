@@ -141,7 +141,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     }
 
     public static class LoadMoreCommentViewHolder extends RecyclerView.ViewHolder {
-        @BindView(R.id.item_loadmorecomments_reply_count) TextView replyCountView;
+        @BindView(R.id.item_loadmorecomments_load_more) TextView loadMoreView;
 
         public static LoadMoreCommentViewHolder create(LayoutInflater inflater, ViewGroup parent) {
             return new LoadMoreCommentViewHolder(inflater.inflate(R.layout.list_item_load_more_comments, parent, false));
@@ -159,7 +159,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
             applyDepthIndentation(itemView, parentCommentNode.getDepth() + 1);
 
             Integer replyCount = parentCommentNode.getMoreChildren().getCount();
-            replyCountView.setText(itemView.getResources().getString(R.string.submission_loadmorecomments_reply_count, replyCount));
+            loadMoreView.setText(itemView.getResources().getString(R.string.submission_load_more_comments, replyCount));
         }
     }
 

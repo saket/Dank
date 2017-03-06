@@ -21,13 +21,5 @@
             android:fontFamily="sans-serif-condensed"
             android:text="@string/submission_load_more_comments"
             android:textColor="@color/teal_400" />
-
-        <TextView
-            android:id="@+id/item_loadmorecomments_reply_count"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginStart="@dimen/spacing8"
-            android:fontFamily="sans-serif-condensed"
-            android:text="@string/submission_loadmorecomments_reply_count" />
     </LinearLayout>
 </RelativeLayout>
