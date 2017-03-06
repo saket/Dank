@@ -93,7 +93,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private ExpandablePageLayout submissionPageLayout;
     private CommentsAdapter commentsAdapter;
     private Subscription commentsSubscription;
-    private CommentsCollapseHelper commentsCollapseHelper;
+    private CommentsHelper commentsHelper;
     private Submission currentSubmission;
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
 
@@ -133,17 +133,17 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
         commentList.setItemAnimator(new DefaultItemAnimator());
 
-        commentsCollapseHelper = new CommentsCollapseHelper();
+        commentsHelper = new CommentsHelper();
         commentsAdapter
                 .commentClicks()
-                .doOnNext(commentsCollapseHelper.toggleCollapse())
-                .flatMap(commentsCollapseHelper.constructComments())
+                .doOnNext(commentsHelper.toggleCollapse())
+                .flatMap(commentsHelper.constructComments())
                 .subscribe(commentsAdapter);
         commentsAdapter
                 .loadMoreCommentsClicks()
                 .observeOn(io())
                 .map(Dank.reddit().loadMoreComments())
-                .flatMap(commentsCollapseHelper.constructComments())
+                .flatMap(commentsHelper.constructComments())
                 .subscribe(commentsAdapter, logError("Failed to load more comments"));
         // ^ Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
 
@@ -300,7 +300,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         contentLoadProgressView.setProgress(0);
         commentListParentSheet.scrollTo(0);
         commentListParentSheet.setScrollingEnabled(false);
-        commentsCollapseHelper.reset();
+        commentsHelper.reset();
         commentsAdapter.updateData(null);
 
         SubmissionContent submissionContent = SubmissionContentParser.parse(submission);
@@ -322,8 +322,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         commentsSubscription = Dank.reddit()
                 .withAuth(Dank.reddit().fullSubmissionData(submission))
-                .doOnNext(commentsCollapseHelper.setupWith())
-                .flatMap(commentsCollapseHelper.constructComments())
+                .doOnNext(commentsHelper.setupWith())
+                .flatMap(commentsHelper.constructComments())
                 .compose(applySchedulers())
                 .doOnTerminate(() -> commentsLoadProgressView.setVisibility(View.GONE))
                 .subscribe(commentsAdapter, logError("Couldn't get comments"));

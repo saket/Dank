@@ -7,8 +7,9 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
-import java.util.LinkedList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import rx.Observable;
 import rx.functions.Action1;
@@ -17,39 +18,35 @@ import rx.functions.Func1;
 /**
  * Helps in flattening a comments tree with collapsed child comments ignored.
  */
-public class CommentsCollapseHelper {
+public class CommentsHelper {
 
+    private Set<String> collapsedCommentNodeIds = new HashSet<>();    // Note: !CommentNode.hashCode() crashes so using a Set isn't possible.
     private CommentNode rootCommentNode;
-
-    // TODO: Replace this with comment IDs.
-    private List<CommentNode> collapsedCommentNodes = new LinkedList<>();    // Note: !CommentNode.hashCode() crashes so using a Set isn't possible.
 
     /**
      * Set the root comment of a submission.
      */
     public Action1<Submission> setupWith() {
-        return submission -> {
-            this.rootCommentNode = submission.getComments();
-        };
+        return submission -> rootCommentNode = submission.getComments();
     }
 
     public void reset() {
         rootCommentNode = null;
-        collapsedCommentNodes.clear();
+        collapsedCommentNodeIds.clear();
     }
 
     public Action1<CommentNode> toggleCollapse() {
         return commentNode -> {
             if (isCollapsed(commentNode)) {
-                collapsedCommentNodes.remove(commentNode);
+                collapsedCommentNodeIds.remove(commentNode.getComment().getId());
             } else {
-                collapsedCommentNodes.add(commentNode);
+                collapsedCommentNodeIds.add(commentNode.getComment().getId());
             }
         };
     }
 
     private boolean isCollapsed(CommentNode commentNode) {
-        return collapsedCommentNodes.contains(commentNode);
+        return collapsedCommentNodeIds.contains(commentNode.getComment().getId());
     }
 
     /**
