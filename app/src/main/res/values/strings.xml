@@ -47,4 +47,6 @@
     <!-- Submission -->
     <string name="submission_error_no_app_to_handle_intent">No app found to handle this link</string>
     <string name="submission_load_more_comments">Load %d more comments</string>
+    <string name="submission_loading_more_comments">Loading more comments…</string>
+    <string name="submission_error_failed_to_load_more_comments">Failed to load more comments</string>
 </resources>

@@ -15,6 +15,11 @@ public abstract class LoadMoreCommentsItem implements SubmissionCommentsRow {
      */
     public abstract CommentNode parentCommentNode();
 
+    /**
+     * True when an API call is ongoing to load more comments. False otherwise.
+     */
+    public abstract boolean progressVisible();
+
     @Override
     public abstract long id();
 
@@ -23,9 +28,9 @@ public abstract class LoadMoreCommentsItem implements SubmissionCommentsRow {
         return Type.LOAD_MORE_COMMENTS;
     }
 
-    public static LoadMoreCommentsItem create(CommentNode parentNode) {
+    public static LoadMoreCommentsItem create(CommentNode parentNode, boolean progressVisible) {
         int id = (parentNode.getComment().getId() + "_loadMore").hashCode();
-        return new AutoValue_LoadMoreCommentsItem(parentNode, id);
+        return new AutoValue_LoadMoreCommentsItem(parentNode, progressVisible, id);
     }
 
 }

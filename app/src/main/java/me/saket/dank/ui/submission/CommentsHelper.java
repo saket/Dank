@@ -1,8 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.RxUtils.applySchedulers;
-import static me.saket.dank.utils.RxUtils.ioIfNeeded;
-
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
@@ -13,21 +10,36 @@ import java.util.Set;
 
 import rx.Observable;
 import rx.functions.Action1;
-import rx.functions.Func1;
+import rx.subjects.PublishSubject;
+import rx.subjects.Subject;
 
 /**
  * Helps in flattening a comments tree with collapsed child comments ignored.
  */
 public class CommentsHelper {
 
-    private Set<String> collapsedCommentNodeIds = new HashSet<>();    // Note: !CommentNode.hashCode() crashes so using a Set isn't possible.
+    // Comments that are collapsed.
+    private Set<String> collapsedCommentNodeIds = new HashSet<>();
+
+    // Comments for which more replies are being fetched.
+    private Set<String> loadingMoreCommentNodeIds = new HashSet<>();
+
     private CommentNode rootCommentNode;
+
+    private Subject<List<SubmissionCommentsRow>, List<SubmissionCommentsRow>> commentUpdates = PublishSubject.create();
+
+    public Observable<List<SubmissionCommentsRow>> updates() {
+        return commentUpdates;
+    }
 
     /**
      * Set the root comment of a submission.
      */
-    public Action1<Submission> setupWith() {
-        return submission -> rootCommentNode = submission.getComments();
+    public Action1<Submission> setup() {
+        return submission -> {
+            rootCommentNode = submission.getComments();
+            commentUpdates.onNext(constructComments());
+        };
     }
 
     public void reset() {
@@ -42,6 +54,7 @@ public class CommentsHelper {
             } else {
                 collapsedCommentNodeIds.add(commentNode.getComment().getId());
             }
+            commentUpdates.onNext(constructComments());
         };
     }
 
@@ -49,14 +62,26 @@ public class CommentsHelper {
         return collapsedCommentNodeIds.contains(commentNode.getComment().getId());
     }
 
+    public Action1<CommentNode> setMoreCommentsLoading(boolean loading) {
+        return commentNode -> {
+            if (loading) {
+                loadingMoreCommentNodeIds.add(commentNode.getComment().getId());
+            } else {
+                loadingMoreCommentNodeIds.remove(commentNode.getComment().getId());
+            }
+            commentUpdates.onNext(constructComments());
+        };
+    }
+
+    public boolean areMoreCommentsLoadingFor(CommentNode commentNode) {
+        return loadingMoreCommentNodeIds.contains(commentNode.getComment().getId());
+    }
+
     /**
      * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
      */
-    public Func1<Object, Observable<List<SubmissionCommentsRow>>> constructComments() {
-        return __ -> Observable
-                .fromCallable(() -> constructComments(new ArrayList<>(rootCommentNode.getTotalSize()), rootCommentNode))
-                .subscribeOn(ioIfNeeded())
-                .compose(applySchedulers());
+    private List<SubmissionCommentsRow> constructComments() {
+        return constructComments(new ArrayList<>(rootCommentNode.getTotalSize()), rootCommentNode);
     }
 
     /**
@@ -92,11 +117,10 @@ public class CommentsHelper {
 //                            indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getMoreChildren().getCount()
 //                    );
 //                    Timber.d("%s %s", indentation, nextNode.getMoreChildren().getChildrenIds());
-                    flattenComments.add(LoadMoreCommentsItem.create(nextNode));
+                    flattenComments.add(LoadMoreCommentsItem.create(nextNode, areMoreCommentsLoadingFor(nextNode)));
                 }
             }
             return flattenComments;
         }
     }
-
 }

@@ -4,6 +4,7 @@ import static butterknife.ButterKnife.findById;
 import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
+import static rx.android.schedulers.AndroidSchedulers.mainThread;
 import static rx.schedulers.Schedulers.io;
 
 import android.annotation.SuppressLint;
@@ -133,20 +134,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
         commentList.setItemAnimator(new DefaultItemAnimator());
 
-        commentsHelper = new CommentsHelper();
-        commentsAdapter
-                .commentClicks()
-                .doOnNext(commentsHelper.toggleCollapse())
-                .flatMap(commentsHelper.constructComments())
-                .subscribe(commentsAdapter);
-        commentsAdapter
-                .loadMoreCommentsClicks()
-                .observeOn(io())
-                .map(Dank.reddit().loadMoreComments())
-                .flatMap(commentsHelper.constructComments())
-                .subscribe(commentsAdapter, logError("Failed to load more comments"));
-        // ^ Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
-
+        setupCommentsHelper();
         setupContentWebView();
         setupContentImageView();
         setupCommentsSheet();
@@ -159,6 +147,46 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             onRestoreSavedInstanceState(savedInstanceState);
         }
         return fragmentLayout;
+    }
+
+    /**
+     * {@link CommentsHelper} helps in collapsing comments and helping {@link CommentsAdapter} in indicating
+     * progress when more comments are being fetched for a CommentNode.
+     * <p>
+     * The direction of modifications/updates to comments is unidirectional. All mods are made on
+     * {@link CommentsHelper} and {@link CommentsAdapter} subscribes to its updates.
+     */
+    private void setupCommentsHelper() {
+        commentsHelper = new CommentsHelper();
+
+        unsubscribeOnDestroy(
+                commentsHelper.updates()
+                        .observeOn(mainThread())
+                        .subscribe(commentsAdapter)
+        );
+
+        // Comment clicks.
+        unsubscribeOnDestroy(
+                commentsAdapter
+                        .commentClicks()
+                        .subscribe(commentsHelper.toggleCollapse())
+        );
+
+        // Load-more-comment clicks.
+        unsubscribeOnDestroy(
+                // Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
+                commentsAdapter
+                        .loadMoreCommentsClicks()
+                        .doOnNext(commentsHelper.setMoreCommentsLoading(true))
+                        .observeOn(io())
+                        .map(Dank.reddit().loadMoreComments())
+                        .subscribe(commentsHelper.setMoreCommentsLoading(false), error -> {
+                            Timber.e(error, "Failed to load more comments");
+                            if (isAdded()) {
+                                Toast.makeText(getActivity(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
+                            }
+                        })
+        );
     }
 
     private void setupContentWebView() {
@@ -322,11 +350,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         commentsSubscription = Dank.reddit()
                 .withAuth(Dank.reddit().fullSubmissionData(submission))
-                .doOnNext(commentsHelper.setupWith())
-                .flatMap(commentsHelper.constructComments())
                 .compose(applySchedulers())
                 .doOnTerminate(() -> commentsLoadProgressView.setVisibility(View.GONE))
-                .subscribe(commentsAdapter, logError("Couldn't get comments"));
+                .subscribe(commentsHelper.setup(), logError("Couldn't get comments"));
     }
 
     private void loadSubmissionContent(Submission submission, SubmissionContent submissionContent) {

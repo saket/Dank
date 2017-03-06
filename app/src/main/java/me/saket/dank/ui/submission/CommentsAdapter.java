@@ -34,18 +34,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     private Subject<CommentNode, CommentNode> commentClickSubject = PublishSubject.create();
     private Subject<CommentNode, CommentNode> loadMoreCommentsClickSubject = PublishSubject.create();
 
-    interface ClickListeners {
-        /**
-         * Called when a comment is clicked.
-         */
-        void onCommentClick(CommentNode clickedCommentNode);
-
-        /**
-         * Called when more comments have to be loaded for <var>parentCommentNode</var>.
-         */
-        void onLoadMoreCommentsClick(CommentNode parentCommentNode);
-    }
-
     public CommentsAdapter(Resources resources) {
         setHasStableIds(true);
         startPaddingForRootComment = resources.getDimensionPixelSize(R.dimen.comment_start_padding_for_root_comment);
@@ -158,8 +146,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
             // Add a +1 depth to align it with sibling comments.
             applyDepthIndentation(itemView, parentCommentNode.getDepth() + 1);
 
-            Integer replyCount = parentCommentNode.getMoreChildren().getCount();
-            loadMoreView.setText(itemView.getResources().getString(R.string.submission_load_more_comments, replyCount));
+            if (loadMoreCommentsItem.progressVisible()) {
+                loadMoreView.setText(R.string.submission_loading_more_comments);
+            } else {
+                Integer replyCount = parentCommentNode.getMoreChildren().getCount();
+                loadMoreView.setText(itemView.getResources().getString(R.string.submission_load_more_comments, replyCount));
+            }
         }
     }
 
