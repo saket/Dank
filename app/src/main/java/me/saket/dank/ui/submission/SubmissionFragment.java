@@ -47,6 +47,7 @@ import butterknife.BindDimen;
 import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.DankFragment;
 import me.saket.dank.R;
@@ -55,6 +56,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Intents;
+import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.SubmissionContentParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
@@ -127,6 +129,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         });
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
 
+        selfPostTextView.setMovementMethod(BetterLinkMovementMethod.getInstance());
+
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.
         commentsAdapter = new CommentsAdapter(getResources());
@@ -160,16 +164,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsHelper = new CommentsHelper();
 
         unsubscribeOnDestroy(
-                commentsHelper.updates()
-                        .observeOn(mainThread())
-                        .subscribe(commentsAdapter)
+                commentsHelper.updates().observeOn(mainThread()).subscribe(commentsAdapter)
         );
 
         // Comment clicks.
         unsubscribeOnDestroy(
-                commentsAdapter
-                        .commentClicks()
-                        .subscribe(commentsHelper.toggleCollapse())
+                commentsAdapter.commentClicks().subscribe(commentsHelper.toggleCollapse())
         );
 
         // Load-more-comment clicks.
@@ -415,7 +415,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
             case SELF:
                 contentLoadProgressView.hide();
-                selfPostTextView.setText(submission.getSelftext());
+                String selfTextHtml = submission.getDataNode().get("selftext_html").asText();
+                CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
+                selfPostTextView.setText(markdownHtml);
+
+//                Timber.d("Html: %s", submission.getDataNode().toString());
+//                selfPostTextView.setText(Html.fromHtml("X<sup>2</sup>"));
                 break;
 
             case LINK:

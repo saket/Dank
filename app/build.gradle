@@ -13,7 +13,7 @@ apply plugin: 'com.neenbedankt.android-apt'
 
 repositories {
     maven { url "https://clojars.org/repo/" }   // Used by AutoParcel
-    maven { url 'https://jitpack.io' }
+    maven { url "https://s3.amazonaws.com/repo.commonsware.com" }   // Used by AutoParcel
 }
 
 android {
@@ -43,6 +43,10 @@ android {
 
     packagingOptions {
         exclude 'META-INF/LICENSE'
+        exclude 'META-INF/DEPENDENCIES'
+        exclude 'META-INF/LICENSE-LGPL-3.txt'
+        exclude 'META-INF/LICENSE-LGPL-2.1.txt'
+        exclude 'META-INF/LICENSE-W3C-TEST'
     }
 
     dexOptions {
@@ -88,5 +92,6 @@ dependencies {
     compile 'com.google.android:flexbox:0.3.0-alpha2'
     compile 'com.robinhood.ticker:ticker:1.1.1'
     compile 'com.github.zagum:Android-ExpandIcon:1.1.1'
-
+    compile 'me.saket:better-link-movement-method:1.2'
+    compile 'org.sufficientlysecure:html-textview:3.3'
 }

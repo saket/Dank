@@ -15,6 +15,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Views;
 import rx.functions.Action1;
@@ -120,7 +121,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
             // Author name, comment.
             authorNameView.setText(String.format("%s (%s)", commentNode.getComment().getAuthor(), commentNode.getComment().getScore()));
-            commentBodyView.setText(commentNode.getComment().getBody().trim());
+
+            String commentBody = commentNode.getComment().getDataNode().get("body_html").asText();
+            commentBodyView.setText(Markdown.parseRedditMarkdownHtml(commentBody, commentBodyView.getPaint()));
 
             // Flair.
             Flair authorFlair = commentNode.getComment().getAuthorFlair();
@@ -149,9 +152,16 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
             if (loadMoreCommentsItem.progressVisible()) {
                 loadMoreView.setText(R.string.submission_loading_more_comments);
             } else {
-                Integer replyCount = parentCommentNode.getMoreChildren().getCount();
-                loadMoreView.setText(itemView.getResources().getString(R.string.submission_load_more_comments, replyCount));
+                if (parentCommentNode.isThreadContinuation()) {
+                    loadMoreView.setText(R.string.submission_continue_this_thread);
+                } else {
+                    loadMoreView.setText(itemView.getResources().getString(
+                            R.string.submission_load_more_comments,
+                            parentCommentNode.getMoreChildren().getCount()
+                    ));
+                }
             }
+            Views.setCompoundDrawableEnd(loadMoreView, parentCommentNode.isThreadContinuation() ? R.drawable.ic_arrow_forward_12dp : 0);
         }
     }
 

@@ -49,4 +49,5 @@
     <string name="submission_load_more_comments">Load %d more comments</string>
     <string name="submission_loading_more_comments">Loading more comments…</string>
     <string name="submission_error_failed_to_load_more_comments">Failed to load more comments</string>
+    <string name="submission_continue_this_thread">Continue this thread</string>
 </resources>

@@ -1,6 +1,7 @@
 package me.saket.dank.utils;
 
 import android.app.Activity;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
 import android.view.View;
@@ -10,6 +11,7 @@ import android.view.Window;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebHistoryItem;
 import android.webkit.WebView;
+import android.widget.TextView;
 
 import butterknife.ButterKnife;
 
@@ -105,5 +107,15 @@ public class Views {
         params.bottomMargin = marginBottom;
         view.setLayoutParams(params);
     }
+
+    public static void setCompoundDrawableEnd(TextView textView, @DrawableRes int iconResId) {
+        textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                textView.getCompoundDrawables()[0],
+                textView.getCompoundDrawables()[1],
+                iconResId != 0 ? textView.getContext().getDrawable(iconResId) : null,
+                textView.getCompoundDrawables()[3]
+        );
+    }
+
 
 }
