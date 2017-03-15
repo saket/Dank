@@ -2,6 +2,7 @@ package me.saket.dank.ui.submission;
 
 import android.content.res.Resources;
 import android.support.v7.widget.RecyclerView;
+import android.text.Spannable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
@@ -21,6 +23,7 @@ import me.saket.dank.utils.Views;
 import rx.functions.Action1;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
+import timber.log.Timber;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentsRow, RecyclerView.ViewHolder>
         implements Action1<List<SubmissionCommentsRow>>
@@ -31,6 +34,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
     private static int startPaddingForRootComment;
     private static int startPaddingPerDepthLevel;
+    private final BetterLinkMovementMethod linkMovementMethod;
 
     private Subject<CommentNode, CommentNode> commentClickSubject = PublishSubject.create();
     private Subject<CommentNode, CommentNode> loadMoreCommentsClickSubject = PublishSubject.create();
@@ -39,6 +43,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
         setHasStableIds(true);
         startPaddingForRootComment = resources.getDimensionPixelSize(R.dimen.comment_start_padding_for_root_comment);
         startPaddingPerDepthLevel = resources.getDimensionPixelSize(R.dimen.comment_start_padding_per_depth_level);
+
+        linkMovementMethod = BetterLinkMovementMethod.newInstance();
     }
 
     /**
@@ -69,7 +75,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     @Override
     protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
         if (viewType == VIEW_TYPE_USER_COMMENT) {
-            return UserCommentViewHolder.create(inflater, parent);
+            return UserCommentViewHolder.create(inflater, parent, linkMovementMethod);
         } else {
             return LoadMoreCommentViewHolder.create(inflater, parent);
         }
@@ -83,9 +89,10 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
             CommentNode commentNode = ((DankCommentNode) commentItem).commentNode();
             ((UserCommentViewHolder) holder).bind(commentNode);
 
-            holder.itemView.setOnClickListener(__ -> {
+            View.OnClickListener listener = v -> {
                 commentClickSubject.onNext(commentNode);
-            });
+            };
+            ((UserCommentViewHolder) holder).itemView.setOnClickListener(listener);
 
         } else {
             LoadMoreCommentsItem loadMoreItem = ((LoadMoreCommentsItem) commentItem);
@@ -106,14 +113,25 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
         @BindView(R.id.item_comment_author_username) TextView authorNameView;
         @BindView(R.id.item_comment_author_flair) TextView authorFlairView;
         @BindView(R.id.item_comment_body) TextView commentBodyView;
+        private BetterLinkMovementMethod linkMovementMethod;
 
-        public static UserCommentViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-            return new UserCommentViewHolder(inflater.inflate(R.layout.list_item_comment, parent, false));
+        public static UserCommentViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
+            return new UserCommentViewHolder(inflater.inflate(R.layout.list_item_comment, parent, false), linkMovementMethod);
         }
 
-        public UserCommentViewHolder(View itemView) {
+        public UserCommentViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
             super(itemView);
+            this.linkMovementMethod = linkMovementMethod;
+
             ButterKnife.bind(this, itemView);
+
+            // Bug workaround: TextView with clickable spans consume all touch events. Manually
+            // transfer them to the parent so that the background touch indicator shows up +
+            // click listener works.
+            commentBodyView.setOnTouchListener((__, event) -> {
+                boolean handledByMovementMethod = linkMovementMethod.onTouchEvent(commentBodyView, ((Spannable) commentBodyView.getText()), event);
+                return handledByMovementMethod || itemView.onTouchEvent(event);
+            });
         }
 
         public void bind(CommentNode commentNode) {
@@ -124,6 +142,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
             String commentBody = commentNode.getComment().getDataNode().get("body_html").asText();
             commentBodyView.setText(Markdown.parseRedditMarkdownHtml(commentBody, commentBodyView.getPaint()));
+            commentBodyView.setMovementMethod(linkMovementMethod);
 
             // Flair.
             Flair authorFlair = commentNode.getComment().getAuthorFlair();
