@@ -8,7 +8,6 @@ import android.view.MotionEvent;
 
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.Settings;
-import com.alexvasilkov.gestures.State;
 import com.alexvasilkov.gestures.views.GestureImageView;
 
 /**
@@ -51,33 +50,6 @@ public class ZoomableImageView extends GestureImageView {
             public boolean onDoubleTapEvent(MotionEvent e) {
                 getParent().requestDisallowInterceptTouchEvent(true);
                 return super.onDoubleTapEvent(e);
-            }
-        });
-
-        getController().addOnStateChangeListener(new GestureController.OnStateChangeListener() {
-            public float lastZoom = -1;
-
-            @Override
-            public void onStateChanged(State state) {
-                if (lastZoom == -1) {
-                    lastZoom = state.getZoom();
-                }
-
-                // Overscroll only when zooming in.
-                boolean isZoomingIn = state.getZoom() > lastZoom;
-                if (isZoomingIn) {
-                    getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
-                } else {
-                    float overzoomFactor = Math.max(MIN_OVER_ZOOM, getController().getStateController().getMinZoom(state));
-                    getController().getSettings().setOverzoomFactor(overzoomFactor);
-                }
-
-                lastZoom = state.getZoom();
-            }
-
-            @Override
-            public void onStateReset(State oldState, State newState) {
-
             }
         });
     }
