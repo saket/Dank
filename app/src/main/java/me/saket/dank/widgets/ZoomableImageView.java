@@ -7,6 +7,7 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 
 import com.alexvasilkov.gestures.GestureController;
+import com.alexvasilkov.gestures.Settings;
 import com.alexvasilkov.gestures.State;
 import com.alexvasilkov.gestures.views.GestureImageView;
 
@@ -26,6 +27,7 @@ public class ZoomableImageView extends GestureImageView {
 
         getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
         getController().getSettings().setFillViewport(true);
+        getController().getSettings().setFitMethod(Settings.Fit.HORIZONTAL);
 
         getController().setOnGesturesListener(new GestureController.SimpleOnGestureListener() {
             @Override
@@ -66,7 +68,8 @@ public class ZoomableImageView extends GestureImageView {
                 if (isZoomingIn) {
                     getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
                 } else {
-                    getController().getSettings().setOverzoomFactor(Math.max(MIN_OVER_ZOOM, state.getZoom()));
+                    float overzoomFactor = Math.max(MIN_OVER_ZOOM, getController().getStateController().getMinZoom(state));
+                    getController().getSettings().setOverzoomFactor(overzoomFactor);
                 }
 
                 lastZoom = state.getZoom();
