@@ -49,7 +49,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.BuildConfig;
-import me.saket.dank.DankFragment;
+import me.saket.dank.ui.DankFragment;
 import me.saket.dank.R;
 import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;

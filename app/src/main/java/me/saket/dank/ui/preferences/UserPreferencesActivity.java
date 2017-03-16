@@ -1,26 +1,25 @@
 package me.saket.dank.ui.preferences;
 
+import static me.saket.dank.utils.Views.executeOnMeasure;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.Toolbar;
-import android.view.MenuItem;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import me.saket.dank.DankActivity;
 import me.saket.dank.R;
-import me.saket.dank.utils.Views;
+import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
-public class UserPreferencesActivity extends DankActivity {
+public class UserPreferencesActivity extends DankPullCollapsibleActivity {
 
     @BindView(R.id.userpreferences_root_page) IndependentExpandablePageLayout activityContentPage;
     @BindView(R.id.toolbar) Toolbar toolbar;
@@ -34,12 +33,15 @@ public class UserPreferencesActivity extends DankActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        overridePendingTransition(0, 0);
         setContentView(R.layout.activity_user_preferences);
         ButterKnife.bind(this);
         findAndSetupToolbar(true);
 
-        setupActivityExpandablePage();
+        executeOnMeasure(toolbar, () -> {
+            setupActivityExpandablePage(activityContentPage, toolbar.getHeight());
+            expandFromBelowToolbar();
+        });
+        activityContentPage.setNestedExpandablePage(preferencesPage);
     }
 
     @Override
@@ -47,7 +49,6 @@ public class UserPreferencesActivity extends DankActivity {
         super.onPostCreate(savedInstanceState);
 
         preferenceList.setLayoutManager(preferenceList.createLayoutManager());
-        preferenceList.setItemAnimator(new DefaultItemAnimator());
         preferenceList.setExpandablePage(preferencesPage, toolbar);
         preferenceList.setHasFixedSize(true);
 
@@ -59,28 +60,6 @@ public class UserPreferencesActivity extends DankActivity {
             });
         });
         preferenceList.setAdapter(preferencesAdapter);
-    }
-
-    private void setupActivityExpandablePage() {
-        Views.executeOnMeasure(toolbar, () -> {
-            activityContentPage.setParentActivityToolbarHeight(toolbar.getHeight());
-            activityContentPage.expandFromBelowToolbar();
-        });
-        activityContentPage.setCallbacks(new IndependentExpandablePageLayout.Callbacks() {
-            @Override
-            public void onPageFullyCollapsed() {
-                UserPreferencesActivity.super.finish();
-                overridePendingTransition(0, 0);
-            }
-
-            @Override
-            public void onPageRelease(boolean collapseEligible) {
-                if (collapseEligible) {
-                    finish();
-                }
-            }
-        });
-        activityContentPage.setNestedExpandablePage(preferencesPage);
     }
 
     private List<DankPreferenceGroup> constructPreferenceGroups() {
@@ -121,22 +100,6 @@ public class UserPreferencesActivity extends DankActivity {
                 R.string.userpreferences_about_subtitle)
         );
         return preferenceGroups;
-    }
-
-    @Override
-    public void finish() {
-        activityContentPage.collapseBelowToolbar();
-    }
-
-    @Override
-    public boolean onOptionsItemSelected(MenuItem item) {
-        if (item.getItemId() == android.R.id.home) {
-            onBackPressed();
-            return true;
-
-        } else {
-            return super.onOptionsItemSelected(item);
-        }
     }
 
 }

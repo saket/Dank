@@ -1,4 +1,4 @@
-package me.saket.dank;
+package me.saket.dank.ui;
 
 import android.app.Fragment;
 

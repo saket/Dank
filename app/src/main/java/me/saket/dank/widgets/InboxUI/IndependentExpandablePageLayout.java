@@ -9,8 +9,6 @@ import android.util.AttributeSet;
  */
 public class IndependentExpandablePageLayout extends ExpandablePageLayout {
 
-    private int parentToolbarHeight;
-
     public interface Callbacks {
         /**
          * Called when this page has fully collapsed and is no longer visible.
@@ -38,16 +36,6 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
             expandImmediately();
             setClippedDimensions(r, b);
         }
-    }
-
-    /**
-     * Used for two things: calculating the pull-to-collapse distance threshold and the
-     * location where this page collapses to (so that it appears to collapse below the
-     * parent Activity's toolbar instead of below the status bar).
-     */
-    public void setParentActivityToolbarHeight(int toolbarHeight) {
-        parentToolbarHeight = toolbarHeight;
-        setPullToCollapseDistanceThreshold(toolbarHeight);
     }
 
     public void setCallbacks(Callbacks callbacks) {
@@ -81,14 +69,19 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
 
     /**
      * Expands this page (with animation) so that it fills the whole screen.
+     *
+     * @param fromShapeRect Initial dimensions of this page.
      */
-    public void expandFromBelowToolbar() {
+    public void expandFrom(Rect fromShapeRect) {
         setClippedDimensions(getWidth(), 0);
-        expand(new InboxRecyclerView.ExpandInfo(-1, -1, new Rect(0, parentToolbarHeight, getWidth(), 0)));
+        expand(new InboxRecyclerView.ExpandInfo(-1, -1, fromShapeRect));
     }
 
-    public void collapseBelowToolbar() {
-        collapse(new InboxRecyclerView.ExpandInfo(-1, -1, new Rect(0, parentToolbarHeight, getWidth(), 0)));
+    /**
+     * @param toShapeRect Final dimensions of this page, when it fully collapses.
+     */
+    public void collapseTo(Rect toShapeRect) {
+        collapse(new InboxRecyclerView.ExpandInfo(-1, -1, toShapeRect));
     }
 
 }

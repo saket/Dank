@@ -16,7 +16,7 @@ import android.widget.Toast;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import me.saket.dank.DankActivity;
+import me.saket.dank.ui.DankActivity;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;

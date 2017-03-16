@@ -1,8 +1,9 @@
-package me.saket.dank;
+package me.saket.dank.ui;
 
 import android.support.v7.app.AppCompatActivity;
 
 import butterknife.ButterKnife;
+import me.saket.dank.R;
 import rx.Subscription;
 import rx.subscriptions.CompositeSubscription;
 

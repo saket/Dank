@@ -23,13 +23,14 @@ import net.dean.jraw.paginators.SubredditPaginator;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import me.saket.dank.DankActivity;
+import me.saket.dank.ui.DankActivity;
 import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -37,6 +38,9 @@ import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
 
+/**
+ * Also see {@link SubmissionFragmentActivity}.
+ */
 public class SubredditActivity extends DankActivity implements SubmissionFragment.Callbacks {
 
     private static final int REQUEST_CODE_LOGIN = 100;
