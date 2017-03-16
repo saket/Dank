@@ -37,9 +37,6 @@ public class Markdown {
         }
     }
 
-    /**
-     * @return "" if source is null, otherwise string with all trailing whitespace removed
-     */
     public static CharSequence trimTrailingWhitespace(CharSequence source) {
         if (source == null) {
             return null;
