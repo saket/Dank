@@ -49,10 +49,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.BuildConfig;
-import me.saket.dank.ui.DankFragment;
 import me.saket.dank.R;
+import me.saket.dank.RedditLinkParserActivity;
 import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Intents;
@@ -129,11 +130,20 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         });
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
 
-        selfPostTextView.setMovementMethod(BetterLinkMovementMethod.getInstance());
+        BetterLinkMovementMethod linkMovementMethod = BetterLinkMovementMethod.newInstance();
+        linkMovementMethod.setOnLinkClickListener((textView, url) -> {
+            try {
+                return RedditLinkParserActivity.handle(getActivity(), url);
+            } catch (Exception e) {
+                e.printStackTrace();
+                return false;
+            }
+        });
+        selfPostTextView.setMovementMethod(linkMovementMethod);
 
         // TODO: 01/02/17 Should we preload Views for adapter rows?
         // Setup comment list and its adapter.
-        commentsAdapter = new CommentsAdapter(getResources());
+        commentsAdapter = new CommentsAdapter(getResources(), linkMovementMethod);
         commentList.setAdapter(RecyclerAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView));
         commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
         commentList.setItemAnimator(new DefaultItemAnimator());

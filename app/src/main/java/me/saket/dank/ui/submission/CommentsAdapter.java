@@ -23,7 +23,6 @@ import me.saket.dank.utils.Views;
 import rx.functions.Action1;
 import rx.subjects.PublishSubject;
 import rx.subjects.Subject;
-import timber.log.Timber;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentsRow, RecyclerView.ViewHolder>
         implements Action1<List<SubmissionCommentsRow>>
@@ -39,12 +38,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     private Subject<CommentNode, CommentNode> commentClickSubject = PublishSubject.create();
     private Subject<CommentNode, CommentNode> loadMoreCommentsClickSubject = PublishSubject.create();
 
-    public CommentsAdapter(Resources resources) {
+    public CommentsAdapter(Resources resources, BetterLinkMovementMethod commentsLinkMovementMethod) {
         setHasStableIds(true);
         startPaddingForRootComment = resources.getDimensionPixelSize(R.dimen.comment_start_padding_for_root_comment);
         startPaddingPerDepthLevel = resources.getDimensionPixelSize(R.dimen.comment_start_padding_per_depth_level);
 
-        linkMovementMethod = BetterLinkMovementMethod.newInstance();
+        linkMovementMethod = commentsLinkMovementMethod;
     }
 
     /**

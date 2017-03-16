@@ -23,15 +23,21 @@
         </activity>
 
         <activity
+            android:name=".ui.authentication.LoginActivity"
+            android:label="@string/login"
+            android:parentActivityName=".ui.subreddits.SubredditActivity"
+            android:theme="@style/DankTheme.TransparentBackground" />
+
+        <activity
             android:name=".ui.preferences.UserPreferencesActivity"
             android:label="@string/activity_userpreferences"
             android:parentActivityName=".ui.subreddits.SubredditActivity"
             android:theme="@style/DankTheme.TransparentBackground" />
 
         <activity
-            android:name=".ui.authentication.LoginActivity"
-            android:label="@string/login"
-            android:parentActivityName=".ui.subreddits.SubredditActivity"
+            android:name=".ui.submission.SubmissionFragmentActivity"
             android:theme="@style/DankTheme.TransparentBackground" />
+
+        <activity android:name=".RedditLinkParserActivity" />
     </application>
 </manifest>
