@@ -50,7 +50,8 @@ import butterknife.ButterKnife;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
-import me.saket.dank.RedditLinkParserActivity;
+import me.saket.dank.OpenRedditUrlActivity;
+import me.saket.dank.data.RedditUrl;
 import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
@@ -58,6 +59,7 @@ import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.RedditUrlParser;
 import me.saket.dank.utils.SubmissionContentParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
@@ -132,12 +134,20 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         BetterLinkMovementMethod linkMovementMethod = BetterLinkMovementMethod.newInstance();
         linkMovementMethod.setOnLinkClickListener((textView, url) -> {
+            // TODO: 18/03/17 Remove try/catch block
             try {
-                return RedditLinkParserActivity.handle(getActivity(), url);
+                RedditUrl redditUrl = RedditUrlParser.parse(url);
+                if (redditUrl != null) {
+                    OpenRedditUrlActivity.handle(getActivity(), redditUrl);
+                    return true;
+                }
+
             } catch (Exception e) {
                 e.printStackTrace();
-                return false;
             }
+
+            Timber.i("Unknown link");
+            return false;
         });
         selfPostTextView.setMovementMethod(linkMovementMethod);
 

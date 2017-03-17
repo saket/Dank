@@ -38,6 +38,6 @@
             android:name=".ui.submission.SubmissionFragmentActivity"
             android:theme="@style/DankTheme.TransparentBackground" />
 
-        <activity android:name=".RedditLinkParserActivity" />
+        <activity android:name=".OpenRedditUrlActivity" />
     </application>
 </manifest>

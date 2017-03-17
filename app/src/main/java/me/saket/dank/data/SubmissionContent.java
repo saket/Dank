@@ -13,6 +13,7 @@ import me.saket.dank.utils.SubmissionContentParser;
 
 /**
  * Contains information of a submission's URL parsed by {@link SubmissionContentParser}.
+ * Not an AutoValue class because it has subclasses.
  */
 public class SubmissionContent {
 
