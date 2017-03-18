@@ -12,17 +12,6 @@ import me.saket.dank.utils.RedditUrlParser;
  */
 public interface RedditUrl extends Parcelable {
 
-    enum Type {
-        SUBMISSION,
-        COMMENT,
-        SUBREDDIT,
-        USER,
-
-        // Unsupported for now.
-        LIVE,
-        WIKI,
-    }
-
     @AutoValue
     abstract class Subreddit implements RedditUrl, Parcelable {
         public abstract String name();
@@ -64,6 +53,15 @@ public interface RedditUrl extends Parcelable {
 
         public static Submission create(String subredditName, String id) {
             return new AutoValue_RedditUrl_Submission(subredditName, id);
+        }
+    }
+
+    @AutoValue
+    abstract class LiveThread implements RedditUrl, Parcelable {
+        public abstract String url();
+
+        public static LiveThread create(String threadUrl) {
+            return new AutoValue_RedditUrl_LiveThread(threadUrl);
         }
     }
 

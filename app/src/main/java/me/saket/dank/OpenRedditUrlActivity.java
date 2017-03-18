@@ -4,10 +4,10 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.widget.Toast;
 
 import me.saket.dank.data.RedditUrl;
 import me.saket.dank.ui.DankActivity;
+import timber.log.Timber;
 
 public class OpenRedditUrlActivity extends DankActivity {
 
@@ -24,7 +24,8 @@ public class OpenRedditUrlActivity extends DankActivity {
         super.onCreate(savedInstanceState);
 
         RedditUrl redditUrl = getIntent().getParcelableExtra(KEY_REDDIT_LINK);
-        Toast.makeText(this, redditUrl.toString(), Toast.LENGTH_SHORT).show();
+        Timber.i("%s", redditUrl);
+        //        Toast.makeText(this, redditUrl.toString(), Toast.LENGTH_SHORT).show();
         finish();
     }
 
