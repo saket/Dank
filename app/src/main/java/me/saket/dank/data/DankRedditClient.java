@@ -29,6 +29,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.utils.AndroidTokenStore;
 import rx.Observable;
 import rx.functions.Func1;
+import timber.log.Timber;
 
 /**
  * Wrapper around {@link RedditClient}.
@@ -124,13 +125,11 @@ public class DankRedditClient {
                 authManagerInitialized = true;
             }
 
-            // TODO: 10/02/17 Update this code for logged in user.
-
             AuthenticationState authState = redditAuthManager.checkAuthState();
             if (authState != AuthenticationState.READY) {
                 switch (authState) {
                     case NONE:
-                        //Timber.d("Authenticating app");
+                        //Timber.d("Authenticating userless app");
                         redditClient.authenticate(redditClient.getOAuthHelper().easyAuth(userlessAppCredentials));
                         break;
 
@@ -139,9 +138,8 @@ public class DankRedditClient {
                         redditAuthManager.refreshAccessToken(loggedInUserCredentials);
                         break;
                 }
-            }
-            //else {
-            //Timber.d("Already authenticated");
+            } //else {
+                //Timber.d("Already authenticated");
             //}
 
             return true;
@@ -159,7 +157,7 @@ public class DankRedditClient {
         return errors -> errors.flatMap(error -> {
             if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
                 // Re-try authenticating.
-                //Timber.w("Attempting to refresh token");
+                Timber.w("Attempting to refresh token");
                 return Observable.fromCallable(() -> {
                     redditAuthManager.refreshAccessToken(isUserLoggedIn() ? loggedInUserCredentials : userlessAppCredentials);
                     return true;
