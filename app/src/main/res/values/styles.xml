@@ -17,11 +17,12 @@
         <item name="android:windowBackground">@android:color/transparent</item>
     </style>
 
-    <style name="DankTextAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+    <style name="DankToolbarTitleAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
         <item name="android:fontFamily">sans-serif-condensed</item>
+        <item name="android:textSize">20sp</item>
     </style>
 
-    <style name="DankTextAppearance.Toolbar">
+    <style name="DankToolbarTitleAppearance.Toolbar">
         <item name="android:textColor">@color/color_accent</item>
     </style>
 
@@ -53,7 +54,7 @@
     </style>
 
     <style name="DankToolbar">
-        <item name="titleTextAppearance">@style/DankTextAppearance.Toolbar</item>
+        <item name="titleTextAppearance">@style/DankToolbarTitleAppearance.Toolbar</item>
         <item name="android:layout_width">match_parent</item>
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@color/toolbar</item>

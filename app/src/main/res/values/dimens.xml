@@ -13,8 +13,9 @@
 
     <dimen name="elevation_toolbar">2dp</dimen>
 
-    <!-- SubReddits -->
+    <!-- Subreddit -->
     <dimen name="subreddit_toolbar_sheet_elevation">10dp</dimen>
+    <dimen name="subreddit_toolbar_title_start_margin_with_nav_icon">52dp</dimen>
 
     <!-- Submission -->
     <dimen name="comment_start_padding_for_root_comment">16dp</dimen>

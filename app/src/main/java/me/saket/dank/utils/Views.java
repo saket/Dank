@@ -96,6 +96,12 @@ public class Views {
         return null;
     }
 
+    public static void setMarginStart(View view, int marginStart) {
+        ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+        params.leftMargin = marginStart;
+        view.setLayoutParams(params);
+    }
+
     public static void setMarginTop(View view, int marginTop) {
         ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
         params.topMargin = marginTop;
@@ -116,6 +122,5 @@ public class Views {
                 textView.getCompoundDrawables()[3]
         );
     }
-
 
 }

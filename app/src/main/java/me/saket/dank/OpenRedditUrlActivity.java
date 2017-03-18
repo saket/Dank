@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 
 import me.saket.dank.data.RedditUrl;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.ui.subreddits.SubredditActivity;
 import timber.log.Timber;
 
 public class OpenRedditUrlActivity extends DankActivity {
@@ -25,7 +26,11 @@ public class OpenRedditUrlActivity extends DankActivity {
 
         RedditUrl redditUrl = getIntent().getParcelableExtra(KEY_REDDIT_LINK);
         Timber.i("%s", redditUrl);
-        //        Toast.makeText(this, redditUrl.toString(), Toast.LENGTH_SHORT).show();
+
+        if (redditUrl instanceof RedditUrl.Subreddit) {
+            SubredditActivity.start(this, ((RedditUrl.Subreddit) redditUrl).name());
+        }
+
         finish();
     }
 

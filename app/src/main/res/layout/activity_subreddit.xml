@@ -61,7 +61,7 @@
                 android:paddingEnd="32dp"
                 android:paddingStart="20dp"
                 android:text="@string/app_name"
-                android:textAppearance="@style/DankTextAppearance.Toolbar" />
+                android:textAppearance="@style/DankToolbarTitleAppearance.Toolbar" />
 
             <com.github.zagum.expandicon.ExpandIconView
                 android:id="@+id/subreddit_toolbar_title_arrow"

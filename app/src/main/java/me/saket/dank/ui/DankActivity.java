@@ -1,5 +1,7 @@
 package me.saket.dank.ui;
 
+import android.support.annotation.NonNull;
+import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 
 import butterknife.ButterKnife;
@@ -53,6 +55,16 @@ public class DankActivity extends AppCompatActivity {
             //noinspection ConstantConditions
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
+    }
+
+    /**
+     * Because suppressing the null check everywhere is stupid.
+     */
+    @NonNull
+    @Override
+    public ActionBar getSupportActionBar() {
+        //noinspection ConstantConditions
+        return super.getSupportActionBar();
     }
 
 }

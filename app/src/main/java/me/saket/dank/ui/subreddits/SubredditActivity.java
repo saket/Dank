@@ -5,11 +5,11 @@ import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
 import static rx.Observable.fromCallable;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
-import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -23,16 +23,17 @@ import net.dean.jraw.paginators.SubredditPaginator;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import me.saket.dank.ui.DankActivity;
 import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
@@ -44,9 +45,10 @@ import rx.Subscription;
 public class SubredditActivity extends DankActivity implements SubmissionFragment.Callbacks {
 
     private static final int REQUEST_CODE_LOGIN = 100;
+    private static final String KEY_INITIAL_SUBREDDIT_NAME = "initialSubredditName";
     private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
 
-    @BindView(R.id.toolbar) Toolbar toolbar;
+    @BindView(R.id.toolbar) DankToolbar toolbar;
     @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
     @BindView(R.id.subreddit_toolbar_title_arrow) ExpandIconView toolbarTitleArrowView;
     @BindView(R.id.subreddit_toolbar_title_container) ViewGroup toolbarTitleContainer;
@@ -60,11 +62,16 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
 
+    public static void start(Context context, String subredditName) {
+        Intent intent = new Intent(context, SubredditActivity.class);
+        intent.putExtra(KEY_INITIAL_SUBREDDIT_NAME, subredditName);
+        context.startActivity(intent);
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_subreddit);
-        findAndSetupToolbar(false);
         ButterKnife.bind(this);
 
         // Add top-margin to make room for the status bar.
@@ -73,8 +80,13 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
             Views.setMarginTop(submissionList, statusBarHeight);
         });
 
-        //noinspection ConstantConditions
+        boolean showToolbarCloseNavIcon = !isTaskRoot();
+        findAndSetupToolbar(showToolbarCloseNavIcon);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
+        if (showToolbarCloseNavIcon) {
+            toolbar.setNavigationIcon(R.drawable.ic_toolbar_close_24dp);
+            Views.setMarginStart(toolbarTitleView, getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_title_start_margin_with_nav_icon));
+        }
 
         // Setup submission list.
         submissionList.setLayoutManager(submissionList.createLayoutManager());
@@ -105,9 +117,13 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
                 .commit();
 
         // Get frontpage (or retained subreddit's) submissions.
-        activeSubreddit = savedInstanceState != null
-                ? savedInstanceState.getParcelable(KEY_ACTIVE_SUBREDDIT)
-                : DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
+        if (savedInstanceState != null) {
+            activeSubreddit = savedInstanceState.getParcelable(KEY_ACTIVE_SUBREDDIT);
+        } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_NAME)) {
+            activeSubreddit = DankSubreddit.create(getIntent().getStringExtra(KEY_INITIAL_SUBREDDIT_NAME));
+        } else {
+            activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
+        }
         loadSubmissions(activeSubreddit);
     }
 
