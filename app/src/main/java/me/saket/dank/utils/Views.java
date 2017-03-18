@@ -40,7 +40,7 @@ public class Views {
      * Execute a runnable when a <var>view</var>'s dimensions get measured and is laid out on the screen.
      */
     public static void executeOnMeasure(View view, Runnable onMeasureRunnable) {
-        if (ViewCompat.isLaidOut(view)) {
+        if (view.isInEditMode() || view.isLaidOut()) {
             onMeasureRunnable.run();
             return;
         }
