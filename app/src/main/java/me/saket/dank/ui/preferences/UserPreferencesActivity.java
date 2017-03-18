@@ -1,7 +1,5 @@
 package me.saket.dank.ui.preferences;
 
-import static me.saket.dank.utils.Views.executeOnMeasure;
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -32,15 +30,15 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
+        setPullCollapsibleEnabled(true);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_preferences);
         ButterKnife.bind(this);
         findAndSetupToolbar(true);
 
-        executeOnMeasure(toolbar, () -> {
-            setupActivityExpandablePage(activityContentPage, toolbar.getHeight());
-            expandFromBelowToolbar();
-        });
+        setupActivityExpandablePage(activityContentPage);
+        expandFromBelowToolbar();
+
         activityContentPage.setNestedExpandablePage(preferencesPage);
     }
 
@@ -53,8 +51,8 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
         preferenceList.setHasFixedSize(true);
 
         PreferencesAdapter preferencesAdapter = new PreferencesAdapter(constructPreferenceGroups());
-        preferencesAdapter.setOnPreferenceGroupClickListener((preferenceGroup, submissionItemView, submissionId) -> {
-            preferenceList.expandItem(preferenceList.indexOfChild(submissionItemView), submissionId);
+        preferencesAdapter.setOnPreferenceGroupClickListener((preferenceGroup, itemView, groupId) -> {
+            preferenceList.expandItem(preferenceList.indexOfChild(itemView), groupId);
             preferencesPage.post(() -> {
                 // TODO: 04/03/17 Load preference page.
             });

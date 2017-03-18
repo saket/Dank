@@ -3,6 +3,9 @@ package me.saket.dank.ui.subreddits;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.Views.getStatusBarHeight;
+import static me.saket.dank.utils.Views.setMarginStart;
+import static me.saket.dank.utils.Views.setMarginTop;
 import static rx.Observable.fromCallable;
 
 import android.content.Context;
@@ -32,7 +35,6 @@ import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.utils.Keyboards;
-import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
@@ -75,9 +77,9 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         ButterKnife.bind(this);
 
         // Add top-margin to make room for the status bar.
-        Views.getStatusBarHeight(this, statusBarHeight -> {
-            Views.setMarginTop(toolbarContainer, statusBarHeight);
-            Views.setMarginTop(submissionList, statusBarHeight);
+        getStatusBarHeight(this, statusBarHeight -> {
+            setMarginTop(toolbarContainer, statusBarHeight);
+            setMarginTop(submissionList, statusBarHeight);
         });
 
         boolean showToolbarCloseNavIcon = !isTaskRoot();
@@ -85,7 +87,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         getSupportActionBar().setDisplayShowTitleEnabled(false);
         if (showToolbarCloseNavIcon) {
             toolbar.setNavigationIcon(R.drawable.ic_toolbar_close_24dp);
-            Views.setMarginStart(toolbarTitleView, getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_title_start_margin_with_nav_icon));
+            setMarginStart(toolbarTitleView, getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_title_start_margin_with_nav_icon));
         }
 
         // Setup submission list.

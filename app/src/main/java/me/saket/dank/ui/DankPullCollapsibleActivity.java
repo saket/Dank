@@ -1,10 +1,12 @@
 package me.saket.dank.ui;
 
+import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.MenuItem;
 
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 /**
@@ -13,40 +15,60 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 public abstract class DankPullCollapsibleActivity extends DankActivity {
 
     private IndependentExpandablePageLayout activityPageLayout;
-    private int activityParentToolbarHeight;
     private Rect expandedFromRect;
+    private int activityParentToolbarHeight;
+    private boolean pullCollapsibleEnabled;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        overridePendingTransition(0, 0);
+        if (pullCollapsibleEnabled) {
+            overridePendingTransition(0, 0);
+        }
+
+        TypedArray typedArray = obtainStyledAttributes(new int[] { android.R.attr.actionBarSize });
+        activityParentToolbarHeight = typedArray.getDimensionPixelSize(0, 0);
+        typedArray.recycle();
     }
 
-    protected void setupActivityExpandablePage(IndependentExpandablePageLayout pageLayout, int parentToolbarHeight) {
+    /**
+     * Defaults to true. When disabled, this behaves like a normal Activity with no expandable page animations.
+     * Should be called before onCreate().
+     */
+    protected void setPullCollapsibleEnabled(boolean enabled) {
+        pullCollapsibleEnabled = enabled;
+    }
+
+    protected void setupActivityExpandablePage(IndependentExpandablePageLayout pageLayout) {
         activityPageLayout = pageLayout;
-        activityParentToolbarHeight = parentToolbarHeight;
 
-        activityPageLayout.setPullToCollapseDistanceThreshold(parentToolbarHeight);
-
-        pageLayout.setCallbacks(new IndependentExpandablePageLayout.Callbacks() {
-            @Override
-            public void onPageFullyCollapsed() {
-                DankPullCollapsibleActivity.super.finish();
-                overridePendingTransition(0, 0);
-            }
-
-            @Override
-            public void onPageRelease(boolean collapseEligible) {
-                if (collapseEligible) {
-                    finish();
+        if (pullCollapsibleEnabled) {
+            activityPageLayout.setPullToCollapseDistanceThreshold(activityParentToolbarHeight);
+            pageLayout.setCallbacks(new IndependentExpandablePageLayout.Callbacks() {
+                @Override
+                public void onPageFullyCollapsed() {
+                    DankPullCollapsibleActivity.super.finish();
+                    overridePendingTransition(0, 0);
                 }
-            }
-        });
+
+                @Override
+                public void onPageRelease(boolean collapseEligible) {
+                    if (collapseEligible) {
+                        finish();
+                    }
+                }
+            });
+
+        } else {
+            activityPageLayout.expandImmediately();
+        }
     }
 
     protected void expandFromBelowToolbar() {
-        Rect toolbarRect = new Rect(0, activityParentToolbarHeight, activityPageLayout.getWidth(), 0);
-        expandFrom(toolbarRect);
+        Views.executeOnMeasure(activityPageLayout, () -> {
+            Rect toolbarRect = new Rect(0, activityParentToolbarHeight, activityPageLayout.getWidth(), 0);
+            expandFrom(toolbarRect);
+        });
     }
 
     protected void expandFrom(Rect fromRect) {
@@ -56,7 +78,11 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
 
     @Override
     public void finish() {
-        activityPageLayout.collapseTo(expandedFromRect);
+        if (pullCollapsibleEnabled) {
+            activityPageLayout.collapseTo(expandedFromRect);
+        } else {
+            super.finish();
+        }
     }
 
     @Override

@@ -52,7 +52,6 @@ public class DankActivity extends AppCompatActivity {
     protected void findAndSetupToolbar(boolean showUpButton) {
         setSupportActionBar(ButterKnife.findById(this, R.id.toolbar));
         if (showUpButton) {
-            //noinspection ConstantConditions
             getSupportActionBar().setDisplayHomeAsUpEnabled(true);
         }
     }

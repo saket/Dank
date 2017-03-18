@@ -20,7 +20,7 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<DankPreferenceG
     private OnClickPreferenceGroupListener clickListener;
 
     interface OnClickPreferenceGroupListener {
-        void onClickPreferenceGroup(DankPreferenceGroup preferenceGroup, View submissionItemView, long submissionId);
+        void onClickPreferenceGroup(DankPreferenceGroup preferenceGroup, View itemView, long groupId);
     }
 
     public PreferencesAdapter(@Nullable List<DankPreferenceGroup> items) {
