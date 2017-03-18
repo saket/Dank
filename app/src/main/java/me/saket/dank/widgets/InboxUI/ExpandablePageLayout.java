@@ -29,16 +29,16 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     @Nullable private View activityToolbar;  // Toolbar inside the parent page, not in this page.
     @Nullable ExpandablePageLayout nestedPage;
 
-    private ValueAnimator toolbarAnimator;
-    private float expandedAlpha;
-    private float collapsedAlpha;
-    private boolean isFullyCoveredByNestedPage;
-
     private State currentState;
     private PullToCollapseListener pullToCollapseListener;
     private OnPullToCollapseIntercepter onPullToCollapseIntercepter;
     private List<Callbacks> callbacks;
     private Map<String, InternalPageCallbacks> internalStateCallbacks = new HashMap<>(2);
+    private ValueAnimator toolbarAnimator;
+    private float expandedAlpha;
+    private float collapsedAlpha;
+    private boolean isFullyCoveredByNestedPage;
+    private boolean pullToCollapseEnabled;
 
     public enum State {
         COLLAPSING,
@@ -135,6 +135,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         changeState(State.COLLAPSED);
 
         // Handles pull-to-collapse-this-page gestures
+        setPullToCollapseEnabled(true);
         pullToCollapseListener = new PullToCollapseListener(getContext(), this, this);
 
         // Make this ViewGroup clickable so that it receives all touch events. Consume everything.
@@ -156,6 +157,10 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         pullToCollapseListener.setCollapseDistanceThreshold(threshold);
     }
 
+    public void setPullToCollapseEnabled(boolean enabled) {
+        pullToCollapseEnabled = enabled;
+    }
+
     protected void changeState(State newState) {
         currentState = newState;
     }
@@ -170,12 +175,17 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
     @Override
     public boolean onInterceptTouchEvent(MotionEvent event) {
-        return (getVisibility() == VISIBLE && pullToCollapseListener.onTouch(this, event)) || super.onInterceptTouchEvent(event);
+        boolean intercepted = false;
+        if (pullToCollapseEnabled && getVisibility() == VISIBLE) {
+            intercepted = pullToCollapseListener.onTouch(this, event);
+        }
+
+        return intercepted || super.onInterceptTouchEvent(event);
     }
 
     @Override
     public boolean onTouchEvent(@NonNull MotionEvent event) {
-        return pullToCollapseListener.onTouch(this, event) || super.onTouchEvent(event);
+        return (pullToCollapseEnabled && pullToCollapseListener.onTouch(this, event)) || super.onTouchEvent(event);
     }
 
     @Override
@@ -282,7 +292,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
      * navigate to this page, by-passing the list.
      */
     public void expandImmediately() {
-        // Ignore if already expanded
+        // Ignore if already expanded.
         if (currentState == State.EXPANDING || currentState == State.EXPANDED) {
             Timber.w("ignore");
             return;

@@ -7,14 +7,14 @@
         <item name="android:navigationBarColor">@color/gray_900</item>
     </style>
 
-    <style name="DankTheme.DrawsStatusBar">
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:windowTranslucentStatus">true</item>
-    </style>
-
     <style name="DankTheme.TransparentBackground">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="DankTheme.TransparentBackground.DrawsStatusBar">
+        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+        <item name="android:windowTranslucentStatus">true</item>
     </style>
 
     <style name="DankToolbarTitleAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
@@ -59,6 +59,13 @@
         <item name="android:layout_height">wrap_content</item>
         <item name="android:background">@color/toolbar</item>
         <item name="android:elevation">@dimen/elevation_toolbar</item>
+    </style>
+
+    <style name="DankPullCollapsibleActivityPage">
+        <item name="android:layout_width">match_parent</item>
+        <item name="android:layout_height">match_parent</item>
+        <item name="android:background">@color/window_background</item>
+        <item name="android:elevation">20dp</item>
     </style>
 
     <!-- Subreddit -->

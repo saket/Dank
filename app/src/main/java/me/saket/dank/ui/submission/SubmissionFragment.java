@@ -4,12 +4,12 @@ import static butterknife.ButterKnife.findById;
 import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.Views.touchLiesOn;
 import static rx.android.schedulers.AndroidSchedulers.mainThread;
 import static rx.schedulers.Schedulers.io;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -49,8 +49,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.BuildConfig;
-import me.saket.dank.R;
 import me.saket.dank.OpenRedditUrlActivity;
+import me.saket.dank.R;
 import me.saket.dank.data.RedditUrl;
 import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;
@@ -492,26 +492,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
      */
     @Override
     public boolean onInterceptPullToCollapseGesture(MotionEvent event, float downX, float downY, boolean upwardPagePull) {
-        Rect commentSheetBounds = new Rect();
-        commentListParentSheet.getGlobalVisibleRect(commentSheetBounds);
-        boolean touchInsideCommentsSheet = commentSheetBounds.contains((int) downX, (int) downY);
-
-        //noinspection SimplifiableIfStatement
-        if (touchInsideCommentsSheet) {
+        if (touchLiesOn(commentListParentSheet, downX, downY)) {
             return upwardPagePull
                     ? commentListParentSheet.canScrollUpwardsAnyFurther()
                     : commentListParentSheet.canScrollDownwardsAnyFurther();
         } else {
-            Rect imageBounds = new Rect();
-            contentImageView.getGlobalVisibleRect(imageBounds);
-            boolean touchInsideImageView = imageBounds.contains((int) downX, (int) downY);
-
-            //noinspection RedundantIfStatement
-            if (touchInsideImageView && contentImageView.canPanVertically(!upwardPagePull)) {
-                return true;
-            }
-
-            return false;
+            return touchLiesOn(contentImageView, downX, downY) && contentImageView.canPanVertically(!upwardPagePull);
         }
     }
 

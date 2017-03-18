@@ -11,6 +11,11 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 /**
  * An Activity that can be dismissed by pulling it vertically.
+ *
+ * Checklist for subclasses:
+ * 1. Call {@link #setPullToCollapseEnabled(boolean)} if needed before super.onCreate().
+ * 2. Call {@link #setupContentExpandablePage(IndependentExpandablePageLayout)}.
+ * 3. Finally, call {@link #expandFromBelowToolbar()} or {@link #expandFrom(Rect)}.
  */
 public abstract class DankPullCollapsibleActivity extends DankActivity {
 
@@ -35,11 +40,11 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
      * Defaults to true. When disabled, this behaves like a normal Activity with no expandable page animations.
      * Should be called before onCreate().
      */
-    protected void setPullCollapsibleEnabled(boolean enabled) {
+    protected void setPullToCollapseEnabled(boolean enabled) {
         pullCollapsibleEnabled = enabled;
     }
 
-    protected void setupActivityExpandablePage(IndependentExpandablePageLayout pageLayout) {
+    protected void setupContentExpandablePage(IndependentExpandablePageLayout pageLayout) {
         activityPageLayout = pageLayout;
 
         if (pullCollapsibleEnabled) {
@@ -60,6 +65,7 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
             });
 
         } else {
+            activityPageLayout.setPullToCollapseEnabled(false);
             activityPageLayout.expandImmediately();
         }
     }

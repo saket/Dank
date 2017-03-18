@@ -14,7 +14,7 @@
 
         <activity
             android:name=".ui.subreddits.SubredditActivity"
-            android:theme="@style/DankTheme.DrawsStatusBar"
+            android:theme="@style/DankTheme.TransparentBackground.DrawsStatusBar"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -32,10 +32,6 @@
             android:name=".ui.preferences.UserPreferencesActivity"
             android:label="@string/activity_userpreferences"
             android:parentActivityName=".ui.subreddits.SubredditActivity"
-            android:theme="@style/DankTheme.TransparentBackground" />
-
-        <activity
-            android:name=".ui.submission.SubmissionFragmentActivity"
             android:theme="@style/DankTheme.TransparentBackground" />
 
         <activity android:name=".OpenRedditUrlActivity" />

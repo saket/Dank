@@ -16,7 +16,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
-import android.view.KeyEvent;
 import android.view.View;
 import android.view.Window;
 
@@ -544,27 +543,6 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
             }
         };
 
-    }
-
-// ======== BACK PRESS ======== //
-
-    /**
-     * Collapse on back press.
-     */
-    @Override
-    public boolean onKeyUp(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK) {
-            switch (getPage().getCurrentState()) {
-                case EXPANDED:
-                    // Collapse page if it's fully expanded
-                    collapse();
-
-                case EXPANDING:
-                    // Consume back press if the page is expanding
-                    return true;
-            }
-        }
-        return super.onKeyUp(keyCode, event);
     }
 
 }

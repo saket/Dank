@@ -6,6 +6,8 @@ import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.getStatusBarHeight;
 import static me.saket.dank.utils.Views.setMarginStart;
 import static me.saket.dank.utils.Views.setMarginTop;
+import static me.saket.dank.utils.Views.setPaddingTop;
+import static me.saket.dank.utils.Views.touchLiesOn;
 import static rx.Observable.fromCallable;
 
 import android.content.Context;
@@ -29,27 +31,25 @@ import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.DankActivity;
+import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
-import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
+import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
 
-/**
- * Also see {@link SubmissionFragmentActivity}.
- */
-public class SubredditActivity extends DankActivity implements SubmissionFragment.Callbacks {
+public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks {
 
     private static final int REQUEST_CODE_LOGIN = 100;
     private static final String KEY_INITIAL_SUBREDDIT_NAME = "initialSubredditName";
     private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
 
+    @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
     @BindView(R.id.toolbar) DankToolbar toolbar;
     @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
     @BindView(R.id.subreddit_toolbar_title_arrow) ExpandIconView toolbarTitleArrowView;
@@ -72,28 +72,49 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        boolean isPullCollapsible = !isTaskRoot();
+        setPullToCollapseEnabled(isPullCollapsible);
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_subreddit);
         ButterKnife.bind(this);
+        setupContentExpandablePage(contentPage);
 
         // Add top-margin to make room for the status bar.
         getStatusBarHeight(this, statusBarHeight -> {
-            setMarginTop(toolbarContainer, statusBarHeight);
+            setPaddingTop(toolbarContainer, statusBarHeight);
             setMarginTop(submissionList, statusBarHeight);
         });
 
-        boolean showToolbarCloseNavIcon = !isTaskRoot();
-        findAndSetupToolbar(showToolbarCloseNavIcon);
+        findAndSetupToolbar(isPullCollapsible);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
-        if (showToolbarCloseNavIcon) {
+
+        if (isPullCollapsible) {
             toolbar.setNavigationIcon(R.drawable.ic_toolbar_close_24dp);
             setMarginStart(toolbarTitleView, getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_title_start_margin_with_nav_icon));
+
+            contentPage.setNestedExpandablePage(submissionPage);
+            expandFromBelowToolbar();
         }
+    }
+
+    @Override
+    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+        super.onPostCreate(savedInstanceState);
 
         // Setup submission list.
         submissionList.setLayoutManager(submissionList.createLayoutManager());
         submissionList.setItemAnimator(new DefaultItemAnimator());
         submissionList.setExpandablePage(submissionPage, toolbarContainer);
+
+        contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
+                touchLiesOn(submissionList, downX, downY) && !touchLiesOn(toolbarContainer, downX, downY)
+                        && submissionList.canScrollVertically(upwardPagePull ? 1 : -1)
+        );
+
+        if (savedInstanceState != null) {
+            submissionList.handleOnRestoreInstanceState(savedInstanceState);
+        }
 
         submissionsAdapter = new SubRedditSubmissionsAdapter();
         submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
@@ -127,11 +148,7 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
             activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
         }
         loadSubmissions(activeSubreddit);
-    }
 
-    @Override
-    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
         setupToolbarSheet();
     }
 
@@ -140,12 +157,6 @@ public class SubredditActivity extends DankActivity implements SubmissionFragmen
         submissionList.handleOnSaveInstance(outState);
         outState.putParcelable(KEY_ACTIVE_SUBREDDIT, activeSubreddit);
         super.onSaveInstanceState(outState);
-    }
-
-    @Override
-    protected void onRestoreInstanceState(Bundle savedInstanceState) {
-        super.onRestoreInstanceState(savedInstanceState);
-        submissionList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
     @Override

@@ -19,7 +19,7 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 public class UserPreferencesActivity extends DankPullCollapsibleActivity {
 
-    @BindView(R.id.userpreferences_root_page) IndependentExpandablePageLayout activityContentPage;
+    @BindView(R.id.userpreferences_root) IndependentExpandablePageLayout activityContentPage;
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.userpreferences_list) InboxRecyclerView preferenceList;
     @BindView(R.id.userpreferences_preferences_page) ExpandablePageLayout preferencesPage;
@@ -30,13 +30,13 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
-        setPullCollapsibleEnabled(true);
+        setPullToCollapseEnabled(true);
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_preferences);
         ButterKnife.bind(this);
         findAndSetupToolbar(true);
 
-        setupActivityExpandablePage(activityContentPage);
+        setupContentExpandablePage(activityContentPage);
         expandFromBelowToolbar();
 
         activityContentPage.setNestedExpandablePage(preferencesPage);

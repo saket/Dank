@@ -1,6 +1,7 @@
 package me.saket.dank.utils;
 
 import android.app.Activity;
+import android.graphics.Rect;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewCompat;
@@ -77,6 +78,10 @@ public class Views {
         view.setPaddingRelative(paddingStart, view.getPaddingTop(), view.getPaddingEnd(), view.getPaddingBottom());
     }
 
+    public static void setPaddingTop(View view, int paddingTop) {
+        view.setPaddingRelative(view.getPaddingStart(), paddingTop, view.getPaddingEnd(), view.getPaddingBottom());
+    }
+
     public static void setHeight(View view, int height) {
         ViewGroup.LayoutParams params = view.getLayoutParams();
         params.height = height;
@@ -121,6 +126,15 @@ public class Views {
                 iconResId != 0 ? textView.getContext().getDrawable(iconResId) : null,
                 textView.getCompoundDrawables()[3]
         );
+    }
+
+    /**
+     * Check whether a touch event's points lie on a View. This does not consider if it's overlapped or not.
+     */
+    public static boolean touchLiesOn(View view, float x, float y) {
+        Rect commentSheetBounds = new Rect();
+        view.getGlobalVisibleRect(commentSheetBounds);
+        return commentSheetBounds.contains((int) x, (int) y);
     }
 
 }
