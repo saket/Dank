@@ -10,6 +10,8 @@ import static rx.schedulers.Schedulers.io;
 
 import android.annotation.SuppressLint;
 import android.content.Intent;
+import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -134,13 +136,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
         linkMovementMethod.setOnLinkClickListener((textView, url) -> {
-            Timber.i("Touch: %s", linkMovementMethod.getLastUrlClickCoordinates());
-
             // TODO: 18/03/17 Remove try/catch block
             try {
                 RedditUrl redditUrl = RedditUrlParser.parse(url);
                 if (redditUrl != null) {
-                    OpenRedditUrlActivity.handle(getActivity(), redditUrl);
+                    Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
+                    Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
+                    OpenRedditUrlActivity.handle(getActivity(), redditUrl, clickedUrlCoordinatesRect);
                     return true;
                 }
 

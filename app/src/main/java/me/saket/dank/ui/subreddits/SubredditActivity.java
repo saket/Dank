@@ -12,6 +12,7 @@ import static rx.Observable.fromCallable;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -65,9 +66,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
 
-    public static void start(Context context, String subredditName) {
+    /**
+     * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
+     */
+    public static void start(Context context, String subredditName, Rect expandFromShape) {
         Intent intent = new Intent(context, SubredditActivity.class);
         intent.putExtra(KEY_INITIAL_SUBREDDIT_NAME, subredditName);
+        intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
         context.startActivity(intent);
     }
 
@@ -95,7 +100,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             setMarginStart(toolbarTitleView, getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_title_start_margin_with_nav_icon));
 
             contentPage.setNestedExpandablePage(submissionPage);
-            expandFromBelowToolbar();
+            expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
         }
     }
 
