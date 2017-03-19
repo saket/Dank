@@ -10,11 +10,10 @@
         android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
         android:supportsRtl="true"
-        android:theme="@style/DankTheme">
+        android:theme="@style/DankTheme.TransparentBackground">
 
         <activity
             android:name=".ui.subreddits.SubredditActivity"
-            android:theme="@style/DankTheme.TransparentBackground.DrawsStatusBar"
             android:windowSoftInputMode="adjustNothing">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -25,14 +24,12 @@
         <activity
             android:name=".ui.authentication.LoginActivity"
             android:label="@string/login"
-            android:parentActivityName=".ui.subreddits.SubredditActivity"
-            android:theme="@style/DankTheme.TransparentBackground" />
+            android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
         <activity
             android:name=".ui.preferences.UserPreferencesActivity"
             android:label="@string/activity_userpreferences"
-            android:parentActivityName=".ui.subreddits.SubredditActivity"
-            android:theme="@style/DankTheme.TransparentBackground" />
+            android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
         <activity android:name=".OpenRedditUrlActivity" />
     </application>

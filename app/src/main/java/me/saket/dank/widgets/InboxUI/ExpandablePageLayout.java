@@ -84,7 +84,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         void onPageExpanded();
 
         /**
-         * Called when the user has chosen to close the expanded item and the <code>ExpandablePage</code> is going to be collapse.
+         * Called when the user has chosen to close the expanded item and the <code>ExpandablePage</code> is going to
+         * be collapse.
          */
         void onPageAboutToCollapse(long collapseAnimDuration);
 
@@ -97,7 +98,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     // Used internally, by InboxRecyclerView.
     interface InternalPageCallbacks {
         /**
-         * Called when this page has fully covered the list.
+         * Called when this page has fully covered the list. This can happen in two situations: when the page has
+         * fully expanded and when the page has moved back to its position after being pulled.
          */
         void onPageFullyCovered();
 
@@ -303,8 +305,16 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
         // Hide the toolbar as soon as we have its height (as expandImmediately() could have been
         // called before the Views were drawn).
+        Exception exception = new Exception();
         if (activityToolbar != null) {
-            Views.executeOnMeasure(activityToolbar, () -> updateToolbarTranslationY(false, 0));
+            Views.executeOnMeasure(activityToolbar, () -> {
+                try {
+                    updateToolbarTranslationY(false, 0);
+                } catch (Exception e) {
+                    Timber.e("Crash caller:");
+                    exception.printStackTrace();
+                }
+            });
         }
 
         Views.executeOnMeasure(this, () -> {

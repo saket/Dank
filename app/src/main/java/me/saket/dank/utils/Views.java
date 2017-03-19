@@ -1,20 +1,18 @@
 package me.saket.dank.utils;
 
-import android.app.Activity;
+import android.content.Context;
+import android.content.res.Configuration;
+import android.content.res.Resources;
 import android.graphics.Rect;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
-import android.support.v4.view.ViewCompat;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
-import android.view.Window;
 import android.webkit.WebBackForwardList;
 import android.webkit.WebHistoryItem;
 import android.webkit.WebView;
 import android.widget.TextView;
-
-import butterknife.ButterKnife;
 
 /**
  * Utility methods for Views.
@@ -49,7 +47,7 @@ public class Views {
         view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
             @Override
             public void onGlobalLayout() {
-                if (ViewCompat.isLaidOut(view)) {
+                if (view.isLaidOut()) {
                     onMeasureRunnable.run();
 
                     //noinspection deprecation
@@ -59,19 +57,12 @@ public class Views {
         });
     }
 
-    public interface OnStatusBarHeightCalculateListener{
-        void onStatusBarHeightCalculated(int statusBarHeight);
-    }
-
-    public static void getStatusBarHeight(View rootViewGroup, OnStatusBarHeightCalculateListener listener) {
-        rootViewGroup.setOnApplyWindowInsetsListener((v, insets) -> {
-            listener.onStatusBarHeightCalculated(insets.getSystemWindowInsetTop());
-            return insets;
-        });
-    }
-
-    public static void getStatusBarHeight(Activity activity, OnStatusBarHeightCalculateListener listener) {
-        getStatusBarHeight(ButterKnife.findById(activity, Window.ID_ANDROID_CONTENT), listener);
+    public static int statusBarHeight(Resources resources) {
+        int resourceId = resources.getIdentifier("status_bar_height", "dimen", "android");
+        if (resourceId > 0) {
+            return resources.getDimensionPixelSize(resourceId);
+        }
+        return 0;
     }
 
     public static void setPaddingStart(View view, int paddingStart) {

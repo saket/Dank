@@ -4,6 +4,10 @@ import static butterknife.ButterKnife.findById;
 import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.Views.executeOnMeasure;
+import static me.saket.dank.utils.Views.setHeight;
+import static me.saket.dank.utils.Views.setMarginTop;
+import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 import static rx.android.schedulers.AndroidSchedulers.mainThread;
 import static rx.schedulers.Schedulers.io;
@@ -126,11 +130,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         submissionPageLayout.addCallbacks(this);
         submissionPageLayout.setPullToCollapseIntercepter(this);
 
-        Views.getStatusBarHeight(fragmentLayout, statusBarHeight -> {
-            Views.setMarginTop(toolbar, statusBarHeight);
-            Views.executeOnMeasure(toolbar, () -> {
-                Views.setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight);
-            });
+        int statusBarHeight = statusBarHeight(getResources());
+        setMarginTop(toolbar, statusBarHeight);
+        executeOnMeasure(toolbar, () -> {
+            setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight);
         });
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
 
@@ -410,7 +413,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                         .load(submissionContent.imageContentUrl(deviceDisplayWidth))
                         .priority(Priority.IMMEDIATE)
                         .into(simpleImageViewTarget(contentImageView, resource -> {
-                            Views.executeOnMeasure(contentImageView, () -> {
+                            executeOnMeasure(contentImageView, () -> {
                                 contentLoadProgressView.hide();
 
                                 int imageMaxVisibleHeight = contentImageView.getHeight();
@@ -452,7 +455,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 contentWebView.loadUrl(BLANK_PAGE_URL);
                 contentWebView.loadUrl(submission.getUrl());
 
-                Views.executeOnMeasure(commentListParentSheet, () -> {
+                executeOnMeasure(commentListParentSheet, () -> {
                     commentListParentSheet.setScrollingEnabled(true);
                     commentListParentSheet.setPeekHeight(commentsSheetMinimumVisibleHeight);
                     commentListParentSheet.scrollTo(commentListParentSheet.getHeight() * 3 / 10);

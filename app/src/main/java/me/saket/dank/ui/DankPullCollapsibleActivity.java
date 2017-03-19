@@ -1,13 +1,18 @@
 package me.saket.dank.ui;
 
+import static me.saket.dank.utils.Views.executeOnMeasure;
+
 import android.content.res.TypedArray;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
 import android.view.MenuItem;
+import android.view.View;
 
-import me.saket.dank.utils.Views;
+import me.saket.dank.R;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
+import me.saket.dank.widgets.StatusBarBackgroundLayout;
 
 /**
  * An Activity that can be dismissed by pulling it vertically.
@@ -36,6 +41,18 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
         TypedArray typedArray = obtainStyledAttributes(new int[] { android.R.attr.actionBarSize });
         activityParentToolbarHeight = typedArray.getDimensionPixelSize(0, 0);
         typedArray.recycle();
+    }
+
+    @Override
+    public void setContentView(@LayoutRes int layoutResID) {
+        if (pullCollapsibleEnabled) {
+            StatusBarBackgroundLayout wrapperLayout = new StatusBarBackgroundLayout(this, R.color.toolbar);
+            View.inflate(this, layoutResID, wrapperLayout);
+            super.setContentView(wrapperLayout);
+
+        } else {
+            super.setContentView(layoutResID);
+        }
     }
 
     /**
@@ -73,15 +90,15 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
     }
 
     protected void expandFromBelowToolbar() {
-        Views.executeOnMeasure(activityPageLayout, () -> {
-            Rect toolbarRect = new Rect(0, activityParentToolbarHeight, activityPageLayout.getWidth(), 0);
+        executeOnMeasure(activityPageLayout, () -> {
+            Rect toolbarRect = new Rect(0, activityPageLayout.getHeight() / 2, activityPageLayout.getWidth(), 0);
             expandFrom(toolbarRect);
         });
     }
 
     protected void expandFrom(Rect fromRect) {
         expandedFromRect = fromRect;
-        Views.executeOnMeasure(activityPageLayout, () -> {
+        executeOnMeasure(activityPageLayout, () -> {
             activityPageLayout.expandFrom(fromRect);
         });
     }

@@ -3,10 +3,10 @@ package me.saket.dank.ui.subreddits;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
-import static me.saket.dank.utils.Views.getStatusBarHeight;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginStart;
 import static me.saket.dank.utils.Views.setMarginTop;
+import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 import static rx.Observable.fromCallable;
 
@@ -87,10 +87,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         setupContentExpandablePage(contentPage);
 
         // Add top-margin to make room for the status bar.
-        getStatusBarHeight(this, statusBarHeight -> {
-            setHeight(statusBarSpaceView, statusBarHeight);
-            setMarginTop(submissionList, statusBarHeight);
-        });
+        int statusBarHeight = statusBarHeight(getResources());
+        setHeight(statusBarSpaceView, statusBarHeight);
+        setMarginTop(submissionList, statusBarHeight);
 
         findAndSetupToolbar(isPullCollapsible);
         getSupportActionBar().setDisplayShowTitleEnabled(false);
