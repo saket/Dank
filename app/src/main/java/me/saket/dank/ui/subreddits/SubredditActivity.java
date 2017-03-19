@@ -4,9 +4,9 @@ import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.getStatusBarHeight;
+import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginStart;
 import static me.saket.dank.utils.Views.setMarginTop;
-import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.touchLiesOn;
 import static rx.Observable.fromCallable;
 
@@ -51,6 +51,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
     @BindView(R.id.toolbar) DankToolbar toolbar;
+    @BindView(R.id.subreddit_toolbar_status_bar_space) View statusBarSpaceView;
     @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
     @BindView(R.id.subreddit_toolbar_title_arrow) ExpandIconView toolbarTitleArrowView;
     @BindView(R.id.subreddit_toolbar_title_container) ViewGroup toolbarTitleContainer;
@@ -82,7 +83,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
         // Add top-margin to make room for the status bar.
         getStatusBarHeight(this, statusBarHeight -> {
-            setPaddingTop(toolbarContainer, statusBarHeight);
+            setHeight(statusBarSpaceView, statusBarHeight);
             setMarginTop(submissionList, statusBarHeight);
         });
 

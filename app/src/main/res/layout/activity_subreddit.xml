@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/subreddit_root"
+    style="@style/DankPullCollapsibleActivityPage"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    style="@style/DankPullCollapsibleActivityPage"
     tools:context="me.saket.dank.ui.subreddits.SubredditActivity"
     tools:layout_marginTop="25dp">
 
@@ -30,10 +30,18 @@
             android:layout_gravity="center" />
     </FrameLayout>
 
+    <View
+        android:id="@+id/subreddit_toolbar_status_bar_space"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:background="@color/toolbar"
+        android:elevation="@dimen/elevation_toolbar" />
+
     <FrameLayout
         android:id="@+id/subreddit_toolbar_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/subreddit_toolbar_status_bar_space"
         android:background="@color/toolbar"
         android:elevation="@dimen/elevation_toolbar">
 

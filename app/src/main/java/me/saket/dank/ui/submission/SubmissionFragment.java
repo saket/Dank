@@ -47,7 +47,6 @@ import butterknife.BindDimen;
 import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.OpenRedditUrlActivity;
 import me.saket.dank.R;
@@ -56,6 +55,7 @@ import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Markdown;
@@ -132,8 +132,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         });
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
 
-        BetterLinkMovementMethod linkMovementMethod = BetterLinkMovementMethod.newInstance();
+        DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
         linkMovementMethod.setOnLinkClickListener((textView, url) -> {
+            Timber.i("Touch: %s", linkMovementMethod.getLastUrlClickCoordinates());
+
             // TODO: 18/03/17 Remove try/catch block
             try {
                 RedditUrl redditUrl = RedditUrlParser.parse(url);
