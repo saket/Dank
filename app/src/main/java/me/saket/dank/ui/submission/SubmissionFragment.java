@@ -56,7 +56,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.OpenRedditUrlActivity;
 import me.saket.dank.R;
-import me.saket.dank.data.RedditUrl;
+import me.saket.dank.data.RedditLink;
 import me.saket.dank.data.SubmissionContent;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
@@ -141,11 +141,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         linkMovementMethod.setOnLinkClickListener((textView, url) -> {
             // TODO: 18/03/17 Remove try/catch block
             try {
-                RedditUrl redditUrl = RedditUrlParser.parse(url);
-                if (redditUrl != null) {
+                RedditLink redditLink = RedditUrlParser.parse(url);
+                if (redditLink != null) {
                     Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
                     Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
-                    OpenRedditUrlActivity.handle(getActivity(), redditUrl, clickedUrlCoordinatesRect);
+                    OpenRedditUrlActivity.handle(getActivity(), redditLink, clickedUrlCoordinatesRect);
                     return true;
                 }
 

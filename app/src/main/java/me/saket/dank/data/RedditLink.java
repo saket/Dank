@@ -10,28 +10,28 @@ import me.saket.dank.utils.RedditUrlParser;
 /**
  * Contains information of a reddit.com URL parsed by {@link RedditUrlParser}.
  */
-public interface RedditUrl extends Parcelable {
+public interface RedditLink extends Parcelable {
 
     @AutoValue
-    abstract class Subreddit implements RedditUrl, Parcelable {
+    abstract class Subreddit implements RedditLink, Parcelable {
         public abstract String name();
 
         public static Subreddit create(String subredditName) {
-            return new AutoValue_RedditUrl_Subreddit(subredditName);
+            return new AutoValue_RedditLink_Subreddit(subredditName);
         }
     }
 
     @AutoValue
-    abstract class User implements RedditUrl, Parcelable {
+    abstract class User implements RedditLink, Parcelable {
         public abstract String name();
 
         public static User create(String userName) {
-            return new AutoValue_RedditUrl_User(userName);
+            return new AutoValue_RedditLink_User(userName);
         }
     }
 
     @AutoValue
-    abstract class Submission implements RedditUrl, Parcelable {
+    abstract class Submission implements RedditLink, Parcelable {
         @Nullable
         public abstract String subredditName();
 
@@ -45,16 +45,16 @@ public interface RedditUrl extends Parcelable {
         public abstract Comment initialComment();
 
         public static Submission create(String subredditName, String id) {
-            return new AutoValue_RedditUrl_Submission(subredditName, id, null);
+            return new AutoValue_RedditLink_Submission(subredditName, id, null);
         }
 
         public static Submission createWithComment(String subredditName, String id, Comment initialComment) {
-            return new AutoValue_RedditUrl_Submission(subredditName, id, initialComment);
+            return new AutoValue_RedditLink_Submission(subredditName, id, initialComment);
         }
     }
 
     @AutoValue
-    abstract class Comment implements RedditUrl, Parcelable {
+    abstract class Comment implements RedditLink, Parcelable {
         public abstract String id();
 
         /**
@@ -63,16 +63,16 @@ public interface RedditUrl extends Parcelable {
         public abstract Integer contextCount();
 
         public static Comment create(String id, Integer contextCount) {
-            return new AutoValue_RedditUrl_Comment(id, contextCount);
+            return new AutoValue_RedditLink_Comment(id, contextCount);
         }
     }
 
     @AutoValue
-    abstract class LiveThread implements RedditUrl, Parcelable {
+    abstract class LiveThread implements RedditLink, Parcelable {
         public abstract String url();
 
         public static LiveThread create(String threadUrl) {
-            return new AutoValue_RedditUrl_LiveThread(threadUrl);
+            return new AutoValue_RedditLink_LiveThread(threadUrl);
         }
     }
 

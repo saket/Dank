@@ -56,7 +56,6 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
             public void getOutline(View view, Outline outline) {
                 outline.setRect(0, 0, ((int) clippedDimensionRect.width()), (int) clippedDimensionRect.height());
             }
-
         });
     }
 

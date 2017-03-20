@@ -31,6 +31,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
+import me.saket.dank.data.RedditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
@@ -47,7 +48,7 @@ import rx.Subscription;
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks {
 
     private static final int REQUEST_CODE_LOGIN = 100;
-    private static final String KEY_INITIAL_SUBREDDIT_NAME = "initialSubredditName";
+    private static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
     private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
 
     @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
@@ -69,9 +70,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     /**
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
      */
-    public static void start(Context context, String subredditName, Rect expandFromShape) {
+    public static void start(Context context, RedditLink.Subreddit subredditLink, Rect expandFromShape) {
         Intent intent = new Intent(context, SubredditActivity.class);
-        intent.putExtra(KEY_INITIAL_SUBREDDIT_NAME, subredditName);
+        intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
         intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
         context.startActivity(intent);
     }
@@ -147,8 +148,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         // Get frontpage (or retained subreddit's) submissions.
         if (savedInstanceState != null) {
             activeSubreddit = savedInstanceState.getParcelable(KEY_ACTIVE_SUBREDDIT);
-        } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_NAME)) {
-            activeSubreddit = DankSubreddit.create(getIntent().getStringExtra(KEY_INITIAL_SUBREDDIT_NAME));
+        } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
+            activeSubreddit = DankSubreddit.create(getIntent().<RedditLink.Subreddit>getParcelableExtra(KEY_INITIAL_SUBREDDIT_LINK).name());
         } else {
             activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
         }
