@@ -136,11 +136,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         submissionList.setAdapter(submissionsAdapter);
 
         // Setup submission page.
-        submissionFragment = (SubmissionFragment) getFragmentManager().findFragmentById(submissionPage.getId());
+        submissionFragment = (SubmissionFragment) getSupportFragmentManager().findFragmentById(submissionPage.getId());
         if (submissionFragment == null) {
             submissionFragment = SubmissionFragment.create();
         }
-        getFragmentManager()
+        getSupportFragmentManager()
                 .beginTransaction()
                 .replace(submissionPage.getId(), submissionFragment)
                 .commit();
@@ -151,7 +151,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
             activeSubreddit = DankSubreddit.create(getIntent().<RedditLink.Subreddit>getParcelableExtra(KEY_INITIAL_SUBREDDIT_LINK).name());
         } else {
-            activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
+            //activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
+            activeSubreddit = DankSubreddit.create("Supapp");
         }
         loadSubmissions(activeSubreddit);
 

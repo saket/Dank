@@ -9,8 +9,8 @@ import android.support.annotation.Nullable;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
-import timber.log.Timber;
 
 public class OpenRedditUrlActivity extends DankActivity {
 
@@ -32,10 +32,13 @@ public class OpenRedditUrlActivity extends DankActivity {
 
         RedditLink redditLink = getIntent().getParcelableExtra(KEY_REDDIT_LINK);
         Rect expandFromShape = getIntent().getParcelableExtra(DankPullCollapsibleActivity.KEY_EXPAND_FROM_SHAPE);
-        Timber.i("%s", redditLink);
+        //Timber.i("%s", redditLink);
 
         if (redditLink instanceof RedditLink.Subreddit) {
             SubredditActivity.start(this, (RedditLink.Subreddit) redditLink, expandFromShape);
+
+        } else if (redditLink instanceof RedditLink.Submission) {
+            SubmissionFragmentActivity.start(this, (RedditLink.Submission) redditLink, expandFromShape);
         }
 
         finish();

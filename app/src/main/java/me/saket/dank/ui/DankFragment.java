@@ -1,6 +1,6 @@
 package me.saket.dank.ui;
 
-import android.app.Fragment;
+import android.support.v4.app.Fragment;
 
 import rx.Subscription;
 import rx.subscriptions.CompositeSubscription;

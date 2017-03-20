@@ -32,5 +32,7 @@
             android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
         <activity android:name=".OpenRedditUrlActivity" />
+
+        <activity android:name=".ui.submission.SubmissionFragmentActivity" />
     </application>
 </manifest>

@@ -102,7 +102,8 @@
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
             android:gravity="center_vertical"
-            android:orientation="horizontal">
+            android:orientation="horizontal"
+            android:visibility="gone">
 
             <ProgressBar
                 android:layout_width="24dp"

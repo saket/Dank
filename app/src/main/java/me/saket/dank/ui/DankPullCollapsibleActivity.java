@@ -11,6 +11,7 @@ import android.view.MenuItem;
 import android.view.View;
 
 import me.saket.dank.R;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.StatusBarBackgroundLayout;
 
@@ -29,7 +30,7 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
     private IndependentExpandablePageLayout activityPageLayout;
     private Rect expandedFromRect;
     private int activityParentToolbarHeight;
-    private boolean pullCollapsibleEnabled;
+    private boolean pullCollapsibleEnabled = true;
 
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -91,7 +92,7 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
 
     protected void expandFromBelowToolbar() {
         executeOnMeasure(activityPageLayout, () -> {
-            Rect toolbarRect = new Rect(0, activityPageLayout.getHeight() / 2, activityPageLayout.getWidth(), 0);
+            Rect toolbarRect = new Rect(0, activityParentToolbarHeight + Views.statusBarHeight(getResources()), activityPageLayout.getWidth(), 0);
             expandFrom(toolbarRect);
         });
     }

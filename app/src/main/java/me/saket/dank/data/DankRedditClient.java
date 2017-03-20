@@ -36,6 +36,8 @@ import timber.log.Timber;
  */
 public class DankRedditClient {
 
+    public static final CommentSort DEFAULT_COMMENT_SORT = CommentSort.TOP;
+
     private final Context context;
     private final RedditClient redditClient;
     private final AuthenticationManager redditAuthManager;
@@ -58,23 +60,26 @@ public class DankRedditClient {
         return new SubredditPaginator(redditClient, subredditName);
     }
 
+    public Observable<Submission> submissionWithComments(SubmissionRequest submissionRequest) {
+        if (submissionRequest.getSort() == null) {
+            throw new AssertionError("Sort cannot be empty");
+        }
+
+        return Observable.fromCallable(() -> redditClient.getSubmission(submissionRequest));
+    }
+
     /**
      * Get all details of submissions, including comments.
-     * TODO: add support for comments sort mode.
      */
-    public Observable<Submission> fullSubmissionData(Submission submission) {
-        return Observable.fromCallable(() -> {
-            CommentSort suggestedSort = submission.getSuggestedSort();
-            if (suggestedSort == null) {
-                suggestedSort = CommentSort.TOP;
-            }
+    public Observable<Submission> submissionWithComments(Submission submission) {
+        CommentSort nonEmptyCommentSort = submission.getSuggestedSort();
+        if (nonEmptyCommentSort == null) {
+            nonEmptyCommentSort = DEFAULT_COMMENT_SORT;
+        }
 
-            return redditClient.getSubmission(
-                    new SubmissionRequest.Builder(submission.getId())
-                            .sort(suggestedSort)
-                            .build()
-            );
-        });
+        return submissionWithComments(new SubmissionRequest.Builder(submission.getId())
+                .sort(nonEmptyCommentSort)
+                .build());
     }
 
     /**
@@ -139,7 +144,7 @@ public class DankRedditClient {
                         break;
                 }
             } //else {
-                //Timber.d("Already authenticated");
+            //Timber.d("Already authenticated");
             //}
 
             return true;

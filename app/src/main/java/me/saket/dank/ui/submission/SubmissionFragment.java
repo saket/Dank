@@ -1,8 +1,8 @@
 package me.saket.dank.ui.submission;
 
-import static butterknife.ButterKnife.findById;
 import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
@@ -126,10 +126,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         View fragmentLayout = inflater.inflate(R.layout.fragment_submission, container, false);
         ButterKnife.bind(this, fragmentLayout);
 
-        submissionPageLayout = findById(getActivity(), R.id.subreddit_submission_page);
-        submissionPageLayout.addCallbacks(this);
-        submissionPageLayout.setPullToCollapseIntercepter(this);
-
         int statusBarHeight = statusBarHeight(getResources());
         setMarginTop(toolbar, statusBarHeight);
         executeOnMeasure(toolbar, () -> {
@@ -178,6 +174,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             onRestoreSavedInstanceState(savedInstanceState);
         }
         return fragmentLayout;
+    }
+
+    @Override
+    public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+        super.onViewCreated(view, savedInstanceState);
+
+        submissionPageLayout = ((ExpandablePageLayout) view.getParent());
+        submissionPageLayout.addCallbacks(this);
+        submissionPageLayout.setPullToCollapseIntercepter(this);
     }
 
     /**
@@ -258,6 +263,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     private void setupCommentsSheet() {
         toolbarBackground.syncBottomWithViewTop(commentListParentSheet);
+        commentListParentSheet.setScrollingEnabled(false);
 
         Func1<?, Integer> revealDistanceFunc = __ -> {
             // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
@@ -372,14 +378,20 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         // Load self-text/media/webpage.
         loadSubmissionContent(submission, submissionContent);
 
-        // Load new comments.
-        commentsLoadProgressView.setVisibility(View.VISIBLE);
+        // TODO: 21/03/17 Retain SubmissionRequest so that comment focus, context count, etc. aren't lost.
+        // TODO: Wait, should we let the parent Activity handle retaining stuff? Will be easier that way.
 
-        commentsSubscription = Dank.reddit()
-                .withAuth(Dank.reddit().fullSubmissionData(submission))
-                .compose(applySchedulers())
-                .doOnTerminate(() -> commentsLoadProgressView.setVisibility(View.GONE))
-                .subscribe(commentsHelper.setup(), logError("Couldn't get comments"));
+        // Load new comments.
+        if (submission.getComments() == null) {
+            commentsSubscription = Dank.reddit()
+                    .withAuth(Dank.reddit().submissionWithComments(submission))
+                    .compose(applySchedulers())
+                    .compose(doOnStartAndFinish(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+                    .subscribe(commentsHelper.setup(), logError("Couldn't get comments"));
+
+        } else {
+            commentsHelper.setup().call(submission);
+        }
     }
 
     private void loadSubmissionContent(Submission submission, SubmissionContent submissionContent) {
@@ -489,6 +501,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             contentWebView.setVisibility(View.GONE);
             contentWebViewContainer.setVisibility(View.GONE);
         }
+    }
+
+    public void handleSubmissionLoadError(Throwable error) {
+        Timber.e(error, error.getMessage());
     }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //
