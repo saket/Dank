@@ -14,22 +14,27 @@ import me.saket.dank.data.RedditUrl;
 public class RedditUrlParser {
 
     /**
-     * /r/$subreddit
+     * /r/$subreddit.
      */
     private static final Pattern SUBREDDIT_PATTERN = Pattern.compile("^/r/([a-zA-Z0-9-_.]+)(/)*$");
 
     /**
-     * /u/$user
+     * /u/$user.
      */
     private static final Pattern USER_PATTERN = Pattern.compile("^/u/([a-zA-Z0-9-_.]+)(/)*$");
 
     /**
-     * Submission: /r/$subreddit/comments/$post_id/post_title
+     * Submission: /r/$subreddit/comments/$post_id/post_title.
      * Comment:    /r/$subreddit/comments/$post_id/post_title/$comment_id.
      * <p>
      * ('post_title' and '/r/$subreddit/' can be empty).
      */
     private static final Pattern SUBMISSION_OR_COMMENT_PATTERN = Pattern.compile("^(/r/([a-zA-Z0-9-_.]+))*/comments/(\\w+)/\\w*/(\\w*).*");
+
+    /**
+     * /r/subreddit/comments/post_id/post_title/comment_id?context=2.
+     */
+    private static final Pattern COMMENT_CONTEXT_PATTERN = Pattern.compile("\\?context=(\\d+)");
 
     private static final Pattern LIVE_THREAD_PATTERN = Pattern.compile("^/live/\\w*(/)*$");
 
@@ -41,7 +46,6 @@ public class RedditUrlParser {
     @Nullable
     public static RedditUrl parse(String url) {
         // TODO: Should we support "np" subdomain?
-        // TODO: Support context count in comments.
         // TODO: Support wiki pages.
 
         Uri linkUri = Uri.parse(url);
@@ -54,10 +58,14 @@ public class RedditUrlParser {
                 String subredditName = submissionOrCommentMatcher.group(2);
                 String submissionId = submissionOrCommentMatcher.group(3);
                 String commentId = submissionOrCommentMatcher.group(4);
+
                 if (commentId.isEmpty()) {
                     return RedditUrl.Submission.create(subredditName, submissionId);
+
                 } else {
-                    return RedditUrl.Comment.create(subredditName, submissionId, commentId);
+                    Matcher contextMatcher = COMMENT_CONTEXT_PATTERN.matcher(urlPath);
+                    int contextCount = contextMatcher.matches() ? Integer.parseInt(contextMatcher.group(1)) : 0;
+                    return RedditUrl.Submission.createWithComment(subredditName, submissionId, RedditUrl.Comment.create(commentId, contextCount));
                 }
             }
 
