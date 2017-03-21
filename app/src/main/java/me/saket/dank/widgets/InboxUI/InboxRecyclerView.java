@@ -30,7 +30,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     private static final float MAX_DIM_FACTOR = 0.2f;                    // [0..1]
     private static final int MAX_DIM = (int) (255 * MAX_DIM_FACTOR);     // [0..255]
     public static final long ANIM_START_DELAY = 0;
-    public static final long ANIM_DURATION_EXPAND = 350;
+    public static final long ANIM_DURATION_EXPAND = 300;
     public static final long ANIM_DURATION_COLLAPSE = ANIM_DURATION_EXPAND;
     public static TimeInterpolator ANIM_INTERPOLATOR_EXPAND = new FastOutSlowInInterpolator();
     public static TimeInterpolator ANIM_INTERPOLATOR_COLLAPSE = new FastOutSlowInInterpolator();
