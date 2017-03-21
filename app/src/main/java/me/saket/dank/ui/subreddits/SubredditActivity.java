@@ -1,5 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
+import static me.saket.dank.utils.CommonUtils.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
@@ -30,6 +31,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
+import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.di.Dank;
@@ -37,6 +39,7 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -124,7 +127,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
         submissionsAdapter = new SubRedditSubmissionsAdapter();
         submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
-            submissionFragment.populateUi(submission);
+            DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
+                    .commentSort(defaultIfNull(submission.getSuggestedSort(), DankRedditClient.DEFAULT_COMMENT_SORT))
+                    .build();
+            submissionFragment.populateUi(submission, submissionRequest);
+
             submissionPage.post(() -> {
                 // Posing the expand() call to the page's message queue seems to result in a smoother
                 // expand animation. I assume this is because the expand() call only executes once the

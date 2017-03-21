@@ -1,15 +1,12 @@
 package me.saket.dank.ui.submission;
 
 import static me.saket.dank.utils.RxUtils.applySchedulers;
-import static rx.Observable.just;
 
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-
-import net.dean.jraw.http.SubmissionRequest;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -19,6 +16,7 @@ import me.saket.dank.data.RedditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
@@ -69,6 +67,8 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
         if (submissionFragment == null) {
             submissionFragment = SubmissionFragment.create();
         }
+
+        final long startTime = System.currentTimeMillis();
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(contentPage.getId(), submissionFragment)
@@ -78,35 +78,25 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
     private void loadSubmission(RedditLink.Submission submissionLink) {
         // We don't know the suggested sort yet. Attempt with the default sort and if it's found
         // to be different, then do another load.
-        SubmissionRequest.Builder submissionReqBuilder = new SubmissionRequest
-                .Builder(submissionLink.id())
-                .sort(DankRedditClient.DEFAULT_COMMENT_SORT);
+        DankSubmissionRequest.Builder submissionReqBuilder = DankSubmissionRequest
+                .builder(submissionLink.id())
+                .commentSort(DankRedditClient.DEFAULT_COMMENT_SORT);
 
         RedditLink.Comment initialComment = submissionLink.initialComment();
         if (initialComment != null) {
             submissionReqBuilder
-                    .focus(initialComment.id())
-                    .context(initialComment.contextCount());
-
-            Timber.i("Focusing on %s", initialComment.id());
+                    .focusComment(initialComment.id())
+                    .contextCount(initialComment.contextCount());
         }
+        DankSubmissionRequest submissionRequest = submissionReqBuilder.build();
 
         unsubscribeOnDestroy(
                 Dank.reddit()
-                        .withAuth(Dank.reddit().submissionWithComments(submissionReqBuilder.build()))
-                        .flatMap(submission -> {
-                            if (submission.getSuggestedSort() != null && submission.getSuggestedSort() != DankRedditClient.DEFAULT_COMMENT_SORT) {
-                                SubmissionRequest requestWithCorrectSort = submissionReqBuilder.sort(submission.getSuggestedSort()).build();
-                                return Dank.reddit().withAuth(Dank.reddit().submissionWithComments(requestWithCorrectSort));
-
-                            } else {
-                                return just(submission);
-                            }
-                        })
+                        .withAuth(Dank.reddit().submissionWithComments(submissionRequest))
                         .compose(applySchedulers())
                         .subscribe(
-                                submission -> submissionFragment.populateUi(submission),
-                                error -> submissionFragment.handleSubmissionLoadError(error)
+                                submission -> submissionFragment.populateUi(submission, submissionRequest),
+                                submissionFragment.handleSubmissionLoadError()
                         )
         );
     }

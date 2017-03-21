@@ -3,12 +3,12 @@ package me.saket.dank.ui.submission;
 import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
-import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
+import static rx.Observable.just;
 import static rx.android.schedulers.AndroidSchedulers.mainThread;
 import static rx.schedulers.Schedulers.io;
 
@@ -18,6 +18,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
@@ -45,7 +46,6 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.dean.jraw.models.Submission;
 
-import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -62,6 +62,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
+import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Markdown;
@@ -73,16 +74,20 @@ import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
+import rx.Observable;
 import rx.Subscription;
+import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
+import rx.subscriptions.Subscriptions;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
 public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
-    private static final String KEY_SUBMISSION_JSON = "submissionJson";
     private static final String BLANK_PAGE_URL = "about:blank";
+    private static final String KEY_SUBMISSION_JSON = "submissionJson";
+    private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
 
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.submission_toolbar_shadow) View toolbarShadows;
@@ -104,9 +109,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     private ExpandablePageLayout submissionPageLayout;
     private CommentsAdapter commentsAdapter;
-    private Subscription commentsSubscription;
+    private Subscription commentsSubscription = Subscriptions.unsubscribed();
     private CommentsHelper commentsHelper;
     private Submission currentSubmission;
+    private DankSubmissionRequest currentSubmissionRequest;
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
 
     private int deviceDisplayWidth;
@@ -333,19 +339,20 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         if (currentSubmission != null) {
             JsonNode dataNode = currentSubmission.getDataNode();
             outState.putString(KEY_SUBMISSION_JSON, dataNode.toString());
+            outState.putParcelable(KEY_SUBMISSION_REQUEST, currentSubmissionRequest);
         }
         super.onSaveInstanceState(outState);
     }
 
     private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
         if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
+            String submissionJson = savedInstanceState.getString(KEY_SUBMISSION_JSON);
             try {
-                String submissionJson = savedInstanceState.getString(KEY_SUBMISSION_JSON);
                 JsonNode jsonNode = new ObjectMapper().readTree(submissionJson);
-                populateUi(new Submission(jsonNode));
+                populateUi(new Submission(jsonNode), savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST));
 
-            } catch (IOException e) {
-                Timber.e(e, "Couldn't deserialize Submission for state restoration");
+            } catch (Exception e) {
+                Timber.e(e, "Couldn't deserialize Submission: %s", submissionJson);
             }
         }
     }
@@ -353,9 +360,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     /**
      * Update the submission to be shown. Since this Fragment is retained by {@link SubredditActivity},
      * we only update the UI everytime a new submission is to be shown.
+     *
+     * @param submissionRequest used for loading the comments of this submission.
      */
-    public void populateUi(Submission submission) {
+    public void populateUi(Submission submission, DankSubmissionRequest submissionRequest) {
         currentSubmission = submission;
+        currentSubmissionRequest = submissionRequest;
 
         // Reset everything.
         contentLoadProgressView.setProgress(0);
@@ -378,20 +388,43 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         // Load self-text/media/webpage.
         loadSubmissionContent(submission, submissionContent);
 
-        // TODO: 21/03/17 Retain SubmissionRequest so that comment focus, context count, etc. aren't lost.
-        // TODO: Wait, should we let the parent Activity handle retaining stuff? Will be easier that way.
-
         // Load new comments.
         if (submission.getComments() == null) {
             commentsSubscription = Dank.reddit()
-                    .withAuth(Dank.reddit().submissionWithComments(submission))
+                    .withAuth(Dank.reddit().submissionWithComments(currentSubmissionRequest))
+                    .flatMap(retryWithCorrectSortIfNeeded())
                     .compose(applySchedulers())
                     .compose(doOnStartAndFinish(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
-                    .subscribe(commentsHelper.setup(), logError("Couldn't get comments"));
+                    .doOnNext(submWithComments -> currentSubmission = submWithComments)
+                    .subscribe(commentsHelper.setup(), handleSubmissionLoadError());
 
         } else {
             commentsHelper.setup().call(submission);
         }
+    }
+
+    /**
+     * The aim is to always load comments in the sort mode suggested by a subreddit. In case we accidentally
+     * load in the wrong mode (maybe because the submission's details were unknown), this function reloads
+     * the submission's data using its suggested sort.
+     */
+    @NonNull
+    private Func1<Submission, Observable<Submission>> retryWithCorrectSortIfNeeded() {
+        return submWithComments -> {
+            if (submWithComments.getSuggestedSort() != null && submWithComments.getSuggestedSort() != currentSubmissionRequest.commentSort()) {
+                currentSubmissionRequest = currentSubmissionRequest.toBuilder()
+                        .commentSort(submWithComments.getSuggestedSort())
+                        .build();
+                return Dank.reddit().withAuth(Dank.reddit().submissionWithComments(currentSubmissionRequest));
+
+            } else {
+                return just(submWithComments);
+            }
+        };
+    }
+
+    public Action1<Throwable> handleSubmissionLoadError() {
+        return error -> Timber.e(error, error.getMessage());
     }
 
     private void loadSubmissionContent(Submission submission, SubmissionContent submissionContent) {
@@ -476,7 +509,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
             case VIDEO:
             case UNKNOWN:
-                // TODO: 12/02/17.
                 contentLoadProgressView.hide();
                 break;
 
@@ -501,10 +533,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             contentWebView.setVisibility(View.GONE);
             contentWebViewContainer.setVisibility(View.GONE);
         }
-    }
-
-    public void handleSubmissionLoadError(Throwable error) {
-        Timber.e(error, error.getMessage());
     }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //
@@ -543,10 +571,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     @Override
     public void onPageCollapsed() {
-        if (commentsSubscription != null) {
-            commentsSubscription.unsubscribe();
-        }
-
+        commentsSubscription.unsubscribe();
         contentWebView.stopLoading();
     }
 

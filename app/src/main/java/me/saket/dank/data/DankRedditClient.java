@@ -27,6 +27,7 @@ import java.util.List;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.AndroidTokenStore;
+import me.saket.dank.utils.DankSubmissionRequest;
 import rx.Observable;
 import rx.functions.Func1;
 import timber.log.Timber;
@@ -60,26 +61,14 @@ public class DankRedditClient {
         return new SubredditPaginator(redditClient, subredditName);
     }
 
-    public Observable<Submission> submissionWithComments(SubmissionRequest submissionRequest) {
-        if (submissionRequest.getSort() == null) {
-            throw new AssertionError("Sort cannot be empty");
-        }
+    public Observable<Submission> submissionWithComments(DankSubmissionRequest submissionRequest) {
+        SubmissionRequest jrawSubmissionRequest = new SubmissionRequest.Builder(submissionRequest.id())
+                .sort(submissionRequest.commentSort())
+                .focus(submissionRequest.focusComment())
+                .context(submissionRequest.contextCount())
+                .build();
 
-        return Observable.fromCallable(() -> redditClient.getSubmission(submissionRequest));
-    }
-
-    /**
-     * Get all details of submissions, including comments.
-     */
-    public Observable<Submission> submissionWithComments(Submission submission) {
-        CommentSort nonEmptyCommentSort = submission.getSuggestedSort();
-        if (nonEmptyCommentSort == null) {
-            nonEmptyCommentSort = DEFAULT_COMMENT_SORT;
-        }
-
-        return submissionWithComments(new SubmissionRequest.Builder(submission.getId())
-                .sort(nonEmptyCommentSort)
-                .build());
+        return Observable.fromCallable(() -> redditClient.getSubmission(jrawSubmissionRequest));
     }
 
     /**
