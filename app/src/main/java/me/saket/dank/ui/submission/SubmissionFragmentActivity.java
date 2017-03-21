@@ -68,7 +68,6 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
             submissionFragment = SubmissionFragment.create();
         }
 
-        final long startTime = System.currentTimeMillis();
         getSupportFragmentManager()
                 .beginTransaction()
                 .replace(contentPage.getId(), submissionFragment)
@@ -89,6 +88,8 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
                     .contextCount(initialComment.contextCount());
         }
         DankSubmissionRequest submissionRequest = submissionReqBuilder.build();
+
+        Timber.i("submissionRequest: %s", submissionRequest);
 
         unsubscribeOnDestroy(
                 Dank.reddit()

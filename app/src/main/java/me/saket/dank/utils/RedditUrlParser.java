@@ -2,6 +2,7 @@ package me.saket.dank.utils;
 
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.text.TextUtils;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -31,11 +32,6 @@ public class RedditUrlParser {
      */
     private static final Pattern SUBMISSION_OR_COMMENT_PATTERN = Pattern.compile("^(/r/([a-zA-Z0-9-_.]+))*/comments/(\\w+)/\\w*/(\\w*).*");
 
-    /**
-     * /r/subreddit/comments/post_id/post_title/comment_id?context=2.
-     */
-    private static final Pattern COMMENT_CONTEXT_PATTERN = Pattern.compile("\\?context=(\\d+)");
-
     private static final Pattern LIVE_THREAD_PATTERN = Pattern.compile("^/live/\\w*(/)*$");
 
     /**
@@ -63,8 +59,8 @@ public class RedditUrlParser {
                     return RedditLink.Submission.create(subredditName, submissionId);
 
                 } else {
-                    Matcher contextMatcher = COMMENT_CONTEXT_PATTERN.matcher(urlPath);
-                    int contextCount = contextMatcher.matches() ? Integer.parseInt(contextMatcher.group(1)) : 0;
+                    String contextParamValue = linkUri.getQueryParameter("context");
+                    int contextCount = TextUtils.isEmpty(contextParamValue) ? 0 : Integer.parseInt(contextParamValue);
                     return RedditLink.Submission.createWithComment(subredditName, submissionId, RedditLink.Comment.create(commentId, contextCount));
                 }
             }
