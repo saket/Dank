@@ -8,12 +8,13 @@ plugins {
     id "me.tatarka.retrolambda" version "3.2.5"
 }
 
-apply plugin: 'com.android.application'
-apply plugin: 'com.neenbedankt.android-apt'
+apply plugin: "com.android.application"
+apply plugin: "com.neenbedankt.android-apt"
 
 repositories {
     maven { url "https://clojars.org/repo/" }   // Used by AutoParcel
-    maven { url 'https://jitpack.io' }
+    maven { url "https://jitpack.io" }
+    maven { url "http://dl.bintray.com/novoda/maven" }
 }
 
 android {
@@ -94,4 +95,5 @@ dependencies {
     compile 'com.github.zagum:Android-ExpandIcon:1.1.1'
     compile 'com.github.Saketme:Better-Link-Movement-Method:40b13980d4'
     compile 'org.sufficientlysecure:html-textview:3.3'
+    compile 'me.zhanghai.android.customtabshelper:library:1.0.3'
 }

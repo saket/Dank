@@ -11,9 +11,7 @@ import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 import static rx.Observable.fromCallable;
 
-import android.content.Context;
 import android.content.Intent;
-import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -51,7 +49,7 @@ import rx.Subscription;
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks {
 
     private static final int REQUEST_CODE_LOGIN = 100;
-    private static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
+    protected static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
     private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
 
     @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
@@ -70,15 +68,15 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
 
-    /**
-     * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
-     */
-    public static void start(Context context, RedditLink.Subreddit subredditLink, Rect expandFromShape) {
-        Intent intent = new Intent(context, SubredditActivity.class);
-        intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
-        intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
-        context.startActivity(intent);
-    }
+//    /**
+//     * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
+//     */
+//    public static void start(Context context, RedditLink.Subreddit subredditLink, Rect expandFromShape) {
+//        Intent intent = new Intent(context, SubredditActivity.class);
+//        intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
+//        intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
+//        context.startActivity(intent);
+//    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
