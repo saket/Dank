@@ -34,5 +34,7 @@
         <activity android:name=".OpenRedditUrlActivity" />
 
         <activity android:name=".ui.submission.SubmissionFragmentActivity" />
+
+        <activity android:name=".ui.user.UserProfileActivity" />
     </application>
 </manifest>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/userprofile_root"
+    style="@style/DankPullCollapsibleActivityPage"
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <me.saket.dank.widgets.DankToolbar
+        android:id="@+id/toolbar"
+        style="@style/DankToolbar"
+        android:fitsSystemWindows="true"
+        app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
+
+</me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

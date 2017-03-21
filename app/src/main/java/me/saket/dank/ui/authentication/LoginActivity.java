@@ -39,7 +39,7 @@ public class LoginActivity extends DankActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_login);
         ButterKnife.bind(this);
-        findAndSetupToolbar(true);
+        findAndSetupToolbar();
 
         toolbar.setBackground(null);
         toolbar.setTitle(R.string.login);

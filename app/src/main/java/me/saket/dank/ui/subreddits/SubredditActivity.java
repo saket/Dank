@@ -95,7 +95,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         setHeight(statusBarSpaceView, statusBarHeight);
         setMarginTop(submissionList, statusBarHeight);
 
-        findAndSetupToolbar(isPullCollapsible);
+        findAndSetupToolbar();
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         if (isPullCollapsible) {
@@ -321,7 +321,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     @Override
     public void onBackPressed() {
-        if (submissionPage.isExpanded()) {
+        if (submissionPage.isExpandedOrExpanding()) {
             boolean backPressHandled = submissionFragment.handleBackPress();
             if (!backPressHandled) {
                 submissionList.collapse();

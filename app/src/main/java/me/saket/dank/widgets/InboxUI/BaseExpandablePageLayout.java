@@ -15,6 +15,8 @@ import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.widget.RelativeLayout;
 
+import timber.log.Timber;
+
 /**
  * Handles change in dimensions. This class exists because animating the dimensions (using an
  * ObjectAnimator) of a complex layout isn't very smooth.

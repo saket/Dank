@@ -11,6 +11,7 @@ import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.ui.user.UserProfileActivity;
 
 public class OpenRedditUrlActivity extends DankActivity {
 
@@ -39,6 +40,9 @@ public class OpenRedditUrlActivity extends DankActivity {
 
         } else if (redditLink instanceof RedditLink.Submission) {
             SubmissionFragmentActivity.start(this, (RedditLink.Submission) redditLink, expandFromShape);
+
+        } else if (redditLink instanceof RedditLink.User) {
+            UserProfileActivity.start(this, ((RedditLink.User) redditLink), expandFromShape);
         }
 
         finish();

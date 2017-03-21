@@ -49,11 +49,8 @@ public class DankActivity extends AppCompatActivity {
         onDestroySubscriptions.add(subscription);
     }
 
-    protected void findAndSetupToolbar(boolean showUpButton) {
+    protected void findAndSetupToolbar() {
         setSupportActionBar(ButterKnife.findById(this, R.id.toolbar));
-        if (showUpButton) {
-            getSupportActionBar().setDisplayHomeAsUpEnabled(true);
-        }
     }
 
     /**

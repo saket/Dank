@@ -18,7 +18,6 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
-import timber.log.Timber;
 
 /**
  * An Activity that can only show a submission, unlike {@link SubredditActivity} which can shows
@@ -89,8 +88,6 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
         }
         DankSubmissionRequest submissionRequest = submissionReqBuilder.build();
 
-        Timber.i("submissionRequest: %s", submissionRequest);
-
         unsubscribeOnDestroy(
                 Dank.reddit()
                         .withAuth(Dank.reddit().submissionWithComments(submissionRequest))
@@ -109,7 +106,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
 
     @Override
     public void onBackPressed() {
-        if (!contentPage.isExpanded() || !submissionFragment.handleBackPress()) {
+        if (!submissionFragment.handleBackPress()) {
             super.onBackPressed();
         }
     }

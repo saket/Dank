@@ -38,7 +38,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_user_preferences);
         ButterKnife.bind(this);
-        findAndSetupToolbar(true);
+        findAndSetupToolbar();
 
         int statusBarHeight = statusBarHeight(getResources());
         setPaddingTop(toolbar, statusBarHeight);
