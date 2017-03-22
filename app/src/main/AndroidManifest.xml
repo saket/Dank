@@ -34,7 +34,7 @@
             android:label="@string/activity_userpreferences"
             android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
-        <activity android:name=".OpenRedditUrlActivity" />
+        <activity android:name=".ui.OpenRedditUrlActivity" />
 
         <activity android:name=".ui.submission.SubmissionFragmentActivity" />
 

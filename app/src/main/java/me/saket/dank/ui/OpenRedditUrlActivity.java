@@ -1,4 +1,4 @@
-package me.saket.dank;
+package me.saket.dank.ui;
 
 import static me.saket.dank.utils.RxUtils.logError;
 
@@ -17,9 +17,8 @@ import org.chromium.customtabsclient.CustomTabsHelper;
 
 import java.util.concurrent.TimeUnit;
 
+import me.saket.dank.R;
 import me.saket.dank.data.RedditLink;
-import me.saket.dank.ui.DankActivity;
-import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfileActivity;
@@ -77,7 +76,9 @@ public class OpenRedditUrlActivity extends DankActivity {
                 .setShowTitle(true)
                 .build();
 
-        CustomTabsActivityHelper.CustomTabsFallback customTabsFallback = (activity, uri) -> Timber.w("Fallback");
+        CustomTabsActivityHelper.CustomTabsFallback customTabsFallback = (activity, uri) -> {
+            Timber.w("Fallback");
+        };
         Uri linkToOpen = Uri.parse(redditLink.url());
 
         // If we cant find a package name, it means there's no browser that supports

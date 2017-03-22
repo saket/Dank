@@ -54,7 +54,7 @@ import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.BuildConfig;
-import me.saket.dank.OpenRedditUrlActivity;
+import me.saket.dank.ui.OpenRedditUrlActivity;
 import me.saket.dank.R;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.data.SubmissionContent;

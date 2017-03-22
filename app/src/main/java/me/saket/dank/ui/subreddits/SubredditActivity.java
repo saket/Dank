@@ -68,16 +68,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
 
-//    /**
-//     * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
-//     */
-//    public static void start(Context context, RedditLink.Subreddit subredditLink, Rect expandFromShape) {
-//        Intent intent = new Intent(context, SubredditActivity.class);
-//        intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
-//        intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
-//        context.startActivity(intent);
-//    }
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         boolean isPullCollapsible = !isTaskRoot();

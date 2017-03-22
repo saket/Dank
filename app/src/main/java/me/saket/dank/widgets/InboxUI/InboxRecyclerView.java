@@ -33,7 +33,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     public static final long ANIM_DURATION_EXPAND = 300;
     public static final long ANIM_DURATION_COLLAPSE = ANIM_DURATION_EXPAND;
     public static TimeInterpolator ANIM_INTERPOLATOR_EXPAND = new FastOutSlowInInterpolator();
-    public static TimeInterpolator ANIM_INTERPOLATOR_COLLAPSE = new FastOutSlowInInterpolator();
+    public static TimeInterpolator ANIM_INTERPOLATOR_COLLAPSE = ANIM_INTERPOLATOR_EXPAND;
 
     private ExpandablePageLayout page;
     private ExpandInfo expandInfo;             // Details about the currently expanded Item
