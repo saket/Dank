@@ -26,6 +26,7 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
     public IndependentExpandablePageLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
         setCollapsedAlpha(1f);
+        setAnimationDuration(300);
     }
 
     @Override

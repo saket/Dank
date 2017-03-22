@@ -10,12 +10,11 @@ import android.graphics.Outline;
 import android.graphics.Path;
 import android.graphics.RectF;
 import android.os.Build;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewOutlineProvider;
 import android.widget.RelativeLayout;
-
-import timber.log.Timber;
 
 /**
  * Handles change in dimensions. This class exists because animating the dimensions (using an
@@ -23,10 +22,14 @@ import timber.log.Timber;
  */
 public abstract class BaseExpandablePageLayout extends RelativeLayout {
 
+    private static final long DEFAULT_ANIM_DURATION = 250;
+    private static TimeInterpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
+
     private Path path;
     private RectF clippedDimensionRect;
     private ValueAnimator dimensionAnimator;
     private boolean isFullyVisible;
+    private long animationDuration;
 
     public BaseExpandablePageLayout(Context context) {
         super(context);
@@ -52,6 +55,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     private void init() {
         clippedDimensionRect = new RectF();
         path = new Path();
+        animationDuration = DEFAULT_ANIM_DURATION;
 
         setOutlineProvider(new ViewOutlineProvider() {
             @Override
@@ -137,11 +141,15 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     }
 
     protected TimeInterpolator getAnimationInterpolator() {
-        return InboxRecyclerView.ANIM_INTERPOLATOR_EXPAND;
+        return ANIM_INTERPOLATOR;
+    }
+
+    public void setAnimationDuration(long duration) {
+        animationDuration = duration;
     }
 
     protected long getAnimationDuration() {
-        return InboxRecyclerView.ANIM_DURATION_EXPAND;
+        return animationDuration;
     }
 
     protected void cancelOngoingClipAnimation() {

@@ -231,8 +231,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
             if (getTranslationY() != 0f) {
                 animate().translationY(0f)
                         .alpha(expandedAlpha)
-                        .setDuration(InboxRecyclerView.ANIM_DURATION_COLLAPSE)
-                        .setInterpolator(InboxRecyclerView.ANIM_INTERPOLATOR_COLLAPSE)
+                        .setDuration(getAnimationDuration())
+                        .setInterpolator(getAnimationInterpolator())
                         .setListener(new AnimatorListenerAdapter() {
                             boolean mCanceled;
 
@@ -390,8 +390,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
                 .alpha(expand ? expandedAlpha : collapsedAlpha)
                 .translationY(targetPageTranslationY)
                 .translationX(targetPageTranslationX)
-                .setDuration(expand ? InboxRecyclerView.ANIM_DURATION_EXPAND : InboxRecyclerView.ANIM_DURATION_COLLAPSE)
-                .setInterpolator(expand ? InboxRecyclerView.ANIM_INTERPOLATOR_EXPAND : InboxRecyclerView.ANIM_INTERPOLATOR_COLLAPSE)
+                .setDuration(getAnimationDuration())
+                .setInterpolator(getAnimationInterpolator())
                 .setListener(new AnimatorListenerAdapter() {
                     private boolean mCanceled;
 
@@ -462,8 +462,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         // If the page lies behind the toolbar, use toolbar's current bottom position instead
         toolbarAnimator = ObjectAnimator.ofFloat(fromTy, targetPageTranslationY);
         toolbarAnimator.addUpdateListener(animation -> updateToolbarTranslationY(show, (float) animation.getAnimatedValue()));
-        toolbarAnimator.setDuration(show ? InboxRecyclerView.ANIM_DURATION_COLLAPSE : InboxRecyclerView.ANIM_DURATION_EXPAND * speedFactor);
-        toolbarAnimator.setInterpolator(show ? InboxRecyclerView.ANIM_INTERPOLATOR_COLLAPSE : InboxRecyclerView.ANIM_INTERPOLATOR_EXPAND);
+        toolbarAnimator.setDuration(getAnimationDuration());
+        toolbarAnimator.setInterpolator(getAnimationInterpolator());
         toolbarAnimator.setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
         toolbarAnimator.start();
     }
@@ -600,7 +600,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
         if (callbacks != null) {
             for (int i = 0; i < callbacks.size(); i++) {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
-                callbacks.get(i).onPageAboutToExpand(InboxRecyclerView.ANIM_DURATION_EXPAND);
+                callbacks.get(i).onPageAboutToExpand(getAnimationDuration());
             }
         }
     }
@@ -644,7 +644,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
         if (callbacks != null) {
             for (final Callbacks callback : callbacks) {
-                callback.onPageAboutToCollapse(InboxRecyclerView.ANIM_DURATION_COLLAPSE);
+                callback.onPageAboutToCollapse(getAnimationDuration());
             }
         }
     }

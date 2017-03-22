@@ -1,6 +1,5 @@
 package me.saket.dank.widgets.InboxUI;
 
-import android.animation.TimeInterpolator;
 import android.app.Activity;
 import android.content.Context;
 import android.graphics.Canvas;
@@ -11,7 +10,6 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.os.Parcel;
 import android.os.Parcelable;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -30,10 +28,6 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     private static final float MAX_DIM_FACTOR = 0.2f;                    // [0..1]
     private static final int MAX_DIM = (int) (255 * MAX_DIM_FACTOR);     // [0..255]
     public static final long ANIM_START_DELAY = 0;
-    public static final long ANIM_DURATION_EXPAND = 300;
-    public static final long ANIM_DURATION_COLLAPSE = ANIM_DURATION_EXPAND;
-    public static TimeInterpolator ANIM_INTERPOLATOR_EXPAND = new FastOutSlowInInterpolator();
-    public static TimeInterpolator ANIM_INTERPOLATOR_COLLAPSE = ANIM_INTERPOLATOR_EXPAND;
 
     private ExpandablePageLayout page;
     private ExpandInfo expandInfo;             // Details about the currently expanded Item
@@ -205,17 +199,14 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
         animateItemsOutOfTheWindow(true);
     }
 
-    /**
-     * @return Time required to collapse the list.
-     */
-    public long collapse() {
+    public void collapse() {
         if (getPage() == null) {
             throw new IllegalStateException("No page attached. Cannot collapse. ListId: " + getId());
         }
 
         // Ignore if already collapsed
         if (getPage().isCollapsedOrCollapsing()) {
-            return 0;
+            return;
         }
         pendingItemsOutOfTheWindowAnimation = false;
 
@@ -228,7 +219,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
         if (getPage() != null) {
             getPage().collapse(getExpandInfo());
         }
-        return animateItemsBackToPosition(false);
+        animateItemsBackToPosition(false);
     }
 
 // ======== ANIMATION ======== //
@@ -273,8 +264,8 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
             if (!immediate) {
                 view.animate()
                         .translationY(moveY)
-                        .setDuration(ANIM_DURATION_EXPAND)
-                        .setInterpolator(ANIM_INTERPOLATOR_EXPAND)
+                        .setDuration(page.getAnimationDuration())
+                        .setInterpolator(page.getAnimationInterpolator())
                         .setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
 
                 if (anchorPosition == i) {
@@ -300,7 +291,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
      *
      * @return Collapse animation duration
      */
-    protected long animateItemsBackToPosition(boolean immediate) {
+    protected void animateItemsBackToPosition(boolean immediate) {
         int childCount = getChildCount();
         for (int i = 0; i < childCount; i++) {
             View view = getChildAt(i);
@@ -318,8 +309,8 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
                 view.animate()
                         .alpha(1f)
                         .translationY(0f)
-                        .setDuration(ANIM_DURATION_COLLAPSE)
-                        .setInterpolator(ANIM_INTERPOLATOR_COLLAPSE)
+                        .setDuration(page.getAnimationDuration())
+                        .setInterpolator(page.getAnimationInterpolator())
                         .setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
 
             } else {
@@ -327,8 +318,6 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
                 view.setAlpha(1f);
             }
         }
-
-        return ANIM_DURATION_COLLAPSE;
     }
 
 // ======== PAGE CALLBACKS ======== //
