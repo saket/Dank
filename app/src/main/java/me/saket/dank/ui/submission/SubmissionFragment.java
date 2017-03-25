@@ -45,6 +45,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Submission.PostHint;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -54,20 +55,19 @@ import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.BuildConfig;
-import me.saket.dank.ui.OpenRedditUrlActivity;
 import me.saket.dank.R;
-import me.saket.dank.data.RedditLink;
-import me.saket.dank.data.SubmissionContent;
+import me.saket.dank.data.Link;
+import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
+import me.saket.dank.ui.OpenRedditUrlActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.DankUrlParser;
 import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Markdown;
-import me.saket.dank.utils.RedditUrlParser;
-import me.saket.dank.utils.SubmissionContentParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatableProgressBar;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
@@ -143,13 +143,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         linkMovementMethod.setOnLinkClickListener((textView, url) -> {
             // TODO: 18/03/17 Remove try/catch block
             try {
-                RedditLink redditLink = RedditUrlParser.parse(url);
-                if (redditLink != null) {
-                    Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
-                    Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
-                    OpenRedditUrlActivity.handle(getActivity(), redditLink, clickedUrlCoordinatesRect);
-                    return true;
-                }
+                Link parsedLink = DankUrlParser.parse(url);
+                Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
+                Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
+                OpenRedditUrlActivity.handle(getActivity(), parsedLink, clickedUrlCoordinatesRect);
+                return true;
 
             } catch (Exception e) {
                 e.printStackTrace();
@@ -374,11 +372,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsHelper.reset();
         commentsAdapter.updateData(null);
 
-        SubmissionContent submissionContent = SubmissionContentParser.parse(submission);
+        Link contentLink = DankUrlParser.parse(submission);
 
         // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
-        toolbarBackground.setEnabled(submissionContent.isImageOrVideo());
-        toolbarShadows.setVisibility(submissionContent.isImageOrVideo() ? View.VISIBLE : View.GONE);
+        toolbarBackground.setEnabled(contentLink.type() == Link.Type.IMAGE_OR_GIF);
+        toolbarShadows.setVisibility(contentLink.type() == Link.Type.IMAGE_OR_GIF ? View.VISIBLE : View.GONE);
 
         // Update submission information.
         //noinspection deprecation
@@ -386,7 +384,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
 
         // Load self-text/media/webpage.
-        loadSubmissionContent(submission, submissionContent);
+        loadSubmissionContent(submission, contentLink);
 
         // Load new comments.
         if (submission.getComments() == null) {
@@ -427,25 +425,24 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         return error -> Timber.e(error, error.getMessage());
     }
 
-    private void loadSubmissionContent(Submission submission, SubmissionContent submissionContent) {
-//        Timber.d("-------------------------------------------");
-//        Timber.i("%s", submission.getTitle());
-//        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
-//        Timber.i("Parsed content: %s", submissionContent);
+    private void loadSubmissionContent(Submission submission, Link contentLink) {
+        Timber.d("-------------------------------------------");
+        Timber.i("%s", submission.getTitle());
+        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
+        Timber.i("Parsed content: %s, type: %s", contentLink, contentLink.type());
 //        if (submissionContent.type() == SubmissionContent.Type.IMAGE) {
 //            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
 //        }
 
-        switch (submissionContent.type()) {
-            case IMAGE:
-                if (submissionContent.host() == SubmissionContent.Host.IMGUR) {
-                    SubmissionContent.Imgur imgurContent = submissionContent.hostContent();
-                    if (imgurContent.isAlbum()) {
+        switch (contentLink.type()) {
+            case IMAGE_OR_GIF:
+                if (contentLink instanceof MediaLink.Imgur) {
+                    if (((MediaLink.Imgur) contentLink).isAlbum()) {
                         contentLoadProgressView.hide();
                         Toast.makeText(getActivity(), "Imgur album", Toast.LENGTH_SHORT).show();
                         break;
                     }
-                } else if (submissionContent.host() == SubmissionContent.Host.GFYCAT) {
+                } else if (contentLink instanceof MediaLink.Gfycat) {
                     contentLoadProgressView.hide();
                     Toast.makeText(getActivity(), "GFYCAT", Toast.LENGTH_SHORT).show();
                     break;
@@ -455,7 +452,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 contentLoadProgressView.show();
 
                 Glide.with(this)
-                        .load(submissionContent.imageContentUrl(deviceDisplayWidth))
+                        .load(((MediaLink) contentLink).optimizedImageUrl(deviceDisplayWidth))
                         .priority(Priority.IMMEDIATE)
                         .into(simpleImageViewTarget(contentImageView, resource -> {
                             executeOnMeasure(contentImageView, () -> {
@@ -485,17 +482,21 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                         }));
                 break;
 
-            case SELF:
-                contentLoadProgressView.hide();
-                String selfTextHtml = submission.getDataNode().get("selftext_html").asText();
-                CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
-                selfPostTextView.setText(markdownHtml);
+            case REDDIT_HOSTED:
+                if (submission.getPostHint() == PostHint.SELF || submission.getPostHint() == PostHint.UNKNOWN && submission.getPostHint() != null) {
+                    contentLoadProgressView.hide();
+                    String selfTextHtml = submission.getDataNode().get("selftext_html").asText();
+                    CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
+                    selfPostTextView.setText(markdownHtml);
 
-//                Timber.d("Html: %s", submission.getDataNode().toString());
-//                selfPostTextView.setText(Html.fromHtml("X<sup>2</sup>"));
+                } else {
+                    selfPostTextView.setText(null);
+                    // TODO: 25/03/17 Link to another subreddit/user/submission
+                    Toast.makeText(getContext(), "Another reddit hosted URL", Toast.LENGTH_SHORT).show();
+                }
                 break;
 
-            case LINK:
+            case EXTERNAL:
                 // Reset the page before loading the new submission so that the last submission isn't visible.
                 contentWebView.loadUrl(BLANK_PAGE_URL);
                 contentWebView.loadUrl(submission.getUrl());
@@ -508,18 +509,17 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 break;
 
             case VIDEO:
-            case UNKNOWN:
                 contentLoadProgressView.hide();
                 break;
 
             default:
-                throw new UnsupportedOperationException("Unknown content: " + submissionContent);
+                throw new UnsupportedOperationException("Unknown content: " + contentLink);
         }
 
-        selfPostTextView.setVisibility(submissionContent.isSelfText() ? View.VISIBLE : View.GONE);
-        contentImageView.setVisibility(submissionContent.isImage() ? View.VISIBLE : View.GONE);
+        selfPostTextView.setVisibility(contentLink.isRedditHosted() ? View.VISIBLE : View.GONE);
+        contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
 
-        if (submissionContent.isLink()) {
+        if (contentLink.isExternal()) {
             // Show the WebView only when this page is fully expanded or else it'll interfere with the entry animation.
             // Also ignore loading the WebView on the emulator. It is very expensive and greatly slow down the emulator.
             if (!BuildConfig.DEBUG || !DeviceUtils.isEmulator()) {

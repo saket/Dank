@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsIntent;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
+import android.widget.Toast;
 
 import org.chromium.customtabsclient.CustomTabsActivityHelper;
 import org.chromium.customtabsclient.CustomTabsHelper;
@@ -18,6 +19,7 @@ import org.chromium.customtabsclient.CustomTabsHelper;
 import java.util.concurrent.TimeUnit;
 
 import me.saket.dank.R;
+import me.saket.dank.data.Link;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
@@ -28,15 +30,15 @@ import timber.log.Timber;
 
 public class OpenRedditUrlActivity extends DankActivity {
 
-    private static final String KEY_REDDIT_LINK = "redditLink";
+    private static final String KEY_LINK = "link";
     private static final int REQUESTCODE_CHROME_CUSTOM_TAB = 100;
 
     /**
      * @param expandFromShape The initial shape of the target Activity from where it will begin its entry expand animation.
      */
-    public static void handle(Context context, RedditLink redditLink, Rect expandFromShape) {
+    public static void handle(Context context, Link link, Rect expandFromShape) {
         Intent intent = new Intent(context, OpenRedditUrlActivity.class);
-        intent.putExtra(KEY_REDDIT_LINK, redditLink);
+        intent.putExtra(KEY_LINK, link);
         intent.putExtra(DankPullCollapsibleActivity.KEY_EXPAND_FROM_SHAPE, expandFromShape);
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
         context.startActivity(intent);
@@ -46,29 +48,33 @@ public class OpenRedditUrlActivity extends DankActivity {
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        RedditLink redditLink = getIntent().getParcelableExtra(KEY_REDDIT_LINK);
+        Link link = (Link) getIntent().getSerializableExtra(KEY_LINK);
         Rect expandFromShape = getIntent().getParcelableExtra(DankPullCollapsibleActivity.KEY_EXPAND_FROM_SHAPE);
-        //Timber.i("%s", redditLink);
+        Timber.i("%s", link);
 
-        if (redditLink instanceof RedditLink.Subreddit) {
-            SubredditActivityWithTransparentWindowBackground.start(this, (RedditLink.Subreddit) redditLink, expandFromShape);
+        if (link instanceof RedditLink.Subreddit) {
+            SubredditActivityWithTransparentWindowBackground.start(this, (RedditLink.Subreddit) link, expandFromShape);
             finish();
 
-        } else if (redditLink instanceof RedditLink.Submission) {
-            SubmissionFragmentActivity.start(this, (RedditLink.Submission) redditLink, expandFromShape);
+        } else if (link instanceof RedditLink.Submission) {
+            SubmissionFragmentActivity.start(this, (RedditLink.Submission) link, expandFromShape);
             finish();
 
-        } else if (redditLink instanceof RedditLink.User) {
-            UserProfileActivity.start(this, ((RedditLink.User) redditLink), expandFromShape);
+        } else if (link instanceof RedditLink.User) {
+            UserProfileActivity.start(this, ((RedditLink.User) link), expandFromShape);
             finish();
 
-        } else if (redditLink instanceof RedditLink.LiveThread) {
+        } else if (link.isExternal()) {
             CustomTabsHelperFragment.attachTo(this);
-            openLinkInChromeCustomTab(((RedditLink.LiveThread) redditLink));
+            openLinkInChromeCustomTab(((Link.External) link));
+
+        } else {
+            Toast.makeText(this, "TODO: " + link.getClass().getSimpleName(), Toast.LENGTH_SHORT).show();
+            finish();
         }
     }
 
-    private void openLinkInChromeCustomTab(RedditLink.LiveThread redditLink) {
+    private void openLinkInChromeCustomTab(Link.External link) {
         CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
                 .enableUrlBarHiding()
                 .setToolbarColor(ContextCompat.getColor(this, R.color.toolbar))
@@ -77,9 +83,10 @@ public class OpenRedditUrlActivity extends DankActivity {
                 .build();
 
         CustomTabsActivityHelper.CustomTabsFallback customTabsFallback = (activity, uri) -> {
+            // TODO: 24/03/17
             Timber.w("Fallback");
         };
-        Uri linkToOpen = Uri.parse(redditLink.url());
+        Uri linkToOpen = Uri.parse(link.url);
 
         // If we cant find a package name, it means there's no browser that supports
         // Chrome Custom Tabs installed. So, we fallback to the WebView.

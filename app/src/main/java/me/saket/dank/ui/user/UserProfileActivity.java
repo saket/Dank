@@ -41,8 +41,8 @@ public class UserProfileActivity extends DankPullCollapsibleActivity {
         setupContentExpandablePage(contentPage);
         expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
 
-        RedditLink.User userLink = getIntent().getParcelableExtra(KEY_USERNAME_LINK);
-        setTitle(getString(R.string.user_name_u_prefix, userLink.name()));
+        RedditLink.User userLink = (RedditLink.User) getIntent().getSerializableExtra(KEY_USERNAME_LINK);
+        setTitle(getString(R.string.user_name_u_prefix, userLink.name));
     }
 
 }

@@ -1,78 +1,91 @@
 package me.saket.dank.data;
 
-import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
-import com.google.auto.value.AutoValue;
-
-import me.saket.dank.utils.RedditUrlParser;
-
 /**
- * Contains information of a reddit.com URL parsed by {@link RedditUrlParser}.
+ * Details of a Reddit.com URL.
  */
-public interface RedditLink extends Parcelable {
+public abstract class RedditLink extends Link {
 
-    @AutoValue
-    abstract class Subreddit implements RedditLink, Parcelable {
-        public abstract String name();
+    @Override
+    public Type type() {
+        return Type.REDDIT_HOSTED;
+    }
+
+    public static class Subreddit extends RedditLink {
+        public String name;
 
         public static Subreddit create(String subredditName) {
-            return new AutoValue_RedditLink_Subreddit(subredditName);
+            Subreddit subreddit = new Subreddit();
+            subreddit.name = subredditName;
+            return subreddit;
         }
     }
 
-    @AutoValue
-    abstract class User implements RedditLink, Parcelable {
-        public abstract String name();
+    public static class User extends RedditLink {
+        public String name;
 
         public static User create(String userName) {
-            return new AutoValue_RedditLink_User(userName);
+            User user = new User();
+            user.name = userName;
+            return user;
         }
     }
 
-    @AutoValue
-    abstract class Submission implements RedditLink, Parcelable {
+    public static class Submission extends RedditLink {
         @Nullable
-        public abstract String subredditName();
+        public String subredditName;
 
-        public abstract String id();
+        public String id;
 
         /**
          * This is non-null if a comment's permalink was clicked. We should show this
          * comment as the root comment of the submission.
          */
         @Nullable
-        public abstract Comment initialComment();
+        public Comment initialComment;
 
-        public static Submission create(String subredditName, String id) {
-            return new AutoValue_RedditLink_Submission(subredditName, id, null);
+        public Submission(String id, @Nullable String subredditName, @Nullable Comment initialComment) {
+            this.id = id;
+            this.subredditName = subredditName;
+            this.initialComment = initialComment;
         }
 
-        public static Submission createWithComment(String subredditName, String id, Comment initialComment) {
-            return new AutoValue_RedditLink_Submission(subredditName, id, initialComment);
+        public static Submission create(String id, String subredditName) {
+            return new Submission(id, subredditName, null);
+        }
+
+        public static Submission createWithComment(String id, String subredditName, Comment initialComment) {
+            return new Submission(id, subredditName, initialComment);
         }
     }
 
-    @AutoValue
-    abstract class Comment implements RedditLink, Parcelable {
-        public abstract String id();
+    public static class Comment extends RedditLink {
+        public String id;
 
         /**
          * Number of parents to show.
          */
-        public abstract Integer contextCount();
+        public Integer contextCount;
 
         public static Comment create(String id, Integer contextCount) {
-            return new AutoValue_RedditLink_Comment(id, contextCount);
+            Comment comment = new Comment();
+            comment.id = id;
+            comment.contextCount = contextCount;
+            return comment;
         }
     }
 
-    @AutoValue
-    abstract class LiveThread implements RedditLink, Parcelable {
-        public abstract String url();
+    /**
+     * A reddit.com URL that Dank doesn't support yet. E.g., a live thread.
+     */
+    public static class UnsupportedYet extends Link.External {
+        public UnsupportedYet(String url) {
+            super(url);
+        }
 
-        public static LiveThread create(String threadUrl) {
-            return new AutoValue_RedditLink_LiveThread(threadUrl);
+        public static UnsupportedYet create(String url) {
+            return new UnsupportedYet(url);
         }
     }
 

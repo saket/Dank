@@ -22,8 +22,7 @@ public class SubredditActivityWithTransparentWindowBackground extends SubredditA
      */
     public static void start(Context context, RedditLink.Subreddit subredditLink, Rect expandFromShape) {
         Intent intent = new Intent(context, SubredditActivityWithTransparentWindowBackground.class);
-        intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
-        intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
+        addStartExtrasToIntent(subredditLink, expandFromShape, intent);
         context.startActivity(intent);
     }
 

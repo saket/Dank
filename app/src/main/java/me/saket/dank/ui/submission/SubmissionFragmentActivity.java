@@ -56,7 +56,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
 
         setupSubmissionFragment();
         if (savedInstanceState == null) {
-            loadSubmission(getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
+            loadSubmission((RedditLink.Submission) getIntent().getSerializableExtra(KEY_SUBMISSION_LINK));
         }
         // Else, SubmissionFragment will handle retaining its data.
     }
@@ -77,14 +77,14 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
         // We don't know the suggested sort yet. Attempt with the default sort and if it's found
         // to be different, then do another load.
         DankSubmissionRequest.Builder submissionReqBuilder = DankSubmissionRequest
-                .builder(submissionLink.id())
+                .builder(submissionLink.id)
                 .commentSort(DankRedditClient.DEFAULT_COMMENT_SORT);
 
-        RedditLink.Comment initialComment = submissionLink.initialComment();
+        RedditLink.Comment initialComment = submissionLink.initialComment;
         if (initialComment != null) {
             submissionReqBuilder
-                    .focusComment(initialComment.id())
-                    .contextCount(initialComment.contextCount());
+                    .focusComment(initialComment.id)
+                    .contextCount(initialComment.contextCount);
         }
         DankSubmissionRequest submissionRequest = submissionReqBuilder.build();
 

@@ -12,6 +12,7 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 import static rx.Observable.fromCallable;
 
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -67,6 +68,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     private DankSubreddit activeSubreddit;
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
+
+    protected static void addStartExtrasToIntent(RedditLink.Subreddit subredditLink, Rect expandFromShape, Intent intent) {
+        intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
+        intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -144,7 +150,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         if (savedInstanceState != null) {
             activeSubreddit = savedInstanceState.getParcelable(KEY_ACTIVE_SUBREDDIT);
         } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
-            activeSubreddit = DankSubreddit.create(getIntent().<RedditLink.Subreddit>getParcelableExtra(KEY_INITIAL_SUBREDDIT_LINK).name());
+            activeSubreddit = DankSubreddit.create(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
         } else {
             //activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
             activeSubreddit = DankSubreddit.create("Supapp");
