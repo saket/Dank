@@ -137,9 +137,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         int statusBarHeight = statusBarHeight(getResources());
         setMarginTop(toolbar, statusBarHeight);
-        executeOnMeasure(toolbar, () -> {
-            setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight);
-        });
+        executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight));
         toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
 
         DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
@@ -190,6 +188,35 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         submissionPageLayout = ((ExpandablePageLayout) view.getParent());
         submissionPageLayout.addCallbacks(this);
         submissionPageLayout.setPullToCollapseIntercepter(this);
+    }
+
+    @Override
+    public void onDestroy() {
+        onCollapseSubscriptions.clear();
+        super.onDestroy();
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        if (activeSubmission != null) {
+            JsonNode dataNode = activeSubmission.getDataNode();
+            outState.putString(KEY_SUBMISSION_JSON, dataNode.toString());
+            outState.putParcelable(KEY_SUBMISSION_REQUEST, activeSubmissionRequest);
+        }
+        super.onSaveInstanceState(outState);
+    }
+
+    private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
+        if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
+            String submissionJson = savedInstanceState.getString(KEY_SUBMISSION_JSON);
+            try {
+                JsonNode jsonNode = new ObjectMapper().readTree(submissionJson);
+                populateUi(new Submission(jsonNode), savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST));
+
+            } catch (Exception e) {
+                Timber.e(e, "Couldn't deserialize Submission: %s", submissionJson);
+            }
+        }
     }
 
     /**
@@ -334,29 +361,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
             isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.call();
         });
-    }
-
-    @Override
-    public void onSaveInstanceState(Bundle outState) {
-        if (activeSubmission != null) {
-            JsonNode dataNode = activeSubmission.getDataNode();
-            outState.putString(KEY_SUBMISSION_JSON, dataNode.toString());
-            outState.putParcelable(KEY_SUBMISSION_REQUEST, activeSubmissionRequest);
-        }
-        super.onSaveInstanceState(outState);
-    }
-
-    private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
-        if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
-            String submissionJson = savedInstanceState.getString(KEY_SUBMISSION_JSON);
-            try {
-                JsonNode jsonNode = new ObjectMapper().readTree(submissionJson);
-                populateUi(new Submission(jsonNode), savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST));
-
-            } catch (Exception e) {
-                Timber.e(e, "Couldn't deserialize Submission: %s", submissionJson);
-            }
-        }
     }
 
     /**
