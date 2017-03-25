@@ -490,9 +490,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             case REDDIT_HOSTED:
                 if (submission.isSelfPost()) {
                     contentLoadProgressView.hide();
-                    String selfTextHtml = submission.getDataNode().get("selftext_html").asText();
+                    String selfTextHtml = submission.getDataNode().get("selftext_html").asText("");
                     CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
-                    selfPostTextView.setVisibility(View.VISIBLE);
+                    selfPostTextView.setVisibility(markdownHtml.length() > 0 ? View.VISIBLE : View.GONE);
                     selfPostTextView.setText(markdownHtml);
 
                 } else {

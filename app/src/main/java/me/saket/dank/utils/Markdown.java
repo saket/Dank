@@ -14,6 +14,8 @@ import android.text.style.LineBackgroundSpan;
 import org.sufficientlysecure.htmltextview.HtmlTagHandler;
 import org.xml.sax.XMLReader;
 
+import timber.log.Timber;
+
 /**
  * Handles converting Reddit's markdown into Spans that can be rendered by TextView.
  *
@@ -23,10 +25,6 @@ import org.xml.sax.XMLReader;
 public class Markdown {
 
     public static CharSequence parseRedditMarkdownHtml(String markdown, TextPaint textPaint) {
-        if (markdown == null) {
-            return null;
-        }
-
         RedditMarkdownHtmlHandler htmlTagHandler = new RedditMarkdownHtmlHandler(textPaint);
         String source = Html.fromHtml(markdown).toString();
 
