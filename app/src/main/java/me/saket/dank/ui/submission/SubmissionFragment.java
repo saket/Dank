@@ -45,7 +45,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Submission.PostHint;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -69,7 +68,7 @@ import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Views;
-import me.saket.dank.widgets.AnimatableProgressBar;
+import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -92,7 +91,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.submission_toolbar_shadow) View toolbarShadows;
     @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
-    @BindView(R.id.submission_content_progress) AnimatableProgressBar contentLoadProgressView;
+    @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
     @BindView(R.id.submission_webview_container) ViewGroup contentWebViewContainer;
     @BindView(R.id.submission_webview) WebView contentWebView;
     @BindView(R.id.submission_image) ZoomableImageView contentImageView;
@@ -150,11 +149,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 return true;
 
             } catch (Exception e) {
-                e.printStackTrace();
+                Timber.i(e, "Couldn't parse URL: %s", url);
+                return false;
             }
-
-            Timber.i("Unknown link");
-            return false;
         });
         selfPostTextView.setMovementMethod(linkMovementMethod);
 
@@ -266,7 +263,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     private void setupCommentsSheet() {
-        toolbarBackground.syncBottomWithViewTop(commentListParentSheet);
+        toolbarBackground.syncPositionWithSheet(commentListParentSheet);
+        contentLoadProgressView.syncPositionWithSheet(commentListParentSheet);
         commentListParentSheet.setScrollingEnabled(false);
 
         Func1<?, Integer> revealDistanceFunc = __ -> {
@@ -372,18 +370,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsHelper.reset();
         commentsAdapter.updateData(null);
 
-        Link contentLink = DankUrlParser.parse(submission);
-
-        // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
-        toolbarBackground.setEnabled(contentLink.type() == Link.Type.IMAGE_OR_GIF);
-        toolbarShadows.setVisibility(contentLink.type() == Link.Type.IMAGE_OR_GIF ? View.VISIBLE : View.GONE);
-
         // Update submission information.
         //noinspection deprecation
         titleView.setText(Html.fromHtml(submission.getTitle()));
         subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
 
         // Load self-text/media/webpage.
+        Link contentLink = DankUrlParser.parse(submission);
         loadSubmissionContent(submission, contentLink);
 
         // Load new comments.
@@ -483,7 +476,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 break;
 
             case REDDIT_HOSTED:
-                if (submission.getPostHint() == PostHint.SELF || submission.getPostHint() == PostHint.UNKNOWN && submission.getPostHint() != null) {
+                if (submission.isSelfPost()) {
                     contentLoadProgressView.hide();
                     String selfTextHtml = submission.getDataNode().get("selftext_html").asText();
                     CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
@@ -518,6 +511,14 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         selfPostTextView.setVisibility(contentLink.isRedditHosted() ? View.VISIBLE : View.GONE);
         contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
+
+        // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
+        toolbarBackground.setSyncScrollEnabled(contentLink.type() == Link.Type.IMAGE_OR_GIF);
+        toolbarShadows.setVisibility(contentLink.type() == Link.Type.IMAGE_OR_GIF ? View.VISIBLE : View.GONE);
+
+        // Stick the content progress bar below the toolbar if it's an external link. Otherwise, make
+        // it scroll with the comments sheet.
+        contentLoadProgressView.setSyncScrollEnabled(contentLink.type() != Link.Type.EXTERNAL);
 
         if (contentLink.isExternal()) {
             // Show the WebView only when this page is fully expanded or else it'll interfere with the entry animation.

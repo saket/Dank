@@ -55,12 +55,6 @@
         tools:background="@color/window_background"
         tools:layout_below="@+id/toolbar">
 
-        <!-- This progressView sits here and not below the toolbar
-             because it otherwise looks odd with a transparent toolbar. -->
-        <me.saket.dank.widgets.AnimatableProgressBar
-            android:id="@+id/submission_content_progress"
-            style="@style/DankProgressBar.Horizontal.TopAligned" />
-
         <TextView
             android:id="@+id/submission_title"
             android:layout_width="match_parent"
@@ -132,8 +126,16 @@
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:scrollbarStyle="insideOverlay"
-            android:scrollbars="vertical" />
+            android:scrollbars="vertical"
+            tools:paddingStart="@dimen/spacing16" />
     </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
+
+    <!-- This progressView sticks to the toolbar's bottom when the WebView
+         is visible, otherwise scrolls with the comments sheet. -->
+    <me.saket.dank.widgets.SubmissionAnimatedProgressBar
+        android:id="@+id/submission_content_progress"
+        style="@style/DankProgressBar.Horizontal.TopAligned"
+        android:layout_below="@id/toolbar" />
 
     <!-- Acts as the toolbar's background. -->
     <me.saket.dank.widgets.AnimatedToolbarBackground
@@ -141,13 +143,16 @@
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
         android:background="@color/toolbar"
-        android:translationZ="@dimen/elevation_toolbar" />
+        android:translationZ="@dimen/elevation_toolbar"
+        tools:layout_marginTop="25dp" />
 
-    <!-- Note: the elevation to this toolbar is set on AnimatableToolbarBackground instead. -->
+    <!-- Note: the elevation to this toolbar is set on AnimatableToolbarBackground
+         instead. -->
     <me.saket.dank.widgets.DankToolbar
         android:id="@id/toolbar"
         style="@style/DankToolbar"
         android:background="@color/transparent"
         app:navigationIcon="@drawable/ic_toolbar_close_24dp"
-        app:navigationIconTint="@color/white" />
+        app:navigationIconTint="@color/white"
+        tools:layout_marginTop="25dp" />
 </RelativeLayout>

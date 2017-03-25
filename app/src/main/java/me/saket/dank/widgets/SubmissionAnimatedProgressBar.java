@@ -11,14 +11,35 @@ import android.widget.ProgressBar;
  * A ProgressBar that uses height animation for hiding/showing + animates changes in determinate progress
  * (because {@link ProgressBar#setProgress(int, boolean)} is API 24+ only).
  */
-public class AnimatableProgressBar extends ProgressBar {
+public class SubmissionAnimatedProgressBar extends ProgressBar {
 
     private ObjectAnimator progressAnimator;
     private boolean visibilityAnimationOngoing;
     private Boolean isVisible;
+    private boolean syncScrollEnabled;
 
-    public AnimatableProgressBar(Context context, AttributeSet attrs) {
+    public SubmissionAnimatedProgressBar(Context context, AttributeSet attrs) {
         super(context, attrs);
+    }
+
+    /**
+     * Tracks <var>sheet</var>'s top offset and keeps this View always on top of it.
+     * Since {@link ScrollingRecyclerViewSheet} uses translationY changes to scroll, this
+     */
+    public void syncPositionWithSheet(ScrollingRecyclerViewSheet sheet) {
+        sheet.addOnSheetScrollChangeListener((newTranslationY) -> {
+            if (syncScrollEnabled && getTranslationY() != newTranslationY) {
+                setTranslationY(newTranslationY);
+            }
+        });
+    }
+
+    /**
+     * When disabled, this View stops scrolling with the sheet passed in {@link
+     * #syncPositionWithSheet(ScrollingRecyclerViewSheet)} and stays fixed below the toolbar.
+     */
+    public void setSyncScrollEnabled(boolean enabled) {
+        syncScrollEnabled = enabled;
     }
 
     public void setProgressWithAnimation(int toProgress) {

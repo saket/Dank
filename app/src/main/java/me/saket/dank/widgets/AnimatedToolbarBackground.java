@@ -22,6 +22,7 @@ public class AnimatedToolbarBackground extends View {
     private Boolean isToolbarFilled;
     private Float currentFillFactor = 0f;
     private final float onVisibleTranslationZ;
+    private boolean syncScrollEnabled;
 
     public AnimatedToolbarBackground(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -34,23 +35,22 @@ public class AnimatedToolbarBackground extends View {
      * Tracks <var>sheet</var>'s top offset and keeps this View always on top of it.
      * Since {@link ScrollingRecyclerViewSheet} uses translationY changes to scroll, this
      */
-    public void syncBottomWithViewTop(ScrollingRecyclerViewSheet sheet) {
-        sheet.addOnSheetScrollChangeListener((translationY) -> {
-            if (isEnabled()) {
-                setTranslationY(translationY);
-                toggleFill(translationY <= 0);
+    public void syncPositionWithSheet(ScrollingRecyclerViewSheet sheet) {
+        sheet.addOnSheetScrollChangeListener((newTranslationY) -> {
+            if (syncScrollEnabled && getTranslationY() != newTranslationY) {
+                setTranslationY(newTranslationY);
+                toggleFill(newTranslationY <= 0);
             }
         });
     }
 
     /**
      * When disabled, this View stops scrolling with the View passed in
-     * {@link #syncBottomWithViewTop(ScrollingRecyclerViewSheet)} and stays fixed at the top
+     * {@link #syncPositionWithSheet(ScrollingRecyclerViewSheet)} and stays fixed at the top
      * with the toolbar background fully filled.
      */
-    @Override
-    public void setEnabled(boolean enabled) {
-        super.setEnabled(enabled);
+    public void setSyncScrollEnabled(boolean enabled) {
+        syncScrollEnabled = enabled;
 
         if (!enabled) {
             toggleFill(true);
