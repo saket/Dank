@@ -3,6 +3,7 @@ package me.saket.dank.ui.subreddits;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.support.annotation.Nullable;
 
 import me.saket.dank.data.RedditLink;
 
@@ -20,7 +21,7 @@ public class SubredditActivityWithTransparentWindowBackground extends SubredditA
     /**
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
      */
-    public static void start(Context context, RedditLink.Subreddit subredditLink, Rect expandFromShape) {
+    public static void start(Context context, RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape) {
         Intent intent = new Intent(context, SubredditActivityWithTransparentWindowBackground.class);
         addStartExtrasToIntent(subredditLink, expandFromShape, intent);
         context.startActivity(intent);

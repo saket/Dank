@@ -47,11 +47,12 @@
 
     <!-- At runtime, this ViewGroup is moved to inside the
          comment list as the header and its top-padding is set. -->
-    <RelativeLayout
+    <LinearLayout
         android:id="@+id/submission_comments_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
+        android:paddingBottom="@dimen/spacing8"
         tools:background="@color/window_background"
         tools:layout_below="@+id/toolbar">
 
@@ -72,7 +73,6 @@
             android:id="@+id/submission_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/submission_title"
             android:layout_marginBottom="@dimen/spacing8"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
@@ -84,17 +84,80 @@
             android:id="@+id/submission_selfpost_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/submission_subtitle"
             android:layout_marginEnd="@dimen/spacing16"
-            android:layout_marginStart="@dimen/spacing16" />
+            android:layout_marginStart="@dimen/spacing16"
+            android:fontFamily="sans-serif-condensed" />
+
+        <RelativeLayout
+            android:id="@+id/submission_linked_reddit_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginEnd="@dimen/spacing16"
+            android:layout_marginStart="@dimen/spacing16"
+            android:layout_marginTop="@dimen/spacing8"
+            android:background="@drawable/background_submission_linked_reddit_url"
+            android:foreground="?attr/selectableItemBackground"
+            android:orientation="horizontal"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <!-- ContentDescription is set in SubmissionLinkedRedditLinkViewHolder -->
+            <ImageView
+                android:id="@+id/submission_linkedredditurl_icon"
+                android:layout_width="60dp"
+                android:layout_height="wrap_content"
+                android:layout_alignBottom="@+id/submission_linkedredditurl_content"
+                android:layout_alignTop="@+id/submission_linkedredditurl_content"
+                android:background="@color/white_opacity_05"
+                android:padding="@dimen/spacing16"
+                android:src="@drawable/ic_link_black_24dp"
+                android:tint="@color/gray_400"
+                tools:ignore="ContentDescription" />
+
+            <LinearLayout
+                android:id="@+id/submission_linkedredditurl_content"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_toEndOf="@+id/submission_linkedredditurl_icon"
+                android:animateLayoutChanges="true"
+                android:gravity="center_vertical"
+                android:orientation="vertical"
+                android:padding="@dimen/spacing16">
+
+                <TextView
+                    android:id="@+id/submission_linkedredditurl_title"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-condensed"
+                    android:maxLines="1"
+                    tools:text="/r/MaliciousCompliance" />
+
+                <TextView
+                    android:id="@+id/submission_linkedredditurl_tap_to_open"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:ellipsize="end"
+                    android:fontFamily="sans-serif-condensed"
+                    android:maxLines="1"
+                    android:textColor="@color/white_opacity_30"
+                    tools:text="https://np.reddit.com/r/MaliciousCompliance/cadasd" />
+            </LinearLayout>
+
+            <ProgressBar
+                android:id="@+id/submission_linkedredditurl_progress"
+                style="@style/DankProgressBar.Horizontal.BottomAligned"
+                android:layout_alignBottom="@+id/submission_linkedredditurl_content"
+                android:indeterminateTint="@color/black_opacity_40" />
+        </RelativeLayout>
 
         <LinearLayout
             android:id="@+id/submission_comments_progress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_below="@+id/submission_selfpost_text"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
+            android:layout_marginTop="@dimen/spacing16"
             android:gravity="center_vertical"
             android:orientation="horizontal"
             android:visibility="gone">
@@ -111,7 +174,7 @@
                 android:text="@string/login_loading_comments"
                 android:textColor="@color/white_opacity_40" />
         </LinearLayout>
-    </RelativeLayout>
+    </LinearLayout>
 
     <me.saket.dank.widgets.ScrollingRecyclerViewSheet
         android:id="@+id/submission_comment_list_parent_sheet"
@@ -127,7 +190,8 @@
             android:layout_height="match_parent"
             android:scrollbarStyle="insideOverlay"
             android:scrollbars="vertical"
-            tools:paddingStart="@dimen/spacing16" />
+            tools:paddingStart="@dimen/spacing16"
+            tools:paddingTop="@dimen/spacing16" />
     </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
 
     <!-- This progressView sticks to the toolbar's bottom when the WebView

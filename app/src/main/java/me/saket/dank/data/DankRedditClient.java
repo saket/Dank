@@ -61,11 +61,12 @@ public class DankRedditClient {
         return new SubredditPaginator(redditClient, subredditName);
     }
 
-    public Observable<Submission> submissionWithComments(DankSubmissionRequest submissionRequest) {
+    public Observable<Submission> submission(DankSubmissionRequest submissionRequest) {
         SubmissionRequest jrawSubmissionRequest = new SubmissionRequest.Builder(submissionRequest.id())
                 .sort(submissionRequest.commentSort())
                 .focus(submissionRequest.focusComment())
                 .context(submissionRequest.contextCount())
+                .limit(submissionRequest.commentLimit())
                 .build();
 
         return Observable.fromCallable(() -> redditClient.getSubmission(jrawSubmissionRequest));

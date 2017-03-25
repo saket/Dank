@@ -57,9 +57,10 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
+import me.saket.dank.data.RedditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
-import me.saket.dank.ui.OpenRedditUrlActivity;
+import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -68,17 +69,17 @@ import me.saket.dank.utils.DeviceUtils;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Views;
-import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
+import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
-import rx.subscriptions.Subscriptions;
+import rx.subscriptions.CompositeSubscription;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -100,6 +101,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
     @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
+    @BindView(R.id.submission_linked_reddit_url) ViewGroup linkedRedditLinkView;
     @BindView(R.id.submission_comment_list) RecyclerView commentList;
     @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
 
@@ -108,11 +110,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     private ExpandablePageLayout submissionPageLayout;
     private CommentsAdapter commentsAdapter;
-    private Subscription commentsSubscription = Subscriptions.unsubscribed();
+    private CompositeSubscription onCollapseSubscriptions = new CompositeSubscription();
     private CommentsHelper commentsHelper;
-    private Submission currentSubmission;
-    private DankSubmissionRequest currentSubmissionRequest;
+    private Submission activeSubmission;
+    private DankSubmissionRequest activeSubmissionRequest;
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
+    private SubmissionLinkedRedditLinkViewHolder linkedRedditLinkViewHolder;
+    private Link activeSubmissionContentLink;
 
     private int deviceDisplayWidth;
     private boolean isCommentSheetBeneathImage;
@@ -145,7 +149,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 Link parsedLink = DankUrlParser.parse(url);
                 Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
                 Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
-                OpenRedditUrlActivity.handle(getActivity(), parsedLink, clickedUrlCoordinatesRect);
+                OpenUrlActivity.handle(getActivity(), parsedLink, clickedUrlCoordinatesRect);
                 return true;
 
             } catch (Exception e) {
@@ -169,6 +173,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
         deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
+
+        linkedRedditLinkViewHolder = new SubmissionLinkedRedditLinkViewHolder(linkedRedditLinkView);
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
@@ -283,7 +289,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         // and on submission title click.
         commentsHeaderView.setOnClickListener(v -> {
-            if (commentListParentSheet.isAtPeekHeightState()) {
+            if (activeSubmissionContentLink instanceof MediaLink && commentListParentSheet.isAtPeekHeightState()) {
                 commentListParentSheet.smoothScrollTo(revealDistanceFunc.call(null));
             }
         });
@@ -332,10 +338,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     @Override
     public void onSaveInstanceState(Bundle outState) {
-        if (currentSubmission != null) {
-            JsonNode dataNode = currentSubmission.getDataNode();
+        if (activeSubmission != null) {
+            JsonNode dataNode = activeSubmission.getDataNode();
             outState.putString(KEY_SUBMISSION_JSON, dataNode.toString());
-            outState.putParcelable(KEY_SUBMISSION_REQUEST, currentSubmissionRequest);
+            outState.putParcelable(KEY_SUBMISSION_REQUEST, activeSubmissionRequest);
         }
         super.onSaveInstanceState(outState);
     }
@@ -360,8 +366,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
      * @param submissionRequest used for loading the comments of this submission.
      */
     public void populateUi(Submission submission, DankSubmissionRequest submissionRequest) {
-        currentSubmission = submission;
-        currentSubmissionRequest = submissionRequest;
+        activeSubmission = submission;
+        activeSubmissionRequest = submissionRequest;
+        activeSubmissionContentLink = DankUrlParser.parse(submission);
 
         // Reset everything.
         contentLoadProgressView.setProgress(0);
@@ -376,18 +383,19 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
 
         // Load self-text/media/webpage.
-        Link contentLink = DankUrlParser.parse(submission);
-        loadSubmissionContent(submission, contentLink);
+        loadSubmissionContent(submission, activeSubmissionContentLink);
 
         // Load new comments.
         if (submission.getComments() == null) {
-            commentsSubscription = Dank.reddit()
-                    .withAuth(Dank.reddit().submissionWithComments(currentSubmissionRequest))
-                    .flatMap(retryWithCorrectSortIfNeeded())
-                    .compose(applySchedulers())
-                    .compose(doOnStartAndFinish(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
-                    .doOnNext(submWithComments -> currentSubmission = submWithComments)
-                    .subscribe(commentsHelper.setup(), handleSubmissionLoadError());
+            unsubscribeOnCollapse(
+                    Dank.reddit()
+                            .withAuth(Dank.reddit().submission(activeSubmissionRequest))
+                            .flatMap(retryWithCorrectSortIfNeeded())
+                            .compose(applySchedulers())
+                            .compose(doOnStartAndFinish(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+                            .doOnNext(submWithComments -> activeSubmission = submWithComments)
+                            .subscribe(commentsHelper.setup(), handleSubmissionLoadError())
+            );
 
         } else {
             commentsHelper.setup().call(submission);
@@ -402,11 +410,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @NonNull
     private Func1<Submission, Observable<Submission>> retryWithCorrectSortIfNeeded() {
         return submWithComments -> {
-            if (submWithComments.getSuggestedSort() != null && submWithComments.getSuggestedSort() != currentSubmissionRequest.commentSort()) {
-                currentSubmissionRequest = currentSubmissionRequest.toBuilder()
+            if (submWithComments.getSuggestedSort() != null && submWithComments.getSuggestedSort() != activeSubmissionRequest.commentSort()) {
+                activeSubmissionRequest = activeSubmissionRequest.toBuilder()
                         .commentSort(submWithComments.getSuggestedSort())
                         .build();
-                return Dank.reddit().withAuth(Dank.reddit().submissionWithComments(currentSubmissionRequest));
+                return Dank.reddit().withAuth(Dank.reddit().submission(activeSubmissionRequest));
 
             } else {
                 return just(submWithComments);
@@ -480,12 +488,20 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                     contentLoadProgressView.hide();
                     String selfTextHtml = submission.getDataNode().get("selftext_html").asText();
                     CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
+                    selfPostTextView.setVisibility(View.VISIBLE);
                     selfPostTextView.setText(markdownHtml);
 
                 } else {
-                    selfPostTextView.setText(null);
-                    // TODO: 25/03/17 Link to another subreddit/user/submission
-                    Toast.makeText(getContext(), "Another reddit hosted URL", Toast.LENGTH_SHORT).show();
+                    contentLoadProgressView.hide();
+                    selfPostTextView.setVisibility(View.GONE);
+                    linkedRedditLinkViewHolder.setVisible(true);
+
+                    unsubscribeOnCollapse(
+                            linkedRedditLinkViewHolder.populate(((RedditLink) contentLink))
+                    );
+                    linkedRedditLinkView.setOnClickListener(__ -> {
+                        OpenUrlActivity.handle(getContext(), contentLink, null);
+                    });
                 }
                 break;
 
@@ -509,7 +525,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 throw new UnsupportedOperationException("Unknown content: " + contentLink);
         }
 
-        selfPostTextView.setVisibility(contentLink.isRedditHosted() ? View.VISIBLE : View.GONE);
+        if (!contentLink.isRedditHosted()) {
+            selfPostTextView.setVisibility(View.GONE);
+            linkedRedditLinkViewHolder.setVisible(false);
+        }
         contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
 
         // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
@@ -572,8 +591,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     @Override
     public void onPageCollapsed() {
-        commentsSubscription.unsubscribe();
+        onCollapseSubscriptions.clear();
         contentWebView.stopLoading();
+    }
+
+    private void unsubscribeOnCollapse(Subscription subscription) {
+        onCollapseSubscriptions.add(subscription);
     }
 
 // ======== BACK-PRESS ======== //
@@ -582,7 +605,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
      * @return true if the back press should be intercepted. False otherwise.
      */
     public boolean handleBackPress() {
-        if (currentSubmission != null && !commentListParentSheet.isExpanded() && contentWebView.getVisibility() == View.VISIBLE) {
+        if (activeSubmission != null && !commentListParentSheet.isExpanded() && contentWebView.getVisibility() == View.VISIBLE) {
             if (contentWebView.canGoBack() && !BLANK_PAGE_URL.equals(Views.previousUrlInHistory(contentWebView))) {
                 // WebView is visible and can go back.
                 contentWebView.goBack();

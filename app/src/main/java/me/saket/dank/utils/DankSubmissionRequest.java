@@ -36,8 +36,12 @@ public abstract class DankSubmissionRequest implements Parcelable {
         return new AutoValue_DankSubmissionRequest.Builder(this);
     }
 
+    @Nullable
+    public abstract Integer commentLimit();
+
     @AutoValue.Builder
     public abstract static class Builder {
+        @SuppressWarnings("unused")
         abstract Builder id(String id);
 
         /**
@@ -63,7 +67,14 @@ public abstract class DankSubmissionRequest implements Parcelable {
          */
         public abstract Builder contextCount(@Nullable Integer context);
 
-        /** Creates a new SubmissionRequest */
+        /**
+         * Sets the maximum amount of comments to return. A null value will exclude this parameter.
+         */
+        public abstract Builder commentLimit(@Nullable Integer limit);
+
+        /**
+         * Creates a new SubmissionRequest
+         */
         public abstract DankSubmissionRequest build();
     }
 

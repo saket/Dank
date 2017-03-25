@@ -28,7 +28,7 @@ import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment;
 import rx.Observable;
 import timber.log.Timber;
 
-public class OpenRedditUrlActivity extends DankActivity {
+public class OpenUrlActivity extends DankActivity {
 
     private static final String KEY_LINK = "link";
     private static final int REQUESTCODE_CHROME_CUSTOM_TAB = 100;
@@ -36,8 +36,8 @@ public class OpenRedditUrlActivity extends DankActivity {
     /**
      * @param expandFromShape The initial shape of the target Activity from where it will begin its entry expand animation.
      */
-    public static void handle(Context context, Link link, Rect expandFromShape) {
-        Intent intent = new Intent(context, OpenRedditUrlActivity.class);
+    public static void handle(Context context, Link link, @Nullable Rect expandFromShape) {
+        Intent intent = new Intent(context, OpenUrlActivity.class);
         intent.putExtra(KEY_LINK, link);
         intent.putExtra(DankPullCollapsibleActivity.KEY_EXPAND_FROM_SHAPE, expandFromShape);
         intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);

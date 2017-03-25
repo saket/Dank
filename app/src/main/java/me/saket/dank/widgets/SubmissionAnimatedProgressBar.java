@@ -84,7 +84,7 @@ public class SubmissionAnimatedProgressBar extends ProgressBar {
         }
         isVisible = visible;
 
-        setPivotY(0f);
+        setPivotY(getHeight() * 4 / 10);    // This value of 40% calculated using trial and error. Change this if needed.
         animate()
                 .scaleY(visible ? 1f : 0f)
                 .setStartDelay(visibilityAnimationOngoing ? 100 : 0)

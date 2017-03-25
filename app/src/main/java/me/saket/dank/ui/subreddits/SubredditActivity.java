@@ -69,7 +69,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
 
-    protected static void addStartExtrasToIntent(RedditLink.Subreddit subredditLink, Rect expandFromShape, Intent intent) {
+    protected static void addStartExtrasToIntent(RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape, Intent intent) {
         intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
         intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
     }

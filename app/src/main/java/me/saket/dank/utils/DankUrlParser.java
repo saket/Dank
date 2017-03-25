@@ -71,12 +71,13 @@ public class DankUrlParser {
                 String commentId = submissionOrCommentMatcher.group(4);
 
                 if (commentId.isEmpty()) {
-                    return RedditLink.Submission.create(submissionId, subredditName);
+                    return RedditLink.Submission.create(url, submissionId, subredditName);
 
                 } else {
                     String contextParamValue = linkUri.getQueryParameter("context");
                     int contextCount = TextUtils.isEmpty(contextParamValue) ? 0 : Integer.parseInt(contextParamValue);
-                    return RedditLink.Submission.createWithComment(submissionId, subredditName, RedditLink.Comment.create(commentId, contextCount));
+                    RedditLink.Comment initialComment = RedditLink.Comment.create(commentId, contextCount);
+                    return RedditLink.Submission.createWithComment(url, submissionId, subredditName, initialComment);
                 }
             }
 
@@ -98,10 +99,11 @@ public class DankUrlParser {
 
         } else if (urlHost.endsWith("redd.it") && !isImageUrlPath(urlPath)) {
             // Short redd.it url. Format: redd.it/post_id. Eg., https://redd.it/5524cd
-            return RedditLink.Submission.create(urlPath, null);
+            return RedditLink.Submission.create(url, urlPath, null);
 
         } else if (urlHost.contains("google") && urlPath.startsWith("/amp/s/amp.reddit.com")) {
-            // Google AMP url: https://www.google.com/amp/s/amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/
+            // Google AMP url.
+            // https://www.google.com/amp/s/amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/
             String nonAmpUrl = "https://" + url.substring(url.indexOf("/amp/s/") + "/amp/s/".length());
             return parse(nonAmpUrl);
         }

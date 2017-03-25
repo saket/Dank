@@ -33,9 +33,8 @@ public abstract class RedditLink extends Link {
     }
 
     public static class Submission extends RedditLink {
-        @Nullable
-        public String subredditName;
-
+        @Nullable public String subredditName;
+        public String url;
         public String id;
 
         /**
@@ -45,18 +44,19 @@ public abstract class RedditLink extends Link {
         @Nullable
         public Comment initialComment;
 
-        public Submission(String id, @Nullable String subredditName, @Nullable Comment initialComment) {
+        public Submission(String url, String id, @Nullable String subredditName, @Nullable Comment initialComment) {
+            this.url = url;
             this.id = id;
             this.subredditName = subredditName;
             this.initialComment = initialComment;
         }
 
-        public static Submission create(String id, String subredditName) {
-            return new Submission(id, subredditName, null);
+        public static Submission create(String url, String id, String subredditName) {
+            return new Submission(url, id, subredditName, null);
         }
 
-        public static Submission createWithComment(String id, String subredditName, Comment initialComment) {
-            return new Submission(id, subredditName, initialComment);
+        public static Submission createWithComment(String url, String id, String subredditName, Comment initialComment) {
+            return new Submission(url, id, subredditName, initialComment);
         }
     }
 

@@ -97,7 +97,11 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
         });
     }
 
-    protected void expandFrom(Rect fromRect) {
+    protected void expandFrom(@Nullable Rect fromRect) {
+        if (fromRect == null) {
+            expandFromBelowToolbar();
+        }
+
         expandedFromRect = fromRect;
         executeOnMeasure(activityPageLayout, () -> {
             activityPageLayout.expandFrom(fromRect);

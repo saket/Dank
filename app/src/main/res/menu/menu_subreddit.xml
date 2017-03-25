@@ -5,7 +5,7 @@
     <item
         android:id="@+id/action_user_profile"
         android:title="@string/subreddit_profile"
-        android:icon="@drawable/ic_profile_24dp"
+        android:icon="@drawable/ic_user_profile_24dp"
         app:showAsAction="ifRoom" />
 
     <item

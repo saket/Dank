@@ -38,7 +38,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
     /**
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
      */
-    public static void start(Context context, RedditLink.Submission submissionLink, Rect expandFromShape) {
+    public static void start(Context context, RedditLink.Submission submissionLink, @Nullable Rect expandFromShape) {
         Intent intent = new Intent(context, SubmissionFragmentActivity.class);
         intent.putExtra(KEY_SUBMISSION_LINK, submissionLink);
         intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
@@ -90,7 +90,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
 
         unsubscribeOnDestroy(
                 Dank.reddit()
-                        .withAuth(Dank.reddit().submissionWithComments(submissionRequest))
+                        .withAuth(Dank.reddit().submission(submissionRequest))
                         .compose(applySchedulers())
                         .subscribe(
                                 submission -> submissionFragment.populateUi(submission, submissionRequest),

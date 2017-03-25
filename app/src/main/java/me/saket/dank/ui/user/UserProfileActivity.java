@@ -24,7 +24,7 @@ public class UserProfileActivity extends DankPullCollapsibleActivity {
     /**
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
      */
-    public static void start(Context context, RedditLink.User userLink, Rect expandFromShape) {
+    public static void start(Context context, RedditLink.User userLink, @Nullable Rect expandFromShape) {
         Intent intent = new Intent(context, UserProfileActivity.class);
         intent.putExtra(KEY_USERNAME_LINK, userLink);
         intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);

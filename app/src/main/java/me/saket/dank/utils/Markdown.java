@@ -23,6 +23,10 @@ import org.xml.sax.XMLReader;
 public class Markdown {
 
     public static CharSequence parseRedditMarkdownHtml(String markdown, TextPaint textPaint) {
+        if (markdown == null) {
+            return null;
+        }
+
         RedditMarkdownHtmlHandler htmlTagHandler = new RedditMarkdownHtmlHandler(textPaint);
         String source = Html.fromHtml(markdown).toString();
 
