@@ -1,7 +1,5 @@
 package me.saket.dank.utils;
 
-import android.content.Context;
-import android.content.res.Configuration;
 import android.content.res.Resources;
 import android.graphics.Rect;
 import android.support.annotation.DrawableRes;
@@ -123,9 +121,13 @@ public class Views {
      * Check whether a touch event's points lie on a View. This does not consider if it's overlapped or not.
      */
     public static boolean touchLiesOn(View view, float x, float y) {
-        Rect commentSheetBounds = new Rect();
-        view.getGlobalVisibleRect(commentSheetBounds);
-        return commentSheetBounds.contains((int) x, (int) y);
+        return globalVisibleRect(view).contains((int) x, (int) y);
+    }
+
+    public static Rect globalVisibleRect(View view) {
+        Rect rect = new Rect();
+        view.getGlobalVisibleRect(rect);
+        return rect;
     }
 
 }

@@ -2,6 +2,7 @@ package me.saket.dank.ui.submission;
 
 import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
@@ -243,10 +244,26 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 // Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
                 commentsAdapter
                         .loadMoreCommentsClicks()
-                        .doOnNext(commentsHelper.setMoreCommentsLoading(true))
-                        .observeOn(io())
-                        .map(Dank.reddit().loadMoreComments())
-                        .subscribe(commentsHelper.setMoreCommentsLoading(false), error -> {
+                        .flatMap(loadMoreClickEvent -> {
+                            if (loadMoreClickEvent.parentCommentNode.isThreadContinuation()) {
+                                DankSubmissionRequest continueThreadRequest = activeSubmissionRequest.toBuilder()
+                                        .focusComment(loadMoreClickEvent.parentCommentNode.getComment().getId())
+                                        .build();
+                                Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView);
+                                expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
+                                SubmissionFragmentActivity.start(getContext(), continueThreadRequest, expandFromShape);
+
+                                return Observable.empty();
+
+                            } else {
+                                return Observable.just(loadMoreClickEvent.parentCommentNode)
+                                        .observeOn(io())
+                                        .doOnNext(commentsHelper.setMoreCommentsLoading(true))
+                                        .map(Dank.reddit().loadMoreComments())
+                                        .doOnNext(commentsHelper.setMoreCommentsLoading(false));
+                            }
+                        })
+                        .subscribe(doNothing(), error -> {
                             Timber.e(error, "Failed to load more comments");
                             if (isAdded()) {
                                 Toast.makeText(getActivity(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
@@ -431,10 +448,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     private void loadSubmissionContent(Submission submission, Link contentLink) {
-        Timber.d("-------------------------------------------");
-        Timber.i("%s", submission.getTitle());
-        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
-        Timber.i("Parsed content: %s, type: %s", contentLink, contentLink.type());
+//        Timber.d("-------------------------------------------");
+//        Timber.i("%s", submission.getTitle());
+//        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
+//        Timber.i("Parsed content: %s, type: %s", contentLink, contentLink.type());
 //        if (submissionContent.type() == SubmissionContent.Type.IMAGE) {
 //            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
 //        }

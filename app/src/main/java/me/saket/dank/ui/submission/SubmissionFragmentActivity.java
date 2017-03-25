@@ -30,6 +30,7 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 public class SubmissionFragmentActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks {
 
     private static final String KEY_SUBMISSION_LINK = "submissionLink";
+    private static final String KEY_SUBMISSION_REQUEST = "submission";
 
     @BindView(R.id.independentsubmission_root) IndependentExpandablePageLayout contentPage;
 
@@ -45,6 +46,16 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
         context.startActivity(intent);
     }
 
+    /**
+     * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
+     */
+    public static void start(Context context, DankSubmissionRequest submissionRequest, @Nullable Rect expandFromShape) {
+        Intent intent = new Intent(context, SubmissionFragmentActivity.class);
+        intent.putExtra(KEY_SUBMISSION_REQUEST, submissionRequest);
+        intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
+        context.startActivity(intent);
+    }
+
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -56,7 +67,11 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
 
         setupSubmissionFragment();
         if (savedInstanceState == null) {
-            loadSubmission((RedditLink.Submission) getIntent().getSerializableExtra(KEY_SUBMISSION_LINK));
+            if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
+                loadSubmission((RedditLink.Submission) getIntent().getSerializableExtra(KEY_SUBMISSION_LINK));
+            } else {
+                loadSubmission((DankSubmissionRequest) getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
+            }
         }
         // Else, SubmissionFragment will handle retaining its data.
     }
@@ -86,8 +101,11 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
                     .focusComment(initialComment.id)
                     .contextCount(initialComment.contextCount);
         }
-        DankSubmissionRequest submissionRequest = submissionReqBuilder.build();
 
+        loadSubmission(submissionReqBuilder.build());
+    }
+
+    private void loadSubmission(DankSubmissionRequest submissionRequest) {
         unsubscribeOnDestroy(
                 Dank.reddit()
                         .withAuth(Dank.reddit().submission(submissionRequest))

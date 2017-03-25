@@ -38,11 +38,10 @@ public abstract class RedditLink extends Link {
         public String id;
 
         /**
-         * This is non-null if a comment's permalink was clicked. We should show this
-         * comment as the root comment of the submission.
+         * This is non-null if a comment's permalink was clicked. This comment is shown as
+         * the root comment of the submission.
          */
-        @Nullable
-        public Comment initialComment;
+        @Nullable public Comment initialComment;
 
         public Submission(String url, String id, @Nullable String subredditName, @Nullable Comment initialComment) {
             this.url = url;

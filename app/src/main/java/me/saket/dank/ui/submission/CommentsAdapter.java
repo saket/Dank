@@ -36,7 +36,24 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     private final BetterLinkMovementMethod linkMovementMethod;
 
     private Subject<CommentNode, CommentNode> commentClickSubject = PublishSubject.create();
-    private Subject<CommentNode, CommentNode> loadMoreCommentsClickSubject = PublishSubject.create();
+    private Subject<LoadMoreCommentsClickEvent, LoadMoreCommentsClickEvent> loadMoreCommentsClickSubject = PublishSubject.create();
+
+    class LoadMoreCommentsClickEvent {
+        /**
+         * Node whose more comments have to be fetched.
+         */
+        CommentNode parentCommentNode;
+
+        /**
+         * Clicked itemView.
+         */
+        View loadMoreItemView;
+
+        public LoadMoreCommentsClickEvent(CommentNode parentNode, View loadMoreItemView) {
+            this.parentCommentNode = parentNode;
+            this.loadMoreItemView = loadMoreItemView;
+        }
+    }
 
     public CommentsAdapter(Resources resources, BetterLinkMovementMethod commentsLinkMovementMethod) {
         setHasStableIds(true);
@@ -56,7 +73,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     /**
      * Emits a CommentNode whose "load more comments" is clicked.
      */
-    public Subject<CommentNode, CommentNode> loadMoreCommentsClicks() {
+    public Subject<LoadMoreCommentsClickEvent, LoadMoreCommentsClickEvent> loadMoreCommentsClicks() {
         return loadMoreCommentsClickSubject;
     }
 
@@ -98,7 +115,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
             ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
 
             holder.itemView.setOnClickListener(__ -> {
-                loadMoreCommentsClickSubject.onNext(loadMoreItem.parentCommentNode());
+                loadMoreCommentsClickSubject.onNext(new LoadMoreCommentsClickEvent(loadMoreItem.parentCommentNode(), holder.itemView));
             });
         }
     }
