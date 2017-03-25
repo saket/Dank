@@ -30,21 +30,6 @@
         android:layout_alignParentTop="true"
         android:background="@drawable/background_submission_toolbar_shadows" />
 
-    <!-- For URLs. -->
-    <FrameLayout
-        android:id="@+id/submission_webview_container"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/toolbar"
-        android:background="@color/gray_800">
-
-        <WebView
-            android:id="@+id/submission_webview"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:visibility="gone" />
-    </FrameLayout>
-
     <!-- At runtime, this ViewGroup is moved to inside the
          comment list as the header and its top-padding is set. -->
     <LinearLayout
@@ -102,7 +87,7 @@
 
             <!-- ContentDescription is set in SubmissionLinkedRedditLinkViewHolder -->
             <ImageView
-                android:id="@+id/submission_linkedredditurl_icon"
+                android:id="@+id/submission_linkdetails_icon"
                 android:layout_width="60dp"
                 android:layout_height="wrap_content"
                 android:layout_alignBottom="@+id/submission_linkedredditurl_content"
@@ -117,14 +102,14 @@
                 android:id="@+id/submission_linkedredditurl_content"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toEndOf="@+id/submission_linkedredditurl_icon"
+                android:layout_toEndOf="@+id/submission_linkdetails_icon"
                 android:animateLayoutChanges="true"
                 android:gravity="center_vertical"
                 android:orientation="vertical"
                 android:padding="@dimen/spacing16">
 
                 <TextView
-                    android:id="@+id/submission_linkedredditurl_title"
+                    android:id="@+id/submission_linkdetails_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
@@ -132,7 +117,7 @@
                     tools:text="/r/MaliciousCompliance" />
 
                 <TextView
-                    android:id="@+id/submission_linkedredditurl_tap_to_open"
+                    android:id="@+id/submission_linkdetails_subtitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
@@ -142,7 +127,7 @@
             </LinearLayout>
 
             <ProgressBar
-                android:id="@+id/submission_linkedredditurl_progress"
+                android:id="@+id/submission_linkdetails_progress"
                 style="@style/DankProgressBar.Horizontal.BottomAligned"
                 android:layout_alignBottom="@+id/submission_linkedredditurl_content"
                 android:indeterminateTint="@color/black_opacity_40" />

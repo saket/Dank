@@ -122,11 +122,4 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
         finish();
     }
 
-    @Override
-    public void onBackPressed() {
-        if (!submissionFragment.handleBackPress()) {
-            super.onBackPressed();
-        }
-    }
-
 }

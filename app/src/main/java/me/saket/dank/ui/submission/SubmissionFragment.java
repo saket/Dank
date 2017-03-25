@@ -14,7 +14,6 @@ import static rx.android.schedulers.AndroidSchedulers.mainThread;
 import static rx.schedulers.Schedulers.io;
 
 import android.annotation.SuppressLint;
-import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -31,10 +30,6 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import android.webkit.WebChromeClient;
-import android.webkit.WebResourceRequest;
-import android.webkit.WebView;
-import android.webkit.WebViewClient;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -54,7 +49,6 @@ import butterknife.BindDimen;
 import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
@@ -66,8 +60,6 @@ import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.DankUrlParser;
-import me.saket.dank.utils.DeviceUtils;
-import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
@@ -86,7 +78,6 @@ import timber.log.Timber;
 @SuppressLint("SetJavaScriptEnabled")
 public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
-    private static final String BLANK_PAGE_URL = "about:blank";
     private static final String KEY_SUBMISSION_JSON = "submissionJson";
     private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
 
@@ -94,15 +85,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.submission_toolbar_shadow) View toolbarShadows;
     @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
     @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
-    @BindView(R.id.submission_webview_container) ViewGroup contentWebViewContainer;
-    @BindView(R.id.submission_webview) WebView contentWebView;
     @BindView(R.id.submission_image) ZoomableImageView contentImageView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
     @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
-    @BindView(R.id.submission_linked_reddit_url) ViewGroup linkedRedditLinkView;
+    @BindView(R.id.submission_linked_reddit_url) ViewGroup linkDetailsView;
     @BindView(R.id.submission_comment_list) RecyclerView commentList;
     @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
 
@@ -116,7 +105,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private Submission activeSubmission;
     private DankSubmissionRequest activeSubmissionRequest;
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
-    private SubmissionLinkedRedditLinkViewHolder linkedRedditLinkViewHolder;
+    private SubmissionLinkDetailsViewHolder linkDetailsViewHolder;
     private Link activeSubmissionContentLink;
 
     private int deviceDisplayWidth;
@@ -166,14 +155,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentList.setItemAnimator(new DefaultItemAnimator());
 
         setupCommentsHelper();
-        setupContentWebView();
         setupContentImageView();
         setupCommentsSheet();
 
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
         deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
 
-        linkedRedditLinkViewHolder = new SubmissionLinkedRedditLinkViewHolder(linkedRedditLinkView);
+        linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView);
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
@@ -270,41 +258,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                             }
                         })
         );
-    }
-
-    private void setupContentWebView() {
-        contentWebView.getSettings().setJavaScriptEnabled(true);
-        contentWebView.setWebChromeClient(new WebChromeClient() {
-            @Override
-            public void onProgressChanged(WebView view, int newProgress) {
-                contentLoadProgressView.setIndeterminate(false);
-                contentLoadProgressView.setProgressWithAnimation(newProgress);
-                contentLoadProgressView.setVisible(newProgress < 100);
-            }
-        });
-
-        // TODO: 04/03/17 How do we find out if there's a registered app for certain URLs?
-        contentWebView.setWebViewClient(new WebViewClient() {
-            @Override
-            public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
-                String urlScheme = request.getUrl().normalizeScheme().getScheme();
-                if ("http".equals(urlScheme) || "https".equals(urlScheme)) {
-                    // Let the WebView load this URL.
-                    return false;
-
-                } else {
-                    // A deep-link was clicked. Send an Intent instead.
-                    Intent deepLinkIntent = Intents.createForUrl(request.getUrl().toString());
-                    if (Intents.hasAppToHandleIntent(getActivity(), deepLinkIntent)) {
-                        startActivity(deepLinkIntent);
-
-                    } else {
-                        Toast.makeText(getActivity(), R.string.submission_error_no_app_to_handle_intent, Toast.LENGTH_SHORT).show();
-                    }
-                    return true;
-                }
-            }
-        });
     }
 
     private void setupContentImageView() {
@@ -514,28 +467,28 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
                 } else {
                     contentLoadProgressView.hide();
-                    selfPostTextView.setVisibility(View.GONE);
-                    linkedRedditLinkViewHolder.setVisible(true);
-
                     unsubscribeOnCollapse(
-                            linkedRedditLinkViewHolder.populate(((RedditLink) contentLink))
+                            linkDetailsViewHolder.populate(((RedditLink) contentLink))
                     );
-                    linkedRedditLinkView.setOnClickListener(__ -> {
+                    linkDetailsView.setOnClickListener(__ -> {
                         OpenUrlActivity.handle(getContext(), contentLink, null);
                     });
                 }
                 break;
 
             case EXTERNAL:
-                // Reset the page before loading the new submission so that the last submission isn't visible.
-                contentWebView.loadUrl(BLANK_PAGE_URL);
-                contentWebView.loadUrl(submission.getUrl());
-
-                executeOnMeasure(commentListParentSheet, () -> {
-                    commentListParentSheet.setScrollingEnabled(true);
-                    commentListParentSheet.setPeekHeight(commentsSheetMinimumVisibleHeight);
-                    commentListParentSheet.scrollTo(commentListParentSheet.getHeight() * 3 / 10);
+                contentLoadProgressView.hide();
+                contentLoadProgressView.hide();
+                unsubscribeOnCollapse(
+                        linkDetailsViewHolder.populate(((Link.External) contentLink))
+                );
+                linkDetailsView.setOnClickListener(__ -> {
+                    OpenUrlActivity.handle(getContext(), contentLink, null);
                 });
+
+                // Reset the page before loading the new submission so that the last submission isn't visible.
+//                contentWebView.loadUrl(BLANK_PAGE_URL);
+//                contentWebView.loadUrl(submission.getUrl());
                 break;
 
             case VIDEO:
@@ -546,10 +499,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 throw new UnsupportedOperationException("Unknown content: " + contentLink);
         }
 
-        if (!contentLink.isRedditHosted()) {
-            selfPostTextView.setVisibility(View.GONE);
-            linkedRedditLinkViewHolder.setVisible(false);
-        }
+        linkDetailsViewHolder.setVisible(contentLink.isExternal() || contentLink.isRedditHosted() && !submission.isSelfPost());
+        selfPostTextView.setVisibility(contentLink.isRedditHosted() && submission.isSelfPost() ? View.VISIBLE : View.GONE);
         contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
 
         // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
@@ -559,21 +510,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         // Stick the content progress bar below the toolbar if it's an external link. Otherwise, make
         // it scroll with the comments sheet.
         contentLoadProgressView.setSyncScrollEnabled(contentLink.type() != Link.Type.EXTERNAL);
-
-        if (contentLink.isExternal()) {
-            // Show the WebView only when this page is fully expanded or else it'll interfere with the entry animation.
-            // Also ignore loading the WebView on the emulator. It is very expensive and greatly slow down the emulator.
-            if (!BuildConfig.DEBUG || !DeviceUtils.isEmulator()) {
-                pendingOnExpandRunnables.add(() -> {
-                    contentWebView.setVisibility(View.VISIBLE);
-                });
-            }
-            contentWebViewContainer.setVisibility(View.VISIBLE);
-
-        } else {
-            contentWebView.setVisibility(View.GONE);
-            contentWebViewContainer.setVisibility(View.GONE);
-        }
     }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //
@@ -613,28 +549,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @Override
     public void onPageCollapsed() {
         onCollapseSubscriptions.clear();
-        contentWebView.stopLoading();
     }
 
     private void unsubscribeOnCollapse(Subscription subscription) {
         onCollapseSubscriptions.add(subscription);
-    }
-
-// ======== BACK-PRESS ======== //
-
-    /**
-     * @return true if the back press should be intercepted. False otherwise.
-     */
-    public boolean handleBackPress() {
-        if (activeSubmission != null && !commentListParentSheet.isExpanded() && contentWebView.getVisibility() == View.VISIBLE) {
-            if (contentWebView.canGoBack() && !BLANK_PAGE_URL.equals(Views.previousUrlInHistory(contentWebView))) {
-                // WebView is visible and can go back.
-                contentWebView.goBack();
-                return true;
-            }
-        }
-
-        return false;
     }
 
 }

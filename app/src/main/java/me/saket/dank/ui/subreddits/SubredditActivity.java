@@ -316,10 +316,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     @Override
     public void onBackPressed() {
         if (submissionPage.isExpandedOrExpanding()) {
-            boolean backPressHandled = submissionFragment.handleBackPress();
-            if (!backPressHandled) {
-                submissionList.collapse();
-            }
+            submissionList.collapse();
 
         } else if (!toolbarSheet.isCollapsed()) {
             toolbarSheet.collapse();
