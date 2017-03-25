@@ -24,7 +24,6 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="@dimen/spacing12"
         android:layout_toEndOf="@+id/item_preferencegroup_icon"
-        android:fontFamily="sans-serif-condensed"
         android:textAllCaps="true"
         android:textColor="@color/gray_100"
         tools:text="@string/userpreferences_look_and_feel" />
@@ -36,7 +35,6 @@
         android:layout_alignStart="@+id/item_preferencegroup_title"
         android:layout_below="@+id/item_preferencegroup_title"
         android:layout_marginBottom="@dimen/spacing12"
-        android:fontFamily="sans-serif-condensed"
         android:textColor="@color/gray_600"
         tools:text="@string/userpreferences_look_and_feel_subtitle" />
 

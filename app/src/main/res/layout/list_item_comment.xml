@@ -16,7 +16,6 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="@dimen/spacing4"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-condensed"
             android:maxLines="1"
             android:textColor="@color/gray_500"
             android:textSize="@dimen/textsize12"
@@ -30,7 +29,6 @@
             android:layout_marginStart="@dimen/spacing8"
             android:layout_weight="1"
             android:ellipsize="end"
-            android:fontFamily="sans-serif-condensed"
             android:maxLines="1"
             android:textSize="@dimen/textsize12"
             tools:text="nuckingfuts73" />
@@ -41,7 +39,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/spacing16"
-        android:fontFamily="sans-serif-condensed"
         android:textColor="@color/gray_200"
         tools:text="That boss was my favourite. I bought Dark Souls after hearing how crushingly difficult it was from a friend of mine. He kept warning me about that boss and told me to prepare for a really difficult time." />
 

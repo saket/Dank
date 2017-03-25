@@ -63,7 +63,6 @@
             android:layout_marginBottom="@dimen/spacing4"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
-            android:fontFamily="sans-serif-condensed"
             android:paddingTop="@dimen/spacing16"
             android:textColor="@color/gray_100"
             android:textSize="@dimen/textsize16"
@@ -76,7 +75,8 @@
             android:layout_marginBottom="@dimen/spacing8"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
-            android:fontFamily="sans-serif-smallcaps"
+            android:textAllCaps="true"
+            android:textSize="@dimen/textsize12"
             android:textColor="@color/gray_600"
             tools:text="/r/pics" />
 
@@ -85,8 +85,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/spacing16"
-            android:layout_marginStart="@dimen/spacing16"
-            android:fontFamily="sans-serif-condensed" />
+            android:layout_marginStart="@dimen/spacing16" />
 
         <RelativeLayout
             android:id="@+id/submission_linked_reddit_url"
@@ -129,7 +128,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
-                    android:fontFamily="sans-serif-condensed"
                     android:maxLines="1"
                     tools:text="/r/MaliciousCompliance" />
 
@@ -138,7 +136,6 @@
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
-                    android:fontFamily="sans-serif-condensed"
                     android:maxLines="1"
                     android:textColor="@color/white_opacity_30"
                     tools:text="https://np.reddit.com/r/MaliciousCompliance/cadasd" />

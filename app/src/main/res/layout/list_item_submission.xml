@@ -17,9 +17,9 @@
             android:id="@+id/submission_item_icon"
             android:layout_width="52dp"
             android:layout_height="52dp"
-            android:layout_marginTop="6dp"
             android:layout_marginBottom="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
+            android:layout_marginTop="6dp"
             tools:background="@drawable/background_submission_self_thumbnail"
             tools:ignore="ContentDescription"
             tools:scaleType="centerInside"
@@ -33,7 +33,6 @@
             android:layout_marginEnd="@dimen/spacing24"
             android:layout_marginStart="@dimen/spacing24"
             android:layout_toEndOf="@+id/submission_item_icon"
-            android:fontFamily="sans-serif-condensed"
             android:textColor="@color/gray_100"
             android:textSize="@dimen/textsize16"
             tools:ignore="RtlHardcoded"
@@ -48,8 +47,9 @@
             android:layout_below="@+id/submission_item_title"
             android:layout_marginBottom="@dimen/spacing16"
             android:layout_marginTop="@dimen/spacing4"
-            android:fontFamily="sans-serif-smallcaps"
+            android:textAllCaps="true"
             android:textColor="@color/gray_600"
+            android:textSize="@dimen/textsize12"
             tools:text="/r/TodayILearned" />
     </RelativeLayout>
 

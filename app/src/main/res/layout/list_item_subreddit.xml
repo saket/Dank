@@ -4,4 +4,4 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_marginTop="-4dp"
     tools:text="Frontpage"
-    style="@style/Button.SubredditPicker" />
+    style="@style/DankButton.SubredditPicker" />
