@@ -126,7 +126,7 @@
                     tools:text="https://np.reddit.com/r/MaliciousCompliance/cadasd" />
             </LinearLayout>
 
-            <ProgressBar
+            <me.saket.dank.widgets.SubmissionAnimatedProgressBar
                 android:id="@+id/submission_linkdetails_progress"
                 style="@style/DankProgressBar.Horizontal.BottomAligned"
                 android:layout_alignBottom="@+id/submission_linkedredditurl_content"

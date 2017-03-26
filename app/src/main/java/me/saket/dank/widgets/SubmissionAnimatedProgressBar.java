@@ -4,6 +4,7 @@ import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
+import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ProgressBar;
 
@@ -20,6 +21,13 @@ public class SubmissionAnimatedProgressBar extends ProgressBar {
 
     public SubmissionAnimatedProgressBar(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+
+//        TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.SubmissionAnimatedProgressBar);
+//        if (attributes.hasValue(R.styleable.SubmissionAnimatedProgressBar_animationPivotY)) {
+//            float animationPivot = attributes.getFloat(R.styleable.SubmissionAnimatedProgressBar_animationPivotY, -1);
+//        }
+//        attributes.recycle();
     }
 
     /**
@@ -65,8 +73,7 @@ public class SubmissionAnimatedProgressBar extends ProgressBar {
 
     @Override
     public void setVisibility(int visibility) {
-        super.setVisibility(visibility);
-        new Exception("Use setVisible() instead").printStackTrace();
+        setVisible(visibility == VISIBLE);
     }
 
     public void show() {
@@ -77,14 +84,18 @@ public class SubmissionAnimatedProgressBar extends ProgressBar {
         setVisible(false);
     }
 
-    public void setVisible(boolean visible) {
-        // Ignore if already visible/hidden.
-        if (isVisible != null && isVisible == visible) {
-            return;
-        }
-        isVisible = visible;
+    private void setVisible(boolean visible) {
+        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
+        boolean isTopAligned = marginLayoutParams.topMargin < 0;
 
-        setPivotY(getHeight() * 4 / 10);    // This value of 40% calculated using trial and error. Change this if needed.
+        if (getHeight() > 0) {
+            // Since we apply negative margins to negate ProgressView's extra vertical spacing,
+            // set a pivot that ensures the gravity of the bar while animating in/out.
+            float pivotYFactor = (float) Math.abs(isTopAligned ? marginLayoutParams.topMargin : 2 * marginLayoutParams.bottomMargin) / getHeight();
+            setPivotY(getHeight() * pivotYFactor);
+        }
+
+        animate().cancel();
         animate()
                 .scaleY(visible ? 1f : 0f)
                 .setStartDelay(visibilityAnimationOngoing ? 100 : 0)

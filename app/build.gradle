@@ -97,4 +97,7 @@ dependencies {
     compile 'com.github.Saketme:Better-Link-Movement-Method:40b13980d4'
     compile 'org.sufficientlysecure:html-textview:3.3'
     compile 'me.zhanghai.android.customtabshelper:library:1.0.3'
+    compile 'org.jsoup:jsoup:1.10.2'
+    compile 'com.schinizer:rxunfurl:0.2.0'
+    compile 'com.github.larvalabs:linkunfurl:v0.11'
 }

@@ -15,9 +15,9 @@ import java.util.Set;
 public class MediaLink extends Link {
 
     protected String url;
-    private boolean canUseRedditOptimizedImageUrl;
     private Type type;
     private Thumbnails redditSuppliedImages;
+    private boolean canUseRedditOptimizedImageUrl;
 
     /**
      * @param canUseRedditOptimizedImages Reddit provides self-hosted copies of the content for images (For GIFs and videos, it
@@ -39,7 +39,7 @@ public class MediaLink extends Link {
      * Used in {@link #optimizedImageUrl(int)}.
      */
     public void setRedditSuppliedImages(Thumbnails redditImages) {
-        this.redditSuppliedImages = redditImages;
+        redditSuppliedImages = redditImages;
     }
 
     /**
@@ -49,7 +49,7 @@ public class MediaLink extends Link {
      * Use this only for images.
      */
     public String optimizedImageUrl(int optimizeForWidth) {
-        if (canUseRedditOptimizedImageUrl) {
+        if (canUseRedditOptimizedImageUrl && redditSuppliedImages != null) {
             Thumbnails.Image closestImage = redditSuppliedImages.getSource();
             int closestDifference = optimizeForWidth - redditSuppliedImages.getSource().getWidth();
 

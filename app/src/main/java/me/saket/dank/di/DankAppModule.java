@@ -12,12 +12,14 @@ import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.http.LoggingMode;
 import net.dean.jraw.http.UserAgent;
 
+import java.util.concurrent.TimeUnit;
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
+import okhttp3.OkHttpClient;
 import timber.log.Timber;
 
 @Module
@@ -64,6 +66,15 @@ public class DankAppModule {
     @Singleton
     SharedPrefsManager provideSharedPrefsManager() {
         return new SharedPrefsManager(appContext);
+    }
+
+    @Provides
+    @Singleton
+    OkHttpClient provideOkHttpClient() {
+        return new OkHttpClient.Builder()
+                .connectTimeout(10, TimeUnit.SECONDS)
+                .readTimeout(10, TimeUnit.SECONDS)
+                .build();
     }
 
 }

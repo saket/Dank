@@ -4,6 +4,7 @@ import android.os.Looper;
 
 import rx.Observable;
 import rx.Scheduler;
+import rx.Single;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
@@ -21,6 +22,18 @@ public class RxUtils {
      * accidentally get executed on the main thread.
      */
     public static <T> Observable.Transformer<T, T> applySchedulers() {
+        return observable -> observable
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread());
+    }
+
+    /**
+     * A transformer that makes an Observable execute its computation (or emit items) inside an IO thread and the
+     * operators that follow this method call (including the Subscriber) execute on the main thread. This should ideally
+     * be called right before (or as close as possible) to the subscribe() call to ensure any other operator doesn't
+     * accidentally get executed on the main thread.
+     */
+    public static <T> Single.Transformer<T, T> applySchedulersSingle() {
         return observable -> observable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());

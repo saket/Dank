@@ -1,7 +1,6 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.RxUtils.applySchedulers;
-import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.logError;
 
 import android.content.res.Resources;
@@ -15,11 +14,10 @@ import android.widget.TextView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.RedditLink;
-import me.saket.dank.di.Dank;
-import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.UrlMetadataParser;
+import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import rx.Subscription;
 import rx.subscriptions.Subscriptions;
 
@@ -32,7 +30,7 @@ public class SubmissionLinkDetailsViewHolder {
     @BindView(R.id.submission_linkdetails_icon) ImageView iconView;
     @BindView(R.id.submission_linkdetails_title) TextView titleView;
     @BindView(R.id.submission_linkdetails_subtitle) TextView subtitleView;
-    @BindView(R.id.submission_linkdetails_progress) View progressView;
+    @BindView(R.id.submission_linkdetails_progress) SubmissionAnimatedProgressBar progressView;
 
     private ViewGroup itemView;
 
@@ -74,30 +72,30 @@ public class SubmissionLinkDetailsViewHolder {
             iconView.setImageResource(R.drawable.ic_submission_24dp);
             titleView.setText(Uri.parse(((RedditLink.Submission) redditLink).url).getPath());
             subtitleView.setText(R.string.submission_linkedredditurl_tap_to_open_submission);
-            return loadSubmissionData((RedditLink.Submission) redditLink);
+            return populateSubmissionTitle((RedditLink.Submission) redditLink);
 
         } else {
             throw new UnsupportedOperationException("Unknown reddit link: " + redditLink);
         }
     }
 
-    private Subscription loadSubmissionData(RedditLink.Submission submissionLink) {
-        DankSubmissionRequest requestWithoutComments = DankSubmissionRequest.builder(submissionLink.id)
-                // We could make commentSort nullable, but the null check is there to detect any accidental absence of sort.
-                .commentSort(DankRedditClient.DEFAULT_COMMENT_SORT)
-                .commentLimit(0)
-                .build();
+    private Subscription populate(String url) {
+        progressView.setVisibility(View.VISIBLE);
 
-        return Dank.reddit()
-                .withAuth(Dank.reddit().submission(requestWithoutComments))
-                .compose(applySchedulers())
-                .compose(doOnStartAndFinish(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
-                .subscribe(submission -> {
+        return UrlMetadataParser.parse(url)
+                .compose(applySchedulersSingle())
+                .subscribe(linkMetadata -> {
                     //noinspection deprecation
-                    titleView.setText(Html.fromHtml(submission.getTitle()));
+                    titleView.setText(Html.fromHtml(linkMetadata.title()));
                     titleView.setMaxLines(Integer.MAX_VALUE);
+                    progressView.setVisibility(View.GONE);
 
-                }, logError("Couldn't load submission details"));
+                }, logError("Couldn't get link's meta-data: " + url));
+    }
+
+    private Subscription populateSubmissionTitle(RedditLink.Submission submissionLink) {
+        // Downloading the page's HTML to get the title is faster than getting the submission's data from the API.
+        return populate(submissionLink.url);
     }
 
     /**
@@ -110,8 +108,8 @@ public class SubmissionLinkDetailsViewHolder {
         iconView.setImageResource(R.drawable.ic_link_black_24dp);
         titleView.setText(externalLink.url);
         subtitleView.setText(R.string.submission_linkedredditurl_tap_to_open_link);
-        progressView.setVisibility(View.VISIBLE);
-        return Subscriptions.unsubscribed();
+
+        return populate(externalLink.url);
     }
 
 }
