@@ -53,6 +53,12 @@ public class RxUtils {
                 .doOnUnsubscribe(() -> isOngoingAction.call(false));
     }
 
+    public static <T> Single.Transformer<T, T> doOnStartAndFinishSingle(Action1<Boolean> isOngoingAction) {
+        return observable -> observable
+                .doOnSubscribe(() -> isOngoingAction.call(true))
+                .doOnUnsubscribe(() -> isOngoingAction.call(false));
+    }
+
     public static Scheduler ioIfNeeded() {
         return Looper.myLooper() == Looper.getMainLooper() ? Schedulers.io() : Schedulers.trampoline();
     }

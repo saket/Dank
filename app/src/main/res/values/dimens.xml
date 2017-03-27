@@ -21,4 +21,8 @@
     <dimen name="comment_start_padding_for_root_comment">16dp</dimen>
     <dimen name="comment_start_padding_per_depth_level">12dp</dimen>
     <dimen name="submission_commentssheet_minimum_visible_height">70dp</dimen>
+    <dimen name="submission_link_icon_width_without_thumbnail">60dp</dimen>
+    <dimen name="submission_link_icon_width_with_thumbnail">100dp</dimen>
+    <dimen name="submission_link_favicon_max_size">32dp</dimen>
+    <dimen name="submission_link_favicon_min_size">20dp</dimen>
 </resources>

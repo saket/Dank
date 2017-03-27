@@ -91,7 +91,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.submission_title) TextView titleView;
     @BindView(R.id.submission_subtitle) TextView subtitleView;
     @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
-    @BindView(R.id.submission_linked_reddit_url) ViewGroup linkDetailsView;
+    @BindView(R.id.submission_link_container) ViewGroup linkDetailsView;
     @BindView(R.id.submission_comment_list) RecyclerView commentList;
     @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
 
@@ -470,25 +470,16 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                     unsubscribeOnCollapse(
                             linkDetailsViewHolder.populate(((RedditLink) contentLink))
                     );
-                    linkDetailsView.setOnClickListener(__ -> {
-                        OpenUrlActivity.handle(getContext(), contentLink, null);
-                    });
+                    linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
                 }
                 break;
 
             case EXTERNAL:
                 contentLoadProgressView.hide();
-                contentLoadProgressView.hide();
                 unsubscribeOnCollapse(
                         linkDetailsViewHolder.populate(((Link.External) contentLink))
                 );
-                linkDetailsView.setOnClickListener(__ -> {
-                    OpenUrlActivity.handle(getContext(), contentLink, null);
-                });
-
-                // Reset the page before loading the new submission so that the last submission isn't visible.
-//                contentWebView.loadUrl(BLANK_PAGE_URL);
-//                contentWebView.loadUrl(submission.getUrl());
+                linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
                 break;
 
             case VIDEO:

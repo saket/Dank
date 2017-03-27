@@ -72,7 +72,7 @@ public class DankAppModule {
     @Singleton
     OkHttpClient provideOkHttpClient() {
         return new OkHttpClient.Builder()
-                .connectTimeout(10, TimeUnit.SECONDS)
+                .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(10, TimeUnit.SECONDS)
                 .build();
     }

@@ -50,14 +50,12 @@
     <string name="submission_loading_more_comments">Loading more comments…</string>
     <string name="submission_error_failed_to_load_more_comments">Failed to load more comments</string>
     <string name="submission_continue_this_thread">Continue this thread</string>
-    <string name="submission_linkedredditurl_loading">Loading…</string>
-
-    <string name="submission_linkedredditurl_tap_to_open_profile">Tap to open profile</string>
-    <string name="submission_linkedredditurl_tap_to_open_subreddit">Tap to open subreddit</string>
-    <string name="submission_linkedredditurl_tap_to_open_submission">Tap to open submission</string>
-    <string name="submission_linkedredditurl_tap_to_open_link">Tap to open link</string>
-    <string name="submission_linkdetails_linked_profile">Linked profile</string>
-    <string name="submission_linkdetails_linked_subreddit">Linked subreddit</string>
-    <string name="submission_linkdetails_linked_submission">Linked submission</string>
-    <string name="submission_linkdetails_linked_url">Linked URL</string>
+    <string name="submission_link_loading">Loading…</string>
+    <string name="submission_link_tap_to_open_profile">Tap to open profile</string>
+    <string name="submission_link_tap_to_open_subreddit">Tap to open subreddit</string>
+    <string name="submission_link_tap_to_open_submission">Tap to open submission</string>
+    <string name="submission_link_linked_profile">Linked profile</string>
+    <string name="submission_link_linked_subreddit">Linked subreddit</string>
+    <string name="submission_link_linked_submission">Linked submission</string>
+    <string name="submission_link_linked_url">Linked URL</string>
 </resources>

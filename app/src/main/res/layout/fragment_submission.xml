@@ -61,8 +61,8 @@
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
             android:textAllCaps="true"
-            android:textSize="@dimen/textsize12"
             android:textColor="@color/gray_600"
+            android:textSize="@dimen/textsize12"
             tools:text="/r/pics" />
 
         <TextView
@@ -73,63 +73,80 @@
             android:layout_marginStart="@dimen/spacing16" />
 
         <RelativeLayout
-            android:id="@+id/submission_linked_reddit_url"
+            android:id="@+id/submission_link_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
             android:layout_marginTop="@dimen/spacing8"
-            android:background="@drawable/background_submission_linked_reddit_url"
+            android:background="@drawable/background_submission_link"
             android:foreground="?attr/selectableItemBackground"
             android:orientation="horizontal"
             android:visibility="gone"
             tools:visibility="visible">
 
-            <!-- ContentDescription is set in SubmissionLinkedRedditLinkViewHolder -->
-            <ImageView
-                android:id="@+id/submission_linkdetails_icon"
-                android:layout_width="60dp"
+            <FrameLayout
+                android:id="@+id/submission_link_icon_container"
+                android:layout_width="@dimen/submission_link_icon_width_without_thumbnail"
                 android:layout_height="wrap_content"
-                android:layout_alignBottom="@+id/submission_linkedredditurl_content"
-                android:layout_alignTop="@+id/submission_linkedredditurl_content"
-                android:background="@color/white_opacity_05"
-                android:padding="@dimen/spacing16"
-                android:src="@drawable/ic_link_black_24dp"
-                android:tint="@color/gray_400"
-                tools:ignore="ContentDescription" />
+                android:layout_alignBottom="@+id/submission_link_title_container"
+                android:layout_alignTop="@+id/submission_link_title_container"
+                android:background="@color/white_opacity_05">
+
+                <!-- ContentDescription is set in SubmissionLinkedRedditLinkViewHolder -->
+                <ImageView
+                    android:id="@+id/submission_link_thumbnail"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:scaleType="centerCrop"
+                    tools:ignore="ContentDescription" />
+
+                <!-- ContentDescription is set in SubmissionLinkedRedditLinkViewHolder -->
+                <ImageView
+                    android:id="@+id/submission_link_icon"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:adjustViewBounds="true"
+                    android:padding="1dp"
+                    android:src="@drawable/ic_link_black_24dp"
+                    tools:ignore="ContentDescription"
+                    tools:tint="@color/gray_400" />
+            </FrameLayout>
 
             <LinearLayout
-                android:id="@+id/submission_linkedredditurl_content"
+                android:id="@+id/submission_link_title_container"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_toEndOf="@+id/submission_linkdetails_icon"
+                android:layout_toEndOf="@+id/submission_link_icon_container"
                 android:animateLayoutChanges="true"
                 android:gravity="center_vertical"
                 android:orientation="vertical"
                 android:padding="@dimen/spacing16">
 
                 <TextView
-                    android:id="@+id/submission_linkdetails_title"
+                    android:id="@+id/submission_link_title"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="1"
+                    android:textColor="@color/submission_link_title"
                     tools:text="/r/MaliciousCompliance" />
 
                 <TextView
-                    android:id="@+id/submission_linkdetails_subtitle"
+                    android:id="@+id/submission_link_subtitle"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
                     android:ellipsize="end"
                     android:maxLines="1"
-                    android:textColor="@color/white_opacity_30"
+                    android:textColor="@color/submission_link_subtitle"
                     tools:text="https://np.reddit.com/r/MaliciousCompliance/cadasd" />
             </LinearLayout>
 
             <me.saket.dank.widgets.SubmissionAnimatedProgressBar
-                android:id="@+id/submission_linkdetails_progress"
+                android:id="@+id/submission_link_progress"
                 style="@style/DankProgressBar.Horizontal.BottomAligned"
-                android:layout_alignBottom="@+id/submission_linkedredditurl_content"
+                android:layout_alignBottom="@+id/submission_link_title_container"
                 android:indeterminateTint="@color/black_opacity_40" />
         </RelativeLayout>
 
