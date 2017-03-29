@@ -34,6 +34,9 @@ public class UrlMetadataParser {
             Request request = new Request.Builder()
                     .url(url)
                     .header("User-Agent", CHROME_DESKTOP_USER_AGENT)
+                    // "Referer" is the correct header name. It's required along with the
+                    // user agent to force websites in returning their HTML version.
+                    .addHeader("Referer", "http://www.google.com")
                     .build();
 
             Call call = Dank.okHttpClient().newCall(request);

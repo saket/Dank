@@ -71,6 +71,15 @@ public class MediaLink extends Link {
         return url;
     }
 
+    @Override
+    public String toString() {
+        return "MediaLink{" +
+                "url='" + url + '\'' +
+                ", type=" + type +
+                ", redditSuppliedImages=" + redditSuppliedImages +
+                ", canUseRedditOptimizedImageUrl=" + canUseRedditOptimizedImageUrl +
+                '}';
+    }
 
     public static MediaLink create(String url, boolean canUseRedditOptimizedImageUrl, Type type) {
         return new MediaLink(url, canUseRedditOptimizedImageUrl, type);

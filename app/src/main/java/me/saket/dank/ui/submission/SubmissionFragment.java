@@ -401,10 +401,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     private void loadSubmissionContent(Submission submission, Link contentLink) {
-//        Timber.d("-------------------------------------------");
-//        Timber.i("%s", submission.getTitle());
-//        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
-//        Timber.i("Parsed content: %s, type: %s", contentLink, contentLink.type());
+        Timber.d("-------------------------------------------");
+        Timber.i("%s", submission.getTitle());
+        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
+        Timber.i("Parsed content: %s, type: %s", contentLink, contentLink.type());
 //        if (submissionContent.type() == SubmissionContent.Type.IMAGE) {
 //            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
 //        }
