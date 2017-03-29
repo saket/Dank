@@ -20,6 +20,11 @@
             tools:ignore="ContentDescription" />
     </FrameLayout>
 
+    <com.google.android.exoplayer2.ui.SimpleExoPlayerView
+        android:id="@+id/submission_video"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" />
+
     <!-- Shadow behind the toolbar so that when the toolbar is transparent (in
          case of photo/video submissions, the toolbar icons are still visible. -->
     <View

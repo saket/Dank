@@ -222,8 +222,11 @@ public class SubmissionLinkDetailsViewHolder {
         Uri imageURI = Uri.parse(thumbnailUrl);
         String linkImageUrl = String.format(Locale.ENGLISH,
                 "http://rsz.io/%s?width=%d",
-                imageURI.getHost() + imageURI.getPath(), iconWidthWithThumbnailPx
+                thumbnailUrl.substring((imageURI.getScheme() + "://").length(), thumbnailUrl.length()),
+                iconWidthWithThumbnailPx
         );
+
+        Timber.i("linkImageUrl: %s", linkImageUrl);
 
         Glide.with(thumbnailView.getContext())
                 .load(linkImageUrl)
@@ -248,8 +251,6 @@ public class SubmissionLinkDetailsViewHolder {
 
                     @Override
                     public void onException(Exception e) {
-                        Timber.e(e, "linkImageUrl: %s", linkImageUrl);
-
                         if (linkMetadata != null && linkMetadata.hasFavicon()) {
                             loadLinkFavicon(linkMetadata, false);
                         }
@@ -290,8 +291,6 @@ public class SubmissionLinkDetailsViewHolder {
                         } else if (resource.getIntrinsicWidth() > faviconMaxSizePx) {
                             setDimensions(iconView, faviconMaxSizePx, faviconMaxSizePx);
                         }
-
-                        Timber.i("Favicon size: %s", resource.getMinimumWidth());
                     }
 
                     @Override

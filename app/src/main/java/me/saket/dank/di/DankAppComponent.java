@@ -1,5 +1,6 @@
 package me.saket.dank.di;
 
+import com.danikula.videocache.HttpProxyCacheServer;
 import com.squareup.moshi.Moshi;
 
 import javax.inject.Singleton;
@@ -16,7 +17,7 @@ public interface DankAppComponent {
 
     SharedPrefsManager sharedPrefs();
 
-    Moshi moshi();
-
     OkHttpClient okHttpClient();
+
+    HttpProxyCacheServer httpProxyCacheServer();
 }

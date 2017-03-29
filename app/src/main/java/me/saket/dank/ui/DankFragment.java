@@ -1,14 +1,17 @@
 package me.saket.dank.ui;
 
-import android.support.v4.app.Fragment;
+import com.trello.navi.component.support.NaviFragment;
+import com.trello.rxlifecycle.android.FragmentEvent;
+import com.trello.rxlifecycle.navi.NaviLifecycle;
 
+import rx.Observable;
 import rx.Subscription;
 import rx.subscriptions.CompositeSubscription;
 
 /**
  * Base class for fragments.
  */
-public class DankFragment extends Fragment {
+public class DankFragment extends NaviFragment {
 
     private CompositeSubscription onStopSubscriptions;
     private CompositeSubscription onDestroySubscriptions;
@@ -43,6 +46,10 @@ public class DankFragment extends Fragment {
             onDestroySubscriptions = new CompositeSubscription();
         }
         onDestroySubscriptions.add(subscription);
+    }
+
+    public Observable<FragmentEvent> lifecycleEvents() {
+        return NaviLifecycle.createFragmentLifecycleProvider(this).lifecycle();
     }
 
 }

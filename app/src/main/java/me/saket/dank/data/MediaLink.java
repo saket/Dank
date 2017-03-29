@@ -71,6 +71,10 @@ public class MediaLink extends Link {
         return url;
     }
 
+    public String url() {
+        return url;
+    }
+
     @Override
     public String toString() {
         return "MediaLink{" +

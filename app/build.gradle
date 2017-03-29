@@ -101,4 +101,8 @@ dependencies {
     compile 'org.jsoup:jsoup:1.10.2'
     compile 'com.schinizer:rxunfurl:0.2.0'
     compile 'com.github.larvalabs:linkunfurl:v0.11'
+    compile 'com.trello:rxlifecycle-navi:1.0'
+
+    compile 'com.google.android.exoplayer:exoplayer:r2.3.1'
+    compile 'com.danikula:videocache:2.6.4'
 }

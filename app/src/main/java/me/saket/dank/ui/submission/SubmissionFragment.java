@@ -17,6 +17,7 @@ import android.annotation.SuppressLint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -39,6 +40,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 
 import net.dean.jraw.models.Submission;
 
@@ -60,6 +62,7 @@ import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.DankUrlParser;
+import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
@@ -86,6 +89,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
     @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
     @BindView(R.id.submission_image) ZoomableImageView contentImageView;
+    @BindView(R.id.submission_video) SimpleExoPlayerView contentVideoView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
@@ -107,6 +111,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
     private SubmissionLinkDetailsViewHolder linkDetailsViewHolder;
     private Link activeSubmissionContentLink;
+    private ExoPlayerManager exoPlayerManager;
 
     private int deviceDisplayWidth;
     private boolean isCommentSheetBeneathImage;
@@ -122,6 +127,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+        super.onCreateView(inflater, container, savedInstanceState);
+
         View fragmentLayout = inflater.inflate(R.layout.fragment_submission, container, false);
         ButterKnife.bind(this, fragmentLayout);
 
@@ -156,6 +163,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         setupCommentsHelper();
         setupContentImageView();
+        setupContentVideoView();
         setupCommentsSheet();
 
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
@@ -263,6 +271,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private void setupContentImageView() {
         contentImageView.setGravity(Gravity.TOP);
         Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
+    }
+
+    private void setupContentVideoView() {
+        exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
     }
 
     private void setupCommentsSheet() {
@@ -476,14 +488,31 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
             case EXTERNAL:
                 contentLoadProgressView.hide();
+                String redditSuppliedThumbnail = activeSubmission.getThumbnail();
+                if (redditSuppliedThumbnail == null) {
+                    redditSuppliedThumbnail = submission.getThumbnails().getSource().getUrl();
+                }
                 unsubscribeOnCollapse(
-                        linkDetailsViewHolder.populate(((Link.External) contentLink), activeSubmission.getThumbnail())
+                        linkDetailsViewHolder.populate(((Link.External) contentLink), redditSuppliedThumbnail)
                 );
                 linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
                 break;
 
             case VIDEO:
                 contentLoadProgressView.hide();
+                commentListParentSheet.setScrollingEnabled(true);
+                executeOnMeasure(commentListParentSheet, () -> {
+                    commentListParentSheet.scrollTo(commentListParentSheet.getHeight() / 2);    // TODO: 29/03/17 Calculate height of video?
+                    commentListParentSheet.setPeekHeight(0);
+                });
+
+                String videoUrl = ((MediaLink) contentLink).url();
+                if (videoUrl.endsWith("gifv")) {
+                    videoUrl = videoUrl.substring(0, videoUrl.length() - "gifv".length()) + "mp4";
+                }
+                Timber.i("videoUrl: %s", videoUrl);
+                String cacheUri = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
+                exoPlayerManager.playVideoInLoop(Uri.parse(cacheUri));
                 break;
 
             default:
@@ -493,10 +522,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         linkDetailsViewHolder.setVisible(contentLink.isExternal() || contentLink.isRedditHosted() && !submission.isSelfPost());
         selfPostTextView.setVisibility(contentLink.isRedditHosted() && submission.isSelfPost() ? View.VISIBLE : View.GONE);
         contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
+        contentVideoView.setVisibility(contentLink.isVideo() ? View.VISIBLE : View.GONE);
 
         // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
-        toolbarBackground.setSyncScrollEnabled(contentLink.type() == Link.Type.IMAGE_OR_GIF);
-        toolbarShadows.setVisibility(contentLink.type() == Link.Type.IMAGE_OR_GIF ? View.VISIBLE : View.GONE);
+        boolean transparentToolbar = contentLink.type() == Link.Type.IMAGE_OR_GIF || contentLink.type() == Link.Type.VIDEO;
+        toolbarBackground.setSyncScrollEnabled(transparentToolbar);
+        toolbarShadows.setVisibility(transparentToolbar ? View.VISIBLE : View.GONE);
 
         // Stick the content progress bar below the toolbar if it's an external link. Otherwise, make
         // it scroll with the comments sheet.
@@ -534,7 +565,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     @Override
     public void onPageAboutToCollapse(long collapseAnimDuration) {
-
+        Glide.clear(contentImageView);
     }
 
     @Override

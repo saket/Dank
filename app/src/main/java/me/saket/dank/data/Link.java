@@ -20,6 +20,10 @@ public abstract class Link implements Serializable {
         return type() == Link.Type.IMAGE_OR_GIF;
     }
 
+    public boolean isVideo() {
+        return type() == Type.VIDEO;
+    }
+
     public boolean isExternal() {
         return type() == Type.EXTERNAL;
     }

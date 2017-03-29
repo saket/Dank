@@ -38,16 +38,18 @@ public class Views {
             return;
         }
 
-        view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
+        view.getViewTreeObserver().addOnPreDrawListener(new ViewTreeObserver.OnPreDrawListener() {
             @Override
-            public void onGlobalLayout() {
+            public boolean onPreDraw() {
                 if (view.isLaidOut()) {
                     onMeasureRunnable.run();
 
                     //noinspection deprecation
-                    view.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+                    view.getViewTreeObserver().removeOnPreDrawListener(this);
                 }
-            }
+
+                return true;
+            };
         });
     }
 

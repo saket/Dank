@@ -5,7 +5,7 @@ import android.content.Context;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 
-import com.squareup.moshi.Moshi;
+import com.danikula.videocache.HttpProxyCacheServer;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
@@ -52,14 +52,8 @@ public class DankAppModule {
     @Singleton
     DankRedditClient provideDankRedditClient(UserAgent redditUserAgent, AuthenticationManager authManager) {
         RedditClient redditClient = new RedditClient(redditUserAgent);
-        redditClient.setLoggingMode(LoggingMode.ALWAYS);
+        redditClient.setLoggingMode(LoggingMode.ON_FAIL);
         return new DankRedditClient(appContext, redditClient, authManager);
-    }
-
-    @Provides
-    @Singleton
-    Moshi provideMoshi() {
-        return new Moshi.Builder().build();
     }
 
     @Provides
@@ -75,6 +69,11 @@ public class DankAppModule {
                 .connectTimeout(30, TimeUnit.SECONDS)
                 .readTimeout(10, TimeUnit.SECONDS)
                 .build();
+    }
+
+    @Provides
+    @Singleton HttpProxyCacheServer provideHttpProxyCacheServer() {
+        return new HttpProxyCacheServer(appContext);
     }
 
 }

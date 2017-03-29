@@ -107,6 +107,7 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
                     // TODO: 19/02/17 Get thumbnails provided by Reddit.
                     // TODO: 19/02/17 Don't download high-res images on low-data mode.
                     if (submission.getThumbnails() != null) {
+                        // Resize image.
                         loadThumbnailFromUrl(submission.getThumbnails().getSource().getUrl());
                     }
                     thumbnailView.setVisibility(View.VISIBLE);

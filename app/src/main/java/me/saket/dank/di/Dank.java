@@ -2,7 +2,7 @@ package me.saket.dank.di;
 
 import android.app.Application;
 
-import com.squareup.moshi.Moshi;
+import com.danikula.videocache.HttpProxyCacheServer;
 
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
@@ -26,12 +26,12 @@ public class Dank {
         return appComponent.sharedPrefs();
     }
 
-    public static Moshi moshi() {
-        return appComponent.moshi();
-    }
-
     public static OkHttpClient okHttpClient() {
         return appComponent.okHttpClient();
+    }
+
+    public static HttpProxyCacheServer httpProxyCacheServer() {
+        return appComponent.httpProxyCacheServer();
     }
 
 }
