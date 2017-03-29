@@ -477,7 +477,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             case EXTERNAL:
                 contentLoadProgressView.hide();
                 unsubscribeOnCollapse(
-                        linkDetailsViewHolder.populate(((Link.External) contentLink))
+                        linkDetailsViewHolder.populate(((Link.External) contentLink), activeSubmission.getThumbnail())
                 );
                 linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
                 break;

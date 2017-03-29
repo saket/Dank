@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission;
 
+import static android.text.TextUtils.isEmpty;
 import static me.saket.dank.utils.Images.drawableToBitmap;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinishSingle;
@@ -11,10 +12,10 @@ import android.content.res.ColorStateList;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.graphics.Palette;
 import android.text.Html;
-import android.text.TextUtils;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
@@ -23,6 +24,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.target.ImageViewTarget;
+import com.bumptech.glide.request.target.SizeReadyCallback;
 
 import java.util.Locale;
 
@@ -43,12 +45,15 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import rx.Subscription;
 import rx.subscriptions.Subscriptions;
+import timber.log.Timber;
 
 /**
  * Used when a submission points to a Reddit hosted URL, which can be another submission or a subreddit or a user.
  * Manages Views for showing details of the linked URL.
  */
 public class SubmissionLinkDetailsViewHolder {
+
+    private static final int TINT_TRANSITION_ANIMATION_DURATION = 300;
 
     @BindView(R.id.submission_link_icon_container) ViewGroup iconContainer;
     @BindView(R.id.submission_link_thumbnail) ImageView thumbnailView;
@@ -89,6 +94,7 @@ public class SubmissionLinkDetailsViewHolder {
 
         linkDetailsContainer.setBackgroundTintList(null);
         thumbnailView.setImageDrawable(null);
+        thumbnailView.setAlpha(0f);
         iconView.setImageDrawable(null);
         iconView.setBackground(null);
         setDimensions(iconView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
@@ -146,7 +152,7 @@ public class SubmissionLinkDetailsViewHolder {
                 .subscribe(linkMetadata -> {
                     String submissionPageTitle = linkMetadata.title();
 
-                    if (!TextUtils.isEmpty(submissionPageTitle)) {
+                    if (!isEmpty(submissionPageTitle)) {
                         // Reddit prefixes page titles with the linked commentator's name (if any). We don't want that.
                         int userNameSeparatorIndex = submissionPageTitle.indexOf("comments on");
                         if (userNameSeparatorIndex > -1) {
@@ -165,7 +171,7 @@ public class SubmissionLinkDetailsViewHolder {
     /**
      * Show information of an external link. Extracts meta-data from the URL to get the favicon and the title.
      */
-    public Subscription populate(Link.External externalLink) {
+    public Subscription populate(Link.External externalLink, @Nullable String redditSuppliedThumbnail) {
         resetViews();
         Views.setWidth(iconContainer, iconWidthWithThumbnailPx);
 
@@ -173,34 +179,49 @@ public class SubmissionLinkDetailsViewHolder {
         thumbnailView.setContentDescription(null);
         iconView.setContentDescription(resources.getString(R.string.submission_link_linked_url));
         iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
-        iconView.setImageResource(R.drawable.ic_link_black_24dp);
         titleView.setText(externalLink.url);
         subtitleView.setText(Urls.parseDomainName(externalLink.url));
 
         progressView.setVisibility(View.VISIBLE);
 
+        // Attempt to load image provided by Reddit. By doing this, we'll be able to load the image and
+        // the URL meta-data in parallel.
+        if (isEmpty(redditSuppliedThumbnail)) {
+            iconView.setImageResource(R.drawable.ic_link_black_24dp);
+        } else {
+            loadLinkThumbnail(externalLink.url, redditSuppliedThumbnail, null, false);
+        }
+
         return UrlMetadataParser.parse(externalLink.url, false)
                 .compose(applySchedulersSingle())
                 .doOnError(__ -> progressView.setVisibility(View.GONE))
                 .subscribe(linkMetadata -> {
-                    titleView.setMaxLines(Integer.MAX_VALUE);
-                    //noinspection deprecation
-                    titleView.setText(Html.fromHtml(linkMetadata.title()));
+                    if (isEmpty(linkMetadata.title())) {
+                        titleView.setText(linkMetadata.url());
+                    } else {
+                        //noinspection deprecation
+                        titleView.setText(Html.fromHtml(linkMetadata.title()));
+                        titleView.setMaxLines(Integer.MAX_VALUE);
+                    }
                     thumbnailView.setContentDescription(titleView.getText());
 
-                    if (linkMetadata.hasImage()) {
-                        loadLinkThumbnail(externalLink, linkMetadata);
+                    // Use link's image if Reddit did not supply with anything.
+                    if (isEmpty(redditSuppliedThumbnail) && linkMetadata.hasImage()) {
+                        loadLinkThumbnail(externalLink.url, linkMetadata.imageUrl(), linkMetadata, true);
+                    } else {
+                        progressView.setVisibility(View.GONE);
                     }
-                    loadLinkFavicon(externalLink, linkMetadata, linkMetadata.hasImage());
+                    boolean hasLinkThumbnail = linkMetadata.hasImage() || !isEmpty(redditSuppliedThumbnail);
+                    loadLinkFavicon(linkMetadata, hasLinkThumbnail);
 
                 }, logError("Couldn't get link's meta-data: " + externalLink.url));
     }
 
-    private void loadLinkThumbnail(Link.External externalLink, LinkMetadata linkMetadata) {
+    private void loadLinkThumbnail(String linkUrl, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnEnd) {
         // Resize down large images.
-        Uri imageURI = Uri.parse(linkMetadata.imageUrl());
+        Uri imageURI = Uri.parse(thumbnailUrl);
         String linkImageUrl = String.format(Locale.ENGLISH,
-                "https://rsz.io/%s?width=%d",
+                "http://rsz.io/%s?width=%d",
                 imageURI.getHost() + imageURI.getPath(), iconWidthWithThumbnailPx
         );
 
@@ -208,71 +229,60 @@ public class SubmissionLinkDetailsViewHolder {
                 .load(linkImageUrl)
                 .listener(new GlideUtils.SimpleRequestListener<String, GlideDrawable>() {
                     @Override
-                    public void onException(Exception e) {
-                        if (linkMetadata.hasFavicon()) {
-                            loadLinkFavicon(externalLink, linkMetadata, false);
-                        }
-                    }
-                })
-                .crossFade()
-                .into(new ImageViewTarget<GlideDrawable>(thumbnailView) {
-                    @Override
-                    protected void setResource(GlideDrawable resource) {
+                    public void onResourceReady(GlideDrawable resource) {
                         generateTintColorFromImage(
-                                externalLink.url,
+                                linkUrl,
                                 resource,
                                 tintColor -> {
-                                    if (!UrlMetadataParser.isGooglePlayLink(externalLink.url)) {
+                                    if (!UrlMetadataParser.isGooglePlayLink(linkUrl)) {
                                         thumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
-                                        thumbnailView.setImageDrawable(resource);
                                     }
                                     tintViews(tintColor);
                                 });
-                        progressView.setVisibility(View.GONE);
+
+                        if (hideProgressBarOnEnd) {
+                            progressView.setVisibility(View.GONE);
+                        }
+                        thumbnailView.animate().alpha(1f).setDuration(TINT_TRANSITION_ANIMATION_DURATION).start();
                     }
-                });
+
+                    @Override
+                    public void onException(Exception e) {
+                        Timber.e(e, "linkImageUrl: %s", linkImageUrl);
+
+                        if (linkMetadata != null && linkMetadata.hasFavicon()) {
+                            loadLinkFavicon(linkMetadata, false);
+                        }
+                    }
+                })
+                .into(thumbnailView);
     }
 
     /**
-     * @param isThumbnailPresent When true, tinting of the Views will be done using the favicon and the progress bar
-     *                           will be shown while the favicon is fetched. This is used when the thumbnail couldn't
-     *                           be loaded.
+     * @param hasLinkThumbnail When true, tinting of the Views will be done using the favicon and the progress bar
+     *                         will be shown while the favicon is fetched. This is used when the thumbnail couldn't
+     *                         be loaded.
      */
-    private void loadLinkFavicon(Link.External externalLink, LinkMetadata linkMetadata, boolean isThumbnailPresent) {
+    private void loadLinkFavicon(LinkMetadata linkMetadata, boolean hasLinkThumbnail) {
         iconView.setImageTintList(null);
 
-        if (!isThumbnailPresent) {
+        if (!hasLinkThumbnail) {
             progressView.setVisibility(View.VISIBLE);
         }
 
         Glide.with(iconView.getContext())
                 .load(linkMetadata.faviconUrl())
-                .crossFade()
                 .listener(new GlideUtils.SimpleRequestListener<String, GlideDrawable>() {
                     @Override
                     public void onResourceReady(GlideDrawable resource) {
-                        if (!isThumbnailPresent) {
+                        if (!hasLinkThumbnail) {
                             // Tint with favicon in case the thumbnail couldn't be fetched.
-                            generateTintColorFromImage(externalLink.url, resource, tintColor -> tintViews(tintColor));
+                            generateTintColorFromImage(linkMetadata.url(), resource, tintColor -> tintViews(tintColor));
                             progressView.setVisibility(View.GONE);
                         }
 
                         iconView.setVisibility(View.VISIBLE);
                         iconView.setBackgroundResource(R.drawable.background_submission_link_favicon_circle);
-                    }
-
-                    @Override
-                    public void onException(Exception e) {
-                        if (!isThumbnailPresent) {
-                            progressView.setVisibility(View.GONE);
-                        }
-                    }
-                })
-                .bitmapTransform(new GlideCircularTransformation(iconView.getContext()))
-                .into(new ImageViewTarget<GlideDrawable>(iconView) {
-                    @Override
-                    protected void setResource(GlideDrawable resource) {
-                        iconView.setImageDrawable(resource);
 
                         if (resource.getIntrinsicWidth() < faviconMinSizePx) {
                             setDimensions(iconView, faviconMinSizePx, faviconMinSizePx);
@@ -280,6 +290,31 @@ public class SubmissionLinkDetailsViewHolder {
                         } else if (resource.getIntrinsicWidth() > faviconMaxSizePx) {
                             setDimensions(iconView, faviconMaxSizePx, faviconMaxSizePx);
                         }
+
+                        Timber.i("Favicon size: %s", resource.getMinimumWidth());
+                    }
+
+                    @Override
+                    public void onException(Exception e) {
+                        Timber.e(e, "Couldn't load favicon");
+
+                        // Show a generic icon if the favicon couldn't be fetched.
+                        if (!hasLinkThumbnail) {
+                            iconView.setImageResource(R.drawable.ic_link_black_24dp);
+                        }
+                    }
+                })
+                .bitmapTransform(new GlideCircularTransformation(iconView.getContext()))
+                .into(new ImageViewTarget<GlideDrawable>(iconView) {
+                    @Override
+                    protected void setResource(GlideDrawable resource) {
+                        iconView.setScaleType(ImageView.ScaleType.CENTER_CROP);
+                        iconView.setImageDrawable(resource);
+                    }
+
+                    @Override
+                    public void getSize(SizeReadyCallback cb) {
+                        cb.onSizeReady(faviconMaxSizePx, faviconMaxSizePx);
                     }
                 });
     }
@@ -329,7 +364,7 @@ public class SubmissionLinkDetailsViewHolder {
     private void animateColor(int fromColor, int toColor, ValueAnimator.AnimatorUpdateListener updateListener) {
         ValueAnimator colorAnimator = ValueAnimator.ofArgb(fromColor, toColor);
         colorAnimator.addUpdateListener(updateListener);
-        colorAnimator.setDuration(300L);
+        colorAnimator.setDuration(TINT_TRANSITION_ANIMATION_DURATION);
         colorAnimator.setInterpolator(new FastOutSlowInInterpolator());
         colorAnimator.start();
     }

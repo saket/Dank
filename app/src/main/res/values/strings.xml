@@ -54,6 +54,7 @@
     <string name="submission_link_tap_to_open_profile">Tap to open profile</string>
     <string name="submission_link_tap_to_open_subreddit">Tap to open subreddit</string>
     <string name="submission_link_tap_to_open_submission">Tap to open submission</string>
+    <string name="submission_link_tap_to_open_link">Tap to open link</string>
     <string name="submission_link_linked_profile">Linked profile</string>
     <string name="submission_link_linked_subreddit">Linked subreddit</string>
     <string name="submission_link_linked_submission">Linked submission</string>
