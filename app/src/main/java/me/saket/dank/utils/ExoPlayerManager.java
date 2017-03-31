@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.view.Surface;
 import android.view.ViewGroup;
 
+import com.google.android.exoplayer2.C;
 import com.google.android.exoplayer2.DefaultLoadControl;
 import com.google.android.exoplayer2.ExoPlayerFactory;
 import com.google.android.exoplayer2.Format;
@@ -29,12 +30,13 @@ import com.google.android.exoplayer2.util.Util;
 import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
 import me.saket.dank.ui.DankFragment;
-import timber.log.Timber;
 
 public class ExoPlayerManager {
 
     private SimpleExoPlayer exoPlayer;
     private SimpleExoPlayerView playerView;
+    private Uri activeVideoUri = Uri.EMPTY;
+    private long resumePositionMs = C.POSITION_UNSET;
 
     public static ExoPlayerManager newInstance(DankFragment fragment, SimpleExoPlayerView playerView) {
         ExoPlayerManager exoPlayerManager = new ExoPlayerManager(playerView);
@@ -45,10 +47,14 @@ public class ExoPlayerManager {
             switch (event) {
                 case RESUME:
                     exoPlayerManager.setupVideoView();
+                    if (exoPlayerManager.canResumeVideoPlayback()) {
+                        exoPlayerManager.resumeVideoPlayback();
+                    }
                     break;
 
                 case PAUSE:
-                    exoPlayerManager.release();
+                    exoPlayerManager.saveInformationForResumingPlayback();
+                    exoPlayerManager.releasePlayer();
                     break;
             }
         });
@@ -61,7 +67,6 @@ public class ExoPlayerManager {
     }
 
     public void setupVideoView() {
-        Timber.i("setupVideoView()");
         if (exoPlayer != null) {
             return;
         }
@@ -90,21 +95,17 @@ public class ExoPlayerManager {
         });
     }
 
-    public void release() {
-        Timber.i("release()");
+    public void releasePlayer() {
         exoPlayer.release();
         exoPlayer = null;
     }
 
     public void playVideoInLoop(Uri videoUri) {
-        // Measures bandwidth during playback. Can be null if not required.
-        DefaultBandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
+        activeVideoUri = videoUri;
 
         // Produces DataSource instances through which media data is loaded.
-        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(playerView.getContext(),
-                Util.getUserAgent(playerView.getContext(), playerView.getContext().getPackageName()),
-                bandwidthMeter
-        );
+        String userAgent = Util.getUserAgent(playerView.getContext(), playerView.getContext().getPackageName());
+        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(playerView.getContext(), userAgent, null);
 
         // Produces Extractor instances for parsing the media data.
         ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
@@ -113,8 +114,24 @@ public class ExoPlayerManager {
         MediaSource videoSource = new LoopingMediaSource(new ExtractorMediaSource(videoUri, dataSourceFactory, extractorsFactory, null, null));
 
         // Prepare the exoPlayer with the source.
-        exoPlayer.prepare(videoSource);
+        boolean canResumePlayback = resumePositionMs != C.POSITION_UNSET;
+        if (canResumePlayback) {
+            exoPlayer.seekTo(resumePositionMs);
+        }
+        exoPlayer.prepare(videoSource, !canResumePlayback, !canResumePlayback);
         exoPlayer.setPlayWhenReady(true);
+    }
+
+    private void resumeVideoPlayback() {
+        playVideoInLoop(activeVideoUri);
+    }
+
+    private boolean canResumeVideoPlayback() {
+        return activeVideoUri != Uri.EMPTY;
+    }
+
+    private void saveInformationForResumingPlayback() {
+        resumePositionMs = exoPlayer.isCurrentWindowSeekable() ? Math.max(0, exoPlayer.getCurrentPosition()) : C.TIME_UNSET;
     }
 
     private abstract static class SimpleVideoRendererEventListener implements VideoRendererEventListener {
