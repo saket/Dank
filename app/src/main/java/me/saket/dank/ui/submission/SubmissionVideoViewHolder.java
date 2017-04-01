@@ -38,7 +38,6 @@ public class SubmissionVideoViewHolder {
     public void load(String videoUrl) {
         contentLoadProgressView.show();
 
-        Timber.d("load()");
         exoPlayerManager.setOnVideoSizeChangeListener((videoWidth, videoHeight) -> {
             setHeight(contentVideoView, videoHeight);
 

@@ -58,7 +58,8 @@ public class MediaLink extends Link {
 
                 if (differenceAbs < Math.abs(closestDifference)
                         // If another image is found with the same difference, choose the higher-res image.
-                        || differenceAbs == closestDifference && redditCopy.getWidth() > closestImage.getWidth()) {
+                        || differenceAbs == closestDifference && redditCopy.getWidth() > closestImage.getWidth())
+                {
                     closestDifference = optimizeForWidth - redditCopy.getWidth();
                     closestImage = redditCopy;
                 }
@@ -71,7 +72,17 @@ public class MediaLink extends Link {
         return url;
     }
 
-    public String url() {
+    public String highQualityVideoUrl() {
+        if (type() != Type.VIDEO) {
+            throw new IllegalStateException("Not a video");
+        }
+        return url;
+    }
+
+    public String lowQualityVideoUrl() {
+        if (type() != Type.VIDEO) {
+            throw new IllegalStateException("Not a video");
+        }
         return url;
     }
 
@@ -113,24 +124,24 @@ public class MediaLink extends Link {
     }
 
     public static class Gfycat extends MediaLink {
-        private static final Set<String> VIDEO_DOMAINS = new HashSet<>(Arrays.asList(
-                "gfycat.com",
-                "zippy.gfycat.com",     // For MP4s.
-                "fat.gfycat.com"        // For WebM.
-        ));
-
-        private static final Set<String> GIF_DOMAINS = new HashSet<>(Arrays.asList(
-                "thumbs.gfycat.com",    // For thumbnail GIFs. URLs end with "-size_restricted.gif".
-                "giant.gfycat.com"      // For original GIFs.
-        ));
-
         public Gfycat(String url, Type type) {
             super(url, false, type);
         }
 
         public static Gfycat create(String url) {
-            Type type = VIDEO_DOMAINS.contains(Uri.parse(url).getHost()) ? Type.VIDEO : Type.IMAGE_OR_GIF;
-            return new Gfycat(url, type);
+            return new Gfycat(url, Type.VIDEO);
+        }
+
+        @Override
+        public String lowQualityVideoUrl() {
+            Uri gfycatURI = Uri.parse(url);
+            return gfycatURI.getScheme() + "://thumbs.gfycat.com" + gfycatURI.getPath() + "-mobile.mp4";
+        }
+
+        @Override
+        public String highQualityVideoUrl() {
+            Uri gfycatURI = Uri.parse(url);
+            return gfycatURI.getScheme() + "://zippy.gfycat.com" + gfycatURI.getPath() + ".webm";
         }
     }
 

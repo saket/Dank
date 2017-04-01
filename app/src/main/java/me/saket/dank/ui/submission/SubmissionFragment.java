@@ -471,8 +471,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 break;
 
             case VIDEO:
-                MediaLink mediaLink = (MediaLink) contentLink;
-                contentVideoViewHolder.load(Dank.httpProxyCacheServer().getProxyUrl(mediaLink.url()));
+                String videoUrl = ((MediaLink) contentLink).lowQualityVideoUrl();
+                Timber.i("videoUrl: %s", videoUrl);
+                contentVideoViewHolder.load(Dank.httpProxyCacheServer().getProxyUrl(videoUrl));
                 break;
 
             default:

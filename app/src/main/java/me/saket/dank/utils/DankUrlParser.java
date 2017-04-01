@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.RedditLink;
+import timber.log.Timber;
 
 /**
  * Parses URLs found in the wilderness of Reddit and categorizes them into {@link Link} subclasses.
@@ -48,6 +49,17 @@ public class DankUrlParser {
      * /live/$thread_id.
      */
     private static final Pattern LIVE_THREAD_PATTERN = Pattern.compile("^/live/\\w*(/)*$");
+
+    /**
+     * Extracts the three-word name of a gfycat until a '.' or '-' is encountered. Example URLs:
+     * <p>
+     * /MessySpryAfricancivet
+     * /MessySpryAfricancivet.gif
+     * /MessySpryAfricancivet-size_restricted.gif
+     * /MessySpryAfricancivet.webm
+     * /MessySpryAfricancivet-mobile.mp4
+     */
+    private static final Pattern GFYCAT_PATH_ID_PATTERN = Pattern.compile("(/[^-.]*)");
 
     /**
      * Determine type of the url.
@@ -129,7 +141,8 @@ public class DankUrlParser {
             return createImgurLink(url);
 
         } else if (urlDomain.contains("gfycat.com")) {
-            return MediaLink.Gfycat.create(url);
+            Timber.i("Creating gfycat");
+            return createGfycatLink(contentURI);
 
         } else if ((urlDomain.contains("reddituploads.com"))) {
             // Reddit sends HTML-escaped URLs. Decode them again.
@@ -172,6 +185,32 @@ public class DankUrlParser {
         // case of images because otherwise it'll be a static image for GIFs or videos.
         boolean canUseRedditOptimizedImageUrl = isImageUrlPath(url);
         return MediaLink.Imgur.create(contentURI.toString(), canUseRedditOptimizedImageUrl);
+    }
+
+    /**
+     * Gfycat uses different type URL structures. This method converts these:
+     * <p>
+     * https://giant.gfycat.com/MessySpryAfricancivet.gif
+     * https://thumbs.gfycat.com/MessySpryAfricancivet-size_restricted.gif
+     * https://zippy.gfycat.com/MessySpryAfricancivet.webm
+     * https://thumbs.gfycat.com/MessySpryAfricancivet-mobile.mp4
+     * <p>
+     * to this:
+     * <p>
+     * https://gfycat.com/MessySpryAfricancivet
+     */
+    private static Link createGfycatLink(Uri gfycatURI) {
+        String gfycatURIPath = gfycatURI.getPath();
+        Timber.i("gfycatURIPath: %s", gfycatURIPath);
+
+        Matcher matcher = GFYCAT_PATH_ID_PATTERN.matcher(gfycatURIPath);
+        if (!matcher.matches()) {
+            Timber.w("Couldn't find three word id");
+            return MediaLink.Gfycat.create(gfycatURI.toString());
+        }
+
+        String gfycatThreeWordId = matcher.group(1);
+        return MediaLink.Gfycat.create(gfycatURI.getScheme() + "://gfycat.com" + gfycatThreeWordId);
     }
 
     private static boolean isImageUrlPath(String urlPath) {
