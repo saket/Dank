@@ -163,11 +163,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
 
         linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView);
-
-        // Restore submission if the Activity was recreated.
-        if (savedInstanceState != null) {
-            onRestoreSavedInstanceState(savedInstanceState);
-        }
         return fragmentLayout;
     }
 
@@ -183,6 +178,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         setupContentImageView();
         setupContentVideoView();
         setupCommentsSheet();
+
+        // Restore submission if the Activity was recreated.
+        if (savedInstanceState != null) {
+            onRestoreSavedInstanceState(savedInstanceState);
+        }
     }
 
     @Override
@@ -276,6 +276,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 commentListParentSheet,
                 deviceDisplayWidth
         );
+        contentImageViewHolder.setup();
     }
 
     private void setupContentVideoView() {
@@ -322,6 +323,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         // Calculates if the top of the comment sheet is directly below the image.
         Func0<Boolean> isCommentSheetBeneathImageFunc = () -> {
+            //noinspection CodeBlock2Expr
             return (int) commentListParentSheet.getY() == (int) contentImageView.getVisibleZoomedImageHeight();
         };
 
@@ -469,7 +471,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 break;
 
             case VIDEO:
-                contentVideoViewHolder.load((MediaLink) contentLink);
+                MediaLink mediaLink = (MediaLink) contentLink;
+                contentVideoViewHolder.load(Dank.httpProxyCacheServer().getProxyUrl(mediaLink.url()));
                 break;
 
             default:

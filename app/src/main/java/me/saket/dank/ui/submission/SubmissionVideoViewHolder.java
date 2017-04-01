@@ -8,8 +8,6 @@ import android.net.Uri;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 
-import me.saket.dank.data.MediaLink;
-import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -37,18 +35,7 @@ public class SubmissionVideoViewHolder {
         this.exoPlayerManager = checkNotNull(exoPlayerManager);
     }
 
-    // TODO: 01/04/17 Move this logic to UrlParser.
-    public void load(MediaLink videoLink) {
-        String videoUrl = videoLink.url();
-        if (videoUrl.endsWith("gifv")) {
-            videoUrl = videoUrl.substring(0, videoUrl.length() - "gifv".length()) + "mp4";
-        }
-        Timber.i("videoUrl: %s", videoUrl);
-        String cacheUri = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
-        load(Uri.parse(cacheUri));
-    }
-
-    private void load(Uri videoUri) {
+    public void load(String videoUrl) {
         contentLoadProgressView.show();
 
         Timber.d("load()");
@@ -68,7 +55,7 @@ public class SubmissionVideoViewHolder {
             });
         });
 
-        exoPlayerManager.playVideoInLoop(videoUri);
+        exoPlayerManager.playVideoInLoop(Uri.parse(videoUrl));
     }
 
 }

@@ -107,7 +107,7 @@ public class MediaLink extends Link {
         }
 
         public static Imgur create(String url, boolean canUseRedditOptimizedImageUrl) {
-            Type type = url.endsWith("gifv") ? Type.VIDEO : Type.IMAGE_OR_GIF;
+            Type type = url.endsWith("mp4") ? Type.VIDEO : Type.IMAGE_OR_GIF;
             return new Imgur(url, canUseRedditOptimizedImageUrl, type);
         }
     }

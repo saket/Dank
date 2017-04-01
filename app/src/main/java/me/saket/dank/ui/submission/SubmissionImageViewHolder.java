@@ -35,7 +35,9 @@ public class SubmissionImageViewHolder {
         this.contentImageView = contentImageView;
         this.commentListParentSheet = commentListParentSheet;
         this.deviceDisplayWidth = deviceDisplayWidth;
+    }
 
+    public void setup() {
         contentImageView.setGravity(Gravity.TOP);
     }
 

@@ -151,14 +151,18 @@ public class DankUrlParser {
 
     private static MediaLink.Imgur createImgurLink(String url) {
         // Convert GIFs to MP4s that are insanely light weight in size.
-        if (url.endsWith(".gif")) {
-            url += "v";
+        String[] gifFormats = new String[] { ".gif", ".gifv" };
+        for (String gifFormat : gifFormats) {
+            if (url.endsWith(gifFormat)) {
+                url = url.substring(0, url.length() - gifFormat.length()) + ".mp4";
+            }
         }
+
         Uri contentURI = Uri.parse(url);
 
         // Attempt to get direct links to images from Imgur submissions.
         // For example, convert 'http://imgur.com/djP1IZC' to 'http://i.imgur.com/djP1IZC.jpg'.
-        if (!isImageUrlPath(url) && !url.endsWith("gifv")) {
+        if (!isImageUrlPath(url) && !url.endsWith("mp4")) {
             // If this happened to be a GIF submission, the user sadly will be forced to see it
             // instead of its GIFV.
             contentURI = Uri.parse(contentURI.getScheme() + "://i.imgur.com" + contentURI.getPath() + ".jpg");
