@@ -5,7 +5,6 @@ import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.Views.executeOnMeasure;
-import static me.saket.dank.utils.Views.executeOnNextLayout;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
@@ -18,7 +17,6 @@ import android.annotation.SuppressLint;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -112,7 +110,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
     private SubmissionLinkDetailsViewHolder linkDetailsViewHolder;
     private Link activeSubmissionContentLink;
-    private ExoPlayerManager exoPlayerManager;
+
+    private SubmissionVideoViewHolder videoViewHolder;
 
     private int deviceDisplayWidth;
     private boolean isCommentSheetBeneathImage;
@@ -162,11 +161,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
         commentList.setItemAnimator(new DefaultItemAnimator());
 
-        setupCommentsHelper();
-        setupContentImageView();
-        setupContentVideoView();
-        setupCommentsSheet();
-
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
         deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
 
@@ -186,6 +180,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         submissionPageLayout = ((ExpandablePageLayout) view.getParent());
         submissionPageLayout.addCallbacks(this);
         submissionPageLayout.setPullToCollapseIntercepter(this);
+
+        setupCommentsHelper();
+        setupContentImageView();
+        setupContentVideoView();
+        setupCommentsSheet();
     }
 
     @Override
@@ -275,8 +274,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     private void setupContentVideoView() {
-        exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
         Views.setMarginBottom(contentVideoView, commentsSheetMinimumVisibleHeight);
+
+        videoViewHolder = new SubmissionVideoViewHolder(
+                submissionPageLayout,
+                contentLoadProgressView,
+                contentVideoView,
+                commentListParentSheet,
+                ExoPlayerManager.newInstance(this, contentVideoView)
+        );
     }
 
     private void setupCommentsSheet() {
@@ -491,36 +497,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             case EXTERNAL:
                 contentLoadProgressView.hide();
                 String redditSuppliedThumbnail = activeSubmission.getThumbnail();
-                if (redditSuppliedThumbnail == null) {
-                    redditSuppliedThumbnail = submission.getThumbnails().getSource().getUrl();
-                }
                 unsubscribeOnCollapse(linkDetailsViewHolder.populate(((Link.External) contentLink), redditSuppliedThumbnail));
                 linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
                 break;
 
             case VIDEO:
-                contentLoadProgressView.show();
-                exoPlayerManager.setOnVideoSizeChangeListener((videoWidth, videoHeight) -> {
-                    setHeight(contentVideoView, videoHeight);
-                    executeOnNextLayout(contentVideoView, () -> {
-                        contentLoadProgressView.hide();
-                        commentListParentSheet.setScrollingEnabled(true);
-                        int revealDistance = contentVideoView.getHeight() - commentListParentSheet.getTop();
-
-                        commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
-                        commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpandedOrExpanding() /* smoothScroll */);
-
-                        exoPlayerManager.setOnVideoSizeChangeListener(null);
-                    });
-                });
-
-                String videoUrl = ((MediaLink) contentLink).url();
-                if (videoUrl.endsWith("gifv")) {
-                    videoUrl = videoUrl.substring(0, videoUrl.length() - "gifv".length()) + "mp4";
-                }
-                Timber.i("videoUrl: %s", videoUrl);
-                String cacheUri = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
-                exoPlayerManager.playVideoInLoop(Uri.parse(cacheUri));
+                videoViewHolder.load((MediaLink) contentLink);
                 break;
 
             default:

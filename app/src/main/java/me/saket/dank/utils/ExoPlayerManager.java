@@ -82,12 +82,6 @@ public class ExoPlayerManager {
         MediaSource videoSource = new LoopingMediaSource(new ExtractorMediaSource(videoUri, dataSourceFactory, extractorsFactory, null, null));
 
         playerView.setVideoURI(videoUri, videoSource);
-//        playerView.setOnPreparedListener(new OnPreparedListener() {
-//            @Override
-//            public void onPrepared() {
-//                playerView.start();
-//            }
-//        });
     }
 
     private void pauseVideoPlayback() {

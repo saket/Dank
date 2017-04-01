@@ -26,6 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:visibility="gone"
+        android:background="@color/window_background"
         app:useTextureViewBacking="true" />
 
     <!-- Shadow behind the toolbar so that when the toolbar is transparent (in
