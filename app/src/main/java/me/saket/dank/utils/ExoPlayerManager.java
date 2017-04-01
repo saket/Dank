@@ -1,60 +1,46 @@
 package me.saket.dank.utils;
 
 import android.net.Uri;
-import android.view.Surface;
-import android.view.ViewGroup;
 
-import com.google.android.exoplayer2.C;
-import com.google.android.exoplayer2.DefaultLoadControl;
-import com.google.android.exoplayer2.ExoPlayerFactory;
-import com.google.android.exoplayer2.Format;
-import com.google.android.exoplayer2.LoadControl;
-import com.google.android.exoplayer2.SimpleExoPlayer;
-import com.google.android.exoplayer2.decoder.DecoderCounters;
+import com.devbrackets.android.exomedia.ui.widget.VideoControlsMobile;
+import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.LoopingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
-import com.google.android.exoplayer2.trackselection.AdaptiveTrackSelection;
-import com.google.android.exoplayer2.trackselection.DefaultTrackSelector;
-import com.google.android.exoplayer2.trackselection.TrackSelection;
-import com.google.android.exoplayer2.trackselection.TrackSelector;
-import com.google.android.exoplayer2.ui.AspectRatioFrameLayout;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
-import com.google.android.exoplayer2.upstream.BandwidthMeter;
 import com.google.android.exoplayer2.upstream.DataSource;
-import com.google.android.exoplayer2.upstream.DefaultBandwidthMeter;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
-import com.google.android.exoplayer2.video.VideoRendererEventListener;
 
 import me.saket.dank.ui.DankFragment;
 
 public class ExoPlayerManager {
 
-    private SimpleExoPlayer exoPlayer;
-    private SimpleExoPlayerView playerView;
-    private Uri activeVideoUri = Uri.EMPTY;
-    private long resumePositionMs = C.POSITION_UNSET;
+    private VideoView playerView;
+    private OnVideoSizeChangeListener videoSizeChangeListener;
 
-    public static ExoPlayerManager newInstance(DankFragment fragment, SimpleExoPlayerView playerView) {
+    public interface OnVideoSizeChangeListener {
+        void onVideoSizeChange(int videoWidth, int videoHeight);
+    }
+
+    public static ExoPlayerManager newInstance(DankFragment fragment, VideoView playerView) {
         ExoPlayerManager exoPlayerManager = new ExoPlayerManager(playerView);
 
         exoPlayerManager.setupVideoView();
 
         fragment.lifecycleEvents().subscribe(event -> {
             switch (event) {
-                case RESUME:
+                case CREATE:
                     exoPlayerManager.setupVideoView();
-                    if (exoPlayerManager.canResumeVideoPlayback()) {
-                        exoPlayerManager.resumeVideoPlayback();
-                    }
+                    break;
+
+                case RESUME:
+                    exoPlayerManager.resumeVideoPlayback();
                     break;
 
                 case PAUSE:
-                    exoPlayerManager.saveInformationForResumingPlayback();
-                    exoPlayerManager.releasePlayer();
+                    exoPlayerManager.pauseVideoPlayback();
                     break;
             }
         });
@@ -62,113 +48,54 @@ public class ExoPlayerManager {
         return exoPlayerManager;
     }
 
-    public ExoPlayerManager(SimpleExoPlayerView playerView) {
+    public ExoPlayerManager(VideoView playerView) {
         this.playerView = playerView;
     }
 
-    public void setupVideoView() {
-        if (exoPlayer != null) {
-            return;
-        }
-
-        // 1. Create a default TrackSelector
-        BandwidthMeter bandwidthMeter = new DefaultBandwidthMeter();
-        TrackSelection.Factory videoTrackSelectionFactory = new AdaptiveTrackSelection.Factory(bandwidthMeter);
-        TrackSelector trackSelector = new DefaultTrackSelector(videoTrackSelectionFactory);
-
-        // 2. Create a default LoadControl
-        LoadControl loadControl = new DefaultLoadControl();
-
-        // 3. Create the exoPlayer
-        exoPlayer = ExoPlayerFactory.newSimpleInstance(playerView.getContext(), trackSelector, loadControl);
-        playerView.setPlayer(exoPlayer);
-        playerView.setResizeMode(AspectRatioFrameLayout.RESIZE_MODE_FIXED_WIDTH);
-
-        exoPlayer.setVideoDebugListener(new SimpleVideoRendererEventListener() {
-            @Override
-            public void onVideoSizeChanged(int videoWidth, int videoHeight, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
-                float widthFactor = (float) playerView.getWidth() / videoWidth;
-                ViewGroup.LayoutParams layoutParams = playerView.getLayoutParams();
-                layoutParams.height = (int) (videoHeight * widthFactor);
-                playerView.setLayoutParams(layoutParams);
-            }
-        });
+    public void setOnVideoSizeChangeListener(OnVideoSizeChangeListener listener) {
+        videoSizeChangeListener = listener;
     }
 
-    public void releasePlayer() {
-        exoPlayer.release();
-        exoPlayer = null;
+    private void setupVideoView() {
+        playerView.setVideoSizeChangeListener((videoWidth, videoHeight) -> {
+            if (videoSizeChangeListener != null) {
+                float widthFactor = (float) playerView.getWidth() / videoWidth;
+                int videoWidthAfterResize = (int) (videoWidth * widthFactor);
+                int videoHeightAfterResize = (int) (videoHeight * widthFactor);
+                videoSizeChangeListener.onVideoSizeChange(videoWidthAfterResize, videoHeightAfterResize);
+            }
+        });
+
+        playerView.setControls(new VideoControlsMobile(playerView.getContext()));
     }
 
     public void playVideoInLoop(Uri videoUri) {
-        activeVideoUri = videoUri;
-
         // Produces DataSource instances through which media data is loaded.
-        String userAgent = Util.getUserAgent(playerView.getContext(), playerView.getContext().getPackageName());
-        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(playerView.getContext(), userAgent, null);
+        DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(playerView.getContext(),
+                Util.getUserAgent(playerView.getContext(), playerView.getContext().getPackageName()),
+                null
+        );
 
         // Produces Extractor instances for parsing the media data.
         ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
 
-        // This is the MediaSource representing the media to be played.
         MediaSource videoSource = new LoopingMediaSource(new ExtractorMediaSource(videoUri, dataSourceFactory, extractorsFactory, null, null));
 
-        // Prepare the exoPlayer with the source.
-        boolean canResumePlayback = resumePositionMs != C.POSITION_UNSET;
-        if (canResumePlayback) {
-            exoPlayer.seekTo(resumePositionMs);
-        }
-        exoPlayer.prepare(videoSource, !canResumePlayback, !canResumePlayback);
-        exoPlayer.setPlayWhenReady(true);
+        playerView.setVideoURI(videoUri, videoSource);
+//        playerView.setOnPreparedListener(new OnPreparedListener() {
+//            @Override
+//            public void onPrepared() {
+//                playerView.start();
+//            }
+//        });
+    }
+
+    private void pauseVideoPlayback() {
+        playerView.pause();
     }
 
     private void resumeVideoPlayback() {
-        playVideoInLoop(activeVideoUri);
-    }
-
-    private boolean canResumeVideoPlayback() {
-        return activeVideoUri != Uri.EMPTY;
-    }
-
-    private void saveInformationForResumingPlayback() {
-        resumePositionMs = exoPlayer.isCurrentWindowSeekable() ? Math.max(0, exoPlayer.getCurrentPosition()) : C.TIME_UNSET;
-    }
-
-    private abstract static class SimpleVideoRendererEventListener implements VideoRendererEventListener {
-        @Override
-        public void onVideoEnabled(DecoderCounters counters) {
-
-        }
-
-        @Override
-        public void onVideoDecoderInitialized(String decoderName, long initializedTimestampMs, long initializationDurationMs) {
-
-        }
-
-        @Override
-        public void onVideoInputFormatChanged(Format format) {
-
-        }
-
-        @Override
-        public void onDroppedFrames(int count, long elapsedMs) {
-
-        }
-
-        @Override
-        public void onVideoSizeChanged(int width, int height, int unappliedRotationDegrees, float pixelWidthHeightRatio) {
-
-        }
-
-        @Override
-        public void onRenderedFirstFrame(Surface surface) {
-
-        }
-
-        @Override
-        public void onVideoDisabled(DecoderCounters counters) {
-
-        }
+        playerView.start();
     }
 
 }

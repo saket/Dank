@@ -130,13 +130,13 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         return peekHeight;
     }
 
+    public void scrollTo(@Px int y) {
+        attemptToConsumeScrollY(currentTopY() - y);
+    }
+
     @Override
     public void scrollTo(int x, int y) {
         scrollTo(y);
-    }
-
-    public void scrollTo(@Px int y) {
-        attemptToConsumeScrollY(currentTopY() - y);
     }
 
     public void smoothScrollTo(@Px int y) {
@@ -153,6 +153,14 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         scrollAnimator.setInterpolator(new FastOutSlowInInterpolator());
         scrollAnimator.addUpdateListener(animation -> attemptToConsumeScrollY(currentTopY() - ((Float) animation.getAnimatedValue())));
         scrollAnimator.start();
+    }
+
+    public void scrollTo(@Px int y, boolean smoothScroll) {
+        if (smoothScroll) {
+            smoothScrollTo(y);
+        } else {
+            scrollTo(y);
+        }
     }
 
     public boolean isSmoothScrollingOngoing() {

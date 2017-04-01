@@ -17,13 +17,16 @@
             android:id="@+id/submission_image"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
+            android:visibility="gone"
             tools:ignore="ContentDescription" />
     </FrameLayout>
 
-    <com.google.android.exoplayer2.ui.SimpleExoPlayerView
+    <com.devbrackets.android.exomedia.ui.widget.VideoView
         android:id="@+id/submission_video"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content" />
+        android:layout_height="wrap_content"
+        android:visibility="gone"
+        app:useTextureViewBacking="true" />
 
     <!-- Shadow behind the toolbar so that when the toolbar is transparent (in
          case of photo/video submissions, the toolbar icons are still visible. -->

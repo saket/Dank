@@ -5,6 +5,7 @@ import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.Views.executeOnMeasure;
+import static me.saket.dank.utils.Views.executeOnNextLayout;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
@@ -38,9 +39,9 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
+import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.google.android.exoplayer2.ui.SimpleExoPlayerView;
 
 import net.dean.jraw.models.Submission;
 
@@ -89,7 +90,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
     @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
     @BindView(R.id.submission_image) ZoomableImageView contentImageView;
-    @BindView(R.id.submission_video) SimpleExoPlayerView contentVideoView;
+    @BindView(R.id.submission_video) VideoView contentVideoView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
     @BindView(R.id.submission_title) TextView titleView;
@@ -275,6 +276,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     private void setupContentVideoView() {
         exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
+        Views.setMarginBottom(contentVideoView, commentsSheetMinimumVisibleHeight);
     }
 
     private void setupCommentsSheet() {
@@ -282,24 +284,28 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         contentLoadProgressView.syncPositionWithSheet(commentListParentSheet);
         commentListParentSheet.setScrollingEnabled(false);
 
-        Func1<?, Integer> revealDistanceFunc = __ -> {
+        Func1<?, Integer> mediaRevealDistanceFunc = __ -> {
             // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
             // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
+            float mediaVisibleHeight = activeSubmissionContentLink.isImageOrGif()
+                    ? contentImageView.getVisibleZoomedImageHeight()
+                    : contentVideoView.getHeight();
+
             return (int) Math.min(
                     commentListParentSheet.getHeight() * 8 / 10,
-                    contentImageView.getVisibleZoomedImageHeight() - commentListParentSheet.getTop()
+                    mediaVisibleHeight - commentListParentSheet.getTop()
             );
         };
 
         // Toggle sheet's collapsed state on image click.
         contentImageView.setOnClickListener(v -> {
-            commentListParentSheet.smoothScrollTo(revealDistanceFunc.call(null));
+            commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.call(null));
         });
 
         // and on submission title click.
         commentsHeaderView.setOnClickListener(v -> {
             if (activeSubmissionContentLink instanceof MediaLink && commentListParentSheet.isAtPeekHeightState()) {
-                commentListParentSheet.smoothScrollTo(revealDistanceFunc.call(null));
+                commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.call(null));
             }
         });
 
@@ -328,7 +334,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 if (isCommentSheetBeneathImage
                         // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
                         // it becomes difficult to lock the comments sheet beneath the image.
-                        || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
+                        || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
+                {
                     commentListParentSheet.scrollTo(imageRevealDistance);
                 }
                 isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.call();
@@ -413,10 +420,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     private void loadSubmissionContent(Submission submission, Link contentLink) {
-        Timber.d("-------------------------------------------");
-        Timber.i("%s", submission.getTitle());
-        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
-        Timber.i("Parsed content: %s, type: %s", contentLink, contentLink.type());
+//        Timber.d("-------------------------------------------");
+//        Timber.i("%s", submission.getTitle());
+//        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
+//        Timber.i("Parsed content: %s, type: %s", contentLink, contentLink.type());
 //        if (submissionContent.type() == SubmissionContent.Type.IMAGE) {
 //            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
 //        }
@@ -458,12 +465,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                                     commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
 
                                     commentListParentSheet.setScrollingEnabled(true);
-                                    if (submissionPageLayout.isExpanded()) {
-                                        // Smoothly reveal the image.
-                                        commentListParentSheet.smoothScrollTo(revealDistance);
-                                    } else {
-                                        commentListParentSheet.scrollTo(revealDistance);
-                                    }
+                                    commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpanded() /* smoothScroll */);
                                 });
                             });
                         }));
@@ -492,18 +494,24 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 if (redditSuppliedThumbnail == null) {
                     redditSuppliedThumbnail = submission.getThumbnails().getSource().getUrl();
                 }
-                unsubscribeOnCollapse(
-                        linkDetailsViewHolder.populate(((Link.External) contentLink), redditSuppliedThumbnail)
-                );
+                unsubscribeOnCollapse(linkDetailsViewHolder.populate(((Link.External) contentLink), redditSuppliedThumbnail));
                 linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
                 break;
 
             case VIDEO:
-                contentLoadProgressView.hide();
-                commentListParentSheet.setScrollingEnabled(true);
-                executeOnMeasure(commentListParentSheet, () -> {
-                    commentListParentSheet.scrollTo(commentListParentSheet.getHeight() / 2);    // TODO: 29/03/17 Calculate height of video?
-                    commentListParentSheet.setPeekHeight(0);
+                contentLoadProgressView.show();
+                exoPlayerManager.setOnVideoSizeChangeListener((videoWidth, videoHeight) -> {
+                    setHeight(contentVideoView, videoHeight);
+                    executeOnNextLayout(contentVideoView, () -> {
+                        contentLoadProgressView.hide();
+                        commentListParentSheet.setScrollingEnabled(true);
+                        int revealDistance = contentVideoView.getHeight() - commentListParentSheet.getTop();
+
+                        commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
+                        commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpandedOrExpanding() /* smoothScroll */);
+
+                        exoPlayerManager.setOnVideoSizeChangeListener(null);
+                    });
                 });
 
                 String videoUrl = ((MediaLink) contentLink).url();
@@ -565,11 +573,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     @Override
     public void onPageAboutToCollapse(long collapseAnimDuration) {
-        Glide.clear(contentImageView);
+
     }
 
     @Override
     public void onPageCollapsed() {
+        Glide.clear(contentImageView);
         onCollapseSubscriptions.clear();
     }
 
