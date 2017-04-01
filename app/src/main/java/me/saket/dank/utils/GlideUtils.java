@@ -4,6 +4,7 @@ import android.widget.ImageView;
 
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.RequestListener;
+import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 
@@ -20,9 +21,10 @@ public class GlideUtils {
      * This method exists to reduce line indentation by one level.
      */
     public static ImageViewTarget<GlideDrawable> simpleImageViewTarget(ImageView imageView, OnImageResourceReadyListener listener) {
-        return new ImageViewTarget<GlideDrawable>(imageView) {
+        return new GlideDrawableImageViewTarget(imageView) {
             @Override
             protected void setResource(GlideDrawable resource) {
+                super.setResource(resource);
                 listener.onImageReady(resource);
             }
         };

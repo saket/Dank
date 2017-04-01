@@ -160,14 +160,14 @@ public class DankUrlParser {
             // Reddit sends HTML-escaped URLs. Decode them again.
             //noinspection deprecation
             String htmlUnescapedUrl = Html.fromHtml(url).toString();
-            return MediaLink.createGeneric(htmlUnescapedUrl, true, Link.Type.IMAGE_OR_GIF);
+            return MediaLink.createGeneric(htmlUnescapedUrl, !isGifUrlPath(urlPath), Link.Type.IMAGE_OR_GIF);
 
         } else if (isImageUrlPath(urlPath)) {
-            return MediaLink.createGeneric(url, true, Link.Type.IMAGE_OR_GIF);
+            Timber.i("Generic GIF: %s", url);
+            return MediaLink.createGeneric(url, !isGifUrlPath(urlPath), Link.Type.IMAGE_OR_GIF);
 
         } else if (urlPath.endsWith(".mp4")) {
-            // TODO: 19/02/17 Can we display .webm?
-            return MediaLink.createGeneric(url, true, Link.Type.VIDEO);
+            return MediaLink.createGeneric(url, !isGifUrlPath(urlPath), Link.Type.VIDEO);
 
         } else {
             return Link.External.create(url);
@@ -240,7 +240,11 @@ public class DankUrlParser {
     }
 
     private static boolean isImageUrlPath(String urlPath) {
-        return urlPath.endsWith(".png") || urlPath.endsWith(".jpg") || urlPath.endsWith(".jpeg") || urlPath.endsWith(".gif");
+        return urlPath.endsWith(".png") || urlPath.endsWith(".jpg") || urlPath.endsWith(".jpeg") || isGifUrlPath(urlPath);
+    }
+
+    private static boolean isGifUrlPath(String urlPath) {
+        return urlPath.endsWith(".gif");
     }
 
 }

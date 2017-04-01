@@ -1,6 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 
 import android.view.Gravity;
@@ -8,8 +7,10 @@ import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 
 import me.saket.dank.data.MediaLink;
+import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -48,10 +49,6 @@ public class SubmissionImageViewHolder {
                 Toast.makeText(contentImageView.getContext(), "Imgur album", Toast.LENGTH_SHORT).show();
                 return;
             }
-        } else if (contentLink instanceof MediaLink.Gfycat) {
-            contentLoadProgressView.hide();
-            Toast.makeText(contentImageView.getContext(), "GFYCAT", Toast.LENGTH_SHORT).show();
-            return;
         }
 
         contentLoadProgressView.setIndeterminate(true);
@@ -60,27 +57,29 @@ public class SubmissionImageViewHolder {
         Glide.with(contentImageView.getContext())
                 .load(contentLink.optimizedImageUrl(deviceDisplayWidth))
                 .priority(Priority.IMMEDIATE)
-                .into(simpleImageViewTarget(contentImageView, resource -> {
-                    executeOnMeasure(contentImageView, () -> {
-                        contentLoadProgressView.hide();
+                .listener(new GlideUtils.SimpleRequestListener<String, GlideDrawable>() {
+                    @Override
+                    public void onResourceReady(GlideDrawable resource) {
+                        executeOnMeasure(contentImageView, () -> {
+                            int imageMaxVisibleHeight = contentImageView.getHeight();
+                            float widthResizeFactor = deviceDisplayWidth / (float) resource.getMinimumWidth();
+                            int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
 
-                        int imageMaxVisibleHeight = contentImageView.getHeight();
-                        float widthResizeFactor = deviceDisplayWidth / (float) resource.getMinimumWidth();
-                        int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
+                            // Reveal the image smoothly or right away depending upon whether or not this
+                            // page is already expanded and visible.
+                            Views.executeOnNextLayout(commentListParentSheet, () -> {
+                                int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
+                                commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
 
-                        contentImageView.setImageDrawable(resource);
-
-                        // Reveal the image smoothly or right away depending upon whether or not this
-                        // page is already expanded and visible.
-                        Views.executeOnNextLayout(commentListParentSheet, () -> {
-                            int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
-                            commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
-
-                            commentListParentSheet.setScrollingEnabled(true);
-                            commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpanded() /* smoothScroll */);
+                                commentListParentSheet.setScrollingEnabled(true);
+                                commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpanded() /* smoothScroll */);
+                            });
                         });
-                    });
-                }));
+
+                        contentLoadProgressView.hide();
+                    }
+                })
+                .into(contentImageView);
     }
 
 }
