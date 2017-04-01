@@ -34,4 +34,8 @@ public class Dank {
         return appComponent.httpProxyCacheServer();
     }
 
+    public static DankApi api() {
+        return appComponent.api();
+    }
+
 }

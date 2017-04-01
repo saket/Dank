@@ -186,12 +186,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     @Override
-    public void onDestroy() {
-        onCollapseSubscriptions.clear();
-        super.onDestroy();
-    }
-
-    @Override
     public void onSaveInstanceState(Bundle outState) {
         if (activeSubmission != null) {
             JsonNode dataNode = activeSubmission.getDataNode();
@@ -456,9 +450,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
                 } else {
                     contentLoadProgressView.hide();
-                    unsubscribeOnCollapse(
-                            linkDetailsViewHolder.populate(((RedditLink) contentLink))
-                    );
+                    unsubscribeOnCollapse(linkDetailsViewHolder.populate(((RedditLink) contentLink)));
                     linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
                 }
                 break;
@@ -471,9 +463,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 break;
 
             case VIDEO:
-                String videoUrl = ((MediaLink) contentLink).lowQualityVideoUrl();
-                Timber.i("videoUrl: %s", videoUrl);
-                contentVideoViewHolder.load(Dank.httpProxyCacheServer().getProxyUrl(videoUrl));
+                MediaLink mediaLink = (MediaLink) contentLink;
+                mediaLink = MediaLink.StreamableUnknown.create("https://streamable.com/fxn88", "fxn88");
+                unsubscribeOnCollapse(contentVideoViewHolder.load(mediaLink));
                 break;
 
             default:
@@ -537,6 +529,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     private void unsubscribeOnCollapse(Subscription subscription) {
         onCollapseSubscriptions.add(subscription);
+        unsubscribeOnDestroy(subscription);
     }
 
 }

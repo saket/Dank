@@ -1,6 +1,8 @@
 package me.saket.dank.ui.submission;
 
 import static com.google.common.base.Preconditions.checkNotNull;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnNextLayout;
 import static me.saket.dank.utils.Views.setHeight;
 
@@ -8,11 +10,15 @@ import android.net.Uri;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 
+import me.saket.dank.data.MediaLink;
+import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
-import timber.log.Timber;
+import rx.Single;
+import rx.Subscription;
+import rx.functions.Action1;
 
 /**
  * Manages loading of video in {@link SubmissionFragment}.
@@ -35,26 +41,48 @@ public class SubmissionVideoViewHolder {
         this.exoPlayerManager = checkNotNull(exoPlayerManager);
     }
 
-    public void load(String videoUrl) {
-        contentLoadProgressView.show();
+    public Subscription load(MediaLink mediaLink) {
+        Single<String> videoUrlObservable = mediaLink instanceof MediaLink.StreamableUnknown
+                ? getStreamableVideoDetails(((MediaLink.StreamableUnknown) mediaLink))
+                : Single.just(mediaLink.lowQualityVideoUrl());
 
-        exoPlayerManager.setOnVideoSizeChangeListener((videoWidth, videoHeight) -> {
-            setHeight(contentVideoView, videoHeight);
+        return videoUrlObservable
+                .doOnSubscribe(() -> contentLoadProgressView.show())
+                .subscribe(load(), error -> {
+                    // TODO: 01/04/17 Handle error.
+                    logError("Couldn't load video").call(error);
+                });
+    }
 
-            // Wait for the height change to happen and then reveal the video.
-            executeOnNextLayout(contentVideoView, () -> {
-                contentLoadProgressView.hide();
-                commentListParentSheet.setScrollingEnabled(true);
+    private Action1<String> load() {
+        return videoUrl -> {
+            exoPlayerManager.setOnVideoSizeChangeListener((videoWidth, videoHeight) -> {
+                setHeight(contentVideoView, videoHeight);
 
-                int revealDistance = contentVideoView.getHeight() - commentListParentSheet.getTop();
-                commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
-                commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpandedOrExpanding() /* smoothScroll */);
+                // Wait for the height change to happen and then reveal the video.
+                executeOnNextLayout(contentVideoView, () -> {
+                    contentLoadProgressView.hide();
+                    commentListParentSheet.setScrollingEnabled(true);
 
-                exoPlayerManager.setOnVideoSizeChangeListener(null);
+                    int revealDistance = contentVideoView.getHeight() - commentListParentSheet.getTop();
+                    commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
+                    commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpandedOrExpanding() /* smoothScroll */);
+
+                    exoPlayerManager.setOnVideoSizeChangeListener(null);
+                });
             });
-        });
 
-        exoPlayerManager.playVideoInLoop(Uri.parse(videoUrl));
+            String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
+            exoPlayerManager.playVideoInLoop(Uri.parse(cachedVideoUrl));
+        };
+    }
+
+    // TODO: 01/04/17 Cache.
+    private Single<String> getStreamableVideoDetails(MediaLink.StreamableUnknown streamableLink) {
+        return Dank.api()
+                .streamableVideoDetails(streamableLink.videoId())
+                .compose(applySchedulersSingle())
+                .map(response -> "https://" + response.files().lowQualityVideo().url());
     }
 
 }

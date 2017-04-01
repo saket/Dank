@@ -9,12 +9,16 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 
+import me.saket.dank.di.DankApi;
+
 /**
  * Details of an image (including GIF) or a video that can be played within in the app.
  */
 public class MediaLink extends Link {
 
     protected String url;
+    private String highQualityVideoUrl;
+    private String lowQualityVideoUrl;
     private Type type;
     private Thumbnails redditSuppliedImages;
     private boolean canUseRedditOptimizedImageUrl;
@@ -22,12 +26,17 @@ public class MediaLink extends Link {
     /**
      * @param canUseRedditOptimizedImages Reddit provides self-hosted copies of the content for images (For GIFs and videos, it
      *                                    provides static images). When this is true, Reddit's copies will be used instead of the
-     *                                    actual URL. This will always be true for static images and false for GIFs and videos.
      */
-    protected MediaLink(String url, boolean canUseRedditOptimizedImages, Type type) {
+    protected MediaLink(String url, String lowQualityVideoUrl, String highQualityVideoUrl, boolean canUseRedditOptimizedImages, Type type) {
         this.url = url;
+        this.highQualityVideoUrl = highQualityVideoUrl;
+        this.lowQualityVideoUrl = lowQualityVideoUrl;
         this.canUseRedditOptimizedImageUrl = canUseRedditOptimizedImages;
         this.type = type;
+    }
+
+    protected MediaLink(String url, boolean canUseRedditOptimizedImages, Type type) {
+        this(url, url, url, canUseRedditOptimizedImages, type);
     }
 
     @Override
@@ -76,14 +85,14 @@ public class MediaLink extends Link {
         if (type() != Type.VIDEO) {
             throw new IllegalStateException("Not a video");
         }
-        return url;
+        return highQualityVideoUrl;
     }
 
     public String lowQualityVideoUrl() {
         if (type() != Type.VIDEO) {
             throw new IllegalStateException("Not a video");
         }
-        return url;
+        return lowQualityVideoUrl;
     }
 
     @Override
@@ -124,24 +133,15 @@ public class MediaLink extends Link {
     }
 
     public static class Gfycat extends MediaLink {
-        public Gfycat(String url, Type type) {
-            super(url, false, type);
+        public Gfycat(String url, String lowQualityVideoUrl, String highQualityVideoUrl, Type type) {
+            super(url, lowQualityVideoUrl, highQualityVideoUrl, false, type);
         }
 
         public static Gfycat create(String url) {
-            return new Gfycat(url, Type.VIDEO);
-        }
-
-        @Override
-        public String lowQualityVideoUrl() {
             Uri gfycatURI = Uri.parse(url);
-            return gfycatURI.getScheme() + "://thumbs.gfycat.com" + gfycatURI.getPath() + "-mobile.mp4";
-        }
-
-        @Override
-        public String highQualityVideoUrl() {
-            Uri gfycatURI = Uri.parse(url);
-            return gfycatURI.getScheme() + "://zippy.gfycat.com" + gfycatURI.getPath() + ".webm";
+            String lowQualityVideoUrl = gfycatURI.getScheme() + "://thumbs.gfycat.com" + gfycatURI.getPath() + "-mobile.mp4";
+            String highQualityVideoUrl = gfycatURI.getScheme() + "://zippy.gfycat.com" + gfycatURI.getPath() + ".webm";
+            return new Gfycat(url, lowQualityVideoUrl, highQualityVideoUrl, Type.VIDEO);
         }
     }
 
@@ -152,6 +152,37 @@ public class MediaLink extends Link {
 
         public static Giphy create(String url) {
             return new Giphy(url);
+        }
+    }
+
+    /**
+     * Container for a streamable video's ID, which can only be used after its video URL has been
+     * fetched using {@link DankApi#streamableVideoDetails(String)}.
+     */
+    public static class StreamableUnknown extends MediaLink {
+        private final String videoId;
+
+        public StreamableUnknown(String url, String videoId) {
+            super(url, false, Type.VIDEO);
+            this.videoId = videoId;
+        }
+
+        public String videoId() {
+            return videoId;
+        }
+
+        public static StreamableUnknown create(String url, String videoId) {
+            return new StreamableUnknown(url, videoId);
+        }
+    }
+
+    public static class Streamable extends MediaLink {
+        private Streamable(String url, String lowQualityVideoUrl, String highQualityVideoUrl) {
+            super(url, lowQualityVideoUrl, highQualityVideoUrl, false, Type.VIDEO);
+        }
+
+        public static Streamable create(String streamableUrl, String lowQualityVideoUrl, String highQualityVideoUrl) {
+            return new Streamable(streamableUrl, lowQualityVideoUrl, highQualityVideoUrl);
         }
     }
 

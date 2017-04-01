@@ -63,13 +63,15 @@ public class DankUrlParser {
 
     /**
      * Extracts the ID of a giphy link. In these examples, the ID is 'l2JJyLbhqCF4va86c
-     *
+     * <p>
      * /media/l2JJyLbhqCF4va86c/giphy.mp4
      * /media/l2JJyLbhqCF4va86c/giphy.gif
      * /gifs/l2JJyLbhqCF4va86c/html5
      * /l2JJyLbhqCF4va86c.gif
      */
     private static final Pattern GIPHY_ID_PATTERN = Pattern.compile("^/(?:(?:media)?(?:gifs)?/)?(\\w*)[/.].*$");
+
+    private static final Pattern STREAMABLE_ID_PATTERN = Pattern.compile("/(\\w)*[^/.?]");
 
     /**
      * Determine type of the url.
@@ -156,6 +158,9 @@ public class DankUrlParser {
         } else if (urlDomain.contains("giphy.com")) {
             return createGiphyLink(contentURI);
 
+        } else if (urlDomain.contains("streamable.com")) {
+            return createUnknownStreamableLink(contentURI);
+
         } else if ((urlDomain.contains("reddituploads.com"))) {
             // Reddit sends HTML-escaped URLs. Decode them again.
             //noinspection deprecation
@@ -163,7 +168,6 @@ public class DankUrlParser {
             return MediaLink.createGeneric(htmlUnescapedUrl, !isGifUrlPath(urlPath), Link.Type.IMAGE_OR_GIF);
 
         } else if (isImageUrlPath(urlPath)) {
-            Timber.i("Generic GIF: %s", url);
             return MediaLink.createGeneric(url, !isGifUrlPath(urlPath), Link.Type.IMAGE_OR_GIF);
 
         } else if (urlPath.endsWith(".mp4")) {
@@ -211,28 +215,41 @@ public class DankUrlParser {
      * <p>
      * https://gfycat.com/MessySpryAfricancivet
      */
-    private static MediaLink.Gfycat createGfycatLink(Uri gfycatURI) {
+    private static Link createGfycatLink(Uri gfycatURI) {
         String gfycatURIPath = gfycatURI.getPath();
         Timber.i("gfycatURIPath: %s", gfycatURIPath);
 
         Matcher matcher = GFYCAT_ID_PATTERN.matcher(gfycatURIPath);
-        if (!matcher.matches()) {
-            Timber.w("Couldn't find three word id");
-            return MediaLink.Gfycat.create(gfycatURI.toString());
-        }
+        if (matcher.matches()) {
+            String gfycatThreeWordId = matcher.group(1);
+            return MediaLink.Gfycat.create(gfycatURI.getScheme() + "://gfycat.com" + gfycatThreeWordId);
 
-        String gfycatThreeWordId = matcher.group(1);
-        return MediaLink.Gfycat.create(gfycatURI.getScheme() + "://gfycat.com" + gfycatThreeWordId);
+        } else {
+            return Link.External.create(gfycatURI.toString());
+        }
     }
 
-    private static Link createGiphyLink(Uri contentURI) {
-        String url = contentURI.toString();
-        String urlPath = contentURI.getPath();
+    private static Link createGiphyLink(Uri giphyURI) {
+        String url = giphyURI.toString();
+        String urlPath = giphyURI.getPath();
 
         Matcher giphyIdMatcher = GIPHY_ID_PATTERN.matcher(urlPath);
         if (giphyIdMatcher.matches()) {
-            String giphyId = giphyIdMatcher.group(1);
-            return MediaLink.Giphy.create(contentURI.getScheme() + "://i.giphy.com/" + giphyId + ".mp4");
+            String videoId = giphyIdMatcher.group(1);
+            return MediaLink.Giphy.create(giphyURI.getScheme() + "://i.giphy.com/" + videoId + ".mp4");
+
+        } else {
+            return Link.External.create(url);
+        }
+    }
+
+    private static Link createUnknownStreamableLink(Uri streamableUri) {
+        String url = streamableUri.toString();
+
+        Matcher streamableIdMatcher = STREAMABLE_ID_PATTERN.matcher(streamableUri.getPath());
+        if (streamableIdMatcher.matches()) {
+            String videoId = streamableIdMatcher.group(1);
+            return MediaLink.StreamableUnknown.create(url, videoId);
 
         } else {
             return Link.External.create(url);
