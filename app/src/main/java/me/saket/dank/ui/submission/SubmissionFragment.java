@@ -1,6 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.GlideUtils.simpleImageViewTarget;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
@@ -25,7 +24,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,7 +34,6 @@ import android.widget.Toast;
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.Priority;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -111,7 +108,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private SubmissionLinkDetailsViewHolder linkDetailsViewHolder;
     private Link activeSubmissionContentLink;
 
-    private SubmissionVideoViewHolder videoViewHolder;
+    private SubmissionVideoViewHolder contentVideoViewHolder;
+    private SubmissionImageViewHolder contentImageViewHolder;
 
     private int deviceDisplayWidth;
     private boolean isCommentSheetBeneathImage;
@@ -269,14 +267,21 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     private void setupContentImageView() {
-        contentImageView.setGravity(Gravity.TOP);
         Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
+
+        contentImageViewHolder = new SubmissionImageViewHolder(
+                submissionPageLayout,
+                contentLoadProgressView,
+                contentImageView,
+                commentListParentSheet,
+                deviceDisplayWidth
+        );
     }
 
     private void setupContentVideoView() {
         Views.setMarginBottom(contentVideoView, commentsSheetMinimumVisibleHeight);
 
-        videoViewHolder = new SubmissionVideoViewHolder(
+        contentVideoViewHolder = new SubmissionVideoViewHolder(
                 submissionPageLayout,
                 contentLoadProgressView,
                 contentVideoView,
@@ -436,45 +441,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         switch (contentLink.type()) {
             case IMAGE_OR_GIF:
-                if (contentLink instanceof MediaLink.Imgur) {
-                    if (((MediaLink.Imgur) contentLink).isAlbum()) {
-                        contentLoadProgressView.hide();
-                        Toast.makeText(getActivity(), "Imgur album", Toast.LENGTH_SHORT).show();
-                        break;
-                    }
-                } else if (contentLink instanceof MediaLink.Gfycat) {
-                    contentLoadProgressView.hide();
-                    Toast.makeText(getActivity(), "GFYCAT", Toast.LENGTH_SHORT).show();
-                    break;
-                }
-
-                contentLoadProgressView.setIndeterminate(true);
-                contentLoadProgressView.show();
-
-                Glide.with(this)
-                        .load(((MediaLink) contentLink).optimizedImageUrl(deviceDisplayWidth))
-                        .priority(Priority.IMMEDIATE)
-                        .into(simpleImageViewTarget(contentImageView, resource -> {
-                            executeOnMeasure(contentImageView, () -> {
-                                contentLoadProgressView.hide();
-
-                                int imageMaxVisibleHeight = contentImageView.getHeight();
-                                float widthResizeFactor = deviceDisplayWidth / (float) resource.getMinimumWidth();
-                                int visibleImageHeight = Math.min((int) (resource.getIntrinsicHeight() * widthResizeFactor), imageMaxVisibleHeight);
-
-                                contentImageView.setImageDrawable(resource);
-
-                                // Reveal the image smoothly or right away depending upon whether or not this
-                                // page is already expanded and visible.
-                                Views.executeOnNextLayout(commentListParentSheet, () -> {
-                                    int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
-                                    commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
-
-                                    commentListParentSheet.setScrollingEnabled(true);
-                                    commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpanded() /* smoothScroll */);
-                                });
-                            });
-                        }));
+                contentImageViewHolder.load((MediaLink) contentLink);
                 break;
 
             case REDDIT_HOSTED:
@@ -502,7 +469,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 break;
 
             case VIDEO:
-                videoViewHolder.load((MediaLink) contentLink);
+                contentVideoViewHolder.load((MediaLink) contentLink);
                 break;
 
             default:

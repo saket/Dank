@@ -17,7 +17,7 @@ import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import timber.log.Timber;
 
 /**
- * Manages showing of video in {@link SubmissionFragment}.
+ * Manages loading of video in {@link SubmissionFragment}.
  */
 public class SubmissionVideoViewHolder {
 
