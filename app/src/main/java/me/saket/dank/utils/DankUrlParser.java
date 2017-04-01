@@ -59,7 +59,17 @@ public class DankUrlParser {
      * /MessySpryAfricancivet.webm
      * /MessySpryAfricancivet-mobile.mp4
      */
-    private static final Pattern GFYCAT_PATH_ID_PATTERN = Pattern.compile("(/[^-.]*)");
+    private static final Pattern GFYCAT_ID_PATTERN = Pattern.compile("(/[^-.]*)");
+
+    /**
+     * Extracts the ID of a giphy link. In these examples, the ID is 'l2JJyLbhqCF4va86c
+     *
+     * /media/l2JJyLbhqCF4va86c/giphy.mp4
+     * /media/l2JJyLbhqCF4va86c/giphy.gif
+     * /gifs/l2JJyLbhqCF4va86c/html5
+     * /l2JJyLbhqCF4va86c.gif
+     */
+    private static final Pattern GIPHY_ID_PATTERN = Pattern.compile("^/(?:(?:media)?(?:gifs)?/)?(\\w*)[/.].*$");
 
     /**
      * Determine type of the url.
@@ -72,10 +82,10 @@ public class DankUrlParser {
         // TODO: Support wiki pages.
 
         Uri linkUri = Uri.parse(url);
-        String urlHost = linkUri.getHost() != null ? linkUri.getHost() : "";
+        String urlDomain = linkUri.getHost() != null ? linkUri.getHost() : "";
         String urlPath = linkUri.getPath() != null ? linkUri.getPath() : "";
 
-        if (urlHost.endsWith("reddit.com")) {
+        if (urlDomain.endsWith("reddit.com")) {
             Matcher submissionOrCommentMatcher = SUBMISSION_OR_COMMENT_PATTERN.matcher(urlPath);
             if (submissionOrCommentMatcher.matches()) {
                 String subredditName = submissionOrCommentMatcher.group(2);
@@ -98,7 +108,7 @@ public class DankUrlParser {
                 return RedditLink.UnsupportedYet.create(url);
             }
 
-        } else if (urlHost.isEmpty()) {
+        } else if (urlDomain.isEmpty()) {
             Matcher subredditMatcher = SUBREDDIT_PATTERN.matcher(urlPath);
             if (subredditMatcher.matches()) {
                 return RedditLink.Subreddit.create(subredditMatcher.group(1));
@@ -109,11 +119,11 @@ public class DankUrlParser {
                 return RedditLink.User.create(userMatcher.group(1));
             }
 
-        } else if (urlHost.endsWith("redd.it") && !isImageUrlPath(urlPath)) {
+        } else if (urlDomain.endsWith("redd.it") && !isImageUrlPath(urlPath)) {
             // Short redd.it url. Format: redd.it/post_id. Eg., https://redd.it/5524cd
             return RedditLink.Submission.create(url, urlPath, null);
 
-        } else if (urlHost.contains("google") && urlPath.startsWith("/amp/s/amp.reddit.com")) {
+        } else if (urlDomain.contains("google") && urlPath.startsWith("/amp/s/amp.reddit.com")) {
             // Google AMP url.
             // https://www.google.com/amp/s/amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/
             String nonAmpUrl = "https://" + url.substring(url.indexOf("/amp/s/") + "/amp/s/".length());
@@ -141,21 +151,23 @@ public class DankUrlParser {
             return createImgurLink(url);
 
         } else if (urlDomain.contains("gfycat.com")) {
-            Timber.i("Creating gfycat");
             return createGfycatLink(contentURI);
+
+        } else if (urlDomain.contains("giphy.com")) {
+            return createGiphyLink(contentURI);
 
         } else if ((urlDomain.contains("reddituploads.com"))) {
             // Reddit sends HTML-escaped URLs. Decode them again.
             //noinspection deprecation
             String htmlUnescapedUrl = Html.fromHtml(url).toString();
-            return MediaLink.create(htmlUnescapedUrl, true, Link.Type.IMAGE_OR_GIF);
+            return MediaLink.createGeneric(htmlUnescapedUrl, true, Link.Type.IMAGE_OR_GIF);
 
         } else if (isImageUrlPath(urlPath)) {
-            return MediaLink.create(url, true, Link.Type.IMAGE_OR_GIF);
+            return MediaLink.createGeneric(url, true, Link.Type.IMAGE_OR_GIF);
 
         } else if (urlPath.endsWith(".mp4")) {
             // TODO: 19/02/17 Can we display .webm?
-            return MediaLink.create(url, true, Link.Type.VIDEO);
+            return MediaLink.createGeneric(url, true, Link.Type.VIDEO);
 
         } else {
             return Link.External.create(url);
@@ -199,11 +211,11 @@ public class DankUrlParser {
      * <p>
      * https://gfycat.com/MessySpryAfricancivet
      */
-    private static Link createGfycatLink(Uri gfycatURI) {
+    private static MediaLink.Gfycat createGfycatLink(Uri gfycatURI) {
         String gfycatURIPath = gfycatURI.getPath();
         Timber.i("gfycatURIPath: %s", gfycatURIPath);
 
-        Matcher matcher = GFYCAT_PATH_ID_PATTERN.matcher(gfycatURIPath);
+        Matcher matcher = GFYCAT_ID_PATTERN.matcher(gfycatURIPath);
         if (!matcher.matches()) {
             Timber.w("Couldn't find three word id");
             return MediaLink.Gfycat.create(gfycatURI.toString());
@@ -211,6 +223,20 @@ public class DankUrlParser {
 
         String gfycatThreeWordId = matcher.group(1);
         return MediaLink.Gfycat.create(gfycatURI.getScheme() + "://gfycat.com" + gfycatThreeWordId);
+    }
+
+    private static Link createGiphyLink(Uri contentURI) {
+        String url = contentURI.toString();
+        String urlPath = contentURI.getPath();
+
+        Matcher giphyIdMatcher = GIPHY_ID_PATTERN.matcher(urlPath);
+        if (giphyIdMatcher.matches()) {
+            String giphyId = giphyIdMatcher.group(1);
+            return MediaLink.Giphy.create(contentURI.getScheme() + "://i.giphy.com/" + giphyId + ".mp4");
+
+        } else {
+            return Link.External.create(url);
+        }
     }
 
     private static boolean isImageUrlPath(String urlPath) {

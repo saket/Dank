@@ -214,7 +214,12 @@ public class SubmissionLinkDetailsViewHolder {
                     boolean hasLinkThumbnail = linkMetadata.hasImage() || !isEmpty(redditSuppliedThumbnail);
                     loadLinkFavicon(linkMetadata, hasLinkThumbnail);
 
-                }, logError("Couldn't get link's meta-data: " + externalLink.url));
+                }, error -> {
+                    if (!(error instanceof IllegalArgumentException) || !error.getMessage().contains("String must not be empty")) {
+                        Timber.e(error, "Couldn't get link's meta-data: " + externalLink.url);
+                    }
+                    // Else, Link wasn't a webpage. Probably an image or a video.
+                });
     }
 
     private void loadLinkThumbnail(String linkUrl, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnEnd) {

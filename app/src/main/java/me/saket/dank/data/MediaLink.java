@@ -96,7 +96,7 @@ public class MediaLink extends Link {
                 '}';
     }
 
-    public static MediaLink create(String url, boolean canUseRedditOptimizedImageUrl, Type type) {
+    public static MediaLink createGeneric(String url, boolean canUseRedditOptimizedImageUrl, Type type) {
         return new MediaLink(url, canUseRedditOptimizedImageUrl, type);
     }
 
@@ -142,6 +142,16 @@ public class MediaLink extends Link {
         public String highQualityVideoUrl() {
             Uri gfycatURI = Uri.parse(url);
             return gfycatURI.getScheme() + "://zippy.gfycat.com" + gfycatURI.getPath() + ".webm";
+        }
+    }
+
+    public static class Giphy extends MediaLink {
+        private Giphy(String url) {
+            super(url, false, Type.VIDEO);
+        }
+
+        public static Giphy create(String url) {
+            return new Giphy(url);
         }
     }
 
