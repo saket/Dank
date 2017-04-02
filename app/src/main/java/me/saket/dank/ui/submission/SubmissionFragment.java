@@ -66,6 +66,7 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
+import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment;
 import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action1;
@@ -163,7 +164,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
         deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
 
-        linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView);
         return fragmentLayout;
     }
 
@@ -179,6 +179,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         setupContentImageView();
         setupContentVideoView();
         setupCommentsSheet();
+
+        linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView, CustomTabsHelperFragment.attachTo(this));
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
