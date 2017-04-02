@@ -171,6 +171,13 @@ public class MediaLink extends Link {
             return videoId;
         }
 
+        @Override
+        public String toString() {
+            return "StreamableUnknown{" +
+                    "videoId='" + videoId + '\'' +
+                    '}';
+        }
+
         public static StreamableUnknown create(String url, String videoId) {
             return new StreamableUnknown(url, videoId);
         }

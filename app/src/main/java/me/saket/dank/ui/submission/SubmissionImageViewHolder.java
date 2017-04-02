@@ -16,6 +16,7 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
+import timber.log.Timber;
 
 /**
  * Manages showing of content image in {@link SubmissionFragment}.
@@ -70,6 +71,9 @@ public class SubmissionImageViewHolder {
                             Views.executeOnNextLayout(commentListParentSheet, () -> {
                                 int revealDistance = visibleImageHeight - commentListParentSheet.getTop();
                                 commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
+                                Timber.i("revealDistance: %s", revealDistance);
+                                Timber.i("visibleImageHeight: %s", visibleImageHeight);
+                                Timber.i("commentListParentSheet.getTop(): %s", commentListParentSheet.getTop());
 
                                 commentListParentSheet.setScrollingEnabled(true);
                                 commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpanded() /* smoothScroll */);

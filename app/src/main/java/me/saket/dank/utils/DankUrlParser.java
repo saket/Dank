@@ -71,7 +71,7 @@ public class DankUrlParser {
      */
     private static final Pattern GIPHY_ID_PATTERN = Pattern.compile("^/(?:(?:media)?(?:gifs)?/)?(\\w*)[/.].*$");
 
-    private static final Pattern STREAMABLE_ID_PATTERN = Pattern.compile("/(\\w)*[^/.?]");
+    private static final Pattern STREAMABLE_ID_PATTERN4 = Pattern.compile("/(\\w*\\d*)[^/.?]*");
 
     /**
      * Determine type of the url.
@@ -246,9 +246,10 @@ public class DankUrlParser {
     private static Link createUnknownStreamableLink(Uri streamableUri) {
         String url = streamableUri.toString();
 
-        Matcher streamableIdMatcher = STREAMABLE_ID_PATTERN.matcher(streamableUri.getPath());
+        Matcher streamableIdMatcher = STREAMABLE_ID_PATTERN4.matcher(streamableUri.getPath());
         if (streamableIdMatcher.matches()) {
             String videoId = streamableIdMatcher.group(1);
+            Timber.i("STREAMABLE_ID_PATTERN4: %s", STREAMABLE_ID_PATTERN4);
             return MediaLink.StreamableUnknown.create(url, videoId);
 
         } else {

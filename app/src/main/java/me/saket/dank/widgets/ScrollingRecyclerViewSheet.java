@@ -49,10 +49,12 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
         void onStateChange(State newState);
     }
+
     public interface SheetScrollChangeListener {
 
         void onScrollChange(float newScrollY);
     }
+
     public ScrollingRecyclerViewSheet(Context context, AttributeSet attrs) {
         super(context, attrs);
         flingScroller = new Scroller(context);
@@ -177,7 +179,12 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
      * Maximum this sheet can scroll before it reaches its peek height.
      */
     public int maxScrollY() {
-        return getHeight() - peekHeight;
+        int masScrollY = getHeight() - peekHeight;
+        if (masScrollY < 0) {
+            return 0;
+        } else {
+            return masScrollY;
+        }
     }
 
     @Override
