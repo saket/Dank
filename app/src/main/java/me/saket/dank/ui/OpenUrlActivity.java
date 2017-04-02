@@ -11,6 +11,7 @@ import android.support.annotation.Nullable;
 import android.support.customtabs.CustomTabsIntent;
 import android.support.v4.app.ActivityOptionsCompat;
 import android.support.v4.content.ContextCompat;
+import android.view.WindowManager;
 import android.widget.Toast;
 
 import org.chromium.customtabsclient.CustomTabsActivityHelper;
@@ -47,6 +48,7 @@ public class OpenUrlActivity extends DankActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
         Link link = (Link) getIntent().getSerializableExtra(KEY_LINK);
         Rect expandFromShape = getIntent().getParcelableExtra(DankPullCollapsibleActivity.KEY_EXPAND_FROM_SHAPE);
