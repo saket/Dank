@@ -1,24 +1,34 @@
 package me.saket.dank.ui.submission;
 
-import static com.google.common.base.Preconditions.checkNotNull;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnNextLayout;
 import static me.saket.dank.utils.Views.setHeight;
 
+import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
+import android.graphics.drawable.LayerDrawable;
 import android.net.Uri;
+import android.support.v7.graphics.Palette;
+import android.view.View;
+import android.view.ViewGroup;
 
+import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 
+import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
+import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.ExoPlayerManager;
+import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import rx.Single;
 import rx.Subscription;
 import rx.functions.Action1;
+import timber.log.Timber;
 
 /**
  * Manages loading of video in {@link SubmissionFragment}.
@@ -27,18 +37,30 @@ public class SubmissionVideoViewHolder {
 
     private ExpandablePageLayout submissionPageLayout;
     private SubmissionAnimatedProgressBar contentLoadProgressView;
+    private ViewGroup contentVideoViewContainer;
     private VideoView contentVideoView;
     private ScrollingRecyclerViewSheet commentListParentSheet;
     private ExoPlayerManager exoPlayerManager;
 
+    private Bitmap videoBitmap;
+    private DankVideoControlsView controlsView;
+
     public SubmissionVideoViewHolder(ExpandablePageLayout submissionPageLayout, SubmissionAnimatedProgressBar contentLoadProgressView,
-            VideoView contentVideoView, ScrollingRecyclerViewSheet commentListParentSheet, ExoPlayerManager exoPlayerManager)
+            VideoView contentVideoView, ViewGroup contentVideoViewContainer, ScrollingRecyclerViewSheet commentListParentSheet,
+            ExoPlayerManager exoPlayerManager)
     {
-        this.submissionPageLayout = checkNotNull(submissionPageLayout);
-        this.contentLoadProgressView = checkNotNull(contentLoadProgressView);
-        this.contentVideoView = checkNotNull(contentVideoView);
-        this.commentListParentSheet = checkNotNull(commentListParentSheet);
-        this.exoPlayerManager = checkNotNull(exoPlayerManager);
+        this.submissionPageLayout = submissionPageLayout;
+        this.contentLoadProgressView = contentLoadProgressView;
+        this.contentVideoViewContainer = contentVideoViewContainer;
+        this.contentVideoView = contentVideoView;
+        this.commentListParentSheet = commentListParentSheet;
+        this.exoPlayerManager = exoPlayerManager;
+    }
+
+    public void setup() {
+        controlsView = new DankVideoControlsView(contentVideoView.getContext());
+        contentVideoView.setControls(controlsView);
+        controlsView.insertSeekBarIn(contentVideoViewContainer);
     }
 
     public Subscription load(MediaLink mediaLink) {
@@ -64,9 +86,9 @@ public class SubmissionVideoViewHolder {
                     contentLoadProgressView.hide();
                     commentListParentSheet.setScrollingEnabled(true);
 
-                    int revealDistance = contentVideoView.getHeight() - commentListParentSheet.getTop();
+                    int revealDistance = contentVideoViewContainer.getHeight() - commentListParentSheet.getTop();
                     commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
-                    commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpandedOrExpanding() /* smoothScroll */);
+                    commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpanded() /* smoothScroll */);
 
                     exoPlayerManager.setOnVideoSizeChangeListener(null);
                 });
@@ -74,7 +96,39 @@ public class SubmissionVideoViewHolder {
 
             String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
             exoPlayerManager.playVideoInLoop(Uri.parse(cachedVideoUrl));
+
+            tintVideoControlsWithVideo();
         };
+    }
+
+    private void tintVideoControlsWithVideo() {
+        LayerDrawable seekBarDrawable = (LayerDrawable) controlsView.getProgressSeekBar().getProgressDrawable();
+        Drawable progressDrawable = seekBarDrawable.findDrawableByLayerId(android.R.id.progress);
+        Drawable bufferDrawable = seekBarDrawable.findDrawableByLayerId(android.R.id.secondaryProgress);
+
+        View viewById = contentVideoView.findViewById(R.id.exomedia_video_view);
+        ExoTextureVideoView textureVideoView = (ExoTextureVideoView) viewById;
+
+        // TODO: Move this to an async code block.
+        // TODO: Transition colors smoothly + use default colors on start.
+
+        controlsView.setVideoProgressChangeListener(() -> {
+            final long startTime = System.currentTimeMillis();
+            if (videoBitmap == null) {
+                videoBitmap = Bitmap.createBitmap(textureVideoView.getResources().getDisplayMetrics(), 10, 10, Bitmap.Config.RGB_565);
+            }
+
+            Palette.from(textureVideoView.getBitmap(videoBitmap))
+                    .generate(palette -> {
+                        int progressColor = palette.getMutedColor(palette.getVibrantColor(-1));
+                        if (progressColor != -1) {
+                            progressDrawable.setTint(progressColor);
+                            bufferDrawable.setTint(Colors.applyAlpha(progressColor, 2f));
+                            controlsView.setVideoProgressChangeListener(null);
+                        }
+                    });
+            //Timber.i("Palette in: %sms", System.currentTimeMillis() - startTime);
+        });
     }
 
     // TODO: 01/04/17 Cache.
@@ -85,4 +139,8 @@ public class SubmissionVideoViewHolder {
                 .map(response -> "https://" + response.files().lowQualityVideo().url());
     }
 
+    public void pausePlayback() {
+        exoPlayerManager.pauseVideoPlayback();
+    }
 }
+

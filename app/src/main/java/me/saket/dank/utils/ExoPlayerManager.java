@@ -2,7 +2,6 @@ package me.saket.dank.utils;
 
 import android.net.Uri;
 
-import com.devbrackets.android.exomedia.ui.widget.VideoControlsMobile;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
@@ -19,6 +18,7 @@ public class ExoPlayerManager {
 
     private VideoView playerView;
     private OnVideoSizeChangeListener videoSizeChangeListener;
+    private boolean wasPlayingUponPause;
 
     public interface OnVideoSizeChangeListener {
         void onVideoSizeChange(int videoWidth, int videoHeight);
@@ -26,22 +26,21 @@ public class ExoPlayerManager {
 
     public static ExoPlayerManager newInstance(DankFragment fragment, VideoView playerView) {
         ExoPlayerManager exoPlayerManager = new ExoPlayerManager(playerView);
-
         exoPlayerManager.setupVideoView();
-
         fragment.lifecycleEvents().subscribe(event -> {
             switch (event) {
-                case CREATE:
-                    exoPlayerManager.setupVideoView();
-                    break;
-
-                case RESUME:
-                    exoPlayerManager.resumeVideoPlayback();
-                    break;
-
                 case PAUSE:
                     exoPlayerManager.pauseVideoPlayback();
                     break;
+
+                case RESUME:
+                    if (exoPlayerManager.wasPlayingUponPause) {
+                        exoPlayerManager.resumeVideoPlayback();
+                    }
+                    break;
+
+                case DESTROY:
+                    exoPlayerManager.releasePlayer();
             }
         });
 
@@ -56,7 +55,7 @@ public class ExoPlayerManager {
         videoSizeChangeListener = listener;
     }
 
-    private void setupVideoView() {
+    public void setupVideoView() {
         playerView.setVideoSizeChangeListener((videoWidth, videoHeight) -> {
             if (videoSizeChangeListener != null) {
                 float widthFactor = (float) playerView.getWidth() / videoWidth;
@@ -65,8 +64,6 @@ public class ExoPlayerManager {
                 videoSizeChangeListener.onVideoSizeChange(videoWidthAfterResize, videoHeightAfterResize);
             }
         });
-
-        playerView.setControls(new VideoControlsMobile(playerView.getContext()));
     }
 
     public void playVideoInLoop(Uri videoUri) {
@@ -82,14 +79,20 @@ public class ExoPlayerManager {
         MediaSource videoSource = new LoopingMediaSource(new ExtractorMediaSource(videoUri, dataSourceFactory, extractorsFactory, null, null));
 
         playerView.setVideoURI(videoUri, videoSource);
-    }
-
-    private void pauseVideoPlayback() {
-        playerView.pause();
+        //playerView.setOnPreparedListener(() -> playerView.start());
     }
 
     private void resumeVideoPlayback() {
         playerView.start();
+    }
+
+    public void pauseVideoPlayback() {
+        wasPlayingUponPause = playerView.isPlaying();
+        playerView.pause();
+    }
+
+    private void releasePlayer() {
+        playerView.release();
     }
 
 }

@@ -59,4 +59,6 @@
     <string name="submission_link_linked_subreddit">Linked subreddit</string>
     <string name="submission_link_linked_submission">Linked submission</string>
     <string name="submission_link_linked_url">Linked URL</string>
+
+    <string name="cd_video_play">Play video</string>
 </resources>

@@ -85,6 +85,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
     @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
     @BindView(R.id.submission_image) ZoomableImageView contentImageView;
+    @BindView(R.id.submission_video_container) ViewGroup contentVideoViewContainer;
     @BindView(R.id.submission_video) VideoView contentVideoView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
     @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
@@ -274,15 +275,17 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     private void setupContentVideoView() {
-        Views.setMarginBottom(contentVideoView, commentsSheetMinimumVisibleHeight);
+        Views.setMarginBottom(contentVideoViewContainer, commentsSheetMinimumVisibleHeight);
 
         contentVideoViewHolder = new SubmissionVideoViewHolder(
                 submissionPageLayout,
                 contentLoadProgressView,
                 contentVideoView,
+                contentVideoViewContainer,
                 commentListParentSheet,
                 ExoPlayerManager.newInstance(this, contentVideoView)
         );
+        contentVideoViewHolder.setup();
     }
 
     private void setupCommentsSheet() {
@@ -295,7 +298,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
             float mediaVisibleHeight = activeSubmissionContentLink.isImageOrGif()
                     ? contentImageView.getVisibleZoomedImageHeight()
-                    : contentVideoView.getHeight();
+                    : contentVideoViewContainer.getHeight();
 
             return (int) Math.min(
                     commentListParentSheet.getHeight() * 8 / 10,
@@ -463,9 +466,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 break;
 
             case VIDEO:
-                MediaLink mediaLink = (MediaLink) contentLink;
-                mediaLink = MediaLink.StreamableUnknown.create("https://streamable.com/fxn88", "fxn88");
-                unsubscribeOnCollapse(contentVideoViewHolder.load(mediaLink));
+                unsubscribeOnCollapse(contentVideoViewHolder.load((MediaLink) contentLink));
                 break;
 
             default:
@@ -475,7 +476,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         linkDetailsViewHolder.setVisible(contentLink.isExternal() || contentLink.isRedditHosted() && !submission.isSelfPost());
         selfPostTextView.setVisibility(contentLink.isRedditHosted() && submission.isSelfPost() ? View.VISIBLE : View.GONE);
         contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
-        contentVideoView.setVisibility(contentLink.isVideo() ? View.VISIBLE : View.GONE);
+        contentVideoViewContainer.setVisibility(contentLink.isVideo() ? View.VISIBLE : View.GONE);
 
         // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
         boolean transparentToolbar = contentLink.type() == Link.Type.IMAGE_OR_GIF || contentLink.type() == Link.Type.VIDEO;
@@ -518,11 +519,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     @Override
     public void onPageAboutToCollapse(long collapseAnimDuration) {
-
     }
 
     @Override
     public void onPageCollapsed() {
+        contentVideoViewHolder.pausePlayback();
         Glide.clear(contentImageView);
         onCollapseSubscriptions.clear();
     }

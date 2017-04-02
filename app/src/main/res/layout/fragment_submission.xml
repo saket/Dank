@@ -21,13 +21,21 @@
             tools:ignore="ContentDescription" />
     </FrameLayout>
 
-    <com.devbrackets.android.exomedia.ui.widget.VideoView
-        android:id="@+id/submission_video"
+    <LinearLayout
+        android:id="@+id/submission_video_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:visibility="gone"
         android:background="@color/window_background"
-        app:useTextureViewBacking="true" />
+        android:orientation="vertical"
+        android:visibility="gone">
+
+        <com.devbrackets.android.exomedia.ui.widget.VideoView
+            android:id="@+id/submission_video"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1"
+            app:useTextureViewBacking="true" />
+    </LinearLayout>
 
     <!-- Shadow behind the toolbar so that when the toolbar is transparent (in
          case of photo/video submissions, the toolbar icons are still visible. -->
