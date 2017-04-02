@@ -10,7 +10,7 @@ public class SharedPrefsManager {
 
     private static final String KEY_DEVICE_UUID = "deviceUuid";
 
-    private SharedPreferences sharedPrefs;
+    protected SharedPreferences sharedPrefs;
 
     public SharedPrefsManager(Context context) {
         sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);

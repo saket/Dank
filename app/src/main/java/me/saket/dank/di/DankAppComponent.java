@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 import dagger.Component;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
+import me.saket.dank.data.UserPrefsManager;
 import okhttp3.OkHttpClient;
 
 @Component(modules = DankAppModule.class)
@@ -21,4 +22,6 @@ public interface DankAppComponent {
     HttpProxyCacheServer httpProxyCacheServer();
 
     DankApi api();
+
+    UserPrefsManager userPrefs();
 }

@@ -153,7 +153,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             activeSubreddit = DankSubreddit.create(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
         } else {
             //activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
-            activeSubreddit = DankSubreddit.create("gifs");
+            activeSubreddit = DankSubreddit.create("todayilearned");
         }
         loadSubmissions(activeSubreddit);
 

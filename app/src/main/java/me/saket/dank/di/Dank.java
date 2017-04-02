@@ -6,6 +6,7 @@ import com.danikula.videocache.HttpProxyCacheServer;
 
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
+import me.saket.dank.data.UserPrefsManager;
 import okhttp3.OkHttpClient;
 
 public class Dank {
@@ -24,6 +25,10 @@ public class Dank {
 
     public static SharedPrefsManager sharedPrefs() {
         return appComponent.sharedPrefs();
+    }
+
+    public static UserPrefsManager userPrefs() {
+        return appComponent.userPrefs();
     }
 
     public static OkHttpClient okHttpClient() {

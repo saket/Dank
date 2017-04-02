@@ -16,7 +16,6 @@ public class SubmissionAnimatedProgressBar extends ProgressBar {
 
     private ObjectAnimator progressAnimator;
     private boolean visibilityAnimationOngoing;
-    private Boolean isVisible;
     private boolean syncScrollEnabled;
 
     public SubmissionAnimatedProgressBar(Context context, AttributeSet attrs) {

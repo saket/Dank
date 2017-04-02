@@ -19,12 +19,14 @@ import org.chromium.customtabsclient.CustomTabsHelper;
 
 import java.util.concurrent.TimeUnit;
 
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfileActivity;
+import me.saket.dank.ui.webview.WebViewFallbackActivity;
 import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment;
 import rx.Observable;
 import timber.log.Timber;
@@ -67,8 +69,14 @@ public class OpenUrlActivity extends DankActivity {
             finish();
 
         } else if (link.isExternal()) {
-            CustomTabsHelperFragment.attachTo(this);
-            openLinkInChromeCustomTab(((Link.External) link));
+            if (BuildConfig.DEBUG) {
+                WebViewFallbackActivity.start(this, ((Link.External) link).url);
+                finish();
+
+            } else {
+                CustomTabsHelperFragment.attachTo(this);
+                openLinkInChromeCustomTab(((Link.External) link));
+            }
 
         } else {
             Toast.makeText(this, "TODO: " + link.getClass().getSimpleName(), Toast.LENGTH_SHORT).show();
@@ -85,8 +93,8 @@ public class OpenUrlActivity extends DankActivity {
                 .build();
 
         CustomTabsActivityHelper.CustomTabsFallback customTabsFallback = (activity, uri) -> {
-            // TODO: 24/03/17
-            Timber.w("Fallback");
+            WebViewFallbackActivity.start(this, link.url);
+            finish();
         };
         Uri linkToOpen = Uri.parse(link.url);
 
