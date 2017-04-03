@@ -26,7 +26,7 @@ import me.saket.dank.data.RedditLink;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfileActivity;
-import me.saket.dank.ui.webview.WebViewFallbackActivity;
+import me.saket.dank.ui.webview.WebViewActivity;
 import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment;
 import rx.Observable;
 import timber.log.Timber;
@@ -70,7 +70,7 @@ public class OpenUrlActivity extends DankActivity {
 
         } else if (link.isExternal()) {
             if (BuildConfig.DEBUG) {
-                WebViewFallbackActivity.start(this, ((Link.External) link).url);
+                WebViewActivity.start(this, ((Link.External) link).url);
                 finish();
 
             } else {
@@ -93,7 +93,7 @@ public class OpenUrlActivity extends DankActivity {
                 .build();
 
         CustomTabsActivityHelper.CustomTabsFallback customTabsFallback = (activity, uri) -> {
-            WebViewFallbackActivity.start(this, link.url);
+            WebViewActivity.start(this, link.url);
             finish();
         };
         Uri linkToOpen = Uri.parse(link.url);

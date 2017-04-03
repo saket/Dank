@@ -34,7 +34,7 @@
             android:label="@string/activity_userpreferences"
             android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
-        <activity android:name=".ui.webview.WebViewFallbackActivity" />
+        <activity android:name=".ui.webview.WebViewActivity" />
 
         <activity android:name=".ui.OpenUrlActivity" />
 
