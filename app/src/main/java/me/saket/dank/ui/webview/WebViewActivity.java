@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.webkit.WebChromeClient;
 import android.webkit.WebSettings;
@@ -18,9 +20,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
-import timber.log.Timber;
 
 /**
  * Fallback for Chrome custom tabs.
@@ -79,6 +81,7 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
         webViewSettings.setDomStorageEnabled(true);
         webViewSettings.setDatabaseEnabled(true);
         webViewSettings.setSupportZoom(true);
+        webViewSettings.setLoadWithOverviewMode(true);
 
         webView.loadUrl(urlToLoad);
     }
@@ -86,15 +89,37 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
     protected void setupContentExpandablePage() {
         super.setupContentExpandablePage(activityContentPage);
 
-        activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-            if (touchLiesOn(webView, downX, downY)) {
-                Timber.i("Can scroll -1? %s, +1? %s", webView.canScrollVertically(-1), webView.canScrollVertically(+1));
-                return webView.canScrollVertically(upwardPagePull ? +1 : -1);
+        // Trigger pull-to-collapse only if the page cannot be scrolled any further in the direction of scroll.
+        activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
+            touchLiesOn(webView, downX, downY) && webView.canScrollVertically(upwardPagePull ? +1 : -1)
+        );
+    }
 
-            } else {
-                return false;
-            }
-        });
+    @Override
+    public boolean onCreateOptionsMenu(Menu menu) {
+        getMenuInflater().inflate(R.menu.menu_webview, menu);
+        return super.onCreateOptionsMenu(menu);
+    }
+
+    @Override
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_refresh:
+                webView.reload();
+                return true;
+
+            case R.id.action_share:
+                Intent shareIntent = Intents.createForSharingUrl(getTitle().toString(), webView.getUrl());
+                startActivity(Intent.createChooser(shareIntent, getString(R.string.webview_share_via)));
+                return true;
+
+            case R.id.action_open_in_external_browser:
+                startActivity(Intents.createForOpeningUrl(webView.getUrl()));
+                return true;
+
+            default:
+            return super.onOptionsItemSelected(item);
+        }
     }
 
     @Override

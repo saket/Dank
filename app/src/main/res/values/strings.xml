@@ -59,6 +59,11 @@
     <string name="submission_link_linked_subreddit">Linked subreddit</string>
     <string name="submission_link_linked_submission">Linked submission</string>
     <string name="submission_link_linked_url">Linked URL</string>
-
     <string name="cd_video_play">Play video</string>
+
+    <!-- WebView -->
+    <string name="webview_open_in_browser">Open in browser</string>
+    <string name="webview_share">Share…</string>
+    <string name="webview_share_via">Share via</string>
+    <string name="webview_refresh">Refresh</string>
 </resources>
