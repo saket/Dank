@@ -60,10 +60,10 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<DankPreferenceG
         }
 
         public void bind(DankPreferenceGroup preferenceGroup) {
-            iconView.setImageResource(preferenceGroup.iconResId());
-            iconView.setContentDescription(iconView.getResources().getText(preferenceGroup.titleResId()));
-            titleView.setText(preferenceGroup.titleResId());
-            subtitleView.setText(preferenceGroup.subtitleResId());
+            iconView.setImageResource(preferenceGroup.iconRes);
+            iconView.setContentDescription(iconView.getResources().getText(preferenceGroup.titleRes));
+            titleView.setText(preferenceGroup.titleRes);
+            subtitleView.setText(preferenceGroup.subtitleRes);
         }
 
     }

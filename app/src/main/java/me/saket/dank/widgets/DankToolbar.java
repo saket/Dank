@@ -11,7 +11,10 @@ import android.util.AttributeSet;
 import me.saket.dank.R;
 
 /**
- *
+ * Better than including the toolbar layout everywhere, which is limited because adding attrs like layout_weight
+ * also requires the width and height of an include tag to be set.
+ * <p>
+ * Also, not sure why, but padding only works if there's a navigation icon set.
  */
 public class DankToolbar extends Toolbar {
 

@@ -28,6 +28,8 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     @BindView(R.id.userpreferences_list) InboxRecyclerView preferenceList;
     @BindView(R.id.userpreferences_preferences_page) ExpandablePageLayout preferencesPage;
 
+    private PreferencesFragment preferencesFragment;
+
     public static void start(Context context) {
         context.startActivity(new Intent(context, UserPreferencesActivity.class));
     }
@@ -45,67 +47,72 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
         setMarginTop(preferenceList, statusBarHeight);
 
         setupContentExpandablePage(activityContentPage);
-        expandFromBelowToolbar();
-
         activityContentPage.setNestedExpandablePage(preferencesPage);
+        expandFromBelowToolbar();
     }
 
     @Override
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
+        setupPreferencesFragment();
+        setupPreferencesGroupList(savedInstanceState);
+    }
 
+    private void setupPreferencesFragment() {
+        preferencesFragment = (PreferencesFragment) getSupportFragmentManager().findFragmentById(preferencesPage.getId());
+        if (preferencesFragment == null) {
+            preferencesFragment = PreferencesFragment.create();
+        }
+        getSupportFragmentManager()
+                .beginTransaction()
+                .replace(preferencesPage.getId(), preferencesFragment)
+                .commitNow();
+    }
+
+    public void onClickPreferencesToolbarUp() {
+        preferenceList.collapse();
+    }
+
+    private void setupPreferencesGroupList(@Nullable Bundle savedInstanceState) {
         preferenceList.setLayoutManager(preferenceList.createLayoutManager());
         preferenceList.setExpandablePage(preferencesPage, toolbar);
         preferenceList.setHasFixedSize(true);
+        if (savedInstanceState != null) {
+            preferenceList.handleOnRestoreInstanceState(savedInstanceState);
+        }
 
         PreferencesAdapter preferencesAdapter = new PreferencesAdapter(constructPreferenceGroups());
         preferencesAdapter.setOnPreferenceGroupClickListener((preferenceGroup, itemView, groupId) -> {
             preferenceList.expandItem(preferenceList.indexOfChild(itemView), groupId);
-            preferencesPage.post(() -> {
-                // TODO: 04/03/17 Load preference page.
-            });
+            preferencesPage.post(() -> preferencesFragment.populatePreferences(preferenceGroup));
         });
         preferenceList.setAdapter(preferencesAdapter);
     }
 
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        preferenceList.handleOnSaveInstance(outState);
+        super.onSaveInstanceState(outState);
+    }
+
     private List<DankPreferenceGroup> constructPreferenceGroups() {
         List<DankPreferenceGroup> preferenceGroups = new ArrayList<>();
-
-        // Look & feel.
-        preferenceGroups.add(DankPreferenceGroup.create(
-                R.drawable.ic_look_and_feel_24dp,
-                R.string.userpreferences_look_and_feel,
-                R.string.userpreferences_look_and_feel_subtitle)
-        );
-
-        // Manage subreddits.
-        preferenceGroups.add(DankPreferenceGroup.create(
-                R.drawable.ic_subreddits_24dp,
-                R.string.userpreferences_manage_subreddits,
-                R.string.userpreferences_manage_subreddits_subtitle)
-        );
-
-        // Filters.
-        preferenceGroups.add(DankPreferenceGroup.create(
-                R.drawable.ic_visibility_off_24dp,
-                R.string.userpreferences_filters,
-                R.string.userpreferences_filters_subtitle)
-        );
-
-        // Data usage.
-        preferenceGroups.add(DankPreferenceGroup.create(
-                R.drawable.ic_data_setting_24dp,
-                R.string.userpreferences_data_usage,
-                R.string.userpreferences_data_usage_subtitle)
-        );
-
-        // About.
-        preferenceGroups.add(DankPreferenceGroup.create(
-                R.drawable.ic_adb_24dp,
-                R.string.userpreferences_about,
-                R.string.userpreferences_about_subtitle)
-        );
+        preferenceGroups.add(DankPreferenceGroup.LOOK_AND_FEEL);
+        preferenceGroups.add(DankPreferenceGroup.MANAGE_SUBREDDITS);
+        preferenceGroups.add(DankPreferenceGroup.FILTERS);
+        preferenceGroups.add(DankPreferenceGroup.DATA_USAGE);
+        preferenceGroups.add(DankPreferenceGroup.MISCELLANEOUS);
+        preferenceGroups.add(DankPreferenceGroup.ABOUT_DANK);
         return preferenceGroups;
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (preferencesPage.isExpandedOrExpanding()) {
+            preferenceList.collapse();
+        } else {
+            super.onBackPressed();
+        }
     }
 
 }

@@ -36,7 +36,7 @@
         android:layout_below="@+id/item_preferencegroup_title"
         android:layout_marginBottom="@dimen/spacing12"
         android:textColor="@color/gray_600"
-        tools:text="@string/userpreferences_look_and_feel_subtitle" />
+        tools:text="@string/userpreferences_look_and_feel_description" />
 
     <View
         android:id="@+id/item_preferencegroup_separator"

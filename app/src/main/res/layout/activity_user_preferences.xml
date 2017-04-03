@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/userpreferences_root"
+    style="@style/DankPullCollapsibleActivityPage"
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/userpreferences_root"
-    style="@style/DankPullCollapsibleActivityPage">
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <me.saket.dank.widgets.InboxUI.InboxRecyclerView
         android:id="@+id/userpreferences_list"
@@ -23,10 +22,5 @@
         android:id="@+id/userpreferences_preferences_page"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:background="@color/window_background">
-
-        <me.saket.dank.widgets.DankToolbar
-            android:id="@+id/userpreferences_preference_toolbar"
-            style="@style/DankToolbar" />
-    </me.saket.dank.widgets.InboxUI.ExpandablePageLayout>
+        android:background="@color/window_background" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>
