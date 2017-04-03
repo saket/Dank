@@ -43,7 +43,6 @@ import me.saket.dank.utils.UrlMetadataParser;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
-import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment;
 import rx.Subscription;
 import rx.subscriptions.Subscriptions;
 import timber.log.Timber;
@@ -77,11 +76,9 @@ public class SubmissionLinkDetailsViewHolder {
     @BindColor(R.color.submission_link_subtitle_dark) int subtitleTextColorForDarkBackground;
 
     private final ViewGroup linkDetailsContainer;
-    private final CustomTabsHelperFragment customTabsHelper;
 
-    public SubmissionLinkDetailsViewHolder(ViewGroup linkedRedditLinkView, CustomTabsHelperFragment customTabsHelper) {
+    public SubmissionLinkDetailsViewHolder(ViewGroup linkedRedditLinkView) {
         this.linkDetailsContainer = linkedRedditLinkView;
-        this.customTabsHelper = customTabsHelper;
         ButterKnife.bind(this, linkedRedditLinkView);
         linkedRedditLinkView.setClipToOutline(true);
     }
@@ -175,8 +172,6 @@ public class SubmissionLinkDetailsViewHolder {
      * Show information of an external link. Extracts meta-data from the URL to get the favicon and the title.
      */
     public Subscription populate(Link.External externalLink, @Nullable String redditSuppliedThumbnail) {
-        customTabsHelper.mayLaunchUrl(Uri.parse(externalLink.url), null, null);
-
         resetViews();
         Views.setWidth(iconContainer, iconWidthWithThumbnailPx);
 

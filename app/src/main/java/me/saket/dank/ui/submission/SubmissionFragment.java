@@ -66,7 +66,6 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
-import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment;
 import rx.Observable;
 import rx.Subscription;
 import rx.functions.Action1;
@@ -180,7 +179,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         setupContentVideoView();
         setupCommentsSheet();
 
-        linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView, CustomTabsHelperFragment.attachTo(this));
+        linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView);
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {

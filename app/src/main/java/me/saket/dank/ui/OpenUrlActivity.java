@@ -1,40 +1,24 @@
 package me.saket.dank.ui;
 
-import static me.saket.dank.utils.RxUtils.logError;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.customtabs.CustomTabsIntent;
-import android.support.v4.app.ActivityOptionsCompat;
-import android.support.v4.content.ContextCompat;
 import android.view.WindowManager;
 import android.widget.Toast;
 
-import org.chromium.customtabsclient.CustomTabsActivityHelper;
-import org.chromium.customtabsclient.CustomTabsHelper;
-
-import java.util.concurrent.TimeUnit;
-
-import me.saket.dank.BuildConfig;
-import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfileActivity;
 import me.saket.dank.ui.webview.WebViewActivity;
-import me.zhanghai.android.customtabshelper.CustomTabsHelperFragment;
-import rx.Observable;
 import timber.log.Timber;
 
 public class OpenUrlActivity extends DankActivity {
 
     private static final String KEY_LINK = "link";
-    private static final int REQUESTCODE_CHROME_CUSTOM_TAB = 100;
 
     /**
      * @param expandFromShape The initial shape of the target Activity from where it will begin its entry expand animation.
@@ -69,62 +53,13 @@ public class OpenUrlActivity extends DankActivity {
             finish();
 
         } else if (link.isExternal()) {
-            if (BuildConfig.DEBUG) {
-                WebViewActivity.start(this, ((Link.External) link).url);
-                finish();
-
-            } else {
-                CustomTabsHelperFragment.attachTo(this);
-                openLinkInChromeCustomTab(((Link.External) link));
-            }
+            WebViewActivity.start(this, ((Link.External) link).url);
+            finish();
 
         } else {
             Toast.makeText(this, "TODO: " + link.getClass().getSimpleName(), Toast.LENGTH_SHORT).show();
             finish();
         }
-    }
-
-    private void openLinkInChromeCustomTab(Link.External link) {
-        CustomTabsIntent customTabsIntent = new CustomTabsIntent.Builder()
-                .enableUrlBarHiding()
-                .setToolbarColor(ContextCompat.getColor(this, R.color.toolbar))
-                .addDefaultShareMenuItem()
-                .setShowTitle(true)
-                .build();
-
-        CustomTabsActivityHelper.CustomTabsFallback customTabsFallback = (activity, uri) -> {
-            WebViewActivity.start(this, link.url);
-            finish();
-        };
-        Uri linkToOpen = Uri.parse(link.url);
-
-        // If we cant find a package name, it means there's no browser that supports
-        // Chrome Custom Tabs installed. So, we fallback to the WebView.
-        String packageName = CustomTabsHelper.getPackageNameToUse(this);
-        if (packageName == null) {
-            customTabsFallback.openUri(this, linkToOpen);
-
-        } else {
-            Bundle startAnimationBundle = ActivityOptionsCompat.makeCustomAnimation(
-                    this, R.anim.chromecustomtab_enter_from_bottom, R.anim.nothing).toBundle();
-
-            Bundle bundle = ActivityOptionsCompat.makeCustomAnimation(
-                    this, R.anim.nothing, R.anim.chromecustomtab_exit_to_bottom).toBundle();
-            customTabsIntent.intent.putExtra(CustomTabsIntent.EXTRA_EXIT_ANIMATION_BUNDLE, bundle);
-
-            customTabsIntent.intent.setPackage(packageName);
-            customTabsIntent.intent.setData(linkToOpen);
-            startActivityForResult(customTabsIntent.intent, REQUESTCODE_CHROME_CUSTOM_TAB, startAnimationBundle);
-        }
-    }
-
-    @Override
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == REQUESTCODE_CHROME_CUSTOM_TAB) {
-            // Finish this Activity once Chrome custom tabs has finished its exit animation.
-            unsubscribeOnDestroy(Observable.timer(getResources().getInteger(R.integer.chromecustomtabs_transition_animation_duration) / 2, TimeUnit.MILLISECONDS).subscribe(__ -> finish(), logError("Wut")));
-        }
-        super.onActivityResult(requestCode, resultCode, data);
     }
 
 }
