@@ -1,7 +1,6 @@
 package me.saket.dank.data;
 
 import android.net.Uri;
-import android.text.Html;
 
 import net.dean.jraw.models.Thumbnails;
 
@@ -10,6 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import me.saket.dank.di.DankApi;
+import me.saket.dank.utils.CommonUtils;
 
 /**
  * Details of an image (including GIF) or a video that can be played within in the app.
@@ -59,26 +59,10 @@ public class MediaLink extends Link {
      */
     public String optimizedImageUrl(int optimizeForWidth) {
         if (canUseRedditOptimizedImageUrl && redditSuppliedImages != null) {
-            Thumbnails.Image closestImage = redditSuppliedImages.getSource();
-            int closestDifference = optimizeForWidth - redditSuppliedImages.getSource().getWidth();
-
-            for (Thumbnails.Image redditCopy : redditSuppliedImages.getVariations()) {
-                int differenceAbs = Math.abs(optimizeForWidth - redditCopy.getWidth());
-
-                if (differenceAbs < Math.abs(closestDifference)
-                        // If another image is found with the same difference, choose the higher-res image.
-                        || differenceAbs == closestDifference && redditCopy.getWidth() > closestImage.getWidth())
-                {
-                    closestDifference = optimizeForWidth - redditCopy.getWidth();
-                    closestImage = redditCopy;
-                }
-            }
-
-            //noinspection deprecation
-            return Html.fromHtml(closestImage.getUrl()).toString();
+            return CommonUtils.findOptimizedImage(redditSuppliedImages, optimizeForWidth);
+        } else {
+            return url;
         }
-
-        return url;
     }
 
     public String highQualityVideoUrl() {

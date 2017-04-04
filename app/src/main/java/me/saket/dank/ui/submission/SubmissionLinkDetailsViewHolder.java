@@ -87,6 +87,10 @@ public class SubmissionLinkDetailsViewHolder {
         linkDetailsContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
+    public int getThumbnailWidth() {
+        return iconWidthWithThumbnailPx;
+    }
+
     private void resetViews() {
         // Stop loading of any pending images.
         Glide.clear(thumbnailView);

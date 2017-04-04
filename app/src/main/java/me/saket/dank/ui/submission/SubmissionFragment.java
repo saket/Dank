@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission;
 
+import static me.saket.dank.utils.CommonUtils.findOptimizedImage;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
@@ -461,7 +462,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
             case EXTERNAL:
                 contentLoadProgressView.hide();
-                String redditSuppliedThumbnail = activeSubmission.getThumbnail();
+                String redditSuppliedThumbnail = activeSubmission.getThumbnails() != null
+                        ? findOptimizedImage(activeSubmission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidth())
+                        : null;
                 unsubscribeOnCollapse(linkDetailsViewHolder.populate(((Link.External) contentLink), redditSuppliedThumbnail));
                 linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
                 break;
