@@ -180,7 +180,7 @@
                 android:id="@+id/submission_link_progress"
                 style="@style/DankProgressBar.Horizontal.BottomAligned"
                 android:layout_alignBottom="@+id/submission_link_title_container"
-                android:indeterminateTint="@color/black_opacity_40" />
+                android:indeterminateTint="@color/black_opacity_50" />
         </RelativeLayout>
 
         <LinearLayout
