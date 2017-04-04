@@ -25,4 +25,5 @@
     <dimen name="submission_link_icon_width_with_thumbnail">100dp</dimen>
     <dimen name="submission_link_favicon_max_size">32dp</dimen>
     <dimen name="submission_link_favicon_min_size">20dp</dimen>
+    <dimen name="submission_image_scroll_hint_elevation">8dp</dimen>
 </resources>

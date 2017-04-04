@@ -8,6 +8,8 @@ import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.widget.TextView;
 
+import timber.log.Timber;
+
 /**
  * Utility methods for Views.
  */
@@ -46,10 +48,14 @@ public class Views {
 
                     //noinspection deprecation
                     view.getViewTreeObserver().removeOnPreDrawListener(this);
+
+                } else if (view.getVisibility() == View.GONE) {
+                    Timber.w("View's visibility is set to Gone. It'll never be measured.");
+                    view.getViewTreeObserver().removeOnPreDrawListener(this);
                 }
 
                 return true;
-            };
+            }
         });
     }
 

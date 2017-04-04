@@ -34,7 +34,6 @@ import android.widget.Toast;
 
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
-import com.bumptech.glide.Glide;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -86,6 +85,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
     @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
     @BindView(R.id.submission_image) ZoomableImageView contentImageView;
+    @BindView(R.id.submission_image_scroll_hint) View contentImageScrollHintView;
     @BindView(R.id.submission_video_container) ViewGroup contentVideoViewContainer;
     @BindView(R.id.submission_video) VideoView contentVideoView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
@@ -270,6 +270,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 submissionPageLayout,
                 contentLoadProgressView,
                 contentImageView,
+                contentImageScrollHintView,
                 commentListParentSheet,
                 deviceDisplayWidth
         );
@@ -528,7 +529,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @Override
     public void onPageCollapsed() {
         contentVideoViewHolder.pausePlayback();
-        Glide.clear(contentImageView);
         onCollapseSubscriptions.clear();
     }
 

@@ -153,7 +153,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             activeSubreddit = DankSubreddit.create(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
         } else {
             //activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
-            activeSubreddit = DankSubreddit.create("todayilearned");
+            activeSubreddit = DankSubreddit.create("pics");
         }
         loadSubmissions(activeSubreddit);
 
@@ -270,6 +270,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     @OnClick(R.id.subreddit_toolbar_title)
     void onClickSubredditPicker() {
+        if (isUserProfileSheetVisible()) {
+            // Shouldn't have happened. Animation probably got stuck and user was able to click on profile button.
+            return;
+        }
+
         if (toolbarSheet.isExpandedOrExpanding()) {
             toolbarSheet.collapse();
 
@@ -286,6 +291,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     }
 
     void onClickUserProfileMenu() {
+        if (isSubredditPickerVisible()) {
+            // Shouldn't have happened. Animation probably got stuck and user was able to click on subreddit button.
+            return;
+        }
+
         if (toolbarSheet.isExpandedOrExpanding()) {
             toolbarSheet.collapse();
 

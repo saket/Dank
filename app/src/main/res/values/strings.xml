@@ -4,6 +4,8 @@
     <string name="user_name_u_prefix">/u/%s</string>
     <string name="frontpage_subreddit_name">Frontpage</string>
 
+    <string name="cd_video_play">Play video</string>
+
     <!-- Login -->
     <string name="login">Login</string>
     <string name="login_logout">Logout</string>
@@ -46,7 +48,7 @@
     <string name="submission_link_linked_subreddit">Linked subreddit</string>
     <string name="submission_link_linked_submission">Linked submission</string>
     <string name="submission_link_linked_url">Linked URL</string>
-    <string name="cd_video_play">Play video</string>
+    <string name="submission_image_scroll_down_hint">Scroll down to see more</string>
 
     <!-- WebView -->
     <string name="webview_open_in_browser">Open in browser</string>
