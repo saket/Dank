@@ -105,11 +105,6 @@ public class MediaLink extends Link {
             super(url, canUseRedditOptimizedImageUrl, type);
         }
 
-        public boolean isAlbum() {
-            String urlPath = Uri.parse(url).getPath();
-            return urlPath.startsWith("/a/") || urlPath.startsWith("/gallery/") || urlPath.startsWith("/g/") || urlPath.contains(",");
-        }
-
         public static Imgur create(String url, boolean canUseRedditOptimizedImageUrl) {
             Type type = url.endsWith("mp4") ? Type.VIDEO : Type.IMAGE_OR_GIF;
             return new Imgur(url, canUseRedditOptimizedImageUrl, type);

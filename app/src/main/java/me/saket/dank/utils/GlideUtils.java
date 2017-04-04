@@ -8,6 +8,8 @@ import com.bumptech.glide.request.target.GlideDrawableImageViewTarget;
 import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 
+import timber.log.Timber;
+
 /**
  * Utility methods related to Glide.
  */
@@ -44,9 +46,12 @@ public class GlideUtils {
         }
 
         public void onResourceReady(R resource) {}
+
         public void onException(Exception e) {
             if (e != null) {
                 e.printStackTrace();
+            } else {
+                Timber.e("Couldn't load resource");
             }
         }
     }

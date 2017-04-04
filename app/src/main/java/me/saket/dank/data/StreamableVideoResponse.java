@@ -16,6 +16,17 @@ public abstract class StreamableVideoResponse {
     @Json(name = "files")
     public abstract Files files();
 
+    /**
+     * Note: URL doesn't contain the scheme or '://'.
+     * E.g.: 'streamable.com/fxn88'. Not sure if 'protocol' is the right word.
+     */
+    @Json(name = "url")
+    abstract String urlWithoutProtocol();
+
+    public String url() {
+        return "https://" + urlWithoutProtocol();
+    }
+
     @AutoValue
     public abstract static class Files {
         @Json(name = "mp4")
@@ -31,8 +42,16 @@ public abstract class StreamableVideoResponse {
 
     @AutoValue
     public abstract static class Video {
+        /**
+         * Note: the URL is scheme-less.
+         * E.g.: '//cdn-e2.streamable.com/video/mp4-mobile/fxn88.mp4?token=1492269114_8becb8f6fab5b53e5b0ee0f0c6a8f8969e38a04a'.
+         */
         @Json(name = "url")
-        public abstract String url();
+        abstract String schemeLessUrl();
+
+        public String url() {
+            return "https:" + schemeLessUrl();
+        }
 
         public static JsonAdapter<Video> jsonAdapter(Moshi moshi) {
             return new AutoValue_StreamableVideoResponse_Video.MoshiJsonAdapter(moshi);

@@ -21,6 +21,7 @@ import me.saket.dank.widgets.InboxUI.SimpleExpandablePageCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
+import timber.log.Timber;
 
 /**
  * Manages showing of content image in {@link SubmissionFragment}.
@@ -108,6 +109,15 @@ public class SubmissionImageViewHolder {
                         });
 
                         contentLoadProgressView.hide();
+                    }
+
+                    @Override
+                    public void onException(Exception e) {
+                        Timber.e("Couldn't load image");
+                        contentLoadProgressView.hide();
+
+                        // TODO: 04/04/17 Show a proper error.
+                        Toast.makeText(imageView.getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
                     }
                 })
                 .into(imageView);

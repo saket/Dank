@@ -28,7 +28,6 @@ import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import rx.Single;
 import rx.Subscription;
 import rx.functions.Action1;
-import timber.log.Timber;
 
 /**
  * Manages loading of video in {@link SubmissionFragment}.
@@ -64,16 +63,29 @@ public class SubmissionVideoViewHolder {
     }
 
     public Subscription load(MediaLink mediaLink) {
-        Single<String> videoUrlObservable = mediaLink instanceof MediaLink.StreamableUnknown
+        Single<? extends MediaLink> videoUrlObservable = mediaLink instanceof MediaLink.StreamableUnknown
                 ? getStreamableVideoDetails(((MediaLink.StreamableUnknown) mediaLink))
-                : Single.just(mediaLink.lowQualityVideoUrl());
+                : Single.just(mediaLink);
 
         return videoUrlObservable
                 .doOnSubscribe(() -> contentLoadProgressView.show())
+                .map(link -> link.lowQualityVideoUrl())
                 .subscribe(load(), error -> {
                     // TODO: 01/04/17 Handle error.
                     logError("Couldn't load video").call(error);
                 });
+    }
+
+    // TODO: 01/04/17 Cache.
+    private Single<MediaLink.Streamable> getStreamableVideoDetails(MediaLink.StreamableUnknown streamableLink) {
+        return Dank.api()
+                .streamableVideoDetails(streamableLink.videoId())
+                .compose(applySchedulersSingle())
+                .map(response -> MediaLink.Streamable.create(
+                        response.url(),
+                        response.files().lowQualityVideo().url(),
+                        response.files().highQualityVideo().url()
+                ));
     }
 
     private Action1<String> load() {
@@ -129,14 +141,6 @@ public class SubmissionVideoViewHolder {
                     });
             //Timber.i("Palette in: %sms", System.currentTimeMillis() - startTime);
         });
-    }
-
-    // TODO: 01/04/17 Cache.
-    private Single<String> getStreamableVideoDetails(MediaLink.StreamableUnknown streamableLink) {
-        return Dank.api()
-                .streamableVideoDetails(streamableLink.videoId())
-                .compose(applySchedulersSingle())
-                .map(response -> "https://" + response.files().lowQualityVideo().url());
     }
 
     public void pausePlayback() {
