@@ -57,7 +57,7 @@ import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
-import me.saket.dank.utils.DankUrlParser;
+import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Views;
@@ -141,7 +141,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         linkMovementMethod.setOnLinkClickListener((textView, url) -> {
             // TODO: 18/03/17 Remove try/catch block
             try {
-                Link parsedLink = DankUrlParser.parse(url);
+                Link parsedLink = UrlParser.parse(url);
                 Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
                 Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
                 OpenUrlActivity.handle(getActivity(), parsedLink, clickedUrlCoordinatesRect);
@@ -374,7 +374,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     public void populateUi(Submission submission, DankSubmissionRequest submissionRequest) {
         activeSubmission = submission;
         activeSubmissionRequest = submissionRequest;
-        activeSubmissionContentLink = DankUrlParser.parse(submission);
+        activeSubmissionContentLink = UrlParser.parse(submission);
 
         // Reset everything.
         contentLoadProgressView.setProgress(0);

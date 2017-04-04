@@ -306,7 +306,9 @@ public class SubmissionLinkDetailsViewHolder {
 
                     @Override
                     public void onException(Exception e) {
-                        Timber.e(e, "Couldn't load favicon");
+                        if (e != null) {
+                            Timber.e(e, "Couldn't load favicon");
+                        }
 
                         // Show a generic icon if the favicon couldn't be fetched.
                         if (!hasLinkThumbnail) {

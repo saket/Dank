@@ -45,7 +45,9 @@ public class GlideUtils {
 
         public void onResourceReady(R resource) {}
         public void onException(Exception e) {
-            e.printStackTrace();
+            if (e != null) {
+                e.printStackTrace();
+            }
         }
     }
 

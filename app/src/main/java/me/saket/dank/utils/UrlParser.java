@@ -25,7 +25,7 @@ import timber.log.Timber;
  * <p>
  * Use {@link #parse(String) to start}.
  */
-public class DankUrlParser {
+public class UrlParser {
 
     /**
      * /r/$subreddit.
