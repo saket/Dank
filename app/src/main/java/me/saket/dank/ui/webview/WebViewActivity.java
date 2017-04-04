@@ -82,6 +82,7 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
         webViewSettings.setDatabaseEnabled(true);
         webViewSettings.setSupportZoom(true);
         webViewSettings.setLoadWithOverviewMode(true);
+        webViewSettings.setUseWideViewPort(true);
 
         webView.loadUrl(urlToLoad);
     }
