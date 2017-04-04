@@ -211,7 +211,11 @@ public class SubmissionLinkDetailsViewHolder {
 
                     // Use link's image if Reddit did not supply with anything.
                     if (isEmpty(redditSuppliedThumbnail) && linkMetadata.hasImage()) {
-                        loadLinkThumbnail(externalLink.url, linkMetadata.imageUrl(), linkMetadata, true);
+                        // Resize down large images. This is not required for reddit supplied images
+                        // because they're already chosen according to their size.
+                        String linkImageUrl = getResizedImageUrl(linkMetadata.imageUrl());
+                        loadLinkThumbnail(externalLink.url, linkImageUrl, linkMetadata, true);
+
                     } else {
                         progressView.setVisibility(View.GONE);
                     }
@@ -226,19 +230,17 @@ public class SubmissionLinkDetailsViewHolder {
                 });
     }
 
-    private void loadLinkThumbnail(String linkUrl, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnEnd) {
-        // Resize down large images.
-        Uri imageURI = Uri.parse(thumbnailUrl);
-        String linkImageUrl = String.format(Locale.ENGLISH,
+    private String getResizedImageUrl(String imageUrl) {
+        return String.format(Locale.ENGLISH,
                 "http://rsz.io/%s?width=%d",
-                thumbnailUrl.substring((imageURI.getScheme() + "://").length(), thumbnailUrl.length()),
+                imageUrl.substring((Uri.parse(imageUrl).getScheme() + "://").length(), imageUrl.length()),
                 iconWidthWithThumbnailPx
         );
+    }
 
-        Timber.i("linkImageUrl: %s", linkImageUrl);
-
+    private void loadLinkThumbnail(String linkUrl, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnEnd) {
         Glide.with(thumbnailView.getContext())
-                .load(linkImageUrl)
+                .load(thumbnailUrl)
                 .listener(new GlideUtils.SimpleRequestListener<String, GlideDrawable>() {
                     @Override
                     public void onResourceReady(GlideDrawable resource) {
