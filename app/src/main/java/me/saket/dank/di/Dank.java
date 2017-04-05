@@ -7,6 +7,7 @@ import com.danikula.videocache.HttpProxyCacheServer;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.utils.ImgurManager;
 import okhttp3.OkHttpClient;
 
 public class Dank {
@@ -41,6 +42,10 @@ public class Dank {
 
     public static DankApi api() {
         return appComponent.api();
+    }
+
+    public static ImgurManager imgur() {
+        return appComponent.imgur();
     }
 
 }

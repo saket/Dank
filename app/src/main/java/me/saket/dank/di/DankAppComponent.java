@@ -8,6 +8,7 @@ import dagger.Component;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.utils.ImgurManager;
 import okhttp3.OkHttpClient;
 
 @Component(modules = DankAppModule.class)
@@ -24,4 +25,6 @@ public interface DankAppComponent {
     DankApi api();
 
     UserPrefsManager userPrefs();
+
+    ImgurManager imgur();
 }

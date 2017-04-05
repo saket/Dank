@@ -8,7 +8,7 @@ import com.squareup.moshi.Moshi;
 import me.saket.dank.di.DankApi;
 
 /**
- * API response for {@link DankApi#streamableVideoDetails(String)}.
+ * API response of {@link DankApi#streamableVideoDetails(String)}.
  */
 @AutoValue
 public abstract class StreamableVideoResponse {

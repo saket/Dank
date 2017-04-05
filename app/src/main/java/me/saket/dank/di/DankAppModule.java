@@ -23,6 +23,7 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.utils.ImgurManager;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -118,8 +119,14 @@ public class DankAppModule {
     }
 
     @Provides
-    @Singleton HttpProxyCacheServer provideHttpProxyCacheServer() {
+    @Singleton
+    HttpProxyCacheServer provideHttpProxyCacheServer() {
         return new HttpProxyCacheServer(appContext);
+    }
+
+    @Provides
+    ImgurManager provideImgurManager() {
+        return new ImgurManager();
     }
 
 }

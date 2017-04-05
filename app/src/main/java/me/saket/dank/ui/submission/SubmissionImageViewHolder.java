@@ -65,13 +65,12 @@ public class SubmissionImageViewHolder {
         });
     }
 
-    public void load(MediaLink contentLink) {
-        if (contentLink instanceof MediaLink.Imgur) {
-            if (((MediaLink.Imgur) contentLink).isAlbum()) {
-                contentLoadProgressView.hide();
-                Toast.makeText(imageView.getContext(), "Imgur album", Toast.LENGTH_SHORT).show();
-                return;
-            }
+    /**
+     * @param isAlbum When true, an album indicator is shown on top of this image.
+     */
+    public void load(MediaLink contentLink, boolean isAlbum) {
+        if (isAlbum) {
+            Toast.makeText(imageView.getContext(), "Imgur album", Toast.LENGTH_SHORT).show();
         }
 
         contentLoadProgressView.setIndeterminate(true);
@@ -123,6 +122,9 @@ public class SubmissionImageViewHolder {
                 .into(imageView);
     }
 
+    /**
+     * Show a tooltip at the bottom of the image, hinting the user that the image is long and can be scrolled.
+     */
     private void showImageScrollHint(float imageHeight, float visibleImageHeight) {
         imageScrollHintView.setVisibility(View.VISIBLE);
         imageScrollHintView.setAlpha(0f);
@@ -151,6 +153,7 @@ public class SubmissionImageViewHolder {
             }
         });
 
+        // Hide the tooltip once the user starts scrolling the image.
         imageScrollListener = new GestureController.OnStateChangeListener() {
             private boolean hidden = false;
 
@@ -164,6 +167,7 @@ public class SubmissionImageViewHolder {
                 float distanceScrollableY = imageHeight - visibleImageHeight;
                 float scrolledPercentage = distanceScrolledY / distanceScrollableY;
 
+                // Hide it after the image has been scrolled 10% of its height.
                 if (scrolledPercentage > 0.1f) {
                     hidden = true;
                     imageScrollHintView.animate()
@@ -178,7 +182,6 @@ public class SubmissionImageViewHolder {
 
             @Override
             public void onStateReset(State oldState, State newState) {
-
             }
         };
         imageView.getController().addOnStateChangeListener(imageScrollListener);

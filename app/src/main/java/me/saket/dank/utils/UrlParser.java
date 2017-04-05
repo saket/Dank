@@ -6,6 +6,7 @@ import android.text.Html;
 import android.text.TextUtils;
 
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Thumbnails;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -13,7 +14,6 @@ import java.util.regex.Pattern;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.RedditLink;
-import timber.log.Timber;
 
 /**
  * Parses URLs found in the wilderness of Reddit and categorizes them into {@link Link} subclasses.
@@ -71,7 +71,20 @@ public class UrlParser {
      */
     private static final Pattern GIPHY_ID_PATTERN = Pattern.compile("^/(?:(?:media)?(?:gifs)?/)?(\\w*)[/.].*$");
 
-    private static final Pattern STREAMABLE_ID_PATTERN4 = Pattern.compile("/(\\w*\\d*)[^/.?]*");
+    /**
+     * Extracts the ID of a streamable link. Eg., https://streamable.com/fxn88 -> 'fxn88'.
+     */
+    private static final Pattern STREAMABLE_ID_PATTERN = Pattern.compile("/(\\w*\\d*)[^/.?]*");
+
+    /**
+     * Extracts the ID of an Imgur album.
+     * <p>
+     * /gallery/9Uq7u
+     * /gallery/coZb0HC
+     * /t/a_day_in_the_life/85Egn
+     * /a/RBpAe
+     */
+    private static final Pattern IMGUR_ALBUM_PATTERN = Pattern.compile("/(?:gallery)?(?:a)?(?:t/\\w*)?/(\\w*).*");
 
     /**
      * Determine type of the url.
@@ -80,7 +93,7 @@ public class UrlParser {
      */
     @NonNull
     public static Link parse(String url) {
-        // TODO: Should we support "np" subdomain?
+        // TODO: Support "np" subdomain?
         // TODO: Support wiki pages.
 
         Uri linkUri = Uri.parse(url);
@@ -135,10 +148,10 @@ public class UrlParser {
         return parseNonRedditUrl(url);
     }
 
-    public static Link parse(Submission submission) {
-        Link parsedLink = parse(submission.getUrl());
+    public static Link parse(String url, Thumbnails redditSuppliedThumbnails) {
+        Link parsedLink = parse(url);
         if (parsedLink instanceof MediaLink) {
-            ((MediaLink) parsedLink).setRedditSuppliedImages(submission.getThumbnails());
+            ((MediaLink) parsedLink).setRedditSuppliedImages(redditSuppliedThumbnails);
         }
         return parsedLink;
     }
@@ -150,7 +163,16 @@ public class UrlParser {
         String urlPath = contentURI.getPath();    // Path is the part of the URL without the domain. E.g.,: /something/image.jpg.
 
         if ((urlDomain.contains("imgur.com") || urlDomain.contains("bildgur.de"))) {
-            return createImgurLink(url);
+            if (isUnsupportedImgurLink(urlPath)) {
+                // These are links that Imgur no longer uses so Dank does not expect them either.
+                return Link.External.create(url);
+
+            } else if (isImgurAlbum(urlPath)) {
+                return createImgurAlbum(url);
+
+            } else {
+                return createImgurLink(url);
+            }
 
         } else if (urlDomain.contains("gfycat.com")) {
             return createGfycatLink(contentURI);
@@ -175,6 +197,18 @@ public class UrlParser {
 
         } else {
             return Link.External.create(url);
+        }
+    }
+
+    private static Link createImgurAlbum(String albumUrl) {
+        Matcher albumUrlMatcher = IMGUR_ALBUM_PATTERN.matcher(Uri.parse(albumUrl).getPath());
+        if (albumUrlMatcher.matches()) {
+            String albumId = albumUrlMatcher.group(1);
+            return MediaLink.ImgurAlbum.create(albumUrl, albumId);
+
+        } else {
+            // Fallback.
+            return Link.External.create(albumUrl);
         }
     }
 
@@ -216,15 +250,13 @@ public class UrlParser {
      * https://gfycat.com/MessySpryAfricancivet
      */
     private static Link createGfycatLink(Uri gfycatURI) {
-        String gfycatURIPath = gfycatURI.getPath();
-        Timber.i("gfycatURIPath: %s", gfycatURIPath);
-
-        Matcher matcher = GFYCAT_ID_PATTERN.matcher(gfycatURIPath);
+        Matcher matcher = GFYCAT_ID_PATTERN.matcher(gfycatURI.getPath());
         if (matcher.matches()) {
             String gfycatThreeWordId = matcher.group(1);
             return MediaLink.Gfycat.create(gfycatURI.getScheme() + "://gfycat.com" + gfycatThreeWordId);
 
         } else {
+            // Fallback.
             return Link.External.create(gfycatURI.toString());
         }
     }
@@ -239,6 +271,7 @@ public class UrlParser {
             return MediaLink.Giphy.create(giphyURI.getScheme() + "://i.giphy.com/" + videoId + ".mp4");
 
         } else {
+            // Fallback.
             return Link.External.create(url);
         }
     }
@@ -246,15 +279,23 @@ public class UrlParser {
     private static Link createUnknownStreamableLink(Uri streamableUri) {
         String url = streamableUri.toString();
 
-        Matcher streamableIdMatcher = STREAMABLE_ID_PATTERN4.matcher(streamableUri.getPath());
+        Matcher streamableIdMatcher = STREAMABLE_ID_PATTERN.matcher(streamableUri.getPath());
         if (streamableIdMatcher.matches()) {
             String videoId = streamableIdMatcher.group(1);
-            Timber.i("STREAMABLE_ID_PATTERN4: %s", STREAMABLE_ID_PATTERN4);
             return MediaLink.StreamableUnknown.create(url, videoId);
 
         } else {
+            // Fallback.
             return Link.External.create(url);
         }
+    }
+
+    public static boolean isImgurAlbum(String urlPath) {
+        return urlPath.startsWith("/gallery/") || urlPath.startsWith("/a/") || urlPath.startsWith("/t/");
+    }
+
+    public static boolean isUnsupportedImgurLink(String urlPath) {
+        return urlPath.contains(",") || urlPath.startsWith("/g/");
     }
 
     private static boolean isImageUrlPath(String urlPath) {

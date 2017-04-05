@@ -2,6 +2,7 @@ package me.saket.dank.ui.submission;
 
 import static me.saket.dank.utils.CommonUtils.findOptimizedImage;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.Views.executeOnMeasure;
@@ -57,9 +58,9 @@ import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
-import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -374,7 +375,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     public void populateUi(Submission submission, DankSubmissionRequest submissionRequest) {
         activeSubmission = submission;
         activeSubmissionRequest = submissionRequest;
-        activeSubmissionContentLink = UrlParser.parse(submission);
+        //Link contentLink = UrlParser.parse(submission.getUrl(), submission.getThumbnails());
 
         // Reset everything.
         contentLoadProgressView.setProgress(0);
@@ -389,7 +390,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
 
         // Load self-text/media/webpage.
-        loadSubmissionContent(submission, activeSubmissionContentLink);
+        Link contentLink = UrlParser.parse(submission.getUrl(), submission.getThumbnails());
+        loadSubmissionContent(submission, contentLink);
 
         // Load new comments.
         if (submission.getComments() == null) {
@@ -433,6 +435,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
 
     private void loadSubmissionContent(Submission submission, Link contentLink) {
+        activeSubmissionContentLink = contentLink;
+
         Timber.d("-------------------------------------------");
         Timber.i("%s", submission.getTitle());
         Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
@@ -443,7 +447,34 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         switch (contentLink.type()) {
             case IMAGE_OR_GIF:
-                contentImageViewHolder.load((MediaLink) contentLink);
+                if (contentLink instanceof MediaLink.ImgurAlbum) {
+                    contentLoadProgressView.show();
+
+                    unsubscribeOnCollapse(Dank.imgur()
+                            .albumCoverImage((MediaLink.ImgurAlbum) contentLink)
+                            .compose(applySchedulersSingle())
+                            .subscribe(imgurResponse -> {
+                                Link coverImageLink = UrlParser.parse(imgurResponse.images().get(0).url(), submission.getThumbnails());
+                                if (coverImageLink.isVideo()) {
+                                    // Whoops, this assumed image turned out to be a video!
+                                    Timber.w("Whoops, video link! imgurResponse: %s", imgurResponse);
+                                    loadSubmissionContent(submission, coverImageLink);
+
+                                } else {
+                                    Timber.i("coverImageLink: %s", coverImageLink);
+                                    contentImageViewHolder.load((MediaLink) coverImageLink, imgurResponse.isAlbum());
+                                }
+
+                            }, error -> {
+                                // TODO: 05/04/17 Handle errors.
+                                Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
+                                Timber.e(error, "Couldn't load album cover image");
+                                contentLoadProgressView.hide();
+                            }));
+
+                } else {
+                    contentImageViewHolder.load((MediaLink) contentLink, false);
+                }
                 break;
 
             case REDDIT_HOSTED:
@@ -479,18 +510,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         }
 
         linkDetailsViewHolder.setVisible(contentLink.isExternal() || contentLink.isRedditHosted() && !submission.isSelfPost());
-        selfPostTextView.setVisibility(contentLink.isRedditHosted() && submission.isSelfPost() ? View.VISIBLE : View.GONE);
+        selfPostTextView.setVisibility(submission.isSelfPost() ? View.VISIBLE : View.GONE);
         contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
         contentVideoViewContainer.setVisibility(contentLink.isVideo() ? View.VISIBLE : View.GONE);
 
         // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
-        boolean transparentToolbar = contentLink.type() == Link.Type.IMAGE_OR_GIF || contentLink.type() == Link.Type.VIDEO;
+        boolean transparentToolbar = contentLink.isImageOrGif() || contentLink.isVideo();
         toolbarBackground.setSyncScrollEnabled(transparentToolbar);
         toolbarShadows.setVisibility(transparentToolbar ? View.VISIBLE : View.GONE);
 
         // Stick the content progress bar below the toolbar if it's an external link. Otherwise, make
         // it scroll with the comments sheet.
-        contentLoadProgressView.setSyncScrollEnabled(contentLink.type() != Link.Type.EXTERNAL);
+        contentLoadProgressView.setSyncScrollEnabled(!contentLink.isExternal());
     }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //

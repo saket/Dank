@@ -20,7 +20,7 @@ public class MediaLink extends Link {
     private String highQualityVideoUrl;
     private String lowQualityVideoUrl;
     private Type type;
-    private Thumbnails redditSuppliedImages;
+    protected Thumbnails redditSuppliedImages;
     private boolean canUseRedditOptimizedImageUrl;
 
     /**
@@ -47,8 +47,9 @@ public class MediaLink extends Link {
     /**
      * Used in {@link #optimizedImageUrl(int)}.
      */
-    public void setRedditSuppliedImages(Thumbnails redditImages) {
+    public MediaLink setRedditSuppliedImages(Thumbnails redditImages) {
         redditSuppliedImages = redditImages;
+        return this;
     }
 
     /**
@@ -66,14 +67,14 @@ public class MediaLink extends Link {
     }
 
     public String highQualityVideoUrl() {
-        if (type() != Type.VIDEO) {
+        if (!isVideo()) {
             throw new IllegalStateException("Not a video");
         }
         return highQualityVideoUrl;
     }
 
     public String lowQualityVideoUrl() {
-        if (type() != Type.VIDEO) {
+        if (!isVideo()) {
             throw new IllegalStateException("Not a video");
         }
         return lowQualityVideoUrl;
@@ -108,6 +109,23 @@ public class MediaLink extends Link {
         public static Imgur create(String url, boolean canUseRedditOptimizedImageUrl) {
             Type type = url.endsWith("mp4") ? Type.VIDEO : Type.IMAGE_OR_GIF;
             return new Imgur(url, canUseRedditOptimizedImageUrl, type);
+        }
+    }
+
+    public static class ImgurAlbum extends MediaLink {
+        private String albumId;
+
+        protected ImgurAlbum(String albumUrl, String albumId) {
+            super(albumUrl, true /* TODO: Test if we can really use reddit supplied thumbnail */, Type.IMAGE_OR_GIF);
+            this.albumId = albumId;
+        }
+
+        public String albumId() {
+            return albumId;
+        }
+
+        public static ImgurAlbum create(String albumUrl, String albumId) {
+            return new ImgurAlbum(albumUrl, albumId);
         }
     }
 

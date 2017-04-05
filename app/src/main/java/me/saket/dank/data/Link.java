@@ -7,13 +7,25 @@ import java.io.Serializable;
  */
 public abstract class Link implements Serializable {
 
-    // TODO: 24/03/17 Is this required?
     public enum Type {
+        /**
+         * Submission / user / subreddit.
+         */
         REDDIT_HOSTED,
+
+        /**
+         * Also includes albums for now.
+         */
         IMAGE_OR_GIF,
+
         VIDEO,
-        EXTERNAL;
+
+        /**
+         * A link that will be opened in a browser.
+         */
+        EXTERNAL,
     }
+
     public abstract Type type();
 
     public boolean isImageOrGif() {

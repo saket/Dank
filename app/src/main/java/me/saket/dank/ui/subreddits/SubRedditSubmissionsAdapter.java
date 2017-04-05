@@ -22,6 +22,7 @@ import me.saket.dank.R;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import rx.functions.Action1;
+import timber.log.Timber;
 
 public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubRedditSubmissionsAdapter.SubmissionViewHolder>
         implements Action1<List<Submission>>
@@ -83,13 +84,13 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
         }
 
         public void bind(Submission submission) {
-            //if ("image".equals(submission.getThumbnail())) {
-//            Timber.d("-------------------------------------------");
-//            Timber.i("%s", submission.getTitle());
-//            Timber.i("Hint: %s, Thumb type: %s", submission.getPostHint(), submission.getThumbnailType());
-//            Timber.i("Thumb: %s", submission.getThumbnail());
-//            Timber.i("Thumbs: %s", submission.getThumbnails());
-            //}
+            if (submission.getTitle().contains("Already drunk")) {
+                Timber.d("-------------------------------------------");
+                Timber.i("%s", submission.getTitle());
+                Timber.i("Hint: %s, Thumb type: %s", submission.getPostHint(), submission.getThumbnailType());
+                Timber.i("Thumb: %s", submission.getThumbnail());
+                Timber.i("Thumbs: %s", submission.getThumbnails());
+            }
 
             switch (submission.getThumbnailType()) {
                 case NSFW:
@@ -114,6 +115,7 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
                     break;
 
                 case URL:
+                    // TODO: 05/04/17 Reddit sometimes sends literal "image" as the thumbnail. Use thumbnail variations in that case.
                     loadThumbnailFromUrl(submission.getThumbnail());
                     thumbnailView.setVisibility(View.VISIBLE);
                     break;
