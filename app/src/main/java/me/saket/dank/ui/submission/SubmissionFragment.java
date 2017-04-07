@@ -108,7 +108,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private Submission activeSubmission;
     private DankSubmissionRequest activeSubmissionRequest;
     private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
-    private SubmissionLinkDetailsViewHolder linkDetailsViewHolder;
+    private SubmissionLinkHolder linkDetailsViewHolder;
     private Link activeSubmissionContentLink;
 
     private SubmissionVideoHolder contentVideoViewHolder;
@@ -181,7 +181,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         setupContentVideoView(view);
         setupCommentsSheet();
 
-        linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView, submissionPageLayout);
+        linkDetailsViewHolder = new SubmissionLinkHolder(linkDetailsView, submissionPageLayout);
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
