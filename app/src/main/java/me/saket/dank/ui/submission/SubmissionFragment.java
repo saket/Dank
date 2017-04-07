@@ -112,7 +112,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private Link activeSubmissionContentLink;
 
     private SubmissionVideoViewHolder contentVideoViewHolder;
-    private SubmissionImageViewHolder contentImageViewHolder;
+    private SubmissionImageHolder contentImageViewHolder;
 
     private int deviceDisplayWidth;
     private boolean isCommentSheetBeneathImage;
@@ -177,7 +177,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         submissionPageLayout.setPullToCollapseIntercepter(this);
 
         setupCommentsHelper();
-        setupContentImageView();
+        setupContentImageView(view);
         setupContentVideoView();
         setupCommentsSheet();
 
@@ -264,17 +264,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         );
     }
 
-    private void setupContentImageView() {
+    private void setupContentImageView(View fragmentLayout) {
         Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
 
-        contentImageViewHolder = new SubmissionImageViewHolder(
-                submissionPageLayout,
-                contentLoadProgressView,
-                contentImageView,
-                contentImageScrollHintView,
-                commentListParentSheet,
-                deviceDisplayWidth
-        );
+        contentImageViewHolder = new SubmissionImageHolder(fragmentLayout, submissionPageLayout, deviceDisplayWidth);
         contentImageViewHolder.setup();
     }
 

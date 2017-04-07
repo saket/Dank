@@ -102,7 +102,6 @@ public class SubmissionLinkDetailsViewHolder {
     }
 
     public void setVisible(boolean visible) {
-        Timber.i("setVisible() -> vis: %s", visible);
         linkDetailsContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 

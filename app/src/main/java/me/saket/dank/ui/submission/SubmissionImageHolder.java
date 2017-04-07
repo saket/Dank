@@ -13,6 +13,9 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.Views;
@@ -26,27 +29,21 @@ import timber.log.Timber;
 /**
  * Manages showing of content image in {@link SubmissionFragment}. Only supports showing a single image right now.
  */
-public class SubmissionImageViewHolder {
+public class SubmissionImageHolder {
+
+    @BindView(R.id.submission_image_scroll_hint) View imageScrollHintView;
+    @BindView(R.id.submission_image) ZoomableImageView imageView;
+    @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
+    @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
 
     private final int deviceDisplayWidth;
-    private final View imageScrollHintView;
-    private final ZoomableImageView imageView;
     private final ExpandablePageLayout submissionPageLayout;
-    private final SubmissionAnimatedProgressBar contentLoadProgressView;
-    private final ScrollingRecyclerViewSheet commentListParentSheet;
 
     private GestureController.OnStateChangeListener imageScrollListener;
 
-    // TODO: ButterKnife everything
-    public SubmissionImageViewHolder(ExpandablePageLayout submissionPageLayout, SubmissionAnimatedProgressBar contentLoadProgressView,
-            ZoomableImageView imageView, View imageScrollHintView, ScrollingRecyclerViewSheet commentListParentSheet,
-            int deviceDisplayWidth)
-    {
+    public SubmissionImageHolder(View fragmentLayout, ExpandablePageLayout submissionPageLayout, int deviceDisplayWidth) {
+        ButterKnife.bind(this, fragmentLayout);
         this.submissionPageLayout = submissionPageLayout;
-        this.contentLoadProgressView = contentLoadProgressView;
-        this.imageView = imageView;
-        this.imageScrollHintView = imageScrollHintView;
-        this.commentListParentSheet = commentListParentSheet;
         this.deviceDisplayWidth = deviceDisplayWidth;
     }
 
@@ -57,13 +54,17 @@ public class SubmissionImageViewHolder {
         submissionPageLayout.addCallbacks(new SimpleExpandablePageCallbacks() {
             @Override
             public void onPageCollapsed() {
-                if (imageScrollListener != null) {
-                    imageView.getController().removeOnStateChangeListener(imageScrollListener);
-                }
-                Glide.clear(imageView);
-                imageScrollHintView.setVisibility(View.GONE);
+                resetViews();
             }
         });
+    }
+
+    private void resetViews() {
+        if (imageScrollListener != null) {
+            imageView.getController().removeOnStateChangeListener(imageScrollListener);
+        }
+        Glide.clear(imageView);
+        imageScrollHintView.setVisibility(View.GONE);
     }
 
     public void load(MediaLink contentLink) {
@@ -122,9 +123,6 @@ public class SubmissionImageViewHolder {
     private void showImageScrollHint(float imageHeight, float visibleImageHeight) {
         imageScrollHintView.setVisibility(View.VISIBLE);
         imageScrollHintView.setAlpha(0f);
-
-        Timber.i("imageHeight: %s", imageHeight);
-        Timber.i("visibleImageHeight: %s", visibleImageHeight);
 
         // Postpone till measure because we need the height.
         executeOnMeasure(imageScrollHintView, () -> {
