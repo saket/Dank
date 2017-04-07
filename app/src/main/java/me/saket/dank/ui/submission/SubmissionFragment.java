@@ -451,7 +451,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         if (contentLink instanceof MediaLink.ImgurUnresolvedGallery) {
             contentLoadProgressView.show();
             String redditSuppliedThumbnail = findOptimizedImage(activeSubmission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidthForAlbum());
-            //linkDetailsViewHolder.prepareForImgurAlbum((MediaLink.ImgurUnresolvedGallery) contentLink, redditSuppliedThumbnail);
 
             unsubscribeOnCollapse(Dank.imgur()
                     .gallery((MediaLink.ImgurUnresolvedGallery) contentLink)
@@ -513,7 +512,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
 
                 if (isImgurAlbum) {
-                    unsubscribeOnCollapse(linkDetailsViewHolder.populate(((MediaLink.ImgurAlbum) contentLink), redditSuppliedThumbnail));
+                    linkDetailsViewHolder.populate(((MediaLink.ImgurAlbum) contentLink), redditSuppliedThumbnail);
                 } else {
                     unsubscribeOnCollapse(linkDetailsViewHolder.populate(((Link.External) contentLink), redditSuppliedThumbnail));
                 }

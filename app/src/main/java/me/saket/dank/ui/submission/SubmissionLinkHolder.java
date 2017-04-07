@@ -4,6 +4,7 @@ import static android.text.TextUtils.isEmpty;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinishSingle;
 import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.Urls.parseDomainName;
 import static me.saket.dank.utils.Views.setDimensions;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setPaddingVertical;
@@ -44,7 +45,6 @@ import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.UrlMetadataParser;
-import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageCallbacks;
@@ -128,6 +128,7 @@ public class SubmissionLinkHolder {
         titleView.setMaxLines(1);
         titleView.setTextColor(titleTextColor);
         subtitleView.setTextColor(subtitleTextColor);
+        setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForLink);
 
         linkDetailsContainer.setBackgroundResource(R.drawable.background_submission_link);
 
@@ -200,7 +201,7 @@ public class SubmissionLinkHolder {
                 }, logError("Couldn't get link's meta-data: " + submissionLink.url));
     }
 
-    public Subscription populate(MediaLink.ImgurAlbum imgurAlbumLink, String redditSuppliedThumbnail) {
+    public void populate(MediaLink.ImgurAlbum imgurAlbumLink, String redditSuppliedThumbnail) {
         // Animate the holder's entry. This block of code is really fragile and the animation only
         // works if these lines are called in their current order. Animating the dimensions of a
         // View is sadly difficult to do the right way.
@@ -218,22 +219,22 @@ public class SubmissionLinkHolder {
         setWidth(iconContainer, thumbnailWidthForAlbum);
         setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForAlbum);
         progressView.setVisibility(View.VISIBLE);
-        iconView.setVisibility(View.GONE);
 
         Resources resources = titleView.getResources();
         subtitleView.setText(resources.getString(R.string.submission_image_album_with_image_count, imgurAlbumLink.imageCount()));
         thumbnailView.setContentDescription(titleView.getText());
         if (isEmpty(imgurAlbumLink.albumTitle())) {
-            titleView.setText(Urls.parseDomainName(imgurAlbumLink.albumUrl()));
+            titleView.setText(parseDomainName(imgurAlbumLink.albumUrl()));
         } else {
             titleView.setText(imgurAlbumLink.albumTitle());
             titleView.setMaxLines(Integer.MAX_VALUE);
         }
 
-        String thumbnailUrl = isEmpty(redditSuppliedThumbnail) ? imgurAlbumLink.coverImageUrl() : redditSuppliedThumbnail;
-        loadLinkThumbnail(false, thumbnailUrl, null, true /* hideProgressBarOnLoad */, false /* tintThumbnail */);
+        iconView.setContentDescription(resources.getString(R.string.submission_link_imgur_gallery));
+        iconView.setImageResource(R.drawable.ic_photo_library_24dp);
 
-        return Subscriptions.unsubscribed();
+        String thumbnailUrl = isEmpty(redditSuppliedThumbnail) ? imgurAlbumLink.coverImageUrl() : redditSuppliedThumbnail;
+        loadLinkThumbnail(false, thumbnailUrl, null, true /* hideProgressBarOnLoad */);
     }
 
     /**
@@ -248,7 +249,7 @@ public class SubmissionLinkHolder {
         iconView.setContentDescription(resources.getString(R.string.submission_link_linked_url));
         iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
         titleView.setText(externalLink.url);
-        subtitleView.setText(Urls.parseDomainName(externalLink.url));
+        subtitleView.setText(parseDomainName(externalLink.url));
         progressView.setVisibility(View.VISIBLE);
 
         boolean isGooglePlayLink = UrlMetadataParser.isGooglePlayLink(externalLink.url);
@@ -259,7 +260,7 @@ public class SubmissionLinkHolder {
         if (isEmpty(redditSuppliedThumbnail)) {
             iconView.setImageResource(R.drawable.ic_link_black_24dp);
         } else {
-            loadLinkThumbnail(isGooglePlayLink, redditSuppliedThumbnail, null, false /* hideProgressOnLoad */, true  /* tintThumbnail */);
+            loadLinkThumbnail(isGooglePlayLink, redditSuppliedThumbnail, null, false /* hideProgressOnLoad */);
         }
 
         return UrlMetadataParser.parse(externalLink.url, false)
@@ -280,7 +281,7 @@ public class SubmissionLinkHolder {
                         // Resize down large images. This is not required for reddit supplied images
                         // because they're already chosen according to their size.
                         String linkImageUrl = getResizedImageUrl(linkMetadata.imageUrl());
-                        loadLinkThumbnail(isGooglePlayLink, linkImageUrl, linkMetadata, true /* hideProgressOnLoad */, true  /* tintThumbnail */);
+                        loadLinkThumbnail(isGooglePlayLink, linkImageUrl, linkMetadata, true /* hideProgressOnLoad */);
 
                     } else {
                         progressView.setVisibility(View.GONE);
@@ -307,9 +308,7 @@ public class SubmissionLinkHolder {
     /**
      * @param linkMetadata For loading the favicon. Can be null to ignore favicon.
      */
-    private void loadLinkThumbnail(boolean isGooglePlayLink, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnLoad,
-            boolean tintThumbnail)
-    {
+    private void loadLinkThumbnail(boolean isGooglePlayLink, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnLoad) {
         Glide.with(thumbnailView.getContext())
                 .load(thumbnailUrl)
                 .asBitmap()
@@ -320,7 +319,7 @@ public class SubmissionLinkHolder {
                                 isGooglePlayLink,
                                 resource,
                                 tintColor -> {
-                                    if (tintThumbnail && !isGooglePlayLink) {
+                                    if (!isGooglePlayLink) {
                                         thumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
                                     }
                                     tintViews(tintColor);
