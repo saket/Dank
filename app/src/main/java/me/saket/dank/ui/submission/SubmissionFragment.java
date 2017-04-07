@@ -111,7 +111,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private SubmissionLinkDetailsViewHolder linkDetailsViewHolder;
     private Link activeSubmissionContentLink;
 
-    private SubmissionVideoViewHolder contentVideoViewHolder;
+    private SubmissionVideoHolder contentVideoViewHolder;
     private SubmissionImageHolder contentImageViewHolder;
 
     private int deviceDisplayWidth;
@@ -178,7 +178,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         setupCommentsHelper();
         setupContentImageView(view);
-        setupContentVideoView();
+        setupContentVideoView(view);
         setupCommentsSheet();
 
         linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView, submissionPageLayout);
@@ -271,17 +271,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         contentImageViewHolder.setup();
     }
 
-    private void setupContentVideoView() {
+    private void setupContentVideoView(View fragmentLayout) {
         Views.setMarginBottom(contentVideoViewContainer, commentsSheetMinimumVisibleHeight);
 
-        contentVideoViewHolder = new SubmissionVideoViewHolder(
-                submissionPageLayout,
-                contentLoadProgressView,
-                contentVideoView,
-                contentVideoViewContainer,
-                commentListParentSheet,
-                ExoPlayerManager.newInstance(this, contentVideoView)
-        );
+        ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
+        contentVideoViewHolder = new SubmissionVideoHolder(fragmentLayout, submissionPageLayout, exoPlayerManager);
         contentVideoViewHolder.setup();
     }
 

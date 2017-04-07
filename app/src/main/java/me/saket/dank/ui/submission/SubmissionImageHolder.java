@@ -41,8 +41,8 @@ public class SubmissionImageHolder {
 
     private GestureController.OnStateChangeListener imageScrollListener;
 
-    public SubmissionImageHolder(View fragmentLayout, ExpandablePageLayout submissionPageLayout, int deviceDisplayWidth) {
-        ButterKnife.bind(this, fragmentLayout);
+    public SubmissionImageHolder(View submissionLayout, ExpandablePageLayout submissionPageLayout, int deviceDisplayWidth) {
+        ButterKnife.bind(this, submissionLayout);
         this.submissionPageLayout = submissionPageLayout;
         this.deviceDisplayWidth = deviceDisplayWidth;
     }

@@ -16,6 +16,8 @@ import android.view.ViewGroup;
 import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
@@ -32,28 +34,21 @@ import rx.functions.Action1;
 /**
  * Manages loading of video in {@link SubmissionFragment}.
  */
-public class SubmissionVideoViewHolder {
+public class SubmissionVideoHolder {
 
-    private ExpandablePageLayout submissionPageLayout;
-    private SubmissionAnimatedProgressBar contentLoadProgressView;
-    private ViewGroup contentVideoViewContainer;
-    private VideoView contentVideoView;
-    private ScrollingRecyclerViewSheet commentListParentSheet;
-    private ExoPlayerManager exoPlayerManager;
+    @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
+    @BindView(R.id.submission_video_container) ViewGroup contentVideoViewContainer;
+    @BindView(R.id.submission_video) VideoView contentVideoView;
+    @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
 
+    private final ExpandablePageLayout submissionPageLayout;
+    private final ExoPlayerManager exoPlayerManager;
     private Bitmap videoBitmap;
     private DankVideoControlsView controlsView;
 
-    // TODO: ButterKnife everything
-    public SubmissionVideoViewHolder(ExpandablePageLayout submissionPageLayout, SubmissionAnimatedProgressBar contentLoadProgressView,
-            VideoView contentVideoView, ViewGroup contentVideoViewContainer, ScrollingRecyclerViewSheet commentListParentSheet,
-            ExoPlayerManager exoPlayerManager)
-    {
+    public SubmissionVideoHolder(View submissionLayout, ExpandablePageLayout submissionPageLayout, ExoPlayerManager exoPlayerManager) {
+        ButterKnife.bind(this, submissionLayout);
         this.submissionPageLayout = submissionPageLayout;
-        this.contentLoadProgressView = contentLoadProgressView;
-        this.contentVideoViewContainer = contentVideoViewContainer;
-        this.contentVideoView = contentVideoView;
-        this.commentListParentSheet = commentListParentSheet;
         this.exoPlayerManager = exoPlayerManager;
     }
 
