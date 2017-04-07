@@ -52,6 +52,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.RedditLink;
+import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.OpenUrlActivity;
@@ -69,6 +70,7 @@ import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import rx.Observable;
 import rx.Subscription;
+import rx.exceptions.OnErrorThrowable;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -454,6 +456,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
             unsubscribeOnCollapse(Dank.imgur()
                     .gallery((MediaLink.ImgurUnresolvedGallery) contentLink)
+                    .map(response -> {
+                        if (response == null) {
+                            throw OnErrorThrowable.from(new NullPointerException());
+                        } else
+                            return response;
+                    })
                     .compose(applySchedulersSingle())
                     .subscribe(imgurResponse -> {
                         if (imgurResponse.isAlbum()) {
@@ -475,9 +483,17 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                         }
 
                     }, error -> {
-                        // TODO: 05/04/17 Handle errors.
-                        Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
-                        Timber.e(error, "Couldn't load album cover image");
+                        // Open this album in browser if Imgur rate limits have reached.
+                        if (error instanceof ImgurApiRateLimitReachedException) {
+                            String albumUrl = ((MediaLink.ImgurUnresolvedGallery) contentLink).albumUrl();
+                            loadSubmissionContent(submission, Link.External.create(albumUrl));
+
+                        } else {
+                            // TODO: 05/04/17 Handle errors (including InvalidImgurAlbumException).
+                            Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
+                            Timber.e(error, "Couldn't load album cover image");
+                            contentLoadProgressView.hide();
+                        }
                     }));
             return;
         }

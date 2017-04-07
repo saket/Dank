@@ -126,7 +126,7 @@ public class DankAppModule {
 
     @Provides
     ImgurManager provideImgurManager() {
-        return new ImgurManager();
+        return new ImgurManager(appContext);
     }
 
 }

@@ -104,11 +104,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
         if (commentItem.type() == SubmissionCommentsRow.Type.USER_COMMENT) {
             CommentNode commentNode = ((DankCommentNode) commentItem).commentNode();
             ((UserCommentViewHolder) holder).bind(commentNode);
-
-            View.OnClickListener listener = v -> {
+            ((UserCommentViewHolder) holder).itemView.setOnClickListener(v -> {
                 commentClickSubject.onNext(commentNode);
-            };
-            ((UserCommentViewHolder) holder).itemView.setOnClickListener(listener);
+            });
 
         } else {
             LoadMoreCommentsItem loadMoreItem = ((LoadMoreCommentsItem) commentItem);

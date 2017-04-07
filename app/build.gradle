@@ -106,7 +106,9 @@ dependencies {
     compile 'com.github.larvalabs:linkunfurl:v0.11'
     compile 'com.trello:rxlifecycle-navi:1.0'
     compile 'it.gilvegliach.android:transparent-text-textview:1.0.3'
+    compile 'com.jakewharton.threetenabp:threetenabp:1.0.5'
 
+    // Videos!
     compile 'com.google.android.exoplayer:exoplayer:r2.3.1'
     compile 'com.github.Saketme:ExoMedia:3ba6565f07'
     compile 'com.danikula:videocache:2.6.4'

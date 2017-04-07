@@ -2,6 +2,8 @@ package me.saket.dank;
 
 import android.app.Application;
 
+import com.jakewharton.threetenabp.AndroidThreeTen;
+
 import me.saket.dank.di.Dank;
 import timber.log.Timber;
 
@@ -11,13 +13,12 @@ public class DankApplication extends Application {
     public void onCreate() {
         super.onCreate();
 
-        // Initialize Timber.
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
         }
 
-        // Initialize Dagger graph.
         Dank.initDependencies(this);
+        AndroidThreeTen.init(this);
     }
 
 }
