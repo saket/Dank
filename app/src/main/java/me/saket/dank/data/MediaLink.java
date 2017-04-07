@@ -94,41 +94,6 @@ public class MediaLink extends Link {
         return new MediaLink(url, canUseRedditOptimizedImageUrl, type);
     }
 
-    public static class Imgur extends MediaLink {
-        private static final Set<String> DOMAINS = new HashSet<>(Arrays.asList(
-                "imgur.com",        // Link to an Imgur submission.
-                "i.imgur.com",      // Direct link to Imgur submission's image/video.
-                "b.bildgur.de",     // Bildgur is Imgur's german cousin.
-                "bildgur.de"
-        ));
-
-        private Imgur(String url, boolean canUseRedditOptimizedImageUrl, Type type) {
-            super(url, canUseRedditOptimizedImageUrl, type);
-        }
-
-        public static Imgur create(String url, boolean canUseRedditOptimizedImageUrl) {
-            Type type = url.endsWith("mp4") ? Type.VIDEO : Type.IMAGE_OR_GIF;
-            return new Imgur(url, canUseRedditOptimizedImageUrl, type);
-        }
-    }
-
-    public static class ImgurAlbum extends MediaLink {
-        private String albumId;
-
-        protected ImgurAlbum(String albumUrl, String albumId) {
-            super(albumUrl, true /* TODO: Test if we can really use reddit supplied thumbnail */, Type.IMAGE_OR_GIF);
-            this.albumId = albumId;
-        }
-
-        public String albumId() {
-            return albumId;
-        }
-
-        public static ImgurAlbum create(String albumUrl, String albumId) {
-            return new ImgurAlbum(albumUrl, albumId);
-        }
-    }
-
     public static class Gfycat extends MediaLink {
         public Gfycat(String url, String lowQualityVideoUrl, String highQualityVideoUrl, Type type) {
             super(url, lowQualityVideoUrl, highQualityVideoUrl, false, type);
@@ -187,6 +152,81 @@ public class MediaLink extends Link {
 
         public static Streamable create(String streamableUrl, String lowQualityVideoUrl, String highQualityVideoUrl) {
             return new Streamable(streamableUrl, lowQualityVideoUrl, highQualityVideoUrl);
+        }
+    }
+
+    public static class Imgur extends MediaLink {
+        private static final Set<String> DOMAINS = new HashSet<>(Arrays.asList(
+                "imgur.com",        // Link to an Imgur submission.
+                "i.imgur.com",      // Direct link to Imgur submission's image/video.
+                "b.bildgur.de",     // Bildgur is Imgur's german cousin.
+                "bildgur.de"
+        ));
+
+        private Imgur(String url, boolean canUseRedditOptimizedImageUrl, Type type) {
+            super(url, canUseRedditOptimizedImageUrl, type);
+        }
+
+        public static Imgur create(String url, boolean canUseRedditOptimizedImageUrl) {
+            Type type = url.endsWith("mp4") ? Type.VIDEO : Type.IMAGE_OR_GIF;
+            return new Imgur(url, canUseRedditOptimizedImageUrl, type);
+        }
+    }
+
+    /**
+     * A Imgur.com/gallery link, whose actual image count is unknown. It could be a single image/gif or an album.
+     */
+    public static class ImgurUnresolvedGallery extends MediaLink {
+        private String albumId;
+
+        protected ImgurUnresolvedGallery(String albumUrl, String albumId) {
+            super(albumUrl, false, Type.UNRESOLVED_IMGUR_GALLERY);
+            this.albumId = albumId;
+        }
+
+        public String albumId() {
+            return albumId;
+        }
+
+        public String albumUrl() {
+            return url;
+        }
+
+        public static ImgurUnresolvedGallery create(String albumUrl, String albumId) {
+            return new ImgurUnresolvedGallery(albumUrl, albumId);
+        }
+    }
+
+    public static class ImgurAlbum extends MediaLink {
+        private final String albumTitle;
+        private final String coverImageUrl;
+        private final int imageCount;
+
+        protected ImgurAlbum(String albumUrl, String albumTitle, String coverImageUrl, int imageCount) {
+            super(albumUrl, false, Type.EXTERNAL);
+            this.albumTitle = albumTitle;
+            this.coverImageUrl = coverImageUrl;
+            this.imageCount = imageCount;
+        }
+
+        public String albumUrl() {
+            return url;
+        }
+
+        public String coverImageUrl() {
+            return coverImageUrl;
+        }
+
+        public int imageCount() {
+            return imageCount;
+        }
+
+        public String albumTitle() {
+            return albumTitle;
+        }
+
+        public static ImgurAlbum create(String albumUrl, String albumTitle, String coverImageUrl, int imageCount) {
+            return new ImgurAlbum(albumUrl, albumTitle, coverImageUrl, imageCount);
         }
     }
 

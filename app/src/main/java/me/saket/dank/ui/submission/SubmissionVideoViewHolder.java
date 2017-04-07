@@ -44,6 +44,7 @@ public class SubmissionVideoViewHolder {
     private Bitmap videoBitmap;
     private DankVideoControlsView controlsView;
 
+    // TODO: ButterKnife everything
     public SubmissionVideoViewHolder(ExpandablePageLayout submissionPageLayout, SubmissionAnimatedProgressBar contentLoadProgressView,
             VideoView contentVideoView, ViewGroup contentVideoViewContainer, ScrollingRecyclerViewSheet commentListParentSheet,
             ExoPlayerManager exoPlayerManager)

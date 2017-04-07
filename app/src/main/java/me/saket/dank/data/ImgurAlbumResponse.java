@@ -33,6 +33,11 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
         return data().images();
     }
 
+    @Override
+    public String albumTitle() {
+        return data().albumTitle();
+    }
+
     public static ImgurAlbumResponse createEmpty() {
         return new AutoValue_ImgurAlbumResponse(new Data() {
             @Override
@@ -44,16 +49,24 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
             public List<ImgurImage> images() {
                 return null;
             }
+
+            @Override
+            public String albumTitle() {
+                return null;
+            }
         });
     }
 
     @AutoValue
     public abstract static class Data {
-        @Json(name = "count")
+        @Json(name = "images_count")
         abstract int imageCount();
 
         @Json(name = "images")
         public abstract List<ImgurImage> images();
+
+        @Json(name = "title")
+        public abstract String albumTitle();
 
         public static JsonAdapter<Data> jsonAdapter(Moshi moshi) {
             return new AutoValue_ImgurAlbumResponse_Data.MoshiJsonAdapter(moshi);

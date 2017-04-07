@@ -105,6 +105,7 @@ dependencies {
     compile 'com.schinizer:rxunfurl:0.2.0'
     compile 'com.github.larvalabs:linkunfurl:v0.11'
     compile 'com.trello:rxlifecycle-navi:1.0'
+    compile 'it.gilvegliach.android:transparent-text-textview:1.0.3'
 
     compile 'com.google.android.exoplayer:exoplayer:r2.3.1'
     compile 'com.github.Saketme:ExoMedia:3ba6565f07'

@@ -181,7 +181,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         setupContentVideoView();
         setupCommentsSheet();
 
-        linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView);
+        linkDetailsViewHolder = new SubmissionLinkDetailsViewHolder(linkDetailsView, submissionPageLayout);
 
         // Restore submission if the Activity was recreated.
         if (savedInstanceState != null) {
@@ -445,36 +445,60 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 //            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
 //        }
 
+        boolean isImgurAlbum = contentLink instanceof MediaLink.ImgurAlbum;
+        linkDetailsViewHolder.setVisible(!isImgurAlbum && contentLink.isExternal() || contentLink.isRedditHosted() && !submission.isSelfPost());
+        selfPostTextView.setVisibility(submission.isSelfPost() ? View.VISIBLE : View.GONE);
+        contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
+        contentVideoViewContainer.setVisibility(contentLink.isVideo() ? View.VISIBLE : View.GONE);
+
+        // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
+        boolean transparentToolbar = contentLink.isImageOrGif() || contentLink.isVideo();
+        toolbarBackground.setSyncScrollEnabled(transparentToolbar);
+        toolbarShadows.setVisibility(transparentToolbar ? View.VISIBLE : View.GONE);
+
+        // Stick the content progress bar below the toolbar if it's an external link. Otherwise, make
+        // it scroll with the comments sheet.
+        // Update: why do we need this?
+        contentLoadProgressView.setSyncScrollEnabled(!contentLink.isExternal());
+
+        if (contentLink instanceof MediaLink.ImgurUnresolvedGallery) {
+            contentLoadProgressView.show();
+            String redditSuppliedThumbnail = findOptimizedImage(activeSubmission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidthForAlbum());
+            //linkDetailsViewHolder.prepareForImgurAlbum((MediaLink.ImgurUnresolvedGallery) contentLink, redditSuppliedThumbnail);
+
+            unsubscribeOnCollapse(Dank.imgur()
+                    .gallery((MediaLink.ImgurUnresolvedGallery) contentLink)
+                    .compose(applySchedulersSingle())
+                    .subscribe(imgurResponse -> {
+                        if (imgurResponse.isAlbum()) {
+                            String coverImageUrl;
+                            if (redditSuppliedThumbnail != null) {
+                                coverImageUrl = redditSuppliedThumbnail;
+                            } else {
+                                coverImageUrl = imgurResponse.images().get(0).url();
+                            }
+
+                            String albumUrl = ((MediaLink.ImgurUnresolvedGallery) contentLink).albumUrl();
+                            int imageCount = imgurResponse.images().size();
+                            MediaLink.ImgurAlbum albumLink = MediaLink.ImgurAlbum.create(albumUrl, imgurResponse.albumTitle(), coverImageUrl, imageCount);
+                            loadSubmissionContent(submission, albumLink);
+
+                        } else {
+                            Link coverImageLink = UrlParser.parse(imgurResponse.images().get(0).url(), submission.getThumbnails());
+                            loadSubmissionContent(submission, coverImageLink);
+                        }
+
+                    }, error -> {
+                        // TODO: 05/04/17 Handle errors.
+                        Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
+                        Timber.e(error, "Couldn't load album cover image");
+                    }));
+            return;
+        }
+
         switch (contentLink.type()) {
             case IMAGE_OR_GIF:
-                if (contentLink instanceof MediaLink.ImgurAlbum) {
-                    contentLoadProgressView.show();
-
-                    unsubscribeOnCollapse(Dank.imgur()
-                            .albumCoverImage((MediaLink.ImgurAlbum) contentLink)
-                            .compose(applySchedulersSingle())
-                            .subscribe(imgurResponse -> {
-                                Link coverImageLink = UrlParser.parse(imgurResponse.images().get(0).url(), submission.getThumbnails());
-                                if (coverImageLink.isVideo()) {
-                                    // Whoops, this assumed image turned out to be a video!
-                                    Timber.w("Whoops, video link! imgurResponse: %s", imgurResponse);
-                                    loadSubmissionContent(submission, coverImageLink);
-
-                                } else {
-                                    Timber.i("coverImageLink: %s", coverImageLink);
-                                    contentImageViewHolder.load((MediaLink) coverImageLink, imgurResponse.isAlbum());
-                                }
-
-                            }, error -> {
-                                // TODO: 05/04/17 Handle errors.
-                                Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
-                                Timber.e(error, "Couldn't load album cover image");
-                                contentLoadProgressView.hide();
-                            }));
-
-                } else {
-                    contentImageViewHolder.load((MediaLink) contentLink, false);
-                }
+                contentImageViewHolder.load((MediaLink) contentLink);
                 break;
 
             case REDDIT_HOSTED:
@@ -487,6 +511,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
                 } else {
                     contentLoadProgressView.hide();
+                    //noinspection ConstantConditions
                     unsubscribeOnCollapse(linkDetailsViewHolder.populate(((RedditLink) contentLink)));
                     linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
                 }
@@ -494,11 +519,17 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
             case EXTERNAL:
                 contentLoadProgressView.hide();
-                String redditSuppliedThumbnail = activeSubmission.getThumbnails() != null
-                        ? findOptimizedImage(activeSubmission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidth())
-                        : null;
-                unsubscribeOnCollapse(linkDetailsViewHolder.populate(((Link.External) contentLink), redditSuppliedThumbnail));
+                String redditSuppliedThumbnail = findOptimizedImage(
+                        activeSubmission.getThumbnails(),
+                        linkDetailsViewHolder.thumbnailWidthForExternalLink()
+                );
                 linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
+
+                if (isImgurAlbum) {
+                    unsubscribeOnCollapse(linkDetailsViewHolder.populate(((MediaLink.ImgurAlbum) contentLink), redditSuppliedThumbnail));
+                } else {
+                    unsubscribeOnCollapse(linkDetailsViewHolder.populate(((Link.External) contentLink), redditSuppliedThumbnail));
+                }
                 break;
 
             case VIDEO:
@@ -508,20 +539,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             default:
                 throw new UnsupportedOperationException("Unknown content: " + contentLink);
         }
-
-        linkDetailsViewHolder.setVisible(contentLink.isExternal() || contentLink.isRedditHosted() && !submission.isSelfPost());
-        selfPostTextView.setVisibility(submission.isSelfPost() ? View.VISIBLE : View.GONE);
-        contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
-        contentVideoViewContainer.setVisibility(contentLink.isVideo() ? View.VISIBLE : View.GONE);
-
-        // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
-        boolean transparentToolbar = contentLink.isImageOrGif() || contentLink.isVideo();
-        toolbarBackground.setSyncScrollEnabled(transparentToolbar);
-        toolbarShadows.setVisibility(transparentToolbar ? View.VISIBLE : View.GONE);
-
-        // Stick the content progress bar below the toolbar if it's an external link. Otherwise, make
-        // it scroll with the comments sheet.
-        contentLoadProgressView.setSyncScrollEnabled(!contentLink.isExternal());
     }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //

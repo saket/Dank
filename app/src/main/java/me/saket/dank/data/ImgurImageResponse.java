@@ -5,7 +5,6 @@ import com.squareup.moshi.Json;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -32,6 +31,12 @@ public abstract class ImgurImageResponse implements ImgurResponse {
     @Override
     public List<ImgurImage> images() {
         return Collections.singletonList(image());
+    }
+
+    @Override
+    public String albumTitle() {
+        // Not valid.
+        return null;
     }
 
     public static JsonAdapter<ImgurImageResponse> jsonAdapter(Moshi moshi) {

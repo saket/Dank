@@ -9,6 +9,7 @@ import android.view.WindowManager;
 import android.widget.Toast;
 
 import me.saket.dank.data.Link;
+import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
@@ -53,7 +54,8 @@ public class OpenUrlActivity extends DankActivity {
             finish();
 
         } else if (link.isExternal()) {
-            WebViewActivity.start(this, ((Link.External) link).url);
+            String url = link instanceof Link.External ? ((Link.External) link).url : ((MediaLink.ImgurAlbum) link).albumUrl();
+            WebViewActivity.start(this, url);
             finish();
 
         } else {

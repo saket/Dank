@@ -90,7 +90,7 @@
             android:id="@+id/submission_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing8"
+            android:layout_marginBottom="@dimen/spacing16"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
             android:textAllCaps="true"
@@ -103,7 +103,8 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/spacing16"
-            android:layout_marginStart="@dimen/spacing16" />
+            android:layout_marginStart="@dimen/spacing16"
+            android:visibility="gone" />
 
         <RelativeLayout
             android:id="@+id/submission_link_container"
@@ -111,7 +112,6 @@
             android:layout_height="wrap_content"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
-            android:layout_marginTop="@dimen/spacing8"
             android:background="@drawable/background_submission_link"
             android:foreground="?attr/selectableItemBackground"
             android:orientation="horizontal"
@@ -120,7 +120,7 @@
 
             <FrameLayout
                 android:id="@+id/submission_link_icon_container"
-                android:layout_width="@dimen/submission_link_icon_width_without_thumbnail"
+                android:layout_width="@dimen/submission_link_thumbnail_width_album"
                 android:layout_height="wrap_content"
                 android:layout_alignBottom="@+id/submission_link_title_container"
                 android:layout_alignTop="@+id/submission_link_title_container"
@@ -155,7 +155,10 @@
                 android:animateLayoutChanges="true"
                 android:gravity="center_vertical"
                 android:orientation="vertical"
-                android:padding="@dimen/spacing16">
+                android:paddingBottom="@dimen/submission_link_title_container_vert_padding_link"
+                android:paddingEnd="@dimen/spacing16"
+                android:paddingStart="@dimen/spacing16"
+                android:paddingTop="@dimen/submission_link_title_container_vert_padding_link">
 
                 <TextView
                     android:id="@+id/submission_link_title"

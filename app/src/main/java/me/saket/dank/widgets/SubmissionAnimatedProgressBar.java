@@ -20,13 +20,6 @@ public class SubmissionAnimatedProgressBar extends ProgressBar {
 
     public SubmissionAnimatedProgressBar(Context context, AttributeSet attrs) {
         super(context, attrs);
-
-
-//        TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.SubmissionAnimatedProgressBar);
-//        if (attributes.hasValue(R.styleable.SubmissionAnimatedProgressBar_animationPivotY)) {
-//            float animationPivot = attributes.getFloat(R.styleable.SubmissionAnimatedProgressBar_animationPivotY, -1);
-//        }
-//        attributes.recycle();
     }
 
     /**

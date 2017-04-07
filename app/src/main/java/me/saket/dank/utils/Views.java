@@ -35,6 +35,17 @@ public class Views {
      * Execute a runnable when a <var>view</var>'s dimensions get measured and is laid out on the screen.
      */
     public static void executeOnMeasure(View view, Runnable onMeasureRunnable) {
+        executeOnMeasure(view, false, onMeasureRunnable);
+    }
+
+    /**
+     * Execute a runnable when a <var>view</var>'s dimensions get measured and is laid out on the screen.
+     *
+     * @param consumeOnPreDraw When true, the pre-draw event will be consumed so that it never reaches the
+     *                         View. This way, the View will not be notified of its size until the next
+     *                         draw pass.
+     */
+    public static void executeOnMeasure(View view, boolean consumeOnPreDraw, Runnable onMeasureRunnable) {
         if (view.isInEditMode() || view.isLaidOut()) {
             onMeasureRunnable.run();
             return;
@@ -48,6 +59,10 @@ public class Views {
 
                     //noinspection deprecation
                     view.getViewTreeObserver().removeOnPreDrawListener(this);
+
+                    if (consumeOnPreDraw) {
+                        return false;
+                    }
 
                 } else if (view.getVisibility() == View.GONE) {
                     Timber.w("View's visibility is set to Gone. It'll never be measured.");
@@ -73,6 +88,10 @@ public class Views {
 
     public static void setPaddingTop(View view, int paddingTop) {
         view.setPaddingRelative(view.getPaddingStart(), paddingTop, view.getPaddingEnd(), view.getPaddingBottom());
+    }
+
+    public static void setPaddingVertical(View view, int padding) {
+        view.setPaddingRelative(view.getPaddingStart(), padding, view.getPaddingEnd(), padding);
     }
 
     public static void setDimensions(View view, int width, int height) {

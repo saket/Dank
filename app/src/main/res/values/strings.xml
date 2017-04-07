@@ -48,7 +48,10 @@
     <string name="submission_link_linked_subreddit">Linked subreddit</string>
     <string name="submission_link_linked_submission">Linked submission</string>
     <string name="submission_link_linked_url">Linked URL</string>
+    <string name="submission_link_imgur_gallery">Linked Imgur gallery</string>
     <string name="submission_image_scroll_down_hint">Scroll down to see more</string>
+    <string name="submission_image_album">Album</string>
+    <string name="submission_image_album_with_image_count">Album (%d images)</string>
 
     <!-- WebView -->
     <string name="webview_open_in_browser">Open in browser</string>

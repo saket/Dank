@@ -168,7 +168,7 @@ public class UrlParser {
                 return Link.External.create(url);
 
             } else if (isImgurAlbum(urlPath)) {
-                return createImgurAlbum(url);
+                return createUnresolvedImgurGallery(url);
 
             } else {
                 return createImgurLink(url);
@@ -200,11 +200,14 @@ public class UrlParser {
         }
     }
 
-    private static Link createImgurAlbum(String albumUrl) {
+    /**
+     * It's titled as unresolved because we don't know if the gallery contains a single image or multiple images.
+     */
+    private static Link createUnresolvedImgurGallery(String albumUrl) {
         Matcher albumUrlMatcher = IMGUR_ALBUM_PATTERN.matcher(Uri.parse(albumUrl).getPath());
         if (albumUrlMatcher.matches()) {
             String albumId = albumUrlMatcher.group(1);
-            return MediaLink.ImgurAlbum.create(albumUrl, albumId);
+            return MediaLink.ImgurUnresolvedGallery.create(albumUrl, albumId);
 
         } else {
             // Fallback.

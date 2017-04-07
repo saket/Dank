@@ -10,4 +10,6 @@ public interface ImgurResponse {
 
     List<ImgurImage> images();
 
+    String albumTitle();
+
 }

@@ -1,15 +1,19 @@
 package me.saket.dank.ui.submission;
 
 import static android.text.TextUtils.isEmpty;
-import static me.saket.dank.utils.Images.drawableToBitmap;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinishSingle;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setDimensions;
+import static me.saket.dank.utils.Views.setHeight;
+import static me.saket.dank.utils.Views.setPaddingVertical;
+import static me.saket.dank.utils.Views.setWidth;
 
+import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.support.annotation.Nullable;
@@ -22,7 +26,6 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.SizeReadyCallback;
 
@@ -35,6 +38,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.LinkMetadata;
+import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.GlideCircularTransformation;
@@ -42,6 +46,8 @@ import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.UrlMetadataParser;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
+import me.saket.dank.widgets.InboxUI.SimpleExpandablePageCallbacks;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import rx.Subscription;
 import rx.subscriptions.Subscriptions;
@@ -60,12 +66,16 @@ public class SubmissionLinkDetailsViewHolder {
     @BindView(R.id.submission_link_icon) ImageView iconView;
     @BindView(R.id.submission_link_title) TextView titleView;
     @BindView(R.id.submission_link_subtitle) TextView subtitleView;
+    @BindView(R.id.submission_link_title_container) ViewGroup titleSubtitleContainer;
     @BindView(R.id.submission_link_progress) SubmissionAnimatedProgressBar progressView;
 
-    @BindDimen(R.dimen.submission_link_icon_width_without_thumbnail) int iconWidthWithoutThumbnailPx;
-    @BindDimen(R.dimen.submission_link_icon_width_with_thumbnail) int iconWidthWithThumbnailPx;
+    @BindDimen(R.dimen.submission_link_thumbnail_width_reddit_link) int thumbnailWidthForRedditLink;
+    @BindDimen(R.dimen.submission_link_thumbnail_width_external_link) int thumbnailWidthForExternalLink;
+    @BindDimen(R.dimen.submission_link_thumbnail_width_album) int thumbnailWidthForAlbum;
     @BindDimen(R.dimen.submission_link_favicon_min_size) int faviconMinSizePx;
     @BindDimen(R.dimen.submission_link_favicon_max_size) int faviconMaxSizePx;
+    @BindDimen(R.dimen.submission_link_title_container_vert_padding_album) int titleContainerVertPaddingForAlbum;
+    @BindDimen(R.dimen.submission_link_title_container_vert_padding_link) int titleContainerVertPaddingForLink;
 
     @BindColor(R.color.window_background) int windowBackgroundColor;
     @BindColor(R.color.submission_link_background_color) int linkDetailsContainerBackgroundColor;
@@ -76,19 +86,32 @@ public class SubmissionLinkDetailsViewHolder {
     @BindColor(R.color.submission_link_subtitle_dark) int subtitleTextColorForDarkBackground;
 
     private final ViewGroup linkDetailsContainer;
+    private ValueAnimator holderHeightAnimator;
 
-    public SubmissionLinkDetailsViewHolder(ViewGroup linkedRedditLinkView) {
+    public SubmissionLinkDetailsViewHolder(ViewGroup linkedRedditLinkView, ExpandablePageLayout submissionPageLayout) {
         this.linkDetailsContainer = linkedRedditLinkView;
         ButterKnife.bind(this, linkedRedditLinkView);
         linkedRedditLinkView.setClipToOutline(true);
+
+        submissionPageLayout.addCallbacks(new SimpleExpandablePageCallbacks() {
+            @Override
+            public void onPageCollapsed() {
+                resetViews();
+            }
+        });
     }
 
     public void setVisible(boolean visible) {
+        Timber.i("setVisible() -> vis: %s", visible);
         linkDetailsContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
     }
 
-    public int getThumbnailWidth() {
-        return iconWidthWithThumbnailPx;
+    public int thumbnailWidthForExternalLink() {
+        return thumbnailWidthForExternalLink;
+    }
+
+    public int getThumbnailWidthForAlbum() {
+        return thumbnailWidthForAlbum;
     }
 
     private void resetViews() {
@@ -108,14 +131,20 @@ public class SubmissionLinkDetailsViewHolder {
         subtitleView.setTextColor(subtitleTextColor);
 
         linkDetailsContainer.setBackgroundResource(R.drawable.background_submission_link);
+
+        if (holderHeightAnimator != null && holderHeightAnimator.isStarted()) {
+            holderHeightAnimator.cancel();
+            setHeight(linkDetailsContainer, ViewGroup.LayoutParams.WRAP_CONTENT);
+        }
     }
 
     /**
      * Load and show title of user/subreddit/submission.
      */
     public Subscription populate(RedditLink redditLink) {
-        resetViews();
-        Views.setWidth(iconContainer, iconWidthWithoutThumbnailPx);
+        setWidth(iconContainer, thumbnailWidthForRedditLink);
+        setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForLink);
+
         Resources resources = titleView.getResources();
         iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
 
@@ -172,12 +201,48 @@ public class SubmissionLinkDetailsViewHolder {
                 }, logError("Couldn't get link's meta-data: " + submissionLink.url));
     }
 
+    public Subscription populate(MediaLink.ImgurAlbum imgurAlbumLink, String redditSuppliedThumbnail) {
+        // Animate the holder's entry. This block of code is really fragile and the animation only
+        // works if these lines are called in their current order. Animating the dimensions of a
+        // View is sadly difficult to do the right way.
+        linkDetailsContainer.setVisibility(View.INVISIBLE);
+        Views.executeOnMeasure(titleSubtitleContainer, true /* consumeOnPreDraw (This is important to avoid glitches) */, () -> {
+            linkDetailsContainer.setVisibility(View.VISIBLE);
+
+            holderHeightAnimator = ObjectAnimator.ofInt(0, titleSubtitleContainer.getHeight());
+            holderHeightAnimator.addUpdateListener(animation -> setHeight(linkDetailsContainer, (int) animation.getAnimatedValue()));
+            holderHeightAnimator.setDuration(300);
+            holderHeightAnimator.setInterpolator(new FastOutSlowInInterpolator());
+            holderHeightAnimator.start();
+        });
+
+        setWidth(iconContainer, thumbnailWidthForAlbum);
+        setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForAlbum);
+        progressView.setVisibility(View.VISIBLE);
+        iconView.setVisibility(View.GONE);
+
+        Resources resources = titleView.getResources();
+        subtitleView.setText(resources.getString(R.string.submission_image_album_with_image_count, imgurAlbumLink.imageCount()));
+        thumbnailView.setContentDescription(titleView.getText());
+        if (isEmpty(imgurAlbumLink.albumTitle())) {
+            titleView.setText(Urls.parseDomainName(imgurAlbumLink.albumUrl()));
+        } else {
+            titleView.setText(imgurAlbumLink.albumTitle());
+            titleView.setMaxLines(Integer.MAX_VALUE);
+        }
+
+        String thumbnailUrl = isEmpty(redditSuppliedThumbnail) ? imgurAlbumLink.coverImageUrl() : redditSuppliedThumbnail;
+        loadLinkThumbnail(false, thumbnailUrl, null, true /* hideProgressBarOnLoad */, false /* tintThumbnail */);
+
+        return Subscriptions.unsubscribed();
+    }
+
     /**
      * Show information of an external link. Extracts meta-data from the URL to get the favicon and the title.
      */
     public Subscription populate(Link.External externalLink, @Nullable String redditSuppliedThumbnail) {
-        resetViews();
-        Views.setWidth(iconContainer, iconWidthWithThumbnailPx);
+        setWidth(iconContainer, thumbnailWidthForExternalLink);
+        setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForLink);
 
         Resources resources = titleView.getResources();
         thumbnailView.setContentDescription(null);
@@ -185,15 +250,17 @@ public class SubmissionLinkDetailsViewHolder {
         iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
         titleView.setText(externalLink.url);
         subtitleView.setText(Urls.parseDomainName(externalLink.url));
-
         progressView.setVisibility(View.VISIBLE);
 
+        boolean isGooglePlayLink = UrlMetadataParser.isGooglePlayLink(externalLink.url);
+
         // Attempt to load image provided by Reddit. By doing this, we'll be able to load the image and
-        // the URL meta-data in parallel.
+        // the URL meta-data in parallel. Additionally, reddit's supplied image will also be optimized
+        // for the thumbnail size.
         if (isEmpty(redditSuppliedThumbnail)) {
             iconView.setImageResource(R.drawable.ic_link_black_24dp);
         } else {
-            loadLinkThumbnail(externalLink.url, redditSuppliedThumbnail, null, false);
+            loadLinkThumbnail(isGooglePlayLink, redditSuppliedThumbnail, null, false /* hideProgressOnLoad */, true  /* tintThumbnail */);
         }
 
         return UrlMetadataParser.parse(externalLink.url, false)
@@ -214,13 +281,13 @@ public class SubmissionLinkDetailsViewHolder {
                         // Resize down large images. This is not required for reddit supplied images
                         // because they're already chosen according to their size.
                         String linkImageUrl = getResizedImageUrl(linkMetadata.imageUrl());
-                        loadLinkThumbnail(externalLink.url, linkImageUrl, linkMetadata, true);
+                        loadLinkThumbnail(isGooglePlayLink, linkImageUrl, linkMetadata, true /* hideProgressOnLoad */, true  /* tintThumbnail */);
 
                     } else {
                         progressView.setVisibility(View.GONE);
                     }
                     boolean hasLinkThumbnail = linkMetadata.hasImage() || !isEmpty(redditSuppliedThumbnail);
-                    loadLinkFavicon(linkMetadata, hasLinkThumbnail);
+                    loadLinkFavicon(linkMetadata, hasLinkThumbnail, isGooglePlayLink);
 
                 }, error -> {
                     if (!(error instanceof IllegalArgumentException) || !error.getMessage().contains("String must not be empty")) {
@@ -234,27 +301,33 @@ public class SubmissionLinkDetailsViewHolder {
         return String.format(Locale.ENGLISH,
                 "http://rsz.io/%s?width=%d",
                 imageUrl.substring((Uri.parse(imageUrl).getScheme() + "://").length(), imageUrl.length()),
-                iconWidthWithThumbnailPx
+                thumbnailWidthForExternalLink
         );
     }
 
-    private void loadLinkThumbnail(String linkUrl, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnEnd) {
+    /**
+     * @param linkMetadata For loading the favicon. Can be null to ignore favicon.
+     */
+    private void loadLinkThumbnail(boolean isGooglePlayLink, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnLoad,
+            boolean tintThumbnail)
+    {
         Glide.with(thumbnailView.getContext())
                 .load(thumbnailUrl)
-                .listener(new GlideUtils.SimpleRequestListener<String, GlideDrawable>() {
+                .asBitmap()
+                .listener(new GlideUtils.SimpleRequestListener<String, Bitmap>() {
                     @Override
-                    public void onResourceReady(GlideDrawable resource) {
+                    public void onResourceReady(Bitmap resource) {
                         generateTintColorFromImage(
-                                linkUrl,
+                                isGooglePlayLink,
                                 resource,
                                 tintColor -> {
-                                    if (!UrlMetadataParser.isGooglePlayLink(linkUrl)) {
+                                    if (tintThumbnail && !isGooglePlayLink) {
                                         thumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
                                     }
                                     tintViews(tintColor);
                                 });
 
-                        if (hideProgressBarOnEnd) {
+                        if (hideProgressBarOnLoad) {
                             progressView.setVisibility(View.GONE);
                         }
                         thumbnailView.animate().alpha(1f).setDuration(TINT_TRANSITION_ANIMATION_DURATION).start();
@@ -263,7 +336,7 @@ public class SubmissionLinkDetailsViewHolder {
                     @Override
                     public void onException(Exception e) {
                         if (linkMetadata != null && linkMetadata.hasFavicon()) {
-                            loadLinkFavicon(linkMetadata, false);
+                            loadLinkFavicon(linkMetadata, false, isGooglePlayLink);
                         }
                     }
                 })
@@ -275,7 +348,7 @@ public class SubmissionLinkDetailsViewHolder {
      *                         will be shown while the favicon is fetched. This is used when the thumbnail couldn't
      *                         be loaded.
      */
-    private void loadLinkFavicon(LinkMetadata linkMetadata, boolean hasLinkThumbnail) {
+    private void loadLinkFavicon(LinkMetadata linkMetadata, boolean hasLinkThumbnail, boolean isGooglePlayLink) {
         iconView.setImageTintList(null);
 
         if (!hasLinkThumbnail) {
@@ -284,22 +357,23 @@ public class SubmissionLinkDetailsViewHolder {
 
         Glide.with(iconView.getContext())
                 .load(linkMetadata.faviconUrl())
-                .listener(new GlideUtils.SimpleRequestListener<String, GlideDrawable>() {
+                .asBitmap()
+                .listener(new GlideUtils.SimpleRequestListener<String, Bitmap>() {
                     @Override
-                    public void onResourceReady(GlideDrawable resource) {
+                    public void onResourceReady(Bitmap resource) {
                         if (!hasLinkThumbnail) {
                             // Tint with favicon in case the thumbnail couldn't be fetched.
-                            generateTintColorFromImage(linkMetadata.url(), resource, tintColor -> tintViews(tintColor));
+                            generateTintColorFromImage(isGooglePlayLink, resource, tintColor -> tintViews(tintColor));
                             progressView.setVisibility(View.GONE);
                         }
 
                         iconView.setVisibility(View.VISIBLE);
                         iconView.setBackgroundResource(R.drawable.background_submission_link_favicon_circle);
 
-                        if (resource.getIntrinsicWidth() < faviconMinSizePx) {
+                        if (resource.getWidth() < faviconMinSizePx) {
                             setDimensions(iconView, faviconMinSizePx, faviconMinSizePx);
 
-                        } else if (resource.getIntrinsicWidth() > faviconMaxSizePx) {
+                        } else if (resource.getHeight() > faviconMaxSizePx) {
                             setDimensions(iconView, faviconMaxSizePx, faviconMaxSizePx);
                         }
                     }
@@ -316,12 +390,12 @@ public class SubmissionLinkDetailsViewHolder {
                         }
                     }
                 })
-                .bitmapTransform(new GlideCircularTransformation(iconView.getContext()))
-                .into(new ImageViewTarget<GlideDrawable>(iconView) {
+                .transform(new GlideCircularTransformation(iconView.getContext()))
+                .into(new ImageViewTarget<Bitmap>(iconView) {
                     @Override
-                    protected void setResource(GlideDrawable resource) {
+                    protected void setResource(Bitmap resource) {
                         iconView.setScaleType(ImageView.ScaleType.CENTER_CROP);
-                        iconView.setImageDrawable(resource);
+                        iconView.setImageBitmap(resource);
                     }
 
                     @Override
@@ -335,12 +409,12 @@ public class SubmissionLinkDetailsViewHolder {
         void onTintColorGenerate(int tintColor);
     }
 
-    private void generateTintColorFromImage(String url, Drawable resource, OnTintColorGenerateListener listener) {
-        Palette.from(drawableToBitmap(resource))
+    private void generateTintColorFromImage(boolean isGooglePlayLink, Bitmap bitmap, OnTintColorGenerateListener listener) {
+        Palette.from(bitmap)
                 .maximumColorCount(Integer.MAX_VALUE)    // Don't understand why, but this changes the darkness of the colors.
                 .generate(palette -> {
                     int tint = -1;
-                    if (UrlMetadataParser.isGooglePlayLink(url)) {
+                    if (isGooglePlayLink) {
                         // The color taken from Play Store's
                         tint = palette.getLightVibrantColor(-1);
                     }

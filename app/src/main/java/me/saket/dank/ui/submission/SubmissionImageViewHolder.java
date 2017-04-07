@@ -24,7 +24,7 @@ import me.saket.dank.widgets.ZoomableImageView;
 import timber.log.Timber;
 
 /**
- * Manages showing of content image in {@link SubmissionFragment}.
+ * Manages showing of content image in {@link SubmissionFragment}. Only supports showing a single image right now.
  */
 public class SubmissionImageViewHolder {
 
@@ -37,6 +37,7 @@ public class SubmissionImageViewHolder {
 
     private GestureController.OnStateChangeListener imageScrollListener;
 
+    // TODO: ButterKnife everything
     public SubmissionImageViewHolder(ExpandablePageLayout submissionPageLayout, SubmissionAnimatedProgressBar contentLoadProgressView,
             ZoomableImageView imageView, View imageScrollHintView, ScrollingRecyclerViewSheet commentListParentSheet,
             int deviceDisplayWidth)
@@ -65,14 +66,7 @@ public class SubmissionImageViewHolder {
         });
     }
 
-    /**
-     * @param isAlbum When true, an album indicator is shown on top of this image.
-     */
-    public void load(MediaLink contentLink, boolean isAlbum) {
-        if (isAlbum) {
-            Toast.makeText(imageView.getContext(), "Imgur album", Toast.LENGTH_SHORT).show();
-        }
-
+    public void load(MediaLink contentLink) {
         contentLoadProgressView.setIndeterminate(true);
         contentLoadProgressView.show();
 
@@ -85,7 +79,7 @@ public class SubmissionImageViewHolder {
                         executeOnMeasure(imageView, () -> {
                             float widthResizeFactor = deviceDisplayWidth / (float) resource.getMinimumWidth();
                             float imageHeight = resource.getIntrinsicHeight() * widthResizeFactor;
-                            float visibleImageHeight = (int) Math.min(imageHeight, imageView.getHeight());
+                            float visibleImageHeight = Math.min(imageHeight, imageView.getHeight());
 
                             // Reveal the image smoothly or right away depending upon whether or not this
                             // page is already expanded and visible.
@@ -129,6 +123,10 @@ public class SubmissionImageViewHolder {
         imageScrollHintView.setVisibility(View.VISIBLE);
         imageScrollHintView.setAlpha(0f);
 
+        Timber.i("imageHeight: %s", imageHeight);
+        Timber.i("visibleImageHeight: %s", visibleImageHeight);
+
+        // Postpone till measure because we need the height.
         executeOnMeasure(imageScrollHintView, () -> {
             Runnable hintEntryAnimationRunnable = () -> {
                 imageScrollHintView.setTranslationY(imageScrollHintView.getHeight() / 2);

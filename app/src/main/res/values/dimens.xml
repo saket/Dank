@@ -21,9 +21,12 @@
     <dimen name="comment_start_padding_for_root_comment">16dp</dimen>
     <dimen name="comment_start_padding_per_depth_level">12dp</dimen>
     <dimen name="submission_commentssheet_minimum_visible_height">70dp</dimen>
-    <dimen name="submission_link_icon_width_without_thumbnail">60dp</dimen>
-    <dimen name="submission_link_icon_width_with_thumbnail">100dp</dimen>
+    <dimen name="submission_image_scroll_hint_elevation">8dp</dimen>
+    <dimen name="submission_link_thumbnail_width_reddit_link">60dp</dimen>
+    <dimen name="submission_link_thumbnail_width_external_link">100dp</dimen>
+    <dimen name="submission_link_thumbnail_width_album">140dp</dimen>
     <dimen name="submission_link_favicon_max_size">32dp</dimen>
     <dimen name="submission_link_favicon_min_size">20dp</dimen>
-    <dimen name="submission_image_scroll_hint_elevation">8dp</dimen>
+    <dimen name="submission_link_title_container_vert_padding_link">@dimen/spacing16</dimen>
+    <dimen name="submission_link_title_container_vert_padding_album">32dp</dimen>
 </resources>
