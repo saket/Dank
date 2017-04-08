@@ -15,7 +15,10 @@
 
     <!-- Subreddit -->
     <dimen name="subreddit_toolbar_sheet_elevation">10dp</dimen>
-    <dimen name="subreddit_toolbar_title_start_margin_with_nav_icon">52dp</dimen>
+    <dimen name="subreddit_toolbar_title_container_start_margin_with_nav_icon">46dp</dimen>
+
+    <dimen name="subreddit_toolbar_title_start_margin_with_nav_icon">6dp</dimen>
+    <dimen name="subreddit_toolbar_title_start_margin_without_nav_icon">-4dp</dimen>
 
     <!-- Submission -->
     <dimen name="comment_start_padding_for_root_comment">16dp</dimen>

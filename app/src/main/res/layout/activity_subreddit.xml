@@ -36,28 +36,45 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:background="@color/toolbar"
-        android:elevation="@dimen/elevation_toolbar" />
+        android:elevation="@dimen/elevation_toolbar"
+        android:visibility="gone" />
 
+    <!-- All Views inside this have bottom margins to make space for their shadows. -->
     <FrameLayout
         android:id="@+id/subreddit_toolbar_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_below="@+id/subreddit_toolbar_status_bar_space"
-        android:background="@color/toolbar"
-        android:elevation="@dimen/elevation_toolbar">
+        android:outlineProvider="bounds">
 
         <me.saket.dank.widgets.DankToolbar
             android:id="@id/toolbar"
-            style="@style/DankToolbar" />
+            style="@style/DankToolbar"
+            android:layout_marginBottom="@dimen/elevation_toolbar"
+            android:elevation="@dimen/elevation_toolbar" />
 
+        <me.saket.dank.widgets.ToolbarExpandableSheet
+            android:id="@+id/subreddit_toolbar_expandable_sheet"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="20dp"
+            android:background="@color/toolbar"
+            android:elevation="@dimen/elevation_toolbar"
+            android:paddingTop="?attr/actionBarSize" />
+
+        <!-- Background is required on this View or else the title's
+             background ripple gets drawn behind the toolbar. -->
         <RelativeLayout
             android:id="@+id/subreddit_toolbar_title_container"
             android:layout_width="wrap_content"
-            android:layout_height="match_parent"
+            android:layout_height="?attr/actionBarSize"
             android:layout_marginEnd="84dp"
-            android:elevation="@dimen/elevation_toolbar"
+            android:background="@color/toolbar"
+            android:elevation="@dimen/subreddit_toolbar_sheet_elevation"
+            android:outlineProvider="none"
             android:paddingEnd="@dimen/spacing16"
-            tools:ignore="RtlSymmetry">
+            tools:ignore="RtlSymmetry"
+            tools:outlineProvider="background">
 
             <Button
                 android:id="@+id/subreddit_toolbar_title"
@@ -65,14 +82,15 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginStart="-4dp"
+                android:layout_marginStart="@dimen/subreddit_toolbar_title_start_margin_without_nav_icon"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:paddingEnd="32dp"
                 android:paddingStart="20dp"
                 android:text="@string/app_name"
-                android:textAppearance="@style/DankToolbarTitleAppearance.Toolbar" />
+                android:textAppearance="@style/DankToolbarTitleAppearance.Toolbar"
+                tools:text="/r/NotMyJob" />
 
             <com.github.zagum.expandicon.ExpandIconView
                 android:id="@+id/subreddit_toolbar_title_arrow"
@@ -90,14 +108,6 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:background="@color/window_background"
-        android:elevation="20dp"
+        android:visibility="invisible"
         tools:visibility="gone" />
-
-    <me.saket.dank.widgets.ToolbarExpandableSheet
-        android:id="@+id/subreddit_toolbar_expandable_sheet"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_below="@id/subreddit_toolbar_container"
-        android:background="@color/toolbar"
-        android:elevation="@dimen/elevation_toolbar" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

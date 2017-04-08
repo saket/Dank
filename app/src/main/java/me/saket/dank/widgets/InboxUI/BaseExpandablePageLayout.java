@@ -80,7 +80,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
         super.draw(canvas);
     }
 
-    protected void animateDimensions(Integer toWidth, Integer toHeight) {
+    public void animateDimensions(Integer toWidth, Integer toHeight) {
         cancelOngoingClipAnimation();
 
         final Float fromWidth = getClippedWidth();

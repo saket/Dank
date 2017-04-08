@@ -67,11 +67,18 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
         animateDimensions(getWidth(), getHeight());
         animate()
-                .translationZ(elevationOnExpand)
                 .setDuration(getAnimationDuration())
                 .setInterpolator(getAnimationInterpolator())
                 .withStartAction(() -> dispatchStateChangeCallback(State.EXPANDING))
-                .withEndAction(() -> dispatchStateChangeCallback(State.EXPANDED))
+                .withEndAction(() -> {
+                    dispatchStateChangeCallback(State.EXPANDED);
+
+                    animate()
+                            .translationZ(elevationOnExpand)
+                            .setDuration(100)
+                            .setInterpolator(getAnimationInterpolator())
+                            .start();
+                })
                 .start();
     }
 
@@ -80,9 +87,10 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
             return;
         }
 
+        setTranslationZ(0f);
+
         animateDimensions(getWidth(), 0);
         animate()
-                .translationZ(0f)
                 .setDuration(getAnimationDuration())
                 .setInterpolator(getAnimationInterpolator())
                 .withStartAction(() -> dispatchStateChangeCallback(State.COLLAPSING))

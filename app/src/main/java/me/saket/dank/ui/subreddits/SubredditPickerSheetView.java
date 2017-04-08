@@ -6,6 +6,7 @@ import static me.saket.dank.utils.RxUtils.logError;
 
 import android.content.Context;
 import android.support.v7.widget.RecyclerView;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.inputmethod.EditorInfo;
@@ -31,15 +32,18 @@ import butterknife.OnEditorAction;
 import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Observable;
 import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
+import timber.log.Timber;
 
 public class SubredditPickerSheetView extends FrameLayout {
 
+    @BindView(R.id.subredditpicker_root) ViewGroup rootViewGroup;
     @BindView(R.id.subredditpicker_search) EditText searchView;
     @BindView(R.id.subredditpicker_subreddit_list) RecyclerView subredditList;
     @BindView(R.id.subredditpicker_load_progress) View subredditsLoadProgressView;
@@ -52,9 +56,11 @@ public class SubredditPickerSheetView extends FrameLayout {
 
     // TODO: 28/02/17 Cache this somewhere else.
     private static List<DankSubreddit> userSubreddits;
+    private ViewGroup activityRootLayout;
 
-    public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet) {
+    public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
         SubredditPickerSheetView subredditPickerView = new SubredditPickerSheetView(toolbarSheet.getContext());
+        subredditPickerView.setActivityRootLayout(activityRootLayout);
         toolbarSheet.addView(subredditPickerView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         return subredditPickerView;
     }
@@ -112,13 +118,17 @@ public class SubredditPickerSheetView extends FrameLayout {
 
 // ======== END PUBLIC APIs ======== //
 
+    public void setActivityRootLayout(ViewGroup activityRootLayout) {
+        this.activityRootLayout = activityRootLayout;
+    }
+
     private Observable<List<DankSubreddit>> loggedInSubreddits() {
         return Dank.reddit()
                 .withAuth(Dank.reddit().userSubreddits())
                 .compose(applySchedulers());
     }
 
-    public Observable<List<DankSubreddit>> loggedOutSubreddits() {
+    private Observable<List<DankSubreddit>> loggedOutSubreddits() {
         List<String> defaultSubreddits = Arrays.asList(getResources().getStringArray(R.array.default_subreddits));
         ArrayList<DankSubreddit> dankSubreddits = new ArrayList<>();
         for (String subredditName : defaultSubreddits) {
@@ -189,6 +199,32 @@ public class SubredditPickerSheetView extends FrameLayout {
                 subredditsRefreshProgressView.setVisibility(View.GONE);
             }
         };
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item) {
+        switch (item.getItemId()) {
+            case R.id.action_manage_subreddits:
+                // TODO: 05/03/17 Open Manage-Subreddits preferences screen.
+
+                int height = activityRootLayout.getHeight();
+                Timber.i("height: %s", height);
+
+                ToolbarExpandableSheet parentSheet = (ToolbarExpandableSheet) getParent();
+                parentSheet.setClippedDimensions(parentSheet.getWidth(), height);
+                parentSheet.animateDimensions(parentSheet.getWidth(), height);
+
+                postDelayed(() -> Views.setHeight(rootViewGroup, height), 500);
+
+//                ValueAnimator heightAnimator = ObjectAnimator.ofInt(rootViewGroup.getHeight(), height);
+//                heightAnimator.addUpdateListener(animation -> {
+//                    Views.setHeight(rootViewGroup, ((int) animation.getAnimatedValue()));
+//                });
+//                heightAnimator.start();
+                return true;
+
+            default:
+                return false;
+        }
     }
 
 }

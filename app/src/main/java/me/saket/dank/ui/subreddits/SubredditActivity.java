@@ -4,9 +4,9 @@ import static me.saket.dank.utils.CommonUtils.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
-import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginStart;
 import static me.saket.dank.utils.Views.setMarginTop;
+import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 import static rx.Observable.fromCallable;
@@ -46,6 +46,7 @@ import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
+import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks {
 
@@ -55,7 +56,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
     @BindView(R.id.toolbar) DankToolbar toolbar;
-    @BindView(R.id.subreddit_toolbar_status_bar_space) View statusBarSpaceView;
     @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
     @BindView(R.id.subreddit_toolbar_title_arrow) ExpandIconView toolbarTitleArrowView;
     @BindView(R.id.subreddit_toolbar_title_container) ViewGroup toolbarTitleContainer;
@@ -86,14 +86,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
         // Add top-margin to make room for the status bar.
         int statusBarHeight = statusBarHeight(getResources());
-        setHeight(statusBarSpaceView, statusBarHeight);
+        setPaddingTop(toolbar, statusBarHeight);
+        setMarginTop(toolbarTitleContainer, statusBarHeight);
         setMarginTop(submissionList, statusBarHeight);
+        setPaddingTop(toolbarSheet, toolbarSheet.getPaddingTop() + statusBarHeight);
 
         findAndSetupToolbar();
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         if (isPullCollapsible) {
             toolbar.setNavigationIcon(R.drawable.ic_toolbar_close_24dp);
+            setMarginStart(toolbarTitleContainer, getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_title_container_start_margin_with_nav_icon));
             setMarginStart(toolbarTitleView, getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_title_start_margin_with_nav_icon));
 
             contentPage.setNestedExpandablePage(submissionPage);
@@ -152,7 +155,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
             activeSubreddit = DankSubreddit.create(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
         } else {
-            activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
+            //activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
+            activeSubreddit = DankSubreddit.create("Supapp");
         }
         loadSubmissions(activeSubreddit);
 
@@ -193,7 +197,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     }
 
     private void setupToolbarSheet() {
-        toolbar.setBackground(null);
         toolbarSheet.hideOnOutsideTouch(submissionList);
         toolbarSheet.setStateChangeListener(state -> {
             switch (state) {
@@ -215,12 +218,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
                 case COLLAPSING:
                     if (isSubredditPickerVisible()) {
                         Keyboards.hide(this, toolbarSheet);
-                        invalidateOptionsMenu();
 
                     } else if (isUserProfileSheetVisible()) {
                         setTitle(activeSubreddit);
                     }
-
                     toolbarTitleArrowView.setState(ExpandIconView.MORE, true);
                     break;
 
@@ -241,7 +242,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
-        getMenuInflater().inflate(isSubredditPickerExpanded() ? R.menu.menu_subreddit_picker : R.menu.menu_subreddit, menu);
+        getMenuInflater().inflate(R.menu.menu_subreddit, menu);
         return super.onCreateOptionsMenu(menu);
     }
 
@@ -250,7 +251,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         switch (item.getItemId()) {
             case R.id.action_user_profile:
                 if (Dank.reddit().isUserLoggedIn()) {
-                    onClickUserProfileMenu();
+                    showUserProfileSheet();
                 } else {
                     LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
                 }
@@ -260,25 +261,18 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
                 UserPreferencesActivity.start(this);
                 return true;
 
-            case R.id.action_manage_subreddits:
-                // TODO: 05/03/17 Open Manage-Subreddits preferences screen.
-                return true;
+            default:
+                return super.onOptionsItemSelected(item);
         }
-        return super.onOptionsItemSelected(item);
     }
 
     @OnClick(R.id.subreddit_toolbar_title)
-    void onClickSubredditPicker() {
-        if (isUserProfileSheetVisible()) {
-            // Shouldn't have happened. Animation probably got stuck and user was able to click on profile button.
-            return;
-        }
-
-        if (toolbarSheet.isExpandedOrExpanding()) {
+    void onClickToolbarTitle() {
+        if (toolbarSheet.isExpandedOrExpanding() || isUserProfileSheetVisible()) {
             toolbarSheet.collapse();
 
         } else {
-            SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet);
+            SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet, contentPage);
             pickerSheet.post(() -> toolbarSheet.expand());
             pickerSheet.setOnSubredditClickListener(subreddit -> {
                 toolbarSheet.collapse();
@@ -289,19 +283,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         }
     }
 
-    void onClickUserProfileMenu() {
-        if (isSubredditPickerVisible()) {
-            // Shouldn't have happened. Animation probably got stuck and user was able to click on subreddit button.
-            return;
-        }
-
-        if (toolbarSheet.isExpandedOrExpanding()) {
-            toolbarSheet.collapse();
-
-        } else {
-            UserProfileSheetView pickerSheet = UserProfileSheetView.showIn(toolbarSheet);
-            pickerSheet.post(() -> toolbarSheet.expand());
-        }
+    void showUserProfileSheet() {
+        UserProfileSheetView pickerSheet = UserProfileSheetView.showIn(toolbarSheet);
+        pickerSheet.post(() -> toolbarSheet.expand());
     }
 
     /**
@@ -309,13 +293,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
      */
     private boolean isSubredditPickerVisible() {
         return !toolbarSheet.isCollapsed() && toolbarSheet.getChildAt(0) instanceof SubredditPickerSheetView;
-    }
-
-    /**
-     * Whether the subreddit picker is "fully" visible.
-     */
-    private boolean isSubredditPickerExpanded() {
-        return toolbarSheet.isExpandedOrExpanding() && toolbarSheet.getChildAt(0) instanceof SubredditPickerSheetView;
     }
 
     private boolean isUserProfileSheetVisible() {
@@ -339,7 +316,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_CODE_LOGIN && resultCode == RESULT_OK) {
             // Show user's profile.
-            onClickUserProfileMenu();
+            showUserProfileSheet();
 
             // Reload submissions if we're on the frontpage.
             if (activeSubreddit.isFrontpage()) {
