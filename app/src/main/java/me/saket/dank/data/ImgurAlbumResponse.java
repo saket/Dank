@@ -1,5 +1,7 @@
 package me.saket.dank.data;
 
+import android.support.annotation.Nullable;
+
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.Json;
 import com.squareup.moshi.JsonAdapter;
@@ -10,7 +12,7 @@ import java.util.List;
 import me.saket.dank.di.DankApi;
 
 /**
- * API response body of {@link DankApi#imgurAlbumPaid(String)} and {@link DankApi#imgurAlbumFree(String)}.
+ * API response body of {@link DankApi#imgurAlbumPaid(String)}.
  */
 @AutoValue
 public abstract class ImgurAlbumResponse implements ImgurResponse {
@@ -65,6 +67,7 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
         @Json(name = "images")
         public abstract List<ImgurImage> images();
 
+        @Nullable
         @Json(name = "title")
         public abstract String albumTitle();
 
