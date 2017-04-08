@@ -134,8 +134,8 @@ public class SubmissionLinkHolder {
 
         if (holderHeightAnimator != null && holderHeightAnimator.isStarted()) {
             holderHeightAnimator.cancel();
-            setHeight(linkDetailsContainer, ViewGroup.LayoutParams.WRAP_CONTENT);
         }
+        setHeight(linkDetailsContainer, ViewGroup.LayoutParams.WRAP_CONTENT);
     }
 
     /**
@@ -221,12 +221,13 @@ public class SubmissionLinkHolder {
         progressView.setVisibility(View.VISIBLE);
 
         Resources resources = titleView.getResources();
-        subtitleView.setText(resources.getString(R.string.submission_image_album_with_image_count, imgurAlbumLink.imageCount()));
         thumbnailView.setContentDescription(titleView.getText());
         if (isEmpty(imgurAlbumLink.albumTitle())) {
-            titleView.setText(parseDomainName(imgurAlbumLink.albumUrl()));
+            titleView.setText(R.string.submission_image_album);
+            subtitleView.setText(resources.getString(R.string.submission_image_album_image_count, imgurAlbumLink.imageCount()));
         } else {
             titleView.setText(imgurAlbumLink.albumTitle());
+            subtitleView.setText(resources.getString(R.string.submission_image_album_label_with_image_count, imgurAlbumLink.imageCount()));
             titleView.setMaxLines(Integer.MAX_VALUE);
         }
 
@@ -315,15 +316,12 @@ public class SubmissionLinkHolder {
                 .listener(new GlideUtils.SimpleRequestListener<String, Bitmap>() {
                     @Override
                     public void onResourceReady(Bitmap resource) {
-                        generateTintColorFromImage(
-                                isGooglePlayLink,
-                                resource,
-                                tintColor -> {
-                                    if (!isGooglePlayLink) {
-                                        thumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
-                                    }
-                                    tintViews(tintColor);
-                                });
+                        generateTintColorFromImage(isGooglePlayLink, resource, tintColor -> {
+                            if (!isGooglePlayLink) {
+                                thumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
+                            }
+                            tintViews(tintColor);
+                        });
 
                         if (hideProgressBarOnLoad) {
                             progressView.setVisibility(View.GONE);
