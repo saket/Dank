@@ -66,7 +66,7 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
-import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
+import me.saket.dank.widgets.AnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import rx.Observable;
 import rx.Subscription;
@@ -86,7 +86,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @BindView(R.id.toolbar) Toolbar toolbar;
     @BindView(R.id.submission_toolbar_shadow) View toolbarShadows;
     @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
-    @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
+    @BindView(R.id.submission_content_progress_bar) AnimatedProgressBar contentLoadProgressView;
     @BindView(R.id.submission_image) ZoomableImageView contentImageView;
     @BindView(R.id.submission_image_scroll_hint) View contentImageScrollHintView;
     @BindView(R.id.submission_video_container) ViewGroup contentVideoViewContainer;
@@ -269,7 +269,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     private void setupContentImageView(View fragmentLayout) {
         Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
 
-        contentImageViewHolder = new SubmissionImageHolder(fragmentLayout, submissionPageLayout, deviceDisplayWidth);
+        contentImageViewHolder = new SubmissionImageHolder(fragmentLayout, contentLoadProgressView, submissionPageLayout, deviceDisplayWidth);
         contentImageViewHolder.setup();
     }
 
@@ -277,13 +277,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         Views.setMarginBottom(contentVideoViewContainer, commentsSheetMinimumVisibleHeight);
 
         ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
-        contentVideoViewHolder = new SubmissionVideoHolder(fragmentLayout, submissionPageLayout, exoPlayerManager);
+        contentVideoViewHolder = new SubmissionVideoHolder(fragmentLayout, contentLoadProgressView, submissionPageLayout, exoPlayerManager);
         contentVideoViewHolder.setup();
     }
 
     private void setupCommentsSheet() {
         toolbarBackground.syncPositionWithSheet(commentListParentSheet);
-        contentLoadProgressView.syncPositionWithSheet(commentListParentSheet);
         commentListParentSheet.setScrollingEnabled(false);
 
         Func1<?, Integer> mediaRevealDistanceFunc = __ -> {
@@ -444,11 +443,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         boolean transparentToolbar = contentLink.isImageOrGif() || contentLink.isVideo();
         toolbarBackground.setSyncScrollEnabled(transparentToolbar);
         toolbarShadows.setVisibility(transparentToolbar ? View.VISIBLE : View.GONE);
-
-        // Stick the content progress bar below the toolbar if it's an external link. Otherwise, make
-        // it scroll with the comments sheet.
-        // Update: why do we need this?
-        contentLoadProgressView.setSyncScrollEnabled(!contentLink.isExternal());
 
         if (contentLink instanceof MediaLink.ImgurUnresolvedGallery) {
             contentLoadProgressView.show();

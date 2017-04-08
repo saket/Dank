@@ -5,6 +5,7 @@ import static me.saket.dank.utils.Views.executeOnMeasure;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.view.Gravity;
 import android.view.View;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.alexvasilkov.gestures.GestureController;
@@ -22,7 +23,6 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
-import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import timber.log.Timber;
 
@@ -33,17 +33,24 @@ public class SubmissionImageHolder {
 
     @BindView(R.id.submission_image_scroll_hint) View imageScrollHintView;
     @BindView(R.id.submission_image) ZoomableImageView imageView;
-    @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
 
     private final int deviceDisplayWidth;
     private final ExpandablePageLayout submissionPageLayout;
+    private final ProgressBar contentLoadProgressView;
 
     private GestureController.OnStateChangeListener imageScrollListener;
 
-    public SubmissionImageHolder(View submissionLayout, ExpandablePageLayout submissionPageLayout, int deviceDisplayWidth) {
+    /**
+     * God knows why (if he/she exists), ButterKnife is failing to bind <var>contentLoadProgressView</var>,
+     * so we're supplying it manually from the fragment.
+     */
+    public SubmissionImageHolder(View submissionLayout, ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout,
+            int deviceDisplayWidth)
+    {
         ButterKnife.bind(this, submissionLayout);
         this.submissionPageLayout = submissionPageLayout;
+        this.contentLoadProgressView = contentLoadProgressView;
         this.deviceDisplayWidth = deviceDisplayWidth;
     }
 
@@ -69,7 +76,7 @@ public class SubmissionImageHolder {
 
     public void load(MediaLink contentLink) {
         contentLoadProgressView.setIndeterminate(true);
-        contentLoadProgressView.show();
+        contentLoadProgressView.setVisibility(View.VISIBLE);
 
         Glide.with(imageView.getContext())
                 .load(contentLink.optimizedImageUrl(deviceDisplayWidth))
@@ -102,13 +109,13 @@ public class SubmissionImageHolder {
                             });
                         });
 
-                        contentLoadProgressView.hide();
+                        contentLoadProgressView.setVisibility(View.GONE);
                     }
 
                     @Override
                     public void onException(Exception e) {
                         Timber.e("Couldn't load image");
-                        contentLoadProgressView.hide();
+                        contentLoadProgressView.setVisibility(View.GONE);
 
                         // TODO: 04/04/17 Show a proper error.
                         Toast.makeText(imageView.getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();

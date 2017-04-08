@@ -12,6 +12,7 @@ import android.net.Uri;
 import android.support.v7.graphics.Palette;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ProgressBar;
 
 import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
@@ -26,7 +27,6 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
-import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import rx.Single;
 import rx.Subscription;
 import rx.functions.Action1;
@@ -36,19 +36,22 @@ import rx.functions.Action1;
  */
 public class SubmissionVideoHolder {
 
-    @BindView(R.id.submission_content_progress) SubmissionAnimatedProgressBar contentLoadProgressView;
     @BindView(R.id.submission_video_container) ViewGroup contentVideoViewContainer;
     @BindView(R.id.submission_video) VideoView contentVideoView;
     @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
 
     private final ExpandablePageLayout submissionPageLayout;
     private final ExoPlayerManager exoPlayerManager;
+    private final ProgressBar contentLoadProgressView;
     private Bitmap videoBitmap;
     private DankVideoControlsView controlsView;
 
-    public SubmissionVideoHolder(View submissionLayout, ExpandablePageLayout submissionPageLayout, ExoPlayerManager exoPlayerManager) {
+    public SubmissionVideoHolder(View submissionLayout, ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout,
+            ExoPlayerManager exoPlayerManager)
+    {
         ButterKnife.bind(this, submissionLayout);
         this.submissionPageLayout = submissionPageLayout;
+        this.contentLoadProgressView = contentLoadProgressView;
         this.exoPlayerManager = exoPlayerManager;
     }
 
@@ -64,7 +67,7 @@ public class SubmissionVideoHolder {
                 : Single.just(mediaLink);
 
         return videoUrlObservable
-                .doOnSubscribe(() -> contentLoadProgressView.show())
+                .doOnSubscribe(() -> contentLoadProgressView.setVisibility(View.VISIBLE))
                 .map(link -> link.lowQualityVideoUrl())
                 .subscribe(load(), error -> {
                     // TODO: 01/04/17 Handle error.
@@ -91,7 +94,7 @@ public class SubmissionVideoHolder {
 
                 // Wait for the height change to happen and then reveal the video.
                 executeOnNextLayout(contentVideoView, () -> {
-                    contentLoadProgressView.hide();
+                    contentLoadProgressView.setVisibility(View.GONE);
                     commentListParentSheet.setScrollingEnabled(true);
 
                     int revealDistance = contentVideoViewContainer.getHeight() - commentListParentSheet.getTop();

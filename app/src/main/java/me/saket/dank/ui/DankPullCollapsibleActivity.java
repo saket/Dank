@@ -64,6 +64,12 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
         pullCollapsibleEnabled = enabled;
     }
 
+    /**
+     * I've considered automatically wrapping layouts in an {@link IndependentExpandablePageLayout} so that this
+     * extra step of boilerplate is removed, but inflation is expensive and the aim was to minimize startup time
+     * because unlike Activity transitions which starts as soon as an Activity is created, our entry animation
+     * runs after the Activity is ready.
+     */
     protected void setupContentExpandablePage(IndependentExpandablePageLayout pageLayout) {
         activityPageLayout = pageLayout;
 

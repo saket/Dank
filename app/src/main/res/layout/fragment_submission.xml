@@ -65,7 +65,7 @@
 
     <!-- At runtime, this ViewGroup is moved to inside the
          comment list as the header and its top-padding is set. -->
-    <LinearLayout
+    <RelativeLayout
         android:id="@+id/submission_comments_header"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
@@ -73,6 +73,13 @@
         android:paddingBottom="@dimen/spacing8"
         tools:background="@color/window_background"
         tools:layout_below="@+id/toolbar">
+
+        <!-- This progressView sticks to the toolbar's bottom when the WebView
+         is visible, otherwise scrolls with the comments sheet. -->
+        <me.saket.dank.widgets.AnimatedProgressBar
+            android:id="@+id/submission_content_progress_bar"
+            style="@style/DankProgressBar.Horizontal.TopAligned"
+            android:elevation="@dimen/submission_image_scroll_hint_elevation" />
 
         <TextView
             android:id="@+id/submission_title"
@@ -90,6 +97,7 @@
             android:id="@+id/submission_subtitle"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@id/submission_title"
             android:layout_marginBottom="@dimen/spacing16"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
@@ -102,14 +110,15 @@
             android:id="@+id/submission_selfpost_text"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/submission_subtitle"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
             android:visibility="gone" />
-
         <RelativeLayout
             android:id="@+id/submission_link_container"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/submission_subtitle"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
             android:background="@drawable/background_submission_link"
@@ -179,7 +188,7 @@
                     tools:text="https://np.reddit.com/r/MaliciousCompliance/cadasd" />
             </LinearLayout>
 
-            <me.saket.dank.widgets.SubmissionAnimatedProgressBar
+            <me.saket.dank.widgets.AnimatedProgressBar
                 android:id="@+id/submission_link_progress"
                 style="@style/DankProgressBar.Horizontal.BottomAligned"
                 android:layout_alignBottom="@+id/submission_link_title_container"
@@ -190,6 +199,7 @@
             android:id="@+id/submission_comments_progress"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
+            android:layout_below="@+id/submission_link_container"
             android:layout_marginEnd="@dimen/spacing16"
             android:layout_marginStart="@dimen/spacing16"
             android:layout_marginTop="@dimen/spacing16"
@@ -209,7 +219,7 @@
                 android:text="@string/login_loading_comments"
                 android:textColor="@color/white_opacity_40" />
         </LinearLayout>
-    </LinearLayout>
+    </RelativeLayout>
 
     <me.saket.dank.widgets.ScrollingRecyclerViewSheet
         android:id="@+id/submission_comment_list_parent_sheet"
@@ -229,14 +239,6 @@
             tools:paddingStart="@dimen/spacing16"
             tools:paddingTop="@dimen/spacing16" />
     </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
-
-    <!-- This progressView sticks to the toolbar's bottom when the WebView
-         is visible, otherwise scrolls with the comments sheet. -->
-    <me.saket.dank.widgets.SubmissionAnimatedProgressBar
-        android:id="@+id/submission_content_progress"
-        style="@style/DankProgressBar.Horizontal.TopAligned"
-        android:layout_below="@id/toolbar"
-        android:elevation="@dimen/submission_image_scroll_hint_elevation" />
 
     <!-- Acts as the toolbar's background. -->
     <me.saket.dank.widgets.AnimatedToolbarBackground
