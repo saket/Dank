@@ -59,8 +59,7 @@
             android:layout_height="wrap_content"
             android:layout_marginBottom="20dp"
             android:background="@color/toolbar"
-            android:elevation="@dimen/elevation_toolbar"
-            android:paddingTop="?attr/actionBarSize" />
+            android:elevation="@dimen/elevation_toolbar" />
 
         <!-- Background is required on this View or else the title's
              background ripple gets drawn behind the toolbar. -->

@@ -18,7 +18,7 @@
     <string name="subreddit_go_to_subreddit">Go to subreddit…</string>
     <string name="subreddit_profile">Profile</string>
     <string name="subreddit_preferences">Preferences</string>
-    <string name="subreddit_manage_subreddits">Manage subreddits</string>
+    <string name="cd_subreddit_manage_subreddits">Manage subreddits</string>
 
     <!-- User profile -->
     <string name="userprofile_comments">Comments</string>

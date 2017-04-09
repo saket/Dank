@@ -3,7 +3,30 @@
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
-    android:layout_height="280dp">
+    android:layout_height="366dp"
+    tools:background="@color/toolbar"
+    tools:layout_marginTop="25dp">
+
+    <!-- Background is necessary on this View for ripples of its child Views
+         to be drawn. -->
+    <LinearLayout
+        android:id="@+id/subredditpicker_options_container"
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:background="@color/toolbar"
+        android:gravity="end|center_vertical"
+        android:paddingEnd="10dp"
+        tools:ignore="RtlSymmetry">
+
+        <ImageButton
+            android:id="@+id/subredditpicker_option_manage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="?attr/selectableItemBackgroundBorderless"
+            android:contentDescription="@string/cd_subreddit_manage_subreddits"
+            android:padding="@dimen/spacing2"
+            android:src="@drawable/ic_edit_24dp" />
+    </LinearLayout>
 
     <!-- Using a separate ImageView instead a compound drawable
          in EditText so that we can control the icon size. -->
@@ -11,6 +34,7 @@
         android:id="@+id/subredditpicker_search_icon"
         android:layout_width="20dp"
         android:layout_height="20dp"
+        android:layout_below="@+id/subredditpicker_options_container"
         android:layout_marginStart="@dimen/spacing16"
         android:layout_marginTop="6dp"
         android:contentDescription="@string/subreddit_go_to_subreddit"
@@ -21,6 +45,7 @@
         android:id="@+id/subredditpicker_search"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/subredditpicker_options_container"
         android:layout_marginBottom="@dimen/spacing4"
         android:layout_marginEnd="14dp"
         android:layout_marginStart="14dp"
@@ -39,10 +64,9 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/subredditpicker_search"
+        android:layout_marginBottom="@dimen/spacing16"
         android:layout_marginEnd="@dimen/spacing12"
-        android:layout_marginStart="@dimen/spacing12"
-        android:clipToPadding="true"
-        android:paddingBottom="@dimen/spacing16" />
+        android:layout_marginStart="@dimen/spacing12" />
 
     <FrameLayout
         android:id="@+id/subredditpicker_load_progress"
@@ -59,6 +83,16 @@
             android:layout_gravity="center"
             android:indeterminateTint="@color/gray_700" />
     </FrameLayout>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/subredditpicker_save_fab"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_alignParentEnd="true"
+        android:layout_margin="@dimen/spacing16"
+        android:src="@drawable/ic_done_24dp"
+        android:tint="@color/black" />
 
     <ProgressBar
         android:id="@+id/subredditpicker_refresh_progress"

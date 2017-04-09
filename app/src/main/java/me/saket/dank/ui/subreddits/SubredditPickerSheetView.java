@@ -4,14 +4,21 @@ import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
+import android.support.design.widget.FloatingActionButton;
+import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.widget.RecyclerView;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Interpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.ImageButton;
 
 import com.google.android.flexbox.AlignItems;
 import com.google.android.flexbox.FlexDirection;
@@ -28,6 +35,7 @@ import java.util.concurrent.TimeUnit;
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import butterknife.OnEditorAction;
 import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
@@ -39,28 +47,40 @@ import rx.Subscription;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
-import timber.log.Timber;
 
+/**
+ * Lets the user:
+ * - Pick
+ * - Reorder
+ * - Sort
+ * - Add new
+ * - Set default.
+ */
 public class SubredditPickerSheetView extends FrameLayout {
+
+    // TODO: 28/02/17 Cache this somewhere else.
+    private static final List<DankSubreddit> USER_SUBREDDITS = new ArrayList<>();
+    private static final Interpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
 
     @BindView(R.id.subredditpicker_root) ViewGroup rootViewGroup;
     @BindView(R.id.subredditpicker_search) EditText searchView;
     @BindView(R.id.subredditpicker_subreddit_list) RecyclerView subredditList;
     @BindView(R.id.subredditpicker_load_progress) View subredditsLoadProgressView;
     @BindView(R.id.subredditpicker_refresh_progress) View subredditsRefreshProgressView;
+    @BindView(R.id.subredditpicker_option_manage) ImageButton editButton;
+    @BindView(R.id.subredditpicker_save_fab) FloatingActionButton saveButton;
 
     @BindString(R.string.frontpage_subreddit_name) String frontpageSubredditName;
 
+    private ViewGroup activityRootLayout;
+    private ToolbarExpandableSheet parentSheet;
     private SubredditAdapter subredditAdapter;
     private CompositeSubscription subscriptions = new CompositeSubscription();
 
-    // TODO: 28/02/17 Cache this somewhere else.
-    private static List<DankSubreddit> userSubreddits;
-    private ViewGroup activityRootLayout;
-
-    public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
+    public static SubredditPickerSheetView show(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
         SubredditPickerSheetView subredditPickerView = new SubredditPickerSheetView(toolbarSheet.getContext());
         subredditPickerView.setActivityRootLayout(activityRootLayout);
+        subredditPickerView.setParentSheet(toolbarSheet);
         toolbarSheet.addView(subredditPickerView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
         return subredditPickerView;
     }
@@ -69,6 +89,7 @@ public class SubredditPickerSheetView extends FrameLayout {
         super(context);
         inflate(context, R.layout.view_subreddit_picker_sheet, this);
         ButterKnife.bind(this, this);
+        saveButton.hide();
     }
 
     @Override
@@ -85,9 +106,9 @@ public class SubredditPickerSheetView extends FrameLayout {
         subredditList.setAdapter(subredditAdapter);
         subredditList.setItemAnimator(null);
 
-        if (userSubreddits != null) {
+        if (!USER_SUBREDDITS.isEmpty()) {
             setSubredditLoadProgressVisible().call(false);
-            subredditAdapter.updateData(userSubreddits);
+            subredditAdapter.updateData(USER_SUBREDDITS);
 
         } else {
             Subscription apiSubscription = (Dank.reddit().isUserLoggedIn() ? loggedInSubreddits() : loggedOutSubreddits())
@@ -96,7 +117,7 @@ public class SubredditPickerSheetView extends FrameLayout {
                         subreddits.add(0, DankSubreddit.createFrontpage(frontpageSubredditName));
                         return subreddits;
                     })
-                    .doOnNext(subreddits -> userSubreddits = subreddits)
+                    .doOnNext(subreddits -> USER_SUBREDDITS.addAll(subreddits))
                     .subscribe(subredditAdapter, logError("Failed to get subreddits"));
             subscriptions.add(apiSubscription);
         }
@@ -120,6 +141,10 @@ public class SubredditPickerSheetView extends FrameLayout {
 
     public void setActivityRootLayout(ViewGroup activityRootLayout) {
         this.activityRootLayout = activityRootLayout;
+    }
+
+    public void setParentSheet(ToolbarExpandableSheet parentSheet) {
+        this.parentSheet = parentSheet;
     }
 
     private Observable<List<DankSubreddit>> loggedInSubreddits() {
@@ -158,13 +183,13 @@ public class SubredditPickerSheetView extends FrameLayout {
                 })
                 .map(searchTerm -> {
                     if (searchTerm.isEmpty()) {
-                        return userSubreddits;
+                        return USER_SUBREDDITS;
                     }
 
                     boolean unknownSubreddit = false;
 
-                    List<DankSubreddit> filteredSubreddits = new ArrayList<>(userSubreddits.size());
-                    for (DankSubreddit userSubreddit : userSubreddits) {
+                    List<DankSubreddit> filteredSubreddits = new ArrayList<>(USER_SUBREDDITS.size());
+                    for (DankSubreddit userSubreddit : USER_SUBREDDITS) {
                         if (userSubreddit.displayName().toLowerCase(Locale.ENGLISH).contains(searchTerm.toLowerCase())) {
                             filteredSubreddits.add(userSubreddit);
 
@@ -201,30 +226,58 @@ public class SubredditPickerSheetView extends FrameLayout {
         };
     }
 
-    public boolean onOptionsItemSelected(MenuItem item) {
-        switch (item.getItemId()) {
-            case R.id.action_manage_subreddits:
-                // TODO: 05/03/17 Open Manage-Subreddits preferences screen.
+    @OnClick(R.id.subredditpicker_option_manage)
+    void onClickEditSubreddits() {
+        int height = activityRootLayout.getHeight() - getTop();
 
-                int height = activityRootLayout.getHeight();
-                Timber.i("height: %s", height);
+        editButton.animate()
+                .alpha(0f)
+                .setDuration(200)
+                .withEndAction(() -> editButton.setVisibility(GONE))
+                .start();
 
-                ToolbarExpandableSheet parentSheet = (ToolbarExpandableSheet) getParent();
-                parentSheet.setClippedDimensions(parentSheet.getWidth(), height);
-                parentSheet.animateDimensions(parentSheet.getWidth(), height);
+        ValueAnimator heightAnimator = ObjectAnimator.ofInt(rootViewGroup.getHeight(), height);
+        heightAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            boolean marginRemoved = false;
 
-                postDelayed(() -> Views.setHeight(rootViewGroup, height), 500);
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                Views.setHeight(rootViewGroup, ((int) animation.getAnimatedValue()));
 
-//                ValueAnimator heightAnimator = ObjectAnimator.ofInt(rootViewGroup.getHeight(), height);
-//                heightAnimator.addUpdateListener(animation -> {
-//                    Views.setHeight(rootViewGroup, ((int) animation.getAnimatedValue()));
-//                });
-//                heightAnimator.start();
-                return true;
+                // The parent sheet keeps a bottom margin to make space for its shadows.
+                // Remove it so that this sheet can extend to the window bottom. Hide it
+                // midway animation so that the user does not notice.
+                if (!marginRemoved && animation.getAnimatedFraction() > 0.5f) {
+                    marginRemoved = true;
+                    Views.setMarginBottom(parentSheet, 0);
+                }
+            }
+        });
+        heightAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                saveButton.show();
 
-            default:
-                return false;
-        }
+                // So FAB doesn't animate itself if it hasn't been laid out yet. Since
+                // we hide it on creation of this sheet, it never gets laid out. We'll
+                // do this manually.
+                saveButton.setScaleX(0f);
+                saveButton.setScaleY(0f);
+                saveButton.animate()
+                        .scaleX(1f)
+                        .scaleY(1f)
+                        .setDuration(200)
+                        .setInterpolator(ANIM_INTERPOLATOR);
+            }
+        });
+        heightAnimator.setInterpolator(ANIM_INTERPOLATOR);
+        heightAnimator.start();
+    }
+
+    @OnClick(R.id.subredditpicker_save_fab)
+    void onClickSaveSubreddits() {
+        // TODO: Save order
+        parentSheet.collapse();
     }
 
 }

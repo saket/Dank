@@ -46,7 +46,6 @@ import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
-import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks {
 
@@ -89,7 +88,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         setPaddingTop(toolbar, statusBarHeight);
         setMarginTop(toolbarTitleContainer, statusBarHeight);
         setMarginTop(submissionList, statusBarHeight);
-        setPaddingTop(toolbarSheet, toolbarSheet.getPaddingTop() + statusBarHeight);
+        setPaddingTop(toolbarSheet, statusBarHeight);
 
         findAndSetupToolbar();
         getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -272,7 +271,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             toolbarSheet.collapse();
 
         } else {
-            SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet, contentPage);
+            SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.show(toolbarSheet, contentPage);
             pickerSheet.post(() -> toolbarSheet.expand());
             pickerSheet.setOnSubredditClickListener(subreddit -> {
                 toolbarSheet.collapse();
