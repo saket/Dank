@@ -197,7 +197,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     }
 
     private void setupToolbarSheet() {
-        toolbarSheet.hideOnOutsideTouch(submissionList);
+        toolbarSheet.hideOnOutsideClick(submissionList);
         toolbarSheet.setStateChangeListener(state -> {
             switch (state) {
                 case EXPANDING:

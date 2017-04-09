@@ -7,6 +7,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewOutlineProvider;
+import android.view.animation.DecelerateInterpolator;
 
 import butterknife.ButterKnife;
 import me.saket.dank.R;
@@ -75,8 +76,8 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
                     animate()
                             .translationZ(elevationOnExpand)
-                            .setDuration(100)
-                            .setInterpolator(getAnimationInterpolator())
+                            .setDuration(150)
+                            .setInterpolator(new DecelerateInterpolator())
                             .start();
                 })
                 .start();
@@ -98,12 +99,13 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
                 .start();
     }
 
-    public void hideOnOutsideTouch(RecyclerView recyclerView) {
+    public void hideOnOutsideClick(RecyclerView recyclerView) {
         recyclerView.addOnItemTouchListener(new RecyclerView.SimpleOnItemTouchListener() {
             @Override
             public boolean onInterceptTouchEvent(RecyclerView rv, MotionEvent e) {
                 if (isExpandedOrExpanding()) {
                     collapse();
+                    return true;
                 }
                 return super.onInterceptTouchEvent(rv, e);
             }
