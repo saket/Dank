@@ -32,6 +32,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import butterknife.BindDimen;
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -60,6 +61,7 @@ public class SubredditPickerSheetView extends FrameLayout {
 
     // TODO: 28/02/17 Cache this somewhere else.
     private static final List<DankSubreddit> USER_SUBREDDITS = new ArrayList<>();
+    private static final int ANIM_DURATION = 300;
     private static final Interpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
 
     @BindView(R.id.subredditpicker_root) ViewGroup rootViewGroup;
@@ -67,10 +69,13 @@ public class SubredditPickerSheetView extends FrameLayout {
     @BindView(R.id.subredditpicker_subreddit_list) RecyclerView subredditList;
     @BindView(R.id.subredditpicker_load_progress) View subredditsLoadProgressView;
     @BindView(R.id.subredditpicker_refresh_progress) View subredditsRefreshProgressView;
+    @BindView(R.id.subredditpicker_options_container) ViewGroup optionsContainer;
     @BindView(R.id.subredditpicker_option_manage) ImageButton editButton;
     @BindView(R.id.subredditpicker_save_fab) FloatingActionButton saveButton;
 
     @BindString(R.string.frontpage_subreddit_name) String frontpageSubredditName;
+    @BindDimen(R.dimen.subreddit_picker_sheet_height) int collapsedPickerSheetHeight;
+    @BindDimen(R.dimen.subreddit_picker_sheet_bottom_margin) int parentSheetBottomMarginForShadows;
 
     private ViewGroup activityRootLayout;
     private ToolbarExpandableSheet parentSheet;
@@ -109,6 +114,7 @@ public class SubredditPickerSheetView extends FrameLayout {
         if (!USER_SUBREDDITS.isEmpty()) {
             setSubredditLoadProgressVisible().call(false);
             subredditAdapter.updateData(USER_SUBREDDITS);
+            optionsContainer.setVisibility(VISIBLE);
 
         } else {
             Subscription apiSubscription = (Dank.reddit().isUserLoggedIn() ? loggedInSubreddits() : loggedOutSubreddits())
@@ -118,6 +124,7 @@ public class SubredditPickerSheetView extends FrameLayout {
                         return subreddits;
                     })
                     .doOnNext(subreddits -> USER_SUBREDDITS.addAll(subreddits))
+                    .doOnNext(__ -> optionsContainer.setVisibility(VISIBLE))
                     .subscribe(subredditAdapter, logError("Failed to get subreddits"));
             subscriptions.add(apiSubscription);
         }
@@ -271,13 +278,40 @@ public class SubredditPickerSheetView extends FrameLayout {
             }
         });
         heightAnimator.setInterpolator(ANIM_INTERPOLATOR);
+        heightAnimator.setDuration(ANIM_DURATION);
         heightAnimator.start();
     }
 
     @OnClick(R.id.subredditpicker_save_fab)
     void onClickSaveSubreddits() {
-        // TODO: Save order
-        parentSheet.collapse();
+        // TODO: Save order.
+
+        editButton.animate()
+                .alpha(1f)
+                .setDuration(ANIM_DURATION)
+                .withStartAction(() -> {
+                    saveButton.hide();
+                    editButton.setVisibility(VISIBLE);
+                })
+                .start();
+
+        ValueAnimator heightAnimator = ObjectAnimator.ofInt(rootViewGroup.getHeight(), collapsedPickerSheetHeight);
+        heightAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
+            boolean marginAdded = false;
+
+            @Override
+            public void onAnimationUpdate(ValueAnimator animation) {
+                Views.setHeight(rootViewGroup, ((int) animation.getAnimatedValue()));
+
+                if (!marginAdded && animation.getAnimatedFraction() > 0.5f) {
+                    marginAdded = true;
+                    Views.setMarginBottom(parentSheet, parentSheetBottomMarginForShadows);
+                }
+            }
+        });
+        heightAnimator.setInterpolator(ANIM_INTERPOLATOR);
+        heightAnimator.setDuration(ANIM_DURATION);
+        heightAnimator.start();
     }
 
 }

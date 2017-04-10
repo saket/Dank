@@ -16,6 +16,8 @@
 
     <!-- Subreddit -->
     <dimen name="subreddit_toolbar_sheet_elevation">10dp</dimen>
+    <dimen name="subreddit_picker_sheet_height">366dp</dimen>
+    <dimen name="subreddit_picker_sheet_bottom_margin">20dp</dimen>
 
     <!-- Submission -->
     <dimen name="comment_start_padding_for_root_comment">16dp</dimen>
