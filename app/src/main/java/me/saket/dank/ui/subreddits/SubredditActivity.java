@@ -4,7 +4,6 @@ import static me.saket.dank.utils.CommonUtils.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
-import static me.saket.dank.utils.Views.setMarginStart;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
@@ -15,6 +14,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NavUtils;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -55,6 +55,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
     @BindView(R.id.toolbar) DankToolbar toolbar;
+    @BindView(R.id.subreddit_toolbar_close) View toolbarCloseButton;
     @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
     @BindView(R.id.subreddit_toolbar_title_arrow) ExpandIconView toolbarTitleArrowView;
     @BindView(R.id.subreddit_toolbar_title_container) ViewGroup toolbarTitleContainer;
@@ -94,12 +95,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         getSupportActionBar().setDisplayShowTitleEnabled(false);
 
         if (isPullCollapsible) {
-            toolbar.setNavigationIcon(R.drawable.ic_toolbar_close_24dp);
-            setMarginStart(toolbarTitleContainer, getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_title_container_start_margin_with_nav_icon));
-            setMarginStart(toolbarTitleView, getResources().getDimensionPixelSize(R.dimen.subreddit_toolbar_title_start_margin_with_nav_icon));
-
             contentPage.setNestedExpandablePage(submissionPage);
             expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
+
+            toolbarCloseButton.setVisibility(View.VISIBLE);
+            toolbarCloseButton.setOnClickListener(__ -> NavUtils.navigateUpFromSameTask(this));
         }
     }
 
@@ -113,7 +113,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         submissionList.setExpandablePage(submissionPage, toolbarContainer);
 
         contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
-                touchLiesOn(submissionList, downX, downY) && !touchLiesOn(toolbarContainer, downX, downY)
+                touchLiesOn(submissionList, downX, downY)
+                        && !touchLiesOn(toolbarContainer, downX, downY)
                         && submissionList.canScrollVertically(upwardPagePull ? 1 : -1)
         );
 
@@ -154,8 +155,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
             activeSubreddit = DankSubreddit.create(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
         } else {
-            //activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
-            activeSubreddit = DankSubreddit.create("Supapp");
+            activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
         }
         loadSubmissions(activeSubreddit);
 

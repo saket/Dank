@@ -44,6 +44,13 @@
         <item name="android:fontFamily">@string/dank_default_font_family</item>
     </style>
 
+    <style name="DankToolbarIcon">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+        <item name="android:padding">@dimen/spacing2</item>
+    </style>
+
     <style name="DankProgressBar" />
 
     <style name="DankProgressBar.Horizontal" parent="android:Widget.Material.ProgressBar.Horizontal">
@@ -126,5 +133,4 @@
         <item name="android:background">?android:selectableItemBackground</item>
         <item name="android:paddingStart">@dimen/comment_start_padding_per_depth_level</item>
     </style>
-
 </resources>

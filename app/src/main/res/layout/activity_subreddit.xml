@@ -72,8 +72,21 @@
             android:elevation="@dimen/subreddit_toolbar_sheet_elevation"
             android:outlineProvider="none"
             android:paddingEnd="@dimen/spacing16"
+            android:paddingStart="4dp"
             tools:ignore="RtlSymmetry"
             tools:outlineProvider="background">
+
+            <!-- Custom toolbar icon because the toolbar gets covered by
+                 subreddit/profile sheet. -->
+            <ImageButton
+                android:id="@+id/subreddit_toolbar_close"
+                style="@style/DankToolbarIcon"
+                android:layout_centerVertical="true"
+                android:layout_marginEnd="22dp"
+                android:layout_marginStart="6dp"
+                android:contentDescription="@string/cd_close_subreddit"
+                android:src="@drawable/ic_toolbar_close_24dp"
+                android:visibility="gone" />
 
             <Button
                 android:id="@+id/subreddit_toolbar_title"
@@ -81,12 +94,12 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_centerVertical="true"
-                android:layout_marginStart="@dimen/subreddit_toolbar_title_start_margin_without_nav_icon"
+                android:layout_toEndOf="@+id/subreddit_toolbar_close"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:ellipsize="end"
                 android:maxLines="1"
                 android:paddingEnd="32dp"
-                android:paddingStart="20dp"
+                android:paddingStart="12dp"
                 android:text="@string/app_name"
                 android:textAppearance="@style/DankToolbarTitleAppearance.Toolbar"
                 tools:text="/r/NotMyJob" />

@@ -20,12 +20,9 @@
 
         <ImageButton
             android:id="@+id/subredditpicker_option_manage"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:background="?attr/selectableItemBackgroundBorderless"
             android:contentDescription="@string/cd_subreddit_manage_subreddits"
-            android:padding="@dimen/spacing2"
-            android:src="@drawable/ic_edit_24dp" />
+            android:src="@drawable/ic_edit_24dp"
+            style="@style/DankToolbarIcon" />
     </LinearLayout>
 
     <!-- Using a separate ImageView instead a compound drawable

@@ -14,11 +14,12 @@
     <string name="login_welcome_user">Welcome, %s!</string>
     <string name="login_loading_comments">Loading comments…</string>
 
-    <!-- Submission list -->
+    <!-- Subreddit -->
     <string name="subreddit_go_to_subreddit">Go to subreddit…</string>
     <string name="subreddit_profile">Profile</string>
     <string name="subreddit_preferences">Preferences</string>
     <string name="cd_subreddit_manage_subreddits">Manage subreddits</string>
+    <string name="cd_close_subreddit">Close subreddit</string>
 
     <!-- User profile -->
     <string name="userprofile_comments">Comments</string>
