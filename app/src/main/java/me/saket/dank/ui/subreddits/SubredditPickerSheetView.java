@@ -3,6 +3,9 @@ package me.saket.dank.ui.subreddits;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.Views.setHeight;
+import static me.saket.dank.utils.Views.setMarginBottom;
+import static me.saket.dank.utils.Views.setPaddingBottom;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.Animator;
@@ -15,11 +18,11 @@ import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewPropertyAnimator;
 import android.view.animation.Interpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.ImageButton;
 
 import com.google.android.flexbox.AlignItems;
 import com.google.android.flexbox.FlexDirection;
@@ -42,7 +45,6 @@ import butterknife.OnEditorAction;
 import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
-import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Observable;
 import rx.Subscription;
@@ -71,7 +73,8 @@ public class SubredditPickerSheetView extends FrameLayout {
     @BindView(R.id.subredditpicker_load_progress) View subredditsLoadProgressView;
     @BindView(R.id.subredditpicker_refresh_progress) View subredditsRefreshProgressView;
     @BindView(R.id.subredditpicker_options_container) ViewGroup optionsContainer;
-    @BindView(R.id.subredditpicker_option_manage) ImageButton editButton;
+    @BindView(R.id.subredditpicker_option_manage) View editButton;
+    @BindView(R.id.subredditpicker_add_and_more_options_container) ViewGroup addAndMoreOptionsContainer;
     @BindView(R.id.subredditpicker_save_fab) FloatingActionButton saveButton;
 
     @BindString(R.string.frontpage_subreddit_name) String frontpageSubredditName;
@@ -95,7 +98,8 @@ public class SubredditPickerSheetView extends FrameLayout {
         super(context);
         inflate(context, R.layout.view_subreddit_picker_sheet, this);
         ButterKnife.bind(this, this);
-        saveButton.hide();
+
+        saveButton.setVisibility(INVISIBLE);
     }
 
     @Override
@@ -238,26 +242,31 @@ public class SubredditPickerSheetView extends FrameLayout {
     void onClickEditSubreddits() {
         int height = activityRootLayout.getHeight() - getTop();
 
-        editButton.animate()
-                .alpha(0f)
-                .setDuration(200)
-                .withEndAction(() -> editButton.setVisibility(GONE))
-                .start();
+        animateAlpha(editButton, 0f)
+                .withEndAction(() -> {
+                    editButton.setVisibility(GONE);
+                    addAndMoreOptionsContainer.setVisibility(VISIBLE);
+                    animateAlpha(addAndMoreOptionsContainer, 1f);
+                });
 
         ValueAnimator heightAnimator = ObjectAnimator.ofInt(rootViewGroup.getHeight(), height);
         heightAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            boolean marginRemoved = false;
+            boolean spacingsAdjusted = false;
 
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                Views.setHeight(rootViewGroup, ((int) animation.getAnimatedValue()));
+                setHeight(rootViewGroup, ((int) animation.getAnimatedValue()));
 
                 // The parent sheet keeps a bottom margin to make space for its shadows.
                 // Remove it so that this sheet can extend to the window bottom. Hide it
                 // midway animation so that the user does not notice.
-                if (!marginRemoved && animation.getAnimatedFraction() > 0.5f) {
-                    marginRemoved = true;
-                    Views.setMarginBottom(parentSheet, 0);
+                if (!spacingsAdjusted && animation.getAnimatedFraction() > 0.5f) {
+                    spacingsAdjusted = true;
+                    setMarginBottom(parentSheet, 0);
+
+                    // Also add bottom padding to the list to make space for the FAB. The
+                    // list has clipToPadding=false in XML.
+                    setPaddingBottom(subredditList, saveButton.getHeight());
                 }
             }
         });
@@ -265,17 +274,6 @@ public class SubredditPickerSheetView extends FrameLayout {
             @Override
             public void onAnimationEnd(Animator animation) {
                 saveButton.show();
-
-                // So FAB doesn't animate itself if it hasn't been laid out yet. Since
-                // we hide it on creation of this sheet, it never gets laid out. We'll
-                // do this manually.
-                saveButton.setScaleX(0f);
-                saveButton.setScaleY(0f);
-                saveButton.animate()
-                        .scaleX(1f)
-                        .scaleY(1f)
-                        .setDuration(200)
-                        .setInterpolator(ANIM_INTERPOLATOR);
             }
         });
         heightAnimator.setInterpolator(ANIM_INTERPOLATOR);
@@ -287,27 +285,33 @@ public class SubredditPickerSheetView extends FrameLayout {
     void onClickSaveSubreddits() {
         // TODO: Save order.
 
-        editButton.animate()
-                .alpha(1f)
-                .setDuration(ANIM_DURATION)
-                .withStartAction(() -> {
-                    saveButton.hide();
+        animateAlpha(addAndMoreOptionsContainer, 0f)
+                .withStartAction(() -> saveButton.hide())
+                .withEndAction(() -> {
                     editButton.setVisibility(VISIBLE);
-                })
-                .start();
+                    addAndMoreOptionsContainer.setVisibility(GONE);
+                    animateAlpha(editButton, 1f);
+                });
 
         ValueAnimator heightAnimator = ObjectAnimator.ofInt(rootViewGroup.getHeight(), collapsedPickerSheetHeight);
         heightAnimator.addUpdateListener(new ValueAnimator.AnimatorUpdateListener() {
-            boolean marginAdded = false;
+            boolean spacingsAdjusted = false;
 
             @Override
             public void onAnimationUpdate(ValueAnimator animation) {
-                Views.setHeight(rootViewGroup, ((int) animation.getAnimatedValue()));
+                setHeight(rootViewGroup, ((int) animation.getAnimatedValue()));
 
-                if (!marginAdded && animation.getAnimatedFraction() > 0.5f) {
-                    marginAdded = true;
-                    Views.setMarginBottom(parentSheet, parentSheetBottomMarginForShadows);
+                if (!spacingsAdjusted && animation.getAnimatedFraction() > 0.5f) {
+                    spacingsAdjusted = true;
+                    setMarginBottom(parentSheet, parentSheetBottomMarginForShadows);
+                    setPaddingBottom(subredditList, 0);
                 }
+            }
+        });
+        heightAnimator.addListener(new AnimatorListenerAdapter() {
+            @Override
+            public void onAnimationEnd(Animator animation) {
+                saveButton.hide();
             }
         });
         heightAnimator.setInterpolator(ANIM_INTERPOLATOR);
@@ -319,6 +323,10 @@ public class SubredditPickerSheetView extends FrameLayout {
         // FlexboxLayoutManager does not override methods required for View#canScrollVertically.
         // So let's intercept all pull-to-collapses if the touch is made on the list.
         return touchLiesOn(subredditList, downX, downY);
+    }
+
+    private ViewPropertyAnimator animateAlpha(View view, float toAlpha) {
+        return view.animate().alpha(toAlpha).setDuration(ANIM_DURATION).setInterpolator(ANIM_INTERPOLATOR);
     }
 
 }

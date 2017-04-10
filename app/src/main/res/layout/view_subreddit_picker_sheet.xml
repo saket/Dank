@@ -9,7 +9,7 @@
 
     <!-- Background is necessary on this View for ripples of its child Views
          to be drawn. -->
-    <LinearLayout
+    <FrameLayout
         android:id="@+id/subredditpicker_options_container"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
@@ -17,14 +17,39 @@
         android:gravity="end|center_vertical"
         android:paddingEnd="10dp"
         android:visibility="invisible"
-        tools:ignore="RtlSymmetry">
+        tools:ignore="RtlSymmetry"
+        tools:visibility="visible">
+
+        <LinearLayout
+            android:id="@+id/subredditpicker_add_and_more_options_container"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="end|center_vertical"
+            android:visibility="gone"
+            tools:visibility="visible">
+
+            <ImageButton
+                android:id="@+id/subredditpicker_option_add_new"
+                style="@style/DankToolbarIcon"
+                android:layout_marginEnd="21dp"
+                android:contentDescription="@string/cd_subredditpicker_add_new_subreddit"
+                android:src="@drawable/ic_add_circle_24dp" />
+
+            <ImageButton
+                android:id="@+id/subredditpicker_option_overflow_menu"
+                style="@style/DankToolbarIcon"
+                android:contentDescription="@string/cd_subredditpicker_more_options"
+                android:src="@drawable/ic_more_vert_24dp" />
+        </LinearLayout>
 
         <ImageButton
             android:id="@+id/subredditpicker_option_manage"
             style="@style/DankToolbarIcon"
-            android:contentDescription="@string/cd_subreddit_manage_subreddits"
-            android:src="@drawable/ic_edit_24dp" />
-    </LinearLayout>
+            android:layout_gravity="end|center_vertical"
+            android:contentDescription="@string/cd_subredditpicker_manage_subreddits"
+            android:src="@drawable/ic_edit_24dp"
+            tools:visibility="gone" />
+    </FrameLayout>
 
     <!-- Using a separate ImageView instead a compound drawable
          in EditText so that we can control the icon size. -->
@@ -62,10 +87,10 @@
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/subredditpicker_search"
-        android:scrollbars="vertical"
         android:layout_marginBottom="@dimen/spacing16"
         android:layout_marginEnd="@dimen/spacing12"
-        android:layout_marginStart="@dimen/spacing12" />
+        android:layout_marginStart="@dimen/spacing12"
+        android:clipToPadding="false" />
 
     <FrameLayout
         android:id="@+id/subredditpicker_load_progress"

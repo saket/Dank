@@ -94,6 +94,10 @@ public class Views {
         view.setPaddingRelative(view.getPaddingStart(), padding, view.getPaddingEnd(), padding);
     }
 
+    public static void setPaddingBottom(View view, int paddingBottom) {
+        view.setPaddingRelative(view.getPaddingStart(), view.getPaddingTop(), view.getPaddingEnd(), paddingBottom);
+    }
+
     public static void setDimensions(View view, int width, int height) {
         ViewGroup.LayoutParams params = view.getLayoutParams();
         params.width = width;
@@ -152,5 +156,4 @@ public class Views {
         view.getGlobalVisibleRect(rect);
         return rect;
     }
-
 }
