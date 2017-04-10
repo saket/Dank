@@ -96,7 +96,7 @@ dependencies {
     // ImageViewer that supports pan, zoom gestures + can decode large images.
     compile 'com.alexvasilkov:gesture-views:2.2.0'
 
-    compile 'com.google.android:flexbox:0.3.0-alpha2'
+    compile 'com.google.android:flexbox:0.3.0-alpha3'
     compile 'com.robinhood.ticker:ticker:1.1.1'
     compile 'com.github.zagum:Android-ExpandIcon:1.1.1'
     compile 'com.github.Saketme:Better-Link-Movement-Method:40b13980d4'

@@ -462,7 +462,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         // If the page lies behind the toolbar, use toolbar's current bottom position instead
         toolbarAnimator = ObjectAnimator.ofFloat(fromTy, targetPageTranslationY);
         toolbarAnimator.addUpdateListener(animation -> updateToolbarTranslationY(show, (float) animation.getAnimatedValue()));
-        toolbarAnimator.setDuration(getAnimationDuration());
+        toolbarAnimator.setDuration(getAnimationDuration() * speedFactor);
         toolbarAnimator.setInterpolator(getAnimationInterpolator());
         toolbarAnimator.setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
         toolbarAnimator.start();
@@ -675,7 +675,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         if (nestedPage != null && nestedPage.isExpandedOrExpanding() && nestedPage.getClippedRect().contains(downX, downY)) {
             // Block this pull if it's being made inside a nested page. Let the nested page's pull-listener consume this event.
             // We should use nested scrolling in the future to make this smarter.
-            // TODO: 20/03/17 Do we even need to call the nested page's
+            // TODO: 20/03/17 Do we even need to call the nested page's listener?
             nestedPage.handleOnPullToCollapseIntercept(event, downX, downY, deltaUpwardSwipe);
             return true;
 

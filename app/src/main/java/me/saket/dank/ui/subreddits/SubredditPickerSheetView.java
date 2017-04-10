@@ -3,6 +3,7 @@ package me.saket.dank.ui.subreddits;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
 import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -312,6 +313,12 @@ public class SubredditPickerSheetView extends FrameLayout {
         heightAnimator.setInterpolator(ANIM_INTERPOLATOR);
         heightAnimator.setDuration(ANIM_DURATION);
         heightAnimator.start();
+    }
+
+    public boolean shouldInterceptPullToCollapse(float downX, float downY) {
+        // FlexboxLayoutManager does not override methods required for View#canScrollVertically.
+        // So let's intercept all pull-to-collapses if the touch is made on the list.
+        return touchLiesOn(subredditList, downX, downY);
     }
 
 }

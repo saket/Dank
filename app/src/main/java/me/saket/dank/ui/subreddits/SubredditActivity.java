@@ -112,11 +112,24 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         submissionList.setItemAnimator(new DefaultItemAnimator());
         submissionList.setExpandablePage(submissionPage, toolbarContainer);
 
-        contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
-                touchLiesOn(submissionList, downX, downY)
-                        && !touchLiesOn(toolbarContainer, downX, downY)
-                        && submissionList.canScrollVertically(upwardPagePull ? 1 : -1)
-        );
+        contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
+            if (touchLiesOn(toolbarContainer, downX, downY)) {
+                if (touchLiesOn(toolbarSheet, downX, downY) && isSubredditPickerVisible()) {
+                    boolean intercepted = findSubredditPickerSheet().shouldInterceptPullToCollapse(downX, downY);
+                    if (intercepted) {
+                        return true;
+                    }
+                }
+                return false;
+            }
+
+            //noinspection SimplifiableIfStatement
+            if (touchLiesOn(submissionList, downX, downY)) {
+                return submissionList.canScrollVertically(upwardPagePull ? 1 : -1);
+            }
+
+            return false;
+        });
 
         if (savedInstanceState != null) {
             submissionList.handleOnRestoreInstanceState(savedInstanceState);
@@ -155,7 +168,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
             activeSubreddit = DankSubreddit.create(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
         } else {
-            activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
+            //activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
+            activeSubreddit = DankSubreddit.create("Supapp");
         }
         loadSubmissions(activeSubreddit);
 
@@ -292,6 +306,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
      */
     private boolean isSubredditPickerVisible() {
         return !toolbarSheet.isCollapsed() && toolbarSheet.getChildAt(0) instanceof SubredditPickerSheetView;
+    }
+
+    private SubredditPickerSheetView findSubredditPickerSheet() {
+        return ((SubredditPickerSheetView) toolbarSheet.getChildAt(0));
     }
 
     private boolean isUserProfileSheetVisible() {
