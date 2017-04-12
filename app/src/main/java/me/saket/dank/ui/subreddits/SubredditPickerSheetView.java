@@ -86,7 +86,7 @@ public class SubredditPickerSheetView extends FrameLayout {
     private SubredditAdapter subredditAdapter;
     private CompositeSubscription subscriptions = new CompositeSubscription();
 
-    public static SubredditPickerSheetView show(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
+    public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
         SubredditPickerSheetView subredditPickerView = new SubredditPickerSheetView(toolbarSheet.getContext());
         subredditPickerView.setActivityRootLayout(activityRootLayout);
         subredditPickerView.setParentSheet(toolbarSheet);

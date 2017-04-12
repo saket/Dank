@@ -41,5 +41,10 @@
         <activity android:name=".ui.submission.SubmissionFragmentActivity" />
 
         <activity android:name=".ui.user.UserProfileActivity" />
+
+        <activity
+            android:name=".ui.user.MessagesActivity"
+            android:label="@string/activity_messages"
+            android:parentActivityName=".ui.subreddits.SubredditActivity" />
     </application>
 </manifest>

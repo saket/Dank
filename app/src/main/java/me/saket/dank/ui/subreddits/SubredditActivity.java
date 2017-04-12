@@ -285,7 +285,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             toolbarSheet.collapse();
 
         } else {
-            SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.show(toolbarSheet, contentPage);
+            SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet, contentPage);
             pickerSheet.post(() -> toolbarSheet.expand());
             pickerSheet.setOnSubredditClickListener(subreddit -> {
                 toolbarSheet.collapse();

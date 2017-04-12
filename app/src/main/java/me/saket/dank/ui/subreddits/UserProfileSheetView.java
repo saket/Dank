@@ -18,6 +18,8 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.MessagesActivity;
+import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Observable;
 import rx.Subscription;
@@ -117,20 +119,21 @@ public class UserProfileSheetView extends FrameLayout {
 
     @OnClick(R.id.userprofilesheet_messages)
     void onClickMessages() {
-        // TODO: 02/03/17
-        parentSheet.collapse();
+        MessagesActivity.start(getContext(), null);
+
+        // Hide this sheet once it gets fully covered.
+        postDelayed(
+                () -> parentSheet.collapse(),
+                (long) (IndependentExpandablePageLayout.ANIMATION_DURATION * 1.6f)
+        );
     }
 
     @OnClick(R.id.userprofilesheet_comments)
     void onClickComments() {
-        // TODO: 02/03/17
-        parentSheet.collapse();
     }
 
     @OnClick(R.id.userprofilesheet_submissions)
     void onClickSubmissions() {
-        // TODO: 02/03/17
-        parentSheet.collapse();
     }
 
     @OnClick(R.id.userprofilesheet_logout)

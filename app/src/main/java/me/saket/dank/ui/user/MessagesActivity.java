@@ -5,7 +5,8 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.Toolbar;
+import android.support.design.widget.TabLayout;
+import android.support.v4.view.ViewPager;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -13,19 +14,17 @@ import me.saket.dank.R;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
-public class UserProfileActivity extends DankPullCollapsibleActivity {
+public class MessagesActivity extends DankPullCollapsibleActivity {
 
-    private static final String KEY_USERNAME = "usernameLink";
-
-    @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.userprofile_root) IndependentExpandablePageLayout contentPage;
+    @BindView(R.id.messages_root) IndependentExpandablePageLayout contentPage;
+    @BindView(R.id.messages_tablayout) TabLayout tabLayout;
+    @BindView(R.id.messages_viewpager) ViewPager viewPager;
 
     /**
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
      */
-    public static void start(Context context, String userName, @Nullable Rect expandFromShape) {
-        Intent intent = new Intent(context, UserProfileActivity.class);
-        intent.putExtra(KEY_USERNAME, userName);
+    public static void start(Context context, @Nullable Rect expandFromShape) {
+        Intent intent = new Intent(context, MessagesActivity.class);
         intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
         context.startActivity(intent);
     }
@@ -33,15 +32,12 @@ public class UserProfileActivity extends DankPullCollapsibleActivity {
     @Override
     protected void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_user_profile);
+        setContentView(R.layout.activity_messages);
         ButterKnife.bind(this);
         findAndSetupToolbar();
 
         setupContentExpandablePage(contentPage);
         expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
-
-        String username = getIntent().getStringExtra(KEY_USERNAME);
-        setTitle(getString(R.string.user_name_u_prefix, username));
     }
 
 }

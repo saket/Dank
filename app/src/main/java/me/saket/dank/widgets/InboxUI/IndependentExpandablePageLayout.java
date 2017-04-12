@@ -9,6 +9,8 @@ import android.util.AttributeSet;
  */
 public class IndependentExpandablePageLayout extends ExpandablePageLayout {
 
+    public static final long ANIMATION_DURATION = 300;
+
     public interface Callbacks {
         /**
          * Called when this page has fully collapsed and is no longer visible.
@@ -26,7 +28,7 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
     public IndependentExpandablePageLayout(Context context, AttributeSet attrs) {
         super(context, attrs);
         setCollapsedAlpha(1f);
-        setAnimationDuration(300);
+        setAnimationDuration(ANIMATION_DURATION);
     }
 
     @Override

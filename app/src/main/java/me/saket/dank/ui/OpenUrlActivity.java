@@ -50,7 +50,7 @@ public class OpenUrlActivity extends DankActivity {
             finish();
 
         } else if (link instanceof RedditLink.User) {
-            UserProfileActivity.start(this, ((RedditLink.User) link), expandFromShape);
+            UserProfileActivity.start(this, ((RedditLink.User) link).name, expandFromShape);
             finish();
 
         } else if (link.isExternal()) {

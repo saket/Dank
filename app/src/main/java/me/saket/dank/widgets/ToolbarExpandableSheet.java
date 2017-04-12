@@ -116,6 +116,10 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
         stateChangeListener = listener;
     }
 
+    public long getCollapseAnimationDuration() {
+        return getAnimationDuration();
+    }
+
 // ======== PUBLIC APIs END ======== //
 
     private void dispatchStateChangeCallback(State state) {

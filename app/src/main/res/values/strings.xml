@@ -77,4 +77,7 @@
     <string name="userpreferences_misc_description">Options that don\'t fit elsewhere</string>
     <string name="userpreferences_about">About Dank</string>
     <string name="userpreferences_about_description">The team behind</string>
+
+    <!-- Messages -->
+    <string name="activity_messages">Messages</string>
 </resources>
