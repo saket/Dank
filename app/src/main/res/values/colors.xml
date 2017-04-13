@@ -33,4 +33,7 @@
     <color name="submission_link_title_dark">@color/black_opacity_90</color>
     <color name="submission_link_subtitle_dark">@color/black_opacity_50</color>
     <color name="submission_link_background_color">#3A3A3A</color>
+
+    <color name="subredditpicker_subreddit_button_tint_normal">#1b1b1b</color>
+    <color name="subredditpicker_subreddit_button_tint_selected">#101010</color>
 </resources>

@@ -20,6 +20,10 @@ import rx.functions.Action1;
  */
 public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, SubredditAdapter.SubredditViewHolder> implements Action1<List<DankSubreddit>> {
 
+    interface OnSubredditClickListener {
+        void onClickSubreddit(DankSubreddit subreddit, View subredditItemView);
+    }
+
     private OnSubredditClickListener clickListener;
 
     public SubredditAdapter() {
@@ -28,10 +32,6 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, Su
 
     public void setOnSubredditClickListener(OnSubredditClickListener listener) {
         clickListener = listener;
-    }
-
-    public OnSubredditClickListener getOnSubredditClickListener() {
-        return clickListener;
     }
 
     @Override
@@ -49,8 +49,8 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, Su
         DankSubreddit subreddit = getItem(position);
         holder.bind(subreddit);
 
-        holder.itemView.setOnClickListener(v -> {
-            clickListener.onClickSubreddit(subreddit);
+        holder.itemView.setOnClickListener(itemView -> {
+            clickListener.onClickSubreddit(subreddit, itemView);
         });
     }
 

@@ -15,11 +15,23 @@
         <item name="android:navigationBarColor">@color/gray_900</item>
         <item name="android:windowTranslucentStatus">true</item>
         <item name="android:backgroundDimEnabled">false</item>
+
+        <item name="alertDialogTheme">@style/DankDialogTheme</item>
     </style>
 
     <style name="DankTheme.TransparentBackground">
         <item name="android:windowIsTranslucent">true</item>
         <item name="android:windowBackground">@android:color/transparent</item>
+    </style>
+
+    <style name="DankDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
+        <!-- Because without this, softInputMode is ignored :| -->
+        <item name="android:windowTranslucentStatus">false</item>
+        <item name="android:windowTitleStyle">@style/DankDialogTitleStyle</item>
+    </style>
+
+    <style name="DankDialogTitleStyle" parent="@android:style/TextAppearance.Material.WindowTitle">
+        <item name="android:fontFamily">sans-serif-condensed</item>
     </style>
 
     <style name="DankToolbarTitleAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
@@ -99,7 +111,7 @@
     <style name="DankButton.SubredditPicker">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
-        <item name="android:backgroundTint">@color/color_primary_dark</item>
+        <item name="android:backgroundTint">@color/subredditpicker_subreddit_button_tint_normal</item>
         <item name="android:gravity">start|center</item>
         <item name="android:minHeight">0dp</item>
         <item name="android:minWidth">0dp</item>

@@ -19,9 +19,18 @@
     <string name="subreddit_profile">Profile</string>
     <string name="subreddit_preferences">Preferences</string>
     <string name="cd_close_subreddit">Close subreddit</string>
+
     <string name="cd_subredditpicker_manage_subreddits">Manage subreddits</string>
     <string name="cd_subredditpicker_add_new_subreddit">Add new subreddit</string>
     <string name="cd_subredditpicker_more_options">More options</string>
+    <string name="subredditpicker_set_as_default">Set as default</string>
+    <string name="subredditpicker_unsubscribe">Unsubscribe</string>
+    <string name="subredditpicker_hide">Hide</string>
+
+    <string name="newsubredditdialog_title">Subscribe to</string>
+    <string name="newsubredditdialog_subscribe">Subscribe</string>
+    <string name="newsubredditdialog_subreddit_hint">subreddit</string>
+    <string name="newsubredditdialog_cancel">Cancel</string>
 
     <!-- User profile -->
     <string name="userprofile_comments">Comments</string>

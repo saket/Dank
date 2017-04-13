@@ -168,8 +168,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
             activeSubreddit = DankSubreddit.create(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
         } else {
-            //activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
-            activeSubreddit = DankSubreddit.create("Supapp");
+            activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
         }
         loadSubmissions(activeSubreddit);
 
@@ -287,7 +286,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         } else {
             SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet, contentPage);
             pickerSheet.post(() -> toolbarSheet.expand());
-            pickerSheet.setOnSubredditClickListener(subreddit -> {
+            pickerSheet.setOnSubredditSelectListener(subreddit -> {
                 toolbarSheet.collapse();
                 if (!subreddit.equals(activeSubreddit)) {
                     loadSubmissions(subreddit);

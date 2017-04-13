@@ -8,4 +8,8 @@
         <attr name="navigationIcon" format="reference" />
         <attr name="navigationIconTint" format="color" />
     </declare-styleable>
+
+    <declare-styleable name="EdittextWithPrefix">
+        <attr name="prefix" format="string" />
+    </declare-styleable>
 </resources>

@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/blue_gray_800"
+    android:orientation="vertical"
+    tools:layout_marginTop="25dp">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing8"
+        android:layout_marginStart="@dimen/spacing16"
+        android:layout_marginTop="@dimen/spacing16"
+        android:text="/r/Frontpage" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        style="@style/DankButton.UserProfileSheet"
+        android:text="Set default" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        style="@style/DankButton.UserProfileSheet"
+        android:text="Unsubscribe" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        style="@style/DankButton.UserProfileSheet"
+        android:text="Hide" />
+</LinearLayout>

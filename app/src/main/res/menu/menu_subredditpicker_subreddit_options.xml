@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/action_set_as_default"
+        android:title="@string/subredditpicker_set_as_default" />
+
+    <item
+        android:id="@+id/action_unsubscribe"
+        android:title="@string/subredditpicker_unsubscribe" />
+
+    <item
+        android:id="@+id/action_hide"
+        android:title="@string/subredditpicker_hide" />
+</menu>

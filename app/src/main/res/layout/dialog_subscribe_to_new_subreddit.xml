@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:fitsSystemWindows="true"
+    android:orientation="vertical"
+    tools:background="@color/window_background"
+    tools:layout_marginTop="@dimen/spacing24">
+
+    <me.saket.dank.widgets.InboxUI.EdittextWithPrefix
+        android:id="@+id/newsubredditdialog_subreddit"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing8"
+        android:layout_marginEnd="21dp"
+        android:layout_marginStart="21dp"
+        android:layout_marginTop="@dimen/spacing8"
+        android:hint="@string/newsubredditdialog_subreddit_hint"
+        android:inputType="text"
+        app:prefix="/r/"
+        tools:ignore="LabelFor" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing8"
+        android:gravity="end|center_vertical"
+        android:paddingEnd="@dimen/spacing12"
+        android:paddingStart="@dimen/spacing12">
+
+        <Button
+            android:id="@+id/newsubredditdialog_cancel"
+            style="?attr/buttonBarNegativeButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/newsubredditdialog_cancel"
+            android:textColor="@color/gray_500" />
+
+        <Button
+            android:id="@+id/newsubredditdialog_subscribe"
+            style="?attr/buttonBarPositiveButtonStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/newsubredditdialog_subscribe" />
+    </LinearLayout>
+</LinearLayout>

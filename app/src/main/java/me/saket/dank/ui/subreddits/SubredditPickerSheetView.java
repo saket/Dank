@@ -13,6 +13,7 @@ import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.ColorStateList;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.widget.RecyclerView;
@@ -23,6 +24,7 @@ import android.view.animation.Interpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
+import android.widget.PopupMenu;
 
 import com.google.android.flexbox.AlignItems;
 import com.google.android.flexbox.FlexDirection;
@@ -36,6 +38,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 
+import butterknife.BindColor;
 import butterknife.BindDimen;
 import butterknife.BindString;
 import butterknife.BindView;
@@ -45,6 +48,7 @@ import butterknife.OnEditorAction;
 import me.saket.dank.R;
 import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.DankActivity;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Observable;
 import rx.Subscription;
@@ -60,7 +64,7 @@ import rx.subscriptions.CompositeSubscription;
  * - Add new
  * - Set default.
  */
-public class SubredditPickerSheetView extends FrameLayout {
+public class SubredditPickerSheetView extends FrameLayout implements SubredditAdapter.OnSubredditClickListener {
 
     // TODO: 28/02/17 Cache this somewhere else.
     private static final List<DankSubreddit> USER_SUBREDDITS = new ArrayList<>();
@@ -80,11 +84,23 @@ public class SubredditPickerSheetView extends FrameLayout {
     @BindString(R.string.frontpage_subreddit_name) String frontpageSubredditName;
     @BindDimen(R.dimen.subreddit_picker_sheet_height) int collapsedPickerSheetHeight;
     @BindDimen(R.dimen.subreddit_picker_sheet_bottom_margin) int parentSheetBottomMarginForShadows;
+    @BindColor(R.color.subredditpicker_subreddit_button_tint_selected) int selectedSubredditButtonTintColor;
 
     private ViewGroup activityRootLayout;
     private ToolbarExpandableSheet parentSheet;
     private SubredditAdapter subredditAdapter;
     private CompositeSubscription subscriptions = new CompositeSubscription();
+    private OnSubredditSelectListener subredditSelectListener;
+    private SheetState sheetState;
+
+    enum SheetState {
+        BROWSE_SUBS,
+        MANAGE_SUBS
+    }
+
+    public interface OnSubredditSelectListener {
+        void onSelectSubreddit(DankSubreddit subreddit);
+    }
 
     public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
         SubredditPickerSheetView subredditPickerView = new SubredditPickerSheetView(toolbarSheet.getContext());
@@ -100,6 +116,7 @@ public class SubredditPickerSheetView extends FrameLayout {
         ButterKnife.bind(this, this);
 
         saveButton.setVisibility(INVISIBLE);
+        sheetState = SheetState.BROWSE_SUBS;
     }
 
     @Override
@@ -113,6 +130,7 @@ public class SubredditPickerSheetView extends FrameLayout {
         subredditList.setLayoutManager(flexboxLayoutManager);
 
         subredditAdapter = new SubredditAdapter();
+        subredditAdapter.setOnSubredditClickListener(this);
         subredditList.setAdapter(subredditAdapter);
         subredditList.setItemAnimator(null);
 
@@ -145,11 +163,47 @@ public class SubredditPickerSheetView extends FrameLayout {
         super.onDetachedFromWindow();
     }
 
-    public void setOnSubredditClickListener(OnSubredditClickListener listener) {
-        subredditAdapter.setOnSubredditClickListener(listener);
+    public void setOnSubredditSelectListener(OnSubredditSelectListener selectListener) {
+        subredditSelectListener = selectListener;
     }
 
-// ======== END PUBLIC APIs ======== //
+    /**
+     * Called when a subreddit is clicked in the adapter. Depending upon the {@link SheetState},
+     * the subreddit is either passed to {@link SubredditActivity} for switching the sub or an
+     * options menu is shown if the user is managing the subs.
+     */
+    @Override
+    public void onClickSubreddit(DankSubreddit subreddit, View subredditItemView) {
+        if (sheetState == SheetState.BROWSE_SUBS) {
+            subredditSelectListener.onSelectSubreddit(subreddit);
+
+        } else {
+            ColorStateList originalTintList = subredditItemView.getBackgroundTintList();
+            subredditItemView.setBackgroundTintList(ColorStateList.valueOf(selectedSubredditButtonTintColor));
+
+            PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView);
+            popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
+            popupMenu.setOnMenuItemClickListener(item -> {
+                switch (item.getItemId()) {
+                    case R.id.action_set_as_default:
+                        return true;
+
+                    case R.id.action_unsubscribe:
+                        return true;
+
+                    case R.id.action_hide:
+                        return true;
+                    default:
+
+                        throw new UnsupportedOperationException();
+                }
+            });
+            popupMenu.setOnDismissListener(menu -> {
+                subredditItemView.setBackgroundTintList(originalTintList);
+            });
+            popupMenu.show();
+        }
+    }
 
     public void setActivityRootLayout(ViewGroup activityRootLayout) {
         this.activityRootLayout = activityRootLayout;
@@ -174,11 +228,12 @@ public class SubredditPickerSheetView extends FrameLayout {
         return Observable.just(dankSubreddits);
     }
 
+    // TODO: How should the enter key in search work when edit mode is enabled.
     @OnEditorAction(R.id.subredditpicker_search)
     boolean onClickSearchFieldEnterKey(int actionId) {
         if (actionId == EditorInfo.IME_ACTION_GO) {
             String searchTerm = searchView.getText().toString().trim();
-            subredditAdapter.getOnSubredditClickListener().onClickSubreddit(DankSubreddit.create(searchTerm));
+            subredditSelectListener.onSelectSubreddit(DankSubreddit.create(searchTerm));
             return true;
         }
         return false;
@@ -238,8 +293,11 @@ public class SubredditPickerSheetView extends FrameLayout {
         };
     }
 
+// ======== ANIMATION ======== //
+
     @OnClick(R.id.subredditpicker_option_manage)
     void onClickEditSubreddits() {
+        sheetState = SheetState.MANAGE_SUBS;
         int height = activityRootLayout.getHeight() - getTop();
 
         animateAlpha(editButton, 0f)
@@ -284,6 +342,7 @@ public class SubredditPickerSheetView extends FrameLayout {
     @OnClick(R.id.subredditpicker_save_fab)
     void onClickSaveSubreddits() {
         // TODO: Save order.
+        sheetState = SheetState.BROWSE_SUBS;
 
         animateAlpha(addAndMoreOptionsContainer, 0f)
                 .withStartAction(() -> saveButton.hide())
@@ -327,6 +386,13 @@ public class SubredditPickerSheetView extends FrameLayout {
 
     private ViewPropertyAnimator animateAlpha(View view, float toAlpha) {
         return view.animate().alpha(toAlpha).setDuration(ANIM_DURATION).setInterpolator(ANIM_INTERPOLATOR);
+    }
+
+// ======== ADD NEW SUBREDDIT ======== //
+
+    @OnClick(R.id.subredditpicker_option_add_new)
+    void onClickNewSubreddit() {
+        SubscribeToNewSubredditDialog.show(((DankActivity) getContext()).getSupportFragmentManager());
     }
 
 }
