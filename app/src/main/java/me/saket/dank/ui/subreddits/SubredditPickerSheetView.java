@@ -1,13 +1,13 @@
 package me.saket.dank.ui.subreddits;
 
-import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
-import static me.saket.dank.utils.RxUtils.flatMapIf;
-import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginBottom;
 import static me.saket.dank.utils.Views.setPaddingBottom;
 import static me.saket.dank.utils.Views.touchLiesOn;
+import static rx.Observable.just;
+import static rx.android.schedulers.AndroidSchedulers.mainThread;
+import static rx.schedulers.Schedulers.io;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -31,6 +31,9 @@ import com.google.android.flexbox.AlignItems;
 import com.google.android.flexbox.FlexDirection;
 import com.google.android.flexbox.FlexWrap;
 import com.google.android.flexbox.FlexboxLayoutManager;
+import com.jakewharton.rxbinding.widget.RxTextView;
+
+import java.util.Collections;
 
 import butterknife.BindColor;
 import butterknife.BindDimen;
@@ -40,6 +43,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
 import me.saket.dank.R;
+import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
@@ -123,21 +127,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         subredditList.setAdapter(subredditAdapter);
         subredditList.setItemAnimator(null);
 
-        // TODO: 15/04/17 Handle error.
-        // TODO: 15/04/17 Empty state.
-
-        final long startTime = System.currentTimeMillis();
-
-        subscriptions.add(Dank
-                .subscriptionManager().getAll(false /* includeHidden */)
-                .compose(flatMapIf(subs -> subs.isEmpty(), Dank.subscriptionManager().refreshSubscriptions(true)))
-                .compose(applySchedulers())
-                .compose(doOnStartAndNext(setSubredditLoadProgressVisible()))
-                .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
-                .doOnNext(o -> Timber.i("Fetched subs in: %sms", System.currentTimeMillis() - startTime))
-                .subscribe(subredditAdapter, logError("Failed to get subreddits")));
-
-        setupSearch();
+        setupSubredditsSearch();
     }
 
     @Override
@@ -198,6 +188,48 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         this.parentSheet = parentSheet;
     }
 
+    // TODO: 15/04/17 Handle error.
+    // TODO: 15/04/17 Empty state.
+    private void setupSubredditsSearch() {
+        // RxTextView emits an initial event on subscribe, so the following code will result in loading all subreddits.
+        subscriptions.add(RxTextView.textChanges(searchView)
+                .map(searchTerm -> {
+                    // Since CharSequence is mutable, it's important to create a copy before doing a debounce().
+                    return searchTerm.toString().trim();
+                })
+                .observeOn(io())
+                .flatMap(searchTerm -> Dank.subscriptionManager().search(searchTerm, false /* includeHidden */))
+                .onErrorResumeNext(error -> {
+                    // Don't let an error terminate the stream.
+                    Timber.e(error, "Error in fetching subreddits");
+                    return just(Collections.emptyList());
+                })
+                .observeOn(mainThread())
+                .compose(doOnStartAndNext(setSubredditLoadProgressVisible()))
+                .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
+                .map(filteredSubs -> {
+                    // If search is active, show user's search term in the results unless an exact match was found.
+                    String searchTerm = searchView.getText().toString();
+
+                    if (!searchTerm.isEmpty()) {
+                        boolean exactSearchFound = false;
+                        for (SubredditSubscription filteredSub : filteredSubs) {
+                            if (filteredSub.name().equalsIgnoreCase(searchTerm)) {
+                                exactSearchFound = true;
+                                break;
+                            }
+                        }
+                        if (!exactSearchFound) {
+                            filteredSubs.add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false));
+                        }
+                    }
+
+                    return filteredSubs;
+                })
+                .subscribe(subredditAdapter)
+        );
+    }
+
     // TODO: How should the enter key in search work when edit mode is enabled.
     @OnEditorAction(R.id.subredditpicker_search)
     boolean onClickSearchFieldEnterKey(int actionId) {
@@ -207,44 +239,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
             return true;
         }
         return false;
-    }
-
-    private void setupSearch() {
-//        Subscription subscription = RxTextView.textChanges(searchView)
-//                .skip(1)
-//                .debounce(100, TimeUnit.MILLISECONDS)
-//                .map(searchTerm -> {
-//                    // Since CharSequence is mutable, it's important
-//                    // to create a copy before doing a debounce().
-//                    return searchTerm.toString().trim();
-//                })
-//                .map(searchTerm -> {
-//                    if (searchTerm.isEmpty()) {
-//                        return USER_SUBREDDITS;
-//                    }
-//
-//                    boolean unknownSubreddit = false;
-//
-//                    List<DankSubreddit> filteredSubreddits = new ArrayList<>(USER_SUBREDDITS.size());
-//                    for (DankSubreddit userSubreddit : USER_SUBREDDITS) {
-//                        if (userSubreddit.displayName().toLowerCase(Locale.ENGLISH).contains(searchTerm.toLowerCase())) {
-//                            filteredSubreddits.add(userSubreddit);
-//
-//                            if (userSubreddit.displayName().equalsIgnoreCase(searchTerm)) {
-//                                unknownSubreddit = true;
-//                            }
-//                        }
-//                    }
-//
-//                    if (!unknownSubreddit) {
-//                        filteredSubreddits.add(DankSubreddit.create(searchTerm));
-//                    }
-//
-//                    return filteredSubreddits;
-//                })
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe(subredditAdapter, logError("Search error"));
-//        subscriptions.add(subscription);
     }
 
     private Action1<Boolean> setSubredditLoadProgressVisible() {

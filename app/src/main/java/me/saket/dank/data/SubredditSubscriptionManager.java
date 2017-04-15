@@ -1,5 +1,8 @@
 package me.saket.dank.data;
 
+import static me.saket.dank.data.SubredditSubscription.TABLE_NAME;
+import static rx.Observable.just;
+
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
@@ -16,6 +19,7 @@ import java.util.Locale;
 
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription.PendingState;
+import me.saket.dank.di.Dank;
 import rx.Completable;
 import rx.Observable;
 import rx.functions.Action1;
@@ -43,53 +47,69 @@ public class SubredditSubscriptionManager {
 
     /**
      * Gets user's subscriptions from the database.
+     *
+     * @param searchQuery Can be empty, but not null.
      */
-    public Observable<List<SubredditSubscription>> getAll(boolean includeHidden) {
+    public Observable<List<SubredditSubscription>> search(String searchQuery, boolean includeHidden) {
         String getQuery = includeHidden
-                ? SubredditSubscription.QUERY_GET_ALL_SUBSCRIBED_INCLUDING_HIDDEN
-                : SubredditSubscription.QUERY_GET_ALL_SUBSCRIBED_EXCLUDING_HIDDEN;
+                ? SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN
+                : SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_EXCLUDING_HIDDEN;
 
         return database
-                .createQuery(SubredditSubscription.TABLE_NAME, getQuery)
+                .createQuery(TABLE_NAME, getQuery, "%" + searchQuery + "%")
                 .mapToList(SubredditSubscription.MAPPER)
-                .map(subscriptions -> {
+                .flatMap(filteredSubs -> {
+                    if (filteredSubs.isEmpty()) {
+                        // Check if the database is empty and fetch fresh subscriptions from remote if needed.
+                        // TODO: 15/04/17 What happens if both local and remote subscriptions are empty?
+                        return database
+                                .createQuery(TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
+                                .mapToList(SubredditSubscription.MAPPER)
+                                .first()
+                                .flatMap(localSubs -> localSubs.isEmpty()
+                                        ? fetchRemoteSubscriptions(localSubs).doOnNext(Dank.subscriptionManager().saveSubscriptionsToDatabase())
+                                        : just(filteredSubs)
+                                );
+                    } else {
+                        return just(filteredSubs);
+                    }
+                })
+                .map(filteredSubs -> {
                     // Move Frontpage and Popular to the top.
-                    String frontpageSub = appContext.getString(R.string.frontpage_subreddit_name);
-                    String popularSub = appContext.getString(R.string.popular_subreddit_name);
+                    String frontpageSubName = appContext.getString(R.string.frontpage_subreddit_name);
+                    String popularSubName = appContext.getString(R.string.popular_subreddit_name);
 
-                    boolean frontpageMoved = false;
-                    boolean popularMoved = false;
+                    SubredditSubscription frontpageSub = null;
+                    SubredditSubscription popularSub = null;
 
-                    for (int i = subscriptions.size() - 1; i >= 0; i--) {
-                        SubredditSubscription subscription = subscriptions.get(i);
+                    for (int i = filteredSubs.size() - 1; i >= 0; i--) {
+                        SubredditSubscription subscription = filteredSubs.get(i);
+                        if (frontpageSub == null && subscription.name().equalsIgnoreCase(frontpageSubName)) {
+                            filteredSubs.remove(i);
+                            frontpageSub = subscription;
 
-                        // Since we are iterating an alphabetically sorted list backwards, we'll find popular before frontpage.
-                        // Another side-effect of going backwards is that the same list item will be found multiple times if
-                        // move it backwards so another if condition is placed to ignore a duplicate check.
-                        if (!frontpageMoved && subscription.name().equalsIgnoreCase(popularSub)) {
-                            // Found popular!
-                            subscriptions.remove(i);
-                            subscriptions.add(0, subscription);
-                            frontpageMoved = true;
-
-                        } else if (!popularMoved && subscription.name().equalsIgnoreCase(frontpageSub)) {
+                        } else if (popularSub == null && subscription.name().equalsIgnoreCase(popularSubName)) {
                             // Found frontpage!
-                            subscriptions.remove(i);
-                            subscriptions.add(0, subscription);
-                            popularMoved = true;
+                            filteredSubs.remove(i);
+                            popularSub = subscription;
                         }
                     }
 
-                    return subscriptions;
+                    if (frontpageSub != null) {
+                        filteredSubs.add(0, frontpageSub);
+                    }
+                    if (popularSub != null) {
+                        filteredSubs.add(1, popularSub);
+                    }
+                    return filteredSubs;
                 });
-
     }
 
     @CheckResult
     public Completable subscribe(String subredditName) {
         return Completable.fromAction(() -> {
             SubredditSubscription subscription = SubredditSubscription.create(subredditName, PendingState.PENDING_SUBSCRIBE, false);
-            database.update(SubredditSubscription.TABLE_NAME, subscription.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
+            database.update(TABLE_NAME, subscription.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
 
             dispatchSyncWithRedditJob();
         });
@@ -99,7 +119,7 @@ public class SubredditSubscriptionManager {
     public Completable unsubscribe(SubredditSubscription subscription) {
         return Completable.fromAction(() -> {
             SubredditSubscription updated = SubredditSubscription.create(subscription.name(), PendingState.PENDING_UNSUBSCRIBE, subscription.isHidden());
-            database.update(SubredditSubscription.TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
+            database.update(TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
 
             dispatchSyncWithRedditJob();
         });
@@ -114,7 +134,7 @@ public class SubredditSubscriptionManager {
             }
 
             SubredditSubscription updated = SubredditSubscription.create(subscription.name(), subscription.pendingState(), hidden);
-            database.update(SubredditSubscription.TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
+            database.update(TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
             dispatchSyncWithRedditJob();
         });
     }
@@ -124,10 +144,7 @@ public class SubredditSubscriptionManager {
      */
     @CheckResult
     public Completable removeAll() {
-        return Completable.fromAction(() -> {
-            Timber.i("Deleting all subscriptions");
-            database.delete(SubredditSubscription.TABLE_NAME, null);
-        });
+        return Completable.fromAction(() -> database.delete(TABLE_NAME, null));
     }
 
     private void dispatchSyncWithRedditJob() {
@@ -136,24 +153,11 @@ public class SubredditSubscriptionManager {
 
 // ======== REMOTE SUBREDDITS ======== //
 
-    /**
-     * @param refreshOnlyIfEmpty When true, subreddits will only be fetched from remote if the local database is empty.
-     */
-    public Observable<List<SubredditSubscription>> refreshSubscriptions(boolean refreshOnlyIfEmpty) {
-        // Check if the database is empty and fetch fresh subscriptions from remote if needed.
-        // TODO: 15/04/17 What happens if both local and remote subscriptions are empty?
-        return database
-                .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
-                .mapToList(SubredditSubscription.MAPPER)
-                .first()
-                .filter(subs -> subs.isEmpty() || !refreshOnlyIfEmpty)
-                .flatMap(localSubs -> fetchRemoteSubscriptions(localSubs))
-                .doOnNext(saveSubscriptionsToDatabase());
-    }
-
     private Observable<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubscriptions) {
-        return (dankRedditClient.isUserLoggedIn() ? loggedInUserSubreddits() : Observable.just(loggedOutSubreddits()))
+        return (dankRedditClient.isUserLoggedIn() ? loggedInUserSubreddits() : just(loggedOutSubreddits()))
                 .map(remoteSubNames -> {
+                    Timber.i("Getting remote subs");
+
                     // So we've received subreddits from the server. Before replacing our database table with these,
                     // we must insert pending-subscribe items and remove pending-unsubscribe items which haven't
                     // synced yet.
@@ -218,11 +222,13 @@ public class SubredditSubscriptionManager {
     @NonNull
     private Action1<List<SubredditSubscription>> saveSubscriptionsToDatabase() {
         return newSubscriptions -> {
+            Timber.i("Saving to DB");
+
             try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-                database.delete(SubredditSubscription.TABLE_NAME, null);
+                database.delete(TABLE_NAME, null);
 
                 for (SubredditSubscription freshSubscription : newSubscriptions) {
-                    database.insert(SubredditSubscription.TABLE_NAME, freshSubscription.toContentValues());
+                    database.insert(TABLE_NAME, freshSubscription.toContentValues());
                 }
 
                 transaction.markSuccessful();

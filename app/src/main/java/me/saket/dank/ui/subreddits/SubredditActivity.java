@@ -187,6 +187,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         toolbarTitleView.setText(isFrontpage ? getString(R.string.app_name) : subredditName);
     }
 
+    // TODO: 15/04/17 Cancel existing loads before loading a new one. 
     private void loadSubmissions(String subredditName) {
         activeSubredditName = subredditName;
         submissionsAdapter.updateData(null);
