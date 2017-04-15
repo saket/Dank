@@ -4,6 +4,8 @@
     <string name="reddit_app_redirect_url">http://saket.me</string>
 
     <string-array name="default_subreddits">
+        <item>Frontpage</item>
+        <item>Popular</item>
         <item>announcements</item>
         <item>Art</item>
         <item>AskReddit</item>

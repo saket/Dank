@@ -8,6 +8,8 @@ import android.content.pm.PackageManager;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.ryanharter.auto.value.moshi.AutoValueMoshiAdapterFactory;
 import com.squareup.moshi.Moshi;
+import com.squareup.sqlbrite.BriteDatabase;
+import com.squareup.sqlbrite.SqlBrite;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
@@ -21,7 +23,9 @@ import dagger.Module;
 import dagger.Provides;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.SharedPrefsManager;
+import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.utils.ImgurManager;
 import okhttp3.OkHttpClient;
@@ -29,6 +33,7 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.moshi.MoshiConverterFactory;
+import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
 @Module
@@ -53,15 +58,21 @@ public class DankAppModule {
     }
 
     @Provides
+    @Singleton
+    RedditClient provideRedditClient(UserAgent redditUserAgent) {
+        RedditClient redditClient = new RedditClient(redditUserAgent);
+        redditClient.setLoggingMode(LoggingMode.ON_FAIL);
+        return redditClient;
+    }
+
+    @Provides
     AuthenticationManager provideRedditAuthManager() {
         return AuthenticationManager.get();
     }
 
     @Provides
     @Singleton
-    DankRedditClient provideDankRedditClient(UserAgent redditUserAgent, AuthenticationManager authManager) {
-        RedditClient redditClient = new RedditClient(redditUserAgent);
-        redditClient.setLoggingMode(LoggingMode.ON_FAIL);
+    DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager) {
         return new DankRedditClient(appContext, redditClient, authManager);
     }
 
@@ -127,6 +138,24 @@ public class DankAppModule {
     @Provides
     ImgurManager provideImgurManager() {
         return new ImgurManager(appContext);
+    }
+
+    @Provides
+    @Singleton
+    BriteDatabase provideBriteDatabase() {
+        SqlBrite sqlBrite = new SqlBrite.Builder()
+                .logger(message -> Timber.tag("Database").v(message))
+                .build();
+
+        BriteDatabase briteDatabase = sqlBrite.wrapDatabaseHelper(new DankSqliteOpenHelper(appContext), Schedulers.io());
+        briteDatabase.setLoggingEnabled(true);
+        return briteDatabase;
+    }
+
+    @Provides
+    @Singleton
+    SubredditSubscriptionManager provideSubredditSubscriptionManager(BriteDatabase briteDatabase, DankRedditClient dankRedditClient) {
+        return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient);
     }
 
 }

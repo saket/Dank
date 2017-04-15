@@ -5,6 +5,10 @@ import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 
+/**
+ * This class exists because Reddit returns the frontpage when an empty subreddit name is passed to it.
+ * /r/Frontpage is an entirely different subreddit.
+ */
 @AutoValue
 public abstract class DankSubreddit implements Parcelable {
 

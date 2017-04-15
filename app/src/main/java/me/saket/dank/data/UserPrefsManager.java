@@ -11,4 +11,12 @@ public class UserPrefsManager {
         this.sharedPrefsManager = sharedPrefsManager;
     }
 
+    public String defaultSubreddit() {
+        return null;
+    }
+
+    public void setDefaultSubreddit(String subredditName) {
+
+    }
+
 }

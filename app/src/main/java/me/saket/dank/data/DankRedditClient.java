@@ -17,12 +17,8 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.LoggedInAccount;
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
-
-import java.util.ArrayList;
-import java.util.List;
 
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
@@ -58,7 +54,11 @@ public class DankRedditClient {
     }
 
     public SubredditPaginator subredditPaginator(String subredditName) {
-        return new SubredditPaginator(redditClient, subredditName);
+        if (isFrontpage(subredditName)) {
+            return new SubredditPaginator(redditClient);
+        } else {
+            return new SubredditPaginator(redditClient, subredditName);
+        }
     }
 
     public Observable<Submission> submission(DankSubmissionRequest submissionRequest) {
@@ -80,22 +80,6 @@ public class DankRedditClient {
             commentNode.loadMoreComments(redditClient);
             return commentNode;
         };
-    }
-
-    /**
-     * Subreddits user has subscribed to.
-     */
-    public Observable<List<DankSubreddit>> userSubreddits() {
-        return Observable.fromCallable(() -> {
-            UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
-            subredditsPaginator.setLimit(200);
-            List<Subreddit> subreddits = subredditsPaginator.accumulateMergedAllSorted();
-            List<DankSubreddit> dankSubreddits = new ArrayList<>(subreddits.size());
-            for (Subreddit subreddit : subreddits) {
-                dankSubreddits.add(DankSubreddit.create(subreddit.getDisplayName()));
-            }
-            return dankSubreddits;
-        });
     }
 
 // ======== AUTHENTICATION ======== //
@@ -232,6 +216,18 @@ public class DankRedditClient {
 
     public Observable<LoggedInAccount> loggedInUserAccount() {
         return Observable.fromCallable(() -> redditClient.me());
+    }
+
+// ======== SUBREDDITS ======== //
+
+    public UserSubredditsPaginator userSubredditsPaginator() {
+        UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
+        subredditsPaginator.setLimit(200);
+        return subredditsPaginator;
+    }
+
+    public boolean isFrontpage(String subredditName) {
+        return context.getString(R.string.frontpage_subreddit_name).equals(subredditName);
     }
 
 }

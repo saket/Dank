@@ -1,7 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.RxUtils.applySchedulers;
-import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
+import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginBottom;
@@ -30,13 +30,6 @@ import com.google.android.flexbox.AlignItems;
 import com.google.android.flexbox.FlexDirection;
 import com.google.android.flexbox.FlexWrap;
 import com.google.android.flexbox.FlexboxLayoutManager;
-import com.jakewharton.rxbinding.widget.RxTextView;
-
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 import butterknife.BindColor;
 import butterknife.BindDimen;
@@ -46,13 +39,10 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
 import me.saket.dank.R;
-import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
-import rx.Observable;
 import rx.Subscription;
-import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
 
@@ -66,8 +56,6 @@ import rx.subscriptions.CompositeSubscription;
  */
 public class SubredditPickerSheetView extends FrameLayout implements SubredditAdapter.OnSubredditClickListener {
 
-    // TODO: 28/02/17 Cache this somewhere else.
-    private static final List<DankSubreddit> USER_SUBREDDITS = new ArrayList<>();
     private static final int ANIM_DURATION = 300;
     private static final Interpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
 
@@ -99,7 +87,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     }
 
     public interface OnSubredditSelectListener {
-        void onSelectSubreddit(DankSubreddit subreddit);
+        void onSelectSubreddit(String subredditName);
     }
 
     public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
@@ -134,23 +122,12 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         subredditList.setAdapter(subredditAdapter);
         subredditList.setItemAnimator(null);
 
-        if (!USER_SUBREDDITS.isEmpty()) {
-            setSubredditLoadProgressVisible().call(false);
-            subredditAdapter.updateData(USER_SUBREDDITS);
-            optionsContainer.setVisibility(VISIBLE);
-
-        } else {
-            Subscription apiSubscription = (Dank.reddit().isUserLoggedIn() ? loggedInSubreddits() : loggedOutSubreddits())
-                    .compose(doOnStartAndFinish(setSubredditLoadProgressVisible()))
-                    .map(subreddits -> {
-                        subreddits.add(0, DankSubreddit.createFrontpage(frontpageSubredditName));
-                        return subreddits;
-                    })
-                    .doOnNext(subreddits -> USER_SUBREDDITS.addAll(subreddits))
-                    .doOnNext(__ -> optionsContainer.setVisibility(VISIBLE))
-                    .subscribe(subredditAdapter, logError("Failed to get subreddits"));
-            subscriptions.add(apiSubscription);
-        }
+        Subscription apiSubscription = Dank.subscriptionManager().getAll(false)
+                .compose(applySchedulers())
+                .compose(doOnStartAndNext(setSubredditLoadProgressVisible()))
+                .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
+                .subscribe(subredditAdapter, logError("Failed to get subreddits"));
+        subscriptions.add(apiSubscription);
 
         setupSearch();
     }
@@ -173,9 +150,9 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
      * options menu is shown if the user is managing the subs.
      */
     @Override
-    public void onClickSubreddit(DankSubreddit subreddit, View subredditItemView) {
+    public void onClickSubreddit(String subredditName, View subredditItemView) {
         if (sheetState == SheetState.BROWSE_SUBS) {
-            subredditSelectListener.onSelectSubreddit(subreddit);
+            subredditSelectListener.onSelectSubreddit(subredditName);
 
         } else {
             ColorStateList originalTintList = subredditItemView.getBackgroundTintList();
@@ -213,68 +190,53 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         this.parentSheet = parentSheet;
     }
 
-    private Observable<List<DankSubreddit>> loggedInSubreddits() {
-        return Dank.reddit()
-                .withAuth(Dank.reddit().userSubreddits())
-                .compose(applySchedulers());
-    }
-
-    private Observable<List<DankSubreddit>> loggedOutSubreddits() {
-        List<String> defaultSubreddits = Arrays.asList(getResources().getStringArray(R.array.default_subreddits));
-        ArrayList<DankSubreddit> dankSubreddits = new ArrayList<>();
-        for (String subredditName : defaultSubreddits) {
-            dankSubreddits.add(DankSubreddit.create(subredditName));
-        }
-        return Observable.just(dankSubreddits);
-    }
-
     // TODO: How should the enter key in search work when edit mode is enabled.
     @OnEditorAction(R.id.subredditpicker_search)
     boolean onClickSearchFieldEnterKey(int actionId) {
         if (actionId == EditorInfo.IME_ACTION_GO) {
             String searchTerm = searchView.getText().toString().trim();
-            subredditSelectListener.onSelectSubreddit(DankSubreddit.create(searchTerm));
+            subredditSelectListener.onSelectSubreddit(searchTerm);
             return true;
         }
         return false;
     }
 
     private void setupSearch() {
-        Subscription subscription = RxTextView.textChanges(searchView)
-                .skip(1)
-                .debounce(100, TimeUnit.MILLISECONDS)
-                .map(searchTerm -> {
-                    // Since CharSequence is mutable, it's important
-                    // to create a copy before doing a debounce().
-                    return searchTerm.toString().trim();
-                })
-                .map(searchTerm -> {
-                    if (searchTerm.isEmpty()) {
-                        return USER_SUBREDDITS;
-                    }
-
-                    boolean unknownSubreddit = false;
-
-                    List<DankSubreddit> filteredSubreddits = new ArrayList<>(USER_SUBREDDITS.size());
-                    for (DankSubreddit userSubreddit : USER_SUBREDDITS) {
-                        if (userSubreddit.displayName().toLowerCase(Locale.ENGLISH).contains(searchTerm.toLowerCase())) {
-                            filteredSubreddits.add(userSubreddit);
-
-                            if (userSubreddit.displayName().equalsIgnoreCase(searchTerm)) {
-                                unknownSubreddit = true;
-                            }
-                        }
-                    }
-
-                    if (!unknownSubreddit) {
-                        filteredSubreddits.add(DankSubreddit.create(searchTerm));
-                    }
-
-                    return filteredSubreddits;
-                })
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subredditAdapter, logError("Search error"));
-        subscriptions.add(subscription);
+//        Subscription subscription = RxTextView.textChanges(searchView)
+//                .skip(1)
+//                .debounce(100, TimeUnit.MILLISECONDS)
+//                .map(searchTerm -> {
+//                    // Since CharSequence is mutable, it's important
+//                    // to create a copy before doing a debounce().
+//                    return searchTerm.toString().trim();
+//                })
+//                .map(searchTerm -> {
+//                    if (searchTerm.isEmpty()) {
+//                        return USER_SUBREDDITS;
+//                    }
+//
+//                    boolean unknownSubreddit = false;
+//
+//                    List<DankSubreddit> filteredSubreddits = new ArrayList<>(USER_SUBREDDITS.size());
+//                    for (DankSubreddit userSubreddit : USER_SUBREDDITS) {
+//                        if (userSubreddit.displayName().toLowerCase(Locale.ENGLISH).contains(searchTerm.toLowerCase())) {
+//                            filteredSubreddits.add(userSubreddit);
+//
+//                            if (userSubreddit.displayName().equalsIgnoreCase(searchTerm)) {
+//                                unknownSubreddit = true;
+//                            }
+//                        }
+//                    }
+//
+//                    if (!unknownSubreddit) {
+//                        filteredSubreddits.add(DankSubreddit.create(searchTerm));
+//                    }
+//
+//                    return filteredSubreddits;
+//                })
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(subredditAdapter, logError("Search error"));
+//        subscriptions.add(subscription);
     }
 
     private Action1<Boolean> setSubredditLoadProgressVisible() {

@@ -11,17 +11,17 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
-import me.saket.dank.data.DankSubreddit;
+import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import rx.functions.Action1;
 
 /**
  * Adapter for displaying a list of subreddits.
  */
-public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, SubredditAdapter.SubredditViewHolder> implements Action1<List<DankSubreddit>> {
+public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscription, SubredditAdapter.SubredditViewHolder> implements Action1<List<SubredditSubscription>> {
 
     interface OnSubredditClickListener {
-        void onClickSubreddit(DankSubreddit subreddit, View subredditItemView);
+        void onClickSubreddit(String subredditName, View subredditItemView);
     }
 
     private OnSubredditClickListener clickListener;
@@ -35,8 +35,8 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, Su
     }
 
     @Override
-    public void call(List<DankSubreddit> subreddits) {
-        updateData(subreddits);
+    public void call(List<SubredditSubscription> subscriptions) {
+        updateData(subscriptions);
     }
 
     @Override
@@ -46,11 +46,11 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, Su
 
     @Override
     public void onBindViewHolder(SubredditViewHolder holder, int position) {
-        DankSubreddit subreddit = getItem(position);
-        holder.bind(subreddit);
+        SubredditSubscription subSubscription = getItem(position);
+        holder.bind(subSubscription);
 
         holder.itemView.setOnClickListener(itemView -> {
-            clickListener.onClickSubreddit(subreddit, itemView);
+            clickListener.onClickSubreddit(subSubscription.name(), itemView);
         });
     }
 
@@ -72,8 +72,8 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<DankSubreddit, Su
             ButterKnife.bind(this, itemView);
         }
 
-        public void bind(DankSubreddit subreddit) {
-            subredditNameView.setText(subreddit.displayName());
+        public void bind(SubredditSubscription subreddit) {
+            subredditNameView.setText(subreddit.name());
         }
 
     }

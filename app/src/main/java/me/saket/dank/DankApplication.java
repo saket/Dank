@@ -2,6 +2,7 @@ package me.saket.dank;
 
 import android.app.Application;
 
+import com.idescout.sql.SqlScoutServer;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
 import me.saket.dank.di.Dank;
@@ -19,6 +20,7 @@ public class DankApplication extends Application {
 
         Dank.initDependencies(this);
         AndroidThreeTen.init(this);
+        SqlScoutServer.create(this, getPackageName());
     }
 
 }

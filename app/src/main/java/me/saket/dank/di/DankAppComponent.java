@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 import dagger.Component;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.SharedPrefsManager;
+import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.utils.ImgurManager;
 import okhttp3.OkHttpClient;
@@ -27,4 +28,6 @@ public interface DankAppComponent {
     UserPrefsManager userPrefs();
 
     ImgurManager imgur();
+
+    SubredditSubscriptionManager subredditSubscriptionManager();
 }

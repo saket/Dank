@@ -2,7 +2,7 @@ package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.CommonUtils.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
-import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
+import static me.saket.dank.utils.RxUtils.doOnStartAndEnd;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
@@ -65,7 +65,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
     @BindView(R.id.subreddit_progress) View progressView;
 
-    private DankSubreddit activeSubreddit;
+    private String activeSubredditName;
     private SubmissionFragment submissionFragment;
     private SubRedditSubmissionsAdapter submissionsAdapter;
 
@@ -164,13 +164,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
         // Get frontpage (or retained subreddit's) submissions.
         if (savedInstanceState != null) {
-            activeSubreddit = savedInstanceState.getParcelable(KEY_ACTIVE_SUBREDDIT);
+            activeSubredditName = savedInstanceState.getString(KEY_ACTIVE_SUBREDDIT);
         } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
-            activeSubreddit = DankSubreddit.create(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
+            activeSubredditName = ((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name;
         } else {
-            activeSubreddit = DankSubreddit.createFrontpage(getString(R.string.frontpage_subreddit_name));
+            activeSubredditName = getString(R.string.frontpage_subreddit_name);
         }
-        loadSubmissions(activeSubreddit);
+        loadSubmissions(activeSubredditName);
 
         setupToolbarSheet();
     }
@@ -178,7 +178,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         submissionList.handleOnSaveInstance(outState);
-        outState.putParcelable(KEY_ACTIVE_SUBREDDIT, activeSubreddit);
+        outState.putString(KEY_ACTIVE_SUBREDDIT, activeSubredditName);
         super.onSaveInstanceState(outState);
     }
 
@@ -193,17 +193,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
                 : getString(R.string.subreddit_name_r_prefix, subreddit.displayName()));
     }
 
-    private void loadSubmissions(DankSubreddit subreddit) {
-        activeSubreddit = subreddit;
+    private void loadSubmissions(String subredditName) {
+        activeSubredditName = subredditName;
         submissionsAdapter.updateData(null);
 
-        setTitle(subreddit);
+        setTitle(subredditName);
 
-        SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subreddit.name());
+        SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subredditName);
         Subscription subscription = Dank.reddit()
                 .withAuth(fromCallable(() -> subredditPaginator.next()))
                 .compose(applySchedulers())
-                .compose(doOnStartAndFinish(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+                .compose(doOnStartAndEnd(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
                 .subscribe(submissionsAdapter, logError("Couldn't get front-page"));
         unsubscribeOnDestroy(subscription);
     }
@@ -232,7 +232,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
                         Keyboards.hide(this, toolbarSheet);
 
                     } else if (isUserProfileSheetVisible()) {
-                        setTitle(activeSubreddit);
+                        setTitle(activeSubredditName);
                     }
                     toolbarTitleArrowView.setState(ExpandIconView.MORE, true);
                     break;
@@ -286,10 +286,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         } else {
             SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet, contentPage);
             pickerSheet.post(() -> toolbarSheet.expand());
-            pickerSheet.setOnSubredditSelectListener(subreddit -> {
+            pickerSheet.setOnSubredditSelectListener(subSubscription -> {
                 toolbarSheet.collapse();
-                if (!subreddit.equals(activeSubreddit)) {
-                    loadSubmissions(subreddit);
+                if (!subSubscription.equalsIgnoreCase(activeSubredditName)) {
+                    loadSubmissions(subSubscription);
                 }
             });
         }
@@ -334,9 +334,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             // Show user's profile.
             showUserProfileSheet();
 
-            // Reload submissions if we're on the frontpage.
-            if (activeSubreddit.isFrontpage()) {
-                loadSubmissions(activeSubreddit);
+            // Reload submissions if we're on the frontpage because the frontpage
+            // submissions will change if the subscriptions change.
+            if (Dank.reddit().isFrontpage(activeSubredditName)) {
+                loadSubmissions(activeSubredditName);
             }
 
         } else {

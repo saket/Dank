@@ -1,9 +1,8 @@
 package me.saket.dank.utils;
 
-import android.os.Looper;
+import android.support.annotation.NonNull;
 
 import rx.Observable;
-import rx.Scheduler;
 import rx.Single;
 import rx.android.schedulers.AndroidSchedulers;
 import rx.functions.Action1;
@@ -40,17 +39,25 @@ public class RxUtils {
     }
 
     public static <T> Action1<T> doNothing() {
-        return t -> {};
+        return t -> {
+        };
     }
 
     public static Action1<Throwable> logError(String errorMessage) {
         return error -> Timber.e(error, errorMessage);
     }
 
-    public static <T> Observable.Transformer<T, T> doOnStartAndFinish(Action1<Boolean> isOngoingAction) {
+    public static <T> Observable.Transformer<T, T> doOnStartAndEnd(Action1<Boolean> action) {
         return observable -> observable
-                .doOnSubscribe(() -> isOngoingAction.call(true))
-                .doOnUnsubscribe(() -> isOngoingAction.call(false));
+                .doOnSubscribe(() -> action.call(true))
+                .doOnUnsubscribe(() -> action.call(false));
+    }
+
+    public static <T> Observable.Transformer<T, T> doOnStartAndNext(Action1<Boolean> action) {
+        return observable -> observable
+                .doOnSubscribe(() -> action.call(true))
+                .doOnNext(o -> action.call(false))
+                .doOnError(o -> action.call(false));
     }
 
     public static <T> Single.Transformer<T, T> doOnStartAndFinishSingle(Action1<Boolean> isOngoingAction) {
@@ -59,8 +66,16 @@ public class RxUtils {
                 .doOnUnsubscribe(() -> isOngoingAction.call(false));
     }
 
-    public static Scheduler ioIfNeeded() {
-        return Looper.myLooper() == Looper.getMainLooper() ? Schedulers.io() : Schedulers.trampoline();
+    @NonNull
+    public static <T> Observable.Transformer<T, T> flatMapIf(boolean predicate, Observable<T> flatMapObservable) {
+        return observable -> observable.flatMap(value -> {
+            if (predicate) {
+                return flatMapObservable;
+
+            } else {
+                return Observable.just(value);
+            }
+        });
     }
 
 }

@@ -4,7 +4,7 @@ import static me.saket.dank.utils.CommonUtils.findOptimizedImage;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
-import static me.saket.dank.utils.RxUtils.doOnStartAndFinish;
+import static me.saket.dank.utils.RxUtils.doOnStartAndEnd;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginTop;
@@ -388,7 +388,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                             .withAuth(Dank.reddit().submission(activeSubmissionRequest))
                             .flatMap(retryWithCorrectSortIfNeeded())
                             .compose(applySchedulers())
-                            .compose(doOnStartAndFinish(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+                            .compose(doOnStartAndEnd(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
                             .doOnNext(submWithComments -> activeSubmission = submWithComments)
                             .subscribe(commentsHelper.setup(), handleSubmissionLoadError())
             );
