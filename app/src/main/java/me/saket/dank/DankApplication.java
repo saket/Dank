@@ -16,11 +16,11 @@ public class DankApplication extends Application {
 
         if (BuildConfig.DEBUG) {
             Timber.plant(new Timber.DebugTree());
+            SqlScoutServer.create(this, getPackageName());
         }
 
         Dank.initDependencies(this);
         AndroidThreeTen.init(this);
-        SqlScoutServer.create(this, getPackageName());
     }
 
 }
