@@ -1,7 +1,5 @@
 package me.saket.dank.utils;
 
-import android.support.annotation.NonNull;
-
 import rx.Observable;
 import rx.Single;
 import rx.android.schedulers.AndroidSchedulers;
@@ -64,18 +62,6 @@ public class RxUtils {
         return observable -> observable
                 .doOnSubscribe(() -> isOngoingAction.call(true))
                 .doOnUnsubscribe(() -> isOngoingAction.call(false));
-    }
-
-    @NonNull
-    public static <T> Observable.Transformer<T, T> flatMapIf(boolean predicate, Observable<T> flatMapObservable) {
-        return observable -> observable.flatMap(value -> {
-            if (predicate) {
-                return flatMapObservable;
-
-            } else {
-                return Observable.just(value);
-            }
-        });
     }
 
 }

@@ -11,6 +11,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
 
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription.PendingState;
@@ -52,23 +53,52 @@ public class SubredditSubscriptionManager {
                 .flatMap(subscriptions -> {
                     if (subscriptions.isEmpty()) {
                         // Check if the database is empty and fetch fresh subscriptions from remote if needed.
-                        // TODO: 15/04/17 What happens if both local and remove subscriptions are empty?
+                        // TODO: 15/04/17 What happens if both local and remote subscriptions are empty?
                         return database
                                 .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
                                 .mapToList(SubredditSubscription.MAPPER)
-                                .flatMap(localSubscriptions -> {
-                                    if (localSubscriptions.isEmpty()) {
-                                        return fetchFreshSubscriptions(localSubscriptions)
-                                                .doOnNext(saveSubscriptionsToDatabase());
-
+                                .flatMap(localSubs -> {
+                                    if (localSubs.isEmpty()) {
+                                        return fetchFreshSubscriptions(localSubs).doOnNext(saveSubscriptionsToDatabase());
                                     } else {
-                                        return Observable.just(localSubscriptions);
+                                        return Observable.just(localSubs);
                                     }
                                 });
                     }
 
                     return Observable.just(subscriptions);
+                })
+                .map(subscriptions -> {
+                    // Move Frontpage and Popular to the top.
+                    String frontpageSub = appContext.getString(R.string.frontpage_subreddit_name);
+                    String popularSub = appContext.getString(R.string.popular_subreddit_name);
+
+                    boolean frontpageMoved = false;
+                    boolean popularMoved = false;
+
+                    for (int i = subscriptions.size() - 1; i >= 0; i--) {
+                        SubredditSubscription subscription = subscriptions.get(i);
+
+                        // Since we are iterating an alphabetically sorted list backwards, we'll find popular before frontpage.
+                        // Another side-effect of going backwards is that the same list item will be found multiple times if
+                        // move it backwards so another if condition is placed to ignore a duplicate check.
+                        if (!frontpageMoved && subscription.name().equalsIgnoreCase(popularSub)) {
+                            // Found popular!
+                            subscriptions.remove(i);
+                            subscriptions.add(0, subscription);
+                            frontpageMoved = true;
+
+                        } else if (!popularMoved && subscription.name().equalsIgnoreCase(frontpageSub)) {
+                            // Found frontpage!
+                            subscriptions.remove(i);
+                            subscriptions.add(0, subscription);
+                            popularMoved = true;
+                        }
+                    }
+
+                    return subscriptions;
                 });
+
     }
 
     public Completable subscribe(String subredditName) {
@@ -154,9 +184,12 @@ public class SubredditSubscriptionManager {
             }
 
             // Add frontpage and /r/popular.
-            remoteSubNames.add(0, "Frontpage");
-            if (!remoteSubNames.contains("Popular") && !remoteSubNames.contains("popular")) {
-                remoteSubNames.add(1, "Popular");
+            String frontpageSub = appContext.getString(R.string.frontpage_subreddit_name);
+            remoteSubNames.add(0, frontpageSub);
+
+            String popularSub = appContext.getString(R.string.popular_subreddit_name);
+            if (!remoteSubNames.contains(popularSub) && !remoteSubNames.contains(popularSub.toLowerCase(Locale.ENGLISH))) {
+                remoteSubNames.add(1, popularSub);
             }
 
             return remoteSubNames;

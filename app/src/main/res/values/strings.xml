@@ -2,7 +2,6 @@
     <string name="app_name">Dank</string>
     <string name="subreddit_name_r_prefix">/r/%s</string>
     <string name="user_name_u_prefix">/u/%s</string>
-    <string name="frontpage_subreddit_name">Frontpage</string>
 
     <string name="cd_video_play">Play video</string>
 
@@ -15,6 +14,9 @@
     <string name="login_loading_comments">Loading comments…</string>
 
     <!-- Subreddit -->
+    <string name="frontpage_subreddit_name">Frontpage</string>
+    <string name="popular_subreddit_name">Popular</string>
+
     <string name="subreddit_go_to_subreddit">Go to subreddit…</string>
     <string name="subreddit_profile">Profile</string>
     <string name="subreddit_preferences">Preferences</string>

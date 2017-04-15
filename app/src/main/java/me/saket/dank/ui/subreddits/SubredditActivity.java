@@ -31,7 +31,6 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.DankSubreddit;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -183,14 +182,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     }
 
     @Override
-    public void setTitle(CharSequence title) {
-        toolbarTitleView.setText(title);
-    }
-
-    public void setTitle(DankSubreddit subreddit) {
-        setTitle(subreddit.isFrontpage()
-                ? getString(R.string.app_name)
-                : getString(R.string.subreddit_name_r_prefix, subreddit.displayName()));
+    public void setTitle(CharSequence subredditName) {
+        boolean isFrontpage = Dank.reddit().isFrontpage(subredditName.toString());
+        toolbarTitleView.setText(isFrontpage ? getString(R.string.app_name) : subredditName);
     }
 
     private void loadSubmissions(String subredditName) {

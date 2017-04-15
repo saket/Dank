@@ -34,13 +34,13 @@ public abstract class SubredditSubscription implements Parcelable {
     static final String QUERY_GET_ALL_SUBSCRIBED_INCLUDING_HIDDEN =
             "SELECT * FROM " + TABLE_NAME
                     + " WHERE " + COLUMN_PENDING_ACTION + " != '" + PendingState.PENDING_UNSUBSCRIBE + "' "
-                    + " ORDER BY " + COLUMN_NAME + " ASC";
+                    + " ORDER BY " + COLUMN_NAME + " COLLATE NOCASE";
 
     static final String QUERY_GET_ALL_SUBSCRIBED_EXCLUDING_HIDDEN =
             "SELECT * FROM " + TABLE_NAME
                     + " WHERE " + COLUMN_PENDING_ACTION + " != '" + PendingState.PENDING_UNSUBSCRIBE + "'"
                     + " AND " + COLUMN_IS_HIDDEN + " != '" + HIDDEN + "'"
-                    + " ORDER BY " + COLUMN_NAME + " ASC";
+                    + " ORDER BY " + COLUMN_NAME + " COLLATE NOCASE";
 
     static final String WHERE_NAME = String.format(
             "%s = ?",
