@@ -1,6 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 
 import android.content.Context;
 import android.view.ViewGroup;
@@ -154,8 +155,8 @@ public class UserProfileSheetView extends FrameLayout {
 
             logoutSubscription = Dank.reddit()
                     .logout()
-                    .compose(applySchedulers())
-                    .subscribe(__ -> {
+                    .compose(applySchedulersCompletable())
+                    .subscribe(() -> {
                         parentSheet.collapse();
 
                     }, error -> {

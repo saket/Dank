@@ -24,7 +24,9 @@ import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
+import rx.Completable;
 import rx.Observable;
+import rx.functions.Action0;
 import rx.functions.Func1;
 import timber.log.Timber;
 
@@ -152,17 +154,18 @@ public class DankRedditClient {
         return new UserLoginHelper();
     }
 
-    public Observable<Boolean> logout() {
-        return Observable.fromCallable(() -> {
+    public Completable logout() {
+        Action0 revokeAccessTokenAction = () -> {
             // Bug workaround: revokeAccessToken() method crashes if logging is enabled.
             LoggingMode modeBackup = redditClient.getLoggingMode();
             redditClient.setLoggingMode(LoggingMode.NEVER);
-
             redditClient.getOAuthHelper().revokeAccessToken(loggedInUserCredentials);
-
             redditClient.setLoggingMode(modeBackup);
-            return true;
-        });
+        };
+
+        return Completable
+                .fromAction(revokeAccessTokenAction)
+                .andThen(Dank.subscriptionManager().removeAll());
     }
 
     public class UserLoginHelper {

@@ -2,6 +2,7 @@ package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
+import static me.saket.dank.utils.RxUtils.flatMapIf;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginBottom;
@@ -42,9 +43,9 @@ import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
-import rx.Subscription;
 import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
+import timber.log.Timber;
 
 /**
  * Lets the user:
@@ -122,12 +123,19 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         subredditList.setAdapter(subredditAdapter);
         subredditList.setItemAnimator(null);
 
-        Subscription apiSubscription = Dank.subscriptionManager().getAll(false)
+        // TODO: 15/04/17 Handle error.
+        // TODO: 15/04/17 Empty state.
+
+        final long startTime = System.currentTimeMillis();
+
+        subscriptions.add(Dank
+                .subscriptionManager().getAll(false /* includeHidden */)
+                .compose(flatMapIf(subs -> subs.isEmpty(), Dank.subscriptionManager().refreshSubscriptions(true)))
                 .compose(applySchedulers())
                 .compose(doOnStartAndNext(setSubredditLoadProgressVisible()))
                 .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
-                .subscribe(subredditAdapter, logError("Failed to get subreddits"));
-        subscriptions.add(apiSubscription);
+                .doOnNext(o -> Timber.i("Fetched subs in: %sms", System.currentTimeMillis() - startTime))
+                .subscribe(subredditAdapter, logError("Failed to get subreddits")));
 
         setupSearch();
     }

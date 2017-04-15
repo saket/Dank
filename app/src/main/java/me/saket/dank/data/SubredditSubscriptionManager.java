@@ -1,6 +1,7 @@
 package me.saket.dank.data;
 
 import android.content.Context;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 
 import com.squareup.sqlbrite.BriteDatabase;
@@ -18,6 +19,7 @@ import me.saket.dank.data.SubredditSubscription.PendingState;
 import rx.Completable;
 import rx.Observable;
 import rx.functions.Action1;
+import timber.log.Timber;
 
 /**
  * Manages:
@@ -40,7 +42,7 @@ public class SubredditSubscriptionManager {
     }
 
     /**
-     * Gets user's subscriptions from the database or from the network if they're not cached yet.
+     * Gets user's subscriptions from the database.
      */
     public Observable<List<SubredditSubscription>> getAll(boolean includeHidden) {
         String getQuery = includeHidden
@@ -50,24 +52,6 @@ public class SubredditSubscriptionManager {
         return database
                 .createQuery(SubredditSubscription.TABLE_NAME, getQuery)
                 .mapToList(SubredditSubscription.MAPPER)
-                .flatMap(subscriptions -> {
-                    if (subscriptions.isEmpty()) {
-                        // Check if the database is empty and fetch fresh subscriptions from remote if needed.
-                        // TODO: 15/04/17 What happens if both local and remote subscriptions are empty?
-                        return database
-                                .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
-                                .mapToList(SubredditSubscription.MAPPER)
-                                .flatMap(localSubs -> {
-                                    if (localSubs.isEmpty()) {
-                                        return fetchFreshSubscriptions(localSubs).doOnNext(saveSubscriptionsToDatabase());
-                                    } else {
-                                        return Observable.just(localSubs);
-                                    }
-                                });
-                    }
-
-                    return Observable.just(subscriptions);
-                })
                 .map(subscriptions -> {
                     // Move Frontpage and Popular to the top.
                     String frontpageSub = appContext.getString(R.string.frontpage_subreddit_name);
@@ -101,6 +85,7 @@ public class SubredditSubscriptionManager {
 
     }
 
+    @CheckResult
     public Completable subscribe(String subredditName) {
         return Completable.fromAction(() -> {
             SubredditSubscription subscription = SubredditSubscription.create(subredditName, PendingState.PENDING_SUBSCRIBE, false);
@@ -110,6 +95,7 @@ public class SubredditSubscriptionManager {
         });
     }
 
+    @CheckResult
     public Completable unsubscribe(SubredditSubscription subscription) {
         return Completable.fromAction(() -> {
             SubredditSubscription updated = SubredditSubscription.create(subscription.name(), PendingState.PENDING_UNSUBSCRIBE, subscription.isHidden());
@@ -119,6 +105,7 @@ public class SubredditSubscriptionManager {
         });
     }
 
+    @CheckResult
     public Completable setHidden(SubredditSubscription subscription, boolean hidden) {
         return Completable.fromAction(() -> {
             if (subscription.pendingState() == PendingState.PENDING_UNSUBSCRIBE) {
@@ -132,13 +119,39 @@ public class SubredditSubscriptionManager {
         });
     }
 
+    /**
+     * Removes all subreddit subscriptions.
+     */
+    @CheckResult
+    public Completable removeAll() {
+        return Completable.fromAction(() -> {
+            Timber.i("Deleting all subscriptions");
+            database.delete(SubredditSubscription.TABLE_NAME, null);
+        });
+    }
+
     private void dispatchSyncWithRedditJob() {
         // TODO: 15/04/17 Sync with Reddit.
     }
 
 // ======== REMOTE SUBREDDITS ======== //
 
-    private Observable<List<SubredditSubscription>> fetchFreshSubscriptions(List<SubredditSubscription> localSubscriptions) {
+    /**
+     * @param refreshOnlyIfEmpty When true, subreddits will only be fetched from remote if the local database is empty.
+     */
+    public Observable<List<SubredditSubscription>> refreshSubscriptions(boolean refreshOnlyIfEmpty) {
+        // Check if the database is empty and fetch fresh subscriptions from remote if needed.
+        // TODO: 15/04/17 What happens if both local and remote subscriptions are empty?
+        return database
+                .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
+                .mapToList(SubredditSubscription.MAPPER)
+                .first()
+                .filter(subs -> subs.isEmpty() || !refreshOnlyIfEmpty)
+                .flatMap(localSubs -> fetchRemoteSubscriptions(localSubs))
+                .doOnNext(saveSubscriptionsToDatabase());
+    }
+
+    private Observable<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubscriptions) {
         return (dankRedditClient.isUserLoggedIn() ? loggedInUserSubreddits() : Observable.just(loggedOutSubreddits()))
                 .map(remoteSubNames -> {
                     // So we've received subreddits from the server. Before replacing our database table with these,
@@ -169,7 +182,6 @@ public class SubredditSubscriptionManager {
                             finalSubreddits.add(SubredditSubscription.create(remoteSubName, PendingState.NONE, false));
                         }
                     }
-
                     return finalSubreddits;
                 });
     }

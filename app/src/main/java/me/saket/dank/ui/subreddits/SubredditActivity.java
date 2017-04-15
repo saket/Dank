@@ -334,6 +334,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
                 loadSubmissions(activeSubredditName);
             }
 
+            // Reload subreddit subscriptions. Not implementing onError() is intentional.
+            // This code is not supposed to fail :/
+            Dank.subscriptionManager().removeAll().subscribe();
+
         } else {
             super.onActivityResult(requestCode, resultCode, data);
         }
