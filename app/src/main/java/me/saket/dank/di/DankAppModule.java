@@ -156,7 +156,7 @@ public class DankAppModule {
                 .build();
 
         BriteDatabase briteDatabase = sqlBrite.wrapDatabaseHelper(new DankSqliteOpenHelper(appContext), Schedulers.io());
-        briteDatabase.setLoggingEnabled(false);
+        briteDatabase.setLoggingEnabled(true);
         return briteDatabase;
     }
 

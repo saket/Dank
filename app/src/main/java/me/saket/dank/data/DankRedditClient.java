@@ -28,6 +28,7 @@ import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
 import rx.Completable;
 import rx.Observable;
+import rx.Single;
 import rx.functions.Action0;
 import rx.functions.Func1;
 import timber.log.Timber;
@@ -235,8 +236,8 @@ public class DankRedditClient {
         return subredditsPaginator;
     }
 
-    public Subreddit findSubreddit(String name) {
-        return redditClient.getSubreddit(name);
+    public Single<Subreddit> findSubreddit(String name) {
+        return Single.fromCallable(() -> redditClient.getSubreddit(name));
     }
 
 }

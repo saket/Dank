@@ -14,7 +14,7 @@ import rx.functions.Func1;
 @AutoValue
 public abstract class SubredditSubscription implements Parcelable {
 
-    static final String TABLE_NAME = "SubredditSubscription";
+    static final String TABLE = "SubredditSubscription";
     static final String COLUMN_NAME = "name";
     static final String COLUMN_PENDING_ACTION = "pending_action";
 
@@ -23,22 +23,22 @@ public abstract class SubredditSubscription implements Parcelable {
     static final String NOT_HIDDEN = "0";
 
     static final String QUERY_CREATE_TABLE =
-            "CREATE TABLE " + TABLE_NAME + " ("
+            "CREATE TABLE " + TABLE + " ("
                     + COLUMN_NAME + " TEXT NOT NULL PRIMARY KEY, "
                     + COLUMN_PENDING_ACTION + " TEXT NOT NULL, "
                     + COLUMN_IS_HIDDEN + " INTEGER NOT NULL)";
 
     static final String QUERY_GET_ALL =
-            "SELECT * FROM " + TABLE_NAME + " ORDER BY " + COLUMN_NAME + " ASC";
+            "SELECT * FROM " + TABLE + " ORDER BY " + COLUMN_NAME + " ASC";
 
     static final String QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN =
-            "SELECT * FROM " + TABLE_NAME
+            "SELECT * FROM " + TABLE
                     + " WHERE " + COLUMN_NAME + " LIKE ?"
                     + " AND " + COLUMN_PENDING_ACTION + " != '" + PendingState.PENDING_UNSUBSCRIBE + "' "
                     + " ORDER BY " + COLUMN_NAME + " COLLATE NOCASE";
 
     static final String QUERY_SEARCH_ALL_SUBSCRIBED_EXCLUDING_HIDDEN =
-            "SELECT * FROM " + TABLE_NAME
+            "SELECT * FROM " + TABLE
                     + " WHERE " + COLUMN_NAME + " LIKE ?"
                     + " AND " + COLUMN_PENDING_ACTION + " != '" + PendingState.PENDING_UNSUBSCRIBE + "'"
                     + " AND " + COLUMN_IS_HIDDEN + " != '" + HIDDEN + "'"

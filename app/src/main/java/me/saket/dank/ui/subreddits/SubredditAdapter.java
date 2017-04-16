@@ -1,11 +1,15 @@
 package me.saket.dank.ui.subreddits;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
+import android.animation.ObjectAnimator;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import java.lang.ref.WeakReference;
 import java.util.List;
 
 import butterknife.BindColor;
@@ -23,18 +27,25 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
         implements Action1<List<SubredditSubscription>>
 {
 
+    private OnSubredditClickListener clickListener;
+    private SubredditSubscription highlightedSubscription;
+    private Runnable onHighlightAnimEndRunnable = () -> highlightedSubscription = null;
+
     interface OnSubredditClickListener {
         void onClickSubreddit(SubredditSubscription subscription, View subredditItemView);
     }
 
-    private OnSubredditClickListener clickListener;
-
     public SubredditAdapter() {
         setHasStableIds(true);
+        temporarilyHighlight(null);
     }
 
     public void setOnSubredditClickListener(OnSubredditClickListener listener) {
         clickListener = listener;
+    }
+
+    public void temporarilyHighlight(SubredditSubscription subscription) {
+        highlightedSubscription = subscription;
     }
 
     @Override
@@ -50,8 +61,11 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
     @Override
     public void onBindViewHolder(SubredditViewHolder holder, int position) {
         SubredditSubscription subSubscription = getItem(position);
-        holder.bind(subSubscription);
 
+        boolean isHighlighted = subSubscription.equals(highlightedSubscription);
+        holder.bind(subSubscription, isHighlighted, onHighlightAnimEndRunnable);
+
+        //noinspection CodeBlock2Expr
         holder.itemView.setOnClickListener(itemView -> {
             clickListener.onClickSubreddit(subSubscription, itemView);
         });
@@ -66,6 +80,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
         @BindView(R.id.item_subreddit_name) Button subredditNameButton;
         @BindColor(R.color.subredditpicker_subreddit_button_text_normal) int normalTextColor;
         @BindColor(R.color.subredditpicker_subreddit_button_text_hidden) int hiddenTextColor;
+        @BindColor(R.color.color_accent) int highlightedTextColor;
 
         public static SubredditViewHolder create(LayoutInflater inflater, ViewGroup parent) {
             return new SubredditViewHolder(inflater.inflate(R.layout.list_item_subreddit, parent, false));
@@ -76,10 +91,40 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
             ButterKnife.bind(this, itemView);
         }
 
-        public void bind(SubredditSubscription subreddit) {
+        public void bind(SubredditSubscription subreddit, boolean isHighlighted, Runnable onHighlightEndRunnable) {
             subredditNameButton.setText(subreddit.name());
             subredditNameButton.getBackground().setAlpha(subreddit.isHidden() ? 100 : 255);
-            subredditNameButton.setTextColor(subreddit.isHidden() ? hiddenTextColor : normalTextColor);
+
+            int buttonTextColor = subreddit.isHidden() ? hiddenTextColor : normalTextColor;
+
+            if (isHighlighted) {
+                playHighlightAnimation(onHighlightEndRunnable, buttonTextColor);
+            } else {
+                subredditNameButton.setTextColor(buttonTextColor);
+            }
+        }
+
+        /**
+         * Note: ObjectAnimator keeps a weak reference to the target View, so there's no need to worry of a leak here.
+         */
+        private void playHighlightAnimation(Runnable onEndRunnable, int textColorToRestore) {
+            WeakReference<Runnable> onEndRunnableRef = new WeakReference<>(onEndRunnable);
+
+            ObjectAnimator highlightAnimator = ObjectAnimator.ofArgb(subredditNameButton, "textColor", textColorToRestore, highlightedTextColor);
+            highlightAnimator.addListener(new AnimatorListenerAdapter() {
+                @Override
+                public void onAnimationEnd(Animator animation) {
+                    if (onEndRunnableRef.get() != null) {
+                        onEndRunnableRef.get().run();
+
+                        ObjectAnimator fadeOutAnimator = ObjectAnimator.ofArgb(subredditNameButton, "textColor", highlightedTextColor,
+                                textColorToRestore);
+                        fadeOutAnimator.setStartDelay(2000);
+                        fadeOutAnimator.start();
+                    }
+                }
+            });
+            highlightAnimator.start();
         }
     }
 

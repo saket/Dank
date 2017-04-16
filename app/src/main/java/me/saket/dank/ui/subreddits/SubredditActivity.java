@@ -25,6 +25,7 @@ import android.widget.TextView;
 
 import com.github.zagum.expandicon.ExpandIconView;
 
+import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.SubredditPaginator;
 
 import butterknife.BindView;
@@ -47,7 +48,7 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
 
-public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks {
+public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, SubscribeToNewSubredditDialog.Callback {
 
     private static final int REQUEST_CODE_LOGIN = 100;
     protected static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
@@ -275,6 +276,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         }
     }
 
+// ======== SUBREDDIT PICKER SHEET ======== //
+
     @OnClick(R.id.subreddit_toolbar_title)
     void onClickToolbarTitle() {
         if (toolbarSheet.isExpandedOrExpanding() || isUserProfileSheetVisible()) {
@@ -283,18 +286,28 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         } else {
             SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet, contentPage);
             pickerSheet.post(() -> toolbarSheet.expand());
-            pickerSheet.setOnSubredditSelectListener(subSubscription -> {
-                toolbarSheet.collapse();
-                if (!subSubscription.equalsIgnoreCase(activeSubredditName)) {
-                    loadSubmissions(subSubscription);
+            pickerSheet.setCallbacks(new SubredditPickerSheetView.Callbacks() {
+                @Override
+                public void onSelectSubreddit(String subredditName) {
+                    toolbarSheet.collapse();
+                    if (!subredditName.equalsIgnoreCase(activeSubredditName)) {
+                        loadSubmissions(subredditName);
+                    }
+                }
+
+                @Override
+                public void onClickAddNewSubreddit() {
+                    SubscribeToNewSubredditDialog.show(getSupportFragmentManager());
                 }
             });
         }
     }
 
-    void showUserProfileSheet() {
-        UserProfileSheetView pickerSheet = UserProfileSheetView.showIn(toolbarSheet);
-        pickerSheet.post(() -> toolbarSheet.expand());
+    @Override
+    public void onEnterNewSubredditForSubscription(Subreddit newSubreddit) {
+        if (isSubredditPickerVisible()) {
+            findSubredditPickerSheet().subscribeTo(newSubreddit);
+        }
     }
 
     /**
@@ -306,6 +319,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     private SubredditPickerSheetView findSubredditPickerSheet() {
         return ((SubredditPickerSheetView) toolbarSheet.getChildAt(0));
+    }
+
+// ======== USER PROFILE SHEET ======== //
+
+    void showUserProfileSheet() {
+        UserProfileSheetView pickerSheet = UserProfileSheetView.showIn(toolbarSheet);
+        pickerSheet.post(() -> toolbarSheet.expand());
     }
 
     private boolean isUserProfileSheetVisible() {

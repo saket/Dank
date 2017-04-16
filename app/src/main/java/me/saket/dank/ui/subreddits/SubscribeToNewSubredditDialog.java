@@ -1,10 +1,13 @@
 package me.saket.dank.ui.subreddits;
 
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+
 import android.annotation.SuppressLint;
 import android.app.Dialog;
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.v4.app.DialogFragment;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
@@ -12,18 +15,31 @@ import android.view.View;
 import android.view.WindowManager;
 import android.widget.EditText;
 
+import com.jakewharton.rxbinding.widget.RxTextView;
+
+import net.dean.jraw.models.Subreddit;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
+import me.saket.dank.di.Dank;
+import me.saket.dank.ui.DankDialogFragment;
 import me.saket.dank.utils.Keyboards;
+import timber.log.Timber;
 
 /**
  * Let's the user subscribe to a new subreddit by manually entering the sub name.
  */
-public class SubscribeToNewSubredditDialog extends DialogFragment {
+public class SubscribeToNewSubredditDialog extends DankDialogFragment {
 
     @BindView(R.id.newsubredditdialog_subreddit) EditText subredditView;
+    @BindView(R.id.newsubredditdialog_subreddit_inputlayout) TextInputLayout subredditViewInputLayout;
+    @BindView(R.id.newsubredditdialog_progress) View progressView;
+
+    public interface Callback {
+        void onEnterNewSubredditForSubscription(Subreddit newSubreddit);
+    }
 
     /**
      * Show this dialog.
@@ -40,6 +56,15 @@ public class SubscribeToNewSubredditDialog extends DialogFragment {
         dialog.show(fragmentManager, tag);
     }
 
+    @Override
+    public void onAttach(Context context) {
+        super.onAttach(context);
+
+        if (!(getActivity() instanceof Callback)) {
+            throw new AssertionError();
+        }
+    }
+
     @NonNull
     @Override
     @SuppressLint("InflateParams")
@@ -52,8 +77,15 @@ public class SubscribeToNewSubredditDialog extends DialogFragment {
                 .setTitle(R.string.newsubredditdialog_title)
                 .create();
 
+        unsubscribeOnDestroy(RxTextView.textChanges(subredditView)
+                .subscribe(o -> {
+                    subredditViewInputLayout.setError(null);
+                    subredditViewInputLayout.setErrorEnabled(false);
+                }));
+
+        // Force show keyboard on start.
         //noinspection ConstantConditions
-        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN | WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
+        dialog.getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_STATE_ALWAYS_VISIBLE);
 
         return dialog;
     }
@@ -65,8 +97,39 @@ public class SubscribeToNewSubredditDialog extends DialogFragment {
 
     @OnClick(R.id.newsubredditdialog_subscribe)
     void onClickSubscribe() {
-        // TODO: 14/04/17 Subscribe to this sub
-        dismissWithKeyboardDismissDelay();
+        String subredditName = subredditView.getText().toString();
+
+        if (subredditName.trim().isEmpty()) {
+            subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_empty_field));
+            return;
+        }
+
+        progressView.setVisibility(View.VISIBLE);
+        Keyboards.hide(getContext(), subredditView);
+
+        unsubscribeOnDestroy(Dank.reddit()
+                .findSubreddit(subredditName)
+                .compose(applySchedulersSingle())
+                .subscribe(subreddit -> {
+                    ((Callback) getActivity()).onEnterNewSubredditForSubscription(subreddit);
+                    dismissWithKeyboardDismissDelay();
+
+                }, error -> {
+                    // TODO: 17/04/17 Network error?
+                    progressView.setVisibility(View.GONE);
+
+                    if (error instanceof IllegalArgumentException && error.getMessage().contains("is private")) {
+                        subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_private_subreddit));
+
+                    } else if (error instanceof IllegalArgumentException && error.getMessage().contains("does not exist")) {
+                        subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_subreddit_doesnt_exist));
+
+                    } else {
+                        Timber.e(error, "Couldn't subscribe");
+                        subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_unknown));
+                    }
+                })
+        );
     }
 
     /**

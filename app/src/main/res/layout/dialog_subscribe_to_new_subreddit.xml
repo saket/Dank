@@ -1,30 +1,40 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:fitsSystemWindows="true"
+    android:animateLayoutChanges="true"
     android:orientation="vertical"
-    tools:background="@color/window_background"
+    tools:background="@color/dialog_background"
     tools:layout_marginTop="@dimen/spacing24">
 
-    <me.saket.dank.widgets.InboxUI.EdittextWithPrefix
-        android:id="@+id/newsubredditdialog_subreddit"
+    <android.support.design.widget.TextInputLayout
+        android:id="@+id/newsubredditdialog_subreddit_inputlayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/spacing8"
         android:layout_marginEnd="21dp"
         android:layout_marginStart="21dp"
         android:layout_marginTop="@dimen/spacing8"
-        android:hint="@string/newsubredditdialog_subreddit_hint"
-        android:inputType="text"
-        app:prefix="/r/"
-        tools:ignore="LabelFor" />
+        app:errorTextAppearance="@style/DankTextInputLayoutErrorTextAppearance"
+        app:hintEnabled="false">
+
+        <me.saket.dank.widgets.InboxUI.EdittextWithPrefix
+            android:id="@+id/newsubredditdialog_subreddit"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="@string/newsubredditdialog_subreddit_hint"
+            android:inputType="text"
+            app:prefix="/r/"
+            tools:ignore="LabelFor" />
+    </android.support.design.widget.TextInputLayout>
 
     <LinearLayout
+        android:id="@+id/newsubredditdialog_options_container"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_below="@+id/newsubredditdialog_subreddit_inputlayout"
         android:layout_marginBottom="@dimen/spacing8"
         android:gravity="end|center_vertical"
         android:paddingEnd="@dimen/spacing12"
@@ -45,4 +55,21 @@
             android:layout_height="wrap_content"
             android:text="@string/newsubredditdialog_subscribe" />
     </LinearLayout>
-</LinearLayout>
+
+    <FrameLayout
+        android:id="@+id/newsubredditdialog_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/newsubredditdialog_options_container"
+        android:layout_alignParentTop="true"
+        android:background="@color/dialog_background"
+        android:clickable="true"
+        tools:visibility="visible"
+        android:visibility="gone">
+
+        <ProgressBar
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="center" />
+    </FrameLayout>
+</RelativeLayout>

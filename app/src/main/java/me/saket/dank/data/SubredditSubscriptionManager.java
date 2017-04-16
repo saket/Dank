@@ -1,10 +1,11 @@
 package me.saket.dank.data;
 
-import static me.saket.dank.data.SubredditSubscription.TABLE_NAME;
+import static me.saket.dank.data.SubredditSubscription.TABLE;
 import static me.saket.dank.utils.CommonUtils.toImmutable;
 import static rx.Observable.just;
 
 import android.content.Context;
+import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
@@ -12,6 +13,7 @@ import android.support.annotation.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.squareup.sqlbrite.BriteDatabase;
 
+import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Subreddit;
 
 import java.util.ArrayList;
@@ -28,8 +30,10 @@ import me.saket.dank.data.SubredditSubscription.PendingState;
 import me.saket.dank.di.Dank;
 import rx.Completable;
 import rx.Observable;
+import rx.Single;
 import rx.functions.Action1;
 import rx.functions.Func1;
+import timber.log.Timber;
 
 /**
  * Manages:
@@ -70,14 +74,14 @@ public class SubredditSubscriptionManager {
                 : SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_EXCLUDING_HIDDEN;
 
         return database
-                .createQuery(TABLE_NAME, getQuery, "%" + filterTerm + "%")
+                .createQuery(TABLE, getQuery, "%" + filterTerm + "%")
                 .mapToList(SubredditSubscription.MAPPER)
                 .map(toImmutable())
                 .flatMap(filteredSubs -> {
                     if (filteredSubs.isEmpty()) {
                         // Check if the database is empty and fetch fresh subscriptions from remote if needed.
                         return database
-                                .createQuery(TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
+                                .createQuery(TABLE, SubredditSubscription.QUERY_GET_ALL)
                                 .mapToList(SubredditSubscription.MAPPER)
                                 .first()
                                 .flatMap(localSubs -> {
@@ -127,7 +131,7 @@ public class SubredditSubscriptionManager {
     @CheckResult
     public Completable refreshSubscriptions() {
         return database
-                .createQuery(TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
+                .createQuery(TABLE, SubredditSubscription.QUERY_GET_ALL)
                 .mapToList(SubredditSubscription.MAPPER)
                 .first()
                 .flatMap(localSubscriptions -> refreshSubscriptions(localSubscriptions))
@@ -142,25 +146,40 @@ public class SubredditSubscriptionManager {
     }
 
     @CheckResult
-    public Completable subscribe(String subredditName) {
-        return Completable.fromAction(() -> {
-            SubredditSubscription subscription = SubredditSubscription.create(subredditName, PendingState.PENDING_SUBSCRIBE, false);
-            database.update(TABLE_NAME, subscription.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
-
-            Subreddit updatedSubreddit = Dank.reddit().findSubreddit(subscription.name());
-            Dank.reddit().userAccountManager().subscribe(updatedSubreddit);
-        });
+    public Completable subscribe(Subreddit subreddit) {
+        return Completable.fromAction(() -> Dank.reddit().userAccountManager().subscribe(subreddit))
+                .andThen(Single.just(PendingState.NONE))
+                .onErrorResumeNext(e -> {
+                    e.printStackTrace();
+                    return Single.just(PendingState.PENDING_SUBSCRIBE);
+                })
+                .doOnSuccess(pendingState -> {
+                    SubredditSubscription subscription = SubredditSubscription.create(subreddit.getDisplayName(), pendingState, false);
+                    database.insert(SubredditSubscription.TABLE, subscription.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
+                })
+                .toCompletable();
     }
 
     @CheckResult
     public Completable unsubscribe(SubredditSubscription subscription) {
-        return Completable.fromAction(() -> {
-            SubredditSubscription updated = SubredditSubscription.create(subscription.name(), PendingState.PENDING_UNSUBSCRIBE, subscription.isHidden());
-            database.update(TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
+        return Completable.fromAction(() -> database.delete(SubredditSubscription.TABLE, SubredditSubscription.WHERE_NAME, subscription.name()))
+                .andThen(Dank.reddit().findSubreddit(subscription.name()))
+                .flatMap(subreddit -> {
+                    Dank.reddit().userAccountManager().unsubscribe(subreddit);
+                    return Single.just(subreddit);
+                })
+                .toCompletable()
+                .onErrorResumeNext(e -> {
+                    e.printStackTrace();
 
-            Subreddit updatedSubreddit = Dank.reddit().findSubreddit(updated.name());
-            Dank.reddit().userAccountManager().unsubscribe(updatedSubreddit);
-        });
+                    boolean is404 = e instanceof NetworkException && ((NetworkException) e).getResponse().getStatusCode() == 404;
+                    if (!is404) {
+                        SubredditSubscription updated = subscription.toBuilder().pendingState(PendingState.PENDING_UNSUBSCRIBE).build();
+                        database.update(SubredditSubscription.TABLE, updated.toContentValues(), SubredditSubscription.WHERE_NAME, updated.name());
+                    }
+                    // Else, subreddit isn't present on the server anymore.
+                    return Completable.complete();
+                });
     }
 
     @CheckResult
@@ -172,7 +191,7 @@ public class SubredditSubscriptionManager {
             }
 
             SubredditSubscription updated = SubredditSubscription.create(subscription.name(), subscription.pendingState(), hidden);
-            database.update(TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
+            database.update(TABLE, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
         });
     }
 
@@ -181,7 +200,7 @@ public class SubredditSubscriptionManager {
      */
     @CheckResult
     public Completable removeAll() {
-        return Completable.fromAction(() -> database.delete(TABLE_NAME, null));
+        return Completable.fromAction(() -> database.delete(TABLE, null));
     }
 
     // ======== DEFAULT ======== //
@@ -301,10 +320,10 @@ public class SubredditSubscriptionManager {
     private Action1<List<SubredditSubscription>> saveSubscriptionsToDatabase() {
         return newSubscriptions -> {
             try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-                database.delete(TABLE_NAME, null);
+                database.delete(TABLE, null);
 
                 for (SubredditSubscription freshSubscription : newSubscriptions) {
-                    database.insert(TABLE_NAME, freshSubscription.toContentValues());
+                    database.insert(TABLE, freshSubscription.toContentValues());
                 }
 
                 transaction.markSuccessful();

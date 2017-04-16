@@ -1,6 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
+import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.doOnStartAndComplete;
 import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
@@ -41,6 +42,8 @@ import com.google.common.collect.ImmutableList;
 import com.jakewharton.rxbinding.widget.RxTextView;
 import com.jakewharton.rxrelay.BehaviorRelay;
 
+import net.dean.jraw.models.Subreddit;
+
 import java.util.Collections;
 
 import butterknife.BindColor;
@@ -52,8 +55,10 @@ import butterknife.OnEditorAction;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.DankActivity;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
+import rx.Completable;
+import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.subscriptions.CompositeSubscription;
 import timber.log.Timber;
@@ -90,7 +95,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     private ToolbarExpandableSheet parentSheet;
     private SubredditAdapter subredditAdapter;
     private CompositeSubscription subscriptions = new CompositeSubscription();
-    private OnSubredditSelectListener subredditSelectListener;
+    private Callbacks callbacks;
     private SheetState sheetState;
     private final BehaviorRelay<Boolean> showHiddenSubredditsSubject;
 
@@ -99,8 +104,10 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         MANAGE_SUBS
     }
 
-    public interface OnSubredditSelectListener {
+    public interface Callbacks {
         void onSelectSubreddit(String subredditName);
+
+        void onClickAddNewSubreddit();
     }
 
     public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
@@ -161,8 +168,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         this.parentSheet = parentSheet;
     }
 
-    public void setOnSubredditSelectListener(OnSubredditSelectListener selectListener) {
-        subredditSelectListener = selectListener;
+    public void setCallbacks(Callbacks callbacks) {
+        this.callbacks = callbacks;
     }
 
     /**
@@ -173,7 +180,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     @Override
     public void onClickSubreddit(SubredditSubscription subscription, View subredditItemView) {
         if (sheetState == SheetState.BROWSE_SUBS) {
-            subredditSelectListener.onSelectSubreddit(subscription.name());
+            callbacks.onSelectSubreddit(subscription.name());
         } else {
             showSubredditOptionsMenu(subscription, subredditItemView);
         }
@@ -201,14 +208,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                 .flatMap(o -> showHiddenSubredditsSubject)
                 .observeOn(io())
                 .switchMap(showHidden -> Dank.subscriptionManager().getAll(searchView.getText().toString(), showHidden))
-                .onErrorResumeNext(error -> {
-                    // Don't let an error terminate the stream.
-                    Timber.e(error, "Error in fetching subreddits");
-                    return just(Collections.emptyList());
-                })
-                .observeOn(mainThread())
-                .compose(doOnStartAndNext(setSubredditLoadProgressVisible()))
-                .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
                 .map(filteredSubs -> {
                     if (sheetState == SheetState.BROWSE_SUBS) {
                         // If search is active, show user's search term in the results unless an exact match was found.
@@ -233,6 +232,14 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                     }
                     return filteredSubs;
                 })
+                .onErrorResumeNext(error -> {
+                    // Don't let an error terminate the stream.
+                    Timber.e(error, "Error in fetching subreddits");
+                    return just(Collections.emptyList());
+                })
+                .observeOn(mainThread())
+                .compose(doOnStartAndNext(setSubredditLoadProgressVisible()))
+                .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
                 .subscribe(subredditAdapter)
         );
     }
@@ -258,7 +265,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     boolean onClickSearchFieldEnterKey(int actionId) {
         if (actionId == EditorInfo.IME_ACTION_GO) {
             String searchTerm = searchView.getText().toString().trim();
-            subredditSelectListener.onSelectSubreddit(searchTerm);
+            callbacks.onSelectSubreddit(searchTerm);
             return true;
         }
         return false;
@@ -454,7 +461,50 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
     @OnClick(R.id.subredditpicker_option_add_new)
     void onClickNewSubreddit() {
-        SubscribeToNewSubredditDialog.show(((DankActivity) getContext()).getSupportFragmentManager());
+        callbacks.onClickAddNewSubreddit();
+    }
+
+    /**
+     * Finds the View for <var>newSubreddit</var> in the list and highlights it temporarily.
+     */
+    public void subscribeTo(Subreddit newSubreddit) {
+        Action0 findAndHighlightSubredditAction = () -> {
+            Views.executeOnNextLayout(subredditList, () -> {
+                Timber.i("Finding highlight");
+                boolean found = false;
+
+                for (int position = 0; position < subredditAdapter.getItemCount(); position++) {
+                    SubredditSubscription subscription = subredditAdapter.getItem(position);
+                    if (subscription.name().equalsIgnoreCase(newSubreddit.getDisplayName())) {
+                        subredditAdapter.temporarilyHighlight(subscription);
+                        subredditAdapter.notifyItemChanged(position);
+
+                        found = true;
+
+                        // FlexboxLayoutManager doesn't support smooth scrolling :(
+                        final int finalPosition = position;
+                        subredditList.post(() -> subredditList.scrollToPosition(finalPosition));
+                        break;
+                    }
+                }
+
+                if (!found) {
+                    Timber.i("Couldn't find inserted subscription!");
+                    //throw new IllegalStateException("Couldn't find inserted subscription!");
+                }
+            });
+        };
+
+        // Enable item change animation, until the user starts searching.
+        subredditList.setItemAnimator(new DefaultItemAnimator());
+
+        subscriptions.add(Dank.subscriptionManager()
+                .subscribe(newSubreddit)
+                // Add some delay to ensure the list's dataset has been updated with this new subreddit.
+                .andThen(Completable.fromAction(findAndHighlightSubredditAction))
+                .compose(applySchedulersCompletable())
+                .subscribe(doNothingCompletable(), doNothing())
+        );
     }
 
 }
