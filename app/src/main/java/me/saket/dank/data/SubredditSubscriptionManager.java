@@ -16,15 +16,17 @@ import net.dean.jraw.models.Subreddit;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
 
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription.PendingState;
 import rx.Completable;
 import rx.Observable;
 import rx.functions.Action1;
-import timber.log.Timber;
 
 /**
  * Manages:
@@ -71,15 +73,13 @@ public class SubredditSubscriptionManager {
                 .flatMap(filteredSubs -> {
                     if (filteredSubs.isEmpty()) {
                         // Check if the database is empty and fetch fresh subscriptions from remote if needed.
-                        // TODO: 15/04/17 What happens if both local and remote subscriptions are empty?
                         return database
                                 .createQuery(TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
                                 .mapToList(SubredditSubscription.MAPPER)
                                 .first()
                                 .flatMap(localSubs -> {
                                     if (localSubs.isEmpty()) {
-                                        return fetchRemoteSubscriptions(localSubs)
-                                                .doOnNext(saveSubscriptionsToDatabase())
+                                        return refreshSubscriptions(localSubs)
                                                 // Don't let this stream emit anything. A change in the database will anyway trigger that.
                                                 .flatMap(o -> Observable.never());
 
@@ -103,21 +103,40 @@ public class SubredditSubscriptionManager {
 
                     for (int i = reOrderedFilteredSubs.size() - 1; i >= 0; i--) {
                         SubredditSubscription subscription = reOrderedFilteredSubs.get(i);
-                        if (frontpageSub == null && subscription.name().equalsIgnoreCase(frontpageSubName)) {
-                            reOrderedFilteredSubs.remove(i);
-                            frontpageSub = subscription;
-                            reOrderedFilteredSubs.add(0, frontpageSub);
 
-                        } else if (popularSub == null && subscription.name().equalsIgnoreCase(popularSubName)) {
-                            // Found frontpage!
+                        // Since we're going backwards, we'll find popular before frontpage.
+                        if (popularSub == null && subscription.name().equalsIgnoreCase(popularSubName)) {
                             reOrderedFilteredSubs.remove(i);
                             popularSub = subscription;
                             reOrderedFilteredSubs.add(0, popularSub);
+
+                        } else if (frontpageSub == null && subscription.name().equalsIgnoreCase(frontpageSubName)) {
+                            reOrderedFilteredSubs.remove(i);
+                            frontpageSub = subscription;
+                            reOrderedFilteredSubs.add(0, frontpageSub);
                         }
                     }
-                    
+
                     return ImmutableList.copyOf(reOrderedFilteredSubs);
                 });
+    }
+
+    @NonNull
+    @CheckResult
+    public Completable refreshSubscriptions() {
+        return database
+                .createQuery(TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
+                .mapToList(SubredditSubscription.MAPPER)
+                .first()
+                .flatMap(localSubscriptions -> refreshSubscriptions(localSubscriptions))
+                .toCompletable();
+    }
+
+    @NonNull
+    private Observable<List<SubredditSubscription>> refreshSubscriptions(List<SubredditSubscription> localSubs) {
+        return fetchRemoteSubscriptions(localSubs)
+                .filter(subs -> !subs.isEmpty())
+                .doOnNext(saveSubscriptionsToDatabase());
     }
 
     @CheckResult
@@ -186,42 +205,57 @@ public class SubredditSubscriptionManager {
 
 // ======== REMOTE SUBREDDITS ======== //
 
-    private Observable<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubscriptions) {
+    private Observable<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
         return (dankRedditClient.isUserLoggedIn() ? loggedInUserSubreddits() : just(loggedOutSubreddits()))
                 .map(remoteSubNames -> {
-                    Timber.i("Getting remote subs");
-
                     // So we've received subreddits from the server. Before overriding our database table with these,
                     // retain pending-subscribe items and pending-unsubscribe items.
-                    HashMap<String, SubredditSubscription> localSubsMap = new HashMap<>(localSubscriptions.size());
-                    for (SubredditSubscription localSub : localSubscriptions) {
-                        localSubsMap.put(localSub.name(), localSub);
+                    Set<String> remoteSubsNamesSet = new HashSet<>(remoteSubNames.size());
+                    for (String remoteSubName : remoteSubNames) {
+                        remoteSubsNamesSet.add(remoteSubName);
                     }
 
-                    // Construct a new list of subs based on the remote subreddits.
-                    List<SubredditSubscription> finalSubreddits = new ArrayList<>(remoteSubNames.size());
+                    ImmutableList.Builder<SubredditSubscription> syncedListBuilder = ImmutableList.builder();
 
-                    for (String remoteSubName : remoteSubNames) {
-                        if (localSubsMap.containsKey(remoteSubName)) {
-                            // We already have this subreddit.
-                            SubredditSubscription localCopy = localSubsMap.get(remoteSubName);
+                    // Go through the local dataset first to find items that we and/or the remote already have.
+                    for (SubredditSubscription localSub : localSubs) {
+                        if (remoteSubsNamesSet.contains(localSub.name())) {
+                            // Remote still has this sub.
+                            if (localSub.isUnsubscribePending()) {
+                                syncedListBuilder.add(localSub);
 
-                            if (!localCopy.isUnsubscribePending()) {
-                                SubredditSubscription stateClearedCopy = localCopy.toBuilder()
-                                        .pendingState(PendingState.NONE)
-                                        .build();
-                                finalSubreddits.add(stateClearedCopy);
+                            } else if (localSub.isSubscribePending()) {
+                                // A pending subscribed sub has already been subscribed on remote. Great.
+                                syncedListBuilder.add(localSub.toBuilder().pendingState(PendingState.NONE).build());
+
+                            } else {
+                                // Both local and remote have the same sub. All cool.
+                                syncedListBuilder.add(localSub);
                             }
 
                         } else {
-                            // New subreddit. User must have subscribed to this subreddit the website or another app (hopefully not).
-                            finalSubreddits.add(SubredditSubscription.create(remoteSubName, PendingState.NONE, false));
+                            // Remote doesn't have this sub.
+                            if (localSub.isSubscribePending()) {
+                                // Oh okay, we haven't been able to make the subscribe API call yet.
+                                syncedListBuilder.add(localSub);
+                            }
+                            // Else, sub has been removed on remote! Will not add this sub.
                         }
                     }
 
-                    // TODO: Retain pending-subscribe and pending-unsubscribe items.
+                    // Do a second pass to find items that the remote has but we don't.
+                    Map<String, SubredditSubscription> localSubsMap = new HashMap<>(localSubs.size());
+                    for (SubredditSubscription localSub : localSubs) {
+                        localSubsMap.put(localSub.name(), localSub);
+                    }
+                    for (String remoteSubName : remoteSubNames) {
+                        if (!localSubsMap.containsKey(remoteSubName)) {
+                            // New sub found.
+                            syncedListBuilder.add(SubredditSubscription.create(remoteSubName, PendingState.NONE, false));
+                        }
+                    }
 
-                    return finalSubreddits;
+                    return syncedListBuilder.build();
                 });
     }
 
@@ -257,8 +291,6 @@ public class SubredditSubscriptionManager {
     @NonNull
     private Action1<List<SubredditSubscription>> saveSubscriptionsToDatabase() {
         return newSubscriptions -> {
-            Timber.i("Saving to DB");
-
             try (BriteDatabase.Transaction transaction = database.newTransaction()) {
                 database.delete(TABLE_NAME, null);
 

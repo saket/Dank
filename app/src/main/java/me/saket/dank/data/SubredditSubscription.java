@@ -68,6 +68,10 @@ public abstract class SubredditSubscription implements Parcelable {
         return pendingState() == PendingState.PENDING_UNSUBSCRIBE;
     }
 
+    public boolean isSubscribePending() {
+        return pendingState() == PendingState.PENDING_SUBSCRIBE;
+    }
+
     public ContentValues toContentValues() {
         ContentValues values = new ContentValues(3);
         values.put(COLUMN_NAME, name());

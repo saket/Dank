@@ -53,12 +53,6 @@ public class RxUtils {
         return error -> Timber.e(error, errorMessage, args);
     }
 
-    public static <T> Observable.Transformer<T, T> doOnStartAndEnd(Action1<Boolean> action) {
-        return observable -> observable
-                .doOnSubscribe(() -> action.call(true))
-                .doOnUnsubscribe(() -> action.call(false));
-    }
-
     public static <T> Observable.Transformer<T, T> doOnStartAndNext(Action1<Boolean> action) {
         return observable -> observable
                 .doOnSubscribe(() -> action.call(true))
@@ -66,10 +60,22 @@ public class RxUtils {
                 .doOnError(o -> action.call(false));
     }
 
-    public static <T> Single.Transformer<T, T> doOnStartAndFinishSingle(Action1<Boolean> isOngoingAction) {
+    public static <T> Observable.Transformer<T, T> doOnStartAndEnd(Action1<Boolean> action) {
+        return observable -> observable
+                .doOnSubscribe(() -> action.call(true))
+                .doOnUnsubscribe(() -> action.call(false));
+    }
+
+    public static <T> Single.Transformer<T, T> doOnStartAndEndSingle(Action1<Boolean> isOngoingAction) {
         return observable -> observable
                 .doOnSubscribe(() -> isOngoingAction.call(true))
                 .doOnUnsubscribe(() -> isOngoingAction.call(false));
+    }
+
+    public static Completable.Transformer doOnStartAndEndCompletable(Action1<Boolean> action) {
+        return observable -> observable
+                .doOnSubscribe(o -> action.call(true))
+                .doOnUnsubscribe(() -> action.call(false));
     }
 
 }

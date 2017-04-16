@@ -2,7 +2,7 @@ package me.saket.dank.ui.submission;
 
 import static android.text.TextUtils.isEmpty;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
-import static me.saket.dank.utils.RxUtils.doOnStartAndFinishSingle;
+import static me.saket.dank.utils.RxUtils.doOnStartAndEndSingle;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Urls.parseDomainName;
 import static me.saket.dank.utils.Views.setDimensions;
@@ -181,7 +181,7 @@ public class SubmissionLinkHolder {
         // Downloading the page's HTML to get the title is faster than getting the submission's data from the API.
         return UrlMetadataParser.parse(submissionLink.url, true)
                 .compose(applySchedulersSingle())
-                .compose(doOnStartAndFinishSingle(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+                .compose(doOnStartAndEndSingle(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
                 .subscribe(linkMetadata -> {
                     String submissionPageTitle = linkMetadata.title();
 
