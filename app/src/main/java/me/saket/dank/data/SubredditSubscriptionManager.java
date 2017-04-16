@@ -123,7 +123,6 @@ public class SubredditSubscriptionManager {
                 });
     }
 
-    @NonNull
     @CheckResult
     public Completable refreshSubscriptions() {
         return database
@@ -171,6 +170,7 @@ public class SubredditSubscriptionManager {
 
             SubredditSubscription updated = SubredditSubscription.create(subscription.name(), subscription.pendingState(), hidden);
             database.update(TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
+
             dispatchSyncWithRedditJob();
         });
     }

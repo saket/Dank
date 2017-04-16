@@ -36,4 +36,7 @@
 
     <color name="subredditpicker_subreddit_button_tint_normal">#1b1b1b</color>
     <color name="subredditpicker_subreddit_button_tint_selected">#0b0b0b</color>
+    <color name="subredditpicker_subreddit_button_text_normal">@color/gray_400</color>
+    <color name="subredditpicker_subreddit_button_text_hidden">@color/gray_700</color>
+
 </resources>

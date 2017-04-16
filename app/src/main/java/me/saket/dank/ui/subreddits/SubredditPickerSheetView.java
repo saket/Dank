@@ -1,7 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
-import static me.saket.dank.utils.RxUtils.doOnStartAndEndCompletable;
+import static me.saket.dank.utils.RxUtils.doOnStartAndComplete;
 import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setHeight;
@@ -21,7 +21,9 @@ import android.content.res.ColorStateList;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
@@ -29,7 +31,6 @@ import android.view.animation.Interpolator;
 import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
-import android.widget.PopupMenu;
 
 import com.google.android.flexbox.AlignItems;
 import com.google.android.flexbox.FlexDirection;
@@ -37,6 +38,7 @@ import com.google.android.flexbox.FlexWrap;
 import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.common.collect.ImmutableList;
 import com.jakewharton.rxbinding.widget.RxTextView;
+import com.jakewharton.rxrelay.BehaviorRelay;
 
 import java.util.Collections;
 
@@ -65,7 +67,8 @@ import timber.log.Timber;
  */
 public class SubredditPickerSheetView extends FrameLayout implements SubredditAdapter.OnSubredditClickListener {
 
-    private static final int ANIM_DURATION = 300;
+    private static final int HEIGHT_CHANGE_ANIM_DURATION = 300;
+    private static final int OPTIONS_VISIBILITY_ANIM_DURATION = 150;
     private static final Interpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
 
     @BindView(R.id.subredditpicker_root) ViewGroup rootViewGroup;
@@ -88,6 +91,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     private CompositeSubscription subscriptions = new CompositeSubscription();
     private OnSubredditSelectListener subredditSelectListener;
     private SheetState sheetState;
+    private final BehaviorRelay<Boolean> showHiddenSubredditsSubject;
 
     enum SheetState {
         BROWSE_SUBS,
@@ -113,6 +117,13 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
         saveButton.setVisibility(INVISIBLE);
         sheetState = SheetState.BROWSE_SUBS;
+        showHiddenSubredditsSubject = BehaviorRelay.create(false /* defaultValue */);
+    }
+
+    public boolean shouldInterceptPullToCollapse(float downX, float downY) {
+        // FlexboxLayoutManager does not override methods required for View#canScrollVertically.
+        // So let's intercept all pull-to-collapses if the touch is made on the list.
+        return touchLiesOn(subredditList, downX, downY);
     }
 
     @Override
@@ -186,8 +197,9 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                     // that the animations run when any event is emitted by downstream Rx chains.
                     subredditList.setItemAnimator(null);
                 })
+                .flatMap(o -> showHiddenSubredditsSubject)
                 .observeOn(io())
-                .switchMap(searchTerm -> Dank.subscriptionManager().search(searchTerm, false /* includeHidden */))
+                .switchMap(searchTerm -> Dank.subscriptionManager().search(searchView.getText().toString(), showHiddenSubredditsSubject.getValue()))
                 .onErrorResumeNext(error -> {
                     // Don't let an error terminate the stream.
                     Timber.e(error, "Error in fetching subreddits");
@@ -250,7 +262,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         return false;
     }
 
-// ======== ANIMATION ======== //
+// ======== OPTIONS ======== //
 
     @OnClick(R.id.subredditpicker_option_manage)
     void onClickEditSubreddits() {
@@ -292,15 +304,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
             }
         });
         heightAnimator.setInterpolator(ANIM_INTERPOLATOR);
-        heightAnimator.setDuration(ANIM_DURATION);
+        heightAnimator.setDuration(HEIGHT_CHANGE_ANIM_DURATION);
         heightAnimator.start();
-    }
-
-    private void onClickRefreshSubscriptions() {
-        subscriptions.add(Dank.subscriptionManager()
-                .refreshSubscriptions()
-                .compose(doOnStartAndEndCompletable(setSubredditLoadProgressVisible()))
-                .subscribe(doNothingCompletable(), logError("Couldn't refresh subscriptions")));
     }
 
     @OnClick(R.id.subredditpicker_save_fab)
@@ -338,30 +343,57 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
             }
         });
         heightAnimator.setInterpolator(ANIM_INTERPOLATOR);
-        heightAnimator.setDuration(ANIM_DURATION);
+        heightAnimator.setDuration(HEIGHT_CHANGE_ANIM_DURATION);
         heightAnimator.start();
     }
 
-    public boolean shouldInterceptPullToCollapse(float downX, float downY) {
-        // FlexboxLayoutManager does not override methods required for View#canScrollVertically.
-        // So let's intercept all pull-to-collapses if the touch is made on the list.
-        return touchLiesOn(subredditList, downX, downY);
+    @OnClick(R.id.subredditpicker_option_overflow_menu)
+    void onClickOverflowMenu(View optionView) {
+        PopupMenu overflowMenu = new PopupMenu(getContext(), optionView, Gravity.NO_GRAVITY, 0, R.style.DankOverflowMenu);
+        overflowMenu.inflate(R.menu.menu_subredditpicker_overflow_menu);
+
+        overflowMenu.getMenu().findItem(R.id.action_show_hidden_subreddits).setVisible(!showHiddenSubredditsSubject.getValue());
+        overflowMenu.getMenu().findItem(R.id.action_hide_hidden_subreddits).setVisible(showHiddenSubredditsSubject.getValue());
+
+        // Enable item change animation, until the user starts searching.
+        subredditList.setItemAnimator(new DefaultItemAnimator());
+
+        overflowMenu.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.action_show_hidden_subreddits:
+                    showHiddenSubredditsSubject.call(true);
+                    return true;
+
+                case R.id.action_hide_hidden_subreddits:
+                    showHiddenSubredditsSubject.call(false);
+                    return true;
+
+                case R.id.action_refresh_subreddits:
+                    Dank.subscriptionManager()
+                            .refreshSubscriptions()
+                            .compose(doOnStartAndComplete(setSubredditLoadProgressVisible()))
+                            .subscribe(doNothingCompletable(), logError("Couldn't refresh subscriptions"));
+                    return true;
+
+                default:
+                    throw new UnsupportedOperationException("Unknown option itemId");
+            }
+        });
+        overflowMenu.show();
     }
 
     private ViewPropertyAnimator animateAlpha(View view, float toAlpha) {
-        return view.animate().alpha(toAlpha).setDuration(ANIM_DURATION).setInterpolator(ANIM_INTERPOLATOR);
+        return view.animate().alpha(toAlpha).setDuration(OPTIONS_VISIBILITY_ANIM_DURATION).setInterpolator(ANIM_INTERPOLATOR);
     }
-
-// ======== OPTIONS ======== //
 
     private void showSubredditOptionsMenu(SubredditSubscription subscription, View subredditItemView) {
         PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView);
         popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
 
-        popupMenu.getMenu().findItem(R.id.action_set_as_default).setVisible(!Dank.subscriptionManager().isDefault(subscription));
-        popupMenu.getMenu().findItem(R.id.action_unsubscribe).setVisible(!Dank.subscriptionManager().isFrontpage(subscription.name()));
-        popupMenu.getMenu().findItem(R.id.action_hide).setVisible(!subscription.isHidden());
-        popupMenu.getMenu().findItem(R.id.action_unhide).setVisible(subscription.isHidden());
+        popupMenu.getMenu().findItem(R.id.action_set_subreddit_as_default).setVisible(!Dank.subscriptionManager().isDefault(subscription));
+        popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit).setVisible(!Dank.subscriptionManager().isFrontpage(subscription.name()));
+        popupMenu.getMenu().findItem(R.id.action_hide_subreddit).setVisible(!subscription.isHidden());
+        popupMenu.getMenu().findItem(R.id.action_unhide_subreddit).setVisible(subscription.isHidden());
 
         // Enable item change animation, until the user starts searching.
         subredditList.setItemAnimator(new DefaultItemAnimator());
@@ -374,11 +406,11 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
-                case R.id.action_set_as_default:
+                case R.id.action_set_subreddit_as_default:
                     Dank.subscriptionManager().setAsDefault(subscription);
                     return true;
 
-                case R.id.action_unsubscribe:
+                case R.id.action_unsubscribe_subreddit:
                     resetDefaultIfDefaultWasRemoved.call(subscription);
 
                     Dank.subscriptionManager()
@@ -386,7 +418,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                             .subscribe(doNothingCompletable(), logError("Couldn't unsubscribe: %s", subscription));
                     return true;
 
-                case R.id.action_hide:
+                case R.id.action_hide_subreddit:
                     resetDefaultIfDefaultWasRemoved.call(subscription);
 
                     Dank.subscriptionManager()
@@ -394,7 +426,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                             .subscribe(doNothingCompletable(), logError("Couldn't hide: %s", subscription));
                     return true;
 
-                case R.id.action_unhide:
+                case R.id.action_unhide_subreddit:
                     Dank.subscriptionManager()
                             .setHidden(subscription, false)
                             .subscribe(doNothingCompletable(), logError("Couldn't unhide: %s", subscription));

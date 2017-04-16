@@ -82,6 +82,7 @@ dependencies {
     apt 'com.jakewharton:butterknife-compiler:8.0.1'
     compile 'io.reactivex:rxandroid:1.2.0'
     compile 'com.jakewharton.rxbinding:rxbinding:1.0.0'
+    compile 'com.jakewharton.rxrelay:rxrelay:1.2.0'
     compile 'com.google.dagger:dagger:2.2'
     apt 'com.google.dagger:dagger-compiler:2.2'
     compile 'com.squareup.okhttp3:okhttp:3.6.0'

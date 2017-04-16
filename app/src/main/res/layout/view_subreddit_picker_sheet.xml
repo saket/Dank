@@ -15,7 +15,7 @@
         android:layout_height="?attr/actionBarSize"
         android:background="@color/toolbar"
         android:gravity="end|center_vertical"
-        android:paddingEnd="10dp"
+        android:paddingEnd="4dp"
         android:visibility="invisible"
         tools:ignore="RtlSymmetry"
         tools:visibility="visible">
@@ -31,7 +31,7 @@
             <ImageButton
                 android:id="@+id/subredditpicker_option_add_new"
                 style="@style/DankToolbarIcon"
-                android:layout_marginEnd="21dp"
+                android:layout_marginEnd="8dp"
                 android:contentDescription="@string/cd_subredditpicker_add_new_subreddit"
                 android:src="@drawable/ic_add_circle_24dp" />
 

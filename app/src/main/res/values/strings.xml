@@ -29,6 +29,9 @@
     <string name="subredditpicker_unsubscribe">Unsubscribe</string>
     <string name="subredditpicker_hide">Hide</string>
     <string name="subredditpicker_unhide">Unhide</string>
+    <string name="subredditpicker_refresh">Refresh</string>
+    <string name="subredditpicker_show_hidden">Show hidden</string>
+    <string name="subredditpicker_hide_hidden">Hide hidden</string>
 
     <string name="newsubredditdialog_title">Subscribe to</string>
     <string name="newsubredditdialog_subscribe">Subscribe</string>

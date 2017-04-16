@@ -8,6 +8,7 @@ import android.widget.Button;
 
 import java.util.List;
 
+import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
@@ -18,7 +19,9 @@ import rx.functions.Action1;
 /**
  * Adapter for displaying a list of subreddits.
  */
-public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscription, SubredditAdapter.SubredditViewHolder> implements Action1<List<SubredditSubscription>> {
+public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscription, SubredditAdapter.SubredditViewHolder>
+        implements Action1<List<SubredditSubscription>>
+{
 
     interface OnSubredditClickListener {
         void onClickSubreddit(SubredditSubscription subscription, View subredditItemView);
@@ -60,8 +63,9 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
     }
 
     static class SubredditViewHolder extends RecyclerView.ViewHolder {
-
-        @BindView(R.id.item_subreddit_name) Button subredditNameView;
+        @BindView(R.id.item_subreddit_name) Button subredditNameButton;
+        @BindColor(R.color.subredditpicker_subreddit_button_text_normal) int normalTextColor;
+        @BindColor(R.color.subredditpicker_subreddit_button_text_hidden) int hiddenTextColor;
 
         public static SubredditViewHolder create(LayoutInflater inflater, ViewGroup parent) {
             return new SubredditViewHolder(inflater.inflate(R.layout.list_item_subreddit, parent, false));
@@ -73,9 +77,10 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
         }
 
         public void bind(SubredditSubscription subreddit) {
-            subredditNameView.setText(subreddit.name());
+            subredditNameButton.setText(subreddit.name());
+            subredditNameButton.getBackground().setAlpha(subreddit.isHidden() ? 100 : 255);
+            subredditNameButton.setTextColor(subreddit.isHidden() ? hiddenTextColor : normalTextColor);
         }
-
     }
 
 }

@@ -72,7 +72,7 @@ public class RxUtils {
                 .doOnUnsubscribe(() -> isOngoingAction.call(false));
     }
 
-    public static Completable.Transformer doOnStartAndEndCompletable(Action1<Boolean> action) {
+    public static Completable.Transformer doOnStartAndComplete(Action1<Boolean> action) {
         return observable -> observable
                 .doOnSubscribe(o -> action.call(true))
                 .doOnUnsubscribe(() -> action.call(false));
