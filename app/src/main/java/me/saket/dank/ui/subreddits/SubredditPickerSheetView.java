@@ -31,6 +31,7 @@ import com.google.android.flexbox.AlignItems;
 import com.google.android.flexbox.FlexDirection;
 import com.google.android.flexbox.FlexWrap;
 import com.google.android.flexbox.FlexboxLayoutManager;
+import com.google.common.collect.ImmutableList;
 import com.jakewharton.rxbinding.widget.RxTextView;
 
 import java.util.Collections;
@@ -199,6 +200,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                 })
                 .observeOn(io())
                 .flatMap(searchTerm -> Dank.subscriptionManager().search(searchTerm, false /* includeHidden */))
+                .switchMap(searchTerm -> Dank.subscriptionManager().search(searchTerm, false /* includeHidden */))
                 .onErrorResumeNext(error -> {
                     // Don't let an error terminate the stream.
                     Timber.e(error, "Error in fetching subreddits");
@@ -219,8 +221,12 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                                 break;
                             }
                         }
+
                         if (!exactSearchFound) {
-                            filteredSubs.add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false));
+                            return ImmutableList.<SubredditSubscription>builder()
+                                    .addAll(filteredSubs)
+                                    .add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false))
+                                    .build();
                         }
                     }
 

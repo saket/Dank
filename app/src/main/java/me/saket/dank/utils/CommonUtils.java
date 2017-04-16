@@ -3,7 +3,13 @@ package me.saket.dank.utils;
 import android.support.annotation.Nullable;
 import android.text.Html;
 
+import com.google.common.collect.ImmutableList;
+
 import net.dean.jraw.models.Thumbnails;
+
+import java.util.List;
+
+import rx.functions.Func1;
 
 /**
  * Utility methods that don't fit in anywhere.
@@ -42,5 +48,9 @@ public class CommonUtils {
         //noinspection deprecation
         return Html.fromHtml(closestImage.getUrl()).toString();
     }
+
+    public static <T> Func1<List<T>, ImmutableList<T>> toImmutable() {
+        return list -> ImmutableList.copyOf(list);
+    };
 
 }

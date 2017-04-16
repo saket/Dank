@@ -1,13 +1,11 @@
 package me.saket.dank.utils;
 
-import android.support.annotation.NonNull;
-
 import rx.Completable;
 import rx.Observable;
 import rx.Single;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action0;
 import rx.functions.Action1;
-import rx.functions.Func1;
 import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
@@ -45,8 +43,14 @@ public class RxUtils {
         };
     }
 
-    public static Action1<Throwable> logError(String errorMessage) {
-        return error -> Timber.e(error, errorMessage);
+    public static Action0 doNothingCompletable() {
+        return () -> {
+
+        };
+    }
+
+    public static Action1<Throwable> logError(String errorMessage, Object... args) {
+        return error -> Timber.e(error, errorMessage, args);
     }
 
     public static <T> Observable.Transformer<T, T> doOnStartAndEnd(Action1<Boolean> action) {
@@ -66,18 +70,6 @@ public class RxUtils {
         return observable -> observable
                 .doOnSubscribe(() -> isOngoingAction.call(true))
                 .doOnUnsubscribe(() -> isOngoingAction.call(false));
-    }
-
-    @NonNull
-    public static <T> Observable.Transformer<T, T> flatMapIf(Func1<T, Boolean> predicateFunc, Observable<T> flatMapObservable) {
-        return observable -> observable.flatMap(value -> {
-            if (predicateFunc.call(value)) {
-                return flatMapObservable;
-
-            } else {
-                return Observable.just(value);
-            }
-        });
     }
 
 }

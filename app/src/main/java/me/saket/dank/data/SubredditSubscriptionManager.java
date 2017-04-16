@@ -1,12 +1,14 @@
 package me.saket.dank.data;
 
 import static me.saket.dank.data.SubredditSubscription.TABLE_NAME;
+import static me.saket.dank.utils.CommonUtils.toImmutable;
 import static rx.Observable.just;
 
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 
+import com.google.common.collect.ImmutableList;
 import com.squareup.sqlbrite.BriteDatabase;
 
 import net.dean.jraw.models.Subreddit;
@@ -58,6 +60,7 @@ public class SubredditSubscriptionManager {
         return database
                 .createQuery(TABLE_NAME, getQuery, "%" + searchQuery + "%")
                 .mapToList(SubredditSubscription.MAPPER)
+                .map(toImmutable())
                 .flatMap(filteredSubs -> {
                     if (filteredSubs.isEmpty()) {
                         // Check if the database is empty and fetch fresh subscriptions from remote if needed.
@@ -66,10 +69,17 @@ public class SubredditSubscriptionManager {
                                 .createQuery(TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
                                 .mapToList(SubredditSubscription.MAPPER)
                                 .first()
-                                .flatMap(localSubs -> localSubs.isEmpty()
-                                        ? fetchRemoteSubscriptions(localSubs).doOnNext(Dank.subscriptionManager().saveSubscriptionsToDatabase())
-                                        : just(filteredSubs)
-                                );
+                                .flatMap(localSubs -> {
+                                    if (localSubs.isEmpty()) {
+                                        return fetchRemoteSubscriptions(localSubs)
+                                                .doOnNext(saveSubscriptionsToDatabase())
+                                                // Don't let this stream emit anything. A change in the database will anyway trigger that.
+                                                .flatMap(o -> Observable.never());
+
+                                    } else {
+                                        return just(filteredSubs);
+                                    }
+                                });
                     } else {
                         return just(filteredSubs);
                     }
@@ -82,26 +92,24 @@ public class SubredditSubscriptionManager {
                     SubredditSubscription frontpageSub = null;
                     SubredditSubscription popularSub = null;
 
-                    for (int i = filteredSubs.size() - 1; i >= 0; i--) {
-                        SubredditSubscription subscription = filteredSubs.get(i);
+                    List<SubredditSubscription> reOrderedFilteredSubs = new ArrayList<>(filteredSubs);
+
+                    for (int i = reOrderedFilteredSubs.size() - 1; i >= 0; i--) {
+                        SubredditSubscription subscription = reOrderedFilteredSubs.get(i);
                         if (frontpageSub == null && subscription.name().equalsIgnoreCase(frontpageSubName)) {
-                            filteredSubs.remove(i);
+                            reOrderedFilteredSubs.remove(i);
                             frontpageSub = subscription;
+                            reOrderedFilteredSubs.add(0, frontpageSub);
 
                         } else if (popularSub == null && subscription.name().equalsIgnoreCase(popularSubName)) {
                             // Found frontpage!
-                            filteredSubs.remove(i);
+                            reOrderedFilteredSubs.remove(i);
                             popularSub = subscription;
+                            reOrderedFilteredSubs.add(0, popularSub);
                         }
                     }
-
-                    if (frontpageSub != null) {
-                        filteredSubs.add(0, frontpageSub);
-                    }
-                    if (popularSub != null) {
-                        filteredSubs.add(1, popularSub);
-                    }
-                    return filteredSubs;
+                    
+                    return ImmutableList.copyOf(reOrderedFilteredSubs);
                 });
     }
 
