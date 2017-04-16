@@ -27,6 +27,7 @@ import me.saket.dank.data.SubredditSubscription.PendingState;
 import rx.Completable;
 import rx.Observable;
 import rx.functions.Action1;
+import rx.functions.Func1;
 
 /**
  * Manages:
@@ -207,56 +208,65 @@ public class SubredditSubscriptionManager {
 
     private Observable<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
         return (dankRedditClient.isUserLoggedIn() ? loggedInUserSubreddits() : just(loggedOutSubreddits()))
-                .map(remoteSubNames -> {
-                    // So we've received subreddits from the server. Before overriding our database table with these,
-                    // retain pending-subscribe items and pending-unsubscribe items.
-                    Set<String> remoteSubsNamesSet = new HashSet<>(remoteSubNames.size());
-                    for (String remoteSubName : remoteSubNames) {
-                        remoteSubsNamesSet.add(remoteSubName);
+                .map(mergeRemoteSubscriptionsWithLocal(localSubs));
+    }
+
+    /**
+     * Kind of similar to how git merge works. The local subscription are considered as the source of truth for
+     * pending subscribe and unsubscribe subscription.
+     */
+    @NonNull
+    Func1<List<String>, List<SubredditSubscription>> mergeRemoteSubscriptionsWithLocal(List<SubredditSubscription> localSubs) {
+        return remoteSubNames -> {
+            // So we've received subreddits from the server. Before overriding our database table with these,
+            // retain pending-subscribe items and pending-unsubscribe items.
+            Set<String> remoteSubsNamesSet = new HashSet<>(remoteSubNames.size());
+            for (String remoteSubName : remoteSubNames) {
+                remoteSubsNamesSet.add(remoteSubName);
+            }
+
+            ImmutableList.Builder<SubredditSubscription> syncedListBuilder = ImmutableList.builder();
+
+            // Go through the local dataset first to find items that we and/or the remote already have.
+            for (SubredditSubscription localSub : localSubs) {
+                if (remoteSubsNamesSet.contains(localSub.name())) {
+                    // Remote still has this sub.
+                    if (localSub.isUnsubscribePending()) {
+                        syncedListBuilder.add(localSub);
+
+                    } else if (localSub.isSubscribePending()) {
+                        // A pending subscribed sub has already been subscribed on remote. Great.
+                        syncedListBuilder.add(localSub.toBuilder().pendingState(PendingState.NONE).build());
+
+                    } else {
+                        // Both local and remote have the same sub. All cool.
+                        syncedListBuilder.add(localSub);
                     }
 
-                    ImmutableList.Builder<SubredditSubscription> syncedListBuilder = ImmutableList.builder();
-
-                    // Go through the local dataset first to find items that we and/or the remote already have.
-                    for (SubredditSubscription localSub : localSubs) {
-                        if (remoteSubsNamesSet.contains(localSub.name())) {
-                            // Remote still has this sub.
-                            if (localSub.isUnsubscribePending()) {
-                                syncedListBuilder.add(localSub);
-
-                            } else if (localSub.isSubscribePending()) {
-                                // A pending subscribed sub has already been subscribed on remote. Great.
-                                syncedListBuilder.add(localSub.toBuilder().pendingState(PendingState.NONE).build());
-
-                            } else {
-                                // Both local and remote have the same sub. All cool.
-                                syncedListBuilder.add(localSub);
-                            }
-
-                        } else {
-                            // Remote doesn't have this sub.
-                            if (localSub.isSubscribePending()) {
-                                // Oh okay, we haven't been able to make the subscribe API call yet.
-                                syncedListBuilder.add(localSub);
-                            }
-                            // Else, sub has been removed on remote! Will not add this sub.
-                        }
+                } else {
+                    // Remote doesn't have this sub.
+                    if (localSub.isSubscribePending()) {
+                        // Oh okay, we haven't been able to make the subscribe API call yet.
+                        syncedListBuilder.add(localSub);
                     }
+                    // Else, sub has been removed on remote! Will not add this sub.
+                }
+            }
 
-                    // Do a second pass to find items that the remote has but we don't.
-                    Map<String, SubredditSubscription> localSubsMap = new HashMap<>(localSubs.size());
-                    for (SubredditSubscription localSub : localSubs) {
-                        localSubsMap.put(localSub.name(), localSub);
-                    }
-                    for (String remoteSubName : remoteSubNames) {
-                        if (!localSubsMap.containsKey(remoteSubName)) {
-                            // New sub found.
-                            syncedListBuilder.add(SubredditSubscription.create(remoteSubName, PendingState.NONE, false));
-                        }
-                    }
+            // Do a second pass to find items that the remote has but we don't.
+            Map<String, SubredditSubscription> localSubsMap = new HashMap<>(localSubs.size());
+            for (SubredditSubscription localSub : localSubs) {
+                localSubsMap.put(localSub.name(), localSub);
+            }
+            for (String remoteSubName : remoteSubNames) {
+                if (!localSubsMap.containsKey(remoteSubName)) {
+                    // New sub found.
+                    syncedListBuilder.add(SubredditSubscription.create(remoteSubName, PendingState.NONE, false));
+                }
+            }
 
-                    return syncedListBuilder.build();
-                });
+            return syncedListBuilder.build();
+        };
     }
 
     @NonNull

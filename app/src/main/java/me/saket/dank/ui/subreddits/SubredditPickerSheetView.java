@@ -46,7 +46,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
-import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.di.Dank;
@@ -161,11 +160,11 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
      */
     @Override
     public void onClickSubreddit(SubredditSubscription subscription, View subredditItemView) {
-//        if (sheetState == SheetState.BROWSE_SUBS) {
-//            subredditSelectListener.onSelectSubreddit(subscription.name());
-//        } else {
-        showSubredditOptionsMenu(subscription, subredditItemView);
-//        }
+        if (sheetState == SheetState.BROWSE_SUBS) {
+            subredditSelectListener.onSelectSubreddit(subscription.name());
+        } else {
+            showSubredditOptionsMenu(subscription, subredditItemView);
+        }
     }
 
 // ======== SEARCH & SUBREDDIT LIST ======== //
@@ -255,11 +254,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
     @OnClick(R.id.subredditpicker_option_manage)
     void onClickEditSubreddits() {
-        if (BuildConfig.DEBUG) {
-            onClickRefreshSubscriptions();
-            return;
-        }
-
         sheetState = SheetState.MANAGE_SUBS;
         int height = activityRootLayout.getHeight() - getTop();
 
@@ -364,9 +358,10 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView);
         popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
 
+        popupMenu.getMenu().findItem(R.id.action_set_as_default).setVisible(!Dank.subscriptionManager().isDefault(subscription));
+        popupMenu.getMenu().findItem(R.id.action_unsubscribe).setVisible(!Dank.subscriptionManager().isFrontpage(subscription.name()));
         popupMenu.getMenu().findItem(R.id.action_hide).setVisible(!subscription.isHidden());
         popupMenu.getMenu().findItem(R.id.action_unhide).setVisible(subscription.isHidden());
-        popupMenu.getMenu().findItem(R.id.action_set_as_default).setVisible(!Dank.subscriptionManager().isDefault(subscription));
 
         // Enable item change animation, until the user starts searching.
         subredditList.setItemAnimator(new DefaultItemAnimator());
