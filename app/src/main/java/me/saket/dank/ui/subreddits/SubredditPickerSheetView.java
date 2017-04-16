@@ -200,7 +200,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                 })
                 .flatMap(o -> showHiddenSubredditsSubject)
                 .observeOn(io())
-                .switchMap(searchTerm -> Dank.subscriptionManager().search(searchView.getText().toString(), showHiddenSubredditsSubject.getValue()))
+                .switchMap(showHidden -> Dank.subscriptionManager().getAll(searchView.getText().toString(), showHidden))
                 .onErrorResumeNext(error -> {
                     // Don't let an error terminate the stream.
                     Timber.e(error, "Error in fetching subreddits");

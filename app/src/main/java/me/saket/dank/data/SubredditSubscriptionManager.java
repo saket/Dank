@@ -62,15 +62,15 @@ public class SubredditSubscriptionManager {
     /**
      * Gets user's subscriptions from the database.
      *
-     * @param searchQuery Can be empty, but not null.
+     * @param filterTerm Can be empty, but not null.
      */
-    public Observable<List<SubredditSubscription>> search(String searchQuery, boolean includeHidden) {
+    public Observable<List<SubredditSubscription>> getAll(String filterTerm, boolean includeHidden) {
         String getQuery = includeHidden
                 ? SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN
                 : SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_EXCLUDING_HIDDEN;
 
         return database
-                .createQuery(TABLE_NAME, getQuery, "%" + searchQuery + "%")
+                .createQuery(TABLE_NAME, getQuery, "%" + filterTerm + "%")
                 .mapToList(SubredditSubscription.MAPPER)
                 .map(toImmutable())
                 .flatMap(filteredSubs -> {
