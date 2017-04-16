@@ -1,5 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.doOnStartAndComplete;
 import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
@@ -418,6 +419,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
                     Dank.subscriptionManager()
                             .unsubscribe(subscription)
+                            .compose(applySchedulersCompletable())
                             .subscribe(doNothingCompletable(), logError("Couldn't unsubscribe: %s", subscription));
                     return true;
 
@@ -426,12 +428,14 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
                     Dank.subscriptionManager()
                             .setHidden(subscription, true)
+                            .compose(applySchedulersCompletable())
                             .subscribe(doNothingCompletable(), logError("Couldn't hide: %s", subscription));
                     return true;
 
                 case R.id.action_unhide_subreddit:
                     Dank.subscriptionManager()
                             .setHidden(subscription, false)
+                            .compose(applySchedulersCompletable())
                             .subscribe(doNothingCompletable(), logError("Couldn't unhide: %s", subscription));
                     return true;
 

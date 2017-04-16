@@ -13,10 +13,12 @@ import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.http.oauth.Credentials;
 import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthHelper;
+import net.dean.jraw.managers.AccountManager;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.LoggedInAccount;
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
 
@@ -221,12 +223,20 @@ public class DankRedditClient {
         return Observable.fromCallable(() -> redditClient.me());
     }
 
+    public AccountManager userAccountManager() {
+        return new AccountManager(redditClient);
+    }
+
 // ======== SUBREDDITS ======== //
 
     public UserSubredditsPaginator userSubredditsPaginator() {
         UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
         subredditsPaginator.setLimit(200);
         return subredditsPaginator;
+    }
+
+    public Subreddit findSubreddit(String name) {
+        return redditClient.getSubreddit(name);
     }
 
 }

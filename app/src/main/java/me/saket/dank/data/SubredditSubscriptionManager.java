@@ -25,6 +25,7 @@ import java.util.Set;
 
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription.PendingState;
+import me.saket.dank.di.Dank;
 import rx.Completable;
 import rx.Observable;
 import rx.functions.Action1;
@@ -146,7 +147,8 @@ public class SubredditSubscriptionManager {
             SubredditSubscription subscription = SubredditSubscription.create(subredditName, PendingState.PENDING_SUBSCRIBE, false);
             database.update(TABLE_NAME, subscription.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
 
-            dispatchSyncWithRedditJob();
+            Subreddit updatedSubreddit = Dank.reddit().findSubreddit(subscription.name());
+            Dank.reddit().userAccountManager().subscribe(updatedSubreddit);
         });
     }
 
@@ -156,7 +158,8 @@ public class SubredditSubscriptionManager {
             SubredditSubscription updated = SubredditSubscription.create(subscription.name(), PendingState.PENDING_UNSUBSCRIBE, subscription.isHidden());
             database.update(TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
 
-            dispatchSyncWithRedditJob();
+            Subreddit updatedSubreddit = Dank.reddit().findSubreddit(updated.name());
+            Dank.reddit().userAccountManager().unsubscribe(updatedSubreddit);
         });
     }
 
@@ -170,8 +173,6 @@ public class SubredditSubscriptionManager {
 
             SubredditSubscription updated = SubredditSubscription.create(subscription.name(), subscription.pendingState(), hidden);
             database.update(TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
-
-            dispatchSyncWithRedditJob();
         });
     }
 
@@ -183,11 +184,7 @@ public class SubredditSubscriptionManager {
         return Completable.fromAction(() -> database.delete(TABLE_NAME, null));
     }
 
-    private void dispatchSyncWithRedditJob() {
-        // TODO: 15/04/17 Sync with Reddit.
-    }
-
-// ======== DEFAULT ======== //
+    // ======== DEFAULT ======== //
 
     public String defaultSubreddit() {
         return userPrefsManager.defaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));
