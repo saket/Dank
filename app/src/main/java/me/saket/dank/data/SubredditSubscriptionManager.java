@@ -21,7 +21,6 @@ import java.util.Locale;
 
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription.PendingState;
-import me.saket.dank.di.Dank;
 import rx.Completable;
 import rx.Observable;
 import rx.functions.Action1;
@@ -40,11 +39,19 @@ public class SubredditSubscriptionManager {
     private Context appContext;
     private BriteDatabase database;
     private DankRedditClient dankRedditClient;
+    private UserPrefsManager userPrefsManager;
 
-    public SubredditSubscriptionManager(Context appContext, BriteDatabase database, DankRedditClient dankRedditClient) {
-        this.appContext = appContext;
+    public SubredditSubscriptionManager(Context context, BriteDatabase database, DankRedditClient dankRedditClient,
+            UserPrefsManager userPrefsManager)
+    {
+        this.appContext = context;
         this.database = database;
         this.dankRedditClient = dankRedditClient;
+        this.userPrefsManager = userPrefsManager;
+    }
+
+    public boolean isFrontpage(String subredditName) {
+        return appContext.getString(R.string.frontpage_subreddit_name).equals(subredditName);
     }
 
     /**
@@ -159,6 +166,24 @@ public class SubredditSubscriptionManager {
         // TODO: 15/04/17 Sync with Reddit.
     }
 
+// ======== DEFAULT ======== //
+
+    public String defaultSubreddit() {
+        return userPrefsManager.defaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));
+    }
+
+    public void setAsDefault(SubredditSubscription subscription) {
+        userPrefsManager.setDefaultSubreddit(subscription.name());
+    }
+
+    public void resetDefaultSubreddit() {
+        userPrefsManager.setDefaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));
+    }
+
+    public boolean isDefault(SubredditSubscription subscription) {
+        return subscription.name().equalsIgnoreCase(defaultSubreddit());
+    }
+
 // ======== REMOTE SUBREDDITS ======== //
 
     private Observable<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubscriptions) {
@@ -166,9 +191,8 @@ public class SubredditSubscriptionManager {
                 .map(remoteSubNames -> {
                     Timber.i("Getting remote subs");
 
-                    // So we've received subreddits from the server. Before replacing our database table with these,
-                    // we must insert pending-subscribe items and remove pending-unsubscribe items which haven't
-                    // synced yet.
+                    // So we've received subreddits from the server. Before overriding our database table with these,
+                    // retain pending-subscribe items and pending-unsubscribe items.
                     HashMap<String, SubredditSubscription> localSubsMap = new HashMap<>(localSubscriptions.size());
                     for (SubredditSubscription localSub : localSubscriptions) {
                         localSubsMap.put(localSub.name(), localSub);
@@ -194,6 +218,9 @@ public class SubredditSubscriptionManager {
                             finalSubreddits.add(SubredditSubscription.create(remoteSubName, PendingState.NONE, false));
                         }
                     }
+
+                    // TODO: Retain pending-subscribe and pending-unsubscribe items.
+
                     return finalSubreddits;
                 });
     }

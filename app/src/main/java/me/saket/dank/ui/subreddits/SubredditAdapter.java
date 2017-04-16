@@ -21,7 +21,7 @@ import rx.functions.Action1;
 public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscription, SubredditAdapter.SubredditViewHolder> implements Action1<List<SubredditSubscription>> {
 
     interface OnSubredditClickListener {
-        void onClickSubreddit(String subredditName, View subredditItemView);
+        void onClickSubreddit(SubredditSubscription subscription, View subredditItemView);
     }
 
     private OnSubredditClickListener clickListener;
@@ -50,7 +50,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
         holder.bind(subSubscription);
 
         holder.itemView.setOnClickListener(itemView -> {
-            clickListener.onClickSubreddit(subSubscription.name(), itemView);
+            clickListener.onClickSubreddit(subSubscription, itemView);
         });
     }
 

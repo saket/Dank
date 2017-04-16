@@ -1,6 +1,8 @@
 package me.saket.dank.ui.subreddits;
 
+import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
+import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginBottom;
 import static me.saket.dank.utils.Views.setPaddingBottom;
@@ -17,6 +19,7 @@ import android.content.Context;
 import android.content.res.ColorStateList;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,7 +41,6 @@ import java.util.Collections;
 
 import butterknife.BindColor;
 import butterknife.BindDimen;
-import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -75,10 +77,9 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     @BindView(R.id.subredditpicker_add_and_more_options_container) ViewGroup addAndMoreOptionsContainer;
     @BindView(R.id.subredditpicker_save_fab) FloatingActionButton saveButton;
 
-    @BindString(R.string.frontpage_subreddit_name) String frontpageSubredditName;
     @BindDimen(R.dimen.subreddit_picker_sheet_height) int collapsedPickerSheetHeight;
     @BindDimen(R.dimen.subreddit_picker_sheet_bottom_margin) int parentSheetBottomMarginForShadows;
-    @BindColor(R.color.subredditpicker_subreddit_button_tint_selected) int selectedSubredditButtonTintColor;
+    @BindColor(R.color.subredditpicker_subreddit_button_tint_selected) int focusedSubredditButtonTintColor;
 
     private ViewGroup activityRootLayout;
     private ToolbarExpandableSheet parentSheet;
@@ -139,6 +140,14 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         super.onDetachedFromWindow();
     }
 
+    public void setActivityRootLayout(ViewGroup activityRootLayout) {
+        this.activityRootLayout = activityRootLayout;
+    }
+
+    public void setParentSheet(ToolbarExpandableSheet parentSheet) {
+        this.parentSheet = parentSheet;
+    }
+
     public void setOnSubredditSelectListener(OnSubredditSelectListener selectListener) {
         subredditSelectListener = selectListener;
     }
@@ -149,45 +158,15 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
      * options menu is shown if the user is managing the subs.
      */
     @Override
-    public void onClickSubreddit(String subredditName, View subredditItemView) {
-        if (sheetState == SheetState.BROWSE_SUBS) {
-            subredditSelectListener.onSelectSubreddit(subredditName);
-
-        } else {
-            ColorStateList originalTintList = subredditItemView.getBackgroundTintList();
-            subredditItemView.setBackgroundTintList(ColorStateList.valueOf(selectedSubredditButtonTintColor));
-
-            PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView);
-            popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
-            popupMenu.setOnMenuItemClickListener(item -> {
-                switch (item.getItemId()) {
-                    case R.id.action_set_as_default:
-                        return true;
-
-                    case R.id.action_unsubscribe:
-                        return true;
-
-                    case R.id.action_hide:
-                        return true;
-                    default:
-
-                        throw new UnsupportedOperationException();
-                }
-            });
-            popupMenu.setOnDismissListener(menu -> {
-                subredditItemView.setBackgroundTintList(originalTintList);
-            });
-            popupMenu.show();
-        }
+    public void onClickSubreddit(SubredditSubscription subscription, View subredditItemView) {
+//        if (sheetState == SheetState.BROWSE_SUBS) {
+//            subredditSelectListener.onSelectSubreddit(subscription.name());
+//        } else {
+        showSubredditOptionsMenu(subscription, subredditItemView);
+//        }
     }
 
-    public void setActivityRootLayout(ViewGroup activityRootLayout) {
-        this.activityRootLayout = activityRootLayout;
-    }
-
-    public void setParentSheet(ToolbarExpandableSheet parentSheet) {
-        this.parentSheet = parentSheet;
-    }
+// ======== SEARCH & SUBREDDIT LIST ======== //
 
     // TODO: 15/04/17 Handle error.
     // TODO: 15/04/17 Empty state.
@@ -198,8 +177,15 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                     // Since CharSequence is mutable, it's important to create a copy before doing a debounce().
                     return searchTerm.toString().trim();
                 })
+                .doOnNext(o -> {
+                    // So this part is interesting. We want item change animations to work only if the user is
+                    // adding/removing subreddits and not while searching. Setting the animator to null here ensures
+                    // that the animation is disabled as soon as a text change event is received. However, enabling
+                    // the animation later like when a subscription is removed in showSubredditOptionsMenu() ensures
+                    // that the animations run when any event is emitted by downstream Rx chains.
+                    subredditList.setItemAnimator(null);
+                })
                 .observeOn(io())
-                .flatMap(searchTerm -> Dank.subscriptionManager().search(searchTerm, false /* includeHidden */))
                 .switchMap(searchTerm -> Dank.subscriptionManager().search(searchTerm, false /* includeHidden */))
                 .onErrorResumeNext(error -> {
                     // Don't let an error terminate the stream.
@@ -236,17 +222,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         );
     }
 
-    // TODO: How should the enter key in search work when edit mode is enabled.
-    @OnEditorAction(R.id.subredditpicker_search)
-    boolean onClickSearchFieldEnterKey(int actionId) {
-        if (actionId == EditorInfo.IME_ACTION_GO) {
-            String searchTerm = searchView.getText().toString().trim();
-            subredditSelectListener.onSelectSubreddit(searchTerm);
-            return true;
-        }
-        return false;
-    }
-
     private Action1<Boolean> setSubredditLoadProgressVisible() {
         return visible -> {
             if (visible) {
@@ -261,6 +236,17 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                 subredditsRefreshProgressView.setVisibility(View.GONE);
             }
         };
+    }
+
+    // TODO: How should the enter key in search work when edit mode is enabled.
+    @OnEditorAction(R.id.subredditpicker_search)
+    boolean onClickSearchFieldEnterKey(int actionId) {
+        if (actionId == EditorInfo.IME_ACTION_GO) {
+            String searchTerm = searchView.getText().toString().trim();
+            subredditSelectListener.onSelectSubreddit(searchTerm);
+            return true;
+        }
+        return false;
     }
 
 // ======== ANIMATION ======== //
@@ -358,7 +344,65 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         return view.animate().alpha(toAlpha).setDuration(ANIM_DURATION).setInterpolator(ANIM_INTERPOLATOR);
     }
 
-// ======== ADD NEW SUBREDDIT ======== //
+// ======== OPTIONS ======== //
+
+    private void showSubredditOptionsMenu(SubredditSubscription subscription, View subredditItemView) {
+        PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView);
+        popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
+
+        popupMenu.getMenu().findItem(R.id.action_hide).setVisible(!subscription.isHidden());
+        popupMenu.getMenu().findItem(R.id.action_unhide).setVisible(subscription.isHidden());
+        popupMenu.getMenu().findItem(R.id.action_set_as_default).setVisible(!Dank.subscriptionManager().isDefault(subscription));
+
+        // Enable item change animation, until the user starts searching.
+        subredditList.setItemAnimator(new DefaultItemAnimator());
+
+        Action1<SubredditSubscription> resetDefaultIfDefaultWasRemoved = removedSub -> {
+            if (Dank.subscriptionManager().isDefault(removedSub)) {
+                Dank.subscriptionManager().resetDefaultSubreddit();
+            }
+        };
+
+        popupMenu.setOnMenuItemClickListener(item -> {
+            switch (item.getItemId()) {
+                case R.id.action_set_as_default:
+                    Dank.subscriptionManager().setAsDefault(subscription);
+                    return true;
+
+                case R.id.action_unsubscribe:
+                    resetDefaultIfDefaultWasRemoved.call(subscription);
+
+                    Dank.subscriptionManager()
+                            .unsubscribe(subscription)
+                            .subscribe(doNothingCompletable(), logError("Couldn't unsubscribe: %s", subscription));
+                    return true;
+
+                case R.id.action_hide:
+                    resetDefaultIfDefaultWasRemoved.call(subscription);
+
+                    Dank.subscriptionManager()
+                            .setHidden(subscription, true)
+                            .subscribe(doNothingCompletable(), logError("Couldn't hide: %s", subscription));
+                    return true;
+
+                case R.id.action_unhide:
+                    Dank.subscriptionManager()
+                            .setHidden(subscription, false)
+                            .subscribe(doNothingCompletable(), logError("Couldn't unhide: %s", subscription));
+                    return true;
+
+                default:
+                    throw new UnsupportedOperationException();
+            }
+        });
+
+        // Apply a subtle tint on the clicked subreddit button to indicate focus.
+        ColorStateList originalTintList = subredditItemView.getBackgroundTintList();
+        subredditItemView.setBackgroundTintList(ColorStateList.valueOf(focusedSubredditButtonTintColor));
+        popupMenu.setOnDismissListener(menu -> subredditItemView.setBackgroundTintList(originalTintList));
+
+        popupMenu.show();
+    }
 
     @OnClick(R.id.subredditpicker_option_add_new)
     void onClickNewSubreddit() {

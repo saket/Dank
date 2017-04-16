@@ -1,5 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
+import static me.saket.dank.di.Dank.subscriptionManager;
 import static me.saket.dank.utils.CommonUtils.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doOnStartAndEnd;
@@ -163,13 +164,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
         // Get frontpage (or retained subreddit's) submissions.
         if (savedInstanceState != null) {
-            activeSubredditName = savedInstanceState.getString(KEY_ACTIVE_SUBREDDIT);
+            loadSubmissions(savedInstanceState.getString(KEY_ACTIVE_SUBREDDIT));
+
         } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
-            activeSubredditName = ((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name;
+            loadSubmissions(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
+
         } else {
-            activeSubredditName = getString(R.string.frontpage_subreddit_name);
+            loadSubmissions(Dank.subscriptionManager().defaultSubreddit());
         }
-        loadSubmissions(activeSubredditName);
 
         setupToolbarSheet();
     }
@@ -183,11 +185,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     @Override
     public void setTitle(CharSequence subredditName) {
-        boolean isFrontpage = Dank.reddit().isFrontpage(subredditName.toString());
+        boolean isFrontpage = subscriptionManager().isFrontpage(subredditName.toString());
         toolbarTitleView.setText(isFrontpage ? getString(R.string.app_name) : subredditName);
     }
 
-    // TODO: 15/04/17 Cancel existing loads before loading a new one. 
+    // TODO: 15/04/17 Cancel existing loads before loading a new one.
     private void loadSubmissions(String subredditName) {
         activeSubredditName = subredditName;
         submissionsAdapter.updateData(null);
@@ -331,13 +333,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
             // Reload submissions if we're on the frontpage because the frontpage
             // submissions will change if the subscriptions change.
-            if (Dank.reddit().isFrontpage(activeSubredditName)) {
+            if (subscriptionManager().isFrontpage(activeSubredditName)) {
                 loadSubmissions(activeSubredditName);
             }
 
             // Reload subreddit subscriptions. Not implementing onError() is intentional.
             // This code is not supposed to fail :/
-            Dank.subscriptionManager().removeAll().subscribe();
+            subscriptionManager().removeAll().subscribe();
 
         } else {
             super.onActivityResult(requestCode, resultCode, data);

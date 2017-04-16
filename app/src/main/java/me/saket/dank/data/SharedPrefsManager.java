@@ -1,8 +1,6 @@
 package me.saket.dank.data;
 
-import android.content.Context;
 import android.content.SharedPreferences;
-import android.preference.PreferenceManager;
 
 import java.util.UUID;
 
@@ -12,8 +10,8 @@ public class SharedPrefsManager {
 
     protected SharedPreferences sharedPrefs;
 
-    public SharedPrefsManager(Context context) {
-        sharedPrefs = PreferenceManager.getDefaultSharedPreferences(context);
+    public SharedPrefsManager(SharedPreferences sharedPrefs) {
+        this.sharedPrefs = sharedPrefs;
     }
 
     public UUID getDeviceUuid() {

@@ -2,8 +2,10 @@ package me.saket.dank.di;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.preference.PreferenceManager;
 
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.ryanharter.auto.value.moshi.AutoValueMoshiAdapterFactory;
@@ -78,14 +80,20 @@ public class DankAppModule {
 
     @Provides
     @Singleton
-    SharedPrefsManager provideSharedPrefsManager() {
-        return new SharedPrefsManager(appContext);
+    SharedPreferences provideSharedPrefs() {
+        return PreferenceManager.getDefaultSharedPreferences(appContext);
     }
 
     @Provides
     @Singleton
-    UserPrefsManager provideUserPrefsManager(SharedPrefsManager sharedPrefsManager) {
-        return new UserPrefsManager(sharedPrefsManager);
+    SharedPrefsManager provideSharedPrefsManager(SharedPreferences sharedPrefs) {
+        return new SharedPrefsManager(sharedPrefs);
+    }
+
+    @Provides
+    @Singleton
+    UserPrefsManager provideUserPrefsManager(SharedPreferences sharedPrefs) {
+        return new UserPrefsManager(sharedPrefs);
     }
 
     @Provides
@@ -148,14 +156,16 @@ public class DankAppModule {
                 .build();
 
         BriteDatabase briteDatabase = sqlBrite.wrapDatabaseHelper(new DankSqliteOpenHelper(appContext), Schedulers.io());
-        briteDatabase.setLoggingEnabled(true);
+        briteDatabase.setLoggingEnabled(false);
         return briteDatabase;
     }
 
     @Provides
     @Singleton
-    SubredditSubscriptionManager provideSubredditSubscriptionManager(BriteDatabase briteDatabase, DankRedditClient dankRedditClient) {
-        return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient);
+    SubredditSubscriptionManager provideSubredditSubscriptionManager(BriteDatabase briteDatabase, DankRedditClient dankRedditClient,
+            UserPrefsManager userPrefsManager)
+    {
+        return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient, userPrefsManager);
     }
 
 }

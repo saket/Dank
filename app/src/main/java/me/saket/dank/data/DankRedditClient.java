@@ -56,7 +56,7 @@ public class DankRedditClient {
     }
 
     public SubredditPaginator subredditPaginator(String subredditName) {
-        if (isFrontpage(subredditName)) {
+        if (Dank.subscriptionManager().isFrontpage(subredditName)) {
             return new SubredditPaginator(redditClient);
         } else {
             return new SubredditPaginator(redditClient, subredditName);
@@ -227,10 +227,6 @@ public class DankRedditClient {
         UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
         subredditsPaginator.setLimit(200);
         return subredditsPaginator;
-    }
-
-    public boolean isFrontpage(String subredditName) {
-        return context.getString(R.string.frontpage_subreddit_name).equals(subredditName);
     }
 
 }
