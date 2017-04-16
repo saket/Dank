@@ -209,26 +209,27 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                 .compose(doOnStartAndNext(setSubredditLoadProgressVisible()))
                 .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
                 .map(filteredSubs -> {
-                    // If search is active, show user's search term in the results unless an exact match was found.
-                    String searchTerm = searchView.getText().toString();
+                    if (sheetState == SheetState.BROWSE_SUBS) {
+                        // If search is active, show user's search term in the results unless an exact match was found.
+                        String searchTerm = searchView.getText().toString();
 
-                    if (!searchTerm.isEmpty()) {
-                        boolean exactSearchFound = false;
-                        for (SubredditSubscription filteredSub : filteredSubs) {
-                            if (filteredSub.name().equalsIgnoreCase(searchTerm)) {
-                                exactSearchFound = true;
-                                break;
+                        if (!searchTerm.isEmpty()) {
+                            boolean exactSearchFound = false;
+                            for (SubredditSubscription filteredSub : filteredSubs) {
+                                if (filteredSub.name().equalsIgnoreCase(searchTerm)) {
+                                    exactSearchFound = true;
+                                    break;
+                                }
+                            }
+
+                            if (!exactSearchFound) {
+                                return ImmutableList.<SubredditSubscription>builder()
+                                        .addAll(filteredSubs)
+                                        .add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false))
+                                        .build();
                             }
                         }
-
-                        if (!exactSearchFound) {
-                            return ImmutableList.<SubredditSubscription>builder()
-                                    .addAll(filteredSubs)
-                                    .add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false))
-                                    .build();
-                        }
                     }
-
                     return filteredSubs;
                 })
                 .subscribe(subredditAdapter)
