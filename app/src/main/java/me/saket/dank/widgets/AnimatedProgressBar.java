@@ -1,5 +1,7 @@
 package me.saket.dank.widgets;
 
+import static me.saket.dank.utils.Views.executeOnNextLayout;
+
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
@@ -19,6 +21,11 @@ public class AnimatedProgressBar extends ProgressBar {
 
     public AnimatedProgressBar(Context context, AttributeSet attrs) {
         super(context, attrs);
+
+        executeOnNextLayout(this, () -> {
+            setVisible(getVisibility() == VISIBLE);
+            super.setVisibility(VISIBLE);
+        });
     }
 
     public void setProgressWithAnimation(int toProgress) {

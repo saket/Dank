@@ -116,13 +116,15 @@
         android:layout_alignParentEnd="true"
         android:layout_margin="@dimen/spacing16"
         android:src="@drawable/ic_done_24dp"
-        android:tint="@color/black" />
+        android:tint="@color/black"
+        tools:ignore="RelativeOverlap" />
 
-    <ProgressBar
+    <me.saket.dank.widgets.AnimatedProgressBar
         android:id="@+id/subredditpicker_refresh_progress"
         style="@style/DankProgressBar.Horizontal.BottomAligned"
+        android:indeterminateTint="@color/color_accent"
         android:layout_alignParentBottom="true"
-        android:layout_below="@+id/subredditpicker_subreddit_list"
-        android:indeterminateTint="@color/black_opacity_50"
-        android:visibility="gone" />
+        android:indeterminate="true"
+        android:visibility="gone"
+        tools:visibility="visible" />
 </RelativeLayout>

@@ -1,6 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
+import static me.saket.dank.utils.RxUtils.doOnStartAndEndCompletable;
 import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setHeight;
@@ -45,6 +46,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.di.Dank;
@@ -253,6 +255,11 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
     @OnClick(R.id.subredditpicker_option_manage)
     void onClickEditSubreddits() {
+        if (BuildConfig.DEBUG) {
+            onClickRefreshSubscriptions();
+            return;
+        }
+
         sheetState = SheetState.MANAGE_SUBS;
         int height = activityRootLayout.getHeight() - getTop();
 
@@ -293,6 +300,13 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         heightAnimator.setInterpolator(ANIM_INTERPOLATOR);
         heightAnimator.setDuration(ANIM_DURATION);
         heightAnimator.start();
+    }
+
+    private void onClickRefreshSubscriptions() {
+        subscriptions.add(Dank.subscriptionManager()
+                .refreshSubscriptions()
+                .compose(doOnStartAndEndCompletable(setSubredditLoadProgressVisible()))
+                .subscribe(doNothingCompletable(), logError("Couldn't refresh subscriptions")));
     }
 
     @OnClick(R.id.subredditpicker_save_fab)
