@@ -116,4 +116,5 @@ dependencies {
     compile 'com.danikula:videocache:2.6.4'
 
     compile 'com.idescout.sql:sqlscout-server:2.0'
+    testCompile 'junit:junit:4.12'
 }

@@ -7,6 +7,7 @@ import static rx.Observable.just;
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
+import android.support.annotation.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
 import com.squareup.sqlbrite.BriteDatabase;
@@ -216,6 +217,7 @@ public class SubredditSubscriptionManager {
      * pending subscribe and unsubscribe subscription.
      */
     @NonNull
+    @VisibleForTesting()
     Func1<List<String>, List<SubredditSubscription>> mergeRemoteSubscriptionsWithLocal(List<SubredditSubscription> localSubs) {
         return remoteSubNames -> {
             // So we've received subreddits from the server. Before overriding our database table with these,
