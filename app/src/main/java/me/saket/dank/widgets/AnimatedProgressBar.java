@@ -1,7 +1,5 @@
 package me.saket.dank.widgets;
 
-import static me.saket.dank.utils.Views.executeOnNextLayout;
-
 import android.animation.ObjectAnimator;
 import android.content.Context;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
@@ -22,10 +20,8 @@ public class AnimatedProgressBar extends ProgressBar {
     public AnimatedProgressBar(Context context, AttributeSet attrs) {
         super(context, attrs);
 
-        executeOnNextLayout(this, () -> {
-            setVisible(getVisibility() == VISIBLE);
-            super.setVisibility(VISIBLE);
-        });
+        setVisible(getVisibility() == VISIBLE);
+        super.setVisibility(VISIBLE);
     }
 
     public void setProgressWithAnimation(int toProgress) {
@@ -63,25 +59,28 @@ public class AnimatedProgressBar extends ProgressBar {
     }
 
     private void setVisible(boolean visible) {
-        ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
-        boolean isTopAligned = marginLayoutParams.topMargin < 0;
-
         if (getHeight() > 0) {
+            ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
+            boolean isTopAligned = marginLayoutParams.topMargin < 0;
+
             // Since we apply negative margins to negate ProgressView's extra vertical spacing,
             // set a pivot that ensures the gravity of the bar while animating in/out.
             float pivotYFactor = (float) Math.abs(isTopAligned ? marginLayoutParams.topMargin : 2 * marginLayoutParams.bottomMargin) / getHeight();
             setPivotY(getHeight() * pivotYFactor);
-        }
 
-        animate().cancel();
-        animate()
-                .scaleY(visible ? 1f : 0f)
-                .setStartDelay(visibilityAnimationOngoing ? 100 : 0)
-                .setInterpolator(new DecelerateInterpolator())
-                .setDuration(400)
-                .withStartAction(() -> visibilityAnimationOngoing = true)
-                .withEndAction(() -> visibilityAnimationOngoing = false)
-                .start();
+            animate().cancel();
+            animate()
+                    .scaleY(visible ? 1f : 0f)
+                    .setStartDelay(visibilityAnimationOngoing ? 100 : 0)
+                    .setInterpolator(new DecelerateInterpolator())
+                    .setDuration(400)
+                    .withStartAction(() -> visibilityAnimationOngoing = true)
+                    .withEndAction(() -> visibilityAnimationOngoing = false)
+                    .start();
+        } else {
+            setScaleY(visible ? 1f : 0f);
+            visibilityAnimationOngoing = false;
+        }
     }
 
 }
