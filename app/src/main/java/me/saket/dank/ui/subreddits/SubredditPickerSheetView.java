@@ -311,8 +311,10 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
     @OnClick(R.id.subredditpicker_save_fab)
     void onClickSaveSubreddits() {
-        // TODO: Save order.
         sheetState = SheetState.BROWSE_SUBS;
+
+        // Hide hidden subs.
+        showHiddenSubredditsSubject.call(false);
 
         animateAlpha(addAndMoreOptionsContainer, 0f)
                 .withStartAction(() -> saveButton.hide())
