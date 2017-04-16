@@ -25,6 +25,8 @@
     <color name="window_background">#303030</color>
     <color name="toolbar">#262626</color>
 
+    <color name="color_accent_secondary">@color/teal_A100</color>
+
     <color name="userprofile_unread_messages">@color/orange_500</color>
     <color name="userprofile_no_messages">@color/gray_300</color>
 

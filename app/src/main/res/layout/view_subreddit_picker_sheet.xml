@@ -5,7 +5,8 @@
     android:layout_width="match_parent"
     android:layout_height="@dimen/subreddit_picker_sheet_height"
     tools:background="@color/toolbar"
-    tools:layout_marginTop="25dp">
+    tools:layout_marginTop="25dp"
+    xmlns:app="http://schemas.android.com/apk/res-auto">
 
     <!-- Background is necessary on this View for ripples of its child Views
          to be drawn. -->
@@ -117,6 +118,7 @@
         android:layout_margin="@dimen/spacing16"
         android:src="@drawable/ic_done_24dp"
         android:tint="@color/black"
+        app:rippleColor="@color/color_accent_secondary"
         tools:ignore="RelativeOverlap" />
 
     <me.saket.dank.widgets.AnimatedProgressBar
