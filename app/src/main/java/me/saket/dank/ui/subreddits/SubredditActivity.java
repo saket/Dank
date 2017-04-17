@@ -48,7 +48,7 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Subscription;
 
-public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, SubscribeToNewSubredditDialog.Callback {
+public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
 
     private static final int REQUEST_CODE_LOGIN = 100;
     protected static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
@@ -297,7 +297,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
                 @Override
                 public void onClickAddNewSubreddit() {
-                    SubscribeToNewSubredditDialog.show(getSupportFragmentManager());
+                    NewSubredditSubscriptionDialog.show(getSupportFragmentManager());
                 }
             });
         }

@@ -34,7 +34,7 @@ import timber.log.Timber;
 /**
  * Let's the user subscribe to a new subreddit by manually entering the sub name.
  */
-public class SubscribeToNewSubredditDialog extends DankDialogFragment {
+public class NewSubredditSubscriptionDialog extends DankDialogFragment {
 
     @BindView(R.id.newsubredditdialog_subreddit) EditText subredditView;
     @BindView(R.id.newsubredditdialog_subreddit_inputlayout) TextInputLayout subredditViewInputLayout;
@@ -48,14 +48,14 @@ public class SubscribeToNewSubredditDialog extends DankDialogFragment {
      * Show this dialog.
      */
     public static void show(FragmentManager fragmentManager) {
-        String tag = SubscribeToNewSubredditDialog.class.getSimpleName();
-        SubscribeToNewSubredditDialog dialog = (SubscribeToNewSubredditDialog) fragmentManager.findFragmentByTag(tag);
+        String tag = NewSubredditSubscriptionDialog.class.getSimpleName();
+        NewSubredditSubscriptionDialog dialog = (NewSubredditSubscriptionDialog) fragmentManager.findFragmentByTag(tag);
 
         if (dialog != null) {
             dialog.dismiss();
         }
 
-        dialog = new SubscribeToNewSubredditDialog();
+        dialog = new NewSubredditSubscriptionDialog();
         dialog.show(fragmentManager, tag);
     }
 
