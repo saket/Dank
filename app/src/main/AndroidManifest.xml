@@ -4,6 +4,9 @@
 
     <uses-permission android:name="android.permission.INTERNET" />
 
+    <!-- For JobScheduler. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
     <application
         android:name=".DankApplication"
         android:allowBackup="true"
@@ -47,5 +50,10 @@
             android:name=".ui.user.MessagesActivity"
             android:label="@string/activity_messages"
             android:parentActivityName=".ui.subreddits.SubredditActivity" />
+
+        <service
+            android:name=".ui.subreddits.SubredditSubscriptionsSyncJob"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

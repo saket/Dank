@@ -31,6 +31,8 @@ import rx.Observable;
 import rx.Single;
 import rx.functions.Action0;
 import rx.functions.Func1;
+import rx.subjects.BehaviorSubject;
+import rx.subjects.Subject;
 import timber.log.Timber;
 
 /**
@@ -40,22 +42,31 @@ public class DankRedditClient {
 
     public static final CommentSort DEFAULT_COMMENT_SORT = CommentSort.TOP;
 
-    private final Context context;
     private final RedditClient redditClient;
     private final AuthenticationManager redditAuthManager;
     private final Credentials loggedInUserCredentials;
     private final Credentials userlessAppCredentials;
+    private final RefreshTokenHandler tokenHandler;
 
     private boolean authManagerInitialized;
+    private Subject<Boolean, Boolean> onRedditClientAuthenticatedRelay = BehaviorSubject.create();
 
     public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager) {
-        this.context = context;
         this.redditClient = redditClient;
         this.redditAuthManager = redditAuthManager;
 
         String redditAppClientId = context.getString(R.string.reddit_app_client_id);
         loggedInUserCredentials = Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
         userlessAppCredentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
+        tokenHandler = new RefreshTokenHandler(new AndroidTokenStore(context), redditClient);
+    }
+
+    /**
+     * A relay that emits an event when the Reddit client has been authenticated.
+     * This should happen only once app cold start.
+     */
+    public Subject<Boolean, Boolean> onRedditClientAuthenticated() {
+        return onRedditClientAuthenticatedRelay;
     }
 
     public SubredditPaginator subredditPaginator(String subredditName) {
@@ -66,7 +77,7 @@ public class DankRedditClient {
         }
     }
 
-    public Observable<Submission> submission(DankSubmissionRequest submissionRequest) {
+    public Single<Submission> submission(DankSubmissionRequest submissionRequest) {
         SubmissionRequest jrawSubmissionRequest = new SubmissionRequest.Builder(submissionRequest.id())
                 .sort(submissionRequest.commentSort())
                 .focus(submissionRequest.focusComment())
@@ -74,7 +85,7 @@ public class DankRedditClient {
                 .limit(submissionRequest.commentLimit())
                 .build();
 
-        return Observable.fromCallable(() -> redditClient.getSubmission(jrawSubmissionRequest));
+        return Single.fromCallable(() -> redditClient.getSubmission(jrawSubmissionRequest));
     }
 
     /**
@@ -92,7 +103,7 @@ public class DankRedditClient {
     /**
      * Ensures that the app is authorized to make Reddit API calls and execute <var>wrappedObservable</var> to be specific.
      */
-    public <T> Observable<T> withAuth(Observable<T> wrappedObservable) {
+    public <T> Single<T> withAuth(Single<T> wrappedObservable) {
         return Dank.reddit()
                 .authenticateIfNeeded()
                 .flatMap(__ -> wrappedObservable)
@@ -102,10 +113,10 @@ public class DankRedditClient {
     /**
      * Get a new API token if we haven't already or refresh the existing API token if the last one has expired.
      */
-    private Observable<Boolean> authenticateIfNeeded() {
-        return Observable.fromCallable(() -> {
+    private Single<Boolean> authenticateIfNeeded() {
+        return Single.fromCallable(() -> {
             if (!authManagerInitialized) {
-                redditAuthManager.init(redditClient, new RefreshTokenHandler(new AndroidTokenStore(context), redditClient));
+                redditAuthManager.init(redditClient, tokenHandler);
                 authManagerInitialized = true;
             }
 
@@ -113,13 +124,19 @@ public class DankRedditClient {
             if (authState != AuthenticationState.READY) {
                 switch (authState) {
                     case NONE:
-                        //Timber.d("Authenticating userless app");
+                        Timber.d("Authenticating userless app");
                         redditClient.authenticate(redditClient.getOAuthHelper().easyAuth(userlessAppCredentials));
+                        onRedditClientAuthenticatedRelay.onNext(true);
                         break;
 
                     case NEED_REFRESH:
-                        //Timber.d("Refreshing token");
+                        boolean isFirstRefreshSinceAppStart = !redditClient.isAuthenticated();
+                        Timber.d("Refreshing token. isFirstRefreshSinceAppStart? %s", isFirstRefreshSinceAppStart);
                         redditAuthManager.refreshAccessToken(loggedInUserCredentials);
+
+                        if (isFirstRefreshSinceAppStart) {
+                            onRedditClientAuthenticatedRelay.onNext(true);
+                        }
                         break;
                 }
             } //else {
@@ -142,10 +159,12 @@ public class DankRedditClient {
             if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
                 // Re-try authenticating.
                 Timber.w("Attempting to refresh token");
-                return Observable.fromCallable(() -> {
-                    redditAuthManager.refreshAccessToken(isUserLoggedIn() ? loggedInUserCredentials : userlessAppCredentials);
-                    return true;
-                });
+
+                return isUserLoggedIn()
+                        .flatMapObservable(loggedIn -> Observable.fromCallable(() -> {
+                            redditAuthManager.refreshAccessToken(loggedIn ? loggedInUserCredentials : userlessAppCredentials);
+                            return true;
+                        }));
 
             } else {
                 return Observable.error(error);
@@ -216,12 +235,16 @@ public class DankRedditClient {
         return redditClient.getAuthenticatedUser();
     }
 
-    public boolean isUserLoggedIn() {
-        return redditClient.isAuthenticated() && redditClient.hasActiveUserContext();
+    public Single<Boolean> isUserLoggedIn() {
+        return onRedditClientAuthenticated()
+                .map(o -> {
+                    Timber.i("Poop");
+                    return redditClient.isAuthenticated() && redditClient.hasActiveUserContext();
+                }).first().toSingle();
     }
 
-    public Observable<LoggedInAccount> loggedInUserAccount() {
-        return Observable.fromCallable(() -> redditClient.me());
+    public Single<LoggedInAccount> loggedInUserAccount() {
+        return Single.fromCallable(() -> redditClient.me());
     }
 
     public AccountManager userAccountManager() {

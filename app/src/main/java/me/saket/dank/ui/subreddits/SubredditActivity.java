@@ -2,14 +2,13 @@ package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.di.Dank.subscriptionManager;
 import static me.saket.dank.utils.CommonUtils.defaultIfNull;
-import static me.saket.dank.utils.RxUtils.applySchedulers;
-import static me.saket.dank.utils.RxUtils.doOnStartAndEnd;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+import static me.saket.dank.utils.RxUtils.doOnStartAndEndSingle;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
-import static rx.Observable.fromCallable;
 
 import android.content.Intent;
 import android.graphics.Rect;
@@ -46,7 +45,9 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
+import rx.Single;
 import rx.Subscription;
+import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
 
@@ -166,15 +167,28 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         // Get frontpage (or retained subreddit's) submissions.
         if (savedInstanceState != null) {
             loadSubmissions(savedInstanceState.getString(KEY_ACTIVE_SUBREDDIT));
-
         } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
             loadSubmissions(((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name);
-
         } else {
             loadSubmissions(Dank.subscriptionManager().defaultSubreddit());
         }
 
         setupToolbarSheet();
+
+        // Schedule subreddit syncs + do an immediate sync.
+        if (isTaskRoot()) {
+            unsubscribeOnDestroy(Dank.reddit().isUserLoggedIn()
+                    .subscribe(loggedIn -> {
+                        if (loggedIn) {
+                            Timber.i("Requesting sync");
+                            SubredditSubscriptionsSyncJob.schedule(this);
+                            SubredditSubscriptionsSyncJob.syncImmediately(this);
+                        } else {
+                            Timber.i("Couldn't start snyc. Is logged in? %s", Dank.reddit().isUserLoggedIn());
+                        }
+                    })
+            );
+        }
     }
 
     @Override
@@ -199,9 +213,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
         SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subredditName);
         Subscription subscription = Dank.reddit()
-                .withAuth(fromCallable(() -> subredditPaginator.next()))
-                .compose(applySchedulers())
-                .compose(doOnStartAndEnd(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+                .withAuth(Single.fromCallable(() -> subredditPaginator.next()))
+                .compose(applySchedulersSingle())
+                .compose(doOnStartAndEndSingle(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
                 .subscribe(submissionsAdapter, logError("Couldn't get front-page"));
         unsubscribeOnDestroy(subscription);
     }
@@ -260,11 +274,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
             case R.id.action_user_profile:
-                if (Dank.reddit().isUserLoggedIn()) {
-                    showUserProfileSheet();
-                } else {
-                    LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
-                }
+                unsubscribeOnDestroy(Dank.reddit()
+                        .isUserLoggedIn()
+                        .subscribe(loggedIn -> {
+                            Timber.i("loggedIn: %s", loggedIn);
+                            if (loggedIn) {
+                                showUserProfileSheet();
+                            } else {
+                                LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
+                            }
+                        })
+                );
                 return true;
 
             case R.id.action_preferences:

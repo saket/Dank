@@ -3,7 +3,6 @@ package me.saket.dank.ui.subreddits;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
-import static me.saket.dank.utils.RxUtils.doOnStartAndComplete;
 import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setHeight;
@@ -150,6 +149,11 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         subredditList.setItemAnimator(null);
 
         setupSubredditsSearch();
+
+        subscriptions.add(SubredditSubscriptionsSyncJob
+                .progressUpdates()
+                .subscribe(setSubredditLoadProgressVisible())
+        );
     }
 
     @Override
@@ -380,10 +384,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                     return true;
 
                 case R.id.action_refresh_subreddits:
-                    Dank.subscriptionManager()
-                            .refreshSubscriptions()
-                            .compose(doOnStartAndComplete(setSubredditLoadProgressVisible()))
-                            .subscribe(doNothingCompletable(), logError("Couldn't refresh subscriptions"));
+                    SubredditSubscriptionsSyncJob.syncImmediately(getContext());
                     return true;
 
                 default:
@@ -468,32 +469,20 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
      * Finds the View for <var>newSubreddit</var> in the list and highlights it temporarily.
      */
     public void subscribeTo(Subreddit newSubreddit) {
-        Action0 findAndHighlightSubredditAction = () -> {
-            Views.executeOnNextLayout(subredditList, () -> {
-                Timber.i("Finding highlight");
-                boolean found = false;
+        Action0 findAndHighlightSubredditAction = () -> Views.executeOnNextLayout(subredditList, () -> {
+            for (int position = 0; position < subredditAdapter.getItemCount(); position++) {
+                SubredditSubscription subscription = subredditAdapter.getItem(position);
+                if (subscription.name().equalsIgnoreCase(newSubreddit.getDisplayName())) {
+                    subredditAdapter.temporarilyHighlight(subscription);
+                    subredditAdapter.notifyItemChanged(position);
 
-                for (int position = 0; position < subredditAdapter.getItemCount(); position++) {
-                    SubredditSubscription subscription = subredditAdapter.getItem(position);
-                    if (subscription.name().equalsIgnoreCase(newSubreddit.getDisplayName())) {
-                        subredditAdapter.temporarilyHighlight(subscription);
-                        subredditAdapter.notifyItemChanged(position);
-
-                        found = true;
-
-                        // FlexboxLayoutManager doesn't support smooth scrolling :(
-                        final int finalPosition = position;
-                        subredditList.post(() -> subredditList.scrollToPosition(finalPosition));
-                        break;
-                    }
+                    // FlexboxLayoutManager doesn't support smooth scrolling :(
+                    final int finalPosition = position;
+                    subredditList.post(() -> subredditList.scrollToPosition(finalPosition));
+                    break;
                 }
-
-                if (!found) {
-                    Timber.i("Couldn't find inserted subscription!");
-                    //throw new IllegalStateException("Couldn't find inserted subscription!");
-                }
-            });
-        };
+            }
+        });
 
         // Enable item change animation, until the user starts searching.
         subredditList.setItemAnimator(new DefaultItemAnimator());

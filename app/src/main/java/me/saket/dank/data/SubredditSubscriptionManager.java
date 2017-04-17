@@ -33,7 +33,6 @@ import rx.Observable;
 import rx.Single;
 import rx.functions.Action1;
 import rx.functions.Func1;
-import timber.log.Timber;
 
 /**
  * Manages:
@@ -88,7 +87,7 @@ public class SubredditSubscriptionManager {
                                     if (localSubs.isEmpty()) {
                                         return refreshSubscriptions(localSubs)
                                                 // Don't let this stream emit anything. A change in the database will anyway trigger that.
-                                                .flatMap(o -> Observable.never());
+                                                .flatMapObservable(o -> Observable.never());
 
                                     } else {
                                         return just(filteredSubs);
@@ -134,15 +133,15 @@ public class SubredditSubscriptionManager {
                 .createQuery(TABLE, SubredditSubscription.QUERY_GET_ALL)
                 .mapToList(SubredditSubscription.MAPPER)
                 .first()
+                .toSingle()
                 .flatMap(localSubscriptions -> refreshSubscriptions(localSubscriptions))
                 .toCompletable();
     }
 
     @NonNull
-    private Observable<List<SubredditSubscription>> refreshSubscriptions(List<SubredditSubscription> localSubs) {
+    private Single<List<SubredditSubscription>> refreshSubscriptions(List<SubredditSubscription> localSubs) {
         return fetchRemoteSubscriptions(localSubs)
-                .filter(subs -> !subs.isEmpty())
-                .doOnNext(saveSubscriptionsToDatabase());
+                .doOnSuccess(saveSubscriptionsToDatabase());
     }
 
     @CheckResult
@@ -223,8 +222,9 @@ public class SubredditSubscriptionManager {
 
 // ======== REMOTE SUBREDDITS ======== //
 
-    private Observable<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
-        return (dankRedditClient.isUserLoggedIn() ? loggedInUserSubreddits() : just(loggedOutSubreddits()))
+    private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
+        return dankRedditClient.isUserLoggedIn()
+                .flatMap(loggedIn -> loggedIn ? Dank.reddit().withAuth(loggedInUserSubreddits()) : Single.just(loggedOutSubreddits()))
                 .map(mergeRemoteSubscriptionsWithLocal(localSubs));
     }
 
@@ -288,8 +288,8 @@ public class SubredditSubscriptionManager {
     }
 
     @NonNull
-    private Observable<List<String>> loggedInUserSubreddits() {
-        return Observable.fromCallable(() -> {
+    private Single<List<String>> loggedInUserSubreddits() {
+        return Single.fromCallable(() -> {
             List<Subreddit> remoteSubs = dankRedditClient.userSubredditsPaginator().accumulateMergedAllSorted();
             List<String> remoteSubNames = new ArrayList<>(remoteSubs.size());
             for (Subreddit subreddit : remoteSubs) {

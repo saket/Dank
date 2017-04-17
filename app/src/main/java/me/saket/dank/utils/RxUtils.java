@@ -1,9 +1,11 @@
 package me.saket.dank.utils;
 
 import rx.Completable;
+import rx.Notification;
 import rx.Observable;
 import rx.Single;
 import rx.android.schedulers.AndroidSchedulers;
+import rx.exceptions.OnErrorThrowable;
 import rx.functions.Action0;
 import rx.functions.Action1;
 import rx.schedulers.Schedulers;
@@ -47,6 +49,22 @@ public class RxUtils {
         return () -> {
 
         };
+    }
+
+    /**
+     * Convenience method to run something when either of onNext or onError is called. This is equivalent of manually
+     * calling both {@link Observable#doOnNext(Action1)} and {@link Observable#doOnError(Action1)}.
+     */
+    public static Completable.Transformer doOnCompleteOrError(Action0 action) {
+        return completable -> completable.doOnEach(notif -> {
+            if (notif.getKind() != Notification.Kind.OnCompleted) {
+                try {
+                    action.call();
+                } catch (Exception e) {
+                    throw OnErrorThrowable.from(e);
+                }
+            }
+        });
     }
 
     public static Action1<Throwable> logError(String errorMessage, Object... args) {

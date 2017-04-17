@@ -6,6 +6,7 @@ import com.idescout.sql.SqlScoutServer;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.subreddits.SubredditSubscriptionsSyncJob;
 import timber.log.Timber;
 
 public class DankApplication extends Application {

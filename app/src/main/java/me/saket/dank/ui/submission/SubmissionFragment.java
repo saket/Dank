@@ -1,16 +1,14 @@
 package me.saket.dank.ui.submission;
 
 import static me.saket.dank.utils.CommonUtils.findOptimizedImage;
-import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
-import static me.saket.dank.utils.RxUtils.doOnStartAndEnd;
+import static me.saket.dank.utils.RxUtils.doOnStartAndEndSingle;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
-import static rx.Observable.just;
 import static rx.android.schedulers.AndroidSchedulers.mainThread;
 import static rx.schedulers.Schedulers.io;
 
@@ -63,12 +61,13 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.AnimatedProgressBar;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
-import me.saket.dank.widgets.AnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import rx.Observable;
+import rx.Single;
 import rx.Subscription;
 import rx.exceptions.OnErrorThrowable;
 import rx.functions.Action1;
@@ -387,9 +386,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                     Dank.reddit()
                             .withAuth(Dank.reddit().submission(activeSubmissionRequest))
                             .flatMap(retryWithCorrectSortIfNeeded())
-                            .compose(applySchedulers())
-                            .compose(doOnStartAndEnd(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
-                            .doOnNext(submWithComments -> activeSubmission = submWithComments)
+                            .compose(applySchedulersSingle())
+                            .compose(doOnStartAndEndSingle(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+                            .doOnSuccess(submWithComments -> activeSubmission = submWithComments)
                             .subscribe(commentsHelper.setup(), handleSubmissionLoadError())
             );
 
@@ -404,7 +403,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
      * the submission's data using its suggested sort.
      */
     @NonNull
-    private Func1<Submission, Observable<Submission>> retryWithCorrectSortIfNeeded() {
+    private Func1<Submission, Single<Submission>> retryWithCorrectSortIfNeeded() {
         return submWithComments -> {
             if (submWithComments.getSuggestedSort() != null && submWithComments.getSuggestedSort() != activeSubmissionRequest.commentSort()) {
                 activeSubmissionRequest = activeSubmissionRequest.toBuilder()
@@ -413,7 +412,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 return Dank.reddit().withAuth(Dank.reddit().submission(activeSubmissionRequest));
 
             } else {
-                return just(submWithComments);
+                return Single.just(submWithComments);
             }
         };
     }

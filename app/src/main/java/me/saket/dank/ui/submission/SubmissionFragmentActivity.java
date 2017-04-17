@@ -1,6 +1,6 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
 import android.content.Context;
 import android.content.Intent;
@@ -109,7 +109,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
         unsubscribeOnDestroy(
                 Dank.reddit()
                         .withAuth(Dank.reddit().submission(submissionRequest))
-                        .compose(applySchedulers())
+                        .compose(applySchedulersSingle())
                         .subscribe(
                                 submission -> submissionFragment.populateUi(submission, submissionRequest),
                                 submissionFragment.handleSubmissionLoadError()

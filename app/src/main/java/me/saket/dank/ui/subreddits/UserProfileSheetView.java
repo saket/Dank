@@ -2,6 +2,7 @@ package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
 import android.content.Context;
 import android.view.ViewGroup;
@@ -63,7 +64,7 @@ public class UserProfileSheetView extends FrameLayout {
 
         userInfoSubscription = Dank.reddit()
                 .withAuth(Dank.reddit().loggedInUserAccount())
-                .compose(applySchedulers())
+                .compose(applySchedulersSingle())
                 .subscribe(loggedInUser -> {
                     populateKarmaCount(loggedInUser);
                     populateUnreadMessageCount(loggedInUser);
