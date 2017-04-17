@@ -10,9 +10,11 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
+import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 
 import com.jakewharton.rxbinding.widget.RxTextView;
@@ -22,6 +24,7 @@ import net.dean.jraw.models.Subreddit;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.OnEditorAction;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankDialogFragment;
@@ -77,6 +80,7 @@ public class SubscribeToNewSubredditDialog extends DankDialogFragment {
                 .setTitle(R.string.newsubredditdialog_title)
                 .create();
 
+        // Clear any error when user starts typing.
         unsubscribeOnDestroy(RxTextView.textChanges(subredditView)
                 .subscribe(o -> {
                     subredditViewInputLayout.setError(null);
@@ -93,6 +97,17 @@ public class SubscribeToNewSubredditDialog extends DankDialogFragment {
     @OnClick(R.id.newsubredditdialog_cancel)
     void onClickCancel() {
         dismissWithKeyboardDismissDelay();
+    }
+
+    @OnEditorAction(R.id.newsubredditdialog_subreddit)
+    boolean onClickEnterOnSubredditField(KeyEvent key) {
+        if (key.getAction() == EditorInfo.IME_ACTION_DONE) {
+            // Proxy enter key to the subscribe button.
+            onClickSubscribe();
+            return true;
+        }
+
+        return false;
     }
 
     @OnClick(R.id.newsubredditdialog_subscribe)
