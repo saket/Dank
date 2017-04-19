@@ -33,6 +33,7 @@ import rx.Observable;
 import rx.Single;
 import rx.functions.Action1;
 import rx.functions.Func1;
+import timber.log.Timber;
 
 /**
  * Manages:
@@ -174,7 +175,7 @@ public class SubredditSubscriptionManager {
                     boolean is404 = e instanceof NetworkException && ((NetworkException) e).getResponse().getStatusCode() == 404;
                     if (!is404) {
                         SubredditSubscription updated = subscription.toBuilder().pendingState(PendingState.PENDING_UNSUBSCRIBE).build();
-                        database.update(SubredditSubscription.TABLE, updated.toContentValues(), SubredditSubscription.WHERE_NAME, updated.name());
+                        database.insert(SubredditSubscription.TABLE, updated.toContentValues());
                     }
                     // Else, subreddit isn't present on the server anymore.
                     return Completable.complete();
@@ -202,7 +203,31 @@ public class SubredditSubscriptionManager {
         return Completable.fromAction(() -> database.delete(TABLE, null));
     }
 
-    // ======== DEFAULT ======== //
+    /**
+     * Execute pending-subscribe and pending-unsubscribe actions that failed earlier because of some error.
+     */
+    public Completable executePendingSubscribesAndUnsubscribes() {
+        return database.createQuery(SubredditSubscription.TABLE, SubredditSubscription.QUERY_GET_ALL_PENDING)
+                .mapToList(SubredditSubscription.MAPPER)
+                .first()
+                .flatMapIterable(subscriptions -> subscriptions)
+                .doOnSubscribe(() -> Timber.d("Executing pending subscriptions"))
+                .flatMap(pendingSubscription -> {
+                    if (pendingSubscription.isSubscribePending()) {
+                        Timber.i("Subscribing to %s", pendingSubscription.name());
+                        return Dank.reddit()
+                                .findSubreddit(pendingSubscription.name())
+                                .flatMapCompletable(subreddit -> subscribe(subreddit))
+                                .toObservable();
+                    } else {
+                        Timber.i("Unsubscribing from %s", pendingSubscription.name());
+                        return unsubscribe(pendingSubscription).toObservable();
+                    }
+                })
+                .toCompletable();
+    }
+
+// ======== DEFAULT SUBREDDIT ======== //
 
     public String defaultSubreddit() {
         return userPrefsManager.defaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));

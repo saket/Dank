@@ -1,7 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.doOnCompleteOrError;
+import static me.saket.dank.utils.RxUtils.doOnStartAndComplete;
 
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -22,14 +22,13 @@ import com.jakewharton.rxrelay.Relay;
 
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import rx.Completable;
 import rx.Subscription;
 import rx.subscriptions.Subscriptions;
 import timber.log.Timber;
 
 /**
- * Syncs user's subreddit subscriptions in background. This brings in user's new
- * subscriptions + executes any pending subscribe or unsubscribe actions.
+ * Syncs user's subreddit subscriptions in background. This brings in user's new subscriptions + executes
+ * any pending subscribe or unsubscribe actions.
  */
 public class SubredditSubscriptionsSyncJob extends JobService {
 
@@ -79,19 +78,10 @@ public class SubredditSubscriptionsSyncJob extends JobService {
 
     @Override
     public boolean onStartJob(JobParameters params) {
-        progressSubject.call(true);
-        Timber.i("Syncing subreddits");
-
-        subscription = Dank.subscriptionManager()
-                .refreshSubscriptions()
-                .andThen(Completable.fromAction(() -> {
-                    // TODO: Execute pending subscribe and unsubscribe events.
-                }))
+        subscription = Dank.subscriptionManager().refreshSubscriptions()
+                .andThen(Dank.subscriptionManager().executePendingSubscribesAndUnsubscribes())
                 .compose(applySchedulersCompletable())
-                .compose(doOnCompleteOrError(() -> {
-                    progressSubject.call(false);
-                    Timber.i("Syncing stopped");
-                }))
+                .compose(doOnStartAndComplete(ongoing -> progressSubject.call(ongoing)))
                 .subscribe(
                         () -> {
                             jobFinished(params, false /* needsReschedule */);
@@ -101,7 +91,8 @@ public class SubredditSubscriptionsSyncJob extends JobService {
                         },
                         error -> {
                             Timber.e(error, "Couldn't sync subscriptions");
-                            jobFinished(params, true);
+                            boolean canRetry = params.getJobId() == ID_RECURRING_JOB;
+                            jobFinished(params, canRetry);
                         }
                 );
 
