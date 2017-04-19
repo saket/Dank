@@ -124,7 +124,7 @@ public class DankRedditClient {
             if (authState != AuthenticationState.READY) {
                 switch (authState) {
                     case NONE:
-                        Timber.d("Authenticating userless app");
+                        //Timber.d("Authenticating userless app");
                         redditClient.authenticate(redditClient.getOAuthHelper().easyAuth(userlessAppCredentials));
                         onRedditClientAuthenticatedRelay.onNext(true);
                         break;
@@ -237,10 +237,9 @@ public class DankRedditClient {
 
     public Single<Boolean> isUserLoggedIn() {
         return onRedditClientAuthenticated()
-                .map(o -> {
-                    Timber.i("Poop");
-                    return redditClient.isAuthenticated() && redditClient.hasActiveUserContext();
-                }).first().toSingle();
+                .map(o -> redditClient.isAuthenticated() && redditClient.hasActiveUserContext())
+                .first()
+                .toSingle();
     }
 
     public Single<LoggedInAccount> loggedInUserAccount() {

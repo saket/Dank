@@ -65,9 +65,9 @@ import timber.log.Timber;
 /**
  * Lets the user:
  * - Pick
- * - Reorder
- * - Sort
  * - Add new
+ * - Hide
+ * - Unsubscribe.
  * - Set default.
  */
 public class SubredditPickerSheetView extends FrameLayout implements SubredditAdapter.OnSubredditClickListener {
@@ -162,11 +162,11 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                 .subscribe(setSubredditLoadProgressVisible())
         );
 
+        // Track changes in subscriptions and send a callback if needed when this sheet collapses.
         subscriptions.add(Dank.subscriptionManager()
                 .getAllIncludingHidden()
                 .scan((oldSubscriptions, newSubscriptions) -> {
                     if (oldSubscriptions.size() != newSubscriptions.size()) {
-                        // Something changed. We'll send a callback when this sheet collapses.
                         pendingOnWindowDetachedRunnable = () -> callbacks.onSubredditsChanged();
                     }
                     return newSubscriptions;

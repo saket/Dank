@@ -94,7 +94,7 @@ dependencies {
     compile 'com.squareup.sqlbrite:sqlbrite:1.1.1'
 
     // Reddit API wrapper.
-    compile 'com.github.Saketme:JRAW:sn~fix-token-refresh-SNAPSHOT'
+    compile 'com.github.Saketme:JRAW:7871daec68'
 
     // ImageViewer that supports pan, zoom gestures + can decode large images.
     compile 'com.alexvasilkov:gesture-views:2.2.0'
