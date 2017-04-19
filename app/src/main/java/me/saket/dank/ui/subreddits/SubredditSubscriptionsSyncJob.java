@@ -22,6 +22,7 @@ import com.jakewharton.rxrelay.Relay;
 
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import rx.Completable;
 import rx.Subscription;
 import rx.subscriptions.Subscriptions;
 import timber.log.Timber;
@@ -83,6 +84,9 @@ public class SubredditSubscriptionsSyncJob extends JobService {
 
         subscription = Dank.subscriptionManager()
                 .refreshSubscriptions()
+                .andThen(Completable.fromAction(() -> {
+                    // TODO: Execute pending subscribe and unsubscribe events.
+                }))
                 .compose(applySchedulersCompletable())
                 .compose(doOnCompleteOrError(() -> {
                     progressSubject.call(false);

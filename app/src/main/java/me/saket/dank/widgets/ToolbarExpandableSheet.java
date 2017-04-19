@@ -38,9 +38,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
         // Hide on start.
         currentState = State.COLLAPSED;
-        Views.executeOnMeasure(this, () -> {
-            setClippedDimensions(getWidth(), 0);
-        });
+        Views.executeOnMeasure(this, () -> setClippedDimensions(getWidth(), 0));
 
         // Avoid the shadows from showing up above the sheet. This is done by passing in the
         // center location of this sheet as the top-location for the shadow, essentially hiding

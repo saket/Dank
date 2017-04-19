@@ -10,7 +10,6 @@ import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
-import android.view.KeyEvent;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager;
@@ -100,8 +99,8 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
     }
 
     @OnEditorAction(R.id.newsubredditdialog_subreddit)
-    boolean onClickEnterOnSubredditField(KeyEvent key) {
-        if (key.getAction() == EditorInfo.IME_ACTION_DONE) {
+    boolean onClickEnterOnSubredditField(int actionId) {
+        if (actionId == EditorInfo.IME_ACTION_DONE) {
             // Proxy enter key to the subscribe button.
             onClickSubscribe();
             return true;

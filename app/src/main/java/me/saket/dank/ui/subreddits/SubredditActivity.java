@@ -54,6 +54,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     private static final int REQUEST_CODE_LOGIN = 100;
     protected static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
     private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
+    private static final String KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE = "isSubredditPickerVisible";
+    private static final String KEY_IS_USER_PROFILE_SHEET_VISIBLE = "isUserProfileSheetVisible";
 
     @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
     @BindView(R.id.toolbar) DankToolbar toolbar;
@@ -189,12 +191,22 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
                     })
             );
         }
+
+        if (savedInstanceState != null) {
+            if (savedInstanceState.getBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE)) {
+                showSubredditPickerSheet();
+            } else if (savedInstanceState.getBoolean(KEY_IS_USER_PROFILE_SHEET_VISIBLE)) {
+                showUserProfileSheet();
+            }
+        }
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         submissionList.handleOnSaveInstance(outState);
         outState.putString(KEY_ACTIVE_SUBREDDIT, activeSubredditName);
+        outState.putBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE, isSubredditPickerVisible());
+        outState.putBoolean(KEY_IS_USER_PROFILE_SHEET_VISIBLE, isUserProfileSheetVisible());
         super.onSaveInstanceState(outState);
     }
 
@@ -296,31 +308,35 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         }
     }
 
-// ======== SUBREDDIT PICKER SHEET ======== //
-
     @OnClick(R.id.subreddit_toolbar_title)
     void onClickToolbarTitle() {
-        if (toolbarSheet.isExpandedOrExpanding() || isUserProfileSheetVisible()) {
+        if (isUserProfileSheetVisible() || isSubredditPickerVisible()) {
             toolbarSheet.collapse();
-
         } else {
-            SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet, contentPage);
-            pickerSheet.post(() -> toolbarSheet.expand());
-            pickerSheet.setCallbacks(new SubredditPickerSheetView.Callbacks() {
-                @Override
-                public void onSelectSubreddit(String subredditName) {
-                    toolbarSheet.collapse();
-                    if (!subredditName.equalsIgnoreCase(activeSubredditName)) {
-                        loadSubmissions(subredditName);
-                    }
-                }
-
-                @Override
-                public void onClickAddNewSubreddit() {
-                    NewSubredditSubscriptionDialog.show(getSupportFragmentManager());
-                }
-            });
+            showSubredditPickerSheet();
         }
+    }
+
+// ======== SUBREDDIT PICKER SHEET ======== //
+
+    void showSubredditPickerSheet() {
+        SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet, contentPage);
+        pickerSheet.post(() -> toolbarSheet.expand());
+
+        pickerSheet.setCallbacks(new SubredditPickerSheetView.Callbacks() {
+            @Override
+            public void onSelectSubreddit(String subredditName) {
+                toolbarSheet.collapse();
+                if (!subredditName.equalsIgnoreCase(activeSubredditName)) {
+                    loadSubmissions(subredditName);
+                }
+            }
+
+            @Override
+            public void onClickAddNewSubreddit() {
+                NewSubredditSubscriptionDialog.show(getSupportFragmentManager());
+            }
+        });
     }
 
     @Override
