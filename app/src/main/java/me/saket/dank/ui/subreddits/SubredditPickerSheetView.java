@@ -93,10 +93,11 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     private ViewGroup activityRootLayout;
     private ToolbarExpandableSheet parentSheet;
     private SubredditAdapter subredditAdapter;
-    private CompositeSubscription subscriptions = new CompositeSubscription();
+    private CompositeSubscription subscriptions;
     private Callbacks callbacks;
     private SheetState sheetState;
-    private final BehaviorRelay<Boolean> showHiddenSubredditsSubject;
+    private BehaviorRelay<Boolean> showHiddenSubredditsSubject;
+    private Runnable pendingOnWindowDetachedRunnable;
 
     enum SheetState {
         BROWSE_SUBS,
@@ -107,6 +108,11 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         void onSelectSubreddit(String subredditName);
 
         void onClickAddNewSubreddit();
+
+        /**
+         * Called when the sheet is collapsing and the subscriptions were changed (added or removed).
+         */
+        void onSubredditsChanged();
     }
 
     public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
@@ -124,6 +130,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
         saveButton.setVisibility(INVISIBLE);
         sheetState = SheetState.BROWSE_SUBS;
+        subscriptions = new CompositeSubscription();
         showHiddenSubredditsSubject = BehaviorRelay.create(false /* defaultValue */);
     }
 
@@ -154,12 +161,24 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                 .progressUpdates()
                 .subscribe(setSubredditLoadProgressVisible())
         );
+
+        subscriptions.add(Dank.subscriptionManager()
+                .getAllIncludingHidden()
+                .scan((oldSubscriptions, newSubscriptions) -> {
+                    if (oldSubscriptions.size() != newSubscriptions.size()) {
+                        // Something changed. We'll send a callback when this sheet collapses.
+                        pendingOnWindowDetachedRunnable = () -> callbacks.onSubredditsChanged();
+                    }
+                    return newSubscriptions;
+                })
+                .subscribe());
     }
 
     @Override
     protected void onDetachedFromWindow() {
-        if (subscriptions != null) {
-            subscriptions.clear();
+        subscriptions.clear();
+        if (pendingOnWindowDetachedRunnable != null) {
+            pendingOnWindowDetachedRunnable.run();
         }
         super.onDetachedFromWindow();
     }
@@ -264,10 +283,9 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         };
     }
 
-    // TODO: How should the enter key in search work when edit mode is enabled.
     @OnEditorAction(R.id.subredditpicker_search)
     boolean onClickSearchFieldEnterKey(int actionId) {
-        if (actionId == EditorInfo.IME_ACTION_GO) {
+        if (sheetState == SheetState.BROWSE_SUBS && actionId == EditorInfo.IME_ACTION_GO) {
             String searchTerm = searchView.getText().toString().trim();
             callbacks.onSelectSubreddit(searchTerm);
             return true;

@@ -64,7 +64,7 @@ public class SubredditSubscriptionManager {
     }
 
     /**
-     * Gets user's subscriptions from the database.
+     * Searches user's subscriptions from the database.
      *
      * @param filterTerm Can be empty, but not null.
      */
@@ -126,6 +126,10 @@ public class SubredditSubscriptionManager {
 
                     return ImmutableList.copyOf(reOrderedFilteredSubs);
                 });
+    }
+
+    public Observable<List<SubredditSubscription>> getAllIncludingHidden() {
+        return getAll("", true);
     }
 
     @CheckResult

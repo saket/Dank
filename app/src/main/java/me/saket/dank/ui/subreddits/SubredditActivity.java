@@ -336,6 +336,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             public void onClickAddNewSubreddit() {
                 NewSubredditSubscriptionDialog.show(getSupportFragmentManager());
             }
+
+            @Override
+            public void onSubredditsChanged() {
+                // Refresh the submissions if the frontpage was active.
+                if (Dank.subscriptionManager().isFrontpage(activeSubredditName)) {
+                    loadSubmissions(activeSubredditName);
+                }
+            }
         });
     }
 
