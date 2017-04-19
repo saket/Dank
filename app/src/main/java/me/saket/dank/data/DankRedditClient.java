@@ -106,15 +106,22 @@ public class DankRedditClient {
     public <T> Single<T> withAuth(Single<T> wrappedObservable) {
         return Dank.reddit()
                 .authenticateIfNeeded()
-                .flatMap(__ -> wrappedObservable)
+                .andThen(wrappedObservable)
+                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired());
+    }
+
+    public Completable withAuth(Completable completable) {
+        return Dank.reddit()
+                .authenticateIfNeeded()
+                .andThen(completable)
                 .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired());
     }
 
     /**
      * Get a new API token if we haven't already or refresh the existing API token if the last one has expired.
      */
-    private Single<Boolean> authenticateIfNeeded() {
-        return Single.fromCallable(() -> {
+    private Completable authenticateIfNeeded() {
+        return Completable.fromCallable(() -> {
             if (!authManagerInitialized) {
                 redditAuthManager.init(redditClient, tokenHandler);
                 authManagerInitialized = true;
@@ -143,6 +150,7 @@ public class DankRedditClient {
             //Timber.d("Already authenticated");
             //}
 
+            // A dummy return value is required because Action0 doesn't handle Exceptions like Callable.
             return true;
         });
     }
@@ -260,6 +268,14 @@ public class DankRedditClient {
 
     public Single<Subreddit> findSubreddit(String name) {
         return Single.fromCallable(() -> redditClient.getSubreddit(name));
+    }
+
+    public Completable subscribeTo(Subreddit subreddit) {
+        return withAuth(Completable.fromAction(() -> userAccountManager().subscribe(subreddit)));
+    }
+
+    public Completable unsubscribeFrom(Subreddit subreddit) {
+        return Completable.fromAction(() -> userAccountManager().unsubscribe(subreddit));
     }
 
 }

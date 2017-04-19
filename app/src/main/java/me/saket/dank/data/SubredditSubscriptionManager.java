@@ -151,7 +151,7 @@ public class SubredditSubscriptionManager {
 
     @CheckResult
     public Completable subscribe(Subreddit subreddit) {
-        return Completable.fromAction(() -> Dank.reddit().userAccountManager().subscribe(subreddit))
+        return Dank.reddit().subscribeTo(subreddit)
                 .andThen(Single.just(PendingState.NONE))
                 .onErrorResumeNext(e -> {
                     e.printStackTrace();
@@ -167,12 +167,8 @@ public class SubredditSubscriptionManager {
     @CheckResult
     public Completable unsubscribe(SubredditSubscription subscription) {
         return Completable.fromAction(() -> database.delete(SubredditSubscription.TABLE, SubredditSubscription.WHERE_NAME, subscription.name()))
-                .andThen(Dank.reddit().findSubreddit(subscription.name()))
-                .flatMap(subreddit -> {
-                    Dank.reddit().userAccountManager().unsubscribe(subreddit);
-                    return Single.just(subreddit);
-                })
-                .toCompletable()
+                .andThen(Dank.reddit().withAuth(Dank.reddit().findSubreddit(subscription.name())))
+                .flatMapCompletable(subreddit -> Dank.reddit().unsubscribeFrom(subreddit))
                 .onErrorResumeNext(e -> {
                     e.printStackTrace();
 
