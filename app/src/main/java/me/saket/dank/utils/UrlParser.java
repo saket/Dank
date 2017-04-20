@@ -43,7 +43,7 @@ public class UrlParser {
      * <p>
      * ('post_title' and '/r/$subreddit/' can be empty).
      */
-    private static final Pattern SUBMISSION_OR_COMMENT_PATTERN = Pattern.compile("^(/r/([a-zA-Z0-9-_.]+))*/comments/(\\w+)/\\w*/(\\w*).*");
+    private static final Pattern SUBMISSION_OR_COMMENT_PATTERN = Pattern.compile("^(/r/([a-zA-Z0-9-_.]+))*/comments/(\\w+)(/\\w*/(\\w*))?.*");
 
     /**
      * /live/$thread_id.
@@ -59,7 +59,7 @@ public class UrlParser {
      * /MessySpryAfricancivet.webm
      * /MessySpryAfricancivet-mobile.mp4
      */
-    private static final Pattern GFYCAT_ID_PATTERN = Pattern.compile("(/[^-.]*)");
+    private static final Pattern GFYCAT_ID_PATTERN = Pattern.compile("^(/[^-.]*).*$");
 
     /**
      * Extracts the ID of a giphy link. In these examples, the ID is 'l2JJyLbhqCF4va86c
@@ -105,9 +105,9 @@ public class UrlParser {
             if (submissionOrCommentMatcher.matches()) {
                 String subredditName = submissionOrCommentMatcher.group(2);
                 String submissionId = submissionOrCommentMatcher.group(3);
-                String commentId = submissionOrCommentMatcher.group(4);
+                String commentId = submissionOrCommentMatcher.group(5);
 
-                if (commentId.isEmpty()) {
+                if (TextUtils.isEmpty(commentId)) {
                     return RedditLink.Submission.create(url, submissionId, subredditName);
 
                 } else {

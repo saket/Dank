@@ -116,6 +116,7 @@ dependencies {
     compile 'com.github.Saketme:ExoMedia:3ba6565f07'
     compile 'com.danikula:videocache:2.6.4'
 
-    compile 'com.idescout.sql:sqlscout-server:2.0'
     testCompile 'junit:junit:4.12'
+    testCompile "org.powermock:powermock-module-junit4:1.6.6"
+    testCompile "org.powermock:powermock-api-mockito:1.6.6"
 }
