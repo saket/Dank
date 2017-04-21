@@ -22,6 +22,8 @@ import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
 
+import java.util.List;
+
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.AndroidTokenStore;
@@ -85,7 +87,7 @@ public class DankRedditClient {
                 .limit(submissionRequest.commentLimit())
                 .build();
 
-        return Single.fromCallable(() -> redditClient.getSubmission(jrawSubmissionRequest));
+        return withAuth(Single.fromCallable(() -> redditClient.getSubmission(jrawSubmissionRequest)));
     }
 
     /**
@@ -251,7 +253,7 @@ public class DankRedditClient {
     }
 
     public Single<LoggedInAccount> loggedInUserAccount() {
-        return Single.fromCallable(() -> redditClient.me());
+        return withAuth(Single.fromCallable(() -> redditClient.me()));
     }
 
     public AccountManager userAccountManager() {
@@ -260,14 +262,16 @@ public class DankRedditClient {
 
 // ======== SUBREDDITS ======== //
 
-    public UserSubredditsPaginator userSubredditsPaginator() {
-        UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
-        subredditsPaginator.setLimit(200);
-        return subredditsPaginator;
+    public Single<List<Subreddit>> userSubreddits() {
+        return withAuth(Single.fromCallable(() -> {
+            UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
+            subredditsPaginator.setLimit(200);
+            return subredditsPaginator.accumulateMergedAllSorted();
+        }));
     }
 
     public Single<Subreddit> findSubreddit(String name) {
-        return Single.fromCallable(() -> redditClient.getSubreddit(name));
+        return withAuth(Single.fromCallable(() -> redditClient.getSubreddit(name)));
     }
 
     public Completable subscribeTo(Subreddit subreddit) {

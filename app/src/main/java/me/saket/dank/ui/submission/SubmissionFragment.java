@@ -380,9 +380,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         // Load new comments.
         if (submission.getComments() == null) {
-            unsubscribeOnCollapse(
-                    Dank.reddit()
-                            .withAuth(Dank.reddit().submission(activeSubmissionRequest))
+            unsubscribeOnCollapse(Dank.reddit()
+                    .submission(activeSubmissionRequest)
                             .flatMap(retryWithCorrectSortIfNeeded())
                             .compose(applySchedulersSingle())
                             .compose(doOnStartAndEndSingle(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
@@ -407,7 +406,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 activeSubmissionRequest = activeSubmissionRequest.toBuilder()
                         .commentSort(submWithComments.getSuggestedSort())
                         .build();
-                return Dank.reddit().withAuth(Dank.reddit().submission(activeSubmissionRequest));
+                return Dank.reddit().submission(activeSubmissionRequest);
 
             } else {
                 return Single.just(submWithComments);

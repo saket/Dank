@@ -107,8 +107,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
 
     private void loadSubmission(DankSubmissionRequest submissionRequest) {
         unsubscribeOnDestroy(
-                Dank.reddit()
-                        .withAuth(Dank.reddit().submission(submissionRequest))
+                Dank.reddit().submission(submissionRequest)
                         .compose(applySchedulersSingle())
                         .subscribe(
                                 submission -> submissionFragment.populateUi(submission, submissionRequest),

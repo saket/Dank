@@ -167,7 +167,7 @@ public class SubredditSubscriptionManager {
     @CheckResult
     public Completable unsubscribe(SubredditSubscription subscription) {
         return Completable.fromAction(() -> database.delete(SubredditSubscription.TABLE, SubredditSubscription.WHERE_NAME, subscription.name()))
-                .andThen(Dank.reddit().withAuth(Dank.reddit().findSubreddit(subscription.name())))
+                .andThen(Dank.reddit().findSubreddit(subscription.name()))
                 .flatMapCompletable(subreddit -> Dank.reddit().unsubscribeFrom(subreddit))
                 .onErrorResumeNext(e -> {
                     e.printStackTrace();
@@ -249,7 +249,7 @@ public class SubredditSubscriptionManager {
 
     private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
         return dankRedditClient.isUserLoggedIn()
-                .flatMap(loggedIn -> loggedIn ? Dank.reddit().withAuth(loggedInUserSubreddits()) : Single.just(loggedOutSubreddits()))
+                .flatMap(loggedIn -> loggedIn ? loggedInUserSubreddits() : Single.just(loggedOutSubreddits()))
                 .map(mergeRemoteSubscriptionsWithLocal(localSubs));
     }
 
@@ -314,24 +314,25 @@ public class SubredditSubscriptionManager {
 
     @NonNull
     private Single<List<String>> loggedInUserSubreddits() {
-        return Single.fromCallable(() -> {
-            List<Subreddit> remoteSubs = dankRedditClient.userSubredditsPaginator().accumulateMergedAllSorted();
-            List<String> remoteSubNames = new ArrayList<>(remoteSubs.size());
-            for (Subreddit subreddit : remoteSubs) {
-                remoteSubNames.add(subreddit.getDisplayName());
-            }
+        return dankRedditClient
+                .userSubreddits()
+                .map(remoteSubs -> {
+                    List<String> remoteSubNames = new ArrayList<>(remoteSubs.size());
+                    for (Subreddit subreddit : remoteSubs) {
+                        remoteSubNames.add(subreddit.getDisplayName());
+                    }
 
-            // Add frontpage and /r/popular.
-            String frontpageSub = appContext.getString(R.string.frontpage_subreddit_name);
-            remoteSubNames.add(0, frontpageSub);
+                    // Add frontpage and /r/popular.
+                    String frontpageSub = appContext.getString(R.string.frontpage_subreddit_name);
+                    remoteSubNames.add(0, frontpageSub);
 
-            String popularSub = appContext.getString(R.string.popular_subreddit_name);
-            if (!remoteSubNames.contains(popularSub) && !remoteSubNames.contains(popularSub.toLowerCase(Locale.ENGLISH))) {
-                remoteSubNames.add(1, popularSub);
-            }
+                    String popularSub = appContext.getString(R.string.popular_subreddit_name);
+                    if (!remoteSubNames.contains(popularSub) && !remoteSubNames.contains(popularSub.toLowerCase(Locale.ENGLISH))) {
+                        remoteSubNames.add(1, popularSub);
+                    }
 
-            return remoteSubNames;
-        });
+                    return remoteSubNames;
+                });
     }
 
     private List<String> loggedOutSubreddits() {

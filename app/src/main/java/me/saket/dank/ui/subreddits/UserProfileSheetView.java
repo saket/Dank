@@ -62,8 +62,7 @@ public class UserProfileSheetView extends FrameLayout {
 
         karmaView.setText(R.string.userprofile_loading_karma);
 
-        userInfoSubscription = Dank.reddit()
-                .withAuth(Dank.reddit().loggedInUserAccount())
+        userInfoSubscription = Dank.reddit().loggedInUserAccount()
                 .compose(applySchedulersSingle())
                 .subscribe(loggedInUser -> {
                     populateKarmaCount(loggedInUser);
