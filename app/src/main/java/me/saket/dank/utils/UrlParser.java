@@ -100,6 +100,16 @@ public class UrlParser {
         String urlDomain = linkUri.getHost() != null ? linkUri.getHost() : "";
         String urlPath = linkUri.getPath() != null ? linkUri.getPath() : "";
 
+        Matcher subredditMatcher = SUBREDDIT_PATTERN.matcher(urlPath);
+        if (subredditMatcher.matches()) {
+            return RedditLink.Subreddit.create(subredditMatcher.group(1));
+        }
+
+        Matcher userMatcher = USER_PATTERN.matcher(urlPath);
+        if (userMatcher.matches()) {
+            return RedditLink.User.create(userMatcher.group(1));
+        }
+
         if (urlDomain.endsWith("reddit.com")) {
             Matcher submissionOrCommentMatcher = SUBMISSION_OR_COMMENT_PATTERN.matcher(urlPath);
             if (submissionOrCommentMatcher.matches()) {
@@ -123,20 +133,10 @@ public class UrlParser {
                 return RedditLink.UnsupportedYet.create(url);
             }
 
-        } else if (urlDomain.isEmpty()) {
-            Matcher subredditMatcher = SUBREDDIT_PATTERN.matcher(urlPath);
-            if (subredditMatcher.matches()) {
-                return RedditLink.Subreddit.create(subredditMatcher.group(1));
-            }
-
-            Matcher userMatcher = USER_PATTERN.matcher(urlPath);
-            if (userMatcher.matches()) {
-                return RedditLink.User.create(userMatcher.group(1));
-            }
-
         } else if (urlDomain.endsWith("redd.it") && !isImageUrlPath(urlPath)) {
             // Short redd.it url. Format: redd.it/post_id. Eg., https://redd.it/5524cd
-            return RedditLink.Submission.create(url, urlPath, null);
+            String submissionId = urlPath.substring(1);  // Remove the leading slash.
+            return RedditLink.Submission.create(url, submissionId, null);
 
         } else if (urlDomain.contains("google") && urlPath.startsWith("/amp/s/amp.reddit.com")) {
             // Google AMP url.

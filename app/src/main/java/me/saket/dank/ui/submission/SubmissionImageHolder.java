@@ -99,6 +99,10 @@ public class SubmissionImageHolder {
                                 //Timber.i("commentListParentSheet.getTop(): %s", commentListParentSheet.getTop());
                                 // TODO: 04/04/17 How do we handle images smaller than the toolbar's bottom?
 
+                                if (revealDistance < 0) {
+                                    Toast.makeText(imageView.getContext(), "Image is smaller than the toolbar+status bar", Toast.LENGTH_SHORT).show();
+                                }
+
                                 commentListParentSheet.setScrollingEnabled(true);
                                 commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpanded() /* smoothScroll */);
 

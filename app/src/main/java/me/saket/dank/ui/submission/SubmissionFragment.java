@@ -69,7 +69,6 @@ import me.saket.dank.widgets.ZoomableImageView;
 import rx.Observable;
 import rx.Single;
 import rx.Subscription;
-import rx.exceptions.OnErrorThrowable;
 import rx.functions.Action1;
 import rx.functions.Func0;
 import rx.functions.Func1;
@@ -362,7 +361,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     public void populateUi(Submission submission, DankSubmissionRequest submissionRequest) {
         activeSubmission = submission;
         activeSubmissionRequest = submissionRequest;
-        //Link contentLink = UrlParser.parse(submission.getUrl(), submission.getThumbnails());
 
         // Reset everything.
         contentLoadProgressView.setProgress(0);
@@ -449,12 +447,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
             unsubscribeOnCollapse(Dank.imgur()
                     .gallery((MediaLink.ImgurUnresolvedGallery) contentLink)
-                    .map(response -> {
-                        if (response == null) {
-                            throw OnErrorThrowable.from(new NullPointerException());
-                        } else
-                            return response;
-                    })
                     .compose(applySchedulersSingle())
                     .subscribe(imgurResponse -> {
                         if (imgurResponse.isAlbum()) {
