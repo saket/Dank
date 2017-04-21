@@ -19,6 +19,7 @@ import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.LoggedInAccount;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Subreddit;
+import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
 
@@ -26,6 +27,7 @@ import java.util.List;
 
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.messages.MessageFolder;
 import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
 import rx.Completable;
@@ -258,6 +260,13 @@ public class DankRedditClient {
 
     public AccountManager userAccountManager() {
         return new AccountManager(redditClient);
+    }
+
+    /**
+     * @param folder See {@link InboxPaginator#InboxPaginator(RedditClient, String)}.
+     */
+    public InboxPaginator userMessages(MessageFolder folder) {
+        return new InboxPaginator(redditClient, folder.value());
     }
 
 // ======== SUBREDDITS ======== //

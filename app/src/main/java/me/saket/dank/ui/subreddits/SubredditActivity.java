@@ -225,7 +225,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
         SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subredditName);
         Subscription subscription = Dank.reddit()
-                .withAuth(Single.fromCallable(() -> subredditPaginator.next()))
+                .withAuth(Single.fromCallable(() -> subredditPaginator.next(true)))
                 .compose(applySchedulersSingle())
                 .compose(doOnStartAndEndSingle(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
                 .subscribe(submissionsAdapter, logError("Couldn't get front-page"));

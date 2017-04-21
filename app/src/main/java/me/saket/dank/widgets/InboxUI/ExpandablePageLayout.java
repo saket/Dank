@@ -739,10 +739,6 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         Collections.addAll(this.callbacks, callbacks);
     }
 
-    public void removeCallbacks(Callbacks pageCallbacks) {
-        callbacks.remove(pageCallbacks);
-    }
-
     public void setPullToCollapseIntercepter(OnPullToCollapseIntercepter intercepter) {
         onPullToCollapseIntercepter = intercepter;
     }

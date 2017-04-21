@@ -20,7 +20,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.user.MessagesActivity;
+import me.saket.dank.ui.user.messages.MessagesActivity;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import rx.Observable;
