@@ -11,7 +11,6 @@ import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.auth.AuthenticationState;
 import net.dean.jraw.auth.RefreshTokenHandler;
-import net.dean.jraw.http.LoggingMode;
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.http.oauth.Credentials;
@@ -193,10 +192,7 @@ public class DankRedditClient {
     public Completable logout() {
         Action0 revokeAccessTokenAction = () -> {
             // Bug workaround: revokeAccessToken() method crashes if logging is enabled.
-            LoggingMode modeBackup = redditClient.getLoggingMode();
-            redditClient.setLoggingMode(LoggingMode.NEVER);
             redditClient.getOAuthHelper().revokeAccessToken(loggedInUserCredentials);
-            redditClient.setLoggingMode(modeBackup);
         };
 
         return Completable

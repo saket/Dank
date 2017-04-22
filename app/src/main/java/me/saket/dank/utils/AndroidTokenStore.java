@@ -44,6 +44,11 @@ public class AndroidTokenStore implements TokenStore {
     }
 
     @Override
+    public void removeToken(String key) {
+        getSharedPreferences().edit().remove(key).apply();
+    }
+
+    @Override
     public long readAcquireTimeMillis(String key) {
         return getSharedPreferences().getLong(TOKEN_ACQUIRE_TIME + key, 0);
     }
@@ -51,6 +56,11 @@ public class AndroidTokenStore implements TokenStore {
     @Override
     public void writeAcquireTimeMillis(String key, long acquireTimeMs) {
         getSharedPreferences().edit().putLong(TOKEN_ACQUIRE_TIME + key, acquireTimeMs).apply();
+    }
+
+    @Override
+    public void removeAcquireTimeMillis(String key) {
+        getSharedPreferences().edit().remove(TOKEN_ACQUIRE_TIME + key).apply();
     }
 
     private SharedPreferences getSharedPreferences() {
