@@ -1,5 +1,7 @@
 package me.saket.dank.ui.submission;
 
+import com.jakewharton.rxrelay.PublishRelay;
+
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
@@ -10,8 +12,6 @@ import java.util.Set;
 
 import rx.Observable;
 import rx.functions.Action1;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
 
 /**
  * Helps in flattening a comments tree with collapsed child comments ignored.
@@ -26,7 +26,7 @@ public class CommentsHelper {
 
     private CommentNode rootCommentNode;
 
-    private Subject<List<SubmissionCommentsRow>, List<SubmissionCommentsRow>> commentUpdates = PublishSubject.create();
+    private PublishRelay<List<SubmissionCommentsRow>> commentUpdates = PublishRelay.create();
 
     public Observable<List<SubmissionCommentsRow>> updates() {
         return commentUpdates;
@@ -38,7 +38,7 @@ public class CommentsHelper {
     public Action1<Submission> setup() {
         return submission -> {
             rootCommentNode = submission.getComments();
-            commentUpdates.onNext(constructComments());
+            commentUpdates.call(constructComments());
         };
     }
 
@@ -54,7 +54,7 @@ public class CommentsHelper {
             } else {
                 collapsedCommentNodeIds.add(commentNode.getComment().getId());
             }
-            commentUpdates.onNext(constructComments());
+            commentUpdates.call(constructComments());
         };
     }
 
@@ -69,7 +69,7 @@ public class CommentsHelper {
             } else {
                 loadingMoreCommentNodeIds.remove(commentNode.getComment().getId());
             }
-            commentUpdates.onNext(constructComments());
+            commentUpdates.call(constructComments());
         };
     }
 
@@ -123,4 +123,5 @@ public class CommentsHelper {
             return flattenComments;
         }
     }
+
 }

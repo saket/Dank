@@ -1,7 +1,11 @@
 package me.saket.dank.data;
 
+import static rx.schedulers.Schedulers.io;
+
 import android.content.Context;
 import android.support.annotation.NonNull;
+
+import com.jakewharton.rxrelay.BehaviorRelay;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
@@ -35,8 +39,6 @@ import rx.Observable;
 import rx.Single;
 import rx.functions.Action0;
 import rx.functions.Func1;
-import rx.subjects.BehaviorSubject;
-import rx.subjects.Subject;
 import timber.log.Timber;
 
 /**
@@ -53,7 +55,7 @@ public class DankRedditClient {
     private final RefreshTokenHandler tokenHandler;
 
     private boolean authManagerInitialized;
-    private Subject<Boolean, Boolean> onRedditClientAuthenticatedRelay = BehaviorSubject.create();
+    private BehaviorRelay<Boolean> onRedditClientAuthenticatedRelay;
 
     public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager) {
         this.redditClient = redditClient;
@@ -63,13 +65,14 @@ public class DankRedditClient {
         loggedInUserCredentials = Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
         userlessAppCredentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
         tokenHandler = new RefreshTokenHandler(new AndroidTokenStore(context), redditClient);
+        onRedditClientAuthenticatedRelay = BehaviorRelay.create();
     }
 
     /**
      * A relay that emits an event when the Reddit client has been authenticated.
      * This should happen only once app cold start.
      */
-    public Subject<Boolean, Boolean> onRedditClientAuthenticated() {
+    public BehaviorRelay<Boolean> onRedditClientAuthenticated() {
         return onRedditClientAuthenticatedRelay;
     }
 
@@ -135,24 +138,22 @@ public class DankRedditClient {
             if (authState != AuthenticationState.READY) {
                 switch (authState) {
                     case NONE:
-                        //Timber.d("Authenticating userless app");
+                        Timber.d("Authenticating userless app in thread");
                         redditClient.authenticate(redditClient.getOAuthHelper().easyAuth(userlessAppCredentials));
-                        onRedditClientAuthenticatedRelay.onNext(true);
                         break;
 
                     case NEED_REFRESH:
-                        boolean isFirstRefreshSinceAppStart = !redditClient.isAuthenticated();
-                        Timber.d("Refreshing token. isFirstRefreshSinceAppStart? %s", isFirstRefreshSinceAppStart);
+                        Timber.d("Refreshing token");
                         redditAuthManager.refreshAccessToken(loggedInUserCredentials);
-
-                        if (isFirstRefreshSinceAppStart) {
-                            onRedditClientAuthenticatedRelay.onNext(true);
-                        }
                         break;
                 }
-            } //else {
-            //Timber.d("Already authenticated");
-            //}
+
+                if (onRedditClientAuthenticatedRelay.getValue() == null) {
+                    onRedditClientAuthenticatedRelay.call(true);
+                }
+            } else {
+                Timber.d("Already authenticated");
+            }
 
             // A dummy return value is required because Action0 doesn't handle Exceptions like Callable.
             return true;
@@ -173,6 +174,7 @@ public class DankRedditClient {
                 Timber.w("Attempting to refresh token");
 
                 return isUserLoggedIn()
+                        .observeOn(io())    // This observeOn() call is important. Check the doc of isUserLoggedIn().
                         .flatMapObservable(loggedIn -> Observable.fromCallable(() -> {
                             redditAuthManager.refreshAccessToken(loggedIn ? loggedInUserCredentials : userlessAppCredentials);
                             return true;
@@ -247,7 +249,15 @@ public class DankRedditClient {
         return redditClient.getAuthenticatedUser();
     }
 
+    /**
+     * Warning: This method relies on a subject where subscribeOn() will have no effect because
+     * its values can possibly be emitted from different threads. Make sure you call observeOn()
+     * right after calling this method.
+     */
     public Single<Boolean> isUserLoggedIn() {
+        // Warning: calling toSingle() directly on the subject does not work.
+        // It causes its subscribers to stop working. I don't understand why.
+        // Taking the first emitted item and converting it into a Single works.
         return onRedditClientAuthenticated()
                 .map(o -> redditClient.isAuthenticated() && redditClient.hasActiveUserContext())
                 .first()

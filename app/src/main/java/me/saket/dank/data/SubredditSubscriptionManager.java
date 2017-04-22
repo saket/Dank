@@ -2,6 +2,7 @@ package me.saket.dank.data;
 
 import static me.saket.dank.data.SubredditSubscription.TABLE;
 import static me.saket.dank.utils.CommonUtils.toImmutable;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static rx.Observable.just;
 
 import android.content.Context;
@@ -250,6 +251,7 @@ public class SubredditSubscriptionManager {
     private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
         return dankRedditClient.isUserLoggedIn()
                 .flatMap(loggedIn -> loggedIn ? loggedInUserSubreddits() : Single.just(loggedOutSubreddits()))
+                .compose(applySchedulersSingle())
                 .map(mergeRemoteSubscriptionsWithLocal(localSubs));
     }
 

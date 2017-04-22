@@ -159,6 +159,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
         subscriptions.add(SubredditSubscriptionsSyncJob
                 .progressUpdates()
+                .observeOn(mainThread())
                 .subscribe(setSubredditLoadProgressVisible())
         );
 

@@ -8,6 +8,8 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.jakewharton.rxrelay.PublishRelay;
+
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Flair;
 
@@ -21,8 +23,6 @@ import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Views;
 import rx.functions.Action1;
-import rx.subjects.PublishSubject;
-import rx.subjects.Subject;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentsRow, RecyclerView.ViewHolder>
         implements Action1<List<SubmissionCommentsRow>>
@@ -35,8 +35,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     private static int startPaddingPerDepthLevel;
     private final BetterLinkMovementMethod linkMovementMethod;
 
-    private Subject<CommentNode, CommentNode> commentClickSubject = PublishSubject.create();
-    private Subject<LoadMoreCommentsClickEvent, LoadMoreCommentsClickEvent> loadMoreCommentsClickSubject = PublishSubject.create();
+    private PublishRelay<CommentNode> commentClickSubject = PublishRelay.create();
+    private PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickSubject = PublishRelay.create();
 
     class LoadMoreCommentsClickEvent {
         /**
@@ -66,14 +66,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     /**
      * Emits a CommentNodes when it's clicked.
      */
-    public Subject<CommentNode, CommentNode> commentClicks() {
+    public PublishRelay<CommentNode> commentClicks() {
         return commentClickSubject;
     }
 
     /**
      * Emits a CommentNode whose "load more comments" is clicked.
      */
-    public Subject<LoadMoreCommentsClickEvent, LoadMoreCommentsClickEvent> loadMoreCommentsClicks() {
+    public PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClicks() {
         return loadMoreCommentsClickSubject;
     }
 
@@ -105,7 +105,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
             CommentNode commentNode = ((DankCommentNode) commentItem).commentNode();
             ((UserCommentViewHolder) holder).bind(commentNode);
             ((UserCommentViewHolder) holder).itemView.setOnClickListener(v -> {
-                commentClickSubject.onNext(commentNode);
+                commentClickSubject.call(commentNode);
             });
 
         } else {
@@ -113,7 +113,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
             ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
 
             holder.itemView.setOnClickListener(__ -> {
-                loadMoreCommentsClickSubject.onNext(new LoadMoreCommentsClickEvent(loadMoreItem.parentCommentNode(), holder.itemView));
+                loadMoreCommentsClickSubject.call(new LoadMoreCommentsClickEvent(loadMoreItem.parentCommentNode(), holder.itemView));
             });
         }
     }

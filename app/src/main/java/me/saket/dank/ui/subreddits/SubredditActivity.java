@@ -9,6 +9,7 @@ import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
+import static rx.android.schedulers.AndroidSchedulers.mainThread;
 
 import android.content.Intent;
 import android.graphics.Rect;
@@ -179,14 +180,16 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
         // Schedule subreddit syncs + do an immediate sync.
         if (isTaskRoot()) {
-            unsubscribeOnDestroy(Dank.reddit().isUserLoggedIn()
+            unsubscribeOnDestroy(Dank.reddit()
+                    .isUserLoggedIn()
+                    .observeOn(mainThread())
                     .subscribe(loggedIn -> {
                         if (loggedIn) {
                             Timber.i("Requesting sync");
                             SubredditSubscriptionsSyncJob.schedule(this);
                             SubredditSubscriptionsSyncJob.syncImmediately(this);
                         } else {
-                            Timber.i("Couldn't start snyc. Is logged in? %s", Dank.reddit().isUserLoggedIn());
+                            Timber.i("Couldn't start snyc. Is logged in? %s", loggedIn);
                         }
                     })
             );
@@ -288,8 +291,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             case R.id.action_user_profile:
                 unsubscribeOnDestroy(Dank.reddit()
                         .isUserLoggedIn()
+                        .observeOn(mainThread())
                         .subscribe(loggedIn -> {
-                            Timber.i("loggedIn: %s", loggedIn);
                             if (loggedIn) {
                                 showUserProfileSheet();
                             } else {
