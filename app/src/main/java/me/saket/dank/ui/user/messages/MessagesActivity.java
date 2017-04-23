@@ -1,5 +1,6 @@
 package me.saket.dank.ui.user.messages;
 
+import static me.saket.dank.ui.user.messages.MessageFolder.UNREAD;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.touchLiesOn;
@@ -20,11 +21,12 @@ import android.view.ViewGroup;
 
 import com.jakewharton.rxrelay.BehaviorRelay;
 
+import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.paginators.InboxPaginator;
+import net.dean.jraw.paginators.Paginator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
@@ -95,7 +97,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
         // TODO: These API calls happen in parallel and start automatically on start. Move them to on-demand loading instead.
 
         // Unread messages.
-        InboxPaginator unreadMessagesPaginator = Dank.reddit().userMessages(MessageFolder.UNREAD);
+        InboxPaginator unreadMessagesPaginator = Dank.reddit().userMessages(UNREAD);
         unsubscribeOnDestroy(Dank.reddit()
                 .withAuth(Single.fromCallable(() -> unreadMessagesPaginator.next(true)))
                 .compose(applySchedulersSingle())
@@ -118,18 +120,9 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
 
         // Comment replies.
         InboxPaginator commentRepliesPaginator = Dank.reddit().userMessages(MessageFolder.COMMENT_REPLIES);
-        commentRepliesPaginator.setLimit(200);
         unsubscribeOnDestroy(Dank.reddit()
                 .withAuth(Single.fromCallable(() -> commentRepliesPaginator.next(true)))
-                .map(messages -> {
-                    List<Message> commentReplies = new ArrayList<>(messages.size());
-                    for (Message message : messages) {
-                        if (MessageFolder.isCommentReply(message)) {
-                            commentReplies.add(message);
-                        }
-                    }
-                    return Collections.unmodifiableList(commentReplies);
-                })
+                //.map(RxUtils.filterItems(MessageFolder.isCommentReply()))
                 .compose(applySchedulersSingle())
                 .subscribe(
                         commentReplies -> commentRepliesMessageRelay.call(commentReplies),
@@ -139,21 +132,32 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
 
         // Post replies.
         InboxPaginator postRepliesPaginator = Dank.reddit().userMessages(MessageFolder.POST_REPLIES);
-        postRepliesPaginator.setLimit(200);
-        unsubscribeOnDestroy(Dank.reddit()
-                .withAuth(Single.fromCallable(() -> postRepliesPaginator.next(true)))
-                .map(messages -> {
-                    List<Message> postReplies = new ArrayList<>(messages.size());
-                    for (Message message : messages) {
-                        if (MessageFolder.isPostReply(message)) {
-                            postReplies.add(message);
-                        }
+        postRepliesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
+
+        Single<List<Message>> postRepliesStream = Single.fromCallable(() -> {
+            List<Message> postReplies = new ArrayList<>();
+
+            // Fetch a minimum of 10 post replies.
+            for (Listing<Message> messages : postRepliesPaginator) {
+                for (Message message : messages) {
+                    if ("post reply".equals(message.getSubject())) {
+                        postReplies.add(message);
                     }
-                    return Collections.unmodifiableList(postReplies);
-                })
+                }
+                if (postReplies.size() > 10) {
+                    break;
+                }
+            }
+            return postReplies;
+        });
+
+        unsubscribeOnDestroy(Dank.reddit()
+                .withAuth(postRepliesStream)
                 .compose(applySchedulersSingle())
                 .subscribe(
-                        postReplies -> postRepliesMessageRelay.call(postReplies),
+                        postReplies -> {
+//                            postRepliesMessageRelay.call(postReplies);
+                        },
                         logError("Couldn't load username mentions")
                 )
         );

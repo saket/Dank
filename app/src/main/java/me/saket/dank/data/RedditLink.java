@@ -57,6 +57,16 @@ public abstract class RedditLink extends Link {
         public static Submission createWithComment(String url, String id, String subredditName, Comment initialComment) {
             return new Submission(url, id, subredditName, initialComment);
         }
+
+        @Override
+        public String toString() {
+            return "Submission{" +
+                    "subredditName='" + subredditName + '\'' +
+                    ", url='" + url + '\'' +
+                    ", id='" + id + '\'' +
+                    ", initialComment=" + initialComment +
+                    '}';
+        }
     }
 
     public static class Comment extends RedditLink {
@@ -72,6 +82,14 @@ public abstract class RedditLink extends Link {
             comment.id = id;
             comment.contextCount = contextCount;
             return comment;
+        }
+
+        @Override
+        public String toString() {
+            return "Comment{" +
+                    "id='" + id + '\'' +
+                    ", contextCount=" + contextCount +
+                    '}';
         }
     }
 

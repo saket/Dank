@@ -6,6 +6,7 @@ import net.dean.jraw.models.Message;
 import net.dean.jraw.paginators.InboxPaginator;
 
 import me.saket.dank.R;
+import rx.functions.Func1;
 
 public enum MessageFolder {
 
@@ -36,12 +37,8 @@ public enum MessageFolder {
         return value;
     }
 
-    public static boolean isCommentReply(Message message) {
-        return "comment reply".equalsIgnoreCase(message.getSubject());
-    }
-
-    public static boolean isPostReply(Message message) {
-        return "post reply".equalsIgnoreCase(message.getSubject());
+    public static Func1<Message, Boolean> isCommentReply() {
+        return message -> "comment reply".equalsIgnoreCase(message.getSubject());
     }
 
 }

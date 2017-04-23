@@ -49,6 +49,7 @@ android {
         exclude 'META-INF/LICENSE-LGPL-3.txt'
         exclude 'META-INF/LICENSE-LGPL-2.1.txt'
         exclude 'META-INF/LICENSE-W3C-TEST'
+        exclude 'META-INF/rxjava.properties'
     }
 
     dexOptions {
@@ -85,7 +86,8 @@ dependencies {
     compile 'com.jakewharton:butterknife:8.0.1'
     apt 'com.jakewharton:butterknife-compiler:8.0.1'
     compile 'io.reactivex:rxandroid:1.2.0'
-    compile 'com.jakewharton.rxbinding:rxbinding:1.0.0'
+    compile 'com.jakewharton.rxbinding2:rxbinding:2.0.0'
+    compile 'com.jakewharton.rxbinding2:rxbinding-recyclerview-v7:2.0.0'
     compile 'com.jakewharton.rxrelay:rxrelay:1.2.0'
     compile 'com.google.dagger:dagger:2.2'
     apt 'com.google.dagger:dagger-compiler:2.2'
