@@ -293,11 +293,11 @@ public class UrlParser {
         }
     }
 
-    public static boolean isImgurAlbum(String urlPath) {
+    static boolean isImgurAlbum(String urlPath) {
         return urlPath.startsWith("/gallery/") || urlPath.startsWith("/a/") || urlPath.startsWith("/t/");
     }
 
-    public static boolean isUnsupportedImgurLink(String urlPath) {
+    private static boolean isUnsupportedImgurLink(String urlPath) {
         return urlPath.contains(",") || urlPath.startsWith("/g/");
     }
 

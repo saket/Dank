@@ -15,6 +15,8 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/spacing16"
         android:layout_marginStart="@dimen/spacing16"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textColor="@color/gray_200"
         tools:text="Litho: A Declarative UI Framework for Android" />
 
@@ -35,7 +37,10 @@
         android:foreground="?attr/selectableItemBackground"
         android:orientation="vertical"
         android:outlineProvider="background"
-        android:padding="@dimen/spacing16">
+        android:paddingBottom="@dimen/spacing16"
+        android:paddingEnd="@dimen/spacing16"
+        android:paddingStart="@dimen/spacing16"
+        android:paddingTop="@dimen/spacing12">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -66,7 +71,7 @@
                 android:textColor="@color/gray_500" />
 
             <TextView
-                android:id="@+id/message_reply_subreddit_name"
+                android:id="@+id/message_reply_from"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/gray_500"

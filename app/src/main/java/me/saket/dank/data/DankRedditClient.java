@@ -11,6 +11,7 @@ import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.auth.AuthenticationState;
 import net.dean.jraw.auth.RefreshTokenHandler;
+import net.dean.jraw.http.LoggingMode;
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.http.oauth.Credentials;
@@ -59,6 +60,8 @@ public class DankRedditClient {
     public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager) {
         this.redditClient = redditClient;
         this.redditAuthManager = redditAuthManager;
+
+        redditClient.setLoggingMode(LoggingMode.ON_FAIL);
 
         String redditAppClientId = context.getString(R.string.reddit_app_client_id);
         loggedInUserCredentials = Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));

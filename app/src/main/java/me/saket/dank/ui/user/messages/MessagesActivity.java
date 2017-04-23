@@ -7,6 +7,7 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 import android.content.Context;
 import android.content.Intent;
 import android.content.res.Resources;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -22,15 +23,23 @@ import com.jakewharton.rxrelay.BehaviorRelay;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.paginators.InboxPaginator;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
+import me.saket.dank.data.Link;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.OpenUrlActivity;
+import me.saket.dank.utils.DankLinkMovementMethod;
+import me.saket.dank.utils.UrlParser;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import rx.Single;
+import timber.log.Timber;
 
 public class MessagesActivity extends DankPullCollapsibleActivity implements MessageFolderFragment.Callbacks {
 
@@ -40,7 +49,10 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
 
     private BehaviorRelay<List<Message>> unreadMessagesRelay = BehaviorRelay.create();
     private BehaviorRelay<List<Message>> privateMessagesRelay = BehaviorRelay.create();
+    private BehaviorRelay<List<Message>> commentRepliesMessageRelay = BehaviorRelay.create();
+    private BehaviorRelay<List<Message>> postRepliesMessageRelay = BehaviorRelay.create();
     private BehaviorRelay<List<Message>> usernameMentionsRelay = BehaviorRelay.create();
+    private DankLinkMovementMethod commentLinkMovementMethod;
 
     /**
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
@@ -80,13 +92,15 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
     protected void onPostCreate(@Nullable Bundle savedInstanceState) {
         super.onPostCreate(savedInstanceState);
 
+        // TODO: These API calls happen in parallel and start automatically on start. Move them to on-demand loading instead.
+
         // Unread messages.
         InboxPaginator unreadMessagesPaginator = Dank.reddit().userMessages(MessageFolder.UNREAD);
         unsubscribeOnDestroy(Dank.reddit()
                 .withAuth(Single.fromCallable(() -> unreadMessagesPaginator.next(true)))
                 .compose(applySchedulersSingle())
                 .subscribe(
-                        messages -> unreadMessagesRelay.call(messages),
+                        unreads -> unreadMessagesRelay.call(unreads),
                         logError("Couldn't load unread messages")
                 )
         );
@@ -102,20 +116,62 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
                 )
         );
 
+        // Comment replies.
+        InboxPaginator commentRepliesPaginator = Dank.reddit().userMessages(MessageFolder.COMMENT_REPLIES);
+        commentRepliesPaginator.setLimit(200);
+        unsubscribeOnDestroy(Dank.reddit()
+                .withAuth(Single.fromCallable(() -> commentRepliesPaginator.next(true)))
+                .map(messages -> {
+                    List<Message> commentReplies = new ArrayList<>(messages.size());
+                    for (Message message : messages) {
+                        if (MessageFolder.isCommentReply(message)) {
+                            commentReplies.add(message);
+                        }
+                    }
+                    return Collections.unmodifiableList(commentReplies);
+                })
+                .compose(applySchedulersSingle())
+                .subscribe(
+                        commentReplies -> commentRepliesMessageRelay.call(commentReplies),
+                        logError("Couldn't load username mentions")
+                )
+        );
+
+        // Post replies.
+        InboxPaginator postRepliesPaginator = Dank.reddit().userMessages(MessageFolder.POST_REPLIES);
+        postRepliesPaginator.setLimit(200);
+        unsubscribeOnDestroy(Dank.reddit()
+                .withAuth(Single.fromCallable(() -> postRepliesPaginator.next(true)))
+                .map(messages -> {
+                    List<Message> postReplies = new ArrayList<>(messages.size());
+                    for (Message message : messages) {
+                        if (MessageFolder.isPostReply(message)) {
+                            postReplies.add(message);
+                        }
+                    }
+                    return Collections.unmodifiableList(postReplies);
+                })
+                .compose(applySchedulersSingle())
+                .subscribe(
+                        postReplies -> postRepliesMessageRelay.call(postReplies),
+                        logError("Couldn't load username mentions")
+                )
+        );
+
         // Username mentions.
         InboxPaginator usernameMentionsPaginator = Dank.reddit().userMessages(MessageFolder.USERNAME_MENTIONS);
         unsubscribeOnDestroy(Dank.reddit()
                 .withAuth(Single.fromCallable(() -> usernameMentionsPaginator.next(true)))
                 .compose(applySchedulersSingle())
                 .subscribe(
-                        messages -> usernameMentionsRelay.call(messages),
+                        mentions -> usernameMentionsRelay.call(mentions),
                         logError("Couldn't load username mentions")
                 )
         );
     }
 
     @Override
-    public BehaviorRelay<List<Message>> messages(MessageFolder folder) {
+    public BehaviorRelay<List<Message>> getMessages(MessageFolder folder) {
         switch (folder) {
             case UNREAD:
                 return unreadMessagesRelay;
@@ -123,16 +179,44 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
             case PRIVATE_MESSAGES:
                 return privateMessagesRelay;
 
+            case COMMENT_REPLIES:
+                return commentRepliesMessageRelay;
+
+            case POST_REPLIES:
+                return postRepliesMessageRelay;
+
             case USERNAME_MENTIONS:
                 return usernameMentionsRelay;
 
             default:
-                throw new UnsupportedOperationException("Unknwon message folder: " + folder);
+                throw new UnsupportedOperationException("Unknown message folder: " + folder);
         }
     }
 
+    @Override
+    public BetterLinkMovementMethod getMessageLinkMovementMethod() {
+        if (commentLinkMovementMethod == null) {
+            commentLinkMovementMethod = DankLinkMovementMethod.newInstance();
+            commentLinkMovementMethod.setOnLinkClickListener((textView, url) -> {
+                // TODO: 18/03/17 Remove try/catch block
+                try {
+                    Link parsedLink = UrlParser.parse(url);
+                    Point clickedUrlCoordinates = commentLinkMovementMethod.getLastUrlClickCoordinates();
+                    int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+                    Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
+                    OpenUrlActivity.handle(this, parsedLink, clickedUrlCoordinatesRect);
+                    return true;
+
+                } catch (Exception e) {
+                    Timber.i(e, "Couldn't parse URL: %s", url);
+                    return false;
+                }
+            });
+        }
+        return commentLinkMovementMethod;
+    }
+
     public static class MessagesPagerAdapter extends FragmentStatePagerAdapter {
-        private MessageFolder[] folders = { MessageFolder.UNREAD, MessageFolder.PRIVATE_MESSAGES, MessageFolder.USERNAME_MENTIONS };
         private MessageFolderFragment activeFragment;
         private Resources resources;
 
@@ -143,12 +227,12 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
 
         @Override
         public Fragment getItem(int position) {
-            return MessageFolderFragment.create(folders[position]);
+            return MessageFolderFragment.create(MessageFolder.ALL[position]);
         }
 
         @Override
         public int getCount() {
-            return 3;
+            return MessageFolder.ALL.length;
         }
 
         @Override
@@ -158,7 +242,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return resources.getString(folders[position].titleRes());
+            return resources.getString(MessageFolder.ALL[position].titleRes());
         }
 
         public MessageFolderFragment getActiveFragment() {

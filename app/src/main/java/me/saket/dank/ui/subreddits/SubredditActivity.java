@@ -17,6 +17,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
 import android.support.v7.widget.DefaultItemAnimator;
+import android.text.TextUtils;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -207,7 +208,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         submissionList.handleOnSaveInstance(outState);
-        outState.putString(KEY_ACTIVE_SUBREDDIT, activeSubredditName);
+        if (!TextUtils.isEmpty(activeSubredditName)) {
+            outState.putString(KEY_ACTIVE_SUBREDDIT, activeSubredditName);
+        }
         outState.putBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE, isSubredditPickerVisible());
         outState.putBoolean(KEY_IS_USER_PROFILE_SHEET_VISIBLE, isUserProfileSheetVisible());
         super.onSaveInstanceState(outState);

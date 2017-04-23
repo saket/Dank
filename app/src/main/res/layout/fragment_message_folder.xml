@@ -9,7 +9,9 @@
     <android.support.v7.widget.RecyclerView
         android:id="@+id/messagefolder_message_list"
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="match_parent"
+        android:scrollbarStyle="insideOverlay"
+        android:scrollbars="vertical" />
 
     <ProgressBar
         android:id="@+id/messagefolder_first_load_progress"

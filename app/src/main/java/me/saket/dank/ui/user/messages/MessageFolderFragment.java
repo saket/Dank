@@ -17,6 +17,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankFragment;
 
@@ -31,7 +32,9 @@ public class MessageFolderFragment extends DankFragment {
     @BindView(R.id.messagefolder_first_load_progress) View firstLoadProgressView;
 
     interface Callbacks {
-        BehaviorRelay<List<Message>> messages(MessageFolder folder);
+        BehaviorRelay<List<Message>> getMessages(MessageFolder folder);
+
+        BetterLinkMovementMethod getMessageLinkMovementMethod();
     }
 
     public static MessageFolderFragment create(MessageFolder folder) {
@@ -62,13 +65,13 @@ public class MessageFolderFragment extends DankFragment {
         messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
         messageList.setItemAnimator(new DefaultItemAnimator());
 
-        MessagesAdapter messagesAdapter = new MessagesAdapter();
+        MessagesAdapter messagesAdapter = new MessagesAdapter(((Callbacks) getActivity()).getMessageLinkMovementMethod());
         messageList.setAdapter(messagesAdapter);
 
         // Subscribe to messages.
         MessageFolder folder = (MessageFolder) getArguments().getSerializable(KEY_FOLDER);
         unsubscribeOnDestroy(((Callbacks) getActivity())
-                .messages(folder)
+                .getMessages(folder)
                 .doOnNext(o -> firstLoadProgressView.setVisibility(View.GONE))
                 .doOnError(o -> firstLoadProgressView.setVisibility(View.GONE))
                 .subscribe(messagesAdapter)
