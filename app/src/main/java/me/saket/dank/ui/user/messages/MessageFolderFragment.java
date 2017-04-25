@@ -12,7 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.jakewharton.rxrelay.BehaviorRelay;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
@@ -127,6 +127,7 @@ public class MessageFolderFragment extends DankFragment {
                     Timber.i("Loading more…");
                     List<Message> postReplies = new ArrayList<>();
 
+                    // TODO: Auth.
                     // Fetch a minimum of 10 post replies.
                     for (Listing<Message> messages : postRepliesPaginator) {
                         for (Message message : messages) {

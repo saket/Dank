@@ -36,6 +36,8 @@ import butterknife.BindColor;
 import butterknife.BindDimen;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.LinkMetadata;
@@ -49,8 +51,6 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatedProgressBar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageCallbacks;
-import rx.Subscription;
-import rx.subscriptions.Subscriptions;
 import timber.log.Timber;
 
 /**
@@ -141,7 +141,7 @@ public class SubmissionLinkHolder {
     /**
      * Load and show title of user/subreddit/submission.
      */
-    public Subscription populate(RedditLink redditLink) {
+    public Disposable populate(RedditLink redditLink) {
         setWidth(iconContainer, thumbnailWidthForRedditLink);
         setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForLink);
 
@@ -154,7 +154,7 @@ public class SubmissionLinkHolder {
             titleView.setText(resources.getString(R.string.subreddit_name_r_prefix, ((RedditLink.Subreddit) redditLink).name));
             subtitleView.setText(R.string.submission_link_tap_to_open_subreddit);
             progressView.setVisibility(View.GONE);
-            return Subscriptions.unsubscribed();
+            return Disposables.disposed();
 
         } else if (redditLink instanceof RedditLink.User) {
             iconView.setContentDescription(resources.getString(R.string.submission_link_linked_profile));
@@ -162,7 +162,7 @@ public class SubmissionLinkHolder {
             titleView.setText(resources.getString(R.string.user_name_u_prefix, ((RedditLink.User) redditLink).name));
             subtitleView.setText(R.string.submission_link_tap_to_open_profile);
             progressView.setVisibility(View.GONE);
-            return Subscriptions.unsubscribed();
+            return Disposables.disposed();
 
         } else if (redditLink instanceof RedditLink.Submission) {
             RedditLink.Submission submissionLink = (RedditLink.Submission) redditLink;
@@ -177,7 +177,7 @@ public class SubmissionLinkHolder {
         }
     }
 
-    private Subscription populateSubmissionTitle(RedditLink.Submission submissionLink) {
+    private Disposable populateSubmissionTitle(RedditLink.Submission submissionLink) {
         // Downloading the page's HTML to get the title is faster than getting the submission's data from the API.
         return UrlMetadataParser.parse(submissionLink.url, true)
                 .compose(applySchedulersSingle())
@@ -241,7 +241,7 @@ public class SubmissionLinkHolder {
     /**
      * Show information of an external link. Extracts meta-data from the URL to get the favicon and the title.
      */
-    public Subscription populate(Link.External externalLink, @Nullable String redditSuppliedThumbnail) {
+    public Disposable populate(Link.External externalLink, @Nullable String redditSuppliedThumbnail) {
         setWidth(iconContainer, thumbnailWidthForExternalLink);
         setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForLink);
 

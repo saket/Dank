@@ -8,7 +8,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
-import com.jakewharton.rxrelay.PublishRelay;
+import com.jakewharton.rxrelay2.PublishRelay;
 
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Flair;
@@ -17,15 +17,15 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.functions.Consumer;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Views;
-import rx.functions.Action1;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentsRow, RecyclerView.ViewHolder>
-        implements Action1<List<SubmissionCommentsRow>>
+        implements Consumer<List<SubmissionCommentsRow>>
 {
 
     private static final int VIEW_TYPE_USER_COMMENT = 100;
@@ -78,7 +78,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     }
 
     @Override
-    public void call(List<SubmissionCommentsRow> commentNodes) {
+    public void accept(List<SubmissionCommentsRow> commentNodes) {
         updateData(commentNodes);
     }
 
@@ -105,7 +105,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
             CommentNode commentNode = ((DankCommentNode) commentItem).commentNode();
             ((UserCommentViewHolder) holder).bind(commentNode);
             ((UserCommentViewHolder) holder).itemView.setOnClickListener(v -> {
-                commentClickSubject.call(commentNode);
+                commentClickSubject.accept(commentNode);
             });
 
         } else {
@@ -113,7 +113,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
             ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
 
             holder.itemView.setOnClickListener(__ -> {
-                loadMoreCommentsClickSubject.call(new LoadMoreCommentsClickEvent(loadMoreItem.parentCommentNode(), holder.itemView));
+                loadMoreCommentsClickSubject.accept(new LoadMoreCommentsClickEvent(loadMoreItem.parentCommentNode(), holder.itemView));
             });
         }
     }

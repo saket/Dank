@@ -1,9 +1,9 @@
 package me.saket.dank.data;
 
+import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
 import static me.saket.dank.data.SubredditSubscription.TABLE;
 import static me.saket.dank.utils.CommonUtils.toImmutable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
-import static rx.Observable.just;
 
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
@@ -26,14 +26,14 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription.PendingState;
 import me.saket.dank.di.Dank;
-import rx.Completable;
-import rx.Observable;
-import rx.Single;
-import rx.functions.Action1;
-import rx.functions.Func1;
 import timber.log.Timber;
 
 /**
@@ -74,29 +74,29 @@ public class SubredditSubscriptionManager {
                 ? SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN
                 : SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_EXCLUDING_HIDDEN;
 
-        return database
+        return toV2Observable(database
                 .createQuery(TABLE, getQuery, "%" + filterTerm + "%")
-                .mapToList(SubredditSubscription.MAPPER)
+                .mapToList(SubredditSubscription.MAPPER))
                 .map(toImmutable())
                 .flatMap(filteredSubs -> {
                     if (filteredSubs.isEmpty()) {
                         // Check if the database is empty and fetch fresh subscriptions from remote if needed.
-                        return database
+                        return toV2Observable(database
                                 .createQuery(TABLE, SubredditSubscription.QUERY_GET_ALL)
-                                .mapToList(SubredditSubscription.MAPPER)
-                                .first()
-                                .flatMap(localSubs -> {
+                                .mapToList(SubredditSubscription.MAPPER))
+                                .firstOrError()
+                                .flatMapObservable(localSubs -> {
                                     if (localSubs.isEmpty()) {
                                         return refreshSubscriptions(localSubs)
                                                 // Don't let this stream emit anything. A change in the database will anyway trigger that.
                                                 .flatMapObservable(o -> Observable.never());
 
                                     } else {
-                                        return just(filteredSubs);
+                                        return Observable.just(filteredSubs);
                                     }
                                 });
                     } else {
-                        return just(filteredSubs);
+                        return Observable.just(filteredSubs);
                     }
                 })
                 .map(filteredSubs -> {
@@ -135,11 +135,10 @@ public class SubredditSubscriptionManager {
 
     @CheckResult
     public Completable refreshSubscriptions() {
-        return database
+        return toV2Observable(database
                 .createQuery(TABLE, SubredditSubscription.QUERY_GET_ALL)
-                .mapToList(SubredditSubscription.MAPPER)
-                .first()
-                .toSingle()
+                .mapToList(SubredditSubscription.MAPPER))
+                .firstOrError()
                 .flatMap(localSubscriptions -> refreshSubscriptions(localSubscriptions))
                 .toCompletable();
     }
@@ -208,11 +207,11 @@ public class SubredditSubscriptionManager {
      * Execute pending-subscribe and pending-unsubscribe actions that failed earlier because of some error.
      */
     public Completable executePendingSubscribesAndUnsubscribes() {
-        return database.createQuery(SubredditSubscription.TABLE, SubredditSubscription.QUERY_GET_ALL_PENDING)
+        return toV2Observable(database.createQuery(SubredditSubscription.TABLE, SubredditSubscription.QUERY_GET_ALL_PENDING)
                 .mapToList(SubredditSubscription.MAPPER)
-                .first()
+                .first())
                 .flatMapIterable(subscriptions -> subscriptions)
-                .doOnSubscribe(() -> Timber.d("Executing pending subscriptions"))
+                .doOnSubscribe(__ -> Timber.d("Executing pending subscriptions"))
                 .flatMap(pendingSubscription -> {
                     if (pendingSubscription.isSubscribePending()) {
                         Timber.i("Subscribing to %s", pendingSubscription.name());
@@ -225,7 +224,7 @@ public class SubredditSubscriptionManager {
                         return unsubscribe(pendingSubscription).toObservable();
                     }
                 })
-                .toCompletable();
+                .ignoreElements();
     }
 
 // ======== DEFAULT SUBREDDIT ======== //
@@ -261,7 +260,7 @@ public class SubredditSubscriptionManager {
      */
     @NonNull
     @VisibleForTesting()
-    Func1<List<String>, List<SubredditSubscription>> mergeRemoteSubscriptionsWithLocal(List<SubredditSubscription> localSubs) {
+    Function<List<String>, List<SubredditSubscription>> mergeRemoteSubscriptionsWithLocal(List<SubredditSubscription> localSubs) {
         return remoteSubNames -> {
             // So we've received subreddits from the server. Before overriding our database table with these,
             // retain pending-subscribe items and pending-unsubscribe items.
@@ -345,7 +344,7 @@ public class SubredditSubscriptionManager {
      * Replace all items in the database with a new list of subscriptions.
      */
     @NonNull
-    private Action1<List<SubredditSubscription>> saveSubscriptionsToDatabase() {
+    private Consumer<List<SubredditSubscription>> saveSubscriptionsToDatabase() {
         return newSubscriptions -> {
             try (BriteDatabase.Transaction transaction = database.newTransaction()) {
                 database.delete(TABLE, null);

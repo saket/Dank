@@ -19,7 +19,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.ViewGroup;
 
-import com.jakewharton.rxrelay.BehaviorRelay;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
@@ -31,6 +31,7 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Single;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
@@ -40,7 +41,6 @@ import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
-import rx.Single;
 import timber.log.Timber;
 
 public class MessagesActivity extends DankPullCollapsibleActivity implements MessageFolderFragment.Callbacks {
@@ -102,7 +102,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
                 .withAuth(Single.fromCallable(() -> unreadMessagesPaginator.next(true)))
                 .compose(applySchedulersSingle())
                 .subscribe(
-                        unreads -> unreadMessagesRelay.call(unreads),
+                        unreads -> unreadMessagesRelay.accept(unreads),
                         logError("Couldn't load unread messages")
                 )
         );
@@ -113,7 +113,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
                 .withAuth(Single.fromCallable(() -> privateMessagesPaginator.next(true)))
                 .compose(applySchedulersSingle())
                 .subscribe(
-                        messages -> privateMessagesRelay.call(messages),
+                        messages -> privateMessagesRelay.accept(messages),
                         logError("Couldn't load private messages")
                 )
         );
@@ -125,7 +125,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
                 //.map(RxUtils.filterItems(MessageFolder.isCommentReply()))
                 .compose(applySchedulersSingle())
                 .subscribe(
-                        commentReplies -> commentRepliesMessageRelay.call(commentReplies),
+                        commentReplies -> commentRepliesMessageRelay.accept(commentReplies),
                         logError("Couldn't load username mentions")
                 )
         );
@@ -156,7 +156,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
                 .compose(applySchedulersSingle())
                 .subscribe(
                         postReplies -> {
-//                            postRepliesMessageRelay.call(postReplies);
+//                            postRepliesMessageRelay.accept(postReplies);
                         },
                         logError("Couldn't load username mentions")
                 )
@@ -168,7 +168,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
                 .withAuth(Single.fromCallable(() -> usernameMentionsPaginator.next(true)))
                 .compose(applySchedulersSingle())
                 .subscribe(
-                        mentions -> usernameMentionsRelay.call(mentions),
+                        mentions -> usernameMentionsRelay.accept(mentions),
                         logError("Couldn't load username mentions")
                 )
         );

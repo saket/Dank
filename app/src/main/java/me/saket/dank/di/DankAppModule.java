@@ -33,7 +33,7 @@ import me.saket.dank.utils.ImgurManager;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
-import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
+import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.moshi.MoshiConverterFactory;
 import rx.schedulers.Schedulers;
 import timber.log.Timber;
@@ -130,7 +130,7 @@ public class DankAppModule {
     @Singleton
     Retrofit provideRetrofit(OkHttpClient okHttpClient, Moshi moshi) {
         return new Retrofit.Builder()
-                .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
+                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
                 .addConverterFactory(MoshiConverterFactory.create(moshi))
                 .baseUrl("http://saket.me/" /* This isn't used anywhere, but this value is not nullable. */)
                 .client(okHttpClient)

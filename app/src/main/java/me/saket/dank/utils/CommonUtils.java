@@ -9,7 +9,7 @@ import net.dean.jraw.models.Thumbnails;
 
 import java.util.List;
 
-import rx.functions.Func1;
+import io.reactivex.functions.Function;
 
 /**
  * Utility methods that don't fit in anywhere.
@@ -49,8 +49,8 @@ public class CommonUtils {
         return Html.fromHtml(closestImage.getUrl()).toString();
     }
 
-    public static <T> Func1<List<T>, ImmutableList<T>> toImmutable() {
+    public static <T> Function<List<T>, ImmutableList<T>> toImmutable() {
         return list -> ImmutableList.copyOf(list);
-    };
+    }
 
 }

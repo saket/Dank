@@ -18,13 +18,13 @@ import java.util.List;
 import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
-import rx.functions.Action1;
 
 public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubRedditSubmissionsAdapter.SubmissionViewHolder>
-        implements Action1<List<Submission>>
+        implements Consumer<List<Submission>>
 {
 
     private OnItemClickListener clickListener;
@@ -45,7 +45,7 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
     }
 
     @Override
-    public void call(List<Submission> submissions) {
+    public void accept(List<Submission> submissions) {
         // TODO: 29/01/17 Use DiffUtils / SortedList instead of invalidating the entire list.
         updateData(submissions);
     }

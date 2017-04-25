@@ -17,13 +17,12 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.text.format.DateUtils;
 
-import com.jakewharton.rxrelay.BehaviorRelay;
-import com.jakewharton.rxrelay.Relay;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 
+import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import rx.Subscription;
-import rx.subscriptions.Subscriptions;
 import timber.log.Timber;
 
 /**
@@ -39,9 +38,9 @@ public class SubredditSubscriptionsSyncJob extends JobService {
      * Emits true when bookmarks are being fetched. False when the process completes.
      * (regardless of the outcome).
      */
-    private static final Relay<Boolean, Boolean> progressSubject = BehaviorRelay.create();
+    private static final BehaviorRelay<Boolean> progressSubject = BehaviorRelay.create();
 
-    private Subscription subscription = Subscriptions.unsubscribed();
+    private Disposable subscription = Disposables.disposed();
 
     /**
      * Sync subscriptions every ~6 hours.
@@ -72,16 +71,18 @@ public class SubredditSubscriptionsSyncJob extends JobService {
     /**
      * See {@link #progressSubject}.
      */
-    public static Relay<Boolean, Boolean> progressUpdates() {
+    public static BehaviorRelay<Boolean> progressUpdates() {
         return progressSubject;
     }
 
     @Override
     public boolean onStartJob(JobParameters params) {
+        Timber.i("Syncing subs");
+
         subscription = Dank.subscriptionManager().refreshSubscriptions()
                 .andThen(Dank.subscriptionManager().executePendingSubscribesAndUnsubscribes())
                 .compose(applySchedulersCompletable())
-                .compose(doOnStartAndComplete(ongoing -> progressSubject.call(ongoing)))
+                .compose(doOnStartAndComplete(ongoing -> progressSubject.accept(ongoing)))
                 .subscribe(
                         () -> {
                             jobFinished(params, false /* needsReschedule */);
@@ -108,7 +109,7 @@ public class SubredditSubscriptionsSyncJob extends JobService {
 
     @Override
     public void onDestroy() {
-        subscription.unsubscribe();
+        subscription.dispose();
         super.onDestroy();
     }
 

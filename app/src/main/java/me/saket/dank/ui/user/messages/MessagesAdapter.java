@@ -16,15 +16,16 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.annotations.NonNull;
+import io.reactivex.functions.Consumer;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.UrlParser;
-import rx.functions.Action1;
 import timber.log.Timber;
 
-public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesAdapter.MessageViewHolder> implements Action1<List<Message>> {
+public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesAdapter.MessageViewHolder> implements Consumer<List<Message>> {
 
     private BetterLinkMovementMethod linkMovementMethod;
 
@@ -51,7 +52,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesA
     }
 
     @Override
-    public void call(List<Message> messages) {
+    public void accept(@NonNull List<Message> messages) {
         updateData(messages);
     }
 

@@ -42,7 +42,7 @@ public class SubredditSubscriptionManagerTest {
         expectedMergedList.add(SubredditSubscription.create("G", SubredditSubscription.PendingState.NONE, false));
         expectedMergedList.add(SubredditSubscription.create("H", SubredditSubscription.PendingState.NONE, false));
 
-        List<SubredditSubscription> mergedList = subscriptionManager.mergeRemoteSubscriptionsWithLocal(localSubs).call(remoteSubNames);
+        List<SubredditSubscription> mergedList = subscriptionManager.mergeRemoteSubscriptionsWithLocal(localSubs).apply(remoteSubNames);
         Assert.assertEquals(expectedMergedList, mergedList);
     }
 

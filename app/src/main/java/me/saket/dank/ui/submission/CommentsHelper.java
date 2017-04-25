@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission;
 
-import com.jakewharton.rxrelay.PublishRelay;
+
+import com.jakewharton.rxrelay2.PublishRelay;
 
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
@@ -10,8 +11,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import rx.Observable;
-import rx.functions.Action1;
+import io.reactivex.Observable;
+import io.reactivex.functions.Consumer;
+import me.saket.dank.utils.SafeConsumer;
 
 /**
  * Helps in flattening a comments tree with collapsed child comments ignored.
@@ -35,10 +37,10 @@ public class CommentsHelper {
     /**
      * Set the root comment of a submission.
      */
-    public Action1<Submission> setup() {
+    public SafeConsumer<Submission> setup() {
         return submission -> {
             rootCommentNode = submission.getComments();
-            commentUpdates.call(constructComments());
+            commentUpdates.accept(CommentsHelper.this.constructComments());
         };
     }
 
@@ -47,14 +49,14 @@ public class CommentsHelper {
         collapsedCommentNodeIds.clear();
     }
 
-    public Action1<CommentNode> toggleCollapse() {
+    public Consumer<CommentNode> toggleCollapse() {
         return commentNode -> {
             if (isCollapsed(commentNode)) {
                 collapsedCommentNodeIds.remove(commentNode.getComment().getId());
             } else {
                 collapsedCommentNodeIds.add(commentNode.getComment().getId());
             }
-            commentUpdates.call(constructComments());
+            commentUpdates.accept(constructComments());
         };
     }
 
@@ -62,14 +64,14 @@ public class CommentsHelper {
         return collapsedCommentNodeIds.contains(commentNode.getComment().getId());
     }
 
-    public Action1<CommentNode> setMoreCommentsLoading(boolean loading) {
+    public Consumer<CommentNode> setMoreCommentsLoading(boolean loading) {
         return commentNode -> {
             if (loading) {
                 loadingMoreCommentNodeIds.add(commentNode.getComment().getId());
             } else {
                 loadingMoreCommentNodeIds.remove(commentNode.getComment().getId());
             }
-            commentUpdates.call(constructComments());
+            commentUpdates.accept(constructComments());
         };
     }
 

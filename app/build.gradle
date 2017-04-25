@@ -74,7 +74,7 @@ dependencies {
     compile "com.android.support:palette-v7:${supportLibVersion}"
 
     // Included to resolve dependency conflict between butterknife-compiler:8.0.1 and auto-value-moshi:0.3.2.
-    apt 'com.squareup:javapoet:1.7.0'
+    apt 'com.squareup:javapoet:1.8.0'
 
     // Cannot live without these.
     compile 'com.squareup.moshi:moshi:1.3.1'
@@ -83,21 +83,24 @@ dependencies {
     apt 'com.ryanharter.auto.value:auto-value-moshi:0.3.2'
     apt 'frankiesardo:auto-parcel:1.0.3'
     compile 'com.jakewharton.timber:timber:4.1.2'
-    compile 'com.jakewharton:butterknife:8.0.1'
-    apt 'com.jakewharton:butterknife-compiler:8.0.1'
-    compile 'io.reactivex:rxandroid:1.2.0'
+    compile 'com.jakewharton:butterknife:8.5.1'
+    apt 'com.jakewharton:butterknife-compiler:8.5.1'
+    compile "io.reactivex.rxjava2:rxjava:2.0.9"
+    compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
     compile 'com.jakewharton.rxbinding2:rxbinding:2.0.0'
     compile 'com.jakewharton.rxbinding2:rxbinding-recyclerview-v7:2.0.0'
-    compile 'com.jakewharton.rxrelay:rxrelay:1.2.0'
+    compile 'com.jakewharton.rxrelay2:rxrelay:2.0.0'
     compile 'com.google.dagger:dagger:2.2'
     apt 'com.google.dagger:dagger-compiler:2.2'
     compile 'com.squareup.okhttp3:okhttp:3.6.0'
     compile 'com.squareup.okhttp3:logging-interceptor:3.6.0'
     compile 'com.squareup.retrofit2:retrofit:2.2.0'
-    compile 'com.squareup.retrofit2:adapter-rxjava:2.0.2'
+    compile 'com.squareup.retrofit2:adapter-rxjava2:2.2.0'
     compile 'com.squareup.retrofit2:converter-moshi:2.0.2'
     compile 'com.github.bumptech.glide:glide:3.7.0'
+
     compile 'com.squareup.sqlbrite:sqlbrite:1.1.1'
+    compile "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet.
 
     // Reddit API wrapper.
     compile 'com.github.Saketme:JRAW:1195f3a385'
@@ -111,9 +114,8 @@ dependencies {
     compile 'com.github.Saketme:Better-Link-Movement-Method:40b13980d4'
     compile 'org.sufficientlysecure:html-textview:3.3'
     compile 'org.jsoup:jsoup:1.10.2'
-    compile 'com.schinizer:rxunfurl:0.2.0'
     compile 'com.github.larvalabs:linkunfurl:v0.11'
-    compile 'com.trello:rxlifecycle-navi:1.0'
+    compile 'com.trello.navi2:navi:2.0'
     compile 'it.gilvegliach.android:transparent-text-textview:1.0.3'
     compile 'com.jakewharton.threetenabp:threetenabp:1.0.5'
 

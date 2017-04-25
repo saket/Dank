@@ -124,7 +124,7 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
     }
 
     @Override
-    protected void onDestroy() {
+    public void onDestroy() {
         webView.setWebChromeClient(null);
         super.onDestroy();
     }

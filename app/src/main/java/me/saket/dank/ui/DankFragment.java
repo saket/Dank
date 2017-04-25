@@ -1,25 +1,22 @@
 package me.saket.dank.ui;
 
-import com.trello.navi.component.support.NaviFragment;
-import com.trello.rxlifecycle.android.FragmentEvent;
-import com.trello.rxlifecycle.navi.NaviLifecycle;
+import com.trello.navi2.component.support.NaviFragment;
 
-import rx.Observable;
-import rx.Subscription;
-import rx.subscriptions.CompositeSubscription;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 
 /**
  * Base class for fragments.
  */
 public class DankFragment extends NaviFragment {
 
-    private CompositeSubscription onStopSubscriptions;
-    private CompositeSubscription onDestroySubscriptions;
+    private CompositeDisposable onStopDisposables;
+    private CompositeDisposable onDestroyDisposables;
 
     @Override
     public void onStop() {
-        if (onStopSubscriptions != null) {
-            onStopSubscriptions.clear();
+        if (onStopDisposables != null) {
+            onStopDisposables.clear();
         }
 
         super.onStop();
@@ -27,29 +24,25 @@ public class DankFragment extends NaviFragment {
 
     @Override
     public void onDestroy() {
-        if (onDestroySubscriptions != null) {
-            onDestroySubscriptions.clear();
+        if (onDestroyDisposables != null) {
+            onDestroyDisposables.clear();
         }
 
         super.onDestroy();
     }
 
-    protected void unsubscribeOnStop(Subscription subscription) {
-        if (onStopSubscriptions == null) {
-            onStopSubscriptions = new CompositeSubscription();
+    protected void unsubscribeOnStop(Disposable subscription) {
+        if (onStopDisposables == null) {
+            onStopDisposables = new CompositeDisposable();
         }
-        onStopSubscriptions.add(subscription);
+        onStopDisposables.add(subscription);
     }
 
-    protected void unsubscribeOnDestroy(Subscription subscription) {
-        if (onDestroySubscriptions == null) {
-            onDestroySubscriptions = new CompositeSubscription();
+    protected void unsubscribeOnDestroy(Disposable subscription) {
+        if (onDestroyDisposables == null) {
+            onDestroyDisposables = new CompositeDisposable();
         }
-        onDestroySubscriptions.add(subscription);
-    }
-
-    public Observable<FragmentEvent> lifecycleEvents() {
-        return NaviLifecycle.createFragmentLifecycleProvider(this).lifecycle();
+        onDestroyDisposables.add(subscription);
     }
 
 }

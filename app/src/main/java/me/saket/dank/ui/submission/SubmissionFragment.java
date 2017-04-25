@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static me.saket.dank.utils.CommonUtils.findOptimizedImage;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
@@ -9,8 +10,6 @@ import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
-import static rx.android.schedulers.AndroidSchedulers.mainThread;
-import static rx.schedulers.Schedulers.io;
 
 import android.annotation.SuppressLint;
 import android.graphics.Point;
@@ -46,6 +45,13 @@ import butterknife.BindDimen;
 import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
@@ -58,6 +64,7 @@ import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
+import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -66,13 +73,6 @@ import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
-import rx.Observable;
-import rx.Single;
-import rx.Subscription;
-import rx.functions.Action1;
-import rx.functions.Func0;
-import rx.functions.Func1;
-import rx.subscriptions.CompositeSubscription;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -103,7 +103,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     private ExpandablePageLayout submissionPageLayout;
     private CommentsAdapter commentsAdapter;
-    private CompositeSubscription onCollapseSubscriptions = new CompositeSubscription();
+    private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
     private CommentsHelper commentsHelper;
     private Submission activeSubmission;
     private DankSubmissionRequest activeSubmissionRequest;
@@ -249,7 +249,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
                             } else {
                                 return Observable.just(loadMoreClickEvent.parentCommentNode)
-                                        .observeOn(io())
+                                        .observeOn(Schedulers.io())
                                         .doOnNext(commentsHelper.setMoreCommentsLoading(true))
                                         .map(Dank.reddit().loadMoreComments())
                                         .doOnNext(commentsHelper.setMoreCommentsLoading(false));
@@ -283,7 +283,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         toolbarBackground.syncPositionWithSheet(commentListParentSheet);
         commentListParentSheet.setScrollingEnabled(false);
 
-        Func1<?, Integer> mediaRevealDistanceFunc = __ -> {
+        Function0<Integer> mediaRevealDistanceFunc = () -> {
             // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
             // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
             float mediaVisibleHeight = activeSubmissionContentLink.isImageOrGif()
@@ -298,18 +298,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
         // Toggle sheet's collapsed state on image click.
         contentImageView.setOnClickListener(v -> {
-            commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.call(null));
+            commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate());
         });
 
         // and on submission title click.
         commentsHeaderView.setOnClickListener(v -> {
             if (activeSubmissionContentLink instanceof MediaLink && commentListParentSheet.isAtPeekHeightState()) {
-                commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.call(null));
+                commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate());
             }
         });
 
         // Calculates if the top of the comment sheet is directly below the image.
-        Func0<Boolean> isCommentSheetBeneathImageFunc = () -> {
+        Function0<Boolean> isCommentSheetBeneathImageFunc = () -> {
             //noinspection CodeBlock2Expr
             return (int) commentListParentSheet.getY() == (int) contentImageView.getVisibleZoomedImageHeight();
         };
@@ -338,7 +338,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 {
                     commentListParentSheet.scrollTo(imageRevealDistance);
                 }
-                isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.call();
+                isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
             }
 
             @Override
@@ -348,7 +348,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         });
 
         commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
-            isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.call();
+            isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
         });
     }
 
@@ -390,7 +390,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             );
 
         } else {
-            commentsHelper.setup().call(submission);
+            commentsHelper.setup().accept(submission);
         }
     }
 
@@ -400,7 +400,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
      * the submission's data using its suggested sort.
      */
     @NonNull
-    private Func1<Submission, Single<Submission>> retryWithCorrectSortIfNeeded() {
+    private Function<Submission, Single<Submission>> retryWithCorrectSortIfNeeded() {
         return submWithComments -> {
             if (submWithComments.getSuggestedSort() != null && submWithComments.getSuggestedSort() != activeSubmissionRequest.commentSort()) {
                 activeSubmissionRequest = activeSubmissionRequest.toBuilder()
@@ -414,7 +414,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         };
     }
 
-    public Action1<Throwable> handleSubmissionLoadError() {
+    public Consumer<Throwable> handleSubmissionLoadError() {
         return error -> Timber.e(error, error.getMessage());
     }
 
@@ -566,7 +566,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         onCollapseSubscriptions.clear();
     }
 
-    private void unsubscribeOnCollapse(Subscription subscription) {
+    private void unsubscribeOnCollapse(Disposable subscription) {
         onCollapseSubscriptions.add(subscription);
         unsubscribeOnDestroy(subscription);
     }

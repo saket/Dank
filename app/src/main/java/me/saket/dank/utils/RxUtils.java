@@ -1,14 +1,12 @@
 package me.saket.dank.utils;
 
-import rx.Completable;
-import rx.Notification;
-import rx.Observable;
-import rx.Single;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.exceptions.OnErrorThrowable;
-import rx.functions.Action0;
-import rx.functions.Action1;
-import rx.schedulers.Schedulers;
+import io.reactivex.CompletableTransformer;
+import io.reactivex.ObservableTransformer;
+import io.reactivex.SingleTransformer;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
 
 /**
@@ -22,78 +20,67 @@ public class RxUtils {
      * be called right before (or as close as possible) to the subscribe() call to ensure any other operator doesn't
      * accidentally get executed on the main thread.
      */
-    public static <T> Observable.Transformer<T, T> applySchedulers() {
+    public static <T> ObservableTransformer<T, T> applySchedulers() {
         return observable -> observable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public static <T> Single.Transformer<T, T> applySchedulersSingle() {
+    public static <T> SingleTransformer<T, T> applySchedulersSingle() {
         return observable -> observable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public static Completable.Transformer applySchedulersCompletable() {
+    public static CompletableTransformer applySchedulersCompletable() {
         return observable -> observable
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread());
     }
 
-    public static <T> Action1<T> doNothing() {
+    public static <T> Consumer<T> doNothing() {
         return t -> {
         };
     }
 
-    public static Action0 doNothingCompletable() {
+    public static Action doNothingCompletable() {
         return () -> {
 
         };
     }
 
-    /**
-     * Convenience method to run something when either of onNext or onError is called. This is equivalent of manually
-     * calling both {@link Observable#doOnNext(Action1)} and {@link Observable#doOnError(Action1)}.
-     */
-    public static Completable.Transformer doOnCompleteOrError(Action0 action) {
-        return completable -> completable.doOnEach(notif -> {
-            if (notif.getKind() != Notification.Kind.OnCompleted) {
-                try {
-                    action.call();
-                } catch (Exception e) {
-                    throw OnErrorThrowable.from(e);
-                }
-            }
-        });
-    }
-
-    public static Action1<Throwable> logError(String errorMessage, Object... args) {
+    public static Consumer<Throwable> logError(String errorMessage, Object... args) {
         return error -> Timber.e(error, errorMessage, args);
     }
 
-    public static <T> Observable.Transformer<T, T> doOnStartAndNext(Action1<Boolean> action) {
+    /**
+     * Calls true on <var>consumer</var> when the stream is subscribed to and false
+     * when the first event is emitted or the stream is terminated.
+     */
+    public static <T> ObservableTransformer<T, T> onStartAndFirstEvent(Consumer<Boolean> consumer) {
         return observable -> observable
-                .doOnSubscribe(() -> action.call(true))
-                .doOnNext(o -> action.call(false))
-                .doOnError(o -> action.call(false));
+                .doOnSubscribe(o -> consumer.accept(true))
+                .doOnNext(o -> consumer.accept(false))
+                .doOnTerminate(() -> consumer.accept(false));
     }
 
-    public static <T> Observable.Transformer<T, T> doOnStartAndEnd(Action1<Boolean> action) {
+    /**
+     * Calls true on <var>consumer</var> when the stream is subscribed to and false when it finishes.
+     */
+    public static <T> SingleTransformer<T, T> doOnStartAndEndSingle(Consumer<Boolean> consumer) {
         return observable -> observable
-                .doOnSubscribe(() -> action.call(true))
-                .doOnUnsubscribe(() -> action.call(false));
+                .doOnSubscribe(o -> consumer.accept(true))
+                .doOnSuccess(o -> consumer.accept(false))
+                .doOnError(o -> consumer.accept(false));
     }
 
-    public static <T> Single.Transformer<T, T> doOnStartAndEndSingle(Action1<Boolean> isOngoingAction) {
+    /**
+     * Calls true on <var>consumer</var> when the stream is subscribed to and false when it finishes.
+     */
+    public static CompletableTransformer doOnStartAndComplete(Consumer<Boolean> consumer) {
         return observable -> observable
-                .doOnSubscribe(() -> isOngoingAction.call(true))
-                .doOnUnsubscribe(() -> isOngoingAction.call(false));
-    }
-
-    public static Completable.Transformer doOnStartAndComplete(Action1<Boolean> action) {
-        return observable -> observable
-                .doOnSubscribe(o -> action.call(true))
-                .doOnUnsubscribe(() -> action.call(false));
+                .doOnSubscribe(o -> consumer.accept(true))
+                .doOnTerminate(() -> consumer.accept(false));
     }
 
 }

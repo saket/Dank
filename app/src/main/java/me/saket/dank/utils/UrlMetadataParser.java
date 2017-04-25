@@ -10,12 +10,12 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
+import io.reactivex.Single;
 import me.saket.dank.data.LinkMetadata;
 import me.saket.dank.di.Dank;
 import okhttp3.Call;
 import okhttp3.Request;
 import okhttp3.Response;
-import rx.Single;
 
 /**
  * Extracts information of a URL.

@@ -18,14 +18,14 @@ import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.MessagesActivity;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
-import rx.Observable;
-import rx.Subscription;
-import rx.subscriptions.Subscriptions;
 import timber.log.Timber;
 
 public class UserProfileSheetView extends FrameLayout {
@@ -36,9 +36,9 @@ public class UserProfileSheetView extends FrameLayout {
     @BindColor(R.color.userprofile_no_messages) int noMessagesTextColor;
     @BindColor(R.color.userprofile_unread_messages) int unreadMessagesTextColor;
 
-    private Subscription confirmLogoutTimer = Subscriptions.unsubscribed();
-    private Subscription logoutSubscription = Subscriptions.empty();
-    private Subscription userInfoSubscription = Subscriptions.empty();
+    private Disposable confirmLogoutTimer = Disposables.disposed();
+    private Disposable logoutDisposable = Disposables.empty();
+    private Disposable userInfoDisposable = Disposables.empty();
     private ToolbarExpandableSheet parentSheet;
 
     public static UserProfileSheetView showIn(ToolbarExpandableSheet toolbarSheet) {
@@ -62,7 +62,7 @@ public class UserProfileSheetView extends FrameLayout {
 
         karmaView.setText(R.string.userprofile_loading_karma);
 
-        userInfoSubscription = Dank.reddit().loggedInUserAccount()
+        userInfoDisposable = Dank.reddit().loggedInUserAccount()
                 .compose(applySchedulersSingle())
                 .subscribe(loggedInUser -> {
                     populateKarmaCount(loggedInUser);
@@ -110,8 +110,8 @@ public class UserProfileSheetView extends FrameLayout {
     @Override
     protected void onDetachedFromWindow() {
         super.onDetachedFromWindow();
-        logoutSubscription.unsubscribe();
-        userInfoSubscription.unsubscribe();
+        logoutDisposable.dispose();
+        userInfoDisposable.dispose();
     }
 
     public void setParentSheet(ToolbarExpandableSheet parentSheet) {
@@ -139,7 +139,7 @@ public class UserProfileSheetView extends FrameLayout {
 
     @OnClick(R.id.userprofilesheet_logout)
     void onClickLogout(TextView logoutButton) {
-        if (confirmLogoutTimer.isUnsubscribed()) {
+        if (confirmLogoutTimer.isDisposed()) {
             logoutButton.setText(R.string.userprofile_confirm_logout);
             confirmLogoutTimer = Observable.timer(5, TimeUnit.SECONDS)
                     .compose(applySchedulers())
@@ -149,11 +149,11 @@ public class UserProfileSheetView extends FrameLayout {
 
         } else {
             // Confirm logout was visible when this button was clicked. Logout the user for real.
-            confirmLogoutTimer.unsubscribe();
-            logoutSubscription.unsubscribe();
+            confirmLogoutTimer.dispose();
+            logoutDisposable.dispose();
             logoutButton.setText(R.string.userprofile_logging_out);
 
-            logoutSubscription = Dank.reddit()
+            logoutDisposable = Dank.reddit()
                     .logout()
                     .compose(applySchedulersCompletable())
                     .subscribe(() -> {

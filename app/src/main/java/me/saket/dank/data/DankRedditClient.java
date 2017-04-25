@@ -1,11 +1,11 @@
 package me.saket.dank.data;
 
-import static rx.schedulers.Schedulers.io;
+import static io.reactivex.schedulers.Schedulers.io;
 
 import android.content.Context;
 import android.support.annotation.NonNull;
 
-import com.jakewharton.rxrelay.BehaviorRelay;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
@@ -27,18 +27,21 @@ import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
 
+import org.reactivestreams.Publisher;
+
 import java.util.List;
 
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.MessageFolder;
 import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
-import rx.Completable;
-import rx.Observable;
-import rx.Single;
-import rx.functions.Action0;
-import rx.functions.Func1;
 import timber.log.Timber;
 
 /**
@@ -100,7 +103,7 @@ public class DankRedditClient {
     /**
      * Load more replies of a comment node.
      */
-    public Func1<CommentNode, CommentNode> loadMoreComments() {
+    public Function<CommentNode, CommentNode> loadMoreComments() {
         return commentNode -> {
             commentNode.loadMoreComments(redditClient);
             return commentNode;
@@ -116,14 +119,14 @@ public class DankRedditClient {
         return Dank.reddit()
                 .authenticateIfNeeded()
                 .andThen(wrappedObservable)
-                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired());
+                .retryWhen(refreshApiTokenIfExpiredAndRetry());
     }
 
     public Completable withAuth(Completable completable) {
         return Dank.reddit()
                 .authenticateIfNeeded()
                 .andThen(completable)
-                .retryWhen(Dank.reddit().refreshApiTokenAndRetryIfExpired());
+                .retryWhen(refreshApiTokenIfExpiredAndRetry());
     }
 
     /**
@@ -151,7 +154,7 @@ public class DankRedditClient {
                 }
 
                 if (onRedditClientAuthenticatedRelay.getValue() == null) {
-                    onRedditClientAuthenticatedRelay.call(true);
+                    onRedditClientAuthenticatedRelay.accept(true);
                 }
             } else {
                 Timber.d("Already authenticated");
@@ -169,7 +172,7 @@ public class DankRedditClient {
      * re-authenticate.
      */
     @NonNull
-    private Func1<Observable<? extends Throwable>, Observable<?>> refreshApiTokenAndRetryIfExpired() {
+    private Function<Flowable<Throwable>, Publisher<Boolean>> refreshApiTokenIfExpiredAndRetry() {
         return errors -> errors.flatMap(error -> {
             if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
                 // Re-try authenticating.
@@ -177,13 +180,13 @@ public class DankRedditClient {
 
                 return isUserLoggedIn()
                         .observeOn(io())    // This observeOn() call is important. Check the doc of isUserLoggedIn().
-                        .flatMapObservable(loggedIn -> Observable.fromCallable(() -> {
+                        .flatMapPublisher(loggedIn -> Flowable.fromCallable(() -> {
                             redditAuthManager.refreshAccessToken(loggedIn ? loggedInUserCredentials : userlessAppCredentials);
                             return true;
                         }));
 
             } else {
-                return Observable.error(error);
+                return Flowable.error(error);
             }
         });
     }
@@ -193,7 +196,7 @@ public class DankRedditClient {
     }
 
     public Completable logout() {
-        Action0 revokeAccessTokenAction = () -> {
+        Action revokeAccessTokenAction = () -> {
             // Bug workaround: revokeAccessToken() method crashes if logging is enabled.
             redditClient.getOAuthHelper().revokeAccessToken(loggedInUserCredentials);
         };
@@ -259,8 +262,7 @@ public class DankRedditClient {
         // Taking the first emitted item and converting it into a Single works.
         return onRedditClientAuthenticated()
                 .map(o -> redditClient.isAuthenticated() && redditClient.hasActiveUserContext())
-                .first()
-                .toSingle();
+                .firstOrError();
     }
 
     public Single<LoggedInAccount> loggedInUserAccount() {

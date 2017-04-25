@@ -5,48 +5,48 @@ import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 
 import butterknife.ButterKnife;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import me.saket.dank.R;
-import rx.Subscription;
-import rx.subscriptions.CompositeSubscription;
 
 /**
  * Base class for all activities.
  */
 public class DankActivity extends AppCompatActivity {
 
-    private CompositeSubscription onStopSubscriptions;
-    private CompositeSubscription onDestroySubscriptions;
+    private CompositeDisposable onStopDisposables;
+    private CompositeDisposable onDestroyDisposables;
 
     @Override
-    protected void onStop() {
-        if (onStopSubscriptions != null) {
-            onStopSubscriptions.clear();
+    public void onStop() {
+        if (onStopDisposables != null) {
+            onStopDisposables.clear();
         }
 
         super.onStop();
     }
 
     @Override
-    protected void onDestroy() {
-        if (onDestroySubscriptions != null) {
-            onDestroySubscriptions.clear();
+    public void onDestroy() {
+        if (onDestroyDisposables != null) {
+            onDestroyDisposables.clear();
         }
 
         super.onDestroy();
     }
 
-    protected void unsubscribeOnStop(Subscription subscription) {
-        if (onStopSubscriptions == null) {
-            onStopSubscriptions = new CompositeSubscription();
+    protected void unsubscribeOnStop(Disposable subscription) {
+        if (onStopDisposables == null) {
+            onStopDisposables = new CompositeDisposable();
         }
-        onStopSubscriptions.add(subscription);
+        onStopDisposables.add(subscription);
     }
 
-    protected void unsubscribeOnDestroy(Subscription subscription) {
-        if (onDestroySubscriptions == null) {
-            onDestroySubscriptions = new CompositeSubscription();
+    protected void unsubscribeOnDestroy(Disposable subscription) {
+        if (onDestroyDisposables == null) {
+            onDestroyDisposables = new CompositeDisposable();
         }
-        onDestroySubscriptions.add(subscription);
+        onDestroyDisposables.add(subscription);
     }
 
     protected void findAndSetupToolbar() {

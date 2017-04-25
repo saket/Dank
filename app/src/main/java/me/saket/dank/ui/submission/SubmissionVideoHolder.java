@@ -19,6 +19,9 @@ import com.devbrackets.android.exomedia.ui.widget.VideoView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
@@ -27,9 +30,6 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
-import rx.Single;
-import rx.Subscription;
-import rx.functions.Action1;
 
 /**
  * Manages loading of video in {@link SubmissionFragment}.
@@ -61,17 +61,17 @@ public class SubmissionVideoHolder {
         controlsView.insertSeekBarIn(contentVideoViewContainer);
     }
 
-    public Subscription load(MediaLink mediaLink) {
+    public Disposable load(MediaLink mediaLink) {
         Single<? extends MediaLink> videoUrlObservable = mediaLink instanceof MediaLink.StreamableUnknown
                 ? getStreamableVideoDetails(((MediaLink.StreamableUnknown) mediaLink))
                 : Single.just(mediaLink);
 
         return videoUrlObservable
-                .doOnSubscribe(() -> contentLoadProgressView.setVisibility(View.VISIBLE))
+                .doOnSubscribe(__ -> contentLoadProgressView.setVisibility(View.VISIBLE))
                 .map(link -> link.lowQualityVideoUrl())
                 .subscribe(load(), error -> {
                     // TODO: 01/04/17 Handle error.
-                    logError("Couldn't load video").call(error);
+                    logError("Couldn't load video").accept(error);
                 });
     }
 
@@ -87,7 +87,7 @@ public class SubmissionVideoHolder {
                 ));
     }
 
-    private Action1<String> load() {
+    private Consumer<String> load() {
         return videoUrl -> {
             exoPlayerManager.setOnVideoSizeChangeListener((videoWidth, videoHeight) -> {
                 setHeight(contentVideoView, videoHeight);

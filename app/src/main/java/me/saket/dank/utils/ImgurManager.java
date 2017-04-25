@@ -1,7 +1,7 @@
 package me.saket.dank.utils;
 
+import static io.reactivex.Single.just;
 import static java.lang.Integer.parseInt;
-import static rx.Single.just;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -11,6 +11,9 @@ import org.threeten.bp.Clock;
 import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneOffset;
 
+import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import me.saket.dank.data.ImgurAlbumResponse;
 import me.saket.dank.data.ImgurResponse;
 import me.saket.dank.data.MediaLink;
@@ -20,10 +23,7 @@ import me.saket.dank.di.Dank;
 import okhttp3.Headers;
 import retrofit2.HttpException;
 import retrofit2.Response;
-import rx.Single;
 import rx.exceptions.OnErrorThrowable;
-import rx.functions.Action1;
-import rx.functions.Func1;
 import timber.log.Timber;
 
 /**
@@ -76,7 +76,7 @@ public class ImgurManager {
                 })
                 .flatMap(albumResponse -> {
                     if (albumResponse.hasImages()) {
-                        return just(albumResponse);
+                        return Single.just(albumResponse);
 
                     } else {
                         // Okay, let's check if it was a single image.
@@ -91,7 +91,7 @@ public class ImgurManager {
                         throw OnErrorThrowable.from(new InvalidImgurAlbumException());
                     }
                 })
-                .doOnSubscribe(() -> {
+                .doOnSubscribe(o -> {
                     resetRateLimitsIfMonthChanged();
 
                     if (isApiRequestLimitReached()) {
@@ -102,7 +102,7 @@ public class ImgurManager {
                 });
     }
 
-    private <T> Func1<Response<T>, Response<T>> throwIfHttpError() {
+    private <T> Function<Response<T>, Response<T>> throwIfHttpError() {
         return response -> {
             if (response.isSuccessful()) {
                 return response;
@@ -113,11 +113,11 @@ public class ImgurManager {
     }
 
     @NonNull
-    private <T extends ImgurResponse> Func1<Response<T>, T> extractResponseBody() {
+    private <T extends ImgurResponse> io.reactivex.functions.Function<Response<T>, T> extractResponseBody() {
         return response -> response.body();
     }
 
-    private Action1<Response> saveImgurApiRateLimits() {
+    private Consumer<Response> saveImgurApiRateLimits() {
         return response -> {
             Headers responseHeaders = response.headers();
             saveApiRequestLimit(parseInt(responseHeaders.get("X-RateLimit-Requests-Limit")));

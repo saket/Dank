@@ -15,16 +15,16 @@ import java.util.List;
 import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
-import rx.functions.Action1;
 
 /**
  * Adapter for displaying a list of subreddits.
  */
 public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscription, SubredditAdapter.SubredditViewHolder>
-        implements Action1<List<SubredditSubscription>>
+        implements Consumer<List<SubredditSubscription>>
 {
 
     private OnSubredditClickListener clickListener;
@@ -49,7 +49,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
     }
 
     @Override
-    public void call(List<SubredditSubscription> subscriptions) {
+    public void accept(List<SubredditSubscription> subscriptions) {
         updateData(subscriptions);
     }
 

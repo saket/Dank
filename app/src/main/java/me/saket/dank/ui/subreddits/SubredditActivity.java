@@ -1,5 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static me.saket.dank.di.Dank.subscriptionManager;
 import static me.saket.dank.utils.CommonUtils.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
@@ -9,7 +10,6 @@ import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
-import static rx.android.schedulers.AndroidSchedulers.mainThread;
 
 import android.content.Intent;
 import android.graphics.Rect;
@@ -32,6 +32,8 @@ import net.dean.jraw.paginators.SubredditPaginator;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.RedditLink;
@@ -47,8 +49,6 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
-import rx.Single;
-import rx.Subscription;
 import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
@@ -230,7 +230,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         setTitle(subredditName);
 
         SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(subredditName);
-        Subscription subscription = Dank.reddit()
+        Disposable subscription = Dank.reddit()
                 .withAuth(Single.fromCallable(() -> subredditPaginator.next(true)))
                 .compose(applySchedulersSingle())
                 .compose(doOnStartAndEndSingle(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))

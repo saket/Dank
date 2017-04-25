@@ -1,17 +1,16 @@
 package me.saket.dank.ui.subreddits;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
-import static me.saket.dank.utils.RxUtils.doOnStartAndNext;
 import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.utils.RxUtils.onStartAndFirstEvent;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginBottom;
 import static me.saket.dank.utils.Views.setPaddingBottom;
 import static me.saket.dank.utils.Views.touchLiesOn;
-import static rx.Observable.just;
-import static rx.android.schedulers.AndroidSchedulers.mainThread;
-import static rx.schedulers.Schedulers.io;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
@@ -38,8 +37,8 @@ import com.google.android.flexbox.FlexDirection;
 import com.google.android.flexbox.FlexWrap;
 import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.common.collect.ImmutableList;
-import com.jakewharton.rxbinding.widget.RxTextView;
-import com.jakewharton.rxrelay.BehaviorRelay;
+import com.jakewharton.rxbinding2.widget.RxTextView;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.models.Subreddit;
 
@@ -51,15 +50,16 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
-import rx.Completable;
-import rx.functions.Action0;
-import rx.functions.Action1;
-import rx.subscriptions.CompositeSubscription;
 import timber.log.Timber;
 
 /**
@@ -93,7 +93,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     private ViewGroup activityRootLayout;
     private ToolbarExpandableSheet parentSheet;
     private SubredditAdapter subredditAdapter;
-    private CompositeSubscription subscriptions;
+    private CompositeDisposable subscriptions;
     private Callbacks callbacks;
     private SheetState sheetState;
     private BehaviorRelay<Boolean> showHiddenSubredditsSubject;
@@ -130,8 +130,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
         saveButton.setVisibility(INVISIBLE);
         sheetState = SheetState.BROWSE_SUBS;
-        subscriptions = new CompositeSubscription();
-        showHiddenSubredditsSubject = BehaviorRelay.create(false /* defaultValue */);
+        subscriptions = new CompositeDisposable();
+        showHiddenSubredditsSubject = BehaviorRelay.createDefault(false);
     }
 
     public boolean shouldInterceptPullToCollapse(float downX, float downY) {
@@ -254,21 +254,22 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                             }
                         }
                     }
+
                     return filteredSubs;
                 })
                 .onErrorResumeNext(error -> {
                     // Don't let an error terminate the stream.
                     Timber.e(error, "Error in fetching subreddits");
-                    return just(Collections.emptyList());
+                    return Observable.just(Collections.emptyList());
                 })
                 .observeOn(mainThread())
-                .compose(doOnStartAndNext(setSubredditLoadProgressVisible()))
+                .compose(onStartAndFirstEvent(setSubredditLoadProgressVisible()))
                 .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
                 .subscribe(subredditAdapter)
         );
     }
 
-    private Action1<Boolean> setSubredditLoadProgressVisible() {
+    private Consumer<Boolean> setSubredditLoadProgressVisible() {
         return visible -> {
             if (visible) {
                 if (subredditAdapter.getItemCount() == 0) {
@@ -278,8 +279,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                 }
 
             } else {
-                subredditsLoadProgressView.setVisibility(View.GONE);
                 subredditsRefreshProgressView.setVisibility(View.GONE);
+                subredditsLoadProgressView.setVisibility(View.GONE);
             }
         };
     }
@@ -345,7 +346,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         sheetState = SheetState.BROWSE_SUBS;
 
         // Hide hidden subs.
-        showHiddenSubredditsSubject.call(false);
+        showHiddenSubredditsSubject.accept(false);
 
         animateAlpha(addAndMoreOptionsContainer, 0f)
                 .withStartAction(() -> saveButton.hide())
@@ -395,11 +396,11 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         overflowMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.action_show_hidden_subreddits:
-                    showHiddenSubredditsSubject.call(true);
+                    showHiddenSubredditsSubject.accept(true);
                     return true;
 
                 case R.id.action_hide_hidden_subreddits:
-                    showHiddenSubredditsSubject.call(false);
+                    showHiddenSubredditsSubject.accept(false);
                     return true;
 
                 case R.id.action_refresh_subreddits:
@@ -429,12 +430,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         // Enable item change animation, until the user starts searching.
         subredditList.setItemAnimator(new DefaultItemAnimator());
 
-        Action1<SubredditSubscription> resetDefaultIfDefaultWasRemoved = removedSub -> {
-            if (Dank.subscriptionManager().isDefault(removedSub)) {
-                Dank.subscriptionManager().resetDefaultSubreddit();
-            }
-        };
-
         popupMenu.setOnMenuItemClickListener(item -> {
             switch (item.getItemId()) {
                 case R.id.action_set_subreddit_as_default:
@@ -442,7 +437,9 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                     return true;
 
                 case R.id.action_unsubscribe_subreddit:
-                    resetDefaultIfDefaultWasRemoved.call(subscription);
+                    if (Dank.subscriptionManager().isDefault(subscription)) {
+                        Dank.subscriptionManager().resetDefaultSubreddit();
+                    }
 
                     Dank.subscriptionManager()
                             .unsubscribe(subscription)
@@ -451,7 +448,9 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
                     return true;
 
                 case R.id.action_hide_subreddit:
-                    resetDefaultIfDefaultWasRemoved.call(subscription);
+                    if (Dank.subscriptionManager().isDefault(subscription)) {
+                        Dank.subscriptionManager().resetDefaultSubreddit();
+                    }
 
                     Dank.subscriptionManager()
                             .setHidden(subscription, true)
@@ -488,7 +487,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
      * Finds the View for <var>newSubreddit</var> in the list and highlights it temporarily.
      */
     public void subscribeTo(Subreddit newSubreddit) {
-        Action0 findAndHighlightSubredditAction = () -> Views.executeOnNextLayout(subredditList, () -> {
+        Action findAndHighlightSubredditAction = () -> Views.executeOnNextLayout(subredditList, () -> {
             for (int position = 0; position < subredditAdapter.getItemCount(); position++) {
                 SubredditSubscription subscription = subredditAdapter.getItem(position);
                 if (subscription.name().equalsIgnoreCase(newSubreddit.getDisplayName())) {
