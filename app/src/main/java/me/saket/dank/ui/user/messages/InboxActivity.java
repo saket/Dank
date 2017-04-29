@@ -1,10 +1,10 @@
 package me.saket.dank.ui.user.messages;
 
-import static me.saket.dank.ui.user.messages.MessageFolder.COMMENT_REPLIES;
-import static me.saket.dank.ui.user.messages.MessageFolder.POST_REPLIES;
-import static me.saket.dank.ui.user.messages.MessageFolder.PRIVATE_MESSAGES;
-import static me.saket.dank.ui.user.messages.MessageFolder.UNREAD;
-import static me.saket.dank.ui.user.messages.MessageFolder.USERNAME_MENTIONS;
+import static me.saket.dank.ui.user.messages.InboxFolder.COMMENT_REPLIES;
+import static me.saket.dank.ui.user.messages.InboxFolder.POST_REPLIES;
+import static me.saket.dank.ui.user.messages.InboxFolder.PRIVATE_MESSAGES;
+import static me.saket.dank.ui.user.messages.InboxFolder.UNREAD;
+import static me.saket.dank.ui.user.messages.InboxFolder.USERNAME_MENTIONS;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
@@ -50,11 +50,11 @@ import me.saket.dank.utils.UrlParser;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
-public class MessagesActivity extends DankPullCollapsibleActivity implements MessageFolderFragment.Callbacks {
+public class InboxActivity extends DankPullCollapsibleActivity implements MessageFolderFragment.Callbacks {
 
-    @BindView(R.id.messages_root) IndependentExpandablePageLayout contentPage;
-    @BindView(R.id.messages_tablayout) TabLayout tabLayout;
-    @BindView(R.id.messages_viewpager) ViewPager viewPager;
+    @BindView(R.id.inbox_root) IndependentExpandablePageLayout contentPage;
+    @BindView(R.id.inbox_tablayout) TabLayout tabLayout;
+    @BindView(R.id.inbox_viewpager) ViewPager viewPager;
 
     private ReplaySubject<List<Message>> unreadMessageStream = ReplaySubject.create();
     private ReplaySubject<List<Message>> privateMessageStream = ReplaySubject.create();
@@ -73,7 +73,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
      */
     public static void start(Context context, @Nullable Rect expandFromShape) {
-        Intent intent = new Intent(context, MessagesActivity.class);
+        Intent intent = new Intent(context, InboxActivity.class);
         intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
         context.startActivity(intent);
     }
@@ -124,7 +124,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
     }
 
     @Override
-    public Subject<List<Message>> messageStream(MessageFolder folder) {
+    public Subject<List<Message>> messageStream(InboxFolder folder) {
         switch (folder) {
             case UNREAD:
                 return unreadMessageStream;
@@ -147,7 +147,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
     }
 
     @Override
-    public Completable fetchNextMessagePage(MessageFolder folder) {
+    public Completable fetchNextMessagePage(InboxFolder folder) {
         switch (folder) {
             case UNREAD:
                 return Dank.reddit()
@@ -268,12 +268,12 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
 
         @Override
         public Fragment getItem(int position) {
-            return MessageFolderFragment.create(MessageFolder.ALL[position]);
+            return MessageFolderFragment.create(InboxFolder.ALL[position]);
         }
 
         @Override
         public int getCount() {
-            return MessageFolder.ALL.length;
+            return InboxFolder.ALL.length;
         }
 
         @Override
@@ -283,7 +283,7 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
 
         @Override
         public CharSequence getPageTitle(int position) {
-            return resources.getString(MessageFolder.ALL[position].titleRes());
+            return resources.getString(InboxFolder.ALL[position].titleRes());
         }
 
         public MessageFolderFragment getActiveFragment() {

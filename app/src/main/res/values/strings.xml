@@ -99,12 +99,12 @@
 
     <!-- Messages -->
     <string name="activity_messages">Messages</string>
-    <string name="messages_reply_from">Reply from</string>
-    <string name="messages_via">via</string>
-    <string name="messages_timestamp_just_now">Just now</string>
-    <string name="messages_tab_unread">Unread</string>
-    <string name="messages_tab_private_messages">Private messages</string>
-    <string name="messages_tab_username_mentions">Username mentions</string>
-    <string name="messages_tab_comment_replies">Comment replies</string>
-    <string name="messages_tab_post_replies">Post replies</string>
+    <string name="inbox_reply_from">Reply from</string>
+    <string name="inbox_via">via</string>
+    <string name="inbox_timestamp_just_now">Just now</string>
+    <string name="inbox_tab_unread">Unread</string>
+    <string name="inbox_tab_private_messages">Private messages</string>
+    <string name="inbox_tab_comment_replies">Comment replies</string>
+    <string name="inbox_tab_post_replies">Post replies</string>
+    <string name="inbox_tab_username_mentions">Username mentions</string>
 </resources>

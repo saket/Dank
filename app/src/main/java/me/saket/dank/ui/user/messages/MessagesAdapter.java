@@ -102,7 +102,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesA
 
             long createdTimeMs = message.getCreated().getTime();
             if (createdTimeMs < DateUtils.MINUTE_IN_MILLIS) {
-                timestampView.setText(R.string.messages_timestamp_just_now);
+                timestampView.setText(R.string.inbox_timestamp_just_now);
             } else {
                 timestampView.setText(DateUtils.getRelativeTimeSpanString(
                         createdTimeMs,

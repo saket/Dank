@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout
-    android:id="@+id/messages_root"
+    android:id="@+id/inbox_root"
     style="@style/DankPullCollapsibleActivityPage"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
@@ -16,7 +16,7 @@
         app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
     <me.saket.dank.widgets.TabLayoutWithCustomFont
-        android:id="@+id/messages_tablayout"
+        android:id="@+id/inbox_tablayout"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:paddingStart="@dimen/viewpager_tablayout_start_spacing_with_toolbar_title"
@@ -28,8 +28,8 @@
         tools:ignore="RtlSymmetry" />
 
     <android.support.v4.view.ViewPager
-        android:id="@+id/messages_viewpager"
+        android:id="@+id/inbox_viewpager"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:layout_below="@+id/messages_tablayout" />
+        android:layout_below="@+id/inbox_tablayout" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

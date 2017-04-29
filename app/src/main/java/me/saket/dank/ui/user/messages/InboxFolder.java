@@ -8,15 +8,15 @@ import net.dean.jraw.paginators.InboxPaginator;
 import me.saket.dank.R;
 import rx.functions.Func1;
 
-public enum MessageFolder {
+public enum InboxFolder {
 
-    UNREAD(R.string.messages_tab_unread, "unread"),
-    PRIVATE_MESSAGES(R.string.messages_tab_private_messages, "messages"),
-    COMMENT_REPLIES(R.string.messages_tab_comment_replies, "inbox"),
-    POST_REPLIES(R.string.messages_tab_post_replies, "inbox"),
-    USERNAME_MENTIONS(R.string.messages_tab_username_mentions, "mentions"),;
+    UNREAD(R.string.inbox_tab_unread, "unread"),
+    PRIVATE_MESSAGES(R.string.inbox_tab_private_messages, "messages"),
+    COMMENT_REPLIES(R.string.inbox_tab_comment_replies, "inbox"),
+    POST_REPLIES(R.string.inbox_tab_post_replies, "inbox"),
+    USERNAME_MENTIONS(R.string.inbox_tab_username_mentions, "mentions"),;
 
-    public static MessageFolder[] ALL = { PRIVATE_MESSAGES, UNREAD, COMMENT_REPLIES, POST_REPLIES, USERNAME_MENTIONS };
+    public static InboxFolder[] ALL = { PRIVATE_MESSAGES, UNREAD, COMMENT_REPLIES, POST_REPLIES, USERNAME_MENTIONS };
 
     private final int titleRes;
     private final String value;
@@ -24,7 +24,7 @@ public enum MessageFolder {
     /**
      * @param value Used by {@link InboxPaginator}.
      */
-    MessageFolder(@StringRes int titleRes, String value) {
+    InboxFolder(@StringRes int titleRes, String value) {
         this.titleRes = titleRes;
         this.value = value;
     }

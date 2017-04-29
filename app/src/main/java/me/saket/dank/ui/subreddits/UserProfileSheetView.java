@@ -23,7 +23,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.user.messages.MessagesActivity;
+import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
@@ -120,7 +120,7 @@ public class UserProfileSheetView extends FrameLayout {
 
     @OnClick(R.id.userprofilesheet_messages)
     void onClickMessages() {
-        MessagesActivity.start(getContext(), null);
+        InboxActivity.start(getContext(), null);
 
         // Hide this sheet once it gets fully covered.
         postDelayed(

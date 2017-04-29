@@ -46,14 +46,14 @@ public class MessageFolderFragment extends DankFragment {
          * fragments can get recreated. So the messages fetched so far have to be cached by
          * the Activity.
          */
-        Subject<List<Message>> messageStream(MessageFolder folder);
+        Subject<List<Message>> messageStream(InboxFolder folder);
 
-        Completable fetchNextMessagePage(MessageFolder folder);
+        Completable fetchNextMessagePage(InboxFolder folder);
 
         BetterLinkMovementMethod getMessageLinkMovementMethod();
     }
 
-    public static MessageFolderFragment create(MessageFolder folder) {
+    public static MessageFolderFragment create(InboxFolder folder) {
         MessageFolderFragment fragment = new MessageFolderFragment();
         Bundle arguments = new Bundle(1);
         arguments.putSerializable(KEY_FOLDER, folder);
@@ -79,7 +79,7 @@ public class MessageFolderFragment extends DankFragment {
         messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
         messageList.setItemAnimator(new DefaultItemAnimator());
 
-        MessageFolder folder = (MessageFolder) getArguments().getSerializable(KEY_FOLDER);
+        InboxFolder folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
 
         // Listen to paginated messages.
         unsubscribeOnDestroy(((Callbacks) getActivity())

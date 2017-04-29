@@ -52,7 +52,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/spacing4"
-                android:text="@string/messages_reply_from"
+                android:text="@string/inbox_reply_from"
                 android:textColor="@color/gray_500" />
 
             <TextView
@@ -67,7 +67,7 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/spacing4"
-                android:text="@string/messages_via"
+                android:text="@string/inbox_via"
                 android:textColor="@color/gray_500" />
 
             <TextView

@@ -40,7 +40,7 @@ import io.reactivex.functions.Action;
 import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.user.messages.MessageFolder;
+import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
 import rx.exceptions.OnErrorThrowable;
@@ -288,7 +288,7 @@ public class DankRedditClient {
     /**
      * @param folder See {@link InboxPaginator#InboxPaginator(RedditClient, String)}.
      */
-    public InboxPaginator userMessages(MessageFolder folder) {
+    public InboxPaginator userMessages(InboxFolder folder) {
         return new InboxPaginator(redditClient, folder.value());
     }
 
