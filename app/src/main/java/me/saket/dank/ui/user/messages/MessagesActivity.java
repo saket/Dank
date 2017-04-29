@@ -1,8 +1,10 @@
 package me.saket.dank.ui.user.messages;
 
+import static me.saket.dank.ui.user.messages.MessageFolder.COMMENT_REPLIES;
+import static me.saket.dank.ui.user.messages.MessageFolder.POST_REPLIES;
+import static me.saket.dank.ui.user.messages.MessageFolder.PRIVATE_MESSAGES;
 import static me.saket.dank.ui.user.messages.MessageFolder.UNREAD;
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
-import static me.saket.dank.utils.RxUtils.logError;
+import static me.saket.dank.ui.user.messages.MessageFolder.USERNAME_MENTIONS;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
@@ -19,7 +21,7 @@ import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
 import android.view.ViewGroup;
 
-import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.google.common.collect.ImmutableList;
 
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
@@ -27,11 +29,16 @@ import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.Paginator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.Single;
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.ObservableTransformer;
+import io.reactivex.subjects.ReplaySubject;
+import io.reactivex.subjects.Subject;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
@@ -49,12 +56,18 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
     @BindView(R.id.messages_tablayout) TabLayout tabLayout;
     @BindView(R.id.messages_viewpager) ViewPager viewPager;
 
-    private BehaviorRelay<List<Message>> unreadMessagesRelay = BehaviorRelay.create();
-    private BehaviorRelay<List<Message>> privateMessagesRelay = BehaviorRelay.create();
-    private BehaviorRelay<List<Message>> commentRepliesMessageRelay = BehaviorRelay.create();
-    private BehaviorRelay<List<Message>> postRepliesMessageRelay = BehaviorRelay.create();
-    private BehaviorRelay<List<Message>> usernameMentionsRelay = BehaviorRelay.create();
+    private ReplaySubject<List<Message>> unreadMessageStream = ReplaySubject.create();
+    private ReplaySubject<List<Message>> privateMessageStream = ReplaySubject.create();
+    private ReplaySubject<List<Message>> commentRepliesStream = ReplaySubject.create();
+    private ReplaySubject<List<Message>> postRepliesStream = ReplaySubject.create();
+    private ReplaySubject<List<Message>> usernameMentionStream = ReplaySubject.create();
+
     private DankLinkMovementMethod commentLinkMovementMethod;
+    private InboxPaginator unreadMessagesPaginator;
+    private InboxPaginator privateMessagesPaginator;
+    private InboxPaginator commentRepliesPaginator;
+    private InboxPaginator postRepliesPaginator;
+    private InboxPaginator usernameMentionsPaginator;
 
     /**
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
@@ -88,113 +101,137 @@ public class MessagesActivity extends DankPullCollapsibleActivity implements Mes
                 return false;
             }
         });
-    }
-
-    @Override
-    protected void onPostCreate(@Nullable Bundle savedInstanceState) {
-        super.onPostCreate(savedInstanceState);
-
-        // TODO: These API calls happen in parallel and start automatically on start. Move them to on-demand loading instead.
 
         // Unread messages.
-        InboxPaginator unreadMessagesPaginator = Dank.reddit().userMessages(UNREAD);
-        unsubscribeOnDestroy(Dank.reddit()
-                .withAuth(Single.fromCallable(() -> unreadMessagesPaginator.next(true)))
-                .compose(applySchedulersSingle())
-                .subscribe(
-                        unreads -> unreadMessagesRelay.accept(unreads),
-                        logError("Couldn't load unread messages")
-                )
-        );
+        unreadMessagesPaginator = Dank.reddit().userMessages(UNREAD);
+        unreadMessagesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
 
         // Private messages.
-        InboxPaginator privateMessagesPaginator = Dank.reddit().userMessages(MessageFolder.PRIVATE_MESSAGES);
-        unsubscribeOnDestroy(Dank.reddit()
-                .withAuth(Single.fromCallable(() -> privateMessagesPaginator.next(true)))
-                .compose(applySchedulersSingle())
-                .subscribe(
-                        messages -> privateMessagesRelay.accept(messages),
-                        logError("Couldn't load private messages")
-                )
-        );
+        privateMessagesPaginator = Dank.reddit().userMessages(PRIVATE_MESSAGES);
+        privateMessagesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
 
         // Comment replies.
-        InboxPaginator commentRepliesPaginator = Dank.reddit().userMessages(MessageFolder.COMMENT_REPLIES);
-        unsubscribeOnDestroy(Dank.reddit()
-                .withAuth(Single.fromCallable(() -> commentRepliesPaginator.next(true)))
-                //.map(RxUtils.filterItems(MessageFolder.isCommentReply()))
-                .compose(applySchedulersSingle())
-                .subscribe(
-                        commentReplies -> commentRepliesMessageRelay.accept(commentReplies),
-                        logError("Couldn't load username mentions")
-                )
-        );
+        commentRepliesPaginator = Dank.reddit().userMessages(COMMENT_REPLIES);
+        commentRepliesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
 
         // Post replies.
-        InboxPaginator postRepliesPaginator = Dank.reddit().userMessages(MessageFolder.POST_REPLIES);
+        postRepliesPaginator = Dank.reddit().userMessages(POST_REPLIES);
         postRepliesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
 
-        Single<List<Message>> postRepliesStream = Single.fromCallable(() -> {
-            List<Message> postReplies = new ArrayList<>();
-
-            // Fetch a minimum of 10 post replies.
-            for (Listing<Message> messages : postRepliesPaginator) {
-                for (Message message : messages) {
-                    if ("post reply".equals(message.getSubject())) {
-                        postReplies.add(message);
-                    }
-                }
-                if (postReplies.size() > 10) {
-                    break;
-                }
-            }
-            return postReplies;
-        });
-
-        unsubscribeOnDestroy(Dank.reddit()
-                .withAuth(postRepliesStream)
-                .compose(applySchedulersSingle())
-                .subscribe(
-                        postReplies -> {
-//                            postRepliesMessageRelay.accept(postReplies);
-                        },
-                        logError("Couldn't load username mentions")
-                )
-        );
-
         // Username mentions.
-        InboxPaginator usernameMentionsPaginator = Dank.reddit().userMessages(MessageFolder.USERNAME_MENTIONS);
-        unsubscribeOnDestroy(Dank.reddit()
-                .withAuth(Single.fromCallable(() -> usernameMentionsPaginator.next(true)))
-                .compose(applySchedulersSingle())
-                .subscribe(
-                        mentions -> usernameMentionsRelay.accept(mentions),
-                        logError("Couldn't load username mentions")
-                )
-        );
+        usernameMentionsPaginator = Dank.reddit().userMessages(USERNAME_MENTIONS);
+        usernameMentionsPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
     }
 
     @Override
-    public BehaviorRelay<List<Message>> getMessages(MessageFolder folder) {
+    public Subject<List<Message>> messageStream(MessageFolder folder) {
         switch (folder) {
             case UNREAD:
-                return unreadMessagesRelay;
+                return unreadMessageStream;
 
             case PRIVATE_MESSAGES:
-                return privateMessagesRelay;
+                return privateMessageStream;
 
             case COMMENT_REPLIES:
-                return commentRepliesMessageRelay;
+                return commentRepliesStream;
 
             case POST_REPLIES:
-                return postRepliesMessageRelay;
+                return postRepliesStream;
 
             case USERNAME_MENTIONS:
-                return usernameMentionsRelay;
+                return usernameMentionStream;
 
             default:
                 throw new UnsupportedOperationException("Unknown message folder: " + folder);
         }
+    }
+
+    @Override
+    public Completable fetchNextMessagePage(MessageFolder folder) {
+        switch (folder) {
+            case UNREAD:
+                return Dank.reddit()
+                        .withAuth(Observable.fromCallable(() -> unreadMessagesPaginator.next(true)))
+                        .compose(propagatePaginatedItemsToStream(unreadMessagesPaginator, unreadMessageStream))
+                        .ignoreElements();
+
+            case PRIVATE_MESSAGES:
+                return Dank.reddit()
+                        .withAuth(Observable.fromCallable(() -> privateMessagesPaginator.next(true)))
+                        .compose(propagatePaginatedItemsToStream(privateMessagesPaginator, privateMessageStream))
+                        .ignoreElements();
+
+            case COMMENT_REPLIES:
+                return Dank.reddit()
+                        .withAuth(Observable.fromCallable(() -> {
+                            // Fetch a minimum of 10 comment replies.
+                            List<Message> commentReplies = new ArrayList<>();
+
+                            // commentRepliesPaginator makes an API call on every iteration.
+                            for (Listing<Message> messages : commentRepliesPaginator) {
+                                for (Message message : messages) {
+                                    if ("comment reply".equals(message.getSubject())) {
+                                        commentReplies.add(message);
+                                    }
+                                }
+                                if (commentReplies.size() > 10) {
+                                    break;
+                                }
+                            }
+                            return commentReplies;
+                        }))
+                        .compose(propagatePaginatedItemsToStream(commentRepliesPaginator, commentRepliesStream))
+                        .ignoreElements();
+
+            case POST_REPLIES:
+                return Dank.reddit()
+                        .withAuth(Observable.fromCallable(() -> {
+                            // Fetch a minimum of 10 post replies.
+                            List<Message> postReplies = new ArrayList<>();
+                            for (Listing<Message> messages : postRepliesPaginator) {
+                                for (Message message : messages) {
+                                    if ("post reply".equals(message.getSubject())) {
+                                        postReplies.add(message);
+                                    }
+                                }
+                                if (postReplies.size() > 10) {
+                                    break;
+                                }
+                            }
+                            return postReplies;
+                        }))
+                        .compose(propagatePaginatedItemsToStream(postRepliesPaginator, postRepliesStream))
+                        .ignoreElements();
+
+            case USERNAME_MENTIONS:
+                return Dank.reddit()
+                        .withAuth(Observable.fromCallable(() -> usernameMentionsPaginator.next(true)))
+                        .compose(propagatePaginatedItemsToStream(usernameMentionsPaginator, usernameMentionStream))
+                        .ignoreElements();
+
+            default:
+                throw new UnsupportedOperationException("Unknown message folder: " + folder);
+        }
+    }
+
+    private static ObservableTransformer<List<Message>, List<Message>> propagatePaginatedItemsToStream(InboxPaginator messagesPaginator,
+            ReplaySubject<List<Message>> stream)
+    {
+        return newMessagesObservable -> {
+            //noinspection unchecked
+            return newMessagesObservable
+                    .map(nextPage -> (List<Message>) new ImmutableList.Builder<Message>()
+                            .addAll(stream.hasValue() ? stream.getValue() : Collections.emptyList())
+                            .addAll(nextPage)
+                            .build()
+                    )
+                    .doOnNext(messages -> stream.onNext(messages))
+                    .doAfterNext(o -> {
+                        if (!messagesPaginator.hasNext()) {
+                            stream.onComplete();
+                        }
+                    });
+        };
     }
 
     @Override

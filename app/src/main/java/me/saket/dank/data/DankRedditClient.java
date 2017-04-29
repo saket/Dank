@@ -31,6 +31,7 @@ import org.reactivestreams.Publisher;
 
 import java.util.List;
 
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
@@ -42,6 +43,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.MessageFolder;
 import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
+import rx.exceptions.OnErrorThrowable;
 import timber.log.Timber;
 
 /**
@@ -129,6 +131,16 @@ public class DankRedditClient {
                 .retryWhen(refreshApiTokenIfExpiredAndRetry());
     }
 
+
+    public <T> Observable<T> withAuth(Observable<T> completable) {
+        return Dank.reddit()
+                .authenticateIfNeeded()
+                .andThen(completable)
+                .toFlowable(BackpressureStrategy.LATEST)
+                .retryWhen(refreshApiTokenIfExpiredAndRetry())
+                .toObservable();
+    }
+
     /**
      * Get a new API token if we haven't already or refresh the existing API token if the last one has expired.
      */
@@ -143,7 +155,7 @@ public class DankRedditClient {
             if (authState != AuthenticationState.READY) {
                 switch (authState) {
                     case NONE:
-                        Timber.d("Authenticating userless app in thread");
+                        Timber.d("Authenticating userless app");
                         redditClient.authenticate(redditClient.getOAuthHelper().easyAuth(userlessAppCredentials));
                         break;
 
@@ -156,9 +168,9 @@ public class DankRedditClient {
                 if (onRedditClientAuthenticatedRelay.getValue() == null) {
                     onRedditClientAuthenticatedRelay.accept(true);
                 }
-            } else {
-                Timber.d("Already authenticated");
-            }
+            } //else {
+                //Timber.d("Already authenticated");
+            //}
 
             // A dummy return value is required because Action0 doesn't handle Exceptions like Callable.
             return true;
@@ -186,7 +198,7 @@ public class DankRedditClient {
                         }));
 
             } else {
-                return Flowable.error(error);
+                throw OnErrorThrowable.from(error);
             }
         });
     }

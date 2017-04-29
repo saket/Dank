@@ -49,7 +49,7 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
 
             @Override
             public List<ImgurImage> images() {
-                return null;
+                throw new UnsupportedOperationException("No images here.");
             }
 
             @Override

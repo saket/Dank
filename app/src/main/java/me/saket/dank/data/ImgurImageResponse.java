@@ -36,7 +36,7 @@ public abstract class ImgurImageResponse implements ImgurResponse {
     @Override
     public String albumTitle() {
         // Not valid.
-        return null;
+        throw new UnsupportedOperationException("Image doesn't have any album title");
     }
 
     public static JsonAdapter<ImgurImageResponse> jsonAdapter(Moshi moshi) {

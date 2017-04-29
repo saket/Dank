@@ -2,6 +2,7 @@ package me.saket.dank.ui.user.messages;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -12,22 +13,17 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.jakewharton.rxrelay2.BehaviorRelay;
-
-import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
-import net.dean.jraw.paginators.InboxPaginator;
-import net.dean.jraw.paginators.Paginator;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.Observable;
+import io.reactivex.Completable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.subjects.Subject;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
-import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.InfiniteScroller;
 import timber.log.Timber;
@@ -42,8 +38,17 @@ public class MessageFolderFragment extends DankFragment {
     @BindView(R.id.messagefolder_message_list) RecyclerView messageList;
     @BindView(R.id.messagefolder_first_load_progress) View firstLoadProgressView;
 
+    private Disposable infiniteScrollDisposable;
+
     interface Callbacks {
-        BehaviorRelay<List<Message>> getMessages(MessageFolder folder);
+        /**
+         * We couldn't combine the message stream and the fetchNextMessagePage() because the
+         * fragments can get recreated. So the messages fetched so far have to be cached by
+         * the Activity.
+         */
+        Subject<List<Message>> messageStream(MessageFolder folder);
+
+        Completable fetchNextMessagePage(MessageFolder folder);
 
         BetterLinkMovementMethod getMessageLinkMovementMethod();
     }
@@ -65,88 +70,49 @@ public class MessageFolderFragment extends DankFragment {
         return layout;
     }
 
-    public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
-        return messageList.canScrollVertically(upwardPagePull ? +1 : -1);
-    }
-
     @Override
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
+        MessagesAdapter messagesAdapter = new MessagesAdapter(((Callbacks) getActivity()).getMessageLinkMovementMethod());
+        messageList.setAdapter(messagesAdapter);
         messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
         messageList.setItemAnimator(new DefaultItemAnimator());
 
-        MessagesAdapter messagesAdapter = new MessagesAdapter(((Callbacks) getActivity()).getMessageLinkMovementMethod());
-        messageList.setAdapter(messagesAdapter);
-
         MessageFolder folder = (MessageFolder) getArguments().getSerializable(KEY_FOLDER);
 
-        // Subscribe to messages.
-        if (folder == MessageFolder.POST_REPLIES) {
-            InfiniteScroller infiniteScroller = new InfiniteScroller(messageList, 0.75f);
-            infiniteScroller
-                    .emitWhenLoadNeeded()
-                    .observeOn(io())
-                    .doOnNext(o -> infiniteScroller.setLoadOngoing(true))
-                    .concatMap(o -> loadNewItems())
-                    .scan((existingMessages, newMessages) -> {
-                        ArrayList<Message> mergedMessages = new ArrayList<>(existingMessages.size() + newMessages.size());
-                        mergedMessages.addAll(existingMessages);
-                        mergedMessages.addAll(newMessages);
-                        return mergedMessages;
-                    })
-                    .observeOn(mainThread())
-                    .doOnNext(m -> Timber.i("Fetched %d messages", m.size()))
-                    .doOnNext(o -> infiniteScroller.setLoadOngoing(false))
-                    .doOnNext(o -> firstLoadProgressView.setVisibility(View.GONE))
-                    .doOnError(o -> firstLoadProgressView.setVisibility(View.GONE))
-                    .subscribe(messages -> messagesAdapter.updateData(messages));
+        // Listen to paginated messages.
+        unsubscribeOnDestroy(((Callbacks) getActivity())
+                .messageStream(folder)
+                .observeOn(mainThread())
+                .doOnComplete(() -> {
+                    infiniteScrollDisposable.dispose();
+                    firstLoadProgressView.setVisibility(View.GONE);
+                })
+                .doOnNext(o -> firstLoadProgressView.setVisibility(View.GONE))
+                .subscribe(messagesAdapter));
 
-        } else {
-            unsubscribeOnDestroy(((Callbacks) getActivity())
-                    .getMessages(folder)
-                    .doOnNext(o -> firstLoadProgressView.setVisibility(View.GONE))
-                    .doOnError(o -> firstLoadProgressView.setVisibility(View.GONE))
-                    .subscribe(messagesAdapter)
-            );
-        }
+        // Listen to load-more requests.
+        InfiniteScroller infiniteScroller = new InfiniteScroller(messageList, 0.75f /* loadThreshold */);
+
+        // InfiniteScroller will emit an empty item to load the initial set of items when this
+        // fragment is created for the first time.
+        infiniteScroller.setEmitInitialEvent(savedInstanceState == null);
+
+        infiniteScrollDisposable = infiniteScroller
+                .emitWhenLoadNeeded()
+                .doOnNext(o -> infiniteScroller.setLoadOngoing(true))
+                .observeOn(io())
+                .flatMapCompletable(o -> ((Callbacks) getActivity()).fetchNextMessagePage(folder))
+                .observeOn(mainThread())
+                .doOnComplete(() -> infiniteScroller.setLoadOngoing(false))
+                .subscribe(doNothingCompletable(), error -> Timber.e(error, "Couldn't fetch more messages under %s", folder));
+
+        unsubscribeOnDestroy(infiniteScrollDisposable);
     }
 
-    // Post replies.
-    InboxPaginator postRepliesPaginator = Dank.reddit().userMessages(MessageFolder.POST_REPLIES);
-    Observable<List<Message>> postRepliesStream;
-
-    {
-        postRepliesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
-    }
-
-    private Observable<List<Message>> loadNewItems() {
-        if (postRepliesPaginator.hasNext()) {
-            if (postRepliesStream == null) {
-                postRepliesStream = Observable.fromCallable(() -> {
-                    Timber.i("Loading more…");
-                    List<Message> postReplies = new ArrayList<>();
-
-                    // TODO: Auth.
-                    // Fetch a minimum of 10 post replies.
-                    for (Listing<Message> messages : postRepliesPaginator) {
-                        for (Message message : messages) {
-                            if ("post reply".equals(message.getSubject())) {
-                                postReplies.add(message);
-                            }
-                        }
-                        if (postReplies.size() > 10) {
-                            break;
-                        }
-                    }
-                    return postReplies;
-                });
-            }
-            return postRepliesStream;
-
-        } else {
-            return Observable.never();
-        }
+    public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
+        return messageList.canScrollVertically(upwardPagePull ? +1 : -1);
     }
 
 }

@@ -19,6 +19,7 @@ import net.dean.jraw.models.Subreddit;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -125,7 +126,7 @@ public class SubredditSubscriptionManager {
                         }
                     }
 
-                    return ImmutableList.copyOf(reOrderedFilteredSubs);
+                    return Collections.unmodifiableList(reOrderedFilteredSubs);
                 });
     }
 

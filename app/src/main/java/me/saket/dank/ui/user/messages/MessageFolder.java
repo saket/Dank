@@ -16,7 +16,7 @@ public enum MessageFolder {
     POST_REPLIES(R.string.messages_tab_post_replies, "inbox"),
     USERNAME_MENTIONS(R.string.messages_tab_username_mentions, "mentions"),;
 
-    public static MessageFolder[] ALL = { UNREAD, PRIVATE_MESSAGES, COMMENT_REPLIES, POST_REPLIES, USERNAME_MENTIONS };
+    public static MessageFolder[] ALL = { PRIVATE_MESSAGES, UNREAD, COMMENT_REPLIES, POST_REPLIES, USERNAME_MENTIONS };
 
     private final int titleRes;
     private final String value;

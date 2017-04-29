@@ -3,10 +3,9 @@ package me.saket.dank.utils;
 import android.support.annotation.Nullable;
 import android.text.Html;
 
-import com.google.common.collect.ImmutableList;
-
 import net.dean.jraw.models.Thumbnails;
 
+import java.util.Collections;
 import java.util.List;
 
 import io.reactivex.functions.Function;
@@ -49,8 +48,8 @@ public class CommonUtils {
         return Html.fromHtml(closestImage.getUrl()).toString();
     }
 
-    public static <T> Function<List<T>, ImmutableList<T>> toImmutable() {
-        return list -> ImmutableList.copyOf(list);
+    public static <T> Function<List<T>, List<T>> toImmutable() {
+        return list -> Collections.unmodifiableList(list);
     }
 
 }

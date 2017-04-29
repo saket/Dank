@@ -54,8 +54,7 @@ public class DankAppModule {
             return UserAgent.of("android", appContext.getPackageName(), packageInfo.versionName, "saketme");
 
         } catch (PackageManager.NameNotFoundException e) {
-            Timber.e(e, "Couldn't get app version name");
-            return null;
+            throw new IllegalStateException("Couldn't get app version name");
         }
     }
 
