@@ -288,7 +288,7 @@ public class DankRedditClient {
     /**
      * @param folder See {@link InboxPaginator#InboxPaginator(RedditClient, String)}.
      */
-    public InboxPaginator userMessages(InboxFolder folder) {
+    public InboxPaginator userMessagePaginator(InboxFolder folder) {
         return new InboxPaginator(redditClient, folder.value());
     }
 

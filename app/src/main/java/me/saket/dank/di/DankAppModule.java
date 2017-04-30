@@ -8,6 +8,9 @@ import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
 
 import com.danikula.videocache.HttpProxyCacheServer;
+import com.nytimes.android.external.fs2.filesystem.FileSystem;
+import com.nytimes.android.external.fs2.filesystem.FileSystemFactory;
+import com.nytimes.android.external.store2.base.impl.MemoryPolicy;
 import com.ryanharter.auto.value.moshi.AutoValueMoshiAdapterFactory;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
@@ -18,6 +21,7 @@ import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.http.LoggingMode;
 import net.dean.jraw.http.UserAgent;
 
+import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Singleton;
 
@@ -26,6 +30,7 @@ import dagger.Provides;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
+import me.saket.dank.data.DataStores;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
@@ -166,6 +171,31 @@ public class DankAppModule {
             UserPrefsManager userPrefsManager)
     {
         return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient, userPrefsManager);
+    }
+
+    @Singleton
+    @Provides
+    MemoryPolicy provideCachingPolicy() {
+        return MemoryPolicy.builder()
+                .setExpireAfter(1)
+                .setExpireAfterTimeUnit(TimeUnit.DAYS)
+                .build();
+    }
+
+    @Provides
+    @Singleton
+    FileSystem provideCacheFileSystem() {
+        try {
+            return FileSystemFactory.create(appContext.getCacheDir());
+        } catch (IOException e) {
+            throw new RuntimeException("Couldn't create FileSystemFactory. Cache dir: " + appContext.getCacheDir());
+        }
+    }
+
+    @Provides
+    @Singleton
+    DataStores provideDataStores(DankRedditClient dankRedditClient, Moshi moshi, FileSystem cacheFileSystem, MemoryPolicy cachingPolicy) {
+        return new DataStores(dankRedditClient, moshi, cacheFileSystem, cachingPolicy);
     }
 
 }

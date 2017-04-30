@@ -134,6 +134,9 @@ public class SubredditSubscriptionManager {
         return getAll("", true);
     }
 
+    /**
+     * Get updated subscriptions from remote and save to DB.
+     */
     @CheckResult
     public Completable refreshSubscriptions() {
         return toV2Observable(database

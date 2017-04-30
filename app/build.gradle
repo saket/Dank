@@ -103,7 +103,7 @@ dependencies {
     compile "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet.
 
     // Reddit API wrapper.
-    compile 'com.github.Saketme:JRAW:1195f3a385'
+    compile 'com.github.Saketme:JRAW:dad092fccd'
 
     // ImageViewer that supports pan, zoom gestures + can decode large images.
     compile 'com.alexvasilkov:gesture-views:2.2.0'
@@ -127,4 +127,10 @@ dependencies {
     testCompile 'junit:junit:4.12'
     testCompile "org.powermock:powermock-module-junit4:1.6.6"
     testCompile "org.powermock:powermock-api-mockito:1.6.6"
+
+    // Caching.
+    compile 'com.github.NYTimes.Store:cache:20445fff13'
+    compile 'com.github.NYTimes.Store:store2:20445fff13'
+    compile 'com.github.NYTimes.Store:middleware-moshi2:20445fff13'
+    compile 'com.github.NYTimes.Store:filesystem2:20445fff13'
 }

@@ -1,7 +1,7 @@
 package me.saket.dank.ui.user.messages;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 
 import android.os.Bundle;
@@ -21,6 +21,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Completable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
 import io.reactivex.subjects.Subject;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
@@ -38,7 +39,7 @@ public class MessageFolderFragment extends DankFragment {
     @BindView(R.id.messagefolder_message_list) RecyclerView messageList;
     @BindView(R.id.messagefolder_first_load_progress) View firstLoadProgressView;
 
-    private Disposable infiniteScrollDisposable;
+    private Disposable infiniteScrollDisposable = Disposables.disposed();
 
     interface Callbacks {
         /**
@@ -97,19 +98,25 @@ public class MessageFolderFragment extends DankFragment {
 
         // InfiniteScroller will emit an empty item to load the initial set of items when this
         // fragment is created for the first time.
-        infiniteScroller.setEmitInitialEvent(savedInstanceState == null);
+        // TODO infiniteScroller.setEmitInitialEvent(savedInstanceState == null);
+        infiniteScroller.setEmitInitialEvent(true);
 
-        infiniteScrollDisposable = infiniteScroller
-                .emitWhenLoadNeeded()
-                .doOnNext(o -> infiniteScroller.setLoadOngoing(true))
-                .observeOn(io())
-                .flatMapCompletable(o -> ((Callbacks) getActivity())
-                        .fetchNextMessagePage(folder)
-                        .doOnComplete(() -> infiniteScroller.setLoadOngoing(false)))
-                .observeOn(mainThread())
+        ((Callbacks) getActivity())
+                .fetchNextMessagePage(folder)
+                .compose(applySchedulersCompletable())
                 .subscribe(doNothingCompletable(), error -> Timber.e(error, "Couldn't fetch more messages under %s", folder));
 
-        unsubscribeOnDestroy(infiniteScrollDisposable);
+//        infiniteScrollDisposable = infiniteScroller
+//                .emitWhenLoadNeeded()
+//                .doOnNext(o -> infiniteScroller.setLoadOngoing(true))
+//                .observeOn(io())
+//                .flatMapCompletable(o -> ((Callbacks) getActivity())
+//                        .fetchNextMessagePage(folder)
+//                        .doOnComplete(() -> infiniteScroller.setLoadOngoing(false)))
+//                .observeOn(mainThread())
+//                .subscribe(doNothingCompletable(), error -> Timber.e(error, "Couldn't fetch more messages under %s", folder));
+//
+//        unsubscribeOnDestroy(infiniteScrollDisposable);
     }
 
     public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {

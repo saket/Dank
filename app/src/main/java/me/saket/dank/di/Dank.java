@@ -5,6 +5,7 @@ import android.app.Application;
 import com.danikula.videocache.HttpProxyCacheServer;
 
 import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.DataStores;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
@@ -50,5 +51,9 @@ public class Dank {
 
     public static SubredditSubscriptionManager subscriptionManager() {
         return appComponent.subredditSubscriptionManager();
+    }
+
+    public static DataStores stores() {
+        return appComponent.dataStores();
     }
 }

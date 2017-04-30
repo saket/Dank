@@ -1,10 +1,5 @@
 package me.saket.dank.ui.user.messages;
 
-import static me.saket.dank.ui.user.messages.InboxFolder.COMMENT_REPLIES;
-import static me.saket.dank.ui.user.messages.InboxFolder.POST_REPLIES;
-import static me.saket.dank.ui.user.messages.InboxFolder.PRIVATE_MESSAGES;
-import static me.saket.dank.ui.user.messages.InboxFolder.UNREAD;
-import static me.saket.dank.ui.user.messages.InboxFolder.USERNAME_MENTIONS;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
@@ -23,20 +18,16 @@ import android.view.ViewGroup;
 
 import com.google.common.collect.ImmutableList;
 
-import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.paginators.InboxPaginator;
-import net.dean.jraw.paginators.Paginator;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Completable;
-import io.reactivex.Observable;
-import io.reactivex.ObservableTransformer;
+import io.reactivex.SingleTransformer;
 import io.reactivex.subjects.ReplaySubject;
 import io.reactivex.subjects.Subject;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
@@ -63,11 +54,6 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
     private ReplaySubject<List<Message>> usernameMentionStream = ReplaySubject.create();
 
     private DankLinkMovementMethod commentLinkMovementMethod;
-    private InboxPaginator unreadMessagesPaginator;
-    private InboxPaginator privateMessagesPaginator;
-    private InboxPaginator commentRepliesPaginator;
-    private InboxPaginator postRepliesPaginator;
-    private InboxPaginator usernameMentionsPaginator;
 
     /**
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
@@ -101,26 +87,6 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
                 return false;
             }
         });
-
-        // Unread messages.
-        unreadMessagesPaginator = Dank.reddit().userMessages(UNREAD);
-        unreadMessagesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
-
-        // Private messages.
-        privateMessagesPaginator = Dank.reddit().userMessages(PRIVATE_MESSAGES);
-        privateMessagesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
-
-        // Comment replies.
-        commentRepliesPaginator = Dank.reddit().userMessages(COMMENT_REPLIES);
-        commentRepliesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
-
-        // Post replies.
-        postRepliesPaginator = Dank.reddit().userMessages(POST_REPLIES);
-        postRepliesPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
-
-        // Username mentions.
-        usernameMentionsPaginator = Dank.reddit().userMessages(USERNAME_MENTIONS);
-        usernameMentionsPaginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
     }
 
     @Override
@@ -149,72 +115,90 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
     @Override
     public Completable fetchNextMessagePage(InboxFolder folder) {
         switch (folder) {
-            case UNREAD:
-                return Dank.reddit()
-                        .withAuth(Observable.fromCallable(() -> unreadMessagesPaginator.next(true)))
-                        .compose(propagatePaginatedItemsToStream(unreadMessagesPaginator, unreadMessageStream))
-                        .ignoreElements();
-
             case PRIVATE_MESSAGES:
-                return Dank.reddit()
-                        .withAuth(Observable.fromCallable(() -> privateMessagesPaginator.next(true)))
-                        .compose(propagatePaginatedItemsToStream(privateMessagesPaginator, privateMessageStream))
-                        .ignoreElements();
-
-            case COMMENT_REPLIES:
-                return Dank.reddit()
-                        .withAuth(Observable.fromCallable(() -> {
-                            // Fetch a minimum of 10 comment replies.
-                            List<Message> commentReplies = new ArrayList<>();
-
-                            // commentRepliesPaginator makes an API call on every iteration.
-                            for (Listing<Message> messages : commentRepliesPaginator) {
-                                for (Message message : messages) {
-                                    if ("comment reply".equals(message.getSubject())) {
-                                        commentReplies.add(message);
-                                    }
-                                }
-                                if (commentReplies.size() > 10) {
-                                    break;
-                                }
-                            }
-                            return commentReplies;
-                        }))
-                        .compose(propagatePaginatedItemsToStream(commentRepliesPaginator, commentRepliesStream))
-                        .ignoreElements();
-
-            case POST_REPLIES:
-                return Dank.reddit()
-                        .withAuth(Observable.fromCallable(() -> {
-                            // Fetch a minimum of 10 post replies.
-                            List<Message> postReplies = new ArrayList<>();
-                            for (Listing<Message> messages : postRepliesPaginator) {
-                                for (Message message : messages) {
-                                    if ("post reply".equals(message.getSubject())) {
-                                        postReplies.add(message);
-                                    }
-                                }
-                                if (postReplies.size() > 10) {
-                                    break;
-                                }
-                            }
-                            return postReplies;
-                        }))
-                        .compose(propagatePaginatedItemsToStream(postRepliesPaginator, postRepliesStream))
-                        .ignoreElements();
-
-            case USERNAME_MENTIONS:
-                return Dank.reddit()
-                        .withAuth(Observable.fromCallable(() -> usernameMentionsPaginator.next(true)))
-                        .compose(propagatePaginatedItemsToStream(usernameMentionsPaginator, usernameMentionStream))
-                        .ignoreElements();
+                Timber.i("Fetching messages for %s", folder);
+                return Dank.stores().messageStore()
+                        .get(MessageCacheKey.create(folder, null))
+                        .doOnSuccess(messages -> Timber.i("Received %s messages", messages.size()))
+                        .doOnSuccess(messages -> privateMessageStream.onNext(messages))
+                        .doOnError(error -> privateMessageStream.onError(error))
+                        .toCompletable();
 
             default:
-                throw new UnsupportedOperationException("Unknown message folder: " + folder);
+                return Completable.complete();
+
+//            case UNREAD:
+//                return Dank.reddit()
+//                        .withAuth(Single.fromCallable(() -> unreadMessagesPaginator.next(true)))
+//                        .compose(propagatePaginatedItemsToStream(unreadMessagesPaginator, unreadMessageStream))
+//                        .toCompletable();
+//
+//            case PRIVATE_MESSAGES:
+//                return Dank.reddit()
+//                        .withAuth(Single.fromCallable(() -> privateMessagesPaginator.next(true)))
+//                        .doOnSuccess(messages -> {
+//                            Timber.d("------------------------------------");
+//                            Timber.d("Messages: %s", messages.size());
+//                            Timber.i("After: %s", messages.getAfter());
+//                            Timber.i("First: %s", messages.get(0).getDataNode());
+//                        })
+//                        .compose(propagatePaginatedItemsToStream(privateMessagesPaginator, privateMessageStream))
+//                        .toCompletable();
+//
+//            case COMMENT_REPLIES:
+//                return Dank.reddit()
+//                        .withAuth(Single.fromCallable(() -> {
+//                            // Fetch a minimum of 10 comment replies.
+//                            List<Message> commentReplies = new ArrayList<>();
+//
+//                            // commentRepliesPaginator makes an API call on every iteration.
+//                            for (Listing<Message> messages : commentRepliesPaginator) {
+//                                for (Message message : messages) {
+//                                    if ("comment reply".equals(message.getSubject())) {
+//                                        commentReplies.add(message);
+//                                    }
+//                                }
+//                                if (commentReplies.size() > 10) {
+//                                    break;
+//                                }
+//                            }
+//                            return commentReplies;
+//                        }))
+//                        .compose(propagatePaginatedItemsToStream(commentRepliesPaginator, commentRepliesStream))
+//                        .toCompletable();
+//
+//            case POST_REPLIES:
+//                return Dank.reddit()
+//                        .withAuth(Single.fromCallable(() -> {
+//                            // Fetch a minimum of 10 post replies.
+//                            List<Message> postReplies = new ArrayList<>();
+//                            for (Listing<Message> messages : postRepliesPaginator) {
+//                                for (Message message : messages) {
+//                                    if ("post reply".equals(message.getSubject())) {
+//                                        postReplies.add(message);
+//                                    }
+//                                }
+//                                if (postReplies.size() > 10) {
+//                                    break;
+//                                }
+//                            }
+//                            return postReplies;
+//                        }))
+//                        .compose(propagatePaginatedItemsToStream(postRepliesPaginator, postRepliesStream))
+//                        .toCompletable();
+//
+//            case USERNAME_MENTIONS:
+//                return Dank.reddit()
+//                        .withAuth(Single.fromCallable(() -> usernameMentionsPaginator.next(true)))
+//                        .compose(propagatePaginatedItemsToStream(usernameMentionsPaginator, usernameMentionStream))
+//                        .toCompletable();
+//
+//            default:
+//                throw new UnsupportedOperationException("Unknown message folder: " + folder);
         }
     }
 
-    private static ObservableTransformer<List<Message>, List<Message>> propagatePaginatedItemsToStream(InboxPaginator messagesPaginator,
+    private static SingleTransformer<List<Message>, List<Message>> propagatePaginatedItemsToStream(InboxPaginator messagesPaginator,
             ReplaySubject<List<Message>> stream)
     {
         return newMessagesObservable -> {
@@ -225,8 +209,9 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
                             .addAll(nextPage)
                             .build()
                     )
-                    .doOnNext(messages -> stream.onNext(messages))
-                    .doAfterNext(o -> {
+                    .doOnSuccess(messages -> stream.onNext(messages))
+                    .doOnError(error -> stream.onError(error))
+                    .doAfterSuccess(o -> {
                         if (!messagesPaginator.hasNext()) {
                             stream.onComplete();
                         }

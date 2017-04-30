@@ -34,7 +34,6 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 
 import net.dean.jraw.models.Submission;
 
@@ -65,6 +64,7 @@ import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
+import me.saket.dank.utils.JacksonUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -192,8 +192,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @Override
     public void onSaveInstanceState(Bundle outState) {
         if (activeSubmission != null) {
-            JsonNode dataNode = activeSubmission.getDataNode();
-            outState.putString(KEY_SUBMISSION_JSON, dataNode.toString());
+            outState.putString(KEY_SUBMISSION_JSON, JacksonUtils.toJson(activeSubmission.getDataNode()));
             outState.putParcelable(KEY_SUBMISSION_REQUEST, activeSubmissionRequest);
         }
         super.onSaveInstanceState(outState);
@@ -201,13 +200,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
         if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
-            String submissionJson = savedInstanceState.getString(KEY_SUBMISSION_JSON);
-            try {
-                JsonNode jsonNode = new ObjectMapper().readTree(submissionJson);
+            JsonNode jsonNode = JacksonUtils.fromJson(savedInstanceState.getString(KEY_SUBMISSION_JSON));
+            if (jsonNode != null) {
                 populateUi(new Submission(jsonNode), savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST));
-
-            } catch (Exception e) {
-                Timber.e(e, "Couldn't deserialize Submission: %s", submissionJson);
             }
         }
     }
@@ -382,11 +377,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         if (submission.getComments() == null) {
             unsubscribeOnCollapse(Dank.reddit()
                     .submission(activeSubmissionRequest)
-                            .flatMap(retryWithCorrectSortIfNeeded())
-                            .compose(applySchedulersSingle())
-                            .compose(doOnStartAndEndSingle(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
-                            .doOnSuccess(submWithComments -> activeSubmission = submWithComments)
-                            .subscribe(commentsHelper.setup(), handleSubmissionLoadError())
+                    .flatMap(retryWithCorrectSortIfNeeded())
+                    .compose(applySchedulersSingle())
+                    .compose(doOnStartAndEndSingle(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+                    .doOnSuccess(submWithComments -> activeSubmission = submWithComments)
+                    .subscribe(commentsHelper.setup(), handleSubmissionLoadError())
             );
 
         } else {
