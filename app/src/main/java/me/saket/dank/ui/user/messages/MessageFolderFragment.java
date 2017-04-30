@@ -103,9 +103,10 @@ public class MessageFolderFragment extends DankFragment {
                 .emitWhenLoadNeeded()
                 .doOnNext(o -> infiniteScroller.setLoadOngoing(true))
                 .observeOn(io())
-                .flatMapCompletable(o -> ((Callbacks) getActivity()).fetchNextMessagePage(folder))
+                .flatMapCompletable(o -> ((Callbacks) getActivity())
+                        .fetchNextMessagePage(folder)
+                        .doOnComplete(() -> infiniteScroller.setLoadOngoing(false)))
                 .observeOn(mainThread())
-                .doOnComplete(() -> infiniteScroller.setLoadOngoing(false))
                 .subscribe(doNothingCompletable(), error -> Timber.e(error, "Couldn't fetch more messages under %s", folder));
 
         unsubscribeOnDestroy(infiniteScrollDisposable);
