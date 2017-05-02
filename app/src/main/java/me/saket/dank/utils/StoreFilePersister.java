@@ -29,41 +29,51 @@ import okio.BufferedSource;
 import okio.Okio;
 import timber.log.Timber;
 
-public class StoreFilePersister<Raw, Key> implements Persister<Raw, Key>, Clearable<Key>, RecordProvider<Key> {
+public class StoreFilePersister<Key, Value> implements Persister<Value, Key>, Clearable<Key>, RecordProvider<Key> {
 
-    private final MoshiParser<Raw> jsonParser;
     private final FSReader<Key> fileReader;
     private final FSWriter<Key> fileWriter;
     private final FileSystem fileSystem;
     private final PathResolver<Key> pathResolver;
     private final long expirationDuration;
     private final TimeUnit expirationUnit;
+    private final JsonParser<Value> jsonParser;
 
-    public StoreFilePersister(FileSystem fileSystem, PathResolver<Key> pathResolver, Moshi moshi, Type typeOfRawData,
-            long expirationDuration, @NonNull TimeUnit expirationUnit)
+    public interface JsonParser<Value> {
+        Value fromJson(InputStream jsonInputStream);
+
+        String toJson(Value raw);
+    }
+
+    public StoreFilePersister(FileSystem fileSystem, PathResolver<Key> pathResolver, JsonParser<Value> jsonParser, long expirationDuration,
+            TimeUnit expirationUnit)
     {
         this.fileSystem = fileSystem;
         this.pathResolver = pathResolver;
         this.expirationDuration = expirationDuration;
         this.expirationUnit = expirationUnit;
 
-        this.jsonParser = new MoshiParser<>(moshi, typeOfRawData);
+        this.jsonParser = jsonParser;
         this.fileReader = new FSReader<>(fileSystem, pathResolver);
         this.fileWriter = new FSWriter<>(fileSystem, pathResolver);
     }
 
     @Nonnull
     @Override
-    public Maybe<Raw> read(@Nonnull Key key) {
+    public Maybe<Value> read(@Nonnull Key key) {
         return fileReader
                 .read(key)
-                .map(bufferedSource -> jsonParser.fromJson(bufferedSource));
+                .map(bufferedSource -> {
+                    try (InputStream inputStream = bufferedSource.inputStream()) {
+                        return jsonParser.fromJson(inputStream);
+                    }
+                });
     }
 
     @Nonnull
     @Override
-    public Single<Boolean> write(@Nonnull Key key, @Nonnull Raw raw) {
-        String rawJson = jsonParser.toJson(raw);
+    public Single<Boolean> write(@Nonnull Key key, @Nonnull Value value) {
+        String rawJson = jsonParser.toJson(value);
         InputStream stream = new ByteArrayInputStream(rawJson.getBytes(StandardCharsets.UTF_8));
         BufferedSource jsonBufferedSource = Okio.buffer(Okio.source(stream));
 

@@ -1,7 +1,6 @@
 package me.saket.dank.di;
 
 import com.danikula.videocache.HttpProxyCacheServer;
-import com.squareup.moshi.Moshi;
 
 import javax.inject.Singleton;
 
@@ -12,6 +11,7 @@ import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.utils.ImgurManager;
+import me.saket.dank.utils.JacksonHelper;
 import okhttp3.OkHttpClient;
 
 @Component(modules = DankAppModule.class)
@@ -33,7 +33,7 @@ public interface DankAppComponent {
 
     SubredditSubscriptionManager subredditSubscriptionManager();
 
-    Moshi moshi();
+    JacksonHelper jacksonHelper();
 
     DataStores dataStores();
 }

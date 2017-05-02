@@ -1,8 +1,7 @@
 package me.saket.dank.ui.user.messages;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.doNothingCompletable;
+import static io.reactivex.schedulers.Schedulers.io;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -13,18 +12,21 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.fasterxml.jackson.databind.JsonNode;
+
+import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
+import net.dean.jraw.models.PrivateMessage;
 
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.Completable;
+import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.disposables.Disposables;
-import io.reactivex.subjects.Subject;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
+import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.InfiniteScroller;
 import timber.log.Timber;
@@ -39,17 +41,11 @@ public class MessageFolderFragment extends DankFragment {
     @BindView(R.id.messagefolder_message_list) RecyclerView messageList;
     @BindView(R.id.messagefolder_first_load_progress) View firstLoadProgressView;
 
-    private Disposable infiniteScrollDisposable = Disposables.disposed();
+    private MessagesAdapter messagesAdapter;
+    private Disposable infiniteScrollDisposable;
 
     interface Callbacks {
-        /**
-         * We couldn't combine the message stream and the fetchNextMessagePage() because the
-         * fragments can get recreated. So the messages fetched so far have to be cached by
-         * the Activity.
-         */
-        Subject<List<Message>> messageStream(InboxFolder folder);
-
-        Completable fetchNextMessagePage(InboxFolder folder);
+        Single<List<Message>> fetchMoreMessages(InboxFolder folder, PaginationAnchor paginationAnchor);
 
         BetterLinkMovementMethod getMessageLinkMovementMethod();
     }
@@ -75,48 +71,73 @@ public class MessageFolderFragment extends DankFragment {
     public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
         super.onViewCreated(view, savedInstanceState);
 
-        MessagesAdapter messagesAdapter = new MessagesAdapter(((Callbacks) getActivity()).getMessageLinkMovementMethod());
+        messagesAdapter = new MessagesAdapter(((Callbacks) getActivity()).getMessageLinkMovementMethod());
         messageList.setAdapter(messagesAdapter);
         messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
         messageList.setItemAnimator(new DefaultItemAnimator());
 
         InboxFolder folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
 
-        // Listen to paginated messages.
-        unsubscribeOnDestroy(((Callbacks) getActivity())
-                .messageStream(folder)
-                .observeOn(mainThread())
-                .doOnComplete(() -> {
-                    infiniteScrollDisposable.dispose();
-                    firstLoadProgressView.setVisibility(View.GONE);
-                })
-                .doOnNext(o -> firstLoadProgressView.setVisibility(View.GONE))
-                .subscribe(messagesAdapter));
-
         // Listen to load-more requests.
         InfiniteScroller infiniteScroller = new InfiniteScroller(messageList, 0.75f /* loadThreshold */);
-
-        // InfiniteScroller will emit an empty item to load the initial set of items when this
-        // fragment is created for the first time.
-        // TODO infiniteScroller.setEmitInitialEvent(savedInstanceState == null);
         infiniteScroller.setEmitInitialEvent(true);
 
-        ((Callbacks) getActivity())
-                .fetchNextMessagePage(folder)
-                .compose(applySchedulersCompletable())
-                .subscribe(doNothingCompletable(), error -> Timber.e(error, "Couldn't fetch more messages under %s", folder));
+        infiniteScrollDisposable = infiniteScroller
+                .emitWhenLoadNeeded()
+                .doOnNext(o -> infiniteScroller.setLoadOngoing(true))
+                .observeOn(io())
+                .flatMapSingle(o -> calculatePaginationAnchor())
+                .scan((oldAnchor, newAnchor) -> {
+                    if (oldAnchor.equals(newAnchor)) {
+                        // No new pagination anchor was found. This means that no new items were fetched. Pagination can stop.
+                        infiniteScrollDisposable.dispose();
+                    }
+                    return newAnchor;
+                })
+                .flatMapSingle(paginationAnchor -> ((Callbacks) getActivity()).fetchMoreMessages(folder, paginationAnchor))
+                .observeOn(mainThread())
+                .doOnNext(o -> infiniteScroller.setLoadOngoing(false))
+                .doOnNext(o -> firstLoadProgressView.setVisibility(View.GONE))
+                .doOnNext(messages -> {
+                    if (messages.isEmpty()) {
+                        if (messagesAdapter.getItemCount() == 0) {
+                            // First load, no messages received. Inbox folder is empty.
+                            infiniteScrollDisposable.dispose();
+                        }
+                    }
+                })
+                .subscribe(messagesAdapter, error -> {
+                    Timber.e(error, "Couldn't fetch more messages under %s", folder);
+                });
+        unsubscribeOnDestroy(infiniteScrollDisposable);
+    }
 
-//        infiniteScrollDisposable = infiniteScroller
-//                .emitWhenLoadNeeded()
-//                .doOnNext(o -> infiniteScroller.setLoadOngoing(true))
-//                .observeOn(io())
-//                .flatMapCompletable(o -> ((Callbacks) getActivity())
-//                        .fetchNextMessagePage(folder)
-//                        .doOnComplete(() -> infiniteScroller.setLoadOngoing(false)))
-//                .observeOn(mainThread())
-//                .subscribe(doNothingCompletable(), error -> Timber.e(error, "Couldn't fetch more messages under %s", folder));
-//
-//        unsubscribeOnDestroy(infiniteScrollDisposable);
+    /**
+     * Find the full-name of the last message in the list, that can be used as the anchor for
+     * fetching the next set of pages.
+     */
+    private Single<PaginationAnchor> calculatePaginationAnchor() {
+        if (messagesAdapter.getItemCount() > 0) {
+            List<Message> existingMessages = messagesAdapter.getData();
+            Message lastMessage = existingMessages.get(existingMessages.size() - 1);
+
+            // Private messages can have nested replies. Go through them and find the last one.
+            if (lastMessage instanceof PrivateMessage) {
+                JsonNode repliesNode = lastMessage.getDataNode().get("replies");
+                if (repliesNode.isObject()) {
+                    // Replies are present.
+                    //noinspection MismatchedQueryAndUpdateOfCollection
+                    List<Message> lastMessageReplies = new Listing<>(repliesNode.get("data"), Message.class);
+                    Message lastMessageLastReply = lastMessageReplies.get(lastMessageReplies.size() - 1);
+                    return Single.just(PaginationAnchor.create(lastMessageLastReply.getFullName()));
+                }
+            }
+
+            return Single.just(PaginationAnchor.create(lastMessage.getFullName()));
+
+        } else {
+            return Single.just(PaginationAnchor.createEmpty());
+        }
     }
 
     public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {

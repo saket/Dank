@@ -17,22 +17,20 @@ import android.support.v4.view.ViewPager;
 import android.view.ViewGroup;
 
 import com.google.common.collect.ImmutableList;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.models.Message;
-import net.dean.jraw.paginators.InboxPaginator;
 
 import java.util.Collections;
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.Completable;
-import io.reactivex.SingleTransformer;
-import io.reactivex.subjects.ReplaySubject;
-import io.reactivex.subjects.Subject;
+import io.reactivex.Single;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
+import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.OpenUrlActivity;
@@ -47,11 +45,11 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
     @BindView(R.id.inbox_tablayout) TabLayout tabLayout;
     @BindView(R.id.inbox_viewpager) ViewPager viewPager;
 
-    private ReplaySubject<List<Message>> unreadMessageStream = ReplaySubject.create();
-    private ReplaySubject<List<Message>> privateMessageStream = ReplaySubject.create();
-    private ReplaySubject<List<Message>> commentRepliesStream = ReplaySubject.create();
-    private ReplaySubject<List<Message>> postRepliesStream = ReplaySubject.create();
-    private ReplaySubject<List<Message>> usernameMentionStream = ReplaySubject.create();
+    private BehaviorRelay<List<Message>> unreadMessageStream = BehaviorRelay.create();
+    private BehaviorRelay<List<Message>> privateMessageStream = BehaviorRelay.create();
+    private BehaviorRelay<List<Message>> commentRepliesStream = BehaviorRelay.create();
+    private BehaviorRelay<List<Message>> postRepliesStream = BehaviorRelay.create();
+    private BehaviorRelay<List<Message>> usernameMentionStream = BehaviorRelay.create();
 
     private DankLinkMovementMethod commentLinkMovementMethod;
 
@@ -89,8 +87,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
         });
     }
 
-    @Override
-    public Subject<List<Message>> messageStream(InboxFolder folder) {
+    public BehaviorRelay<List<Message>> messageStream(InboxFolder folder) {
         switch (folder) {
             case UNREAD:
                 return unreadMessageStream;
@@ -113,110 +110,30 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
     }
 
     @Override
-    public Completable fetchNextMessagePage(InboxFolder folder) {
-        switch (folder) {
-            case PRIVATE_MESSAGES:
-                Timber.i("Fetching messages for %s", folder);
-                return Dank.stores().messageStore()
-                        .get(MessageCacheKey.create(folder, null))
-                        .doOnSuccess(messages -> Timber.i("Received %s messages", messages.size()))
-                        .doOnSuccess(messages -> privateMessageStream.onNext(messages))
-                        .doOnError(error -> privateMessageStream.onError(error))
-                        .toCompletable();
+    public Single<List<Message>> fetchMoreMessages(InboxFolder folder, PaginationAnchor paginationAnchor) {
+        // TODO: Retry thrice.
+        // TODO: Show error on error.
 
-            default:
-                return Completable.complete();
+        BehaviorRelay<List<Message>> folderStream = messageStream(folder);
+        MessageCacheKey cacheKey = MessageCacheKey.create(folder, paginationAnchor);
 
-//            case UNREAD:
-//                return Dank.reddit()
-//                        .withAuth(Single.fromCallable(() -> unreadMessagesPaginator.next(true)))
-//                        .compose(propagatePaginatedItemsToStream(unreadMessagesPaginator, unreadMessageStream))
-//                        .toCompletable();
-//
-//            case PRIVATE_MESSAGES:
-//                return Dank.reddit()
-//                        .withAuth(Single.fromCallable(() -> privateMessagesPaginator.next(true)))
-//                        .doOnSuccess(messages -> {
-//                            Timber.d("------------------------------------");
-//                            Timber.d("Messages: %s", messages.size());
-//                            Timber.i("After: %s", messages.getAfter());
-//                            Timber.i("First: %s", messages.get(0).getDataNode());
-//                        })
-//                        .compose(propagatePaginatedItemsToStream(privateMessagesPaginator, privateMessageStream))
-//                        .toCompletable();
-//
-//            case COMMENT_REPLIES:
-//                return Dank.reddit()
-//                        .withAuth(Single.fromCallable(() -> {
-//                            // Fetch a minimum of 10 comment replies.
-//                            List<Message> commentReplies = new ArrayList<>();
-//
-//                            // commentRepliesPaginator makes an API call on every iteration.
-//                            for (Listing<Message> messages : commentRepliesPaginator) {
-//                                for (Message message : messages) {
-//                                    if ("comment reply".equals(message.getSubject())) {
-//                                        commentReplies.add(message);
-//                                    }
-//                                }
-//                                if (commentReplies.size() > 10) {
-//                                    break;
-//                                }
-//                            }
-//                            return commentReplies;
-//                        }))
-//                        .compose(propagatePaginatedItemsToStream(commentRepliesPaginator, commentRepliesStream))
-//                        .toCompletable();
-//
-//            case POST_REPLIES:
-//                return Dank.reddit()
-//                        .withAuth(Single.fromCallable(() -> {
-//                            // Fetch a minimum of 10 post replies.
-//                            List<Message> postReplies = new ArrayList<>();
-//                            for (Listing<Message> messages : postRepliesPaginator) {
-//                                for (Message message : messages) {
-//                                    if ("post reply".equals(message.getSubject())) {
-//                                        postReplies.add(message);
-//                                    }
-//                                }
-//                                if (postReplies.size() > 10) {
-//                                    break;
-//                                }
-//                            }
-//                            return postReplies;
-//                        }))
-//                        .compose(propagatePaginatedItemsToStream(postRepliesPaginator, postRepliesStream))
-//                        .toCompletable();
-//
-//            case USERNAME_MENTIONS:
-//                return Dank.reddit()
-//                        .withAuth(Single.fromCallable(() -> usernameMentionsPaginator.next(true)))
-//                        .compose(propagatePaginatedItemsToStream(usernameMentionsPaginator, usernameMentionStream))
-//                        .toCompletable();
-//
-//            default:
-//                throw new UnsupportedOperationException("Unknown message folder: " + folder);
-        }
-    }
+        Timber.d("--------------------------------");
+        Timber.i("Fetching more messages for %s with key: %s", paginationAnchor, cacheKey);
 
-    private static SingleTransformer<List<Message>, List<Message>> propagatePaginatedItemsToStream(InboxPaginator messagesPaginator,
-            ReplaySubject<List<Message>> stream)
-    {
-        return newMessagesObservable -> {
-            //noinspection unchecked
-            return newMessagesObservable
-                    .map(nextPage -> (List<Message>) new ImmutableList.Builder<Message>()
-                            .addAll(stream.hasValue() ? stream.getValue() : Collections.emptyList())
-                            .addAll(nextPage)
-                            .build()
-                    )
-                    .doOnSuccess(messages -> stream.onNext(messages))
-                    .doOnError(error -> stream.onError(error))
-                    .doAfterSuccess(o -> {
-                        if (!messagesPaginator.hasNext()) {
-                            stream.onComplete();
-                        }
-                    });
-        };
+        return Dank.stores().messageStore()
+                .get(cacheKey)
+                .map(nextPage -> (List<Message>) new ImmutableList.Builder<Message>()
+                        .addAll(folderStream.hasValue() ? folderStream.getValue() : Collections.emptyList())
+                        .addAll(nextPage)
+                        .build()
+                )
+                .doOnSuccess(messages -> folderStream.accept(messages))
+//                    .doAfterSuccess(o -> {
+//                        if (!messagesPaginator.hasNext()) {
+//                            folderStream.onComplete();
+//                        }
+//                    })
+        ;
     }
 
     @Override

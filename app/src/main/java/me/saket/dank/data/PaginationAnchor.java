@@ -19,4 +19,8 @@ public abstract class PaginationAnchor {
         return new AutoValue_PaginationAnchor(fullName);
     }
 
+    public static PaginationAnchor createEmpty() {
+        return new AutoValue_PaginationAnchor("");
+    }
+
 }

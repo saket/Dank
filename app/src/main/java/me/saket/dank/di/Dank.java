@@ -10,6 +10,7 @@ import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.utils.ImgurManager;
+import me.saket.dank.utils.JacksonHelper;
 import okhttp3.OkHttpClient;
 
 public class Dank {
@@ -51,6 +52,10 @@ public class Dank {
 
     public static SubredditSubscriptionManager subscriptionManager() {
         return appComponent.subredditSubscriptionManager();
+    }
+
+    public static JacksonHelper jackson() {
+        return appComponent.jacksonHelper();
     }
 
     public static DataStores stores() {

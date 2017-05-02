@@ -64,7 +64,6 @@ import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
-import me.saket.dank.utils.JacksonUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -192,7 +191,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @Override
     public void onSaveInstanceState(Bundle outState) {
         if (activeSubmission != null) {
-            outState.putString(KEY_SUBMISSION_JSON, JacksonUtils.toJson(activeSubmission.getDataNode()));
+            outState.putString(KEY_SUBMISSION_JSON, Dank.jackson().toJson(activeSubmission.getDataNode()));
             outState.putParcelable(KEY_SUBMISSION_REQUEST, activeSubmissionRequest);
         }
         super.onSaveInstanceState(outState);
@@ -200,7 +199,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
         if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
-            JsonNode jsonNode = JacksonUtils.fromJson(savedInstanceState.getString(KEY_SUBMISSION_JSON));
+            JsonNode jsonNode = Dank.jackson().fromJson(savedInstanceState.getString(KEY_SUBMISSION_JSON));
             if (jsonNode != null) {
                 populateUi(new Submission(jsonNode), savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST));
             }

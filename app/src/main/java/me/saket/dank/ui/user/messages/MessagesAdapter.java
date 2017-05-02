@@ -85,14 +85,14 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesA
 
         public void bind(Message message) {
             if (message instanceof CommentMessage) {
-                // TODO: Send PR for these custom fields to JRAW.
-                linkTitleView.setText(message.getDataNode().get("link_title").asText());
+                linkTitleView.setText(((CommentMessage) message).getLinkTitle());
                 fromView.setText(itemView.getResources().getString(R.string.subreddit_name_r_prefix, message.getSubreddit()));
 
             } else if (message instanceof PrivateMessage) {
                 linkTitleView.setText(message.getSubject());
             }
 
+            // TODO: Send PR for these custom fields to JRAW.
             // TODO: Should we cache these markdown?
             String bodyHtml = message.getDataNode().get("body_html").asText();
             messageBodyView.setText(Markdown.parseRedditMarkdownHtml(bodyHtml, messageBodyView.getPaint()));

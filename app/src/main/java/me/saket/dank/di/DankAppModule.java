@@ -8,6 +8,7 @@ import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
 
 import com.danikula.videocache.HttpProxyCacheServer;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nytimes.android.external.fs2.filesystem.FileSystem;
 import com.nytimes.android.external.fs2.filesystem.FileSystemFactory;
 import com.nytimes.android.external.store2.base.impl.MemoryPolicy;
@@ -35,6 +36,7 @@ import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.utils.ImgurManager;
+import me.saket.dank.utils.JacksonHelper;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -118,7 +120,7 @@ public class DankAppModule {
 
     @Provides
     @Singleton
-    DankApi providesKiteApi(Retrofit retrofit) {
+    DankApi providesDankApi(Retrofit retrofit) {
         return retrofit.create(DankApi.class);
     }
 
@@ -141,6 +143,15 @@ public class DankAppModule {
                 .build();
     }
 
+    @Provides
+    @Singleton
+    JacksonHelper provideJacksonHelper() {
+        return new JacksonHelper(new ObjectMapper());
+    }
+
+    /**
+     * Used for caching videos.
+     */
     @Provides
     @Singleton
     HttpProxyCacheServer provideHttpProxyCacheServer() {
@@ -194,8 +205,10 @@ public class DankAppModule {
 
     @Provides
     @Singleton
-    DataStores provideDataStores(DankRedditClient dankRedditClient, Moshi moshi, FileSystem cacheFileSystem, MemoryPolicy cachingPolicy) {
-        return new DataStores(dankRedditClient, moshi, cacheFileSystem, cachingPolicy);
+    DataStores provideDataStores(DankRedditClient dankRedditClient, JacksonHelper jacksonHelper, FileSystem cacheFileSystem,
+            MemoryPolicy cachingPolicy)
+    {
+        return new DataStores(dankRedditClient, jacksonHelper, cacheFileSystem, cachingPolicy);
     }
 
 }

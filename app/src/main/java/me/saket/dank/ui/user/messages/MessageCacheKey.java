@@ -1,7 +1,5 @@
 package me.saket.dank.ui.user.messages;
 
-import android.support.annotation.Nullable;
-
 import com.google.auto.value.AutoValue;
 import com.nytimes.android.external.fs2.PathResolver;
 
@@ -12,7 +10,6 @@ public abstract class MessageCacheKey {
 
     public abstract InboxFolder folder();
 
-    @Nullable
     public abstract PaginationAnchor paginationAnchor();
 
     public static MessageCacheKey create(InboxFolder folder, PaginationAnchor startAfterThingName) {
@@ -24,12 +21,8 @@ public abstract class MessageCacheKey {
     }
 
     public static PathResolver<MessageCacheKey> PATH_RESOLVER = key -> {
-        if (key.hasPaginationAnchor()) {
-            //noinspection ConstantConditions
-            return key.folder().name() + key.paginationAnchor().fullName();
-        } else {
-            return key.folder().name();
-        }
+        //noinspection CodeBlock2Expr
+        return key.folder().value() + key.paginationAnchor().fullName();
     };
 
 }
