@@ -11,6 +11,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -24,6 +25,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.PaginationAnchor;
@@ -40,12 +43,14 @@ public class MessageFolderFragment extends DankFragment {
 
     @BindView(R.id.messagefolder_message_list) RecyclerView messageList;
     @BindView(R.id.messagefolder_first_load_progress) View firstLoadProgressView;
+    @BindView(R.id.messagefolder_empty_state) ViewGroup emptyStateContainer;
+    @BindView(R.id.messagefolder_empty_state_message) TextView emptyStateMessageView;
 
     private MessagesAdapter messagesAdapter;
     private Disposable infiniteScrollDisposable;
 
     interface Callbacks {
-        Single<List<Message>> fetchMoreMessages(InboxFolder folder, PaginationAnchor paginationAnchor);
+        Function<PaginationAnchor, Single<List<Message>>> fetchMoreMessages(InboxFolder folder);
 
         BetterLinkMovementMethod getMessageLinkMovementMethod();
     }
@@ -81,7 +86,6 @@ public class MessageFolderFragment extends DankFragment {
         // Listen to load-more requests.
         InfiniteScroller infiniteScroller = new InfiniteScroller(messageList, 0.75f /* loadThreshold */);
         infiniteScroller.setEmitInitialEvent(true);
-
         infiniteScrollDisposable = infiniteScroller
                 .emitWhenLoadNeeded()
                 .doOnNext(o -> infiniteScroller.setLoadOngoing(true))
@@ -89,27 +93,32 @@ public class MessageFolderFragment extends DankFragment {
                 .flatMapSingle(o -> calculatePaginationAnchor())
                 .scan((oldAnchor, newAnchor) -> {
                     if (oldAnchor.equals(newAnchor)) {
-                        // No new pagination anchor was found. This means that no new items were fetched. Pagination can stop.
+                        // No new pagination anchor was found. This means that
+                        // no new items were fetched. Pagination can stop.
                         infiniteScrollDisposable.dispose();
                     }
                     return newAnchor;
                 })
-                .flatMapSingle(paginationAnchor -> ((Callbacks) getActivity()).fetchMoreMessages(folder, paginationAnchor))
+                .flatMapSingle(((Callbacks) getActivity()).fetchMoreMessages(folder))
                 .observeOn(mainThread())
-                .doOnNext(o -> infiniteScroller.setLoadOngoing(false))
-                .doOnNext(o -> firstLoadProgressView.setVisibility(View.GONE))
                 .doOnNext(messages -> {
-                    if (messages.isEmpty()) {
-                        if (messagesAdapter.getItemCount() == 0) {
-                            // First load, no messages received. Inbox folder is empty.
-                            infiniteScrollDisposable.dispose();
-                        }
+                    infiniteScroller.setLoadOngoing(false);
+                    firstLoadProgressView.setVisibility(View.GONE);
+
+                    boolean isFolderEmpty = messages.isEmpty() && messagesAdapter.getItemCount() == 0;
+
+                    if (isFolderEmpty) {
+                        // First load, no messages received. Inbox folder is empty.
+                        infiniteScrollDisposable.dispose();
                     }
+                    setEmptyStateVisible(isFolderEmpty, folder);
                 })
-                .subscribe(messagesAdapter, error -> {
-                    Timber.e(error, "Couldn't fetch more messages under %s", folder);
-                });
+                .subscribe(messagesAdapter, handleMessageLoadError(folder));
         unsubscribeOnDestroy(infiniteScrollDisposable);
+    }
+
+    public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
+        return messageList.canScrollVertically(upwardPagePull ? +1 : -1);
     }
 
     /**
@@ -140,8 +149,38 @@ public class MessageFolderFragment extends DankFragment {
         }
     }
 
-    public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
-        return messageList.canScrollVertically(upwardPagePull ? +1 : -1);
+    private void setEmptyStateVisible(boolean visible, InboxFolder forFolder) {
+        emptyStateContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
+
+        if (visible) {
+            switch (forFolder) {
+                case UNREAD:
+                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_unread);
+                    break;
+
+                case PRIVATE_MESSAGES:
+                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_private_messages);
+                    break;
+
+                case COMMENT_REPLIES:
+                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_comment_replies);
+                    break;
+
+                case POST_REPLIES:
+                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_post_replies);
+                    break;
+
+                case USERNAME_MENTIONS:
+                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_username_mentions);
+                    break;
+            }
+        }
+    }
+
+    private Consumer<Throwable> handleMessageLoadError(InboxFolder folder) {
+        return error -> {
+            Timber.e(error, "Couldn't fetch more messages under %s", folder);
+        };
     }
 
 }

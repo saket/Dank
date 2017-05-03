@@ -98,7 +98,7 @@
     <string name="userpreferences_about_description">The team behind</string>
 
     <!-- Messages -->
-    <string name="activity_messages">Messages</string>
+    <string name="activity_inbox">Inbox</string>
     <string name="inbox_reply_from">Reply from</string>
     <string name="inbox_via">via</string>
     <string name="inbox_timestamp_just_now">Just now</string>
@@ -107,4 +107,10 @@
     <string name="inbox_tab_comment_replies">Comment replies</string>
     <string name="inbox_tab_post_replies">Post replies</string>
     <string name="inbox_tab_username_mentions">Username mentions</string>
+    <string name="inbox_empty_state_title" translatable="false">ᕕ( ᐛ )ᕗ</string>
+    <string name="inbox_empty_state_message_for_unread">All caught up! You don\'t have \nany unread messages</string>
+    <string name="inbox_empty_state_message_for_private_messages">You don\'t have any private messages. \nLooks like you don\'t have any friends.</string>
+    <string name="inbox_empty_state_message_for_comment_replies">You don\'t have any comment replies. \nNobody replies to you on Reddit.</string>
+    <string name="inbox_empty_state_message_for_post_replies">You don\'t have any post replies. \nGuess who\'s really unpopular on Reddit?</string>
+    <string name="inbox_empty_state_message_for_username_mentions">You don\'t have any username mentions.</string>
 </resources>

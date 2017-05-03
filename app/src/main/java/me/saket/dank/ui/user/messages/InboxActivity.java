@@ -27,6 +27,7 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Single;
+import io.reactivex.functions.Function;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
@@ -87,7 +88,31 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
         });
     }
 
-    public BehaviorRelay<List<Message>> messageStream(InboxFolder folder) {
+    @Override
+    public Function<PaginationAnchor, Single<List<Message>>> fetchMoreMessages(InboxFolder folder) {
+        return paginationAnchor -> {
+            // TODO: Retry thrice. Update: Do this in Dank.reddit().withAuth().
+            // TODO: Error state and empty state.
+
+            BehaviorRelay<List<Message>> folderStream = messageStream(folder);
+            MessageCacheKey cacheKey = MessageCacheKey.create(folder, paginationAnchor);
+
+            return Dank.stores().messageStore()
+                    .get(cacheKey)
+                    .map(nextPage -> (List<Message>) new ImmutableList.Builder<Message>()
+                            .addAll(folderStream.hasValue() ? folderStream.getValue() : Collections.emptyList())
+                            .addAll(nextPage)
+                            .build()
+                    )
+                    .doOnSuccess(messages -> folderStream.accept(messages));
+        };
+    }
+
+    /**
+     * These local streams are used as a cache of messages loaded so far, so that we can
+     * combine all message pages loaded so far and emit them to the fragment subscribers.
+     */
+    private BehaviorRelay<List<Message>> messageStream(InboxFolder folder) {
         switch (folder) {
             case UNREAD:
                 return unreadMessageStream;
@@ -107,33 +132,6 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
             default:
                 throw new UnsupportedOperationException("Unknown message folder: " + folder);
         }
-    }
-
-    @Override
-    public Single<List<Message>> fetchMoreMessages(InboxFolder folder, PaginationAnchor paginationAnchor) {
-        // TODO: Retry thrice.
-        // TODO: Show error on error.
-
-        BehaviorRelay<List<Message>> folderStream = messageStream(folder);
-        MessageCacheKey cacheKey = MessageCacheKey.create(folder, paginationAnchor);
-
-        Timber.d("--------------------------------");
-        Timber.i("Fetching more messages for %s with key: %s", paginationAnchor, cacheKey);
-
-        return Dank.stores().messageStore()
-                .get(cacheKey)
-                .map(nextPage -> (List<Message>) new ImmutableList.Builder<Message>()
-                        .addAll(folderStream.hasValue() ? folderStream.getValue() : Collections.emptyList())
-                        .addAll(nextPage)
-                        .build()
-                )
-                .doOnSuccess(messages -> folderStream.accept(messages))
-//                    .doAfterSuccess(o -> {
-//                        if (!messagesPaginator.hasNext()) {
-//                            folderStream.onComplete();
-//                        }
-//                    })
-        ;
     }
 
     @Override

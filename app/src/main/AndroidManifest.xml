@@ -48,7 +48,7 @@
 
         <activity
             android:name=".ui.user.messages.InboxActivity"
-            android:label="@string/activity_messages"
+            android:label="@string/activity_inbox"
             android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
         <service

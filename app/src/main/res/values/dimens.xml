@@ -3,6 +3,7 @@
     <dimen name="textsize14">14sp</dimen>
     <dimen name="textsize16">16sp</dimen>
     <dimen name="textsize18">18sp</dimen>
+    <dimen name="textsize24">24sp</dimen>
 
     <dimen name="spacing2">2dp</dimen>
     <dimen name="spacing4">4dp</dimen>

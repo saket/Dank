@@ -26,7 +26,6 @@ import io.reactivex.Single;
 import me.saket.dank.ui.user.messages.MessageCacheKey;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.StoreFilePersister;
-import timber.log.Timber;
 
 /**
  * Repository for all {@link Store} we have in Dank.
@@ -51,8 +50,6 @@ public class DataStores {
                     //noinspection ConstantConditions
                     paginator.setStartAfterThing(key.paginationAnchor().fullName());
                 }
-
-                Timber.i("Fetching messages in %s from remote. Anchor: %s", key.folder(), key.paginationAnchor());
 
                 // Try fetching a minimum of 10 comment replies.
                 List<Message> minimum10Messages = new ArrayList<>();
@@ -97,38 +94,39 @@ public class DataStores {
             return dankRedditClient.withAuth(Single.fromCallable(paginatorCallable));
         };
 
+        StoreFilePersister.JsonParser<List<Message>> diskPersistJsonParser = new StoreFilePersister.JsonParser<List<Message>>() {
+            @Override
+            public String toJson(List<Message> messagesToPersist) {
+                JsonNode[] jsonNodes = new JsonNode[messagesToPersist.size()];
+                for (int i = 0; i < messagesToPersist.size(); i++) {
+                    jsonNodes[i] = (messagesToPersist.get(i).getDataNode());
+                }
+                return jacksonHelper.toJson(jsonNodes);
+            }
+
+            @Override
+            @SuppressWarnings("ConstantConditions")
+            public List<Message> fromJson(InputStream jsonInputStream) {
+                JsonNode[] jsonNodes = jacksonHelper.fromJson(jsonInputStream, JsonNode[].class);
+                return constructMessagesFromJsonNodes(jsonNodes);
+            }
+
+            @NonNull
+            private List<Message> constructMessagesFromJsonNodes(JsonNode[] jsonNodes) {
+                List<Message> deserializedMessages = new ArrayList<>(jsonNodes.length);
+                for (JsonNode jsonNode : jsonNodes) {
+                    boolean isCommentMessage = jsonNode.get("was_comment").asBoolean();
+                    Message deserializedMessage = isCommentMessage ? new CommentMessage(jsonNode) : new PrivateMessage(jsonNode);
+                    deserializedMessages.add(deserializedMessage);
+                }
+                return deserializedMessages;
+            }
+        };
+
         Persister<List<Message>, MessageCacheKey> diskPersister = new StoreFilePersister<>(
                 cacheFileSystem,
                 MessageCacheKey.PATH_RESOLVER,
-                new StoreFilePersister.JsonParser<List<Message>>() {
-                    @Override
-                    public String toJson(List<Message> messagesToPersist) {
-                        JsonNode[] jsonNodes = new JsonNode[messagesToPersist.size()];
-                        for (int i = 0; i < messagesToPersist.size(); i++) {
-                            jsonNodes[i] = (messagesToPersist.get(i).getDataNode());
-                        }
-                        return jacksonHelper.toJson(jsonNodes);
-                    }
-
-                    @Override
-                    @SuppressWarnings("ConstantConditions")
-                    public List<Message> fromJson(InputStream jsonInputStream) {
-                        JsonNode[] jsonNodes = jacksonHelper.fromJson(jsonInputStream, JsonNode[].class);
-                        List<Message> messages = constructMessagesFromJsonNodes(jsonNodes);
-                        return messages;
-                    }
-
-                    @NonNull
-                    private List<Message> constructMessagesFromJsonNodes(JsonNode[] jsonNodes) {
-                        List<Message> deserializedMessages = new ArrayList<>(jsonNodes.length);
-                        for (JsonNode jsonNode : jsonNodes) {
-                            boolean isCommentMessage = jsonNode.get("was_comment").asBoolean();
-                            Message deserializedMessage = isCommentMessage ? new CommentMessage(jsonNode) : new PrivateMessage(jsonNode);
-                            deserializedMessages.add(deserializedMessage);
-                        }
-                        return deserializedMessages;
-                    }
-                },
+                diskPersistJsonParser,
                 cachingPolicy.getExpireAfter(),
                 cachingPolicy.getExpireAfterTimeUnit()
         );
