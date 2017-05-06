@@ -14,7 +14,7 @@ import io.reactivex.functions.Predicate;
 /**
  * Listens for scroll events and dispatches
  */
-public class InfiniteScroller {
+public class InfiniteScrollListener {
 
     private final float loadThresholdFactor;
     private final RecyclerView recyclerView;
@@ -26,7 +26,11 @@ public class InfiniteScroller {
      *                            and a factor of 0.6f, a new load will be triggered when the list reaches the
      *                            12th item.
      */
-    public InfiniteScroller(RecyclerView recyclerView, @FloatRange(from = 0f, to = 1f) float loadThresholdFactor) {
+    public static InfiniteScrollListener create(RecyclerView recyclerView, @FloatRange(from = 0f, to = 1f) float loadThresholdFactor) {
+        return new InfiniteScrollListener(recyclerView, loadThresholdFactor);
+    }
+
+    private InfiniteScrollListener(RecyclerView recyclerView, @FloatRange(from = 0f, to = 1f) float loadThresholdFactor) {
         this.loadThresholdFactor = loadThresholdFactor;
         this.recyclerView = recyclerView;
     }
@@ -35,8 +39,9 @@ public class InfiniteScroller {
         isLoadOngoing = loadOngoing;
     }
 
-    public void setEmitInitialEvent(boolean emitInitial) {
+    public InfiniteScrollListener setEmitInitialEvent(boolean emitInitial) {
         this.emitInitialEvent = emitInitial;
+        return this;
     }
 
     @CheckResult

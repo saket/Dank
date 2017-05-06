@@ -23,4 +23,8 @@ public abstract class PaginationAnchor {
         return new AutoValue_PaginationAnchor("");
     }
 
+    public boolean isEmpty() {
+        return fullName().length() == 0;
+    }
+
 }

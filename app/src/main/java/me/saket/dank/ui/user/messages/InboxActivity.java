@@ -89,16 +89,15 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
             }
         });
 
-        unsubscribeOnDestroy(
-                RxViewPager.pageSelections(viewPager)
-                        .scan((prevPage, newPage) -> {
-                            MessageFolderFragment previousFragment = messagesPagerAdapter.getFragment(prevPage);
-                            if (previousFragment != null) {
-                                previousFragment.onFragmentHiddenInPager();
-                            }
-                            return newPage;
-                        })
-                        .subscribe()
+        unsubscribeOnDestroy(RxViewPager.pageSelections(viewPager)
+                .scan((prevPage, newPage) -> {
+                    MessageFolderFragment previousFragment = messagesPagerAdapter.getFragment(prevPage);
+                    if (previousFragment != null) {
+                        previousFragment.onFragmentHiddenInPager();
+                    }
+                    return newPage;
+                })
+                .subscribe()
         );
     }
 
