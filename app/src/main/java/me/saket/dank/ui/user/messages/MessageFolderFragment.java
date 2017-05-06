@@ -5,13 +5,13 @@ import static io.reactivex.schedulers.Schedulers.io;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.Snackbar;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.TextView;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -30,8 +30,14 @@ import io.reactivex.functions.Function;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.PaginationAnchor;
+import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.exceptions.PaginationCompleteException;
+import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
+import me.saket.dank.utils.RecyclerAdapterWithProgressFooter;
 import me.saket.dank.utils.InfiniteScroller;
+import me.saket.dank.widgets.EmptyStateView;
+import me.saket.dank.widgets.ErrorStateView;
 import timber.log.Timber;
 
 /**
@@ -43,11 +49,23 @@ public class MessageFolderFragment extends DankFragment {
 
     @BindView(R.id.messagefolder_message_list) RecyclerView messageList;
     @BindView(R.id.messagefolder_first_load_progress) View firstLoadProgressView;
-    @BindView(R.id.messagefolder_empty_state) ViewGroup emptyStateContainer;
-    @BindView(R.id.messagefolder_empty_state_message) TextView emptyStateMessageView;
+    @BindView(R.id.messagefolder_empty_state) EmptyStateView emptyStateView;
+    @BindView(R.id.messagefolder_error_state) ErrorStateView errorStateView;
 
+    private InboxFolder folder;
     private MessagesAdapter messagesAdapter;
+    private RecyclerAdapterWithProgressFooter messagesAdapterWithProgress;
     private Disposable infiniteScrollDisposable;
+    private Snackbar loadMoreErrorSnackbar;     // TODO: Rxify this.
+
+    private enum ScreenState {
+        FIRST_LOAD_IN_FLIGHT,
+        MORE_LOAD_IN_FLIGHT,
+        MESSAGES_VISIBLE,
+        EMPTY_STATE,
+        ERROR_ON_FIRST_LOAD,
+        ERROR_ON_MORE_LOAD,
+    }
 
     interface Callbacks {
         Function<PaginationAnchor, Single<List<Message>>> fetchMoreMessages(InboxFolder folder);
@@ -77,44 +95,135 @@ public class MessageFolderFragment extends DankFragment {
         super.onViewCreated(view, savedInstanceState);
 
         messagesAdapter = new MessagesAdapter(((Callbacks) getActivity()).getMessageLinkMovementMethod());
-        messageList.setAdapter(messagesAdapter);
+        messagesAdapterWithProgress = RecyclerAdapterWithProgressFooter.wrap(messagesAdapter);
+        messageList.setAdapter(messagesAdapterWithProgress);
+
         messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
         messageList.setItemAnimator(new DefaultItemAnimator());
 
-        InboxFolder folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
+        folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
+        subscribeToMessageLoads();
+    }
 
+    /**
+     * Called when the ViewPager is swiped and this page goes out of the view.
+     */
+    public void onFragmentHiddenInPager() {
+        if (loadMoreErrorSnackbar != null) {
+            loadMoreErrorSnackbar.dismiss();
+        }
+    }
+
+    private void subscribeToMessageLoads() {
         // Listen to load-more requests.
         InfiniteScroller infiniteScroller = new InfiniteScroller(messageList, 0.75f /* loadThreshold */);
         infiniteScroller.setEmitInitialEvent(true);
         infiniteScrollDisposable = infiniteScroller
                 .emitWhenLoadNeeded()
                 .doOnNext(o -> infiniteScroller.setLoadOngoing(true))
-                .observeOn(io())
                 .flatMapSingle(o -> calculatePaginationAnchor())
                 .scan((oldAnchor, newAnchor) -> {
                     if (oldAnchor.equals(newAnchor)) {
                         // No new pagination anchor was found. This means that
                         // no new items were fetched. Pagination can stop.
-                        infiniteScrollDisposable.dispose();
+                        throw new PaginationCompleteException();
                     }
                     return newAnchor;
                 })
+                .distinctUntilChanged()
+                .doOnNext(o -> {
+                    showScreenState(messagesAdapter.getItemCount() == 0 ? ScreenState.FIRST_LOAD_IN_FLIGHT : ScreenState.MORE_LOAD_IN_FLIGHT);
+                })
+                .observeOn(io())
                 .flatMapSingle(((Callbacks) getActivity()).fetchMoreMessages(folder))
                 .observeOn(mainThread())
                 .doOnNext(messages -> {
                     infiniteScroller.setLoadOngoing(false);
-                    firstLoadProgressView.setVisibility(View.GONE);
 
-                    boolean isFolderEmpty = messages.isEmpty() && messagesAdapter.getItemCount() == 0;
-
-                    if (isFolderEmpty) {
+                    boolean areMessagesEmpty = messages.isEmpty() && messagesAdapter.getItemCount() == 0;
+                    if (areMessagesEmpty) {
                         // First load, no messages received. Inbox folder is empty.
                         infiniteScrollDisposable.dispose();
+                        showScreenState(ScreenState.EMPTY_STATE);
+                        showEmptyStateView(folder);
+                    } else {
+                        showScreenState(ScreenState.MESSAGES_VISIBLE);
                     }
-                    setEmptyStateVisible(isFolderEmpty, folder);
                 })
                 .subscribe(messagesAdapter, handleMessageLoadError(folder));
         unsubscribeOnDestroy(infiniteScrollDisposable);
+    }
+
+    private void showScreenState(ScreenState state) {
+        switch (state) {
+            case FIRST_LOAD_IN_FLIGHT:
+                firstLoadProgressView.setVisibility(View.VISIBLE);
+                emptyStateView.setVisibility(View.GONE);
+                errorStateView.setVisibility(View.GONE);
+                messageList.post(() -> messagesAdapterWithProgress.setProgressVisible(false));
+                if (loadMoreErrorSnackbar != null) {
+                    loadMoreErrorSnackbar.dismiss();
+                }
+                break;
+
+            case MORE_LOAD_IN_FLIGHT:
+                firstLoadProgressView.setVisibility(View.GONE);
+                emptyStateView.setVisibility(View.GONE);
+                errorStateView.setVisibility(View.GONE);
+                messageList.post(() -> messagesAdapterWithProgress.setProgressVisible(true));
+                if (loadMoreErrorSnackbar != null) {
+                    loadMoreErrorSnackbar.dismiss();
+                }
+                break;
+
+            case MESSAGES_VISIBLE:
+                firstLoadProgressView.setVisibility(View.GONE);
+                emptyStateView.setVisibility(View.GONE);
+                errorStateView.setVisibility(View.GONE);
+                messageList.post(() -> messagesAdapterWithProgress.setProgressVisible(false));
+                if (loadMoreErrorSnackbar != null) {
+                    loadMoreErrorSnackbar.dismiss();
+                }
+                break;
+
+            case ERROR_ON_FIRST_LOAD:
+                firstLoadProgressView.setVisibility(View.GONE);
+                emptyStateView.setVisibility(View.GONE);
+                errorStateView.setVisibility(View.VISIBLE);
+                messageList.post(() -> messagesAdapterWithProgress.setProgressVisible(false));
+                if (loadMoreErrorSnackbar != null) {
+                    loadMoreErrorSnackbar.dismiss();
+                }
+                break;
+
+            case ERROR_ON_MORE_LOAD:
+                firstLoadProgressView.setVisibility(View.GONE);
+                emptyStateView.setVisibility(View.GONE);
+                errorStateView.setVisibility(View.GONE);
+                messageList.post(() -> messagesAdapterWithProgress.setProgressVisible(false));
+
+                if (isVisible()) {
+                    loadMoreErrorSnackbar = Snackbar.make(messageList, "Failed to load more messages", Snackbar.LENGTH_INDEFINITE);
+                    loadMoreErrorSnackbar.setAction(R.string.common_error_retry, v -> subscribeToMessageLoads());
+                    loadMoreErrorSnackbar.show();
+                }
+                break;
+
+            case EMPTY_STATE:
+                firstLoadProgressView.setVisibility(View.GONE);
+                emptyStateView.setVisibility(View.VISIBLE);
+                errorStateView.setVisibility(View.GONE);
+                messageList.post(() -> messagesAdapterWithProgress.setProgressVisible(false));
+                if (loadMoreErrorSnackbar != null) {
+                    loadMoreErrorSnackbar.dismiss();
+                }
+                break;
+
+            default:
+                throw new AssertionError("Unknown state: " + state);
+        }
+
+        //messagesAdapterWithProgress.setProgressVisible(true);
     }
 
     public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
@@ -149,37 +258,52 @@ public class MessageFolderFragment extends DankFragment {
         }
     }
 
-    private void setEmptyStateVisible(boolean visible, InboxFolder forFolder) {
-        emptyStateContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
+    private void showEmptyStateView(InboxFolder forFolder) {
+        emptyStateView.setEmoji(R.string.inbox_empty_state_title);
 
-        if (visible) {
-            switch (forFolder) {
-                case UNREAD:
-                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_unread);
-                    break;
+        switch (forFolder) {
+            case UNREAD:
+                emptyStateView.setMessage(R.string.inbox_empty_state_message_for_unread);
+                break;
 
-                case PRIVATE_MESSAGES:
-                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_private_messages);
-                    break;
+            case PRIVATE_MESSAGES:
+                emptyStateView.setMessage(R.string.inbox_empty_state_message_for_private_messages);
+                break;
 
-                case COMMENT_REPLIES:
-                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_comment_replies);
-                    break;
+            case COMMENT_REPLIES:
+                emptyStateView.setMessage(R.string.inbox_empty_state_message_for_comment_replies);
+                break;
 
-                case POST_REPLIES:
-                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_post_replies);
-                    break;
+            case POST_REPLIES:
+                emptyStateView.setMessage(R.string.inbox_empty_state_message_for_post_replies);
+                break;
 
-                case USERNAME_MENTIONS:
-                    emptyStateMessageView.setText(R.string.inbox_empty_state_message_for_username_mentions);
-                    break;
-            }
+            case USERNAME_MENTIONS:
+                emptyStateView.setMessage(R.string.inbox_empty_state_message_for_username_mentions);
+                break;
         }
     }
 
     private Consumer<Throwable> handleMessageLoadError(InboxFolder folder) {
         return error -> {
-            Timber.e(error, "Couldn't fetch more messages under %s", folder);
+            if ((error instanceof PaginationCompleteException)) {
+                // Expected. Ignore.
+                return;
+            }
+
+            ResolvedError resolvedError = Dank.errors().resolve(error);
+
+            if (messagesAdapter.getItemCount() == 0) {
+                showScreenState(ScreenState.ERROR_ON_FIRST_LOAD);
+                errorStateView.applyFrom(resolvedError);
+                errorStateView.setOnRetryClickListener(o -> subscribeToMessageLoads());
+            } else {
+                showScreenState(ScreenState.ERROR_ON_MORE_LOAD);
+            }
+
+            if (resolvedError.isUnknown()) {
+                Timber.e(error, "Couldn't fetch more messages under %s", folder);
+            }
         };
     }
 

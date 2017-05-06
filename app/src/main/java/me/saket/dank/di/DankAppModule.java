@@ -32,6 +32,7 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.DataStores;
+import me.saket.dank.data.ErrorManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
@@ -120,12 +121,6 @@ public class DankAppModule {
 
     @Provides
     @Singleton
-    DankApi providesDankApi(Retrofit retrofit) {
-        return retrofit.create(DankApi.class);
-    }
-
-    @Provides
-    @Singleton
     Moshi provideMoshi() {
         return new Moshi.Builder()
                 .add(new AutoValueMoshiAdapterFactory())
@@ -141,6 +136,12 @@ public class DankAppModule {
                 .baseUrl("http://saket.me/" /* This isn't used anywhere, but this value is not nullable. */)
                 .client(okHttpClient)
                 .build();
+    }
+
+    @Provides
+    @Singleton
+    DankApi providesDankApi(Retrofit retrofit) {
+        return retrofit.create(DankApi.class);
     }
 
     @Provides
@@ -211,4 +212,9 @@ public class DankAppModule {
         return new DataStores(dankRedditClient, jacksonHelper, cacheFileSystem, cachingPolicy);
     }
 
+    @Provides
+    @Singleton
+    ErrorManager provideErrorManager() {
+        return new ErrorManager();
+    }
 }

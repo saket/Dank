@@ -65,6 +65,7 @@ import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.RecyclerAdapterWithHeader;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatedProgressBar;

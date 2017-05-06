@@ -31,11 +31,17 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesA
 
     public MessagesAdapter(BetterLinkMovementMethod linkMovementMethod) {
         this.linkMovementMethod = linkMovementMethod;
+        setHasStableIds(true);
     }
 
     @Override
     protected MessageViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
         return MessageViewHolder.create(inflater, parent, linkMovementMethod);
+    }
+
+    @Override
+    public long getItemId(int position) {
+        return getItem(position).getId().hashCode();
     }
 
     @Override

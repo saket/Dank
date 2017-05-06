@@ -7,6 +7,7 @@ import javax.inject.Singleton;
 import dagger.Component;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DataStores;
+import me.saket.dank.data.ErrorManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
@@ -36,4 +37,6 @@ public interface DankAppComponent {
     JacksonHelper jacksonHelper();
 
     DataStores dataStores();
+
+    ErrorManager errorManager();
 }

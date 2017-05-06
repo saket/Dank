@@ -31,6 +31,7 @@ public class UrlMetadataParser {
     @CheckResult
     public static Single<LinkMetadata> parse(String url, boolean ignoreSocialData) {
         return Single.fromCallable(() -> {
+            // TODO: Port this to Retrofit.
             Request request = new Request.Builder()
                     .url(url)
                     .header("User-Agent", CHROME_DESKTOP_USER_AGENT)

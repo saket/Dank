@@ -3,6 +3,7 @@
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
     android:orientation="vertical"
     tools:layout_marginTop="25dp">
 
@@ -20,35 +21,19 @@
         android:layout_gravity="center"
         tools:visibility="gone" />
 
-    <LinearLayout
+    <me.saket.dank.widgets.EmptyStateView
         android:id="@+id/messagefolder_empty_state"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginTop="-60dp"
-        android:gravity="center"
-        android:orientation="vertical">
+        android:visibility="gone" />
 
-        <TextView
-            android:id="@+id/messagefolder_empty_state_title"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing8"
-            android:text="@string/inbox_empty_state_title"
-            android:textColor="@color/gray_400"
-            android:textSize="24sp" />
-
-        <TextView
-            android:id="@+id/messagefolder_empty_state_message"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/spacing16"
-            android:layout_marginStart="@dimen/spacing16"
-            android:layout_marginTop="@dimen/spacing4"
-            android:gravity="center_horizontal"
-            android:lineSpacingExtra="@dimen/spacing4"
-            android:text="@string/inbox_empty_state_message_for_username_mentions"
-            android:textColor="@color/gray_500"
-            android:textSize="@dimen/textsize14" />
-    </LinearLayout>
+    <me.saket.dank.widgets.ErrorStateView
+        android:id="@+id/messagefolder_error_state"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginTop="-60dp"
+        android:visibility="gone" />
 </FrameLayout>

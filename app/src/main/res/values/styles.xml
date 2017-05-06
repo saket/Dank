@@ -56,6 +56,10 @@
         <item name="android:fontFamily">@string/dank_default_font_family</item>
     </style>
 
+    <style name="DankButton.Borderless" parent="@style/Widget.AppCompat.Button.Borderless.Colored">
+        <item name="android:fontFamily">@string/dank_default_font_family</item>
+    </style>
+
     <style name="DankToolbarIcon">
         <item name="android:layout_width">wrap_content</item>
         <item name="android:layout_height">wrap_content</item>
@@ -108,6 +112,24 @@
         <item name="android:elevation">8dp</item>
     </style>
 
+    <style name="EmptyStateEmoji">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:textColor">@color/gray_400</item>
+        <item name="android:textSize">24sp</item>
+    </style>
+
+    <style name="EmptyStateMessage">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:layout_marginEnd">@dimen/spacing16</item>
+        <item name="android:layout_marginStart">@dimen/spacing16</item>
+        <item name="android:gravity">center_horizontal</item>
+        <item name="android:lineSpacingExtra">@dimen/spacing4</item>
+        <item name="android:textColor">@color/gray_500</item>
+        <item name="android:textSize">@dimen/textsize14</item>
+    </style>
+
     <!-- Subreddit -->
     <style name="SubredditPickerSearchFieldTheme">
         <item name="android:colorControlNormal">@color/gray_800</item>
@@ -151,5 +173,4 @@
         <item name="android:background">?android:selectableItemBackground</item>
         <item name="android:paddingStart">@dimen/comment_start_padding_per_depth_level</item>
     </style>
-
 </resources>

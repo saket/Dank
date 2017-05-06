@@ -5,6 +5,18 @@
 
     <string name="cd_video_play">Play video</string>
 
+    <!-- Common errors -->
+    <string name="common_error_retry">Retry</string>
+
+    <string name="common_unknown_error_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
+    <string name="common_unknown_error_message">Whoops! Something went wrong. Can you try again?</string>
+
+    <string name="common_network_error_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
+    <string name="common_network_error_message">Uh oh, Reddit seems to be unreachable.</string>
+
+    <string name="common_reddit_is_down_error_emoji" translatable="false">(ಥ_ಥ)</string>
+    <string name="common_reddit_is_down_error_message">You broke Reddit! It\'s under heavy load right now.</string>
+
     <!-- Login -->
     <string name="login">Login</string>
     <string name="login_logout">Logout</string>
@@ -38,8 +50,8 @@
     <string name="newsubredditdialog_subreddit_hint">subreddit</string>
     <string name="newsubredditdialog_cancel">Cancel</string>
     <string name="newsubredditdialog_error_empty_field">This can\'t be empty ಠ_ಠ</string>
-    <string name="newsubredditdialog_error_private_subreddit">You don\'t have access to this subreddit ಠ_ಠ</string>
-    <string name="newsubredditdialog_error_subreddit_doesnt_exist">Couldn\'t find this subreddit ಥ_ಥ</string>
+    <string name="newsubredditdialog_error_private_subreddit">You don\'t have access to this subreddit (ಠ_ಠ)</string>
+    <string name="newsubredditdialog_error_subreddit_doesnt_exist">Couldn\'t find this subreddit (ಥ_ಥ)</string>
     <string name="newsubredditdialog_error_unknown">Something went wrong (╯°□°）╯︵ ┻━┻</string>
 
     <!-- User profile -->

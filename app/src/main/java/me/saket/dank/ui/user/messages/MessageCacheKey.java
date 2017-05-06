@@ -22,7 +22,7 @@ public abstract class MessageCacheKey {
 
     public static PathResolver<MessageCacheKey> PATH_RESOLVER = key -> {
         //noinspection CodeBlock2Expr
-        return key.folder().value() + key.paginationAnchor().fullName();
+        return key.folder().name() + key.paginationAnchor().fullName();
     };
 
 }

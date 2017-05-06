@@ -14,9 +14,11 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
+import android.util.SparseArray;
 import android.view.ViewGroup;
 
 import com.google.common.collect.ImmutableList;
+import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.models.Message;
@@ -80,20 +82,29 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
         contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
             //noinspection SimplifiableIfStatement
             if (touchLiesOn(viewPager, downX, downY)) {
-                MessageFolderFragment activeFragment = messagesPagerAdapter.getActiveFragment();
+                MessageFolderFragment activeFragment = messagesPagerAdapter.getFragment(viewPager.getCurrentItem());
                 return activeFragment.shouldInterceptPullToCollapse(upwardPagePull);
             } else {
                 return false;
             }
         });
+
+        unsubscribeOnDestroy(
+                RxViewPager.pageSelections(viewPager)
+                        .scan((prevPage, newPage) -> {
+                            MessageFolderFragment previousFragment = messagesPagerAdapter.getFragment(prevPage);
+                            if (previousFragment != null) {
+                                previousFragment.onFragmentHiddenInPager();
+                            }
+                            return newPage;
+                        })
+                        .subscribe()
+        );
     }
 
     @Override
     public Function<PaginationAnchor, Single<List<Message>>> fetchMoreMessages(InboxFolder folder) {
         return paginationAnchor -> {
-            // TODO: Retry thrice. Update: Do this in Dank.reddit().withAuth().
-            // TODO: Error state and empty state.
-
             BehaviorRelay<List<Message>> folderStream = messageStream(folder);
             MessageCacheKey cacheKey = MessageCacheKey.create(folder, paginationAnchor);
 
@@ -158,12 +169,13 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
     }
 
     public static class MessagesPagerAdapter extends FragmentStatePagerAdapter {
-        private MessageFolderFragment activeFragment;
         private Resources resources;
+        private SparseArray<MessageFolderFragment> fragmentMap;
 
         public MessagesPagerAdapter(Resources resources, FragmentManager manager) {
             super(manager);
             this.resources = resources;
+            this.fragmentMap = new SparseArray<>();
         }
 
         @Override
@@ -177,17 +189,25 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
         }
 
         @Override
-        public void setPrimaryItem(ViewGroup container, int position, Object object) {
-            activeFragment = ((MessageFolderFragment) object);
-        }
-
-        @Override
         public CharSequence getPageTitle(int position) {
             return resources.getString(InboxFolder.ALL[position].titleRes());
         }
 
-        public MessageFolderFragment getActiveFragment() {
-            return activeFragment;
+        @Override
+        public Object instantiateItem(ViewGroup container, int position) {
+            MessageFolderFragment fragment = (MessageFolderFragment) super.instantiateItem(container, position);
+            fragmentMap.put(position, fragment);
+            return fragment;
+        }
+
+        @Override
+        public void destroyItem(ViewGroup container, int position, Object object) {
+            fragmentMap.remove(position);
+            super.destroyItem(container, position, object);
+        }
+
+        public MessageFolderFragment getFragment(int position) {
+            return fragmentMap.get(position);
         }
     }
 

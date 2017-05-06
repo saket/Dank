@@ -1,4 +1,4 @@
-package me.saket.dank.ui.submission;
+package me.saket.dank.utils;
 
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
@@ -9,7 +9,7 @@ import android.view.ViewGroup;
  */
 public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-    private static final int VIEW_TYPE_HEADER = 0;
+    private static final int VIEW_TYPE_HEADER = 99;
 
     private RecyclerView.Adapter adapterToWrap;
     private View headerView;
@@ -25,6 +25,7 @@ public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView
     private RecyclerAdapterWithHeader(RecyclerView.Adapter adapterToWrap, View headerView) {
         this.adapterToWrap = adapterToWrap;
         this.headerView = headerView;
+        setHasStableIds(adapterToWrap.hasStableIds());
 
         adapterToWrap.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
             @Override
@@ -66,6 +67,15 @@ public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView
             return new HeaderViewHolder(headerView);
         } else {
             return adapterToWrap.onCreateViewHolder(parent, viewType);
+        }
+    }
+
+    @Override
+    public long getItemId(int position) {
+        if (position == 0) {
+            return 99;
+        } else {
+            return adapterToWrap.getItemId(position);
         }
     }
 
