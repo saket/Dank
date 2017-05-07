@@ -33,8 +33,8 @@ public class ErrorStateView extends FrameLayout {
     }
 
     public void applyFrom(ResolvedError error) {
-        emojiView.setText(error.errorEmoji());
-        messageView.setText(error.errorMessage());
+        emojiView.setText(error.errorEmojiRes());
+        messageView.setText(error.errorMessageRes());
     }
 
     public void setOnRetryClickListener(View.OnClickListener retryClickListener) {

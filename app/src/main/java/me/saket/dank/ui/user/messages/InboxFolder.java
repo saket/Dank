@@ -14,7 +14,7 @@ public enum InboxFolder {
     POST_REPLIES(R.string.inbox_tab_post_replies, "inbox"),
     USERNAME_MENTIONS(R.string.inbox_tab_username_mentions, "mentions"),;
 
-    public static InboxFolder[] ALL = { UNREAD, PRIVATE_MESSAGES, COMMENT_REPLIES, POST_REPLIES, USERNAME_MENTIONS };
+    public static InboxFolder[] ALL = { PRIVATE_MESSAGES, UNREAD, COMMENT_REPLIES, POST_REPLIES, USERNAME_MENTIONS };
 
     private final int titleRes;
     private final String value;

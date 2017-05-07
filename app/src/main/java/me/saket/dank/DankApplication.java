@@ -3,6 +3,7 @@ package me.saket.dank;
 import android.app.Application;
 
 import com.jakewharton.threetenabp.AndroidThreeTen;
+import com.tspoon.traceur.Traceur;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
@@ -24,6 +25,7 @@ public class DankApplication extends Application {
 
         Dank.initDependencies(this);
         AndroidThreeTen.init(this);
+        Traceur.enableLogging();
 
         RxJavaPlugins.setErrorHandler(e -> {
             if (e instanceof UndeliverableException) {

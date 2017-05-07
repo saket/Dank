@@ -75,7 +75,7 @@ public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView
         if (position == 0) {
             return 99;
         } else {
-            return adapterToWrap.getItemId(position);
+            return adapterToWrap.getItemId(position-1);
         }
     }
 

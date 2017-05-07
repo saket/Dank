@@ -91,6 +91,7 @@ dependencies {
     compile 'com.jakewharton.rxbinding2:rxbinding-recyclerview-v7:2.0.0'
     compile 'com.jakewharton.rxrelay2:rxrelay:2.0.0'
     compile 'com.jakewharton.rxbinding2:rxbinding-support-v4:2.0.0'
+    compile 'com.tspoon.traceur:traceur:1.0.1'
     compile 'com.google.dagger:dagger:2.10'
     apt 'com.google.dagger:dagger-compiler:2.10'
     compile 'com.squareup.okhttp3:okhttp:3.6.0'

@@ -18,6 +18,7 @@ import android.util.SparseArray;
 import android.view.ViewGroup;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableSet;
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
@@ -29,15 +30,14 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Single;
-import io.reactivex.functions.Function;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
-import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
+import me.saket.dank.utils.InfiniteScroller;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
@@ -102,19 +102,25 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
     }
 
     @Override
-    public Function<PaginationAnchor, Single<List<Message>>> fetchMoreMessages(InboxFolder folder) {
-        return paginationAnchor -> {
+    public InfiniteScroller.InfiniteDataStreamFunction<Message> fetchMoreMessages(InboxFolder folder) {
+        return (paginationAnchor, skipCache) -> {
             BehaviorRelay<List<Message>> folderStream = messageStream(folder);
             MessageCacheKey cacheKey = MessageCacheKey.create(folder, paginationAnchor);
 
-            return Dank.stores().messageStore()
-                    .get(cacheKey)
-                    .map(nextPage -> (List<Message>) new ImmutableList.Builder<Message>()
-                            .addAll(folderStream.hasValue() ? folderStream.getValue() : Collections.emptyList())
-                            .addAll(nextPage)
-                            .build()
-                    )
-                    .doOnSuccess(messages -> folderStream.accept(messages));
+            Single<List<Message>> storeStream;
+            if (skipCache) {
+                storeStream = Dank.stores().messageStore().fetch(cacheKey);
+                //.map(m -> m.subList(m.size() - Math.min(m.size(), 9), m.size() - Math.min(m.size(), 1)))
+            } else {
+                storeStream = Dank.stores().messageStore().get(cacheKey)
+                        // Using a set here to avoid duplicates. Duplicates can creep in when force-loading messages.
+                        .map(nextPageMessages -> ImmutableList.copyOf(new ImmutableSet.Builder<Message>()
+                                .addAll(folderStream.hasValue() ? folderStream.getValue() : Collections.emptyList())
+                                .addAll(nextPageMessages)
+                                .build()));
+            }
+
+            return storeStream.doOnSuccess(messages -> folderStream.accept(messages));
         };
     }
 

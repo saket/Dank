@@ -23,7 +23,7 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
     private Set<ProgressType> visibleProgressTypes;
 
     public enum ProgressType {
-        FRESH_DATA_LOAD_PROGRESS,
+        REFRESH_DATA_LOAD_PROGRESS,
         MORE_DATA_LOAD_PROGRESS
     }
 
@@ -81,15 +81,18 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
             visibleProgressTypes.remove(progressType);
         }
 
-        boolean isHeader = progressType == ProgressType.FRESH_DATA_LOAD_PROGRESS;
-        if (visible) {
-            notifyItemInserted(isHeader ? 0 : getItemCount());
-        } else {
-            // Note: the footer item position should be itemCount-1, but it's resulting
-            // in the 2nd last item getting animated in a strange way. Using the itemCount
-            // also works. Not sure why.
-            notifyItemRemoved(isHeader ? 0 : getItemCount());
-        }
+        boolean isHeader = progressType == ProgressType.REFRESH_DATA_LOAD_PROGRESS;
+
+        // TODO
+//        if (visible) {
+//            notifyItemInserted(isHeader ? 0 : getItemCount());
+//        } else {
+//            // Note: the footer item position should be itemCount-1, but it's resulting
+//            // in the 2nd last item getting animated in a strange way. Using the itemCount
+//            // also works. Not sure why.
+//            notifyItemRemoved(isHeader ? 0 : getItemCount());
+//        }
+        notifyDataSetChanged();
     }
 
     @Override
@@ -99,7 +102,7 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
         } else if (isFooterProgressItem(position)) {
             return VIEW_TYPE_FOOTER;
         } else {
-            return adapterToWrap.getItemId(position);
+            return adapterToWrap.getItemId(position - getVisibleHeaderItemCount());
         }
     }
 
@@ -110,7 +113,7 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
         } else if (isFooterProgressItem(position)) {
             return VIEW_TYPE_FOOTER;
         } else {
-            return adapterToWrap.getItemViewType(position);
+            return adapterToWrap.getItemViewType(position - getVisibleHeaderItemCount());
         }
     }
 
@@ -130,7 +133,7 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
         int viewType = getItemViewType(position);
         if (viewType != VIEW_TYPE_HEADER && viewType != VIEW_TYPE_FOOTER) {
             //noinspection unchecked
-            adapterToWrap.onBindViewHolder(holder, position);
+            adapterToWrap.onBindViewHolder(holder, position - getVisibleHeaderItemCount());
         }
     }
 
@@ -140,7 +143,7 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
     }
 
     private boolean isHeaderProgressItem(int position) {
-        return isProgressVisible(ProgressType.FRESH_DATA_LOAD_PROGRESS) && position == 0;
+        return isProgressVisible(ProgressType.REFRESH_DATA_LOAD_PROGRESS) && position == 0;
     }
 
     private boolean isFooterProgressItem(int position) {
@@ -148,7 +151,7 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
     }
 
     private int getVisibleHeaderItemCount() {
-        return isProgressVisible(ProgressType.FRESH_DATA_LOAD_PROGRESS) ? 1 : 0;
+        return isProgressVisible(ProgressType.REFRESH_DATA_LOAD_PROGRESS) ? 1 : 0;
     }
 
     private int getVisibleFooterItemCount() {

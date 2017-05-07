@@ -34,6 +34,7 @@ public class DataStores {
 
     private final Store<List<Message>, MessageCacheKey> messageStore;
 
+    // TODO: Use custom caching policy for each store. Messages should keep the cache forever.
     public DataStores(DankRedditClient dankRedditClient, JacksonHelper jacksonHelper, FileSystem cacheFileSystem, MemoryPolicy cachingPolicy) {
         messageStore = createMessageStore(dankRedditClient, jacksonHelper, cacheFileSystem, cachingPolicy);
     }
@@ -56,7 +57,9 @@ public class DataStores {
 
                 while (paginator.hasNext()) {
                     // paginator.next() makes an API call.
+                    //Timber.i("Fetching messages in %s", key.folder());
                     Listing<Message> nextSetOfMessages = paginator.next();
+                    //Timber.i("Fetched %s messages in %s", nextSetOfMessages.size(), key.folder());
 
                     for (Message nextMessage : nextSetOfMessages) {
                         switch (key.folder()) {
@@ -134,6 +137,7 @@ public class DataStores {
         return StoreBuilder.<MessageCacheKey, List<Message>>key()
                 .fetcher(networkFetcher)
                 .persister(diskPersister)
+                .refreshOnStale()
                 .memoryPolicy(cachingPolicy)
                 .open();
     }

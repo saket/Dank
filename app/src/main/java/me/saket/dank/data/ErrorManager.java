@@ -1,5 +1,6 @@
 package me.saket.dank.data;
 
+import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
@@ -25,7 +26,7 @@ public class ErrorManager {
             error = error.getCause();
         }
 
-        if (error instanceof SocketTimeoutException || error instanceof UnknownHostException) {
+        if (error instanceof SocketException || error instanceof SocketTimeoutException || error instanceof UnknownHostException) {
             return ResolvedError.create(
                     ResolvedError.Type.NETWORK_ERROR,
                     R.string.common_network_error_emoji,

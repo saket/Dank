@@ -1,8 +1,5 @@
 package me.saket.dank.ui.user.messages;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -24,19 +21,16 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Single;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.data.exceptions.PaginationCompleteException;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
+import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.ProgressType;
-import me.saket.dank.utils.InfiniteScrollListener;
+import me.saket.dank.utils.InfiniteScroller;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
 import timber.log.Timber;
@@ -51,25 +45,15 @@ public class MessageFolderFragment extends DankFragment {
     @BindView(R.id.messagefolder_message_list) RecyclerView messageList;
     @BindView(R.id.messagefolder_first_load_progress) View firstLoadProgressView;
     @BindView(R.id.messagefolder_empty_state) EmptyStateView emptyStateView;
-    @BindView(R.id.messagefolder_error_state) ErrorStateView errorStateView;
+    @BindView(R.id.messagefolder_error_state) ErrorStateView firstLoadErrorStateView;
 
     private InboxFolder folder;
     private MessagesAdapter messagesAdapter;
     private InfiniteScrollRecyclerAdapter messagesAdapterWithProgress;
-    private Disposable infiniteScrollDisposable;
     private Snackbar loadMoreErrorSnackbar;     // TODO: Rxify this.
 
-    private enum ScreenState {
-        FRESH_LOAD_IN_FLIGHT,
-        MORE_LOAD_IN_FLIGHT,
-        MESSAGES_VISIBLE,
-        EMPTY_STATE,
-        ERROR_ON_FRESH_LOAD,
-        ERROR_ON_MORE_LOAD,
-    }
-
     interface Callbacks {
-        Function<PaginationAnchor, Single<List<Message>>> fetchMoreMessages(InboxFolder folder);
+        InfiniteScroller.InfiniteDataStreamFunction<Message> fetchMoreMessages(InboxFolder folder);
 
         BetterLinkMovementMethod getMessageLinkMovementMethod();
     }
@@ -104,6 +88,9 @@ public class MessageFolderFragment extends DankFragment {
 
         folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
         subscribeToMessageLoads();
+
+        populateEmptyStateView();
+        firstLoadErrorStateView.setOnRetryClickListener(o -> subscribeToMessageLoads());
     }
 
     /**
@@ -115,134 +102,80 @@ public class MessageFolderFragment extends DankFragment {
         }
     }
 
-    private void showScreenState(ScreenState state) {
-        switch (state) {
-            case FRESH_LOAD_IN_FLIGHT:
-                emptyStateView.setVisibility(View.GONE);
-                errorStateView.setVisibility(View.GONE);
-                if (loadMoreErrorSnackbar != null) {
-                    loadMoreErrorSnackbar.dismiss();
+    private void subscribeToMessageLoads() {
+        InfiniteScroller.ViewStateCallbacks<Message> viewStateCallbacks = new InfiniteScroller.ViewStateCallbacks<Message>() {
+            @Override
+            public void setFirstLoadProgressVisible(boolean visible) {
+                firstLoadProgressView.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void setMoreLoadProgressVisible(boolean visible) {
+                messageList.post(() -> messagesAdapterWithProgress.setProgressVisible(ProgressType.MORE_DATA_LOAD_PROGRESS, visible));
+            }
+
+            @Override
+            public void setRefreshProgressVisible(boolean visible) {
+                //Timber.i("setRefreshProgressVisible() -> visible: %s", visible);
+                messageList.post(() -> messagesAdapterWithProgress.setProgressVisible(ProgressType.REFRESH_DATA_LOAD_PROGRESS, visible));
+            }
+
+            @Override
+            public void setEmptyStateVisible(boolean visible) {
+                emptyStateView.setVisibility(visible ? View.VISIBLE : View.GONE);
+            }
+
+            @Override
+            public void updateItemsDataset(List<Message> items) {
+                messagesAdapter.updateData(items);
+            }
+
+            @Override
+            public void setErrorOnFirstLoadVisible(@Nullable Throwable error, boolean errorVisible) {
+                firstLoadErrorStateView.setVisibility(errorVisible ? View.VISIBLE : View.GONE);
+
+                if (errorVisible) {
+                    ResolvedError resolvedError = Dank.errors().resolve(error);
+                    if (resolvedError.isUnknown()) {
+                        Timber.e(error, "Couldn't fetch more messages under %s", folder);
+                    }
+                    firstLoadErrorStateView.applyFrom(resolvedError);
+                }
+            }
+
+            @Override
+            public void setErrorOnMoreLoadVisible(@Nullable Throwable error, boolean errorVisible) {
+                if (!isVisible()) {
+                    // Ignore showing the snackbar if this fragment isn't visible,
+                    // because the Snackbar is appearing in the Activity's layout.
+                    return;
                 }
 
-                boolean isFirstLoad = messagesAdapter.getItemCount() == 0;
-                if (isFirstLoad) {
-                    firstLoadProgressView.setVisibility(View.VISIBLE);
-                } else {
-                    messageList.post(() -> {
-                        messagesAdapterWithProgress.setProgressVisible(ProgressType.FRESH_DATA_LOAD_PROGRESS, false);
-                        messagesAdapterWithProgress.setProgressVisible(ProgressType.MORE_DATA_LOAD_PROGRESS, false);
-                    });
-                }
-                break;
+                if (errorVisible) {
+                    ResolvedError resolvedError = Dank.errors().resolve(error);
+                    if (resolvedError.isUnknown()) {
+                        Timber.e(error, "Couldn't fetch more messages under %s", folder);
+                    }
 
-            case MORE_LOAD_IN_FLIGHT:
-                firstLoadProgressView.setVisibility(View.GONE);
-                emptyStateView.setVisibility(View.GONE);
-                errorStateView.setVisibility(View.GONE);
-                messageList.post(() -> {
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.FRESH_DATA_LOAD_PROGRESS, false);
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.MORE_DATA_LOAD_PROGRESS, true);
-                });
-                if (loadMoreErrorSnackbar != null) {
-                    loadMoreErrorSnackbar.dismiss();
-                }
-                break;
-
-            case MESSAGES_VISIBLE:
-                firstLoadProgressView.setVisibility(View.GONE);
-                emptyStateView.setVisibility(View.GONE);
-                errorStateView.setVisibility(View.GONE);
-                messageList.post(() -> {
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.FRESH_DATA_LOAD_PROGRESS, false);
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.MORE_DATA_LOAD_PROGRESS, false);
-                });
-                if (loadMoreErrorSnackbar != null) {
-                    loadMoreErrorSnackbar.dismiss();
-                }
-                break;
-
-            case ERROR_ON_FRESH_LOAD:
-                firstLoadProgressView.setVisibility(View.GONE);
-                emptyStateView.setVisibility(View.GONE);
-                errorStateView.setVisibility(View.VISIBLE);
-                messageList.post(() -> {
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.FRESH_DATA_LOAD_PROGRESS, false);
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.MORE_DATA_LOAD_PROGRESS, false);
-                });
-                if (loadMoreErrorSnackbar != null) {
-                    loadMoreErrorSnackbar.dismiss();
-                }
-                break;
-
-            case ERROR_ON_MORE_LOAD:
-                firstLoadProgressView.setVisibility(View.GONE);
-                emptyStateView.setVisibility(View.GONE);
-                errorStateView.setVisibility(View.GONE);
-                messageList.post(() -> {
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.FRESH_DATA_LOAD_PROGRESS, false);
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.MORE_DATA_LOAD_PROGRESS, false);
-                });
-
-                if (isVisible()) {
-                    loadMoreErrorSnackbar = Snackbar.make(messageList, "Failed to load more messages", Snackbar.LENGTH_INDEFINITE);
+                    loadMoreErrorSnackbar = Snackbar.make(messageList, resolvedError.errorMessageRes(), Snackbar.LENGTH_INDEFINITE);
                     loadMoreErrorSnackbar.setAction(R.string.common_error_retry, v -> subscribeToMessageLoads());
                     loadMoreErrorSnackbar.show();
-                }
-                break;
 
-            case EMPTY_STATE:
-                firstLoadProgressView.setVisibility(View.GONE);
-                emptyStateView.setVisibility(View.VISIBLE);
-                errorStateView.setVisibility(View.GONE);
-                messageList.post(() -> {
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.FRESH_DATA_LOAD_PROGRESS, false);
-                    messagesAdapterWithProgress.setProgressVisible(ProgressType.MORE_DATA_LOAD_PROGRESS, false);
-                });
-                if (loadMoreErrorSnackbar != null) {
+                } else if (loadMoreErrorSnackbar != null) {
                     loadMoreErrorSnackbar.dismiss();
                 }
-                break;
+            }
+        };
 
-            default:
-                throw new AssertionError("Unknown state: " + state);
-        }
-    }
+        InfiniteScrollListener scrollListener = InfiniteScrollListener.create(messageList, 0.75f /* loadThreshold */);
+        scrollListener.setEmitInitialEvent(true);
 
-    private void subscribeToMessageLoads() {
-        // Listen to load-more requests.
-        InfiniteScrollListener infiniteScrollListener = InfiniteScrollListener.create(messageList, 0.75f /* loadThreshold */);
-        infiniteScrollListener.setEmitInitialEvent(true);
-        infiniteScrollDisposable = infiniteScrollListener.emitWhenLoadNeeded()
-                .flatMapSingle(o -> calculatePaginationAnchor())
-                .scan((oldAnchor, newAnchor) -> {
-                    if (oldAnchor.equals(newAnchor)) {
-                        // No new pagination anchor was found. This means that
-                        // no new items were fetched. Pagination can stop.
-                        throw new PaginationCompleteException();
-                    }
-                    return newAnchor;
-                })
-                .doOnNext(o -> showScreenState(messagesAdapter.getItemCount() == 0 ? ScreenState.FRESH_LOAD_IN_FLIGHT : ScreenState.MORE_LOAD_IN_FLIGHT))
-                .doOnNext(o -> infiniteScrollListener.setLoadOngoing(true))
-                .observeOn(io())
-                .flatMapSingle(((Callbacks) getActivity()).fetchMoreMessages(folder))
-                .observeOn(mainThread())
-                .doOnNext(messages -> {
-                    infiniteScrollListener.setLoadOngoing(false);
-
-                    boolean noMessagesFoundInFolder = messages.isEmpty() && messagesAdapter.getItemCount() == 0;
-                    if (noMessagesFoundInFolder) {
-                        // First load, no messages received. Inbox folder is empty.
-                        showScreenState(ScreenState.EMPTY_STATE);
-                        showEmptyStateView(folder);
-                        throw new PaginationCompleteException();
-
-                    } else {
-                        showScreenState(ScreenState.MESSAGES_VISIBLE);
-                    }
-                })
-                .subscribe(messagesAdapter, handleMessageLoadError(folder));
-        unsubscribeOnDestroy(infiniteScrollDisposable);
+        unsubscribeOnDestroy(
+                InfiniteScroller.<Message>create(scrollListener)
+                        .withViewStateCallbacks(viewStateCallbacks)
+                        .withStreams(paginationAnchorStream(), ((Callbacks) getActivity()).fetchMoreMessages(folder))
+                        .subscribe()
+        );
     }
 
     public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
@@ -253,34 +186,36 @@ public class MessageFolderFragment extends DankFragment {
      * Find the full-name of the last message in the list, that can be used as the anchor for
      * fetching the next set of pages.
      */
-    private Single<PaginationAnchor> calculatePaginationAnchor() {
-        if (messagesAdapter.getItemCount() > 0) {
-            List<Message> existingMessages = messagesAdapter.getData();
-            Message lastMessage = existingMessages.get(existingMessages.size() - 1);
+    private Single<PaginationAnchor> paginationAnchorStream() {
+        return Single.fromCallable(() -> {
+            if (messagesAdapter.getItemCount() > 0) {
+                List<Message> existingMessages = messagesAdapter.getData();
+                Message lastMessage = existingMessages.get(existingMessages.size() - 1);
 
-            // Private messages can have nested replies. Go through them and find the last one.
-            if (lastMessage instanceof PrivateMessage) {
-                JsonNode repliesNode = lastMessage.getDataNode().get("replies");
-                if (repliesNode.isObject()) {
-                    // Replies are present.
-                    //noinspection MismatchedQueryAndUpdateOfCollection
-                    List<Message> lastMessageReplies = new Listing<>(repliesNode.get("data"), Message.class);
-                    Message lastMessageLastReply = lastMessageReplies.get(lastMessageReplies.size() - 1);
-                    return Single.just(PaginationAnchor.create(lastMessageLastReply.getFullName()));
+                // Private messages can have nested replies. Go through them and find the last one.
+                if (lastMessage instanceof PrivateMessage) {
+                    JsonNode repliesNode = lastMessage.getDataNode().get("replies");
+                    if (repliesNode.isObject()) {
+                        // Replies are present.
+                        //noinspection MismatchedQueryAndUpdateOfCollection
+                        List<Message> lastMessageReplies = new Listing<>(repliesNode.get("data"), Message.class);
+                        Message lastMessageLastReply = lastMessageReplies.get(lastMessageReplies.size() - 1);
+                        return PaginationAnchor.create(lastMessageLastReply.getFullName());
+                    }
                 }
+
+                return PaginationAnchor.create(lastMessage.getFullName());
+
+            } else {
+                return PaginationAnchor.createEmpty();
             }
-
-            return Single.just(PaginationAnchor.create(lastMessage.getFullName()));
-
-        } else {
-            return Single.just(PaginationAnchor.createEmpty());
-        }
+        });
     }
 
-    private void showEmptyStateView(InboxFolder forFolder) {
+    private void populateEmptyStateView() {
         emptyStateView.setEmoji(R.string.inbox_empty_state_title);
 
-        switch (forFolder) {
+        switch (folder) {
             case UNREAD:
                 emptyStateView.setMessage(R.string.inbox_empty_state_message_for_unread);
                 break;
@@ -301,29 +236,6 @@ public class MessageFolderFragment extends DankFragment {
                 emptyStateView.setMessage(R.string.inbox_empty_state_message_for_username_mentions);
                 break;
         }
-    }
-
-    private Consumer<Throwable> handleMessageLoadError(InboxFolder folder) {
-        return error -> {
-            if ((error instanceof PaginationCompleteException)) {
-                // Expected. Ignore.
-                return;
-            }
-
-            ResolvedError resolvedError = Dank.errors().resolve(error);
-
-            if (messagesAdapter.getItemCount() == 0) {
-                showScreenState(ScreenState.ERROR_ON_FRESH_LOAD);
-                errorStateView.applyFrom(resolvedError);
-                errorStateView.setOnRetryClickListener(o -> subscribeToMessageLoads());
-            } else {
-                showScreenState(ScreenState.ERROR_ON_MORE_LOAD);
-            }
-
-            if (resolvedError.isUnknown()) {
-                Timber.e(error, "Couldn't fetch more messages under %s", folder);
-            }
-        };
     }
 
 }

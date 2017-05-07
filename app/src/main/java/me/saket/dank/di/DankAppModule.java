@@ -49,6 +49,8 @@ import timber.log.Timber;
 @Module
 public class DankAppModule {
 
+    private static final int NETWORK_CONNECT_TIMEOUT_SECONDS = 15;
+    private static final int NETWORK_READ_TIMEOUT_SECONDS = 10;
     private Context appContext;
 
     public DankAppModule(Application appContext) {
@@ -71,6 +73,8 @@ public class DankAppModule {
     RedditClient provideRedditClient(UserAgent redditUserAgent) {
         RedditClient redditClient = new RedditClient(redditUserAgent);
         redditClient.setLoggingMode(LoggingMode.ON_FAIL);
+        redditClient.getHttpAdapter().setConnectTimeout(NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+        redditClient.getHttpAdapter().setReadTimeout(NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS);
         return redditClient;
     }
 
@@ -107,8 +111,8 @@ public class DankAppModule {
     @Singleton
     OkHttpClient provideOkHttpClient() {
         OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                .connectTimeout(30, TimeUnit.SECONDS)
-                .readTimeout(10, TimeUnit.SECONDS);
+                .connectTimeout(NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .readTimeout(NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS);
 
         if (BuildConfig.DEBUG) {
             HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> Timber.tag("OkHttp").d(message));

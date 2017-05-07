@@ -19,10 +19,10 @@ public abstract class ResolvedError {
     public abstract Type type();
 
     @StringRes
-    public abstract int errorEmoji();
+    public abstract int errorEmojiRes();
 
     @StringRes
-    public abstract int errorMessage();
+    public abstract int errorMessageRes();
 
     public boolean isUnknown() {
         return type() == Type.UNKNOWN;
