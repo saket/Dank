@@ -11,6 +11,8 @@ import java.io.InterruptedIOException;
 import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.plugins.RxJavaPlugins;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.subreddits.SubredditSubscriptionsSyncJob;
+import me.saket.dank.ui.user.messages.UnreadMessageSyncJob;
 import timber.log.Timber;
 
 public class DankApplication extends Application {
@@ -26,6 +28,10 @@ public class DankApplication extends Application {
         Dank.initDependencies(this);
         AndroidThreeTen.init(this);
         Traceur.enableLogging();
+
+        // Sync jobs.
+        SubredditSubscriptionsSyncJob.schedule(this);
+        UnreadMessageSyncJob.schedule(this);
 
         RxJavaPlugins.setErrorHandler(e -> {
             if (e instanceof UndeliverableException) {

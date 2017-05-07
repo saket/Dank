@@ -144,7 +144,7 @@ public class DankRedditClient {
     /**
      * Get a new API token if we haven't already or refresh the existing API token if the last one has expired.
      */
-    private Completable authenticateIfNeeded() {
+    private synchronized Completable authenticateIfNeeded() {
         return Completable.fromCallable(() -> {
             if (!authManagerInitialized) {
                 redditAuthManager.init(redditClient, tokenHandler);

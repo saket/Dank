@@ -31,7 +31,6 @@ public class DankActivity extends AppCompatActivity {
         if (onDestroyDisposables != null) {
             onDestroyDisposables.clear();
         }
-
         super.onDestroy();
     }
 

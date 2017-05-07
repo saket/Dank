@@ -149,8 +149,7 @@ public class SubredditSubscriptionManager {
 
     @NonNull
     private Single<List<SubredditSubscription>> refreshSubscriptions(List<SubredditSubscription> localSubs) {
-        return fetchRemoteSubscriptions(localSubs)
-                .doOnSuccess(saveSubscriptionsToDatabase());
+        return fetchRemoteSubscriptions(localSubs).doOnSuccess(saveSubscriptionsToDatabase());
     }
 
     @CheckResult
@@ -319,8 +318,7 @@ public class SubredditSubscriptionManager {
 
     @NonNull
     private Single<List<String>> loggedInUserSubreddits() {
-        return dankRedditClient
-                .userSubreddits()
+        return dankRedditClient.userSubreddits()
                 .map(remoteSubs -> {
                     List<String> remoteSubNames = new ArrayList<>(remoteSubs.size());
                     for (Subreddit subreddit : remoteSubs) {

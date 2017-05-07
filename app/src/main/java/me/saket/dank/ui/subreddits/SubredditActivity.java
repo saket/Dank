@@ -187,7 +187,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
                     .subscribe(loggedIn -> {
                         if (loggedIn) {
                             Timber.i("Requesting sync");
-                            SubredditSubscriptionsSyncJob.schedule(this);
                             SubredditSubscriptionsSyncJob.syncImmediately(this);
                         } else {
                             Timber.i("Couldn't start snyc. Is logged in? %s", loggedIn);

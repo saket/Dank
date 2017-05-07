@@ -55,5 +55,10 @@
             android:name=".ui.subreddits.SubredditSubscriptionsSyncJob"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <service
+            android:name=".ui.user.messages.UnreadMessageSyncJob"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
     </application>
 </manifest>

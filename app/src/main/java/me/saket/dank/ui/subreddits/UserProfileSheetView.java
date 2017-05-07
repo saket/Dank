@@ -59,6 +59,8 @@ public class UserProfileSheetView extends FrameLayout {
         super.onAttachedToWindow();
 
         // TODO: 02/03/17 Cache user account.
+        // TODO: Get unread messages count from /messages/unread because that
+        // TODO: might be cached already when fetching new messages in background.
 
         karmaView.setText(R.string.userprofile_loading_karma);
 
