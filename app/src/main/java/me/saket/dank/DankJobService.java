@@ -32,6 +32,10 @@ public abstract class DankJobService extends JobService {
 
     protected static final int ID_MESSAGES_FREQUENCY_USER_SET = 2;
     protected static final int ID_MESSAGES_FREQUENCY_AGGRESSIVE = 3;
+    protected static final int ID_MESSAGES_IMMEDIATELY = 4;
+
+    protected static final int ID_MARK_MESSAGE_AS_READ = 5;
+    protected static final int ID_SEND_DIRECT_MESSAGE_REPLY = 6;
 
     private CompositeDisposable onDestroyDisposables;
 
@@ -54,6 +58,7 @@ public abstract class DankJobService extends JobService {
         List<JobInfo> allPendingJobs = jobScheduler.getAllPendingJobs();
 
         for (JobInfo pendingJob : allPendingJobs) {
+            Timber.i("pendingJob: %s", pendingJob);
             if (pendingJob.getId() == jobId) {
                 return pendingJob;
             }
@@ -77,7 +82,7 @@ public abstract class DankJobService extends JobService {
         super.onDestroy();
     }
 
-    protected void displayDebugNotification(String notifBody, Object... args) {
+    protected void displayDebugNotification(int notifId, String notifBody, Object... args) {
         if (!BuildConfig.DEBUG) {
             Timber.e(new RuntimeException("Debug notification"), "This shouldn't be here!");
             return;
@@ -90,12 +95,13 @@ public abstract class DankJobService extends JobService {
                 .setContentTitle(String.format(notifBody, args))
                 .setContentIntent(onClickPendingIntent)
                 .setSmallIcon(R.mipmap.ic_launcher)
+                .setShowWhen(true)
                 .setAutoCancel(true)
                 .setPriority(Notification.PRIORITY_MIN)
                 .setColor(ContextCompat.getColor(getBaseContext(), R.color.color_accent));
 
         NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(0, builder.build());
+        notificationManager.notify(notifId, builder.build());
     }
 
 }

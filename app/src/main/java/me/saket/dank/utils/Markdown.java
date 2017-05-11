@@ -14,8 +14,6 @@ import android.text.style.LineBackgroundSpan;
 import org.sufficientlysecure.htmltextview.HtmlTagHandler;
 import org.xml.sax.XMLReader;
 
-import timber.log.Timber;
-
 /**
  * Handles converting Reddit's markdown into Spans that can be rendered by TextView.
  *
@@ -39,7 +37,7 @@ public class Markdown {
         }
     }
 
-    public static CharSequence trimTrailingWhitespace(CharSequence source) {
+    private static CharSequence trimTrailingWhitespace(CharSequence source) {
         if (source == null) {
             return null;
         }
@@ -51,7 +49,7 @@ public class Markdown {
         return source.subSequence(0, len + 1);
     }
 
-    public static class RedditMarkdownHtmlHandler extends HtmlTagHandler {
+    private static class RedditMarkdownHtmlHandler extends HtmlTagHandler {
         public RedditMarkdownHtmlHandler(TextPaint textPaint) {
             super(textPaint);
         }

@@ -57,8 +57,10 @@
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <service
-            android:name=".ui.user.messages.UnreadMessageSyncJob"
+            android:name=".notifs.UnreadMessageSyncJob"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <receiver android:name=".notifs.NotificationActionReceiver" />
     </application>
 </manifest>

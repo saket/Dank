@@ -192,7 +192,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     @Override
     public void onSaveInstanceState(Bundle outState) {
         if (activeSubmission != null) {
-            outState.putString(KEY_SUBMISSION_JSON, Dank.jackson().toJson(activeSubmission.getDataNode()));
+            outState.putString(KEY_SUBMISSION_JSON, Dank.jackson().toJson(activeSubmission));
             outState.putParcelable(KEY_SUBMISSION_REQUEST, activeSubmissionRequest);
         }
         super.onSaveInstanceState(outState);

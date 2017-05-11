@@ -20,6 +20,7 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
+import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.UrlParser;
@@ -100,7 +101,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesA
 
             // TODO: Send PR for these custom fields to JRAW.
             // TODO: Should we cache these markdown?
-            String bodyHtml = message.getDataNode().get("body_html").asText();
+            String bodyHtml = JrawUtils.getMessageBodyHtml(message);
             messageBodyView.setText(Markdown.parseRedditMarkdownHtml(bodyHtml, messageBodyView.getPaint()));
             messageBodyView.setMovementMethod(linkMovementMethod);
 

@@ -33,11 +33,6 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
      * Sync subscriptions every ~6 hours when the device is idle, charging and on an unmetered connection.
      */
     public static void schedule(Context context) {
-        if (hasPendingJobForId(context, ID_SUBSCRIPTIONS_RECURRING_JOB)) {
-            // Avoid re-scheduling the same job.
-            return;
-        }
-
         JobInfo syncJob = new JobInfo.Builder(ID_SUBSCRIPTIONS_RECURRING_JOB, new ComponentName(context, SubredditSubscriptionsSyncJob.class))
                 .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
                 .setRequiresCharging(true)
@@ -79,7 +74,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
                 .subscribe(
                         () -> {
                             if (params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB) {
-                                displayDebugNotification("Subreddits synced");
+                                displayDebugNotification(0, "Subreddits synced");
                             }
                             jobFinished(params, false /* needsReschedule */);
                         },

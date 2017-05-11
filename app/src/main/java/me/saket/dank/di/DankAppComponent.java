@@ -11,6 +11,7 @@ import me.saket.dank.data.ErrorManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.utils.ImgurManager;
 import me.saket.dank.utils.JacksonHelper;
 import okhttp3.OkHttpClient;
@@ -39,4 +40,6 @@ public interface DankAppComponent {
     DataStores dataStores();
 
     ErrorManager errorManager();
+
+    MessagesNotificationManager messagesNotificationManager();
 }

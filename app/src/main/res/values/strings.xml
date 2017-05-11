@@ -125,4 +125,8 @@
     <string name="inbox_empty_state_message_for_comment_replies">You don\'t have any comment replies. \nNobody replies to you on Reddit.</string>
     <string name="inbox_empty_state_message_for_post_replies">You don\'t have any post replies. \nGuess who\'s really unpopular on Reddit?</string>
     <string name="inbox_empty_state_message_for_username_mentions">You don\'t have any username mentions.</string>
+
+    <!-- Notifications -->
+    <string name="messagenotification_reply">Reply</string>
+    <string name="messagenotification_quick_reply">Quick reply</string>
 </resources>

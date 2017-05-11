@@ -12,7 +12,7 @@ import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.plugins.RxJavaPlugins;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddits.SubredditSubscriptionsSyncJob;
-import me.saket.dank.ui.user.messages.UnreadMessageSyncJob;
+import me.saket.dank.notifs.UnreadMessageSyncJob;
 import timber.log.Timber;
 
 public class DankApplication extends Application {
