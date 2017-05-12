@@ -13,7 +13,6 @@ import android.support.v4.app.NotificationCompat.MessagingStyle;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.app.RemoteInput;
 import android.support.v4.content.ContextCompat;
-import android.text.TextPaint;
 
 import net.dean.jraw.models.Message;
 
@@ -136,7 +135,6 @@ public class MessagesNotificationManager {
 
   public Completable displayNotification(Context context, List<Message> unreadMessages) {
     return Completable.fromAction(() -> {
-      Timber.i("Creating notif for:");
       String loggedInUserName = Dank.reddit().loggedInUserName();
 
       List<Message> timeSortedMessages = new ArrayList<>(unreadMessages.size());
@@ -154,7 +152,8 @@ public class MessagesNotificationManager {
         }
       });
 
-      timeSortedMessages.forEach(m -> Timber.i("%s", m.getBody()));
+      Timber.i("Creating notifs for:");
+      timeSortedMessages.forEach(m -> Timber.i("%s (%s)", m.getBody(), m.getCreated()));
       createNotification(context, loggedInUserName, Collections.unmodifiableList(timeSortedMessages));
     });
   }
@@ -169,14 +168,14 @@ public class MessagesNotificationManager {
     MessagingStyle messagingStyleBuilder = new MessagingStyle(loggedInUserName);
     //messagingStyleBuilder.setConversationTitle(sortedUnreadMessages.size() + " new messages");
 
-    // Markdown requires a TextPaint object for constructing ordered points. Sending
-    // an empty object also works for us.
-    TextPaint textPaint = new TextPaint();
-
     for (Message unreadMessage : sortedUnreadMessages) {
       long timestamp = JrawUtils.createdTimeUtc(unreadMessage);
-      Markdown.parseRedditMarkdownHtml(JrawUtils.getMessageBodyHtml(unreadMessage), textPaint);
-      messagingStyleBuilder.addMessage(new MessagingStyle.Message(unreadMessage.getBody(), timestamp, unreadMessage.getAuthor()));
+
+      // Update: Lol using some tags crashes Android's SystemUi. We'll have to remove all markdown tags.
+      CharSequence messageBodyWithMarkdown = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
+      String markdownStrippedBody = messageBodyWithMarkdown.toString();
+
+      messagingStyleBuilder.addMessage(new MessagingStyle.Message(markdownStrippedBody, timestamp, unreadMessage.getAuthor()));
     }
 
     // Mark all as seen on summary notif dismissal.
@@ -230,9 +229,12 @@ public class MessagesNotificationManager {
       Intent markAsSeenIntent = NotificationActionReceiver.createMarkAsSeenIntent(context, unreadMessage);
       PendingIntent deletePendingIntent = PendingIntent.getBroadcast(context, notificationId, markAsSeenIntent, PendingIntent.FLAG_ONE_SHOT);
 
+      String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
+
       Notification bundledNotification = new NotificationCompat.Builder(context)
           .setContentTitle(unreadMessage.getAuthor())
-          .setContentText(unreadMessage.getBody())
+          .setContentText(markdownStrippedBody)
+          .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
           .setShowWhen(false)
           .setWhen(unreadMessage.getCreated().getTime())
           .setSmallIcon(R.mipmap.ic_launcher)

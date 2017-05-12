@@ -26,7 +26,6 @@ import io.reactivex.Single;
 import me.saket.dank.ui.user.messages.MessageCacheKey;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.StoreFilePersister;
-import timber.log.Timber;
 
 /**
  * Repository for all {@link Store} we have in Dank.
@@ -58,9 +57,7 @@ public class DataStores {
 
                 while (paginator.hasNext()) {
                     // paginator.next() makes an API call.
-                    Timber.i("Fetching messages in %s", key.folder());
                     Listing<Message> nextSetOfMessages = paginator.next();
-                    Timber.i("Fetched %s messages in %s", nextSetOfMessages.size(), key.folder());
 
                     for (Message nextMessage : nextSetOfMessages) {
                         switch (key.folder()) {
