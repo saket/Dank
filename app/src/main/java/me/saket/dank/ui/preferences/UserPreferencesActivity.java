@@ -62,6 +62,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     setupPreferencesFragment();
     setupPreferencesGroupList(savedInstanceState);
 
+    hiddenOptionsButton.setVisibility(View.GONE);
     unsubscribeOnDestroy(Dank.reddit()
         .isUserLoggedIn()
         .subscribe(loggedIn -> {
