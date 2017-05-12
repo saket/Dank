@@ -38,9 +38,10 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.di.Dank;
-import me.saket.dank.notifs.UnreadMessageSyncJob;
+import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
+import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
@@ -181,6 +182,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // Schedule subreddit syncs + do an immediate sync.
     if (isTaskRoot()) {
+      // TODO: Also subscribe to on-logged-in-event and run these jobs:
       unsubscribeOnDestroy(Dank.reddit()
           .isUserLoggedIn()
           .observeOn(mainThread())
@@ -188,6 +190,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             if (loggedIn) {
               Timber.i("Requesting sync");
               SubredditSubscriptionsSyncJob.syncImmediately(this);
+              SubredditSubscriptionsSyncJob.schedule(this);
+              CheckUnreadMessagesJobService.syncImmediately(this);
+              CheckUnreadMessagesJobService.schedule(this);
+
             } else {
               Timber.i("Couldn't start snyc. Is logged in? %s", loggedIn);
             }
@@ -305,8 +311,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         return true;
 
       case R.id.action_preferences:
-        //UserPreferencesActivity.start(this);
-        UnreadMessageSyncJob.runImmediately(this);
+        UserPreferencesActivity.start(this);
         return true;
 
       default:
@@ -403,13 +408,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
       // Reload submissions if we're on the frontpage because the frontpage
       // submissions will change if the subscriptions change.
-      if (subscriptionManager().isFrontpage(activeSubredditName)) {
+      if (Dank.subscriptionManager().isFrontpage(activeSubredditName)) {
         loadSubmissions(activeSubredditName);
       }
 
       // Reload subreddit subscriptions. Not implementing onError() is intentional.
       // This code is not supposed to fail :/
-      subscriptionManager().removeAll().subscribe();
+      Dank.subscriptionManager().removeAll().subscribe();
 
     } else {
       super.onActivityResult(requestCode, resultCode, data);

@@ -225,7 +225,7 @@ public class DankAppModule {
 
     @Provides
     @Singleton
-    MessagesNotificationManager provideMessagesNotifManager(DankRedditClient dankRedditClient, SharedPreferences sharedPreferences) {
-        return new MessagesNotificationManager(sharedPreferences);
+    MessagesNotificationManager provideMessagesNotifManager(SharedPreferences sharedPreferences) {
+        return new MessagesNotificationManager(new MessagesNotificationManager.SeenUnreadMessageIdStore(sharedPreferences));
     }
 }

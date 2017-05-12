@@ -128,5 +128,5 @@
 
     <!-- Notifications -->
     <string name="messagenotification_reply">Reply</string>
-    <string name="messagenotification_quick_reply">Quick reply</string>
+    <string name="messagenotification_reply_to_user">Reply to /u/%s</string>
 </resources>

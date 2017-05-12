@@ -24,6 +24,10 @@ public class NotificationActionsJobService extends DankJobService {
 
   private static final String KEY_MESSAGE_JSON = "message";
   private static final String KEY_MESSAGE_DIRECT_REPLY = "messageDirectReply";
+  private static final String KEY_ACTION = "action";
+
+  private static final String ACTION_MARK_MESSAGE_AS_READ = "markMessageAsRead";
+  private static final String ACTION_SEND_DIRECT_REPLY = "sendDirectReply";
 
   /**
    * We use JobScheduler for marking a message as read so that it handles retrying the
@@ -32,6 +36,7 @@ public class NotificationActionsJobService extends DankJobService {
   public static void markAsRead(Context context, Message message, JacksonHelper jacksonHelper) {
     PersistableBundle extras = new PersistableBundle(1);
     extras.putString(KEY_MESSAGE_JSON, jacksonHelper.toJson(message));
+    extras.putString(KEY_ACTION, ACTION_MARK_MESSAGE_AS_READ);
 
     // Each job needs a unique ID and since we create a separate job for each message.
     int jobId = ID_MARK_MESSAGE_AS_READ + message.getId().hashCode();
@@ -53,6 +58,7 @@ public class NotificationActionsJobService extends DankJobService {
     PersistableBundle extras = new PersistableBundle(2);
     extras.putString(KEY_MESSAGE_JSON, jacksonHelper.toJson(replyToMessage));
     extras.putString(KEY_MESSAGE_DIRECT_REPLY, replyText);
+    extras.putString(KEY_ACTION, ACTION_SEND_DIRECT_REPLY);
 
     // Each job needs a unique ID and since we create a separate job for each message.
     int jobId = ID_SEND_DIRECT_MESSAGE_REPLY + replyToMessage.getId().hashCode();
@@ -73,14 +79,20 @@ public class NotificationActionsJobService extends DankJobService {
     String messageJson = params.getExtras().getString(KEY_MESSAGE_JSON);
     Message message = JrawUtils.parseMessageJson(messageJson, Dank.jackson());
 
-    switch (params.getJobId()) {
-      case ID_MARK_MESSAGE_AS_READ:
+    // Switching on the action because a new job is created for each message, each with an unique jobId.
+    //noinspection ConstantConditions
+    switch (params.getExtras().getString(KEY_ACTION)) {
+      case ACTION_MARK_MESSAGE_AS_READ:
         markMessageAsRead(params, message);
         break;
 
-      case ID_SEND_DIRECT_MESSAGE_REPLY:
+      case ACTION_SEND_DIRECT_REPLY:
         String replyText = params.getExtras().getString(KEY_MESSAGE_DIRECT_REPLY);
         sendDirectMessageReply(params, message, replyText);
+        break;
+
+      default:
+        throw new UnsupportedOperationException("Unknown job action: " + params.getExtras().getString(KEY_ACTION));
     }
 
     // Return true to indicate that the job is still being processed (in a background thread).
@@ -90,6 +102,7 @@ public class NotificationActionsJobService extends DankJobService {
   private void markMessageAsRead(JobParameters params, Message message) {
     unsubscribeOnDestroy(
         Dank.reddit().withAuth(Completable.fromAction(() -> Dank.reddit().userInboxManager().setRead(true, message)))
+            .andThen(Dank.messagesNotifManager().removeMessageNotifSeenStatus(message))
             .compose(applySchedulersCompletable())
             .subscribe(() -> {
               jobFinished(params, false /* needsReschedule */);
@@ -109,19 +122,20 @@ public class NotificationActionsJobService extends DankJobService {
   private void sendDirectMessageReply(JobParameters params, Message replyToMessage, String replyText) {
     unsubscribeOnDestroy(
         Dank.reddit().withAuth(Completable.fromAction(() -> Dank.reddit().userAccountManager().reply(replyToMessage, replyText)))
-        .compose(applySchedulersCompletable())
-        .subscribe(() -> {
-          jobFinished(params, false /* needsReschedule */);
+            .andThen(Dank.messagesNotifManager().removeMessageNotifSeenStatus(replyToMessage))
+            .compose(applySchedulersCompletable())
+            .subscribe(() -> {
+              jobFinished(params, false /* needsReschedule */);
 
-        }, error -> {
-          ResolvedError resolvedError = Dank.errors().resolve(error);
-          if (resolvedError.isUnknown()) {
-            Timber.e(error, "Unknown error while sending direct reply to a message.");
-          }
+            }, error -> {
+              ResolvedError resolvedError = Dank.errors().resolve(error);
+              if (resolvedError.isUnknown()) {
+                Timber.e(error, "Unknown error while sending direct reply to a message.");
+              }
 
-          boolean needsReschedule = resolvedError.isNetworkError() || resolvedError.isRedditServerError();
-          jobFinished(params, needsReschedule);
-        })
+              boolean needsReschedule = resolvedError.isNetworkError() || resolvedError.isRedditServerError();
+              jobFinished(params, needsReschedule);
+            })
     );
   }
 

@@ -51,13 +51,23 @@
             android:label="@string/activity_inbox"
             android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
+        <activity
+            android:name=".ui.preferences.HiddenPreferencesActivity"
+            android:label="Hidden Preferences"
+            android:parentActivityName=".ui.preferences.UserPreferencesActivity" />
+
         <service
             android:name=".ui.subreddits.SubredditSubscriptionsSyncJob"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
         <service
-            android:name=".notifs.UnreadMessageSyncJob"
+            android:name=".notifs.CheckUnreadMessagesJobService"
+            android:exported="true"
+            android:permission="android.permission.BIND_JOB_SERVICE" />
+
+        <service
+            android:name=".notifs.NotificationActionsJobService"
             android:exported="true"
             android:permission="android.permission.BIND_JOB_SERVICE" />
 
