@@ -203,6 +203,9 @@ public class MessagesNotificationManager {
         .setDeleteIntent(summaryDeletePendingIntent)
         .setColor(ContextCompat.getColor(context, R.color.color_accent))
         .setStyle(messagingStyleBuilder)
+        .setCategory(Notification.CATEGORY_MESSAGE)
+        .setDefaults(Notification.DEFAULT_ALL)
+        .setOnlyAlertOnce(true)
         .build();
     notificationManager.notify(NOTIF_ID_BUNDLE_SUMMARY, summaryNotification);
 
@@ -244,6 +247,7 @@ public class MessagesNotificationManager {
           .addAction(markAsReadAction)
           .addAction(replyAction)
           .setDeleteIntent(deletePendingIntent)
+          .setCategory(Notification.CATEGORY_MESSAGE)
           .build();
       notificationManager.notify(notificationId, bundledNotification);
     }
