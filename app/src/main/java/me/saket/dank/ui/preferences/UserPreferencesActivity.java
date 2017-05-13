@@ -113,14 +113,13 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     preferenceList.setAdapter(preferencesAdapter);
   }
 
-  private List<DankPreferenceGroup> constructPreferenceGroups() {
-    List<DankPreferenceGroup> preferenceGroups = new ArrayList<>();
-    preferenceGroups.add(DankPreferenceGroup.LOOK_AND_FEEL);
-    preferenceGroups.add(DankPreferenceGroup.MANAGE_SUBREDDITS);
-    preferenceGroups.add(DankPreferenceGroup.FILTERS);
-    preferenceGroups.add(DankPreferenceGroup.DATA_USAGE);
-    preferenceGroups.add(DankPreferenceGroup.MISCELLANEOUS);
-    preferenceGroups.add(DankPreferenceGroup.ABOUT_DANK);
+  private List<UserPreferenceGroup> constructPreferenceGroups() {
+    List<UserPreferenceGroup> preferenceGroups = new ArrayList<>();
+    preferenceGroups.add(UserPreferenceGroup.LOOK_AND_FEEL);
+    preferenceGroups.add(UserPreferenceGroup.FILTERS);
+    preferenceGroups.add(UserPreferenceGroup.DATA_USAGE);
+    preferenceGroups.add(UserPreferenceGroup.MISCELLANEOUS);
+    preferenceGroups.add(UserPreferenceGroup.ABOUT_DANK);
     return preferenceGroups;
   }
 

@@ -5,17 +5,12 @@ import android.support.annotation.StringRes;
 
 import me.saket.dank.R;
 
-public enum DankPreferenceGroup {
+public enum UserPreferenceGroup {
 
   LOOK_AND_FEEL(
       R.drawable.ic_look_and_feel_24dp,
       R.string.userpreferences_look_and_feel,
       R.string.userpreferences_look_and_feel_description),
-
-  MANAGE_SUBREDDITS(
-      R.drawable.ic_subreddits_24dp,
-      R.string.userpreferences_manage_subreddits,
-      R.string.userpreferences_manage_subreddits_description),
 
   FILTERS(
       R.drawable.ic_visibility_off_24dp,
@@ -41,7 +36,7 @@ public enum DankPreferenceGroup {
   final int titleRes;
   final int subtitleRes;
 
-  DankPreferenceGroup(@DrawableRes int iconRes, @StringRes int titleRes, @StringRes int subtitleRes) {
+  UserPreferenceGroup(@DrawableRes int iconRes, @StringRes int titleRes, @StringRes int subtitleRes) {
     this.iconRes = iconRes;
     this.titleRes = titleRes;
     this.subtitleRes = subtitleRes;

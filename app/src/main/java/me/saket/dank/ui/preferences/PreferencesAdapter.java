@@ -15,15 +15,15 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
-public class PreferencesAdapter extends RecyclerViewArrayAdapter<DankPreferenceGroup, PreferencesAdapter.PreferenceGroupViewHolder> {
+public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceGroup, PreferencesAdapter.PreferenceGroupViewHolder> {
 
     private OnClickPreferenceGroupListener clickListener;
 
     interface OnClickPreferenceGroupListener {
-        void onClickPreferenceGroup(DankPreferenceGroup preferenceGroup, View itemView, long groupId);
+        void onClickPreferenceGroup(UserPreferenceGroup preferenceGroup, View itemView, long groupId);
     }
 
-    public PreferencesAdapter(@Nullable List<DankPreferenceGroup> items) {
+    public PreferencesAdapter(@Nullable List<UserPreferenceGroup> items) {
         super(items);
         setHasStableIds(true);
     }
@@ -39,7 +39,7 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<DankPreferenceG
 
     @Override
     public void onBindViewHolder(PreferenceGroupViewHolder holder, int position) {
-        DankPreferenceGroup preferenceGroup = getItem(position);
+        UserPreferenceGroup preferenceGroup = getItem(position);
         holder.bind(preferenceGroup);
         holder.itemView.setOnClickListener(__ -> clickListener.onClickPreferenceGroup(preferenceGroup, holder.itemView, getItemId(position)));
     }
@@ -59,7 +59,7 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<DankPreferenceG
             ButterKnife.bind(this, itemView);
         }
 
-        public void bind(DankPreferenceGroup preferenceGroup) {
+        public void bind(UserPreferenceGroup preferenceGroup) {
             iconView.setImageResource(preferenceGroup.iconRes);
             iconView.setContentDescription(iconView.getResources().getText(preferenceGroup.titleRes));
             titleView.setText(preferenceGroup.titleRes);

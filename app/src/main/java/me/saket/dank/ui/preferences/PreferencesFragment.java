@@ -19,52 +19,66 @@ import me.saket.dank.ui.DankFragment;
  */
 public class PreferencesFragment extends DankFragment {
 
-    @BindView(R.id.toolbar) Toolbar toolbar;
-    @BindView(R.id.userpreferences_viewswitcher) ViewSwitcher layoutSwitcher;
+  private static final String KEY_ACTIVE_PREFERENCE_GROUP = "activePreferenceGroup";
 
-    public static PreferencesFragment create() {
-        return new PreferencesFragment();
+  @BindView(R.id.toolbar) Toolbar toolbar;
+  @BindView(R.id.userpreferences_viewswitcher) ViewSwitcher layoutSwitcher;
+
+  private UserPreferenceGroup activePreferenceGroup;
+
+  public static PreferencesFragment create() {
+    return new PreferencesFragment();
+  }
+
+  @Nullable
+  @Override
+  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+    super.onCreateView(inflater, container, savedInstanceState);
+    View layout = inflater.inflate(R.layout.fragment_user_preferences, container, false);
+    ButterKnife.bind(this, layout);
+
+    toolbar.setNavigationOnClickListener(v -> ((UserPreferencesActivity) getActivity()).onClickPreferencesToolbarUp());
+
+    if (savedInstanceState != null) {
+      populatePreferences((UserPreferenceGroup) savedInstanceState.getSerializable(KEY_ACTIVE_PREFERENCE_GROUP));
     }
 
-    @Nullable
-    @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-        super.onCreateView(inflater, container, savedInstanceState);
-        View layout = inflater.inflate(R.layout.fragment_user_preferences, container, false);
-        ButterKnife.bind(this, layout);
+    return layout;
+  }
 
-        toolbar.setNavigationOnClickListener(v -> ((UserPreferencesActivity) getActivity()).onClickPreferencesToolbarUp());
+  @Override
+  public void onSaveInstanceState(Bundle outState) {
+    outState.putSerializable(KEY_ACTIVE_PREFERENCE_GROUP, activePreferenceGroup);
+    super.onSaveInstanceState(outState);
+  }
 
-        return layout;
+  public void populatePreferences(UserPreferenceGroup preferenceGroup) {
+    activePreferenceGroup = preferenceGroup;
+
+    @IdRes int groupLayoutRes = -1;
+    switch (preferenceGroup) {
+      case LOOK_AND_FEEL:
+        break;
+
+      case FILTERS:
+        break;
+
+      case DATA_USAGE:
+        groupLayoutRes = R.id.userpreferences_container_data_usage;
+        break;
+
+      case MISCELLANEOUS:
+        groupLayoutRes = R.id.userpreferences_container_misc;
+        break;
+
+      case ABOUT_DANK:
+        break;
     }
 
-    public void populatePreferences(DankPreferenceGroup preferenceGroup) {
-        @IdRes int groupLayoutRes = -1;
-
-        switch (preferenceGroup) {
-            case LOOK_AND_FEEL:
-                break;
-
-            case MANAGE_SUBREDDITS:
-                break;
-
-            case FILTERS:
-                break;
-
-            case DATA_USAGE:
-                break;
-
-            case MISCELLANEOUS:
-                groupLayoutRes = R.id.userpreferences_container_misc;
-                break;
-
-            case ABOUT_DANK:
-                break;
-        }
-
-        if (groupLayoutRes != -1) {
-            layoutSwitcher.setDisplayedChild(layoutSwitcher.indexOfChild(layoutSwitcher.findViewById(groupLayoutRes)));
-        }
+    toolbar.setTitle(preferenceGroup.titleRes);
+    if (groupLayoutRes != -1) {
+      layoutSwitcher.setDisplayedChild(layoutSwitcher.indexOfChild(layoutSwitcher.findViewById(groupLayoutRes)));
     }
+  }
 
 }

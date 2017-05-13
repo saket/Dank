@@ -99,8 +99,6 @@
     <string name="activity_userpreferences">Preferences</string>
     <string name="userpreferences_look_and_feel">Look &amp; feel</string>
     <string name="userpreferences_look_and_feel_description">Customize appearance and gestures</string>
-    <string name="userpreferences_manage_subreddits">Manage subreddits</string>
-    <string name="userpreferences_manage_subreddits_description">Change order and pin favorites</string>
     <string name="userpreferences_data_usage">Data usage</string>
     <string name="userpreferences_data_usage_description">Balance data consumption and quality</string>
     <string name="userpreferences_filters">Filters</string>
@@ -109,6 +107,8 @@
     <string name="userpreferences_misc_description">Options that don\'t fit elsewhere</string>
     <string name="userpreferences_about">About Dank</string>
     <string name="userpreferences_about_description">The team behind</string>
+
+    <string name="userpreferences_datausage_new_messages">New Messages</string>
 
     <!-- Messages -->
     <string name="activity_inbox">Inbox</string>

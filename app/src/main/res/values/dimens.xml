@@ -35,4 +35,5 @@
 
     <!-- Messages -->
     <dimen name="viewpager_tablayout_start_spacing_with_toolbar_title">60dp</dimen>
+    <dimen name="elevation_nested_expandable_sheet">10dp</dimen>
 </resources>

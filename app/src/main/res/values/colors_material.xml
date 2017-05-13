@@ -326,6 +326,7 @@
     <color name="gray_600">#757575</color>
     <color name="gray_700">#616161</color>
     <color name="gray_800">#424242</color>
+    <color name="gray_850">#3A3A3A</color>
     <color name="gray_900">#212121</color>
     <color name="black">#000000</color>
     <color name="white">#ffffff</color>

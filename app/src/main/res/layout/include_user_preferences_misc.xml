@@ -5,6 +5,7 @@
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:paddingTop="@dimen/spacing16"
+    tools:background="@color/window_background"
     tools:layout_marginTop="25dp">
 
     <TextView
@@ -12,7 +13,7 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/spacing16"
         android:layout_marginStart="@dimen/spacing16"
-        android:textSize="@dimen/textsize12"
         android:text="Group subtitle"
-        android:textAllCaps="true" />
+        android:textAllCaps="true"
+        android:textSize="@dimen/textsize12" />
 </LinearLayout>

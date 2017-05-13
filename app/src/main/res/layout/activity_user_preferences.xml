@@ -3,7 +3,8 @@
     style="@style/DankPullCollapsibleActivityPage"
     xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools">
+    xmlns:tools="http://schemas.android.com/tools"
+    tools:layout_marginTop="25dp">
 
     <me.saket.dank.widgets.InboxUI.InboxRecyclerView
         android:id="@+id/userpreferences_list"
@@ -14,6 +15,17 @@
         android:scrollbarStyle="insideOverlay"
         android:scrollbars="vertical" />
 
+    <Button
+        android:id="@+id/userpreferences_hiddenoptions"
+        style="@style/DankButton.Borderless"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:elevation="0dp"
+        android:text=""
+        tools:ignore="HardcodedText" />
+
     <me.saket.dank.widgets.DankToolbar
         android:id="@id/toolbar"
         style="@style/DankToolbar"
@@ -23,15 +35,6 @@
         android:id="@+id/userpreferences_preferences_page"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:elevation="@dimen/elevation_nested_expandable_sheet"
         android:background="@color/window_background" />
-
-    <Button
-        android:id="@+id/userpreferences_hiddenoptions"
-        style="@style/DankButton.Borderless"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:layout_centerHorizontal="true"
-        android:text=""
-        tools:ignore="HardcodedText" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

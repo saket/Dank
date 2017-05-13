@@ -1,17 +1,19 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:orientation="vertical">
+    android:clickable="true"
+    android:orientation="vertical"
+    tools:background="@color/window_background">
 
     <me.saket.dank.widgets.DankToolbar
         android:id="@id/toolbar"
         style="@style/DankToolbar"
-        tools:layout_marginTop="25dp"
         android:fitsSystemWindows="true"
-        app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
+        app:navigationIcon="@drawable/ic_toolbar_close_24dp"
+        tools:layout_marginTop="25dp" />
 
     <ViewSwitcher
         android:id="@+id/userpreferences_viewswitcher"
@@ -20,6 +22,10 @@
 
         <include
             android:id="@+id/userpreferences_container_misc"
-            layout="@layout/include_preferences_misc" />
+            layout="@layout/include_user_preferences_misc" />
+
+        <include
+            android:id="@+id/userpreferences_container_data_usage"
+            layout="@layout/include_user_preferences_data_usage" />
     </ViewSwitcher>
 </LinearLayout>
