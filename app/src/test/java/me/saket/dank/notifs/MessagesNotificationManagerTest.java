@@ -42,7 +42,7 @@ public class MessagesNotificationManagerTest {
   }
 
   @Test
-  public void whenMultipleUnreadsAreFetched_whenMultipleMessagesAreMarkedAsRead_shouldFilterSeenMessagesCorrectly() {
+  public void whenMultipleUnreadsAreFetched_andMultipleMessagesAreMarkedAsRead_shouldFilterSeenMessagesCorrectly() {
     // New unreads received from server.
     List<Message> unreadMessages = new ArrayList<>();
     for (int i = 0; i < 3; i++) {
@@ -104,9 +104,9 @@ public class MessagesNotificationManagerTest {
     assertEquals(filteredUnseenMessages.contains(unreadMessages.get(1)), false);
 
     // All notifs are cleared.
-    String[] messageIdsToMarkAsSeen = new String[unreadMessages.size()];
-    for (int i = 0; i < messageIdsToMarkAsSeen.length; i++) {
-      messageIdsToMarkAsSeen[i] = unreadMessages.get(i).getId();
+    List<String> messageIdsToMarkAsSeen = new ArrayList<>();
+    for (Message unreadMessage : unreadMessages) {
+      messageIdsToMarkAsSeen.add(unreadMessage.getId());
     }
     notificationManager
         .markMessageNotifAsSeen(messageIdsToMarkAsSeen)

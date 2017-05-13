@@ -35,7 +35,7 @@ public class DataStores {
     /**
      * The maximum count of items that will be fetched on every pagination iteration.
      */
-    public static final int ITEM_COUNT_FETCHED_PER_PAGE = Paginator.DEFAULT_LIMIT * 2;
+    public static final int MESSAGES_FETCHED_PER_PAGE = Paginator.DEFAULT_LIMIT * 2;
 
     private final Store<List<Message>, MessageCacheKey> messageStore;
 
@@ -50,7 +50,7 @@ public class DataStores {
         Fetcher<List<Message>, MessageCacheKey> networkFetcher = key -> {
             Callable<List<Message>> paginatorCallable = () -> {
                 InboxPaginator paginator = dankRedditClient.userMessagePaginator(key.folder());
-                paginator.setLimit(ITEM_COUNT_FETCHED_PER_PAGE);
+                paginator.setLimit(MESSAGES_FETCHED_PER_PAGE);
 
                 if (key.hasPaginationAnchor()) {
                     //noinspection ConstantConditions

@@ -129,6 +129,7 @@
 
     <!-- Notifications -->
     <string name="messagenotification_below_nougat_multiple_messages_title">%d new messages</string>
+    <string name="messagenotification_below_nougat_multiple_messages_title_indeterminate">%d+ new messages</string>
     <string name="messagenotification_reply">Reply</string>
     <string name="messagenotification_reply_to_user">Reply to /u/%s</string>
     <string name="messagenotification_below_nougat_expanded_body_row" translatable="false"><![CDATA[<b>%s</b> %s]]></string>

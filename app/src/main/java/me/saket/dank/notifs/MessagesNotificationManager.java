@@ -29,6 +29,7 @@ import java.util.Set;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
+import me.saket.dank.data.DataStores;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
@@ -312,6 +313,12 @@ public class MessagesNotificationManager {
     );
     Action markAllReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_all_as_read), markAllAsReadPendingIntent).build();
 
+    // Since message API is paginated, it's possible that the user has multiple pages of unread messages
+    // and we could only fetch the first page.
+    String notificationTitle = unreadMessages.size() == DataStores.MESSAGES_FETCHED_PER_PAGE
+        ? context.getString(R.string.messagenotification_below_nougat_multiple_messages_title_indeterminate, unreadMessages.size())
+        : context.getString(R.string.messagenotification_below_nougat_multiple_messages_title, unreadMessages.size());
+
     // Notification body.
     // Using a Set to remove duplicate author names.
     Set<String> messageAuthors = new LinkedHashSet<>(unreadMessages.size());
@@ -323,7 +330,7 @@ public class MessagesNotificationManager {
         : Strings.concatenateWithCommaAndAnd(context.getResources(), messageAuthors);
 
     return new NotificationCompat.Builder(context)
-        .setContentTitle(context.getString(R.string.messagenotification_below_nougat_multiple_messages_title, unreadMessages.size()))
+        .setContentTitle(notificationTitle)
         .setContentText(notifBody)
         .setSmallIcon(R.mipmap.ic_launcher)
         .setStyle(messagingStyleBuilder)
