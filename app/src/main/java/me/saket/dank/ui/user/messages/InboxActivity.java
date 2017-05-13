@@ -60,9 +60,13 @@ public class InboxActivity extends DankPullCollapsibleActivity implements Messag
      * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
      */
     public static void start(Context context, @Nullable Rect expandFromShape) {
+        context.startActivity(createStartIntent(context, expandFromShape));
+    }
+
+    public static Intent createStartIntent(Context context, @Nullable Rect expandFromShape) {
         Intent intent = new Intent(context, InboxActivity.class);
         intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
-        context.startActivity(intent);
+        return intent;
     }
 
     @Override

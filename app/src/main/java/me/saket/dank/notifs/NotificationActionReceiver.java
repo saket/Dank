@@ -17,6 +17,7 @@ import java.util.List;
 import io.reactivex.Completable;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.JrawUtils;
 import timber.log.Timber;
@@ -36,6 +37,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
   private static final String ACTION_MARK_AS_READ = "markAsRead";
   private static final String ACTION_MARK_ALL_AS_READ = "markAllAsRead";
   private static final String ACTION_MARK_AS_SEEN = "markAllAsSeen";
+  private static final String ACTION_MARK_AS_SEEN_AND_OPEN_INBOX = "markAsSeenAndOpenInbox";
 
   public static Intent createDirectReplyIntent(Context context, Message replyToMessage, JacksonHelper jacksonHelper, int notificationId) {
     if (notificationId == -1 || replyToMessage == null) {
@@ -99,10 +101,32 @@ public class NotificationActionReceiver extends BroadcastReceiver {
     return intent;
   }
 
+  /**
+   * Mark all unread messages as seen and then open {@link InboxActivity}.
+   */
+  public static Intent createMarkAllSeenAndOpenInboxIntent(Context context, List<Message> messagesToMarkAsSeen) {
+    ArrayList<String> messageIdsToMarkAsSeen = new ArrayList<>(messagesToMarkAsSeen.size());
+    for (Message message : messagesToMarkAsSeen) {
+      messageIdsToMarkAsSeen.add(message.getId());
+    }
+
+    return new Intent(context, NotificationActionReceiver.class)
+        .setAction(ACTION_MARK_AS_SEEN_AND_OPEN_INBOX)
+        .putStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST, messageIdsToMarkAsSeen);
+  }
+
+  /**
+   * Mark <var>unreadMessage</var> as seen and then open {@link InboxActivity}.
+   */
+  public static Intent createMarkAsSeenAndOpenInboxIntent(Context context, Message unreadMessage) {
+    ArrayList<Message> singleList = new ArrayList<>(1);
+    singleList.add(unreadMessage);
+    return createMarkAllSeenAndOpenInboxIntent(context, singleList);
+  }
+
   @Override
   public void onReceive(Context context, Intent intent) {
     String messageJson = intent.getStringExtra(INTENT_KEY_MESSAGE_JSON);
-    Timber.i("Notif action: %s", intent.getAction());
 
     switch (intent.getAction()) {
       case ACTION_DIRECT_REPLY:
@@ -141,7 +165,6 @@ public class NotificationActionReceiver extends BroadcastReceiver {
         break;
 
       case ACTION_MARK_ALL_AS_READ:
-        Timber.i("Marking all as read");
         List<String> messageIdsToMarkAsRead = intent.getStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST);
         Dank.messagesNotifManager()
             .markMessageNotifAsSeen(messageIdsToMarkAsRead)
@@ -150,13 +173,27 @@ public class NotificationActionReceiver extends BroadcastReceiver {
             .subscribe();
         break;
 
-      case ACTION_MARK_AS_SEEN:
+      case ACTION_MARK_AS_SEEN: {
         List<String> messageIdsToMarkAsSeen = intent.getStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST);
         Dank.messagesNotifManager()
             .markMessageNotifAsSeen(messageIdsToMarkAsSeen)
             .subscribe();
         // This action gets called only when all the notifs are dismissed, so we don't need to refresh the notif again.
-        break;
+      }
+      break;
+
+      case ACTION_MARK_AS_SEEN_AND_OPEN_INBOX: {
+        List<String> messageIdsToMarkAsSeen = intent.getStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST);
+        Dank.messagesNotifManager()
+            .markMessageNotifAsSeen(messageIdsToMarkAsSeen)
+            .subscribe(() -> {
+              Intent inboxIntent = InboxActivity.createStartIntent(context, null);
+              inboxIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+              context.startActivity(inboxIntent);
+            });
+      }
+      // This action is also performed only when a notification is tapped, where it gets dismissed. So refreshing notifs isn't required.
+      break;
 
       default:
         throw new UnsupportedOperationException("Unknown action: " + intent.getAction());

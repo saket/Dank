@@ -7,6 +7,7 @@ import android.app.PendingIntent;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.os.Build;
 import android.support.annotation.CheckResult;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationCompat.Action;
@@ -44,6 +45,7 @@ public class MessagesNotificationManager {
   private static final int P_INTENT_REQ_ID_MARK_AS_READ = 202;
   private static final int P_INTENT_REQ_ID_MARK_AS_SEEN = 203;
   private static final int P_INTENT_REQ_ID_DIRECT_REPLY = 204;
+  private static final int P_INTENT_REQ_ID_OPEN_INBOX = 205;
   private static final String BUNDLED_NOTIFS_KEY = "unreadMessages";
 
   private final SeenUnreadMessageIdStore seenMessageIdsStore;
@@ -184,61 +186,81 @@ public class MessagesNotificationManager {
         ? createSingleMessageSummaryNotifBuilder(context, unreadMessages.get(0), loggedInUserName)
         : createMultipleMessagesSummaryNotifBuilder(context, unreadMessages, loggedInUserName);
 
+    // Open Inbox on click.
+    PendingIntent onSummaryClickPendingIntent = PendingIntent.getBroadcast(
+        context,
+        P_INTENT_REQ_ID_OPEN_INBOX,
+        NotificationActionReceiver.createMarkAllSeenAndOpenInboxIntent(context, unreadMessages),
+        PendingIntent.FLAG_UPDATE_CURRENT
+    );
+
     Notification summaryNotification = summaryNotifBuilder
         .setGroup(BUNDLED_NOTIFS_KEY)
         .setGroupSummary(true)
         .setShowWhen(true)
-        .setAutoCancel(true)
         .setColor(ContextCompat.getColor(context, R.color.notification_icon_color))
         .setCategory(Notification.CATEGORY_MESSAGE)
         .setDefaults(Notification.DEFAULT_ALL)
         .setOnlyAlertOnce(true)
+        .setContentIntent(onSummaryClickPendingIntent)
+        .setAutoCancel(true)
         .build();
     notificationManager.notify(NOTIF_ID_BUNDLE_SUMMARY, summaryNotification);
 
     // Add bundled notifications (Nougat+).
-    for (Message unreadMessage : unreadMessages) {
-      int notificationId = createNotificationIdFor(unreadMessage);
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      for (Message unreadMessage : unreadMessages) {
+        int notificationId = createNotificationIdFor(unreadMessage);
 
-      // Mark as read action.
-      PendingIntent markAsReadPendingIntent = createMarkAsReadPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_MARK_AS_READ + notificationId);
-      Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
+        // Mark as read action.
+        PendingIntent markAsReadPendingIntent = createMarkAsReadPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_MARK_AS_READ + notificationId);
+        Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
 
-      // Direct reply action.
-      Intent directReplyIntent = NotificationActionReceiver.createDirectReplyIntent(context, unreadMessage, Dank.jackson(), notificationId);
-      PendingIntent directReplyPendingIntent = PendingIntent.getBroadcast(
-          context,
-          P_INTENT_REQ_ID_DIRECT_REPLY + notificationId,
-          directReplyIntent,
-          PendingIntent.FLAG_CANCEL_CURRENT
-      );
-      Action replyAction = new Action.Builder(0, context.getString(R.string.messagenotification_reply), directReplyPendingIntent)
-          .addRemoteInput(new RemoteInput.Builder(NotificationActionReceiver.KEY_DIRECT_REPLY_MESSAGE)
-              .setLabel(context.getString(R.string.messagenotification_reply_to_user, unreadMessage.getAuthor()))
-              .build())
-          .setAllowGeneratedReplies(true)
-          .build();
+        // Direct reply action.
+        Intent directReplyIntent = NotificationActionReceiver.createDirectReplyIntent(context, unreadMessage, Dank.jackson(), notificationId);
+        PendingIntent directReplyPendingIntent = PendingIntent.getBroadcast(
+            context,
+            P_INTENT_REQ_ID_DIRECT_REPLY + notificationId,
+            directReplyIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT
+        );
+        Action replyAction = new Action.Builder(0, context.getString(R.string.messagenotification_reply), directReplyPendingIntent)
+            .addRemoteInput(new RemoteInput.Builder(NotificationActionReceiver.KEY_DIRECT_REPLY_MESSAGE)
+                .setLabel(context.getString(R.string.messagenotification_reply_to_user, unreadMessage.getAuthor()))
+                .build())
+            .setAllowGeneratedReplies(true)
+            .build();
 
-      // Mark as seen on dismissal.
-      PendingIntent deletePendingIntent = createMarkAsSeenPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_MARK_AS_SEEN + notificationId);
+        // Mark as seen on dismissal.
+        PendingIntent deletePendingIntent = createMarkAsSeenPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_MARK_AS_SEEN + notificationId);
 
-      String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
+        // Open Inbox on click.
+        PendingIntent onClickPendingIntent = PendingIntent.getBroadcast(
+            context,
+            P_INTENT_REQ_ID_OPEN_INBOX,
+            NotificationActionReceiver.createMarkAsSeenAndOpenInboxIntent(context, unreadMessage),
+            PendingIntent.FLAG_UPDATE_CURRENT
+        );
 
-      Notification bundledNotification = new NotificationCompat.Builder(context)
-          .setContentTitle(unreadMessage.getAuthor())
-          .setContentText(markdownStrippedBody)
-          .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
-          .setShowWhen(false)
-          .setSmallIcon(R.mipmap.ic_launcher)
-          .setGroup(BUNDLED_NOTIFS_KEY)
-          .setAutoCancel(true)
-          .setColor(ContextCompat.getColor(context, R.color.color_accent))
-          .addAction(markAsReadAction)
-          .addAction(replyAction)
-          .setDeleteIntent(deletePendingIntent)
-          .setCategory(Notification.CATEGORY_MESSAGE)
-          .build();
-      notificationManager.notify(notificationId, bundledNotification);
+        String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
+
+        Notification bundledNotification = new NotificationCompat.Builder(context)
+            .setContentTitle(unreadMessage.getAuthor())
+            .setContentText(markdownStrippedBody)
+            .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
+            .setShowWhen(false)
+            .setSmallIcon(R.mipmap.ic_launcher)
+            .setGroup(BUNDLED_NOTIFS_KEY)
+            .setAutoCancel(true)
+            .setColor(ContextCompat.getColor(context, R.color.color_accent))
+            .addAction(markAsReadAction)
+            .addAction(replyAction)
+            .setContentIntent(onClickPendingIntent)
+            .setDeleteIntent(deletePendingIntent)
+            .setCategory(Notification.CATEGORY_MESSAGE)
+            .build();
+        notificationManager.notify(notificationId, bundledNotification);
+      }
     }
   }
 
@@ -251,13 +273,7 @@ public class MessagesNotificationManager {
     Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
 
     // Dismissal intent.
-    Intent markAsSeenIntent = NotificationActionReceiver.createMarkAsSeenIntent(context, unreadMessage);
-    PendingIntent deletePendingIntent = PendingIntent.getBroadcast(
-        context,
-        P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN,
-        markAsSeenIntent,
-        PendingIntent.FLAG_CANCEL_CURRENT
-    );
+    PendingIntent deletePendingIntent = createMarkAsSeenPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN);
 
     // Update: Lol using some tags crashes Android's SystemUi. We'll have to remove all markdown tags.
     String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
@@ -282,16 +298,23 @@ public class MessagesNotificationManager {
     // Create a "InboxStyle" summary notification for the bundled notifs, that will only be visible on < Nougat.
     NotificationCompat.InboxStyle messagingStyleBuilder = new NotificationCompat.InboxStyle();
     messagingStyleBuilder.setSummaryText(loggedInUserName);
+    int linesAdded = 0;
+
     for (Message unreadMessage : unreadMessages) {
       CharSequence messageBodyWithMarkdown = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
       String markdownStrippedBody = messageBodyWithMarkdown.toString();
-
       //noinspection deprecation
       messagingStyleBuilder.addLine(Html.fromHtml(context.getString(
           R.string.messagenotification_below_nougat_expanded_body_row,
           unreadMessage.getAuthor(),
           markdownStrippedBody
       )));
+
+      // Bug workaround: Android displays a random integer after the 7th item. E.g., "@17041057.
+      // Manually limit the lines to 7 to avoid this.
+      if (++linesAdded == 7) {
+        break;
+      }
     }
 
     // Mark all as seen on summary notif dismissal.
@@ -300,7 +323,7 @@ public class MessagesNotificationManager {
         context,
         P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN,
         markAllAsSeenIntent,
-        PendingIntent.FLAG_CANCEL_CURRENT
+        PendingIntent.FLAG_UPDATE_CURRENT
     );
 
     // Mark all as read action. Will only show up on < Nougat.
@@ -309,7 +332,7 @@ public class MessagesNotificationManager {
         context,
         P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_READ,
         markAllAsReadIntent,
-        PendingIntent.FLAG_CANCEL_CURRENT
+        PendingIntent.FLAG_UPDATE_CURRENT
     );
     Action markAllReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_all_as_read), markAllAsReadPendingIntent).build();
 
@@ -341,12 +364,12 @@ public class MessagesNotificationManager {
   private PendingIntent createMarkAsReadPendingIntent(Context context, Message unreadMessage, int requestId) {
     int notificationId = createNotificationIdFor(unreadMessage);
     Intent markAsReadIntent = NotificationActionReceiver.createMarkAsReadIntent(context, unreadMessage, Dank.jackson(), notificationId);
-    return PendingIntent.getBroadcast(context, requestId, markAsReadIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+    return PendingIntent.getBroadcast(context, requestId, markAsReadIntent, PendingIntent.FLAG_UPDATE_CURRENT);
   }
 
   private PendingIntent createMarkAsSeenPendingIntent(Context context, Message unreadMessage, int requestId) {
     Intent markAsSeenIntent = NotificationActionReceiver.createMarkAsSeenIntent(context, unreadMessage);
-    return PendingIntent.getBroadcast(context, requestId, markAsSeenIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+    return PendingIntent.getBroadcast(context, requestId, markAsSeenIntent, PendingIntent.FLAG_UPDATE_CURRENT);
   }
 
   private int createNotificationIdFor(Message message) {
