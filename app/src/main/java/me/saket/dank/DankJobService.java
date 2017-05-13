@@ -36,6 +36,7 @@ public abstract class DankJobService extends JobService {
 
     protected static final int ID_MARK_MESSAGE_AS_READ = 5;
     protected static final int ID_SEND_DIRECT_MESSAGE_REPLY = 6;
+    protected static final int ID_MARK_ALL_MESSAGES_AS_READ = 7;
 
     private CompositeDisposable onDestroyDisposables;
 

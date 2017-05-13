@@ -9,17 +9,20 @@ import android.content.Intent;
 import android.content.SharedPreferences;
 import android.support.annotation.CheckResult;
 import android.support.v4.app.NotificationCompat;
-import android.support.v4.app.NotificationCompat.MessagingStyle;
+import android.support.v4.app.NotificationCompat.Action;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.app.RemoteInput;
 import android.support.v4.content.ContextCompat;
+import android.text.Html;
 
 import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashSet;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 
@@ -29,11 +32,17 @@ import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.Strings;
 import timber.log.Timber;
 
 public class MessagesNotificationManager {
 
   private static final int NOTIF_ID_BUNDLE_SUMMARY = 100;
+  private static final int P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN = 200;
+  private static final int P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_READ = 201;
+  private static final int P_INTENT_REQ_ID_MARK_AS_READ = 202;
+  private static final int P_INTENT_REQ_ID_MARK_AS_SEEN = 203;
+  private static final int P_INTENT_REQ_ID_DIRECT_REPLY = 204;
   private static final String BUNDLED_NOTIFS_KEY = "unreadMessages";
 
   private final SeenUnreadMessageIdStore seenMessageIdsStore;
@@ -64,19 +73,19 @@ public class MessagesNotificationManager {
   }
 
   @CheckResult
-  public Completable markMessageNotifAsSeen(String... messageIds) {
+  public Completable markMessageNotifAsSeen(List<String> messageIds) {
     return seenMessageIdsStore.get()
-        .flatMapCompletable(seenMessageIds -> {
-          Set<String> updatedSeenMessages = new HashSet<>(seenMessageIds.size() + messageIds.length);
-          updatedSeenMessages.addAll(seenMessageIds);
-          Collections.addAll(updatedSeenMessages, messageIds);
+        .flatMapCompletable(existingSeenMessageIds -> {
+          Set<String> updatedSeenMessages = new HashSet<>(existingSeenMessageIds.size() + messageIds.size());
+          updatedSeenMessages.addAll(existingSeenMessageIds);
+          updatedSeenMessages.addAll(messageIds);
           return seenMessageIdsStore.save(updatedSeenMessages);
         });
   }
 
   @CheckResult
   public Completable markMessageNotifAsSeen(Message message) {
-    return markMessageNotifAsSeen(message.getId());
+    return markMessageNotifAsSeen(Collections.singletonList(message.getId()));
   }
 
   /**
@@ -95,7 +104,7 @@ public class MessagesNotificationManager {
   }
 
   /**
-   * Recycle all "seen" message IDs.
+   * Empty the seen message Ids when there are no more unread messages present.
    */
   @CheckResult
   public Completable removeAllMessageNotifSeenStatuses() {
@@ -137,100 +146,80 @@ public class MessagesNotificationManager {
     return Completable.fromAction(() -> {
       String loggedInUserName = Dank.reddit().loggedInUserName();
 
-      List<Message> timeSortedMessages = new ArrayList<>(unreadMessages.size());
-      timeSortedMessages.addAll(unreadMessages);
-      timeSortedMessages.sort((first, second) -> {
+      Comparator<Message> oldestMessageFirstComparator = (first, second) -> {
         Date firstDate = first.getCreated();
         Date secondDate = second.getCreated();
 
         if (firstDate.after(secondDate)) {
-          return -1;  // First is older than second.
+          return -1;
         } else if (secondDate.after(firstDate)) {
-          return +1;  // Second is older than first.
+          return +1;
         } else {
           return 0;   // Equal
         }
-      });
+      };
+      List<Message> sortedMessages = new ArrayList<>(unreadMessages.size());
+      sortedMessages.addAll(unreadMessages);
+      Collections.sort(sortedMessages, oldestMessageFirstComparator);
 
       Timber.i("Creating notifs for:");
-      timeSortedMessages.forEach(m -> Timber.i("%s (%s)", m.getBody(), m.getCreated()));
-      createNotification(context, loggedInUserName, Collections.unmodifiableList(timeSortedMessages));
+      for (Message sortedMessage : sortedMessages) {
+        Timber.i("%s (%s)", sortedMessage.getBody(), sortedMessage.getCreated());
+      }
+      createNotification(context, Collections.unmodifiableList(sortedMessages), loggedInUserName);
     });
   }
 
   /**
    * Constructs bundled notifications for unread messages.
    */
-  private void createNotification(Context context, String loggedInUserName, List<Message> sortedUnreadMessages) {
+  private void createNotification(Context context, List<Message> unreadMessages, String loggedInUserName) {
     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
 
-    // We'll create a "MessagingStyle" summary notification for the bundled notifs.
-    MessagingStyle messagingStyleBuilder = new MessagingStyle(loggedInUserName);
-    //messagingStyleBuilder.setConversationTitle(sortedUnreadMessages.size() + " new messages");
+    // This summary notification will only be used on < Nougat, where bundled notifications aren't supported.
+    // Though, Android will still pick up some properties from it on Nougat, like the sound, vibration, icon, etc.
+    // The style (InboxStyle, MessagingStyle) is dropped on Nougat.
+    NotificationCompat.Builder summaryNotifBuilder = unreadMessages.size() == 1
+        ? createSingleMessageSummaryNotifBuilder(context, unreadMessages.get(0), loggedInUserName)
+        : createMultipleMessagesSummaryNotifBuilder(context, unreadMessages, loggedInUserName);
 
-    for (Message unreadMessage : sortedUnreadMessages) {
-      long timestamp = JrawUtils.createdTimeUtc(unreadMessage);
-
-      // Update: Lol using some tags crashes Android's SystemUi. We'll have to remove all markdown tags.
-      CharSequence messageBodyWithMarkdown = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
-      String markdownStrippedBody = messageBodyWithMarkdown.toString();
-
-      messagingStyleBuilder.addMessage(new MessagingStyle.Message(markdownStrippedBody, timestamp, unreadMessage.getAuthor()));
-    }
-
-    // Mark all as seen on summary notif dismissal.
-    Intent markAllAsSeenIntent = NotificationActionReceiver.createMarkAllAsSeenIntent(context, sortedUnreadMessages);
-    PendingIntent summaryDeletePendingIntent = PendingIntent.getBroadcast(
-        context,
-        NOTIF_ID_BUNDLE_SUMMARY,
-        markAllAsSeenIntent,
-        PendingIntent.FLAG_ONE_SHOT
-    );
-
-//    String notifBody = sortedUnreadMessages.size() == 1
-//        ? "From " + sortedUnreadMessages.get(0).getAuthor()
-//        : "From " + sortedUnreadMessages.size() + " users";
-
-    Notification summaryNotification = new NotificationCompat.Builder(context)
-//        .setContentTitle(sortedUnreadMessages.size() + " new messages")
-//        .setContentText(notifBody)
-        .setSmallIcon(R.mipmap.ic_launcher)
-        .setSubText(loggedInUserName)
+    Notification summaryNotification = summaryNotifBuilder
         .setGroup(BUNDLED_NOTIFS_KEY)
-        .setShowWhen(true)
         .setGroupSummary(true)
+        .setShowWhen(true)
         .setAutoCancel(true)
-        .setDeleteIntent(summaryDeletePendingIntent)
-        .setColor(ContextCompat.getColor(context, R.color.color_accent))
-        .setStyle(messagingStyleBuilder)
+        .setColor(ContextCompat.getColor(context, R.color.notification_icon_color))
         .setCategory(Notification.CATEGORY_MESSAGE)
         .setDefaults(Notification.DEFAULT_ALL)
         .setOnlyAlertOnce(true)
         .build();
     notificationManager.notify(NOTIF_ID_BUNDLE_SUMMARY, summaryNotification);
 
-    for (Message unreadMessage : sortedUnreadMessages) {
-      int notificationId = (int) JrawUtils.createdTimeUtc(unreadMessage);
+    // Add bundled notifications (Nougat+).
+    for (Message unreadMessage : unreadMessages) {
+      int notificationId = createNotificationIdFor(unreadMessage);
 
       // Mark as read action.
-      Intent markAsReadIntent = NotificationActionReceiver.createMarkAsReadIntent(context, unreadMessage, Dank.jackson(), notificationId);
-      PendingIntent markAsReadPendingIntent = PendingIntent.getBroadcast(context, notificationId, markAsReadIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-      NotificationCompat.Action markAsReadAction = new NotificationCompat.Action.Builder(0, "Mark read", markAsReadPendingIntent).build();
+      PendingIntent markAsReadPendingIntent = createMarkAsReadPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_MARK_AS_READ + notificationId);
+      Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
 
       // Direct reply action.
       Intent directReplyIntent = NotificationActionReceiver.createDirectReplyIntent(context, unreadMessage, Dank.jackson(), notificationId);
-      PendingIntent directReplyPendingIntent = PendingIntent.getBroadcast(context, notificationId, directReplyIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-      RemoteInput directReplyInput = new RemoteInput.Builder(NotificationActionReceiver.KEY_DIRECT_REPLY_MESSAGE)
-          .setLabel(context.getString(R.string.messagenotification_reply_to_user, unreadMessage.getAuthor()))
-          .build();
-      NotificationCompat.Action replyAction = new NotificationCompat.Action.Builder(0, context.getString(R.string.messagenotification_reply), directReplyPendingIntent)
-          .addRemoteInput(directReplyInput)
+      PendingIntent directReplyPendingIntent = PendingIntent.getBroadcast(
+          context,
+          P_INTENT_REQ_ID_DIRECT_REPLY + notificationId,
+          directReplyIntent,
+          PendingIntent.FLAG_CANCEL_CURRENT
+      );
+      Action replyAction = new Action.Builder(0, context.getString(R.string.messagenotification_reply), directReplyPendingIntent)
+          .addRemoteInput(new RemoteInput.Builder(NotificationActionReceiver.KEY_DIRECT_REPLY_MESSAGE)
+              .setLabel(context.getString(R.string.messagenotification_reply_to_user, unreadMessage.getAuthor()))
+              .build())
           .setAllowGeneratedReplies(true)
           .build();
 
-      // Dismissal intent.
-      Intent markAsSeenIntent = NotificationActionReceiver.createMarkAsSeenIntent(context, unreadMessage);
-      PendingIntent deletePendingIntent = PendingIntent.getBroadcast(context, notificationId, markAsSeenIntent, PendingIntent.FLAG_ONE_SHOT);
+      // Mark as seen on dismissal.
+      PendingIntent deletePendingIntent = createMarkAsSeenPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_MARK_AS_SEEN + notificationId);
 
       String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
 
@@ -239,7 +228,6 @@ public class MessagesNotificationManager {
           .setContentText(markdownStrippedBody)
           .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
           .setShowWhen(false)
-          .setWhen(unreadMessage.getCreated().getTime())
           .setSmallIcon(R.mipmap.ic_launcher)
           .setGroup(BUNDLED_NOTIFS_KEY)
           .setAutoCancel(true)
@@ -251,6 +239,111 @@ public class MessagesNotificationManager {
           .build();
       notificationManager.notify(notificationId, bundledNotification);
     }
+  }
+
+  /**
+   * Create an "BigTextStyle" notification for a single unread messages.
+   */
+  private NotificationCompat.Builder createSingleMessageSummaryNotifBuilder(Context context, Message unreadMessage, String loggedInUserName) {
+    // Mark as read action.
+    PendingIntent markAsReadPendingIntent = createMarkAsReadPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_READ);
+    Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
+
+    // Dismissal intent.
+    Intent markAsSeenIntent = NotificationActionReceiver.createMarkAsSeenIntent(context, unreadMessage);
+    PendingIntent deletePendingIntent = PendingIntent.getBroadcast(
+        context,
+        P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN,
+        markAsSeenIntent,
+        PendingIntent.FLAG_CANCEL_CURRENT
+    );
+
+    // Update: Lol using some tags crashes Android's SystemUi. We'll have to remove all markdown tags.
+    String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
+
+    return new NotificationCompat.Builder(context)
+        .setContentTitle(unreadMessage.getAuthor())
+        .setContentText(markdownStrippedBody)
+        .setStyle(new NotificationCompat.BigTextStyle()
+            .bigText(markdownStrippedBody)
+            .setSummaryText(loggedInUserName))
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setDeleteIntent(deletePendingIntent)
+        .addAction(markAsReadAction);
+  }
+
+  /**
+   * Create an "InboxStyle" notification for multiple unread messages.
+   */
+  private NotificationCompat.Builder createMultipleMessagesSummaryNotifBuilder(Context context, List<Message> unreadMessages,
+      String loggedInUserName)
+  {
+    // Create a "InboxStyle" summary notification for the bundled notifs, that will only be visible on < Nougat.
+    NotificationCompat.InboxStyle messagingStyleBuilder = new NotificationCompat.InboxStyle();
+    messagingStyleBuilder.setSummaryText(loggedInUserName);
+    for (Message unreadMessage : unreadMessages) {
+      CharSequence messageBodyWithMarkdown = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
+      String markdownStrippedBody = messageBodyWithMarkdown.toString();
+
+      //noinspection deprecation
+      messagingStyleBuilder.addLine(Html.fromHtml(context.getString(
+          R.string.messagenotification_below_nougat_expanded_body_row,
+          unreadMessage.getAuthor(),
+          markdownStrippedBody
+      )));
+    }
+
+    // Mark all as seen on summary notif dismissal.
+    Intent markAllAsSeenIntent = NotificationActionReceiver.createMarkAllAsSeenIntent(context, unreadMessages);
+    PendingIntent summaryDeletePendingIntent = PendingIntent.getBroadcast(
+        context,
+        P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN,
+        markAllAsSeenIntent,
+        PendingIntent.FLAG_CANCEL_CURRENT
+    );
+
+    // Mark all as read action. Will only show up on < Nougat.
+    Intent markAllAsReadIntent = NotificationActionReceiver.createMarkAllAsReadIntent(context, unreadMessages);
+    PendingIntent markAllAsReadPendingIntent = PendingIntent.getBroadcast(
+        context,
+        P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_READ,
+        markAllAsReadIntent,
+        PendingIntent.FLAG_CANCEL_CURRENT
+    );
+    Action markAllReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_all_as_read), markAllAsReadPendingIntent).build();
+
+    // Notification body.
+    // Using a Set to remove duplicate author names.
+    Set<String> messageAuthors = new LinkedHashSet<>(unreadMessages.size());
+    for (Message unreadMessage : unreadMessages) {
+      messageAuthors.add(unreadMessage.getAuthor());
+    }
+    String notifBody = messageAuthors.size() == 1
+        ? context.getString(R.string.messagenotification_below_nougat_body_from_single_author, messageAuthors.iterator().next())
+        : Strings.concatenateWithCommaAndAnd(context.getResources(), messageAuthors);
+
+    return new NotificationCompat.Builder(context)
+        .setContentTitle(context.getString(R.string.messagenotification_below_nougat_multiple_messages_title, unreadMessages.size()))
+        .setContentText(notifBody)
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setStyle(messagingStyleBuilder)
+        .setDeleteIntent(summaryDeletePendingIntent)
+        .addAction(markAllReadAction);
+  }
+
+  private PendingIntent createMarkAsReadPendingIntent(Context context, Message unreadMessage, int requestId) {
+    int notificationId = createNotificationIdFor(unreadMessage);
+    Intent markAsReadIntent = NotificationActionReceiver.createMarkAsReadIntent(context, unreadMessage, Dank.jackson(), notificationId);
+    return PendingIntent.getBroadcast(context, requestId, markAsReadIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+  }
+
+  private PendingIntent createMarkAsSeenPendingIntent(Context context, Message unreadMessage, int requestId) {
+    Intent markAsSeenIntent = NotificationActionReceiver.createMarkAsSeenIntent(context, unreadMessage);
+    return PendingIntent.getBroadcast(context, requestId, markAsSeenIntent, PendingIntent.FLAG_CANCEL_CURRENT);
+  }
+
+  private int createNotificationIdFor(Message message) {
+    return message.getId().hashCode();
   }
 
   @CheckResult

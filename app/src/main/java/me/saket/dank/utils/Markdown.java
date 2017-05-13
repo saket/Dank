@@ -43,6 +43,7 @@ public class Markdown {
    * Convert "**Something**" -> "Something", without any styling.
    */
   public static String stripMarkdown(String markdown) {
+    // Since all the styling is added using spans, converting the CharSequence to a String will remove all the styling.
     return parseRedditMarkdownHtml(markdown, EMPTY_TEXTPAINT).toString();
   }
 

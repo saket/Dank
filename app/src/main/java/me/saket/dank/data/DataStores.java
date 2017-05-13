@@ -32,6 +32,11 @@ import me.saket.dank.utils.StoreFilePersister;
  */
 public class DataStores {
 
+    /**
+     * The maximum count of items that will be fetched on every pagination iteration.
+     */
+    public static final int ITEM_COUNT_FETCHED_PER_PAGE = Paginator.DEFAULT_LIMIT * 2;
+
     private final Store<List<Message>, MessageCacheKey> messageStore;
 
     // TODO: Use custom caching policy for each store. Messages should keep the cache forever.
@@ -45,7 +50,7 @@ public class DataStores {
         Fetcher<List<Message>, MessageCacheKey> networkFetcher = key -> {
             Callable<List<Message>> paginatorCallable = () -> {
                 InboxPaginator paginator = dankRedditClient.userMessagePaginator(key.folder());
-                paginator.setLimit(Paginator.DEFAULT_LIMIT * 2);
+                paginator.setLimit(ITEM_COUNT_FETCHED_PER_PAGE);
 
                 if (key.hasPaginationAnchor()) {
                     //noinspection ConstantConditions

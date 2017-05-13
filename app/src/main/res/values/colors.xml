@@ -42,4 +42,6 @@
     <color name="subredditpicker_subreddit_button_text_normal">@color/gray_400</color>
     <color name="subredditpicker_subreddit_button_text_hidden">@color/gray_700</color>
 
+    <!-- So Nougat automatically replaces teal_a400 with this color for notification. We're using the same color for < Nougat. -->
+    <color name="notification_icon_color">#00875C</color>
 </resources>

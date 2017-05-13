@@ -2,8 +2,8 @@
     <string name="app_name">Dank</string>
     <string name="subreddit_name_r_prefix">/r/%s</string>
     <string name="user_name_u_prefix">/u/%s</string>
-
-    <string name="cd_video_play">Play video</string>
+    <string name="comma_separator_for_multiple_words">,</string>
+    <string name="and_suffix_for_comma_separated_words">and</string>
 
     <!-- Common errors -->
     <string name="common_error_retry">Retry</string>
@@ -87,6 +87,7 @@
     <string name="submission_image_album">Album</string>
     <string name="submission_image_album_label_with_image_count">Album (%d images)</string>
     <string name="submission_image_album_image_count">%d images</string>
+    <string name="submission_cd_play_video">Play video</string>
 
     <!-- WebView -->
     <string name="webview_open_in_browser">Open in browser</string>
@@ -127,6 +128,11 @@
     <string name="inbox_empty_state_message_for_username_mentions">You don\'t have any username mentions.</string>
 
     <!-- Notifications -->
+    <string name="messagenotification_below_nougat_multiple_messages_title">%d new messages</string>
     <string name="messagenotification_reply">Reply</string>
     <string name="messagenotification_reply_to_user">Reply to /u/%s</string>
+    <string name="messagenotification_below_nougat_expanded_body_row" translatable="false"><![CDATA[<b>%s</b> %s]]></string>
+    <string name="messagenotification_below_nougat_body_from_single_author">From %s</string>
+    <string name="messagenotification_mark_as_read">Mark as read</string>
+    <string name="messagenotification_mark_all_as_read">Mark all as read</string>
 </resources>

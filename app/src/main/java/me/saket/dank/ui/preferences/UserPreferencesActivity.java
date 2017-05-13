@@ -1,5 +1,6 @@
 package me.saket.dank.ui.preferences;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
@@ -65,6 +66,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     hiddenOptionsButton.setVisibility(View.GONE);
     unsubscribeOnDestroy(Dank.reddit()
         .isUserLoggedIn()
+        .observeOn(mainThread())
         .subscribe(loggedIn -> {
           if (loggedIn) {
             String loggedInUserName = Dank.reddit().loggedInUserName();
