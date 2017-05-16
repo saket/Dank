@@ -111,6 +111,7 @@ public class InfiniteScroller<T extends RedditObject> {
           } else if (updateEvent instanceof StateUpdate.ItemsLoaded) {
             //noinspection unchecked
             callbacks.updateItemsDataset(((StateUpdate.ItemsLoaded<T>) updateEvent).items);
+            callbacks.setEmptyStateVisible(false);
 
           } else if (updateEvent instanceof StateUpdate.Error) {
             boolean onFirstLoad = ((StateUpdate.Error) updateEvent).errorOnFirstLoad;
@@ -186,8 +187,7 @@ public class InfiniteScroller<T extends RedditObject> {
   /**
    * Load data from cache and force-refresh from remote. Remote data is emitted only if it's new.
    */
-  private Observable<List<T>> loadFromDataStore(PaginationAnchor anchor, InfiniteDataStreamFunction<T> dataStreamFunc) throws Exception
-  {
+  private Observable<List<T>> loadFromDataStore(PaginationAnchor anchor, InfiniteDataStreamFunction<T> dataStreamFunc) throws Exception {
     Observable<List<T>> cacheStream = dataStreamFunc.apply(anchor, false /* skipCache */)
         .subscribeOn(Schedulers.io())
         .doOnSubscribe(o -> {
