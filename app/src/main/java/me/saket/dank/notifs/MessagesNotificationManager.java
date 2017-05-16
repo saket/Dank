@@ -169,14 +169,14 @@ public class MessagesNotificationManager {
       for (Message sortedMessage : sortedMessages) {
         Timber.i("%s (%s)", sortedMessage.getBody(), sortedMessage.getCreated());
       }
-      createNotification(context, Collections.unmodifiableList(sortedMessages), loggedInUserName);
+      createNotifications(context, Collections.unmodifiableList(sortedMessages), loggedInUserName);
     });
   }
 
   /**
    * Constructs bundled notifications for unread messages.
    */
-  private void createNotification(Context context, List<Message> unreadMessages, String loggedInUserName) {
+  private void createNotifications(Context context, List<Message> unreadMessages, String loggedInUserName) {
     NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
 
     // This summary notification will only be used on < Nougat, where bundled notifications aren't supported.
@@ -248,7 +248,8 @@ public class MessagesNotificationManager {
             .setContentTitle(unreadMessage.getAuthor())
             .setContentText(markdownStrippedBody)
             .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
-            .setShowWhen(false)
+            .setShowWhen(true)
+            .setWhen(JrawUtils.createdTimeUtc(unreadMessage))
             .setSmallIcon(R.mipmap.ic_launcher)
             .setGroup(BUNDLED_NOTIFS_KEY)
             .setAutoCancel(true)
