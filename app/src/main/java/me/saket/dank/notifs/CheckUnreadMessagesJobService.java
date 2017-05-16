@@ -39,27 +39,19 @@ public class CheckUnreadMessagesJobService extends DankJobService {
    * 2. Another one that is more frequent, but runs only when the device is on a metered connection and charging.
    */
   public static void schedule(Context context) {
-    JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
     long userSelectedTimeIntervalMillis = Dank.userPrefs().unreadMessagesCheckIntervalMillis();
+    JobInfo userSetSyncJob = new JobInfo.Builder(ID_MESSAGES_FREQUENCY_USER_SET, new ComponentName(context, CheckUnreadMessagesJobService.class))
+        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+        .setPersisted(true)
+        .setPeriodic(userSelectedTimeIntervalMillis)
+        .build();
 
-    // TODO: existingUserSetJobInfo always returns null on the emulator. If it's the same case on phone, remove all this extra crappy logic.
-    JobInfo existingUserSetJobInfo = getPendingJobForId(context, ID_MESSAGES_FREQUENCY_USER_SET);
-    boolean isUserSetJobAlreadyScheduled = existingUserSetJobInfo != null;
-    boolean wasIntervalChanged = isUserSetJobAlreadyScheduled && existingUserSetJobInfo.getIntervalMillis() != userSelectedTimeIntervalMillis;
+    JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    jobScheduler.schedule(userSetSyncJob);
 
-    if (!isUserSetJobAlreadyScheduled || wasIntervalChanged) {
-      JobInfo userSetSyncJob = new JobInfo.Builder(ID_MESSAGES_FREQUENCY_USER_SET, new ComponentName(context, CheckUnreadMessagesJobService.class))
-          .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-          .setPersisted(true)
-          .setPeriodic(userSelectedTimeIntervalMillis)
-          .build();
-      jobScheduler.schedule(userSetSyncJob);
-    }
-
-    boolean isAggressiveAlreadyScheduled = hasPendingJobForId(context, ID_MESSAGES_FREQUENCY_AGGRESSIVE);
     long aggressiveTimeIntervalMillis = DateUtils.MINUTE_IN_MILLIS * 15;
 
-    if (!isAggressiveAlreadyScheduled && userSelectedTimeIntervalMillis != aggressiveTimeIntervalMillis) {
+    if (userSelectedTimeIntervalMillis != aggressiveTimeIntervalMillis) {
       JobInfo aggressiveSyncJob = new JobInfo.Builder(ID_MESSAGES_FREQUENCY_AGGRESSIVE, new ComponentName(context, CheckUnreadMessagesJobService.class))
           .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
           .setRequiresCharging(true)

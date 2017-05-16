@@ -15,21 +15,22 @@
         android:fitsSystemWindows="true"
         app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
-    <me.saket.dank.widgets.TabLayoutWithCustomFont
-        android:id="@+id/inbox_tablayout"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingStart="@dimen/viewpager_tablayout_start_spacing_with_toolbar_title"
-        android:layout_below="@+id/toolbar"
-        android:background="@color/toolbar"
-        app:tabMode="scrollable"
-        android:clipToPadding="false"
-        android:elevation="@dimen/elevation_toolbar"
-        tools:ignore="RtlSymmetry" />
-
     <android.support.v4.view.ViewPager
         android:id="@+id/inbox_viewpager"
+        android:elevation="@dimen/elevation_toolbar"
+        android:layout_below="@+id/toolbar"
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/inbox_tablayout" />
+        android:layout_height="match_parent">
+
+        <me.saket.dank.widgets.TabLayoutWithCustomFont
+            android:id="@+id/inbox_tablayout"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingStart="@dimen/viewpager_tablayout_start_spacing_with_toolbar_title"
+            android:background="@color/toolbar"
+            android:elevation="@dimen/elevation_toolbar"
+            app:tabMode="scrollable"
+            android:clipToPadding="false"
+            tools:ignore="RtlSymmetry" />
+    </android.support.v4.view.ViewPager>
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

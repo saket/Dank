@@ -3,16 +3,10 @@ package me.saket.dank;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.job.JobInfo;
-import android.app.job.JobScheduler;
 import android.app.job.JobService;
-import android.content.Context;
 import android.content.Intent;
-import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
-
-import java.util.List;
 
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
@@ -39,34 +33,6 @@ public abstract class DankJobService extends JobService {
     protected static final int ID_MARK_ALL_MESSAGES_AS_READ = 7;
 
     private CompositeDisposable onDestroyDisposables;
-
-    protected static boolean hasPendingJobForId(Context context, long jobId) {
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        List<JobInfo> allPendingJobs = jobScheduler.getAllPendingJobs();
-
-        for (JobInfo pendingJob : allPendingJobs) {
-            if (pendingJob.getId() == jobId) {
-                return true;
-            }
-        }
-
-        return false;
-    }
-
-    @Nullable
-    protected static JobInfo getPendingJobForId(Context context, long jobId) {
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        List<JobInfo> allPendingJobs = jobScheduler.getAllPendingJobs();
-
-        for (JobInfo pendingJob : allPendingJobs) {
-            Timber.i("pendingJob: %s", pendingJob);
-            if (pendingJob.getId() == jobId) {
-                return pendingJob;
-            }
-        }
-
-        return null;
-    }
 
     protected void unsubscribeOnDestroy(Disposable subscription) {
         if (onDestroyDisposables == null) {
