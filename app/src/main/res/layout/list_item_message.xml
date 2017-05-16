@@ -82,8 +82,6 @@
             android:id="@+id/message_reply_body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:ellipsize="end"
-            android:maxLines="6"
             android:textColor="@color/gray_200"
             tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..." />
     </LinearLayout>
