@@ -31,7 +31,6 @@ import dagger.Provides;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
-import me.saket.dank.data.DataStores;
 import me.saket.dank.data.ErrorManager;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
@@ -208,14 +207,6 @@ public class DankAppModule {
     } catch (IOException e) {
       throw new RuntimeException("Couldn't create FileSystemFactory. Cache dir: " + appContext.getCacheDir());
     }
-  }
-
-  @Provides
-  @Singleton
-  DataStores provideDataStores(DankRedditClient dankRedditClient, JacksonHelper jacksonHelper, FileSystem cacheFileSystem,
-      MemoryPolicy cachingPolicy)
-  {
-    return new DataStores(dankRedditClient, jacksonHelper, cacheFileSystem, cachingPolicy);
   }
 
   @Provides

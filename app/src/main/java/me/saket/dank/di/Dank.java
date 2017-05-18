@@ -5,7 +5,6 @@ import android.app.Application;
 import com.danikula.videocache.HttpProxyCacheServer;
 
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.DataStores;
 import me.saket.dank.data.ErrorManager;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
@@ -59,10 +58,6 @@ public class Dank {
 
   public static JacksonHelper jackson() {
     return appComponent.jacksonHelper();
-  }
-
-  public static DataStores stores() {
-    return appComponent.dataStores();
   }
 
   public static ErrorManager errors() {

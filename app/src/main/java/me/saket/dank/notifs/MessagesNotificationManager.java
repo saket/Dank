@@ -30,7 +30,7 @@ import java.util.Set;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
-import me.saket.dank.data.DataStores;
+import me.saket.dank.data.InboxManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
@@ -339,7 +339,7 @@ public class MessagesNotificationManager {
 
     // Since message API is paginated, it's possible that the user has multiple pages of unread messages
     // and we could only fetch the first page.
-    String notificationTitle = unreadMessages.size() == DataStores.MESSAGES_FETCHED_PER_PAGE
+    String notificationTitle = unreadMessages.size() == InboxManager.MESSAGES_FETCHED_PER_PAGE
         ? context.getString(R.string.messagenotification_below_nougat_multiple_messages_title_indeterminate, unreadMessages.size())
         : context.getString(R.string.messagenotification_below_nougat_multiple_messages_title, unreadMessages.size());
 
