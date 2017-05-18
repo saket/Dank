@@ -73,16 +73,7 @@ public class InboxFolderFragment extends DankFragment {
     messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
     messageList.setItemAnimator(new DefaultItemAnimator());
 
-    // TODO: Remove DataStores.
-    // TODO: Remove MessageCacheKey.
-    // TODO: Notifications?
-
-    unsubscribeOnDestroy(Dank.inbox().message(folder)
-        .doOnNext(messages -> {
-          if (messages.isEmpty()) {
-            Timber.i("%s Empty state", folder);
-          }
-        })
+    unsubscribeOnDestroy(Dank.inbox().messages(folder)
         .compose(applySchedulers())
         .subscribe(messagesAdapter));
     startInfiniteScroll();
@@ -104,6 +95,12 @@ public class InboxFolderFragment extends DankFragment {
             .doOnSuccess(oo -> scrollListener.setLoadOngoing(false))
         )
         .doOnNext(o -> Timber.i("%s Progress: load stop", folder))
+        .doOnNext(fetchMoreResult -> {
+          if (fetchMoreResult.wasEmpty()) {
+            // TODO: Show empty state only
+            Timber.i("%s Empty state", folder);
+          }
+        })
         .takeUntil(fetchMoreResult -> (boolean) fetchMoreResult.wasEmpty())
         .subscribe(doNothing(), error -> Timber.w("%s %s", folder, error.getMessage())));
   }

@@ -18,12 +18,14 @@ import rx.functions.Func1;
 public abstract class StoredMessage {
 
   public static final String TABLE_NAME = "StoredMessage";
+  static final String COLUMN_ID = "id";
   static final String COLUMN_MESSAGE = "message";
   static final String COLUMN_CREATED_TIME_MS = "created_time_ms";
   static final String COLUMN_FOLDER = "folder";
 
   public static final String QUERY_CREATE_TABLE =
       "CREATE TABLE " + TABLE_NAME + " ("
+          + COLUMN_ID + " TEXT NOT NULL PRIMARY KEY, "
           + COLUMN_MESSAGE + " TEXT NOT NULL, "
           + COLUMN_CREATED_TIME_MS + " INTEGER NOT NULL, "
           + COLUMN_FOLDER + " TEXT NOT NULL)";
@@ -39,6 +41,8 @@ public abstract class StoredMessage {
           + " ORDER BY " + COLUMN_CREATED_TIME_MS + " ASC"
           + " LIMIT 1";
 
+  public abstract String id();
+
   public abstract Message message();
 
   public abstract long createdTimeMillis();
@@ -46,7 +50,8 @@ public abstract class StoredMessage {
   public abstract InboxFolder folder();
 
   public ContentValues toContentValues(JacksonHelper jacksonHelper) {
-    ContentValues values = new ContentValues(3);
+    ContentValues values = new ContentValues(4);
+    values.put(COLUMN_ID, id());
     values.put(COLUMN_MESSAGE, jacksonHelper.toJson(message()));
     values.put(COLUMN_CREATED_TIME_MS, createdTimeMillis());
     values.put(COLUMN_FOLDER, folder().name());
@@ -58,7 +63,7 @@ public abstract class StoredMessage {
       Message message = JrawUtils.parseMessageJson(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGE)), jacksonHelper);
       long createdTimeMillis = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_CREATED_TIME_MS));
       InboxFolder folder = InboxFolder.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER)));
-      return create(message, createdTimeMillis, folder);
+      return create(message.getId(), message, createdTimeMillis, folder);
     };
   }
 
@@ -66,8 +71,8 @@ public abstract class StoredMessage {
     return cursor -> JrawUtils.parseMessageJson(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGE)), jacksonHelper);
   }
 
-  public static StoredMessage create(Message message, long createdTimeMillis, InboxFolder folder) {
-    return new AutoValue_StoredMessage(message, createdTimeMillis, folder);
+  public static StoredMessage create(String id, Message message, long createdTimeMillis, InboxFolder folder) {
+    return new AutoValue_StoredMessage(id, message, createdTimeMillis, folder);
   }
 
 }

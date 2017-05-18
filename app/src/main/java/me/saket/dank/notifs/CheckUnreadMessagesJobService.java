@@ -15,13 +15,10 @@ import net.dean.jraw.models.Message;
 import java.util.List;
 
 import io.reactivex.Completable;
-import io.reactivex.Single;
 import me.saket.dank.DankJobService;
-import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxFolder;
-import me.saket.dank.ui.user.messages.MessageCacheKey;
 import me.saket.dank.utils.PersistableBundleUtils;
 import timber.log.Timber;
 
@@ -30,7 +27,7 @@ import timber.log.Timber;
  */
 public class CheckUnreadMessagesJobService extends DankJobService {
 
-  private static final String KEY_SKIP_CACHE = "skipCache";
+  private static final String KEY_REFRESH_MESSAGES = "refreshMessages";
 
   /**
    * Schedules two recurring sync jobs:
@@ -57,6 +54,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
           .setRequiresCharging(true)
           .setPersisted(true)
           .setPeriodic(aggressiveTimeIntervalMillis)
+
           .build();
       jobScheduler.schedule(aggressiveSyncJob);
     }
@@ -65,11 +63,12 @@ public class CheckUnreadMessagesJobService extends DankJobService {
   /**
    * Fetch unread messages and display notification immediately.
    *
-   * @param skipCache Currently used for refreshing existing notifications, where doing a network call is not required.
+   * @param refreshMessages Currently supplied as false for refreshing existing notifications, where making
+   *                        a network call is not desired.
    */
-  private static void syncImmediately(Context context, boolean skipCache) {
+  private static void syncImmediately(Context context, boolean refreshMessages) {
     PersistableBundle extras = new PersistableBundle(1);
-    PersistableBundleUtils.putBoolean(extras, KEY_SKIP_CACHE, skipCache);
+    PersistableBundleUtils.putBoolean(extras, KEY_REFRESH_MESSAGES, refreshMessages);
 
     JobInfo syncJob = new JobInfo.Builder(ID_MESSAGES_IMMEDIATELY, new ComponentName(context, CheckUnreadMessagesJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
@@ -86,7 +85,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
    * Fetch unread messages and display notification immediately.
    */
   public static void syncImmediately(Context context) {
-    syncImmediately(context, false /* skipCache */);
+    syncImmediately(context, true /* refreshMessages */);
   }
 
   /**
@@ -94,21 +93,16 @@ public class CheckUnreadMessagesJobService extends DankJobService {
    * getting refreshed automatically. Thus the name.
    */
   public static void refreshNotifications(Context context) {
-    syncImmediately(context, true /* skipCache */);
+    syncImmediately(context, false /* refreshMessages */);
   }
 
   @Override
   public boolean onStartJob(JobParameters params) {
-    MessageCacheKey cacheKey = MessageCacheKey.create(InboxFolder.UNREAD, PaginationAnchor.createEmpty());
-    boolean skipCache = PersistableBundleUtils.getBoolean(params.getExtras(), KEY_SKIP_CACHE);
-
-    Single<List<Message>> stream = skipCache
-        ? Dank.stores().messageStore().get(cacheKey)
-        : Dank.stores().messageStore().fetch(cacheKey);
-
     Timber.i("Fetching unread messages");
+    boolean refreshMessages = PersistableBundleUtils.getBoolean(params.getExtras(), KEY_REFRESH_MESSAGES);
 
-    unsubscribeOnDestroy(stream
+    unsubscribeOnDestroy((refreshMessages ? Dank.inbox().refreshMessages(InboxFolder.UNREAD).toCompletable() : Completable.complete())
+        .andThen(Dank.inbox().messages(InboxFolder.UNREAD).firstOrError())
         .flatMapCompletable(unreads -> notifyUnreadMessages(unreads))
         .compose(applySchedulersCompletable())
         .subscribe(() -> {

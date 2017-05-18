@@ -3,6 +3,7 @@ package me.saket.dank.data;
 import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
 import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Single;
 
+import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
@@ -22,7 +23,6 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.ui.user.messages.StoredMessage;
 import me.saket.dank.utils.JacksonHelper;
@@ -46,18 +46,36 @@ public class InboxManager {
   }
 
   @CheckResult
-  public Observable<List<Message>> message(InboxFolder folder) {
+  public Observable<List<Message>> messages(InboxFolder folder) {
     return toV2Observable(briteDatabase
         .createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
         .mapToList(StoredMessage.mapMessageFromCursor(jacksonHelper)));
   }
 
   /**
-   * Fetch more messages in <var>folder</var>.
+   * Fetch messages after the oldest message we locally have in <var>folder</var>.
    */
   @CheckResult
   public Single<FetchMoreResult> fetchMoreMessages(InboxFolder folder) {
-    Function<PaginationAnchor, List<Message>> fetchMessages = paginationAnchor -> {
+    return getPaginationAnchor(folder)
+        .flatMap(anchor -> fetchMessagesFromAnchor(folder, anchor))
+        .doOnSuccess(saveMessages(folder))
+        .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages.isEmpty()));
+  }
+
+  /**
+   * Fetch most recent messages. Unlike {@link #fetchMoreMessages(InboxFolder)}, this does not use the oldest message as the anchor.
+   */
+  @CheckResult
+  public Single<FetchMoreResult> refreshMessages(InboxFolder folder) {
+    return fetchMessagesFromAnchor(folder, PaginationAnchor.createEmpty())
+        .doOnSuccess(saveMessages(folder))
+        .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages.isEmpty()));
+  }
+
+  @CheckResult
+  private Single<List<Message>> fetchMessagesFromAnchor(InboxFolder folder, PaginationAnchor paginationAnchor) {
+    return Single.fromCallable(() -> {
       InboxPaginator paginator = dankRedditClient.userMessagePaginator(folder);
       paginator.setLimit(MESSAGES_FETCHED_PER_PAGE);
 
@@ -100,22 +118,7 @@ public class InboxManager {
       }
 
       return minimum10Messages;
-    };
-
-    Consumer<List<Message>> saveFetchedMessages = fetchedMessages -> {
-      try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
-        for (Message fetchedMessage : fetchedMessages) {
-          StoredMessage messageToStore = StoredMessage.create(fetchedMessage, JrawUtils.createdTimeUtc(fetchedMessage), folder);
-          briteDatabase.insert(StoredMessage.TABLE_NAME, messageToStore.toContentValues(jacksonHelper));
-        }
-        transaction.markSuccessful();
-      }
-    };
-
-    return getPaginationAnchor(folder)
-        .map(fetchMessages)
-        .doOnSuccess(saveFetchedMessages)
-        .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages.isEmpty()));
+    });
   }
 
   /**
@@ -123,7 +126,7 @@ public class InboxManager {
    */
   @CheckResult
   private Single<PaginationAnchor> getPaginationAnchor(InboxFolder folder) {
-    StoredMessage dummyDefaultValue = StoredMessage.create(new PrivateMessage(null), 0, InboxFolder.PRIVATE_MESSAGES);
+    StoredMessage dummyDefaultValue = StoredMessage.create("-1", new PrivateMessage(null), 0, InboxFolder.PRIVATE_MESSAGES);
 
     return toV2Single(briteDatabase.createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
         .mapToOneOrDefault(StoredMessage.mapFromCursor(jacksonHelper), dummyDefaultValue)
@@ -154,6 +157,18 @@ public class InboxManager {
         .toSingle());
   }
 
+  private Consumer<List<Message>> saveMessages(InboxFolder folder) {
+    return fetchedMessages -> {
+      try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
+        for (Message fetchedMessage : fetchedMessages) {
+          StoredMessage messageToStore = StoredMessage.create(fetchedMessage.getId(), fetchedMessage, JrawUtils.createdTimeUtc(fetchedMessage), folder);
+          briteDatabase.insert(StoredMessage.TABLE_NAME, messageToStore.toContentValues(jacksonHelper), SQLiteDatabase.CONFLICT_REPLACE);
+        }
+        transaction.markSuccessful();
+      }
+    };
+  }
+
   @AutoValue
   public abstract static class FetchMoreResult {
     public abstract boolean wasEmpty();
@@ -161,7 +176,6 @@ public class InboxManager {
     public static FetchMoreResult create(boolean empty) {
       return new AutoValue_InboxManager_FetchMoreResult(empty);
     }
-
   }
 
 // ======== READ STATUS ======== //
