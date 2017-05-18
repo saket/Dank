@@ -75,7 +75,6 @@ public class InboxFolderFragment extends DankFragment {
 
     // TODO: Remove DataStores.
     // TODO: Remove MessageCacheKey.
-    // TODO: Remove onFragmentHiddenInPager().
     // TODO: Notifications?
 
     unsubscribeOnDestroy(Dank.inbox().message(folder)
@@ -90,12 +89,6 @@ public class InboxFolderFragment extends DankFragment {
 
     populateEmptyStateView();
     firstLoadErrorStateView.setOnRetryClickListener(o -> startInfiniteScroll());
-  }
-
-  /**
-   * Called when this fragment is no longer visible in the fragment.
-   */
-  public void onFragmentHiddenInPager() {
   }
 
   private void startInfiniteScroll() {

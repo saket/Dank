@@ -14,10 +14,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.util.SparseArray;
 import android.view.ViewGroup;
-
-import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -67,25 +64,9 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     tabLayout.setupWithViewPager(viewPager, true);
 
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-      //noinspection SimplifiableIfStatement
-      if (touchLiesOn(viewPager, downX, downY)) {
-        InboxFolderFragment activeFragment = messagesPagerAdapter.getFragment(viewPager.getCurrentItem());
-        return activeFragment.shouldInterceptPullToCollapse(upwardPagePull);
-      } else {
-        return false;
-      }
+      //noinspection CodeBlock2Expr
+      return touchLiesOn(viewPager, downX, downY) && messagesPagerAdapter.getActiveFragment().shouldInterceptPullToCollapse(upwardPagePull);
     });
-
-    unsubscribeOnDestroy(RxViewPager.pageSelections(viewPager)
-        .scan((prevPage, newPage) -> {
-          InboxFolderFragment previousFragment = messagesPagerAdapter.getFragment(prevPage);
-          if (previousFragment != null) {
-            previousFragment.onFragmentHiddenInPager();
-          }
-          return newPage;
-        })
-        .subscribe()
-    );
   }
 
   @Override
@@ -113,12 +94,11 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   public static class MessagesPagerAdapter extends FragmentStatePagerAdapter {
     private Resources resources;
-    private SparseArray<InboxFolderFragment> fragmentMap;
+    private InboxFolderFragment activeFragment;
 
     public MessagesPagerAdapter(Resources resources, FragmentManager manager) {
       super(manager);
       this.resources = resources;
-      this.fragmentMap = new SparseArray<>();
     }
 
     @Override
@@ -137,21 +117,13 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     }
 
     @Override
-    public Object instantiateItem(ViewGroup container, int position) {
-      InboxFolderFragment fragment = (InboxFolderFragment) super.instantiateItem(container, position);
-      fragmentMap.put(position, fragment);
-      return fragment;
+    public void setPrimaryItem(ViewGroup container, int position, Object object) {
+      super.setPrimaryItem(container, position, object);
+      activeFragment = (InboxFolderFragment) object;
     }
 
-    @Override
-    public void destroyItem(ViewGroup container, int position, Object object) {
-      fragmentMap.remove(position);
-      super.destroyItem(container, position, object);
-    }
-
-    public InboxFolderFragment getFragment(int position) {
-      return fragmentMap.get(position);
+    public InboxFolderFragment getActiveFragment() {
+      return activeFragment;
     }
   }
-
 }
