@@ -33,6 +33,7 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.DataStores;
 import me.saket.dank.data.ErrorManager;
+import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
@@ -50,182 +51,188 @@ import timber.log.Timber;
 @Module
 public class DankAppModule {
 
-    private static final int NETWORK_CONNECT_TIMEOUT_SECONDS = 15;
-    private static final int NETWORK_READ_TIMEOUT_SECONDS = 10;
-    private Context appContext;
+  private static final int NETWORK_CONNECT_TIMEOUT_SECONDS = 15;
+  private static final int NETWORK_READ_TIMEOUT_SECONDS = 10;
+  private Context appContext;
 
-    public DankAppModule(Application appContext) {
-        this.appContext = appContext;
+  public DankAppModule(Application appContext) {
+    this.appContext = appContext;
+  }
+
+  @Provides
+  UserAgent provideRedditUserAgent() {
+    try {
+      PackageInfo packageInfo = appContext.getPackageManager().getPackageInfo(appContext.getPackageName(), 0);
+      return UserAgent.of("android", appContext.getPackageName(), packageInfo.versionName, "saketme");
+
+    } catch (PackageManager.NameNotFoundException e) {
+      throw new IllegalStateException("Couldn't get app version name");
+    }
+  }
+
+  @Provides
+  @Singleton
+  RedditClient provideRedditClient(UserAgent redditUserAgent) {
+    RedditClient redditClient = new RedditClient(redditUserAgent);
+    redditClient.setLoggingMode(LoggingMode.ON_FAIL);
+    redditClient.getHttpAdapter().setConnectTimeout(NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    redditClient.getHttpAdapter().setReadTimeout(NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+    return redditClient;
+  }
+
+  @Provides
+  AuthenticationManager provideRedditAuthManager() {
+    return AuthenticationManager.get();
+  }
+
+  @Provides
+  @Singleton
+  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager) {
+    return new DankRedditClient(appContext, redditClient, authManager);
+  }
+
+  @Provides
+  @Singleton
+  SharedPreferences provideSharedPrefs() {
+    return PreferenceManager.getDefaultSharedPreferences(appContext);
+  }
+
+  @Provides
+  @Singleton
+  SharedPrefsManager provideSharedPrefsManager(SharedPreferences sharedPrefs) {
+    return new SharedPrefsManager(sharedPrefs);
+  }
+
+  @Provides
+  @Singleton
+  UserPrefsManager provideUserPrefsManager(SharedPreferences sharedPrefs) {
+    return new UserPrefsManager(sharedPrefs);
+  }
+
+  @Provides
+  @Singleton
+  OkHttpClient provideOkHttpClient() {
+    OkHttpClient.Builder builder = new OkHttpClient.Builder()
+        .connectTimeout(NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .readTimeout(NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS);
+
+    if (BuildConfig.DEBUG) {
+      HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> Timber.tag("OkHttp").d(message));
+      logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+      builder.addNetworkInterceptor(logging);
     }
 
-    @Provides
-    UserAgent provideRedditUserAgent() {
-        try {
-            PackageInfo packageInfo = appContext.getPackageManager().getPackageInfo(appContext.getPackageName(), 0);
-            return UserAgent.of("android", appContext.getPackageName(), packageInfo.versionName, "saketme");
+    return builder.build();
+  }
 
-        } catch (PackageManager.NameNotFoundException e) {
-            throw new IllegalStateException("Couldn't get app version name");
-        }
+  @Provides
+  @Singleton
+  Moshi provideMoshi() {
+    return new Moshi.Builder()
+        .add(new AutoValueMoshiAdapterFactory())
+        .build();
+  }
+
+  @Provides
+  @Singleton
+  Retrofit provideRetrofit(OkHttpClient okHttpClient, Moshi moshi) {
+    return new Retrofit.Builder()
+        .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
+        .addConverterFactory(MoshiConverterFactory.create(moshi))
+        .baseUrl("http://saket.me/" /* This isn't used anywhere, but this value is not nullable. */)
+        .client(okHttpClient)
+        .build();
+  }
+
+  @Provides
+  @Singleton
+  DankApi providesDankApi(Retrofit retrofit) {
+    return retrofit.create(DankApi.class);
+  }
+
+  @Provides
+  @Singleton
+  JacksonHelper provideJacksonHelper() {
+    return new JacksonHelper(new ObjectMapper());
+  }
+
+  /**
+   * Used for caching videos.
+   */
+  @Provides
+  @Singleton
+  HttpProxyCacheServer provideHttpProxyCacheServer() {
+    return new HttpProxyCacheServer(appContext);
+  }
+
+  @Provides
+  ImgurManager provideImgurManager() {
+    return new ImgurManager(appContext);
+  }
+
+  @Provides
+  @Singleton
+  BriteDatabase provideBriteDatabase() {
+    SqlBrite sqlBrite = new SqlBrite.Builder()
+        .logger(message -> Timber.tag("Database").v(message))
+        .build();
+
+    BriteDatabase briteDatabase = sqlBrite.wrapDatabaseHelper(new DankSqliteOpenHelper(appContext), Schedulers.io());
+    //briteDatabase.setLoggingEnabled(BuildConfig.DEBUG);
+    briteDatabase.setLoggingEnabled(false);
+    return briteDatabase;
+  }
+
+  @Provides
+  @Singleton
+  SubredditSubscriptionManager provideSubredditSubscriptionManager(BriteDatabase briteDatabase, DankRedditClient dankRedditClient,
+      UserPrefsManager userPrefsManager)
+  {
+    return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient, userPrefsManager);
+  }
+
+  @Singleton
+  @Provides
+  MemoryPolicy provideCachingPolicy() {
+    return MemoryPolicy.builder()
+        .setExpireAfter(1)
+        .setExpireAfterTimeUnit(TimeUnit.DAYS)
+        .build();
+  }
+
+  @Provides
+  @Singleton
+  FileSystem provideCacheFileSystem() {
+    try {
+      return FileSystemFactory.create(appContext.getCacheDir());
+    } catch (IOException e) {
+      throw new RuntimeException("Couldn't create FileSystemFactory. Cache dir: " + appContext.getCacheDir());
     }
+  }
 
-    @Provides
-    @Singleton
-    RedditClient provideRedditClient(UserAgent redditUserAgent) {
-        RedditClient redditClient = new RedditClient(redditUserAgent);
-        redditClient.setLoggingMode(LoggingMode.ON_FAIL);
-        redditClient.getHttpAdapter().setConnectTimeout(NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        redditClient.getHttpAdapter().setReadTimeout(NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-        return redditClient;
-    }
+  @Provides
+  @Singleton
+  DataStores provideDataStores(DankRedditClient dankRedditClient, JacksonHelper jacksonHelper, FileSystem cacheFileSystem,
+      MemoryPolicy cachingPolicy)
+  {
+    return new DataStores(dankRedditClient, jacksonHelper, cacheFileSystem, cachingPolicy);
+  }
 
-    @Provides
-    AuthenticationManager provideRedditAuthManager() {
-        return AuthenticationManager.get();
-    }
+  @Provides
+  @Singleton
+  ErrorManager provideErrorManager() {
+    return new ErrorManager();
+  }
 
-    @Provides
-    @Singleton
-    DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager) {
-        return new DankRedditClient(appContext, redditClient, authManager);
-    }
+  @Provides
+  @Singleton
+  InboxManager provideInboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, JacksonHelper jacksonHelper) {
+    return new InboxManager(dankRedditClient, briteDatabase, jacksonHelper);
+  }
 
-    @Provides
-    @Singleton
-    SharedPreferences provideSharedPrefs() {
-        return PreferenceManager.getDefaultSharedPreferences(appContext);
-    }
-
-    @Provides
-    @Singleton
-    SharedPrefsManager provideSharedPrefsManager(SharedPreferences sharedPrefs) {
-        return new SharedPrefsManager(sharedPrefs);
-    }
-
-    @Provides
-    @Singleton
-    UserPrefsManager provideUserPrefsManager(SharedPreferences sharedPrefs) {
-        return new UserPrefsManager(sharedPrefs);
-    }
-
-    @Provides
-    @Singleton
-    OkHttpClient provideOkHttpClient() {
-        OkHttpClient.Builder builder = new OkHttpClient.Builder()
-                .connectTimeout(NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .readTimeout(NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-
-        if (BuildConfig.DEBUG) {
-            HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> Timber.tag("OkHttp").d(message));
-            logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-            builder.addNetworkInterceptor(logging);
-        }
-
-        return builder.build();
-    }
-
-    @Provides
-    @Singleton
-    Moshi provideMoshi() {
-        return new Moshi.Builder()
-                .add(new AutoValueMoshiAdapterFactory())
-                .build();
-    }
-
-    @Provides
-    @Singleton
-    Retrofit provideRetrofit(OkHttpClient okHttpClient, Moshi moshi) {
-        return new Retrofit.Builder()
-                .addCallAdapterFactory(RxJava2CallAdapterFactory.create())
-                .addConverterFactory(MoshiConverterFactory.create(moshi))
-                .baseUrl("http://saket.me/" /* This isn't used anywhere, but this value is not nullable. */)
-                .client(okHttpClient)
-                .build();
-    }
-
-    @Provides
-    @Singleton
-    DankApi providesDankApi(Retrofit retrofit) {
-        return retrofit.create(DankApi.class);
-    }
-
-    @Provides
-    @Singleton
-    JacksonHelper provideJacksonHelper() {
-        return new JacksonHelper(new ObjectMapper());
-    }
-
-    /**
-     * Used for caching videos.
-     */
-    @Provides
-    @Singleton
-    HttpProxyCacheServer provideHttpProxyCacheServer() {
-        return new HttpProxyCacheServer(appContext);
-    }
-
-    @Provides
-    ImgurManager provideImgurManager() {
-        return new ImgurManager(appContext);
-    }
-
-    @Provides
-    @Singleton
-    BriteDatabase provideBriteDatabase() {
-        SqlBrite sqlBrite = new SqlBrite.Builder()
-                .logger(message -> Timber.tag("Database").v(message))
-                .build();
-
-        BriteDatabase briteDatabase = sqlBrite.wrapDatabaseHelper(new DankSqliteOpenHelper(appContext), Schedulers.io());
-        //briteDatabase.setLoggingEnabled(BuildConfig.DEBUG);
-        briteDatabase.setLoggingEnabled(false);
-        return briteDatabase;
-    }
-
-    @Provides
-    @Singleton
-    SubredditSubscriptionManager provideSubredditSubscriptionManager(BriteDatabase briteDatabase, DankRedditClient dankRedditClient,
-            UserPrefsManager userPrefsManager)
-    {
-        return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient, userPrefsManager);
-    }
-
-    @Singleton
-    @Provides
-    MemoryPolicy provideCachingPolicy() {
-        return MemoryPolicy.builder()
-                .setExpireAfter(1)
-                .setExpireAfterTimeUnit(TimeUnit.DAYS)
-                .build();
-    }
-
-    @Provides
-    @Singleton
-    FileSystem provideCacheFileSystem() {
-        try {
-            return FileSystemFactory.create(appContext.getCacheDir());
-        } catch (IOException e) {
-            throw new RuntimeException("Couldn't create FileSystemFactory. Cache dir: " + appContext.getCacheDir());
-        }
-    }
-
-    @Provides
-    @Singleton
-    DataStores provideDataStores(DankRedditClient dankRedditClient, JacksonHelper jacksonHelper, FileSystem cacheFileSystem,
-            MemoryPolicy cachingPolicy)
-    {
-        return new DataStores(dankRedditClient, jacksonHelper, cacheFileSystem, cachingPolicy);
-    }
-
-    @Provides
-    @Singleton
-    ErrorManager provideErrorManager() {
-        return new ErrorManager();
-    }
-
-    @Provides
-    @Singleton
-    MessagesNotificationManager provideMessagesNotifManager(SharedPreferences sharedPreferences) {
-        return new MessagesNotificationManager(new MessagesNotificationManager.SeenUnreadMessageIdStore(sharedPreferences));
-    }
+  @Provides
+  @Singleton
+  MessagesNotificationManager provideMessagesNotifManager(SharedPreferences sharedPreferences) {
+    return new MessagesNotificationManager(new MessagesNotificationManager.SeenUnreadMessageIdStore(sharedPreferences));
+  }
 }

@@ -132,7 +132,7 @@ public class NotificationActionsJobService extends DankJobService {
 
   private void markMessageAsRead(JobParameters params, Message message) {
     unsubscribeOnDestroy(
-        Dank.reddit().withAuth(Completable.fromAction(() -> Dank.reddit().userInboxManager().setRead(true, message)))
+        Dank.reddit().withAuth(Dank.inbox().setRead(message, true))
             .andThen(Dank.messagesNotifManager().removeMessageNotifSeenStatus(message))
             .compose(applySchedulersCompletable())
             .subscribe(
@@ -144,7 +144,7 @@ public class NotificationActionsJobService extends DankJobService {
 
   private void markAllMessagesAsRead(JobParameters params) {
     unsubscribeOnDestroy(
-        Dank.reddit().withAuth(Completable.fromAction(() -> Dank.reddit().userInboxManager().setAllRead()))
+        Dank.reddit().withAuth(Dank.inbox().setAllRead())
             .andThen(Dank.messagesNotifManager().removeAllMessageNotifSeenStatuses())
             .compose(applySchedulersCompletable())
             .subscribe(

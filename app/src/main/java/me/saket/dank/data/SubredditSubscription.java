@@ -14,7 +14,7 @@ import rx.functions.Func1;
 @AutoValue
 public abstract class SubredditSubscription implements Parcelable {
 
-    static final String TABLE = "SubredditSubscription";
+    static final String TABLE_NAME = "SubredditSubscription";
     static final String COLUMN_NAME = "name";
     static final String COLUMN_PENDING_ACTION = "pending_action";
 
@@ -23,28 +23,28 @@ public abstract class SubredditSubscription implements Parcelable {
     static final String NOT_HIDDEN = "0";
 
     static final String QUERY_CREATE_TABLE =
-            "CREATE TABLE " + TABLE + " ("
+            "CREATE TABLE " + TABLE_NAME + " ("
                     + COLUMN_NAME + " TEXT NOT NULL PRIMARY KEY, "
                     + COLUMN_PENDING_ACTION + " TEXT NOT NULL, "
                     + COLUMN_IS_HIDDEN + " INTEGER NOT NULL)";
 
     static final String QUERY_GET_ALL =
-            "SELECT * FROM " + TABLE + " ORDER BY " + COLUMN_NAME + " ASC";
+            "SELECT * FROM " + TABLE_NAME + " ORDER BY " + COLUMN_NAME + " ASC";
 
     static final String QUERY_GET_ALL_PENDING =
-            "SELECT * FROM " + TABLE
+            "SELECT * FROM " + TABLE_NAME
                     + " WHERE " + COLUMN_PENDING_ACTION + " == '" + PendingState.PENDING_SUBSCRIBE + "'"
                     + " OR " + COLUMN_PENDING_ACTION + " == '" + PendingState.PENDING_UNSUBSCRIBE + "'"
                     + " ORDER BY " + COLUMN_NAME + " COLLATE NOCASE";
 
     static final String QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN =
-            "SELECT * FROM " + TABLE
+            "SELECT * FROM " + TABLE_NAME
                     + " WHERE " + COLUMN_NAME + " LIKE ?"
                     + " AND " + COLUMN_PENDING_ACTION + " != '" + PendingState.PENDING_UNSUBSCRIBE + "' "
                     + " ORDER BY " + COLUMN_NAME + " COLLATE NOCASE";
 
     static final String QUERY_SEARCH_ALL_SUBSCRIBED_EXCLUDING_HIDDEN =
-            "SELECT * FROM " + TABLE
+            "SELECT * FROM " + TABLE_NAME
                     + " WHERE " + COLUMN_NAME + " LIKE ?"
                     + " AND " + COLUMN_PENDING_ACTION + " != '" + PendingState.PENDING_UNSUBSCRIBE + "'"
                     + " AND " + COLUMN_IS_HIDDEN + " != '" + HIDDEN + "'"
@@ -78,6 +78,10 @@ public abstract class SubredditSubscription implements Parcelable {
         return pendingState() == PendingState.PENDING_SUBSCRIBE;
     }
 
+    public Builder toBuilder() {
+        return new AutoValue_SubredditSubscription.Builder(this);
+    }
+
     public ContentValues toContentValues() {
         ContentValues values = new ContentValues(3);
         values.put(COLUMN_NAME, name());
@@ -86,15 +90,11 @@ public abstract class SubredditSubscription implements Parcelable {
         return values;
     }
 
-    public Builder toBuilder() {
-        return new AutoValue_SubredditSubscription.Builder(this);
-    }
-
     public static final Func1<Cursor, SubredditSubscription> MAPPER = cursor -> {
         String subredditName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME));
-        String pendingStateString = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PENDING_ACTION));
+        PendingState pendingState = PendingState.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PENDING_ACTION)));
         boolean isHidden = HIDDEN.equals(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IS_HIDDEN)));
-        return SubredditSubscription.create(subredditName, PendingState.valueOf(pendingStateString), isHidden);
+        return create(subredditName, pendingState, isHidden);
     };
 
     public static SubredditSubscription create(String name, PendingState pendingState, boolean isHidden) {

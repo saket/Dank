@@ -18,7 +18,6 @@ import net.dean.jraw.http.oauth.Credentials;
 import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthHelper;
 import net.dean.jraw.managers.AccountManager;
-import net.dean.jraw.managers.InboxManager;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.LoggedInAccount;
@@ -286,8 +285,8 @@ public class DankRedditClient {
         return new AccountManager(redditClient);
     }
 
-    public InboxManager userInboxManager() {
-        return new InboxManager(redditClient);
+    net.dean.jraw.managers.InboxManager redditInboxManager() {
+        return new net.dean.jraw.managers.InboxManager(redditClient);
     }
 
     /**

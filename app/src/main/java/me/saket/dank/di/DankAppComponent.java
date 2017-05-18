@@ -8,6 +8,7 @@ import dagger.Component;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DataStores;
 import me.saket.dank.data.ErrorManager;
+import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
@@ -19,27 +20,29 @@ import okhttp3.OkHttpClient;
 @Component(modules = DankAppModule.class)
 @Singleton
 public interface DankAppComponent {
-    DankRedditClient dankRedditClient();
+  DankRedditClient dankRedditClient();
 
-    SharedPrefsManager sharedPrefs();
+  SharedPrefsManager sharedPrefs();
 
-    OkHttpClient okHttpClient();
+  OkHttpClient okHttpClient();
 
-    HttpProxyCacheServer httpProxyCacheServer();
+  HttpProxyCacheServer httpProxyCacheServer();
 
-    DankApi api();
+  DankApi api();
 
-    UserPrefsManager userPrefs();
+  UserPrefsManager userPrefs();
 
-    ImgurManager imgur();
+  ImgurManager imgur();
 
-    SubredditSubscriptionManager subredditSubscriptionManager();
+  SubredditSubscriptionManager subredditSubscriptionManager();
 
-    JacksonHelper jacksonHelper();
+  JacksonHelper jacksonHelper();
 
-    DataStores dataStores();
+  DataStores dataStores();
 
-    ErrorManager errorManager();
+  ErrorManager errorManager();
 
-    MessagesNotificationManager messagesNotificationManager();
+  InboxManager inboxManager();
+
+  MessagesNotificationManager messagesNotificationManager();
 }

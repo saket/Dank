@@ -15,7 +15,6 @@ import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.PrivateMessage;
 import net.dean.jraw.paginators.InboxPaginator;
-import net.dean.jraw.paginators.Paginator;
 
 import java.io.InputStream;
 import java.util.ArrayList;
@@ -35,7 +34,7 @@ public class DataStores {
     /**
      * The maximum count of items that will be fetched on every pagination iteration.
      */
-    public static final int MESSAGES_FETCHED_PER_PAGE = Paginator.DEFAULT_LIMIT * 2;
+    public static final int MESSAGES_FETCHED_PER_PAGE = InboxManager.MESSAGES_FETCHED_PER_PAGE;
 
     private final Store<List<Message>, MessageCacheKey> messageStore;
 
