@@ -72,7 +72,9 @@ public class InboxFolderFragment extends DankFragment {
     super.onViewCreated(view, savedInstanceState);
     folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
 
-    messagesAdapter = new MessagesAdapter(((Callbacks) getActivity()).getMessageLinkMovementMethod());
+    Callbacks callbacks = (Callbacks) getActivity();
+
+    messagesAdapter = new MessagesAdapter(callbacks.getMessageLinkMovementMethod());
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
     messageList.setAdapter(messagesAdapterWithProgress);
     messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -81,14 +83,20 @@ public class InboxFolderFragment extends DankFragment {
     unsubscribeOnDestroy(Dank.inbox().messages(folder)
         .compose(applySchedulers())
         .compose(doOnceAfterNext(o -> {
+          startInfiniteScroll();
+
           // Refresh messages once we've received the messages from database for the first time.
-          if (!((Callbacks) getActivity()).isFirstRefreshDone(folder)) {
+          if (!callbacks.isFirstRefreshDone(folder)) {
             refreshMessages();
           }
         }))
+        .doAfterNext(messages -> {
+          if (callbacks.isFirstRefreshDone(folder)) {
+            // Fragment got recreated, but Activity didn't so a second refresh did not happen.
+            emptyStateView.setVisibility(messages.isEmpty() ? View.VISIBLE : View.GONE);
+          }
+        })
         .subscribe(messagesAdapter));
-
-    startInfiniteScroll();
 
     populateEmptyStateView();
   }
