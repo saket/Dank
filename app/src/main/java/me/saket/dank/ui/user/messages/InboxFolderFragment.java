@@ -108,7 +108,10 @@ public class InboxFolderFragment extends DankFragment {
               emptyStateView.setVisibility(result.wasEmpty() ? View.VISIBLE : View.GONE);
               firstLoadErrorStateView.setOnRetryClickListener(o -> refreshMessages());
             },
-            error -> Timber.e(error, "Couldn't refresh %s", folder)
+            error -> {
+              // TODO: Show error in adapter.
+              Timber.e(error, "Couldn't refresh %s", folder);
+            }
         ));
   }
 
@@ -126,7 +129,10 @@ public class InboxFolderFragment extends DankFragment {
             }))
         )
         .takeUntil(fetchMoreResult -> (boolean) fetchMoreResult.wasEmpty())
-        .subscribe(doNothing(), error -> Timber.w("%s %s", folder, error.getMessage())));
+        .subscribe(doNothing(), error -> {
+          // TODO: Show error in adapter.
+          Timber.w("%s %s", folder, error.getMessage());
+        }));
   }
 
   private void setProgressVisibleForFetchingMoreItems(boolean visible) {
