@@ -30,6 +30,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
+import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.FooterMode;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderMode;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
@@ -187,8 +188,6 @@ public class InboxFolderFragment extends DankFragment {
    * @param isRetrying When true, more items are fetched right away. Otherwise, we wait for {@link InfiniteScrollListener} to emit.
    */
   private void startInfiniteScroll(boolean isRetrying) {
-    Timber.d("startInfiniteScroll() -> isRetrying? %s", isRetrying);
-
     InfiniteScrollListener scrollListener = InfiniteScrollListener.create(messageList, 0.75f /* loadThreshold */);
     scrollListener.setEmitInitialEvent(false);
 
@@ -209,10 +208,10 @@ public class InboxFolderFragment extends DankFragment {
 
   private <T> SingleTransformer<T, T> handleProgressAndErrorForLoadMore() {
     return upstream -> upstream
-        .doOnSubscribe(o -> messageList.post(() -> messagesAdapterWithProgress.setFooterMode(InfiniteScrollRecyclerAdapter.FooterMode.PROGRESS)))
-        .doOnSuccess(o -> messageList.post(() -> messagesAdapterWithProgress.setFooterMode(InfiniteScrollRecyclerAdapter.FooterMode.HIDDEN)))
+        .doOnSubscribe(o -> messageList.post(() -> messagesAdapterWithProgress.setFooterMode(FooterMode.PROGRESS)))
+        .doOnSuccess(o -> messageList.post(() -> messagesAdapterWithProgress.setFooterMode(FooterMode.HIDDEN)))
         .doOnError(error -> {
-          messageList.post(() -> messagesAdapterWithProgress.setFooterMode(InfiniteScrollRecyclerAdapter.FooterMode.ERROR));
+          messageList.post(() -> messagesAdapterWithProgress.setFooterMode(FooterMode.ERROR));
           messagesAdapterWithProgress.setOnFooterErrorRetryClickListener(o -> startInfiniteScroll(true /* isRetrying */));
         });
   }
