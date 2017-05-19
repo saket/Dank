@@ -4,7 +4,7 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static me.saket.dank.utils.CommonUtils.findOptimizedImage;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
-import static me.saket.dank.utils.RxUtils.doOnSingleStartAndEnd;
+import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginTop;
@@ -380,7 +380,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           .submission(activeSubmissionRequest)
           .flatMap(retryWithCorrectSortIfNeeded())
           .compose(applySchedulersSingle())
-          .compose(doOnSingleStartAndEnd(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+          .compose(doOnSingleStartAndTerminate(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
           .doOnSuccess(submWithComments -> activeSubmission = submWithComments)
           .subscribe(commentsHelper.setup(), handleSubmissionLoadError())
       );

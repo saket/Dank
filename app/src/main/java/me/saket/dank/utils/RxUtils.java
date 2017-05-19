@@ -6,6 +6,7 @@ import io.reactivex.SingleTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Action;
+import io.reactivex.functions.BiConsumer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import timber.log.Timber;
@@ -63,12 +64,21 @@ public class RxUtils {
   }
 
   /**
-   * Calls true on <var>consumer</var> when the stream is subscribed to and false when it finishes.
+   * Calls true on <var>consumer</var> when the stream is subscribed to and false when it terminates (with success or failure).
    */
-  public static <T> SingleTransformer<T, T> doOnSingleStartAndEnd(Consumer<Boolean> consumer) {
+  public static <T> SingleTransformer<T, T> doOnSingleStartAndTerminate(Consumer<Boolean> consumer) {
     return observable -> observable
         .doOnSubscribe(o -> consumer.accept(true))
         .doAfterTerminate(() -> consumer.accept(false));
+  }
+
+  /**
+   * Calls true on <var>consumer</var> when the stream is subscribed to and false when it succeeds.
+   */
+  public static <T> SingleTransformer<T, T> doOnSingleStartAndSuccess(Consumer<Boolean> consumer) {
+    return observable -> observable
+        .doOnSubscribe(o -> consumer.accept(true))
+        .doOnSuccess(o -> consumer.accept(false));
   }
 
   /**

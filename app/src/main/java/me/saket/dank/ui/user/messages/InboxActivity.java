@@ -118,9 +118,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   public boolean onOptionsItemSelected(MenuItem item) {
     if (item.getItemId() == R.id.action_refresh_messages) {
       InboxFolderFragment activeFragment = inboxPagerAdapter.getActiveFragment();
-      if (isFirstRefreshDone(activeFragment.getFolder())) {
-        activeFragment.refreshMessages();
-      }
+      activeFragment.handleOnClickRefreshMenuItem();
       return true;
 
     } else {

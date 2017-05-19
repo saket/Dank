@@ -102,7 +102,7 @@
     <style name="DankOverflowMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow" />
 
     <style name="DankTextInputLayoutErrorTextAppearance">
-        <item name="android:textColor">@color/red_400</item>
+        <item name="android:textColor">@color/error_text_color</item>
     </style>
 
     <style name="DankPullCollapsibleActivityPage">
@@ -128,6 +128,15 @@
         <item name="android:lineSpacingExtra">@dimen/spacing4</item>
         <item name="android:textColor">@color/gray_500</item>
         <item name="android:textSize">@dimen/textsize14</item>
+    </style>
+
+    <style name="DankInfiniteScrollHeaderFooterErrorText">
+        <item name="android:layout_width">wrap_content</item>
+        <item name="android:layout_height">wrap_content</item>
+        <item name="android:drawablePadding">@dimen/spacing16</item>
+        <item name="android:drawableStart">@drawable/ic_error_24dp</item>
+        <item name="android:gravity">center_vertical</item>
+        <item name="android:textColor">@color/red_A100</item>
     </style>
 
     <!-- Subreddit -->

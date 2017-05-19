@@ -45,7 +45,7 @@ public class InfiniteScrollListener {
   }
 
   @CheckResult
-  public Observable<?> emitWhenLoadNeeded() {
+  public Observable<RecyclerViewScrollEvent> emitWhenLoadNeeded() {
     // RxRecyclerView doesn't emit an initial value, unlike all other bindings. So do it manually.
     RecyclerViewScrollEvent initialScrollEvent = RecyclerViewScrollEvent.create(recyclerView, 0, 0);
 
@@ -55,7 +55,7 @@ public class InfiniteScrollListener {
     }
 
     return scrollEventsStream
-        .filter(event -> event.dy() > 0)  // This ensures the list has enough items to be scrollable.
+        .filter(event -> event.dy() != 0)  // This ensures the list has enough items to scroll.
         .filter(o -> !isLoadOngoing)
         .filter(shouldLoadMore());
   }

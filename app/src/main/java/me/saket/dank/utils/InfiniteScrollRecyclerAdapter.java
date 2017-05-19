@@ -4,11 +4,12 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
 
-import java.util.HashSet;
-import java.util.Set;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import me.saket.dank.R;
+import timber.log.Timber;
 
 /**
  * Contains a header progress View for indicating fresh data load and a footer progress View
@@ -20,11 +21,21 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
   private static final int VIEW_TYPE_FOOTER = 100;
 
   private RecyclerView.Adapter adapterToWrap;
-  private Set<ProgressType> visibleProgressTypes;
+  private HeaderMode activeHeaderMode = HeaderMode.HIDDEN;
+  private FooterMode activeFooterMode = FooterMode.HIDDEN;
+  private View.OnClickListener onHeaderErrorRetryClickListener;
+  private View.OnClickListener onFooterErrorRetryClickListener;
 
-  public enum ProgressType {
-    REFRESH_DATA_LOAD_PROGRESS,
-    MORE_DATA_LOAD_PROGRESS
+  public enum HeaderMode {
+    PROGRESS,
+    ERROR,
+    HIDDEN
+  }
+
+  public enum FooterMode {
+    PROGRESS,
+    ERROR,
+    HIDDEN
   }
 
   public static InfiniteScrollRecyclerAdapter wrap(RecyclerView.Adapter adapterToWrap) {
@@ -33,7 +44,6 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
 
   private InfiniteScrollRecyclerAdapter(RecyclerView.Adapter adapterToWrap) {
     this.adapterToWrap = adapterToWrap;
-    this.visibleProgressTypes = new HashSet<>(3);
     setHasStableIds(adapterToWrap.hasStableIds());
 
     adapterToWrap.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
@@ -70,59 +80,70 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
     });
   }
 
-  public void setProgressVisible(ProgressType progressType, boolean visible) {
-    if (visible == visibleProgressTypes.contains(progressType)) {
+  public void setHeaderMode(HeaderMode headerMode) {
+    if (activeHeaderMode == headerMode) {
       return;
     }
-
-    if (visible) {
-      visibleProgressTypes.add(progressType);
-    } else {
-      visibleProgressTypes.remove(progressType);
-    }
-
-    // TODO: Use DiffUtils?
-//    boolean isHeader = progressType == ProgressType.REFRESH_DATA_LOAD_PROGRESS;
-//    if (visible) {
-//      notifyItemInserted(isHeader ? 0 : getItemCount());
-//
-//    } else {
-//      // Note: the footer item position should be itemCount-1, but it's resulting
-//      // in the 2nd last item getting animated in a strange way. Using the itemCount
-//      // also works. Not sure why.
-//      notifyItemRemoved(isHeader ? 0 : getItemCount());
-//    }
+    activeHeaderMode = headerMode;
     notifyDataSetChanged();
   }
 
-  @Override
-  public long getItemId(int position) {
-    if (isHeaderProgressItem(position)) {
-      return VIEW_TYPE_HEADER;
-    } else if (isFooterProgressItem(position)) {
-      return VIEW_TYPE_FOOTER;
-    } else {
-      return adapterToWrap.getItemId(position - getVisibleHeaderItemCount());
+  public void setOnHeaderErrorRetryClickListener(View.OnClickListener listener) {
+    onHeaderErrorRetryClickListener = listener;
+  }
+
+  public void setFooterMode(FooterMode footerMode) {
+    if (activeFooterMode == footerMode) {
+      return;
     }
+    activeFooterMode = footerMode;
+    notifyDataSetChanged();
+  }
+
+  public void setOnFooterErrorRetryClickListener(View.OnClickListener listener) {
+    onFooterErrorRetryClickListener = listener;
   }
 
   @Override
   public int getItemViewType(int position) {
-    if (isHeaderProgressItem(position)) {
+    if (isHeaderItem(position)) {
       return VIEW_TYPE_HEADER;
-    } else if (isFooterProgressItem(position)) {
+
+    } else if (isFooterItem(position)) {
       return VIEW_TYPE_FOOTER;
+
     } else {
       return adapterToWrap.getItemViewType(position - getVisibleHeaderItemCount());
     }
   }
 
   @Override
+  public long getItemId(int position) {
+    if (isHeaderItem(position)) {
+      return VIEW_TYPE_HEADER;
+
+    } else if (isFooterItem(position)) {
+      return VIEW_TYPE_FOOTER;
+
+    } else {
+      return adapterToWrap.getItemId(position - getVisibleHeaderItemCount());
+    }
+  }
+
+  @Override
   public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
     if (viewType == VIEW_TYPE_HEADER) {
-      return HeaderProgressViewHolder.create(LayoutInflater.from(parent.getContext()), parent);
+      // Create a proxy click listener so that retry works even if the retry click listener is registered after the error occurs.
+      View.OnClickListener proxyRetryClickListener = v -> onHeaderErrorRetryClickListener.onClick(v);
+      return HeaderViewHolder.create(LayoutInflater.from(parent.getContext()), parent, proxyRetryClickListener);
+
     } else if (viewType == VIEW_TYPE_FOOTER) {
-      return FooterProgressViewHolder.create(LayoutInflater.from(parent.getContext()), parent);
+      View.OnClickListener proxyRetryClickListener = v -> {
+        Timber.i("Proxy click. onFooterErrorRetryClickListener: %s", onFooterErrorRetryClickListener);
+        onFooterErrorRetryClickListener.onClick(v);
+      };
+      return FooterViewHolder.create(LayoutInflater.from(parent.getContext()), parent, proxyRetryClickListener);
+
     } else {
       return adapterToWrap.onCreateViewHolder(parent, viewType);
     }
@@ -130,10 +151,18 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
 
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-    int viewType = getItemViewType(position);
-    if (viewType != VIEW_TYPE_HEADER && viewType != VIEW_TYPE_FOOTER) {
-      //noinspection unchecked
-      adapterToWrap.onBindViewHolder(holder, position - getVisibleHeaderItemCount());
+    switch (getItemViewType(position)) {
+      case VIEW_TYPE_HEADER:
+        ((HeaderViewHolder) holder).bind(activeHeaderMode);
+        break;
+
+      case VIEW_TYPE_FOOTER:
+        ((FooterViewHolder) holder).bind(activeFooterMode);
+        break;
+
+      default:
+        //noinspection unchecked
+        adapterToWrap.onBindViewHolder(holder, position - getVisibleHeaderItemCount());
     }
   }
 
@@ -142,47 +171,75 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
     return adapterToWrap.getItemCount() + getVisibleHeaderItemCount() + getVisibleFooterItemCount();
   }
 
-  private boolean isHeaderProgressItem(int position) {
-    return isProgressVisible(ProgressType.REFRESH_DATA_LOAD_PROGRESS) && position == 0;
+  private boolean isHeaderItem(int position) {
+    return isHeaderVisible() && position == 0;
   }
 
-  private boolean isFooterProgressItem(int position) {
-    return isProgressVisible(ProgressType.MORE_DATA_LOAD_PROGRESS) && position == getItemCount() - 1;
+  private boolean isFooterItem(int position) {
+    return isFooterVisible() && position == getItemCount() - 1;
   }
 
   private int getVisibleHeaderItemCount() {
-    return isProgressVisible(ProgressType.REFRESH_DATA_LOAD_PROGRESS) ? 1 : 0;
+    return isHeaderVisible() ? 1 : 0;
   }
 
   private int getVisibleFooterItemCount() {
-    return isProgressVisible(ProgressType.MORE_DATA_LOAD_PROGRESS) ? 1 : 0;
+    return isFooterVisible() ? 1 : 0;
   }
 
-  private boolean isProgressVisible(ProgressType type) {
-    return visibleProgressTypes.contains(type);
+  private boolean isHeaderVisible() {
+    return activeHeaderMode != HeaderMode.HIDDEN;
   }
 
-  // TODO: Layout.
-  static class HeaderProgressViewHolder extends RecyclerView.ViewHolder {
-    public static HeaderProgressViewHolder create(LayoutInflater inflater, ViewGroup container) {
-      View progressItemView = inflater.inflate(R.layout.list_item_progress_indicator, container, false);
-      return new HeaderProgressViewHolder(progressItemView);
+  private boolean isFooterVisible() {
+    return activeFooterMode != FooterMode.HIDDEN;
+  }
+
+  static class HeaderViewHolder extends RecyclerView.ViewHolder {
+    @BindView(R.id.infinitescroll_header_progress_container) View progressContainer;
+    @BindView(R.id.infinitescroll_header_error) TextView errorView;
+
+    private View.OnClickListener retryClickListener;
+
+    public static HeaderViewHolder create(LayoutInflater inflater, ViewGroup container, View.OnClickListener retryClickListener) {
+      View progressItemView = inflater.inflate(R.layout.list_item_infinitescroll_header, container, false);
+      return new HeaderViewHolder(progressItemView, retryClickListener);
     }
 
-    public HeaderProgressViewHolder(View itemView) {
+    public HeaderViewHolder(View itemView, View.OnClickListener retryClickListener) {
       super(itemView);
+      this.retryClickListener = retryClickListener;
+      ButterKnife.bind(this, itemView);
+    }
+
+    public void bind(HeaderMode headerMode) {
+      progressContainer.setVisibility(headerMode == HeaderMode.PROGRESS ? View.VISIBLE : View.GONE);
+      errorView.setVisibility(headerMode == HeaderMode.PROGRESS ? View.GONE : View.VISIBLE);
+      itemView.setOnClickListener(headerMode == HeaderMode.PROGRESS ? null : retryClickListener);
     }
   }
 
-  static class FooterProgressViewHolder extends RecyclerView.ViewHolder {
-    public static FooterProgressViewHolder create(LayoutInflater inflater, ViewGroup container) {
-      View progressItemView = inflater.inflate(R.layout.list_item_progress_indicator, container, false);
-      return new FooterProgressViewHolder(progressItemView);
+  static class FooterViewHolder extends RecyclerView.ViewHolder {
+    @BindView(R.id.infinitescroll_footer_progress) View progressView;
+    @BindView(R.id.infinitescroll_footer_error) View errorView;
+    private View.OnClickListener retryClickListener;
+
+    public static FooterViewHolder create(LayoutInflater inflater, ViewGroup container, View.OnClickListener retryClickListener) {
+      View progressItemView = inflater.inflate(R.layout.list_item_infinitescroll_footer, container, false);
+      return new FooterViewHolder(progressItemView, retryClickListener);
     }
 
-    public FooterProgressViewHolder(View itemView) {
+    public FooterViewHolder(View itemView, View.OnClickListener retryClickListener) {
       super(itemView);
+      this.retryClickListener = retryClickListener;
+      ButterKnife.bind(this, itemView);
+    }
+
+    public void bind(FooterMode footerMode) {
+      progressView.setVisibility(footerMode == FooterMode.ERROR ? View.GONE : View.VISIBLE);
+      errorView.setVisibility(footerMode == FooterMode.ERROR ? View.VISIBLE : View.GONE);
+      itemView.setOnClickListener(footerMode == FooterMode.ERROR ? retryClickListener : null);
+      itemView.setClickable(footerMode == FooterMode.ERROR);
     }
   }
-
 }

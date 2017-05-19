@@ -33,6 +33,8 @@
     <dimen name="submission_link_title_container_vert_padding_link">@dimen/spacing16</dimen>
     <dimen name="submission_link_title_container_vert_padding_album">32dp</dimen>
 
+    <dimen name="one_line_progress_indicator_size">24dp</dimen>
+
     <!-- Messages -->
     <dimen name="viewpager_tablayout_start_spacing_with_toolbar_title">60dp</dimen>
     <dimen name="elevation_nested_expandable_sheet">10dp</dimen>

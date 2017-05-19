@@ -23,7 +23,6 @@
     <string name="login_error_oauth_permission_rejected">You must press \'allow\' to log in with this account</string>
     <string name="login_error_oauth_failed">Failed to login. Please try again.</string>
     <string name="login_welcome_user">Welcome, %s!</string>
-    <string name="login_loading_comments">Loading comments…</string>
 
     <!-- Subreddit -->
     <string name="frontpage_subreddit_name">Frontpage</string>
@@ -68,7 +67,7 @@
     <string name="userprofile_unread_messages_count_99_plus">99+ new messages</string>
 
     <!-- Submission -->
-    <string name="submission_error_no_app_to_handle_intent">No app found to handle this link</string>
+    <string name="submission_loading_comments">Loading comments…</string>
     <string name="submission_load_more_comments">Load %d more comments</string>
     <string name="submission_loading_more_comments">Loading more comments…</string>
     <string name="submission_error_failed_to_load_more_comments">Failed to load more comments</string>
@@ -126,7 +125,10 @@
     <string name="inbox_empty_state_message_for_comment_replies">You don\'t have any comment replies. \nNobody replies to you on Reddit.</string>
     <string name="inbox_empty_state_message_for_post_replies">You don\'t have any post replies. \nGuess who\'s really unpopular on Reddit?</string>
     <string name="inbox_empty_state_message_for_username_mentions">You don\'t have any username mentions.</string>
+    <string name="inbox_refreshing_messages">Refreshing messages…</string>
     <string name="inbox_menu_refresh_messages">Refresh messages</string>
+    <string name="inbox_error_failed_to_refresh_messages">Failed to refresh messages. Tap to retry.</string>
+    <string name="inbox_error_failed_to_load_more_messages">Failed to load more messages. Tap to retry.</string>
 
     <!-- Notifications -->
     <string name="messagenotification_below_nougat_multiple_messages_title">%d new messages</string>

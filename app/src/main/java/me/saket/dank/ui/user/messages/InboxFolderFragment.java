@@ -3,7 +3,7 @@ package me.saket.dank.ui.user.messages;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
-import static me.saket.dank.utils.RxUtils.doOnSingleStartAndEnd;
+import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.RxUtils.doOnceAfterNext;
 
 import android.os.Bundle;
@@ -15,14 +15,22 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.jakewharton.rxbinding2.support.v7.widget.RecyclerViewScrollEvent;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observable;
+import io.reactivex.SingleTransformer;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
+import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderMode;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
 import timber.log.Timber;
@@ -42,6 +50,7 @@ public class InboxFolderFragment extends DankFragment {
   private InboxFolder folder;
   private MessagesAdapter messagesAdapter;
   private InfiniteScrollRecyclerAdapter messagesAdapterWithProgress;
+  private Disposable refreshDisposable = Disposables.empty();
 
   interface Callbacks {
     void setFirstRefreshDone(InboxFolder forFolder);
@@ -83,88 +92,129 @@ public class InboxFolderFragment extends DankFragment {
     unsubscribeOnDestroy(Dank.inbox().messages(folder)
         .compose(applySchedulers())
         .compose(doOnceAfterNext(o -> {
-          startInfiniteScroll();
+          startInfiniteScroll(false /* isRetrying */);
 
           // Refresh messages once we've received the messages from database for the first time.
           if (!callbacks.isFirstRefreshDone(folder)) {
             refreshMessages();
           }
         }))
-        .doAfterNext(messages -> {
+        .doOnNext(messages -> {
           if (callbacks.isFirstRefreshDone(folder)) {
-            // Fragment got recreated, but Activity didn't so a second refresh did not happen.
+            // Setting empty state's visibility is ideally done in refreshMessages(), but Fragment
+            // got recreated and but Activity didn't so a second refresh did not happen.
             emptyStateView.setVisibility(messages.isEmpty() ? View.VISIBLE : View.GONE);
           }
         })
         .subscribe(messagesAdapter));
 
+    // TODO: Header and footer error state click listeners.
+
     populateEmptyStateView();
   }
 
-  protected InboxFolder getFolder() {
-    return folder;
+  /**
+   * Refresh message (only if not already refreshing).
+   */
+  protected void handleOnClickRefreshMenuItem() {
+    if (refreshDisposable.isDisposed()) {
+      refreshMessages();
+    }
   }
 
   protected void refreshMessages() {
-    unsubscribeOnDestroy(Dank.inbox().refreshMessages(folder)
+    refreshDisposable = Dank.inbox().refreshMessages(folder)
         .compose(applySchedulersSingle())
-        .compose(doOnSingleStartAndEnd(ongoing -> setProgressVisibleForRefresh(ongoing)))
+        .compose(handleProgressAndErrorForFirstRefresh())
+        .compose(handleProgressAndErrorForSubsequentRefresh())
         .doOnSubscribe(o -> emptyStateView.setVisibility(View.GONE))
-        .subscribe(
-            result -> {
-              ((Callbacks) getActivity()).setFirstRefreshDone(folder);
-              emptyStateView.setVisibility(result.wasEmpty() ? View.VISIBLE : View.GONE);
-              firstLoadErrorStateView.setOnRetryClickListener(o -> refreshMessages());
-            },
-            error -> {
-              // TODO: Show error in adapter.
-              Timber.e(error, "Couldn't refresh %s", folder);
-            }
-        ));
+        .subscribe(result -> {
+          if (isAdded()) {
+            ((Callbacks) getActivity()).setFirstRefreshDone(folder);
+          }
+
+          emptyStateView.setVisibility(result.wasEmpty() ? View.VISIBLE : View.GONE);
+          firstLoadErrorStateView.setOnRetryClickListener(o -> refreshMessages());
+        }, doNothing());
+
+    unsubscribeOnDestroy(refreshDisposable);
   }
 
-  private void startInfiniteScroll() {
+  private <T> SingleTransformer<T, T> handleProgressAndErrorForFirstRefresh() {
+    if (messagesAdapter.getItemCount() > 0) {
+      return upstream -> upstream;
+    }
+
+    return upstream -> upstream
+        .doOnSubscribe(o -> {
+          firstLoadProgressView.setVisibility(View.VISIBLE);
+          firstLoadErrorStateView.setVisibility(View.GONE);
+        })
+        .doOnSuccess(o -> firstLoadProgressView.setVisibility(View.GONE))
+        .doOnError(error -> {
+          ResolvedError resolvedError = Dank.errors().resolve(error);
+          if (resolvedError.isUnknown()) {
+            Timber.e(error, "Unknown error while refreshing messages in %s folder.", folder);
+          }
+          firstLoadErrorStateView.applyFrom(resolvedError);
+          firstLoadErrorStateView.setVisibility(View.VISIBLE);
+          firstLoadErrorStateView.setOnRetryClickListener(o -> refreshMessages());
+
+          firstLoadProgressView.setVisibility(View.GONE);
+        });
+  }
+
+  private <T> SingleTransformer<T, T> handleProgressAndErrorForSubsequentRefresh() {
+    if (messagesAdapter.getItemCount() == 0) {
+      return upstream -> upstream;
+    }
+
+    return upstream -> upstream
+        .doOnSubscribe(o -> messageList.post(() -> messagesAdapterWithProgress.setHeaderMode(HeaderMode.PROGRESS)))
+        .doOnSuccess(o -> messageList.post(() -> messagesAdapterWithProgress.setHeaderMode(HeaderMode.HIDDEN)))
+        .doOnError(error -> {
+          messageList.post(() -> messagesAdapterWithProgress.setHeaderMode(HeaderMode.ERROR));
+          messagesAdapterWithProgress.setOnHeaderErrorRetryClickListener(o -> refreshMessages());
+
+          ResolvedError resolvedError = Dank.errors().resolve(error);
+          if (resolvedError.isUnknown()) {
+            Timber.e(error, "Unknown error while refreshing messages in %s folder.", folder);
+          }
+        });
+  }
+
+  /**
+   * @param isRetrying When true, more items are fetched right away. Otherwise, we wait for {@link InfiniteScrollListener} to emit.
+   */
+  private void startInfiniteScroll(boolean isRetrying) {
+    Timber.d("startInfiniteScroll() -> isRetrying? %s", isRetrying);
+
     InfiniteScrollListener scrollListener = InfiniteScrollListener.create(messageList, 0.75f /* loadThreshold */);
     scrollListener.setEmitInitialEvent(false);
 
-    unsubscribeOnDestroy(scrollListener
-        .emitWhenLoadNeeded()
+    Observable<RecyclerViewScrollEvent> emitWhenLoadNeededStream = scrollListener.emitWhenLoadNeeded();
+    if (isRetrying) {
+      emitWhenLoadNeededStream = emitWhenLoadNeededStream.startWith(Observable.just(RecyclerViewScrollEvent.create(messageList, 0, 0)));
+    }
+
+    unsubscribeOnDestroy(emitWhenLoadNeededStream
         .flatMapSingle(o -> Dank.inbox().fetchMoreMessages(folder)
             .compose(applySchedulersSingle())
-            .compose(doOnSingleStartAndEnd(ongoing -> {
-              scrollListener.setLoadOngoing(ongoing);
-              setProgressVisibleForFetchingMoreItems(ongoing);
-            }))
+            .compose(handleProgressAndErrorForLoadMore())
+            .compose(doOnSingleStartAndTerminate(ongoing -> scrollListener.setLoadOngoing(ongoing)))
         )
         .takeUntil(fetchMoreResult -> (boolean) fetchMoreResult.wasEmpty())
-        .subscribe(doNothing(), error -> {
-          // TODO: Show error in adapter.
-          Timber.w("%s %s", folder, error.getMessage());
-        }));
+        .subscribe(doNothing(), doNothing()));
   }
 
-  private void setProgressVisibleForFetchingMoreItems(boolean visible) {
-    messageList.post(() ->
-        messagesAdapterWithProgress.setProgressVisible(InfiniteScrollRecyclerAdapter.ProgressType.MORE_DATA_LOAD_PROGRESS, visible)
-    );
-  }
-
-  private void setProgressVisibleForRefresh(boolean visible) {
-    if (visible) {
-      if (messagesAdapter.getItemCount() == 0) {
-        firstLoadProgressView.setVisibility(View.VISIBLE);
-      } else {
-        messageList.post(() ->
-            messagesAdapterWithProgress.setProgressVisible(InfiniteScrollRecyclerAdapter.ProgressType.REFRESH_DATA_LOAD_PROGRESS, true)
-        );
-      }
-
-    } else {
-      firstLoadProgressView.setVisibility(View.GONE);
-      messageList.post(() ->
-          messagesAdapterWithProgress.setProgressVisible(InfiniteScrollRecyclerAdapter.ProgressType.REFRESH_DATA_LOAD_PROGRESS, false)
-      );
-    }
+  private <T> SingleTransformer<T, T> handleProgressAndErrorForLoadMore() {
+    return upstream -> upstream
+        .doOnSubscribe(o -> messageList.post(() -> messagesAdapterWithProgress.setFooterMode(InfiniteScrollRecyclerAdapter.FooterMode.PROGRESS)))
+        .doOnSuccess(o -> messageList.post(() -> messagesAdapterWithProgress.setFooterMode(InfiniteScrollRecyclerAdapter.FooterMode.HIDDEN)))
+        .doOnError(error -> {
+          messageList.post(() -> messagesAdapterWithProgress.setFooterMode(InfiniteScrollRecyclerAdapter.FooterMode.ERROR));
+          messagesAdapterWithProgress.setOnFooterErrorRetryClickListener(o -> startInfiniteScroll(true /* isRetrying */));
+        });
   }
 
   public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
