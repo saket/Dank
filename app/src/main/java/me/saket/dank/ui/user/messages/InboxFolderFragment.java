@@ -1,7 +1,10 @@
 package me.saket.dank.ui.user.messages;
 
 import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
+import static me.saket.dank.utils.RxUtils.doOnSingleStartAndEnd;
+import static me.saket.dank.utils.RxUtils.doOnceAfterNext;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -14,7 +17,6 @@ import android.view.ViewGroup;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
@@ -42,6 +44,10 @@ public class InboxFolderFragment extends DankFragment {
   private InfiniteScrollRecyclerAdapter messagesAdapterWithProgress;
 
   interface Callbacks {
+    void setFirstRefreshDone(InboxFolder forFolder);
+
+    boolean isFirstRefreshDone(InboxFolder forFolder);
+
     BetterLinkMovementMethod getMessageLinkMovementMethod();
   }
 
@@ -53,7 +59,6 @@ public class InboxFolderFragment extends DankFragment {
     return fragment;
   }
 
-  @Nullable
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
@@ -75,34 +80,77 @@ public class InboxFolderFragment extends DankFragment {
 
     unsubscribeOnDestroy(Dank.inbox().messages(folder)
         .compose(applySchedulers())
+        .compose(doOnceAfterNext(o -> {
+          // Refresh messages once we've received the messages from database for the first time.
+          if (!((Callbacks) getActivity()).isFirstRefreshDone(folder)) {
+            refreshMessages();
+          }
+        }))
         .subscribe(messagesAdapter));
+
     startInfiniteScroll();
 
     populateEmptyStateView();
-    firstLoadErrorStateView.setOnRetryClickListener(o -> startInfiniteScroll());
+  }
+
+  protected InboxFolder getFolder() {
+    return folder;
+  }
+
+  protected void refreshMessages() {
+    unsubscribeOnDestroy(Dank.inbox().refreshMessages(folder)
+        .compose(applySchedulersSingle())
+        .compose(doOnSingleStartAndEnd(ongoing -> setProgressVisibleForRefresh(ongoing)))
+        .doOnSubscribe(o -> emptyStateView.setVisibility(View.GONE))
+        .subscribe(
+            result -> {
+              ((Callbacks) getActivity()).setFirstRefreshDone(folder);
+              emptyStateView.setVisibility(result.wasEmpty() ? View.VISIBLE : View.GONE);
+              firstLoadErrorStateView.setOnRetryClickListener(o -> refreshMessages());
+            },
+            error -> Timber.e(error, "Couldn't refresh %s", folder)
+        ));
   }
 
   private void startInfiniteScroll() {
     InfiniteScrollListener scrollListener = InfiniteScrollListener.create(messageList, 0.75f /* loadThreshold */);
-    scrollListener.setEmitInitialEvent(true);
+    scrollListener.setEmitInitialEvent(false);
 
     unsubscribeOnDestroy(scrollListener
         .emitWhenLoadNeeded()
-        .doOnNext(o -> Timber.i("%s Progress: load start", folder))
-        .observeOn(Schedulers.io())
         .flatMapSingle(o -> Dank.inbox().fetchMoreMessages(folder)
-            .doOnSubscribe(oo -> scrollListener.setLoadOngoing(true))
-            .doOnSuccess(oo -> scrollListener.setLoadOngoing(false))
+            .compose(applySchedulersSingle())
+            .compose(doOnSingleStartAndEnd(ongoing -> {
+              scrollListener.setLoadOngoing(ongoing);
+              setProgressVisibleForFetchingMoreItems(ongoing);
+            }))
         )
-        .doOnNext(o -> Timber.i("%s Progress: load stop", folder))
-        .doOnNext(fetchMoreResult -> {
-          if (fetchMoreResult.wasEmpty()) {
-            // TODO: Show empty state only
-            Timber.i("%s Empty state", folder);
-          }
-        })
         .takeUntil(fetchMoreResult -> (boolean) fetchMoreResult.wasEmpty())
         .subscribe(doNothing(), error -> Timber.w("%s %s", folder, error.getMessage())));
+  }
+
+  private void setProgressVisibleForFetchingMoreItems(boolean visible) {
+    messageList.post(() ->
+        messagesAdapterWithProgress.setProgressVisible(InfiniteScrollRecyclerAdapter.ProgressType.MORE_DATA_LOAD_PROGRESS, visible)
+    );
+  }
+
+  private void setProgressVisibleForRefresh(boolean visible) {
+    if (visible) {
+      if (messagesAdapter.getItemCount() == 0) {
+        firstLoadProgressView.setVisibility(View.VISIBLE);
+      } else {
+        messageList.post(() ->
+            messagesAdapterWithProgress.setProgressVisible(InfiniteScrollRecyclerAdapter.ProgressType.REFRESH_DATA_LOAD_PROGRESS, true)
+        );
+      }
+
+    } else {
+      firstLoadProgressView.setVisibility(View.GONE);
+      messageList.post(() ->
+          messagesAdapterWithProgress.setProgressVisible(InfiniteScrollRecyclerAdapter.ProgressType.REFRESH_DATA_LOAD_PROGRESS, false)
+      );
+    }
   }
 
   public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {

@@ -45,6 +45,9 @@ public class InboxManager {
     this.jacksonHelper = jacksonHelper;
   }
 
+  /**
+   * Stream of all messages in <var>folder</var>
+   */
   @CheckResult
   public Observable<List<Message>> messages(InboxFolder folder) {
     return toV2Observable(briteDatabase
@@ -59,23 +62,24 @@ public class InboxManager {
   public Single<FetchMoreResult> fetchMoreMessages(InboxFolder folder) {
     return getPaginationAnchor(folder)
         .flatMap(anchor -> fetchMessagesFromAnchor(folder, anchor))
-        .doOnSuccess(saveMessages(folder))
+        .doOnSuccess(saveMessages(folder, false))
         .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages.isEmpty()));
   }
 
   /**
-   * Fetch most recent messages. Unlike {@link #fetchMoreMessages(InboxFolder)}, this does not use the oldest message as the anchor.
+   * Fetch most recent messages and remove any existing messages. Unlike {@link #fetchMoreMessages(InboxFolder)},
+   * this does not use the oldest message as the anchor.
    */
   @CheckResult
   public Single<FetchMoreResult> refreshMessages(InboxFolder folder) {
     return fetchMessagesFromAnchor(folder, PaginationAnchor.createEmpty())
-        .doOnSuccess(saveMessages(folder))
+        .doOnSuccess(saveMessages(folder, true))
         .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages.isEmpty()));
   }
 
   @CheckResult
   private Single<List<Message>> fetchMessagesFromAnchor(InboxFolder folder, PaginationAnchor paginationAnchor) {
-    return Single.fromCallable(() -> {
+    return dankRedditClient.withAuth(Single.fromCallable(() -> {
       InboxPaginator paginator = dankRedditClient.userMessagePaginator(folder);
       paginator.setLimit(MESSAGES_FETCHED_PER_PAGE);
 
@@ -118,7 +122,7 @@ public class InboxManager {
       }
 
       return minimum10Messages;
-    });
+    }));
   }
 
   /**
@@ -130,7 +134,7 @@ public class InboxManager {
 
     return toV2Single(briteDatabase.createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
         .mapToOneOrDefault(StoredMessage.mapFromCursor(jacksonHelper), dummyDefaultValue)
-        .take(1)
+        .first()
         .map(lastStoredMessage -> {
           if (lastStoredMessage == dummyDefaultValue) {
             return PaginationAnchor.createEmpty();
@@ -157,9 +161,13 @@ public class InboxManager {
         .toSingle());
   }
 
-  private Consumer<List<Message>> saveMessages(InboxFolder folder) {
+  private Consumer<List<Message>> saveMessages(InboxFolder folder, boolean removeExistingMessages) {
     return fetchedMessages -> {
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
+        if (removeExistingMessages) {
+          briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.QUERY_WHERE_FOLDER, folder.name());
+        }
+
         for (Message fetchedMessage : fetchedMessages) {
           StoredMessage messageToStore = StoredMessage.create(fetchedMessage.getId(), fetchedMessage, JrawUtils.createdTimeUtc(fetchedMessage), folder);
           briteDatabase.insert(StoredMessage.TABLE_NAME, messageToStore.toContentValues(jacksonHelper), SQLiteDatabase.CONFLICT_REPLACE);

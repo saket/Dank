@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
     <item
-        android:id="@+id/action_refresh"
+        android:id="@+id/action_refresh_webpage"
         android:title="@string/webview_refresh" />
 
     <item
-        android:id="@+id/action_share"
+        android:id="@+id/action_share_webpage"
         android:title="@string/webview_share" />
 
     <item

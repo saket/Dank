@@ -4,17 +4,19 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
 import android.content.Intent;
-import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
-import android.support.v4.app.Fragment;
-import android.support.v4.app.FragmentManager;
-import android.support.v4.app.FragmentStatePagerAdapter;
 import android.support.v4.view.ViewPager;
-import android.view.ViewGroup;
+import android.view.Menu;
+import android.view.MenuItem;
+
+import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
+
+import java.util.HashSet;
+import java.util.Set;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -34,7 +36,9 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @BindView(R.id.inbox_tablayout) TabLayout tabLayout;
   @BindView(R.id.inbox_viewpager) ViewPager viewPager;
 
+  private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.ALL.length);
   private DankLinkMovementMethod commentLinkMovementMethod;
+  private InboxPagerAdapter inboxPagerAdapter;
 
   /**
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
@@ -59,14 +63,26 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     setupContentExpandablePage(contentPage);
     expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
 
-    MessagesPagerAdapter messagesPagerAdapter = new MessagesPagerAdapter(getResources(), getSupportFragmentManager());
-    viewPager.setAdapter(messagesPagerAdapter);
+    inboxPagerAdapter = new InboxPagerAdapter(getResources(), getSupportFragmentManager());
+    viewPager.setAdapter(inboxPagerAdapter);
     tabLayout.setupWithViewPager(viewPager, true);
+
+    RxViewPager.pageSelections(viewPager).subscribe(o -> invalidateOptionsMenu());
 
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       //noinspection CodeBlock2Expr
-      return touchLiesOn(viewPager, downX, downY) && messagesPagerAdapter.getActiveFragment().shouldInterceptPullToCollapse(upwardPagePull);
+      return touchLiesOn(viewPager, downX, downY) && inboxPagerAdapter.getActiveFragment().shouldInterceptPullToCollapse(upwardPagePull);
     });
+  }
+
+  @Override
+  public void setFirstRefreshDone(InboxFolder forFolder) {
+    firstRefreshDoneForFolders.add(forFolder);
+  }
+
+  @Override
+  public boolean isFirstRefreshDone(InboxFolder forFolder) {
+    return firstRefreshDoneForFolders.contains(forFolder);
   }
 
   @Override
@@ -92,38 +108,23 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     return commentLinkMovementMethod;
   }
 
-  public static class MessagesPagerAdapter extends FragmentStatePagerAdapter {
-    private Resources resources;
-    private InboxFolderFragment activeFragment;
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.menu_inbox, menu);
+    return super.onCreateOptionsMenu(menu);
+  }
 
-    public MessagesPagerAdapter(Resources resources, FragmentManager manager) {
-      super(manager);
-      this.resources = resources;
-    }
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    if (item.getItemId() == R.id.action_refresh_messages) {
+      InboxFolderFragment activeFragment = inboxPagerAdapter.getActiveFragment();
+      if (isFirstRefreshDone(activeFragment.getFolder())) {
+        activeFragment.refreshMessages();
+      }
+      return true;
 
-    @Override
-    public Fragment getItem(int position) {
-      return InboxFolderFragment.create(InboxFolder.ALL[position]);
-    }
-
-    @Override
-    public int getCount() {
-      return InboxFolder.ALL.length;
-    }
-
-    @Override
-    public CharSequence getPageTitle(int position) {
-      return resources.getString(InboxFolder.ALL[position].titleRes());
-    }
-
-    @Override
-    public void setPrimaryItem(ViewGroup container, int position, Object object) {
-      super.setPrimaryItem(container, position, object);
-      activeFragment = (InboxFolderFragment) object;
-    }
-
-    public InboxFolderFragment getActiveFragment() {
-      return activeFragment;
+    } else {
+      return super.onOptionsItemSelected(item);
     }
   }
 }

@@ -4,7 +4,7 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static me.saket.dank.di.Dank.subscriptionManager;
 import static me.saket.dank.utils.CommonUtils.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
-import static me.saket.dank.utils.RxUtils.doOnStartAndEndSingle;
+import static me.saket.dank.utils.RxUtils.doOnSingleStartAndEnd;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
@@ -238,7 +238,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     Disposable subscription = Dank.reddit()
         .withAuth(Single.fromCallable(() -> subredditPaginator.next(true)))
         .compose(applySchedulersSingle())
-        .compose(doOnStartAndEndSingle(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
+        .compose(doOnSingleStartAndEnd(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
         .subscribe(submissionsAdapter, logError("Couldn't get front-page"));
     unsubscribeOnDestroy(subscription);
   }

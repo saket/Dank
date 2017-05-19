@@ -1,7 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.doOnStartAndComplete;
+import static me.saket.dank.utils.RxUtils.doOnCompletableStartAndEnd;
 
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
@@ -70,7 +70,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
         unsubscribeOnDestroy(Dank.subscriptionManager().refreshSubscriptions()
                 .andThen(Dank.subscriptionManager().executePendingSubscribesAndUnsubscribes())
                 .compose(applySchedulersCompletable())
-                .compose(doOnStartAndComplete(ongoing -> progressSubject.accept(ongoing)))
+                .compose(doOnCompletableStartAndEnd(ongoing -> progressSubject.accept(ongoing)))
                 .subscribe(
                         () -> {
                             if (params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB) {

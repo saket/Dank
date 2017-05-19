@@ -110,7 +110,7 @@
 
     <string name="userpreferences_datausage_new_messages">New Messages</string>
 
-    <!-- Messages -->
+    <!-- Inbox -->
     <string name="activity_inbox">Inbox</string>
     <string name="inbox_reply_from">Reply from</string>
     <string name="inbox_via">via</string>
@@ -126,6 +126,7 @@
     <string name="inbox_empty_state_message_for_comment_replies">You don\'t have any comment replies. \nNobody replies to you on Reddit.</string>
     <string name="inbox_empty_state_message_for_post_replies">You don\'t have any post replies. \nGuess who\'s really unpopular on Reddit?</string>
     <string name="inbox_empty_state_message_for_username_mentions">You don\'t have any username mentions.</string>
+    <string name="inbox_menu_refresh_messages">Refresh messages</string>
 
     <!-- Notifications -->
     <string name="messagenotification_below_nougat_multiple_messages_title">%d new messages</string>

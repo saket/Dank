@@ -105,11 +105,11 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         switch (item.getItemId()) {
-            case R.id.action_refresh:
+            case R.id.action_refresh_webpage:
                 webView.reload();
                 return true;
 
-            case R.id.action_share:
+            case R.id.action_share_webpage:
                 Intent shareIntent = Intents.createForSharingUrl(getTitle().toString(), webView.getUrl());
                 startActivity(Intent.createChooser(shareIntent, getString(R.string.webview_share_via)));
                 return true;

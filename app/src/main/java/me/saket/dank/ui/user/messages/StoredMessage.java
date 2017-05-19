@@ -41,6 +41,9 @@ public abstract class StoredMessage {
           + " ORDER BY " + COLUMN_CREATED_TIME_MS + " ASC"
           + " LIMIT 1";
 
+  public static final String QUERY_WHERE_FOLDER =
+      COLUMN_FOLDER + " == ?";
+
   public abstract String id();
 
   public abstract Message message();
