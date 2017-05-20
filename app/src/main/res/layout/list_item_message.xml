@@ -36,7 +36,6 @@
         android:background="@drawable/background_message_content"
         android:foreground="?attr/selectableItemBackground"
         android:orientation="vertical"
-        android:outlineProvider="background"
         android:paddingBottom="@dimen/spacing16"
         android:paddingEnd="@dimen/spacing16"
         android:paddingStart="@dimen/spacing16"
@@ -82,7 +81,7 @@
             android:id="@+id/message_reply_body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:textColor="@color/gray_200"
+            android:textColor="@color/gray_300"
             tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..." />
     </LinearLayout>
 

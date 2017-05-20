@@ -87,20 +87,28 @@ public class MessagesNotificationManager {
   }
 
   @CheckResult
-  public Completable markMessageNotifAsSeen(Message message) {
-    return markMessageNotifAsSeen(Collections.singletonList(message.getId()));
+  public Completable markMessageNotifAsSeen(Message... messages) {
+    List<String> messageIds = new ArrayList<>(messages.length);
+    for (Message message : messages) {
+      messageIds.add(message.getId());
+    }
+    return markMessageNotifAsSeen(messageIds);
   }
 
   /**
    * Recycle <var>message</var>'s ID when it's no longer unread.
    */
   @CheckResult
-  public Completable removeMessageNotifSeenStatus(Message message) {
+  public Completable removeMessageNotifSeenStatus(Message... messages) {
     return seenMessageIdsStore.get()
         .map(oldSeenMessageIds -> {
           Set<String> updatedSeenMessageIds = new HashSet<>(oldSeenMessageIds.size());
           updatedSeenMessageIds.addAll(oldSeenMessageIds);
-          updatedSeenMessageIds.remove(message.getId());
+          Timber.d("---------------------");
+          for (Message message : messages) {
+            Timber.i("Removing seen for: %s", message.getBody().substring(0, Math.min(50, message.getBody().length())));
+            updatedSeenMessageIds.remove(message.getId());
+          }
           return Collections.unmodifiableSet(updatedSeenMessageIds);
         })
         .toCompletable();
@@ -209,6 +217,8 @@ public class MessagesNotificationManager {
 
     // Add bundled notifications (Nougat+).
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+      Timber.i("%s bundled notifs", unreadMessages.size());
+
       for (Message unreadMessage : unreadMessages) {
         int notificationId = createNotificationIdFor(unreadMessage);
 
@@ -217,7 +227,7 @@ public class MessagesNotificationManager {
         Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
 
         // Direct reply action.
-        Intent directReplyIntent = NotificationActionReceiver.createDirectReplyIntent(context, unreadMessage, Dank.jackson(), notificationId);
+        Intent directReplyIntent = NotificationActionReceiver.createDirectReplyIntent(context, unreadMessage, Dank.moshi(), notificationId);
         PendingIntent directReplyPendingIntent = PendingIntent.getBroadcast(
             context,
             P_INTENT_REQ_ID_DIRECT_REPLY + notificationId,
@@ -363,8 +373,7 @@ public class MessagesNotificationManager {
   }
 
   private PendingIntent createMarkAsReadPendingIntent(Context context, Message unreadMessage, int requestId) {
-    int notificationId = createNotificationIdFor(unreadMessage);
-    Intent markAsReadIntent = NotificationActionReceiver.createMarkAsReadIntent(context, unreadMessage, Dank.jackson(), notificationId);
+    Intent markAsReadIntent = NotificationActionReceiver.createMarkAsReadIntent(context, Dank.moshi(), unreadMessage);
     return PendingIntent.getBroadcast(context, requestId, markAsReadIntent, PendingIntent.FLAG_UPDATE_CURRENT);
   }
 
@@ -373,21 +382,25 @@ public class MessagesNotificationManager {
     return PendingIntent.getBroadcast(context, requestId, markAsSeenIntent, PendingIntent.FLAG_UPDATE_CURRENT);
   }
 
-  private int createNotificationIdFor(Message message) {
+  /**
+   * Id used for generating a notification for <var>message</var>. This can be used for dismissing it if it's active.
+   */
+  public static int createNotificationIdFor(Message message) {
     return message.getId().hashCode();
   }
 
   @CheckResult
-  public Completable dismissNotification(Context context, int notificationId) {
+  public Completable dismissNotification(Context context, Message... messages) {
     return Completable.fromAction(() -> {
-      Timber.i("dismissNotification %s", notificationId);
-
-      if (notificationId == -1) {
-        throw new IllegalStateException();
-      }
-
       NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-      notificationManager.cancel(notificationId);
+      for (Message message : messages) {
+        int notificationId = createNotificationIdFor(message);
+        Timber.i("dismissNotification %s", notificationId);
+        if (notificationId == -1) {
+          throw new IllegalStateException();
+        }
+        notificationManager.cancel(notificationId);
+      }
     });
   }
 

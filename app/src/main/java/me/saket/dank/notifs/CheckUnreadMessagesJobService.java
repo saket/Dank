@@ -98,7 +98,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
 
   @Override
   public boolean onStartJob(JobParameters params) {
-    Timber.i("Fetching unread messages");
+    Timber.i("Fetching unread messages. JobID: %s", params.getJobId());
     boolean refreshMessages = PersistableBundleUtils.getBoolean(params.getExtras(), KEY_REFRESH_MESSAGES);
 
     unsubscribeOnDestroy((refreshMessages ? Dank.inbox().refreshMessages(InboxFolder.UNREAD).toCompletable() : Completable.complete())

@@ -6,8 +6,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.CheckResult;
 import android.support.v4.app.RemoteInput;
 import android.widget.Toast;
+
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Message;
 
@@ -15,11 +18,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.Completable;
+import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxActivity;
-import me.saket.dank.utils.JacksonHelper;
-import me.saket.dank.utils.JrawUtils;
 import timber.log.Timber;
 
 /**
@@ -30,8 +32,8 @@ public class NotificationActionReceiver extends BroadcastReceiver {
 
   public static final String KEY_DIRECT_REPLY_MESSAGE = "me.saket.dank.directReplyMessage";
   private static final String INTENT_KEY_MESSAGE_JSON = "me.saket.dank.message";
-  private static final String INTENT_KEY_NOTIFICATION_ID = "me.saket.dank.notificationId";
   private static final String INTENT_KEY_MESSAGE_ID_LIST = "me.saket.dank.messageIdList";
+  private static final String INTENT_KEY_MESSAGE_ARRAY_JSON = "me.saket.dank.messageArrayJson";
 
   private static final String ACTION_DIRECT_REPLY = "quickReply";
   private static final String ACTION_MARK_AS_READ = "markAsRead";
@@ -39,27 +41,25 @@ public class NotificationActionReceiver extends BroadcastReceiver {
   private static final String ACTION_MARK_AS_SEEN = "markAllAsSeen";
   private static final String ACTION_MARK_AS_SEEN_AND_OPEN_INBOX = "markAsSeenAndOpenInbox";
 
-  public static Intent createDirectReplyIntent(Context context, Message replyToMessage, JacksonHelper jacksonHelper, int notificationId) {
+  public static Intent createDirectReplyIntent(Context context, Message replyToMessage, Moshi moshi, int notificationId) {
     if (notificationId == -1 || replyToMessage == null) {
       throw new AssertionError();
     }
 
     Intent intent = new Intent(context, NotificationActionReceiver.class);
     intent.setAction(ACTION_DIRECT_REPLY);
-    intent.putExtra(INTENT_KEY_MESSAGE_JSON, jacksonHelper.toJson(replyToMessage));
-    intent.putExtra(INTENT_KEY_NOTIFICATION_ID, notificationId);
+    intent.putExtra(INTENT_KEY_MESSAGE_JSON, moshi.adapter(Message.class).toJson(replyToMessage));
     return intent;
   }
 
-  public static Intent createMarkAsReadIntent(Context context, Message message, JacksonHelper jacksonHelper, int notificationId) {
-    if (notificationId == -1 || message == null) {
+  public static Intent createMarkAsReadIntent(Context context, Moshi moshi, Message... messages) {
+    if (messages.length == 0) {
       throw new AssertionError();
     }
 
     Intent intent = new Intent(context, NotificationActionReceiver.class);
     intent.setAction(ACTION_MARK_AS_READ);
-    intent.putExtra(INTENT_KEY_MESSAGE_JSON, jacksonHelper.toJson(message));
-    intent.putExtra(INTENT_KEY_NOTIFICATION_ID, notificationId);
+    intent.putExtra(INTENT_KEY_MESSAGE_ARRAY_JSON, moshi.adapter(Message[].class).toJson(messages));
     return intent;
   }
 
@@ -126,45 +126,48 @@ public class NotificationActionReceiver extends BroadcastReceiver {
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    String messageJson = intent.getStringExtra(INTENT_KEY_MESSAGE_JSON);
-
     switch (intent.getAction()) {
-      case ACTION_DIRECT_REPLY:
-        Completable sendReplyCompletable = Completable.fromAction(() -> {
-          Bundle directReplyResult = RemoteInput.getResultsFromIntent(intent);
-          String replyText = directReplyResult.getString(KEY_DIRECT_REPLY_MESSAGE);
-          NotificationActionsJobService.sendDirectReply(context, parseMessage(messageJson), Dank.jackson(), replyText);
-        });
-
-        // Note: dismiss notification after calling CheckUnreadMessagesJobService.refreshNotifications()
-        // so that the summary notif gets removed first. Otherwise, the summary notif goes into a gray
-        // color "disabled" state that is visible for a short time if there are no more individual notifs available.
-        sendReplyCompletable
-            .andThen(Dank.messagesNotifManager().markMessageNotifAsSeen(parseMessage(messageJson)))
-            .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.refreshNotifications(context)))
-            .andThen(Dank.messagesNotifManager().dismissNotification(context, intent.getIntExtra(INTENT_KEY_NOTIFICATION_ID, -1)))
+      case ACTION_DIRECT_REPLY: {
+        parseMessage(intent.getStringExtra(INTENT_KEY_MESSAGE_JSON))
+            .flatMapCompletable(message -> {
+              // Note: dismiss notification after calling CheckUnreadMessagesJobService.refreshNotifications()
+              // so that the summary notif gets removed first. Otherwise, the summary notif goes into a gray
+              // color "disabled" state that is visible for a short time if there are no more individual notifs
+              // available. CheckUnreadMessagesJobService.refreshNotifications() will dismiss all notifs if no
+              // unseen/unread messages are present, so the summary gets removed too.
+              return Completable
+                  .fromAction(() -> {
+                    Bundle directReplyResult = RemoteInput.getResultsFromIntent(intent);
+                    String replyText = directReplyResult.getString(KEY_DIRECT_REPLY_MESSAGE);
+                    NotificationActionsJobService.sendDirectReply(context, message, Dank.jackson(), replyText);
+                  })
+                  .andThen(Dank.messagesNotifManager().markMessageNotifAsSeen(message))
+                  .andThen(Completable.fromAction(() -> NotificationActionsJobService.markAsRead(context, Dank.moshi(), message)))
+                  .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.refreshNotifications(context)))
+                  .andThen(Dank.messagesNotifManager().dismissNotification(context, message));
+            })
             .subscribe(doNothingCompletable(), error -> {
               Timber.e(error, "Couldn't send direct reply");
               Toast.makeText(context, R.string.common_unknown_error_message, Toast.LENGTH_LONG).show();
             });
         break;
+      }
 
-      case ACTION_MARK_AS_READ:
-        Message message = parseMessage(messageJson);
-        Dank.messagesNotifManager()
-            .markMessageNotifAsSeen(message)
-            .andThen(Completable.fromAction(() -> {
-              // Offload work to a service because Receivers are destroyed immediately.
-              NotificationActionsJobService.markAsRead(context, message, Dank.jackson());
-
-              // Refresh the notifs so that the summary notif gets canceled if no more notifs are present.
-              CheckUnreadMessagesJobService.refreshNotifications(context);
-            }))
-            .andThen(Dank.messagesNotifManager().dismissNotification(context, intent.getIntExtra(INTENT_KEY_NOTIFICATION_ID, -1)))
+      case ACTION_MARK_AS_READ: {
+        // Offload work to a service (because Receivers are destroyed immediately) and refresh
+        // the notifs so that the summary notif gets canceled if no more notifs are present.
+        parseMessageArray(intent.getStringExtra(INTENT_KEY_MESSAGE_ARRAY_JSON))
+            .flatMapCompletable(messages -> Dank.messagesNotifManager()
+                .markMessageNotifAsSeen(messages)
+                .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.refreshNotifications(context)))
+                .andThen(Completable.fromAction(() -> NotificationActionsJobService.markAsRead(context, Dank.moshi(), messages)))
+                .andThen(Dank.messagesNotifManager().dismissNotification(context, messages))
+            )
             .subscribe();
         break;
+      }
 
-      case ACTION_MARK_ALL_AS_READ:
+      case ACTION_MARK_ALL_AS_READ: {
         List<String> messageIdsToMarkAsRead = intent.getStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST);
         Dank.messagesNotifManager()
             .markMessageNotifAsSeen(messageIdsToMarkAsRead)
@@ -172,6 +175,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
             .andThen(Completable.fromAction(() -> NotificationActionsJobService.markAllAsRead(context)))
             .subscribe();
         break;
+      }
 
       case ACTION_MARK_AS_SEEN: {
         List<String> messageIdsToMarkAsSeen = intent.getStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST);
@@ -179,8 +183,8 @@ public class NotificationActionReceiver extends BroadcastReceiver {
             .markMessageNotifAsSeen(messageIdsToMarkAsSeen)
             .subscribe();
         // This action gets called only when all the notifs are dismissed, so we don't need to refresh the notif again.
+        break;
       }
-      break;
 
       case ACTION_MARK_AS_SEEN_AND_OPEN_INBOX: {
         List<String> messageIdsToMarkAsSeen = intent.getStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST);
@@ -191,17 +195,23 @@ public class NotificationActionReceiver extends BroadcastReceiver {
               inboxIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
               context.startActivity(inboxIntent);
             });
+        // This action is also performed only when a notification is tapped, where it gets dismissed. So refreshing notifs isn't required.
+        break;
       }
-      // This action is also performed only when a notification is tapped, where it gets dismissed. So refreshing notifs isn't required.
-      break;
 
       default:
         throw new UnsupportedOperationException("Unknown action: " + intent.getAction());
     }
   }
 
-  private Message parseMessage(String messageJson) {
-    return JrawUtils.parseMessageJson(messageJson, Dank.jackson());
+  @CheckResult
+  private Single<Message> parseMessage(String messageJson) {
+    return Single.fromCallable(() -> Dank.moshi().adapter(Message.class).fromJson(messageJson));
+  }
+
+  @CheckResult
+  private Single<Message[]> parseMessageArray(String messageArrayJson) {
+    return Single.fromCallable(() -> Dank.moshi().adapter(Message[].class).fromJson(messageArrayJson));
   }
 
 }

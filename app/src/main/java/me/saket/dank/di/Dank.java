@@ -3,6 +3,7 @@ package me.saket.dank.di;
 import android.app.Application;
 
 import com.danikula.videocache.HttpProxyCacheServer;
+import com.squareup.moshi.Moshi;
 
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorManager;
@@ -70,5 +71,9 @@ public class Dank {
 
   public static MessagesNotificationManager messagesNotifManager() {
     return appComponent.messagesNotificationManager();
+  }
+
+  public static Moshi moshi() {
+    return appComponent.moshi();
   }
 }

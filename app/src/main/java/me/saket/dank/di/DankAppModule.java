@@ -39,6 +39,7 @@ import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.utils.ImgurManager;
 import me.saket.dank.utils.JacksonHelper;
+import me.saket.dank.utils.MessageMoshiAdapter;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -126,9 +127,10 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  Moshi provideMoshi() {
+  Moshi provideMoshi(JacksonHelper jacksonHelper) {
     return new Moshi.Builder()
         .add(new AutoValueMoshiAdapterFactory())
+        .add(new MessageMoshiAdapter(jacksonHelper))
         .build();
   }
 

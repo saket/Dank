@@ -8,17 +8,21 @@ import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.PersistableBundle;
-import android.text.format.DateUtils;
+import android.support.annotation.CheckResult;
+
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Message;
 
+import java.util.Arrays;
+
 import io.reactivex.Completable;
+import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.JacksonHelper;
-import me.saket.dank.utils.JrawUtils;
 import timber.log.Timber;
 
 /**
@@ -27,7 +31,8 @@ import timber.log.Timber;
  */
 public class NotificationActionsJobService extends DankJobService {
 
-  private static final String KEY_MESSAGE_JSON = "message";
+  private static final String KEY_MESSAGE_JSON = "messageJson";
+  private static final String KEY_MESSAGE_ARRAY_JSON = "messageArrayJson";
   private static final String KEY_MESSAGE_DIRECT_REPLY = "messageDirectReply";
   private static final String KEY_ACTION = "action";
 
@@ -57,18 +62,18 @@ public class NotificationActionsJobService extends DankJobService {
     jobScheduler.schedule(markAsReadJob);
   }
 
-  public static void markAsRead(Context context, Message message, JacksonHelper jacksonHelper) {
+  public static void markAsRead(Context context, Moshi moshi, Message... messages) {
     PersistableBundle extras = new PersistableBundle(1);
-    extras.putString(KEY_MESSAGE_JSON, jacksonHelper.toJson(message));
     extras.putString(KEY_ACTION, ACTION_MARK_MESSAGE_AS_READ);
+    extras.putString(KEY_MESSAGE_ARRAY_JSON, moshi.adapter(Message[].class).toJson(messages));
 
-    int jobId = ID_MARK_MESSAGE_AS_READ + message.getId().hashCode();
+    int jobId = ID_MARK_MESSAGE_AS_READ + Arrays.hashCode(messages);
 
     JobInfo markAsReadJob = new JobInfo.Builder(jobId, new ComponentName(context, NotificationActionsJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)
         .setExtras(extras)
-        .setOverrideDeadline(DateUtils.MINUTE_IN_MILLIS * 5)
+        .setOverrideDeadline(0)
         .build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
@@ -83,7 +88,7 @@ public class NotificationActionsJobService extends DankJobService {
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)
         .setExtras(extras)
-        .setOverrideDeadline(DateUtils.MINUTE_IN_MILLIS * 5)
+        .setOverrideDeadline(0)
         .build();
     // JobInfo use a default back-off criteria of (30s, exponential) so we're not setting
     // it ourselves.
@@ -99,11 +104,11 @@ public class NotificationActionsJobService extends DankJobService {
     switch (params.getExtras().getString(KEY_ACTION)) {
       case ACTION_SEND_DIRECT_REPLY:
         String replyText = params.getExtras().getString(KEY_MESSAGE_DIRECT_REPLY);
-        sendDirectMessageReply(params, parseMessage(params.getExtras().getString(KEY_MESSAGE_JSON)), replyText);
+        sendDirectMessageReply(params, replyText);
         break;
 
       case ACTION_MARK_MESSAGE_AS_READ:
-        markMessageAsRead(params, parseMessage(params.getExtras().getString(KEY_MESSAGE_JSON)));
+        markMessageAsRead(params);
         break;
 
       case ACTION_MARK_ALL_MESSAGES_AS_READ:
@@ -118,10 +123,13 @@ public class NotificationActionsJobService extends DankJobService {
     return true;
   }
 
-  private void sendDirectMessageReply(JobParameters params, Message replyToMessage, String replyText) {
+  private void sendDirectMessageReply(JobParameters params, String replyText) {
     unsubscribeOnDestroy(
-        Dank.reddit().withAuth(Completable.fromAction(() -> Dank.reddit().userAccountManager().reply(replyToMessage, replyText)))
-            .andThen(Dank.messagesNotifManager().removeMessageNotifSeenStatus(replyToMessage))
+        parseMessage(params.getExtras().getString(KEY_MESSAGE_JSON))
+            .flatMapCompletable(replyToMessage -> Dank.reddit()
+                .withAuth(Completable.fromAction(() -> Dank.reddit().userAccountManager().reply(replyToMessage, replyText)))
+                .andThen(Dank.messagesNotifManager().removeMessageNotifSeenStatus(replyToMessage))
+            )
             .compose(applySchedulersCompletable())
             .subscribe(
                 () -> jobFinished(params, false /* needsReschedule */),
@@ -130,16 +138,18 @@ public class NotificationActionsJobService extends DankJobService {
     );
   }
 
-  private void markMessageAsRead(JobParameters params, Message message) {
+  private void markMessageAsRead(JobParameters params) {
     unsubscribeOnDestroy(
-        Dank.reddit().withAuth(Dank.inbox().setRead(message, true))
-            .andThen(Dank.messagesNotifManager().removeMessageNotifSeenStatus(message))
+        parseMessageArray(params.getExtras().getString(KEY_MESSAGE_ARRAY_JSON))
+            .flatMapCompletable(messages -> Dank.reddit()
+                .withAuth(Dank.inbox().setRead(messages, true))
+                .andThen(Dank.messagesNotifManager().removeMessageNotifSeenStatus(messages))
+            )
             .compose(applySchedulersCompletable())
             .subscribe(
                 () -> jobFinished(params, false),
                 rescheduleJobIfNetworkOrRedditError(params)
-            )
-    );
+            ));
   }
 
   private void markAllMessagesAsRead(JobParameters params) {
@@ -173,8 +183,14 @@ public class NotificationActionsJobService extends DankJobService {
     return false;
   }
 
-  private Message parseMessage(String messageJson) {
-    return JrawUtils.parseMessageJson(messageJson, Dank.jackson());
+  @CheckResult
+  private Single<Message> parseMessage(String messageJson) {
+    return Single.fromCallable(() -> Dank.moshi().adapter(Message.class).fromJson(messageJson));
+  }
+
+  @CheckResult
+  private Single<Message[]> parseMessageArray(String messageArrayJson) {
+    return Single.fromCallable(() -> Dank.moshi().adapter(Message[].class).fromJson(messageArrayJson));
   }
 
 }

@@ -16,13 +16,15 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.jakewharton.rxbinding2.support.v7.widget.RecyclerViewScrollEvent;
+import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
+
+import net.dean.jraw.models.Message;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
 import io.reactivex.SingleTransformer;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.disposables.Disposables;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
@@ -50,15 +52,25 @@ public class InboxFolderFragment extends DankFragment {
 
   private InboxFolder folder;
   private MessagesAdapter messagesAdapter;
-  private InfiniteScrollRecyclerAdapter messagesAdapterWithProgress;
-  private Disposable refreshDisposable = Disposables.empty();
+  private InfiniteScrollRecyclerAdapter<Message, MessagesAdapter.MessageViewHolder> messagesAdapterWithProgress;
+
+  private boolean isRefreshOngoing;
 
   interface Callbacks {
     void setFirstRefreshDone(InboxFolder forFolder);
 
     boolean isFirstRefreshDone(InboxFolder forFolder);
 
+    /**
+     * For linkifying message bodies.
+     */
     BetterLinkMovementMethod getMessageLinkMovementMethod();
+
+    /**
+     * Called as the user scrolls the unread message list. All the seen unread messages are
+     * marked as read on Activity exit.
+     */
+    void markUnreadMessageAsSeen(Message message);
   }
 
   public static InboxFolderFragment create(InboxFolder folder) {
@@ -80,11 +92,12 @@ public class InboxFolderFragment extends DankFragment {
   @Override
   public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
-    folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
 
+    folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
     Callbacks callbacks = (Callbacks) getActivity();
 
     messagesAdapter = new MessagesAdapter(callbacks.getMessageLinkMovementMethod());
+
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
     messageList.setAdapter(messagesAdapterWithProgress);
     messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -109,25 +122,25 @@ public class InboxFolderFragment extends DankFragment {
         })
         .subscribe(messagesAdapter));
 
-    // TODO: Header and footer error state click listeners.
-
     populateEmptyStateView();
+    trackSeenUnreadMessages();
   }
 
   /**
    * Refresh message (only if not already refreshing).
    */
   protected void handleOnClickRefreshMenuItem() {
-    if (refreshDisposable.isDisposed()) {
+    if (!isRefreshOngoing) {
       refreshMessages();
     }
   }
 
   protected void refreshMessages() {
-    refreshDisposable = Dank.inbox().refreshMessages(folder)
+    Disposable refreshDisposable = Dank.inbox().refreshMessages(folder)
         .compose(applySchedulersSingle())
         .compose(handleProgressAndErrorForFirstRefresh())
         .compose(handleProgressAndErrorForSubsequentRefresh())
+        .compose(doOnSingleStartAndTerminate(ongoing -> isRefreshOngoing = ongoing))
         .doOnSubscribe(o -> emptyStateView.setVisibility(View.GONE))
         .subscribe(result -> {
           if (isAdded()) {
@@ -193,7 +206,7 @@ public class InboxFolderFragment extends DankFragment {
 
     Observable<RecyclerViewScrollEvent> emitWhenLoadNeededStream = scrollListener.emitWhenLoadNeeded();
     if (isRetrying) {
-      emitWhenLoadNeededStream = emitWhenLoadNeededStream.startWith(Observable.just(RecyclerViewScrollEvent.create(messageList, 0, 0)));
+      emitWhenLoadNeededStream.startWith(Observable.just(RecyclerViewScrollEvent.create(messageList, 0, 0)));
     }
 
     unsubscribeOnDestroy(emitWhenLoadNeededStream
@@ -214,10 +227,6 @@ public class InboxFolderFragment extends DankFragment {
           messageList.post(() -> messagesAdapterWithProgress.setFooterMode(FooterMode.ERROR));
           messagesAdapterWithProgress.setOnFooterErrorRetryClickListener(o -> startInfiniteScroll(true /* isRetrying */));
         });
-  }
-
-  public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
-    return messageList.canScrollVertically(upwardPagePull ? +1 : -1);
   }
 
   private void populateEmptyStateView() {
@@ -244,6 +253,35 @@ public class InboxFolderFragment extends DankFragment {
         emptyStateView.setMessage(R.string.inbox_empty_state_message_for_username_mentions);
         break;
     }
+  }
+
+  private void trackSeenUnreadMessages() {
+    if (folder != InboxFolder.UNREAD) {
+      return;
+    }
+
+    unsubscribeOnDestroy(RxRecyclerView.scrollEvents(messageList)
+        .subscribe(scrollEvent -> {
+          int firstVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
+          int lastVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findLastCompletelyVisibleItemPosition();
+
+          if (firstVisiblePosition == -1 && lastVisiblePosition == -1) {
+            // Currently displayed item is longer than the window, so there is no completely visible item.
+            firstVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findFirstVisibleItemPosition();
+            lastVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findLastVisibleItemPosition();
+          }
+
+          for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
+            if (messagesAdapterWithProgress.isWrappedAdapterItem(i)) {
+              Message message = messagesAdapterWithProgress.getItemInWrappedAdapter(i);
+              ((Callbacks) getActivity()).markUnreadMessageAsSeen(message);
+            }
+          }
+        }, error -> Timber.e(error, "Couldn't track seen unread messages")));
+  }
+
+  public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
+    return messageList.canScrollVertically(upwardPagePull ? +1 : -1);
   }
 
 }

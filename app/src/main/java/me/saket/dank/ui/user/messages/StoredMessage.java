@@ -25,10 +25,12 @@ public abstract class StoredMessage {
 
   public static final String QUERY_CREATE_TABLE =
       "CREATE TABLE " + TABLE_NAME + " ("
-          + COLUMN_ID + " TEXT NOT NULL PRIMARY KEY, "
+          + COLUMN_ID + " TEXT NOT NULL, "
           + COLUMN_MESSAGE + " TEXT NOT NULL, "
           + COLUMN_CREATED_TIME_MS + " INTEGER NOT NULL, "
-          + COLUMN_FOLDER + " TEXT NOT NULL)";
+          + COLUMN_FOLDER + " TEXT NOT NULL, "
+          + "PRIMARY KEY (" + COLUMN_ID + ", " + COLUMN_FOLDER + ")"
+          + ")";
 
   public static final String QUERY_GET_ALL_IN_FOLDER =
       "SELECT * FROM " + TABLE_NAME

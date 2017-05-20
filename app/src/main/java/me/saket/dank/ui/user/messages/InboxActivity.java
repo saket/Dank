@@ -1,5 +1,7 @@
 package me.saket.dank.ui.user.messages;
 
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
@@ -14,7 +16,12 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Types;
 
+import net.dean.jraw.models.Message;
+
+import java.io.IOException;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -23,14 +30,19 @@ import butterknife.ButterKnife;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
+import me.saket.dank.di.Dank;
+import me.saket.dank.notifs.NotificationActionReceiver;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.OpenUrlActivity;
+import me.saket.dank.utils.Collections;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
 public class InboxActivity extends DankPullCollapsibleActivity implements InboxFolderFragment.Callbacks {
+
+  private static final String KEY_SEEN_UNREAD_MESSAGES = "seenUnreadMessages";
 
   @BindView(R.id.inbox_root) IndependentExpandablePageLayout contentPage;
   @BindView(R.id.inbox_tablayout) TabLayout tabLayout;
@@ -39,6 +51,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.ALL.length);
   private DankLinkMovementMethod commentLinkMovementMethod;
   private InboxPagerAdapter inboxPagerAdapter;
+  private Set<Message> seenUnreadMessages = new HashSet<>();
 
   /**
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
@@ -76,6 +89,38 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   }
 
   @Override
+  public void onSaveInstanceState(Bundle outState) {
+    JsonAdapter<Set<Message>> jsonAdapter = Dank.moshi().adapter(Types.newParameterizedType(Set.class, Message.class));
+    outState.putString(KEY_SEEN_UNREAD_MESSAGES, jsonAdapter.toJson(seenUnreadMessages));
+    super.onSaveInstanceState(outState);
+  }
+
+  @Override
+  public void onRestoreInstanceState(Bundle inState) {
+    if (inState != null) {
+      final long startTime = System.currentTimeMillis();
+      JsonAdapter<Set<Message>> jsonAdapter = Dank.moshi().adapter(Types.newParameterizedType(Set.class, Message.class));
+      String seenUnreadMessagesJson = inState.getString(KEY_SEEN_UNREAD_MESSAGES);
+      try {
+        //noinspection ConstantConditions
+        seenUnreadMessages = jsonAdapter.fromJson(seenUnreadMessagesJson);
+        Timber.i("Deserialized in: %sms", System.currentTimeMillis() - startTime);
+
+      } catch (IOException e) {
+        Timber.e(e, "Couldn't deserialize seen unread messages json: %s", seenUnreadMessagesJson);
+      }
+    }
+  }
+
+  @Override
+  public void finish() {
+    if (!isChangingConfigurations()) {
+      markSeenMessagesAsRead();
+    }
+    super.finish();
+  }
+
+  @Override
   public void setFirstRefreshDone(InboxFolder forFolder) {
     firstRefreshDoneForFolders.add(forFolder);
   }
@@ -106,6 +151,27 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       });
     }
     return commentLinkMovementMethod;
+  }
+
+  @Override
+  public void markUnreadMessageAsSeen(Message message) {
+    if (!seenUnreadMessages.contains(message)) {
+      seenUnreadMessages.add(message);
+      Timber.i("Seen: %s", message.getBody().substring(0, Math.min(50, message.getBody().length())));
+    }
+  }
+
+  private void markSeenMessagesAsRead() {
+    if (seenUnreadMessages.isEmpty()) {
+      return;
+    }
+
+    Message[] seenMessagesArray = Collections.toArray(seenUnreadMessages, Message.class);
+    sendBroadcast(NotificationActionReceiver.createMarkAsReadIntent(this, Dank.moshi(), seenMessagesArray));
+
+    Dank.inbox().refreshMessages(InboxFolder.UNREAD)
+        .compose(applySchedulersSingle())
+        .subscribe(doNothing(), doNothing());
   }
 
   @Override

@@ -39,7 +39,7 @@ public class PreferencesFragment extends DankFragment {
 
     toolbar.setNavigationOnClickListener(v -> ((UserPreferencesActivity) getActivity()).onClickPreferencesToolbarUp());
 
-    if (savedInstanceState != null) {
+    if (savedInstanceState != null && savedInstanceState.containsKey(KEY_ACTIVE_PREFERENCE_GROUP)) {
       populatePreferences((UserPreferenceGroup) savedInstanceState.getSerializable(KEY_ACTIVE_PREFERENCE_GROUP));
     }
 
@@ -48,7 +48,9 @@ public class PreferencesFragment extends DankFragment {
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
-    outState.putSerializable(KEY_ACTIVE_PREFERENCE_GROUP, activePreferenceGroup);
+    if (activePreferenceGroup != null) {
+      outState.putSerializable(KEY_ACTIVE_PREFERENCE_GROUP, activePreferenceGroup);
+    }
     super.onSaveInstanceState(outState);
   }
 

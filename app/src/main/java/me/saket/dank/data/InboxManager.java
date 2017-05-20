@@ -27,6 +27,7 @@ import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.ui.user.messages.StoredMessage;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.JrawUtils;
+import timber.log.Timber;
 
 public class InboxManager {
 
@@ -189,8 +190,14 @@ public class InboxManager {
 // ======== READ STATUS ======== //
 
   @CheckResult
-  public Completable setRead(Message message, boolean read) {
-    return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setRead(read, message));
+  public Completable setRead(Message[] messages, boolean read) {
+    return Completable.fromAction(() -> {
+      Timber.d("--------------------------");
+      for (Message message : messages) {
+        Timber.i("Read: %s", message.getBody().substring(0, Math.min(50, message.getBody().length())));
+      }
+      dankRedditClient.redditInboxManager().setRead(read, messages[0], messages);
+    });
   }
 
   @CheckResult

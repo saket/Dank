@@ -14,13 +14,15 @@ import timber.log.Timber;
 /**
  * Contains a header progress View for indicating fresh data load and a footer progress View
  * for indicating more data load. Both header and footer offer error states.
+ *
+ * @param <T> Type of items in the wrapped adapter.
  */
-public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
   private static final int VIEW_TYPE_HEADER = 99;
   private static final int VIEW_TYPE_FOOTER = 100;
 
-  private RecyclerView.Adapter adapterToWrap;
+  private RecyclerViewArrayAdapter<T, VH> adapterToWrap;
   private HeaderMode activeHeaderMode = HeaderMode.HIDDEN;
   private FooterMode activeFooterMode = FooterMode.HIDDEN;
   private View.OnClickListener onHeaderErrorRetryClickListener;
@@ -38,11 +40,11 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
     HIDDEN
   }
 
-  public static InfiniteScrollRecyclerAdapter wrap(RecyclerView.Adapter adapterToWrap) {
-    return new InfiniteScrollRecyclerAdapter(adapterToWrap);
+  public static <T, VH extends RecyclerView.ViewHolder> InfiniteScrollRecyclerAdapter<T, VH> wrap(RecyclerViewArrayAdapter<T, VH> adapterToWrap) {
+    return new InfiniteScrollRecyclerAdapter<>(adapterToWrap);
   }
 
-  private InfiniteScrollRecyclerAdapter(RecyclerView.Adapter adapterToWrap) {
+  private InfiniteScrollRecyclerAdapter(RecyclerViewArrayAdapter<T, VH> adapterToWrap) {
     this.adapterToWrap = adapterToWrap;
     setHasStableIds(adapterToWrap.hasStableIds());
 
@@ -104,6 +106,14 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
     onFooterErrorRetryClickListener = listener;
   }
 
+  public boolean isWrappedAdapterItem(int position) {
+    return !(isHeaderItem(position) || isFooterItem(position));
+  }
+
+  public T getItemInWrappedAdapter(int position) {
+    return adapterToWrap.getItem(position - getVisibleHeaderItemCount());
+  }
+
   @Override
   public int getItemViewType(int position) {
     if (isHeaderItem(position)) {
@@ -162,7 +172,7 @@ public class InfiniteScrollRecyclerAdapter extends RecyclerView.Adapter<Recycler
 
       default:
         //noinspection unchecked
-        adapterToWrap.onBindViewHolder(holder, position - getVisibleHeaderItemCount());
+        adapterToWrap.onBindViewHolder((VH) holder, position - getVisibleHeaderItemCount());
     }
   }
 

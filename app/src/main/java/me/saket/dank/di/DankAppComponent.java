@@ -1,6 +1,7 @@
 package me.saket.dank.di;
 
 import com.danikula.videocache.HttpProxyCacheServer;
+import com.squareup.moshi.Moshi;
 
 import javax.inject.Singleton;
 
@@ -42,4 +43,6 @@ public interface DankAppComponent {
   InboxManager inboxManager();
 
   MessagesNotificationManager messagesNotificationManager();
+
+  Moshi moshi();
 }
