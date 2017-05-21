@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
@@ -38,4 +39,25 @@
         android:layout_gravity="center"
         android:layout_marginTop="-60dp"
         android:visibility="gone" />
+
+    <!-- This useless container is required so that the parent doesn't play
+         any transition animation when the visibility of this FAB changes. -->
+    <FrameLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:animateLayoutChanges="false">
+
+        <android.support.design.widget.FloatingActionButton
+            android:id="@+id/messagefolder_mark_all_as_read"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_gravity="bottom|end"
+            android:layout_margin="@dimen/spacing16"
+            android:src="@drawable/ic_done_all_24dp"
+            android:tint="@color/black"
+            android:visibility="invisible"
+            app:fabSize="normal"
+            app:rippleColor="@color/color_accent_secondary"
+            tools:visibility="visible" />
+    </FrameLayout>
 </FrameLayout>

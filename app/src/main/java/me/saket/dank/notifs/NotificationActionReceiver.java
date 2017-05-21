@@ -41,6 +41,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
   private static final String ACTION_MARK_AS_SEEN = "markAllAsSeen";
   private static final String ACTION_MARK_AS_SEEN_AND_OPEN_INBOX = "markAsSeenAndOpenInbox";
 
+  @CheckResult
   public static Intent createDirectReplyIntent(Context context, Message replyToMessage, Moshi moshi, int notificationId) {
     if (notificationId == -1 || replyToMessage == null) {
       throw new AssertionError();
@@ -52,6 +53,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
     return intent;
   }
 
+  @CheckResult
   public static Intent createMarkAsReadIntent(Context context, Moshi moshi, Message... messages) {
     if (messages.length == 0) {
       throw new AssertionError();
@@ -63,6 +65,10 @@ public class NotificationActionReceiver extends BroadcastReceiver {
     return intent;
   }
 
+  /**
+   * @param messagesToMarkAsRead Used for marking their notifications as "seen".
+   */
+  @CheckResult
   public static Intent createMarkAllAsReadIntent(Context context, List<Message> messagesToMarkAsRead) {
     ArrayList<String> messageIdsToMarkAsRead = new ArrayList<>(messagesToMarkAsRead.size());
     for (Message message : messagesToMarkAsRead) {
@@ -80,6 +86,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
   /**
    * Gets called when an individual notification is dismissed.
    */
+  @CheckResult
   public static Intent createMarkAsSeenIntent(Context context, Message messageToMarkAsSeen) {
     ArrayList<Message> singleList = new ArrayList<>(1);
     singleList.add(messageToMarkAsSeen);
@@ -89,6 +96,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
   /**
    * Gets called when the entire bundled notification is dismissed.
    */
+  @CheckResult
   public static Intent createMarkAllAsSeenIntent(Context context, List<Message> messagesToMarkAsSeen) {
     ArrayList<String> messageIdsToMarkAsSeen = new ArrayList<>(messagesToMarkAsSeen.size());
     for (Message message : messagesToMarkAsSeen) {
@@ -104,6 +112,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
   /**
    * Mark all unread messages as seen and then open {@link InboxActivity}.
    */
+  @CheckResult
   public static Intent createMarkAllSeenAndOpenInboxIntent(Context context, List<Message> messagesToMarkAsSeen) {
     ArrayList<String> messageIdsToMarkAsSeen = new ArrayList<>(messagesToMarkAsSeen.size());
     for (Message message : messagesToMarkAsSeen) {
@@ -118,6 +127,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
   /**
    * Mark <var>unreadMessage</var> as seen and then open {@link InboxActivity}.
    */
+  @CheckResult
   public static Intent createMarkAsSeenAndOpenInboxIntent(Context context, Message unreadMessage) {
     ArrayList<Message> singleList = new ArrayList<>(1);
     singleList.add(unreadMessage);

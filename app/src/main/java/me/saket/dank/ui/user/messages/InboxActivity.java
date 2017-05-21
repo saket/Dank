@@ -23,6 +23,7 @@ import net.dean.jraw.models.Message;
 
 import java.io.IOException;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import butterknife.BindView;
@@ -154,11 +155,16 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   }
 
   @Override
-  public void markUnreadMessageAsSeen(Message message) {
-    if (!seenUnreadMessages.contains(message)) {
-      seenUnreadMessages.add(message);
-      Timber.i("Seen: %s", message.getBody().substring(0, Math.min(50, message.getBody().length())));
+  public void markUnreadMessageAsRead(Message unreadMessage) {
+    if (!seenUnreadMessages.contains(unreadMessage)) {
+      seenUnreadMessages.add(unreadMessage);
     }
+  }
+
+  @Override
+  public void markAllUnreadMessagesAsReadAndExit(List<Message> unreadMessages) {
+    sendBroadcast(NotificationActionReceiver.createMarkAllAsReadIntent(this, unreadMessages));
+    finish();
   }
 
   private void markSeenMessagesAsRead() {

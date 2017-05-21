@@ -8,6 +8,7 @@ import static me.saket.dank.utils.RxUtils.doOnceAfterNext;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -20,8 +21,11 @@ import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 
 import net.dean.jraw.models.Message;
 
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import io.reactivex.Observable;
 import io.reactivex.SingleTransformer;
 import io.reactivex.disposables.Disposable;
@@ -49,6 +53,7 @@ public class InboxFolderFragment extends DankFragment {
   @BindView(R.id.messagefolder_first_load_progress) View firstLoadProgressView;
   @BindView(R.id.messagefolder_empty_state) EmptyStateView emptyStateView;
   @BindView(R.id.messagefolder_error_state) ErrorStateView firstLoadErrorStateView;
+  @BindView(R.id.messagefolder_mark_all_as_read) FloatingActionButton markAllAsReadButton;
 
   private InboxFolder folder;
   private MessagesAdapter messagesAdapter;
@@ -70,7 +75,9 @@ public class InboxFolderFragment extends DankFragment {
      * Called as the user scrolls the unread message list. All the seen unread messages are
      * marked as read on Activity exit.
      */
-    void markUnreadMessageAsSeen(Message message);
+    void markUnreadMessageAsRead(Message unreadMessage);
+
+    void markAllUnreadMessagesAsReadAndExit(List<Message> unreadMessages);
   }
 
   public static InboxFolderFragment create(InboxFolder folder) {
@@ -97,13 +104,13 @@ public class InboxFolderFragment extends DankFragment {
     Callbacks callbacks = (Callbacks) getActivity();
 
     messagesAdapter = new MessagesAdapter(callbacks.getMessageLinkMovementMethod());
-
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
     messageList.setAdapter(messagesAdapterWithProgress);
     messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
     messageList.setItemAnimator(new DefaultItemAnimator());
 
     unsubscribeOnDestroy(Dank.inbox().messages(folder)
+        .distinctUntilChanged()
         .compose(applySchedulers())
         .compose(doOnceAfterNext(o -> {
           startInfiniteScroll(false /* isRetrying */);
@@ -120,10 +127,21 @@ public class InboxFolderFragment extends DankFragment {
             emptyStateView.setVisibility(messages.isEmpty() ? View.VISIBLE : View.GONE);
           }
         })
+        .doOnNext(messages -> {
+          if (folder == InboxFolder.UNREAD && !messages.isEmpty()) {
+            markAllAsReadButton.show();
+          } else {
+            markAllAsReadButton.hide();
+          }
+        })
         .subscribe(messagesAdapter));
 
     populateEmptyStateView();
     trackSeenUnreadMessages();
+  }
+
+  public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
+    return messageList.canScrollVertically(upwardPagePull ? +1 : -1);
   }
 
   /**
@@ -261,7 +279,7 @@ public class InboxFolderFragment extends DankFragment {
     }
 
     unsubscribeOnDestroy(RxRecyclerView.scrollEvents(messageList)
-        .subscribe(scrollEvent -> {
+        .map(scrollEvent -> {
           int firstVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
           int lastVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findLastCompletelyVisibleItemPosition();
 
@@ -271,17 +289,23 @@ public class InboxFolderFragment extends DankFragment {
             lastVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findLastVisibleItemPosition();
           }
 
-          for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
-            if (messagesAdapterWithProgress.isWrappedAdapterItem(i)) {
-              Message message = messagesAdapterWithProgress.getItemInWrappedAdapter(i);
-              ((Callbacks) getActivity()).markUnreadMessageAsSeen(message);
+          if (firstVisiblePosition != -1) {
+            for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
+              if (messagesAdapterWithProgress.isWrappedAdapterItem(i)) {
+                Message message = messagesAdapterWithProgress.getItemInWrappedAdapter(i);
+                ((Callbacks) getActivity()).markUnreadMessageAsRead(message);
+              }
             }
           }
-        }, error -> Timber.e(error, "Couldn't track seen unread messages")));
+
+          return scrollEvent;
+        })
+        .subscribe(doNothing(), error -> Timber.e(error, "Couldn't track seen unread messages")));
   }
 
-  public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
-    return messageList.canScrollVertically(upwardPagePull ? +1 : -1);
+  @OnClick(R.id.messagefolder_mark_all_as_read)
+  void onClickMarkAllAsRead() {
+    ((Callbacks) getActivity()).markAllUnreadMessagesAsReadAndExit(messagesAdapter.getData());
   }
 
 }

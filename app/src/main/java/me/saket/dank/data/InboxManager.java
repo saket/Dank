@@ -27,7 +27,6 @@ import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.ui.user.messages.StoredMessage;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.JrawUtils;
-import timber.log.Timber;
 
 public class InboxManager {
 
@@ -39,6 +38,15 @@ public class InboxManager {
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase briteDatabase;
   private final JacksonHelper jacksonHelper;
+
+  @AutoValue
+  public abstract static class FetchMoreResult {
+    public abstract boolean wasEmpty();
+
+    public static FetchMoreResult create(boolean empty) {
+      return new AutoValue_InboxManager_FetchMoreResult(empty);
+    }
+  }
 
   public InboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, JacksonHelper jacksonHelper) {
     this.dankRedditClient = dankRedditClient;
@@ -178,31 +186,40 @@ public class InboxManager {
     };
   }
 
-  @AutoValue
-  public abstract static class FetchMoreResult {
-    public abstract boolean wasEmpty();
+  @CheckResult
+  private Completable removeMessages(InboxFolder folder, Message... messages) {
+    return Completable.fromAction(() -> {
+      try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
+        for (Message message : messages) {
+          briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.QUERY_WHERE_FOLDER_AND_ID, folder.name(), message.getId());
+        }
+        transaction.markSuccessful();
+      }
+    });
+  }
 
-    public static FetchMoreResult create(boolean empty) {
-      return new AutoValue_InboxManager_FetchMoreResult(empty);
-    }
+  @CheckResult
+  private Completable removeAllMessages(InboxFolder folder) {
+    return Completable.fromAction(() -> {
+      try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
+        briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.QUERY_WHERE_FOLDER, folder.name());
+        transaction.markSuccessful();
+      }
+    });
   }
 
 // ======== READ STATUS ======== //
 
   @CheckResult
   public Completable setRead(Message[] messages, boolean read) {
-    return Completable.fromAction(() -> {
-      Timber.d("--------------------------");
-      for (Message message : messages) {
-        Timber.i("Read: %s", message.getBody().substring(0, Math.min(50, message.getBody().length())));
-      }
-      dankRedditClient.redditInboxManager().setRead(read, messages[0], messages);
-    });
+    return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setRead(read, messages[0], messages))
+        .andThen(removeMessages(InboxFolder.UNREAD, messages));
   }
 
   @CheckResult
   public Completable setAllRead() {
-    return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setAllRead());
+    return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setAllRead())
+        .andThen(removeAllMessages(InboxFolder.UNREAD));
   }
 
 }

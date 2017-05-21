@@ -46,6 +46,9 @@ public abstract class StoredMessage {
   public static final String QUERY_WHERE_FOLDER =
       COLUMN_FOLDER + " == ?";
 
+  public static final String QUERY_WHERE_FOLDER_AND_ID =
+      COLUMN_FOLDER + " == ? AND " + COLUMN_ID + " == ?";
+
   public abstract String id();
 
   public abstract Message message();
