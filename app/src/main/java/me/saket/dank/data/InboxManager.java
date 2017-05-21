@@ -8,6 +8,7 @@ import android.support.annotation.CheckResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.auto.value.AutoValue;
+import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 
 import net.dean.jraw.models.Listing;
@@ -25,7 +26,6 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.ui.user.messages.StoredMessage;
-import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.JrawUtils;
 
 public class InboxManager {
@@ -37,7 +37,7 @@ public class InboxManager {
 
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase briteDatabase;
-  private final JacksonHelper jacksonHelper;
+  private Moshi moshi;
 
   @AutoValue
   public abstract static class FetchMoreResult {
@@ -48,10 +48,10 @@ public class InboxManager {
     }
   }
 
-  public InboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, JacksonHelper jacksonHelper) {
+  public InboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
     this.dankRedditClient = dankRedditClient;
     this.briteDatabase = briteDatabase;
-    this.jacksonHelper = jacksonHelper;
+    this.moshi = moshi;
   }
 
   /**
@@ -61,7 +61,7 @@ public class InboxManager {
   public Observable<List<Message>> messages(InboxFolder folder) {
     return toV2Observable(briteDatabase
         .createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
-        .mapToList(StoredMessage.mapMessageFromCursor(jacksonHelper)));
+        .mapToList(StoredMessage.mapMessageFromCursor(moshi)));
   }
 
   /**
@@ -142,7 +142,7 @@ public class InboxManager {
     StoredMessage dummyDefaultValue = StoredMessage.create("-1", new PrivateMessage(null), 0, InboxFolder.PRIVATE_MESSAGES);
 
     return toV2Single(briteDatabase.createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
-        .mapToOneOrDefault(StoredMessage.mapFromCursor(jacksonHelper), dummyDefaultValue)
+        .mapToOneOrDefault(StoredMessage.mapFromCursor(moshi), dummyDefaultValue)
         .first()
         .map(lastStoredMessage -> {
           if (lastStoredMessage == dummyDefaultValue) {
@@ -179,7 +179,7 @@ public class InboxManager {
 
         for (Message fetchedMessage : fetchedMessages) {
           StoredMessage messageToStore = StoredMessage.create(fetchedMessage.getId(), fetchedMessage, JrawUtils.createdTimeUtc(fetchedMessage), folder);
-          briteDatabase.insert(StoredMessage.TABLE_NAME, messageToStore.toContentValues(jacksonHelper), SQLiteDatabase.CONFLICT_REPLACE);
+          briteDatabase.insert(StoredMessage.TABLE_NAME, messageToStore.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
         }
         transaction.markSuccessful();
       }

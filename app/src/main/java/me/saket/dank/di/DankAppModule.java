@@ -219,8 +219,8 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  InboxManager provideInboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, JacksonHelper jacksonHelper) {
-    return new InboxManager(dankRedditClient, briteDatabase, jacksonHelper);
+  InboxManager provideInboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
+    return new InboxManager(dankRedditClient, briteDatabase, moshi);
   }
 
   @Provides

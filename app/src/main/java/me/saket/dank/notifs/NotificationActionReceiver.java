@@ -149,7 +149,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
                   .fromAction(() -> {
                     Bundle directReplyResult = RemoteInput.getResultsFromIntent(intent);
                     String replyText = directReplyResult.getString(KEY_DIRECT_REPLY_MESSAGE);
-                    NotificationActionsJobService.sendDirectReply(context, message, Dank.jackson(), replyText);
+                    NotificationActionsJobService.sendDirectReply(context, message, Dank.moshi(), replyText);
                   })
                   .andThen(Dank.messagesNotifManager().markMessageNotifAsSeen(message))
                   .andThen(Completable.fromAction(() -> NotificationActionsJobService.markAsRead(context, Dank.moshi(), message)))

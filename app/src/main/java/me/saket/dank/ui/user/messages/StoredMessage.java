@@ -4,11 +4,13 @@ import android.content.ContentValues;
 import android.database.Cursor;
 
 import com.google.auto.value.AutoValue;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Message;
 
-import me.saket.dank.utils.JacksonHelper;
-import me.saket.dank.utils.JrawUtils;
+import java.io.IOException;
+
 import rx.functions.Func1;
 
 /**
@@ -57,26 +59,33 @@ public abstract class StoredMessage {
 
   public abstract InboxFolder folder();
 
-  public ContentValues toContentValues(JacksonHelper jacksonHelper) {
+  public ContentValues toContentValues(Moshi moshi) {
     ContentValues values = new ContentValues(4);
     values.put(COLUMN_ID, id());
-    values.put(COLUMN_MESSAGE, jacksonHelper.toJson(message()));
+    values.put(COLUMN_MESSAGE, moshi.adapter(Message.class).toJson(message()));
     values.put(COLUMN_CREATED_TIME_MS, createdTimeMillis());
     values.put(COLUMN_FOLDER, folder().name());
     return values;
   }
 
-  public static Func1<Cursor, StoredMessage> mapFromCursor(JacksonHelper jacksonHelper) {
+  public static Func1<Cursor, StoredMessage> mapFromCursor(Moshi moshi) {
     return cursor -> {
-      Message message = JrawUtils.parseMessageJson(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGE)), jacksonHelper);
+      Message message = mapMessageFromCursor(moshi).call(cursor);
       long createdTimeMillis = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_CREATED_TIME_MS));
       InboxFolder folder = InboxFolder.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER)));
       return create(message.getId(), message, createdTimeMillis, folder);
     };
   }
 
-  public static Func1<Cursor, Message> mapMessageFromCursor(JacksonHelper jacksonHelper) {
-    return cursor -> JrawUtils.parseMessageJson(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGE)), jacksonHelper);
+  public static Func1<Cursor, Message> mapMessageFromCursor(Moshi moshi) {
+    return cursor -> {
+      JsonAdapter<Message> adapter = moshi.adapter(Message.class);
+      try {
+        return adapter.fromJson(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGE)));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    };
   }
 
   public static StoredMessage create(String id, Message message, long createdTimeMillis, InboxFolder folder) {

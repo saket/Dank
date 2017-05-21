@@ -22,7 +22,6 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
-import me.saket.dank.utils.JacksonHelper;
 import timber.log.Timber;
 
 /**
@@ -40,9 +39,9 @@ public class NotificationActionsJobService extends DankJobService {
   private static final String ACTION_MARK_MESSAGE_AS_READ = "markMessageAsRead";
   private static final String ACTION_MARK_ALL_MESSAGES_AS_READ = "markAllMessagesAsRead";
 
-  public static void sendDirectReply(Context context, Message replyToMessage, JacksonHelper jacksonHelper, String replyText) {
+  public static void sendDirectReply(Context context, Message replyToMessage, Moshi moshi, String replyText) {
     PersistableBundle extras = new PersistableBundle(2);
-    extras.putString(KEY_MESSAGE_JSON, jacksonHelper.toJson(replyToMessage));
+    extras.putString(KEY_MESSAGE_JSON, moshi.adapter(Message.class).toJson(replyToMessage));
     extras.putString(KEY_MESSAGE_DIRECT_REPLY, replyText);
     extras.putString(KEY_ACTION, ACTION_SEND_DIRECT_REPLY);
 
