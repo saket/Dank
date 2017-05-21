@@ -81,12 +81,22 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     viewPager.setAdapter(inboxPagerAdapter);
     tabLayout.setupWithViewPager(viewPager, true);
 
-    RxViewPager.pageSelections(viewPager).subscribe(o -> invalidateOptionsMenu());
-
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       //noinspection CodeBlock2Expr
       return touchLiesOn(viewPager, downX, downY) && inboxPagerAdapter.getActiveFragment().shouldInterceptPullToCollapse(upwardPagePull);
     });
+  }
+
+  @Override
+  protected void onStart() {
+    super.onStart();
+
+    // Dismiss any active message notifications when the unread page is active.
+    unsubscribeOnStop(RxViewPager.pageSelections(viewPager)
+        .map(pageIndex -> inboxPagerAdapter.getFolder(pageIndex) == InboxFolder.UNREAD)
+        .filter(isUnreadActive -> isUnreadActive)
+        .flatMapCompletable(o -> Dank.messagesNotifManager().dismissAllNotifications(this))
+        .subscribe());
   }
 
   @Override

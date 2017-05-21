@@ -16,6 +16,10 @@ public class InboxPagerAdapter extends FragmentStatePagerAdapter {
     this.resources = resources;
   }
 
+  public InboxFolder getFolder(int position) {
+    return InboxFolder.ALL[position];
+  }
+
   @Override
   public Fragment getItem(int position) {
     return InboxFolderFragment.create(InboxFolder.ALL[position]);
