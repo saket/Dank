@@ -22,6 +22,7 @@ import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxActivity;
+import me.saket.dank.ui.user.messages.InboxFolder;
 import timber.log.Timber;
 
 /**
@@ -201,9 +202,9 @@ public class NotificationActionReceiver extends BroadcastReceiver {
         Dank.messagesNotifManager()
             .markMessageNotifAsSeen(messageIdsToMarkAsSeen)
             .subscribe(() -> {
-              Intent inboxIntent = InboxActivity.createStartIntent(context, null);
-              inboxIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-              context.startActivity(inboxIntent);
+              Intent unreadInboxIntent = InboxActivity.createStartIntent(context, InboxFolder.UNREAD, null);
+              unreadInboxIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+              context.startActivity(unreadInboxIntent);
             });
         // This action is also performed only when a notification is tapped, where it gets dismissed. So refreshing notifs isn't required.
         break;

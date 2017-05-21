@@ -6,6 +6,8 @@ import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 import android.view.ViewGroup;
 
+import java.util.Arrays;
+
 public class InboxPagerAdapter extends FragmentStatePagerAdapter {
 
   private Resources resources;
@@ -18,6 +20,10 @@ public class InboxPagerAdapter extends FragmentStatePagerAdapter {
 
   public InboxFolder getFolder(int position) {
     return InboxFolder.ALL[position];
+  }
+
+  public int getPosition(InboxFolder folder) {
+    return Arrays.binarySearch(InboxFolder.ALL, folder);
   }
 
   @Override

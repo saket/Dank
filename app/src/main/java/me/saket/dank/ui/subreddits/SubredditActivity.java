@@ -416,6 +416,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       // This code is not supposed to fail :/
       Dank.subscriptionManager().removeAll().subscribe();
 
+      // TODO: Expose a callback when the user logs in. Get subreddits, messages and profile.
+
     } else {
       super.onActivityResult(requestCode, resultCode, data);
     }

@@ -44,6 +44,7 @@ import timber.log.Timber;
 public class InboxActivity extends DankPullCollapsibleActivity implements InboxFolderFragment.Callbacks {
 
   private static final String KEY_SEEN_UNREAD_MESSAGES = "seenUnreadMessages";
+  private static final String KEY_INITIAL_FOLDER = "initialFolder";
 
   @BindView(R.id.inbox_root) IndependentExpandablePageLayout contentPage;
   @BindView(R.id.inbox_tablayout) TabLayout tabLayout;
@@ -58,12 +59,13 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
    */
   public static void start(Context context, @Nullable Rect expandFromShape) {
-    context.startActivity(createStartIntent(context, expandFromShape));
+    context.startActivity(createStartIntent(context, InboxFolder.UNREAD, expandFromShape));
   }
 
-  public static Intent createStartIntent(Context context, @Nullable Rect expandFromShape) {
+  public static Intent createStartIntent(Context context, InboxFolder initialFolder, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, InboxActivity.class);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
+    intent.putExtra(KEY_INITIAL_FOLDER, initialFolder);
     return intent;
   }
 
@@ -85,6 +87,19 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       //noinspection CodeBlock2Expr
       return touchLiesOn(viewPager, downX, downY) && inboxPagerAdapter.getActiveFragment().shouldInterceptPullToCollapse(upwardPagePull);
     });
+
+    // We're only using the initial value to move to the Unread tab if any other page was active in onNewIntent().
+    if (getIntent().getSerializableExtra(KEY_INITIAL_FOLDER) != InboxFolder.ALL[0]) {
+      throw new UnsupportedOperationException("Hey, when did we write this code?");
+    }
+  }
+
+  @Override
+  protected void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+
+    InboxFolder folderToShow = (InboxFolder) intent.getSerializableExtra(KEY_INITIAL_FOLDER);
+    viewPager.setCurrentItem(inboxPagerAdapter.getPosition(folderToShow));
   }
 
   @Override
