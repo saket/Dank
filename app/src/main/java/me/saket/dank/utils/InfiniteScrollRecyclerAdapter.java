@@ -19,8 +19,8 @@ import timber.log.Timber;
  */
 public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
 
-  private static final int VIEW_TYPE_HEADER = 99;
-  private static final int VIEW_TYPE_FOOTER = 100;
+  private static final int VIEW_TYPE_HEADER = 20;
+  private static final int VIEW_TYPE_FOOTER = 21;
 
   private RecyclerViewArrayAdapter<T, VH> adapterToWrap;
   private HeaderMode activeHeaderMode = HeaderMode.HIDDEN;
@@ -123,7 +123,11 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
       return VIEW_TYPE_FOOTER;
 
     } else {
-      return adapterToWrap.getItemViewType(position - getVisibleHeaderItemCount());
+      int wrappedItemType = adapterToWrap.getItemViewType(position - getVisibleHeaderItemCount());
+      if (wrappedItemType == VIEW_TYPE_HEADER || wrappedItemType == VIEW_TYPE_FOOTER) {
+        throw new IllegalStateException("Use another viewType value");
+      }
+      return wrappedItemType;
     }
   }
 

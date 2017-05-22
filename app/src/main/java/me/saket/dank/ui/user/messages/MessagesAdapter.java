@@ -1,5 +1,6 @@
 package me.saket.dank.ui.user.messages;
 
+import android.content.res.Resources;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.text.format.DateUtils;
@@ -10,7 +11,6 @@ import android.widget.TextView;
 
 import net.dean.jraw.models.CommentMessage;
 import net.dean.jraw.models.Message;
-import net.dean.jraw.models.PrivateMessage;
 
 import java.util.List;
 
@@ -26,18 +26,40 @@ import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.UrlParser;
 import timber.log.Timber;
 
-public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesAdapter.MessageViewHolder> implements Consumer<List<Message>> {
+public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerView.ViewHolder> implements Consumer<List<Message>> {
+
+  private static final int VIEW_TYPE_PRIVATE_MESSAGE_THREAD = 100;
+  private static final int VIEW_TYPE_INDIVIDUAL_MESSAGE = 101;
 
   private BetterLinkMovementMethod linkMovementMethod;
+  private boolean showMessageThreads;
 
-  public MessagesAdapter(BetterLinkMovementMethod linkMovementMethod) {
+  /**
+   * @param showMessageThreads used for {@link InboxFolder#PRIVATE_MESSAGES}.
+   */
+  public MessagesAdapter(BetterLinkMovementMethod linkMovementMethod, boolean showMessageThreads) {
     this.linkMovementMethod = linkMovementMethod;
+    this.showMessageThreads = showMessageThreads;
     setHasStableIds(true);
   }
 
   @Override
-  protected MessageViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-    return MessageViewHolder.create(inflater, parent, linkMovementMethod);
+  public void accept(@NonNull List<Message> messages) {
+    updateData(messages);
+  }
+
+  @Override
+  public int getItemViewType(int position) {
+    return showMessageThreads ? VIEW_TYPE_PRIVATE_MESSAGE_THREAD : VIEW_TYPE_INDIVIDUAL_MESSAGE;
+  }
+
+  @Override
+  protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
+    if (viewType == VIEW_TYPE_INDIVIDUAL_MESSAGE) {
+      return IndividualMessageViewHolder.create(inflater, parent, linkMovementMethod);
+    } else {
+      return MessageThreadViewHolder.create(inflater, parent);
+    }
   }
 
   @Override
@@ -46,37 +68,88 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesA
   }
 
   @Override
-  public void onBindViewHolder(MessageViewHolder holder, int position) {
+  public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
     Message message = getItem(position);
-    holder.bind(message);
 
-    holder.itemView.setOnClickListener(o -> {
-      // TODO: Check if message is a comment.
-      // TODO: Send callback.
-      String commentUrl = "https://reddit.com" + message.getDataNode().get("context").asText();
-      Timber.i("Clicked url: %s", UrlParser.parse(commentUrl));
-    });
+    if (getItemViewType(position) == VIEW_TYPE_INDIVIDUAL_MESSAGE) {
+      ((IndividualMessageViewHolder) holder).bind(message);
+      holder.itemView.setOnClickListener(o -> {
+        // TODO: Check if message is a comment.
+        // TODO: Send callback.
+        String commentUrl = "https://reddit.com" + message.getDataNode().get("context").asText();
+        Timber.i("Clicked url: %s", UrlParser.parse(commentUrl));
+      });
+
+    } else {
+      ((MessageThreadViewHolder) holder).bind(message);
+      holder.itemView.setOnClickListener(o -> {
+        Timber.i("TODO: Open thread");
+      });
+    }
   }
 
-  @Override
-  public void accept(@NonNull List<Message> messages) {
-    updateData(messages);
+  private static CharSequence createTimestamp(Resources resources, Message message) {
+    long createdTimeMs = JrawUtils.createdTimeUtc(message);
+    if (createdTimeMs < DateUtils.MINUTE_IN_MILLIS) {
+      return resources.getString(R.string.inbox_timestamp_just_now);
+    } else {
+      return DateUtils.getRelativeTimeSpanString(
+          createdTimeMs,
+          System.currentTimeMillis(),
+          0,
+          DateUtils.FORMAT_ABBREV_RELATIVE | DateUtils.FORMAT_ABBREV_MONTH
+      );
+    }
   }
 
-  public static class MessageViewHolder extends RecyclerView.ViewHolder {
-    @BindView(R.id.message_reply_post_title) TextView linkTitleView;
-    @BindView(R.id.message_reply_timestamp) TextView timestampView;
-    @BindView(R.id.message_reply_author_name) TextView authorNameView;
-    @BindView(R.id.message_reply_from) TextView fromView;
-    @BindView(R.id.message_reply_body) TextView messageBodyView;
+  static class MessageThreadViewHolder extends RecyclerView.ViewHolder {
+    @BindView(R.id.messagethread_sender) TextView senderView;
+    @BindView(R.id.messagethread_subject) TextView subjectView;
+    @BindView(R.id.messagethread_snippet) TextView snippetView;
+    @BindView(R.id.messagethread_timestamp) TextView timestampView;
+
+    public static MessageThreadViewHolder create(LayoutInflater inflater, ViewGroup parent) {
+      return new MessageThreadViewHolder(inflater.inflate(R.layout.list_item_message_thread, parent, false));
+    }
+
+    public MessageThreadViewHolder(View itemView) {
+      super(itemView);
+      ButterKnife.bind(this, itemView);
+    }
+
+    public void bind(Message message) {
+      String senderName = message.getAuthor();
+      if (senderName == null) {
+        senderView.setText(itemView.getResources().getString(R.string.subreddit_name_r_prefix, message.getSubreddit()));
+      } else {
+        senderView.setText(senderName);
+      }
+
+      subjectView.setText(message.getSubject());
+      timestampView.setText(createTimestamp(itemView.getResources(), message));
+
+      // Cache this: This is taking too long to bind.
+      String bodyHtml = JrawUtils.getMessageBodyHtml(message);
+      String bodyWithoutHtml = Markdown.stripMarkdown(bodyHtml);
+      bodyWithoutHtml = bodyWithoutHtml.replace("\n", " ");
+      snippetView.setText(bodyWithoutHtml);
+    }
+  }
+
+  static class IndividualMessageViewHolder extends RecyclerView.ViewHolder {
+    @BindView(R.id.individualmessage_reply_post_title) TextView linkTitleView;
+    @BindView(R.id.individualmessage_reply_timestamp) TextView timestampView;
+    @BindView(R.id.individualmessage_reply_author_name) TextView authorNameView;
+    @BindView(R.id.individualmessage_reply_from) TextView fromView;
+    @BindView(R.id.individualmessage_reply_body) TextView messageBodyView;
 
     private final BetterLinkMovementMethod linkMovementMethod;
 
-    public static MessageViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
-      return new MessageViewHolder(inflater.inflate(R.layout.list_item_message, parent, false), linkMovementMethod);
+    public static IndividualMessageViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
+      return new IndividualMessageViewHolder(inflater.inflate(R.layout.list_item_individual_message, parent, false), linkMovementMethod);
     }
 
-    public MessageViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
+    public IndividualMessageViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
       super(itemView);
       this.linkMovementMethod = linkMovementMethod;
       ButterKnife.bind(this, itemView);
@@ -91,11 +164,10 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesA
     }
 
     public void bind(Message message) {
-      if (message instanceof CommentMessage) {
+      if (message.isComment()) {
         linkTitleView.setText(((CommentMessage) message).getLinkTitle());
         fromView.setText(itemView.getResources().getString(R.string.subreddit_name_r_prefix, message.getSubreddit()));
-
-      } else if (message instanceof PrivateMessage) {
+      } else {
         linkTitleView.setText(message.getSubject());
       }
 
@@ -106,19 +178,8 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, MessagesA
       messageBodyView.setMovementMethod(linkMovementMethod);
 
       authorNameView.setText(message.getAuthor());
-
-      long createdTimeMs = message.getCreated().getTime();
-      if (createdTimeMs < DateUtils.MINUTE_IN_MILLIS) {
-        timestampView.setText(R.string.inbox_timestamp_just_now);
-      } else {
-        timestampView.setText(DateUtils.getRelativeTimeSpanString(
-            createdTimeMs,
-            System.currentTimeMillis(),
-            0,
-            DateUtils.FORMAT_ABBREV_RELATIVE
-        ));
-      }
+      timestampView.setText(createTimestamp(itemView.getResources(), message));
     }
-  }
 
+  }
 }

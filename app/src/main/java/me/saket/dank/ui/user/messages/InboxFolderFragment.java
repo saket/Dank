@@ -59,7 +59,7 @@ public class InboxFolderFragment extends DankFragment {
 
   private InboxFolder folder;
   private MessagesAdapter messagesAdapter;
-  private InfiniteScrollRecyclerAdapter<Message, MessagesAdapter.MessageViewHolder> messagesAdapterWithProgress;
+  private InfiniteScrollRecyclerAdapter<Message, ?> messagesAdapterWithProgress;
 
   private boolean isRefreshOngoing;
 
@@ -105,7 +105,7 @@ public class InboxFolderFragment extends DankFragment {
     folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
     Callbacks callbacks = (Callbacks) getActivity();
 
-    messagesAdapter = new MessagesAdapter(callbacks.getMessageLinkMovementMethod());
+    messagesAdapter = new MessagesAdapter(callbacks.getMessageLinkMovementMethod(), folder == InboxFolder.PRIVATE_MESSAGES);
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
     messageList.setAdapter(messagesAdapterWithProgress);
     messageList.setLayoutManager(new LinearLayoutManager(getActivity()));

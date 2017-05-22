@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="?attr/selectableItemBackground"
+  android:orientation="vertical"
+  android:paddingTop="@dimen/spacing12"
+  tools:background="@color/window_background"
+  tools:layout_marginTop="25dp">
+
+  <TextView
+    android:id="@+id/messagethread_subject"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:layout_marginStart="@dimen/spacing16"
+    android:layout_toStartOf="@+id/messagethread_timestamp"
+    android:ellipsize="end"
+    android:maxLines="1"
+    android:textColor="@color/gray_200"
+    tools:text="Subject" />
+
+  <TextView
+    android:id="@+id/messagethread_timestamp"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentEnd="true"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:textSize="@dimen/textsize12"
+    tools:text="Yesterday" />
+
+  <TextView
+    android:id="@+id/messagethread_sender"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/messagethread_subject"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:layout_marginStart="@dimen/spacing16"
+    android:layout_marginTop="@dimen/spacing8"
+    android:ellipsize="end"
+    android:maxLines="1"
+    tools:text="Saketme" />
+
+  <TextView
+    android:id="@+id/messagethread_snippet"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/messagethread_sender"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:layout_marginStart="@dimen/spacing16"
+    android:layout_toStartOf="@+id/messagethread_message_count"
+    android:ellipsize="end"
+    android:maxLines="2"
+    android:textColor="@color/gray_500"
+    tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..." />
+
+  <TextView
+    android:id="@+id/messagethread_message_count"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignParentEnd="true"
+    android:layout_alignTop="@+id/messagethread_snippet"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:textSize="@dimen/textsize12"
+    tools:text="+20" />
+
+  <View
+    style="@style/DankSeparator.Vertical"
+    android:layout_below="@+id/messagethread_snippet"
+    android:layout_marginTop="@dimen/spacing16" />
+</RelativeLayout>

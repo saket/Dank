@@ -10,7 +10,7 @@
     tools:layout_marginTop="25dp">
 
     <TextView
-        android:id="@+id/message_reply_post_title"
+        android:id="@+id/individualmessage_reply_post_title"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/spacing16"
@@ -21,7 +21,7 @@
         tools:text="Litho: A Declarative UI Framework for Android" />
 
     <TextView
-        android:id="@+id/message_reply_timestamp"
+        android:id="@+id/individualmessage_reply_timestamp"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/spacing16"
@@ -55,7 +55,7 @@
                 android:textColor="@color/gray_500" />
 
             <TextView
-                android:id="@+id/message_reply_author_name"
+                android:id="@+id/individualmessage_reply_author_name"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:layout_marginEnd="@dimen/spacing4"
@@ -70,7 +70,7 @@
                 android:textColor="@color/gray_500" />
 
             <TextView
-                android:id="@+id/message_reply_from"
+                android:id="@+id/individualmessage_reply_from"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:textColor="@color/gray_500"
@@ -78,7 +78,7 @@
         </LinearLayout>
 
         <TextView
-            android:id="@+id/message_reply_body"
+            android:id="@+id/individualmessage_reply_body"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:textColor="@color/gray_300"
