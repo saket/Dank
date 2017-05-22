@@ -8,7 +8,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.google.auto.value.AutoValue;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 

@@ -115,7 +115,9 @@ public class CheckUnreadMessagesJobService extends DankJobService {
 
               Timber.i("----------------------------------------");
               Timber.w("Stale notifs: %s", staleMessages.size());
-              staleMessages.forEach(m -> Timber.i("%s", m.getBody().substring(0, Math.min(m.getBody().length(), 50))));
+              for (Message m : staleMessages) {
+                Timber.i("%s", m.getBody().substring(0, Math.min(m.getBody().length(), 50)));
+              }
               Timber.i("----------------------------------------");
 
               return unmodifiableList(staleMessages);

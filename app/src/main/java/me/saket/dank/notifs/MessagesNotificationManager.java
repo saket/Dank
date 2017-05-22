@@ -281,7 +281,7 @@ public class MessagesNotificationManager {
   private NotificationCompat.Builder createSingleMessageSummaryNotifBuilder(Context context, Message unreadMessage, String loggedInUserName) {
     // Mark as read action.
     PendingIntent markAsReadPendingIntent = createMarkAsReadPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_READ);
-    Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
+    Action markAsReadAction = new Action.Builder(R.drawable.ic_done_24dp, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
 
     // Dismissal intent.
     PendingIntent deletePendingIntent = createMarkAsSeenPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN);
@@ -345,7 +345,7 @@ public class MessagesNotificationManager {
         markAllAsReadIntent,
         PendingIntent.FLAG_UPDATE_CURRENT
     );
-    Action markAllReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_all_as_read), markAllAsReadPendingIntent).build();
+    Action markAllReadAction = new Action.Builder(R.drawable.ic_done_all_24dp, context.getString(R.string.messagenotification_mark_all_as_read), markAllAsReadPendingIntent).build();
 
     // Since message API is paginated, it's possible that the user has multiple pages of unread messages
     // and we could only fetch the first page.
