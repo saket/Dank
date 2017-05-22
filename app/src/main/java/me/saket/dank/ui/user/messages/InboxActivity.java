@@ -46,6 +46,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   private static final String KEY_SEEN_UNREAD_MESSAGES = "seenUnreadMessages";
   private static final String KEY_INITIAL_FOLDER = "initialFolder";
+  private static final String KEY_ACTIVE_PAGE_INDEX = "activePageIndex";
 
   @BindView(R.id.inbox_root) IndependentExpandablePageLayout contentPage;
   @BindView(R.id.inbox_tablayout) TabLayout tabLayout;
@@ -80,18 +81,28 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     setupContentExpandablePage(contentPage);
     expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
 
-    inboxPagerAdapter = new InboxPagerAdapter(getResources(), getSupportFragmentManager());
-    viewPager.setAdapter(inboxPagerAdapter);
-    tabLayout.setupWithViewPager(viewPager, true);
-
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       //noinspection CodeBlock2Expr
       return touchLiesOn(viewPager, downX, downY) && inboxPagerAdapter.getActiveFragment().shouldInterceptPullToCollapse(upwardPagePull);
     });
 
+    inboxPagerAdapter = new InboxPagerAdapter(getResources(), getSupportFragmentManager());
+
     // We're only using the initial value to move to the Unread tab if any other page was active in onNewIntent().
     if (getIntent().getSerializableExtra(KEY_INITIAL_FOLDER) != InboxFolder.ALL[0]) {
       throw new UnsupportedOperationException("Hey, when did we write this code?");
+    }
+  }
+
+  @Override
+  protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+
+    viewPager.setAdapter(inboxPagerAdapter);
+    tabLayout.setupWithViewPager(viewPager, true);
+
+    if (savedInstanceState != null) {
+      viewPager.setCurrentItem(savedInstanceState.getInt(KEY_ACTIVE_PAGE_INDEX));
     }
   }
 
@@ -122,6 +133,10 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   public void onSaveInstanceState(Bundle outState) {
     JsonAdapter<Set<Message>> jsonAdapter = Dank.moshi().adapter(Types.newParameterizedType(Set.class, Message.class));
     outState.putString(KEY_SEEN_UNREAD_MESSAGES, jsonAdapter.toJson(seenUnreadMessages));
+
+    // ViewPager is supposed to handle restoring page index on its own, but that
+    // is not working for some reason. And I don't have time to investigate why.
+    outState.putInt(KEY_ACTIVE_PAGE_INDEX, viewPager.getCurrentItem());
     super.onSaveInstanceState(outState);
   }
 
