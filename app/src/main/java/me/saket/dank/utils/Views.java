@@ -12,6 +12,8 @@ import timber.log.Timber;
 
 /**
  * Utility methods for Views.
+ *
+ * Convert all "executeOn*" methods to Rx.
  */
 public class Views {
 

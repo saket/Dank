@@ -15,6 +15,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.MarginLayoutParams;
 
 import com.jakewharton.rxbinding2.support.v7.widget.RecyclerViewScrollEvent;
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
@@ -38,6 +39,7 @@ import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.FooterMode;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderMode;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
 import timber.log.Timber;
@@ -130,8 +132,15 @@ public class InboxFolderFragment extends DankFragment {
         .doOnNext(messages -> {
           if (folder == InboxFolder.UNREAD && !messages.isEmpty()) {
             markAllAsReadButton.show();
+            Views.executeOnMeasure(markAllAsReadButton, () -> {
+              MarginLayoutParams fabMarginLayoutParams = (MarginLayoutParams) markAllAsReadButton.getLayoutParams();
+              int spaceForFab = markAllAsReadButton.getHeight() + fabMarginLayoutParams.topMargin + fabMarginLayoutParams.bottomMargin;
+              Views.setPaddingBottom(messageList, spaceForFab);
+            });
+
           } else {
             markAllAsReadButton.hide();
+            Views.setPaddingBottom(messageList, 0);
           }
         })
         .subscribe(messagesAdapter));
