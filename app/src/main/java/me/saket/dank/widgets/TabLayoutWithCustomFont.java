@@ -12,14 +12,14 @@ import me.saket.dank.R;
  */
 public class TabLayoutWithCustomFont extends TabLayout {
 
-    public TabLayoutWithCustomFont(Context context, AttributeSet attrs) {
-        super(context, attrs);
-    }
+  public TabLayoutWithCustomFont(Context context, AttributeSet attrs) {
+    super(context, attrs);
+  }
 
-    @Override
-    public void addTab(@NonNull Tab tab, int position, boolean setSelected) {
-        tab.setCustomView(R.layout.view_viewpager_tab);
-        super.addTab(tab, position, setSelected);
-    }
+  @Override
+  public void addTab(@NonNull Tab tab, int position, boolean setSelected) {
+    tab.setCustomView(R.layout.view_viewpager_tab);
+    super.addTab(tab, position, setSelected);
+  }
 
 }

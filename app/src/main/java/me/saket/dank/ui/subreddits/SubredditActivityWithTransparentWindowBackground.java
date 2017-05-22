@@ -13,18 +13,18 @@ import me.saket.dank.data.RedditLink;
  * <p>
  * - Double tapping on a URL would take user to the home-screen.
  * - Opening a chrome custom tab would leak the home-screen during its entry animation.
- *
+ * <p>
  * This Activity simply exists so that a different theme can be used in the manifest.
  */
 public class SubredditActivityWithTransparentWindowBackground extends SubredditActivity {
 
-    /**
-     * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
-     */
-    public static void start(Context context, RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape) {
-        Intent intent = new Intent(context, SubredditActivityWithTransparentWindowBackground.class);
-        addStartExtrasToIntent(subredditLink, expandFromShape, intent);
-        context.startActivity(intent);
-    }
+  /**
+   * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
+   */
+  public static void start(Context context, RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape) {
+    Intent intent = new Intent(context, SubredditActivityWithTransparentWindowBackground.class);
+    addStartExtrasToIntent(subredditLink, expandFromShape, intent);
+    context.startActivity(intent);
+  }
 
 }

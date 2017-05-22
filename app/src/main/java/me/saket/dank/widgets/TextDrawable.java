@@ -9,35 +9,35 @@ import android.widget.TextView;
 
 public class TextDrawable extends Drawable {
 
-    private final String text;
-    private final TextView textView;
+  private final String text;
+  private final TextView textView;
 
-    /**
-     * Creates a drawable from the given text.
-     */
-    public TextDrawable(String text, TextView textView) {
-        this.text = text;
-        this.textView = textView;
-        setBounds(0, 0, (int) textView.getPaint().measureText(this.text) + text.length(), (int) textView.getTextSize());
-    }
+  /**
+   * Creates a drawable from the given text.
+   */
+  public TextDrawable(String text, TextView textView) {
+    this.text = text;
+    this.textView = textView;
+    setBounds(0, 0, (int) textView.getPaint().measureText(this.text) + text.length(), (int) textView.getTextSize());
+  }
 
-    @Override
-    public void draw(@NonNull Canvas canvas) {
-        Paint paint = textView.getPaint();
-        paint.setColor(textView.getTextColors().getColorForState(textView.getDrawableState(), 0));
-        int lineBaseline = textView.getLineBounds(0, null);
-        canvas.drawText(text, 0, canvas.getClipBounds().top + lineBaseline, paint);
-    }
+  @Override
+  public void draw(@NonNull Canvas canvas) {
+    Paint paint = textView.getPaint();
+    paint.setColor(textView.getTextColors().getColorForState(textView.getDrawableState(), 0));
+    int lineBaseline = textView.getLineBounds(0, null);
+    canvas.drawText(text, 0, canvas.getClipBounds().top + lineBaseline, paint);
+  }
 
-    @Override
-    public void setAlpha(int alpha) {/* Not supported */}
+  @Override
+  public void setAlpha(int alpha) {/* Not supported */}
 
-    @Override
-    public void setColorFilter(ColorFilter colorFilter) {/* Not supported */}
+  @Override
+  public void setColorFilter(ColorFilter colorFilter) {/* Not supported */}
 
-    @Override
-    public int getOpacity() {
-        return 1;
-    }
+  @Override
+  public int getOpacity() {
+    return 1;
+  }
 
 }

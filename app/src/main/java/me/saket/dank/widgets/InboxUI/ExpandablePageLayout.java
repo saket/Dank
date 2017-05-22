@@ -26,728 +26,728 @@ import timber.log.Timber;
  */
 public class ExpandablePageLayout extends BaseExpandablePageLayout implements PullToCollapseListener.OnPullListener {
 
-    @Nullable private View activityToolbar;  // Toolbar inside the parent page, not in this page.
-    @Nullable ExpandablePageLayout nestedPage;
+  @Nullable private View activityToolbar;  // Toolbar inside the parent page, not in this page.
+  @Nullable ExpandablePageLayout nestedPage;
 
-    private State currentState;
-    private PullToCollapseListener pullToCollapseListener;
-    private OnPullToCollapseIntercepter onPullToCollapseIntercepter;
-    private List<Callbacks> callbacks;
-    private Map<String, InternalPageCallbacks> internalStateCallbacks = new HashMap<>(2);
-    private ValueAnimator toolbarAnimator;
-    private float expandedAlpha;
-    private float collapsedAlpha;
-    private boolean isFullyCoveredByNestedPage;
-    private boolean pullToCollapseEnabled;
+  private State currentState;
+  private PullToCollapseListener pullToCollapseListener;
+  private OnPullToCollapseIntercepter onPullToCollapseIntercepter;
+  private List<Callbacks> callbacks;
+  private Map<String, InternalPageCallbacks> internalStateCallbacks = new HashMap<>(2);
+  private ValueAnimator toolbarAnimator;
+  private float expandedAlpha;
+  private float collapsedAlpha;
+  private boolean isFullyCoveredByNestedPage;
+  private boolean pullToCollapseEnabled;
 
-    public enum State {
-        COLLAPSING,
-        COLLAPSED,
-        EXPANDING,
-        EXPANDED
-    }
+  public enum State {
+    COLLAPSING,
+    COLLAPSED,
+    EXPANDING,
+    EXPANDED
+  }
 
-    public interface OnPullToCollapseIntercepter {
-        /**
-         * Called when the user makes a vertical swipe gesture, which is registered as a pull-to-collapse gesture.
-         * This is called once per gesture, when the user's finger touches this page. <code>ExpandablePage</code>
-         * starts accepting this gesture if this method returns false.
-         * <p>
-         * So, if you have other vertically scrollable Views in your layout (RecyclerView, ListView, ScrollView, etc.),
-         * you can return true to consume a gesture after verifying that the touch event lies on one of those Views.
-         * This will block <code>ExpandablePage</code> from processing the gesture until the finger is lifted.
-         *
-         * @param downX          X-location from where the gesture started.
-         * @param downY          Y-location from where the gesture started.
-         * @param upwardPagePull True if the PAGE is being pulled upwards. Remember that upward swipe == downward
-         *                       scroll and vice versa.
-         * @return True to consume this touch event. False otherwise.
-         */
-        boolean onInterceptPullToCollapseGesture(MotionEvent event, float downX, float downY, boolean upwardPagePull);
-    }
+  public interface OnPullToCollapseIntercepter {
+    /**
+     * Called when the user makes a vertical swipe gesture, which is registered as a pull-to-collapse gesture.
+     * This is called once per gesture, when the user's finger touches this page. <code>ExpandablePage</code>
+     * starts accepting this gesture if this method returns false.
+     * <p>
+     * So, if you have other vertically scrollable Views in your layout (RecyclerView, ListView, ScrollView, etc.),
+     * you can return true to consume a gesture after verifying that the touch event lies on one of those Views.
+     * This will block <code>ExpandablePage</code> from processing the gesture until the finger is lifted.
+     *
+     * @param downX          X-location from where the gesture started.
+     * @param downY          Y-location from where the gesture started.
+     * @param upwardPagePull True if the PAGE is being pulled upwards. Remember that upward swipe == downward
+     *                       scroll and vice versa.
+     * @return True to consume this touch event. False otherwise.
+     */
+    boolean onInterceptPullToCollapseGesture(MotionEvent event, float downX, float downY, boolean upwardPagePull);
+  }
+
+  /**
+   * Implement this to receive callbacks about an <code>ExpandingPage</code>. Use with
+   * {@link ExpandablePageLayout#addCallbacks(Callbacks...)}. If you use a Fragment
+   * inside your <code>ExpandablePage</code>, it's best to make your Fragment implement this interface.
+   */
+  public interface Callbacks {
+    /**
+     * Called when the user has selected an item and the <code>ExpandablePage</code> is going to be expand.
+     */
+    void onPageAboutToExpand(long expandAnimDuration);
 
     /**
-     * Implement this to receive callbacks about an <code>ExpandingPage</code>. Use with
-     * {@link ExpandablePageLayout#addCallbacks(Callbacks...)}. If you use a Fragment
-     * inside your <code>ExpandablePage</code>, it's best to make your Fragment implement this interface.
+     * Called when either the <code>ExpandablePage</code>'s expand animation is complete or if the
+     * <code>ExpandablePage</code> was expanded immediately. At this time, the page is fully covering the list.
      */
-    public interface Callbacks {
-        /**
-         * Called when the user has selected an item and the <code>ExpandablePage</code> is going to be expand.
-         */
-        void onPageAboutToExpand(long expandAnimDuration);
-
-        /**
-         * Called when either the <code>ExpandablePage</code>'s expand animation is complete or if the
-         * <code>ExpandablePage</code> was expanded immediately. At this time, the page is fully covering the list.
-         */
-        void onPageExpanded();
-
-        /**
-         * Called when the user has chosen to close the expanded item and the <code>ExpandablePage</code> is going to
-         * be collapse.
-         */
-        void onPageAboutToCollapse(long collapseAnimDuration);
-
-        /**
-         * Called when the page's collapse animation is complete. At this time, it's totally invisible to the user.
-         */
-        void onPageCollapsed();
-    }
-
-    // Used internally, by InboxRecyclerView.
-    interface InternalPageCallbacks {
-        /**
-         * Called when this page has fully covered the list. This can happen in two situations: when the page has
-         * fully expanded and when the page has moved back to its position after being pulled.
-         */
-        void onPageFullyCovered();
-
-        /**
-         * Called when this page is going to be collapsed.
-         */
-        void onPageAboutToCollapse();
-
-        /**
-         * Called when this page has fully collapsed and is no longer visible.
-         */
-        void onPageFullyCollapsed();
-
-        /**
-         * Page is being pulled. Sync the scroll with the list.
-         */
-        void onPagePull(float deltaY);
-
-        /**
-         * Called when this page was released while being pulled.
-         *
-         * @param collapseEligible Whether the page was pulled enough for collapsing it.
-         */
-        void onPageRelease(boolean collapseEligible);
-    }
-
-    public ExpandablePageLayout(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        expandedAlpha = 1f;
-        collapsedAlpha = 0f;
-
-        // Hidden on start
-        setAlpha(expandedAlpha);
-        setVisibility(View.INVISIBLE);
-        changeState(State.COLLAPSED);
-
-        // Handles pull-to-collapse-this-page gestures
-        setPullToCollapseEnabled(true);
-        pullToCollapseListener = new PullToCollapseListener(getContext(), this, this);
-
-        // Make this ViewGroup clickable so that it receives all touch events. Consume everything.
-        setClickable(true);
-    }
-
-    public void setup(View parentActivityToolbar) {
-        activityToolbar = parentActivityToolbar;
-
-        Views.executeOnMeasure(activityToolbar, () -> {
-            setPullToCollapseDistanceThreshold(parentActivityToolbar.getHeight());
-        });
-    }
+    void onPageExpanded();
 
     /**
-     * The distance after which the page can collapse when pulled.
+     * Called when the user has chosen to close the expanded item and the <code>ExpandablePage</code> is going to
+     * be collapse.
      */
-    public void setPullToCollapseDistanceThreshold(int threshold) {
-        pullToCollapseListener.setCollapseDistanceThreshold(threshold);
-    }
+    void onPageAboutToCollapse(long collapseAnimDuration);
 
-    public void setPullToCollapseEnabled(boolean enabled) {
-        pullToCollapseEnabled = enabled;
-    }
+    /**
+     * Called when the page's collapse animation is complete. At this time, it's totally invisible to the user.
+     */
+    void onPageCollapsed();
+  }
 
-    protected void changeState(State newState) {
-        currentState = newState;
-    }
+  // Used internally, by InboxRecyclerView.
+  interface InternalPageCallbacks {
+    /**
+     * Called when this page has fully covered the list. This can happen in two situations: when the page has
+     * fully expanded and when the page has moved back to its position after being pulled.
+     */
+    void onPageFullyCovered();
 
-    @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        // Ignore touch events until the page is fully expanded for avoiding accidental taps.
-        return isExpanded() && super.dispatchTouchEvent(ev);
-    }
+    /**
+     * Called when this page is going to be collapsed.
+     */
+    void onPageAboutToCollapse();
+
+    /**
+     * Called when this page has fully collapsed and is no longer visible.
+     */
+    void onPageFullyCollapsed();
+
+    /**
+     * Page is being pulled. Sync the scroll with the list.
+     */
+    void onPagePull(float deltaY);
+
+    /**
+     * Called when this page was released while being pulled.
+     *
+     * @param collapseEligible Whether the page was pulled enough for collapsing it.
+     */
+    void onPageRelease(boolean collapseEligible);
+  }
+
+  public ExpandablePageLayout(Context context, AttributeSet attrs) {
+    super(context, attrs);
+    expandedAlpha = 1f;
+    collapsedAlpha = 0f;
+
+    // Hidden on start
+    setAlpha(expandedAlpha);
+    setVisibility(View.INVISIBLE);
+    changeState(State.COLLAPSED);
+
+    // Handles pull-to-collapse-this-page gestures
+    setPullToCollapseEnabled(true);
+    pullToCollapseListener = new PullToCollapseListener(getContext(), this, this);
+
+    // Make this ViewGroup clickable so that it receives all touch events. Consume everything.
+    setClickable(true);
+  }
+
+  public void setup(View parentActivityToolbar) {
+    activityToolbar = parentActivityToolbar;
+
+    Views.executeOnMeasure(activityToolbar, () -> {
+      setPullToCollapseDistanceThreshold(parentActivityToolbar.getHeight());
+    });
+  }
+
+  /**
+   * The distance after which the page can collapse when pulled.
+   */
+  public void setPullToCollapseDistanceThreshold(int threshold) {
+    pullToCollapseListener.setCollapseDistanceThreshold(threshold);
+  }
+
+  public void setPullToCollapseEnabled(boolean enabled) {
+    pullToCollapseEnabled = enabled;
+  }
+
+  protected void changeState(State newState) {
+    currentState = newState;
+  }
+
+  @Override
+  public boolean dispatchTouchEvent(MotionEvent ev) {
+    // Ignore touch events until the page is fully expanded for avoiding accidental taps.
+    return isExpanded() && super.dispatchTouchEvent(ev);
+  }
 
 // ======== PULL TO COLLAPSE ======== //
 
-    @Override
-    public boolean onInterceptTouchEvent(MotionEvent event) {
-        boolean intercepted = false;
-        if (pullToCollapseEnabled && getVisibility() == VISIBLE) {
-            intercepted = pullToCollapseListener.onTouch(this, event);
-        }
-
-        return intercepted || super.onInterceptTouchEvent(event);
+  @Override
+  public boolean onInterceptTouchEvent(MotionEvent event) {
+    boolean intercepted = false;
+    if (pullToCollapseEnabled && getVisibility() == VISIBLE) {
+      intercepted = pullToCollapseListener.onTouch(this, event);
     }
 
-    @Override
-    public boolean onTouchEvent(@NonNull MotionEvent event) {
-        return (pullToCollapseEnabled && pullToCollapseListener.onTouch(this, event)) || super.onTouchEvent(event);
+    return intercepted || super.onInterceptTouchEvent(event);
+  }
+
+  @Override
+  public boolean onTouchEvent(@NonNull MotionEvent event) {
+    return (pullToCollapseEnabled && pullToCollapseListener.onTouch(this, event)) || super.onTouchEvent(event);
+  }
+
+  @Override
+  public void onPull(float deltaY, float currentTranslationY, boolean upwardPull, boolean deltaUpwardPull) {
+    // In case the user pulled the page before it could fully open (and while the toolbar was still hiding).
+    stopToolbarAnimation();
+
+    // Reveal the toolbar if this page is being pulled down or hide it back if it's being released.
+    if (activityToolbar != null) {
+      updateToolbarTranslationY(currentTranslationY > 0f, currentTranslationY);
     }
 
-    @Override
-    public void onPull(float deltaY, float currentTranslationY, boolean upwardPull, boolean deltaUpwardPull) {
-        // In case the user pulled the page before it could fully open (and while the toolbar was still hiding).
-        stopToolbarAnimation();
+    // Sync the positions of the list items with this page.
+    dispatchOnPagePullCallbacks(deltaY);
+  }
 
-        // Reveal the toolbar if this page is being pulled down or hide it back if it's being released.
-        if (activityToolbar != null) {
-            updateToolbarTranslationY(currentTranslationY > 0f, currentTranslationY);
-        }
+  @Override
+  public void onRelease(boolean collapseEligible) {
+    dispatchOnPageReleasedCallback(collapseEligible);
 
-        // Sync the positions of the list items with this page.
-        dispatchOnPagePullCallbacks(deltaY);
+    // The list should either collapse or animate back its items out of the list.
+    if (collapseEligible) {
+      dispatchOnPageAboutToCollapseCallback();
+
+    } else {
+      if (isCollapsedOrCollapsing()) {
+        // Let the page collapse in peace.
+        return;
+      }
+
+      changeState(State.EXPANDED);
+      stopAnyOngoingPageAnimation();
+
+      // Restore everything to their expanded position
+      // 1. Hide Toolbar again
+      if (activityToolbar != null) {
+        animateToolbar(false, 0f);
+      }
+
+      // 2. Expand page again
+      if (getTranslationY() != 0f) {
+        animate().translationY(0f)
+            .alpha(expandedAlpha)
+            .setDuration(getAnimationDuration())
+            .setInterpolator(getAnimationInterpolator())
+            .setListener(new AnimatorListenerAdapter() {
+              boolean mCanceled;
+
+              @Override
+              public void onAnimationStart(Animator animation) {
+                super.onAnimationStart(animation);
+                mCanceled = false;
+              }
+
+              @Override
+              public void onAnimationCancel(Animator animation) {
+                super.onAnimationCancel(animation);
+                mCanceled = true;
+              }
+
+              @Override
+              public void onAnimationEnd(Animator animation) {
+                super.onAnimationEnd(animation);
+                if (mCanceled) {
+                  return;
+                }
+                dispatchOnPageFullyCoveredCallback();
+              }
+
+            })
+            .start();
+      }
     }
-
-    @Override
-    public void onRelease(boolean collapseEligible) {
-        dispatchOnPageReleasedCallback(collapseEligible);
-
-        // The list should either collapse or animate back its items out of the list.
-        if (collapseEligible) {
-            dispatchOnPageAboutToCollapseCallback();
-
-        } else {
-            if (isCollapsedOrCollapsing()) {
-                // Let the page collapse in peace.
-                return;
-            }
-
-            changeState(State.EXPANDED);
-            stopAnyOngoingPageAnimation();
-
-            // Restore everything to their expanded position
-            // 1. Hide Toolbar again
-            if (activityToolbar != null) {
-                animateToolbar(false, 0f);
-            }
-
-            // 2. Expand page again
-            if (getTranslationY() != 0f) {
-                animate().translationY(0f)
-                        .alpha(expandedAlpha)
-                        .setDuration(getAnimationDuration())
-                        .setInterpolator(getAnimationInterpolator())
-                        .setListener(new AnimatorListenerAdapter() {
-                            boolean mCanceled;
-
-                            @Override
-                            public void onAnimationStart(Animator animation) {
-                                super.onAnimationStart(animation);
-                                mCanceled = false;
-                            }
-
-                            @Override
-                            public void onAnimationCancel(Animator animation) {
-                                super.onAnimationCancel(animation);
-                                mCanceled = true;
-                            }
-
-                            @Override
-                            public void onAnimationEnd(Animator animation) {
-                                super.onAnimationEnd(animation);
-                                if (mCanceled) {
-                                    return;
-                                }
-                                dispatchOnPageFullyCoveredCallback();
-                            }
-
-                        })
-                        .start();
-            }
-        }
-    }
+  }
 
 // ======== EXPAND / COLLAPSE ANIMATION ======== //
 
-    /**
-     * Expands this page (with animation) so that it fills the whole screen.
-     */
-    void expand(InboxRecyclerView.ExpandInfo expandInfo) {
-        // Skip animations if Android hasn't measured Views yet.
-        if (!isLaidOut() && getVisibility() != GONE) {
-            throw new IllegalAccessError("Width / Height not available to expand");
-        }
-
-        // Ignore if already expanded.
-        if (isExpandedOrExpanding()) {
-            return;
-        }
-
-        // Place the expandable page on top of the expanding item.
-        alignPageWithExpandingItem(expandInfo);
-
-        // Animate!
-        animatePageExpandCollapse(true /* expand */, getWidth(), getHeight(), expandInfo);
-
-        // Callbacks, just before the animation starts.
-        dispatchOnAboutToExpandCallback();
+  /**
+   * Expands this page (with animation) so that it fills the whole screen.
+   */
+  void expand(InboxRecyclerView.ExpandInfo expandInfo) {
+    // Skip animations if Android hasn't measured Views yet.
+    if (!isLaidOut() && getVisibility() != GONE) {
+      throw new IllegalAccessError("Width / Height not available to expand");
     }
 
-    /**
-     * Expands this page instantly, without any animation. Use this when the user wants to directly
-     * navigate to this page, by-passing the list.
-     */
-    public void expandImmediately() {
-        // Ignore if already expanded.
-        if (currentState == State.EXPANDING || currentState == State.EXPANDED) {
-            Timber.w("ignore");
-            return;
-        }
-
-        setVisibility(VISIBLE);
-        setAlpha(expandedAlpha);
-
-        // Hide the toolbar as soon as we have its height (as expandImmediately() could have been
-        // called before the Views were drawn).
-        Exception exception = new Exception();
-        if (activityToolbar != null) {
-            Views.executeOnMeasure(activityToolbar, () -> {
-                try {
-                    updateToolbarTranslationY(false, 0);
-                } catch (Exception e) {
-                    Timber.e("Crash caller:");
-                    exception.printStackTrace();
-                }
-            });
-        }
-
-        Views.executeOnMeasure(this, () -> {
-            // Cover the whole screen right away. Don't need any animations.
-            alignPageToCoverScreen();
-
-            // Let the list know about this so that it dims itself
-            // right away and does not draw any child Views
-            dispatchOnAboutToExpandCallback();
-            dispatchOnFullyExpandedCallback();
-        });
+    // Ignore if already expanded.
+    if (isExpandedOrExpanding()) {
+      return;
     }
 
-    /**
-     * Collapses this page, back to its original state.
-     */
-    void collapse(InboxRecyclerView.ExpandInfo expandInfo) {
-        // Ignore if already collapsed.
-        if (currentState == State.COLLAPSED || currentState == State.COLLAPSING) {
-            return;
-        }
+    // Place the expandable page on top of the expanding item.
+    alignPageWithExpandingItem(expandInfo);
 
-        // Fire!
-        int targetWidth = expandInfo.expandedItemLocationRect.width();
-        int targetHeight = expandInfo.expandedItemLocationRect.height();
-        if (targetWidth == 0) {
-            // Page must expanded immediately after a state restoration.
-            targetWidth = getWidth();
-        }
-        animatePageExpandCollapse(false /* Collapse */, targetWidth, targetHeight, expandInfo);
+    // Animate!
+    animatePageExpandCollapse(true /* expand */, getWidth(), getHeight(), expandInfo);
 
-        // Send callbacks that the city is going to collapse.
-        dispatchOnPageAboutToCollapseCallback();
+    // Callbacks, just before the animation starts.
+    dispatchOnAboutToExpandCallback();
+  }
+
+  /**
+   * Expands this page instantly, without any animation. Use this when the user wants to directly
+   * navigate to this page, by-passing the list.
+   */
+  public void expandImmediately() {
+    // Ignore if already expanded.
+    if (currentState == State.EXPANDING || currentState == State.EXPANDED) {
+      Timber.w("ignore");
+      return;
     }
 
-    /**
-     * Places the expandable page exactly on top of the expanding list item
-     * (including matching its height with the list item)
-     */
-    protected void alignPageWithExpandingItem(InboxRecyclerView.ExpandInfo expandInfo) {
-        // Match height and location.
-        setClippedDimensions(
-                expandInfo.expandedItemLocationRect.width(),
-                expandInfo.expandedItemLocationRect.height()
-        );
-        setTranslationY(expandInfo.expandedItemLocationRect.top);
+    setVisibility(VISIBLE);
+    setAlpha(expandedAlpha);
+
+    // Hide the toolbar as soon as we have its height (as expandImmediately() could have been
+    // called before the Views were drawn).
+    Exception exception = new Exception();
+    if (activityToolbar != null) {
+      Views.executeOnMeasure(activityToolbar, () -> {
+        try {
+          updateToolbarTranslationY(false, 0);
+        } catch (Exception e) {
+          Timber.e("Crash caller:");
+          exception.printStackTrace();
+        }
+      });
     }
 
-    protected void alignPageToCoverScreen() {
-        resetClipping();
-        setTranslationY(0f);
+    Views.executeOnMeasure(this, () -> {
+      // Cover the whole screen right away. Don't need any animations.
+      alignPageToCoverScreen();
+
+      // Let the list know about this so that it dims itself
+      // right away and does not draw any child Views
+      dispatchOnAboutToExpandCallback();
+      dispatchOnFullyExpandedCallback();
+    });
+  }
+
+  /**
+   * Collapses this page, back to its original state.
+   */
+  void collapse(InboxRecyclerView.ExpandInfo expandInfo) {
+    // Ignore if already collapsed.
+    if (currentState == State.COLLAPSED || currentState == State.COLLAPSING) {
+      return;
     }
 
-    protected void animatePageExpandCollapse(boolean expand, int targetWidth, int targetHeight, InboxRecyclerView.ExpandInfo expandInfo) {
-        float targetPageTranslationY = expand ? 0f : expandInfo.expandedItemLocationRect.top;
-        final float targetPageTranslationX = expand ? 0f : expandInfo.expandedItemLocationRect.left;
+    // Fire!
+    int targetWidth = expandInfo.expandedItemLocationRect.width();
+    int targetHeight = expandInfo.expandedItemLocationRect.height();
+    if (targetWidth == 0) {
+      // Page must expanded immediately after a state restoration.
+      targetWidth = getWidth();
+    }
+    animatePageExpandCollapse(false /* Collapse */, targetWidth, targetHeight, expandInfo);
 
-        // If there's no record about the expanded list item (from whose place this page was expanded),
-        // collapse just below the toolbar and not the window top to avoid closing the toolbar upon hiding.
-        if (!expand && expandInfo.expandedItemLocationRect.height() == 0) {
-            int toolbarBottom = activityToolbar != null ? activityToolbar.getBottom() : 0;
-            targetPageTranslationY = Math.max(targetPageTranslationY, toolbarBottom);
-        }
+    // Send callbacks that the city is going to collapse.
+    dispatchOnPageAboutToCollapseCallback();
+  }
 
-        if (expand) {
-            setVisibility(View.VISIBLE);
-        }
+  /**
+   * Places the expandable page exactly on top of the expanding list item
+   * (including matching its height with the list item)
+   */
+  protected void alignPageWithExpandingItem(InboxRecyclerView.ExpandInfo expandInfo) {
+    // Match height and location.
+    setClippedDimensions(
+        expandInfo.expandedItemLocationRect.width(),
+        expandInfo.expandedItemLocationRect.height()
+    );
+    setTranslationY(expandInfo.expandedItemLocationRect.top);
+  }
 
-        // Alpha and translation.
-        setAlpha(expand ? collapsedAlpha : expandedAlpha);
-        stopAnyOngoingPageAnimation();
-        animate()
-                .alpha(expand ? expandedAlpha : collapsedAlpha)
-                .translationY(targetPageTranslationY)
-                .translationX(targetPageTranslationX)
-                .setDuration(getAnimationDuration())
-                .setInterpolator(getAnimationInterpolator())
-                .setListener(new AnimatorListenerAdapter() {
-                    private boolean mCanceled;
+  protected void alignPageToCoverScreen() {
+    resetClipping();
+    setTranslationY(0f);
+  }
 
-                    @Override
-                    public void onAnimationStart(Animator animation) {
-                        super.onAnimationStart(animation);
-                        mCanceled = false;
-                    }
+  protected void animatePageExpandCollapse(boolean expand, int targetWidth, int targetHeight, InboxRecyclerView.ExpandInfo expandInfo) {
+    float targetPageTranslationY = expand ? 0f : expandInfo.expandedItemLocationRect.top;
+    final float targetPageTranslationX = expand ? 0f : expandInfo.expandedItemLocationRect.left;
 
-                    @Override
-                    public void onAnimationCancel(Animator animation) {
-                        super.onAnimationCancel(animation);
-                        mCanceled = true;
-                    }
-
-                    @Override
-                    public void onAnimationEnd(Animator animation) {
-                        super.onAnimationEnd(animation);
-                        if (mCanceled) {
-                            return;
-                        }
-                        if (!expand) {
-                            setVisibility(View.INVISIBLE);
-                            dispatchOnPageCollapsedCallback();
-                        } else {
-                            dispatchOnFullyExpandedCallback();
-                        }
-                    }
-                })
-                .setStartDelay(!expand ? 0 : InboxRecyclerView.ANIM_START_DELAY)
-                .start();
-
-        // Show the toolbar fully even if the page is going to collapse behind it
-        float targetPageTranslationYForToolbar = targetPageTranslationY;
-        if (!expand && activityToolbar != null && targetPageTranslationYForToolbar < activityToolbar.getBottom()) {
-            targetPageTranslationYForToolbar = activityToolbar.getBottom();
-        }
-
-        if (activityToolbar != null) {
-            // Hide / show the toolbar by pushing it up during expand and pulling it down during collapse.
-            animateToolbar(
-                    !expand,    // When expand = false -> !expand = Show toolbar
-                    targetPageTranslationYForToolbar
-            );
-        }
-
-        // Width & Height.
-        animateDimensions(targetWidth, targetHeight);
+    // If there's no record about the expanded list item (from whose place this page was expanded),
+    // collapse just below the toolbar and not the window top to avoid closing the toolbar upon hiding.
+    if (!expand && expandInfo.expandedItemLocationRect.height() == 0) {
+      int toolbarBottom = activityToolbar != null ? activityToolbar.getBottom() : 0;
+      targetPageTranslationY = Math.max(targetPageTranslationY, toolbarBottom);
     }
 
-    private void animateToolbar(boolean show, float targetPageTranslationY) {
-        if (getTranslationY() == targetPageTranslationY) {
-            return;
-        }
-
-        final float toolbarCurrentBottom = activityToolbar != null ? activityToolbar.getBottom() + activityToolbar.getTranslationY() : 0;
-        final float fromTy = Math.max(toolbarCurrentBottom, getTranslationY());
-
-        // The hide animation happens a bit too quickly if the page has to travel a large
-        // distance (when using the current interpolator: EASE). Let's try slowing it down.
-        long speedFactor = 1L;
-        if (show && Math.abs(targetPageTranslationY - fromTy) > getClippedHeight() * 2 / 5) {
-            speedFactor *= 2L;
-        }
-
-        stopToolbarAnimation();
-
-        // If the page lies behind the toolbar, use toolbar's current bottom position instead
-        toolbarAnimator = ObjectAnimator.ofFloat(fromTy, targetPageTranslationY);
-        toolbarAnimator.addUpdateListener(animation -> updateToolbarTranslationY(show, (float) animation.getAnimatedValue()));
-        toolbarAnimator.setDuration(getAnimationDuration() * speedFactor);
-        toolbarAnimator.setInterpolator(getAnimationInterpolator());
-        toolbarAnimator.setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
-        toolbarAnimator.start();
+    if (expand) {
+      setVisibility(View.VISIBLE);
     }
 
-    /**
-     * Helper method for showing / hiding the toolbar depending upon this page's current translationY.
-     */
-    private void updateToolbarTranslationY(boolean show, float pageTranslationY) {
-        //noinspection ConstantConditions
-        final int toolbarHeight = activityToolbar.getBottom();
-        float targetTranslationY = pageTranslationY - toolbarHeight;
+    // Alpha and translation.
+    setAlpha(expand ? collapsedAlpha : expandedAlpha);
+    stopAnyOngoingPageAnimation();
+    animate()
+        .alpha(expand ? expandedAlpha : collapsedAlpha)
+        .translationY(targetPageTranslationY)
+        .translationX(targetPageTranslationX)
+        .setDuration(getAnimationDuration())
+        .setInterpolator(getAnimationInterpolator())
+        .setListener(new AnimatorListenerAdapter() {
+          private boolean mCanceled;
 
-        if (show) {
-            if (targetTranslationY > toolbarHeight) {
-                targetTranslationY = toolbarHeight;
+          @Override
+          public void onAnimationStart(Animator animation) {
+            super.onAnimationStart(animation);
+            mCanceled = false;
+          }
+
+          @Override
+          public void onAnimationCancel(Animator animation) {
+            super.onAnimationCancel(animation);
+            mCanceled = true;
+          }
+
+          @Override
+          public void onAnimationEnd(Animator animation) {
+            super.onAnimationEnd(animation);
+            if (mCanceled) {
+              return;
             }
-            if (targetTranslationY > 0) {
-                targetTranslationY = 0;
+            if (!expand) {
+              setVisibility(View.INVISIBLE);
+              dispatchOnPageCollapsedCallback();
+            } else {
+              dispatchOnFullyExpandedCallback();
             }
+          }
+        })
+        .setStartDelay(!expand ? 0 : InboxRecyclerView.ANIM_START_DELAY)
+        .start();
 
-        } else if (pageTranslationY >= toolbarHeight || activityToolbar.getTranslationY() <= -toolbarHeight) {
-            // Hide.
-            return;
-        }
-
-        activityToolbar.setTranslationY(targetTranslationY);
+    // Show the toolbar fully even if the page is going to collapse behind it
+    float targetPageTranslationYForToolbar = targetPageTranslationY;
+    if (!expand && activityToolbar != null && targetPageTranslationYForToolbar < activityToolbar.getBottom()) {
+      targetPageTranslationYForToolbar = activityToolbar.getBottom();
     }
 
-    void stopAnyOngoingPageAnimation() {
-        animate().cancel();
-        stopToolbarAnimation();
+    if (activityToolbar != null) {
+      // Hide / show the toolbar by pushing it up during expand and pulling it down during collapse.
+      animateToolbar(
+          !expand,    // When expand = false -> !expand = Show toolbar
+          targetPageTranslationYForToolbar
+      );
     }
 
-    private void stopToolbarAnimation() {
-        if (toolbarAnimator != null) {
-            toolbarAnimator.cancel();
-        }
+    // Width & Height.
+    animateDimensions(targetWidth, targetHeight);
+  }
+
+  private void animateToolbar(boolean show, float targetPageTranslationY) {
+    if (getTranslationY() == targetPageTranslationY) {
+      return;
     }
+
+    final float toolbarCurrentBottom = activityToolbar != null ? activityToolbar.getBottom() + activityToolbar.getTranslationY() : 0;
+    final float fromTy = Math.max(toolbarCurrentBottom, getTranslationY());
+
+    // The hide animation happens a bit too quickly if the page has to travel a large
+    // distance (when using the current interpolator: EASE). Let's try slowing it down.
+    long speedFactor = 1L;
+    if (show && Math.abs(targetPageTranslationY - fromTy) > getClippedHeight() * 2 / 5) {
+      speedFactor *= 2L;
+    }
+
+    stopToolbarAnimation();
+
+    // If the page lies behind the toolbar, use toolbar's current bottom position instead
+    toolbarAnimator = ObjectAnimator.ofFloat(fromTy, targetPageTranslationY);
+    toolbarAnimator.addUpdateListener(animation -> updateToolbarTranslationY(show, (float) animation.getAnimatedValue()));
+    toolbarAnimator.setDuration(getAnimationDuration() * speedFactor);
+    toolbarAnimator.setInterpolator(getAnimationInterpolator());
+    toolbarAnimator.setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
+    toolbarAnimator.start();
+  }
+
+  /**
+   * Helper method for showing / hiding the toolbar depending upon this page's current translationY.
+   */
+  private void updateToolbarTranslationY(boolean show, float pageTranslationY) {
+    //noinspection ConstantConditions
+    final int toolbarHeight = activityToolbar.getBottom();
+    float targetTranslationY = pageTranslationY - toolbarHeight;
+
+    if (show) {
+      if (targetTranslationY > toolbarHeight) {
+        targetTranslationY = toolbarHeight;
+      }
+      if (targetTranslationY > 0) {
+        targetTranslationY = 0;
+      }
+
+    } else if (pageTranslationY >= toolbarHeight || activityToolbar.getTranslationY() <= -toolbarHeight) {
+      // Hide.
+      return;
+    }
+
+    activityToolbar.setTranslationY(targetTranslationY);
+  }
+
+  void stopAnyOngoingPageAnimation() {
+    animate().cancel();
+    stopToolbarAnimation();
+  }
+
+  private void stopToolbarAnimation() {
+    if (toolbarAnimator != null) {
+      toolbarAnimator.cancel();
+    }
+  }
 
 // ======== OPTIMIZATIONS ======== //
 
-    /**
-     * To be used when another ExpandablePageLayout is shown inside this page.
-     * This page will avoid all draw calls while the nested page is open to
-     * minimize overdraw.
-     */
-    public void setNestedExpandablePage(ExpandablePageLayout nestedPage) {
-        this.nestedPage = nestedPage;
+  /**
+   * To be used when another ExpandablePageLayout is shown inside this page.
+   * This page will avoid all draw calls while the nested page is open to
+   * minimize overdraw.
+   */
+  public void setNestedExpandablePage(ExpandablePageLayout nestedPage) {
+    this.nestedPage = nestedPage;
 
-        nestedPage.setInternalCallbacksNestedPage(new InternalPageCallbacks() {
-            @Override
-            public void onPageAboutToCollapse() {
-                onPageBackgroundVisible();
-            }
+    nestedPage.setInternalCallbacksNestedPage(new InternalPageCallbacks() {
+      @Override
+      public void onPageAboutToCollapse() {
+        onPageBackgroundVisible();
+      }
 
-            @Override
-            public void onPageFullyCollapsed() {
-            }
+      @Override
+      public void onPageFullyCollapsed() {
+      }
 
-            @Override
-            public void onPagePull(float deltaY) {
-                onPageBackgroundVisible();
-            }
+      @Override
+      public void onPagePull(float deltaY) {
+        onPageBackgroundVisible();
+      }
 
-            @Override
-            public void onPageRelease(boolean collapseEligible) {
-                if (collapseEligible) {
-                    onPageBackgroundVisible();
-                }
-            }
-
-            @Override
-            public void onPageFullyCovered() {
-                final boolean invalidate = !isFullyCoveredByNestedPage;
-                isFullyCoveredByNestedPage = true;   // Skips draw() until visible again to the
-                if (invalidate) {
-                    postInvalidate();
-                }
-            }
-
-            public void onPageBackgroundVisible() {
-                final boolean invalidate = isFullyCoveredByNestedPage;
-                isFullyCoveredByNestedPage = false;
-                if (invalidate) {
-                    postInvalidate();
-                }
-            }
-        });
-    }
-
-    @Override
-    public void draw(Canvas canvas) {
-        // Or if the page is collapsed.
-        if (currentState == State.COLLAPSED) {
-            return;
+      @Override
+      public void onPageRelease(boolean collapseEligible) {
+        if (collapseEligible) {
+          onPageBackgroundVisible();
         }
-        super.draw(canvas);
-    }
+      }
 
-    @Override
-    protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
-        // When this page is fully covered by a nested ExpandablePage, avoid drawing any other child Views.
-        //noinspection SimplifiableIfStatement
-        if (isFullyCoveredByNestedPage && !(child instanceof ExpandablePageLayout)) {
-            return false;
+      @Override
+      public void onPageFullyCovered() {
+        final boolean invalidate = !isFullyCoveredByNestedPage;
+        isFullyCoveredByNestedPage = true;   // Skips draw() until visible again to the
+        if (invalidate) {
+          postInvalidate();
         }
-        return super.drawChild(canvas, child, drawingTime);
+      }
+
+      public void onPageBackgroundVisible() {
+        final boolean invalidate = isFullyCoveredByNestedPage;
+        isFullyCoveredByNestedPage = false;
+        if (invalidate) {
+          postInvalidate();
+        }
+      }
+    });
+  }
+
+  @Override
+  public void draw(Canvas canvas) {
+    // Or if the page is collapsed.
+    if (currentState == State.COLLAPSED) {
+      return;
     }
+    super.draw(canvas);
+  }
+
+  @Override
+  protected boolean drawChild(Canvas canvas, View child, long drawingTime) {
+    // When this page is fully covered by a nested ExpandablePage, avoid drawing any other child Views.
+    //noinspection SimplifiableIfStatement
+    if (isFullyCoveredByNestedPage && !(child instanceof ExpandablePageLayout)) {
+      return false;
+    }
+    return super.drawChild(canvas, child, drawingTime);
+  }
 
 // ======== CALLBACKS ======== //
 
-    private void dispatchOnPagePullCallbacks(float deltaY) {
-        for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-            if (internalCallback == null) {
-                continue;
-            }
-            internalCallback.onPagePull(deltaY);
-        }
+  private void dispatchOnPagePullCallbacks(float deltaY) {
+    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
+      if (internalCallback == null) {
+        continue;
+      }
+      internalCallback.onPagePull(deltaY);
+    }
+  }
+
+  private void dispatchOnPageReleasedCallback(boolean collapseEligible) {
+    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
+      if (internalCallback == null) {
+        continue;
+      }
+      internalCallback.onPageRelease(collapseEligible);
+    }
+  }
+
+  private void dispatchOnAboutToExpandCallback() {
+    // The state change must happen after the subscribers have been
+    // notified that the page is going to expand
+    changeState(State.EXPANDING);
+
+    if (callbacks != null) {
+      for (int i = 0; i < callbacks.size(); i++) {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
+        callbacks.get(i).onPageAboutToExpand(getAnimationDuration());
+      }
+    }
+  }
+
+  @SuppressWarnings("Convert2streamapi")
+  private void dispatchOnFullyExpandedCallback() {
+    changeState(State.EXPANDED);
+    dispatchOnPageFullyCoveredCallback();
+
+    if (callbacks != null) {
+      for (final Callbacks callback : callbacks) {
+        callback.onPageExpanded();
+      }
+    }
+  }
+
+  /**
+   * There's a difference between the page fully expanding and fully covering the list.
+   * When the page is fully expanded, it may or may not be covering the list. This is
+   * usually when the user is pulling the page.
+   */
+  private void dispatchOnPageFullyCoveredCallback() {
+    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
+      if (internalCallback == null) {
+        continue;
+      }
+      internalCallback.onPageFullyCovered();
+    }
+  }
+
+  private void dispatchOnPageAboutToCollapseCallback() {
+    // The state change must happen after the subscribers have been notified that the page is going to collapse.
+    changeState(State.COLLAPSING);
+
+    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
+      if (internalCallback == null) {
+        continue;
+      }
+      internalCallback.onPageAboutToCollapse();
     }
 
-    private void dispatchOnPageReleasedCallback(boolean collapseEligible) {
-        for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-            if (internalCallback == null) {
-                continue;
-            }
-            internalCallback.onPageRelease(collapseEligible);
-        }
+    if (callbacks != null) {
+      for (final Callbacks callback : callbacks) {
+        callback.onPageAboutToCollapse(getAnimationDuration());
+      }
+    }
+  }
+
+  private void dispatchOnPageCollapsedCallback() {
+    changeState(State.COLLAPSED);
+
+    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
+      if (internalCallback == null) {
+        continue;
+      }
+      internalCallback.onPageFullyCollapsed();
     }
 
-    private void dispatchOnAboutToExpandCallback() {
-        // The state change must happen after the subscribers have been
-        // notified that the page is going to expand
-        changeState(State.EXPANDING);
-
-        if (callbacks != null) {
-            for (int i = 0; i < callbacks.size(); i++) {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
-                callbacks.get(i).onPageAboutToExpand(getAnimationDuration());
-            }
-        }
+    if (callbacks != null) {
+      for (final Callbacks callback : callbacks) {
+        callback.onPageCollapsed();
+      }
     }
+  }
 
-    @SuppressWarnings("Convert2streamapi")
-    private void dispatchOnFullyExpandedCallback() {
-        changeState(State.EXPANDED);
-        dispatchOnPageFullyCoveredCallback();
+  /**
+   * Offer a pull-to-collapse to a listener if it wants to block it. If a nested page is registered
+   * and the touch was made on it, block it right away.
+   */
+  @SuppressWarnings("SimplifiableIfStatement")
+  boolean handleOnPullToCollapseIntercept(MotionEvent event, float downX, float downY, boolean deltaUpwardSwipe) {
+    if (nestedPage != null && nestedPage.isExpandedOrExpanding() && nestedPage.getClippedRect().contains(downX, downY)) {
+      // Block this pull if it's being made inside a nested page. Let the nested page's pull-listener consume this event.
+      // We should use nested scrolling in the future to make this smarter.
+      // TODO: 20/03/17 Do we even need to call the nested page's listener?
+      nestedPage.handleOnPullToCollapseIntercept(event, downX, downY, deltaUpwardSwipe);
+      return true;
 
-        if (callbacks != null) {
-            for (final Callbacks callback : callbacks) {
-                callback.onPageExpanded();
-            }
-        }
+    } else if (onPullToCollapseIntercepter != null) {
+      return onPullToCollapseIntercepter.onInterceptPullToCollapseGesture(event, downX, downY, deltaUpwardSwipe);
+
+    } else {
+      return false;
     }
-
-    /**
-     * There's a difference between the page fully expanding and fully covering the list.
-     * When the page is fully expanded, it may or may not be covering the list. This is
-     * usually when the user is pulling the page.
-     */
-    private void dispatchOnPageFullyCoveredCallback() {
-        for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-            if (internalCallback == null) {
-                continue;
-            }
-            internalCallback.onPageFullyCovered();
-        }
-    }
-
-    private void dispatchOnPageAboutToCollapseCallback() {
-        // The state change must happen after the subscribers have been notified that the page is going to collapse.
-        changeState(State.COLLAPSING);
-
-        for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-            if (internalCallback == null) {
-                continue;
-            }
-            internalCallback.onPageAboutToCollapse();
-        }
-
-        if (callbacks != null) {
-            for (final Callbacks callback : callbacks) {
-                callback.onPageAboutToCollapse(getAnimationDuration());
-            }
-        }
-    }
-
-    private void dispatchOnPageCollapsedCallback() {
-        changeState(State.COLLAPSED);
-
-        for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-            if (internalCallback == null) {
-                continue;
-            }
-            internalCallback.onPageFullyCollapsed();
-        }
-
-        if (callbacks != null) {
-            for (final Callbacks callback : callbacks) {
-                callback.onPageCollapsed();
-            }
-        }
-    }
-
-    /**
-     * Offer a pull-to-collapse to a listener if it wants to block it. If a nested page is registered
-     * and the touch was made on it, block it right away.
-     */
-    @SuppressWarnings("SimplifiableIfStatement")
-    boolean handleOnPullToCollapseIntercept(MotionEvent event, float downX, float downY, boolean deltaUpwardSwipe) {
-        if (nestedPage != null && nestedPage.isExpandedOrExpanding() && nestedPage.getClippedRect().contains(downX, downY)) {
-            // Block this pull if it's being made inside a nested page. Let the nested page's pull-listener consume this event.
-            // We should use nested scrolling in the future to make this smarter.
-            // TODO: 20/03/17 Do we even need to call the nested page's listener?
-            nestedPage.handleOnPullToCollapseIntercept(event, downX, downY, deltaUpwardSwipe);
-            return true;
-
-        } else if (onPullToCollapseIntercepter != null) {
-            return onPullToCollapseIntercepter.onInterceptPullToCollapseGesture(event, downX, downY, deltaUpwardSwipe);
-
-        } else {
-            return false;
-        }
-    }
+  }
 
 // ======== SETTERS & GETTERS ======== //
 
-    /**
-     * Calls for the associated InboxList.
-     */
-    void setInternalCallbacksList(InternalPageCallbacks listCallbacks) {
-        internalStateCallbacks.put("List", listCallbacks);
-    }
+  /**
+   * Calls for the associated InboxList.
+   */
+  void setInternalCallbacksList(InternalPageCallbacks listCallbacks) {
+    internalStateCallbacks.put("List", listCallbacks);
+  }
 
-    void setInternalCallbacksNestedPage(InternalPageCallbacks pageCallbacks) {
-        internalStateCallbacks.put("NestedPage", pageCallbacks);
-    }
+  void setInternalCallbacksNestedPage(InternalPageCallbacks pageCallbacks) {
+    internalStateCallbacks.put("NestedPage", pageCallbacks);
+  }
 
-    public boolean isExpanded() {
-        return currentState == State.EXPANDED;
-    }
+  public boolean isExpanded() {
+    return currentState == State.EXPANDED;
+  }
 
-    public boolean isExpandingOrCollapsing() {
-        return currentState == State.EXPANDING || currentState == State.COLLAPSING;
-    }
+  public boolean isExpandingOrCollapsing() {
+    return currentState == State.EXPANDING || currentState == State.COLLAPSING;
+  }
 
-    public boolean isCollapsing() {
-        return currentState == State.COLLAPSING;
-    }
+  public boolean isCollapsing() {
+    return currentState == State.COLLAPSING;
+  }
 
-    public boolean isCollapsed() {
-        return currentState == State.COLLAPSED;
-    }
+  public boolean isCollapsed() {
+    return currentState == State.COLLAPSED;
+  }
 
-    public State getCurrentState() {
-        return currentState;
-    }
+  public State getCurrentState() {
+    return currentState;
+  }
 
-    public boolean isExpanding() {
-        return currentState == State.EXPANDING;
-    }
+  public boolean isExpanding() {
+    return currentState == State.EXPANDING;
+  }
 
-    public boolean isExpandedOrExpanding() {
-        return currentState == State.EXPANDED || currentState == State.EXPANDING;
-    }
+  public boolean isExpandedOrExpanding() {
+    return currentState == State.EXPANDED || currentState == State.EXPANDING;
+  }
 
-    public boolean isCollapsedOrCollapsing() {
-        return currentState == State.COLLAPSING || currentState == State.COLLAPSED;
-    }
+  public boolean isCollapsedOrCollapsing() {
+    return currentState == State.COLLAPSING || currentState == State.COLLAPSED;
+  }
 
-    public void addCallbacks(Callbacks... callbacks) {
-        if (this.callbacks == null) {
-            this.callbacks = new ArrayList<>(4);
-        }
-        Collections.addAll(this.callbacks, callbacks);
+  public void addCallbacks(Callbacks... callbacks) {
+    if (this.callbacks == null) {
+      this.callbacks = new ArrayList<>(4);
     }
+    Collections.addAll(this.callbacks, callbacks);
+  }
 
-    public void setPullToCollapseIntercepter(OnPullToCollapseIntercepter intercepter) {
-        onPullToCollapseIntercepter = intercepter;
-    }
+  public void setPullToCollapseIntercepter(OnPullToCollapseIntercepter intercepter) {
+    onPullToCollapseIntercepter = intercepter;
+  }
 
-    /**
-     * Alpha of this page when it's collapsed.
-     */
-    public void setCollapsedAlpha(float collapsedAlpha) {
-        this.collapsedAlpha = collapsedAlpha;
-    }
+  /**
+   * Alpha of this page when it's collapsed.
+   */
+  public void setCollapsedAlpha(float collapsedAlpha) {
+    this.collapsedAlpha = collapsedAlpha;
+  }
 
 }

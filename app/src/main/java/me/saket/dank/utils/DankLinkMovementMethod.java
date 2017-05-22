@@ -12,23 +12,23 @@ import me.saket.bettermovementmethod.BetterLinkMovementMethod;
  */
 public class DankLinkMovementMethod extends BetterLinkMovementMethod {
 
-    private Point clickedUrlCoordinates;
+  private Point clickedUrlCoordinates;
 
-    public static DankLinkMovementMethod newInstance() {
-        return new DankLinkMovementMethod();
-    }
+  public static DankLinkMovementMethod newInstance() {
+    return new DankLinkMovementMethod();
+  }
 
-    @Override
-    public boolean onTouchEvent(TextView view, Spannable text, MotionEvent event) {
-        if (event.getAction() == MotionEvent.ACTION_UP) {
-            // A link is potentially going to be clicked.
-            clickedUrlCoordinates = new Point((int) event.getRawX(), (int) event.getRawY());
-        }
-        return super.onTouchEvent(view, text, event);
+  @Override
+  public boolean onTouchEvent(TextView view, Spannable text, MotionEvent event) {
+    if (event.getAction() == MotionEvent.ACTION_UP) {
+      // A link is potentially going to be clicked.
+      clickedUrlCoordinates = new Point((int) event.getRawX(), (int) event.getRawY());
     }
+    return super.onTouchEvent(view, text, event);
+  }
 
-    public Point getLastUrlClickCoordinates() {
-        return clickedUrlCoordinates;
-    }
+  public Point getLastUrlClickCoordinates() {
+    return clickedUrlCoordinates;
+  }
 
 }

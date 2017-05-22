@@ -18,22 +18,22 @@ import me.saket.dank.R;
  */
 public class DankToolbar extends Toolbar {
 
-    public DankToolbar(Context context, @Nullable AttributeSet attrs) {
-        super(context, attrs);
+  public DankToolbar(Context context, @Nullable AttributeSet attrs) {
+    super(context, attrs);
 
-        TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.DankToolbar);
+    TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.DankToolbar);
 
-        Drawable navigationIcon = attributes.getDrawable(R.styleable.DankToolbar_navigationIcon);
+    Drawable navigationIcon = attributes.getDrawable(R.styleable.DankToolbar_navigationIcon);
 
-        if (attributes.hasValue(R.styleable.DankToolbar_navigationIconTint)) {
-            //noinspection ConstantConditions
-            navigationIcon = navigationIcon.mutate();
-            navigationIcon.setTint(attributes.getColor(R.styleable.DankToolbar_navigationIconTint, Color.WHITE));
-        }
-        if (navigationIcon != null) {
-            setNavigationIcon(navigationIcon);
-        }
-        attributes.recycle();
+    if (attributes.hasValue(R.styleable.DankToolbar_navigationIconTint)) {
+      //noinspection ConstantConditions
+      navigationIcon = navigationIcon.mutate();
+      navigationIcon.setTint(attributes.getColor(R.styleable.DankToolbar_navigationIconTint, Color.WHITE));
     }
+    if (navigationIcon != null) {
+      setNavigationIcon(navigationIcon);
+    }
+    attributes.recycle();
+  }
 
 }

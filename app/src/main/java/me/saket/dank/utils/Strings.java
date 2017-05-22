@@ -15,6 +15,8 @@ public class Strings {
 
   /**
    * "A, B, C and D".
+   *
+   * TODO: Remove
    */
   public static String concatenateWithCommaAndAnd2(Resources resources, List<String> strings) {
     final StringBuilder stringBuilder = new StringBuilder(strings.size());

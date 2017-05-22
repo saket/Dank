@@ -24,108 +24,108 @@ import me.saket.dank.utils.RecyclerViewArrayAdapter;
  * Adapter for displaying a list of subreddits.
  */
 public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscription, SubredditAdapter.SubredditViewHolder>
-        implements Consumer<List<SubredditSubscription>>
+    implements Consumer<List<SubredditSubscription>>
 {
 
-    private OnSubredditClickListener clickListener;
-    private SubredditSubscription highlightedSubscription;
-    private Runnable onHighlightAnimEndRunnable = () -> highlightedSubscription = null;
+  private OnSubredditClickListener clickListener;
+  private SubredditSubscription highlightedSubscription;
+  private Runnable onHighlightAnimEndRunnable = () -> highlightedSubscription = null;
 
-    interface OnSubredditClickListener {
-        void onClickSubreddit(SubredditSubscription subscription, View subredditItemView);
+  interface OnSubredditClickListener {
+    void onClickSubreddit(SubredditSubscription subscription, View subredditItemView);
+  }
+
+  public SubredditAdapter() {
+    setHasStableIds(true);
+    temporarilyHighlight(null);
+  }
+
+  public void setOnSubredditClickListener(OnSubredditClickListener listener) {
+    clickListener = listener;
+  }
+
+  public void temporarilyHighlight(SubredditSubscription subscription) {
+    highlightedSubscription = subscription;
+  }
+
+  @Override
+  public void accept(List<SubredditSubscription> subscriptions) {
+    updateData(subscriptions);
+  }
+
+  @Override
+  protected SubredditViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
+    return SubredditViewHolder.create(inflater, parent);
+  }
+
+  @Override
+  public void onBindViewHolder(SubredditViewHolder holder, int position) {
+    SubredditSubscription subSubscription = getItem(position);
+
+    boolean isHighlighted = subSubscription.equals(highlightedSubscription);
+    holder.bind(subSubscription, isHighlighted, onHighlightAnimEndRunnable);
+
+    //noinspection CodeBlock2Expr
+    holder.itemView.setOnClickListener(itemView -> {
+      clickListener.onClickSubreddit(subSubscription, itemView);
+    });
+  }
+
+  @Override
+  public long getItemId(int position) {
+    return getItem(position).hashCode();
+  }
+
+  static class SubredditViewHolder extends RecyclerView.ViewHolder {
+    @BindView(R.id.item_subreddit_name) Button subredditNameButton;
+    @BindColor(R.color.subredditpicker_subreddit_button_text_normal) int normalTextColor;
+    @BindColor(R.color.subredditpicker_subreddit_button_text_hidden) int hiddenTextColor;
+    @BindColor(R.color.color_accent) int highlightedTextColor;
+
+    public static SubredditViewHolder create(LayoutInflater inflater, ViewGroup parent) {
+      return new SubredditViewHolder(inflater.inflate(R.layout.list_item_subreddit, parent, false));
     }
 
-    public SubredditAdapter() {
-        setHasStableIds(true);
-        temporarilyHighlight(null);
+    public SubredditViewHolder(View itemView) {
+      super(itemView);
+      ButterKnife.bind(this, itemView);
     }
 
-    public void setOnSubredditClickListener(OnSubredditClickListener listener) {
-        clickListener = listener;
+    public void bind(SubredditSubscription subreddit, boolean isHighlighted, Runnable onHighlightEndRunnable) {
+      subredditNameButton.setText(subreddit.name());
+      subredditNameButton.getBackground().setAlpha(subreddit.isHidden() ? 100 : 255);
+
+      int buttonTextColor = subreddit.isHidden() ? hiddenTextColor : normalTextColor;
+
+      if (isHighlighted) {
+        playHighlightAnimation(onHighlightEndRunnable, buttonTextColor);
+      } else {
+        subredditNameButton.setTextColor(buttonTextColor);
+      }
     }
 
-    public void temporarilyHighlight(SubredditSubscription subscription) {
-        highlightedSubscription = subscription;
-    }
+    /**
+     * Note: ObjectAnimator keeps a weak reference to the target View, so there's no need to worry of a leak here.
+     */
+    private void playHighlightAnimation(Runnable onEndRunnable, int textColorToRestore) {
+      WeakReference<Runnable> onEndRunnableRef = new WeakReference<>(onEndRunnable);
 
-    @Override
-    public void accept(List<SubredditSubscription> subscriptions) {
-        updateData(subscriptions);
-    }
+      ObjectAnimator highlightAnimator = ObjectAnimator.ofArgb(subredditNameButton, "textColor", textColorToRestore, highlightedTextColor);
+      highlightAnimator.addListener(new AnimatorListenerAdapter() {
+        @Override
+        public void onAnimationEnd(Animator animation) {
+          if (onEndRunnableRef.get() != null) {
+            onEndRunnableRef.get().run();
 
-    @Override
-    protected SubredditViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-        return SubredditViewHolder.create(inflater, parent);
-    }
-
-    @Override
-    public void onBindViewHolder(SubredditViewHolder holder, int position) {
-        SubredditSubscription subSubscription = getItem(position);
-
-        boolean isHighlighted = subSubscription.equals(highlightedSubscription);
-        holder.bind(subSubscription, isHighlighted, onHighlightAnimEndRunnable);
-
-        //noinspection CodeBlock2Expr
-        holder.itemView.setOnClickListener(itemView -> {
-            clickListener.onClickSubreddit(subSubscription, itemView);
-        });
-    }
-
-    @Override
-    public long getItemId(int position) {
-        return getItem(position).hashCode();
-    }
-
-    static class SubredditViewHolder extends RecyclerView.ViewHolder {
-        @BindView(R.id.item_subreddit_name) Button subredditNameButton;
-        @BindColor(R.color.subredditpicker_subreddit_button_text_normal) int normalTextColor;
-        @BindColor(R.color.subredditpicker_subreddit_button_text_hidden) int hiddenTextColor;
-        @BindColor(R.color.color_accent) int highlightedTextColor;
-
-        public static SubredditViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-            return new SubredditViewHolder(inflater.inflate(R.layout.list_item_subreddit, parent, false));
+            ObjectAnimator fadeOutAnimator = ObjectAnimator.ofArgb(subredditNameButton, "textColor", highlightedTextColor,
+                textColorToRestore);
+            fadeOutAnimator.setStartDelay(2000);
+            fadeOutAnimator.start();
+          }
         }
-
-        public SubredditViewHolder(View itemView) {
-            super(itemView);
-            ButterKnife.bind(this, itemView);
-        }
-
-        public void bind(SubredditSubscription subreddit, boolean isHighlighted, Runnable onHighlightEndRunnable) {
-            subredditNameButton.setText(subreddit.name());
-            subredditNameButton.getBackground().setAlpha(subreddit.isHidden() ? 100 : 255);
-
-            int buttonTextColor = subreddit.isHidden() ? hiddenTextColor : normalTextColor;
-
-            if (isHighlighted) {
-                playHighlightAnimation(onHighlightEndRunnable, buttonTextColor);
-            } else {
-                subredditNameButton.setTextColor(buttonTextColor);
-            }
-        }
-
-        /**
-         * Note: ObjectAnimator keeps a weak reference to the target View, so there's no need to worry of a leak here.
-         */
-        private void playHighlightAnimation(Runnable onEndRunnable, int textColorToRestore) {
-            WeakReference<Runnable> onEndRunnableRef = new WeakReference<>(onEndRunnable);
-
-            ObjectAnimator highlightAnimator = ObjectAnimator.ofArgb(subredditNameButton, "textColor", textColorToRestore, highlightedTextColor);
-            highlightAnimator.addListener(new AnimatorListenerAdapter() {
-                @Override
-                public void onAnimationEnd(Animator animation) {
-                    if (onEndRunnableRef.get() != null) {
-                        onEndRunnableRef.get().run();
-
-                        ObjectAnimator fadeOutAnimator = ObjectAnimator.ofArgb(subredditNameButton, "textColor", highlightedTextColor,
-                                textColorToRestore);
-                        fadeOutAnimator.setStartDelay(2000);
-                        fadeOutAnimator.start();
-                    }
-                }
-            });
-            highlightAnimator.start();
-        }
+      });
+      highlightAnimator.start();
     }
+  }
 
 }

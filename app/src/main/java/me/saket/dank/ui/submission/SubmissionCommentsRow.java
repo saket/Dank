@@ -5,13 +5,13 @@ package me.saket.dank.ui.submission;
  */
 public interface SubmissionCommentsRow {
 
-    enum Type {
-        USER_COMMENT,
-        LOAD_MORE_COMMENTS,
-    }
+  enum Type {
+    USER_COMMENT,
+    LOAD_MORE_COMMENTS,
+  }
 
-    long id();
+  long id();
 
-    Type type();
+  Type type();
 
 }

@@ -22,148 +22,148 @@ import okhttp3.Response;
  */
 public class UrlMetadataParser {
 
-    private static final String CHROME_DESKTOP_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) " +
-            "Chrome/56.0.2924.87 Safari/537.36";
+  private static final String CHROME_DESKTOP_USER_AGENT = "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_12_3) AppleWebKit/537.36 (KHTML, like Gecko) " +
+      "Chrome/56.0.2924.87 Safari/537.36";
 
-    /**
-     * @param ignoreSocialData When true, facebook/twitter titles, images will be ignored and the page HTML title will be used instead.
-     */
-    @CheckResult
-    public static Single<LinkMetadata> parse(String url, boolean ignoreSocialData) {
-        return Single.fromCallable(() -> {
-            // TODO: Port this to Retrofit.
-            Request request = new Request.Builder()
-                    .url(url)
-                    .header("User-Agent", CHROME_DESKTOP_USER_AGENT)
-                    // "Referer" is the correct header name. It's required along with the
-                    // user agent to force websites in returning their HTML version.
-                    .addHeader("Referer", "http://www.google.com")
-                    .build();
+  /**
+   * @param ignoreSocialData When true, facebook/twitter titles, images will be ignored and the page HTML title will be used instead.
+   */
+  @CheckResult
+  public static Single<LinkMetadata> parse(String url, boolean ignoreSocialData) {
+    return Single.fromCallable(() -> {
+      // TODO: Port this to Retrofit.
+      Request request = new Request.Builder()
+          .url(url)
+          .header("User-Agent", CHROME_DESKTOP_USER_AGENT)
+          // "Referer" is the correct header name. It's required along with the
+          // user agent to force websites in returning their HTML version.
+          .addHeader("Referer", "http://www.google.com")
+          .build();
 
-            Call call = Dank.okHttpClient().newCall(request);
-            try (Response response = call.execute()) {
-                Document pageDocument = Jsoup.parse(response.body().string(), url);
-                return extractMetaData(url, pageDocument, ignoreSocialData);
-            }
-        });
+      Call call = Dank.okHttpClient().newCall(request);
+      try (Response response = call.execute()) {
+        Document pageDocument = Jsoup.parse(response.body().string(), url);
+        return extractMetaData(url, pageDocument, ignoreSocialData);
+      }
+    });
+  }
+
+  private static LinkMetadata extractMetaData(String url, Document pageDocument, boolean ignoreSocialData) {
+    String linkTitle;
+    String linkImage;
+    String faviconUrl;
+
+    if (ignoreSocialData) {
+      return LinkMetadata.create(url, pageDocument.title(), null, null);
     }
 
-    private static LinkMetadata extractMetaData(String url, Document pageDocument, boolean ignoreSocialData) {
-        String linkTitle;
-        String linkImage;
-        String faviconUrl;
+    // Websites seem to give better images for twitter, maybe because Twitter shows smaller
+    // thumbnails than Facebook. So we'll prefer Twitter over Facebook.
 
-        if (ignoreSocialData) {
-            return LinkMetadata.create(url, pageDocument.title(), null, null);
-        }
+    // Thumbnail.
+    boolean isGooglePlayLink = isGooglePlayLink(url);
+    if (isGooglePlayLink) {
+      // Play Store uses a shitty favicon.
+      linkImage = "https://www.android.com/static/2016/img/icons/why-android/play_2x.png";
 
-        // Websites seem to give better images for twitter, maybe because Twitter shows smaller
-        // thumbnails than Facebook. So we'll prefer Twitter over Facebook.
+    } else {
+      linkImage = getMetaTag(pageDocument, "twitter:image", true);
+      if (isEmpty(linkImage)) {
+        linkImage = getMetaTag(pageDocument, "og:image", true);
+      }
+      if (isEmpty(linkImage)) {
+        linkImage = getMetaTag(pageDocument, "twitter:image:src", true);
+      }
+      if (isEmpty(linkImage)) {
+        linkImage = getMetaTag(pageDocument, "og:image:secure_url", true);
+      }
 
-        // Thumbnail.
-        boolean isGooglePlayLink = isGooglePlayLink(url);
-        if (isGooglePlayLink) {
-            // Play Store uses a shitty favicon.
-            linkImage = "https://www.android.com/static/2016/img/icons/why-android/play_2x.png";
-
-        } else {
-            linkImage = getMetaTag(pageDocument, "twitter:image", true);
-            if (isEmpty(linkImage)) {
-                linkImage = getMetaTag(pageDocument, "og:image", true);
-            }
-            if (isEmpty(linkImage)) {
-                linkImage = getMetaTag(pageDocument, "twitter:image:src", true);
-            }
-            if (isEmpty(linkImage)) {
-                linkImage = getMetaTag(pageDocument, "og:image:secure_url", true);
-            }
-
-            // So... scheme-less URLs are also a thing.
-            if (linkImage != null && linkImage.startsWith("//")) {
-                Uri imageURI = Uri.parse(url);
-                linkImage = imageURI.getScheme() + linkImage;
-            }
-        }
-
-        // Title.
-        linkTitle = getMetaTag(pageDocument, "twitter:title", false);
-        if (isEmpty(linkTitle)) {
-            linkTitle = getMetaTag(pageDocument, "og:title", false);
-        }
-        if (isEmpty(linkTitle)) {
-            linkTitle = pageDocument.title();
-        }
-
-        // Favicon.
-        faviconUrl = getLinkRelTag(pageDocument, "apple-touch-icon");
-        if (isEmpty(faviconUrl)) {
-            faviconUrl = getLinkRelTag(pageDocument, "apple-touch-icon-precomposed");
-        }
-        if (isEmpty(faviconUrl)) {
-            faviconUrl = getLinkRelTag(pageDocument, "shortcut icon");
-        }
-        if (isEmpty(faviconUrl)) {
-            faviconUrl = getLinkRelTag(pageDocument, "icon");
-        }
-        if (isEmpty(faviconUrl)) {
-            if (!isGooglePlayLink) {
-                // Thanks Google for the backup!
-                faviconUrl = "https://www.google.com/s2/favicons?domain_url=" + url;
-
-            } else {
-                // Play Store uses a shitty favicon. Prefer the thumbnail instead.
-                faviconUrl = null;
-            }
-        }
-
-        return LinkMetadata.create(url, linkTitle, faviconUrl, linkImage);
+      // So... scheme-less URLs are also a thing.
+      if (linkImage != null && linkImage.startsWith("//")) {
+        Uri imageURI = Uri.parse(url);
+        linkImage = imageURI.getScheme() + linkImage;
+      }
     }
 
-    private static String getMetaTag(Document document, String attr, boolean useAbsoluteUrl) {
-        Elements elements = document.select("meta[name=" + attr + "]");
-        for (Element element : elements) {
-            final String url = element.attr(useAbsoluteUrl ? "abs:content" : "content");
-            if (url != null) {
-                return url;
-            }
-        }
-        elements = document.select("meta[property=" + attr + "]");
-        for (Element element : elements) {
-            final String url = element.attr(useAbsoluteUrl ? "abs:content" : "content");
-            if (url != null) {
-                return url;
-            }
-        }
-        return null;
+    // Title.
+    linkTitle = getMetaTag(pageDocument, "twitter:title", false);
+    if (isEmpty(linkTitle)) {
+      linkTitle = getMetaTag(pageDocument, "og:title", false);
+    }
+    if (isEmpty(linkTitle)) {
+      linkTitle = pageDocument.title();
     }
 
-    private static String getLinkRelTag(Document document, String rel) {
-        Elements elements = document.head().select("link[rel=" + rel + "]");
-        if (elements.isEmpty()) {
-            return null;
-        }
+    // Favicon.
+    faviconUrl = getLinkRelTag(pageDocument, "apple-touch-icon");
+    if (isEmpty(faviconUrl)) {
+      faviconUrl = getLinkRelTag(pageDocument, "apple-touch-icon-precomposed");
+    }
+    if (isEmpty(faviconUrl)) {
+      faviconUrl = getLinkRelTag(pageDocument, "shortcut icon");
+    }
+    if (isEmpty(faviconUrl)) {
+      faviconUrl = getLinkRelTag(pageDocument, "icon");
+    }
+    if (isEmpty(faviconUrl)) {
+      if (!isGooglePlayLink) {
+        // Thanks Google for the backup!
+        faviconUrl = "https://www.google.com/s2/favicons?domain_url=" + url;
 
-        String largestSizeUrl = elements.first().attr("abs:href");
-        int largestSize = 0;
-
-        for (Element element : elements) {
-            // Some websites have multiple icons for different sizes. Find the largest one.
-            String sizes = element.attr("sizes");
-            int size;
-            if (sizes.contains("x")) {
-                size = Integer.parseInt(sizes.split("x")[0]);
-
-                if (size > largestSize) {
-                    largestSize = size;
-                    largestSizeUrl = element.attr("abs:href");
-                }
-            }
-        }
-        return largestSizeUrl;
+      } else {
+        // Play Store uses a shitty favicon. Prefer the thumbnail instead.
+        faviconUrl = null;
+      }
     }
 
-    public static boolean isGooglePlayLink(String url) {
-        return Uri.parse(url).getHost().contains("play.google");
+    return LinkMetadata.create(url, linkTitle, faviconUrl, linkImage);
+  }
+
+  private static String getMetaTag(Document document, String attr, boolean useAbsoluteUrl) {
+    Elements elements = document.select("meta[name=" + attr + "]");
+    for (Element element : elements) {
+      final String url = element.attr(useAbsoluteUrl ? "abs:content" : "content");
+      if (url != null) {
+        return url;
+      }
     }
+    elements = document.select("meta[property=" + attr + "]");
+    for (Element element : elements) {
+      final String url = element.attr(useAbsoluteUrl ? "abs:content" : "content");
+      if (url != null) {
+        return url;
+      }
+    }
+    return null;
+  }
+
+  private static String getLinkRelTag(Document document, String rel) {
+    Elements elements = document.head().select("link[rel=" + rel + "]");
+    if (elements.isEmpty()) {
+      return null;
+    }
+
+    String largestSizeUrl = elements.first().attr("abs:href");
+    int largestSize = 0;
+
+    for (Element element : elements) {
+      // Some websites have multiple icons for different sizes. Find the largest one.
+      String sizes = element.attr("sizes");
+      int size;
+      if (sizes.contains("x")) {
+        size = Integer.parseInt(sizes.split("x")[0]);
+
+        if (size > largestSize) {
+          largestSize = size;
+          largestSizeUrl = element.attr("abs:href");
+        }
+      }
+    }
+    return largestSizeUrl;
+  }
+
+  public static boolean isGooglePlayLink(String url) {
+    return Uri.parse(url).getHost().contains("play.google");
+  }
 
 }

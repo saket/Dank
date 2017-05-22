@@ -6,24 +6,24 @@ package me.saket.dank.widgets.InboxUI;
  */
 public abstract class SimpleExpandablePageCallbacks implements ExpandablePageLayout.Callbacks {
 
-    @Override
-    public void onPageAboutToExpand(long expandAnimDuration) {
+  @Override
+  public void onPageAboutToExpand(long expandAnimDuration) {
 
-    }
+  }
 
-    @Override
-    public void onPageExpanded() {
+  @Override
+  public void onPageExpanded() {
 
-    }
+  }
 
-    @Override
-    public void onPageAboutToCollapse(long collapseAnimDuration) {
+  @Override
+  public void onPageAboutToCollapse(long collapseAnimDuration) {
 
-    }
+  }
 
-    @Override
-    public void onPageCollapsed() {
+  @Override
+  public void onPageCollapsed() {
 
-    }
+  }
 
 }

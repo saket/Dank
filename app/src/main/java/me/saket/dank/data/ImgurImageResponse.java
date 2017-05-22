@@ -16,31 +16,31 @@ import me.saket.dank.di.DankApi;
 @AutoValue
 public abstract class ImgurImageResponse implements ImgurResponse {
 
-    @Json(name = "data")
-    abstract ImgurImage image();
+  @Json(name = "data")
+  abstract ImgurImage image();
 
-    @Override
-    @Json(name = "success")
-    public abstract boolean hasImages();
+  @Override
+  @Json(name = "success")
+  public abstract boolean hasImages();
 
-    @Override
-    public boolean isAlbum() {
-        return false;
-    }
+  @Override
+  public boolean isAlbum() {
+    return false;
+  }
 
-    @Override
-    public List<ImgurImage> images() {
-        return Collections.singletonList(image());
-    }
+  @Override
+  public List<ImgurImage> images() {
+    return Collections.singletonList(image());
+  }
 
-    @Override
-    public String albumTitle() {
-        // Not valid.
-        throw new UnsupportedOperationException("Image doesn't have any album title");
-    }
+  @Override
+  public String albumTitle() {
+    // Not valid.
+    throw new UnsupportedOperationException("Image doesn't have any album title");
+  }
 
-    public static JsonAdapter<ImgurImageResponse> jsonAdapter(Moshi moshi) {
-        return new AutoValue_ImgurImageResponse.MoshiJsonAdapter(moshi);
-    }
+  public static JsonAdapter<ImgurImageResponse> jsonAdapter(Moshi moshi) {
+    return new AutoValue_ImgurImageResponse.MoshiJsonAdapter(moshi);
+  }
 
 }

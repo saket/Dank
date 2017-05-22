@@ -5,6 +5,8 @@ import android.view.View;
 
 /**
  * Override what you want.
+ *
+ * TODO: Remove
  */
 public abstract class SimpleOnChildAttachStateChangeListener implements RecyclerView.OnChildAttachStateChangeListener {
   @Override

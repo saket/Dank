@@ -31,91 +31,91 @@ import timber.log.Timber;
 
 public class StoreFilePersister<Key, Value> implements Persister<Value, Key>, Clearable<Key>, RecordProvider<Key> {
 
-    private final FSReader<Key> fileReader;
-    private final FSWriter<Key> fileWriter;
-    private final FileSystem fileSystem;
-    private final PathResolver<Key> pathResolver;
-    private final long expirationDuration;
-    private final TimeUnit expirationUnit;
-    private final JsonParser<Value> jsonParser;
+  private final FSReader<Key> fileReader;
+  private final FSWriter<Key> fileWriter;
+  private final FileSystem fileSystem;
+  private final PathResolver<Key> pathResolver;
+  private final long expirationDuration;
+  private final TimeUnit expirationUnit;
+  private final JsonParser<Value> jsonParser;
 
-    public interface JsonParser<Value> {
-        Value fromJson(InputStream jsonInputStream);
+  public interface JsonParser<Value> {
+    Value fromJson(InputStream jsonInputStream);
 
-        String toJson(Value raw);
+    String toJson(Value raw);
+  }
+
+  public StoreFilePersister(FileSystem fileSystem, PathResolver<Key> pathResolver, JsonParser<Value> jsonParser, long expirationDuration,
+      TimeUnit expirationUnit)
+  {
+    this.fileSystem = fileSystem;
+    this.pathResolver = pathResolver;
+    this.expirationDuration = expirationDuration;
+    this.expirationUnit = expirationUnit;
+
+    this.jsonParser = jsonParser;
+    this.fileReader = new FSReader<>(fileSystem, pathResolver);
+    this.fileWriter = new FSWriter<>(fileSystem, pathResolver);
+  }
+
+  @Nonnull
+  @Override
+  public Maybe<Value> read(@Nonnull Key key) {
+    return fileReader
+        .read(key)
+        .map(bufferedSource -> {
+          try (InputStream inputStream = bufferedSource.inputStream()) {
+            return jsonParser.fromJson(inputStream);
+          }
+        });
+  }
+
+  @Nonnull
+  @Override
+  public Single<Boolean> write(@Nonnull Key key, @Nonnull Value value) {
+    String rawJson = jsonParser.toJson(value);
+    InputStream stream = new ByteArrayInputStream(rawJson.getBytes(StandardCharsets.UTF_8));
+    BufferedSource jsonBufferedSource = Okio.buffer(Okio.source(stream));
+
+    return fileWriter.write(key, jsonBufferedSource);
+  }
+
+  @Override
+  public void clear(@Nonnull Key key) {
+    try {
+      fileSystem.deleteAll(pathResolver.resolve(key));
+    } catch (IOException e) {
+      Timber.e(e, "Error deleting item with key %s", key.toString());
+    }
+  }
+
+  @Nonnull
+  @Override
+  public RecordState getRecordState(@Nonnull Key key) {
+    return fileSystem.getRecordState(expirationUnit,
+        expirationDuration,
+        pathResolver.resolve(key));
+  }
+
+  public static class MoshiParser<Raw> {
+    private final JsonAdapter<Raw> jsonAdapter;
+
+    @Inject
+    public MoshiParser(@Nonnull Moshi moshi, @Nonnull Type type) {
+      jsonAdapter = moshi.adapter(type);
     }
 
-    public StoreFilePersister(FileSystem fileSystem, PathResolver<Key> pathResolver, JsonParser<Value> jsonParser, long expirationDuration,
-            TimeUnit expirationUnit)
-    {
-        this.fileSystem = fileSystem;
-        this.pathResolver = pathResolver;
-        this.expirationDuration = expirationDuration;
-        this.expirationUnit = expirationUnit;
-
-        this.jsonParser = jsonParser;
-        this.fileReader = new FSReader<>(fileSystem, pathResolver);
-        this.fileWriter = new FSWriter<>(fileSystem, pathResolver);
+    public Raw fromJson(@NonNull BufferedSource bufferedSource) throws ParserException {
+      try {
+        return jsonAdapter.fromJson(bufferedSource);
+      } catch (IOException e) {
+        throw new ParserException(e.getMessage(), e);
+      }
     }
 
-    @Nonnull
-    @Override
-    public Maybe<Value> read(@Nonnull Key key) {
-        return fileReader
-                .read(key)
-                .map(bufferedSource -> {
-                    try (InputStream inputStream = bufferedSource.inputStream()) {
-                        return jsonParser.fromJson(inputStream);
-                    }
-                });
+    public String toJson(Raw raw) {
+      return jsonAdapter.toJson(raw);
     }
-
-    @Nonnull
-    @Override
-    public Single<Boolean> write(@Nonnull Key key, @Nonnull Value value) {
-        String rawJson = jsonParser.toJson(value);
-        InputStream stream = new ByteArrayInputStream(rawJson.getBytes(StandardCharsets.UTF_8));
-        BufferedSource jsonBufferedSource = Okio.buffer(Okio.source(stream));
-
-        return fileWriter.write(key, jsonBufferedSource);
-    }
-
-    @Override
-    public void clear(@Nonnull Key key) {
-        try {
-            fileSystem.deleteAll(pathResolver.resolve(key));
-        } catch (IOException e) {
-            Timber.e(e, "Error deleting item with key %s", key.toString());
-        }
-    }
-
-    @Nonnull
-    @Override
-    public RecordState getRecordState(@Nonnull Key key) {
-        return fileSystem.getRecordState(expirationUnit,
-                expirationDuration,
-                pathResolver.resolve(key));
-    }
-
-    public static class MoshiParser<Raw> {
-        private final JsonAdapter<Raw> jsonAdapter;
-
-        @Inject
-        public MoshiParser(@Nonnull Moshi moshi, @Nonnull Type type) {
-            jsonAdapter = moshi.adapter(type);
-        }
-
-        public Raw fromJson(@NonNull BufferedSource bufferedSource) throws ParserException {
-            try {
-                return jsonAdapter.fromJson(bufferedSource);
-            } catch (IOException e) {
-                throw new ParserException(e.getMessage(), e);
-            }
-        }
-
-        public String toJson(Raw raw) {
-            return jsonAdapter.toJson(raw);
-        }
-    }
+  }
 
 }

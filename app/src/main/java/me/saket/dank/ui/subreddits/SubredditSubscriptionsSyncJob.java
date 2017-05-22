@@ -23,81 +23,81 @@ import timber.log.Timber;
  */
 public class SubredditSubscriptionsSyncJob extends DankJobService {
 
-    /**
-     * Emits true when bookmarks are being fetched. False when the process completes.
-     * (regardless of the outcome).
-     */
-    private static final BehaviorRelay<Boolean> progressSubject = BehaviorRelay.create();
+  /**
+   * Emits true when bookmarks are being fetched. False when the process completes.
+   * (regardless of the outcome).
+   */
+  private static final BehaviorRelay<Boolean> progressSubject = BehaviorRelay.create();
 
-    /**
-     * Sync subscriptions every ~6 hours when the device is idle, charging and on an unmetered connection.
-     */
-    public static void schedule(Context context) {
-        JobInfo syncJob = new JobInfo.Builder(ID_SUBSCRIPTIONS_RECURRING_JOB, new ComponentName(context, SubredditSubscriptionsSyncJob.class))
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
-                .setRequiresCharging(true)
-                .setRequiresDeviceIdle(true)
-                .setPersisted(true)
-                .setPeriodic(DateUtils.HOUR_IN_MILLIS * 6)
-                .build();
+  /**
+   * Sync subscriptions every ~6 hours when the device is idle, charging and on an unmetered connection.
+   */
+  public static void schedule(Context context) {
+    JobInfo syncJob = new JobInfo.Builder(ID_SUBSCRIPTIONS_RECURRING_JOB, new ComponentName(context, SubredditSubscriptionsSyncJob.class))
+        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
+        .setRequiresCharging(true)
+        .setRequiresDeviceIdle(true)
+        .setPersisted(true)
+        .setPeriodic(DateUtils.HOUR_IN_MILLIS * 6)
+        .build();
 
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        jobScheduler.schedule(syncJob);
-    }
+    JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    jobScheduler.schedule(syncJob);
+  }
 
-    public static void syncImmediately(Context context) {
-        JobInfo syncJob = new JobInfo.Builder(ID_SUBSCRIPTIONS_ONE_TIME_JOB, new ComponentName(context, SubredditSubscriptionsSyncJob.class))
-                .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
-                .setPersisted(false)
-                .setOverrideDeadline(0)
-                .build();
+  public static void syncImmediately(Context context) {
+    JobInfo syncJob = new JobInfo.Builder(ID_SUBSCRIPTIONS_ONE_TIME_JOB, new ComponentName(context, SubredditSubscriptionsSyncJob.class))
+        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+        .setPersisted(false)
+        .setOverrideDeadline(0)
+        .build();
 
-        JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
-        jobScheduler.schedule(syncJob);
-    }
+    JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    jobScheduler.schedule(syncJob);
+  }
 
-    /**
-     * See {@link #progressSubject}.
-     */
-    public static BehaviorRelay<Boolean> progressUpdates() {
-        return progressSubject;
-    }
+  /**
+   * See {@link #progressSubject}.
+   */
+  public static BehaviorRelay<Boolean> progressUpdates() {
+    return progressSubject;
+  }
 
-    @Override
-    public boolean onStartJob(JobParameters params) {
-        // TODO: Run periodic job only if user is logged in.
+  @Override
+  public boolean onStartJob(JobParameters params) {
+    // TODO: Run periodic job only if user is logged in.
 
-        unsubscribeOnDestroy(Dank.subscriptionManager().refreshSubscriptions()
-                .andThen(Dank.subscriptionManager().executePendingSubscribesAndUnsubscribes())
-                .compose(applySchedulersCompletable())
-                .compose(doOnCompletableStartAndEnd(ongoing -> progressSubject.accept(ongoing)))
-                .subscribe(
-                        () -> {
-                            if (params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB) {
-                                displayDebugNotification(0, "Subreddits synced");
-                            }
-                            jobFinished(params, false /* needsReschedule */);
-                        },
-                        error -> {
-                            ResolvedError resolvedError = Dank.errors().resolve(error);
-                            if (resolvedError.isUnknown()) {
-                                Timber.e(error, "Unknown error while syncing subscriptions");
-                            }
+    unsubscribeOnDestroy(Dank.subscriptionManager().refreshSubscriptions()
+        .andThen(Dank.subscriptionManager().executePendingSubscribesAndUnsubscribes())
+        .compose(applySchedulersCompletable())
+        .compose(doOnCompletableStartAndEnd(ongoing -> progressSubject.accept(ongoing)))
+        .subscribe(
+            () -> {
+              if (params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB) {
+                displayDebugNotification(0, "Subreddits synced");
+              }
+              jobFinished(params, false /* needsReschedule */);
+            },
+            error -> {
+              ResolvedError resolvedError = Dank.errors().resolve(error);
+              if (resolvedError.isUnknown()) {
+                Timber.e(error, "Unknown error while syncing subscriptions");
+              }
 
-                            boolean isNotOurFault = resolvedError.isNetworkError() || resolvedError.isRedditServerError();
-                            boolean canRetry = isNotOurFault && params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB;
-                            jobFinished(params, canRetry);
-                        }
-                ));
+              boolean isNotOurFault = resolvedError.isNetworkError() || resolvedError.isRedditServerError();
+              boolean canRetry = isNotOurFault && params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB;
+              jobFinished(params, canRetry);
+            }
+        ));
 
-        // Return true to indicate that the job is still being processed (in a background thread).
-        return true;
-    }
+    // Return true to indicate that the job is still being processed (in a background thread).
+    return true;
+  }
 
-    @Override
-    public boolean onStopJob(JobParameters params) {
-        // Return true to indicate JobScheduler that the job should be rescheduled.
-        return true;
-    }
+  @Override
+  public boolean onStopJob(JobParameters params) {
+    // Return true to indicate JobScheduler that the job should be rescheduled.
+    return true;
+  }
 
 }

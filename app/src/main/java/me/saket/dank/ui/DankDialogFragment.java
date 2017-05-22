@@ -10,39 +10,39 @@ import io.reactivex.disposables.Disposable;
  */
 public class DankDialogFragment extends NaviDialogFragment {
 
-    private CompositeDisposable onStopDisposables;
-    private CompositeDisposable onDestroyDisposables;
+  private CompositeDisposable onStopDisposables;
+  private CompositeDisposable onDestroyDisposables;
 
-    @Override
-    public void onStop() {
-        if (onStopDisposables != null) {
-            onStopDisposables.clear();
-        }
-
-        super.onStop();
+  @Override
+  public void onStop() {
+    if (onStopDisposables != null) {
+      onStopDisposables.clear();
     }
 
-    @Override
-    public void onDestroy() {
-        if (onDestroyDisposables != null) {
-            onDestroyDisposables.clear();
-        }
+    super.onStop();
+  }
 
-        super.onDestroy();
+  @Override
+  public void onDestroy() {
+    if (onDestroyDisposables != null) {
+      onDestroyDisposables.clear();
     }
 
-    protected void unsubscribeOnStop(Disposable subscription) {
-        if (onStopDisposables == null) {
-            onStopDisposables = new CompositeDisposable();
-        }
-        onStopDisposables.add(subscription);
-    }
+    super.onDestroy();
+  }
 
-    protected void unsubscribeOnDestroy(Disposable subscription) {
-        if (onDestroyDisposables == null) {
-            onDestroyDisposables = new CompositeDisposable();
-        }
-        onDestroyDisposables.add(subscription);
+  protected void unsubscribeOnStop(Disposable subscription) {
+    if (onStopDisposables == null) {
+      onStopDisposables = new CompositeDisposable();
     }
+    onStopDisposables.add(subscription);
+  }
+
+  protected void unsubscribeOnDestroy(Disposable subscription) {
+    if (onDestroyDisposables == null) {
+      onDestroyDisposables = new CompositeDisposable();
+    }
+    onDestroyDisposables.add(subscription);
+  }
 
 }

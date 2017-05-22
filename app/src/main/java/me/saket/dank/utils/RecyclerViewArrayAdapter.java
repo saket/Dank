@@ -17,50 +17,50 @@ import java.util.List;
  */
 public abstract class RecyclerViewArrayAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
 
-    private @Nullable List<T> items;
+  private @Nullable List<T> items;
 
-    /**
-     * @param items Initial items to show.
-     */
-    public RecyclerViewArrayAdapter(@Nullable List<T> items) {
-        this.items = items;
-    }
+  /**
+   * @param items Initial items to show.
+   */
+  public RecyclerViewArrayAdapter(@Nullable List<T> items) {
+    this.items = items;
+  }
 
-    public RecyclerViewArrayAdapter() {
-        this(null);
-    }
+  public RecyclerViewArrayAdapter() {
+    this(null);
+  }
 
-    @Override
-    public final VH onCreateViewHolder(ViewGroup parent, int viewType) {
-        return onCreateViewHolder(LayoutInflater.from(parent.getContext()), parent, viewType);
-    }
+  @Override
+  public final VH onCreateViewHolder(ViewGroup parent, int viewType) {
+    return onCreateViewHolder(LayoutInflater.from(parent.getContext()), parent, viewType);
+  }
 
-    protected abstract VH onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType);
+  protected abstract VH onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType);
 
-    public T getItem(int position) {
-        return items != null ? items.get(position) : null;
-    }
+  public T getItem(int position) {
+    return items != null ? items.get(position) : null;
+  }
 
-    @Override
-    public int getItemCount() {
-        return items != null ? items.size() : 0;
-    }
+  @Override
+  public int getItemCount() {
+    return items != null ? items.size() : 0;
+  }
 
-    @Override
-    public long getItemId(int position) {
-        return position;
-    }
+  @Override
+  public long getItemId(int position) {
+    return position;
+  }
 
-    /**
-     * Updates this adapter's data set and refreshes the RecyclerView.
-     */
-    public void updateData(List<T> items) {
-        this.items = items;
-        notifyDataSetChanged();
-    }
+  /**
+   * Updates this adapter's data set and refreshes the RecyclerView.
+   */
+  public void updateData(List<T> items) {
+    this.items = items;
+    notifyDataSetChanged();
+  }
 
-    public List<T> getData() {
-        return items;
-    }
+  public List<T> getData() {
+    return items;
+  }
 
 }

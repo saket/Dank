@@ -18,88 +18,88 @@ import me.saket.dank.ui.submission.SubmissionFragment;
  */
 public class AnimatedToolbarBackground extends View {
 
-    private ValueAnimator backgroundFillAnimator;
-    private Boolean isToolbarFilled;
-    private Float currentFillFactor = 0f;
-    private final float onVisibleTranslationZ;
-    private boolean syncScrollEnabled;
+  private ValueAnimator backgroundFillAnimator;
+  private Boolean isToolbarFilled;
+  private Float currentFillFactor = 0f;
+  private final float onVisibleTranslationZ;
+  private boolean syncScrollEnabled;
 
-    public AnimatedToolbarBackground(Context context, AttributeSet attrs) {
-        super(context, attrs);
-        onVisibleTranslationZ = getTranslationZ();
-        setTranslationZ(0f);
-        toggleFill(true);
+  public AnimatedToolbarBackground(Context context, AttributeSet attrs) {
+    super(context, attrs);
+    onVisibleTranslationZ = getTranslationZ();
+    setTranslationZ(0f);
+    toggleFill(true);
+  }
+
+  /**
+   * Tracks <var>sheet</var>'s top offset and keeps this View always on top of it.
+   * Since {@link ScrollingRecyclerViewSheet} uses translationY changes to scroll, this
+   */
+  public void syncPositionWithSheet(ScrollingRecyclerViewSheet sheet) {
+    sheet.addOnSheetScrollChangeListener((newTranslationY) -> {
+      if (syncScrollEnabled && getTranslationY() != newTranslationY) {
+        setTranslationY(newTranslationY);
+        toggleFill(newTranslationY <= 0);
+      }
+    });
+  }
+
+  /**
+   * When disabled, this View stops scrolling with the View passed in
+   * {@link #syncPositionWithSheet(ScrollingRecyclerViewSheet)} and stays fixed at the top
+   * with the toolbar background fully filled.
+   */
+  public void setSyncScrollEnabled(boolean enabled) {
+    syncScrollEnabled = enabled;
+
+    if (!enabled) {
+      toggleFill(true);
     }
+  }
 
-    /**
-     * Tracks <var>sheet</var>'s top offset and keeps this View always on top of it.
-     * Since {@link ScrollingRecyclerViewSheet} uses translationY changes to scroll, this
-     */
-    public void syncPositionWithSheet(ScrollingRecyclerViewSheet sheet) {
-        sheet.addOnSheetScrollChangeListener((newTranslationY) -> {
-            if (syncScrollEnabled && getTranslationY() != newTranslationY) {
-                setTranslationY(newTranslationY);
-                toggleFill(newTranslationY <= 0);
-            }
-        });
+  /**
+   * Fill/empty the toolbar's background.
+   */
+  private void toggleFill(boolean fill) {
+    if (isToolbarFilled != null && isToolbarFilled == fill) {
+      return;
     }
+    isToolbarFilled = fill;
 
-    /**
-     * When disabled, this View stops scrolling with the View passed in
-     * {@link #syncPositionWithSheet(ScrollingRecyclerViewSheet)} and stays fixed at the top
-     * with the toolbar background fully filled.
-     */
-    public void setSyncScrollEnabled(boolean enabled) {
-        syncScrollEnabled = enabled;
+    Float targetFillFactor = fill ? 1f : 0f;
+    if (isLaidOut()) {
+      if (backgroundFillAnimator != null) {
+        backgroundFillAnimator.cancel();
+      }
 
-        if (!enabled) {
-            toggleFill(true);
-        }
+      backgroundFillAnimator = ValueAnimator.ofFloat(currentFillFactor, targetFillFactor);
+      backgroundFillAnimator.addUpdateListener(animation -> {
+        Float factor = (Float) animation.getAnimatedValue();
+        setTranslationZ(onVisibleTranslationZ * factor);
+        setBackgroundFill(factor);
+      });
+      backgroundFillAnimator.setInterpolator(new FastOutSlowInInterpolator());
+      backgroundFillAnimator.setDuration(150);
+      backgroundFillAnimator.start();
+
+    } else {
+      setBackgroundFill(targetFillFactor);
+      setTranslationZ(onVisibleTranslationZ * targetFillFactor);
     }
+  }
 
-    /**
-     * Fill/empty the toolbar's background.
-     */
-    private void toggleFill(boolean fill) {
-        if (isToolbarFilled != null && isToolbarFilled == fill) {
-            return;
-        }
-        isToolbarFilled = fill;
+  /**
+   * Fill the toolbar background from bottom to top.
+   */
+  private void setBackgroundFill(@FloatRange(from = 0, to = 1) Float fillFactor) {
+    currentFillFactor = fillFactor;
+    invalidate();
+  }
 
-        Float targetFillFactor = fill ? 1f : 0f;
-        if (isLaidOut()) {
-            if (backgroundFillAnimator != null) {
-                backgroundFillAnimator.cancel();
-            }
-
-            backgroundFillAnimator = ValueAnimator.ofFloat(currentFillFactor, targetFillFactor);
-            backgroundFillAnimator.addUpdateListener(animation -> {
-                Float factor = (Float) animation.getAnimatedValue();
-                setTranslationZ(onVisibleTranslationZ * factor);
-                setBackgroundFill(factor);
-            });
-            backgroundFillAnimator.setInterpolator(new FastOutSlowInInterpolator());
-            backgroundFillAnimator.setDuration(150);
-            backgroundFillAnimator.start();
-
-        } else {
-            setBackgroundFill(targetFillFactor);
-            setTranslationZ(onVisibleTranslationZ * targetFillFactor);
-        }
-    }
-
-    /**
-     * Fill the toolbar background from bottom to top.
-     */
-    private void setBackgroundFill(@FloatRange(from = 0, to = 1) Float fillFactor) {
-        currentFillFactor = fillFactor;
-        invalidate();
-    }
-
-    @Override
-    public void draw(Canvas canvas) {
-        canvas.clipRect(0, getHeight() - (getHeight() * currentFillFactor), getRight(), getBottom());
-        super.draw(canvas);
-    }
+  @Override
+  public void draw(Canvas canvas) {
+    canvas.clipRect(0, getHeight() - (getHeight() * currentFillFactor), getRight(), getBottom());
+    super.draw(canvas);
+  }
 
 }

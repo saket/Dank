@@ -10,14 +10,14 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- *
+ * TODO: Remove.
  */
 public class RedditPaginator<T extends Thing> {
 
-    private RedditClient redditClient;
-    private Sorting sorting;
-    private TimePeriod timePeriod;
-    private int limit = Paginator.DEFAULT_LIMIT;
+  private RedditClient redditClient;
+  private Sorting sorting;
+  private TimePeriod timePeriod;
+  private int limit = Paginator.DEFAULT_LIMIT;
 
 //    public Listing<T> load() throws NetworkException, IllegalStateException {
 //        String path = getBaseUri();
@@ -60,24 +60,25 @@ public class RedditPaginator<T extends Thing> {
 //        return listing;
 //    }
 
-    /**
-     * Generates extra arguments to be included in the query string.
-     * @return A non-null map of paginator-implementation-specific arguments
-     */
-    protected Map<String, String> getExtraQueryArgs() {
-        return new HashMap<>();
+  /**
+   * Generates extra arguments to be included in the query string.
+   *
+   * @return A non-null map of paginator-implementation-specific arguments
+   */
+  protected Map<String, String> getExtraQueryArgs() {
+    return new HashMap<>();
+  }
+
+  protected String getSortingString() {
+    if (timePeriod == null) {
+      return null;
     }
 
-    protected String getSortingString() {
-        if (timePeriod == null) {
-            return null;
-        }
-
-        if (sorting == Sorting.CONTROVERSIAL || sorting == Sorting.TOP) {
-            return sorting.name().toLowerCase();
-        } else {
-            return null;
-        }
+    if (sorting == Sorting.CONTROVERSIAL || sorting == Sorting.TOP) {
+      return sorting.name().toLowerCase();
+    } else {
+      return null;
     }
+  }
 
 }

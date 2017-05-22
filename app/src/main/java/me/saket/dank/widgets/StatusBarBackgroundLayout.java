@@ -21,39 +21,39 @@ import me.saket.dank.utils.Views;
  */
 public class StatusBarBackgroundLayout extends FrameLayout {
 
-    private Rect statusBarRect;
-    private Paint statusBarPaint;
+  private Rect statusBarRect;
+  private Paint statusBarPaint;
 
-    public StatusBarBackgroundLayout(@NonNull Context context) {
-        super(context);
-        init(android.R.color.transparent);
+  public StatusBarBackgroundLayout(@NonNull Context context) {
+    super(context);
+    init(android.R.color.transparent);
+  }
+
+  public StatusBarBackgroundLayout(@NonNull Context context, @ColorRes int statusBarBackgroundColor) {
+    super(context);
+    init(statusBarBackgroundColor);
+  }
+
+  private void init(int statusBarBackgroundColor) {
+    setWillNotDraw(false);
+
+    statusBarPaint = new Paint();
+    statusBarPaint.setColor(ContextCompat.getColor(getContext(), statusBarBackgroundColor));
+  }
+
+  @Override
+  protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
+    super.onLayout(changed, left, top, right, bottom);
+
+    if (statusBarRect == null) {
+      statusBarRect = new Rect(0, 0, getRight(), Views.statusBarHeight(getResources()));
     }
+  }
 
-    public StatusBarBackgroundLayout(@NonNull Context context, @ColorRes int statusBarBackgroundColor) {
-        super(context);
-        init(statusBarBackgroundColor);
-    }
-
-    private void init(int statusBarBackgroundColor) {
-        setWillNotDraw(false);
-
-        statusBarPaint = new Paint();
-        statusBarPaint.setColor(ContextCompat.getColor(getContext(), statusBarBackgroundColor));
-    }
-
-    @Override
-    protected void onLayout(boolean changed, int left, int top, int right, int bottom) {
-        super.onLayout(changed, left, top, right, bottom);
-
-        if (statusBarRect == null) {
-            statusBarRect = new Rect(0, 0, getRight(), Views.statusBarHeight(getResources()));
-        }
-    }
-
-    @Override
-    public void draw(Canvas canvas) {
-        canvas.drawRect(statusBarRect, statusBarPaint);
-        super.draw(canvas);
-    }
+  @Override
+  public void draw(Canvas canvas) {
+    canvas.drawRect(statusBarRect, statusBarPaint);
+    super.draw(canvas);
+  }
 
 }

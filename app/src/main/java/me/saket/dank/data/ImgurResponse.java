@@ -4,12 +4,12 @@ import java.util.List;
 
 public interface ImgurResponse {
 
-    boolean hasImages();
+  boolean hasImages();
 
-    boolean isAlbum();
+  boolean isAlbum();
 
-    List<ImgurImage> images();
+  List<ImgurImage> images();
 
-    String albumTitle();
+  String albumTitle();
 
 }

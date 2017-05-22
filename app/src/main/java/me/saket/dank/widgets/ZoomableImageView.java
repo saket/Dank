@@ -16,102 +16,102 @@ import com.alexvasilkov.gestures.views.GestureImageView;
  */
 public class ZoomableImageView extends GestureImageView {
 
-    private static final float MAX_OVER_ZOOM = 4f;
-    private static final float MIN_OVER_ZOOM = 1f;
+  private static final float MAX_OVER_ZOOM = 4f;
+  private static final float MIN_OVER_ZOOM = 1f;
 
-    private GestureDetector gestureDetector;
+  private GestureDetector gestureDetector;
 
-    public ZoomableImageView(Context context, AttributeSet attrs) {
-        super(context, attrs);
+  public ZoomableImageView(Context context, AttributeSet attrs) {
+    super(context, attrs);
 
+    getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
+    getController().getSettings().setFillViewport(true);
+    getController().getSettings().setFitMethod(Settings.Fit.HORIZONTAL);
+
+    getController().setOnGesturesListener(new GestureController.SimpleOnGestureListener() {
+      @Override
+      public boolean onSingleTapConfirmed(@NonNull MotionEvent event) {
+        performClick();
+        return true;
+      }
+
+      @Override
+      public void onUpOrCancel(@NonNull MotionEvent event) {
+        // Bug workaround: Image zoom stops working after first overzoom. Resetting it when the
+        // finger is lifted seems to solve the problem.
         getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
-        getController().getSettings().setFillViewport(true);
-        getController().getSettings().setFitMethod(Settings.Fit.HORIZONTAL);
+      }
+    });
 
-        getController().setOnGesturesListener(new GestureController.SimpleOnGestureListener() {
-            @Override
-            public boolean onSingleTapConfirmed(@NonNull MotionEvent event) {
-                performClick();
-                return true;
-            }
+    // Bug workarounds: GestureImageView doesn't request parent ViewGroups to stop intercepting touch
+    // events when it starts consuming them to zoom.
+    gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
+      @Override
+      public boolean onDoubleTapEvent(MotionEvent e) {
+        getParent().requestDisallowInterceptTouchEvent(true);
+        return super.onDoubleTapEvent(e);
+      }
+    });
+  }
 
-            @Override
-            public void onUpOrCancel(@NonNull MotionEvent event) {
-                // Bug workaround: Image zoom stops working after first overzoom. Resetting it when the
-                // finger is lifted seems to solve the problem.
-                getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
-            }
-        });
+  public void setGravity(int gravity) {
+    getController().getSettings().setGravity(gravity);
+  }
 
-        // Bug workarounds: GestureImageView doesn't request parent ViewGroups to stop intercepting touch
-        // events when it starts consuming them to zoom.
-        gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-            @Override
-            public boolean onDoubleTapEvent(MotionEvent e) {
-                getParent().requestDisallowInterceptTouchEvent(true);
-                return super.onDoubleTapEvent(e);
-            }
-        });
+  public int getImageHeight() {
+    return getController().getSettings().getImageH();
+  }
+
+  /**
+   * Calculate height of the image that is currently visible.
+   */
+  public float getVisibleZoomedImageHeight() {
+    float zoomedImageHeight = getZoomedImageHeight();
+
+    // Subtract the portion that has gone outside limits due to zooming in, because they are
+    // longer visible.
+    float heightNotVisible = getController().getState().getY();
+    if (heightNotVisible < 0) {
+      zoomedImageHeight += heightNotVisible;
     }
 
-    public void setGravity(int gravity) {
-        getController().getSettings().setGravity(gravity);
+    if (zoomedImageHeight > getHeight()) {
+      zoomedImageHeight = getHeight();
     }
 
-    public int getImageHeight() {
-        return getController().getSettings().getImageH();
+    return zoomedImageHeight;
+  }
+
+  private float getZoomedImageHeight() {
+    return (float) getImageHeight() * getZoom();
+  }
+
+  public float getZoom() {
+    return getController().getState().getZoom();
+  }
+
+  /**
+   * Whether the image can be panned anymore vertically, upwards or downwards depending upon <var>upwardPan</var>.
+   */
+  public boolean canPanVertically(boolean upwardPan) {
+    float imageY = getController().getState().getY();
+    if (upwardPan) {
+      return imageY != 0;
+    } else {
+      return getHeight() - getZoomedImageHeight() != imageY;
+    }
+  }
+
+  @Override
+  public boolean onTouchEvent(@NonNull MotionEvent event) {
+    gestureDetector.onTouchEvent(event);
+
+    if (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() == 2) {
+      // Two-finger zoom is probably going to start. Disallow parent from intercepting this gesture.
+      getParent().requestDisallowInterceptTouchEvent(true);
     }
 
-    /**
-     * Calculate height of the image that is currently visible.
-     */
-    public float getVisibleZoomedImageHeight() {
-        float zoomedImageHeight = getZoomedImageHeight();
-
-        // Subtract the portion that has gone outside limits due to zooming in, because they are
-        // longer visible.
-        float heightNotVisible = getController().getState().getY();
-        if (heightNotVisible < 0) {
-            zoomedImageHeight += heightNotVisible;
-        }
-
-        if (zoomedImageHeight > getHeight()) {
-            zoomedImageHeight = getHeight();
-        }
-
-        return zoomedImageHeight;
-    }
-
-    private float getZoomedImageHeight() {
-        return (float) getImageHeight() * getZoom();
-    }
-
-    public float getZoom() {
-        return getController().getState().getZoom();
-    }
-
-    /**
-     * Whether the image can be panned anymore vertically, upwards or downwards depending upon <var>upwardPan</var>.
-     */
-    public boolean canPanVertically(boolean upwardPan) {
-        float imageY = getController().getState().getY();
-        if (upwardPan) {
-            return imageY != 0;
-        } else {
-            return getHeight() - getZoomedImageHeight() != imageY;
-        }
-    }
-
-    @Override
-    public boolean onTouchEvent(@NonNull MotionEvent event) {
-        gestureDetector.onTouchEvent(event);
-
-        if (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() == 2) {
-            // Two-finger zoom is probably going to start. Disallow parent from intercepting this gesture.
-            getParent().requestDisallowInterceptTouchEvent(true);
-        }
-
-        return super.onTouchEvent(event);
-    }
+    return super.onTouchEvent(event);
+  }
 
 }

@@ -18,57 +18,57 @@ import timber.log.Timber;
  */
 public abstract class DankJobService extends JobService {
 
-    /**
-     * IDs are stored here to prevent any accidental duplicate IDs.
-     */
-    protected static final int ID_SUBSCRIPTIONS_RECURRING_JOB = 0;
-    protected static final int ID_SUBSCRIPTIONS_ONE_TIME_JOB = 1;
+  /**
+   * IDs are stored here to prevent any accidental duplicate IDs.
+   */
+  protected static final int ID_SUBSCRIPTIONS_RECURRING_JOB = 0;
+  protected static final int ID_SUBSCRIPTIONS_ONE_TIME_JOB = 1;
 
-    protected static final int ID_MESSAGES_FREQUENCY_USER_SET = 2;
-    protected static final int ID_MESSAGES_FREQUENCY_AGGRESSIVE = 3;
-    protected static final int ID_MESSAGES_IMMEDIATELY = 4;
+  protected static final int ID_MESSAGES_FREQUENCY_USER_SET = 2;
+  protected static final int ID_MESSAGES_FREQUENCY_AGGRESSIVE = 3;
+  protected static final int ID_MESSAGES_IMMEDIATELY = 4;
 
-    protected static final int ID_MARK_MESSAGE_AS_READ = 5;
-    protected static final int ID_SEND_DIRECT_MESSAGE_REPLY = 6;
-    protected static final int ID_MARK_ALL_MESSAGES_AS_READ = 7;
+  protected static final int ID_MARK_MESSAGE_AS_READ = 5;
+  protected static final int ID_SEND_DIRECT_MESSAGE_REPLY = 6;
+  protected static final int ID_MARK_ALL_MESSAGES_AS_READ = 7;
 
-    private CompositeDisposable onDestroyDisposables;
+  private CompositeDisposable onDestroyDisposables;
 
-    protected void unsubscribeOnDestroy(Disposable subscription) {
-        if (onDestroyDisposables == null) {
-            onDestroyDisposables = new CompositeDisposable();
-        }
-        onDestroyDisposables.add(subscription);
+  protected void unsubscribeOnDestroy(Disposable subscription) {
+    if (onDestroyDisposables == null) {
+      onDestroyDisposables = new CompositeDisposable();
+    }
+    onDestroyDisposables.add(subscription);
+  }
+
+  @Override
+  public void onDestroy() {
+    if (onDestroyDisposables != null) {
+      onDestroyDisposables.clear();
+    }
+    super.onDestroy();
+  }
+
+  protected void displayDebugNotification(int notifId, String notifBody, Object... args) {
+    if (!BuildConfig.DEBUG) {
+      Timber.e(new RuntimeException("Debug notification"), "This shouldn't be here!");
+      return;
     }
 
-    @Override
-    public void onDestroy() {
-        if (onDestroyDisposables != null) {
-            onDestroyDisposables.clear();
-        }
-        super.onDestroy();
-    }
+    Intent homeActivityIntent = new Intent(this, SubredditActivity.class);
+    PendingIntent onClickPendingIntent = PendingIntent.getActivity(this, 0, homeActivityIntent, PendingIntent.FLAG_CANCEL_CURRENT);
 
-    protected void displayDebugNotification(int notifId, String notifBody, Object... args) {
-        if (!BuildConfig.DEBUG) {
-            Timber.e(new RuntimeException("Debug notification"), "This shouldn't be here!");
-            return;
-        }
+    NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
+        .setContentTitle(String.format(notifBody, args))
+        .setContentIntent(onClickPendingIntent)
+        .setSmallIcon(R.mipmap.ic_launcher)
+        .setShowWhen(true)
+        .setAutoCancel(true)
+        .setPriority(Notification.PRIORITY_MIN)
+        .setColor(ContextCompat.getColor(getBaseContext(), R.color.color_accent));
 
-        Intent homeActivityIntent = new Intent(this, SubredditActivity.class);
-        PendingIntent onClickPendingIntent = PendingIntent.getActivity(this, 0, homeActivityIntent, PendingIntent.FLAG_CANCEL_CURRENT);
-
-        NotificationCompat.Builder builder = new NotificationCompat.Builder(this)
-                .setContentTitle(String.format(notifBody, args))
-                .setContentIntent(onClickPendingIntent)
-                .setSmallIcon(R.mipmap.ic_launcher)
-                .setShowWhen(true)
-                .setAutoCancel(true)
-                .setPriority(Notification.PRIORITY_MIN)
-                .setColor(ContextCompat.getColor(getBaseContext(), R.color.color_accent));
-
-        NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
-        notificationManager.notify(notifId, builder.build());
-    }
+    NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    notificationManager.notify(notifId, builder.build());
+  }
 
 }
