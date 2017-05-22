@@ -101,6 +101,8 @@ public class CheckUnreadMessagesJobService extends DankJobService {
     Timber.i("Fetching unread messages. JobID: %s", params.getJobId());
     boolean refreshMessages = PersistableBundleUtils.getBoolean(params.getExtras(), KEY_REFRESH_MESSAGES);
 
+    // TODO: After refreshing messages, also dismiss any notification whose message is no longer present in unread folder.
+
     unsubscribeOnDestroy((refreshMessages ? Dank.inbox().refreshMessages(InboxFolder.UNREAD).toCompletable() : Completable.complete())
         .andThen(Dank.inbox().messages(InboxFolder.UNREAD).firstOrError())
         .flatMapCompletable(unreads -> notifyUnreadMessages(unreads))
@@ -130,14 +132,19 @@ public class CheckUnreadMessagesJobService extends DankJobService {
 
   private Completable notifyUnreadMessages(List<Message> unreadMessages) {
     MessagesNotificationManager notifManager = Dank.messagesNotifManager();
-    Timber.i("Notifying for unread messages");
-
+    
     return notifManager.filterUnseenMessages(unreadMessages)
-        .flatMapCompletable(unseenMessages ->
-            unseenMessages.isEmpty()
-                ? notifManager.dismissAllNotifications(getBaseContext())
-                : notifManager.displayNotification(getBaseContext(), unseenMessages)
-        );
+        .flatMapCompletable(unseenMessages -> {
+          if (unseenMessages.isEmpty()) {
+            return notifManager.dismissAllNotifications(getBaseContext());
+
+          } else if (!Dank.sharedPrefs().isUnreadMessagesFolderActive(false)) {
+            return notifManager.displayNotification(getBaseContext(), unseenMessages);
+
+          } else {
+            return Completable.complete();
+          }
+        });
   }
 
 }

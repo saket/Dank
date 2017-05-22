@@ -28,6 +28,7 @@ import java.util.Set;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Completable;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
@@ -109,8 +110,11 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     // Dismiss any active message notifications when the unread page is active.
     unsubscribeOnStop(RxViewPager.pageSelections(viewPager)
         .map(pageIndex -> inboxPagerAdapter.getFolder(pageIndex) == InboxFolder.UNREAD)
-        .filter(isUnreadActive -> isUnreadActive)
-        .flatMapCompletable(o -> Dank.messagesNotifManager().dismissAllNotifications(this))
+        .doOnNext(isUnreadActive -> Dank.sharedPrefs().setUnreadMessagesFolderActive(isUnreadActive))
+        .doOnDispose(() -> Dank.sharedPrefs().setUnreadMessagesFolderActive(false))
+        .flatMapCompletable(isUnreadActive -> isUnreadActive
+            ? Dank.messagesNotifManager().dismissAllNotifications(this)
+            : Completable.complete())
         .subscribe());
   }
 
