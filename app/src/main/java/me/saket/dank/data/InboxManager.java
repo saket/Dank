@@ -18,6 +18,7 @@ import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.Paginator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import io.reactivex.Completable;
@@ -39,12 +40,14 @@ public class InboxManager {
   private final BriteDatabase briteDatabase;
   private Moshi moshi;
 
+  // TODO: Do we need this class?
   @AutoValue
   public abstract static class FetchMoreResult {
+    public abstract List<Message> fetchedMessages();
     public abstract boolean wasEmpty();
 
-    public static FetchMoreResult create(boolean empty) {
-      return new AutoValue_InboxManager_FetchMoreResult(empty);
+    public static FetchMoreResult create(List<Message> fetchedMessages, boolean empty) {
+      return new AutoValue_InboxManager_FetchMoreResult(fetchedMessages, empty);
     }
   }
 
@@ -61,7 +64,8 @@ public class InboxManager {
   public Observable<List<Message>> messages(InboxFolder folder) {
     return toV2Observable(briteDatabase
         .createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
-        .mapToList(StoredMessage.mapMessageFromCursor(moshi)));
+        .mapToList(StoredMessage.mapMessageFromCursor(moshi)))
+        .map(mutableList -> Collections.unmodifiableList(mutableList));
   }
 
   /**
@@ -72,7 +76,7 @@ public class InboxManager {
     return getPaginationAnchor(folder)
         .flatMap(anchor -> fetchMessagesFromAnchor(folder, anchor))
         .doOnSuccess(saveMessages(folder, false))
-        .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages.isEmpty()));
+        .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages, fetchedMessages.isEmpty()));
   }
 
   /**
@@ -83,7 +87,7 @@ public class InboxManager {
   public Single<FetchMoreResult> refreshMessages(InboxFolder folder) {
     return fetchMessagesFromAnchor(folder, PaginationAnchor.createEmpty())
         .doOnSuccess(saveMessages(folder, true))
-        .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages.isEmpty()));
+        .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages, fetchedMessages.isEmpty()));
   }
 
   @CheckResult

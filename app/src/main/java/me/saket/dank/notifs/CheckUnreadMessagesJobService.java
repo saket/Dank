@@ -1,5 +1,6 @@
 package me.saket.dank.notifs;
 
+import static java.util.Collections.unmodifiableList;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 
 import android.app.job.JobInfo;
@@ -12,6 +13,7 @@ import android.text.format.DateUtils;
 
 import net.dean.jraw.models.Message;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import io.reactivex.Completable;
@@ -19,6 +21,7 @@ import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxFolder;
+import me.saket.dank.utils.Arrays;
 import me.saket.dank.utils.PersistableBundleUtils;
 import timber.log.Timber;
 
@@ -101,9 +104,31 @@ public class CheckUnreadMessagesJobService extends DankJobService {
     Timber.i("Fetching unread messages. JobID: %s", params.getJobId());
     boolean refreshMessages = PersistableBundleUtils.getBoolean(params.getExtras(), KEY_REFRESH_MESSAGES);
 
-    // TODO: After refreshing messages, also dismiss any notification whose message is no longer present in unread folder.
+    Completable refreshCompletable = Dank.inbox()
+        .messages(InboxFolder.UNREAD)
+        .firstOrError()
+        .flatMapCompletable(existingUnreads -> Dank.inbox().refreshMessages(InboxFolder.UNREAD)
+            .map(fetchMoreResult -> fetchMoreResult.fetchedMessages())
+            .map(receivedUnreads -> {
+              List<Message> staleMessages = new ArrayList<>(existingUnreads.size());
+              staleMessages.addAll(existingUnreads);
+              staleMessages.removeAll(receivedUnreads);
 
-    unsubscribeOnDestroy((refreshMessages ? Dank.inbox().refreshMessages(InboxFolder.UNREAD).toCompletable() : Completable.complete())
+              Timber.i("----------------------------------------");
+              Timber.w("Stale notifs: %s", staleMessages.size());
+              staleMessages.forEach(m -> Timber.i("%s", m.getBody().substring(0, Math.min(m.getBody().length(), 50))));
+              Timber.i("----------------------------------------");
+
+              return unmodifiableList(staleMessages);
+            })
+            .flatMapCompletable(staleMessages ->
+                // When generating bundled notifications, Android does not remove existing bundle when a new bundle is posted.
+                // It instead amends any new notifications with the existing ones. This means that we'll have to manually
+                // cleanup stale notifications.
+                Dank.messagesNotifManager().dismissNotification(getBaseContext(), Arrays.toArray(staleMessages, Message.class))
+            ));
+
+    unsubscribeOnDestroy((refreshMessages ? refreshCompletable : Completable.complete())
         .andThen(Dank.inbox().messages(InboxFolder.UNREAD).firstOrError())
         .flatMapCompletable(unreads -> notifyUnreadMessages(unreads))
         .compose(applySchedulersCompletable())
@@ -132,7 +157,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
 
   private Completable notifyUnreadMessages(List<Message> unreadMessages) {
     MessagesNotificationManager notifManager = Dank.messagesNotifManager();
-    
+
     return notifManager.filterUnseenMessages(unreadMessages)
         .flatMapCompletable(unseenMessages -> {
           if (unseenMessages.isEmpty()) {

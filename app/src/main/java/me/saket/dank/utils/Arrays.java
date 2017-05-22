@@ -6,9 +6,9 @@ import java.lang.reflect.Array;
 import java.util.Collection;
 
 /**
- * Utility methods for collections and arrays.
+ * Utility methods for arrays.
  */
-public class Collections {
+public class Arrays {
 
   public static <T> T[] toArray(@Nullable Collection<?> collection, Class<T> tClass) {
     if (collection == null) {

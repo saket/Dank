@@ -36,7 +36,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.NotificationActionReceiver;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.OpenUrlActivity;
-import me.saket.dank.utils.Collections;
+import me.saket.dank.utils.Arrays;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
@@ -201,7 +201,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       return;
     }
 
-    Message[] seenMessagesArray = Collections.toArray(seenUnreadMessages, Message.class);
+    Message[] seenMessagesArray = Arrays.toArray(seenUnreadMessages, Message.class);
     sendBroadcast(NotificationActionReceiver.createMarkAsReadIntent(this, Dank.moshi(), seenMessagesArray));
 
     Dank.inbox().refreshMessages(InboxFolder.UNREAD)
