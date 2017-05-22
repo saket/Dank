@@ -2,6 +2,7 @@ package me.saket.dank.data;
 
 import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
 import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Single;
+import static java.util.Collections.unmodifiableList;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
@@ -18,7 +19,6 @@ import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.Paginator;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import io.reactivex.Completable;
@@ -40,17 +40,6 @@ public class InboxManager {
   private final BriteDatabase briteDatabase;
   private Moshi moshi;
 
-  // TODO: Do we need this class?
-  @AutoValue
-  public abstract static class FetchMoreResult {
-    public abstract List<Message> fetchedMessages();
-    public abstract boolean wasEmpty();
-
-    public static FetchMoreResult create(List<Message> fetchedMessages, boolean empty) {
-      return new AutoValue_InboxManager_FetchMoreResult(fetchedMessages, empty);
-    }
-  }
-
   public InboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
     this.dankRedditClient = dankRedditClient;
     this.briteDatabase = briteDatabase;
@@ -65,18 +54,18 @@ public class InboxManager {
     return toV2Observable(briteDatabase
         .createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
         .mapToList(StoredMessage.mapMessageFromCursor(moshi)))
-        .map(mutableList -> Collections.unmodifiableList(mutableList));
+        .map(mutableList -> unmodifiableList(mutableList));
   }
 
   /**
    * Fetch messages after the oldest message we locally have in <var>folder</var>.
    */
   @CheckResult
-  public Single<FetchMoreResult> fetchMoreMessages(InboxFolder folder) {
+  public Single<List<Message>> fetchMoreMessages(InboxFolder folder) {
     return getPaginationAnchor(folder)
         .flatMap(anchor -> fetchMessagesFromAnchor(folder, anchor))
         .doOnSuccess(saveMessages(folder, false))
-        .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages, fetchedMessages.isEmpty()));
+        .map(fetchedMessages -> unmodifiableList(fetchedMessages));
   }
 
   /**
@@ -84,10 +73,10 @@ public class InboxManager {
    * this does not use the oldest message as the anchor.
    */
   @CheckResult
-  public Single<FetchMoreResult> refreshMessages(InboxFolder folder) {
+  public Single<List<Message>> refreshMessages(InboxFolder folder) {
     return fetchMessagesFromAnchor(folder, PaginationAnchor.createEmpty())
         .doOnSuccess(saveMessages(folder, true))
-        .map(fetchedMessages -> FetchMoreResult.create(fetchedMessages, fetchedMessages.isEmpty()));
+        .map(fetchedMessages -> unmodifiableList(fetchedMessages));
   }
 
   @CheckResult

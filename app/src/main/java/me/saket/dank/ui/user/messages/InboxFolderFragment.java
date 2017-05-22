@@ -160,12 +160,12 @@ public class InboxFolderFragment extends DankFragment {
         .compose(handleProgressAndErrorForSubsequentRefresh())
         .compose(doOnSingleStartAndTerminate(ongoing -> isRefreshOngoing = ongoing))
         .doOnSubscribe(o -> emptyStateView.setVisibility(View.GONE))
-        .subscribe(result -> {
+        .subscribe(fetchedMessages -> {
           if (isAdded()) {
             ((Callbacks) getActivity()).setFirstRefreshDone(folder);
           }
 
-          emptyStateView.setVisibility(result.wasEmpty() ? View.VISIBLE : View.GONE);
+          emptyStateView.setVisibility(fetchedMessages.isEmpty() ? View.VISIBLE : View.GONE);
           firstLoadErrorStateView.setOnRetryClickListener(o -> refreshMessages());
         }, doNothing());
 
@@ -233,7 +233,7 @@ public class InboxFolderFragment extends DankFragment {
             .compose(handleProgressAndErrorForLoadMore())
             .compose(doOnSingleStartAndTerminate(ongoing -> scrollListener.setLoadOngoing(ongoing)))
         )
-        .takeUntil(fetchMoreResult -> (boolean) fetchMoreResult.wasEmpty())
+        .takeUntil(fetchedMessages -> (boolean) fetchedMessages.isEmpty())
         .subscribe(doNothing(), doNothing()));
   }
 
