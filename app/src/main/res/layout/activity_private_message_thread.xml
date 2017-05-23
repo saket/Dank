@@ -1,11 +1,41 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout
-  android:id="@+id/privatemessagethread_root"
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/privatemessagethread_root"
   style="@style/DankPullCollapsibleActivityPage"
   xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   tools:layout_marginTop="25dp">
 
+  <me.saket.dank.widgets.DankToolbar
+    android:id="@id/toolbar"
+    style="@style/DankToolbar"
+    app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
+
+  <TextView
+    android:id="@+id/privatemessagethread_subject"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@id/toolbar"
+    android:padding="@dimen/spacing16"
+    android:textColor="@color/gray_200"
+    android:textSize="@dimen/textsize18"
+    tools:text="regarding sikkim" />
+
+  <android.support.v7.widget.RecyclerView
+    android:id="@+id/privatemessagethread_message_list"
+    style="@style/DankRecyclerView"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_above="@+id/privatemessagethread_reply_field_container"
+    android:layout_below="@id/privatemessagethread_subject"
+    android:clipToPadding="false" />
+
+  <android.support.design.widget.FloatingActionButton
+    android:id="@+id/privatemessagethread_reply"
+    style="@style/DankFAB"
+    android:layout_margin="@dimen/spacing16"
+    android:src="@drawable/ic_reply_24dp"
+    android:visibility="invisible" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

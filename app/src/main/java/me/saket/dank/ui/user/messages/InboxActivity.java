@@ -40,6 +40,7 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.utils.Arrays;
 import me.saket.dank.utils.DankLinkMovementMethod;
+import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
@@ -56,7 +57,6 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @BindView(R.id.inbox_viewpager) ViewPager viewPager;
 
   private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.ALL.length);
-  private DankLinkMovementMethod commentLinkMovementMethod;
   private InboxPagerAdapter inboxPagerAdapter;
   private Set<Message> seenUnreadMessages = new HashSet<>();
 
@@ -74,7 +74,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.activity_messages);
+    setContentView(R.layout.activity_inbox);
     ButterKnife.bind(this);
     findAndSetupToolbar();
 
@@ -177,18 +177,16 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   @Override
   public BetterLinkMovementMethod getMessageLinkMovementMethod() {
-    if (commentLinkMovementMethod == null) {
-      commentLinkMovementMethod = DankLinkMovementMethod.newInstance();
-      commentLinkMovementMethod.setOnLinkClickListener((textView, url) -> {
-        Point clickedUrlCoordinates = commentLinkMovementMethod.getLastUrlClickCoordinates();
-        int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
-        Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
+    DankLinkMovementMethod commentLinkMovementMethod = DankLinkMovementMethod.newInstance();
+    commentLinkMovementMethod.setOnLinkClickListener((textView, url) -> {
+      Point clickedUrlCoordinates = commentLinkMovementMethod.getLastUrlClickCoordinates();
+      int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+      Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
 
-        Link parsedLink = UrlParser.parse(url);
-        OpenUrlActivity.handle(this, parsedLink, clickedUrlCoordinatesRect);
-        return true;
-      });
-    }
+      Link parsedLink = UrlParser.parse(url);
+      OpenUrlActivity.handle(this, parsedLink, clickedUrlCoordinatesRect);
+      return true;
+    });
     return commentLinkMovementMethod;
   }
 
@@ -204,7 +202,8 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       OpenUrlActivity.handle(this, parsedLink, messageItemViewRect);
 
     } else {
-      PrivateMessageThreadActivity.start(this, messageItemViewRect);
+      String secondPartyName = JrawUtils.getSecondPartyName(getResources(), message, Dank.reddit().loggedInUserName());
+      PrivateMessageThreadActivity.start(this, message.getId(), secondPartyName, messageItemViewRect);
     }
   }
 

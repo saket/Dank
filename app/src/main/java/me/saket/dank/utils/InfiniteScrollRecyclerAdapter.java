@@ -230,6 +230,7 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
       progressContainer.setVisibility(headerMode == HeaderMode.PROGRESS ? View.VISIBLE : View.GONE);
       errorView.setVisibility(headerMode == HeaderMode.PROGRESS ? View.GONE : View.VISIBLE);
       itemView.setOnClickListener(headerMode == HeaderMode.PROGRESS ? null : retryClickListener);
+      itemView.setClickable(headerMode == HeaderMode.ERROR);
     }
   }
 

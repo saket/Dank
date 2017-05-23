@@ -47,10 +47,15 @@ public abstract class StoredMessage {
           + " ORDER BY " + COLUMN_LATEST_MESSAGE_TIMESTAMP + " ASC"
           + " LIMIT 1";
 
-  public static final String QUERY_WHERE_FOLDER =
+  public static final String QUERY_GET_SINGLE =
+      "SELECT * FROM " + TABLE_NAME
+          + " WHERE " + COLUMN_ID + " == ? "
+          + " AND " + COLUMN_FOLDER + " == ?";
+
+  public static final String WHERE_FOLDER =
       COLUMN_FOLDER + " == ?";
 
-  public static final String QUERY_WHERE_FOLDER_AND_ID =
+  public static final String WHERE_FOLDER_AND_ID =
       COLUMN_FOLDER + " == ? AND " + COLUMN_ID + " == ?";
 
   public abstract String id();

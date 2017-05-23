@@ -1,91 +1,87 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="?attr/selectableItemBackground"
+  android:orientation="vertical"
+  android:paddingTop="@dimen/spacing12"
+  tools:background="@color/window_background"
+  tools:layout_marginTop="25dp">
+
+  <TextView
+    android:id="@+id/individualmessage_reply_post_title"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:layout_marginStart="@dimen/spacing16"
+    android:ellipsize="end"
+    android:maxLines="1"
+    android:textColor="@color/gray_200"
+    tools:text="Litho: A Declarative UI Framework for Android" />
+
+  <TextView
+    android:id="@+id/individualmessage_reply_timestamp"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:layout_marginStart="@dimen/spacing16"
+    tools:text="2 days ago"
+    style="@style/DankMessageTimestampStyle" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/spacing16"
+    android:background="@drawable/background_message_content"
+    android:foreground="?attr/selectableItemBackground"
     android:orientation="vertical"
-    android:paddingTop="@dimen/spacing12"
-    tools:background="@color/window_background"
-    tools:layout_marginTop="25dp">
-
-    <TextView
-        android:id="@+id/individualmessage_reply_post_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing16"
-        android:layout_marginStart="@dimen/spacing16"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="@color/gray_200"
-        tools:text="Litho: A Declarative UI Framework for Android" />
-
-    <TextView
-        android:id="@+id/individualmessage_reply_timestamp"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing16"
-        android:layout_marginStart="@dimen/spacing16"
-        android:textColor="@color/gray_500"
-        tools:text="2 days ago" />
+    android:paddingBottom="@dimen/spacing16"
+    android:paddingEnd="@dimen/spacing16"
+    android:paddingStart="@dimen/spacing16"
+    android:paddingTop="@dimen/spacing12">
 
     <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_margin="@dimen/spacing16"
-        android:background="@drawable/background_message_content"
-        android:foreground="?attr/selectableItemBackground"
-        android:orientation="vertical"
-        android:paddingBottom="@dimen/spacing16"
-        android:paddingEnd="@dimen/spacing16"
-        android:paddingStart="@dimen/spacing16"
-        android:paddingTop="@dimen/spacing12">
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/spacing8"
+      android:orientation="horizontal">
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing8"
-            android:orientation="horizontal">
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing4"
+        android:text="@string/inbox_reply_from"
+        android:textColor="@color/gray_500" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/spacing4"
-                android:text="@string/inbox_reply_from"
-                android:textColor="@color/gray_500" />
+      <TextView
+        android:id="@+id/individualmessage_reply_author_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing4"
+        android:textColor="@color/gray_500"
+        tools:text="saketme" />
 
-            <TextView
-                android:id="@+id/individualmessage_reply_author_name"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/spacing4"
-                android:textColor="@color/gray_500"
-                tools:text="saketme" />
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing4"
+        android:text="@string/inbox_via"
+        android:textColor="@color/gray_500" />
 
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_marginEnd="@dimen/spacing4"
-                android:text="@string/inbox_via"
-                android:textColor="@color/gray_500" />
-
-            <TextView
-                android:id="@+id/individualmessage_reply_from"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:textColor="@color/gray_500"
-                tools:text="/r/androiddev" />
-        </LinearLayout>
-
-        <TextView
-            android:id="@+id/individualmessage_reply_body"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textColor="@color/gray_300"
-            tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..." />
+      <TextView
+        android:id="@+id/individualmessage_reply_from"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@color/gray_500"
+        tools:text="/r/androiddev" />
     </LinearLayout>
 
-    <View
-        style="@style/DankSeparator.Vertical"
-        android:layout_marginTop="@dimen/spacing4" />
+    <TextView
+      android:id="@+id/individualmessage_reply_body"
+      tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..."
+      style="@style/DankMessageBodyStyle" />
+  </LinearLayout>
+
+  <View
+    style="@style/DankSeparator.Vertical"
+    android:layout_marginTop="@dimen/spacing4" />
 </LinearLayout>

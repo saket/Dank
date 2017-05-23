@@ -1,9 +1,7 @@
 package me.saket.dank.ui.user.messages;
 
-import android.content.res.Resources;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
-import android.text.format.DateUtils;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -23,6 +21,7 @@ import me.saket.dank.R;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
+import me.saket.dank.utils.Dates;
 import timber.log.Timber;
 
 public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerView.ViewHolder> implements Consumer<List<Message>> {
@@ -92,20 +91,6 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
     });
   }
 
-  private static CharSequence createTimestamp(Resources resources, Message message) {
-    long createdTimeMs = JrawUtils.createdTimeUtc(message);
-    if (createdTimeMs < DateUtils.MINUTE_IN_MILLIS) {
-      return resources.getString(R.string.inbox_timestamp_just_now);
-    } else {
-      return DateUtils.getRelativeTimeSpanString(
-          createdTimeMs,
-          System.currentTimeMillis(),
-          0,
-          DateUtils.FORMAT_ABBREV_RELATIVE | DateUtils.FORMAT_ABBREV_MONTH
-      );
-    }
-  }
-
   static class MessageThreadViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.messagethread_second_party) TextView secondPartyNameView;
     @BindView(R.id.messagethread_subject) TextView subjectView;
@@ -130,30 +115,16 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
     }
 
     private void bind(Message parentMessage, Message latestMessageInThread, String loggedInUserName) {
-      String destination = parentMessage.getDataNode().get("dest").asText();
-      String secondPartyName;
-
-      if (destination.startsWith("#")) {
-        secondPartyName = itemView.getResources().getString(R.string.subreddit_name_r_prefix, parentMessage.getSubreddit());
-      } else {
-        if (destination.equalsIgnoreCase(loggedInUserName)) {
-          secondPartyName = parentMessage.getAuthor() == null
-              ? itemView.getResources().getString(R.string.subreddit_name_r_prefix, parentMessage.getSubreddit())
-              : parentMessage.getAuthor();
-        } else {
-          secondPartyName = destination;
-        }
-      }
+      String secondPartyName = JrawUtils.getSecondPartyName(itemView.getResources(), parentMessage, loggedInUserName);
+      secondPartyNameView.setText(secondPartyName);
+      secondPartyNameView.setVisibility(secondPartyName != null && !secondPartyName.isEmpty() ? View.VISIBLE : View.GONE);
 
       if (secondPartyName == null || secondPartyName.isEmpty()) {
         Timber.e(new IllegalStateException("Second party name is null. Message: " + parentMessage.getDataNode().toString()), "Empty second party");
       }
 
-      secondPartyNameView.setText(secondPartyName);
-      secondPartyNameView.setVisibility(secondPartyName != null && !secondPartyName.isEmpty() ? View.VISIBLE : View.GONE);
-
       subjectView.setText(parentMessage.getSubject());
-      timestampView.setText(createTimestamp(itemView.getResources(), latestMessageInThread));
+      timestampView.setText(Dates.createTimestamp(itemView.getResources(), JrawUtils.createdTimeUtc(latestMessageInThread)));
 
       // TODO Cache this: This is taking too long to bind.
       String bodyHtml = JrawUtils.messageBodyHtml(latestMessageInThread);
@@ -210,7 +181,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
       messageBodyView.setMovementMethod(linkMovementMethod);
 
       authorNameView.setText(message.getAuthor());
-      timestampView.setText(createTimestamp(itemView.getResources(), message));
+      timestampView.setText(Dates.createTimestamp(itemView.getResources(), JrawUtils.createdTimeUtc(message)));
     }
 
   }

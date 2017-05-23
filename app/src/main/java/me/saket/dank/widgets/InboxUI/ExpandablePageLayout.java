@@ -139,9 +139,6 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     // Handles pull-to-collapse-this-page gestures
     setPullToCollapseEnabled(true);
     pullToCollapseListener = new PullToCollapseListener(getContext(), this, this);
-
-    // Make this ViewGroup clickable so that it receives all touch events. Consume everything.
-    setClickable(true);
   }
 
   public void setup(View parentActivityToolbar) {
@@ -170,7 +167,12 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   @Override
   public boolean dispatchTouchEvent(MotionEvent ev) {
     // Ignore touch events until the page is fully expanded for avoiding accidental taps.
-    return isExpanded() && super.dispatchTouchEvent(ev);
+    if (isExpanded()) {
+      super.dispatchTouchEvent(ev);
+    }
+
+    // Consume all touch events to avoid them leaking behind.
+    return true;
   }
 
 // ======== PULL TO COLLAPSE ======== //

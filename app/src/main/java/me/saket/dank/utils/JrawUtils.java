@@ -1,5 +1,8 @@
 package me.saket.dank.utils;
 
+import android.content.res.Resources;
+import android.support.annotation.Nullable;
+
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.dean.jraw.models.CommentMessage;
@@ -12,6 +15,8 @@ import net.dean.jraw.models.attr.Created;
 
 import java.util.Collections;
 import java.util.List;
+
+import me.saket.dank.R;
 
 public class JrawUtils {
 
@@ -42,5 +47,23 @@ public class JrawUtils {
 
   public static String messageBodyHtml(Message message) {
     return message.getDataNode().get("body_html").asText();
+  }
+
+  @Nullable
+  public static String getSecondPartyName(Resources resources, Message message, String loggedInUserName) {
+    String secondPartyName;
+    String destination = message.getDataNode().get("dest").asText();
+    if (destination.startsWith("#")) {
+      secondPartyName = resources.getString(R.string.subreddit_name_r_prefix, message.getSubreddit());
+    } else {
+      if (destination.equalsIgnoreCase(loggedInUserName)) {
+        secondPartyName = message.getAuthor() == null
+            ? resources.getString(R.string.subreddit_name_r_prefix, message.getSubreddit())
+            : message.getAuthor();
+      } else {
+        secondPartyName = destination;
+      }
+    }
+    return secondPartyName;
   }
 }

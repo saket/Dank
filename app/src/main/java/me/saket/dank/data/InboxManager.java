@@ -56,6 +56,18 @@ public class InboxManager {
   }
 
   /**
+   * Both ID and folder are required because {@link StoredMessage} uses a composite key of the ID and the
+   * folder. This is because it's possible for the same message to be present in Unread as well as Private
+   * Message folder.
+   */
+  @CheckResult
+  public Observable<Message> message(String messageId, InboxFolder folder) {
+    return toV2Observable(briteDatabase
+        .createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_SINGLE, messageId, folder.name())
+        .mapToOne(StoredMessage.mapMessageFromCursor(moshi)));
+  }
+
+  /**
    * Fetch messages after the oldest message we locally have in <var>folder</var>.
    */
   @CheckResult
@@ -162,7 +174,7 @@ public class InboxManager {
     return fetchedMessages -> {
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
         if (removeExistingMessages) {
-          briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.QUERY_WHERE_FOLDER, folder.name());
+          briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.WHERE_FOLDER, folder.name());
         }
 
         for (Message fetchedMessage : fetchedMessages) {
@@ -187,7 +199,7 @@ public class InboxManager {
     return Completable.fromAction(() -> {
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
         for (Message message : messages) {
-          briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.QUERY_WHERE_FOLDER_AND_ID, folder.name(), message.getId());
+          briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.WHERE_FOLDER_AND_ID, folder.name(), message.getId());
         }
         transaction.markSuccessful();
       }
@@ -198,7 +210,7 @@ public class InboxManager {
   private Completable removeAllMessages(InboxFolder folder) {
     return Completable.fromAction(() -> {
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
-        briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.QUERY_WHERE_FOLDER, folder.name());
+        briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.WHERE_FOLDER, folder.name());
         transaction.markSuccessful();
       }
     });

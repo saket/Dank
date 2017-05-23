@@ -1,185 +1,215 @@
 <resources>
 
-    <string name="dank_default_font_family">sans-serif-condensed</string>
+  <string name="dank_default_font_family">sans-serif-condensed</string>
 
-    <style name="DankTheme" parent="Theme.AppCompat.NoActionBar">
-        <item name="colorPrimary">@color/color_primary</item>
-        <item name="colorPrimaryDark">@color/color_primary_dark</item>
-        <item name="colorAccent">@color/color_accent</item>
+  <style name="DankTheme" parent="Theme.AppCompat.NoActionBar">
+    <item name="colorPrimary">@color/color_primary</item>
+    <item name="colorPrimaryDark">@color/color_primary_dark</item>
+    <item name="colorAccent">@color/color_accent</item>
 
-        <item name="android:textViewStyle">@style/DankDefaultTextViewStyle</item>
-        <item name="editTextStyle">@style/DankDefaultEditTextStyle</item>
-        <item name="android:buttonStyle">@style/DankButton</item>
+    <item name="android:textViewStyle">@style/DankDefaultTextViewStyle</item>
+    <item name="editTextStyle">@style/DankDefaultEditTextStyle</item>
+    <item name="android:buttonStyle">@style/DankButton</item>
 
-        <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-        <item name="android:navigationBarColor">@color/gray_900</item>
-        <item name="android:windowTranslucentStatus">true</item>
-        <item name="android:backgroundDimEnabled">false</item>
+    <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    <item name="android:navigationBarColor">@color/gray_900</item>
+    <item name="android:windowTranslucentStatus">true</item>
+    <item name="android:backgroundDimEnabled">false</item>
 
-        <item name="alertDialogTheme">@style/DankDialogTheme</item>
-    </style>
+    <item name="alertDialogTheme">@style/DankDialogTheme</item>
+  </style>
 
-    <style name="DankTheme.TransparentBackground">
-        <item name="android:windowIsTranslucent">true</item>
-        <item name="android:windowBackground">@android:color/transparent</item>
-    </style>
+  <style name="DankTheme.TransparentBackground">
+    <item name="android:windowIsTranslucent">true</item>
+    <item name="android:windowBackground">@android:color/transparent</item>
+  </style>
 
-    <style name="DankDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
-        <!-- Because without this, softInputMode is ignored :| -->
-        <item name="android:windowTranslucentStatus">false</item>
-        <item name="android:windowTitleStyle">@style/DankDialogTitleStyle</item>
-    </style>
+  <style name="DankDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
+    <!-- Because without this, softInputMode is ignored :| -->
+    <item name="android:windowTranslucentStatus">false</item>
+    <item name="android:windowTitleStyle">@style/DankDialogTitleStyle</item>
+  </style>
 
-    <style name="DankDialogTitleStyle" parent="@android:style/TextAppearance.Material.WindowTitle">
-        <item name="android:fontFamily">sans-serif-condensed</item>
-    </style>
+  <style name="DankDialogTitleStyle" parent="@android:style/TextAppearance.Material.WindowTitle">
+    <item name="android:fontFamily">sans-serif-condensed</item>
+  </style>
 
-    <style name="DankToolbarTitleAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
-        <item name="android:fontFamily">@string/dank_default_font_family</item>
-        <item name="android:textSize">20sp</item>
-    </style>
+  <style name="DankToolbarTitleAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
+    <item name="android:fontFamily">@string/dank_default_font_family</item>
+    <item name="android:textSize">20sp</item>
+  </style>
 
-    <style name="DankToolbarTitleAppearance.Toolbar">
-        <item name="android:textColor">@color/color_accent</item>
-    </style>
+  <style name="DankToolbarTitleAppearance.Toolbar">
+    <item name="android:textColor">@color/color_accent</item>
+  </style>
 
-    <style name="DankSeparator">
-        <item name="android:background">@color/white_opacity_05</item>
-    </style>
+  <style name="DankSeparator">
+    <item name="android:background">@color/white_opacity_05</item>
+  </style>
 
-    <style name="DankSeparator.Vertical">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">1dp</item>
-    </style>
+  <style name="DankSeparator.Vertical">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">1dp</item>
+  </style>
 
-    <style name="DankButton" parent="Widget.AppCompat.Button">
-        <item name="android:fontFamily">@string/dank_default_font_family</item>
-    </style>
+  <style name="DankButton" parent="Widget.AppCompat.Button">
+    <item name="android:fontFamily">@string/dank_default_font_family</item>
+  </style>
 
-    <style name="DankButton.Borderless" parent="@style/Widget.AppCompat.Button.Borderless.Colored">
-        <item name="android:fontFamily">@string/dank_default_font_family</item>
-    </style>
+  <style name="DankButton.Borderless" parent="@style/Widget.AppCompat.Button.Borderless.Colored">
+    <item name="android:fontFamily">@string/dank_default_font_family</item>
+  </style>
 
-    <style name="DankToolbarIcon">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
-        <item name="android:padding">@dimen/spacing8</item>
-    </style>
+  <style name="DankToolbarIcon">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+    <item name="android:padding">@dimen/spacing8</item>
+  </style>
 
-    <style name="DankProgressBar" />
+  <style name="DankProgressBar" />
 
-    <style name="DankProgressBar.Horizontal" parent="android:Widget.Material.ProgressBar.Horizontal">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:indeterminate">true</item>
-    </style>
+  <style name="DankProgressBar.Horizontal" parent="android:Widget.Material.ProgressBar.Horizontal">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:indeterminate">true</item>
+  </style>
 
-    <style name="DankProgressBar.Horizontal.TopAligned">
-        <item name="android:layout_marginTop">-7dp</item>
-    </style>
+  <style name="DankProgressBar.Horizontal.TopAligned">
+    <item name="android:layout_marginTop">-7dp</item>
+  </style>
 
-    <style name="DankProgressBar.Horizontal.BottomAligned">
-        <item name="android:layout_marginBottom">-7dp</item>
-    </style>
+  <style name="DankProgressBar.Horizontal.BottomAligned">
+    <item name="android:layout_marginBottom">-7dp</item>
+  </style>
 
-    <style name="DankToolbar">
-        <item name="titleTextAppearance">@style/DankToolbarTitleAppearance.Toolbar</item>
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:background">@color/toolbar</item>
-        <item name="android:elevation">@dimen/elevation_toolbar</item>
-    </style>
+  <style name="DankToolbar">
+    <item name="titleTextAppearance">@style/DankToolbarTitleAppearance.Toolbar</item>
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">@color/toolbar</item>
+    <item name="android:elevation">@dimen/elevation_toolbar</item>
+  </style>
 
-    <style name="DankDefaultTextViewStyle" parent="@android:style/Widget.TextView">
-        <item name="android:fontFamily">@string/dank_default_font_family</item>
-    </style>
+  <style name="DankDefaultTextViewStyle" parent="@android:style/Widget.TextView">
+    <item name="android:fontFamily">@string/dank_default_font_family</item>
+  </style>
 
-    <style name="DankDefaultEditTextStyle" parent="@android:style/Widget.EditText">
-        <item name="android:fontFamily">@string/dank_default_font_family</item>
-    </style>
+  <style name="DankDefaultEditTextStyle" parent="@android:style/Widget.EditText">
+    <item name="android:fontFamily">@string/dank_default_font_family</item>
+  </style>
 
-    <style name="DankOverflowMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow" />
+  <style name="DankOverflowMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow" />
 
-    <style name="DankTextInputLayoutErrorTextAppearance">
-        <item name="android:textColor">@color/error_text_color</item>
-    </style>
+  <style name="DankTextInputLayoutErrorTextAppearance">
+    <item name="android:textColor">@color/error_text_color</item>
+  </style>
 
-    <style name="DankPullCollapsibleActivityPage">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">match_parent</item>
-        <item name="android:background">@color/window_background</item>
-        <item name="android:elevation">8dp</item>
-    </style>
+  <style name="DankPullCollapsibleActivityPage">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">match_parent</item>
+    <item name="android:background">@color/window_background</item>
+    <item name="android:elevation">8dp</item>
+  </style>
 
-    <style name="EmptyStateEmoji">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:textColor">@color/gray_400</item>
-        <item name="android:textSize">24sp</item>
-    </style>
+  <style name="EmptyStateEmoji">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:textColor">@color/gray_400</item>
+    <item name="android:textSize">24sp</item>
+  </style>
 
-    <style name="EmptyStateMessage">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:layout_marginEnd">@dimen/spacing16</item>
-        <item name="android:layout_marginStart">@dimen/spacing16</item>
-        <item name="android:gravity">center_horizontal</item>
-        <item name="android:lineSpacingExtra">@dimen/spacing4</item>
-        <item name="android:textColor">@color/gray_500</item>
-        <item name="android:textSize">@dimen/textsize14</item>
-    </style>
+  <style name="EmptyStateMessage">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_marginEnd">@dimen/spacing16</item>
+    <item name="android:layout_marginStart">@dimen/spacing16</item>
+    <item name="android:gravity">center_horizontal</item>
+    <item name="android:lineSpacingExtra">@dimen/spacing4</item>
+    <item name="android:textColor">@color/gray_500</item>
+    <item name="android:textSize">@dimen/textsize14</item>
+  </style>
 
-    <style name="DankInfiniteScrollHeaderFooterErrorText">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:drawablePadding">@dimen/spacing16</item>
-        <item name="android:drawableStart">@drawable/ic_error_24dp</item>
-        <item name="android:gravity">center_vertical</item>
-        <item name="android:textColor">@color/red_A100</item>
-    </style>
+  <style name="DankInfiniteScrollHeaderFooterErrorText">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:drawablePadding">@dimen/spacing16</item>
+    <item name="android:drawableStart">@drawable/ic_error_24dp</item>
+    <item name="android:gravity">center_vertical</item>
+    <item name="android:textColor">@color/red_A100</item>
+  </style>
 
-    <!-- Subreddit -->
-    <style name="SubredditPickerSearchFieldTheme">
-        <item name="android:colorControlNormal">@color/gray_800</item>
-        <item name="android:colorControlActivated">@color/gray_500</item>
-    </style>
+  <style name="DankRecyclerView">
+    <item name="android:scrollbarStyle">insideOverlay</item>
+    <item name="android:scrollbars">vertical</item>
+  </style>
 
-    <style name="DankButton.SubredditPicker">
-        <item name="android:layout_width">wrap_content</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:backgroundTint">@color/subredditpicker_subreddit_button_tint_normal</item>
-        <item name="android:gravity">start|center</item>
-        <item name="android:minHeight">0dp</item>
-        <item name="android:minWidth">0dp</item>
-        <item name="android:paddingBottom">@dimen/spacing12</item>
-        <item name="android:paddingTop">@dimen/spacing12</item>
-        <item name="android:textAllCaps">false</item>
-        <item name="android:textColor">@color/subredditpicker_subreddit_button_text_normal</item>
-        <item name="android:textSize">@dimen/textsize18</item>
-    </style>
+  <!-- Subreddit -->
+  <style name="SubredditPickerSearchFieldTheme">
+    <item name="android:colorControlNormal">@color/gray_800</item>
+    <item name="android:colorControlActivated">@color/gray_500</item>
+  </style>
 
-    <style name="DankButton.UserProfileSheet">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:background">?attr/selectableItemBackground</item>
-        <item name="android:textColor">@color/userprofile_no_messages</item>
-        <item name="android:clickable">true</item>
-        <item name="android:textAllCaps">true</item>
-        <item name="android:gravity">center_vertical|start</item>
-        <item name="android:drawablePadding">@dimen/spacing24</item>
-        <item name="android:paddingBottom">@dimen/spacing12</item>
-        <item name="android:paddingEnd">@dimen/spacing16</item>
-        <item name="android:paddingStart">@dimen/spacing16</item>
-        <item name="android:paddingTop">@dimen/spacing12</item>
-        <item name="android:textSize">@dimen/textsize16</item>
-    </style>
+  <style name="DankButton.SubredditPicker">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:backgroundTint">@color/subredditpicker_subreddit_button_tint_normal</item>
+    <item name="android:gravity">start|center</item>
+    <item name="android:minHeight">0dp</item>
+    <item name="android:minWidth">0dp</item>
+    <item name="android:paddingBottom">@dimen/spacing12</item>
+    <item name="android:paddingTop">@dimen/spacing12</item>
+    <item name="android:textAllCaps">false</item>
+    <item name="android:textColor">@color/subredditpicker_subreddit_button_text_normal</item>
+    <item name="android:textSize">@dimen/textsize18</item>
+  </style>
 
-    <!-- Submission -->
-    <style name="DankSubmissionCommentItem">
-        <item name="android:layout_width">match_parent</item>
-        <item name="android:layout_height">wrap_content</item>
-        <item name="android:background">?android:selectableItemBackground</item>
-        <item name="android:paddingStart">@dimen/comment_start_padding_per_depth_level</item>
-    </style>
+  <style name="DankButton.UserProfileSheet">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">?attr/selectableItemBackground</item>
+    <item name="android:textColor">@color/userprofile_no_messages</item>
+    <item name="android:clickable">true</item>
+    <item name="android:textAllCaps">true</item>
+    <item name="android:gravity">center_vertical|start</item>
+    <item name="android:drawablePadding">@dimen/spacing24</item>
+    <item name="android:paddingBottom">@dimen/spacing12</item>
+    <item name="android:paddingEnd">@dimen/spacing16</item>
+    <item name="android:paddingStart">@dimen/spacing16</item>
+    <item name="android:paddingTop">@dimen/spacing12</item>
+    <item name="android:textSize">@dimen/textsize16</item>
+  </style>
+
+  <!-- Submission -->
+  <style name="DankSubmissionCommentItem">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">?android:selectableItemBackground</item>
+    <item name="android:paddingStart">@dimen/comment_start_padding_per_depth_level</item>
+  </style>
+
+  <!-- Inbox -->
+  <style name="DankMessageTimestampStyle">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:textColor">@color/gray_500</item>
+  </style>
+
+  <style name="DankMessageBodyStyle">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:textColor">@color/gray_300</item>
+  </style>
+
+  <style name="DankFAB">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_gravity">bottom|end</item>
+    <item name="android:layout_alignParentBottom">true</item>
+    <item name="android:layout_alignParentEnd">true</item>
+    <item name="android:layout_margin">@dimen/spacing16</item>
+    <item name="android:tint">@color/teal_900</item>
+    <item name="fabSize">normal</item>
+    <item name="rippleColor">@color/color_accent_secondary</item>
+  </style>
 </resources>

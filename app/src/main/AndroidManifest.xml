@@ -58,6 +58,7 @@
 
     <activity
       android:name=".ui.user.messages.PrivateMessageThreadActivity"
+      android:windowSoftInputMode="adjustResize"
       android:parentActivityName=".ui.user.messages.InboxActivity" />
 
     <service
