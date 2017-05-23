@@ -129,6 +129,7 @@
     <string name="inbox_menu_refresh_messages">Refresh messages</string>
     <string name="inbox_error_failed_to_refresh_messages">Failed to refresh messages. Tap to retry.</string>
     <string name="inbox_error_failed_to_load_more_messages">Failed to load more messages. Tap to retry.</string>
+    <string name="inbox_snippet_sent_by_logged_in_user">You: %s</string>
 
     <!-- Notifications -->
     <string name="messagenotification_below_nougat_multiple_messages_title">%d new messages</string>

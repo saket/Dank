@@ -105,7 +105,11 @@ public class InboxFolderFragment extends DankFragment {
     folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
     Callbacks callbacks = (Callbacks) getActivity();
 
-    messagesAdapter = new MessagesAdapter(callbacks.getMessageLinkMovementMethod(), folder == InboxFolder.PRIVATE_MESSAGES);
+    messagesAdapter = new MessagesAdapter(
+        callbacks.getMessageLinkMovementMethod(),
+        folder == InboxFolder.PRIVATE_MESSAGES,
+        Dank.reddit().loggedInUserName()
+    );
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
     messageList.setAdapter(messagesAdapterWithProgress);
     messageList.setLayoutManager(new LinearLayoutManager(getActivity()));

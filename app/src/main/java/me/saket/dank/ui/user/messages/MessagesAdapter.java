@@ -33,13 +33,15 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
 
   private BetterLinkMovementMethod linkMovementMethod;
   private boolean showMessageThreads;
+  private String loggedInUserName;
 
   /**
    * @param showMessageThreads used for {@link InboxFolder#PRIVATE_MESSAGES}.
    */
-  public MessagesAdapter(BetterLinkMovementMethod linkMovementMethod, boolean showMessageThreads) {
+  public MessagesAdapter(BetterLinkMovementMethod linkMovementMethod, boolean showMessageThreads, String loggedInUserName) {
     this.linkMovementMethod = linkMovementMethod;
     this.showMessageThreads = showMessageThreads;
+    this.loggedInUserName = loggedInUserName;
     setHasStableIds(true);
   }
 
@@ -81,7 +83,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
       });
 
     } else {
-      ((MessageThreadViewHolder) holder).bind(message);
+      ((MessageThreadViewHolder) holder).bind(message, loggedInUserName);
       holder.itemView.setOnClickListener(o -> {
         Timber.i("TODO: Open thread");
       });
@@ -103,7 +105,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
   }
 
   static class MessageThreadViewHolder extends RecyclerView.ViewHolder {
-    @BindView(R.id.messagethread_sender) TextView senderView;
+    @BindView(R.id.messagethread_second_party) TextView secondPartyNameView;
     @BindView(R.id.messagethread_subject) TextView subjectView;
     @BindView(R.id.messagethread_snippet) TextView snippetView;
     @BindView(R.id.messagethread_timestamp) TextView timestampView;
@@ -117,22 +119,45 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
       ButterKnife.bind(this, itemView);
     }
 
-    public void bind(Message message) {
-      String senderName = message.getAuthor();
-      if (senderName == null) {
-        senderView.setText(itemView.getResources().getString(R.string.subreddit_name_r_prefix, message.getSubreddit()));
+    // TODO Cache this: This is taking too long to bind.
+    public void bind(Message message, String loggedInUserName) {
+      String destination = message.getDataNode().get("dest").asText();
+      String secondPartyName;
+
+      if (destination.startsWith("#")) {
+        secondPartyName = itemView.getResources().getString(R.string.subreddit_name_r_prefix, message.getSubreddit());
       } else {
-        senderView.setText(senderName);
+        if (destination.equalsIgnoreCase(loggedInUserName)) {
+          secondPartyName = message.getAuthor() == null
+              ? itemView.getResources().getString(R.string.subreddit_name_r_prefix, message.getSubreddit())
+              : message.getAuthor();
+        } else {
+          secondPartyName = destination;
+        }
       }
+
+      Timber.i("%s", message.getDataNode());
+      Timber.d("--------------------------------");
+
+      if (secondPartyName == null || secondPartyName.isEmpty()) {
+        Timber.e(new IllegalStateException("Second party name is null. Message: " + message.getDataNode().toString()), "Empty second party");
+      }
+
+      secondPartyNameView.setText(secondPartyName);
+      secondPartyNameView.setVisibility(secondPartyName != null && !secondPartyName.isEmpty() ? View.VISIBLE : View.GONE);
 
       subjectView.setText(message.getSubject());
       timestampView.setText(createTimestamp(itemView.getResources(), message));
 
-      // Cache this: This is taking too long to bind.
       String bodyHtml = JrawUtils.getMessageBodyHtml(message);
       String bodyWithoutHtml = Markdown.stripMarkdown(bodyHtml);
       bodyWithoutHtml = bodyWithoutHtml.replace("\n", " ");
-      snippetView.setText(bodyWithoutHtml);
+
+      boolean wasLastMessageBySelf = loggedInUserName.equalsIgnoreCase(message.getAuthor());  // Author can be null.
+      snippetView.setText(wasLastMessageBySelf
+          ? itemView.getResources().getString(R.string.inbox_snippet_sent_by_logged_in_user, bodyWithoutHtml)
+          : bodyWithoutHtml
+      );
     }
   }
 

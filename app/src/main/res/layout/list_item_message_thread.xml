@@ -31,7 +31,7 @@
     tools:text="Yesterday" />
 
   <TextView
-    android:id="@+id/messagethread_sender"
+    android:id="@+id/messagethread_second_party"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_below="@+id/messagethread_subject"
@@ -46,7 +46,7 @@
     android:id="@+id/messagethread_snippet"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_below="@id/messagethread_sender"
+    android:layout_below="@id/messagethread_second_party"
     android:layout_marginEnd="@dimen/spacing16"
     android:layout_marginStart="@dimen/spacing16"
     android:layout_toStartOf="@+id/messagethread_message_count"
