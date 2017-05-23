@@ -30,7 +30,9 @@
     <activity
       android:name=".ui.authentication.LoginActivity"
       android:label="@string/login"
-      android:parentActivityName=".ui.subreddits.SubredditActivity" />
+      android:parentActivityName=".ui.subreddits.SubredditActivity"
+      android:theme="@style/DankTheme.DialogLikeActivity"
+      android:windowSoftInputMode="adjustResize" />
 
     <activity
       android:name=".ui.preferences.UserPreferencesActivity"
