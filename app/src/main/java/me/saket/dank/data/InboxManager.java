@@ -7,7 +7,6 @@ import static java.util.Collections.unmodifiableList;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 
@@ -145,12 +144,9 @@ public class InboxManager {
 
             // Private messages can have nested replies. Go through them and find the last one.
             if (lastMessage instanceof PrivateMessage) {
-              JsonNode repliesNode = lastMessage.getDataNode().get("replies");
-
-              if (repliesNode.isObject()) {
+              List<Message> lastMessageReplies = JrawUtils.messageReplies(lastMessage);
+              if (!lastMessageReplies.isEmpty()) {
                 // Replies are present.
-                //noinspection MismatchedQueryAndUpdateOfCollection
-                Listing<Message> lastMessageReplies = new Listing<>(repliesNode.get("data"), Message.class);
                 Message lastMessageLastReply = lastMessageReplies.get(lastMessageReplies.size() - 1);
                 return PaginationAnchor.create(lastMessageLastReply.getFullName());
               }
@@ -170,7 +166,15 @@ public class InboxManager {
         }
 
         for (Message fetchedMessage : fetchedMessages) {
-          StoredMessage messageToStore = StoredMessage.create(fetchedMessage.getId(), fetchedMessage, JrawUtils.createdTimeUtc(fetchedMessage), folder);
+          long latestMessageTimestamp;
+          if (fetchedMessage.isComment()) {
+            latestMessageTimestamp = JrawUtils.createdTimeUtc(fetchedMessage);
+          } else {
+            List<Message> messageReplies = JrawUtils.messageReplies(fetchedMessage);
+            Message latestMessage = messageReplies.isEmpty() ? fetchedMessage : messageReplies.get(messageReplies.size() - 1);
+            latestMessageTimestamp = JrawUtils.createdTimeUtc(latestMessage);
+          }
+          StoredMessage messageToStore = StoredMessage.create(fetchedMessage.getId(), fetchedMessage, latestMessageTimestamp, folder);
           briteDatabase.insert(StoredMessage.TABLE_NAME, messageToStore.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
         }
         transaction.markSuccessful();

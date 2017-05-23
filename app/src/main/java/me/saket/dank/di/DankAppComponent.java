@@ -2,6 +2,7 @@ package me.saket.dank.di;
 
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.squareup.moshi.Moshi;
+import com.squareup.sqlbrite.BriteDatabase;
 
 import javax.inject.Singleton;
 
@@ -45,4 +46,6 @@ public interface DankAppComponent {
   MessagesNotificationManager messagesNotificationManager();
 
   Moshi moshi();
+
+  BriteDatabase briteDatabase();
 }

@@ -252,7 +252,7 @@ public class MessagesNotificationManager {
             PendingIntent.FLAG_UPDATE_CURRENT
         );
 
-        String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
+        String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
 
         Notification bundledNotification = new NotificationCompat.Builder(context)
             .setContentTitle(unreadMessage.getAuthor())
@@ -287,7 +287,7 @@ public class MessagesNotificationManager {
     PendingIntent deletePendingIntent = createMarkAsSeenPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN);
 
     // Update: Lol using some tags crashes Android's SystemUi. We'll have to remove all markdown tags.
-    String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
+    String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
 
     return new NotificationCompat.Builder(context)
         .setContentTitle(unreadMessage.getAuthor())
@@ -312,7 +312,7 @@ public class MessagesNotificationManager {
     int linesAdded = 0;
 
     for (Message unreadMessage : unreadMessages) {
-      CharSequence messageBodyWithMarkdown = Markdown.stripMarkdown(JrawUtils.getMessageBodyHtml(unreadMessage));
+      CharSequence messageBodyWithMarkdown = Markdown.stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
       String markdownStrippedBody = messageBodyWithMarkdown.toString();
       //noinspection deprecation
       messagingStyleBuilder.addLine(Html.fromHtml(context.getString(

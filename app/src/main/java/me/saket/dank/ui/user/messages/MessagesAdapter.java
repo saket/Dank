@@ -119,41 +119,46 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
       ButterKnife.bind(this, itemView);
     }
 
-    // TODO Cache this: This is taking too long to bind.
     public void bind(Message message, String loggedInUserName) {
-      String destination = message.getDataNode().get("dest").asText();
+      List<Message> messageReplies = JrawUtils.messageReplies(message);
+      Message latestMessageInThread = messageReplies.isEmpty()
+          ? message
+          : messageReplies.get(messageReplies.size() - 1);
+      bind(message, latestMessageInThread, loggedInUserName);
+    }
+
+    private void bind(Message parentMessage, Message latestMessageInThread, String loggedInUserName) {
+      String destination = parentMessage.getDataNode().get("dest").asText();
       String secondPartyName;
 
       if (destination.startsWith("#")) {
-        secondPartyName = itemView.getResources().getString(R.string.subreddit_name_r_prefix, message.getSubreddit());
+        secondPartyName = itemView.getResources().getString(R.string.subreddit_name_r_prefix, parentMessage.getSubreddit());
       } else {
         if (destination.equalsIgnoreCase(loggedInUserName)) {
-          secondPartyName = message.getAuthor() == null
-              ? itemView.getResources().getString(R.string.subreddit_name_r_prefix, message.getSubreddit())
-              : message.getAuthor();
+          secondPartyName = parentMessage.getAuthor() == null
+              ? itemView.getResources().getString(R.string.subreddit_name_r_prefix, parentMessage.getSubreddit())
+              : parentMessage.getAuthor();
         } else {
           secondPartyName = destination;
         }
       }
 
-      Timber.i("%s", message.getDataNode());
-      Timber.d("--------------------------------");
-
       if (secondPartyName == null || secondPartyName.isEmpty()) {
-        Timber.e(new IllegalStateException("Second party name is null. Message: " + message.getDataNode().toString()), "Empty second party");
+        Timber.e(new IllegalStateException("Second party name is null. Message: " + parentMessage.getDataNode().toString()), "Empty second party");
       }
 
       secondPartyNameView.setText(secondPartyName);
       secondPartyNameView.setVisibility(secondPartyName != null && !secondPartyName.isEmpty() ? View.VISIBLE : View.GONE);
 
-      subjectView.setText(message.getSubject());
-      timestampView.setText(createTimestamp(itemView.getResources(), message));
+      subjectView.setText(parentMessage.getSubject());
+      timestampView.setText(createTimestamp(itemView.getResources(), latestMessageInThread));
 
-      String bodyHtml = JrawUtils.getMessageBodyHtml(message);
+      // TODO Cache this: This is taking too long to bind.
+      String bodyHtml = JrawUtils.messageBodyHtml(latestMessageInThread);
       String bodyWithoutHtml = Markdown.stripMarkdown(bodyHtml);
       bodyWithoutHtml = bodyWithoutHtml.replace("\n", " ");
 
-      boolean wasLastMessageBySelf = loggedInUserName.equalsIgnoreCase(message.getAuthor());  // Author can be null.
+      boolean wasLastMessageBySelf = loggedInUserName.equalsIgnoreCase(latestMessageInThread.getAuthor());  // Author can be null.
       snippetView.setText(wasLastMessageBySelf
           ? itemView.getResources().getString(R.string.inbox_snippet_sent_by_logged_in_user, bodyWithoutHtml)
           : bodyWithoutHtml
@@ -198,7 +203,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
 
       // TODO: Send PR for these custom fields to JRAW.
       // TODO: Should we cache these markdown?
-      String bodyHtml = JrawUtils.getMessageBodyHtml(message);
+      String bodyHtml = JrawUtils.messageBodyHtml(message);
       messageBodyView.setText(Markdown.parseRedditMarkdownHtml(bodyHtml, messageBodyView.getPaint()));
       messageBodyView.setMovementMethod(linkMovementMethod);
 
