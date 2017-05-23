@@ -1,145 +1,150 @@
 <resources>
-    <string name="app_name">Dank</string>
-    <string name="subreddit_name_r_prefix">/r/%s</string>
-    <string name="user_name_u_prefix">/u/%s</string>
-    <string name="comma_separator_for_multiple_words">,</string>
-    <string name="and_suffix_for_comma_separated_words">and</string>
-    <string name="timestamp_just_now">Just now</string>
+  <string name="app_name">Dank</string>
+  <string name="subreddit_name_r_prefix">/r/%s</string>
+  <string name="user_name_u_prefix">/u/%s</string>
+  <string name="comma_separator_for_multiple_words">,</string>
+  <string name="and_suffix_for_comma_separated_words">and</string>
+  <string name="timestamp_just_now">Just now</string>
 
-    <!-- Common errors -->
-    <string name="common_error_retry">Retry</string>
+  <!-- Common errors -->
+  <string name="common_error_retry">Retry</string>
 
-    <string name="common_unknown_error_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
-    <string name="common_unknown_error_message">Whoops! Something went wrong. Can you try again?</string>
+  <string name="common_unknown_error_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
+  <string name="common_unknown_error_message">Whoops! Something went wrong. Can you try again?</string>
 
-    <string name="common_network_error_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
-    <string name="common_network_error_message">Uh oh, Reddit seems to be unreachable.</string>
+  <string name="common_network_error_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
+  <string name="common_network_error_message">Uh oh, Reddit seems to be unreachable.</string>
 
-    <string name="common_reddit_is_down_error_emoji" translatable="false">(ಥ_ಥ)</string>
-    <string name="common_reddit_is_down_error_message">You broke Reddit! It\'s under heavy load right now.</string>
+  <string name="common_reddit_is_down_error_emoji" translatable="false">(ಥ_ಥ)</string>
+  <string name="common_reddit_is_down_error_message">You broke Reddit! It\'s under heavy load right now.</string>
 
-    <!-- Login -->
-    <string name="login">Login</string>
-    <string name="login_logout">Logout</string>
-    <string name="login_error_oauth_permission_rejected">You must press \'allow\' to log in with this account</string>
-    <string name="login_error_oauth_failed">Failed to login. Please try again.</string>
-    <string name="login_welcome_user">Welcome, %s!</string>
+  <!-- Login -->
+  <string name="login">Login</string>
+  <string name="login_logout">Logout</string>
+  <string name="login_error_oauth_permission_rejected">You must press \'allow\' to log in with this account</string>
+  <string name="login_error_oauth_failed">Failed to login. Please try again.</string>
+  <string name="login_welcome_user">Welcome, %s!</string>
 
-    <!-- Subreddit -->
-    <string name="frontpage_subreddit_name">Frontpage</string>
-    <string name="popular_subreddit_name">Popular</string>
+  <!-- Subreddit -->
+  <string name="frontpage_subreddit_name">Frontpage</string>
+  <string name="popular_subreddit_name">Popular</string>
 
-    <string name="subreddit_go_to_subreddit">Go to subreddit…</string>
-    <string name="subreddit_profile">Profile</string>
-    <string name="subreddit_preferences">Preferences</string>
-    <string name="cd_close_subreddit">Close subreddit</string>
+  <string name="subreddit_go_to_subreddit">Go to subreddit…</string>
+  <string name="subreddit_profile">Profile</string>
+  <string name="subreddit_preferences">Preferences</string>
+  <string name="cd_close_subreddit">Close subreddit</string>
 
-    <string name="cd_subredditpicker_manage_subreddits">Manage subreddits</string>
-    <string name="cd_subredditpicker_add_new_subreddit">Add new subreddit</string>
-    <string name="cd_subredditpicker_more_options">More options</string>
-    <string name="cd_subredditpicker_save_changes">Save changes</string>
-    <string name="subredditpicker_set_as_default">Set as default</string>
-    <string name="subredditpicker_unsubscribe">Unsubscribe</string>
-    <string name="subredditpicker_hide">Hide</string>
-    <string name="subredditpicker_unhide">Unhide</string>
-    <string name="subredditpicker_refresh">Refresh</string>
-    <string name="subredditpicker_show_hidden">Show hidden</string>
-    <string name="subredditpicker_hide_hidden">Hide hidden</string>
+  <string name="cd_subredditpicker_manage_subreddits">Manage subreddits</string>
+  <string name="cd_subredditpicker_add_new_subreddit">Add new subreddit</string>
+  <string name="cd_subredditpicker_more_options">More options</string>
+  <string name="cd_subredditpicker_save_changes">Save changes</string>
+  <string name="subredditpicker_set_as_default">Set as default</string>
+  <string name="subredditpicker_unsubscribe">Unsubscribe</string>
+  <string name="subredditpicker_hide">Hide</string>
+  <string name="subredditpicker_unhide">Unhide</string>
+  <string name="subredditpicker_refresh">Refresh</string>
+  <string name="subredditpicker_show_hidden">Show hidden</string>
+  <string name="subredditpicker_hide_hidden">Hide hidden</string>
 
-    <string name="newsubredditdialog_title">Subscribe to</string>
-    <string name="newsubredditdialog_subscribe">Subscribe</string>
-    <string name="newsubredditdialog_subreddit_hint">subreddit</string>
-    <string name="newsubredditdialog_cancel">Cancel</string>
-    <string name="newsubredditdialog_error_empty_field">This can\'t be empty ಠ_ಠ</string>
-    <string name="newsubredditdialog_error_private_subreddit">You don\'t have access to this subreddit (ಠ_ಠ)</string>
-    <string name="newsubredditdialog_error_subreddit_doesnt_exist">Couldn\'t find this subreddit (ಥ_ಥ)</string>
-    <string name="newsubredditdialog_error_unknown">Something went wrong (╯°□°）╯︵ ┻━┻</string>
+  <string name="newsubredditdialog_title">Subscribe to</string>
+  <string name="newsubredditdialog_subscribe">Subscribe</string>
+  <string name="newsubredditdialog_subreddit_hint">subreddit</string>
+  <string name="newsubredditdialog_cancel">Cancel</string>
+  <string name="newsubredditdialog_error_empty_field">This can\'t be empty ಠ_ಠ</string>
+  <string name="newsubredditdialog_error_private_subreddit">You don\'t have access to this subreddit (ಠ_ಠ)</string>
+  <string name="newsubredditdialog_error_subreddit_doesnt_exist">Couldn\'t find this subreddit (ಥ_ಥ)</string>
+  <string name="newsubredditdialog_error_unknown">Something went wrong (╯°□°）╯︵ ┻━┻</string>
 
-    <!-- User profile -->
-    <string name="userprofile_comments">Comments</string>
-    <string name="userprofile_submissions">Submissions</string>
-    <string name="userprofile_karma_count">%s karma</string>
-    <string name="userprofile_loading_karma">Loading karma…</string>
-    <string name="userprofile_error_user_karma_load">Couldn\'t get karma</string>
-    <string name="userprofile_confirm_logout">Confirm logout?</string>
-    <string name="userprofile_logging_out">Logging out…</string>
-    <string name="userprofile_messages">Messages</string>
-    <string name="userprofile_unread_messages_count_single">%d new message</string>
-    <string name="userprofile_unread_messages_count_99_or_less">%d new messages</string>
-    <string name="userprofile_unread_messages_count_99_plus">99+ new messages</string>
+  <!-- User profile -->
+  <string name="userprofile_comments">Comments</string>
+  <string name="userprofile_submissions">Submissions</string>
+  <string name="userprofile_karma_count">%s karma</string>
+  <string name="userprofile_loading_karma">Loading karma…</string>
+  <string name="userprofile_error_user_karma_load">Couldn\'t get karma</string>
+  <string name="userprofile_confirm_logout">Confirm logout?</string>
+  <string name="userprofile_logging_out">Logging out…</string>
+  <string name="userprofile_messages">Messages</string>
+  <string name="userprofile_unread_messages_count_single">%d new message</string>
+  <string name="userprofile_unread_messages_count_99_or_less">%d new messages</string>
+  <string name="userprofile_unread_messages_count_99_plus">99+ new messages</string>
 
-    <!-- Submission -->
-    <string name="submission_loading_comments">Loading comments…</string>
-    <string name="submission_load_more_comments">Load %d more comments</string>
-    <string name="submission_loading_more_comments">Loading more comments…</string>
-    <string name="submission_error_failed_to_load_more_comments">Failed to load more comments</string>
-    <string name="submission_continue_this_thread">Continue this thread</string>
-    <string name="submission_link_loading">Loading…</string>
-    <string name="submission_link_tap_to_open_profile">Tap to open profile</string>
-    <string name="submission_link_tap_to_open_subreddit">Tap to open subreddit</string>
-    <string name="submission_link_tap_to_open_submission">Tap to open submission</string>
-    <string name="submission_link_tap_to_open_link">Tap to open link</string>
-    <string name="submission_link_linked_profile">Linked profile</string>
-    <string name="submission_link_linked_subreddit">Linked subreddit</string>
-    <string name="submission_link_linked_submission">Linked submission</string>
-    <string name="submission_link_linked_url">Linked URL</string>
-    <string name="submission_link_imgur_gallery">Linked Imgur gallery</string>
-    <string name="submission_image_scroll_down_hint">Scroll down to see more</string>
-    <string name="submission_image_album">Album</string>
-    <string name="submission_image_album_label_with_image_count">Album (%d images)</string>
-    <string name="submission_image_album_image_count">%d images</string>
-    <string name="submission_cd_play_video">Play video</string>
+  <!-- Submission -->
+  <string name="submission_loading_comments">Loading comments…</string>
+  <string name="submission_load_more_comments">Load %d more comments</string>
+  <string name="submission_loading_more_comments">Loading more comments…</string>
+  <string name="submission_error_failed_to_load_more_comments">Failed to load more comments</string>
+  <string name="submission_continue_this_thread">Continue this thread</string>
+  <string name="submission_link_loading">Loading…</string>
+  <string name="submission_link_tap_to_open_profile">Tap to open profile</string>
+  <string name="submission_link_tap_to_open_subreddit">Tap to open subreddit</string>
+  <string name="submission_link_tap_to_open_submission">Tap to open submission</string>
+  <string name="submission_link_tap_to_open_link">Tap to open link</string>
+  <string name="submission_link_linked_profile">Linked profile</string>
+  <string name="submission_link_linked_subreddit">Linked subreddit</string>
+  <string name="submission_link_linked_submission">Linked submission</string>
+  <string name="submission_link_linked_url">Linked URL</string>
+  <string name="submission_link_imgur_gallery">Linked Imgur gallery</string>
+  <string name="submission_image_scroll_down_hint">Scroll down to see more</string>
+  <string name="submission_image_album">Album</string>
+  <string name="submission_image_album_label_with_image_count">Album (%d images)</string>
+  <string name="submission_image_album_image_count">%d images</string>
+  <string name="submission_cd_play_video">Play video</string>
 
-    <!-- WebView -->
-    <string name="webview_open_in_browser">Open in browser</string>
-    <string name="webview_share">Share…</string>
-    <string name="webview_share_via">Share via</string>
-    <string name="webview_refresh">Refresh</string>
+  <!-- WebView -->
+  <string name="webview_open_in_browser">Open in browser</string>
+  <string name="webview_share">Share…</string>
+  <string name="webview_share_via">Share via</string>
+  <string name="webview_refresh">Refresh</string>
 
-    <!-- User Preferences -->
-    <string name="activity_userpreferences">Preferences</string>
-    <string name="userpreferences_look_and_feel">Look &amp; feel</string>
-    <string name="userpreferences_look_and_feel_description">Customize appearance and gestures</string>
-    <string name="userpreferences_data_usage">Data usage</string>
-    <string name="userpreferences_data_usage_description">Balance data consumption and quality</string>
-    <string name="userpreferences_filters">Filters</string>
-    <string name="userpreferences_filters_description">NSFW and other content filters</string>
-    <string name="userpreferences_misc">Miscellaneous</string>
-    <string name="userpreferences_misc_description">Options that don\'t fit elsewhere</string>
-    <string name="userpreferences_about">About Dank</string>
-    <string name="userpreferences_about_description">The team behind</string>
+  <!-- User Preferences -->
+  <string name="activity_userpreferences">Preferences</string>
+  <string name="userpreferences_look_and_feel">Look &amp; feel</string>
+  <string name="userpreferences_look_and_feel_description">Customize appearance and gestures</string>
+  <string name="userpreferences_data_usage">Data usage</string>
+  <string name="userpreferences_data_usage_description">Balance data consumption and quality</string>
+  <string name="userpreferences_filters">Filters</string>
+  <string name="userpreferences_filters_description">NSFW and other content filters</string>
+  <string name="userpreferences_misc">Miscellaneous</string>
+  <string name="userpreferences_misc_description">Options that don\'t fit elsewhere</string>
+  <string name="userpreferences_about">About Dank</string>
+  <string name="userpreferences_about_description">The team behind</string>
 
-    <string name="userpreferences_datausage_new_messages">New Messages</string>
+  <string name="userpreferences_datausage_new_messages">New Messages</string>
 
-    <!-- Inbox -->
-    <string name="activity_inbox">Inbox</string>
-    <string name="inbox_reply_from">Reply from</string>
-    <string name="inbox_via">via</string>
-    <string name="inbox_tab_unread">Unread</string>
-    <string name="inbox_tab_private_messages">Private messages</string>
-    <string name="inbox_tab_comment_replies">Comment replies</string>
-    <string name="inbox_tab_post_replies">Post replies</string>
-    <string name="inbox_tab_username_mentions">Username mentions</string>
-    <string name="inbox_empty_state_title" translatable="false">ᕕ( ᐛ )ᕗ</string>
-    <string name="inbox_empty_state_message_for_unread">All caught up! You don\'t have \nany unread messages</string>
-    <string name="inbox_empty_state_message_for_private_messages">You don\'t have any private messages. \nLooks like you don\'t have any friends.</string>
-    <string name="inbox_empty_state_message_for_comment_replies">You don\'t have any comment replies. \nNobody replies to you on Reddit.</string>
-    <string name="inbox_empty_state_message_for_post_replies">You don\'t have any post replies. \nGuess who\'s really unpopular on Reddit?</string>
-    <string name="inbox_empty_state_message_for_username_mentions">You don\'t have any username mentions.</string>
-    <string name="inbox_refreshing_messages">Refreshing messages…</string>
-    <string name="inbox_menu_refresh_messages">Refresh messages</string>
-    <string name="inbox_error_failed_to_refresh_messages">Failed to refresh messages. Tap to retry.</string>
-    <string name="inbox_error_failed_to_load_more_messages">Failed to load more messages. Tap to retry.</string>
-    <string name="inbox_snippet_sent_by_logged_in_user">You: %s</string>
-    <string name="cd_inbox_mark_all_unread_messages_as_read">Mark all unread messages as read</string>
+  <!-- Inbox -->
+  <string name="activity_inbox">Inbox</string>
+  <string name="inbox_reply_from">Reply from</string>
+  <string name="inbox_via">via</string>
+  <string name="inbox_tab_unread">Unread</string>
+  <string name="inbox_tab_private_messages">Private messages</string>
+  <string name="inbox_tab_comment_replies">Comment replies</string>
+  <string name="inbox_tab_post_replies">Post replies</string>
+  <string name="inbox_tab_username_mentions">Username mentions</string>
+  <string name="inbox_empty_state_title" translatable="false">ᕕ( ᐛ )ᕗ</string>
+  <string name="inbox_empty_state_message_for_unread">All caught up! You don\'t have \nany unread messages</string>
+  <string name="inbox_empty_state_message_for_private_messages">You don\'t have any private messages. \nLooks like you don\'t have any friends.</string>
+  <string name="inbox_empty_state_message_for_comment_replies">You don\'t have any comment replies. \nNobody replies to you on Reddit.</string>
+  <string name="inbox_empty_state_message_for_post_replies">You don\'t have any post replies. \nGuess who\'s really unpopular on Reddit?</string>
+  <string name="inbox_empty_state_message_for_username_mentions">You don\'t have any username mentions.</string>
+  <string name="inbox_refreshing_messages">Refreshing messages…</string>
+  <string name="inbox_menu_refresh_messages">Refresh messages</string>
+  <string name="inbox_error_failed_to_refresh_messages">Failed to refresh messages. Tap to retry.</string>
+  <string name="inbox_error_failed_to_load_more_messages">Failed to load more messages. Tap to retry.</string>
+  <string name="inbox_snippet_sent_by_logged_in_user">You: %s</string>
+  <string name="cd_inbox_mark_all_unread_messages_as_read">Mark all unread messages as read</string>
 
-    <!-- Notifications -->
-    <string name="messagenotification_below_nougat_multiple_messages_title">%d new messages</string>
-    <string name="messagenotification_below_nougat_multiple_messages_title_indeterminate">%d+ new messages</string>
-    <string name="messagenotification_reply">Reply</string>
-    <string name="messagenotification_reply_to_user">Reply to /u/%s</string>
-    <string name="messagenotification_below_nougat_expanded_body_row" translatable="false"><![CDATA[<b>%s</b> %s]]></string>
-    <string name="messagenotification_below_nougat_body_from_single_author">From %s</string>
-    <string name="messagenotification_mark_as_read">Mark as read</string>
-    <string name="messagenotification_mark_all_as_read">Mark all as read</string>
+  <!-- Notifications -->
+  <string name="messagenotification_below_nougat_multiple_messages_title">%d new messages</string>
+  <string name="messagenotification_below_nougat_multiple_messages_title_indeterminate">%d+ new messages</string>
+  <string name="messagenotification_reply">Reply</string>
+  <string name="messagenotification_reply_to_user">Reply to /u/%s</string>
+  <string name="messagenotification_below_nougat_expanded_body_row" translatable="false"><![CDATA[<b>%s</b> %s]]></string>
+  <string name="messagenotification_below_nougat_body_from_single_author">From %s</string>
+  <string name="messagenotification_mark_as_read">Mark as read</string>
+  <string name="messagenotification_mark_all_as_read">Mark all as read</string>
+
+  <!-- Compose Reply -->
+  <string name="composereply_compose_field_hint">Write a reply…</string>
+  <string name="composereply_send">Send</string>
+  <string name="composereply_title_reply_to">re: %s</string>
 </resources>

@@ -28,6 +28,7 @@ import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import me.saket.dank.R;
@@ -50,6 +51,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.privatemessagethread_subject) TextView threadSubjectView;
   @BindView(R.id.privatemessagethread_message_list) RecyclerView messageRecyclerView;
   @BindView(R.id.privatemessagethread_reply) FloatingActionButton replyButton;
+
+  private ThreadedMessagesAdapter messagesAdapter;
 
   public static void start(Context context, String messageId, String threadSecondPartyName, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, PrivateMessageThreadActivity.class);
@@ -106,7 +109,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     messageRecyclerView.setLayoutManager(layoutManager);
 
     // TODO: Empty state
-    ThreadedMessagesAdapter messagesAdapter = new ThreadedMessagesAdapter(linkMovementMethod);
+    messagesAdapter = new ThreadedMessagesAdapter(linkMovementMethod);
     messageRecyclerView.setAdapter(messagesAdapter);
 
     unsubscribeOnDestroy(Dank.inbox().message(getIntent().getStringExtra(KEY_MESSAGE_ID), InboxFolder.PRIVATE_MESSAGES)
@@ -130,5 +133,12 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       return touchLiesOn(messageRecyclerView, downX, downY) && messageRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1);
     });
+  }
+
+  @OnClick(R.id.privatemessagethread_reply)
+  void onClickReply() {
+    List<Message> messages = messagesAdapter.getData();
+    Message latestMessage = messages.get(messages.size() - 1);
+    ComposeReplyActivity.start(this, getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME), latestMessage, Dank.moshi());
   }
 }

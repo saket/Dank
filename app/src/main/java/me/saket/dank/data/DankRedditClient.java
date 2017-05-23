@@ -259,6 +259,7 @@ public class DankRedditClient {
 
 // ======== USER ACCOUNT ======== //
 
+  // TODO: Cache this value otherwise recreating Activities might result in a crash, because authenticating takes time.
   public String loggedInUserName() {
     return redditClient.getAuthenticatedUser();
   }

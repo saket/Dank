@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:animateLayoutChanges="true"
+  android:background="@color/black_opacity_20"
+  tools:background="@color/white_opacity_05"
+  tools:layout_marginTop="25dp">
+
+  <RelativeLayout
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_margin="@dimen/spacing24"
+    android:animateLayoutChanges="true"
+    android:background="@color/window_background"
+    android:elevation="120dp"
+    tools:ignore="UselessParent">
+
+    <me.saket.dank.widgets.DankToolbar
+      android:id="@id/toolbar"
+      style="@style/DankToolbar"
+      android:background="@null"
+      app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
+
+    <!-- Using a ScrollView so that clipToPadding attr can be used. -->
+    <ScrollView
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:layout_above="@+id/composereply_bottombar"
+      android:layout_below="@id/toolbar"
+      android:clipToPadding="false"
+      android:fillViewport="true"
+      android:paddingBottom="@dimen/spacing16"
+      android:paddingEnd="@dimen/spacing16"
+      android:paddingStart="@dimen/spacing16"
+      android:paddingTop="@dimen/spacing4">
+
+      <EditText
+        android:id="@+id/composereply_compose_field"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@null"
+        android:gravity="top"
+        android:hint="@string/composereply_compose_field_hint"
+        android:inputType="textMultiLine"
+        android:textSize="@dimen/textsize16" />
+    </ScrollView>
+
+    <LinearLayout
+      android:id="@+id/composereply_bottombar"
+      android:layout_width="match_parent"
+      android:layout_height="?attr/actionBarSize"
+      android:layout_alignParentBottom="true"
+      android:background="@color/black_opacity_05"
+      android:gravity="center_vertical|end"
+      android:orientation="horizontal"
+      android:paddingEnd="@dimen/spacing4"
+      android:paddingStart="@dimen/spacing4">
+
+      <Button
+        android:id="@+id/composereply_send"
+        style="@style/DankButton.Borderless"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/composereply_send" />
+    </LinearLayout>
+
+    <FrameLayout
+      android:id="@+id/composereply_progress"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:background="@color/window_background"
+      android:elevation="@dimen/elevation_toolbar"
+      android:visibility="gone">
+
+      <ProgressBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
+    </FrameLayout>
+  </RelativeLayout>
+</FrameLayout>

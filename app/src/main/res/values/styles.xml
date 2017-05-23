@@ -25,9 +25,16 @@
   </style>
 
   <style name="DankDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
-    <!-- Because without this, softInputMode is ignored :| -->
+    <!-- Translucent systemUi results in softInputMode getting ignored :| -->
     <item name="android:windowTranslucentStatus">false</item>
     <item name="android:windowTitleStyle">@style/DankDialogTitleStyle</item>
+  </style>
+
+  <style name="DankTheme.DialogLikeActivity" parent="DankTheme.TransparentBackground">
+    <item name="android:windowTranslucentStatus">false</item>
+    <item name="android:windowDrawsSystemBarBackgrounds">true</item>
+    <item name="android:statusBarColor">@color/transparent</item>
+    <item name="android:navigationBarColor">@color/transparent</item>
   </style>
 
   <style name="DankDialogTitleStyle" parent="@android:style/TextAppearance.Material.WindowTitle">

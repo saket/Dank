@@ -28,7 +28,6 @@
     style="@style/DankRecyclerView"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_above="@+id/privatemessagethread_reply_field_container"
     android:layout_below="@id/privatemessagethread_subject"
     android:clipToPadding="false" />
 

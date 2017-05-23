@@ -66,5 +66,4 @@ public class JacksonHelper {
       return null;
     }
   }
-
 }
