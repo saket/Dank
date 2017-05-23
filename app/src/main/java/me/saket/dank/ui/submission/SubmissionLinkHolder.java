@@ -268,6 +268,7 @@ public class SubmissionLinkHolder {
         .compose(applySchedulersSingle())
         .doOnError(__ -> progressView.setVisibility(View.GONE))
         .subscribe(linkMetadata -> {
+          // TODO: Move all of subscribe() to within the chain so that image loads aren't sent after the activity is destroyed.
           if (isEmpty(linkMetadata.title())) {
             titleView.setText(linkMetadata.url());
           } else {

@@ -63,7 +63,7 @@ public class InboxFolderFragment extends DankFragment {
 
   private boolean isRefreshOngoing;
 
-  interface Callbacks {
+  interface Callbacks extends MessagesAdapter.OnMessageClickListener {
     void setFirstRefreshDone(InboxFolder forFolder);
 
     boolean isFirstRefreshDone(InboxFolder forFolder);
@@ -72,6 +72,9 @@ public class InboxFolderFragment extends DankFragment {
      * For linkifying message bodies.
      */
     BetterLinkMovementMethod getMessageLinkMovementMethod();
+
+    @Override
+    void onClickMessage(Message message, View messageItemView);
 
     /**
      * Called as the user scrolls the unread message list. All the seen unread messages are
@@ -103,19 +106,28 @@ public class InboxFolderFragment extends DankFragment {
     super.onViewCreated(view, savedInstanceState);
 
     folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
-    Callbacks callbacks = (Callbacks) getActivity();
 
     messagesAdapter = new MessagesAdapter(
-        callbacks.getMessageLinkMovementMethod(),
+        ((Callbacks) getActivity()).getMessageLinkMovementMethod(),
         folder == InboxFolder.PRIVATE_MESSAGES,
         Dank.reddit().loggedInUserName()
     );
+    messagesAdapter.setOnMessageClickListener(((Callbacks) getActivity()));
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
     messageList.setAdapter(messagesAdapterWithProgress);
     messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
     messageList.setItemAnimator(new DefaultItemAnimator());
 
-    unsubscribeOnDestroy(Dank.inbox().messages(folder)
+    populateEmptyStateView();
+    trackSeenUnreadMessages();
+  }
+
+  @Override
+  public void onStart() {
+    super.onStart();
+    Callbacks callbacks = (Callbacks) getActivity();
+
+    unsubscribeOnStop(Dank.inbox().messages(folder)
         .distinctUntilChanged()
         .compose(applySchedulers())
         .compose(doOnceAfterNext(o -> {
@@ -148,9 +160,6 @@ public class InboxFolderFragment extends DankFragment {
           }
         })
         .subscribe(messagesAdapter));
-
-    populateEmptyStateView();
-    trackSeenUnreadMessages();
   }
 
   public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {

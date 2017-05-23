@@ -202,7 +202,7 @@ public class NotificationActionReceiver extends BroadcastReceiver {
         Dank.messagesNotifManager()
             .markMessageNotifAsSeen(messageIdsToMarkAsSeen)
             .subscribe(() -> {
-              Intent unreadInboxIntent = InboxActivity.createStartIntent(context, InboxFolder.UNREAD, null);
+              Intent unreadInboxIntent = InboxActivity.createStartIntent(context, InboxFolder.UNREAD);
               unreadInboxIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
               context.startActivity(unreadInboxIntent);
             });

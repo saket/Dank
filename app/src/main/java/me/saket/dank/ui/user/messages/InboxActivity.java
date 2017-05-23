@@ -9,11 +9,13 @@ import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
 import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 import com.squareup.moshi.JsonAdapter;
@@ -39,6 +41,7 @@ import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.utils.Arrays;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.UrlParser;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
@@ -57,16 +60,13 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   private InboxPagerAdapter inboxPagerAdapter;
   private Set<Message> seenUnreadMessages = new HashSet<>();
 
-  /**
-   * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
-   */
-  public static void start(Context context, @Nullable Rect expandFromShape) {
-    context.startActivity(createStartIntent(context, InboxFolder.UNREAD, expandFromShape));
+  public static void start(Context context) {
+    context.startActivity(createStartIntent(context, InboxFolder.UNREAD));
   }
 
-  public static Intent createStartIntent(Context context, InboxFolder initialFolder, @Nullable Rect expandFromShape) {
+  public static Intent createStartIntent(Context context, InboxFolder initialFolder) {
     Intent intent = new Intent(context, InboxActivity.class);
-    intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
+    intent.putExtra(KEY_EXPAND_FROM_SHAPE, (Parcelable) null);
     intent.putExtra(KEY_INITIAL_FOLDER, initialFolder);
     return intent;
   }
@@ -79,7 +79,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     findAndSetupToolbar();
 
     setupContentExpandablePage(contentPage);
-    expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
+    expandFromBelowToolbar();
 
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       //noinspection CodeBlock2Expr
@@ -180,22 +180,32 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     if (commentLinkMovementMethod == null) {
       commentLinkMovementMethod = DankLinkMovementMethod.newInstance();
       commentLinkMovementMethod.setOnLinkClickListener((textView, url) -> {
-        // TODO: 18/03/17 Remove try/catch block
-        try {
-          Link parsedLink = UrlParser.parse(url);
-          Point clickedUrlCoordinates = commentLinkMovementMethod.getLastUrlClickCoordinates();
-          int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
-          Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
-          OpenUrlActivity.handle(this, parsedLink, clickedUrlCoordinatesRect);
-          return true;
+        Point clickedUrlCoordinates = commentLinkMovementMethod.getLastUrlClickCoordinates();
+        int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+        Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
 
-        } catch (Exception e) {
-          Timber.i(e, "Couldn't parse URL: %s", url);
-          return false;
-        }
+        Link parsedLink = UrlParser.parse(url);
+        OpenUrlActivity.handle(this, parsedLink, clickedUrlCoordinatesRect);
+        return true;
       });
     }
     return commentLinkMovementMethod;
+  }
+
+  @Override
+  public void onClickMessage(Message message, View messageItemView) {
+    // Play the expand entry animation from the bottom of the list item.
+    Rect messageItemViewRect = Views.globalVisibleRect(messageItemView);
+    messageItemViewRect.top = messageItemViewRect.bottom;
+
+    if (message.isComment()) {
+      String commentUrl = "https://reddit.com" + message.getDataNode().get("context").asText();
+      Link parsedLink = UrlParser.parse(commentUrl);
+      OpenUrlActivity.handle(this, parsedLink, messageItemViewRect);
+
+    } else {
+      PrivateMessageThreadActivity.start(this, messageItemViewRect);
+    }
   }
 
   @Override

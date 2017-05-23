@@ -23,7 +23,6 @@ import me.saket.dank.R;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
-import me.saket.dank.utils.UrlParser;
 import timber.log.Timber;
 
 public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerView.ViewHolder> implements Consumer<List<Message>> {
@@ -34,6 +33,11 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
   private BetterLinkMovementMethod linkMovementMethod;
   private boolean showMessageThreads;
   private String loggedInUserName;
+  private OnMessageClickListener onMessageClickListener;
+
+  interface OnMessageClickListener {
+    void onClickMessage(Message message, View messageItemView);
+  }
 
   /**
    * @param showMessageThreads used for {@link InboxFolder#PRIVATE_MESSAGES}.
@@ -43,6 +47,10 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
     this.showMessageThreads = showMessageThreads;
     this.loggedInUserName = loggedInUserName;
     setHasStableIds(true);
+  }
+
+  public void setOnMessageClickListener(OnMessageClickListener listener) {
+    onMessageClickListener = listener;
   }
 
   @Override
@@ -75,19 +83,13 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
 
     if (getItemViewType(position) == VIEW_TYPE_INDIVIDUAL_MESSAGE) {
       ((IndividualMessageViewHolder) holder).bind(message);
-      holder.itemView.setOnClickListener(o -> {
-        // TODO: Check if message is a comment.
-        // TODO: Send callback.
-        String commentUrl = "https://reddit.com" + message.getDataNode().get("context").asText();
-        Timber.i("Clicked url: %s", UrlParser.parse(commentUrl));
-      });
-
     } else {
       ((MessageThreadViewHolder) holder).bind(message, loggedInUserName);
-      holder.itemView.setOnClickListener(o -> {
-        Timber.i("TODO: Open thread");
-      });
     }
+
+    holder.itemView.setOnClickListener(o -> {
+      onMessageClickListener.onClickMessage(message, holder.itemView);
+    });
   }
 
   private static CharSequence createTimestamp(Resources resources, Message message) {

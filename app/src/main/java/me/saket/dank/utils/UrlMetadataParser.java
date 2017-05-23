@@ -32,6 +32,7 @@ public class UrlMetadataParser {
   public static Single<LinkMetadata> parse(String url, boolean ignoreSocialData) {
     return Single.fromCallable(() -> {
       // TODO: Port this to Retrofit.
+      // TODO: Port to RxJava2.
       Request request = new Request.Builder()
           .url(url)
           .header("User-Agent", CHROME_DESKTOP_USER_AGENT)

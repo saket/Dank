@@ -1,76 +1,80 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest package="me.saket.dank"
-    xmlns:android="http://schemas.android.com/apk/res/android">
+  xmlns:android="http://schemas.android.com/apk/res/android">
 
-    <uses-permission android:name="android.permission.INTERNET" />
+  <uses-permission android:name="android.permission.INTERNET" />
 
-    <!-- For JobScheduler. -->
-    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+  <!-- For JobScheduler. -->
+  <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
 
-    <application
-        android:name=".DankApplication"
-        android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
-        android:label="@string/app_name"
-        android:supportsRtl="true"
-        android:theme="@style/DankTheme.TransparentBackground">
+  <application
+    android:name=".DankApplication"
+    android:allowBackup="true"
+    android:icon="@mipmap/ic_launcher"
+    android:label="@string/app_name"
+    android:supportsRtl="true"
+    android:theme="@style/DankTheme.TransparentBackground">
 
-        <activity
-            android:name=".ui.subreddits.SubredditActivity"
-            android:theme="@style/DankTheme"
-            android:windowSoftInputMode="adjustNothing">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+    <activity
+      android:name=".ui.subreddits.SubredditActivity"
+      android:theme="@style/DankTheme"
+      android:windowSoftInputMode="adjustNothing">
+      <intent-filter>
+        <action android:name="android.intent.action.MAIN" />
+        <category android:name="android.intent.category.LAUNCHER" />
+      </intent-filter>
+    </activity>
 
-        <activity android:name=".ui.subreddits.SubredditActivityWithTransparentWindowBackground" />
+    <activity android:name=".ui.subreddits.SubredditActivityWithTransparentWindowBackground" />
 
-        <activity
-            android:name=".ui.authentication.LoginActivity"
-            android:label="@string/login"
-            android:parentActivityName=".ui.subreddits.SubredditActivity" />
+    <activity
+      android:name=".ui.authentication.LoginActivity"
+      android:label="@string/login"
+      android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
-        <activity
-            android:name=".ui.preferences.UserPreferencesActivity"
-            android:label="@string/activity_userpreferences"
-            android:parentActivityName=".ui.subreddits.SubredditActivity" />
+    <activity
+      android:name=".ui.preferences.UserPreferencesActivity"
+      android:label="@string/activity_userpreferences"
+      android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
-        <activity android:name=".ui.webview.WebViewActivity" />
+    <activity android:name=".ui.webview.WebViewActivity" />
 
-        <activity android:name=".ui.OpenUrlActivity" />
+    <activity android:name=".ui.OpenUrlActivity" />
 
-        <activity android:name=".ui.submission.SubmissionFragmentActivity" />
+    <activity android:name=".ui.submission.SubmissionFragmentActivity" />
 
-        <activity android:name=".ui.user.UserProfileActivity" />
+    <activity android:name=".ui.user.UserProfileActivity" />
 
-        <activity
-            android:name=".ui.user.messages.InboxActivity"
-            android:label="@string/activity_inbox"
-            android:launchMode="singleTop"
-            android:parentActivityName=".ui.subreddits.SubredditActivity" />
+    <activity
+      android:name=".ui.user.messages.InboxActivity"
+      android:label="@string/activity_inbox"
+      android:launchMode="singleTop"
+      android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
-        <activity
-            android:name=".ui.preferences.HiddenPreferencesActivity"
-            android:label="Hidden Preferences"
-            android:parentActivityName=".ui.preferences.UserPreferencesActivity" />
+    <activity
+      android:name=".ui.preferences.HiddenPreferencesActivity"
+      android:label="Hidden Preferences"
+      android:parentActivityName=".ui.preferences.UserPreferencesActivity" />
 
-        <service
-            android:name=".ui.subreddits.SubredditSubscriptionsSyncJob"
-            android:exported="true"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
+    <activity
+      android:name=".ui.user.messages.PrivateMessageThreadActivity"
+      android:parentActivityName=".ui.user.messages.InboxActivity" />
 
-        <service
-            android:name=".notifs.CheckUnreadMessagesJobService"
-            android:exported="true"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
+    <service
+      android:name=".ui.subreddits.SubredditSubscriptionsSyncJob"
+      android:exported="true"
+      android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <service
-            android:name=".notifs.NotificationActionsJobService"
-            android:exported="true"
-            android:permission="android.permission.BIND_JOB_SERVICE" />
+    <service
+      android:name=".notifs.CheckUnreadMessagesJobService"
+      android:exported="true"
+      android:permission="android.permission.BIND_JOB_SERVICE" />
 
-        <receiver android:name=".notifs.NotificationActionReceiver" />
-    </application>
+    <service
+      android:name=".notifs.NotificationActionsJobService"
+      android:exported="true"
+      android:permission="android.permission.BIND_JOB_SERVICE" />
+
+    <receiver android:name=".notifs.NotificationActionReceiver" />
+  </application>
 </manifest>

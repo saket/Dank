@@ -5,6 +5,7 @@ import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
 import android.content.Context;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
 import android.widget.TextView;
@@ -121,8 +122,8 @@ public class UserProfileSheetView extends FrameLayout {
   }
 
   @OnClick(R.id.userprofilesheet_messages)
-  void onClickMessages() {
-    InboxActivity.start(getContext(), null);
+  void onClickMessages(View messageButton) {
+    InboxActivity.start(getContext());
 
     // Hide this sheet once it gets fully covered.
     postDelayed(
