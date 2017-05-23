@@ -80,7 +80,7 @@ public class InboxFolderFragment extends DankFragment {
      * Called as the user scrolls the unread message list. All the seen unread messages are
      * marked as read on Activity exit.
      */
-    void markUnreadMessageAsRead(Message unreadMessage);
+    void markUnreadMessageAsSeen(Message unreadMessage);
 
     void markAllUnreadMessagesAsReadAndExit(List<Message> unreadMessages);
   }
@@ -315,7 +315,7 @@ public class InboxFolderFragment extends DankFragment {
             for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
               if (messagesAdapterWithProgress.isWrappedAdapterItem(i)) {
                 Message message = messagesAdapterWithProgress.getItemInWrappedAdapter(i);
-                ((Callbacks) getActivity()).markUnreadMessageAsRead(message);
+                ((Callbacks) getActivity()).markUnreadMessageAsSeen(message);
               }
             }
           }

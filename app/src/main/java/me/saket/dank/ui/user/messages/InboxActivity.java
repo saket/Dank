@@ -208,16 +208,10 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   }
 
   @Override
-  public void markUnreadMessageAsRead(Message unreadMessage) {
+  public void markUnreadMessageAsSeen(Message unreadMessage) {
     if (!seenUnreadMessages.contains(unreadMessage)) {
       seenUnreadMessages.add(unreadMessage);
     }
-  }
-
-  @Override
-  public void markAllUnreadMessagesAsReadAndExit(List<Message> unreadMessages) {
-    sendBroadcast(NotificationActionReceiver.createMarkAllAsReadIntent(this, unreadMessages));
-    finish();
   }
 
   private void markSeenMessagesAsRead() {
@@ -231,6 +225,12 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     Dank.inbox().refreshMessages(InboxFolder.UNREAD)
         .compose(applySchedulersSingle())
         .subscribe(doNothing(), doNothing());
+  }
+
+  @Override
+  public void markAllUnreadMessagesAsReadAndExit(List<Message> unreadMessages) {
+    sendBroadcast(NotificationActionReceiver.createMarkAllAsReadIntent(this, unreadMessages));
+    finish();
   }
 
   @Override
