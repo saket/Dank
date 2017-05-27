@@ -34,4 +34,11 @@ public class Colors {
     return Color.rgb(red, green, blue);
   }
 
+  /**
+   * Converts a color integer back to its hex form. Does not support alpha channel.
+   * Example: 0xFFFFFFFF -> #FFFFFF
+   */
+  public static String colorIntToHex(@ColorInt int colorInt) {
+    return "#" + Integer.toHexString(colorInt).toUpperCase();
+  }
 }

@@ -22,8 +22,10 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
+import me.saket.dank.widgets.swipe.SwipeableLayout;
+import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
-public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubRedditSubmissionsAdapter.SubmissionViewHolder>
+public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubmissionsAdapter.SubmissionViewHolder>
     implements Consumer<List<Submission>>
 {
 
@@ -36,7 +38,7 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
     void onItemClick(Submission submission, View submissionItemView, long submissionId);
   }
 
-  public SubRedditSubmissionsAdapter() {
+  public SubmissionsAdapter() {
     setHasStableIds(true);
   }
 
@@ -77,7 +79,7 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
     return submission.hashCode();
   }
 
-  public static class SubmissionViewHolder extends RecyclerView.ViewHolder {
+  public static class SubmissionViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
     @BindView(R.id.submission_item_icon) ImageView thumbnailView;
     @BindView(R.id.submission_item_title) TextView titleView;
     @BindView(R.id.submission_item_subtitle) TextView subTitleView;
@@ -87,6 +89,11 @@ public class SubRedditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
     public SubmissionViewHolder(View itemView) {
       super(itemView);
       ButterKnife.bind(this, itemView);
+    }
+
+    @Override
+    public SwipeableLayout getSwipeableLayout() {
+      return ((SwipeableLayout) itemView);
     }
 
     public void bind(Submission submission) {

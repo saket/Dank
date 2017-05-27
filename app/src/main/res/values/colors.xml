@@ -1,49 +1,52 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <!--
-        Transparency table:
-         00% = 00 H
-        025% = 06 H
-         05% = 0C H
-         10% = 1A H
-         15% = 26 H
-         20% = 33 H
-         25% = 40 H
-         30% = 4C H
-         40% = 66 H
-         50% = 80 H
-         60% = 99 H
-        75% ~= C4 H     This is reverse of 4C == 25%
-         80% = CC H
-         90% = E6 H
-        100% = FF H
-    -->
+  <!--
+      Transparency table:
+       00% = 00 H
+      025% = 06 H
+       05% = 0C H
+       10% = 1A H
+       15% = 26 H
+       20% = 33 H
+       25% = 40 H
+       30% = 4C H
+       40% = 66 H
+       50% = 80 H
+       60% = 99 H
+      75% ~= C4 H     This is reverse of 4C == 25%
+       80% = CC H
+       90% = E6 H
+      100% = FF H
+  -->
 
-    <color name="color_primary">#202020</color>
-    <color name="color_primary_dark">#1b1b1b</color>
-    <color name="color_accent">@color/teal_A400</color>
-    <color name="window_background">#303030</color>
-    <color name="dialog_background">@color/gray_800</color>
-    <color name="toolbar">#262626</color>
+  <color name="color_primary">#202020</color>
+  <color name="color_primary_dark">#1b1b1b</color>
+  <color name="color_accent">@color/teal_A400</color>
+  <color name="window_background">#303030</color>
+  <color name="dialog_background">@color/gray_800</color>
+  <color name="toolbar">#262626</color>
 
-    <color name="color_accent_secondary">@color/teal_A100</color>
+  <color name="color_accent_secondary">@color/teal_A100</color>
 
-    <color name="userprofile_unread_messages">@color/orange_500</color>
-    <color name="userprofile_no_messages">@color/gray_300</color>
+  <color name="userprofile_unread_messages">@color/orange_500</color>
+  <color name="userprofile_no_messages">@color/gray_300</color>
 
-    <color name="submission_link_title">@color/white_opacity_90</color>
-    <color name="submission_link_subtitle">@color/white_opacity_50</color>
-    <color name="submission_link_title_dark">@color/black_opacity_90</color>
-    <color name="submission_link_subtitle_dark">@color/black_opacity_50</color>
-    <color name="submission_link_background_color">#3A3A3A</color>
+  <color name="submission_link_title">@color/white_opacity_90</color>
+  <color name="submission_link_subtitle">@color/white_opacity_50</color>
+  <color name="submission_link_title_dark">@color/black_opacity_90</color>
+  <color name="submission_link_subtitle_dark">@color/black_opacity_50</color>
+  <color name="submission_link_background_color">#3A3A3A</color>
 
-    <color name="subredditpicker_subreddit_button_tint_normal">#1b1b1b</color>
-    <color name="subredditpicker_subreddit_button_tint_selected">#0b0b0b</color>
-    <color name="subredditpicker_subreddit_button_text_normal">@color/gray_400</color>
-    <color name="subredditpicker_subreddit_button_text_hidden">@color/gray_700</color>
+  <color name="subredditpicker_subreddit_button_tint_normal">#1b1b1b</color>
+  <color name="subredditpicker_subreddit_button_tint_selected">#0b0b0b</color>
+  <color name="subredditpicker_subreddit_button_text_normal">@color/gray_400</color>
+  <color name="subredditpicker_subreddit_button_text_hidden">@color/gray_700</color>
 
-    <color name="error_text_color">@color/red_A100</color>
+  <color name="error_text_color">@color/red_A100</color>
 
-    <!-- So Nougat automatically replaces teal_a400 with this color for notification. We're using the same color for < Nougat. -->
-    <color name="notification_icon_color">#00875C</color>
+  <!-- So Nougat automatically replaces teal_a400 with this color for notification. We're using the same color for < Nougat. -->
+  <color name="notification_icon_color">#00875C</color>
+
+  <color name="list_item_swipe_upvote">#FF8B60</color>
+  <color name="list_item_swipe_downvote">#9494FF</color>
 </resources>

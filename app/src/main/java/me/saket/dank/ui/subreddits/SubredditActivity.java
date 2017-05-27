@@ -43,6 +43,7 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.ui.submission.SwipeableSubmissionManager;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.DankToolbar;
@@ -74,7 +75,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   private String activeSubredditName;
   private SubmissionFragment submissionFragment;
-  private SubRedditSubmissionsAdapter submissionsAdapter;
+  private SubmissionsAdapter submissionsAdapter;
 
   protected static void addStartExtrasToIntent(RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
@@ -142,7 +143,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       submissionList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
-    submissionsAdapter = new SubRedditSubmissionsAdapter();
+    submissionsAdapter = new SubmissionsAdapter();
     submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
       DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
           .commentSort(defaultIfNull(submission.getSuggestedSort(), DankRedditClient.DEFAULT_COMMENT_SORT))
@@ -157,7 +158,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId);
       });
     });
-    submissionList.setAdapter(submissionsAdapter);
+
+    SwipeableSubmissionManager swipeActionsManager = new SwipeableSubmissionManager(this);
+    submissionList.setAdapter(swipeActionsManager.wrapAdapter(submissionsAdapter));
+    swipeActionsManager.attachToRecyclerView(submissionList);
 
     // Setup submission page.
     submissionFragment = (SubmissionFragment) getSupportFragmentManager().findFragmentById(submissionPage.getId());

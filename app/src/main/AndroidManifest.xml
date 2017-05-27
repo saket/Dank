@@ -68,6 +68,11 @@
       android:theme="@style/DankTheme.DialogLikeActivity"
       android:windowSoftInputMode="adjustResize|stateVisible" />
 
+    <activity
+      android:name=".ui.PlaygroundActivity"
+      android:label="Playground"
+      android:parentActivityName=".ui.subreddits.SubredditActivity" />
+
     <service
       android:name=".ui.subreddits.SubredditSubscriptionsSyncJob"
       android:exported="true"

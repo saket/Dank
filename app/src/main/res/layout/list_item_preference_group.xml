@@ -1,45 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<me.saket.dank.widgets.swipe.SwipeableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  tools:layout_marginTop="25dp">
+
+  <me.saket.dank.widgets.swipe.SwipeActionIconView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_vertical"
+    android:padding="@dimen/spacing16"
+    android:src="@drawable/ic_mail_24dp" />
+
+  <RelativeLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?attr/selectableItemBackground"
+    android:background="@color/window_background"
+    android:foreground="?attr/selectableItemBackground"
     android:orientation="vertical">
 
     <!-- TODO: Set contentDescription in code. -->
     <ImageView
-        android:id="@+id/item_preferencegroup_icon"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_alignBottom="@+id/item_preferencegroup_separator"
-        android:layout_alignParentTop="true"
-        android:layout_marginEnd="@dimen/spacing12"
-        android:layout_marginStart="@dimen/spacing4"
-        android:padding="@dimen/spacing16"
-        android:src="@drawable/ic_look_and_feel_24dp" />
+      android:id="@+id/item_preferencegroup_icon"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_alignBottom="@+id/item_preferencegroup_separator"
+      android:layout_alignParentTop="true"
+      android:layout_marginEnd="@dimen/spacing12"
+      android:layout_marginStart="@dimen/spacing4"
+      android:padding="@dimen/spacing16"
+      android:src="@drawable/ic_look_and_feel_24dp" />
 
     <TextView
-        android:id="@+id/item_preferencegroup_title"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="@dimen/spacing12"
-        android:layout_toEndOf="@+id/item_preferencegroup_icon"
-        android:textAllCaps="true"
-        android:textColor="@color/gray_100"
-        tools:text="@string/userpreferences_look_and_feel" />
+      android:id="@+id/item_preferencegroup_title"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="@dimen/spacing12"
+      android:layout_toEndOf="@+id/item_preferencegroup_icon"
+      android:textAllCaps="true"
+      android:textColor="@color/gray_100"
+      tools:text="@string/userpreferences_look_and_feel" />
 
     <TextView
-        android:id="@+id/item_preferencegroup_subtitle"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignStart="@+id/item_preferencegroup_title"
-        android:layout_below="@+id/item_preferencegroup_title"
-        android:layout_marginBottom="@dimen/spacing12"
-        android:textColor="@color/gray_600"
-        tools:text="@string/userpreferences_look_and_feel_description" />
+      android:id="@+id/item_preferencegroup_subtitle"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_alignStart="@+id/item_preferencegroup_title"
+      android:layout_below="@+id/item_preferencegroup_title"
+      android:layout_marginBottom="@dimen/spacing12"
+      android:textColor="@color/gray_600"
+      tools:text="@string/userpreferences_look_and_feel_description" />
 
     <View
-        android:id="@+id/item_preferencegroup_separator"
-        style="@style/DankSeparator.Vertical"
-        android:layout_below="@+id/item_preferencegroup_subtitle" />
-</RelativeLayout>
+      android:id="@+id/item_preferencegroup_separator"
+      style="@style/DankSeparator.Vertical"
+      android:layout_below="@+id/item_preferencegroup_subtitle" />
+  </RelativeLayout>
+</me.saket.dank.widgets.swipe.SwipeableLayout>
+

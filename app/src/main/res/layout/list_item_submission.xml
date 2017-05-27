@@ -1,59 +1,73 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<me.saket.dank.widgets.swipe.SwipeableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content">
+
+  <me.saket.dank.widgets.swipe.SwipeActionIconView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center_vertical"
+    android:padding="@dimen/spacing16"
+    android:src="@drawable/ic_mail_24dp" />
+
+  <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="?android:attr/selectableItemBackground"
+    android:background="@color/window_background"
+    android:foreground="?attr/selectableItemBackground"
     android:orientation="vertical"
-    android:paddingTop="@dimen/spacing12">
+    android:paddingTop="@dimen/spacing12"
+    tools:layout_marginTop="25dp">
 
     <RelativeLayout
-        android:id="@+id/submission_item_content_container"
+      android:id="@+id/submission_item_content_container"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content">
+
+      <!-- TODO: Set content-description programmatically. -->
+      <ImageView
+        android:id="@+id/submission_item_icon"
+        android:layout_width="52dp"
+        android:layout_height="52dp"
+        android:layout_marginBottom="@dimen/spacing16"
+        android:layout_marginStart="@dimen/spacing16"
+        android:layout_marginTop="6dp"
+        tools:background="@drawable/background_submission_self_thumbnail"
+        tools:ignore="ContentDescription"
+        tools:scaleType="centerInside"
+        tools:src="@drawable/ic_link_black_24dp"
+        tools:tint="@color/gray_200" />
+
+      <TextView
+        android:id="@+id/submission_item_title"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing24"
+        android:layout_marginStart="@dimen/spacing24"
+        android:layout_toEndOf="@+id/submission_item_icon"
+        android:textColor="@color/gray_100"
+        android:textSize="@dimen/textsize16"
+        tools:ignore="RtlHardcoded"
+        tools:text="Title" />
 
-        <!-- TODO: Set content-description programmatically. -->
-        <ImageView
-            android:id="@+id/submission_item_icon"
-            android:layout_width="52dp"
-            android:layout_height="52dp"
-            android:layout_marginBottom="@dimen/spacing16"
-            android:layout_marginStart="@dimen/spacing16"
-            android:layout_marginTop="6dp"
-            tools:background="@drawable/background_submission_self_thumbnail"
-            tools:ignore="ContentDescription"
-            tools:scaleType="centerInside"
-            tools:src="@drawable/ic_link_black_24dp"
-            tools:tint="@color/gray_200" />
-
-        <TextView
-            android:id="@+id/submission_item_title"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/spacing24"
-            android:layout_marginStart="@dimen/spacing24"
-            android:layout_toEndOf="@+id/submission_item_icon"
-            android:textColor="@color/gray_100"
-            android:textSize="@dimen/textsize16"
-            tools:ignore="RtlHardcoded"
-            tools:text="Title" />
-
-        <TextView
-            android:id="@+id/submission_item_subtitle"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_alignEnd="@+id/submission_item_title"
-            android:layout_alignStart="@+id/submission_item_title"
-            android:layout_below="@+id/submission_item_title"
-            android:layout_marginBottom="@dimen/spacing16"
-            android:layout_marginTop="@dimen/spacing4"
-            android:textAllCaps="true"
-            android:textColor="@color/gray_600"
-            android:textSize="@dimen/textsize12"
-            tools:text="/r/TodayILearned" />
+      <TextView
+        android:id="@+id/submission_item_subtitle"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/submission_item_title"
+        android:layout_alignStart="@+id/submission_item_title"
+        android:layout_below="@+id/submission_item_title"
+        android:layout_marginBottom="@dimen/spacing16"
+        android:layout_marginTop="@dimen/spacing4"
+        android:textAllCaps="true"
+        android:textColor="@color/gray_600"
+        android:textSize="@dimen/textsize12"
+        tools:text="/r/TodayILearned" />
     </RelativeLayout>
 
     <View
-        android:id="@+id/submission_item_separator"
-        style="@style/DankSeparator.Vertical" />
-</LinearLayout>
+      android:id="@+id/submission_item_separator"
+      style="@style/DankSeparator.Vertical" />
+  </LinearLayout>
+</me.saket.dank.widgets.swipe.SwipeableLayout>

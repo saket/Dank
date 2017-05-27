@@ -4,6 +4,7 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
+import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
 import android.content.Intent;
@@ -55,6 +56,10 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     setupContentExpandablePage(activityContentPage);
     activityContentPage.setNestedExpandablePage(preferencesPage);
     expandFromBelowToolbar();
+
+    activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
+      return touchLiesOn(preferenceList, downX, downY) && preferenceList.canScrollVertically(upwardPagePull ? 1 : -1);
+    });
   }
 
   @Override
