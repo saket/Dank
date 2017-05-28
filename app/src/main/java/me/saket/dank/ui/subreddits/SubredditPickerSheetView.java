@@ -19,7 +19,6 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
@@ -58,6 +57,7 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.di.Dank;
+import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
@@ -74,7 +74,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
   private static final int HEIGHT_CHANGE_ANIM_DURATION = 300;
   private static final int OPTIONS_VISIBILITY_ANIM_DURATION = 150;
-  private static final Interpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
+  private static final Interpolator ANIM_INTERPOLATOR = Animations.INTERPOLATOR;
 
   @BindView(R.id.subredditpicker_root) ViewGroup rootViewGroup;
   @BindView(R.id.subredditpicker_search) EditText searchView;

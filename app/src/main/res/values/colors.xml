@@ -47,6 +47,8 @@
   <!-- So Nougat automatically replaces teal_a400 with this color for notification. We're using the same color for < Nougat. -->
   <color name="notification_icon_color">#00875C</color>
 
-  <color name="list_item_swipe_upvote">#FF8B60</color>
+  <color name="list_item_swipe_upvote">@color/deep_orange_300</color>
   <color name="list_item_swipe_downvote">#9494FF</color>
+  <color name="list_item_swipe_save">@color/green_400</color>
+  <color name="list_item_swipe_more_options">@color/blue_gray_400</color>
 </resources>

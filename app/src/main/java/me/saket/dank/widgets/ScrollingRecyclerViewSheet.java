@@ -6,7 +6,6 @@ import android.content.res.TypedArray;
 import android.os.Handler;
 import android.support.annotation.Px;
 import android.support.v4.view.NestedScrollingParent;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.widget.RecyclerView;
 import android.util.AttributeSet;
 import android.view.View;
@@ -19,6 +18,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.saket.dank.R;
+import me.saket.dank.utils.Animations;
 
 /**
  * A scrollable sheet that can wrap a RecyclerView and scroll together (not in parallel) in a nested manner.
@@ -152,7 +152,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     }
 
     scrollAnimator = ValueAnimator.ofFloat(currentTopY(), y);
-    scrollAnimator.setInterpolator(new FastOutSlowInInterpolator());
+    scrollAnimator.setInterpolator(Animations.INTERPOLATOR);
     scrollAnimator.addUpdateListener(animation -> attemptToConsumeScrollY(currentTopY() - ((Float) animation.getAnimatedValue())));
     scrollAnimator.start();
   }

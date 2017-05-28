@@ -18,7 +18,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.support.annotation.Nullable;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.support.v7.graphics.Palette;
 import android.text.Html;
 import android.view.View;
@@ -43,6 +42,7 @@ import me.saket.dank.data.Link;
 import me.saket.dank.data.LinkMetadata;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.RedditLink;
+import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.GlideUtils;
@@ -212,7 +212,7 @@ public class SubmissionLinkHolder {
       holderHeightAnimator = ObjectAnimator.ofInt(0, titleSubtitleContainer.getHeight());
       holderHeightAnimator.addUpdateListener(animation -> setHeight(linkDetailsContainer, (int) animation.getAnimatedValue()));
       holderHeightAnimator.setDuration(300);
-      holderHeightAnimator.setInterpolator(new FastOutSlowInInterpolator());
+      holderHeightAnimator.setInterpolator(Animations.INTERPOLATOR);
       holderHeightAnimator.start();
     });
 
@@ -448,7 +448,7 @@ public class SubmissionLinkHolder {
     ValueAnimator colorAnimator = ValueAnimator.ofArgb(fromColor, toColor);
     colorAnimator.addUpdateListener(updateListener);
     colorAnimator.setDuration(TINT_TRANSITION_ANIMATION_DURATION);
-    colorAnimator.setInterpolator(new FastOutSlowInInterpolator());
+    colorAnimator.setInterpolator(Animations.INTERPOLATOR);
     colorAnimator.start();
   }
 

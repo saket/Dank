@@ -2,11 +2,12 @@ package me.saket.dank.widgets;
 
 import android.animation.ObjectAnimator;
 import android.content.Context;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.view.ViewGroup;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ProgressBar;
+
+import me.saket.dank.utils.Animations;
 
 /**
  * A ProgressBar that uses height animation for hiding/showing + animates changes in determinate progress
@@ -28,7 +29,7 @@ public class AnimatedProgressBar extends ProgressBar {
     cancelProgressAnimation();
 
     progressAnimator = ObjectAnimator.ofInt(this, "progress", getProgress(), toProgress);
-    progressAnimator.setInterpolator(new FastOutSlowInInterpolator());
+    progressAnimator.setInterpolator(Animations.INTERPOLATOR);
     progressAnimator.setDuration(400);
     progressAnimator.start();
   }

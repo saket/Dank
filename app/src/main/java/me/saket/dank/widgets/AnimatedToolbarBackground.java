@@ -4,11 +4,11 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.support.annotation.FloatRange;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.view.View;
 
 import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.utils.Animations;
 
 /**
  * Acts as the background of the Toolbar present in {@link SubmissionFragment} and covers the
@@ -78,7 +78,7 @@ public class AnimatedToolbarBackground extends View {
         setTranslationZ(onVisibleTranslationZ * factor);
         setBackgroundFill(factor);
       });
-      backgroundFillAnimator.setInterpolator(new FastOutSlowInInterpolator());
+      backgroundFillAnimator.setInterpolator(Animations.INTERPOLATOR);
       backgroundFillAnimator.setDuration(150);
       backgroundFillAnimator.start();
 

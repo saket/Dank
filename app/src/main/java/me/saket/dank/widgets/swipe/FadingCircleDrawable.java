@@ -12,7 +12,8 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
+
+import me.saket.dank.utils.Animations;
 
 /**
  * Mimics a ripple drawable. Used for indicating that a swipe action has been performed in {@link SwipeableLayout}.
@@ -94,7 +95,7 @@ public class FadingCircleDrawable extends Drawable {
     fadeOutAnimator.setStartDelay(ANIM_DURATION / 2);
 
     animator = new AnimatorSet();
-    animator.setInterpolator(new FastOutSlowInInterpolator());
+    animator.setInterpolator(Animations.INTERPOLATOR);
     animator.playTogether(radiusAnimator, fadeOutAnimator);
     animator.start();
   }

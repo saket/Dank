@@ -135,4 +135,5 @@ dependencies {
     compile 'com.github.NYTimes.Store:store2:20445fff13'
     compile 'com.github.NYTimes.Store:middleware-moshi2:20445fff13'
     compile 'com.github.NYTimes.Store:filesystem2:20445fff13'
+    compile 'com.jakewharton:disklrucache:2.0.2'
 }

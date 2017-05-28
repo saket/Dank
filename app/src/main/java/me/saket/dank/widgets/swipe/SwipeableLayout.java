@@ -13,11 +13,12 @@ import android.support.annotation.FloatRange;
 import android.support.annotation.IntRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+
+import me.saket.dank.utils.Animations;
 
 public class SwipeableLayout extends FrameLayout {
 
@@ -122,7 +123,7 @@ public class SwipeableLayout extends FrameLayout {
 
       // Move the icon along with the View being swiped.
       if (swipingFromEndToStart) {
-        actionIconView.setTranslationX(getWidth() - translationX);
+        actionIconView.setTranslationX(swipeableChild.getWidth() + translationX);
       } else {
         actionIconView.setTranslationX(translationX - actionIconView.getWidth());
       }
@@ -152,7 +153,7 @@ public class SwipeableLayout extends FrameLayout {
   public void animateBackToPosition() {
     translationAnimator = ObjectAnimator.ofFloat(this, "swipeTranslation", getSwipeTranslation(), 0f);
     translationAnimator.setDuration(300);
-    translationAnimator.setInterpolator(new FastOutSlowInInterpolator());
+    translationAnimator.setInterpolator(Animations.INTERPOLATOR);
     translationAnimator.start();
   }
 
@@ -216,7 +217,7 @@ public class SwipeableLayout extends FrameLayout {
         colorDrawable().setColor(((Integer) animation.getAnimatedValue()));
       });
       transitionAnimator.setDuration(200);
-      transitionAnimator.setInterpolator(new FastOutSlowInInterpolator());
+      transitionAnimator.setInterpolator(Animations.INTERPOLATOR);
       transitionAnimator.start();
     }
 
@@ -231,7 +232,7 @@ public class SwipeableLayout extends FrameLayout {
           toAlpha
       );
       transitionAnimator.setDuration(200);
-      transitionAnimator.setInterpolator(new FastOutSlowInInterpolator());
+      transitionAnimator.setInterpolator(Animations.INTERPOLATOR);
       transitionAnimator.start();
     }
   }

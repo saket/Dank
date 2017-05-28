@@ -2,7 +2,6 @@ package me.saket.dank.ui.submission;
 
 import static me.saket.dank.utils.Views.executeOnMeasure;
 
-import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -18,6 +17,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
+import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -143,7 +143,7 @@ public class SubmissionImageHolder {
             .alpha(1f)
             .translationY(0f)
             .setDuration(300)
-            .setInterpolator(new FastOutSlowInInterpolator())
+            .setInterpolator(Animations.INTERPOLATOR)
             .start();
       };
 
@@ -181,7 +181,7 @@ public class SubmissionImageHolder {
               .alpha(0f)
               .translationY(-imageScrollHintView.getHeight() / 2)
               .setDuration(300)
-              .setInterpolator(new FastOutSlowInInterpolator())
+              .setInterpolator(Animations.INTERPOLATOR)
               .withEndAction(() -> imageScrollHintView.setVisibility(View.GONE))
               .start();
         }
