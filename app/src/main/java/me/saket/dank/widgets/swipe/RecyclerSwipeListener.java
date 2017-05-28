@@ -7,6 +7,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import me.saket.dank.utils.SimpleRecyclerViewOnChildAttachStateChangeListener;
+import timber.log.Timber;
 
 /**
  * Not using {@link ItemTouchHelper}, because it only supports "dismissing" items with swipe. There's no concept of them snapping back.
@@ -52,7 +53,7 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
         }
 
         // The swipe should start horizontally, but we'll let the gesture continue in any direction after that.
-        boolean isHorizontalSwipe = Math.abs(distanceX) > Math.abs(distanceY) * 2;
+        boolean isHorizontalSwipe = viewBeingSwiped.hasCrossedSwipeDistanceThreshold() || Math.abs(distanceX) > Math.abs(distanceY) * 2;
         isSwiping = !viewBeingSwiped.isSettlingBackToPosition() && isHorizontalSwipe;
 
         if (!isSwiping) {
