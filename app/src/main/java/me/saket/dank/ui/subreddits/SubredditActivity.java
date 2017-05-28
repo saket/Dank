@@ -43,7 +43,7 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
-import me.saket.dank.ui.submission.SwipeableSubmissionManager;
+import me.saket.dank.ui.submission.SwipeableSubmissionHelper;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.DankToolbar;
@@ -159,7 +159,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       });
     });
 
-    SwipeableSubmissionManager swipeActionsManager = new SwipeableSubmissionManager(this);
+    SwipeableSubmissionHelper swipeActionsManager = new SwipeableSubmissionHelper(Dank.submissions());
     submissionList.setAdapter(swipeActionsManager.wrapAdapter(submissionsAdapter));
     swipeActionsManager.attachToRecyclerView(submissionList);
 

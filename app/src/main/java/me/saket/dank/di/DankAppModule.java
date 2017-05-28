@@ -34,6 +34,7 @@ import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorManager;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
+import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
@@ -81,8 +82,29 @@ public class DankAppModule {
   }
 
   @Provides
+  // Already singleton.
   AuthenticationManager provideRedditAuthManager() {
     return AuthenticationManager.get();
+  }
+
+  @Provides
+  @Singleton
+  SubredditSubscriptionManager provideSubredditSubscriptionManager(BriteDatabase briteDatabase, DankRedditClient dankRedditClient,
+      UserPrefsManager userPrefsManager)
+  {
+    return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient, userPrefsManager);
+  }
+
+  @Provides
+  @Singleton
+  InboxManager provideInboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
+    return new InboxManager(dankRedditClient, briteDatabase, moshi);
+  }
+
+  @Provides
+  @Singleton
+  SubmissionManager provideSubmissionManager(DankRedditClient dankRedditClient) {
+    return new SubmissionManager(dankRedditClient);
   }
 
   @Provides
@@ -184,14 +206,6 @@ public class DankAppModule {
     return briteDatabase;
   }
 
-  @Provides
-  @Singleton
-  SubredditSubscriptionManager provideSubredditSubscriptionManager(BriteDatabase briteDatabase, DankRedditClient dankRedditClient,
-      UserPrefsManager userPrefsManager)
-  {
-    return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient, userPrefsManager);
-  }
-
   @Singleton
   @Provides
   MemoryPolicy provideCachingPolicy() {
@@ -215,12 +229,6 @@ public class DankAppModule {
   @Singleton
   ErrorManager provideErrorManager() {
     return new ErrorManager();
-  }
-
-  @Provides
-  @Singleton
-  InboxManager provideInboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
-    return new InboxManager(dankRedditClient, briteDatabase, moshi);
   }
 
   @Provides

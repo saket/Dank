@@ -91,6 +91,7 @@ public class DankRedditClient {
     }
   }
 
+  // TODO: Move to SubmissionManager.
   public Single<Submission> submission(DankSubmissionRequest submissionRequest) {
     SubmissionRequest jrawSubmissionRequest = new SubmissionRequest.Builder(submissionRequest.id())
         .sort(submissionRequest.commentSort())
