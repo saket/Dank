@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.Views;
 
 public class SwipeableLayout extends FrameLayout {
 
@@ -57,7 +58,6 @@ public class SwipeableLayout extends FrameLayout {
     super(context, attrs);
 
     backgroundDrawable = new BackgroundDrawable(new ColorDrawable(Color.TRANSPARENT), new ColorDrawable(Color.DKGRAY));
-    setBackground(backgroundDrawable);
 
     setSwipeDistanceThresholdCrossed(false);  // Controls the background color's gray tint.
 
@@ -84,6 +84,12 @@ public class SwipeableLayout extends FrameLayout {
 
     if (child instanceof SwipeActionIconView) {
       actionIconView = ((SwipeActionIconView) child);
+
+      // Set a random icon to set the ImageView's initial dimensions.
+      Views.executeOnMeasure(actionIconView, () -> {
+        actionIconView.setTranslationX(-actionIconView.getWidth());
+      });
+
     } else {
       swipeableChild = child;
     }
@@ -101,6 +107,15 @@ public class SwipeableLayout extends FrameLayout {
     }
   }
 
+  @Override
+  protected void dispatchDraw(Canvas canvas) {
+    if (swipeableChild.getTranslationX() != 0f) {
+      backgroundDrawable.draw(canvas);
+    }
+    super.dispatchDraw(canvas);
+    swipeActionTriggerDrawable.draw(canvas);
+  }
+
 // ======== SWIPE ======== //
 
   public void setSwipeTranslation(@FloatRange(from = -1f, to = 1f) float translationX) {
@@ -111,14 +126,20 @@ public class SwipeableLayout extends FrameLayout {
     swipeableChild.setTranslationX(translationX);
     swipeActionTriggerDrawable.setBounds((int) translationX, 0, (int) (getWidth() + translationX), getHeight());
 
+    // We want to draw the background drawable in only the visible portion of the background to avoid a redraw.
+    boolean swipingFromEndToStart = translationX < 0f;
+    if (swipingFromEndToStart) {
+      backgroundDrawable.setBounds((int) (getRight() - getLeft() + translationX), 0, getRight() - getLeft(), getBottom() - getTop());
+    } else {
+      backgroundDrawable.setBounds(0, 0, (int) translationX, getBottom() - getTop());
+    }
+
     if (translationX == 0f) {
       backgroundDrawable.animateColorTransition(Color.TRANSPARENT);
       setSwipeDistanceThresholdCrossed(false);
       activeSwipeAction = null;
 
     } else {
-      boolean swipingFromEndToStart = translationX < 0f;
-
       // Move the icon along with the View being swiped.
       if (swipingFromEndToStart) {
         actionIconView.setTranslationX(swipeableChild.getWidth() + translationX);
@@ -189,6 +210,9 @@ public class SwipeableLayout extends FrameLayout {
   }
 
   private static class BackgroundDrawable extends LayerDrawable {
+    private ValueAnimator colorTransitionAnimator;
+    private ObjectAnimator tintTransitionAnimator;
+
     /**
      * Creates a new layer drawable with the list of specified layers.
      */
@@ -211,28 +235,36 @@ public class SwipeableLayout extends FrameLayout {
      * Animate the background layer's color.
      */
     public void animateColorTransition(@ColorInt int toColor) {
-      ValueAnimator transitionAnimator = ValueAnimator.ofArgb(colorDrawable().getColor(), toColor);
-      transitionAnimator.addUpdateListener(animation -> {
+      if (colorTransitionAnimator != null) {
+        colorTransitionAnimator.cancel();
+      }
+
+      colorTransitionAnimator = ValueAnimator.ofArgb(colorDrawable().getColor(), toColor);
+      colorTransitionAnimator.addUpdateListener(animation -> {
         colorDrawable().setColor(((Integer) animation.getAnimatedValue()));
       });
-      transitionAnimator.setDuration(200);
-      transitionAnimator.setInterpolator(Animations.INTERPOLATOR);
-      transitionAnimator.start();
+      colorTransitionAnimator.setDuration(200);
+      colorTransitionAnimator.setInterpolator(Animations.INTERPOLATOR);
+      colorTransitionAnimator.start();
     }
 
     /**
      * Animate the gray layer's alpha.
      */
     public void animateSwipeThresholdCrossedTransition(@IntRange(from = 0, to = 255) int toAlpha) {
-      ObjectAnimator transitionAnimator = ObjectAnimator.ofInt(
+      if (tintTransitionAnimator != null) {
+        tintTransitionAnimator.cancel();
+      }
+
+      tintTransitionAnimator = ObjectAnimator.ofInt(
           swipeThresholdTintDrawable(),
           "alpha",
           swipeThresholdTintDrawable().getAlpha(),
           toAlpha
       );
-      transitionAnimator.setDuration(200);
-      transitionAnimator.setInterpolator(Animations.INTERPOLATOR);
-      transitionAnimator.start();
+      tintTransitionAnimator.setDuration(200);
+      tintTransitionAnimator.setInterpolator(Animations.INTERPOLATOR);
+      tintTransitionAnimator.start();
     }
   }
 
@@ -245,12 +277,6 @@ public class SwipeableLayout extends FrameLayout {
     int swipeActionColor = ContextCompat.getColor(getContext(), forAction.backgroundColorRes());
     boolean triggerFromStart = swipeActions.startActions().contains(forAction);
     swipeActionTriggerDrawable.play(swipeActionColor, triggerFromStart);
-  }
-
-  @Override
-  protected void dispatchDraw(Canvas canvas) {
-    super.dispatchDraw(canvas);
-    swipeActionTriggerDrawable.draw(canvas);
   }
 
   @Override
