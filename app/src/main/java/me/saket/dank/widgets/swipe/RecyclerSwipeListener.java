@@ -7,7 +7,6 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import me.saket.dank.utils.SimpleRecyclerViewOnChildAttachStateChangeListener;
-import timber.log.Timber;
 
 /**
  * Not using {@link ItemTouchHelper}, because it only supports "dismissing" items with swipe. There's no concept of them snapping back.

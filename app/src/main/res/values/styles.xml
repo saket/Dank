@@ -17,6 +17,7 @@
     <item name="android:backgroundDimEnabled">false</item>
 
     <item name="alertDialogTheme">@style/DankDialogTheme</item>
+    <item name="android:windowBackground">@android:color/transparent</item>
   </style>
 
   <style name="DankTheme.TransparentBackground">
