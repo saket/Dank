@@ -112,34 +112,36 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
   public void showSwipeActionIcon(SwipeActionIconView imageView, @Nullable SwipeAction oldAction, SwipeAction newAction) {
     switch (newAction.name()) {
       case ACTION_NAME_OPTIONS:
-        imageView.setRotation(0);
+        resetIconRotation(imageView);
         imageView.setImageResource(R.drawable.ic_more_vert_24dp);
         break;
 
       case ACTION_NAME_SAVE:
-        imageView.setRotation(0);
+        resetIconRotation(imageView);
         imageView.setImageResource(R.drawable.ic_star_24dp);
         break;
 
       case ACTION_NAME_UNSAVE:
-        imageView.setRotation(0);
+        resetIconRotation(imageView);
         imageView.setImageResource(R.drawable.ic_star_border_24dp);
         break;
 
       case ACTION_NAME_UPVOTE:
         if (oldAction != null && ACTION_NAME_DOWNVOTE.equals(oldAction.name())) {
-          animateFlipImageView(imageView);
+          imageView.setRotation(180);   // We want to play a circular animation if the user keeps switching between upvote and downvote.
+          imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
         } else {
-          imageView.setRotation(0);
+          resetIconRotation(imageView);
           imageView.setImageResource(R.drawable.ic_arrow_upward_24dp);
         }
         break;
 
       case ACTION_NAME_DOWNVOTE:
         if (oldAction != null && ACTION_NAME_UPVOTE.equals(oldAction.name())) {
-          animateFlipImageView(imageView);
-        } else {
           imageView.setRotation(0);
+          imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
+        } else {
+          resetIconRotation(imageView);
           imageView.setImageResource(R.drawable.ic_arrow_downward_24dp);
         }
         break;
@@ -149,8 +151,9 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
     }
   }
 
-  private void animateFlipImageView(SwipeActionIconView imageView) {
-    imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
+  private void resetIconRotation(SwipeActionIconView imageView) {
+    imageView.animate().cancel();
+    imageView.setRotation(0);
   }
 
   private void performSwipeAction(SwipeAction action, Submission submission) {
