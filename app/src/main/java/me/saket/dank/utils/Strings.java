@@ -35,4 +35,17 @@ public class Strings {
 
     return stringBuilder.toString();
   }
+
+  /**
+   * Convert "11958" -> "11k".
+   */
+  public static String abbreviateCount(int count) {
+    if (count < 1_000) {
+      return String.valueOf(count);
+    } else if (count < 1_000_000) {
+      return count / 1_000 + "k";
+    } else {
+      return count / 1_000_000 + "m";
+    }
+  }
 }

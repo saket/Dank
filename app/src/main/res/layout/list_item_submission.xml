@@ -2,7 +2,8 @@
 <me.saket.dank.widgets.swipe.SwipeableLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="wrap_content">
+  android:layout_height="wrap_content"
+  tools:background="@color/window_background">
 
   <me.saket.dank.widgets.swipe.SwipeActionIconView
     android:layout_width="56dp"
@@ -13,6 +14,7 @@
   <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:elevation="2dp"
     android:foreground="?attr/selectableItemBackground"
     android:orientation="vertical"
     android:paddingTop="@dimen/spacing12"
@@ -23,7 +25,6 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content">
 
-      <!-- TODO: Set content-description programmatically. -->
       <ImageView
         android:id="@+id/submission_item_icon"
         android:layout_width="52dp"
@@ -49,19 +50,20 @@
         tools:ignore="RtlHardcoded"
         tools:text="Title" />
 
-      <TextView
-        android:id="@+id/submission_item_subtitle"
-        android:layout_width="match_parent"
+      <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        android:id="@+id/submission_item_byline"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_alignEnd="@+id/submission_item_title"
         android:layout_alignStart="@+id/submission_item_title"
         android:layout_below="@+id/submission_item_title"
         android:layout_marginBottom="@dimen/spacing16"
         android:layout_marginTop="@dimen/spacing4"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textAllCaps="true"
-        android:textColor="@color/gray_600"
+        android:textColor="@color/submission_item_byline"
         android:textSize="@dimen/textsize12"
-        tools:text="/r/TodayILearned" />
+        tools:text="/r/TodayILearned \u00b7 Saketme \u00b7 43 comments" />
     </RelativeLayout>
 
     <View

@@ -22,11 +22,13 @@
   <color name="color_primary">#202020</color>
   <color name="color_primary_dark">#1b1b1b</color>
   <color name="color_accent">@color/teal_A400</color>
+  <color name="color_accent_secondary">@color/teal_A100</color>
   <color name="window_background">#303030</color>
   <color name="dialog_background">@color/gray_800</color>
   <color name="toolbar">#262626</color>
 
-  <color name="color_accent_secondary">@color/teal_A100</color>
+  <color name="upvote">@color/deep_orange_300</color>   <!-- Picked from the material palette. Slightly varies from what Reddit uses. -->
+  <color name="downvote">#9494FF</color>                <!-- This is what Reddit uses. Couldn't find anything close in the material palette. -->
 
   <color name="userprofile_unread_messages">@color/orange_500</color>
   <color name="userprofile_no_messages">@color/gray_300</color>
@@ -47,8 +49,13 @@
   <!-- So Nougat automatically replaces teal_a400 with this color for notification. We're using the same color for < Nougat. -->
   <color name="notification_icon_color">#00875C</color>
 
-  <color name="list_item_swipe_upvote">@color/deep_orange_300</color>
-  <color name="list_item_swipe_downvote">#9494FF</color>
+  <color name="list_item_swipe_upvote">@color/upvote</color>
+  <color name="list_item_swipe_downvote">@color/downvote</color>
   <color name="list_item_swipe_save">@color/green_400</color>
   <color name="list_item_swipe_more_options">@color/blue_gray_400</color>
+
+  <color name="submission_item_vote_direction_none">@color/gray_500</color>
+  <color name="submission_item_vote_direction_upvote">@color/upvote</color>
+  <color name="submission_item_vote_direction_downvote">@color/downvote</color>
+  <color name="submission_item_byline">@color/gray_600</color>
 </resources>

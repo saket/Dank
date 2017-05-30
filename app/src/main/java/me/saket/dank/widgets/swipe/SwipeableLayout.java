@@ -21,6 +21,7 @@ import android.widget.FrameLayout;
 
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
+import timber.log.Timber;
 
 public class SwipeableLayout extends FrameLayout {
 
@@ -164,7 +165,7 @@ public class SwipeableLayout extends FrameLayout {
         }
 
         // Tint the background gray until the swipe threshold is crossed.
-        boolean swipeThresholdCrossed = Math.abs(translationX) > actionIconView.getWidth() * 4 / 10;
+        boolean swipeThresholdCrossed = Math.abs(translationX) > actionIconView.getWidth() * 3 / 4;
         setSwipeDistanceThresholdCrossed(swipeThresholdCrossed);
       }
     }
@@ -253,9 +254,11 @@ public class SwipeableLayout extends FrameLayout {
      */
     public void animateSwipeThresholdCrossedTransition(@IntRange(from = 0, to = 255) int toAlpha) {
       if (tintTransitionAnimator != null) {
+        Timber.i("Canceling tint");
         tintTransitionAnimator.cancel();
       }
 
+      Timber.i("Animating tint to alpha %s", toAlpha);
       tintTransitionAnimator = ObjectAnimator.ofInt(
           swipeThresholdTintDrawable(),
           "alpha",

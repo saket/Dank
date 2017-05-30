@@ -25,6 +25,7 @@ import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxActivity;
+import me.saket.dank.utils.Strings;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
@@ -82,14 +83,7 @@ public class UserProfileSheetView extends FrameLayout {
     Integer linkKarma = loggedInUser.getLinkKarma();
     int karmaCount = commentKarma + linkKarma;
 
-    String compactKarma;
-    if (karmaCount < 1_000) {
-      compactKarma = String.valueOf(karmaCount);
-    } else if (karmaCount < 1_000_000) {
-      compactKarma = karmaCount / 1_000 + "k";
-    } else {
-      compactKarma = karmaCount / 1_000_000 + "m";
-    }
+    String compactKarma = Strings.abbreviateCount(karmaCount);
     karmaView.setText(getResources().getString(R.string.userprofile_karma_count, compactKarma));
   }
 

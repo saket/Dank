@@ -34,6 +34,11 @@
   <string name="subreddit_preferences">Preferences</string>
   <string name="cd_close_subreddit">Close subreddit</string>
 
+  <string name="submission_item_cd_external_url">Thumbnail for submission URL</string>
+  <string name="submission_item_cd_self_text">Thumbnail for self-text submission</string>
+  <string name="submission_item_byline_subreddit_name_author_and_comments_count">/r/%1$s \u00b7 %2$s \u00b7 %3$s Comments</string>
+  <string name="submission_item_byline_subreddit_name_author">/r/%1$s \u00b7 %2$s</string>
+
   <string name="cd_subredditpicker_manage_subreddits">Manage subreddits</string>
   <string name="cd_subredditpicker_add_new_subreddit">Add new subreddit</string>
   <string name="cd_subredditpicker_more_options">More options</string>

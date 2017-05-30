@@ -1,126 +1,126 @@
 <?xml version="1.0" encoding="utf-8"?>
 <me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/subreddit_root"
-    style="@style/DankPullCollapsibleActivityPage"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:context="me.saket.dank.ui.subreddits.SubredditActivity"
-    tools:layout_marginTop="25dp">
+  style="@style/DankPullCollapsibleActivityPage"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  tools:context="me.saket.dank.ui.subreddits.SubredditActivity"
+  tools:layout_marginTop="25dp">
 
-    <me.saket.dank.widgets.InboxUI.InboxRecyclerView
-        android:id="@+id/subreddit_submission_list"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:clipToPadding="false"
-        android:paddingTop="?android:attr/actionBarSize"
-        android:scrollbarStyle="insideOverlay"
-        android:scrollbars="vertical"
-        tools:visibility="gone" />
+  <me.saket.dank.widgets.InboxUI.InboxRecyclerView
+    android:id="@+id/subreddit_submission_list"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:clipToPadding="false"
+    android:paddingTop="?android:attr/actionBarSize"
+    android:scrollbarStyle="insideOverlay"
+    android:scrollbars="vertical"
+    tools:visibility="gone" />
 
-    <FrameLayout
-        android:id="@+id/subreddit_progress"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_centerInParent="true"
-        android:background="@color/window_background"
-        android:visibility="gone">
+  <FrameLayout
+    android:id="@+id/subreddit_progress"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_centerInParent="true"
+    android:background="@color/window_background"
+    android:visibility="gone">
 
-        <ProgressBar
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_gravity="center" />
-    </FrameLayout>
+    <ProgressBar
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center" />
+  </FrameLayout>
 
-    <View
-        android:id="@+id/subreddit_toolbar_status_bar_space"
-        android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@color/toolbar"
-        android:elevation="@dimen/elevation_toolbar"
+  <View
+    android:id="@+id/subreddit_toolbar_status_bar_space"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:background="@color/toolbar"
+    android:elevation="@dimen/elevation_toolbar"
+    android:visibility="gone" />
+
+  <!-- All Views inside this have bottom margins to make space for their shadows. -->
+  <FrameLayout
+    android:id="@+id/subreddit_toolbar_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/subreddit_toolbar_status_bar_space"
+    android:outlineProvider="bounds">
+
+    <me.saket.dank.widgets.DankToolbar
+      android:id="@id/toolbar"
+      style="@style/DankToolbar"
+      android:layout_marginBottom="@dimen/elevation_toolbar"
+      android:elevation="@dimen/elevation_toolbar" />
+
+    <me.saket.dank.widgets.ToolbarExpandableSheet
+      android:id="@+id/subreddit_toolbar_expandable_sheet"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/subreddit_picker_sheet_bottom_margin"
+      android:background="@color/toolbar"
+      android:elevation="@dimen/elevation_toolbar" />
+
+    <!-- Background is required on this View or else the title's
+         background ripple gets drawn behind the toolbar. -->
+    <RelativeLayout
+      android:id="@+id/subreddit_toolbar_title_container"
+      android:layout_width="wrap_content"
+      android:layout_height="?attr/actionBarSize"
+      android:layout_marginEnd="84dp"
+      android:background="@color/toolbar"
+      android:elevation="@dimen/subreddit_toolbar_sheet_elevation"
+      android:outlineProvider="none"
+      android:paddingEnd="@dimen/spacing16"
+      android:paddingStart="4dp"
+      tools:ignore="RtlSymmetry"
+      tools:outlineProvider="background">
+
+      <!-- Custom toolbar icon because the toolbar gets covered by
+           subreddit/profile sheet. -->
+      <ImageButton
+        android:id="@+id/subreddit_toolbar_close"
+        style="@style/DankToolbarIcon"
+        android:layout_centerVertical="true"
+        android:layout_marginEnd="22dp"
+        android:layout_marginStart="6dp"
+        android:contentDescription="@string/cd_close_subreddit"
+        android:src="@drawable/ic_toolbar_close_24dp"
         android:visibility="gone" />
 
-    <!-- All Views inside this have bottom margins to make space for their shadows. -->
-    <FrameLayout
-        android:id="@+id/subreddit_toolbar_container"
-        android:layout_width="match_parent"
+      <Button
+        android:id="@+id/subreddit_toolbar_title"
+        style="@style/Widget.AppCompat.Button.Borderless"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_below="@+id/subreddit_toolbar_status_bar_space"
-        android:outlineProvider="bounds">
+        android:layout_centerVertical="true"
+        android:layout_toEndOf="@+id/subreddit_toolbar_close"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:paddingEnd="32dp"
+        android:paddingStart="12dp"
+        android:text="@string/app_name"
+        android:textAppearance="@style/DankToolbarTitleAppearance.Toolbar"
+        tools:text="/r/NotMyJob" />
 
-        <me.saket.dank.widgets.DankToolbar
-            android:id="@id/toolbar"
-            style="@style/DankToolbar"
-            android:layout_marginBottom="@dimen/elevation_toolbar"
-            android:elevation="@dimen/elevation_toolbar" />
+      <com.github.zagum.expandicon.ExpandIconView
+        android:id="@+id/subreddit_toolbar_title_arrow"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:layout_centerVertical="true"
+        android:layout_marginStart="-28dp"
+        android:layout_toEndOf="@+id/subreddit_toolbar_title"
+        app:eiv_color="@color/color_accent" />
+    </RelativeLayout>
+  </FrameLayout>
 
-        <me.saket.dank.widgets.ToolbarExpandableSheet
-            android:id="@+id/subreddit_toolbar_expandable_sheet"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/subreddit_picker_sheet_bottom_margin"
-            android:background="@color/toolbar"
-            android:elevation="@dimen/elevation_toolbar" />
-
-        <!-- Background is required on this View or else the title's
-             background ripple gets drawn behind the toolbar. -->
-        <RelativeLayout
-            android:id="@+id/subreddit_toolbar_title_container"
-            android:layout_width="wrap_content"
-            android:layout_height="?attr/actionBarSize"
-            android:layout_marginEnd="84dp"
-            android:background="@color/toolbar"
-            android:elevation="@dimen/subreddit_toolbar_sheet_elevation"
-            android:outlineProvider="none"
-            android:paddingEnd="@dimen/spacing16"
-            android:paddingStart="4dp"
-            tools:ignore="RtlSymmetry"
-            tools:outlineProvider="background">
-
-            <!-- Custom toolbar icon because the toolbar gets covered by
-                 subreddit/profile sheet. -->
-            <ImageButton
-                android:id="@+id/subreddit_toolbar_close"
-                style="@style/DankToolbarIcon"
-                android:layout_centerVertical="true"
-                android:layout_marginEnd="22dp"
-                android:layout_marginStart="6dp"
-                android:contentDescription="@string/cd_close_subreddit"
-                android:src="@drawable/ic_toolbar_close_24dp"
-                android:visibility="gone" />
-
-            <Button
-                android:id="@+id/subreddit_toolbar_title"
-                style="@style/Widget.AppCompat.Button.Borderless"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:layout_centerVertical="true"
-                android:layout_toEndOf="@+id/subreddit_toolbar_close"
-                android:background="?attr/selectableItemBackgroundBorderless"
-                android:ellipsize="end"
-                android:maxLines="1"
-                android:paddingEnd="32dp"
-                android:paddingStart="12dp"
-                android:text="@string/app_name"
-                android:textAppearance="@style/DankToolbarTitleAppearance.Toolbar"
-                tools:text="/r/NotMyJob" />
-
-            <com.github.zagum.expandicon.ExpandIconView
-                android:id="@+id/subreddit_toolbar_title_arrow"
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:layout_centerVertical="true"
-                android:layout_marginStart="-28dp"
-                android:layout_toEndOf="@+id/subreddit_toolbar_title"
-                app:eiv_color="@color/color_accent" />
-        </RelativeLayout>
-    </FrameLayout>
-
-    <me.saket.dank.widgets.InboxUI.ExpandablePageLayout
-        android:id="@+id/subreddit_submission_page"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:background="@color/window_background"
-        android:visibility="invisible"
-        android:elevation="@dimen/elevation_nested_expandable_sheet"
-        tools:visibility="gone" />
+  <me.saket.dank.widgets.InboxUI.ExpandablePageLayout
+    android:id="@+id/subreddit_submission_page"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/window_background"
+    android:elevation="@dimen/elevation_nested_expandable_sheet"
+    android:visibility="invisible"
+    tools:visibility="gone" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

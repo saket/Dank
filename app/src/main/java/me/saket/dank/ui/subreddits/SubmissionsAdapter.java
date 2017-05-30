@@ -1,8 +1,10 @@
 package me.saket.dank.ui.subreddits;
 
 import android.support.annotation.DrawableRes;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.text.Html;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,8 +22,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
+import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.Truss;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
@@ -29,6 +34,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
     implements Consumer<List<Submission>>
 {
 
+  private UserPrefsManager userPrefsManager;
   private OnItemClickListener clickListener;
 
   interface OnItemClickListener {
@@ -38,7 +44,8 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
     void onItemClick(Submission submission, View submissionItemView, long submissionId);
   }
 
-  public SubmissionsAdapter() {
+  public SubmissionsAdapter(UserPrefsManager userPrefsManager) {
+    this.userPrefsManager = userPrefsManager;
     setHasStableIds(true);
   }
 
@@ -60,7 +67,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
   @Override
   public void onBindViewHolder(SubmissionViewHolder holder, int position) {
     Submission submission = getItem(position);
-    holder.bind(submission);
+    holder.bind(submission, userPrefsManager.canShowSubmissionCommentsCountInByline());
 
     holder.itemView.setOnClickListener(v -> {
       clickListener.onItemClick(submission, holder.itemView, getItemId(position));
@@ -82,7 +89,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
   public static class SubmissionViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
     @BindView(R.id.submission_item_icon) ImageView thumbnailView;
     @BindView(R.id.submission_item_title) TextView titleView;
-    @BindView(R.id.submission_item_subtitle) TextView subTitleView;
+    @BindView(R.id.submission_item_byline) TextView subredditView;
 
     @BindColor(R.color.gray_100) int defaultIconsTintColor;
 
@@ -96,7 +103,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
       return ((SwipeableLayout) itemView);
     }
 
-    public void bind(Submission submission) {
+    public void bind(Submission submission, boolean showCommentsCount) {
       //if (submission.getTitle().contains("Already drunk")) {
       //    Timber.d("-------------------------------------------");
       //    Timber.i("%s", submission.getTitle());
@@ -111,6 +118,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
         case SELF:
           loadStaticThumbnail(R.drawable.ic_text_fields_black_24dp);
           thumbnailView.setVisibility(View.VISIBLE);
+          thumbnailView.setContentDescription(itemView.getResources().getString(R.string.submission_item_cd_self_text));
           break;
 
         case DEFAULT:
@@ -125,12 +133,16 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
             loadThumbnailFromUrl(submission.getThumbnails().getSource().getUrl());
           }
           thumbnailView.setVisibility(View.VISIBLE);
+
+          // TODO: Also check this.
+          thumbnailView.setContentDescription(itemView.getResources().getString(R.string.submission_item_cd_external_url));
           break;
 
         case URL:
           // TODO: 05/04/17 Reddit sometimes sends literal "image" as the thumbnail. Use thumbnail variations in that case.
           loadThumbnailFromUrl(submission.getThumbnail());
           thumbnailView.setVisibility(View.VISIBLE);
+          thumbnailView.setContentDescription(itemView.getResources().getString(R.string.submission_item_cd_external_url));
           break;
 
         case NONE:
@@ -138,9 +150,45 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
           break;
       }
 
+      int voteDirectionColor;
+      switch (submission.getVote()) {
+        case UPVOTE:
+          voteDirectionColor = R.color.submission_item_vote_direction_upvote;
+          break;
+
+        case DOWNVOTE:
+          voteDirectionColor = R.color.submission_item_vote_direction_downvote;
+          break;
+
+        default:
+        case NO_VOTE:
+          voteDirectionColor = R.color.submission_item_vote_direction_none;
+          break;
+      }
+
+      Truss titleBuilder = new Truss();
+      titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), voteDirectionColor)));
+      titleBuilder.append(Strings.abbreviateCount(submission.getScore()));
+      titleBuilder.popSpan();
+      titleBuilder.append("  ");
       //noinspection deprecation
-      titleView.setText(Html.fromHtml(submission.getTitle()));
-      subTitleView.setText(subTitleView.getResources().getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
+      titleBuilder.append(Html.fromHtml(submission.getTitle()));
+      titleView.setText(titleBuilder.build());
+
+      if (showCommentsCount) {
+        subredditView.setText(itemView.getResources().getString(
+            R.string.submission_item_byline_subreddit_name_author_and_comments_count,
+            submission.getSubredditName(),
+            submission.getAuthor(),
+            Strings.abbreviateCount(submission.getCommentCount())
+        ));
+      } else {
+        subredditView.setText(itemView.getResources().getString(
+            R.string.submission_item_byline_subreddit_name_author,
+            submission.getSubredditName(),
+            submission.getAuthor()
+        ));
+      }
     }
 
     private void loadStaticThumbnail(@DrawableRes int iconRes) {

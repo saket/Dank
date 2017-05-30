@@ -12,6 +12,9 @@ public class UserPrefsManager {
 
   private static final String KEY_DEFAULT_SUBREDDIT = "defaultSubreddit";
   private static final String KEY_UNREAD_MESSAGES_CHECK_INTERVAL_MILLIS = "unreadMessagesCheckInterval";
+  private static final String KEY_SHOW_SUBMISSION_COMMENTS_COUNT_IN_BYLINE = "showSubmissionCommentsCountInByline";
+
+  private static final boolean DEFAULT_VALUE_SHOW_SUBMISSION_COMMENTS_COUNT = false;
 
   private SharedPreferences sharedPrefs;
 
@@ -31,4 +34,11 @@ public class UserPrefsManager {
     return sharedPrefs.getLong(KEY_UNREAD_MESSAGES_CHECK_INTERVAL_MILLIS, DEFAULT_INTERVAL_FOR_MESSAGES_CHECK_MILLIS);
   }
 
+  public void setShowSubmissionCommentsCountInByline(boolean showCommentsCount) {
+    sharedPrefs.edit().putBoolean(KEY_SHOW_SUBMISSION_COMMENTS_COUNT_IN_BYLINE, showCommentsCount).apply();
+  }
+
+  public boolean canShowSubmissionCommentsCountInByline() {
+    return sharedPrefs.getBoolean(KEY_SHOW_SUBMISSION_COMMENTS_COUNT_IN_BYLINE, DEFAULT_VALUE_SHOW_SUBMISSION_COMMENTS_COUNT);
+  }
 }

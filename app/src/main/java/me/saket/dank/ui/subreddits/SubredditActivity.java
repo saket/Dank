@@ -143,7 +143,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       submissionList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
-    submissionsAdapter = new SubmissionsAdapter();
+    submissionsAdapter = new SubmissionsAdapter(Dank.userPrefs());
     submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
       DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
           .commentSort(defaultIfNull(submission.getSuggestedSort(), DankRedditClient.DEFAULT_COMMENT_SORT))
