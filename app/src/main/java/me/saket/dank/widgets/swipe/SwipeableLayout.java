@@ -26,12 +26,12 @@ import timber.log.Timber;
 public class SwipeableLayout extends FrameLayout {
 
   private View swipeableChild;
-  private BackgroundDrawable backgroundDrawable;
   private SwipeActions swipeActions;
   private SwipeActionIconView actionIconView;
   private SwipeAction activeSwipeAction;
   private boolean swipeDistanceThresholdCrossed;
   private ObjectAnimator translationAnimator;
+  private BackgroundDrawable backgroundDrawable;
   private FadingCircleDrawable swipeActionTriggerDrawable;
 
   private OnPerformSwipeActionListener onPerformSwipeActionListener;
@@ -59,6 +59,7 @@ public class SwipeableLayout extends FrameLayout {
     super(context, attrs);
 
     backgroundDrawable = new BackgroundDrawable(new ColorDrawable(Color.TRANSPARENT), new ColorDrawable(Color.DKGRAY));
+    backgroundDrawable.setCallback(this);
 
     setSwipeDistanceThresholdCrossed(false);  // Controls the background color's gray tint.
 
@@ -254,11 +255,9 @@ public class SwipeableLayout extends FrameLayout {
      */
     public void animateSwipeThresholdCrossedTransition(@IntRange(from = 0, to = 255) int toAlpha) {
       if (tintTransitionAnimator != null) {
-        Timber.i("Canceling tint");
         tintTransitionAnimator.cancel();
       }
 
-      Timber.i("Animating tint to alpha %s", toAlpha);
       tintTransitionAnimator = ObjectAnimator.ofInt(
           swipeThresholdTintDrawable(),
           "alpha",
@@ -284,7 +283,7 @@ public class SwipeableLayout extends FrameLayout {
 
   @Override
   public void invalidateDrawable(@NonNull Drawable drawable) {
-    if (drawable == swipeActionTriggerDrawable) {
+    if (isOurDrawable(drawable)) {
       invalidate();
     } else {
       super.invalidateDrawable(drawable);
@@ -293,6 +292,10 @@ public class SwipeableLayout extends FrameLayout {
 
   @Override
   protected boolean verifyDrawable(@NonNull Drawable who) {
-    return swipeActionTriggerDrawable == who || super.verifyDrawable(who);
+    return isOurDrawable(who) || super.verifyDrawable(who);
+  }
+
+  private boolean isOurDrawable(@NonNull Drawable drawable) {
+    return drawable == swipeActionTriggerDrawable || drawable == backgroundDrawable;
   }
 }
