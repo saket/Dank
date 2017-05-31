@@ -34,6 +34,7 @@ public class JrawUtils {
     return thing.getDataNode().get("created_utc").longValue() * 1000;
   }
 
+  // TODO: Submit this to JRAW.
   public static List<Message> messageReplies(Message message) {
     if (!(message instanceof PrivateMessage)) {
       throw new AssertionError();
@@ -45,12 +46,14 @@ public class JrawUtils {
         : Collections.emptyList();
   }
 
+  // TODO: Submit this to JRAW.
   public static String messageBodyHtml(Message message) {
     return message.getDataNode().get("body_html").asText();
   }
 
   @Nullable
-  public static String getSecondPartyName(Resources resources, Message message, String loggedInUserName) {
+  // TODO: Submit this to JRAW.
+  public static String secondPartyName(Resources resources, Message message, String loggedInUserName) {
     String secondPartyName;
     String destination = message.getDataNode().get("dest").asText();
     if (destination.startsWith("#")) {

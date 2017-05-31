@@ -2,6 +2,7 @@ package me.saket.dank.utils;
 
 import android.content.res.Resources;
 
+import java.text.DecimalFormat;
 import java.util.Collection;
 import java.util.Iterator;
 
@@ -11,6 +12,9 @@ import me.saket.dank.R;
  * Utility methods for String manipulation.
  */
 public class Strings {
+
+  private static final DecimalFormat THOUSANDS_FORMATTER = new DecimalFormat("#.#k");
+  private static final DecimalFormat MILLIONS_FORMATTER = new DecimalFormat("#.#m");
 
   public static String concatenateWithCommaAndAnd(Resources resources, Collection<String> strings) {
     final StringBuilder stringBuilder = new StringBuilder(strings.size());
@@ -37,15 +41,23 @@ public class Strings {
   }
 
   /**
-   * Convert "11958" -> "11k".
+   * Converts:
+   * <li>893       -> 893</li>
+   * <li>8933      -> 8.9k</li>
+   * <li>89331     -> 89.3k</li>
+   * <li>8_933_100 -> 8.9m</li>
    */
-  public static String abbreviateCount(int count) {
+  public static String abbreviateRedditCount(float count) {
+    if (count % 1 != 0) {
+      throw new UnsupportedOperationException("Decimals weren't planned to be supported");
+    }
+
     if (count < 1_000) {
       return String.valueOf(count);
     } else if (count < 1_000_000) {
-      return count / 1_000 + "k";
+      return THOUSANDS_FORMATTER.format(count / 1_000);
     } else {
-      return count / 1_000_000 + "m";
+      return MILLIONS_FORMATTER.format(count / 1_000_000f);
     }
   }
 }

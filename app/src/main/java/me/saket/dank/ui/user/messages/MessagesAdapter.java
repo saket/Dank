@@ -115,7 +115,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
     }
 
     private void bind(Message parentMessage, Message latestMessageInThread, String loggedInUserName) {
-      String secondPartyName = JrawUtils.getSecondPartyName(itemView.getResources(), parentMessage, loggedInUserName);
+      String secondPartyName = JrawUtils.secondPartyName(itemView.getResources(), parentMessage, loggedInUserName);
       secondPartyNameView.setText(secondPartyName);
       secondPartyNameView.setVisibility(secondPartyName != null && !secondPartyName.isEmpty() ? View.VISIBLE : View.GONE);
 

@@ -29,6 +29,7 @@ import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
+import timber.log.Timber;
 
 public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubmissionsAdapter.SubmissionViewHolder>
     implements Consumer<List<Submission>>
@@ -168,7 +169,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
 
       Truss titleBuilder = new Truss();
       titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), voteDirectionColor)));
-      titleBuilder.append(Strings.abbreviateCount(submission.getScore()));
+      titleBuilder.append(Strings.abbreviateRedditCount(submission.getScore()));
       titleBuilder.popSpan();
       titleBuilder.append("  ");
       //noinspection deprecation
@@ -180,7 +181,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
             R.string.submission_item_byline_subreddit_name_author_and_comments_count,
             submission.getSubredditName(),
             submission.getAuthor(),
-            Strings.abbreviateCount(submission.getCommentCount())
+            Strings.abbreviateRedditCount(submission.getCommentCount())
         ));
       } else {
         subredditView.setText(itemView.getResources().getString(
@@ -212,5 +213,4 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
       return new SubmissionViewHolder(LayoutInflater.from(parent.getContext()).inflate(R.layout.list_item_submission, parent, false));
     }
   }
-
 }
