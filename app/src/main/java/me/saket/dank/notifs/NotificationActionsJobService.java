@@ -40,7 +40,7 @@ public class NotificationActionsJobService extends DankJobService {
   private static final String ACTION_MARK_ALL_MESSAGES_AS_READ = "markAllMessagesAsRead";
 
   public static void sendDirectReply(Context context, Message replyToMessage, Moshi moshi, String replyText) {
-    PersistableBundle extras = new PersistableBundle(2);
+    PersistableBundle extras = new PersistableBundle(3);
     extras.putString(KEY_MESSAGE_JSON, moshi.adapter(Message.class).toJson(replyToMessage));
     extras.putString(KEY_MESSAGE_DIRECT_REPLY, replyText);
     extras.putString(KEY_ACTION, ACTION_SEND_DIRECT_REPLY);
@@ -62,7 +62,7 @@ public class NotificationActionsJobService extends DankJobService {
   }
 
   public static void markAsRead(Context context, Moshi moshi, Message... messages) {
-    PersistableBundle extras = new PersistableBundle(1);
+    PersistableBundle extras = new PersistableBundle(2);
     extras.putString(KEY_ACTION, ACTION_MARK_MESSAGE_AS_READ);
     extras.putString(KEY_MESSAGE_ARRAY_JSON, moshi.adapter(Message[].class).toJson(messages));
 
@@ -179,7 +179,7 @@ public class NotificationActionsJobService extends DankJobService {
   @Override
   public boolean onStopJob(JobParameters params) {
     // Return true to indicate JobScheduler that the job should be rescheduled.
-    return false;
+    return true;
   }
 
   @CheckResult

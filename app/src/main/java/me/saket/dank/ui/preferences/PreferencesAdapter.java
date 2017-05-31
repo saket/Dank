@@ -14,8 +14,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
-import me.saket.dank.widgets.swipe.SwipeableLayout;
-import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
 public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceGroup, PreferencesAdapter.PreferenceGroupViewHolder> {
 
@@ -46,7 +44,7 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceG
     holder.itemView.setOnClickListener(__ -> clickListener.onClickPreferenceGroup(preferenceGroup, holder.itemView, getItemId(position)));
   }
 
-  static class PreferenceGroupViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
+  static class PreferenceGroupViewHolder extends RecyclerView.ViewHolder {
 
     @BindView(R.id.item_preferencegroup_icon) ImageView iconView;
     @BindView(R.id.item_preferencegroup_title) TextView titleView;
@@ -59,11 +57,6 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceG
     public PreferenceGroupViewHolder(View itemView) {
       super(itemView);
       ButterKnife.bind(this, itemView);
-    }
-
-    @Override
-    public SwipeableLayout getSwipeableLayout() {
-      return (SwipeableLayout) itemView;
     }
 
     public void bind(UserPreferenceGroup preferenceGroup) {

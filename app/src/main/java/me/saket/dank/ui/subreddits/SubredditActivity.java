@@ -43,7 +43,6 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.SubmissionFragment;
-import me.saket.dank.ui.submission.SwipeableSubmissionHelper;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.DankToolbar;
@@ -143,7 +142,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       submissionList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
-    submissionsAdapter = new SubmissionsAdapter(Dank.userPrefs());
+    submissionsAdapter = new SubmissionsAdapter(Dank.voting(), Dank.userPrefs());
     submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
       DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
           .commentSort(defaultIfNull(submission.getSuggestedSort(), DankRedditClient.DEFAULT_COMMENT_SORT))
@@ -159,7 +158,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       });
     });
 
-    SwipeableSubmissionHelper swipeActionsManager = new SwipeableSubmissionHelper(Dank.submissions());
+    SwipeableSubmissionHelper swipeActionsManager = new SwipeableSubmissionHelper(Dank.submissions(), Dank.voting());
     submissionList.setAdapter(swipeActionsManager.wrapAdapter(submissionsAdapter));
     swipeActionsManager.attachToRecyclerView(submissionList);
 

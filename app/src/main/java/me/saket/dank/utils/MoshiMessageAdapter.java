@@ -8,11 +8,11 @@ import net.dean.jraw.models.Message;
 /**
  * Moshi adapter for {@link Message}.
  */
-public class MessageMoshiAdapter {
+public class MoshiMessageAdapter {
 
   private JacksonHelper jacksonHelper;
 
-  public MessageMoshiAdapter(JacksonHelper jacksonHelper) {
+  public MoshiMessageAdapter(JacksonHelper jacksonHelper) {
     this.jacksonHelper = jacksonHelper;
   }
 

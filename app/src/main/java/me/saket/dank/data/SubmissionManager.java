@@ -12,9 +12,11 @@ public class SubmissionManager {
 
   private Set<String> savedSubmissionIds;
 
-  public SubmissionManager(DankRedditClient dankRedditClient) {
-    savedSubmissionIds = new HashSet<>();
+  public SubmissionManager() {
+    this.savedSubmissionIds = new HashSet<>();
   }
+
+// ======== SAVE ======== //
 
   public void save(Submission submission) {
     savedSubmissionIds.add(submission.getId());

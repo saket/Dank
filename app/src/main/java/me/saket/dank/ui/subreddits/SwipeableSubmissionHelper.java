@@ -1,4 +1,4 @@
-package me.saket.dank.ui.submission;
+package me.saket.dank.ui.subreddits;
 
 import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
@@ -6,9 +6,13 @@ import android.support.v7.widget.RecyclerView;
 import android.view.ViewGroup;
 
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.VoteDirection;
 
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.SubmissionManager;
+import me.saket.dank.data.VotingManager;
+import me.saket.dank.ui.submission.SimpleRecyclerAdapterWrapper;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
@@ -28,15 +32,17 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
   private static final String ACTION_NAME_SAVE = "Save";
   private static final String ACTION_NAME_UNSAVE = "UnSave";
   private static final String ACTION_NAME_OPTIONS = "Options";
-  private static final String ACTION_NAME_UPVOTE = "Upvote";
-  private static final String ACTION_NAME_DOWNVOTE = "Downvote";
+  static final String ACTION_NAME_UPVOTE = "Upvote";
+  static final String ACTION_NAME_DOWNVOTE = "Downvote";
 
   private final SwipeActions swipeActionsWithUnsave;
   private final SwipeActions swipeActionsWithSave;
   private final SubmissionManager submissionManager;
+  private VotingManager votingManager;
 
-  public SwipeableSubmissionHelper(SubmissionManager submissionManager) {
+  public SwipeableSubmissionHelper(SubmissionManager submissionManager, VotingManager votingManager) {
     this.submissionManager = submissionManager;
+    this.votingManager = votingManager;
 
     SwipeAction saveSwipeAction = SwipeAction.create(ACTION_NAME_SAVE, R.color.list_item_swipe_save, 1f);
     SwipeAction unSaveSwipeAction = SwipeAction.create(ACTION_NAME_UNSAVE, R.color.list_item_swipe_save, 1f);
@@ -90,20 +96,22 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
         Submission submission = adapterToWrap.getItem(position);
         SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
 
-        determineAndSetSwipeActions(submission, swipeableLayout);
+        swipeableLayout.setSwipeActions(determineSwipeActions(submission));
 
         swipeableLayout.setOnPerformSwipeActionListener(action -> {
-          swipeableLayout.playRippleAnimation(action);
           performSwipeAction(action, submission);
+          swipeableLayout.playRippleAnimation(action);  // TODO: Specify ripple direction.
 
-          // Update swipe actions in case submission was saved.
-          determineAndSetSwipeActions(submission, swipeableLayout);
+          // We should ideally only be updating the backing data-set and let onBind() handle the
+          // changes, but RecyclerView's item animator reset's the View's x-translation which we
+          // don't want. So we manually update the Views here.
+          adapterToWrap.onBindViewHolder(holder, position);
         });
       }
 
-      private void determineAndSetSwipeActions(Submission submission, SwipeableLayout swipeableLayout) {
+      private SwipeActions determineSwipeActions(Submission submission) {
         boolean isSubmissionSaved = submissionManager.isSaved(submission);
-        swipeableLayout.setSwipeActions(isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave);
+        return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
       }
     };
   }
@@ -157,27 +165,38 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
   }
 
   private void performSwipeAction(SwipeAction action, Submission submission) {
-    Timber.i("Action: %s", action.name());
-
     switch (action.name()) {
       case ACTION_NAME_OPTIONS:
+        Timber.i("Action: %s", action.name());
         break;
 
       case ACTION_NAME_SAVE:
         submissionManager.save(submission);
+        Timber.i("Action: %s", action.name());
         break;
 
       case ACTION_NAME_UNSAVE:
         submissionManager.unSave(submission);
+        Timber.i("Action: %s", action.name());
         break;
 
-      case ACTION_NAME_UPVOTE:
-        // TODO: Remove upvote if submission was already upvoted.
+      case ACTION_NAME_UPVOTE: {
+        VoteDirection currentVoteDirection = votingManager.getPendingVote(submission, submission.getVote());
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
+        votingManager.voteWithAutoRetry(submission, newVoteDirection)
+            .subscribeOn(Schedulers.io())
+            .subscribe();
         break;
+      }
 
-      case ACTION_NAME_DOWNVOTE:
-        // TODO: Remove downvote if submission was already downvoted.
+      case ACTION_NAME_DOWNVOTE: {
+        VoteDirection currentVoteDirection = votingManager.getPendingVote(submission, submission.getVote());
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
+        votingManager.voteWithAutoRetry(submission, newVoteDirection)
+            .subscribeOn(Schedulers.io())
+            .subscribe();
         break;
+      }
 
       default:
         throw new UnsupportedOperationException("Unknown swipe action: " + action);

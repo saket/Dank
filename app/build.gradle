@@ -16,6 +16,7 @@ repositories {
     maven { url "https://jitpack.io" }
     maven { url "http://dl.bintray.com/novoda/maven" }
     maven { url 'http://www.idescout.com/maven/repo/' }
+    maven { url 'https://oss.sonatype.org/content/repositories/snapshots/' }
 }
 
 android {
@@ -117,6 +118,7 @@ dependencies {
     compile 'org.jsoup:jsoup:1.10.2'
     compile 'com.trello.navi2:navi:2.0'
     compile 'com.jakewharton.threetenabp:threetenabp:1.0.5'
+    compile 'com.squareup.tape2:tape:2.0.0-SNAPSHOT'
 
     // Videos!
     compile 'com.google.android.exoplayer:exoplayer:r2.3.1'

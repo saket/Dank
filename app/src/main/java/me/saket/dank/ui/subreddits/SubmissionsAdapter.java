@@ -14,6 +14,7 @@ import android.widget.TextView;
 import com.bumptech.glide.Glide;
 
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.VoteDirection;
 
 import java.util.List;
 
@@ -23,18 +24,19 @@ import butterknife.ButterKnife;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.data.VotingManager;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
-import timber.log.Timber;
 
 public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubmissionsAdapter.SubmissionViewHolder>
     implements Consumer<List<Submission>>
 {
 
+  private VotingManager votingManager;
   private UserPrefsManager userPrefsManager;
   private OnItemClickListener clickListener;
 
@@ -45,7 +47,8 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
     void onItemClick(Submission submission, View submissionItemView, long submissionId);
   }
 
-  public SubmissionsAdapter(UserPrefsManager userPrefsManager) {
+  public SubmissionsAdapter(VotingManager votingManager, UserPrefsManager userPrefsManager) {
+    this.votingManager = votingManager;
     this.userPrefsManager = userPrefsManager;
     setHasStableIds(true);
   }
@@ -68,7 +71,8 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
   @Override
   public void onBindViewHolder(SubmissionViewHolder holder, int position) {
     Submission submission = getItem(position);
-    holder.bind(submission, userPrefsManager.canShowSubmissionCommentsCountInByline());
+    VoteDirection voteDirection = votingManager.getPendingVote(submission, submission.getVote());
+    holder.bind(submission, voteDirection, userPrefsManager.canShowSubmissionCommentsCountInByline());
 
     holder.itemView.setOnClickListener(v -> {
       clickListener.onItemClick(submission, holder.itemView, getItemId(position));
@@ -104,7 +108,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
       return ((SwipeableLayout) itemView);
     }
 
-    public void bind(Submission submission, boolean showCommentsCount) {
+    public void bind(Submission submission, VoteDirection voteDirection, boolean showCommentsCount) {
       //if (submission.getTitle().contains("Already drunk")) {
       //    Timber.d("-------------------------------------------");
       //    Timber.i("%s", submission.getTitle());
@@ -152,7 +156,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
       }
 
       int voteDirectionColor;
-      switch (submission.getVote()) {
+      switch (voteDirection) {
         case UPVOTE:
           voteDirectionColor = R.color.submission_item_vote_direction_upvote;
           break;

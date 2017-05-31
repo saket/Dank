@@ -122,7 +122,9 @@ public class SwipeableLayout extends FrameLayout {
 
   public void setSwipeTranslation(@FloatRange(from = -1f, to = 1f) float translationX) {
     if (!isLaidOut()) {
-      throw new IllegalStateException("SwipeableLayout hasn't been measured yet!");
+      //throw new IllegalStateException("SwipeableLayout hasn't been measured yet!");
+      Timber.w("SwipeableLayout hasn't been measured yet!");
+      return;
     }
 
     swipeableChild.setTranslationX(translationX);

@@ -1,7 +1,6 @@
 package me.saket.dank.di;
 
 import android.app.Application;
-import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -37,10 +36,11 @@ import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.utils.ImgurManager;
 import me.saket.dank.utils.JacksonHelper;
-import me.saket.dank.utils.MessageMoshiAdapter;
+import me.saket.dank.utils.MoshiMessageAdapter;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -54,7 +54,7 @@ public class DankAppModule {
 
   private static final int NETWORK_CONNECT_TIMEOUT_SECONDS = 15;
   private static final int NETWORK_READ_TIMEOUT_SECONDS = 10;
-  private Context appContext;
+  private Application appContext;
 
   public DankAppModule(Application appContext) {
     this.appContext = appContext;
@@ -97,20 +97,26 @@ public class DankAppModule {
 
   @Provides
   @Singleton
+  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager) {
+    return new DankRedditClient(appContext, redditClient, authManager);
+  }
+
+  @Provides
+  @Singleton
   InboxManager provideInboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
     return new InboxManager(dankRedditClient, briteDatabase, moshi);
   }
 
   @Provides
   @Singleton
-  SubmissionManager provideSubmissionManager(DankRedditClient dankRedditClient) {
-    return new SubmissionManager(dankRedditClient);
+  SubmissionManager provideSubmissionManager(VotingManager votingManager) {
+    return new SubmissionManager();
   }
 
   @Provides
   @Singleton
-  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager) {
-    return new DankRedditClient(appContext, redditClient, authManager);
+  VotingManager provideVotingManager(DankRedditClient dankRedditClient, SharedPreferences sharedPreferences) {
+    return new VotingManager(appContext, dankRedditClient, sharedPreferences);
   }
 
   @Provides
@@ -152,7 +158,7 @@ public class DankAppModule {
   Moshi provideMoshi(JacksonHelper jacksonHelper) {
     return new Moshi.Builder()
         .add(new AutoValueMoshiAdapterFactory())
-        .add(new MessageMoshiAdapter(jacksonHelper))
+        .add(new MoshiMessageAdapter(jacksonHelper))
         .build();
   }
 

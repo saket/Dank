@@ -13,6 +13,7 @@ import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.utils.ImgurManager;
 import me.saket.dank.utils.JacksonHelper;
@@ -85,5 +86,9 @@ public class Dank {
 
   public static BriteDatabase database() {
     return appComponent.briteDatabase();
+  }
+
+  public static VotingManager voting() {
+    return appComponent.votingManager();
   }
 }
