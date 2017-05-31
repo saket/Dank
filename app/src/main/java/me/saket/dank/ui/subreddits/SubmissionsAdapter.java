@@ -173,7 +173,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
 
       Truss titleBuilder = new Truss();
       titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), voteDirectionColor)));
-      titleBuilder.append(Strings.abbreviateRedditCount(submission.getScore()));
+      titleBuilder.append(Strings.abbreviateScore(submission.getScore()));
       titleBuilder.popSpan();
       titleBuilder.append("  ");
       //noinspection deprecation
@@ -185,7 +185,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
             R.string.submission_item_byline_subreddit_name_author_and_comments_count,
             submission.getSubredditName(),
             submission.getAuthor(),
-            Strings.abbreviateRedditCount(submission.getCommentCount())
+            Strings.abbreviateScore(submission.getCommentCount())
         ));
       } else {
         subredditView.setText(itemView.getResources().getString(

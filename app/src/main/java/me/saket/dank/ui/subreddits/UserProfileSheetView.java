@@ -83,7 +83,7 @@ public class UserProfileSheetView extends FrameLayout {
     Integer linkKarma = loggedInUser.getLinkKarma();
     int karmaCount = commentKarma + linkKarma;
 
-    String compactKarma = Strings.abbreviateRedditCount(karmaCount);
+    String compactKarma = Strings.abbreviateScore(karmaCount);
     karmaView.setText(getResources().getString(R.string.userprofile_karma_count, compactKarma));
   }
 

@@ -47,17 +47,17 @@ public class Strings {
    * <li>89331     -> 89.3k</li>
    * <li>8_933_100 -> 8.9m</li>
    */
-  public static String abbreviateRedditCount(float count) {
-    if (count % 1 != 0) {
+  public static String abbreviateScore(float score) {
+    if (score % 1 != 0) {
       throw new UnsupportedOperationException("Decimals weren't planned to be supported");
     }
 
-    if (count < 1_000) {
-      return String.valueOf((int) count);
-    } else if (count < 1_000_000) {
-      return THOUSANDS_FORMATTER.format(count / 1_000);
+    if (score < 1_000) {
+      return String.valueOf((int) score);
+    } else if (score < 1_000_000) {
+      return THOUSANDS_FORMATTER.format(score / 1_000);
     } else {
-      return MILLIONS_FORMATTER.format(count / 1_000_000f);
+      return MILLIONS_FORMATTER.format(score / 1_000_000f);
     }
   }
 }
