@@ -53,7 +53,7 @@ public class Strings {
     }
 
     if (count < 1_000) {
-      return String.valueOf(count);
+      return String.valueOf((int) count);
     } else if (count < 1_000_000) {
       return THOUSANDS_FORMATTER.format(count / 1_000);
     } else {
