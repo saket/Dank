@@ -21,7 +21,7 @@ import me.saket.dank.R;
 public class JrawUtils {
 
   public static Message parseMessageJson(String json, JacksonHelper jacksonHelper) {
-    JsonNode jsonNode = jacksonHelper.fromJson(json);
+    JsonNode jsonNode = jacksonHelper.parseJsonNode(json);
     //noinspection ConstantConditions
     boolean isCommentMessage = jsonNode.get("was_comment").asBoolean();
     return isCommentMessage ? new CommentMessage(jsonNode) : new PrivateMessage(jsonNode);

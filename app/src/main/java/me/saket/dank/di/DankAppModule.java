@@ -41,6 +41,7 @@ import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.utils.ImgurManager;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.MoshiMessageAdapter;
+import me.saket.dank.utils.MoshiSubmissionAdapter;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -109,8 +110,8 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  SubmissionManager provideSubmissionManager(VotingManager votingManager) {
-    return new SubmissionManager();
+  SubmissionManager provideSubmissionManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
+    return new SubmissionManager(dankRedditClient, briteDatabase, moshi);
   }
 
   @Provides
@@ -159,6 +160,7 @@ public class DankAppModule {
     return new Moshi.Builder()
         .add(new AutoValueMoshiAdapterFactory())
         .add(new MoshiMessageAdapter(jacksonHelper))
+        .add(new MoshiSubmissionAdapter(jacksonHelper))
         .build();
   }
 

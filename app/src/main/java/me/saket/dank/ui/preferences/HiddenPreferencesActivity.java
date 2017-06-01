@@ -20,7 +20,7 @@ import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
-import me.saket.dank.ui.user.messages.StoredMessage;
+import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
@@ -67,8 +67,8 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     dropMessagesTableButton.setOnClickListener(v -> {
       Completable
           .fromAction(() -> {
-            Dank.database().executeAndTrigger(StoredMessage.TABLE_NAME, "DROP TABLE " + StoredMessage.TABLE_NAME);
-            Dank.database().executeAndTrigger(StoredMessage.TABLE_NAME, StoredMessage.QUERY_CREATE_TABLE);
+            Dank.database().executeAndTrigger(CachedMessage.TABLE_NAME, "DROP TABLE " + CachedMessage.TABLE_NAME);
+            Dank.database().executeAndTrigger(CachedMessage.TABLE_NAME, CachedMessage.QUERY_CREATE_TABLE);
           })
           .compose(RxUtils.applySchedulersCompletable())
           .subscribe(() -> {

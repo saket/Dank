@@ -47,7 +47,7 @@ public class JacksonHelper {
   }
 
   @Nullable
-  public JsonNode fromJson(String json) {
+  public JsonNode parseJsonNode(String json) {
     try {
       return objectMapper.readTree(json);
     } catch (IOException e) {

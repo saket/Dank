@@ -200,7 +200,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
     if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
-      JsonNode jsonNode = Dank.jackson().fromJson(savedInstanceState.getString(KEY_SUBMISSION_JSON));
+      JsonNode jsonNode = Dank.jackson().parseJsonNode(savedInstanceState.getString(KEY_SUBMISSION_JSON));
       if (jsonNode != null) {
         populateUi(new Submission(jsonNode), savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST));
       }

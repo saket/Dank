@@ -23,8 +23,8 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
+import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.ui.user.messages.InboxFolder;
-import me.saket.dank.ui.user.messages.StoredMessage;
 import me.saket.dank.utils.JrawUtils;
 
 public class InboxManager {
@@ -50,21 +50,21 @@ public class InboxManager {
   @CheckResult
   public Observable<List<Message>> messages(InboxFolder folder) {
     return toV2Observable(briteDatabase
-        .createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
-        .mapToList(StoredMessage.mapMessageFromCursor(moshi)))
+        .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
+        .mapToList(CachedMessage.mapMessageFromCursor(moshi)))
         .map(mutableList -> unmodifiableList(mutableList));
   }
 
   /**
-   * Both ID and folder are required because {@link StoredMessage} uses a composite key of the ID and the
+   * Both ID and folder are required because {@link CachedMessage} uses a composite key of the ID and the
    * folder. This is because it's possible for the same message to be present in Unread as well as Private
    * Message folder.
    */
   @CheckResult
   public Observable<Message> message(String messageId, InboxFolder folder) {
     return toV2Observable(briteDatabase
-        .createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_SINGLE, messageId, folder.name())
-        .mapToOne(StoredMessage.mapMessageFromCursor(moshi)));
+        .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_SINGLE, messageId, folder.name())
+        .mapToOne(CachedMessage.mapMessageFromCursor(moshi)));
   }
 
   /**
@@ -142,10 +142,10 @@ public class InboxManager {
    */
   @CheckResult
   private Single<PaginationAnchor> getPaginationAnchor(InboxFolder folder) {
-    StoredMessage dummyDefaultValue = StoredMessage.create("-1", new PrivateMessage(null), 0, InboxFolder.PRIVATE_MESSAGES);
+    CachedMessage dummyDefaultValue = CachedMessage.create("-1", new PrivateMessage(null), 0, InboxFolder.PRIVATE_MESSAGES);
 
-    return toV2Single(briteDatabase.createQuery(StoredMessage.TABLE_NAME, StoredMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
-        .mapToOneOrDefault(StoredMessage.mapFromCursor(moshi), dummyDefaultValue)
+    return toV2Single(briteDatabase.createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
+        .mapToOneOrDefault(CachedMessage.mapFromCursor(moshi), dummyDefaultValue)
         .first()
         .map(lastStoredMessage -> {
           if (lastStoredMessage == dummyDefaultValue) {
@@ -170,11 +170,14 @@ public class InboxManager {
         .toSingle());
   }
 
+  /**
+   * @param removeExistingMessages Whether to remove existing messages under <var>folder</var>.
+   */
   private Consumer<List<Message>> saveMessages(InboxFolder folder, boolean removeExistingMessages) {
     return fetchedMessages -> {
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
         if (removeExistingMessages) {
-          briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.WHERE_FOLDER, folder.name());
+          briteDatabase.delete(CachedMessage.TABLE_NAME, CachedMessage.WHERE_FOLDER, folder.name());
         }
 
         for (Message fetchedMessage : fetchedMessages) {
@@ -186,8 +189,8 @@ public class InboxManager {
             Message latestMessage = messageReplies.isEmpty() ? fetchedMessage : messageReplies.get(messageReplies.size() - 1);
             latestMessageTimestamp = JrawUtils.createdTimeUtc(latestMessage);
           }
-          StoredMessage messageToStore = StoredMessage.create(fetchedMessage.getId(), fetchedMessage, latestMessageTimestamp, folder);
-          briteDatabase.insert(StoredMessage.TABLE_NAME, messageToStore.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
+          CachedMessage messageToStore = CachedMessage.create(fetchedMessage.getId(), fetchedMessage, latestMessageTimestamp, folder);
+          briteDatabase.insert(CachedMessage.TABLE_NAME, messageToStore.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
         }
         transaction.markSuccessful();
       }
@@ -199,7 +202,7 @@ public class InboxManager {
     return Completable.fromAction(() -> {
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
         for (Message message : messages) {
-          briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.WHERE_FOLDER_AND_ID, folder.name(), message.getId());
+          briteDatabase.delete(CachedMessage.TABLE_NAME, CachedMessage.WHERE_FOLDER_AND_ID, folder.name(), message.getId());
         }
         transaction.markSuccessful();
       }
@@ -210,7 +213,7 @@ public class InboxManager {
   private Completable removeAllMessages(InboxFolder folder) {
     return Completable.fromAction(() -> {
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
-        briteDatabase.delete(StoredMessage.TABLE_NAME, StoredMessage.WHERE_FOLDER, folder.name());
+        briteDatabase.delete(CachedMessage.TABLE_NAME, CachedMessage.WHERE_FOLDER, folder.name());
         transaction.markSuccessful();
       }
     });

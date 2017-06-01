@@ -4,11 +4,12 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
-import me.saket.dank.ui.user.messages.StoredMessage;
+import me.saket.dank.ui.submission.CachedSubmission;
+import me.saket.dank.ui.user.messages.CachedMessage;
 
 public class DankSqliteOpenHelper extends SQLiteOpenHelper {
 
-  private static final int DB_VERSION = 2;
+  private static final int DB_VERSION = 3;
   private static final String DB_NAME = "Dank";
 
   public DankSqliteOpenHelper(Context context) {
@@ -18,12 +19,10 @@ public class DankSqliteOpenHelper extends SQLiteOpenHelper {
   @Override
   public void onCreate(SQLiteDatabase db) {
     db.execSQL(SubredditSubscription.QUERY_CREATE_TABLE);
-    db.execSQL(StoredMessage.QUERY_CREATE_TABLE);
+    db.execSQL(CachedMessage.QUERY_CREATE_TABLE);
+    db.execSQL(CachedSubmission.QUERY_CREATE_TABLE);
   }
 
   @Override
-  public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-
-  }
-
+  public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {}
 }
