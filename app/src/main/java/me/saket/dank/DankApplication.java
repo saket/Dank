@@ -9,7 +9,6 @@ import com.tspoon.traceur.Traceur;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 
-import io.reactivex.exceptions.UndeliverableException;
 import io.reactivex.plugins.RxJavaPlugins;
 import me.saket.dank.di.Dank;
 import timber.log.Timber;
@@ -30,9 +29,8 @@ public class DankApplication extends Application {
     Traceur.enableLogging();
 
     RxJavaPlugins.setErrorHandler(e -> {
-      if (e instanceof UndeliverableException) {
-        e = e.getCause();
-      }
+      e = Dank.errors().findActualCause(e);
+
       if (e instanceof IOException) {
         // Fine, irrelevant network problem or API that throws on cancellation.
         Timber.w("IOException");
@@ -59,5 +57,4 @@ public class DankApplication extends Application {
       Timber.e(e, "Undeliverable exception received, not sure what to do.");
     });
   }
-
 }

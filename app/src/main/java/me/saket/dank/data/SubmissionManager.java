@@ -10,6 +10,7 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 
+import io.reactivex.functions.Function;
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.paginators.SubredditPaginator;
@@ -49,17 +50,28 @@ public class SubmissionManager {
 // ======== CACHING ======== //
 
   @CheckResult
-  public Observable<List<CachedSubmission>> submissions(CachedSubmissionFolder folder) {
+  public Observable<List<Submission>> submissions(CachedSubmissionFolder folder) {
     return toV2Observable(briteDatabase
         .createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetAll(folder))
-        .mapToList(CachedSubmission.mapFromCursor(moshi)))
+        .mapToList(CachedSubmission.mapSubmissionFromCursor(moshi)))
         .map(toImmutable());
+  }
+
+  // TODO: Probably don't need this.
+  private Function<List<CachedSubmission>, List<Submission>> extractSubmissionsFromCachedItems() {
+    return cachedSubmissions -> {
+      List<Submission> submissions = new ArrayList<>(cachedSubmissions.size());
+      for (CachedSubmission cachedSubmission : cachedSubmissions) {
+        submissions.add(cachedSubmission.submission());
+      }
+      return submissions;
+    };
   }
 
   @CheckResult
   public Single<List<CachedSubmission>> fetchAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
     Timber.i("fetchMoreSubmissions()");
-    return paginationAnchor(folder)
+    return lastPaginationAnchor(folder)
         .doOnSuccess(paginationAnchor -> Timber.i("paginationAnchor: %s", paginationAnchor))
         .map(anchor -> {
           List<CachedSubmission> cachedSubmissions = Collections.emptyList();
@@ -68,9 +80,9 @@ public class SubmissionManager {
           // saveNewSubmissions() ignores duplicates. Which means that we might have to do
           // another fetch if all fetched submissions turned out to be duplicates.
           while (cachedSubmissions.isEmpty() && fetchResult.hasMoreItems()) {
-            fetchResult = fetchSubmissionsFromAnchor(folder, anchor).blockingGet();
+            fetchResult = fetchSubmissionsFromAnchor(folder, anchor  /* CheckForNew */).blockingGet();
             List<Submission> fetchedSubmissions = fetchResult.fetchedSubmissions();
-            cachedSubmissions = saveNewSubmissions(fetchedSubmissions, folder, false);
+            cachedSubmissions = saveNewSubmissions(fetchedSubmissions, folder, false).blockingGet();
           }
 
           return Collections.unmodifiableList(cachedSubmissions);
@@ -78,7 +90,7 @@ public class SubmissionManager {
   }
 
   /**
-   * Fetch fresh submissions and remove any existing submissions under <var>folder</var>.
+   * Fetch fresh submissions under <var>folder</var>.
    */
   @CheckResult
   public Single<List<Submission>> fetchFromRemote(CachedSubmissionFolder folder) {
@@ -87,51 +99,62 @@ public class SubmissionManager {
   }
 
   /**
+   * Fetch and save fresh submissions under <var>folder</var>.
+   */
+  @CheckResult
+  public Single<List<CachedSubmission>> fetchAndSaveFromRemote(CachedSubmissionFolder folder, boolean removeExistingSubmissions) {
+    return fetchFromRemote(folder)
+        .flatMap(fetchedSubmissions -> Dank.submissions().saveNewSubmissions(fetchedSubmissions, folder, removeExistingSubmissions));
+  }
+
+  /**
    * This will ignore duplicates.
    *
    * @param removeExistingSubmissions Whether to remove existing submissions under <var>folder</var>.
    */
   @CheckResult
-  public List<CachedSubmission> saveNewSubmissions(List<Submission> submissionsToSave, CachedSubmissionFolder folder,
+  private Single<List<CachedSubmission>> saveNewSubmissions(List<Submission> submissionsToSave, CachedSubmissionFolder folder,
       boolean removeExistingSubmissions)
   {
-    List<CachedSubmission> cachedSubmissions = new ArrayList<>(submissionsToSave.size());
+    return Single.fromCallable(() -> {
+      List<CachedSubmission> cachedSubmissions = new ArrayList<>(submissionsToSave.size());
 
-    try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
-      if (removeExistingSubmissions) {
-        briteDatabase.delete(CachedSubmission.TABLE_NAME, CachedSubmission.constructWhereAll(folder));
-      }
-
-      for (int i = 0; i < submissionsToSave.size(); i++) {
-        // Reddit sends submissions according to their sorting order. So they may or may not be
-        // sorted by their creation time. However, we want to store their download time so that
-        // they can be fetched in the same order (because SQLite doesn't guarantee preservation
-        // of insertion order). Adding the index to avoid duplicate times.
-        long fetchedTimeMillis = System.currentTimeMillis() + i;
-        Submission submission = submissionsToSave.get(i);
-        boolean isSavedByUser = false;  // TODO: Get this value from DB.
-
-        CachedSubmission cachedSubmission = CachedSubmission.create(
-            submission.getFullName(),
-            submission,
-            folder,
-            fetchedTimeMillis,
-            submission.getVote(),
-            isSavedByUser
-        );
-
-        // It's possible to receive a duplicate submission from Reddit if the submissions got
-        // reordered because of changes in their votes. We'll ignore them.
-        long inserted = briteDatabase.insert(CachedSubmission.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_IGNORE);
-        if (inserted != -1) {
-          cachedSubmissions.add(cachedSubmission);
+      try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
+        if (removeExistingSubmissions) {
+          briteDatabase.delete(CachedSubmission.TABLE_NAME, CachedSubmission.constructWhere(folder));
         }
+
+        for (int i = 0; i < submissionsToSave.size(); i++) {
+          // Reddit sends submissions according to their sorting order. So they may or may not be
+          // sorted by their creation time. However, we want to store their download time so that
+          // they can be fetched in the same order (because SQLite doesn't guarantee preservation
+          // of insertion order). Adding the index to avoid duplicate times.
+          long fetchedTimeMillis = System.currentTimeMillis() + i;
+          Submission submission = submissionsToSave.get(i);
+          boolean isSavedByUser = false;  // TODO: Get this value from DB.
+
+          CachedSubmission cachedSubmission = CachedSubmission.create(
+              submission.getFullName(),
+              submission,
+              folder,
+              fetchedTimeMillis,
+              submission.getVote(),
+              isSavedByUser
+          );
+
+          // It's possible to receive a duplicate submission from Reddit if the submissions got
+          // reordered because of changes in their votes. We'll ignore them.
+          long inserted = briteDatabase.insert(CachedSubmission.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_IGNORE);
+          if (inserted != -1) {
+            cachedSubmissions.add(cachedSubmission);
+          }
+        }
+
+        transaction.markSuccessful();
       }
 
-      transaction.markSuccessful();
-    }
-
-    return cachedSubmissions;
+      return cachedSubmissions;
+    });
   }
 
   @CheckResult
@@ -141,6 +164,7 @@ public class SubmissionManager {
       if (!anchor.isEmpty()) {
         subredditPaginator.setStartAfterThing(anchor.fullName());
       }
+
       Timber.i("Loading more from %s", anchor.fullName());
       subredditPaginator.setSorting(folder.sortOrder());
       subredditPaginator.setTimePeriod(folder.sortTimePeriod());
@@ -165,11 +189,11 @@ public class SubmissionManager {
    * Create a PaginationAnchor from the last cached submission under <var>folder</var>.
    */
   @CheckResult
-  private Single<PaginationAnchor> paginationAnchor(CachedSubmissionFolder folder) {
+  private Single<PaginationAnchor> lastPaginationAnchor(CachedSubmissionFolder folder) {
     return toV2Observable(briteDatabase
         .createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetLastSubmission(folder))
         .mapToList(CachedSubmission.mapFromCursor(moshi)))
-        // cachedSubmissions will only have one value because CachedSubmission.QUERY_GET_LAST_IN_FOLDER places a limit of 1.
+        // list will only have one value because the query places a limit of 1.
         .map(cachedSubmissions -> cachedSubmissions.isEmpty()
             ? PaginationAnchor.createEmpty()
             : PaginationAnchor.create(cachedSubmissions.get(0).fullName()))
@@ -187,6 +211,11 @@ public class SubmissionManager {
   @CheckResult
   public Completable removeAllCached() {
     return Completable.fromAction(() -> briteDatabase.delete(CachedSubmission.TABLE_NAME, null));
+  }
+
+  @CheckResult
+  public Completable removeAllCachedInFolder(CachedSubmissionFolder folder) {
+    return Completable.fromAction(() -> briteDatabase.delete(CachedSubmission.TABLE_NAME, CachedSubmission.constructWhere(folder)));
   }
 
 // ======== SAVE ======== //

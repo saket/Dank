@@ -43,7 +43,6 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
-import rx.exceptions.OnErrorThrowable;
 import timber.log.Timber;
 
 /**
@@ -186,22 +185,24 @@ public class DankRedditClient {
    */
   @NonNull
   private Function<Flowable<Throwable>, Publisher<Boolean>> refreshApiTokenIfExpiredAndRetry() {
-    return errors -> errors.flatMap(error -> {
-      if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
-        // Re-try authenticating.
-        Timber.w("Attempting to refresh token");
+    return errors -> {
+      return errors.flatMap(error -> {
+        if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
+          // Re-try authenticating.
+          Timber.w("Attempting to refresh token");
 
-        return isUserLoggedIn()
-            .observeOn(io())    // This observeOn() call is important. Check the doc of isUserLoggedIn().
-            .flatMapPublisher(loggedIn -> Flowable.fromCallable(() -> {
-              redditAuthManager.refreshAccessToken(loggedIn ? loggedInUserCredentials : userlessAppCredentials);
-              return true;
-            }));
+          return isUserLoggedIn()
+              .observeOn(io())    // This observeOn() call is important. Check the doc of isUserLoggedIn().
+              .flatMapPublisher(loggedIn -> Flowable.fromCallable(() -> {
+                redditAuthManager.refreshAccessToken(loggedIn ? loggedInUserCredentials : userlessAppCredentials);
+                return true;
+              }));
 
-      } else {
-        throw OnErrorThrowable.from(error);
-      }
-    });
+        } else {
+          return Flowable.error(error);
+        }
+      });
+    };
   }
 
   public UserLoginHelper userLoginHelper() {

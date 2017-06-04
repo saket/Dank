@@ -68,7 +68,7 @@ public abstract class CachedSubmission {
         + " ORDER BY " + COLUMN_FETCH_TIME + " ASC";
   }
 
-  public static String constructWhereAll(CachedSubmissionFolder folder) {
+  public static String constructWhere(CachedSubmissionFolder folder) {
     return COLUMN_FOLDER + " == '" + folder.serialize() + "'";
   }
 
@@ -87,13 +87,17 @@ public abstract class CachedSubmission {
   public static Func1<Cursor, CachedSubmission> mapFromCursor(Moshi moshi) {
     return cursor -> {
       String fullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FULLNAME));
-      Submission submission = submissionFromJson(moshi, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SUBMISSION_JSON)));
+      Submission submission = mapSubmissionFromCursor(moshi).call(cursor);
       CachedSubmissionFolder folder = CachedSubmissionFolder.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER)));
       long fetchTimeMillis = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_FETCH_TIME));
       VoteDirection userVoteDirection = VoteDirection.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USER_VOTE_DIRECTION)));
       boolean isSavedByUser = BOOLEAN_TRUE_INT == cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_IS_SAVED_BY_USER));
       return create(fullName, submission, folder, fetchTimeMillis, userVoteDirection, isSavedByUser);
     };
+  }
+
+  public static Func1<Cursor, Submission> mapSubmissionFromCursor(Moshi moshi) {
+    return cursor -> submissionFromJson(moshi, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SUBMISSION_JSON)));
   }
 
   private static Submission submissionFromJson(Moshi moshi, String submissionJson) {

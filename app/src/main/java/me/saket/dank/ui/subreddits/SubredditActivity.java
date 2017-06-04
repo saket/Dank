@@ -3,10 +3,12 @@ package me.saket.dank.ui.subreddits;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static me.saket.dank.di.Dank.subscriptionManager;
 import static me.saket.dank.utils.CommonUtils.defaultIfNull;
+import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
-import static me.saket.dank.utils.RxUtils.doOnceAfterNext;
+import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
@@ -15,7 +17,6 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NavUtils;
 import android.support.v7.widget.DefaultItemAnimator;
@@ -24,25 +25,21 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-
-import com.github.zagum.expandicon.ExpandIconView;
-import com.jakewharton.rxrelay2.BehaviorRelay;
-
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Subreddit;
-import net.dean.jraw.paginators.Sorting;
-import net.dean.jraw.paginators.TimePeriod;
-
-import java.util.ArrayList;
-import java.util.List;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import com.github.zagum.expandicon.ExpandIconView;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 import io.reactivex.Completable;
+import io.reactivex.CompletableSource;
 import io.reactivex.SingleTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
+import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import java.util.HashSet;
+import java.util.Set;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.RedditLink;
@@ -52,15 +49,13 @@ import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
-import me.saket.dank.ui.submission.CachedSubmission;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.subreddits.SubmissionsAdapter.SubmissionViewHolder;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
-import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.FooterMode;
-import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderMode;
+import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderFooterInfo;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.widgets.DankToolbar;
@@ -70,6 +65,10 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Subreddit;
+import net.dean.jraw.paginators.Sorting;
+import net.dean.jraw.paginators.TimePeriod;
 import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
@@ -95,9 +94,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @BindView(R.id.subreddit_submission_errorState) ErrorStateView firstLoadErrorStateView;
 
   private SubmissionFragment submissionFragment;
-  private SubmissionsAdapter submissionsAdapter;
   private InfiniteScrollRecyclerAdapter<Submission, ?> submissionAdapterWithProgress;
   private BehaviorRelay<String> subredditNameChangesRelay = BehaviorRelay.create();
+  private Set<CachedSubmissionFolder> firstRefreshDoneForSubredditFolders = new HashSet<>();
+  private Disposable ongoingSubmissionsLoadDisposable = Disposables.disposed();
 
   protected static void addStartExtrasToIntent(RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
@@ -195,7 +195,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           .observeOn(mainThread())
           .subscribe(loggedIn -> {
             if (loggedIn) {
-              Timber.i("Requesting sync");
               SubredditSubscriptionsSyncJob.syncImmediately(this);
               SubredditSubscriptionsSyncJob.schedule(this);
               CheckUnreadMessagesJobService.syncImmediately(this);
@@ -283,7 +282,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     submissionList.setItemAnimator(new DefaultItemAnimator());
     submissionList.setExpandablePage(submissionPage, toolbarContainer);
 
-    submissionsAdapter = new SubmissionsAdapter(Dank.voting(), Dank.userPrefs());
+    SubmissionsAdapter submissionsAdapter = new SubmissionsAdapter(Dank.voting(), Dank.userPrefs());
     submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
       DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
           .commentSort(defaultIfNull(submission.getSuggestedSort(), DankRedditClient.DEFAULT_COMMENT_SORT))
@@ -308,38 +307,69 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     submissionAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(swipeableSubmissionsAdapter);
     submissionList.setAdapter(submissionAdapterWithProgress);
 
-    // Listen to messages in DB.
     unsubscribeOnDestroy(
         subredditNameChangesRelay
             .observeOn(AndroidSchedulers.mainThread())
             .map(subredditName -> CachedSubmissionFolder.create(subredditName, Sorting.HOT, TimePeriod.DAY))
-            .doOnNext(o -> submissionAdapterWithProgress.accept(null))
-            // TODO Divide request in batches to avoid waiting for long.
-            .switchMap(folder -> Dank.submissions().submissions(folder))
-            .observeOn(AndroidSchedulers.mainThread())
-            .map(cachedSubmissions -> {
-              List<Submission> submissions = new ArrayList<>(cachedSubmissions.size());
-              for (CachedSubmission cachedSubmission : cachedSubmissions) {
-                submissions.add(cachedSubmission.submission());
-              }
-              return submissions;
-            })
-            .compose(doOnceAfterNext(submissions -> {
-              startInfiniteScroll(false /* isRetrying */);
-            }))
-            .doOnNext(submissions -> {
-              emptyStateView.setVisibility(submissions.isEmpty() ? View.VISIBLE : View.GONE);
-            })
-            .subscribe(submissionAdapterWithProgress)
+            .doOnNext(folder -> Timber.i("Sub change: %s", folder.subredditName()))
+            .subscribe(folder -> loadSubmissions(folder))
     );
+  }
 
-    // Refresh messages once we've received the messages from database for the first time.
-    unsubscribeOnDestroy(
-        subredditNameChangesRelay
-            .distinct()
-            .flatMapCompletable(subredditName -> refreshSubmissions(subredditName))
-            .subscribe()
-    );
+  private void loadSubmissions(CachedSubmissionFolder folder) {
+    Completable refreshBeforeLoadCompletable;
+    boolean isFirstRefresh = !firstRefreshDoneForSubredditFolders.contains(folder);
+    if (isFirstRefresh) {
+      refreshBeforeLoadCompletable = Dank.submissions().fetchAndSaveFromRemote(folder, true /* removeExisting */)
+          .toCompletable()
+          .compose(applySchedulersCompletable())
+          .doOnSubscribe(o -> Timber.i("Refreshing from remote"))
+          .doOnComplete(() -> firstRefreshDoneForSubredditFolders.add(folder));
+    } else {
+      refreshBeforeLoadCompletable = Completable.complete();
+    }
+
+    // Unfortunately, using switchMap is not an option here so disposing old chains manually.
+    ongoingSubmissionsLoadDisposable.dispose();
+
+    ongoingSubmissionsLoadDisposable = refreshBeforeLoadCompletable
+        .doOnSubscribe(o -> {
+          firstLoadErrorStateView.setVisibility(View.GONE);
+          firstLoadProgressView.setVisibility(View.VISIBLE);
+          submissionAdapterWithProgress.accept(null);
+        })
+        .onErrorResumeNext(swallowErrorUnlessCacheIsEmpty(folder))
+        .doOnTerminate(() -> firstLoadProgressView.setVisibility(View.GONE))
+        .andThen(Dank.submissions().submissions(folder))
+        .compose(applySchedulers())
+        .doOnNext(submissions -> Timber.d("Fetched %s submissions from DB under %s", submissions.size(), subredditNameChangesRelay.getValue()))
+        .subscribe(submissionAdapterWithProgress, logError("Couldn't get messages"));
+    unsubscribeOnDestroy(ongoingSubmissionsLoadDisposable);
+  }
+
+  private Function<Throwable, CompletableSource> swallowErrorUnlessCacheIsEmpty(CachedSubmissionFolder folder) {
+    return error -> {
+      // If any error occurs, swallow it unless we don't have anything in the DB to show.
+      return Dank.submissions().hasSubmissions(folder)
+          .compose(applySchedulersSingle())
+          .doOnSubscribe(o -> firstLoadErrorStateView.setVisibility(View.GONE))
+          .flatMapCompletable(hasExistingSubmissions -> {
+            if (hasExistingSubmissions) {
+              return Completable.complete();
+
+            } else {
+              ResolvedError resolvedError = Dank.errors().resolve(error);
+              firstLoadErrorStateView.applyFrom(resolvedError);
+              firstLoadErrorStateView.setVisibility(View.VISIBLE);
+              firstLoadErrorStateView.setOnRetryClickListener(o -> loadSubmissions(folder));
+              Timber.w("Error: %s", error.getMessage());
+              if (resolvedError.isUnknown()) {
+                Timber.e(error, "Unknown error while refreshing submissions");
+              }
+              return Completable.error(error);
+            }
+          });
+    };
   }
 
   // TODO: Reset on subreddit change, because we suspend infinite scroll if no more submissions were fetched.
@@ -360,75 +390,25 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .subscribe(doNothing(), doNothing()));
   }
 
-  // TODO: Extract to separate class
   private <T> SingleTransformer<T, T> handleProgressAndErrorForLoadMore() {
     return upstream -> upstream
-        .doOnSubscribe(o -> submissionList.post(() -> submissionAdapterWithProgress.setFooterMode(FooterMode.PROGRESS)))
-        .doOnSuccess(o -> submissionList.post(() -> submissionAdapterWithProgress.setFooterMode(FooterMode.HIDDEN)))
-        .doOnError(error -> {
-          submissionList.post(() -> submissionAdapterWithProgress.setFooterMode(FooterMode.ERROR));
-          submissionAdapterWithProgress.setOnFooterErrorRetryClickListener(o -> startInfiniteScroll(true /* isRetrying */));
-        });
+        .doOnSubscribe(o -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createFooterProgress()))
+        .doOnSuccess(o -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createHidden()))
+        .doOnError(error -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createError(
+            R.string.subreddit_error_failed_to_load_more_submissions,
+            o -> startInfiniteScroll(true /* isRetrying */)
+        )));
   }
 
-  @CheckResult
-  protected Completable refreshSubmissions(String subredditName) {
-    Timber.i("Refreshing submissions for %s", subredditName);
-    CachedSubmissionFolder folder = CachedSubmissionFolder.create(subredditName, Sorting.HOT, TimePeriod.DAY);
-    return Dank.submissions().hasSubmissions(folder)
-        .compose(applySchedulersSingle())
-        .flatMap(hasSubmissions -> {
-          if (hasSubmissions) {
-            return Dank.submissions().fetchFromRemote(folder)
-                .compose(applySchedulersSingle())
-                .compose(handleProgressAndErrorForSubsequentRefresh(subredditName));
+  private void onClickRefresh() {
+    CachedSubmissionFolder activeFolder = CachedSubmissionFolder.create(subredditNameChangesRelay.getValue(), Sorting.HOT, TimePeriod.DAY);
 
-          } else {
-            return Dank.submissions().fetchFromRemote(folder)
-                .map(fetchedSubmissions -> Dank.submissions().saveNewSubmissions(fetchedSubmissions, folder, true /* removeExisting */))
-                .compose(applySchedulersSingle())
-                .compose(handleProgressAndErrorForFirstRefresh(subredditName));
-          }
-        })
-        .doOnSubscribe(o -> emptyStateView.setVisibility(View.GONE))
-        .doOnSuccess(fetchedSubmissions -> emptyStateView.setVisibility(fetchedSubmissions.isEmpty() ? View.VISIBLE : View.GONE))
-        .toCompletable();
-  }
-
-  private <T> SingleTransformer<T, T> handleProgressAndErrorForFirstRefresh(String subredditName) {
-    return upstream -> upstream
-        .doOnSubscribe(o -> {
-          firstLoadProgressView.setVisibility(View.VISIBLE);
-          firstLoadErrorStateView.setVisibility(View.GONE);
-        })
-        .doOnSuccess(o -> firstLoadProgressView.setVisibility(View.GONE))
-        .doOnError(error -> {
-          ResolvedError resolvedError = Dank.errors().resolve(error);
-          if (resolvedError.isUnknown()) {
-            Timber.e(error, "Unknown error while refreshing submissions");
-          }
-          firstLoadErrorStateView.applyFrom(resolvedError);
-          firstLoadErrorStateView.setVisibility(View.VISIBLE);
-          firstLoadErrorStateView.setOnRetryClickListener(o -> refreshSubmissions(subredditName));
-
-          firstLoadProgressView.setVisibility(View.GONE);
-        });
-  }
-
-  // TODO: Extract to separate class
-  private <T> SingleTransformer<T, T> handleProgressAndErrorForSubsequentRefresh(String subredditName) {
-    return upstream -> upstream
-        .doOnSubscribe(o -> submissionList.post(() -> submissionAdapterWithProgress.setHeaderMode(HeaderMode.PROGRESS)))
-        .doOnSuccess(o -> submissionList.post(() -> submissionAdapterWithProgress.setHeaderMode(HeaderMode.NEW_ITEMS_DOWNLOADED)))
-        .doOnError(error -> {
-          submissionList.post(() -> submissionAdapterWithProgress.setHeaderMode(HeaderMode.ERROR));
-          submissionAdapterWithProgress.setOnHeaderErrorRetryClickListener(o -> refreshSubmissions(subredditName));
-
-          ResolvedError resolvedError = Dank.errors().resolve(error);
-          if (resolvedError.isUnknown()) {
-            Timber.e(error, "Unknown error while refreshing submissions");
-          }
-        });
+    // This will force loadSubmissions() to get re-called.
+    unsubscribeOnDestroy(Dank.submissions().removeAllCachedInFolder(activeFolder)
+        .subscribe(() -> {
+          firstRefreshDoneForSubredditFolders.remove(activeFolder);
+          subredditNameChangesRelay.accept(subredditNameChangesRelay.getValue());
+        }));
   }
 
 // ======== NAVIGATION ======== //
@@ -447,6 +427,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Override
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
+      case R.id.action_refresh_submissions:
+        onClickRefresh();
+        return true;
+
       case R.id.action_user_profile:
         unsubscribeOnDestroy(Dank.reddit()
             .isUserLoggedIn()
@@ -562,6 +546,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       if (Dank.subscriptionManager().isFrontpage(subredditNameChangesRelay.getValue())) {
         subredditNameChangesRelay.accept(subredditNameChangesRelay.getValue());
       }
+
+      firstRefreshDoneForSubredditFolders.clear();
 
       // Reload subreddit subscriptions. Not implementing onError() is intentional.
       // This code is not supposed to fail :/

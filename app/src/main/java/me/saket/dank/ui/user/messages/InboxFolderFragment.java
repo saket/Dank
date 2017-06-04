@@ -35,8 +35,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
-import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.FooterMode;
-import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderMode;
+import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderFooterInfo;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
@@ -219,11 +218,13 @@ public class InboxFolderFragment extends DankFragment {
     }
 
     return upstream -> upstream
-        .doOnSubscribe(o -> messageList.post(() -> messagesAdapterWithProgress.setHeaderMode(HeaderMode.PROGRESS)))
-        .doOnSuccess(o -> messageList.post(() -> messagesAdapterWithProgress.setHeaderMode(HeaderMode.HIDDEN)))
+        .doOnSubscribe(o -> messagesAdapterWithProgress.setHeader(HeaderFooterInfo.createHeaderProgress(R.string.inbox_refreshing_messages)))
+        .doOnSuccess(o -> messagesAdapterWithProgress.setHeader(HeaderFooterInfo.createHidden()))
         .doOnError(error -> {
-          messageList.post(() -> messagesAdapterWithProgress.setHeaderMode(HeaderMode.ERROR));
-          messagesAdapterWithProgress.setOnHeaderErrorRetryClickListener(o -> refreshMessages(deleteAllMessagesInFolder));
+          messagesAdapterWithProgress.setHeader(HeaderFooterInfo.createError(
+              R.string.inbox_error_failed_to_refresh_messages,
+              o -> refreshMessages(deleteAllMessagesInFolder)
+          ));
 
           ResolvedError resolvedError = Dank.errors().resolve(error);
           if (resolvedError.isUnknown()) {
@@ -251,11 +252,13 @@ public class InboxFolderFragment extends DankFragment {
 
   private <T> SingleTransformer<T, T> handleProgressAndErrorForLoadMore() {
     return upstream -> upstream
-        .doOnSubscribe(o -> messageList.post(() -> messagesAdapterWithProgress.setFooterMode(FooterMode.PROGRESS)))
-        .doOnSuccess(o -> messageList.post(() -> messagesAdapterWithProgress.setFooterMode(FooterMode.HIDDEN)))
+        .doOnSubscribe(o -> messagesAdapterWithProgress.setFooter(HeaderFooterInfo.createFooterProgress()))
+        .doOnSuccess(o -> messagesAdapterWithProgress.setFooter(HeaderFooterInfo.createHidden()))
         .doOnError(error -> {
-          messageList.post(() -> messagesAdapterWithProgress.setFooterMode(FooterMode.ERROR));
-          messagesAdapterWithProgress.setOnFooterErrorRetryClickListener(o -> startInfiniteScroll(true /* isRetrying */));
+          messagesAdapterWithProgress.setFooter(HeaderFooterInfo.createError(
+              R.string.inbox_error_failed_to_load_more_messages,
+              o -> startInfiniteScroll(true /* isRetrying */)
+          ));
         });
   }
 

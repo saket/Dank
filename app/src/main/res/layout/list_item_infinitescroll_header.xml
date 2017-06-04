@@ -27,20 +27,21 @@
       android:indeterminateTint="@color/color_accent" />
 
     <TextView
+      android:id="@+id/infinitescroll_footer_progress_title"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:text="@string/inbox_refreshing_messages"
+      tools:text="Refreshing…"
       android:textColor="@color/color_accent" />
   </LinearLayout>
 
   <me.saket.dank.widgets.TintableCompoundDrawableTextView
     android:id="@+id/infinitescroll_header_error"
     style="@style/DankInfiniteScrollHeaderFooterTextWithIcon"
-    android:text="@string/inbox_error_failed_to_refresh_messages"
+    tools:text="Error :/"
     android:visibility="gone" />
 
   <me.saket.dank.widgets.TintableCompoundDrawableTextView
-    android:id="@+id/infinitescroll_header_items_downloaded"
+    android:id="@+id/infinitescroll_header_custom_event"
     style="@style/DankInfiniteScrollHeaderFooterTextWithIcon"
     android:text="Items ready"
     android:textColor="@color/color_accent_secondary"

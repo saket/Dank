@@ -4,6 +4,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
+import io.reactivex.exceptions.UndeliverableException;
 import me.saket.dank.R;
 import retrofit2.HttpException;
 import rx.exceptions.OnErrorThrowable;
@@ -15,16 +16,7 @@ import rx.exceptions.OnErrorThrowable;
 public class ErrorManager {
 
   public ResolvedError resolve(Throwable error) {
-    if (error instanceof OnErrorThrowable) {
-      error = error.getCause();
-    }
-    if (error instanceof RuntimeException && error.getCause() != null) {
-      // Stupid JRAW wraps all HTTP exceptions with RuntimeException.
-      error = error.getCause();
-    }
-    if (error instanceof IllegalStateException && error.getMessage().contains("Reached retry limit")) {
-      error = error.getCause();
-    }
+    error = findActualCause(error);
 
     if (error instanceof SocketException || error instanceof SocketTimeoutException || error instanceof UnknownHostException) {
       return ResolvedError.create(
@@ -49,4 +41,20 @@ public class ErrorManager {
     }
   }
 
+  public Throwable findActualCause(Throwable error) {
+    if (error instanceof UndeliverableException) {
+      error = error.getCause();
+    }
+    if (error instanceof OnErrorThrowable) {
+      error = error.getCause();
+    }
+    if (error instanceof RuntimeException && error.getCause() != null) {
+      // Stupid JRAW wraps all HTTP exceptions with RuntimeException.
+      error = error.getCause();
+    }
+    if (error instanceof IllegalStateException && error.getMessage().contains("Reached retry limit")) {
+      error = error.getCause();
+    }
+    return error;
+  }
 }

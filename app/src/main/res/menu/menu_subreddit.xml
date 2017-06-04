@@ -1,16 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<menu xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto">
+<menu xmlns:tools="http://schemas.android.com/tools"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto">
 
-    <item
-        android:id="@+id/action_user_profile"
-        android:title="@string/subreddit_menu_action_profile"
-        android:icon="@drawable/ic_user_profile_24dp"
-        app:showAsAction="ifRoom" />
+  <item
+    android:id="@+id/action_refresh_submissions"
+    android:icon="@drawable/ic_refresh_24dp"
+    android:title="@string/subreddit_menuaction_refresh_submissions"
+    app:showAsAction="always"
+    tools:ignore="AlwaysShowAction" />
 
-    <item
-        android:id="@+id/action_preferences"
-        android:icon="@drawable/ic_settings_24dp"
-        android:title="@string/subreddit_menu_action_preferences"
-        app:showAsAction="ifRoom" />
+  <item
+    android:id="@+id/action_user_profile"
+    android:icon="@drawable/ic_user_profile_24dp"
+    android:title="@string/subreddit_menuaction_profile"
+    app:showAsAction="always" />
+
+  <item
+    android:id="@+id/action_preferences"
+    android:icon="@drawable/ic_settings_24dp"
+    android:title="@string/subreddit_menuaction_preferences"
+    app:showAsAction="always" />
 </menu>

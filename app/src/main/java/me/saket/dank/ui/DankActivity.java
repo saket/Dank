@@ -41,11 +41,11 @@ public class DankActivity extends AppCompatActivity {
     onStopDisposables.add(subscription);
   }
 
-  protected void unsubscribeOnDestroy(Disposable subscription) {
+  protected void unsubscribeOnDestroy(Disposable disposable) {
     if (onDestroyDisposables == null) {
       onDestroyDisposables = new CompositeDisposable();
     }
-    onDestroyDisposables.add(subscription);
+    onDestroyDisposables.add(disposable);
   }
 
   protected void findAndSetupToolbar() {

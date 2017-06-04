@@ -101,7 +101,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
 
   @Override
   public boolean onStartJob(JobParameters params) {
-    Timber.i("Fetching unread messages. JobID: %s", params.getJobId());
+    //Timber.i("Fetching unread messages. JobID: %s", params.getJobId());
     boolean refreshMessages = PersistableBundleUtils.getBoolean(params.getExtras(), KEY_REFRESH_MESSAGES);
 
     Completable refreshCompletable = Dank.inbox()
@@ -113,12 +113,12 @@ public class CheckUnreadMessagesJobService extends DankJobService {
               staleMessages.addAll(existingUnreads);
               staleMessages.removeAll(receivedUnreads);
 
-              Timber.i("----------------------------------------");
-              Timber.w("Stale notifs: %s", staleMessages.size());
-              for (Message m : staleMessages) {
-                Timber.i("%s", m.getBody().substring(0, Math.min(m.getBody().length(), 50)));
-              }
-              Timber.i("----------------------------------------");
+//              Timber.i("----------------------------------------");
+//              Timber.w("Stale notifs: %s", staleMessages.size());
+//              for (Message m : staleMessages) {
+//                Timber.i("%s", m.getBody().substring(0, Math.min(m.getBody().length(), 50)));
+//              }
+//              Timber.i("----------------------------------------");
 
               return unmodifiableList(staleMessages);
             })

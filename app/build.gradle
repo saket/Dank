@@ -106,7 +106,7 @@ dependencies {
     compile "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet.
 
     // Reddit API wrapper.
-    compile 'com.github.Saketme:JRAW:bd20b3e581'
+    compile 'com.github.Saketme:JRAW:6864908f28'
 
     // ImageViewer that supports pan, zoom gestures + can decode large images.
     compile 'com.alexvasilkov:gesture-views:2.2.0'

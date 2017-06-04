@@ -77,7 +77,7 @@ public class DankAppModule {
   @Singleton
   RedditClient provideRedditClient(UserAgent redditUserAgent) {
     RedditClient redditClient = new RedditClient(redditUserAgent);
-    redditClient.setLoggingMode(LoggingMode.ON_FAIL);
+    redditClient.setLoggingMode(LoggingMode.ALWAYS);
     redditClient.getHttpAdapter().setConnectTimeout(NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     redditClient.getHttpAdapter().setReadTimeout(NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS);
     return redditClient;
@@ -148,7 +148,7 @@ public class DankAppModule {
 
     if (BuildConfig.DEBUG) {
       HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> Timber.tag("OkHttp").d(message));
-      logging.setLevel(HttpLoggingInterceptor.Level.NONE);
+      logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
       builder.addInterceptor(logging);
       builder.addNetworkInterceptor(new StethoInterceptor());
     }

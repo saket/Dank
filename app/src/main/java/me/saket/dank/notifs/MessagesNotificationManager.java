@@ -410,7 +410,7 @@ public class MessagesNotificationManager {
   @CheckResult
   public Completable dismissAllNotifications(Context context) {
     return Completable.fromAction(() -> {
-      Timber.i("Dismissing all notifs");
+      //Timber.i("Dismissing all notifs");
       NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
       notificationManager.cancel(NOTIF_ID_BUNDLE_SUMMARY);
     });
