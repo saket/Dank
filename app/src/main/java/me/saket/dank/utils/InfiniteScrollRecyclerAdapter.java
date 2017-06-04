@@ -6,9 +6,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import java.util.List;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.ui.subreddits.SubredditActivity;
 import timber.log.Timber;
 
 /**
@@ -17,12 +21,14 @@ import timber.log.Timber;
  *
  * @param <T> Type of items in the wrapped adapter.
  */
-public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<RecyclerView.ViewHolder>
+    implements Consumer<List<T>>
+{
 
   private static final int VIEW_TYPE_HEADER = 20;
   private static final int VIEW_TYPE_FOOTER = 21;
 
-  private RecyclerViewArrayAdapter<T, VH> adapterToWrap;
+  private RecyclerViewArrayAdapter<T, VH> wrappedAdapter;
   private HeaderMode activeHeaderMode = HeaderMode.HIDDEN;
   private FooterMode activeFooterMode = FooterMode.HIDDEN;
   private View.OnClickListener onHeaderErrorRetryClickListener;
@@ -31,7 +37,14 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
   public enum HeaderMode {
     PROGRESS,
     ERROR,
-    HIDDEN
+    HIDDEN,
+
+    /**
+     * This is only used in {@link SubredditActivity}, where newly fetched submissions are held
+     * until the user selects to save them. We shall use OOM in the future instead of using
+     * enums here.
+     */
+    NEW_ITEMS_DOWNLOADED
   }
 
   public enum FooterMode {
@@ -45,10 +58,10 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
   }
 
   private InfiniteScrollRecyclerAdapter(RecyclerViewArrayAdapter<T, VH> adapterToWrap) {
-    this.adapterToWrap = adapterToWrap;
+    this.wrappedAdapter = adapterToWrap;
     setHasStableIds(adapterToWrap.hasStableIds());
 
-    adapterToWrap.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
+    wrappedAdapter.registerAdapterDataObserver(new RecyclerView.AdapterDataObserver() {
       @Override
       public void onChanged() {
         notifyDataSetChanged();
@@ -82,6 +95,11 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
     });
   }
 
+  @Override
+  public void accept(List<T> items) {
+    wrappedAdapter.updateData(items);
+  }
+
   public void setHeaderMode(HeaderMode headerMode) {
     if (activeHeaderMode == headerMode) {
       return;
@@ -111,7 +129,7 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
   }
 
   public T getItemInWrappedAdapter(int position) {
-    return adapterToWrap.getItem(position - getVisibleHeaderItemCount());
+    return wrappedAdapter.getItem(position - getVisibleHeaderItemCount());
   }
 
   @Override
@@ -123,7 +141,7 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
       return VIEW_TYPE_FOOTER;
 
     } else {
-      int wrappedItemType = adapterToWrap.getItemViewType(position - getVisibleHeaderItemCount());
+      int wrappedItemType = wrappedAdapter.getItemViewType(position - getVisibleHeaderItemCount());
       if (wrappedItemType == VIEW_TYPE_HEADER || wrappedItemType == VIEW_TYPE_FOOTER) {
         throw new IllegalStateException("Use another viewType value");
       }
@@ -140,7 +158,7 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
       return VIEW_TYPE_FOOTER;
 
     } else {
-      return adapterToWrap.getItemId(position - getVisibleHeaderItemCount());
+      return wrappedAdapter.getItemId(position - getVisibleHeaderItemCount());
     }
   }
 
@@ -159,7 +177,7 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
       return FooterViewHolder.create(LayoutInflater.from(parent.getContext()), parent, proxyRetryClickListener);
 
     } else {
-      return adapterToWrap.onCreateViewHolder(parent, viewType);
+      return wrappedAdapter.onCreateViewHolder(parent, viewType);
     }
   }
 
@@ -176,13 +194,13 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
 
       default:
         //noinspection unchecked
-        adapterToWrap.onBindViewHolder((VH) holder, position - getVisibleHeaderItemCount());
+        wrappedAdapter.onBindViewHolder((VH) holder, position - getVisibleHeaderItemCount());
     }
   }
 
   @Override
   public int getItemCount() {
-    return adapterToWrap.getItemCount() + getVisibleHeaderItemCount() + getVisibleFooterItemCount();
+    return wrappedAdapter.getItemCount() + getVisibleHeaderItemCount() + getVisibleFooterItemCount();
   }
 
   private boolean isHeaderItem(int position) {
@@ -212,6 +230,7 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
   static class HeaderViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.infinitescroll_header_progress_container) View progressContainer;
     @BindView(R.id.infinitescroll_header_error) TextView errorView;
+    @BindView(R.id.infinitescroll_header_items_downloaded) TextView itemsDownloadedView;
 
     private View.OnClickListener retryClickListener;
 
@@ -228,7 +247,9 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
 
     public void bind(HeaderMode headerMode) {
       progressContainer.setVisibility(headerMode == HeaderMode.PROGRESS ? View.VISIBLE : View.GONE);
-      errorView.setVisibility(headerMode == HeaderMode.PROGRESS ? View.GONE : View.VISIBLE);
+      errorView.setVisibility(headerMode == HeaderMode.ERROR ? View.VISIBLE : View.GONE);
+      itemsDownloadedView.setVisibility(headerMode == HeaderMode.NEW_ITEMS_DOWNLOADED ? View.VISIBLE : View.GONE);
+
       itemView.setOnClickListener(headerMode == HeaderMode.PROGRESS ? null : retryClickListener);
       itemView.setClickable(headerMode == HeaderMode.ERROR);
     }

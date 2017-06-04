@@ -17,6 +17,7 @@
 
     <activity
       android:name=".ui.subreddits.SubredditActivity"
+      android:launchMode="singleTop"
       android:theme="@style/DankTheme"
       android:windowSoftInputMode="adjustNothing">
       <intent-filter>

@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
 
-import com.jakewharton.rxbinding2.support.v7.widget.RecyclerViewScrollEvent;
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 
 import net.dean.jraw.models.Message;
@@ -27,7 +26,6 @@ import java.util.List;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import io.reactivex.Observable;
 import io.reactivex.SingleTransformer;
 import io.reactivex.disposables.Disposable;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
@@ -114,6 +112,7 @@ public class InboxFolderFragment extends DankFragment {
     );
     messagesAdapter.setOnMessageClickListener(((Callbacks) getActivity()));
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
+
     messageList.setAdapter(messagesAdapterWithProgress);
     messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
     messageList.setItemAnimator(new DefaultItemAnimator());
@@ -128,24 +127,22 @@ public class InboxFolderFragment extends DankFragment {
     Callbacks callbacks = (Callbacks) getActivity();
 
     unsubscribeOnStop(Dank.inbox().messages(folder)
-        .distinctUntilChanged()
         .compose(applySchedulers())
         .compose(doOnceAfterNext(o -> {
           startInfiniteScroll(false /* isRetrying */);
 
           // Refresh messages once we've received the messages from database for the first time.
           if (!callbacks.isFirstRefreshDone(folder)) {
-            refreshMessages();
+            refreshMessages(false /* replaceAllExistingMessages */);
           }
         }))
         .doOnNext(messages -> {
           if (callbacks.isFirstRefreshDone(folder)) {
-            // Setting empty state's visibility is ideally done in refreshMessages(), but Fragment
-            // got recreated and but Activity didn't so a second refresh did not happen.
             emptyStateView.setVisibility(messages.isEmpty() ? View.VISIBLE : View.GONE);
           }
         })
-        .doOnNext(messages -> {
+        .doAfterNext(messages -> {
+          // Show FAB in unread folder for marking all as read.
           if (folder == InboxFolder.UNREAD && !messages.isEmpty()) {
             markAllAsReadButton.show();
             Views.executeOnMeasure(markAllAsReadButton, () -> {
@@ -171,30 +168,28 @@ public class InboxFolderFragment extends DankFragment {
    */
   protected void handleOnClickRefreshMenuItem() {
     if (!isRefreshOngoing) {
-      refreshMessages();
+      refreshMessages(true /* deleteAllMessages */);
     }
   }
 
-  protected void refreshMessages() {
-    Disposable refreshDisposable = Dank.inbox().refreshMessages(folder)
+  protected void refreshMessages(boolean replaceAllExistingMessages) {
+    Disposable refreshDisposable = Dank.inbox().refreshMessages(folder, replaceAllExistingMessages)
         .compose(applySchedulersSingle())
-        .compose(handleProgressAndErrorForFirstRefresh())
-        .compose(handleProgressAndErrorForSubsequentRefresh())
+        .compose(handleProgressAndErrorForFirstRefresh(replaceAllExistingMessages))
+        .compose(handleProgressAndErrorForSubsequentRefresh(replaceAllExistingMessages))
         .compose(doOnSingleStartAndTerminate(ongoing -> isRefreshOngoing = ongoing))
         .doOnSubscribe(o -> emptyStateView.setVisibility(View.GONE))
         .subscribe(fetchedMessages -> {
           if (isAdded()) {
             ((Callbacks) getActivity()).setFirstRefreshDone(folder);
           }
-
           emptyStateView.setVisibility(fetchedMessages.isEmpty() ? View.VISIBLE : View.GONE);
-          firstLoadErrorStateView.setOnRetryClickListener(o -> refreshMessages());
         }, doNothing());
 
     unsubscribeOnDestroy(refreshDisposable);
   }
 
-  private <T> SingleTransformer<T, T> handleProgressAndErrorForFirstRefresh() {
+  private <T> SingleTransformer<T, T> handleProgressAndErrorForFirstRefresh(boolean deleteAllMessagesInFolder) {
     if (messagesAdapter.getItemCount() > 0) {
       return upstream -> upstream;
     }
@@ -212,13 +207,13 @@ public class InboxFolderFragment extends DankFragment {
           }
           firstLoadErrorStateView.applyFrom(resolvedError);
           firstLoadErrorStateView.setVisibility(View.VISIBLE);
-          firstLoadErrorStateView.setOnRetryClickListener(o -> refreshMessages());
+          firstLoadErrorStateView.setOnRetryClickListener(o -> refreshMessages(deleteAllMessagesInFolder));
 
           firstLoadProgressView.setVisibility(View.GONE);
         });
   }
 
-  private <T> SingleTransformer<T, T> handleProgressAndErrorForSubsequentRefresh() {
+  private <T> SingleTransformer<T, T> handleProgressAndErrorForSubsequentRefresh(boolean deleteAllMessagesInFolder) {
     if (messagesAdapter.getItemCount() == 0) {
       return upstream -> upstream;
     }
@@ -228,7 +223,7 @@ public class InboxFolderFragment extends DankFragment {
         .doOnSuccess(o -> messageList.post(() -> messagesAdapterWithProgress.setHeaderMode(HeaderMode.HIDDEN)))
         .doOnError(error -> {
           messageList.post(() -> messagesAdapterWithProgress.setHeaderMode(HeaderMode.ERROR));
-          messagesAdapterWithProgress.setOnHeaderErrorRetryClickListener(o -> refreshMessages());
+          messagesAdapterWithProgress.setOnHeaderErrorRetryClickListener(o -> refreshMessages(deleteAllMessagesInFolder));
 
           ResolvedError resolvedError = Dank.errors().resolve(error);
           if (resolvedError.isUnknown()) {
@@ -241,15 +236,10 @@ public class InboxFolderFragment extends DankFragment {
    * @param isRetrying When true, more items are fetched right away. Otherwise, we wait for {@link InfiniteScrollListener} to emit.
    */
   private void startInfiniteScroll(boolean isRetrying) {
-    InfiniteScrollListener scrollListener = InfiniteScrollListener.create(messageList, 0.75f /* loadThreshold */);
-    scrollListener.setEmitInitialEvent(false);
+    InfiniteScrollListener scrollListener = InfiniteScrollListener.create(messageList, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD);
+    scrollListener.setEmitInitialEvent(isRetrying);
 
-    Observable<RecyclerViewScrollEvent> emitWhenLoadNeededStream = scrollListener.emitWhenLoadNeeded();
-    if (isRetrying) {
-      emitWhenLoadNeededStream.startWith(Observable.just(RecyclerViewScrollEvent.create(messageList, 0, 0)));
-    }
-
-    unsubscribeOnDestroy(emitWhenLoadNeededStream
+    unsubscribeOnDestroy(scrollListener.emitWhenLoadNeeded()
         .flatMapSingle(o -> Dank.inbox().fetchMoreMessages(folder)
             .compose(applySchedulersSingle())
             .compose(handleProgressAndErrorForLoadMore())
@@ -271,7 +261,6 @@ public class InboxFolderFragment extends DankFragment {
 
   private void populateEmptyStateView() {
     emptyStateView.setEmoji(R.string.inbox_empty_state_title);
-
     switch (folder) {
       case UNREAD:
         emptyStateView.setMessage(R.string.inbox_empty_state_message_for_unread);

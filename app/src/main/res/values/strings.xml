@@ -28,10 +28,11 @@
   <!-- Subreddit -->
   <string name="frontpage_subreddit_name">Frontpage</string>
   <string name="popular_subreddit_name">Popular</string>
+  <string name="subreddit_empty_state_title" translatable="false">ლ(ಠ_ಠლ)</string>
+  <string name="subreddit_empty_state_message">This subreddit is empty</string>
 
-  <string name="subreddit_go_to_subreddit">Go to subreddit…</string>
-  <string name="subreddit_profile">Profile</string>
-  <string name="subreddit_preferences">Preferences</string>
+  <string name="subreddit_menu_action_profile">Profile</string>
+  <string name="subreddit_menu_action_preferences">Preferences</string>
   <string name="cd_close_subreddit">Close subreddit</string>
 
   <string name="submission_item_cd_external_url">Thumbnail for submission URL</string>
@@ -50,6 +51,7 @@
   <string name="subredditpicker_refresh">Refresh</string>
   <string name="subredditpicker_show_hidden">Show hidden</string>
   <string name="subredditpicker_hide_hidden">Hide hidden</string>
+  <string name="subredditpicker_search_hint_go_to_subreddit">Go to subreddit…</string>
 
   <string name="newsubredditdialog_title">Subscribe to</string>
   <string name="newsubredditdialog_subscribe">Subscribe</string>

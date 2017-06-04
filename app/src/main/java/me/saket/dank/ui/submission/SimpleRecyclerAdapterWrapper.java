@@ -1,16 +1,19 @@
 package me.saket.dank.ui.submission;
 
 import android.support.v7.widget.RecyclerView;
-import android.view.ViewGroup;
+
+import java.util.List;
+
+import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
 /**
  * An adapter that delegates all calls to a wrapped adapter, except for create and bind.
  */
-public class SimpleRecyclerAdapterWrapper<VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
+public abstract class SimpleRecyclerAdapterWrapper<T, VH extends RecyclerView.ViewHolder> extends RecyclerViewArrayAdapter<T, VH> {
 
-  private RecyclerView.Adapter<VH> adapterToWrap;
+  private RecyclerViewArrayAdapter<T, VH> adapterToWrap;
 
-  public SimpleRecyclerAdapterWrapper(RecyclerView.Adapter<VH> adapterToWrap) {
+  public SimpleRecyclerAdapterWrapper(RecyclerViewArrayAdapter<T, VH> adapterToWrap) {
     this.adapterToWrap = adapterToWrap;
 
     setHasStableIds(adapterToWrap.hasStableIds());
@@ -50,16 +53,6 @@ public class SimpleRecyclerAdapterWrapper<VH extends RecyclerView.ViewHolder> ex
   }
 
   @Override
-  public VH onCreateViewHolder(ViewGroup parent, int viewType) {
-    return null;
-  }
-
-  @Override
-  public void onBindViewHolder(VH holder, int position) {
-
-  }
-
-  @Override
   public int getItemCount() {
     return adapterToWrap.getItemCount();
   }
@@ -72,5 +65,10 @@ public class SimpleRecyclerAdapterWrapper<VH extends RecyclerView.ViewHolder> ex
   @Override
   public int getItemViewType(int position) {
     return adapterToWrap.getItemViewType(position);
+  }
+
+  @Override
+  public void updateData(List<T> items) {
+    adapterToWrap.updateData(items);
   }
 }

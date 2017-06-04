@@ -10,12 +10,14 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
 import android.support.v7.widget.Toolbar;
+import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Completable;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
@@ -53,18 +55,14 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
 
-    Button clearSeenMessageNotifsButton = createButton();
-    clearSeenMessageNotifsButton.setText("Clear \"seen\" message notifs");
-    clearSeenMessageNotifsButton.setOnClickListener(o -> {
+    addButton("Clear \"seen\" message notifs", v -> {
       Dank.messagesNotifManager()
           .removeAllMessageNotifSeenStatuses()
           .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.syncImmediately(this)))
           .subscribe();
     });
 
-    Button dropMessagesTableButton = createButton();
-    dropMessagesTableButton.setText("Drop messages table");
-    dropMessagesTableButton.setOnClickListener(v -> {
+    addButton("Drop messages table", v -> {
       Completable
           .fromAction(() -> {
             Dank.database().executeAndTrigger(CachedMessage.TABLE_NAME, "DROP TABLE " + CachedMessage.TABLE_NAME);
@@ -75,12 +73,16 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
             Snackbar.make(v, "Messages dropped", Snackbar.LENGTH_SHORT).show();
           });
     });
+
+    addButton("Clear cached submissions", v -> {
+      Dank.submissions().removeAllCached().subscribeOn(Schedulers.io()).subscribe();
+    });
   }
 
-  private Button createButton() {
+  private void addButton(String label, View.OnClickListener clickListener) {
     Button button = new Button(this);
     contentContainer.addView(button, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-    return button;
+    button.setText(label);
+    button.setOnClickListener(clickListener);
   }
-
 }

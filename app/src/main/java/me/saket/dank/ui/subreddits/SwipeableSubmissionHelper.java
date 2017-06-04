@@ -3,6 +3,7 @@ package me.saket.dank.ui.subreddits;
 import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
 import net.dean.jraw.models.Submission;
@@ -13,6 +14,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.SimpleRecyclerAdapterWrapper;
+import me.saket.dank.ui.subreddits.SubmissionsAdapter.SubmissionViewHolder;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
@@ -21,7 +23,6 @@ import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
 import me.saket.dank.widgets.swipe.SwipeActionsHolder;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
-import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 import timber.log.Timber;
 
 /**
@@ -79,19 +80,17 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
   }
 
   @CheckResult
-  public <T extends Submission, VH extends RecyclerView.ViewHolder & ViewHolderWithSwipeActions> RecyclerView.Adapter wrapAdapter(
-      RecyclerViewArrayAdapter<T, VH> adapterToWrap)
-  {
-    return new SimpleRecyclerAdapterWrapper<VH>(adapterToWrap) {
+  public RecyclerViewArrayAdapter<Submission, SubmissionViewHolder> wrapAdapter(SubmissionsAdapter adapterToWrap) {
+    return new SimpleRecyclerAdapterWrapper<Submission, SubmissionViewHolder>(adapterToWrap) {
       @Override
-      public VH onCreateViewHolder(ViewGroup parent, int viewType) {
-        VH holder = adapterToWrap.onCreateViewHolder(parent, viewType);
+      public SubmissionViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
+        SubmissionViewHolder holder = adapterToWrap.onCreateViewHolder(parent, viewType);
         holder.getSwipeableLayout().setSwipeActionIconProvider(SwipeableSubmissionHelper.this);
         return holder;
       }
 
       @Override
-      public void onBindViewHolder(VH holder, int position) {
+      public void onBindViewHolder(SubmissionViewHolder holder, int position) {
         adapterToWrap.onBindViewHolder(holder, position);
         Submission submission = adapterToWrap.getItem(position);
         SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
@@ -171,12 +170,12 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
         break;
 
       case ACTION_NAME_SAVE:
-        submissionManager.save(submission);
+        submissionManager.markAsSaved(submission);
         Timber.i("Action: %s", action.name());
         break;
 
       case ACTION_NAME_UNSAVE:
-        submissionManager.unSave(submission);
+        submissionManager.markAsUnsaved(submission);
         Timber.i("Action: %s", action.name());
         break;
 

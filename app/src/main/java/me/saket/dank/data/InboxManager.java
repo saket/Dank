@@ -79,13 +79,13 @@ public class InboxManager {
   }
 
   /**
-   * Fetch most recent messages and remove any existing messages. Unlike {@link #fetchMoreMessages(InboxFolder)},
+   * Fetch most recent messages. Unlike {@link #fetchMoreMessages(InboxFolder)},
    * this does not use the oldest message as the anchor.
    */
   @CheckResult
-  public Single<List<Message>> refreshMessages(InboxFolder folder) {
+  public Single<List<Message>> refreshMessages(InboxFolder folder, boolean replaceAllMessages) {
     return fetchMessagesFromAnchor(folder, PaginationAnchor.createEmpty())
-        .doOnSuccess(saveMessages(folder, true))
+        .doOnSuccess(saveMessages(folder, replaceAllMessages))
         .map(fetchedMessages -> unmodifiableList(fetchedMessages));
   }
 

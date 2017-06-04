@@ -83,7 +83,7 @@ public class RxUtils {
   /**
    * Calls true on <var>consumer</var> when the stream is subscribed to and false when it finishes.
    */
-  public static CompletableTransformer doOnCompletableStartAndEnd(Consumer<Boolean> consumer) {
+  public static CompletableTransformer doOnCompletableStartAndTerminate(Consumer<Boolean> consumer) {
     return observable -> observable
         .doOnSubscribe(o -> consumer.accept(true))
         .doAfterTerminate(() -> consumer.accept(false));

@@ -16,6 +16,7 @@ import me.saket.dank.di.Dank;
 import okhttp3.Call;
 import okhttp3.Request;
 import okhttp3.Response;
+import timber.log.Timber;
 
 /**
  * Extracts information of a URL.
@@ -94,6 +95,9 @@ public class UrlMetadataParser {
     if (isEmpty(linkTitle)) {
       linkTitle = pageDocument.title();
     }
+    if (isEmpty(linkTitle)) {
+      Timber.w("linkTitle is empty :O.");
+    }
 
     // Favicon.
     faviconUrl = getLinkRelTag(pageDocument, "apple-touch-icon");
@@ -116,6 +120,8 @@ public class UrlMetadataParser {
         faviconUrl = null;
       }
     }
+
+    Timber.i("linkTitle: %s", linkTitle);
 
     return LinkMetadata.create(url, linkTitle, faviconUrl, linkImage);
   }

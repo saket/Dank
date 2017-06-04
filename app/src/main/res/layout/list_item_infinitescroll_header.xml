@@ -1,41 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="@color/window_background"
+  android:foreground="?attr/selectableItemBackground"
+  android:paddingBottom="@dimen/spacing16"
+  android:paddingEnd="@dimen/spacing16"
+  android:paddingStart="@dimen/spacing16"
+  android:paddingTop="@dimen/spacing24"
+  tools:layout_marginTop="25dp">
+  <!-- animateLayoutChanges does not work very well here. -->
+
+  <LinearLayout
+    android:id="@+id/infinitescroll_header_progress_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:background="@color/window_background"
-    android:foreground="?attr/selectableItemBackground"
-    android:paddingBottom="@dimen/spacing16"
-    android:paddingEnd="@dimen/spacing16"
-    android:paddingStart="@dimen/spacing16"
-    android:paddingTop="@dimen/spacing24"
-    tools:layout_marginTop="25dp">
-    <!-- animateLayoutChanges does not work very well here. -->
+    android:gravity="center_vertical"
+    android:visibility="gone">
 
-    <LinearLayout
-        android:id="@+id/infinitescroll_header_progress_container"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:gravity="center_vertical"
-        android:visibility="visible">
+    <ProgressBar
+      android:layout_width="@dimen/one_line_progress_indicator_size"
+      android:layout_height="@dimen/one_line_progress_indicator_size"
+      android:layout_marginEnd="@dimen/spacing16"
+      android:indeterminate="true"
+      android:indeterminateTint="@color/color_accent" />
 
-        <ProgressBar
-            android:layout_width="@dimen/one_line_progress_indicator_size"
-            android:layout_height="@dimen/one_line_progress_indicator_size"
-            android:layout_marginEnd="@dimen/spacing16"
-            android:indeterminate="true"
-            android:indeterminateTint="@color/color_accent" />
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:text="@string/inbox_refreshing_messages"
+      android:textColor="@color/color_accent" />
+  </LinearLayout>
 
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="@string/inbox_refreshing_messages"
-            android:textColor="@color/color_accent" />
-    </LinearLayout>
+  <me.saket.dank.widgets.TintableCompoundDrawableTextView
+    android:id="@+id/infinitescroll_header_error"
+    style="@style/DankInfiniteScrollHeaderFooterTextWithIcon"
+    android:text="@string/inbox_error_failed_to_refresh_messages"
+    android:visibility="gone" />
 
-    <me.saket.dank.widgets.TintableCompoundDrawableTextView
-        android:id="@+id/infinitescroll_header_error"
-        android:text="@string/inbox_error_failed_to_refresh_messages"
-        android:visibility="gone"
-        style="@style/DankInfiniteScrollHeaderFooterErrorText" />
+  <me.saket.dank.widgets.TintableCompoundDrawableTextView
+    android:id="@+id/infinitescroll_header_items_downloaded"
+    style="@style/DankInfiniteScrollHeaderFooterTextWithIcon"
+    android:text="Items ready"
+    android:textColor="@color/color_accent_secondary"
+    android:visibility="visible" />
 </FrameLayout>

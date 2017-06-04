@@ -19,7 +19,7 @@
 
     <me.saket.dank.widgets.TintableCompoundDrawableTextView
         android:id="@+id/infinitescroll_footer_error"
-        style="@style/DankInfiniteScrollHeaderFooterErrorText"
+        style="@style/DankInfiniteScrollHeaderFooterTextWithIcon"
         android:layout_gravity="center"
         android:paddingBottom="@dimen/spacing12"
         android:paddingTop="@dimen/spacing12"

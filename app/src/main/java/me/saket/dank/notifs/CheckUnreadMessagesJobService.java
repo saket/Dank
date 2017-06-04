@@ -107,7 +107,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
     Completable refreshCompletable = Dank.inbox()
         .messages(InboxFolder.UNREAD)
         .firstOrError()
-        .flatMapCompletable(existingUnreads -> Dank.inbox().refreshMessages(InboxFolder.UNREAD)
+        .flatMapCompletable(existingUnreads -> Dank.inbox().refreshMessages(InboxFolder.UNREAD, false /* replaceAllMessages */)
             .map(receivedUnreads -> {
               List<Message> staleMessages = new ArrayList<>(existingUnreads.size());
               staleMessages.addAll(existingUnreads);

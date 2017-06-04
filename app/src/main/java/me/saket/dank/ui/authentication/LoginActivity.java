@@ -106,5 +106,4 @@ public class LoginActivity extends DankActivity {
       super.onBackPressed();
     }
   }
-
 }

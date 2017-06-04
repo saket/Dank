@@ -4,6 +4,7 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
+  android:background="@null"
   tools:context="me.saket.dank.ui.subreddits.SubredditActivity"
   tools:layout_marginTop="25dp">
 
@@ -17,11 +18,28 @@
     android:scrollbars="vertical"
     tools:visibility="gone" />
 
+  <me.saket.dank.widgets.EmptyStateView
+    android:id="@+id/subreddit_submission_emptyState"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:layout_marginTop="-60dp"
+    android:visibility="gone" />
+
+  <me.saket.dank.widgets.ErrorStateView
+    android:id="@+id/subreddit_submission_errorState"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:layout_marginTop="-60dp"
+    android:visibility="gone" />
+
   <FrameLayout
     android:id="@+id/subreddit_progress"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_centerInParent="true"
+    android:layout_below="@+id/subreddit_toolbar_container"
     android:background="@color/window_background"
     android:visibility="gone">
 
@@ -31,20 +49,11 @@
       android:layout_gravity="center" />
   </FrameLayout>
 
-  <View
-    android:id="@+id/subreddit_toolbar_status_bar_space"
-    android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:background="@color/toolbar"
-    android:elevation="@dimen/elevation_toolbar"
-    android:visibility="gone" />
-
   <!-- All Views inside this have bottom margins to make space for their shadows. -->
   <FrameLayout
     android:id="@+id/subreddit_toolbar_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_below="@+id/subreddit_toolbar_status_bar_space"
     android:outlineProvider="bounds">
 
     <me.saket.dank.widgets.DankToolbar

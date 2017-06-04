@@ -60,7 +60,7 @@
     android:layout_below="@+id/subredditpicker_options_container"
     android:layout_marginStart="@dimen/spacing16"
     android:layout_marginTop="6dp"
-    android:contentDescription="@string/subreddit_go_to_subreddit"
+    android:contentDescription="@string/subredditpicker_search_hint_go_to_subreddit"
     android:src="@drawable/ic_search_24dp"
     android:tint="@color/gray_700" />
 
@@ -73,7 +73,7 @@
     android:layout_marginEnd="14dp"
     android:layout_marginStart="14dp"
     android:layout_marginTop="-8dp"
-    android:hint="@string/subreddit_go_to_subreddit"
+    android:hint="@string/subredditpicker_search_hint_go_to_subreddit"
     android:imeOptions="actionGo"
     android:inputType="textCapWords"
     android:paddingStart="32dp"

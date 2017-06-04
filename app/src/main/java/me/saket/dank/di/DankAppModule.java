@@ -7,6 +7,7 @@ import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
 
 import com.danikula.videocache.HttpProxyCacheServer;
+import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nytimes.android.external.fs2.filesystem.FileSystem;
 import com.nytimes.android.external.fs2.filesystem.FileSystemFactory;
@@ -147,8 +148,9 @@ public class DankAppModule {
 
     if (BuildConfig.DEBUG) {
       HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> Timber.tag("OkHttp").d(message));
-      logging.setLevel(HttpLoggingInterceptor.Level.BODY);
-      builder.addNetworkInterceptor(logging);
+      logging.setLevel(HttpLoggingInterceptor.Level.NONE);
+      builder.addInterceptor(logging);
+      builder.addNetworkInterceptor(new StethoInterceptor());
     }
 
     return builder.build();

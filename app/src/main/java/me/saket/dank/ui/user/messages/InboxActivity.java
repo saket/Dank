@@ -222,7 +222,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     Message[] seenMessagesArray = Arrays.toArray(seenUnreadMessages, Message.class);
     sendBroadcast(NotificationActionReceiver.createMarkAsReadIntent(this, Dank.moshi(), seenMessagesArray));
 
-    Dank.inbox().refreshMessages(InboxFolder.UNREAD)
+    Dank.inbox().refreshMessages(InboxFolder.UNREAD, false /* replaceAllMessages */)
         .compose(applySchedulersSingle())
         .subscribe(doNothing(), doNothing());
   }

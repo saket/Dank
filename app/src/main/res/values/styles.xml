@@ -17,7 +17,6 @@
     <item name="android:backgroundDimEnabled">false</item>
 
     <item name="alertDialogTheme">@style/DankDialogTheme</item>
-    <item name="android:windowBackground">@android:color/transparent</item>
   </style>
 
   <style name="DankTheme.TransparentBackground">
@@ -138,7 +137,7 @@
     <item name="android:textSize">@dimen/textsize14</item>
   </style>
 
-  <style name="DankInfiniteScrollHeaderFooterErrorText">
+  <style name="DankInfiniteScrollHeaderFooterTextWithIcon">
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:drawablePadding">@dimen/spacing16</item>

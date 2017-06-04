@@ -16,6 +16,11 @@ import io.reactivex.functions.Predicate;
  */
 public class InfiniteScrollListener {
 
+  /**
+   * Fetch more items once the list has scrolled past 75% of its items.
+   */
+  public static final float DEFAULT_LOAD_THRESHOLD = 0.75f;
+
   private final float loadThresholdFactor;
   private final RecyclerView recyclerView;
   private boolean isLoadOngoing;

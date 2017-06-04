@@ -24,8 +24,10 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
     recyclerView.addOnChildAttachStateChangeListener(new SimpleRecyclerViewOnChildAttachStateChangeListener() {
       @Override
       public void onChildViewDetachedFromWindow(View view) {
-        ViewHolderWithSwipeActions viewHolder = (ViewHolderWithSwipeActions) recyclerView.getChildViewHolder(view);
-        viewHolder.getSwipeableLayout().setSwipeTranslation(0f);
+        RecyclerView.ViewHolder viewHolder = recyclerView.getChildViewHolder(view);
+        if (viewHolder instanceof ViewHolderWithSwipeActions) {
+          ((ViewHolderWithSwipeActions) viewHolder).getSwipeableLayout().setSwipeTranslation(0f);
+        }
       }
     });
   }
@@ -38,8 +40,10 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
         // itself. So rawX() and rawY() will not be correct.
         View childViewUnder = recyclerView.findChildViewUnder(e.getX(), e.getY());
         if (childViewUnder != null) {
-          ViewHolderWithSwipeActions viewHolder = (ViewHolderWithSwipeActions) recyclerView.getChildViewHolder(childViewUnder);
-          viewBeingSwiped = viewHolder.getSwipeableLayout();
+          RecyclerView.ViewHolder viewHolder = recyclerView.getChildViewHolder(childViewUnder);
+          if (viewHolder instanceof ViewHolderWithSwipeActions) {
+            viewBeingSwiped = ((ViewHolderWithSwipeActions) viewHolder).getSwipeableLayout();
+          }
         }
 
         return false;
