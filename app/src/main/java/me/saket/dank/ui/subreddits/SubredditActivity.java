@@ -8,7 +8,6 @@ import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
-import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
@@ -25,11 +24,21 @@ import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
+import com.github.zagum.expandicon.ExpandIconView;
+import com.jakewharton.rxrelay2.BehaviorRelay;
+
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Subreddit;
+import net.dean.jraw.paginators.Sorting;
+import net.dean.jraw.paginators.TimePeriod;
+
+import java.util.HashSet;
+import java.util.Set;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import com.github.zagum.expandicon.ExpandIconView;
-import com.jakewharton.rxrelay2.BehaviorRelay;
 import io.reactivex.Completable;
 import io.reactivex.CompletableSource;
 import io.reactivex.SingleTransformer;
@@ -38,8 +47,6 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import java.util.HashSet;
-import java.util.Set;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.RedditLink;
@@ -65,10 +72,6 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Subreddit;
-import net.dean.jraw.paginators.Sorting;
-import net.dean.jraw.paginators.TimePeriod;
 import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
@@ -332,18 +335,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // Unfortunately, using switchMap is not an option here so disposing old chains manually.
     ongoingSubmissionsLoadDisposable.dispose();
 
+    firstLoadErrorStateView.setVisibility(View.GONE);
+    firstLoadProgressView.setVisibility(View.VISIBLE);
+    submissionAdapterWithProgress.accept(null);
+
     ongoingSubmissionsLoadDisposable = refreshBeforeLoadCompletable
-        .doOnSubscribe(o -> {
-          firstLoadErrorStateView.setVisibility(View.GONE);
-          firstLoadProgressView.setVisibility(View.VISIBLE);
-          submissionAdapterWithProgress.accept(null);
-        })
         .onErrorResumeNext(swallowErrorUnlessCacheIsEmpty(folder))
         .doOnTerminate(() -> firstLoadProgressView.setVisibility(View.GONE))
         .andThen(Dank.submissions().submissions(folder))
         .compose(applySchedulers())
         .doOnNext(submissions -> Timber.d("Fetched %s submissions from DB under %s", submissions.size(), subredditNameChangesRelay.getValue()))
-        .subscribe(submissionAdapterWithProgress, logError("Couldn't get messages"));
+        .subscribe(submissionAdapterWithProgress, doNothing());
     unsubscribeOnDestroy(ongoingSubmissionsLoadDisposable);
   }
 
