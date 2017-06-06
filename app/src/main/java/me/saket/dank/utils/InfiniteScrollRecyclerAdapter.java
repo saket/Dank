@@ -148,6 +148,13 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
     });
   }
 
+  public void setFooterWithoutNotifyingDataSetChanged(HeaderFooterInfo footerInfo) {
+    if (activeFooterInfo == footerInfo) {
+      return;
+    }
+    recyclerView.post(() -> activeFooterInfo = footerInfo);
+  }
+
   public boolean isWrappedAdapterItem(int position) {
     return !(isHeaderItem(position) || isFooterItem(position));
   }

@@ -34,7 +34,6 @@ import net.dean.jraw.paginators.Sorting;
 import net.dean.jraw.paginators.TimePeriod;
 
 import java.util.HashSet;
-import java.util.Set;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -81,6 +80,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
   private static final String KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE = "isSubredditPickerVisible";
   private static final String KEY_IS_USER_PROFILE_SHEET_VISIBLE = "isUserProfileSheetVisible";
+  private static final String KEY_FIRST_REFRESH_DONE_FOR_SUBREDDIT_FOLDERS = "firstRefreshDoneForSubredditFolders";
 
   @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
   @BindView(R.id.toolbar) DankToolbar toolbar;
@@ -98,9 +98,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   private SubmissionFragment submissionFragment;
   private InfiniteScrollRecyclerAdapter<Submission, ?> submissionAdapterWithProgress;
-  private BehaviorRelay<String> subredditNameChangesRelay = BehaviorRelay.create();
-  private Set<CachedSubmissionFolder> firstRefreshDoneForSubredditFolders = new HashSet<>();
+  private HashSet<CachedSubmissionFolder> firstRefreshDoneForSubredditFolders = new HashSet<>();
   private Disposable ongoingSubmissionsLoadDisposable = Disposables.disposed();
+  private BehaviorRelay<String> subredditChangesRelay = BehaviorRelay.create();
+  private BehaviorRelay<String> subredditNameChangesRelay = BehaviorRelay.create();
 
   protected static void addStartExtrasToIntent(RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
@@ -126,7 +127,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     findAndSetupToolbar();
     getSupportActionBar().setDisplayShowTitleEnabled(false);
-    subredditNameChangesRelay.subscribe(subredditName -> setTitle(subredditName));
+    subredditNameChangesRelay
+        .startWith(subredditChangesRelay)
+        .flatMap(subredditName -> subredditChangesRelay)
+        .subscribe(subredditName -> setTitle(subredditName));
 
     if (isPullCollapsible) {
       contentPage.setNestedExpandablePage(submissionPage);
@@ -138,27 +142,29 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
   @Override
-  protected void onPostCreate(@Nullable Bundle savedInstanceState) {
-    super.onPostCreate(savedInstanceState);
+  protected void onPostCreate(@Nullable Bundle savedState) {
+    super.onPostCreate(savedState);
 
-    setupSubmissionList();
-
-    // Get frontpage (or retained subreddit's) submissions.
-    if (savedInstanceState != null) {
-      String retainedSub = savedInstanceState.getString(KEY_ACTIVE_SUBREDDIT);
-      //noinspection ConstantConditions
-      subredditNameChangesRelay.accept(retainedSub);
-
-    } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
-      String requestedSub = ((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name;
-      subredditNameChangesRelay.accept(requestedSub);
-
-    } else {
-      subredditNameChangesRelay.accept(Dank.subscriptionManager().defaultSubreddit());
+    if (savedState != null) {
+      //noinspection unchecked
+      firstRefreshDoneForSubredditFolders = (HashSet<CachedSubmissionFolder>) savedState.getSerializable(KEY_FIRST_REFRESH_DONE_FOR_SUBREDDIT_FOLDERS);
     }
 
-    if (savedInstanceState != null) {
-      submissionList.handleOnRestoreInstanceState(savedInstanceState);
+    setupSubmissionList();
+    if (savedState != null) {
+      submissionList.handleOnRestoreInstanceState(savedState);
+    }
+
+    // Get frontpage (or retained subreddit's) submissions.
+    if (savedState != null) {
+      String retainedSub = savedState.getString(KEY_ACTIVE_SUBREDDIT);
+      //noinspection ConstantConditions
+      subredditChangesRelay.accept(retainedSub);
+    } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
+      String requestedSub = ((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name;
+      subredditChangesRelay.accept(requestedSub);
+    } else {
+      subredditChangesRelay.accept(Dank.subscriptionManager().defaultSubreddit());
     }
 
     // Setup submission page.
@@ -211,10 +217,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     }
 
     // Restore state of subreddit picker sheet / user profile sheet.
-    if (savedInstanceState != null) {
-      if (savedInstanceState.getBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE)) {
+    if (savedState != null) {
+      if (savedState.getBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE)) {
         showSubredditPickerSheet();
-      } else if (savedInstanceState.getBoolean(KEY_IS_USER_PROFILE_SHEET_VISIBLE)) {
+      } else if (savedState.getBoolean(KEY_IS_USER_PROFILE_SHEET_VISIBLE)) {
         showUserProfileSheet();
       }
     }
@@ -226,11 +232,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     submissionList.handleOnSaveInstance(outState);
-    if (subredditNameChangesRelay.hasValue()) {
-      outState.putString(KEY_ACTIVE_SUBREDDIT, subredditNameChangesRelay.getValue());
+    if (subredditChangesRelay.hasValue()) {
+      outState.putString(KEY_ACTIVE_SUBREDDIT, subredditChangesRelay.getValue());
     }
     outState.putBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE, isSubredditPickerVisible());
     outState.putBoolean(KEY_IS_USER_PROFILE_SHEET_VISIBLE, isUserProfileSheetVisible());
+    outState.putSerializable(KEY_FIRST_REFRESH_DONE_FOR_SUBREDDIT_FOLDERS, firstRefreshDoneForSubredditFolders);
     super.onSaveInstanceState(outState);
   }
 
@@ -265,7 +272,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
           } else if (isUserProfileSheetVisible()) {
             // This will update the title.
-            subredditNameChangesRelay.accept(subredditNameChangesRelay.getValue());
+            subredditNameChangesRelay.accept(subredditChangesRelay.getValue());
           }
           toolbarTitleArrowView.setState(ExpandIconView.MORE, true);
           break;
@@ -311,10 +318,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     submissionList.setAdapter(submissionAdapterWithProgress);
 
     unsubscribeOnDestroy(
-        subredditNameChangesRelay
+        subredditChangesRelay
             .observeOn(AndroidSchedulers.mainThread())
             .map(subredditName -> CachedSubmissionFolder.create(subredditName, Sorting.HOT, TimePeriod.DAY))
-            .doOnNext(folder -> Timber.i("Sub change: %s", folder.subredditName()))
             .subscribe(folder -> loadSubmissions(folder))
     );
   }
@@ -326,7 +332,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       refreshBeforeLoadCompletable = Dank.submissions().fetchAndSaveFromRemote(folder, true /* removeExisting */)
           .toCompletable()
           .compose(applySchedulersCompletable())
-          .doOnSubscribe(o -> Timber.i("Refreshing from remote"))
           .doOnComplete(() -> firstRefreshDoneForSubredditFolders.add(folder));
     } else {
       refreshBeforeLoadCompletable = Completable.complete();
@@ -342,9 +347,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     ongoingSubmissionsLoadDisposable = refreshBeforeLoadCompletable
         .onErrorResumeNext(swallowErrorUnlessCacheIsEmpty(folder))
         .doOnTerminate(() -> firstLoadProgressView.setVisibility(View.GONE))
+        .doOnComplete(() -> startInfiniteScroll(false /* isRetrying */))
         .andThen(Dank.submissions().submissions(folder))
         .compose(applySchedulers())
-        .doOnNext(submissions -> Timber.d("Fetched %s submissions from DB under %s", submissions.size(), subredditNameChangesRelay.getValue()))
         .subscribe(submissionAdapterWithProgress, doNothing());
     unsubscribeOnDestroy(ongoingSubmissionsLoadDisposable);
   }
@@ -374,13 +379,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     };
   }
 
-  // TODO: Reset on subreddit change, because we suspend infinite scroll if no more submissions were fetched.
-  // TODO: This might already be happening?
   private void startInfiniteScroll(boolean isRetrying) {
     InfiniteScrollListener scrollListener = InfiniteScrollListener.create(submissionList, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD);
     scrollListener.setEmitInitialEvent(isRetrying);
 
-    CachedSubmissionFolder folder = CachedSubmissionFolder.create(subredditNameChangesRelay.getValue(), Sorting.HOT, TimePeriod.DAY);
+    CachedSubmissionFolder folder = CachedSubmissionFolder.create(subredditChangesRelay.getValue(), Sorting.HOT, TimePeriod.DAY);
     unsubscribeOnDestroy(scrollListener.emitWhenLoadNeeded()
         .doOnNext(o -> Timber.i("need to load more"))
         .flatMapSingle(o -> Dank.submissions().fetchAndSaveMoreSubmissions(folder)
@@ -395,7 +398,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private <T> SingleTransformer<T, T> handleProgressAndErrorForLoadMore() {
     return upstream -> upstream
         .doOnSubscribe(o -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createFooterProgress()))
-        .doOnSuccess(o -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createHidden()))
+        .doOnSuccess(o -> submissionAdapterWithProgress.setFooterWithoutNotifyingDataSetChanged(HeaderFooterInfo.createHidden()))
         .doOnError(error -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createError(
             R.string.subreddit_error_failed_to_load_more_submissions,
             o -> startInfiniteScroll(true /* isRetrying */)
@@ -403,13 +406,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
   private void onClickRefresh() {
-    CachedSubmissionFolder activeFolder = CachedSubmissionFolder.create(subredditNameChangesRelay.getValue(), Sorting.HOT, TimePeriod.DAY);
+    CachedSubmissionFolder activeFolder = CachedSubmissionFolder.create(subredditChangesRelay.getValue(), Sorting.HOT, TimePeriod.DAY);
 
     // This will force loadSubmissions() to get re-called.
     unsubscribeOnDestroy(Dank.submissions().removeAllCachedInFolder(activeFolder)
         .subscribe(() -> {
           firstRefreshDoneForSubredditFolders.remove(activeFolder);
-          subredditNameChangesRelay.accept(subredditNameChangesRelay.getValue());
+          subredditChangesRelay.accept(subredditChangesRelay.getValue());
         }));
   }
 
@@ -475,8 +478,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       @Override
       public void onSelectSubreddit(String subredditName) {
         toolbarSheet.collapse();
-        if (!subredditName.equalsIgnoreCase(subredditNameChangesRelay.getValue())) {
-          subredditNameChangesRelay.accept(subredditName);
+        if (!subredditName.equalsIgnoreCase(subredditChangesRelay.getValue())) {
+          subredditChangesRelay.accept(subredditName);
         }
       }
 
@@ -488,8 +491,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       @Override
       public void onSubredditsChanged() {
         // Refresh the submissions if the frontpage was active.
-        if (Dank.subscriptionManager().isFrontpage(subredditNameChangesRelay.getValue())) {
-          subredditNameChangesRelay.accept(subredditNameChangesRelay.getValue());
+        if (Dank.subscriptionManager().isFrontpage(subredditChangesRelay.getValue())) {
+          subredditChangesRelay.accept(subredditChangesRelay.getValue());
         }
       }
     });
@@ -545,8 +548,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
       // Reload submissions if we're on the frontpage because the frontpage
       // submissions will change if the subscriptions change.
-      if (Dank.subscriptionManager().isFrontpage(subredditNameChangesRelay.getValue())) {
-        subredditNameChangesRelay.accept(subredditNameChangesRelay.getValue());
+      if (Dank.subscriptionManager().isFrontpage(subredditChangesRelay.getValue())) {
+        subredditChangesRelay.accept(subredditChangesRelay.getValue());
       }
 
       firstRefreshDoneForSubredditFolders.clear();
