@@ -46,6 +46,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.DankApplication;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.RedditLink;
@@ -158,6 +159,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       firstRefreshDoneForSubredditFolders = (HashSet<CachedSubmissionFolder>) savedState
           .getSerializable(KEY_FIRST_REFRESH_DONE_FOR_SUBREDDIT_FOLDERS);
     }
+    // Force refresh all subreddits when the app (not this Activity) returns to background.
+    unsubscribeOnDestroy(
+        DankApplication.appMinimizeStream().subscribe(o -> firstRefreshDoneForSubredditFolders.clear())
+    );
 
     setupSubmissionList();
     if (savedState != null) {

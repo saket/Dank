@@ -12,7 +12,6 @@ import net.dean.jraw.paginators.TimePeriod;
 
 import me.saket.dank.R;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
-import timber.log.Timber;
 
 public class SubmissionsSortingModePopupMenu extends PopupMenu {
 
@@ -107,9 +106,6 @@ public class SubmissionsSortingModePopupMenu extends PopupMenu {
   public void highlightActiveSortingAndTImePeriod(SortingAndTimePeriod highlightedSortingAndTimePeriod) {
     String highlightedSorting = context.getString(highlightedSortingAndTimePeriod.getSortingDisplayTextRes());
     String highlightedTimePeriod = context.getString(highlightedSortingAndTimePeriod.getTimePeriodDisplayTextRes());
-
-    Timber.i("highlightedSorting: %s", highlightedSorting);
-    Timber.i("highlightedTimePeriod: %s", highlightedTimePeriod);
 
     for (int i = 0; i < getMenu().size(); i++) {
       MenuItem menuItem = getMenu().getItem(i);

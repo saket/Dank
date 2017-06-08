@@ -1,8 +1,12 @@
 package me.saket.dank;
 
+import android.app.Activity;
 import android.app.Application;
+import android.support.annotation.CheckResult;
 
 import com.facebook.stetho.Stetho;
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.tspoon.traceur.Traceur;
 
@@ -11,9 +15,12 @@ import java.io.InterruptedIOException;
 
 import io.reactivex.plugins.RxJavaPlugins;
 import me.saket.dank.di.Dank;
+import me.saket.dank.utils.SimpleActivityLifecycleCallbacks;
 import timber.log.Timber;
 
 public class DankApplication extends Application {
+
+  private static Relay<Object> dankMinimizeRelay = PublishRelay.create();
 
   @Override
   public void onCreate() {
@@ -56,5 +63,33 @@ public class DankApplication extends Application {
 
       Timber.e(e, "Undeliverable exception received, not sure what to do.");
     });
+
+    registerActivityLifecycleCallbacks(new SimpleActivityLifecycleCallbacks() {
+      int activeActivitiesCount = 0;
+
+      @Override
+      public void onActivityStarted(Activity activity) {
+        ++activeActivitiesCount;
+      }
+
+      @Override
+      public void onActivityStopped(Activity activity) {
+        --activeActivitiesCount;
+
+        if (activeActivitiesCount == 0) {
+          dankMinimizeRelay.accept(new Object());
+        }
+      }
+    });
+  }
+
+  /**
+   * An Observable that emits whenever all activities of the app are minimized/stopped.
+   * Note 1: Unsubscribe only in onDestroy(). Unsubscribing in onStop() will be incorrect.
+   * Note 2: Do not forget #1.
+   */
+  @CheckResult
+  public static Relay<Object> appMinimizeStream() {
+    return dankMinimizeRelay;
   }
 }
