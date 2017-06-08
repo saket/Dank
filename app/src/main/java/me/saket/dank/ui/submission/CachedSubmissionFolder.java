@@ -5,36 +5,37 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.paginators.Sorting;
 import net.dean.jraw.paginators.TimePeriod;
 
+import java.io.Serializable;
+
 /**
  * Uniquely identifies a cached submission by its subreddit's name and sorting information.
  */
 @AutoValue
-public abstract class CachedSubmissionFolder {
+public abstract class CachedSubmissionFolder implements Serializable {
 
   private static final String SEPARATOR = "____";
 
   public abstract String subredditName();
 
-  public abstract Sorting sortOrder();
-
-  public abstract TimePeriod sortTimePeriod();
-
-  public static CachedSubmissionFolder create(String subredditName, Sorting sortOrder, TimePeriod timePeriod) {
-    return new AutoValue_CachedSubmissionFolder(subredditName, sortOrder, timePeriod);
-  }
+  public abstract SortingAndTimePeriod sortingAndTimePeriod();
 
   public static CachedSubmissionFolder create(String subredditName, Sorting sortOrder) {
-    if (sortOrder.requiresTimePeriod()) {
-      throw new AssertionError("Sorting requires a timeperiod");
-    }
-    return create(subredditName, sortOrder, TimePeriod.DAY /* using a dummy period of a null value. */);
+    return create(subredditName, SortingAndTimePeriod.create(sortOrder));
+  }
+
+  public static CachedSubmissionFolder create(String subredditName, Sorting sortOrder, TimePeriod timePeriod) {
+    return create(subredditName, SortingAndTimePeriod.create(sortOrder, timePeriod));
+  }
+
+  private static CachedSubmissionFolder create(String subredditName, SortingAndTimePeriod sortingAndTimePeriod) {
+    return new AutoValue_CachedSubmissionFolder(subredditName, sortingAndTimePeriod);
   }
 
   /**
    * Used for storing this into DB. Not using moshi because this will be searcheable.
    */
   public String serialize() {
-    return subredditName() + SEPARATOR + sortOrder().name() + SEPARATOR + sortTimePeriod().name();
+    return subredditName() + SEPARATOR + sortingAndTimePeriod().sortOrder().name() + SEPARATOR + sortingAndTimePeriod().timePeriod().name();
   }
 
   public static CachedSubmissionFolder valueOf(String serializedSrtingAndTimePeriod) {

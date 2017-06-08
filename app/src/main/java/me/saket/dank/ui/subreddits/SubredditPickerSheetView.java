@@ -384,7 +384,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
   @OnClick(R.id.subredditpicker_option_overflow_menu)
   void onClickOverflowMenu(View optionView) {
-    PopupMenu overflowMenu = new PopupMenu(getContext(), optionView, Gravity.NO_GRAVITY, 0, R.style.DankOverflowMenu);
+    PopupMenu overflowMenu = new PopupMenu(getContext(), optionView, Gravity.END);
     overflowMenu.inflate(R.menu.menu_subredditpicker_overflow_menu);
 
     overflowMenu.getMenu().findItem(R.id.action_show_hidden_subreddits).setVisible(!showHiddenSubredditsSubject.getValue());
@@ -419,7 +419,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   }
 
   private void showSubredditOptionsMenu(SubredditSubscription subscription, View subredditItemView) {
-    PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView);
+    PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView, Gravity.BOTTOM, 0, R.style.DankPopupMenu_SubredditOptions);
     popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
 
     popupMenu.getMenu().findItem(R.id.action_set_subreddit_as_default).setVisible(!Dank.subscriptionManager().isDefault(subscription));

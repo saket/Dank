@@ -8,6 +8,7 @@ import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
+import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
@@ -23,6 +24,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.github.zagum.expandicon.ExpandIconView;
@@ -56,6 +58,7 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
+import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.subreddits.SubmissionsAdapter.SubmissionViewHolder;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -89,6 +92,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @BindView(R.id.subreddit_toolbar_title_arrow) ExpandIconView toolbarTitleArrowView;
   @BindView(R.id.subreddit_toolbar_title_container) ViewGroup toolbarTitleContainer;
   @BindView(R.id.subreddit_toolbar_container) ViewGroup toolbarContainer;
+  @BindView(R.id.subreddit_sorting_mode_container) ViewGroup sortingModeContainer;
   @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
   @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
   @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
@@ -120,10 +124,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // Add top-margin to make room for the status bar.
     int statusBarHeight = statusBarHeight(getResources());
-    setPaddingTop(toolbar, statusBarHeight);
     setMarginTop(toolbarTitleContainer, statusBarHeight);
-    setMarginTop(submissionList, statusBarHeight);
+    setPaddingTop(toolbar, statusBarHeight);
     setPaddingTop(toolbarSheet, statusBarHeight);
+    executeOnMeasure(toolbar, () -> setMarginTop(sortingModeContainer, statusBarHeight + toolbar.getHeight()));
+    executeOnMeasure(sortingModeContainer, () -> {
+      setPaddingTop(submissionList, sortingModeContainer.getHeight() + toolbar.getHeight() + statusBarHeight);
+    });
 
     findAndSetupToolbar();
     getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -414,6 +421,20 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           firstRefreshDoneForSubredditFolders.remove(activeFolder);
           subredditChangesRelay.accept(subredditChangesRelay.getValue());
         }));
+  }
+
+// ======== SORTING MODE ======== //
+
+  @OnClick(R.id.subreddit_sorting_mode)
+  public void onClickSortingMode(Button sortingModeButton) {
+    SubmissionsSortingModePopupMenu sortingPopupMenu = new SubmissionsSortingModePopupMenu(this, sortingModeButton);
+    sortingPopupMenu.inflate(R.menu.menu_submission_sorting_mode);
+
+    // TODO: Get the current sort mode dynamically.
+    SortingAndTimePeriod currentSortMode = SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.DAY);
+    sortingPopupMenu.highlightActiveSortingAndTImePeriod(currentSortMode);
+
+    sortingPopupMenu.show();
   }
 
 // ======== NAVIGATION ======== //

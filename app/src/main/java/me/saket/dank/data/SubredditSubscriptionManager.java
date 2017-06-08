@@ -213,7 +213,6 @@ public class SubredditSubscriptionManager {
         .mapToList(SubredditSubscription.MAPPER)
         .first())
         .flatMapIterable(subscriptions -> subscriptions)
-        .doOnSubscribe(__ -> Timber.d("Executing pending subscriptions"))
         .flatMap(pendingSubscription -> {
           if (pendingSubscription.isSubscribePending()) {
             Timber.i("Subscribing to %s", pendingSubscription.name());

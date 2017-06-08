@@ -53,7 +53,7 @@
       android:layout_width="match_parent"
       android:layout_height="?attr/actionBarSize"
       android:layout_alignParentBottom="true"
-      android:background="@color/black_opacity_05"
+      android:background="@color/black_opacity_10"
       android:gravity="center_vertical|end"
       android:orientation="horizontal"
       android:paddingEnd="@dimen/spacing4"

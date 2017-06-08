@@ -10,7 +10,6 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 
-import io.reactivex.functions.Function;
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.paginators.SubredditPaginator;
@@ -24,6 +23,7 @@ import java.util.Set;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.functions.Function;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.submission.CachedSubmission;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
@@ -165,9 +165,8 @@ public class SubmissionManager {
         subredditPaginator.setStartAfterThing(anchor.fullName());
       }
 
-      Timber.i("Loading more from %s", anchor.fullName());
-      subredditPaginator.setSorting(folder.sortOrder());
-      subredditPaginator.setTimePeriod(folder.sortTimePeriod());
+      subredditPaginator.setSorting(folder.sortingAndTimePeriod().sortOrder());
+      subredditPaginator.setTimePeriod(folder.sortingAndTimePeriod().timePeriod());
       Listing<Submission> submissions = subredditPaginator.next(true);
 
       return FetchResult.create(submissions, subredditPaginator.hasNext());

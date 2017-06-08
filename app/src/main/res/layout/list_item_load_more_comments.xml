@@ -8,7 +8,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="?attr/selectableItemBackground"
-        android:foreground="@color/black_opacity_05"
+        android:foreground="@color/black_opacity_10"
         android:paddingBottom="@dimen/spacing8"
         android:paddingStart="@dimen/spacing8"
         android:paddingTop="@dimen/spacing8"

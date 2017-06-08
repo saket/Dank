@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+  <item android:title="@string/sorting_mode_hot" />
+  <item android:title="@string/sorting_mode_new" />
+  <item android:title="@string/sorting_mode_rising" />
+  <item android:title="@string/sorting_mode_controversial">
+    <menu>
+      <item android:title="@string/sorting_time_period_hour" />
+      <item android:title="@string/sorting_time_period_day" />
+      <item android:title="@string/sorting_time_period_week" />
+      <item android:title="@string/sorting_time_period_month" />
+      <item android:title="@string/sorting_time_period_year" />
+      <item android:title="@string/sorting_time_period_all_time" />
+    </menu>
+  </item>
+  <item android:title="@string/sorting_mode_top">
+    <menu>
+      <item android:title="@string/sorting_time_period_hour" />
+      <item android:title="@string/sorting_time_period_day" />
+      <item android:title="@string/sorting_time_period_week" />
+      <item android:title="@string/sorting_time_period_month" />
+      <item android:title="@string/sorting_time_period_year" />
+      <item android:title="@string/sorting_time_period_all_time" />
+    </menu>
+  </item>
+</menu>

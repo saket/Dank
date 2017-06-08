@@ -5,6 +5,7 @@
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:background="@null"
+  android:elevation="0dp"
   tools:context="me.saket.dank.ui.subreddits.SubredditActivity"
   tools:layout_marginTop="25dp">
 
@@ -37,11 +38,69 @@
   <ProgressBar
     android:id="@+id/subreddit_progress"
     android:layout_width="wrap_content"
-    android:layout_centerInParent="true"
     android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
     android:layout_gravity="center" />
 
-  <!-- All Views inside this have bottom margins to make space for their shadows. -->
+  <LinearLayout
+    android:id="@+id/subreddit_sorting_mode_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="-2dp"
+    android:background="@color/window_background"
+    android:paddingBottom="@dimen/spacing8"
+    android:paddingEnd="@dimen/spacing12"
+    android:paddingStart="@dimen/spacing12"
+    android:paddingTop="@dimen/spacing8"
+    tools:layout_below="@+id/subreddit_toolbar_container">
+
+    <Button
+      android:id="@+id/subreddit_sorting_mode"
+      style="@style/DankButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:backgroundTint="@color/gray_800"
+      android:drawablePadding="@dimen/spacing8"
+      android:drawableStart="@drawable/ic_sort_16dp"
+      android:minHeight="0dp"
+      android:minWidth="0dp"
+      android:paddingBottom="@dimen/spacing12"
+      android:elevation="10dp"
+      android:paddingEnd="@dimen/spacing12"
+      android:paddingStart="@dimen/spacing12"
+      android:paddingTop="@dimen/spacing12"
+      android:text="Hot"
+      android:textColor="@color/gray_300" />
+
+    <!--<View-->
+    <!--android:layout_width="4dp"-->
+    <!--android:layout_height="4dp"-->
+    <!--android:background="@drawable/shape_circle_separator"-->
+    <!--android:layout_gravity="center_vertical"-->
+    <!--android:backgroundTint="@color/gray_700"-->
+    <!--android:layout_marginEnd="@dimen/spacing16"-->
+    <!--android:layout_marginStart="@dimen/spacing16" />-->
+
+    <Button
+      android:id="@+id/subreddit_subscribe"
+      style="@style/DankButton"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:backgroundTint="@color/gray_800"
+      android:minHeight="0dp"
+      android:minWidth="0dp"
+      android:paddingBottom="@dimen/spacing12"
+      android:paddingEnd="@dimen/spacing12"
+      android:paddingStart="@dimen/spacing12"
+      android:paddingTop="@dimen/spacing12"
+      android:text="Subscribe"
+      android:textColor="@color/color_accent" />
+  </LinearLayout>
+
+  <!-- All Views inside this have bottom margins to make space for
+       their shadows. Setting an elevation on this container would
+       have been a better option, but it doesn't work because the
+       toolbar expandable sheet can change its dimensions.  -->
   <FrameLayout
     android:id="@+id/subreddit_toolbar_container"
     android:layout_width="match_parent"
@@ -103,7 +162,7 @@
         android:paddingStart="12dp"
         android:text="@string/app_name"
         android:textAppearance="@style/DankToolbarTitleAppearance.Toolbar"
-        tools:text="/r/NotMyJob" />
+        tools:text="/r/androiddev" />
 
       <com.github.zagum.expandicon.ExpandIconView
         android:id="@+id/subreddit_toolbar_title_arrow"

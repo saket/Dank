@@ -1,59 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="reddit_app_client_id">E-TcdjXmZ4tVXg</string>
-    <string name="reddit_app_redirect_url">http://saket.me</string>
+  <string name="reddit_app_client_id">E-TcdjXmZ4tVXg</string>
+  <string name="reddit_app_redirect_url">http://saket.me</string>
 
-    <string-array name="default_subreddits">
-        <item>Frontpage</item>
-        <item>Popular</item>
-        <item>announcements</item>
-        <item>Art</item>
-        <item>AskReddit</item>
-        <item>askscience</item>
-        <item>aww</item>
-        <item>blog</item>
-        <item>books</item>
-        <item>creepy</item>
-        <item>dataisbeautiful</item>
-        <item>DIY</item>
-        <item>Documentaries</item>
-        <item>EarthPorn</item>
-        <item>explainlikeimfive</item>
-        <item>food</item>
-        <item>funny</item>
-        <item>Futurology</item>
-        <item>gadgets</item>
-        <item>gaming</item>
-        <item>GetMotivated</item>
-        <item>gifs</item>
-        <item>history</item>
-        <item>IAmA</item>
-        <item>InternetIsBeautiful</item>
-        <item>Jokes</item>
-        <item>LifeProTips</item>
-        <item>listentothis</item>
-        <item>mildlyinteresting</item>
-        <item>movies</item>
-        <item>Music</item>
-        <item>news</item>
-        <item>nosleep</item>
-        <item>nottheonion</item>
-        <item>OldSchoolCool</item>
-        <item>personalfinance</item>
-        <item>philosophy</item>
-        <item>photoshopbattles</item>
-        <item>pics</item>
-        <item>science</item>
-        <item>Showerthoughts</item>
-        <item>space</item>
-        <item>sports</item>
-        <item>television</item>
-        <item>tifu</item>
-        <item>todayilearned</item>
-        <item>TwoXChromosomes</item>
-        <item>UpliftingNews</item>
-        <item>videos</item>
-        <item>worldnews</item>
-        <item>WritingPrompts</item>
-    </string-array>
+  <string-array name="default_subreddits">
+    <item>Frontpage</item>
+    <item>Popular</item>
+    <item>announcements</item>
+    <item>Art</item>
+    <item>AskReddit</item>
+    <item>askscience</item>
+    <item>aww</item>
+    <item>blog</item>
+    <item>books</item>
+    <item>creepy</item>
+    <item>dataisbeautiful</item>
+    <item>DIY</item>
+    <item>Documentaries</item>
+    <item>EarthPorn</item>
+    <item>explainlikeimfive</item>
+    <item>food</item>
+    <item>funny</item>
+    <item>Futurology</item>
+    <item>gadgets</item>
+    <item>gaming</item>
+    <item>GetMotivated</item>
+    <item>gifs</item>
+    <item>history</item>
+    <item>IAmA</item>
+    <item>InternetIsBeautiful</item>
+    <item>Jokes</item>
+    <item>LifeProTips</item>
+    <item>listentothis</item>
+    <item>mildlyinteresting</item>
+    <item>movies</item>
+    <item>Music</item>
+    <item>news</item>
+    <item>nosleep</item>
+    <item>nottheonion</item>
+    <item>OldSchoolCool</item>
+    <item>personalfinance</item>
+    <item>philosophy</item>
+    <item>photoshopbattles</item>
+    <item>pics</item>
+    <item>science</item>
+    <item>Showerthoughts</item>
+    <item>space</item>
+    <item>sports</item>
+    <item>television</item>
+    <item>tifu</item>
+    <item>todayilearned</item>
+    <item>TwoXChromosomes</item>
+    <item>UpliftingNews</item>
+    <item>videos</item>
+    <item>worldnews</item>
+    <item>WritingPrompts</item>
+  </string-array>
 </resources>

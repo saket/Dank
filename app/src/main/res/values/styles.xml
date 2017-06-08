@@ -17,6 +17,11 @@
     <item name="android:backgroundDimEnabled">false</item>
 
     <item name="alertDialogTheme">@style/DankDialogTheme</item>
+
+    <!-- Popups -->
+    <item name="popupMenuStyle">@style/DankPopupMenu</item>
+    <item name="textAppearanceLargePopupMenu">@style/DankPopupMenuTextAppearance</item>
+    <item name="textAppearancePopupMenuHeader">@style/DankPopupMenuHeaderTextAppearance</item>
   </style>
 
   <style name="DankTheme.TransparentBackground">
@@ -38,7 +43,7 @@
   </style>
 
   <style name="DankDialogTitleStyle" parent="@android:style/TextAppearance.Material.WindowTitle">
-    <item name="android:fontFamily">sans-serif-condensed</item>
+    <item name="android:fontFamily">@string/dank_default_font_family</item>
   </style>
 
   <style name="DankToolbarTitleAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
@@ -57,6 +62,11 @@
   <style name="DankSeparator.Vertical">
     <item name="android:layout_width">match_parent</item>
     <item name="android:layout_height">1dp</item>
+  </style>
+
+  <style name="DankSeparator.Horizontal">
+    <item name="android:layout_width">1dp</item>
+    <item name="android:layout_height">match_parent</item>
   </style>
 
   <style name="DankButton" parent="Widget.AppCompat.Button">
@@ -106,7 +116,18 @@
     <item name="android:fontFamily">@string/dank_default_font_family</item>
   </style>
 
-  <style name="DankOverflowMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow" />
+  <style name="DankPopupMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow" />
+
+  <style name="DankPopupMenuTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Large">
+    <item name="android:textAllCaps">true</item>
+    <item name="android:textSize">@dimen/textsize14</item>
+  </style>
+
+  <style name="DankPopupMenuHeaderTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Header">
+    <item name="android:textAllCaps">true</item>
+    <item name="android:textSize">@dimen/textsize12</item>
+    <item name="android:textColor">@color/gray_500</item>
+  </style>
 
   <style name="DankTextInputLayoutErrorTextAppearance">
     <item name="android:textColor">@color/error_text_color</item>
@@ -185,6 +206,19 @@
     <item name="android:paddingStart">@dimen/spacing16</item>
     <item name="android:paddingTop">@dimen/spacing12</item>
     <item name="android:textSize">@dimen/textsize16</item>
+  </style>
+
+  <style name="DankPopupMenu.SubredditOptions">
+    <item name="android:dropDownHorizontalOffset">@dimen/popup_menu_horizontal_offset_for_button</item>
+    <item name="android:dropDownVerticalOffset">-4dp</item>
+
+    <item name="overlapAnchor">false</item>
+    <item name="android:overlapAnchor">false</item>
+  </style>
+
+  <style name="DankPopupMenu.SubmissionSortingMode">
+    <item name="android:dropDownHorizontalOffset">@dimen/popup_menu_horizontal_offset_for_button</item>
+    <item name="android:dropDownVerticalOffset">@dimen/popup_menu_vertical_offset_for_button</item>
   </style>
 
   <!-- Submission -->
