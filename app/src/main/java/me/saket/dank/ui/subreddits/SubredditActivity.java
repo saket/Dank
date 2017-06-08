@@ -7,7 +7,6 @@ import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
-import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
@@ -417,12 +416,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     CachedSubmissionFolder folder = CachedSubmissionFolder.create(subredditChangesRelay.getValue(), sortingChangesRelay.getValue());
     unsubscribeOnDestroy(scrollListener.emitWhenLoadNeeded()
-        .doOnNext(o -> Timber.i("need to load more"))
+        .doOnNext(o -> scrollListener.setLoadOngoing(true))
         .flatMapSingle(o -> Dank.submissions().fetchAndSaveMoreSubmissions(folder)
             .compose(applySchedulersSingle())
             .compose(handleProgressAndErrorForLoadMore())
-            .compose(doOnSingleStartAndTerminate(ongoing -> scrollListener.setLoadOngoing(ongoing)))
         )
+        .doOnNext(o -> scrollListener.setLoadOngoing(false))
         .takeUntil(fetchedMessages -> (boolean) fetchedMessages.isEmpty())
         .subscribe(doNothing(), doNothing()));
   }
@@ -454,8 +453,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   public void onClickSortingMode(Button sortingModeButton) {
     SubmissionsSortingModePopupMenu sortingPopupMenu = new SubmissionsSortingModePopupMenu(this, sortingModeButton);
     sortingPopupMenu.inflate(R.menu.menu_submission_sorting_mode);
-    sortingPopupMenu.setOnSortingModeSelectListener(sortingAndTimePeriod -> sortingChangesRelay.accept(sortingAndTimePeriod));
     sortingPopupMenu.highlightActiveSortingAndTImePeriod(sortingChangesRelay.getValue());
+    sortingPopupMenu.setOnSortingModeSelectListener(sortingAndTimePeriod -> sortingChangesRelay.accept(sortingAndTimePeriod));
     sortingPopupMenu.show();
   }
 

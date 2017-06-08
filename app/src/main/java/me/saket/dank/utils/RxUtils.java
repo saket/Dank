@@ -72,15 +72,6 @@ public class RxUtils {
   }
 
   /**
-   * Calls true on <var>consumer</var> when the stream is subscribed to and false when it succeeds.
-   */
-  public static <T> SingleTransformer<T, T> doOnSingleStartAndSuccess(Consumer<Boolean> consumer) {
-    return observable -> observable
-        .doOnSubscribe(o -> consumer.accept(true))
-        .doOnSuccess(o -> consumer.accept(false));
-  }
-
-  /**
    * Calls true on <var>consumer</var> when the stream is subscribed to and false when it finishes.
    */
   public static CompletableTransformer doOnCompletableStartAndTerminate(Consumer<Boolean> consumer) {
