@@ -33,7 +33,6 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.Sorting;
-import net.dean.jraw.paginators.TimePeriod;
 
 import java.util.HashSet;
 
@@ -84,6 +83,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private static final String KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE = "isSubredditPickerVisible";
   private static final String KEY_IS_USER_PROFILE_SHEET_VISIBLE = "isUserProfileSheetVisible";
   private static final String KEY_FIRST_REFRESH_DONE_FOR_SUBREDDIT_FOLDERS = "firstRefreshDoneForSubredditFolders";
+  private static final String KEY_SORTING_AND_TIME_PERIOD = "sortingAndTimePeriod";
 
   @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
   @BindView(R.id.toolbar) DankToolbar toolbar;
@@ -93,6 +93,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @BindView(R.id.subreddit_toolbar_title_container) ViewGroup toolbarTitleContainer;
   @BindView(R.id.subreddit_toolbar_container) ViewGroup toolbarContainer;
   @BindView(R.id.subreddit_sorting_mode_container) ViewGroup sortingModeContainer;
+  @BindView(R.id.subreddit_sorting_mode) Button sortingModeButton;
   @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
   @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
   @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
@@ -106,6 +107,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private Disposable ongoingSubmissionsLoadDisposable = Disposables.disposed();
   private BehaviorRelay<String> subredditChangesRelay = BehaviorRelay.create();
   private BehaviorRelay<String> subredditNameChangesRelay = BehaviorRelay.create();
+  private BehaviorRelay<SortingAndTimePeriod> sortingChangesRelay = BehaviorRelay.create();
 
   protected static void addStartExtrasToIntent(RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
@@ -154,7 +156,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     if (savedState != null) {
       //noinspection unchecked
-      firstRefreshDoneForSubredditFolders = (HashSet<CachedSubmissionFolder>) savedState.getSerializable(KEY_FIRST_REFRESH_DONE_FOR_SUBREDDIT_FOLDERS);
+      firstRefreshDoneForSubredditFolders = (HashSet<CachedSubmissionFolder>) savedState
+          .getSerializable(KEY_FIRST_REFRESH_DONE_FOR_SUBREDDIT_FOLDERS);
     }
 
     setupSubmissionList();
@@ -163,7 +166,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     }
 
     // Get frontpage (or retained subreddit's) submissions.
-    if (savedState != null) {
+    if (savedState != null && savedState.containsKey(KEY_ACTIVE_SUBREDDIT)) {
       String retainedSub = savedState.getString(KEY_ACTIVE_SUBREDDIT);
       //noinspection ConstantConditions
       subredditChangesRelay.accept(retainedSub);
@@ -183,7 +186,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .beginTransaction()
         .replace(submissionPage.getId(), submissionFragment)
         .commit();
-
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       if (touchLiesOn(toolbarContainer, downX, downY)) {
         if (touchLiesOn(toolbarSheet, downX, downY) && isSubredditPickerVisible()) {
@@ -217,7 +219,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
               CheckUnreadMessagesJobService.schedule(this);
 
             } else {
-              Timber.i("Couldn't start snyc. Is logged in? %s", loggedIn);
+              Timber.i("Couldn't start sync. Is logged in? %s", loggedIn);
             }
           })
       );
@@ -232,6 +234,26 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       }
     }
 
+    if (savedState != null && savedState.containsKey(KEY_SORTING_AND_TIME_PERIOD)) {
+      //noinspection ConstantConditions
+      sortingChangesRelay.accept(savedState.getParcelable(KEY_SORTING_AND_TIME_PERIOD));
+    } else {
+      sortingChangesRelay.accept(SortingAndTimePeriod.create(Sorting.HOT));
+    }
+    unsubscribeOnDestroy(
+        sortingChangesRelay.subscribe(sortingAndTimePeriod -> {
+          if (sortingAndTimePeriod.sortOrder().requiresTimePeriod()) {
+            sortingModeButton.setText(getString(
+                R.string.subreddit_sorting_mode_with_time_period,
+                getString(sortingAndTimePeriod.getSortingDisplayTextRes()),
+                getString(sortingAndTimePeriod.getTimePeriodDisplayTextRes())
+            ));
+          } else {
+            sortingModeButton.setText(getString(R.string.subreddit_sorting_mode, getString(sortingAndTimePeriod.getSortingDisplayTextRes())));
+          }
+        })
+    );
+
     emptyStateView.setEmoji(R.string.subreddit_empty_state_title);
     emptyStateView.setMessage(R.string.subreddit_empty_state_message);
   }
@@ -241,6 +263,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     submissionList.handleOnSaveInstance(outState);
     if (subredditChangesRelay.hasValue()) {
       outState.putString(KEY_ACTIVE_SUBREDDIT, subredditChangesRelay.getValue());
+    }
+    if (sortingChangesRelay.hasValue()) {
+      outState.putParcelable(KEY_SORTING_AND_TIME_PERIOD, sortingChangesRelay.getValue());
     }
     outState.putBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE, isSubredditPickerVisible());
     outState.putBoolean(KEY_IS_USER_PROFILE_SHEET_VISIBLE, isUserProfileSheetVisible());
@@ -327,7 +352,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     unsubscribeOnDestroy(
         subredditChangesRelay
             .observeOn(AndroidSchedulers.mainThread())
-            .map(subredditName -> CachedSubmissionFolder.create(subredditName, Sorting.HOT, TimePeriod.DAY))
+            .flatMap(subreddit -> sortingChangesRelay.map(sorting -> CachedSubmissionFolder.create(subreddit, sorting)))
             .subscribe(folder -> loadSubmissions(folder))
     );
   }
@@ -390,7 +415,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     InfiniteScrollListener scrollListener = InfiniteScrollListener.create(submissionList, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD);
     scrollListener.setEmitInitialEvent(isRetrying);
 
-    CachedSubmissionFolder folder = CachedSubmissionFolder.create(subredditChangesRelay.getValue(), Sorting.HOT, TimePeriod.DAY);
+    CachedSubmissionFolder folder = CachedSubmissionFolder.create(subredditChangesRelay.getValue(), sortingChangesRelay.getValue());
     unsubscribeOnDestroy(scrollListener.emitWhenLoadNeeded()
         .doOnNext(o -> Timber.i("need to load more"))
         .flatMapSingle(o -> Dank.submissions().fetchAndSaveMoreSubmissions(folder)
@@ -413,7 +438,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
   private void onClickRefresh() {
-    CachedSubmissionFolder activeFolder = CachedSubmissionFolder.create(subredditChangesRelay.getValue(), Sorting.HOT, TimePeriod.DAY);
+    CachedSubmissionFolder activeFolder = CachedSubmissionFolder.create(subredditChangesRelay.getValue(), sortingChangesRelay.getValue());
 
     // This will force loadSubmissions() to get re-called.
     unsubscribeOnDestroy(Dank.submissions().removeAllCachedInFolder(activeFolder)
@@ -429,11 +454,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   public void onClickSortingMode(Button sortingModeButton) {
     SubmissionsSortingModePopupMenu sortingPopupMenu = new SubmissionsSortingModePopupMenu(this, sortingModeButton);
     sortingPopupMenu.inflate(R.menu.menu_submission_sorting_mode);
-
-    // TODO: Get the current sort mode dynamically.
-    SortingAndTimePeriod currentSortMode = SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.DAY);
-    sortingPopupMenu.highlightActiveSortingAndTImePeriod(currentSortMode);
-
+    sortingPopupMenu.setOnSortingModeSelectListener(sortingAndTimePeriod -> sortingChangesRelay.accept(sortingAndTimePeriod));
+    sortingPopupMenu.highlightActiveSortingAndTImePeriod(sortingChangesRelay.getValue());
     sortingPopupMenu.show();
   }
 

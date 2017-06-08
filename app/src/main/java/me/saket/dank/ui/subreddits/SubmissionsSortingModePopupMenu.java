@@ -12,21 +12,105 @@ import net.dean.jraw.paginators.TimePeriod;
 
 import me.saket.dank.R;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
+import timber.log.Timber;
 
 public class SubmissionsSortingModePopupMenu extends PopupMenu {
 
   private final Context context;
+  private OnSortingModeSelectListener onSortingModeSelectListener;
+
+  public interface OnSortingModeSelectListener {
+    void onSortingModeSelect(SortingAndTimePeriod sortingAndTimePeriod);
+  }
 
   public SubmissionsSortingModePopupMenu(Context context, View anchorView) {
     super(context, anchorView, Gravity.NO_GRAVITY, 0, R.style.DankPopupMenu_SubmissionSortingMode);
     this.context = context;
+
+    setOnMenuItemClickListener(menuItem -> {
+      switch (menuItem.getItemId()) {
+        case R.id.action_subreddit_sorting_hot:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.HOT));
+          return true;
+
+        case R.id.action_subreddit_sorting_new:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.NEW));
+          return true;
+
+        case R.id.action_subreddit_sorting_rising:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.RISING));
+          return true;
+
+        case R.id.action_subreddit_sorting_controversial_hour:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.HOUR));
+          return true;
+
+        case R.id.action_subreddit_sorting_controversial_day:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.DAY));
+          return true;
+
+        case R.id.action_subreddit_sorting_controversial_week:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.WEEK));
+          return true;
+
+        case R.id.action_subreddit_sorting_controversial_month:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.MONTH));
+          return true;
+
+        case R.id.action_subreddit_sorting_controversial_year:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.YEAR));
+          return true;
+
+        case R.id.action_subreddit_sorting_controversial_alltime:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.ALL));
+          return true;
+
+        case R.id.action_subreddit_sorting_top_hour:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.HOUR));
+          return true;
+
+        case R.id.action_subreddit_sorting_top_day:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.DAY));
+          return true;
+
+        case R.id.action_subreddit_sorting_top_week:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.WEEK));
+          return true;
+
+        case R.id.action_subreddit_sorting_top_month:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.MONTH));
+          return true;
+
+        case R.id.action_subreddit_sorting_top_year:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.YEAR));
+          return true;
+
+        case R.id.action_subreddit_sorting_top_alltime:
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.ALL));
+          return true;
+
+        case R.id.action_subreddit_sorting_controversial:
+        case R.id.action_subreddit_sorting_top:
+          // Submenu.
+          return false;
+
+        default:
+          throw new UnsupportedOperationException();
+      }
+    });
+  }
+
+  public void setOnSortingModeSelectListener(OnSortingModeSelectListener listener) {
+    onSortingModeSelectListener = listener;
   }
 
   public void highlightActiveSortingAndTImePeriod(SortingAndTimePeriod highlightedSortingAndTimePeriod) {
-    String highlightedSorting = getSortingModeText(highlightedSortingAndTimePeriod.sortOrder());
-    String highlightedTimePeriod = getTimePeriodText(highlightedSortingAndTimePeriod.timePeriod());
+    String highlightedSorting = context.getString(highlightedSortingAndTimePeriod.getSortingDisplayTextRes());
+    String highlightedTimePeriod = context.getString(highlightedSortingAndTimePeriod.getTimePeriodDisplayTextRes());
 
-    // TODO: Highlight currently selected sorting mode and time period.
+    Timber.i("highlightedSorting: %s", highlightedSorting);
+    Timber.i("highlightedTimePeriod: %s", highlightedTimePeriod);
+
     for (int i = 0; i < getMenu().size(); i++) {
       MenuItem menuItem = getMenu().getItem(i);
 
@@ -47,54 +131,6 @@ public class SubmissionsSortingModePopupMenu extends PopupMenu {
           menuItem.setEnabled(false);
         }
       }
-    }
-  }
-
-  private String getSortingModeText(Sorting sorting) {
-    switch (sorting) {
-      case HOT:
-        return context.getString(R.string.sorting_mode_hot);
-
-      case NEW:
-        return context.getString(R.string.sorting_mode_new);
-
-      case RISING:
-        return context.getString(R.string.sorting_mode_rising);
-
-      case CONTROVERSIAL:
-        return context.getString(R.string.sorting_mode_controversial);
-
-      case TOP:
-        return context.getString(R.string.sorting_mode_top);
-
-      default:
-      case GILDED:
-        throw new UnsupportedOperationException();
-    }
-  }
-
-  private String getTimePeriodText(TimePeriod timePeriod) {
-    switch (timePeriod) {
-      case HOUR:
-        return context.getString(R.string.sorting_time_period_hour);
-
-      case DAY:
-        return context.getString(R.string.sorting_time_period_day);
-
-      case WEEK:
-        return context.getString(R.string.sorting_time_period_week);
-
-      case MONTH:
-        return context.getString(R.string.sorting_time_period_month);
-
-      case YEAR:
-        return context.getString(R.string.sorting_time_period_year);
-
-      case ALL:
-        return context.getString(R.string.sorting_time_period_all_time);
-
-      default:
-        throw new UnsupportedOperationException();
     }
   }
 }

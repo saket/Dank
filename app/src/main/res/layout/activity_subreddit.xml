@@ -69,7 +69,7 @@
       android:paddingEnd="@dimen/spacing12"
       android:paddingStart="@dimen/spacing12"
       android:paddingTop="@dimen/spacing12"
-      android:text="Hot"
+      tools:text="Top (Month)"
       android:textColor="@color/gray_300" />
 
     <!--<View-->

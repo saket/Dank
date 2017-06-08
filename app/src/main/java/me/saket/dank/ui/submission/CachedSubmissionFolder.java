@@ -23,11 +23,7 @@ public abstract class CachedSubmissionFolder implements Serializable {
     return create(subredditName, SortingAndTimePeriod.create(sortOrder));
   }
 
-  public static CachedSubmissionFolder create(String subredditName, Sorting sortOrder, TimePeriod timePeriod) {
-    return create(subredditName, SortingAndTimePeriod.create(sortOrder, timePeriod));
-  }
-
-  private static CachedSubmissionFolder create(String subredditName, SortingAndTimePeriod sortingAndTimePeriod) {
+  public static CachedSubmissionFolder create(String subredditName, SortingAndTimePeriod sortingAndTimePeriod) {
     return new AutoValue_CachedSubmissionFolder(subredditName, sortingAndTimePeriod);
   }
 
@@ -44,6 +40,6 @@ public abstract class CachedSubmissionFolder implements Serializable {
     Sorting sorting = Sorting.valueOf(parts[1]);
     TimePeriod sortTimePeriod = TimePeriod.valueOf(parts[2]);
 
-    return CachedSubmissionFolder.create(subredditName, sorting, sortTimePeriod);
+    return create(subredditName, SortingAndTimePeriod.create(sorting, sortTimePeriod));
   }
 }

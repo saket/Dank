@@ -67,6 +67,9 @@
   <string name="newsubredditdialog_error_subreddit_doesnt_exist">Couldn\'t find this subreddit (ಥ_ಥ)</string>
   <string name="newsubredditdialog_error_unknown">Something went wrong (╯°□°）╯︵ ┻━┻</string>
 
+  <string name="subreddit_sorting_mode" translatable="false">%s</string>
+  <string name="subreddit_sorting_mode_with_time_period" translatable="false">%1$s (%2$s)</string>  <!-- Hot (Month) -->
+
   <string name="sorting_mode_hot">Hot</string>
   <string name="sorting_mode_new">New</string>
   <string name="sorting_mode_rising">Rising</string>
@@ -77,7 +80,7 @@
   <string name="sorting_time_period_week">Week</string>
   <string name="sorting_time_period_month">Month</string>
   <string name="sorting_time_period_year">Year</string>
-  <string name="sorting_time_period_all_time">All time</string>
+  <string name="sorting_time_period_alltime">All time</string>
 
   <!-- User profile -->
   <string name="userprofile_comments">Comments</string>
