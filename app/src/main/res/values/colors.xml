@@ -23,9 +23,11 @@
   <color name="color_primary_dark">#1b1b1b</color>
   <color name="color_accent">@color/teal_A400</color>
   <color name="color_accent_secondary">@color/teal_A100</color>
-  <color name="window_background">#303030</color>
+  <color name="window_background">#292929</color>
   <color name="dialog_background">@color/gray_800</color>
-  <color name="toolbar">#262626</color>
+
+  <color name="toolbar">@color/gray_900</color>
+  <color name="navigation_bar">@color/gray_950</color>
 
   <color name="upvote">@color/deep_orange_300</color>   <!-- Picked from the material palette. Slightly varies from what Reddit uses. -->
   <color name="downvote">#9494FF</color>                <!-- This is what Reddit uses. Couldn't find anything close in the material palette. -->

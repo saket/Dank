@@ -14,6 +14,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:clipToPadding="false"
+    android:layout_marginTop="2dp"
     android:paddingTop="?android:attr/actionBarSize"
     android:scrollbarStyle="insideOverlay"
     android:scrollbars="vertical"
@@ -47,6 +48,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="-2dp"
+    android:animateLayoutChanges="true"
     android:background="@color/window_background"
     android:paddingBottom="@dimen/spacing8"
     android:paddingEnd="@dimen/spacing12"
@@ -62,15 +64,15 @@
       android:backgroundTint="@color/gray_800"
       android:drawablePadding="@dimen/spacing8"
       android:drawableStart="@drawable/ic_sort_16dp"
+      android:elevation="10dp"
       android:minHeight="0dp"
       android:minWidth="0dp"
       android:paddingBottom="@dimen/spacing12"
-      android:elevation="10dp"
       android:paddingEnd="@dimen/spacing12"
       android:paddingStart="@dimen/spacing12"
       android:paddingTop="@dimen/spacing12"
-      tools:text="Top (Month)"
-      android:textColor="@color/gray_300" />
+      android:textColor="@color/gray_300"
+      tools:text="Top (Month)" />
 
     <!--<View-->
     <!--android:layout_width="4dp"-->

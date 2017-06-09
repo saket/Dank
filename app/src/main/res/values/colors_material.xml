@@ -329,8 +329,10 @@
   <color name="gray_800">#424242</color>
   <color name="gray_850">#3A3A3A</color>
   <color name="gray_900">#212121</color>
+  <color name="gray_950">#1B1B1B</color>
   <color name="black">#000000</color>
   <color name="white">#ffffff</color>
+
 
   <!--blue gray-->
   <color name="blue_gray_50">#ECEFF1</color>

@@ -11,8 +11,9 @@
     <item name="editTextStyle">@style/DankDefaultEditTextStyle</item>
     <item name="android:buttonStyle">@style/DankButton</item>
 
+    <item name="android:windowBackground">@color/window_background</item>
     <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-    <item name="android:navigationBarColor">@color/gray_900</item>
+    <item name="android:navigationBarColor">@color/navigation_bar</item>
     <item name="android:windowTranslucentStatus">true</item>
     <item name="android:backgroundDimEnabled">false</item>
 

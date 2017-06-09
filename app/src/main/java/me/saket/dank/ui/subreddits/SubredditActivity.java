@@ -13,6 +13,7 @@ import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
+import android.animation.LayoutTransition;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
@@ -237,6 +238,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         showUserProfileSheet();
       }
     }
+
+    // Setup sorting button.
+    LayoutTransition layoutTransition = sortingModeContainer.getLayoutTransition();
+    layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
 
     if (savedState != null && savedState.containsKey(KEY_SORTING_AND_TIME_PERIOD)) {
       //noinspection ConstantConditions
