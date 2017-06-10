@@ -18,6 +18,7 @@ import android.widget.EditText;
 
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
+import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Subreddit;
 
 import butterknife.BindView;
@@ -135,13 +136,16 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
           if (error instanceof IllegalArgumentException && error.getMessage().contains("is private")) {
             subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_private_subreddit));
 
-          } else if (error instanceof IllegalArgumentException && error.getMessage().contains("does not exist")) {
+          } else if (error instanceof IllegalArgumentException && error.getMessage().contains("does not exist")
+              || (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 404)) {
             subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_subreddit_doesnt_exist));
 
           } else {
             Timber.e(error, "Couldn't subscribe");
             subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_unknown));
           }
+
+          Timber.e(error, "Couldn't subscribe");
         })
     );
   }
