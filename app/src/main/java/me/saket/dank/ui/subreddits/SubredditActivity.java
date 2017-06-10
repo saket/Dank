@@ -7,6 +7,7 @@ import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
+import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
@@ -41,6 +42,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Completable;
 import io.reactivex.CompletableSource;
+import io.reactivex.Observable;
 import io.reactivex.SingleTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.Disposable;
@@ -95,6 +97,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @BindView(R.id.subreddit_toolbar_container) ViewGroup toolbarContainer;
   @BindView(R.id.subreddit_sorting_mode_container) ViewGroup sortingModeContainer;
   @BindView(R.id.subreddit_sorting_mode) Button sortingModeButton;
+  @BindView(R.id.subreddit_subscribe) Button subscribeButton;
   @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
   @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
   @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
@@ -165,49 +168,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         DankApplication.appMinimizeStream().subscribe(o -> firstRefreshDoneForSubredditFolders.clear())
     );
 
-    setupSubmissionList();
-    if (savedState != null) {
-      submissionList.handleOnRestoreInstanceState(savedState);
-    }
-
-    // Get frontpage (or retained subreddit's) submissions.
-    if (savedState != null && savedState.containsKey(KEY_ACTIVE_SUBREDDIT)) {
-      String retainedSub = savedState.getString(KEY_ACTIVE_SUBREDDIT);
-      //noinspection ConstantConditions
-      subredditChangesRelay.accept(retainedSub);
-    } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
-      String requestedSub = ((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name;
-      subredditChangesRelay.accept(requestedSub);
-    } else {
-      subredditChangesRelay.accept(Dank.subscriptionManager().defaultSubreddit());
-    }
-
-    // Setup submission page.
-    submissionFragment = (SubmissionFragment) getSupportFragmentManager().findFragmentById(submissionPage.getId());
-    if (submissionFragment == null) {
-      submissionFragment = SubmissionFragment.create();
-    }
-    getSupportFragmentManager()
-        .beginTransaction()
-        .replace(submissionPage.getId(), submissionFragment)
-        .commit();
-    contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-      if (touchLiesOn(toolbarContainer, downX, downY)) {
-        if (touchLiesOn(toolbarSheet, downX, downY) && isSubredditPickerVisible()) {
-          boolean intercepted = findSubredditPickerSheet().shouldInterceptPullToCollapse(downX, downY);
-          if (intercepted) {
-            return true;
-          }
-        }
-        return false;
-      }
-      //noinspection SimplifiableIfStatement
-      if (touchLiesOn(submissionList, downX, downY)) {
-        return submissionList.canScrollVertically(upwardPagePull ? 1 : -1);
-      }
-      return false;
-    });
-
+    setupSubmissionList(savedState);
+    setupSubmissionFragment();
     setupToolbarSheet();
 
     // Schedule subreddit syncs + do an immediate sync.
@@ -265,6 +227,21 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     emptyStateView.setEmoji(R.string.subreddit_empty_state_title);
     emptyStateView.setMessage(R.string.subreddit_empty_state_message);
+
+    // TODO: Refresh this once the user logs in.
+    // Toggle the subscribe button's visibility.
+
+    unsubscribeOnDestroy(
+        subredditChangesRelay
+            .switchMap(subredditName -> Dank.subscriptions().isSubscribed(subredditName))
+            .compose(applySchedulers())
+            .startWith(Boolean.FALSE)
+            .onErrorResumeNext(error -> {
+              logError("Couldn't get subscribed status for %s", subredditChangesRelay.getValue()).accept(error);
+              return Observable.just(false);
+            })
+            .subscribe(isSubscribed -> subscribeButton.setVisibility(isSubscribed ? View.GONE : View.VISIBLE))
+    );
   }
 
   @Override
@@ -353,9 +330,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     });
   }
 
-// ======== SUBMISSIONS ======== //
+// ======== SUBMISSION LIST ======== //
 
-  private void setupSubmissionList() {
+  private void setupSubmissionList(Bundle savedState) {
     submissionList.setLayoutManager(submissionList.createLayoutManager());
     submissionList.setItemAnimator(new DefaultItemAnimator());
     submissionList.setExpandablePage(submissionPage, toolbarContainer);
@@ -391,6 +368,22 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             .flatMap(subreddit -> sortingChangesRelay.map(sorting -> CachedSubmissionFolder.create(subreddit, sorting)))
             .subscribe(folder -> loadSubmissions(folder))
     );
+
+    // Get frontpage (or retained subreddit's) submissions.
+    if (savedState != null && savedState.containsKey(KEY_ACTIVE_SUBREDDIT)) {
+      String retainedSub = savedState.getString(KEY_ACTIVE_SUBREDDIT);
+      //noinspection ConstantConditions
+      subredditChangesRelay.accept(retainedSub);
+    } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
+      String requestedSub = ((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name;
+      subredditChangesRelay.accept(requestedSub);
+    } else {
+      subredditChangesRelay.accept(Dank.subscriptions().defaultSubreddit());
+    }
+
+    if (savedState != null) {
+      submissionList.handleOnRestoreInstanceState(savedState);
+    }
   }
 
   private void loadSubmissions(CachedSubmissionFolder folder) {

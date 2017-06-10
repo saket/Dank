@@ -95,7 +95,7 @@
       android:paddingEnd="@dimen/spacing12"
       android:paddingStart="@dimen/spacing12"
       android:paddingTop="@dimen/spacing12"
-      android:text="Subscribe"
+      android:text="@string/subreddit_subscribe"
       android:textColor="@color/color_accent" />
   </LinearLayout>
 

@@ -69,6 +69,7 @@ public class SubredditSubscriptionManager {
    *
    * @param filterTerm Can be empty, but not null.
    */
+  @CheckResult
   public Observable<List<SubredditSubscription>> getAll(String filterTerm, boolean includeHidden) {
     String getQuery = includeHidden
         ? SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN
@@ -129,6 +130,7 @@ public class SubredditSubscriptionManager {
         });
   }
 
+  @CheckResult
   public Observable<List<SubredditSubscription>> getAllIncludingHidden() {
     return getAll("", true);
   }
@@ -226,6 +228,15 @@ public class SubredditSubscriptionManager {
           }
         })
         .ignoreElements();
+  }
+
+  @CheckResult
+  public Observable<Boolean> isSubscribed(String subredditName) {
+    return Dank.subscriptions().getAllIncludingHidden()  // This ensures that the DB is never empty.
+        .switchMap(o -> toV2Observable(database
+            .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN, subredditName)
+            .mapToList(SubredditSubscription.MAPPER)))
+        .map(subscriptions -> !subscriptions.isEmpty());
   }
 
 // ======== DEFAULT SUBREDDIT ======== //
@@ -357,5 +368,4 @@ public class SubredditSubscriptionManager {
       }
     };
   }
-
 }

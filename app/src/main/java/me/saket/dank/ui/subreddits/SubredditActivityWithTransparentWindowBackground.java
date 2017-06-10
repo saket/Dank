@@ -3,8 +3,10 @@ package me.saket.dank.ui.subreddits;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.os.Bundle;
 import android.support.annotation.Nullable;
 
+import me.saket.dank.R;
 import me.saket.dank.data.RedditLink;
 
 /**
@@ -27,4 +29,9 @@ public class SubredditActivityWithTransparentWindowBackground extends SubredditA
     context.startActivity(intent);
   }
 
+  @Override
+  protected void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    contentPage.setBackgroundResource(R.color.window_background);
+  }
 }

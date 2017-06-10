@@ -55,7 +55,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
 
-    addButton("Clear \"seen\" message notifs", v -> {
+    addButton("Clear \"seen\" message notifs", o -> {
       Dank.messagesNotifManager()
           .removeAllMessageNotifSeenStatuses()
           .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.syncImmediately(this)))
@@ -74,8 +74,14 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           });
     });
 
-    addButton("Clear cached submissions", v -> {
+    addButton("Clear cached submissions", o -> {
       Dank.submissions().removeAllCached().subscribeOn(Schedulers.io()).subscribe();
+    });
+
+    addButton("Clear subreddit subscriptions", o -> {
+      Dank.subscriptions().removeAll()
+          .subscribeOn(Schedulers.io())
+          .subscribe();
     });
   }
 
