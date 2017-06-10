@@ -110,7 +110,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private HashSet<CachedSubmissionFolder> firstRefreshDoneForSubredditFolders = new HashSet<>();
   private Disposable ongoingSubmissionsLoadDisposable = Disposables.disposed();
   private BehaviorRelay<String> subredditChangesRelay = BehaviorRelay.create();
-  private BehaviorRelay<String> subredditNameChangesRelay = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesRelay = BehaviorRelay.create();
 
   protected static void addStartExtrasToIntent(RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape, Intent intent) {
@@ -140,10 +139,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     findAndSetupToolbar();
     getSupportActionBar().setDisplayShowTitleEnabled(false);
-    subredditNameChangesRelay
-        .startWith(subredditChangesRelay)
-        .flatMap(subredditName -> subredditChangesRelay)
-        .subscribe(subredditName -> setTitle(subredditName));
 
     if (isPullCollapsible) {
       contentPage.setNestedExpandablePage(submissionPage);
@@ -317,7 +312,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
           } else if (isUserProfileSheetVisible()) {
             // This will update the title.
-            subredditNameChangesRelay.accept(subredditChangesRelay.getValue());
+            setTitle(subredditChangesRelay.getValue());
           }
           toolbarTitleArrowView.setState(ExpandIconView.MORE, true);
           break;
@@ -365,6 +360,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     unsubscribeOnDestroy(
         subredditChangesRelay
             .observeOn(AndroidSchedulers.mainThread())
+            .doOnNext(subreddit -> setTitle(subreddit))
             .flatMap(subreddit -> sortingChangesRelay.map(sorting -> CachedSubmissionFolder.create(subreddit, sorting)))
             .subscribe(folder -> loadSubmissions(folder))
     );
