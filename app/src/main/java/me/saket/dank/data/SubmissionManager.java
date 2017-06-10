@@ -35,14 +35,15 @@ public class SubmissionManager {
 
   private DankRedditClient dankRedditClient;
   private BriteDatabase briteDatabase;
+  private VotingManager votingManager;
   private Moshi moshi;
   private Set<String> savedSubmissionIds;
 
-  public SubmissionManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
+  public SubmissionManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, VotingManager votingManager, Moshi moshi) {
     this.dankRedditClient = dankRedditClient;
     this.briteDatabase = briteDatabase;
+    this.votingManager = votingManager;
     this.moshi = moshi;
-
     this.savedSubmissionIds = new HashSet<>();
   }
 
@@ -58,7 +59,6 @@ public class SubmissionManager {
 
   @CheckResult
   public Single<List<CachedSubmission>> fetchAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
-    Timber.i("fetchMoreSubmissions()");
     return lastPaginationAnchor(folder)
         .doOnSuccess(paginationAnchor -> Timber.i("paginationAnchor: %s", paginationAnchor))
         .map(anchor -> {
@@ -68,7 +68,7 @@ public class SubmissionManager {
           // saveNewSubmissions() ignores duplicates. Which means that we might have to do
           // another fetch if all fetched submissions turned out to be duplicates.
           while (cachedSubmissions.isEmpty() && fetchResult.hasMoreItems()) {
-            fetchResult = fetchSubmissionsFromAnchor(folder, anchor  /* CheckForNew */).blockingGet();
+            fetchResult = fetchSubmissionsFromAnchor(folder, anchor).blockingGet();
             List<Submission> fetchedSubmissions = fetchResult.fetchedSubmissions();
             cachedSubmissions = saveNewSubmissions(fetchedSubmissions, folder, false).blockingGet();
           }
@@ -147,7 +147,7 @@ public class SubmissionManager {
 
   @CheckResult
   private Single<FetchResult> fetchSubmissionsFromAnchor(CachedSubmissionFolder folder, PaginationAnchor anchor) {
-    return dankRedditClient.withAuth(Single.fromCallable(() -> {
+    Single<FetchResult> fetchResultSingle = dankRedditClient.withAuth(Single.fromCallable(() -> {
       SubredditPaginator subredditPaginator = Dank.reddit().subredditPaginator(folder.subredditName());
       if (!anchor.isEmpty()) {
         subredditPaginator.setStartAfterThing(anchor.fullName());
@@ -159,6 +159,12 @@ public class SubmissionManager {
 
       return FetchResult.create(submissions, subredditPaginator.hasNext());
     }));
+
+    return fetchResultSingle
+        .flatMap(fetchResult -> votingManager
+            .removePendingVotesForFetchedSubmissions(fetchResult.fetchedSubmissions())
+            .andThen(Single.just(fetchResult))
+        );
   }
 
   @AutoValue

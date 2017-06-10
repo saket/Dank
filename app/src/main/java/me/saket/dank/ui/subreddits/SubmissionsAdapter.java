@@ -99,7 +99,9 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
 
             default:
             case NO_VOTE:
-              throw new IllegalStateException("Cannot have a pending 'no-vote' if the last vote was also 'no-vote'");
+              // No-vote on a submission with already a no-vote direction happens when the user
+              // makes multiple votes on it and eventually settles on the same no-vote direction.
+              break;
           }
           break;
       }

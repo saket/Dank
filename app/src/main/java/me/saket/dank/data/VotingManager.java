@@ -11,6 +11,7 @@ import net.dean.jraw.models.VoteDirection;
 import net.dean.jraw.models.attr.Votable;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -23,7 +24,7 @@ import timber.log.Timber;
 /**
  * Handles voting on {@link Submission Submissions} & {@link Comment Comments} and storing their values
  * locally, until they're refreshed from remote again.
- *
+ * <p>
  * TODO: Clear individual pending votes when they're received from remote.
  * TODO: Do we need to worry about recycling old pending votes because their jobs timed out and expired?
  */
@@ -86,6 +87,23 @@ public class VotingManager {
         });
   }
 
+  /**
+   * Assuming the server as the source of truth, remove pending vote for submissions that were fetched from remote.
+   */
+  @CheckResult
+  public <T extends Thing & Votable> Completable removePendingVotesForFetchedSubmissions(List<T> thingsFromRemote) {
+    return Completable.fromAction(() -> {
+      SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.edit();
+      for (T thing : thingsFromRemote) {
+        if (isVotePending(thing)) {
+          //Timber.i("Removing stale pending vote for %s", ((Submission) thing).getTitle());
+          sharedPrefsEditor.remove(keyFor(thing));
+        }
+      }
+      sharedPrefsEditor.apply();
+    });
+  }
+
   public <T extends Thing & Votable> VoteDirection getPendingOrDefaultVote(T thing, VoteDirection defaultValue) {
     return VoteDirection.valueOf(sharedPrefs.getString(keyFor(thing), defaultValue.name()));
   }
@@ -119,9 +137,11 @@ public class VotingManager {
         }
       }
 
+      SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.edit();
       for (String keyToRemove : keysToRemove) {
-        sharedPrefs.edit().remove(keyToRemove).apply();
+        sharedPrefsEditor.remove(keyToRemove);
       }
+      sharedPrefsEditor.apply();
     });
   }
 }

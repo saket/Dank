@@ -84,8 +84,9 @@ public class DankAppModule {
   }
 
   @Provides
-  // Already singleton.
-  AuthenticationManager provideRedditAuthManager() {
+    // Already singleton.
+  AuthenticationManager provideRedditAuthManager()
+  {
     return AuthenticationManager.get();
   }
 
@@ -111,8 +112,10 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  SubmissionManager provideSubmissionManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
-    return new SubmissionManager(dankRedditClient, briteDatabase, moshi);
+  SubmissionManager provideSubmissionManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, VotingManager votingManager,
+      Moshi moshi)
+  {
+    return new SubmissionManager(dankRedditClient, briteDatabase, votingManager, moshi);
   }
 
   @Provides
