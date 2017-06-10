@@ -83,6 +83,12 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           .subscribeOn(Schedulers.io())
           .subscribe();
     });
+
+    addButton("Clear pending votes", o -> {
+      Dank.voting().removeAll()
+          .subscribeOn(Schedulers.io())
+          .subscribe();
+    });
   }
 
   private void addButton(String label, View.OnClickListener clickListener) {

@@ -10,7 +10,12 @@ import net.dean.jraw.models.Thing;
 import net.dean.jraw.models.VoteDirection;
 import net.dean.jraw.models.attr.Votable;
 
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
+
 import io.reactivex.Completable;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.submission.VoteJobService;
 import timber.log.Timber;
@@ -28,16 +33,18 @@ public class VotingManager {
 
   private Application appContext;
   private DankRedditClient dankRedditClient;
-  private SharedPreferences sharedPreferences;
+  private SharedPreferences sharedPrefs;
 
   /**
    * @param appContext Used for scheduling {@link VoteJobService}.
    */
-  public VotingManager(Application appContext, DankRedditClient dankRedditClient, SharedPreferences sharedPreferences) {
+  public VotingManager(Application appContext, DankRedditClient dankRedditClient, SharedPreferences sharedPrefs) {
     this.appContext = appContext;
     this.dankRedditClient = dankRedditClient;
-    this.sharedPreferences = sharedPreferences;
+    this.sharedPrefs = sharedPrefs;
   }
+
+  private <T extends Thing & Votable> String keyFor(T thing) {return KEY_PENDING_VOTE_ + thing.getFullName();}
 
   @CheckResult
   public Completable vote(String thingFullName, VoteDirection voteDirection) {
@@ -79,22 +86,42 @@ public class VotingManager {
         });
   }
 
-  public <T extends Thing & Votable> VoteDirection getPendingVote(T thing, VoteDirection defaultValue) {
-    return VoteDirection.valueOf(sharedPreferences.getString(keyFor(thing), defaultValue.name()));
+  public <T extends Thing & Votable> VoteDirection getPendingOrDefaultVote(T thing, VoteDirection defaultValue) {
+    return VoteDirection.valueOf(sharedPrefs.getString(keyFor(thing), defaultValue.name()));
   }
 
   public boolean isVotePending(String thingFullName) {
     VotableThingFullNameWrapper thing = VotableThingFullNameWrapper.create(thingFullName);
-    return sharedPreferences.contains(keyFor(thing));
+    return isVotePending(thing);
+  }
+
+  public <T extends Thing & Votable> boolean isVotePending(T thing) {
+    return sharedPrefs.contains(keyFor(thing));
   }
 
   private <T extends Thing & Votable> void markVoteAsPending(T thingToVote, VoteDirection voteDirection) {
-    sharedPreferences.edit().putString(keyFor(thingToVote), voteDirection.name()).apply();
+    sharedPrefs.edit().putString(keyFor(thingToVote), voteDirection.name()).apply();
   }
 
-  private <T extends Thing & Votable> void removePendingVote(T thingToVote) {
-    sharedPreferences.edit().remove(keyFor(thingToVote)).apply();
-  }
+  @CheckResult
+  public Completable removeAll() {
+    if (!BuildConfig.DEBUG) {
+      throw new IllegalStateException();
+    }
 
-  private <T extends Thing & Votable> String keyFor(T thing) {return KEY_PENDING_VOTE_ + thing.getFullName();}
+    return Completable.fromAction(() -> {
+      Set<String> keysToRemove = new HashSet<>();
+
+      Map<String, ?> allValues = sharedPrefs.getAll();
+      for (Map.Entry<String, ?> entry : allValues.entrySet()) {
+        if (entry.getKey().startsWith(KEY_PENDING_VOTE_)) {
+          keysToRemove.add(entry.getKey());
+        }
+      }
+
+      for (String keyToRemove : keysToRemove) {
+        sharedPrefs.edit().remove(keyToRemove).apply();
+      }
+    });
+  }
 }

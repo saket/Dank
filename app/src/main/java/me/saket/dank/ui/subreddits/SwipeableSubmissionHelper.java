@@ -180,7 +180,7 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
         break;
 
       case ACTION_NAME_UPVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingVote(submission, submission.getVote());
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
         votingManager.voteWithAutoRetry(submission, newVoteDirection)
             .subscribeOn(Schedulers.io())
@@ -189,7 +189,7 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
       }
 
       case ACTION_NAME_DOWNVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingVote(submission, submission.getVote());
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
         votingManager.voteWithAutoRetry(submission, newVoteDirection)
             .subscribeOn(Schedulers.io())

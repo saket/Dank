@@ -23,7 +23,6 @@ import java.util.Set;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.functions.Function;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.submission.CachedSubmission;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
@@ -55,17 +54,6 @@ public class SubmissionManager {
         .createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetAll(folder))
         .mapToList(CachedSubmission.mapSubmissionFromCursor(moshi)))
         .map(toImmutable());
-  }
-
-  // TODO: Probably don't need this.
-  private Function<List<CachedSubmission>, List<Submission>> extractSubmissionsFromCachedItems() {
-    return cachedSubmissions -> {
-      List<Submission> submissions = new ArrayList<>(cachedSubmissions.size());
-      for (CachedSubmission cachedSubmission : cachedSubmissions) {
-        submissions.add(cachedSubmission.submission());
-      }
-      return submissions;
-    };
   }
 
   @CheckResult

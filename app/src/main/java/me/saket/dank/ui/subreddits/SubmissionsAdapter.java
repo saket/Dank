@@ -71,8 +71,41 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
   @Override
   public void onBindViewHolder(SubmissionViewHolder holder, int position) {
     Submission submission = getItem(position);
-    VoteDirection voteDirection = votingManager.getPendingVote(submission, submission.getVote());
-    holder.bind(submission, voteDirection, userPrefsManager.canShowSubmissionCommentsCountInByline());
+    VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
+
+    int submissionScore = submission.getScore();
+
+    // Manipulate the score manually if there's a pending vote.
+    if (votingManager.isVotePending(submission)) {
+      switch (pendingOrDefaultVoteDirection) {
+        case UPVOTE:
+          submissionScore += 1;
+          break;
+
+        case DOWNVOTE:
+          submissionScore -= 1;
+          break;
+
+        default:
+        case NO_VOTE:
+          switch (submission.getVote()) {
+            case UPVOTE:
+              submissionScore -= 1;
+              break;
+
+            case DOWNVOTE:
+              submissionScore += 1;
+              break;
+
+            default:
+            case NO_VOTE:
+              throw new IllegalStateException("Cannot have a pending 'no-vote' if the last vote was also 'no-vote'");
+          }
+          break;
+      }
+    }
+
+    holder.bind(submission, submissionScore, pendingOrDefaultVoteDirection, userPrefsManager.canShowSubmissionCommentsCountInByline());
 
     holder.itemView.setOnClickListener(v -> {
       clickListener.onItemClick(submission, holder.itemView, getItemId(position));
@@ -108,7 +141,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
       return ((SwipeableLayout) itemView);
     }
 
-    public void bind(Submission submission, VoteDirection voteDirection, boolean showCommentsCount) {
+    public void bind(Submission submission, int submissionScore, VoteDirection voteDirection, boolean showCommentsCount) {
       //if (submission.getTitle().contains("Already drunk")) {
       //    Timber.d("-------------------------------------------");
       //    Timber.i("%s", submission.getTitle());
@@ -173,7 +206,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
 
       Truss titleBuilder = new Truss();
       titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), voteDirectionColor)));
-      titleBuilder.append(Strings.abbreviateScore(submission.getScore()));
+      titleBuilder.append(Strings.abbreviateScore(submissionScore));
       titleBuilder.popSpan();
       titleBuilder.append("  ");
       //noinspection deprecation
