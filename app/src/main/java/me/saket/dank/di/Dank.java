@@ -56,7 +56,7 @@ public class Dank {
     return appComponent.imgur();
   }
 
-  public static SubredditSubscriptionManager subscriptionManager() {
+  public static SubredditSubscriptionManager subscriptions() {
     return appComponent.subredditSubscriptionManager();
   }
 

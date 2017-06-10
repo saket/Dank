@@ -83,7 +83,7 @@ public class DankRedditClient {
   }
 
   public SubredditPaginator subredditPaginator(String subredditName) {
-    if (Dank.subscriptionManager().isFrontpage(subredditName)) {
+    if (Dank.subscriptions().isFrontpage(subredditName)) {
       return new SubredditPaginator(redditClient);
     } else {
       return new SubredditPaginator(redditClient, subredditName);
@@ -217,7 +217,7 @@ public class DankRedditClient {
 
     return Completable
         .fromAction(revokeAccessTokenAction)
-        .andThen(Dank.subscriptionManager().removeAll());
+        .andThen(Dank.subscriptions().removeAll());
   }
 
   public class UserLoginHelper {

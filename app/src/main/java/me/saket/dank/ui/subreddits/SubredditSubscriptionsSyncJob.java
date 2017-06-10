@@ -67,8 +67,8 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
   public boolean onStartJob(JobParameters params) {
     // TODO: Run periodic job only if user is logged in.
 
-    unsubscribeOnDestroy(Dank.subscriptionManager().refreshSubscriptions()
-        .andThen(Dank.subscriptionManager().executePendingSubscribesAndUnsubscribes())
+    unsubscribeOnDestroy(Dank.subscriptions().refreshSubscriptions()
+        .andThen(Dank.subscriptions().executePendingSubscribesAndUnsubscribes())
         .compose(applySchedulersCompletable())
         .compose(doOnCompletableStartAndTerminate(ongoing -> progressSubject.accept(ongoing)))
         .subscribe(

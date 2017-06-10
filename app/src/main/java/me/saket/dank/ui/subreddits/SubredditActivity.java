@@ -1,7 +1,7 @@
 package me.saket.dank.ui.subreddits;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static me.saket.dank.di.Dank.subscriptionManager;
+import static me.saket.dank.di.Dank.subscriptions;
 import static me.saket.dank.utils.CommonUtils.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
@@ -284,8 +284,35 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   @Override
   public void setTitle(CharSequence subredditName) {
-    boolean isFrontpage = subscriptionManager().isFrontpage(subredditName.toString());
+    boolean isFrontpage = subscriptions().isFrontpage(subredditName.toString());
     toolbarTitleView.setText(isFrontpage ? getString(R.string.app_name) : subredditName);
+  }
+
+  private void setupSubmissionFragment() {
+    submissionFragment = (SubmissionFragment) getSupportFragmentManager().findFragmentById(submissionPage.getId());
+    if (submissionFragment == null) {
+      submissionFragment = SubmissionFragment.create();
+    }
+    getSupportFragmentManager()
+        .beginTransaction()
+        .replace(submissionPage.getId(), submissionFragment)
+        .commit();
+    contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
+      if (touchLiesOn(toolbarContainer, downX, downY)) {
+        if (touchLiesOn(toolbarSheet, downX, downY) && isSubredditPickerVisible()) {
+          boolean intercepted = findSubredditPickerSheet().shouldInterceptPullToCollapse(downX, downY);
+          if (intercepted) {
+            return true;
+          }
+        }
+        return false;
+      }
+      //noinspection SimplifiableIfStatement
+      if (touchLiesOn(submissionList, downX, downY)) {
+        return submissionList.canScrollVertically(upwardPagePull ? 1 : -1);
+      }
+      return false;
+    });
   }
 
   private void setupToolbarSheet() {
@@ -543,7 +570,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       @Override
       public void onSubredditsChanged() {
         // Refresh the submissions if the frontpage was active.
-        if (Dank.subscriptionManager().isFrontpage(subredditChangesRelay.getValue())) {
+        if (Dank.subscriptions().isFrontpage(subredditChangesRelay.getValue())) {
           subredditChangesRelay.accept(subredditChangesRelay.getValue());
         }
       }
@@ -600,7 +627,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
       // Reload submissions if we're on the frontpage because the frontpage
       // submissions will change if the subscriptions change.
-      if (Dank.subscriptionManager().isFrontpage(subredditChangesRelay.getValue())) {
+      if (Dank.subscriptions().isFrontpage(subredditChangesRelay.getValue())) {
         subredditChangesRelay.accept(subredditChangesRelay.getValue());
       }
 
@@ -608,8 +635,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
       // Reload subreddit subscriptions. Not implementing onError() is intentional.
       // This code is not supposed to fail :/
-      Dank.subscriptionManager().removeAll()
+      Dank.subscriptions().removeAll()
           .andThen(Dank.submissions().removeAllCached())
+          .andThen(Dank.subscriptions().getAllIncludingHidden().ignoreElements())
           .subscribeOn(Schedulers.io())
           .subscribe();
 

@@ -58,6 +58,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
@@ -157,14 +158,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
     setupSubredditsSearch();
 
-    subscriptions.add(SubredditSubscriptionsSyncJob
-        .progressUpdates()
-        .observeOn(mainThread())
-        .subscribe(setSubredditLoadProgressVisible())
-    );
-
     // Track changes in subscriptions and send a callback if needed when this sheet collapses.
-    subscriptions.add(Dank.subscriptionManager()
+    subscriptions.add(Dank.subscriptions()
         .getAllIncludingHidden()
         .scan((oldSubscriptions, newSubscriptions) -> {
           if (oldSubscriptions.size() != newSubscriptions.size()) {
@@ -231,7 +226,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         })
         .flatMap(o -> showHiddenSubredditsSubject)
         .observeOn(io())
-        .switchMap(showHidden -> Dank.subscriptionManager().getAll(searchView.getText().toString(), showHidden))
+        .switchMap(showHidden -> Dank.subscriptions().getAll(searchView.getText().toString(), showHidden))
         .map(filteredSubs -> {
           if (sheetState == SheetState.BROWSE_SUBS) {
             // If search is active, show user's search term in the results unless an exact match was found.
@@ -264,8 +259,16 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         })
         .observeOn(mainThread())
         .compose(onStartAndFirstEvent(setSubredditLoadProgressVisible()))
+        .compose(RxUtils.doOnceAfterNext(o -> listenToBackgroundRefreshes()))
         .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
         .subscribe(subredditAdapter)
+    );
+  }
+
+  private void listenToBackgroundRefreshes() {
+    subscriptions.add(SubredditSubscriptionsSyncJob.progressUpdates()
+        .observeOn(mainThread())
+        .subscribe(setSubredditLoadProgressVisible())
     );
   }
 
@@ -422,8 +425,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView, Gravity.BOTTOM, 0, R.style.DankPopupMenu_SubredditOptions);
     popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
 
-    popupMenu.getMenu().findItem(R.id.action_set_subreddit_as_default).setVisible(!Dank.subscriptionManager().isDefault(subscription));
-    popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit).setVisible(!Dank.subscriptionManager().isFrontpage(subscription.name()));
+    popupMenu.getMenu().findItem(R.id.action_set_subreddit_as_default).setVisible(!Dank.subscriptions().isDefault(subscription));
+    popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit).setVisible(!Dank.subscriptions().isFrontpage(subscription.name()));
     popupMenu.getMenu().findItem(R.id.action_hide_subreddit).setVisible(!subscription.isHidden());
     popupMenu.getMenu().findItem(R.id.action_unhide_subreddit).setVisible(subscription.isHidden());
 
@@ -433,33 +436,33 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     popupMenu.setOnMenuItemClickListener(item -> {
       switch (item.getItemId()) {
         case R.id.action_set_subreddit_as_default:
-          Dank.subscriptionManager().setAsDefault(subscription);
+          Dank.subscriptions().setAsDefault(subscription);
           return true;
 
         case R.id.action_unsubscribe_subreddit:
-          if (Dank.subscriptionManager().isDefault(subscription)) {
-            Dank.subscriptionManager().resetDefaultSubreddit();
+          if (Dank.subscriptions().isDefault(subscription)) {
+            Dank.subscriptions().resetDefaultSubreddit();
           }
 
-          Dank.subscriptionManager()
+          Dank.subscriptions()
               .unsubscribe(subscription)
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), logError("Couldn't unsubscribe: %s", subscription));
           return true;
 
         case R.id.action_hide_subreddit:
-          if (Dank.subscriptionManager().isDefault(subscription)) {
-            Dank.subscriptionManager().resetDefaultSubreddit();
+          if (Dank.subscriptions().isDefault(subscription)) {
+            Dank.subscriptions().resetDefaultSubreddit();
           }
 
-          Dank.subscriptionManager()
+          Dank.subscriptions()
               .setHidden(subscription, true)
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), logError("Couldn't hide: %s", subscription));
           return true;
 
         case R.id.action_unhide_subreddit:
-          Dank.subscriptionManager()
+          Dank.subscriptions()
               .setHidden(subscription, false)
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), logError("Couldn't unhide: %s", subscription));
@@ -505,7 +508,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     // Enable item change animation, until the user starts searching.
     subredditList.setItemAnimator(new DefaultItemAnimator());
 
-    subscriptions.add(Dank.subscriptionManager()
+    subscriptions.add(Dank.subscriptions()
         .subscribe(newSubreddit)
         // Add some delay to ensure the list's dataset has been updated with this new subreddit.
         .andThen(Completable.fromAction(findAndHighlightSubredditAction))
