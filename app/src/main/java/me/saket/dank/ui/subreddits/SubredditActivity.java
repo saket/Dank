@@ -223,9 +223,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     emptyStateView.setEmoji(R.string.subreddit_empty_state_title);
     emptyStateView.setMessage(R.string.subreddit_empty_state_message);
 
-    // TODO: Refresh this once the user logs in.
     // Toggle the subscribe button's visibility.
-
     unsubscribeOnDestroy(
         subredditChangesRelay
             .switchMap(subredditName -> Dank.subscriptions().isSubscribed(subredditName))

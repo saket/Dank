@@ -16,6 +16,7 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
   private final GestureDetector gestureDetector;
   private boolean isSwiping;
   private SwipeableLayout viewBeingSwiped;
+  private float viewTopOnSwipeStart;
 
   public RecyclerSwipeListener(RecyclerView recyclerView) {
     gestureDetector = createSwipeGestureDetector(recyclerView);
@@ -46,6 +47,9 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
           }
         }
 
+        // Clearing everything here because ACTION_UP doesn't get called if no touch event was intercepted.
+        isSwiping = false;
+        viewTopOnSwipeStart = viewBeingSwiped != null ? viewBeingSwiped.getTop() : -1;
         return false;
       }
 
@@ -54,10 +58,14 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
         if (viewBeingSwiped == null) {
           return false;
         }
+        if (viewTopOnSwipeStart != viewBeingSwiped.getTop()) {
+          // List is being scrolled.
+          return false;
+        }
 
         // The swipe should start horizontally, but we'll let the gesture continue in any direction after that.
-        boolean isHorizontalSwipe = viewBeingSwiped.hasCrossedSwipeDistanceThreshold() || Math.abs(distanceX) > Math.abs(distanceY) * 2;
-        isSwiping = !viewBeingSwiped.isSettlingBackToPosition() && isHorizontalSwipe;
+        boolean isHorizontalSwipe = Math.abs(distanceX) > Math.abs(distanceY) * 2;
+        isSwiping = !viewBeingSwiped.isSettlingBackToPosition() && (viewBeingSwiped.hasCrossedSwipeDistanceThreshold() || isHorizontalSwipe);
 
         if (!isSwiping) {
           return false;
@@ -97,7 +105,6 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
     }
 
     if (event.getAction() == MotionEvent.ACTION_UP || event.getAction() == MotionEvent.ACTION_CANCEL) {
-      isSwiping = false;
       viewBeingSwiped.animateBackToPosition();
     }
   }
