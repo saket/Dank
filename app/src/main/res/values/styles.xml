@@ -120,14 +120,12 @@
   <style name="DankPopupMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow" />
 
   <style name="DankPopupMenuTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Large">
-    <item name="android:textAllCaps">true</item>
-    <item name="android:textSize">@dimen/textsize14</item>
   </style>
 
   <style name="DankPopupMenuHeaderTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Header">
     <item name="android:textAllCaps">true</item>
-    <item name="android:textSize">@dimen/textsize12</item>
     <item name="android:textColor">@color/gray_500</item>
+    <item name="android:textSize">@dimen/textsize12</item>
   </style>
 
   <style name="DankTextInputLayoutErrorTextAppearance">
