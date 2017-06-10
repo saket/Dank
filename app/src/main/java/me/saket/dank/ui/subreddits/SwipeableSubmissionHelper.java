@@ -120,7 +120,7 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
     switch (newAction.name()) {
       case ACTION_NAME_OPTIONS:
         resetIconRotation(imageView);
-        imageView.setImageResource(R.drawable.ic_more_vert_24dp);
+        imageView.setImageResource(R.drawable.ic_more_horiz_24dp);
         break;
 
       case ACTION_NAME_SAVE:
