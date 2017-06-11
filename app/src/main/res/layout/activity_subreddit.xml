@@ -96,7 +96,7 @@
       android:paddingStart="@dimen/spacing12"
       android:paddingTop="@dimen/spacing12"
       android:text="@string/subreddit_subscribe"
-      android:textColor="@color/color_accent" />
+      android:textColor="@color/subreddit_subscribe" />
   </LinearLayout>
 
   <!-- All Views inside this have bottom margins to make space for

@@ -32,6 +32,7 @@
   <string name="subreddit_empty_state_message">This subreddit is empty</string>
   <string name="subreddit_error_failed_to_load_more_submissions">Failed to load more submissions. Tap to retry.</string>
   <string name="subreddit_subscribe">Subscribe</string>
+  <string name="subreddit_unsubscribe">Unsubscribe</string>
 
   <string name="subreddit_menuaction_profile">Profile</string>
   <string name="subreddit_menuaction_preferences">Preferences</string>

@@ -130,6 +130,9 @@ public class SubredditSubscriptionManager {
         });
   }
 
+  /**
+   * Get all subscribed subreddits, including the hidden ones.
+   */
   @CheckResult
   public Observable<List<SubredditSubscription>> getAllIncludingHidden() {
     return getAll("", true);
@@ -162,7 +165,7 @@ public class SubredditSubscriptionManager {
           return Single.just(PendingState.PENDING_SUBSCRIBE);
         })
         .doOnSuccess(pendingState -> {
-          SubredditSubscription subscription = SubredditSubscription.create(subreddit.getDisplayName(), pendingState, false);
+          SubredditSubscription subscription = SubredditSubscription.create(subreddit.getDisplayName(), pendingState, false /* isHidden */);
           database.insert(SubredditSubscription.TABLE_NAME, subscription.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
         })
         .toCompletable();
@@ -184,6 +187,14 @@ public class SubredditSubscriptionManager {
           // Else, subreddit isn't present on the server anymore.
           return Completable.complete();
         });
+  }
+
+  @CheckResult
+  public Completable unsubscribe(Subreddit subreddit) {
+    return toV2Observable(database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_SINGLE, subreddit.getDisplayName())
+        .mapToOne(SubredditSubscription.MAPPER))
+        .firstOrError()
+        .flatMapCompletable(subredditSubscription -> unsubscribe(subredditSubscription));
   }
 
   @CheckResult
@@ -233,10 +244,14 @@ public class SubredditSubscriptionManager {
   @CheckResult
   public Observable<Boolean> isSubscribed(String subredditName) {
     return Dank.subscriptions().getAllIncludingHidden()  // This ensures that the DB is never empty.
-        .switchMap(o -> toV2Observable(database
-            .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN, subredditName)
-            .mapToList(SubredditSubscription.MAPPER)))
-        .map(subscriptions -> !subscriptions.isEmpty());
+        .map(subscriptions -> {
+          for (SubredditSubscription subscription : subscriptions) {
+            if (subscription.name().equalsIgnoreCase(subredditName)) {
+              return true;
+            }
+          }
+          return false;
+        });
   }
 
 // ======== DEFAULT SUBREDDIT ======== //
@@ -288,14 +303,17 @@ public class SubredditSubscriptionManager {
         if (remoteSubsNamesSet.contains(localSub.name())) {
           // Remote still has this sub.
           if (localSub.isUnsubscribePending()) {
+            //noinspection ResultOfMethodCallIgnored
             syncedListBuilder.add(localSub);
 
           } else if (localSub.isSubscribePending()) {
             // A pending subscribed sub has already been subscribed on remote. Great.
+            //noinspection ResultOfMethodCallIgnored
             syncedListBuilder.add(localSub.toBuilder().pendingState(PendingState.NONE).build());
 
           } else {
             // Both local and remote have the same sub. All cool.
+            //noinspection ResultOfMethodCallIgnored
             syncedListBuilder.add(localSub);
           }
 
@@ -303,6 +321,7 @@ public class SubredditSubscriptionManager {
           // Remote doesn't have this sub.
           if (localSub.isSubscribePending()) {
             // Oh okay, we haven't been able to make the subscribe API call yet.
+            //noinspection ResultOfMethodCallIgnored
             syncedListBuilder.add(localSub);
           }
           // Else, sub has been removed on remote! Will not add this sub.
@@ -317,6 +336,7 @@ public class SubredditSubscriptionManager {
       for (String remoteSubName : remoteSubNames) {
         if (!localSubsMap.containsKey(remoteSubName)) {
           // New sub found.
+          //noinspection ResultOfMethodCallIgnored
           syncedListBuilder.add(SubredditSubscription.create(remoteSubName, PendingState.NONE, false));
         }
       }
@@ -344,7 +364,8 @@ public class SubredditSubscriptionManager {
           }
 
           return remoteSubNames;
-        });
+        })
+        .map(toImmutable());
   }
 
   private List<String> loggedOutSubreddits() {

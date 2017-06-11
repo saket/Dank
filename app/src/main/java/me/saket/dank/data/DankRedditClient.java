@@ -3,6 +3,7 @@ package me.saket.dank.data;
 import static io.reactivex.schedulers.Schedulers.io;
 
 import android.content.Context;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -301,6 +302,7 @@ public class DankRedditClient {
 
 // ======== SUBREDDITS ======== //
 
+  @CheckResult
   public Single<List<Subreddit>> userSubreddits() {
     return withAuth(Single.fromCallable(() -> {
       UserSubredditsPaginator subredditsPaginator = new UserSubredditsPaginator(redditClient, "subscriber");
@@ -309,6 +311,7 @@ public class DankRedditClient {
     }));
   }
 
+  @CheckResult
   public Single<Subreddit> findSubreddit(String name) {
     return withAuth(Single.fromCallable(() -> redditClient.getSubreddit(name)));
   }

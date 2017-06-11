@@ -122,8 +122,7 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
     progressView.setVisibility(View.VISIBLE);
     Keyboards.hide(getContext(), subredditView);
 
-    unsubscribeOnDestroy(Dank.reddit()
-        .findSubreddit(subredditName)
+    unsubscribeOnDestroy(Dank.reddit().findSubreddit(subredditName)
         .compose(applySchedulersSingle())
         .subscribe(subreddit -> {
           ((Callback) getActivity()).onEnterNewSubredditForSubscription(subreddit);

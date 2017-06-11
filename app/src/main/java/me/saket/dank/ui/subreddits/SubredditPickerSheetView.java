@@ -444,6 +444,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
             Dank.subscriptions().resetDefaultSubreddit();
           }
 
+          Timber.i("Poop 1");
           Dank.subscriptions()
               .unsubscribe(subscription)
               .compose(applySchedulersCompletable())

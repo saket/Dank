@@ -31,6 +31,9 @@ public abstract class SubredditSubscription implements Parcelable {
   static final String QUERY_GET_ALL =
       "SELECT * FROM " + TABLE_NAME + " ORDER BY " + COLUMN_NAME + " ASC";
 
+  static final String QUERY_GET_SINGLE =
+      "SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME + " == ?";
+
   static final String QUERY_GET_ALL_PENDING =
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_PENDING_ACTION + " == '" + PendingState.PENDING_SUBSCRIBE + "'"

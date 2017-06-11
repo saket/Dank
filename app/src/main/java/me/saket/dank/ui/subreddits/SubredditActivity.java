@@ -7,6 +7,7 @@ import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
+import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setMarginTop;
@@ -235,6 +236,19 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             })
             .subscribe(isSubscribed -> subscribeButton.setVisibility(isSubscribed ? View.GONE : View.VISIBLE))
     );
+  }
+
+  @OnClick(R.id.subreddit_subscribe)
+  public void onClickSubscribeToSubreddit() {
+    String subredditName = subredditChangesRelay.getValue();
+    subscribeButton.setVisibility(View.GONE);
+
+    // Intentionally not unsubscribing from this API call on Activity destroy.
+    // We'll treat it as a fire-n-forget call and let them run even when this Activity exits.
+    Dank.reddit().findSubreddit(subredditName)
+        .flatMapCompletable(subreddit -> Dank.subscriptions().subscribe(subreddit))
+        .subscribeOn(Schedulers.io())
+        .subscribe(doNothingCompletable(), logError("Couldn't subscribe to %s", subredditName));
   }
 
   @Override
