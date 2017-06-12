@@ -2,7 +2,7 @@ package me.saket.dank.ui.subreddits;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static me.saket.dank.di.Dank.subscriptions;
-import static me.saket.dank.utils.CommonUtils.defaultIfNull;
+import static me.saket.dank.utils.Commons.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;

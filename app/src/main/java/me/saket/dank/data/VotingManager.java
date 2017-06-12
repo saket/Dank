@@ -144,4 +144,45 @@ public class VotingManager {
       sharedPrefsEditor.apply();
     });
   }
+
+  /**
+   * Get <var>thing</var>'s score assuming that any pending vote has been synced with remote.
+   */
+  public <T extends Thing & Votable> int getScoreAfterAdjustingPendingVote(T thing) {
+    int submissionScore = thing.getScore();
+
+    if (isVotePending(thing)) {
+      VoteDirection pendingOrDefaultVoteDirection = getPendingOrDefaultVote(thing, thing.getVote());
+      switch (pendingOrDefaultVoteDirection) {
+        case UPVOTE:
+          submissionScore += 1;
+          break;
+
+        case DOWNVOTE:
+          submissionScore -= 1;
+          break;
+
+        default:
+        case NO_VOTE:
+          switch (thing.getVote()) {
+            case UPVOTE:
+              submissionScore -= 1;
+              break;
+
+            case DOWNVOTE:
+              submissionScore += 1;
+              break;
+
+            default:
+            case NO_VOTE:
+              // No-vote on a submission with already a no-vote direction happens when the user
+              // makes multiple votes on it and eventually settles on the same no-vote direction.
+              break;
+          }
+          break;
+      }
+    }
+
+    return submissionScore;
+  }
 }

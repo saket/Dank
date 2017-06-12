@@ -58,20 +58,7 @@
 
     <Button
       android:id="@+id/subreddit_sorting_mode"
-      style="@style/DankButton"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:backgroundTint="@color/gray_800"
-      android:drawablePadding="@dimen/spacing8"
-      android:drawableStart="@drawable/ic_sort_16dp"
-      android:elevation="10dp"
-      android:minHeight="0dp"
-      android:minWidth="0dp"
-      android:paddingBottom="@dimen/spacing12"
-      android:paddingEnd="@dimen/spacing12"
-      android:paddingStart="@dimen/spacing12"
-      android:paddingTop="@dimen/spacing12"
-      android:textColor="@color/gray_300"
+      style="@style/DankButton.SortingMode"
       tools:text="Top (Month)" />
 
     <!--<View-->

@@ -3,7 +3,8 @@
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="match_parent">
+  android:layout_height="match_parent"
+  tools:background="@color/window_background">
 
   <!-- TODO: set content-description in code. -->
   <!-- For image/gif. -->
@@ -64,23 +65,54 @@
 
   <!-- At runtime, this ViewGroup is moved to inside the
        comment list as the header and its top-padding is set. -->
-  <RelativeLayout
+  <LinearLayout
     android:id="@+id/submission_comments_header"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:elevation="2dp"
     android:orientation="vertical"
-    android:paddingBottom="@dimen/spacing8"
-    tools:background="@color/window_background"
+    android:paddingTop="@dimen/spacing16"
     tools:layout_below="@+id/toolbar">
+
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="@dimen/spacing16"
+      android:layout_marginStart="@dimen/spacing16"
+      android:paddingBottom="@dimen/spacing8"
+      android:visibility="gone">
+
+      <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        android:id="@+id/submission_score"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:drawablePadding="@dimen/spacing4"
+        android:drawableStart="@drawable/ic_arrow_upward_12dp"
+        android:gravity="center_vertical"
+        android:text="653"
+        android:textColor="@color/gray_600"
+        android:textSize="@dimen/textsize18" />
+
+      <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        android:id="@+id/submission_comments_count"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing16"
+        android:drawablePadding="@dimen/spacing4"
+        android:drawableStart="@drawable/ic_comment_outline_16dp"
+        android:gravity="center_vertical"
+        android:text="40"
+        android:textColor="@color/gray_600"
+        android:textSize="@dimen/textsize18" />
+    </LinearLayout>
 
     <TextView
       android:id="@+id/submission_title"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_marginBottom="@dimen/spacing4"
+      android:layout_marginBottom="@dimen/spacing8"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
-      android:paddingTop="@dimen/spacing16"
       android:textColor="@color/gray_100"
       android:textSize="@dimen/textsize16"
       tools:text="I did a thing in Photoshop, and am fairly proud of it." />
@@ -89,7 +121,6 @@
       android:id="@+id/submission_byline"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_below="@id/submission_title"
       android:layout_marginBottom="@dimen/spacing16"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
@@ -102,7 +133,6 @@
       android:id="@+id/submission_selfpost_text"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_below="@+id/submission_byline"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
       android:visibility="gone" />
@@ -111,7 +141,7 @@
       android:id="@+id/submission_link_container"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_below="@+id/submission_byline"
+      android:layout_marginBottom="@dimen/spacing16"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
       android:background="@drawable/background_submission_link"
@@ -192,13 +222,12 @@
       android:id="@+id/submission_comments_progress"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_below="@+id/submission_link_container"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
-      android:layout_marginTop="@dimen/spacing16"
       android:gravity="center_vertical"
       android:orientation="horizontal"
-      android:visibility="gone">
+      android:visibility="visible"
+      tools:visibility="visible">
 
       <ProgressBar
         android:layout_width="@dimen/one_line_progress_indicator_size"
@@ -212,7 +241,7 @@
         android:text="@string/submission_loading_comments"
         android:textColor="@color/white_opacity_40" />
     </LinearLayout>
-  </RelativeLayout>
+  </LinearLayout>
 
   <me.saket.dank.widgets.ScrollingRecyclerViewSheet
     android:id="@+id/submission_comment_list_parent_sheet"
@@ -237,8 +266,8 @@
      toolbar is reached. -->
   <me.saket.dank.widgets.SubmissionAnimatedProgressBar
     android:id="@+id/submission_content_progress_bar"
-    android:layout_below="@id/toolbar"
-    style="@style/DankProgressBar.Horizontal.TopAligned" />
+    style="@style/DankProgressBar.Horizontal.TopAligned"
+    android:layout_below="@id/toolbar" />
 
   <!-- Acts as the toolbar's background. -->
   <me.saket.dank.widgets.AnimatedToolbarBackground

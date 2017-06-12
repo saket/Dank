@@ -25,6 +25,7 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Strings;
@@ -72,41 +73,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
   public void onBindViewHolder(SubmissionViewHolder holder, int position) {
     Submission submission = getItem(position);
     VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
-
-    int submissionScore = submission.getScore();
-
-    // Manipulate the score manually if there's a pending vote.
-    if (votingManager.isVotePending(submission)) {
-      switch (pendingOrDefaultVoteDirection) {
-        case UPVOTE:
-          submissionScore += 1;
-          break;
-
-        case DOWNVOTE:
-          submissionScore -= 1;
-          break;
-
-        default:
-        case NO_VOTE:
-          switch (submission.getVote()) {
-            case UPVOTE:
-              submissionScore -= 1;
-              break;
-
-            case DOWNVOTE:
-              submissionScore += 1;
-              break;
-
-            default:
-            case NO_VOTE:
-              // No-vote on a submission with already a no-vote direction happens when the user
-              // makes multiple votes on it and eventually settles on the same no-vote direction.
-              break;
-          }
-          break;
-      }
-    }
-
+    int submissionScore = votingManager.getScoreAfterAdjustingPendingVote(submission);
     holder.bind(submission, submissionScore, pendingOrDefaultVoteDirection, userPrefsManager.canShowSubmissionCommentsCountInByline());
 
     holder.itemView.setOnClickListener(v -> {
@@ -190,21 +157,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
           break;
       }
 
-      int voteDirectionColor;
-      switch (voteDirection) {
-        case UPVOTE:
-          voteDirectionColor = R.color.submission_item_vote_direction_upvote;
-          break;
-
-        case DOWNVOTE:
-          voteDirectionColor = R.color.submission_item_vote_direction_downvote;
-          break;
-
-        default:
-        case NO_VOTE:
-          voteDirectionColor = R.color.submission_item_vote_direction_none;
-          break;
-      }
+      int voteDirectionColor = Commons.voteColor(voteDirection);
 
       Truss titleBuilder = new Truss();
       titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), voteDirectionColor)));

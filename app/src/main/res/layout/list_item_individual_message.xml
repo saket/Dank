@@ -82,6 +82,6 @@
   </LinearLayout>
 
   <View
-    style="@style/DankSeparator.Vertical"
+    style="@style/DankSeparator.VerticalContent"
     android:layout_marginTop="@dimen/spacing4" />
 </LinearLayout>

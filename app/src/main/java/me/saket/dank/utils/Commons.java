@@ -1,19 +1,22 @@
 package me.saket.dank.utils;
 
+import android.support.annotation.ColorRes;
 import android.support.annotation.Nullable;
 import android.text.Html;
 
 import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.VoteDirection;
 
 import java.util.Collections;
 import java.util.List;
 
 import io.reactivex.functions.Function;
+import me.saket.dank.R;
 
 /**
  * Utility methods that don't fit in anywhere.
  */
-public class CommonUtils {
+public class Commons {
 
   public static <T> T defaultIfNull(T valueToCheck, T defaultValue) {
     return valueToCheck != null ? valueToCheck : defaultValue;
@@ -52,4 +55,16 @@ public class CommonUtils {
     return list -> Collections.unmodifiableList(list);
   }
 
+  @ColorRes
+  public static int voteColor(VoteDirection voteDirection) {
+    switch (voteDirection) {
+      case UPVOTE:
+        return R.color.submission_item_vote_direction_upvote;
+      case DOWNVOTE:
+        return R.color.submission_item_vote_direction_downvote;
+      default:
+      case NO_VOTE:
+        return R.color.submission_item_vote_direction_none;
+    }
+  }
 }

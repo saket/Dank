@@ -5,6 +5,8 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 
+import timber.log.Timber;
+
 /**
  * Handles pull-to-dispatch gesture for an {@link ExpandablePageLayout}.
  */
@@ -53,6 +55,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
    */
   public void setCollapseDistanceThreshold(int threshold) {
     collapseDistanceThreshold = threshold;
+    Timber.i("collapseDistanceThreshold: %s", collapseDistanceThreshold);
   }
 
   @Override

@@ -40,6 +40,6 @@
     tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..." />
 
   <View
-    style="@style/DankSeparator.Vertical"
+    style="@style/DankSeparator.VerticalContent"
     android:layout_marginTop="@dimen/spacing16" />
 </LinearLayout>

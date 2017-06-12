@@ -1,7 +1,7 @@
 package me.saket.dank.data;
 
 import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
-import static me.saket.dank.utils.CommonUtils.toImmutable;
+import static me.saket.dank.utils.Commons.toImmutable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
 import android.content.Context;

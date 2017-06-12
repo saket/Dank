@@ -1,7 +1,7 @@
 package me.saket.dank.ui.submission;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static me.saket.dank.utils.CommonUtils.findOptimizedImage;
+import static me.saket.dank.utils.Commons.findOptimizedImage;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
@@ -18,11 +18,13 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.text.Html;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -36,6 +38,7 @@ import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.VoteDirection;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -60,6 +63,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
@@ -68,12 +72,14 @@ import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerAdapterWithHeader;
+import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
-import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
+import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import timber.log.Timber;
 
@@ -371,13 +377,25 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentsAdapter.updateData(null);
 
     // Update submission information.
+    VoteDirection pendingOrDefaultVote = Dank.voting().getPendingOrDefaultVote(submission, submission.getVote());
+    int voteDirectionColor = Commons.voteColor(pendingOrDefaultVote);
+
+    Truss titleBuilder = new Truss();
+    titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), voteDirectionColor)));
+    titleBuilder.append(Strings.abbreviateScore(Dank.voting().getScoreAfterAdjustingPendingVote(submission)));
+    titleBuilder.popSpan();
+    titleBuilder.append("  ");
     //noinspection deprecation
-    titleView.setText(Html.fromHtml(submission.getTitle()));
+    titleBuilder.append(Html.fromHtml(submission.getTitle()));
+    titleView.setText(titleBuilder.build());
+
+    long timeMillis = JrawUtils.createdTimeUtc(submission);
     bylineView.setText(getString(
         R.string.submission_byline,
         submission.getSubredditName(),
         submission.getAuthor(),
-        Dates.createTimestamp(getResources(), JrawUtils.createdTimeUtc(submission))
+        Dates.createTimestamp(getResources(), timeMillis),
+        Strings.abbreviateScore(submission.getCommentCount())
     ));
 
     // Load self-text/media/webpage.

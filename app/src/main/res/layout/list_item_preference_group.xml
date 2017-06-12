@@ -53,7 +53,7 @@
 
     <View
       android:id="@+id/item_preferencegroup_separator"
-      style="@style/DankSeparator.Vertical"
+      style="@style/DankSeparator.VerticalContent"
       android:layout_below="@+id/item_preferencegroup_subtitle" />
   </RelativeLayout>
 </me.saket.dank.widgets.swipe.SwipeableLayout>

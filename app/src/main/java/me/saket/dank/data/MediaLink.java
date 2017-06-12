@@ -9,7 +9,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import me.saket.dank.di.DankApi;
-import me.saket.dank.utils.CommonUtils;
+import me.saket.dank.utils.Commons;
 
 /**
  * Details of an image (including GIF) or a video that can be played within in the app.
@@ -60,7 +60,7 @@ public class MediaLink extends Link {
    */
   public String optimizedImageUrl(int optimizeForWidth) {
     if (canUseRedditOptimizedImageUrl && redditSuppliedImages != null) {
-      return CommonUtils.findOptimizedImage(redditSuppliedImages, optimizeForWidth);
+      return Commons.findOptimizedImage(redditSuppliedImages, optimizeForWidth);
     } else {
       return url;
     }

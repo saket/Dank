@@ -60,12 +60,12 @@
     <item name="android:background">@color/white_opacity_05</item>
   </style>
 
-  <style name="DankSeparator.Vertical">
+  <style name="DankSeparator.VerticalContent">
     <item name="android:layout_width">match_parent</item>
     <item name="android:layout_height">1dp</item>
   </style>
 
-  <style name="DankSeparator.Horizontal">
+  <style name="DankSeparator.HorizontalContent">
     <item name="android:layout_width">1dp</item>
     <item name="android:layout_height">match_parent</item>
   </style>
@@ -251,5 +251,21 @@
     <item name="android:tint">@color/teal_900</item>
     <item name="fabSize">normal</item>
     <item name="rippleColor">@color/color_accent_secondary</item>
+  </style>
+
+  <style name="DankButton.SortingMode">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:backgroundTint">@color/gray_800</item>
+    <item name="android:drawablePadding">@dimen/spacing8</item>
+    <item name="android:drawableStart">@drawable/ic_sort_16dp</item>
+    <item name="android:elevation">10dp</item>
+    <item name="android:minHeight">0dp</item>
+    <item name="android:minWidth">0dp</item>
+    <item name="android:paddingBottom">@dimen/spacing12</item>
+    <item name="android:paddingEnd">@dimen/spacing12</item>
+    <item name="android:paddingStart">@dimen/spacing12</item>
+    <item name="android:paddingTop">@dimen/spacing12</item>
+    <item name="android:textColor">@color/gray_300</item>
   </style>
 </resources>

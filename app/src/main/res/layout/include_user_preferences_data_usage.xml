@@ -30,7 +30,7 @@
         app:title="Check for new messages" />
 
     <View
-        style="@style/DankSeparator.Vertical"
+        style="@style/DankSeparator.VerticalContent"
         android:visibility="gone"
         android:background="#3c3c3c" />
 

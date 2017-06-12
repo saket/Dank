@@ -68,6 +68,6 @@
 
     <View
       android:id="@+id/submission_item_separator"
-      style="@style/DankSeparator.Vertical" />
+      style="@style/DankSeparator.VerticalContent" />
   </LinearLayout>
 </me.saket.dank.widgets.swipe.SwipeableLayout>

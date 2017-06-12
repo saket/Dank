@@ -24,7 +24,7 @@
         android:drawableStart="@drawable/ic_mail_24dp"
         android:text="@string/userprofile_messages" />
 
-    <View style="@style/DankSeparator.Vertical" />
+    <View style="@style/DankSeparator.VerticalContent" />
 
     <me.saket.dank.widgets.TintableCompoundDrawableTextView
         android:id="@+id/userprofilesheet_comments"
@@ -32,7 +32,7 @@
         android:drawableStart="@drawable/ic_reply_24dp"
         android:text="@string/userprofile_comments" />
 
-    <View style="@style/DankSeparator.Vertical" />
+    <View style="@style/DankSeparator.VerticalContent" />
 
     <me.saket.dank.widgets.TintableCompoundDrawableTextView
         android:id="@+id/userprofilesheet_submissions"
@@ -40,7 +40,7 @@
         android:drawableStart="@drawable/ic_submission_24dp"
         android:text="@string/userprofile_submissions" />
 
-    <View style="@style/DankSeparator.Vertical" />
+    <View style="@style/DankSeparator.VerticalContent" />
 
     <me.saket.dank.widgets.TintableCompoundDrawableTextView
         android:id="@+id/userprofilesheet_logout"
