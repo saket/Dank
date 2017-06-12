@@ -158,7 +158,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
         case SELF:
           loadStaticThumbnail(R.drawable.ic_text_fields_black_24dp);
           thumbnailView.setVisibility(View.VISIBLE);
-          thumbnailView.setContentDescription(itemView.getResources().getString(R.string.submission_item_cd_self_text));
+          thumbnailView.setContentDescription(itemView.getResources().getString(R.string.subreddit_submission_item_cd_self_text));
           break;
 
         case DEFAULT:
@@ -175,14 +175,14 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
           thumbnailView.setVisibility(View.VISIBLE);
 
           // TODO: Also check this.
-          thumbnailView.setContentDescription(itemView.getResources().getString(R.string.submission_item_cd_external_url));
+          thumbnailView.setContentDescription(itemView.getResources().getString(R.string.subreddit_submission_item_cd_external_url));
           break;
 
         case URL:
           // TODO: 05/04/17 Reddit sometimes sends literal "image" as the thumbnail. Use thumbnail variations in that case.
           loadThumbnailFromUrl(submission.getThumbnail());
           thumbnailView.setVisibility(View.VISIBLE);
-          thumbnailView.setContentDescription(itemView.getResources().getString(R.string.submission_item_cd_external_url));
+          thumbnailView.setContentDescription(itemView.getResources().getString(R.string.subreddit_submission_item_cd_external_url));
           break;
 
         case NONE:
@@ -217,14 +217,14 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
 
       if (showCommentsCount) {
         subredditView.setText(itemView.getResources().getString(
-            R.string.submission_item_byline_subreddit_name_author_and_comments_count,
+            R.string.subreddit_submission_item_byline_subreddit_name_author_and_comments_count,
             submission.getSubredditName(),
             submission.getAuthor(),
             Strings.abbreviateScore(submission.getCommentCount())
         ));
       } else {
         subredditView.setText(itemView.getResources().getString(
-            R.string.submission_item_byline_subreddit_name_author,
+            R.string.subreddit_submission_item_byline_subreddit_name_author,
             submission.getSubredditName(),
             submission.getAuthor()
         ));

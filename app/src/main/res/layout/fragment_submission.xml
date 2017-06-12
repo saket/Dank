@@ -73,8 +73,8 @@
     tools:background="@color/window_background"
     tools:layout_below="@+id/toolbar">
 
-    <!-- This progressView sticks to the toolbar's bottom when the WebView
-     is visible, otherwise scrolls with the comments sheet. -->
+    <!-- This progressView scrolls with the comments sheet, until the
+         toolbar is reached. -->
     <me.saket.dank.widgets.AnimatedProgressBar
       android:id="@+id/submission_content_progress_bar"
       style="@style/DankProgressBar.Horizontal.TopAligned" />
@@ -92,7 +92,7 @@
       tools:text="I did a thing in Photoshop, and am fairly proud of it." />
 
     <TextView
-      android:id="@+id/submission_subtitle"
+      android:id="@+id/submission_byline"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_below="@id/submission_title"
@@ -108,7 +108,7 @@
       android:id="@+id/submission_selfpost_text"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_below="@+id/submission_subtitle"
+      android:layout_below="@+id/submission_byline"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
       android:visibility="gone" />
@@ -117,7 +117,7 @@
       android:id="@+id/submission_link_container"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_below="@+id/submission_subtitle"
+      android:layout_below="@+id/submission_byline"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
       android:background="@drawable/background_submission_link"

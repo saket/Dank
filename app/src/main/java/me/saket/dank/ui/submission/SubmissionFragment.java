@@ -62,8 +62,10 @@ import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
+import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerAdapterWithHeader;
 import me.saket.dank.utils.UrlParser;
@@ -92,7 +94,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
   @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
   @BindView(R.id.submission_title) TextView titleView;
-  @BindView(R.id.submission_subtitle) TextView subtitleView;
+  @BindView(R.id.submission_byline) TextView bylineView;
   @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
   @BindView(R.id.submission_link_container) ViewGroup linkDetailsView;
   @BindView(R.id.submission_comment_list) RecyclerView commentList;
@@ -368,7 +370,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Update submission information.
     //noinspection deprecation
     titleView.setText(Html.fromHtml(submission.getTitle()));
-    subtitleView.setText(getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()));
+    bylineView.setText(getString(
+        R.string.submission_byline,
+        submission.getSubredditName(),
+        submission.getAuthor(),
+        Dates.createTimestamp(getResources(), JrawUtils.createdTimeUtc(submission))
+    ));
 
     // Load self-text/media/webpage.
     Link contentLink = UrlParser.parse(submission.getUrl(), submission.getThumbnails());
