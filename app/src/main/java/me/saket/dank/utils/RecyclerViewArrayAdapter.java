@@ -62,5 +62,4 @@ public abstract class RecyclerViewArrayAdapter<T, VH extends RecyclerView.ViewHo
   public List<T> getData() {
     return items;
   }
-
 }

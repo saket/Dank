@@ -467,7 +467,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private <T> SingleTransformer<T, T> handleProgressAndErrorForLoadMore() {
     return upstream -> upstream
         .doOnSubscribe(o -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createFooterProgress()))
-        .doOnSuccess(o -> submissionAdapterWithProgress.setFooterWithoutNotifyingDataSetChanged(HeaderFooterInfo.createHidden()))
+        .doOnSuccess(o -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createHidden()))
         .doOnError(error -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createError(
             R.string.subreddit_error_failed_to_load_more_submissions,
             o -> startInfiniteScroll(true /* isRetrying */)
