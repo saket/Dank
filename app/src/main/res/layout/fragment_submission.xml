@@ -73,12 +73,6 @@
     tools:background="@color/window_background"
     tools:layout_below="@+id/toolbar">
 
-    <!-- This progressView scrolls with the comments sheet, until the
-         toolbar is reached. -->
-    <me.saket.dank.widgets.AnimatedProgressBar
-      android:id="@+id/submission_content_progress_bar"
-      style="@style/DankProgressBar.Horizontal.TopAligned" />
-
     <TextView
       android:id="@+id/submission_title"
       android:layout_width="match_parent"
@@ -187,7 +181,7 @@
           tools:text="https://np.reddit.com/r/MaliciousCompliance/cadasd" />
       </LinearLayout>
 
-      <me.saket.dank.widgets.AnimatedProgressBar
+      <me.saket.dank.widgets.SubmissionAnimatedProgressBar
         android:id="@+id/submission_link_progress"
         style="@style/DankProgressBar.Horizontal.BottomAligned"
         android:layout_alignBottom="@+id/submission_link_title_container"
@@ -238,6 +232,13 @@
       tools:paddingStart="@dimen/spacing16"
       tools:paddingTop="@dimen/spacing16" />
   </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
+
+  <!-- This progressView scrolls with the comments sheet, until the
+     toolbar is reached. -->
+  <me.saket.dank.widgets.SubmissionAnimatedProgressBar
+    android:id="@+id/submission_content_progress_bar"
+    android:layout_below="@id/toolbar"
+    style="@style/DankProgressBar.Horizontal.TopAligned" />
 
   <!-- Acts as the toolbar's background. -->
   <me.saket.dank.widgets.AnimatedToolbarBackground

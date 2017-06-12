@@ -115,7 +115,7 @@
     android:src="@drawable/ic_done_24dp"
     tools:ignore="RelativeOverlap" />
 
-  <me.saket.dank.widgets.AnimatedProgressBar
+  <me.saket.dank.widgets.SubmissionAnimatedProgressBar
     android:id="@+id/subredditpicker_refresh_progress"
     style="@style/DankProgressBar.Horizontal.BottomAligned"
     android:layout_alignParentBottom="true"

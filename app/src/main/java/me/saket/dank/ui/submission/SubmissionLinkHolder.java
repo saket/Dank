@@ -48,7 +48,7 @@ import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.UrlMetadataParser;
 import me.saket.dank.utils.Views;
-import me.saket.dank.widgets.AnimatedProgressBar;
+import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageCallbacks;
 import timber.log.Timber;
@@ -67,7 +67,7 @@ public class SubmissionLinkHolder {
   @BindView(R.id.submission_link_title) TextView titleView;
   @BindView(R.id.submission_link_subtitle) TextView subtitleView;
   @BindView(R.id.submission_link_title_container) ViewGroup titleSubtitleContainer;
-  @BindView(R.id.submission_link_progress) AnimatedProgressBar progressView;
+  @BindView(R.id.submission_link_progress) SubmissionAnimatedProgressBar progressView;
 
   @BindDimen(R.dimen.submission_link_thumbnail_width_reddit_link) int thumbnailWidthForRedditLink;
   @BindDimen(R.dimen.submission_link_thumbnail_width_external_link) int thumbnailWidthForExternalLink;

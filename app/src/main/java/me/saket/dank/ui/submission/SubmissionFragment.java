@@ -70,7 +70,7 @@ import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerAdapterWithHeader;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
-import me.saket.dank.widgets.AnimatedProgressBar;
+import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -86,7 +86,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.submission_toolbar_shadow) View toolbarShadows;
   @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
-  @BindView(R.id.submission_content_progress_bar) AnimatedProgressBar contentLoadProgressView;
+  @BindView(R.id.submission_content_progress_bar) SubmissionAnimatedProgressBar contentLoadProgressView;
   @BindView(R.id.submission_image) ZoomableImageView contentImageView;
   @BindView(R.id.submission_image_scroll_hint) View contentImageScrollHintView;
   @BindView(R.id.submission_video_container) ViewGroup contentVideoViewContainer;
@@ -279,6 +279,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private void setupCommentsSheet() {
     toolbarBackground.syncPositionWithSheet(commentListParentSheet);
     commentListParentSheet.setScrollingEnabled(false);
+
+    contentLoadProgressView.syncPositionWithSheet(commentListParentSheet);
+    contentLoadProgressView.setSyncScrollEnabled(true);
 
     Function0<Integer> mediaRevealDistanceFunc = () -> {
       // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
