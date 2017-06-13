@@ -146,6 +146,16 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight));
     toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
 
+    // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
+    deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
+
+    return fragmentLayout;
+  }
+
+  @Override
+  public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(view, savedInstanceState);
+
     DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
     linkMovementMethod.setOnLinkClickListener((textView, url) -> {
       // TODO: 18/03/17 Remove try/catch block
@@ -163,22 +173,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     });
     selfPostTextView.setMovementMethod(linkMovementMethod);
 
-    // TODO: 01/02/17 Should we preload Views for adapter rows?
     // Setup comment list and its adapter.
     commentsAdapter = new CommentsAdapter(getResources(), linkMovementMethod);
     commentList.setAdapter(RecyclerAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView));
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
     commentList.setItemAnimator(new DefaultItemAnimator());
-
-    // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
-    deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
-
-    return fragmentLayout;
-  }
-
-  @Override
-  public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-    super.onViewCreated(view, savedInstanceState);
 
     submissionPageLayout = ((ExpandablePageLayout) view.getParent());
     submissionPageLayout.addCallbacks(this);
