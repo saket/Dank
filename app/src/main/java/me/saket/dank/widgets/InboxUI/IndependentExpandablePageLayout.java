@@ -42,7 +42,7 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
   }
 
   public void setCallbacks(Callbacks callbacks) {
-    super.setInternalCallbacksList(new InternalPageCallbacks() {
+    super.setInternalStateCallbacksForList(new InternalPageCallbacks() {
       @Override
       public void onPageFullyCovered() {
       }

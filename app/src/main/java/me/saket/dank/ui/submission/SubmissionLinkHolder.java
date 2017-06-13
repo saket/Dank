@@ -50,7 +50,7 @@ import me.saket.dank.utils.UrlMetadataParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
-import me.saket.dank.widgets.InboxUI.SimpleExpandablePageCallbacks;
+import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateCallbacks;
 import timber.log.Timber;
 
 /**
@@ -93,7 +93,7 @@ public class SubmissionLinkHolder {
     ButterKnife.bind(this, linkedRedditLinkView);
     linkedRedditLinkView.setClipToOutline(true);
 
-    submissionPageLayout.addCallbacks(new SimpleExpandablePageCallbacks() {
+    submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateCallbacks() {
       @Override
       public void onPageCollapsed() {
         resetViews();

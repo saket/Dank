@@ -32,7 +32,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   private State currentState;
   private PullToCollapseListener pullToCollapseListener;
   private OnPullToCollapseIntercepter onPullToCollapseIntercepter;
-  private List<Callbacks> callbacks;
+  private List<StateCallbacks> stateCallbacks;
   private Map<String, InternalPageCallbacks> internalStateCallbacks = new HashMap<>(2);
   private ValueAnimator toolbarAnimator;
   private float expandedAlpha;
@@ -67,11 +67,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   }
 
   /**
-   * Implement this to receive callbacks about an <code>ExpandingPage</code>. Use with
-   * {@link ExpandablePageLayout#addCallbacks(Callbacks...)}. If you use a Fragment
+   * Implement this to receive state callbacks about an <code>ExpandingPage</code>. Use with
+   * {@link ExpandablePageLayout#addStateCallbacks(StateCallbacks...)}. If you use a Fragment
    * inside your <code>ExpandablePage</code>, it's best to make your Fragment implement this interface.
    */
-  public interface Callbacks {
+  public interface StateCallbacks {
     /**
      * Called when the user has selected an item and the <code>ExpandablePage</code> is going to be expand.
      */
@@ -348,7 +348,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     }
     animatePageExpandCollapse(false /* Collapse */, targetWidth, targetHeight, expandInfo);
 
-    // Send callbacks that the city is going to collapse.
+    // Send state callbacks that the city is going to collapse.
     dispatchOnPageAboutToCollapseCallback();
   }
 
@@ -515,7 +515,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   public void setNestedExpandablePage(ExpandablePageLayout nestedPage) {
     this.nestedPage = nestedPage;
 
-    nestedPage.setInternalCallbacksNestedPage(new InternalPageCallbacks() {
+    nestedPage.setInternalStateCallbacksForNestedPage(new InternalPageCallbacks() {
       @Override
       public void onPageAboutToCollapse() {
         onPageBackgroundVisible();
@@ -600,9 +600,9 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     // notified that the page is going to expand
     changeState(State.EXPANDING);
 
-    if (callbacks != null) {
-      for (int i = 0; i < callbacks.size(); i++) {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
-        callbacks.get(i).onPageAboutToExpand(getAnimationDuration());
+    if (stateCallbacks != null) {
+      for (int i = 0; i < stateCallbacks.size(); i++) {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
+        stateCallbacks.get(i).onPageAboutToExpand(getAnimationDuration());
       }
     }
   }
@@ -612,8 +612,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     changeState(State.EXPANDED);
     dispatchOnPageFullyCoveredCallback();
 
-    if (callbacks != null) {
-      for (final Callbacks callback : callbacks) {
+    if (stateCallbacks != null) {
+      for (final StateCallbacks callback : stateCallbacks) {
         callback.onPageExpanded();
       }
     }
@@ -644,8 +644,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       internalCallback.onPageAboutToCollapse();
     }
 
-    if (callbacks != null) {
-      for (final Callbacks callback : callbacks) {
+    if (stateCallbacks != null) {
+      for (final StateCallbacks callback : stateCallbacks) {
         callback.onPageAboutToCollapse(getAnimationDuration());
       }
     }
@@ -661,8 +661,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       internalCallback.onPageFullyCollapsed();
     }
 
-    if (callbacks != null) {
-      for (final Callbacks callback : callbacks) {
+    if (stateCallbacks != null) {
+      for (final StateCallbacks callback : stateCallbacks) {
         callback.onPageCollapsed();
       }
     }
@@ -692,13 +692,13 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 // ======== SETTERS & GETTERS ======== //
 
   /**
-   * Calls for the associated InboxList.
+   * Calls for the associated InboxRecyclerView.
    */
-  void setInternalCallbacksList(InternalPageCallbacks listCallbacks) {
+  void setInternalStateCallbacksForList(InternalPageCallbacks listCallbacks) {
     internalStateCallbacks.put("List", listCallbacks);
   }
 
-  void setInternalCallbacksNestedPage(InternalPageCallbacks pageCallbacks) {
+  void setInternalStateCallbacksForNestedPage(InternalPageCallbacks pageCallbacks) {
     internalStateCallbacks.put("NestedPage", pageCallbacks);
   }
 
@@ -734,11 +734,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     return currentState == State.COLLAPSING || currentState == State.COLLAPSED;
   }
 
-  public void addCallbacks(Callbacks... callbacks) {
-    if (this.callbacks == null) {
-      this.callbacks = new ArrayList<>(4);
+  public void addStateCallbacks(StateCallbacks... callbacks) {
+    if (this.stateCallbacks == null) {
+      this.stateCallbacks = new ArrayList<>(4);
     }
-    Collections.addAll(this.callbacks, callbacks);
+    Collections.addAll(this.stateCallbacks, callbacks);
   }
 
   public void setPullToCollapseIntercepter(OnPullToCollapseIntercepter intercepter) {

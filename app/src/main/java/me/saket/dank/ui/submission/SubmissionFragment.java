@@ -84,7 +84,7 @@ import me.saket.dank.widgets.ZoomableImageView;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.Callbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
+public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.StateCallbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
@@ -180,7 +180,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentList.setItemAnimator(new DefaultItemAnimator());
 
     submissionPageLayout = ((ExpandablePageLayout) view.getParent());
-    submissionPageLayout.addCallbacks(this);
+    submissionPageLayout.addStateCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
     setupCommentsHelper();
