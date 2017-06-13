@@ -1,28 +1,25 @@
 package me.saket.dank.utils;
 
 import android.support.v7.widget.RecyclerView;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import java.util.List;
+
 /**
  * An adapter that wraps in another adapter for adding a header row in the list.
+ *
+ * @param <VH> Type of ViewHolder for the header and the child items.
  */
-public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView.ViewHolder> {
+public abstract class RecyclerAdapterWithHeader<VH extends RecyclerView.ViewHolder> extends RecyclerViewArrayAdapter<Object, VH> {
 
   private static final int VIEW_TYPE_HEADER = 99;
 
-  private RecyclerView.Adapter adapterToWrap;
+  private RecyclerViewArrayAdapter<?, VH> adapterToWrap;
   private View headerView;
 
-  public static RecyclerAdapterWithHeader wrap(RecyclerView.Adapter adapterToWrap, View headerView) {
-    if (headerView.getParent() != null) {
-      ((ViewGroup) headerView.getParent()).removeView(headerView);
-    }
-
-    return new RecyclerAdapterWithHeader(adapterToWrap, headerView);
-  }
-
-  private RecyclerAdapterWithHeader(RecyclerView.Adapter adapterToWrap, View headerView) {
+  protected RecyclerAdapterWithHeader(RecyclerViewArrayAdapter<?, VH> adapterToWrap, View headerView) {
     this.adapterToWrap = adapterToWrap;
     this.headerView = headerView;
     setHasStableIds(adapterToWrap.hasStableIds());
@@ -61,22 +58,25 @@ public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView
     });
   }
 
+  protected abstract VH onCreateHeaderViewHolder(View headerView);
+
+  protected abstract void onBindHeaderViewHolder(VH holder, int position);
+
+  protected abstract Object getHeaderItem();
+
   @Override
-  public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-    if (viewType == VIEW_TYPE_HEADER) {
-      return new HeaderViewHolder(headerView);
-    } else {
-      return adapterToWrap.onCreateViewHolder(parent, viewType);
-    }
+  public void updateData(List<Object> items) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected VH onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
+    return viewType == VIEW_TYPE_HEADER ? onCreateHeaderViewHolder(headerView) : adapterToWrap.onCreateViewHolder(parent, viewType);
   }
 
   @Override
   public long getItemId(int position) {
-    if (position == 0) {
-      return 99;
-    } else {
-      return adapterToWrap.getItemId(position - 1);
-    }
+    return position == 0 ? -VIEW_TYPE_HEADER : adapterToWrap.getItemId(position - 1);
   }
 
   @Override
@@ -85,8 +85,10 @@ public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView
   }
 
   @Override
-  public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-    if (getItemViewType(position) != VIEW_TYPE_HEADER) {
+  public void onBindViewHolder(VH holder, int position) {
+    if (getItemViewType(position) == VIEW_TYPE_HEADER) {
+      onBindHeaderViewHolder(holder, position);
+    } else {
       //noinspection unchecked
       adapterToWrap.onBindViewHolder(holder, position - 1);
     }
@@ -97,10 +99,7 @@ public class RecyclerAdapterWithHeader extends RecyclerView.Adapter<RecyclerView
     return 1 + adapterToWrap.getItemCount();
   }
 
-  public static class HeaderViewHolder extends RecyclerView.ViewHolder {
-    public HeaderViewHolder(View itemView) {
-      super(itemView);
-    }
+  public Object getItem(int position) {
+    return position == 0 ? getHeaderItem() : adapterToWrap.getItem(position);
   }
-
 }

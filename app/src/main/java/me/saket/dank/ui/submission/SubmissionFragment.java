@@ -71,8 +71,9 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
-import me.saket.dank.utils.RecyclerAdapterWithHeader;
+import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.SubmissionAdapterWithHeader;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -111,6 +112,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private ExpandablePageLayout submissionPageLayout;
   private CommentsAdapter commentsAdapter;
+  private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
   private CommentsHelper commentsHelper;
   private Submission activeSubmission;
@@ -179,9 +181,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Add submission Views as a header so that it scrolls with the list.
     commentsAdapter = new CommentsAdapter(getResources(), linkMovementMethod);
-    RecyclerAdapterWithHeader adapterWithSubmissionHeader = RecyclerAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView);
+    adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView);
 
-    commentList.setAdapter(adapterWithSubmissionHeader);
+    // Wrapper adapter for swipe gestures.
+    SwipeableCommentsHelper swipeActionsManager = new SwipeableCommentsHelper(Dank.submissions(), Dank.voting());
+    RecyclerViewArrayAdapter swipeableCommentsAdapter = swipeActionsManager.wrapAdapter(adapterWithSubmissionHeader);
+    swipeActionsManager.attachToRecyclerView(commentList);
+    commentList.setAdapter(swipeableCommentsAdapter);
 
     submissionPageLayout = ((ExpandablePageLayout) view.getParent());
     submissionPageLayout.addStateCallbacks(this);
@@ -405,14 +411,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     Link contentLink = UrlParser.parse(submission.getUrl(), submission.getThumbnails());
     loadSubmissionContent(submission, contentLink);
 
+    adapterWithSubmissionHeader.updateData(submission);
+
     // Load new comments.
     if (submission.getComments() == null) {
-      unsubscribeOnCollapse(Dank.reddit()
-          .submission(activeSubmissionRequest)
+      unsubscribeOnCollapse(Dank.reddit().submission(activeSubmissionRequest)
           .flatMap(retryWithCorrectSortIfNeeded())
           .compose(applySchedulersSingle())
           .compose(doOnSingleStartAndTerminate(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
-          .doOnSuccess(submWithComments -> activeSubmission = submWithComments)
+          .doOnSuccess(submissionWithComments -> activeSubmission = submissionWithComments)
           .subscribe(commentsHelper.setup(), handleSubmissionLoadError())
       );
 

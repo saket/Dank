@@ -1,48 +1,56 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout style="@style/DankSubmissionCommentItem"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
+<me.saket.dank.widgets.swipe.SwipeableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  tools:layout_marginTop="25dp">
+
+  <me.saket.dank.widgets.swipe.SwipeActionIconView style="@style/DankSwipeableLayoutIcon" />
+
+  <LinearLayout
+    style="@style/DankSubmissionCommentItem"
     android:orientation="vertical"
     android:paddingTop="@dimen/spacing8">
 
     <LinearLayout
-        android:layout_width="match_parent"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="@dimen/spacing16">
+
+      <TextView
+        android:id="@+id/item_comment_author_username"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing16">
+        android:layout_marginBottom="@dimen/spacing4"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textColor="@color/gray_500"
+        android:textSize="@dimen/textsize12"
+        tools:text="nuckingfuts73" />
 
-        <TextView
-            android:id="@+id/item_comment_author_username"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing4"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textColor="@color/gray_500"
-            android:textSize="@dimen/textsize12"
-            tools:text="nuckingfuts73" />
-
-        <TextView
-            android:id="@+id/item_comment_author_flair"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
-            android:layout_marginBottom="@dimen/spacing4"
-            android:layout_marginStart="@dimen/spacing8"
-            android:layout_weight="1"
-            android:ellipsize="end"
-            android:maxLines="1"
-            android:textSize="@dimen/textsize12"
-            tools:text="nuckingfuts73" />
+      <TextView
+        android:id="@+id/item_comment_author_flair"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing4"
+        android:layout_marginStart="@dimen/spacing8"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:textSize="@dimen/textsize12"
+        tools:text="nuckingfuts73" />
     </LinearLayout>
 
     <TextView
-        android:id="@+id/item_comment_body"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing16"
-        android:textColor="@color/gray_200"
-        tools:text="That boss was my favourite. I bought Dark Souls after hearing how crushingly difficult it was from a friend of mine. He kept warning me about that boss and told me to prepare for a really difficult time." />
+      android:id="@+id/item_comment_body"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="@dimen/spacing16"
+      android:textColor="@color/gray_200"
+      tools:text="That boss was my favourite. I bought Dark Souls after hearing how crushingly difficult it was from a friend of mine. He kept warning me about that boss and told me to prepare for a really difficult time." />
 
     <View
-        style="@style/DankSeparator.VerticalContent"
-        android:layout_marginTop="@dimen/spacing12" />
-</LinearLayout>
+      style="@style/DankSeparator.VerticalContent"
+      android:layout_marginTop="@dimen/spacing12" />
+  </LinearLayout>
+</me.saket.dank.widgets.swipe.SwipeableLayout>

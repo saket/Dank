@@ -32,5 +32,4 @@ public abstract class LoadMoreCommentsItem implements SubmissionCommentsRow {
     int id = (parentNode.getComment().getId() + "_loadMore").hashCode();
     return new AutoValue_LoadMoreCommentsItem(parentNode, progressVisible, id);
   }
-
 }

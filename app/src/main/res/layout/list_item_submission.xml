@@ -5,11 +5,7 @@
   android:layout_height="wrap_content"
   tools:background="@color/window_background">
 
-  <me.saket.dank.widgets.swipe.SwipeActionIconView
-    android:layout_width="56dp"
-    android:layout_height="56dp"
-    android:layout_gravity="center_vertical"
-    android:padding="@dimen/spacing16" />
+  <me.saket.dank.widgets.swipe.SwipeActionIconView style="@style/DankSwipeableLayoutIcon" />
 
   <LinearLayout
     android:layout_width="match_parent"

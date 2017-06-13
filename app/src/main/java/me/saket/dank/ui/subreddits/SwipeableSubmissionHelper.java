@@ -26,15 +26,15 @@ import me.saket.dank.widgets.swipe.SwipeableLayout;
 import timber.log.Timber;
 
 /**
- * Controls swipe actions on submissions.
+ * Controls gesture actions on submissions.
  */
 public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIconProvider {
 
   private static final String ACTION_NAME_SAVE = "Save";
   private static final String ACTION_NAME_UNSAVE = "UnSave";
   private static final String ACTION_NAME_OPTIONS = "Options";
-  static final String ACTION_NAME_UPVOTE = "Upvote";
-  static final String ACTION_NAME_DOWNVOTE = "Downvote";
+  private static final String ACTION_NAME_UPVOTE = "Upvote";
+  private static final String ACTION_NAME_DOWNVOTE = "Downvote";
 
   private final SwipeActions swipeActionsWithUnsave;
   private final SwipeActions swipeActionsWithSave;
@@ -115,6 +115,45 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
     };
   }
 
+  private void performSwipeAction(SwipeAction action, Submission submission) {
+    switch (action.name()) {
+      case ACTION_NAME_OPTIONS:
+        Timber.i("Action: %s", action.name());
+        break;
+
+      case ACTION_NAME_SAVE:
+        submissionManager.markAsSaved(submission);
+        Timber.i("Action: %s", action.name());
+        break;
+
+      case ACTION_NAME_UNSAVE:
+        submissionManager.markAsUnsaved(submission);
+        Timber.i("Action: %s", action.name());
+        break;
+
+      case ACTION_NAME_UPVOTE: {
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
+        votingManager.voteWithAutoRetry(submission, newVoteDirection)
+            .subscribeOn(Schedulers.io())
+            .subscribe();
+        break;
+      }
+
+      case ACTION_NAME_DOWNVOTE: {
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
+        votingManager.voteWithAutoRetry(submission, newVoteDirection)
+            .subscribeOn(Schedulers.io())
+            .subscribe();
+        break;
+      }
+
+      default:
+        throw new UnsupportedOperationException("Unknown swipe action: " + action);
+    }
+  }
+
   @Override
   public void showSwipeActionIcon(SwipeActionIconView imageView, @Nullable SwipeAction oldAction, SwipeAction newAction) {
     switch (newAction.name()) {
@@ -161,44 +200,5 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
   private void resetIconRotation(SwipeActionIconView imageView) {
     imageView.animate().cancel();
     imageView.setRotation(0);
-  }
-
-  private void performSwipeAction(SwipeAction action, Submission submission) {
-    switch (action.name()) {
-      case ACTION_NAME_OPTIONS:
-        Timber.i("Action: %s", action.name());
-        break;
-
-      case ACTION_NAME_SAVE:
-        submissionManager.markAsSaved(submission);
-        Timber.i("Action: %s", action.name());
-        break;
-
-      case ACTION_NAME_UNSAVE:
-        submissionManager.markAsUnsaved(submission);
-        Timber.i("Action: %s", action.name());
-        break;
-
-      case ACTION_NAME_UPVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
-        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.voteWithAutoRetry(submission, newVoteDirection)
-            .subscribeOn(Schedulers.io())
-            .subscribe();
-        break;
-      }
-
-      case ACTION_NAME_DOWNVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
-        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.voteWithAutoRetry(submission, newVoteDirection)
-            .subscribeOn(Schedulers.io())
-            .subscribe();
-        break;
-      }
-
-      default:
-        throw new UnsupportedOperationException("Unknown swipe action: " + action);
-    }
   }
 }

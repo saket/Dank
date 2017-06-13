@@ -9,7 +9,8 @@ import android.view.View;
 import me.saket.dank.utils.SimpleRecyclerViewOnChildAttachStateChangeListener;
 
 /**
- * Not using {@link ItemTouchHelper}, because it only supports "dismissing" items with swipe. There's no concept of them snapping back.
+ * Not using {@link ItemTouchHelper}, because it only supports "dismissing" items with swipe.
+ * There's no concept of them snapping back.
  */
 public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListener {
 

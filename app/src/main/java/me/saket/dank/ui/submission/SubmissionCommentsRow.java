@@ -13,5 +13,4 @@ public interface SubmissionCommentsRow {
   long id();
 
   Type type();
-
 }

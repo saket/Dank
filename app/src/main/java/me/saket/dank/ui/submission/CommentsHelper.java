@@ -40,7 +40,7 @@ public class CommentsHelper {
   public SafeConsumer<Submission> setup() {
     return submission -> {
       rootCommentNode = submission.getComments();
-      commentUpdates.accept(CommentsHelper.this.constructComments());
+      commentUpdates.accept(constructComments());
     };
   }
 
@@ -90,12 +90,12 @@ public class CommentsHelper {
    * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
    */
   private List<SubmissionCommentsRow> constructComments(List<SubmissionCommentsRow> flattenComments, CommentNode nextNode) {
-    String indentation = "";
-    if (nextNode.getDepth() != 0) {
-      for (int step = 0; step < nextNode.getDepth(); step++) {
-        indentation += "  ";
-      }
-    }
+//    String indentation = "";
+//    if (nextNode.getDepth() != 0) {
+//      for (int step = 0; step < nextNode.getDepth(); step++) {
+//        indentation += "  ";
+//      }
+//    }
 
     boolean isCommentNodeCollapsed = isCollapsed(nextNode);
     if (nextNode.getDepth() != 0) {

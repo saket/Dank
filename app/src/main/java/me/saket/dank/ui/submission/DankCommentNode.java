@@ -23,5 +23,4 @@ public abstract class DankCommentNode implements SubmissionCommentsRow {
     int commentId = commentNode.getComment().getId().hashCode();
     return new AutoValue_DankCommentNode(commentNode, isCollapsed, commentId);
   }
-
 }

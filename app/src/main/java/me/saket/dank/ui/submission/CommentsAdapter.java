@@ -23,6 +23,8 @@ import me.saket.dank.R;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.swipe.SwipeableLayout;
+import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentsRow, RecyclerView.ViewHolder>
     implements Consumer<List<SubmissionCommentsRow>>
@@ -123,7 +125,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     return getItem(position).id();
   }
 
-  public static class UserCommentViewHolder extends RecyclerView.ViewHolder {
+  public static class UserCommentViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
     @BindView(R.id.item_comment_author_username) TextView authorNameView;
     @BindView(R.id.item_comment_author_flair) TextView authorFlairView;
     @BindView(R.id.item_comment_body) TextView commentBodyView;
@@ -161,6 +163,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       // Flair.
       Flair authorFlair = commentNode.getComment().getAuthorFlair();
       authorFlairView.setText(authorFlair != null ? authorFlair.getText() : null);
+    }
+
+    @Override
+    public SwipeableLayout getSwipeableLayout() {
+      return (SwipeableLayout) itemView;
     }
   }
 

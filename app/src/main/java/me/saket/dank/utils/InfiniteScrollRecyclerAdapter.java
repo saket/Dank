@@ -189,10 +189,10 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
   @Override
   public long getItemId(int position) {
     if (isHeaderItem(position)) {
-      return VIEW_TYPE_HEADER;
+      return -VIEW_TYPE_HEADER;
 
     } else if (isFooterItem(position)) {
-      return VIEW_TYPE_FOOTER;
+      return -VIEW_TYPE_FOOTER;
 
     } else {
       return wrappedAdapter.getItemId(position - getVisibleHeaderItemCount());

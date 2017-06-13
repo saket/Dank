@@ -220,6 +220,13 @@
     <item name="android:dropDownVerticalOffset">@dimen/popup_menu_vertical_offset_for_button</item>
   </style>
 
+  <style name="DankSwipeableLayoutIcon">
+    <item name="android:layout_width">56dp</item>
+    <item name="android:layout_height">56dp</item>
+    <item name="android:layout_gravity">center_vertical</item>
+    <item name="android:padding">@dimen/spacing16</item>
+  </style>
+
   <!-- Submission -->
   <style name="DankSubmissionCommentItem">
     <item name="android:layout_width">match_parent</item>
