@@ -142,12 +142,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     getSupportActionBar().setDisplayShowTitleEnabled(false);
 
     if (isPullCollapsible) {
-      contentPage.setNestedExpandablePage(submissionPage);
       expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
-
       toolbarCloseButton.setVisibility(View.VISIBLE);
       toolbarCloseButton.setOnClickListener(__ -> NavUtils.navigateUpFromSameTask(this));
     }
+    contentPage.setNestedExpandablePage(submissionPage);
   }
 
   @Override
