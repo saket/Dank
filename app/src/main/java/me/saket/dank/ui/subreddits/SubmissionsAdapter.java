@@ -40,6 +40,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
   private VotingManager votingManager;
   private UserPrefsManager userPrefsManager;
   private OnItemClickListener clickListener;
+  private SubmissionSwipeActionsProvider swipeActionsProvider;
 
   interface OnItemClickListener {
     /**
@@ -48,9 +49,10 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
     void onItemClick(Submission submission, View submissionItemView, long submissionId);
   }
 
-  public SubmissionsAdapter(VotingManager votingManager, UserPrefsManager userPrefsManager) {
+  public SubmissionsAdapter(VotingManager votingManager, UserPrefsManager userPrefsManager, SubmissionSwipeActionsProvider swipeActionsProvider) {
     this.votingManager = votingManager;
     this.userPrefsManager = userPrefsManager;
+    this.swipeActionsProvider = swipeActionsProvider;
     setHasStableIds(true);
   }
 
@@ -66,7 +68,9 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
 
   @Override
   protected SubmissionViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-    return SubmissionViewHolder.create(parent);
+    SubmissionViewHolder holder = SubmissionViewHolder.create(parent);
+    holder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
+    return holder;
   }
 
   @Override
@@ -78,6 +82,12 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
 
     holder.itemView.setOnClickListener(v -> {
       clickListener.onItemClick(submission, holder.itemView, getItemId(position));
+    });
+
+    SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
+    swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions(submission));
+    swipeableLayout.setOnPerformSwipeActionListener(action -> {
+      swipeActionsProvider.performSwipeAction(this, position, action, submission, holder);
     });
   }
 

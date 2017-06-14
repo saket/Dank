@@ -1,10 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
-import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.RecyclerView;
-import android.view.LayoutInflater;
-import android.view.ViewGroup;
 
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
@@ -13,11 +9,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.VotingManager;
-import me.saket.dank.ui.submission.SimpleRecyclerAdapterWrapper;
-import me.saket.dank.ui.subreddits.SubmissionsAdapter.SubmissionViewHolder;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.RecyclerViewArrayAdapter;
-import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
@@ -28,7 +20,7 @@ import timber.log.Timber;
 /**
  * Controls gesture actions on submissions.
  */
-public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIconProvider {
+public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActionIconProvider {
 
   private static final String ACTION_NAME_SAVE = "Save";
   private static final String ACTION_NAME_UNSAVE = "UnSave";
@@ -41,7 +33,7 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
   private final SubmissionManager submissionManager;
   private VotingManager votingManager;
 
-  public SwipeableSubmissionHelper(SubmissionManager submissionManager, VotingManager votingManager) {
+  public SubmissionSwipeActionsProvider(SubmissionManager submissionManager, VotingManager votingManager) {
     this.submissionManager = submissionManager;
     this.votingManager = votingManager;
 
@@ -74,48 +66,14 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
         .build();
   }
 
-  public void attachToRecyclerView(RecyclerView recyclerView) {
-    RecyclerSwipeListener swipeListener = new RecyclerSwipeListener(recyclerView);
-    recyclerView.addOnItemTouchListener(swipeListener);
+  public SwipeActions getSwipeActions(Submission submission) {
+    boolean isSubmissionSaved = submissionManager.isSaved(submission);
+    return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
   }
 
-  @CheckResult
-  public RecyclerViewArrayAdapter<Submission, SubmissionViewHolder> wrapAdapter(SubmissionsAdapter adapterToWrap) {
-    return new SimpleRecyclerAdapterWrapper<Submission, SubmissionViewHolder>(adapterToWrap) {
-      @Override
-      public SubmissionViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-        SubmissionViewHolder holder = adapterToWrap.onCreateViewHolder(parent, viewType);
-        holder.getSwipeableLayout().setSwipeActionIconProvider(SwipeableSubmissionHelper.this);
-        return holder;
-      }
-
-      @Override
-      public void onBindViewHolder(SubmissionViewHolder holder, int position) {
-        adapterToWrap.onBindViewHolder(holder, position);
-        Submission submission = adapterToWrap.getItem(position);
-        SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
-
-        swipeableLayout.setSwipeActions(determineSwipeActions(submission));
-
-        swipeableLayout.setOnPerformSwipeActionListener(action -> {
-          performSwipeAction(action, submission);
-          swipeableLayout.playRippleAnimation(action);  // TODO: Specify ripple direction.
-
-          // We should ideally only be updating the backing data-set and let onBind() handle the
-          // changes, but RecyclerView's item animator reset's the View's x-translation which we
-          // don't want. So we manually update the Views here.
-          adapterToWrap.onBindViewHolder(holder, position);
-        });
-      }
-
-      private SwipeActions determineSwipeActions(Submission submission) {
-        boolean isSubmissionSaved = submissionManager.isSaved(submission);
-        return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
-      }
-    };
-  }
-
-  private void performSwipeAction(SwipeAction action, Submission submission) {
+  public void performSwipeAction(SubmissionsAdapter submissionsAdapter, int position, SwipeAction action, Submission submission,
+      SubmissionsAdapter.SubmissionViewHolder holder)
+  {
     switch (action.name()) {
       case ACTION_NAME_OPTIONS:
         Timber.i("Action: %s", action.name());
@@ -152,6 +110,13 @@ public class SwipeableSubmissionHelper implements SwipeableLayout.SwipeActionIco
       default:
         throw new UnsupportedOperationException("Unknown swipe action: " + action);
     }
+
+    // We should ideally only be updating the backing data-set and let onBind() handle the
+    // changes, but RecyclerView's item animator reset's the View's x-translation which we
+    // don't want. So we manually update the Views here.
+    submissionsAdapter.onBindViewHolder(holder, position);
+
+    holder.getSwipeableLayout().playRippleAnimation(action);  // TODO: Specify ripple direction.
   }
 
   @Override

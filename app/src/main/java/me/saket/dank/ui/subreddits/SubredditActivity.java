@@ -63,13 +63,11 @@ import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionFragment;
-import me.saket.dank.ui.subreddits.SubmissionsAdapter.SubmissionViewHolder;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderFooterInfo;
 import me.saket.dank.utils.Keyboards;
-import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
@@ -77,6 +75,7 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
+import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
@@ -343,7 +342,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     submissionList.setItemAnimator(new DefaultItemAnimator());
     submissionList.setExpandablePage(submissionPage, toolbarContainer);
 
-    SubmissionsAdapter submissionsAdapter = new SubmissionsAdapter(Dank.voting(), Dank.userPrefs());
+    // Swipe gestures.
+    SubmissionSwipeActionsProvider swipeActionsProvider = new SubmissionSwipeActionsProvider(Dank.submissions(), Dank.voting());
+    submissionList.addOnItemTouchListener(new RecyclerSwipeListener(submissionList));
+
+    SubmissionsAdapter submissionsAdapter = new SubmissionsAdapter(Dank.voting(), Dank.userPrefs(), swipeActionsProvider);
     submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
       DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
           .commentSort(defaultIfNull(submission.getSuggestedSort(), DankRedditClient.DEFAULT_COMMENT_SORT))
@@ -359,13 +362,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       });
     });
 
-    // Wrapper adapter for swipe gestures.
-    SwipeableSubmissionHelper swipeActionsManager = new SwipeableSubmissionHelper(Dank.submissions(), Dank.voting());
-    RecyclerViewArrayAdapter<Submission, SubmissionViewHolder> swipeableSubmissionsAdapter = swipeActionsManager.wrapAdapter(submissionsAdapter);
-    swipeActionsManager.attachToRecyclerView(submissionList);
-
     // Wrapper adapter for infinite scroll progress and errors.
-    submissionAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(swipeableSubmissionsAdapter);
+    submissionAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(submissionsAdapter);
     submissionList.setAdapter(submissionAdapterWithProgress);
 
     unsubscribeOnDestroy(

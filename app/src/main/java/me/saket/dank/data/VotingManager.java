@@ -72,6 +72,8 @@ public class VotingManager {
    */
   @CheckResult
   public <T extends Thing & Votable> Completable voteWithAutoRetry(T thingToVote, VoteDirection voteDirection) {
+    Timber.i("Voting for %s with %s", thingToVote.getFullName(), voteDirection);
+
     return vote(thingToVote, voteDirection)
         .onErrorComplete(error -> {
           if (!Dank.errors().resolve(error).isUnknown()) {

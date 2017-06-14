@@ -89,8 +89,6 @@ public class SwipeableCommentsHelper {
             .add(SwipeAction.create(ACTION_NAME_COMMENT_UPVOTE, R.color.list_item_swipe_upvote, 1f))
             .build())
         .build();
-
-
   }
 
   public void attachToRecyclerView(RecyclerView recyclerView) {
