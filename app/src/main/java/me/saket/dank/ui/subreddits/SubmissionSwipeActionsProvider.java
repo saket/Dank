@@ -71,22 +71,20 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
   }
 
-  public void performSwipeAction(SubmissionsAdapter submissionsAdapter, int position, SwipeAction action, Submission submission,
-      SubmissionsAdapter.SubmissionViewHolder holder)
-  {
-    switch (action.name()) {
+  public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
+    switch (swipeAction.name()) {
       case ACTION_NAME_OPTIONS:
-        Timber.i("Action: %s", action.name());
+        Timber.i("Action: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_SAVE:
         submissionManager.markAsSaved(submission);
-        Timber.i("Action: %s", action.name());
+        Timber.i("Action: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_UNSAVE:
         submissionManager.markAsUnsaved(submission);
-        Timber.i("Action: %s", action.name());
+        Timber.i("Action: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_UPVOTE: {
@@ -108,15 +106,10 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
       }
 
       default:
-        throw new UnsupportedOperationException("Unknown swipe action: " + action);
+        throw new UnsupportedOperationException("Unknown swipe action: " + swipeAction);
     }
 
-    // We should ideally only be updating the backing data-set and let onBind() handle the
-    // changes, but RecyclerView's item animator reset's the View's x-translation which we
-    // don't want. So we manually update the Views here.
-    submissionsAdapter.onBindViewHolder(holder, position);
-
-    holder.getSwipeableLayout().playRippleAnimation(action);  // TODO: Specify ripple direction.
+    swipeableLayout.playRippleAnimation(swipeAction);  // TODO: Specify ripple direction.
   }
 
   @Override

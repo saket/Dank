@@ -87,7 +87,12 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
     SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
     swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions(submission));
     swipeableLayout.setOnPerformSwipeActionListener(action -> {
-      swipeActionsProvider.performSwipeAction(this, position, action, submission, holder);
+      swipeActionsProvider.performSwipeAction(action, submission, swipeableLayout);
+
+      // We should ideally only be updating the backing data-set and let onBind() handle the
+      // changes, but RecyclerView's item animator reset's the View's x-translation which we
+      // don't want. So we manually update the Views here.
+      onBindViewHolder(holder, position);
     });
   }
 

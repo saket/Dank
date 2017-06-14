@@ -36,6 +36,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
   private static int startPaddingForRootComment;
   private static int startPaddingPerDepthLevel;
   private final BetterLinkMovementMethod linkMovementMethod;
+  private final CommentSwipeActionsProvider swipeActionsProvider;
 
   private PublishRelay<CommentNode> commentClickSubject = PublishRelay.create();
   private PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickSubject = PublishRelay.create();
@@ -57,12 +58,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     }
   }
 
-  public CommentsAdapter(Resources resources, BetterLinkMovementMethod commentsLinkMovementMethod) {
-    setHasStableIds(true);
+  public CommentsAdapter(Resources resources, BetterLinkMovementMethod commentsLinkMovementMethod, CommentSwipeActionsProvider swipeActionsProvider) {
+    this.linkMovementMethod = commentsLinkMovementMethod;
+    this.swipeActionsProvider = swipeActionsProvider;
+
     startPaddingForRootComment = resources.getDimensionPixelSize(R.dimen.comment_start_padding_for_root_comment);
     startPaddingPerDepthLevel = resources.getDimensionPixelSize(R.dimen.comment_start_padding_per_depth_level);
-
-    linkMovementMethod = commentsLinkMovementMethod;
+    setHasStableIds(true);
   }
 
   /**
@@ -93,7 +95,10 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
   @Override
   protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
     if (viewType == VIEW_TYPE_USER_COMMENT) {
-      return UserCommentViewHolder.create(inflater, parent, linkMovementMethod);
+      UserCommentViewHolder holder = UserCommentViewHolder.create(inflater, parent, linkMovementMethod);
+      holder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
+      return holder;
+
     } else {
       return LoadMoreCommentViewHolder.create(inflater, parent);
     }
@@ -105,9 +110,22 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
     if (commentItem.type() == SubmissionCommentsRow.Type.USER_COMMENT) {
       CommentNode commentNode = ((DankCommentNode) commentItem).commentNode();
-      ((UserCommentViewHolder) holder).bind(commentNode);
-      ((UserCommentViewHolder) holder).itemView.setOnClickListener(v -> {
+
+      UserCommentViewHolder commentViewHolder = (UserCommentViewHolder) holder;
+      commentViewHolder.bind(commentNode);
+      commentViewHolder.itemView.setOnClickListener(v -> {
         commentClickSubject.accept(commentNode);
+      });
+
+      SwipeableLayout swipeableLayout = commentViewHolder.getSwipeableLayout();
+      swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions());
+      swipeableLayout.setOnPerformSwipeActionListener(action -> {
+        swipeActionsProvider.performSwipeAction(action, commentNode, swipeableLayout);
+
+        // We should ideally only be updating the backing data-set and let onBind() handle the
+        // changes, but RecyclerView's item animator reset's the View's x-translation which we
+        // don't want. So we manually update the Views here.
+        onBindViewHolder(holder, position);
       });
 
     } else {
@@ -151,7 +169,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     }
 
     public void bind(CommentNode commentNode) {
-      applyDepthIndentation(itemView, commentNode.getDepth());
+      applyDepthIndentation(((ViewGroup) itemView).getChildAt(1), commentNode.getDepth());
 
       // Author name, comment.
       authorNameView.setText(String.format("%s (%s)", commentNode.getComment().getAuthor(), commentNode.getComment().getScore()));
@@ -212,5 +230,4 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       Views.setPaddingStart(itemView, startPaddingPerDepthLevel * depth);
     }
   }
-
 }

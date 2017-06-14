@@ -18,13 +18,10 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
-import android.text.Html;
-import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,7 +35,6 @@ import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
 
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.VoteDirection;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -62,19 +58,14 @@ import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.OpenUrlActivity;
+import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
-import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
-import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
-import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
-import me.saket.dank.utils.RecyclerViewArrayAdapter;
-import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.SubmissionAdapterWithHeader;
-import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
@@ -82,6 +73,7 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
+import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -100,8 +92,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindView(R.id.submission_video) VideoView contentVideoView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
   @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
-  @BindView(R.id.submission_title) TextView titleView;
-  @BindView(R.id.submission_byline) TextView bylineView;
   @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
   @BindView(R.id.submission_link_container) ViewGroup linkDetailsView;
   @BindView(R.id.submission_comment_list) RecyclerView commentList;
@@ -118,11 +108,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private Submission activeSubmission;
   private DankSubmissionRequest activeSubmissionRequest;
   private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
-  private SubmissionLinkHolder linkDetailsViewHolder;
   private Link activeSubmissionContentLink;
 
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
+  private SubmissionLinkHolder linkDetailsViewHolder;
 
   private int deviceDisplayWidth;
   private boolean isCommentSheetBeneathImage;
@@ -175,19 +165,19 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     });
     selfPostTextView.setMovementMethod(linkMovementMethod);
 
+    // Swipe gestures.
+    commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
+    SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(Dank.submissions(), Dank.voting());
+    CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(Dank.voting());
+
     // Setup comment list and its adapter.
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
     commentList.setItemAnimator(new DefaultItemAnimator());
+    commentsAdapter = new CommentsAdapter(getResources(), linkMovementMethod, commentSwipeActionsProvider);
 
     // Add submission Views as a header so that it scrolls with the list.
-    commentsAdapter = new CommentsAdapter(getResources(), linkMovementMethod);
-    adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView);
-
-    // Wrapper adapter for swipe gestures.
-    SwipeableCommentsHelper swipeActionsManager = new SwipeableCommentsHelper(Dank.submissions(), Dank.voting());
-    RecyclerViewArrayAdapter swipeableCommentsAdapter = swipeActionsManager.wrapAdapter(adapterWithSubmissionHeader);
-    swipeActionsManager.attachToRecyclerView(commentList);
-    commentList.setAdapter(swipeableCommentsAdapter);
+    adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView, Dank.voting(), submissionSwipeActionsProvider);
+    commentList.setAdapter(adapterWithSubmissionHeader);
 
     submissionPageLayout = ((ExpandablePageLayout) view.getParent());
     submissionPageLayout.addStateCallbacks(this);
@@ -378,40 +368,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     activeSubmissionRequest = submissionRequest;
 
     // Reset everything.
-    contentLoadProgressView.setProgress(0);
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
     commentsHelper.reset();
     commentList.scrollTo(0, 0);
     commentsAdapter.updateData(null);
 
-    // Update submission information.
-    VoteDirection pendingOrDefaultVote = Dank.voting().getPendingOrDefaultVote(submission, submission.getVote());
-    int voteDirectionColor = Commons.voteColor(pendingOrDefaultVote);
+    // Update submission information. Everything that
+    adapterWithSubmissionHeader.updateSubmission(submission);
 
-    Truss titleBuilder = new Truss();
-    titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(getActivity(), voteDirectionColor)));
-    titleBuilder.append(Strings.abbreviateScore(Dank.voting().getScoreAfterAdjustingPendingVote(submission)));
-    titleBuilder.popSpan();
-    titleBuilder.append("  ");
-    //noinspection deprecation
-    titleBuilder.append(Html.fromHtml(submission.getTitle()));
-    titleView.setText(titleBuilder.build());
-
-    long timeMillis = JrawUtils.createdTimeUtc(submission);
-    bylineView.setText(getString(
-        R.string.submission_byline,
-        submission.getSubredditName(),
-        submission.getAuthor(),
-        Dates.createTimestamp(getResources(), timeMillis),
-        Strings.abbreviateScore(submission.getCommentCount())
-    ));
-
-    // Load self-text/media/webpage.
+    // Load content
     Link contentLink = UrlParser.parse(submission.getUrl(), submission.getThumbnails());
     loadSubmissionContent(submission, contentLink);
-
-    adapterWithSubmissionHeader.updateData(submission);
 
     // Load new comments.
     if (submission.getComments() == null) {
