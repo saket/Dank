@@ -1,5 +1,6 @@
 package me.saket.dank.widgets.swipe;
 
+import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.GestureDetector;
@@ -36,6 +37,8 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
 
   private GestureDetector createSwipeGestureDetector(RecyclerView recyclerView) {
     return new GestureDetector(recyclerView.getContext(), new GestureDetector.SimpleOnGestureListener() {
+      Rect viewGlobalVisibleRect = new Rect();
+
       @Override
       public boolean onDown(MotionEvent e) {
         // RecyclerView#findChildViewUnder() requires touch coordinates relative to
@@ -50,7 +53,14 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
 
         // Clearing everything here because ACTION_UP doesn't get called if no touch event was intercepted.
         isSwiping = false;
-        viewTopOnSwipeStart = viewBeingSwiped != null ? viewBeingSwiped.getTop() : -1;
+        if (viewBeingSwiped != null) {
+          // In SubmissionFragment, the comment list is contained in another scrolling layout.
+          // So viewBeingSwiped.getTop() cannot be used as it'll be relative to its parent.
+          viewBeingSwiped.getGlobalVisibleRect(viewGlobalVisibleRect);
+          viewTopOnSwipeStart = viewGlobalVisibleRect.top;
+        } else {
+          viewTopOnSwipeStart = -1;
+        }
         return false;
       }
 
@@ -59,7 +69,9 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
         if (viewBeingSwiped == null) {
           return false;
         }
-        if (viewTopOnSwipeStart != viewBeingSwiped.getTop()) {
+
+        viewBeingSwiped.getGlobalVisibleRect(viewGlobalVisibleRect);
+        if (viewTopOnSwipeStart != viewGlobalVisibleRect.top) {
           // List is being scrolled.
           return false;
         }
