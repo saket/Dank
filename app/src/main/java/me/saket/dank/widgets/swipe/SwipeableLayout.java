@@ -146,7 +146,7 @@ public class SwipeableLayout extends FrameLayout {
     } else {
       // Move the icon along with the View being swiped.
       if (swipingFromEndToStart) {
-        actionIconView.setTranslationX(swipeableChild.getWidth() + translationX);
+        actionIconView.setTranslationX(swipeableChild.getRight() + translationX);
       } else {
         actionIconView.setTranslationX(translationX - actionIconView.getWidth());
       }

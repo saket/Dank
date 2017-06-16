@@ -23,8 +23,10 @@ import me.saket.dank.R;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.IndentedLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
+import timber.log.Timber;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentsRow, RecyclerView.ViewHolder>
     implements Consumer<List<SubmissionCommentsRow>>
@@ -33,8 +35,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
   private static final int VIEW_TYPE_USER_COMMENT = 100;
   private static final int VIEW_TYPE_LOAD_MORE = 101;
 
-  private static int startPaddingForRootComment;
-  private static int startPaddingPerDepthLevel;
   private final BetterLinkMovementMethod linkMovementMethod;
   private final CommentSwipeActionsProvider swipeActionsProvider;
 
@@ -61,9 +61,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
   public CommentsAdapter(Resources resources, BetterLinkMovementMethod commentsLinkMovementMethod, CommentSwipeActionsProvider swipeActionsProvider) {
     this.linkMovementMethod = commentsLinkMovementMethod;
     this.swipeActionsProvider = swipeActionsProvider;
-
-    startPaddingForRootComment = resources.getDimensionPixelSize(R.dimen.comment_start_padding_for_root_comment);
-    startPaddingPerDepthLevel = resources.getDimensionPixelSize(R.dimen.comment_start_padding_per_depth_level);
     setHasStableIds(true);
   }
 
@@ -133,6 +130,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
 
       holder.itemView.setOnClickListener(__ -> {
+        Timber.i("load more click");
         loadMoreCommentsClickSubject.accept(new LoadMoreCommentsClickEvent(loadMoreItem.parentCommentNode(), holder.itemView));
       });
     }
@@ -144,6 +142,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
   }
 
   public static class UserCommentViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
+    @BindView(R.id.item_comment_indented_container) IndentedLayout indentedContainer;
     @BindView(R.id.item_comment_author_username) TextView authorNameView;
     @BindView(R.id.item_comment_author_flair) TextView authorFlairView;
     @BindView(R.id.item_comment_body) TextView commentBodyView;
@@ -169,11 +168,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     }
 
     public void bind(CommentNode commentNode) {
-      applyDepthIndentation(((ViewGroup) itemView).getChildAt(1), commentNode.getDepth());
+      indentedContainer.setIndentationDepth(commentNode.getDepth() - 1);
 
       // Author name, comment.
       authorNameView.setText(String.format("%s (%s)", commentNode.getComment().getAuthor(), commentNode.getComment().getScore()));
 
+      // Body.
       String commentBody = commentNode.getComment().getDataNode().get("body_html").asText();
       commentBodyView.setText(Markdown.parseRedditMarkdownHtml(commentBody, commentBodyView.getPaint()));
       commentBodyView.setMovementMethod(linkMovementMethod);
@@ -191,6 +191,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
   public static class LoadMoreCommentViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.item_loadmorecomments_load_more) TextView loadMoreView;
+    @BindView(R.id.item_loadmorecomments_indented_container) IndentedLayout indentedContainer;
 
     public static LoadMoreCommentViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new LoadMoreCommentViewHolder(inflater.inflate(R.layout.list_item_load_more_comments, parent, false));
@@ -205,7 +206,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       CommentNode parentCommentNode = loadMoreCommentsItem.parentCommentNode();
 
       // Add a +1 depth to align it with sibling comments.
-      applyDepthIndentation(itemView, parentCommentNode.getDepth() + 1);
+      indentedContainer.setIndentationDepth(parentCommentNode.getDepth());
 
       if (loadMoreCommentsItem.progressVisible()) {
         loadMoreView.setText(R.string.submission_loading_more_comments);
@@ -220,14 +221,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
         }
       }
       Views.setCompoundDrawableEnd(loadMoreView, parentCommentNode.isThreadContinuation() ? R.drawable.ic_arrow_forward_12dp : 0);
-    }
-  }
-
-  public static void applyDepthIndentation(View itemView, int depth) {
-    if (depth == 1) {
-      Views.setPaddingStart(itemView, startPaddingForRootComment);
-    } else {
-      Views.setPaddingStart(itemView, startPaddingPerDepthLevel * depth);
     }
   }
 }

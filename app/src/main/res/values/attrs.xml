@@ -1,15 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <declare-styleable name="ScrollingRecyclerViewSheet">
-        <attr name="peekHeight" format="dimension" />
-    </declare-styleable>
+  <declare-styleable name="ScrollingRecyclerViewSheet">
+    <attr name="peekHeight" format="dimension" />
+  </declare-styleable>
 
-    <declare-styleable name="DankToolbar">
-        <attr name="navigationIcon" format="reference" />
-        <attr name="navigationIconTint" format="color" />
-    </declare-styleable>
+  <declare-styleable name="DankToolbar">
+    <attr name="navigationIcon" format="reference" />
+    <attr name="navigationIconTint" format="color" />
+  </declare-styleable>
 
-    <declare-styleable name="EdittextWithPrefix">
-        <attr name="prefix" format="string" />
-    </declare-styleable>
+  <declare-styleable name="EdittextWithPrefix">
+    <attr name="prefix" format="string" />
+  </declare-styleable>
+
+  <declare-styleable name="IndentedLayout">
+    <attr name="spacePerDepth" format="dimension" />
+    <attr name="indentationLineColor" format="color" />
+    <attr name="indentationLineWidth" format="dimension" />
+  </declare-styleable>
 </resources>

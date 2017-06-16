@@ -232,7 +232,9 @@
     <item name="android:layout_width">match_parent</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:background">?android:selectableItemBackground</item>
-    <item name="android:paddingStart">@dimen/comment_start_padding_per_depth_level</item>
+    <item name="indentationLineColor">@color/gray_850</item>
+    <item name="indentationLineWidth">1dp</item>
+    <item name="spacePerDepth">@dimen/spacing16</item>
   </style>
 
   <!-- Inbox -->

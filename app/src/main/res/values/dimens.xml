@@ -13,6 +13,7 @@
   <dimen name="spacing16">16dp</dimen>
   <dimen name="spacing20">20dp</dimen>
   <dimen name="spacing24">24dp</dimen>
+  <dimen name="spacing32">32dp</dimen>
 
   <dimen name="elevation_toolbar">4dp</dimen>
 
@@ -25,8 +26,6 @@
   <dimen name="popup_menu_vertical_offset_for_button">6dp</dimen> <!-- that includes padding to make space for shadow. -->
 
   <!-- Submission -->
-  <dimen name="comment_start_padding_for_root_comment">16dp</dimen>
-  <dimen name="comment_start_padding_per_depth_level">12dp</dimen>
   <dimen name="submission_commentssheet_minimum_visible_height">70dp</dimen>
   <dimen name="submission_link_thumbnail_width_reddit_link">60dp</dimen>
   <dimen name="submission_link_thumbnail_width_external_link">100dp</dimen>

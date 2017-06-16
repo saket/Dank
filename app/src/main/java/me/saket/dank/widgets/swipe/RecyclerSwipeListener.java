@@ -48,7 +48,11 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
           RecyclerView.ViewHolder viewHolder = recyclerView.getChildViewHolder(childViewUnder);
           if (viewHolder instanceof ViewHolderWithSwipeActions) {
             viewBeingSwiped = ((ViewHolderWithSwipeActions) viewHolder).getSwipeableLayout();
+          } else {
+            viewBeingSwiped = null;
           }
+        } else {
+          viewBeingSwiped = null;
         }
 
         // Clearing everything here because ACTION_UP doesn't get called if no touch event was intercepted.

@@ -3,20 +3,20 @@ package me.saket.dank.widgets;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
-import android.support.v7.widget.AppCompatTextView;
+import android.support.v7.widget.AppCompatButton;
 import android.util.AttributeSet;
 
 /**
- * A TextView which tints its compound drawable with the same color as its text.
+ * A Button which tints its compound drawable with the same color as its text.
  */
-public class TintableCompoundDrawableTextView extends AppCompatTextView {
+public class TintableCompoundDrawableButton extends AppCompatButton {
 
-  public TintableCompoundDrawableTextView(Context context, AttributeSet attrs) {
+  public TintableCompoundDrawableButton(Context context, AttributeSet attrs) {
     super(context, attrs);
     init();
   }
 
-  public TintableCompoundDrawableTextView(Context context, AttributeSet attrs, int defStyleAttr) {
+  public TintableCompoundDrawableButton(Context context, AttributeSet attrs, int defStyleAttr) {
     super(context, attrs, defStyleAttr);
     init();
   }
