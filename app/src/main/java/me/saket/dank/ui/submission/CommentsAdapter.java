@@ -47,11 +47,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
   private static final int VIEW_TYPE_LOAD_MORE = 101;
 
   private final BetterLinkMovementMethod linkMovementMethod;
-  private VotingManager votingManager;
+  private final VotingManager votingManager;
   private final CommentSwipeActionsProvider swipeActionsProvider;
-
-  private PublishRelay<CommentNode> commentClickSubject = PublishRelay.create();
-  private PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickSubject = PublishRelay.create();
+  private final PublishRelay<CommentNode> commentClickSubject = PublishRelay.create();
+  private final PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickSubject = PublishRelay.create();
+  private String submissionAuthor;
 
   class LoadMoreCommentsClickEvent {
     /**
@@ -98,6 +98,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     updateData(commentNodes);
   }
 
+  /**
+   * OP of a submission, highlighted in comments. This is being set manually instead of {@link Comment#getSubmissionAuthor()},
+   * because that's always null. Not sure where I'm going wrong.
+   */
+  public void updateSubmissionAuthor(String submissionAuthor) {
+    this.submissionAuthor = submissionAuthor;
+  }
+
   @Override
   public int getItemViewType(int position) {
     SubmissionCommentsRow commentItem = getItem(position);
@@ -123,13 +131,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     if (commentItem.type() == SubmissionCommentsRow.Type.USER_COMMENT) {
       CommentNode commentNode = ((DankCommentNode) commentItem).commentNode();
       Comment comment = commentNode.getComment();
-
       VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.getVote());
       int commentScore = votingManager.getScoreAfterAdjustingPendingVote(comment);
+      boolean isAuthorOP = commentNode.getComment().getAuthor().equalsIgnoreCase(submissionAuthor);
 
       UserCommentViewHolder commentViewHolder = (UserCommentViewHolder) holder;
-      commentViewHolder.bind(commentNode, pendingOrDefaultVoteDirection, commentScore);
-
+      commentViewHolder.bind(commentNode, pendingOrDefaultVoteDirection, commentScore, isAuthorOP);
       commentViewHolder.itemView.setOnClickListener(v -> {
         commentClickSubject.accept(commentNode);
       });
@@ -167,6 +174,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     @BindView(R.id.item_comment_body) TextView commentBodyView;
 
     @BindColor(R.color.submission_comment_byline_author) int bylineAuthorNameColor;
+    @BindColor(R.color.submission_comment_byline_author_op) int bylineAuthorNameColorForOP;
     @BindString(R.string.submission_comment_byline_item_separator) String bylineItemSeparator;
     @BindString(R.string.submission_comment_byline_item_score) String bylineItemScore;
 
@@ -191,14 +199,15 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       });
     }
 
-    public void bind(CommentNode commentNode, VoteDirection voteDirection, int commentScore) {
+    public void bind(CommentNode commentNode, VoteDirection voteDirection, int commentScore, boolean isAuthorOP) {
       indentedContainer.setIndentationDepth(commentNode.getDepth() - 1);
 
       // Byline: author, flair, score and timestamp.
       Flair authorFlair = commentNode.getComment().getAuthorFlair();
+      CharSequence timestamp = Dates.createTimestamp(itemView.getResources(), JrawUtils.createdTimeUtc(commentNode.getComment()));
 
       Truss bylineBuilder = new Truss();
-      bylineBuilder.pushSpan(new ForegroundColorSpan(bylineAuthorNameColor));
+      bylineBuilder.pushSpan(new ForegroundColorSpan(isAuthorOP ? bylineAuthorNameColorForOP : bylineAuthorNameColor));
       bylineBuilder.append(commentNode.getComment().getAuthor());
       bylineBuilder.popSpan();
       if (authorFlair != null) {
@@ -210,7 +219,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       bylineBuilder.append(String.format(bylineItemScore, Strings.abbreviateScore(commentScore)));
       bylineBuilder.popSpan();
       bylineBuilder.append(bylineItemSeparator);
-      bylineBuilder.append(Dates.createTimestamp(itemView.getResources(), JrawUtils.createdTimeUtc(commentNode.getComment())));
+      bylineBuilder.append(timestamp);
       bylineView.setText(bylineBuilder.build());
 
       // Body.

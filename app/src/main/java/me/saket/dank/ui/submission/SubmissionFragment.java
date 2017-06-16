@@ -376,6 +376,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Update submission information. Everything that
     adapterWithSubmissionHeader.updateSubmission(submission);
+    commentsAdapter.updateSubmissionAuthor(submission.getAuthor());
 
     // Load content
     Link contentLink = UrlParser.parse(submission.getUrl(), submission.getThumbnails());
