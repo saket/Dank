@@ -59,12 +59,12 @@ public class Commons {
   public static int voteColor(VoteDirection voteDirection) {
     switch (voteDirection) {
       case UPVOTE:
-        return R.color.submission_item_vote_direction_upvote;
+        return R.color.vote_direction_upvote;
       case DOWNVOTE:
-        return R.color.submission_item_vote_direction_downvote;
+        return R.color.vote_direction_downvote;
       default:
       case NO_VOTE:
-        return R.color.submission_item_vote_direction_none;
+        return R.color.vote_direction_none;
     }
   }
 }

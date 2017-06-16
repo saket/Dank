@@ -28,16 +28,6 @@ public class Truss {
     return this;
   }
 
-  public Truss append(char c) {
-    builder.append(c);
-    return this;
-  }
-
-  public Truss append(int number) {
-    builder.append(String.valueOf(number));
-    return this;
-  }
-
   /** Starts {@code span} at the current position in the builder. */
   public Truss pushSpan(Object span) {
     stack.addLast(new Span(builder.length(), span));

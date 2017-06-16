@@ -117,6 +117,8 @@
   <string name="submission_cd_play_video">Play video</string>
 
   <string name="submission_byline">r/%1$s \u00b7 %2$s \u00b7 %3$s \u00b7 %4$s comments</string> <!-- r/subreddit * author * timestamp * comments count -->
+  <string name="submission_comment_byline_item_separator">\u0020\u00b7\u0020</string>
+  <string name="submission_comment_byline_item_score">%s points</string>
 
   <!-- WebView -->
   <string name="webview_open_in_browser">Open in browser</string>

@@ -173,7 +173,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Setup comment list and its adapter.
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
     commentList.setItemAnimator(new DefaultItemAnimator());
-    commentsAdapter = new CommentsAdapter(getResources(), linkMovementMethod, commentSwipeActionsProvider);
+    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), commentSwipeActionsProvider);
 
     // Add submission Views as a header so that it scrolls with the list.
     adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView, Dank.voting(), submissionSwipeActionsProvider);

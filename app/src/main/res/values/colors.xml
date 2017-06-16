@@ -32,22 +32,6 @@
   <color name="upvote">@color/deep_orange_300</color>   <!-- Picked from the material palette. Slightly varies from what Reddit uses. -->
   <color name="downvote">#9494FF</color>                <!-- This is what Reddit uses. Couldn't find anything close in the material palette. -->
 
-  <color name="userprofile_unread_messages">@color/orange_500</color>
-  <color name="userprofile_no_messages">@color/gray_300</color>
-
-  <color name="subreddit_subscribe">@color/color_accent</color>
-
-  <color name="submission_link_title">@color/white_opacity_90</color>
-  <color name="submission_link_subtitle">@color/white_opacity_50</color>
-  <color name="submission_link_title_dark">@color/black_opacity_90</color>
-  <color name="submission_link_subtitle_dark">@color/black_opacity_50</color>
-  <color name="submission_link_background_color">#3A3A3A</color>
-
-  <color name="subredditpicker_subreddit_button_tint_normal">#1b1b1b</color>
-  <color name="subredditpicker_subreddit_button_tint_selected">#0b0b0b</color>
-  <color name="subredditpicker_subreddit_button_text_normal">@color/gray_400</color>
-  <color name="subredditpicker_subreddit_button_text_hidden">@color/gray_700</color>
-
   <color name="error_text_color">@color/red_A100</color>
 
   <!-- So Nougat automatically replaces teal_a400 with this color for notification. We're using the same color for < Nougat. -->
@@ -58,9 +42,27 @@
   <color name="list_item_swipe_save">@color/green_400</color>
   <color name="list_item_swipe_more_options">@color/blue_gray_400</color>
   <color name="list_item_swipe_reply">@color/yellow_700</color>
+  <color name="vote_direction_none">@color/gray_500</color>
+  <color name="vote_direction_upvote">@color/upvote</color>
+  <color name="vote_direction_downvote">@color/downvote</color>
 
-  <color name="submission_item_vote_direction_none">@color/gray_500</color>
-  <color name="submission_item_vote_direction_upvote">@color/upvote</color>
-  <color name="submission_item_vote_direction_downvote">@color/downvote</color>
-  <color name="submission_item_byline">@color/gray_600</color>
+  <!-- User Profile -->
+  <color name="userprofile_unread_messages">@color/orange_500</color>
+  <color name="userprofile_no_messages">@color/gray_300</color>
+
+  <!-- Subreddit -->
+  <color name="subreddit_submission_item_byline">@color/gray_600</color>
+  <color name="subreddit_subscribe">@color/color_accent</color>
+  <color name="subredditpicker_subreddit_button_tint_normal">#1b1b1b</color>
+  <color name="subredditpicker_subreddit_button_tint_selected">#0b0b0b</color>
+  <color name="subredditpicker_subreddit_button_text_normal">@color/gray_400</color>
+  <color name="subredditpicker_subreddit_button_text_hidden">@color/gray_700</color>
+
+  <!-- Submission -->
+  <color name="submission_link_title">@color/white_opacity_90</color>
+  <color name="submission_link_subtitle">@color/white_opacity_50</color>
+  <color name="submission_link_title_dark">@color/black_opacity_90</color>
+  <color name="submission_link_subtitle_dark">@color/black_opacity_50</color>
+  <color name="submission_link_background_color">#3A3A3A</color>
+  <color name="submission_comment_byline_author">@color/teal_300</color>
 </resources>

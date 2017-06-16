@@ -172,10 +172,8 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
           break;
       }
 
-      int voteDirectionColor = Commons.voteColor(voteDirection);
-
       Truss titleBuilder = new Truss();
-      titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), voteDirectionColor)));
+      titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), Commons.voteColor(voteDirection))));
       titleBuilder.append(Strings.abbreviateScore(submissionScore));
       titleBuilder.popSpan();
       titleBuilder.append("  ");

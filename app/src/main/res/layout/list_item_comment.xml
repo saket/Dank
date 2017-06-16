@@ -14,42 +14,25 @@
     android:orientation="vertical"
     android:paddingTop="@dimen/spacing8">
 
-    <LinearLayout
+    <TextView
+      android:id="@+id/item_comment_byline"
       android:layout_width="match_parent"
-      android:layout_marginStart="@dimen/spacing16"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/spacing4"
       android:layout_marginEnd="@dimen/spacing16"
-      android:layout_height="wrap_content">
-
-      <TextView
-        android:id="@+id/item_comment_author_username"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing4"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textColor="@color/teal_300"
-        android:textSize="@dimen/textsize12"
-        tools:text="nuckingfuts73" />
-
-      <TextView
-        android:id="@+id/item_comment_author_flair"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing4"
-        android:layout_marginStart="@dimen/spacing16"
-        android:layout_weight="1"
-        android:ellipsize="end"
-        android:maxLines="1"
-        android:textSize="@dimen/textsize12"
-        tools:text="nuckingfuts73" />
-    </LinearLayout>
+      android:layout_marginStart="@dimen/spacing16"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:textColor="@color/vote_direction_none"
+      android:textSize="@dimen/textsize12"
+      tools:text="nuckingfuts73 \u00b7 516 \u00b7 2 hr. ago" />
 
     <TextView
       android:id="@+id/item_comment_body"
       android:layout_width="match_parent"
-      android:layout_marginStart="@dimen/spacing16"
-      android:layout_marginEnd="@dimen/spacing16"
       android:layout_height="wrap_content"
+      android:layout_marginEnd="@dimen/spacing16"
+      android:layout_marginStart="@dimen/spacing16"
       android:textColor="@color/gray_200"
       tools:text="That boss was my favourite. I bought Dark Souls after hearing how crushingly difficult it was from a friend of mine. He kept warning me about that boss and told me to prepare for a really difficult time." />
 

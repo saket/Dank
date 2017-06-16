@@ -57,7 +57,7 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:textAllCaps="true"
-        android:textColor="@color/submission_item_byline"
+        android:textColor="@color/subreddit_submission_item_byline"
         android:textSize="@dimen/textsize12"
         tools:text="/r/TodayILearned \u00b7 Saketme \u00b7 43 comments" />
     </RelativeLayout>

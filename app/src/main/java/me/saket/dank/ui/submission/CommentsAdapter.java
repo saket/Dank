@@ -1,8 +1,9 @@
 package me.saket.dank.ui.submission;
 
-import android.content.res.Resources;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
+import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -10,18 +11,28 @@ import android.widget.TextView;
 
 import com.jakewharton.rxrelay2.PublishRelay;
 
+import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Flair;
+import net.dean.jraw.models.VoteDirection;
 
 import java.util.List;
 
+import butterknife.BindColor;
+import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.functions.Consumer;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
+import me.saket.dank.data.VotingManager;
+import me.saket.dank.utils.Commons;
+import me.saket.dank.utils.Dates;
+import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
+import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.IndentedLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
@@ -36,6 +47,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
   private static final int VIEW_TYPE_LOAD_MORE = 101;
 
   private final BetterLinkMovementMethod linkMovementMethod;
+  private VotingManager votingManager;
   private final CommentSwipeActionsProvider swipeActionsProvider;
 
   private PublishRelay<CommentNode> commentClickSubject = PublishRelay.create();
@@ -58,8 +70,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     }
   }
 
-  public CommentsAdapter(Resources resources, BetterLinkMovementMethod commentsLinkMovementMethod, CommentSwipeActionsProvider swipeActionsProvider) {
+  public CommentsAdapter(BetterLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager,
+      CommentSwipeActionsProvider swipeActionsProvider)
+  {
     this.linkMovementMethod = commentsLinkMovementMethod;
+    this.votingManager = votingManager;
     this.swipeActionsProvider = swipeActionsProvider;
     setHasStableIds(true);
   }
@@ -107,9 +122,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
     if (commentItem.type() == SubmissionCommentsRow.Type.USER_COMMENT) {
       CommentNode commentNode = ((DankCommentNode) commentItem).commentNode();
+      Comment comment = commentNode.getComment();
+
+      VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.getVote());
+      int commentScore = votingManager.getScoreAfterAdjustingPendingVote(comment);
 
       UserCommentViewHolder commentViewHolder = (UserCommentViewHolder) holder;
-      commentViewHolder.bind(commentNode);
+      commentViewHolder.bind(commentNode, pendingOrDefaultVoteDirection, commentScore);
+
       commentViewHolder.itemView.setOnClickListener(v -> {
         commentClickSubject.accept(commentNode);
       });
@@ -143,9 +163,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
   public static class UserCommentViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
     @BindView(R.id.item_comment_indented_container) IndentedLayout indentedContainer;
-    @BindView(R.id.item_comment_author_username) TextView authorNameView;
-    @BindView(R.id.item_comment_author_flair) TextView authorFlairView;
+    @BindView(R.id.item_comment_byline) TextView bylineView;
     @BindView(R.id.item_comment_body) TextView commentBodyView;
+
+    @BindColor(R.color.submission_comment_byline_author) int bylineAuthorNameColor;
+    @BindString(R.string.submission_comment_byline_item_separator) String bylineItemSeparator;
+    @BindString(R.string.submission_comment_byline_item_score) String bylineItemScore;
+
     private BetterLinkMovementMethod linkMovementMethod;
 
     public static UserCommentViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
@@ -167,20 +191,32 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       });
     }
 
-    public void bind(CommentNode commentNode) {
+    public void bind(CommentNode commentNode, VoteDirection voteDirection, int commentScore) {
       indentedContainer.setIndentationDepth(commentNode.getDepth() - 1);
 
-      // Author name, comment.
-      authorNameView.setText(String.format("%s (%s)", commentNode.getComment().getAuthor(), commentNode.getComment().getScore()));
+      // Byline: author, flair, score and timestamp.
+      Flair authorFlair = commentNode.getComment().getAuthorFlair();
+
+      Truss bylineBuilder = new Truss();
+      bylineBuilder.pushSpan(new ForegroundColorSpan(bylineAuthorNameColor));
+      bylineBuilder.append(commentNode.getComment().getAuthor());
+      bylineBuilder.popSpan();
+      if (authorFlair != null) {
+        bylineBuilder.append(bylineItemSeparator);
+        bylineBuilder.append(authorFlair.getText());
+      }
+      bylineBuilder.append(bylineItemSeparator);
+      bylineBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), Commons.voteColor(voteDirection))));
+      bylineBuilder.append(String.format(bylineItemScore, Strings.abbreviateScore(commentScore)));
+      bylineBuilder.popSpan();
+      bylineBuilder.append(bylineItemSeparator);
+      bylineBuilder.append(Dates.createTimestamp(itemView.getResources(), JrawUtils.createdTimeUtc(commentNode.getComment())));
+      bylineView.setText(bylineBuilder.build());
 
       // Body.
       String commentBody = commentNode.getComment().getDataNode().get("body_html").asText();
       commentBodyView.setText(Markdown.parseRedditMarkdownHtml(commentBody, commentBodyView.getPaint()));
       commentBodyView.setMovementMethod(linkMovementMethod);
-
-      // Flair.
-      Flair authorFlair = commentNode.getComment().getAuthorFlair();
-      authorFlairView.setText(authorFlair != null ? authorFlair.getText() : null);
     }
 
     @Override
