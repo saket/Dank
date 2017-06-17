@@ -49,15 +49,13 @@ public class CommentsHelper {
     collapsedCommentNodeIds.clear();
   }
 
-  public Consumer<CommentNode> toggleCollapse() {
-    return commentNode -> {
-      if (isCollapsed(commentNode)) {
-        collapsedCommentNodeIds.remove(commentNode.getComment().getId());
-      } else {
-        collapsedCommentNodeIds.add(commentNode.getComment().getId());
-      }
-      commentUpdates.accept(constructComments());
-    };
+  public void toggleCollapse(CommentNode nodeToCollapse) {
+    if (isCollapsed(nodeToCollapse)) {
+      collapsedCommentNodeIds.remove(nodeToCollapse.getComment().getId());
+    } else {
+      collapsedCommentNodeIds.add(nodeToCollapse.getComment().getId());
+    }
+    commentUpdates.accept(constructComments());
   }
 
   private boolean isCollapsed(CommentNode commentNode) {

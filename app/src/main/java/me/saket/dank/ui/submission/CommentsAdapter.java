@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission;
 
+import android.support.annotation.CheckResult;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
@@ -10,6 +11,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 
 import net.dean.jraw.models.Comment;
@@ -23,6 +25,7 @@ import butterknife.BindColor;
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
@@ -50,24 +53,40 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
   private final BetterLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
   private final CommentSwipeActionsProvider swipeActionsProvider;
-  private final PublishRelay<CommentNode> commentClickSubject = PublishRelay.create();
-  private final PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickSubject = PublishRelay.create();
+  private final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
+  private final PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = PublishRelay.create();
   private String submissionAuthor;
 
-  class LoadMoreCommentsClickEvent {
+  @AutoValue
+  abstract static class CommentClickEvent {
+    public abstract CommentNode commentNode();
+
+    public abstract View commentItemView();
+
+    /**
+     * Whether the comment was clicked to collapse.
+     */
+    public abstract boolean isCollapsing();
+
+    public static CommentClickEvent create(CommentNode commentNode, View commentItemView, boolean isCollapsing) {
+      return new AutoValue_CommentsAdapter_CommentClickEvent(commentNode, commentItemView, isCollapsing);
+    }
+  }
+
+  @AutoValue
+  abstract static class LoadMoreCommentsClickEvent {
     /**
      * Node whose more comments have to be fetched.
      */
-    CommentNode parentCommentNode;
+    abstract CommentNode parentCommentNode();
 
     /**
      * Clicked itemView.
      */
-    View loadMoreItemView;
+    abstract View loadMoreItemView();
 
-    public LoadMoreCommentsClickEvent(CommentNode parentNode, View loadMoreItemView) {
-      this.parentCommentNode = parentNode;
-      this.loadMoreItemView = loadMoreItemView;
+    public static LoadMoreCommentsClickEvent create(CommentNode parentNode, View loadMoreItemView) {
+      return new AutoValue_CommentsAdapter_LoadMoreCommentsClickEvent(parentNode, loadMoreItemView);
     }
   }
 
@@ -80,18 +99,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     setHasStableIds(true);
   }
 
-  /**
-   * Emits a CommentNodes when it's clicked.
-   */
-  public PublishRelay<CommentNode> commentClicks() {
-    return commentClickSubject;
+  @CheckResult
+  public Observable<CommentClickEvent> streamCommentClicks() {
+    return commentClickStream;
   }
 
-  /**
-   * Emits a CommentNode whose "load more comments" is clicked.
-   */
-  public PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClicks() {
-    return loadMoreCommentsClickSubject;
+  @CheckResult
+  public Observable<LoadMoreCommentsClickEvent> streamLoadMoreCommentsClicks() {
+    return loadMoreCommentsClickStream;
   }
 
   @Override
@@ -130,16 +145,18 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     SubmissionCommentsRow commentItem = getItem(position);
 
     if (commentItem.type() == SubmissionCommentsRow.Type.USER_COMMENT) {
-      CommentNode commentNode = ((DankCommentNode) commentItem).commentNode();
+      DankCommentNode dankCommentNode = (DankCommentNode) commentItem;
+      CommentNode commentNode = dankCommentNode.commentNode();
       Comment comment = commentNode.getComment();
+
       VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.getVote());
       int commentScore = votingManager.getScoreAfterAdjustingPendingVote(comment);
       boolean isAuthorOP = commentNode.getComment().getAuthor().equalsIgnoreCase(submissionAuthor);
 
       UserCommentViewHolder commentViewHolder = (UserCommentViewHolder) holder;
-      commentViewHolder.bind((DankCommentNode) commentItem, pendingOrDefaultVoteDirection, commentScore, isAuthorOP);
+      commentViewHolder.bind(dankCommentNode, pendingOrDefaultVoteDirection, commentScore, isAuthorOP);
       commentViewHolder.itemView.setOnClickListener(v -> {
-        commentClickSubject.accept(commentNode);
+        commentClickStream.accept(CommentClickEvent.create(commentNode, commentViewHolder.itemView, !dankCommentNode.isCollapsed()));
       });
 
       SwipeableLayout swipeableLayout = commentViewHolder.getSwipeableLayout();
@@ -159,7 +176,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
       holder.itemView.setOnClickListener(__ -> {
         Timber.i("load more click");
-        loadMoreCommentsClickSubject.accept(new LoadMoreCommentsClickEvent(loadMoreItem.parentCommentNode(), holder.itemView));
+        loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreItem.parentCommentNode(), holder.itemView));
       });
     }
   }

@@ -165,24 +165,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     });
     selfPostTextView.setMovementMethod(linkMovementMethod);
 
-    // Swipe gestures.
-    commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
-    SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(Dank.submissions(), Dank.voting());
-    CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(Dank.voting());
-
-    // Setup comment list and its adapter.
-    commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
-    commentList.setItemAnimator(new DefaultItemAnimator());
-    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), commentSwipeActionsProvider);
-
-    // Add submission Views as a header so that it scrolls with the list.
-    adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView, Dank.voting(), submissionSwipeActionsProvider);
-    commentList.setAdapter(adapterWithSubmissionHeader);
-
     submissionPageLayout = ((ExpandablePageLayout) view.getParent());
     submissionPageLayout.addStateCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
+    setupCommentList(linkMovementMethod);
     setupCommentsHelper();
     setupContentImageView(view);
     setupContentVideoView(view);
@@ -214,6 +201,31 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
   }
 
+  private void setupCommentList(DankLinkMovementMethod linkMovementMethod) {// Swipe gestures.
+    commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
+    SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(Dank.submissions(), Dank.voting());
+    CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(Dank.voting());
+
+    // Setup comment list and its adapter.
+    commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
+    commentList.setItemAnimator(new DefaultItemAnimator());
+    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), commentSwipeActionsProvider);
+
+    // Add submission Views as a header so that it scrolls with the list.
+    adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView, Dank.voting(), submissionSwipeActionsProvider);
+    commentList.setAdapter(adapterWithSubmissionHeader);
+
+    unsubscribeOnDestroy(
+        commentsAdapter.streamCommentClicks()
+            .filter(clickEvent -> clickEvent.isCollapsing())
+            .subscribe(clickEvent -> {
+              Views.executeOnNextLayout(clickEvent.commentItemView(), () -> {
+                commentList.post(() -> commentList.smoothScrollBy(0, clickEvent.commentItemView().getHeight()));
+              });
+            })
+    );
+  }
+
   /**
    * {@link CommentsHelper} helps in collapsing comments and helping {@link CommentsAdapter} in indicating
    * progress when more comments are being fetched for a CommentNode.
@@ -230,27 +242,27 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Comment clicks.
     unsubscribeOnDestroy(
-        commentsAdapter.commentClicks().subscribe(commentsHelper.toggleCollapse())
+        commentsAdapter.streamCommentClicks().subscribe(clickEvent -> commentsHelper.toggleCollapse(clickEvent.commentNode()))
     );
 
     // Load-more-comment clicks.
     unsubscribeOnDestroy(
         // Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
         commentsAdapter
-            .loadMoreCommentsClicks()
+            .streamLoadMoreCommentsClicks()
             .flatMap(loadMoreClickEvent -> {
-              if (loadMoreClickEvent.parentCommentNode.isThreadContinuation()) {
+              if (loadMoreClickEvent.parentCommentNode().isThreadContinuation()) {
                 DankSubmissionRequest continueThreadRequest = activeSubmissionRequest.toBuilder()
-                    .focusComment(loadMoreClickEvent.parentCommentNode.getComment().getId())
+                    .focusComment(loadMoreClickEvent.parentCommentNode().getComment().getId())
                     .build();
-                Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView);
+                Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
                 expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
                 SubmissionFragmentActivity.start(getContext(), continueThreadRequest, expandFromShape);
 
                 return Observable.empty();
 
               } else {
-                return Observable.just(loadMoreClickEvent.parentCommentNode)
+                return Observable.just(loadMoreClickEvent.parentCommentNode())
                     .observeOn(Schedulers.io())
                     .doOnNext(commentsHelper.setMoreCommentsLoading(true))
                     .map(Dank.reddit().loadMoreComments())
