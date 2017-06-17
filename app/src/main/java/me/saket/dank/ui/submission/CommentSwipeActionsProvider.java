@@ -2,8 +2,11 @@ package me.saket.dank.ui.submission;
 
 import android.support.annotation.Nullable;
 
+import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.VoteDirection;
 
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.utils.Animations;
@@ -90,7 +93,39 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
   }
 
   public void performSwipeAction(SwipeAction swipeAction, CommentNode commentNode, SwipeableLayout swipeableLayout) {
-    Timber.i("Action: %s", swipeAction.name());
     swipeableLayout.playRippleAnimation(swipeAction);  // TODO: Specify ripple direction.
+
+    Comment comment = commentNode.getComment();
+
+    switch (swipeAction.name()) {
+      case ACTION_NAME_OPTIONS:
+        Timber.i("TODO: %s", swipeAction.name());
+        break;
+
+      case ACTION_NAME_REPLY:
+        Timber.i("TODO: %s", swipeAction.name());
+        break;
+
+      case ACTION_NAME_UPVOTE: {
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.getVote());
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
+        votingManager.voteWithAutoRetry(comment, newVoteDirection)
+            .subscribeOn(Schedulers.io())
+            .subscribe();
+        break;
+      }
+
+      case ACTION_NAME_DOWNVOTE: {
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.getVote());
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
+        votingManager.voteWithAutoRetry(comment, newVoteDirection)
+            .subscribeOn(Schedulers.io())
+            .subscribe();
+        break;
+      }
+
+      default:
+        throw new UnsupportedOperationException("Unknown swipe action: " + swipeAction);
+    }
   }
 }

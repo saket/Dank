@@ -74,17 +74,17 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
     switch (swipeAction.name()) {
       case ACTION_NAME_OPTIONS:
-        Timber.i("Action: %s", swipeAction.name());
+        Timber.i("TODO: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_SAVE:
         submissionManager.markAsSaved(submission);
-        Timber.i("Action: %s", swipeAction.name());
+        Timber.i("TODO: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_UNSAVE:
         submissionManager.markAsUnsaved(submission);
-        Timber.i("Action: %s", swipeAction.name());
+        Timber.i("TODO: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_UPVOTE: {
