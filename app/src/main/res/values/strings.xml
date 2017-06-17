@@ -121,8 +121,8 @@
   <string name="submission_comment_byline_item_score">%s points</string>
 
   <plurals name="submission_comment_hidden_comments">
-    <item quantity="one">1 hidden comment</item>
-    <item quantity="other">%d hidden comments</item>
+    <item quantity="one">1 hidden</item>
+    <item quantity="other">%d hidden</item>
   </plurals>
 
   <!-- WebView -->
