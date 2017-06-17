@@ -120,6 +120,11 @@
   <string name="submission_comment_byline_item_separator">\u0020\u00b7\u0020</string>
   <string name="submission_comment_byline_item_score">%s points</string>
 
+  <plurals name="submission_comment_hidden_comments">
+    <item quantity="one">1 hidden comment</item>
+    <item quantity="other">%d hidden comments</item>
+  </plurals>
+
   <!-- WebView -->
   <string name="webview_open_in_browser">Open in browser</string>
   <string name="webview_share">Share…</string>

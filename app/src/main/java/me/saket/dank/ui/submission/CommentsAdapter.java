@@ -3,6 +3,7 @@ package me.saket.dank.ui.submission;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -136,7 +137,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       boolean isAuthorOP = commentNode.getComment().getAuthor().equalsIgnoreCase(submissionAuthor);
 
       UserCommentViewHolder commentViewHolder = (UserCommentViewHolder) holder;
-      commentViewHolder.bind(commentNode, pendingOrDefaultVoteDirection, commentScore, isAuthorOP);
+      commentViewHolder.bind((DankCommentNode) commentItem, pendingOrDefaultVoteDirection, commentScore, isAuthorOP);
       commentViewHolder.itemView.setOnClickListener(v -> {
         commentClickSubject.accept(commentNode);
       });
@@ -175,10 +176,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
     @BindColor(R.color.submission_comment_byline_author) int bylineAuthorNameColor;
     @BindColor(R.color.submission_comment_byline_author_op) int bylineAuthorNameColorForOP;
+    @BindColor(R.color.submission_comment_body_expanded) int expandedBodyColor;
+    @BindColor(R.color.submission_comment_body_collapsed) int collapsedBodyColor;
+    @BindColor(R.color.submission_comment_byline_default_color) int bylineDefaultColor;
     @BindString(R.string.submission_comment_byline_item_separator) String bylineItemSeparator;
-    @BindString(R.string.submission_comment_byline_item_score) String bylineItemScore;
+    @BindString(R.string.submission_comment_byline_item_score) String bylineItemScoreString;
 
     private BetterLinkMovementMethod linkMovementMethod;
+    private boolean isCollapsed;
 
     public static UserCommentViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
       return new UserCommentViewHolder(inflater.inflate(R.layout.list_item_comment, parent, false), linkMovementMethod);
@@ -186,46 +191,67 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
     public UserCommentViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
       super(itemView);
-      this.linkMovementMethod = linkMovementMethod;
-
       ButterKnife.bind(this, itemView);
+      this.linkMovementMethod = linkMovementMethod;
 
       // Bug workaround: TextView with clickable spans consume all touch events. Manually
       // transfer them to the parent so that the background touch indicator shows up +
       // click listener works.
       commentBodyView.setOnTouchListener((__, event) -> {
-        boolean handledByMovementMethod = linkMovementMethod.onTouchEvent(commentBodyView, ((Spannable) commentBodyView.getText()), event);
+        if (isCollapsed) {
+          return false;
+        }
+
+        boolean handledByMovementMethod = linkMovementMethod.onTouchEvent(commentBodyView, (Spannable) commentBodyView.getText(), event);
         return handledByMovementMethod || itemView.onTouchEvent(event);
       });
     }
 
-    public void bind(CommentNode commentNode, VoteDirection voteDirection, int commentScore, boolean isAuthorOP) {
-      indentedContainer.setIndentationDepth(commentNode.getDepth() - 1);
+    public void bind(DankCommentNode dankCommentNode, VoteDirection voteDirection, int commentScore, boolean isAuthorOP) {
+      indentedContainer.setIndentationDepth(dankCommentNode.commentNode().getDepth() - 1);
+      Comment comment = dankCommentNode.commentNode().getComment();
+      isCollapsed = dankCommentNode.isCollapsed();
 
       // Byline: author, flair, score and timestamp.
-      Flair authorFlair = commentNode.getComment().getAuthorFlair();
-      CharSequence timestamp = Dates.createTimestamp(itemView.getResources(), JrawUtils.createdTimeUtc(commentNode.getComment()));
-
       Truss bylineBuilder = new Truss();
-      bylineBuilder.pushSpan(new ForegroundColorSpan(isAuthorOP ? bylineAuthorNameColorForOP : bylineAuthorNameColor));
-      bylineBuilder.append(commentNode.getComment().getAuthor());
-      bylineBuilder.popSpan();
-      if (authorFlair != null) {
+      if (isCollapsed) {
+        bylineBuilder.append(comment.getAuthor());
         bylineBuilder.append(bylineItemSeparator);
-        bylineBuilder.append(authorFlair.getText());
+        int hiddenCommentsCount = dankCommentNode.commentNode().getTotalSize() + 1;   // +1 for the parent comment itself.
+        String hiddenCommentsString = itemView.getResources().getQuantityString(R.plurals.submission_comment_hidden_comments, hiddenCommentsCount);
+        bylineBuilder.append(String.format(hiddenCommentsString, hiddenCommentsCount));
+
+      } else {
+        bylineBuilder.pushSpan(new ForegroundColorSpan(isAuthorOP ? bylineAuthorNameColorForOP : bylineAuthorNameColor));
+        bylineBuilder.append(comment.getAuthor());
+        bylineBuilder.popSpan();
+        Flair authorFlair = comment.getAuthorFlair();
+        if (authorFlair != null) {
+          bylineBuilder.append(bylineItemSeparator);
+          bylineBuilder.append(authorFlair.getText());
+        }
+        bylineBuilder.append(bylineItemSeparator);
+        bylineBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), Commons.voteColor(voteDirection))));
+        bylineBuilder.append(String.format(bylineItemScoreString, Strings.abbreviateScore(commentScore)));
+        bylineBuilder.popSpan();
+        bylineBuilder.append(bylineItemSeparator);
+        bylineBuilder.append(Dates.createTimestamp(itemView.getResources(), JrawUtils.createdTimeUtc(comment)));
       }
-      bylineBuilder.append(bylineItemSeparator);
-      bylineBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), Commons.voteColor(voteDirection))));
-      bylineBuilder.append(String.format(bylineItemScore, Strings.abbreviateScore(commentScore)));
-      bylineBuilder.popSpan();
-      bylineBuilder.append(bylineItemSeparator);
-      bylineBuilder.append(timestamp);
+      bylineView.setTextColor(isCollapsed ? collapsedBodyColor : bylineDefaultColor);
       bylineView.setText(bylineBuilder.build());
 
       // Body.
-      String commentBody = commentNode.getComment().getDataNode().get("body_html").asText();
-      commentBodyView.setText(Markdown.parseRedditMarkdownHtml(commentBody, commentBodyView.getPaint()));
-      commentBodyView.setMovementMethod(linkMovementMethod);
+      String commentBody = comment.getDataNode().get("body_html").asText();
+      if (isCollapsed) {
+        commentBodyView.setText(Markdown.stripMarkdown(commentBody));
+        commentBodyView.setMovementMethod(null);
+      } else {
+        commentBodyView.setText(Markdown.parseRedditMarkdownHtml(commentBody, commentBodyView.getPaint()));
+        commentBodyView.setMovementMethod(linkMovementMethod);
+      }
+      commentBodyView.setMaxLines(isCollapsed ? 1 : Integer.MAX_VALUE);
+      commentBodyView.setEllipsize(isCollapsed ? TextUtils.TruncateAt.END : null);
+      commentBodyView.setTextColor(isCollapsed ? collapsedBodyColor : expandedBodyColor);
     }
 
     @Override

@@ -23,7 +23,7 @@
       android:layout_marginStart="@dimen/spacing16"
       android:ellipsize="end"
       android:maxLines="1"
-      android:textColor="@color/vote_direction_none"
+      android:textColor="@color/submission_comment_byline_default_color"
       android:textSize="@dimen/textsize12"
       tools:text="nuckingfuts73 \u00b7 516 \u00b7 2 hr. ago" />
 
@@ -33,7 +33,8 @@
       android:layout_height="wrap_content"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
-      android:textColor="@color/gray_200"
+      android:textColor="@color/submission_comment_body_expanded"
+      android:textSize="@dimen/submission_comment_body_expanded"
       tools:text="That boss was my favourite. I bought Dark Souls after hearing how crushingly difficult it was from a friend of mine. He kept warning me about that boss and told me to prepare for a really difficult time." />
 
     <View
