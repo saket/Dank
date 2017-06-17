@@ -61,6 +61,18 @@ public abstract class RecyclerAdapterWithHeader<HVH extends RecyclerView.ViewHol
     });
   }
 
+  @Override
+  public void onAttachedToRecyclerView(RecyclerView recyclerView) {
+    super.onAttachedToRecyclerView(recyclerView);
+    adapterToWrap.onAttachedToRecyclerView(recyclerView);
+  }
+
+  @Override
+  public void onDetachedFromRecyclerView(RecyclerView recyclerView) {
+    super.onDetachedFromRecyclerView(recyclerView);
+    adapterToWrap.onDetachedFromRecyclerView(recyclerView);
+  }
+
   protected abstract boolean isHeaderVisible();
 
   protected abstract HVH onCreateHeaderViewHolder(View headerView);

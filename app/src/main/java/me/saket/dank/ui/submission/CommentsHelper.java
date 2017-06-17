@@ -1,7 +1,11 @@
 package me.saket.dank.ui.submission;
 
 
+import android.support.annotation.CheckResult;
+
+import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
@@ -13,40 +17,41 @@ import java.util.Set;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
-import me.saket.dank.utils.SafeConsumer;
+import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.utils.Commons;
 
 /**
  * Helps in flattening a comments tree with collapsed child comments ignored.
  */
 public class CommentsHelper {
 
-  // Comments that are collapsed.
-  private Set<String> collapsedCommentNodeIds = new HashSet<>();
-
-  // Comments for which more replies are being fetched.
-  private Set<String> loadingMoreCommentNodeIds = new HashSet<>();
-
+  private Set<String> collapsedCommentNodeIds = new HashSet<>();    // Comments that are collapsed.
+  private Set<String> loadingMoreCommentNodeIds = new HashSet<>();  // Comments for which more replies are being fetched.
   private CommentNode rootCommentNode;
+  private Relay<Object> changesRequiredStream = PublishRelay.create();
 
-  private PublishRelay<List<SubmissionCommentsRow>> commentUpdates = PublishRelay.create();
-
-  public Observable<List<SubmissionCommentsRow>> updates() {
-    return commentUpdates;
+  public CommentsHelper() {
   }
 
   /**
    * Set the root comment of a submission.
    */
-  public SafeConsumer<Submission> setup() {
-    return submission -> {
-      rootCommentNode = submission.getComments();
-      commentUpdates.accept(constructComments());
-    };
+  public void setComments(Submission submissionWithComments) {
+    rootCommentNode = submissionWithComments.getComments();
+    changesRequiredStream.accept(Notification.INSTANCE);
   }
 
   public void reset() {
     rootCommentNode = null;
     collapsedCommentNodeIds.clear();
+  }
+
+  @CheckResult
+  public Observable<List<SubmissionCommentsRow>> streamUpdates() {
+    return changesRequiredStream
+        .observeOn(Schedulers.io())
+        .map(o -> constructComments())
+        .map(Commons.toImmutable());
   }
 
   public void toggleCollapse(CommentNode nodeToCollapse) {
@@ -55,7 +60,7 @@ public class CommentsHelper {
     } else {
       collapsedCommentNodeIds.add(nodeToCollapse.getComment().getId());
     }
-    commentUpdates.accept(constructComments());
+    changesRequiredStream.accept(Notification.INSTANCE);
   }
 
   private boolean isCollapsed(CommentNode commentNode) {
@@ -69,7 +74,7 @@ public class CommentsHelper {
       } else {
         loadingMoreCommentNodeIds.remove(commentNode.getComment().getId());
       }
-      commentUpdates.accept(constructComments());
+      changesRequiredStream.accept(Notification.INSTANCE);
     };
   }
 

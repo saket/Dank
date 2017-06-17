@@ -1,11 +1,13 @@
 package me.saket.dank.ui.submission;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.Commons.findOptimizedImage;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.Views.executeOnMeasure;
+import static me.saket.dank.utils.Views.executeOnNextLayout;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
@@ -49,7 +51,6 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
@@ -201,7 +202,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
   }
 
-  private void setupCommentList(DankLinkMovementMethod linkMovementMethod) {// Swipe gestures.
+  private void setupCommentList(DankLinkMovementMethod linkMovementMethod) {
+    // Swipe gestures.
     commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(Dank.submissions(), Dank.voting());
     CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(Dank.voting());
@@ -237,7 +239,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentsHelper = new CommentsHelper();
 
     unsubscribeOnDestroy(
-        commentsHelper.updates().observeOn(mainThread()).subscribe(commentsAdapter)
+        commentsHelper.streamUpdates()
+            .observeOn(mainThread())
+            .subscribe(commentsAdapter)
     );
 
     // Comment clicks.
@@ -263,7 +267,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
               } else {
                 return Observable.just(loadMoreClickEvent.parentCommentNode())
-                    .observeOn(Schedulers.io())
+                    .observeOn(io())
                     .doOnNext(commentsHelper.setMoreCommentsLoading(true))
                     .map(Dank.reddit().loadMoreComments())
                     .doOnNext(commentsHelper.setMoreCommentsLoading(false));
@@ -401,11 +405,14 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           .compose(applySchedulersSingle())
           .compose(doOnSingleStartAndTerminate(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
           .doOnSuccess(submissionWithComments -> activeSubmission = submissionWithComments)
-          .subscribe(commentsHelper.setup(), handleSubmissionLoadError())
+          .subscribe(
+              submissionWithComments -> commentsHelper.setComments(submissionWithComments),
+              handleSubmissionLoadError()
+          )
       );
 
     } else {
-      commentsHelper.setup().accept(submission);
+      commentsHelper.setComments(submission);
     }
   }
 

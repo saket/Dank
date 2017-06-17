@@ -12,7 +12,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
-import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
@@ -53,8 +53,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
   private final BetterLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
   private final CommentSwipeActionsProvider swipeActionsProvider;
-  private final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
-  private final PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = PublishRelay.create();
+  private final BehaviorRelay<CommentClickEvent> commentClickStream = BehaviorRelay.create();
+  private final BehaviorRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = BehaviorRelay.create();
   private String submissionAuthor;
 
   @AutoValue
