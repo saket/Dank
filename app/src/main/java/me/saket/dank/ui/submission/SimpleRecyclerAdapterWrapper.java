@@ -68,7 +68,7 @@ public abstract class SimpleRecyclerAdapterWrapper<T, VH extends RecyclerView.Vi
   }
 
   @Override
-  public void updateData(List<T> items) {
-    adapterToWrap.updateData(items);
+  public void updateDataAndNotifyDatasetChanged(List<T> items) {
+    adapterToWrap.updateDataAndNotifyDatasetChanged(items);
   }
 }

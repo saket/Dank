@@ -125,7 +125,7 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
 
   @Override
   public void accept(List<T> items) {
-    wrappedAdapter.updateData(items);
+    wrappedAdapter.updateDataAndNotifyDatasetChanged(items);
   }
 
   public void setHeader(HeaderFooterInfo headerInfo) {

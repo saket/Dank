@@ -3,7 +3,7 @@ package me.saket.dank.ui.submission;
 /**
  * Represents one row in the comments section.
  */
-public interface SubmissionCommentsRow {
+public interface SubmissionCommentRow {
 
   enum Type {
     USER_COMMENT,

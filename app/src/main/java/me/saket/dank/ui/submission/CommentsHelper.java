@@ -47,7 +47,7 @@ public class CommentsHelper {
   }
 
   @CheckResult
-  public Observable<List<SubmissionCommentsRow>> streamUpdates() {
+  public Observable<List<SubmissionCommentRow>> streamUpdates() {
     return changesRequiredStream
         .observeOn(Schedulers.io())
         .map(o -> constructComments())
@@ -85,14 +85,14 @@ public class CommentsHelper {
   /**
    * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
    */
-  private List<SubmissionCommentsRow> constructComments() {
+  private List<SubmissionCommentRow> constructComments() {
     return constructComments(new ArrayList<>(rootCommentNode.getTotalSize()), rootCommentNode);
   }
 
   /**
    * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
    */
-  private List<SubmissionCommentsRow> constructComments(List<SubmissionCommentsRow> flattenComments, CommentNode nextNode) {
+  private List<SubmissionCommentRow> constructComments(List<SubmissionCommentRow> flattenComments, CommentNode nextNode) {
 //    String indentation = "";
 //    if (nextNode.getDepth() != 0) {
 //      for (int step = 0; step < nextNode.getDepth(); step++) {
@@ -122,7 +122,7 @@ public class CommentsHelper {
 //                            indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getMoreChildren().getCount()
 //                    );
 //                    Timber.d("%s %s", indentation, nextNode.getMoreChildren().getChildrenIds());
-          flattenComments.add(LoadMoreCommentsItem.create(nextNode, areMoreCommentsLoadingFor(nextNode)));
+          flattenComments.add(LoadMoreCommentItem.create(nextNode, areMoreCommentsLoadingFor(nextNode)));
         }
       }
       return flattenComments;

@@ -54,7 +54,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
 
   @Override
   public void accept(@NonNull List<Message> messages) {
-    updateData(messages);
+    updateDataAndNotifyDatasetChanged(messages);
   }
 
   @Override

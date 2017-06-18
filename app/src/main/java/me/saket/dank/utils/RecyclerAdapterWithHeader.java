@@ -82,7 +82,7 @@ public abstract class RecyclerAdapterWithHeader<HVH extends RecyclerView.ViewHol
   protected abstract Object getHeaderItem();
 
   @Override
-  public void updateData(List<Object> items) {
+  public void updateDataAndNotifyDatasetChanged(List<Object> items) {
     throw new UnsupportedOperationException();
   }
 

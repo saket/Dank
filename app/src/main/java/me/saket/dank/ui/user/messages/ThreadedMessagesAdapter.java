@@ -38,7 +38,7 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<Message, T
 
   @Override
   public void accept(@NonNull List<Message> messages) {
-    updateData(messages);
+    updateDataAndNotifyDatasetChanged(messages);
   }
 
   @Override

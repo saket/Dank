@@ -63,7 +63,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
   @Override
   public void accept(List<Submission> submissions) {
     // TODO: 29/01/17 Use DiffUtils / SortedList instead of invalidating the entire list.
-    updateData(submissions);
+    updateDataAndNotifyDatasetChanged(submissions);
   }
 
   @Override

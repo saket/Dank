@@ -50,7 +50,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
 
   @Override
   public void accept(List<SubredditSubscription> subscriptions) {
-    updateData(subscriptions);
+    updateDataAndNotifyDatasetChanged(subscriptions);
   }
 
   @Override

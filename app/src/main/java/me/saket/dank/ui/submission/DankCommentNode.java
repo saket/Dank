@@ -5,7 +5,7 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.CommentNode;
 
 @AutoValue
-public abstract class DankCommentNode implements SubmissionCommentsRow {
+public abstract class DankCommentNode implements SubmissionCommentRow {
 
   public abstract CommentNode commentNode();
 
@@ -15,7 +15,7 @@ public abstract class DankCommentNode implements SubmissionCommentsRow {
   public abstract long id();
 
   @Override
-  public SubmissionCommentsRow.Type type() {
+  public SubmissionCommentRow.Type type() {
     return Type.USER_COMMENT;
   }
 

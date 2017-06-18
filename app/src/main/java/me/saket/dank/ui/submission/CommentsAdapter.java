@@ -19,14 +19,11 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Flair;
 import net.dean.jraw.models.VoteDirection;
 
-import java.util.List;
-
 import butterknife.BindColor;
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
-import io.reactivex.functions.Consumer;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.VotingManager;
@@ -43,9 +40,7 @@ import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 import timber.log.Timber;
 
-public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentsRow, RecyclerView.ViewHolder>
-    implements Consumer<List<SubmissionCommentsRow>>
-{
+public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentRow, RecyclerView.ViewHolder> {
 
   private static final int VIEW_TYPE_USER_COMMENT = 100;
   private static final int VIEW_TYPE_LOAD_MORE = 101;
@@ -109,11 +104,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
     return loadMoreCommentsClickStream;
   }
 
-  @Override
-  public void accept(List<SubmissionCommentsRow> commentNodes) {
-    updateData(commentNodes);
-  }
-
   /**
    * OP of a submission, highlighted in comments. This is being set manually instead of {@link Comment#getSubmissionAuthor()},
    * because that's always null. Not sure where I'm going wrong.
@@ -124,8 +114,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
   @Override
   public int getItemViewType(int position) {
-    SubmissionCommentsRow commentItem = getItem(position);
-    return commentItem.type() == SubmissionCommentsRow.Type.USER_COMMENT ? VIEW_TYPE_USER_COMMENT : VIEW_TYPE_LOAD_MORE;
+    SubmissionCommentRow commentItem = getItem(position);
+    return commentItem.type() == SubmissionCommentRow.Type.USER_COMMENT ? VIEW_TYPE_USER_COMMENT : VIEW_TYPE_LOAD_MORE;
   }
 
   @Override
@@ -142,9 +132,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
 
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-    SubmissionCommentsRow commentItem = getItem(position);
+    SubmissionCommentRow commentItem = getItem(position);
 
-    if (commentItem.type() == SubmissionCommentsRow.Type.USER_COMMENT) {
+    if (commentItem.type() == SubmissionCommentRow.Type.USER_COMMENT) {
       DankCommentNode dankCommentNode = (DankCommentNode) commentItem;
       CommentNode commentNode = dankCommentNode.commentNode();
       Comment comment = commentNode.getComment();
@@ -171,7 +161,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       });
 
     } else {
-      LoadMoreCommentsItem loadMoreItem = ((LoadMoreCommentsItem) commentItem);
+      LoadMoreCommentItem loadMoreItem = ((LoadMoreCommentItem) commentItem);
       ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
 
       holder.itemView.setOnClickListener(__ -> {
@@ -290,7 +280,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionComments
       ButterKnife.bind(this, itemView);
     }
 
-    public void bind(LoadMoreCommentsItem loadMoreCommentsItem) {
+    public void bind(LoadMoreCommentItem loadMoreCommentsItem) {
       CommentNode parentCommentNode = loadMoreCommentsItem.parentCommentNode();
 
       // Add a +1 depth to align it with sibling comments.

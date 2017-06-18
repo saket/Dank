@@ -8,6 +8,8 @@ import android.widget.ArrayAdapter;
 
 import java.util.List;
 
+import timber.log.Timber;
+
 /**
  * Base class for a RecyclerView adapter that is backed by an list of objects. The name of this class uses "array" to
  * keep it consistent with {@link ArrayAdapter} (which doesn't work for a RecyclerView).
@@ -54,9 +56,18 @@ public abstract class RecyclerViewArrayAdapter<T, VH extends RecyclerView.ViewHo
   /**
    * Updates this adapter's data set and refreshes the RecyclerView.
    */
-  public void updateData(List<T> items) {
+  public void updateDataAndNotifyDatasetChanged(List<T> items) {
     this.items = items;
     notifyDataSetChanged();
+
+    Timber.w("Use DiffUtils!");
+  }
+
+  /**
+   * Updates this adapter's data set and refreshes the RecyclerView.
+   */
+  public void updateData(List<T> items) {
+    this.items = items;
   }
 
   public List<T> getData() {

@@ -8,7 +8,7 @@ import net.dean.jraw.models.CommentNode;
  * An item in a submission comments that can load more comments for its parent.
  */
 @AutoValue
-public abstract class LoadMoreCommentsItem implements SubmissionCommentsRow {
+public abstract class LoadMoreCommentItem implements SubmissionCommentRow {
 
   /**
    * The comment node for which more comments can be fetched.
@@ -28,8 +28,8 @@ public abstract class LoadMoreCommentsItem implements SubmissionCommentsRow {
     return Type.LOAD_MORE_COMMENTS;
   }
 
-  public static LoadMoreCommentsItem create(CommentNode parentNode, boolean progressVisible) {
+  public static LoadMoreCommentItem create(CommentNode parentNode, boolean progressVisible) {
     int id = (parentNode.getComment().getId() + "_loadMore").hashCode();
-    return new AutoValue_LoadMoreCommentsItem(parentNode, progressVisible, id);
+    return new AutoValue_LoadMoreCommentItem(parentNode, progressVisible, id);
   }
 }

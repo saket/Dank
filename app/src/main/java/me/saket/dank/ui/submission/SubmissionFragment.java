@@ -6,6 +6,7 @@ import static me.saket.dank.utils.Commons.findOptimizedImage;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
+import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.executeOnNextLayout;
 import static me.saket.dank.utils.Views.setHeight;
@@ -20,10 +21,12 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -38,6 +41,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import net.dean.jraw.models.Submission;
 
+import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 
@@ -45,6 +49,7 @@ import butterknife.BindDimen;
 import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
@@ -220,11 +225,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     unsubscribeOnDestroy(
         commentsAdapter.streamCommentClicks()
             .filter(clickEvent -> clickEvent.isCollapsing())
-            .subscribe(clickEvent -> {
-              Views.executeOnNextLayout(clickEvent.commentItemView(), () -> {
-                commentList.post(() -> commentList.smoothScrollBy(0, clickEvent.commentItemView().getHeight()));
-              });
-            })
+            .subscribe(clickEvent -> executeOnNextLayout(clickEvent.commentItemView(), () -> {
+              // TODO Uncomment: commentList.post(() -> commentList.smoothScrollBy(0, clickEvent.commentItemView().getHeight()));
+            }))
     );
   }
 
@@ -238,10 +241,25 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private void setupCommentsHelper() {
     commentsHelper = new CommentsHelper();
 
+    Pair<List<SubmissionCommentRow>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
+
     unsubscribeOnDestroy(
         commentsHelper.streamUpdates()
+            .toFlowable(BackpressureStrategy.LATEST)
+            .scan(initialPair, (pair, next) -> {
+              CommentsDiffCallback callback = new CommentsDiffCallback(pair.first, next);
+              DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true /* detectMoves */);
+              return Pair.create(next, result);
+            })
+            .skip(1)  // To skip the initial value.
             .observeOn(mainThread())
-            .subscribe(commentsAdapter)
+            .subscribe(dataAndDiff -> {
+              List<SubmissionCommentRow> newComments = dataAndDiff.first;
+              commentsAdapter.updateData(newComments);
+
+              DiffUtil.DiffResult commentsDiffResult = dataAndDiff.second;
+              commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
+            }, logError("Error while diff-ing comments"))
     );
 
     // Comment clicks.
@@ -388,7 +406,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentListParentSheet.setScrollingEnabled(false);
     commentsHelper.reset();
     commentList.scrollTo(0, 0);
-    commentsAdapter.updateData(null);
+    commentsAdapter.updateDataAndNotifyDatasetChanged(null);
 
     // Update submission information. Everything that
     adapterWithSubmissionHeader.updateSubmission(submission);
