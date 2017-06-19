@@ -217,14 +217,12 @@
     </LinearLayout>
   </me.saket.dank.widgets.swipe.SwipeableLayout>
 
-
   <me.saket.dank.widgets.ScrollingRecyclerViewSheet
     android:id="@+id/submission_comment_list_parent_sheet"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_below="@id/toolbar"
     android:background="@color/window_background"
-    android:outlineProvider="none"
     tools:layout_below="@+id/submission_comments_header">
 
     <android.support.v7.widget.RecyclerView

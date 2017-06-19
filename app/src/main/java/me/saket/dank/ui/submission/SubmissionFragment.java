@@ -8,7 +8,6 @@ import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
-import static me.saket.dank.utils.Views.executeOnNextLayout;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
@@ -22,7 +21,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.util.DiffUtil;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -66,6 +64,7 @@ import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
@@ -74,6 +73,7 @@ import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.SubmissionAdapterWithHeader;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -213,22 +213,16 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(Dank.submissions(), Dank.voting());
     CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(Dank.voting());
 
-    // Setup comment list and its adapter.
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
-    commentList.setItemAnimator(new DefaultItemAnimator());
-    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), commentSwipeActionsProvider);
+    SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator().withInterpolator(Animations.INTERPOLATOR);
+    itemAnimator.setRemoveDuration(250);
+    itemAnimator.setAddDuration(250);
+    commentList.setItemAnimator(itemAnimator);
 
     // Add submission Views as a header so that it scrolls with the list.
+    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), commentSwipeActionsProvider);
     adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView, Dank.voting(), submissionSwipeActionsProvider);
     commentList.setAdapter(adapterWithSubmissionHeader);
-
-    unsubscribeOnDestroy(
-        commentsAdapter.streamCommentClicks()
-            .filter(clickEvent -> clickEvent.isCollapsing())
-            .subscribe(clickEvent -> executeOnNextLayout(clickEvent.commentItemView(), () -> {
-              // TODO Uncomment: commentList.post(() -> commentList.smoothScrollBy(0, clickEvent.commentItemView().getHeight()));
-            }))
-    );
   }
 
   /**

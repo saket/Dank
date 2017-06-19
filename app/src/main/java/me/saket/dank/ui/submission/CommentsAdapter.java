@@ -38,7 +38,6 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.IndentedLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
-import timber.log.Timber;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentRow, RecyclerView.ViewHolder> {
 
@@ -165,7 +164,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
 
       holder.itemView.setOnClickListener(__ -> {
-        Timber.i("load more click");
         loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreItem.parentCommentNode(), holder.itemView));
       });
     }
@@ -224,6 +222,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       if (isCollapsed) {
         bylineBuilder.append(comment.getAuthor());
         bylineBuilder.append(bylineItemSeparator);
+
+        // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
         int hiddenCommentsCount = dankCommentNode.commentNode().getTotalSize() + 1;   // +1 for the parent comment itself.
         String hiddenCommentsString = itemView.getResources().getQuantityString(R.plurals.submission_comment_hidden_comments, hiddenCommentsCount);
         bylineBuilder.append(String.format(hiddenCommentsString, hiddenCommentsCount));

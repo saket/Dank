@@ -3,7 +3,9 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  tools:background="@color/window_background"
+  android:background="@color/window_background"
+  android:elevation="1dp"
+  android:outlineProvider="none"
   tools:layout_marginTop="25dp">
 
   <me.saket.dank.widgets.swipe.SwipeActionIconView style="@style/DankSwipeableLayoutIcon" />
