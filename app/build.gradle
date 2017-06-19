@@ -68,6 +68,10 @@ ext {
 }
 
 dependencies {
+    testCompile 'junit:junit:4.12'
+    testCompile "org.powermock:powermock-module-junit4:1.6.6"
+    testCompile "org.powermock:powermock-api-mockito:1.6.6"
+
     compile "com.android.support:recyclerview-v7:${supportLibVersion}"
     compile "com.android.support:support-annotations:${supportLibVersion}"
     compile "com.android.support:design:${supportLibVersion}"
@@ -101,16 +105,8 @@ dependencies {
     compile 'com.squareup.retrofit2:adapter-rxjava2:2.2.0'
     compile 'com.squareup.retrofit2:converter-moshi:2.0.2'
     compile 'com.github.bumptech.glide:glide:3.7.0'
-
     compile 'com.squareup.sqlbrite:sqlbrite:1.1.1'
-    compile "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet.
-
-    // Reddit API wrapper.
-    compile 'com.github.Saketme:JRAW:6864908f28'
-
-    // ImageViewer that supports pan, zoom gestures + can decode large images.
-    compile 'com.alexvasilkov:gesture-views:2.2.0'
-
+    compile "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet. TODO: Remove this. SQLBrite is on Rx2.
     compile 'com.google.android:flexbox:0.3.0-alpha3'
     compile 'com.github.zagum:Android-ExpandIcon:1.1.1'
     compile 'com.github.Saketme:Better-Link-Movement-Method:40b13980d4'
@@ -120,14 +116,16 @@ dependencies {
     compile 'com.jakewharton.threetenabp:threetenabp:1.0.5'
     compile 'com.squareup.tape2:tape:2.0.0-SNAPSHOT'
 
+    // Reddit API wrapper.
+    compile 'com.github.Saketme:JRAW:6864908f28'
+
+    // ImageViewer that supports pan, zoom gestures + can decode large images.
+    compile 'com.alexvasilkov:gesture-views:2.2.0'
+
     // Videos!
     compile 'com.google.android.exoplayer:exoplayer:r2.3.1'
     compile 'com.github.Saketme:ExoMedia:3ba6565f07'
     compile 'com.danikula:videocache:2.6.4'
-
-    testCompile 'junit:junit:4.12'
-    testCompile "org.powermock:powermock-module-junit4:1.6.6"
-    testCompile "org.powermock:powermock-api-mockito:1.6.6"
 
     // Caching.
     compile 'com.github.NYTimes.Store:cache:20445fff13'
