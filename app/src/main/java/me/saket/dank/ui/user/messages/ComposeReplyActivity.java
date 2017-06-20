@@ -7,9 +7,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 
-import com.squareup.moshi.Moshi;
-
-import net.dean.jraw.models.Message;
+import net.dean.jraw.models.Contribution;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -23,15 +21,14 @@ import me.saket.dank.ui.DankActivity;
 public class ComposeReplyActivity extends DankActivity {
 
   private static final String KEY_RECEIVER_NAME = "receiverName";
-  private static final String KEY_CONTRIBUTION_JSON = "contributionJson";
+//  private static final String KEY_CONTRIBUTION_JSON = "contributionJson";
 
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.composereply_progress) View progressView;
 
-  public static void start(Context context, String receiverName, Message replyToMessage, Moshi moshi) {
+  public static <T extends Contribution> void start(Context context, String secondPartyName) {
     Intent intent = new Intent(context, ComposeReplyActivity.class);
-    intent.putExtra(KEY_RECEIVER_NAME, receiverName);
-    intent.putExtra(KEY_CONTRIBUTION_JSON, moshi.adapter(Message.class).toJson(replyToMessage));
+    intent.putExtra(KEY_RECEIVER_NAME, secondPartyName);
     context.startActivity(intent);
   }
 

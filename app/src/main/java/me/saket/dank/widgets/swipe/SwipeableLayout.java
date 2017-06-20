@@ -25,6 +25,8 @@ import timber.log.Timber;
 
 public class SwipeableLayout extends FrameLayout {
 
+  public static final long ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION = 300;
+
   private View swipeableChild;
   private SwipeActions swipeActions;
   private SwipeActionIconView actionIconView;
@@ -179,7 +181,7 @@ public class SwipeableLayout extends FrameLayout {
    */
   public void animateBackToPosition() {
     translationAnimator = ObjectAnimator.ofFloat(this, "swipeTranslation", getSwipeTranslation(), 0f);
-    translationAnimator.setDuration(300);
+    translationAnimator.setDuration(ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION);
     translationAnimator.setInterpolator(Animations.INTERPOLATOR);
     translationAnimator.start();
   }

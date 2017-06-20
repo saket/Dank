@@ -139,6 +139,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   void onClickReply() {
     List<Message> messages = messagesAdapter.getData();
     Message latestMessage = messages.get(messages.size() - 1);
-    ComposeReplyActivity.start(this, getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME), latestMessage, Dank.moshi());
+    ComposeReplyActivity.start(this, getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME));
   }
 }

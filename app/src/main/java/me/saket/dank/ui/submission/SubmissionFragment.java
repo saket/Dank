@@ -211,7 +211,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Swipe gestures.
     commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(Dank.submissions(), Dank.voting());
-    CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(Dank.voting());
+    CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(getActivity(), Dank.voting());
 
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
     SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator().withInterpolator(Animations.INTERPOLATOR);

@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission;
 
+import android.content.Context;
 import android.support.annotation.Nullable;
 
 import net.dean.jraw.models.Comment;
@@ -9,6 +10,7 @@ import net.dean.jraw.models.VoteDirection;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.ui.user.messages.ComposeReplyActivity;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
@@ -27,10 +29,12 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
   private static final String ACTION_NAME_UPVOTE = "CommentUpvote";
   private static final String ACTION_NAME_DOWNVOTE = "CommentDownvote";
 
+  private final Context context;
   private final VotingManager votingManager;
   private final SwipeActions commentSwipeActions;
 
-  public CommentSwipeActionsProvider(VotingManager votingManager) {
+  public CommentSwipeActionsProvider(Context context, VotingManager votingManager) {
+    this.context = context;
     this.votingManager = votingManager;
 
     commentSwipeActions = SwipeActions.builder()
@@ -104,6 +108,10 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
 
       case ACTION_NAME_REPLY:
         Timber.i("TODO: %s", swipeAction.name());
+        swipeableLayout.postDelayed(
+            () -> ComposeReplyActivity.start(context, comment.getAuthor()),
+            SwipeableLayout.ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION * 9/10
+        );
         break;
 
       case ACTION_NAME_UPVOTE: {
