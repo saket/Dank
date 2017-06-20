@@ -16,6 +16,7 @@ import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
 import me.saket.dank.widgets.swipe.SwipeActionsHolder;
+import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable.RippleType;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import timber.log.Timber;
 
@@ -97,13 +98,13 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
   }
 
   public void performSwipeAction(SwipeAction swipeAction, CommentNode commentNode, SwipeableLayout swipeableLayout) {
-    swipeableLayout.playRippleAnimation(swipeAction);  // TODO: Specify ripple direction.
-
     Comment comment = commentNode.getComment();
+    boolean isUndoAction;
 
     switch (swipeAction.name()) {
       case ACTION_NAME_OPTIONS:
         Timber.i("TODO: %s", swipeAction.name());
+        isUndoAction = false;
         break;
 
       case ACTION_NAME_REPLY:
@@ -112,6 +113,7 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
             () -> ComposeReplyActivity.start(context, comment.getAuthor()),
             SwipeableLayout.ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION * 9/10
         );
+        isUndoAction = false;
         break;
 
       case ACTION_NAME_UPVOTE: {
@@ -120,6 +122,8 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
         votingManager.voteWithAutoRetry(comment, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
+
+        isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
         break;
       }
 
@@ -129,11 +133,15 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
         votingManager.voteWithAutoRetry(comment, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
+
+        isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
         break;
       }
 
       default:
         throw new UnsupportedOperationException("Unknown swipe action: " + swipeAction);
     }
+
+    swipeableLayout.playRippleAnimation(swipeAction, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
   }
 }

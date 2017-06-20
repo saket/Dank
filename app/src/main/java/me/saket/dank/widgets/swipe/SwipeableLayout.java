@@ -34,7 +34,7 @@ public class SwipeableLayout extends FrameLayout {
   private boolean swipeDistanceThresholdCrossed;
   private ObjectAnimator translationAnimator;
   private BackgroundDrawable backgroundDrawable;
-  private FadingCircleDrawable swipeActionTriggerDrawable;
+  private SwipeTriggerRippleDrawable swipeActionTriggerDrawable;
 
   private OnPerformSwipeActionListener onPerformSwipeActionListener;
   private SwipeActionIconProvider swipeActionIconProvider;
@@ -66,7 +66,7 @@ public class SwipeableLayout extends FrameLayout {
     setSwipeDistanceThresholdCrossed(false);  // Controls the background color's gray tint.
 
     setWillNotDraw(false);
-    swipeActionTriggerDrawable = new FadingCircleDrawable();
+    swipeActionTriggerDrawable = new SwipeTriggerRippleDrawable();
     swipeActionTriggerDrawable.setCallback(this);
   }
 
@@ -279,10 +279,10 @@ public class SwipeableLayout extends FrameLayout {
   /**
    * Called from {@link OnPerformSwipeActionListener#onPerformSwipeAction(SwipeAction)}, when a swipe action is performed.
    */
-  public void playRippleAnimation(SwipeAction forAction) {
+  public void playRippleAnimation(SwipeAction forAction, SwipeTriggerRippleDrawable.RippleType swipeRippleType) {
     int swipeActionColor = ContextCompat.getColor(getContext(), forAction.backgroundColorRes());
-    boolean triggerFromStart = swipeActions.startActions().contains(forAction);
-    swipeActionTriggerDrawable.play(swipeActionColor, triggerFromStart);
+    SwipeDirection rippleDirection = swipeActions.startActions().contains(forAction) ? SwipeDirection.START_TO_END : SwipeDirection.END_TO_START;
+    swipeActionTriggerDrawable.play(swipeActionColor, rippleDirection, swipeRippleType);
   }
 
   @Override

@@ -14,6 +14,7 @@ import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
 import me.saket.dank.widgets.swipe.SwipeActionsHolder;
+import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable.RippleType;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import timber.log.Timber;
 
@@ -71,47 +72,6 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
   }
 
-  public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
-    switch (swipeAction.name()) {
-      case ACTION_NAME_OPTIONS:
-        Timber.i("TODO: %s", swipeAction.name());
-        break;
-
-      case ACTION_NAME_SAVE:
-        submissionManager.markAsSaved(submission);
-        Timber.i("TODO: %s", swipeAction.name());
-        break;
-
-      case ACTION_NAME_UNSAVE:
-        submissionManager.markAsUnsaved(submission);
-        Timber.i("TODO: %s", swipeAction.name());
-        break;
-
-      case ACTION_NAME_UPVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
-        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.voteWithAutoRetry(submission, newVoteDirection)
-            .subscribeOn(Schedulers.io())
-            .subscribe();
-        break;
-      }
-
-      case ACTION_NAME_DOWNVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
-        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.voteWithAutoRetry(submission, newVoteDirection)
-            .subscribeOn(Schedulers.io())
-            .subscribe();
-        break;
-      }
-
-      default:
-        throw new UnsupportedOperationException("Unknown swipe action: " + swipeAction);
-    }
-
-    swipeableLayout.playRippleAnimation(swipeAction);  // TODO: Specify ripple direction.
-  }
-
   @Override
   public void showSwipeActionIcon(SwipeActionIconView imageView, @Nullable SwipeAction oldAction, SwipeAction newAction) {
     switch (newAction.name()) {
@@ -153,6 +113,56 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
       default:
         throw new UnsupportedOperationException("Unknown swipe action: " + newAction);
     }
+  }
+
+  public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
+    boolean isUndoAction;
+
+    switch (swipeAction.name()) {
+      case ACTION_NAME_OPTIONS:
+        isUndoAction = false;
+        Timber.i("TODO: %s", swipeAction.name());
+        break;
+
+      case ACTION_NAME_SAVE:
+        submissionManager.markAsSaved(submission);
+        isUndoAction = false;
+        Timber.i("TODO: %s", swipeAction.name());
+        break;
+
+      case ACTION_NAME_UNSAVE:
+        submissionManager.markAsUnsaved(submission);
+        isUndoAction = true;
+        Timber.i("TODO: %s", swipeAction.name());
+        break;
+
+      case ACTION_NAME_UPVOTE: {
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
+        votingManager.voteWithAutoRetry(submission, newVoteDirection)
+            .subscribeOn(Schedulers.io())
+            .subscribe();
+
+        isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
+        break;
+      }
+
+      case ACTION_NAME_DOWNVOTE: {
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
+        votingManager.voteWithAutoRetry(submission, newVoteDirection)
+            .subscribeOn(Schedulers.io())
+            .subscribe();
+
+        isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
+        break;
+      }
+
+      default:
+        throw new UnsupportedOperationException("Unknown swipe action: " + swipeAction);
+    }
+
+    swipeableLayout.playRippleAnimation(swipeAction, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
   }
 
   private void resetIconRotation(SwipeActionIconView imageView) {

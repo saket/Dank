@@ -61,8 +61,9 @@ public class VotingManager {
 
     return dankRedditClient.withAuth(Completable
         .fromAction(() -> dankRedditClient.userAccountManager().vote(thingToVote, voteDirection)))
-        .doOnSubscribe(o -> Timber.i("Voting for %s…", thingToVote.getFullName()))
-        .doOnComplete(() -> Timber.i("Voting done for %s", thingToVote.getFullName()));
+//        .doOnSubscribe(o -> Timber.i("Voting for %s…", thingToVote.getFullName()))
+//        .doOnComplete(() -> Timber.i("Voting done for %s", thingToVote.getFullName()))
+        ;
   }
 
   /**
