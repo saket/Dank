@@ -4,6 +4,8 @@ import android.support.v7.util.DiffUtil;
 
 import java.util.List;
 
+import timber.log.Timber;
+
 public class CommentsDiffCallback extends DiffUtil.Callback {
 
   private final List<SubmissionCommentRow> oldComments;
@@ -53,6 +55,12 @@ public class CommentsDiffCallback extends DiffUtil.Callback {
   public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
     SubmissionCommentRow oldCommentRow = oldComments.get(oldItemPosition);
     SubmissionCommentRow newCommentRow = newComments.get(newItemPosition);
-    return oldCommentRow.equals(newCommentRow);
+
+    try {
+      return oldCommentRow.equals(newCommentRow);
+    } catch (StackOverflowError e) {
+      Timber.e(e, "StackOverflowError while equals. oldCommentRow: %s, newCommentRow: %s", oldCommentRow, newCommentRow);
+      return false;
+    }
   }
 }
