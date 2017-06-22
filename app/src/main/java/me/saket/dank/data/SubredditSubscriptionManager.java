@@ -34,6 +34,7 @@ import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription.PendingState;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.UserSession;
 import timber.log.Timber;
 
 /**
@@ -50,14 +51,16 @@ public class SubredditSubscriptionManager {
   private BriteDatabase database;
   private DankRedditClient dankRedditClient;
   private UserPrefsManager userPrefsManager;
+  private UserSession userSession;
 
   public SubredditSubscriptionManager(Context context, BriteDatabase database, DankRedditClient dankRedditClient,
-      UserPrefsManager userPrefsManager)
+      UserPrefsManager userPrefsManager, UserSession userSession)
   {
     this.appContext = context;
     this.database = database;
     this.dankRedditClient = dankRedditClient;
     this.userPrefsManager = userPrefsManager;
+    this.userSession = userSession;
   }
 
   public boolean isFrontpage(String subredditName) {
@@ -275,8 +278,8 @@ public class SubredditSubscriptionManager {
 // ======== REMOTE SUBREDDITS ======== //
 
   private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
-    return dankRedditClient.isUserLoggedIn()
-        .flatMap(loggedIn -> loggedIn ? loggedInUserSubreddits() : Single.just(loggedOutSubreddits()))
+    Single<List<String>> subredditsStream = userSession.isUserLoggedIn() ? loggedInUserSubreddits() : Single.just(loggedOutSubreddits());
+    return subredditsStream
         .compose(applySchedulersSingle())
         .map(mergeRemoteSubscriptionsWithLocal(localSubs));
   }

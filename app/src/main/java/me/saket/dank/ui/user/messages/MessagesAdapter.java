@@ -40,6 +40,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
 
   /**
    * @param showMessageThreads used for {@link InboxFolder#PRIVATE_MESSAGES}.
+   * @param loggedInUserName Used for prefixing the body with "You: " for user sent messages.
    */
   public MessagesAdapter(BetterLinkMovementMethod linkMovementMethod, boolean showMessageThreads, String loggedInUserName) {
     this.linkMovementMethod = linkMovementMethod;

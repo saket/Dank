@@ -202,7 +202,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       OpenUrlActivity.handle(this, parsedLink, messageItemViewRect);
 
     } else {
-      String secondPartyName = JrawUtils.secondPartyName(getResources(), message, Dank.reddit().loggedInUserName());
+      String secondPartyName = JrawUtils.secondPartyName(getResources(), message, Dank.userSession().loggedInUserName());
       PrivateMessageThreadActivity.start(this, message.getId(), secondPartyName, messageItemViewRect);
     }
   }

@@ -1,6 +1,5 @@
 package me.saket.dank.ui.subreddits;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static me.saket.dank.di.Dank.subscriptions;
 import static me.saket.dank.utils.Commons.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
@@ -167,23 +166,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     setupToolbarSheet();
 
     // Schedule subreddit syncs + do an immediate sync.
-    if (isTaskRoot()) {
-      // TODO: Also subscribe to on-logged-in-event and run these jobs:
-      unsubscribeOnDestroy(Dank.reddit()
-          .isUserLoggedIn()
-          .observeOn(mainThread())
-          .subscribe(loggedIn -> {
-            if (loggedIn) {
-              SubredditSubscriptionsSyncJob.syncImmediately(this);
-              SubredditSubscriptionsSyncJob.schedule(this);
-              CheckUnreadMessagesJobService.syncImmediately(this);
-              CheckUnreadMessagesJobService.schedule(this);
-
-            } else {
-              Timber.i("Couldn't start sync. Is logged in? %s", loggedIn);
-            }
-          })
-      );
+    // TODO: Also subscribe to on-logged-in-event and run these jobs:
+    if (isTaskRoot() && Dank.userSession().isUserLoggedIn()) {
+      SubredditSubscriptionsSyncJob.syncImmediately(this);
+      SubredditSubscriptionsSyncJob.schedule(this);
+      CheckUnreadMessagesJobService.syncImmediately(this);
+      CheckUnreadMessagesJobService.schedule(this);
     }
 
     // Restore state of subreddit picker sheet / user profile sheet.
@@ -307,7 +295,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             invalidateOptionsMenu();
 
           } else if (isUserProfileSheetVisible()) {
-            setTitle(getString(R.string.user_name_u_prefix, Dank.reddit().loggedInUserName()));
+            setTitle(getString(R.string.user_name_u_prefix, Dank.userSession().loggedInUserName()));
           }
 
           toolbarTitleArrowView.setState(ExpandIconView.LESS, true);
@@ -514,17 +502,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         return true;
 
       case R.id.action_user_profile:
-        unsubscribeOnDestroy(Dank.reddit()
-            .isUserLoggedIn()
-            .observeOn(mainThread())
-            .subscribe(loggedIn -> {
-              if (loggedIn) {
-                showUserProfileSheet();
-              } else {
-                LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
-              }
-            })
-        );
+        if (Dank.userSession().isUserLoggedIn()) {
+          showUserProfileSheet();
+        } else {
+          LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
+        }
         return true;
 
       case R.id.action_preferences:

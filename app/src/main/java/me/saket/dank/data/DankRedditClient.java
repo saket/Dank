@@ -1,7 +1,5 @@
 package me.saket.dank.data;
 
-import static io.reactivex.schedulers.Schedulers.io;
-
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
@@ -41,6 +39,7 @@ import io.reactivex.functions.Action;
 import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -55,6 +54,7 @@ public class DankRedditClient {
 
   private final RedditClient redditClient;
   private final AuthenticationManager redditAuthManager;
+  private UserSession userSession;
   private final Credentials loggedInUserCredentials;
   private final Credentials userlessAppCredentials;
   private final RefreshTokenHandler tokenHandler;
@@ -62,9 +62,10 @@ public class DankRedditClient {
   private boolean authManagerInitialized;
   private BehaviorRelay<Boolean> onRedditClientAuthenticatedRelay;
 
-  public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager) {
+  public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager, UserSession userSession) {
     this.redditClient = redditClient;
     this.redditAuthManager = redditAuthManager;
+    this.userSession = userSession;
 
     redditClient.setLoggingMode(LoggingMode.ON_FAIL);
 
@@ -118,6 +119,7 @@ public class DankRedditClient {
   /**
    * Ensures that the app is authorized to make Reddit API calls and execute <var>wrappedObservable</var> to be specific.
    */
+  // TODO: Move to UserSession.java
   public <T> Single<T> withAuth(Single<T> wrappedObservable) {
     return Dank.reddit()
         .authenticateIfNeeded()
@@ -125,6 +127,7 @@ public class DankRedditClient {
         .retryWhen(refreshApiTokenIfExpiredAndRetry());
   }
 
+  // TODO: Move to UserSession.java
   public Completable withAuth(Completable completable) {
     return Dank.reddit()
         .authenticateIfNeeded()
@@ -132,7 +135,7 @@ public class DankRedditClient {
         .retryWhen(refreshApiTokenIfExpiredAndRetry());
   }
 
-
+  // TODO: Move to UserSession.java
   public <T> Observable<T> withAuth(Observable<T> completable) {
     return Dank.reddit()
         .authenticateIfNeeded()
@@ -145,6 +148,7 @@ public class DankRedditClient {
   /**
    * Get a new API token if we haven't already or refresh the existing API token if the last one has expired.
    */
+  // TODO: Move to UserSession.java
   private synchronized Completable authenticateIfNeeded() {
     return Completable.fromCallable(() -> {
       if (!authManagerInitialized) {
@@ -185,31 +189,30 @@ public class DankRedditClient {
    * re-authenticate.
    */
   @NonNull
+  // TODO: Move to UserSession.java
   private Function<Flowable<Throwable>, Publisher<Boolean>> refreshApiTokenIfExpiredAndRetry() {
-    return errors -> {
-      return errors.flatMap(error -> {
-        if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
-          // Re-try authenticating.
-          Timber.w("Attempting to refresh token");
+    return errors -> errors.flatMap(error -> {
+      if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 401) {
+        // Re-try authenticating.
+        Timber.w("Attempting to refresh token");
 
-          return isUserLoggedIn()
-              .observeOn(io())    // This observeOn() call is important. Check the doc of isUserLoggedIn().
-              .flatMapPublisher(loggedIn -> Flowable.fromCallable(() -> {
-                redditAuthManager.refreshAccessToken(loggedIn ? loggedInUserCredentials : userlessAppCredentials);
-                return true;
-              }));
+        return Flowable.fromCallable(() -> {
+          redditAuthManager.refreshAccessToken(userSession.isUserLoggedIn() ? loggedInUserCredentials : userlessAppCredentials);
+          return true;
+        });
 
-        } else {
-          return Flowable.error(error);
-        }
-      });
-    };
+      } else {
+        return Flowable.error(error);
+      }
+    });
   }
 
-  public UserLoginHelper userLoginHelper() {
+  // TODO: Move to UserSession.java
+  public UserLoginHelper createUserLoginHelper() {
     return new UserLoginHelper();
   }
 
+  // TODO: Move to UserSession.java
   public Completable logout() {
     Action revokeAccessTokenAction = () -> {
       // Bug workaround: revokeAccessToken() method crashes if logging is enabled.
@@ -218,9 +221,10 @@ public class DankRedditClient {
 
     return Completable
         .fromAction(revokeAccessTokenAction)
-        .andThen(Dank.subscriptions().removeAll());
+        .andThen(Dank.subscriptions().removeAll());   // TODO: Use a broadcast instead.
   }
 
+  // TODO: Move to UserSession.java
   public class UserLoginHelper {
 
     public UserLoginHelper() {
@@ -250,37 +254,20 @@ public class DankRedditClient {
     /**
      * Emits an item when the app is successfully able to authenticate the user in.
      */
-    public Observable<Boolean> parseOAuthSuccessUrl(String successUrl) {
-      return Observable.fromCallable(() -> {
+    public Completable parseOAuthSuccessUrl(String successUrl) {
+      return Completable.fromAction(() -> {
         OAuthData oAuthData = redditClient.getOAuthHelper().onUserChallenge(successUrl, loggedInUserCredentials);
         redditClient.authenticate(oAuthData);
-        return true;
+
+        String username = redditClient.getAuthenticatedUser();
+        userSession.setLoggedInUsername(username);
       });
     }
-
   }
 
 // ======== USER ACCOUNT ======== //
 
-  // TODO: Cache this value otherwise recreating Activities might result in a crash, because authenticating takes time.
-  public String loggedInUserName() {
-    return redditClient.getAuthenticatedUser();
-  }
-
-  /**
-   * Warning: This method relies on a subject where subscribeOn() will have no effect because
-   * its values can possibly be emitted from different threads. Make sure you call observeOn()
-   * right after calling this method.
-   */
-  public Single<Boolean> isUserLoggedIn() {
-    // Warning: calling toSingle() directly on the subject does not work.
-    // It causes its subscribers to stop working. I don't understand why.
-    // Taking the first emitted item and converting it into a Single works.
-    return onRedditClientAuthenticated()
-        .map(o -> redditClient.isAuthenticated() && redditClient.hasActiveUserContext())
-        .firstOrError();
-  }
-
+  // TODO: Move to UserSession.java
   public Single<LoggedInAccount> loggedInUserAccount() {
     return withAuth(Single.fromCallable(() -> redditClient.me()));
   }

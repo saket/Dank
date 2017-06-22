@@ -39,6 +39,7 @@ import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
+import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.ImgurManager;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.MoshiMessageAdapter;
@@ -93,15 +94,15 @@ public class DankAppModule {
   @Provides
   @Singleton
   SubredditSubscriptionManager provideSubredditSubscriptionManager(BriteDatabase briteDatabase, DankRedditClient dankRedditClient,
-      UserPrefsManager userPrefsManager)
+      UserPrefsManager userPrefsManager, UserSession userSession)
   {
-    return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient, userPrefsManager);
+    return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient, userPrefsManager, userSession);
   }
 
   @Provides
   @Singleton
-  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager) {
-    return new DankRedditClient(appContext, redditClient, authManager);
+  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager, UserSession userSession) {
+    return new DankRedditClient(appContext, redditClient, authManager, userSession);
   }
 
   @Provides
@@ -248,5 +249,11 @@ public class DankAppModule {
   @Singleton
   MessagesNotificationManager provideMessagesNotifManager(SharedPreferences sharedPreferences) {
     return new MessagesNotificationManager(new MessagesNotificationManager.SeenUnreadMessageIdStore(sharedPreferences));
+  }
+
+  @Provides
+  @Singleton
+  UserSession provideUserSessionManager(SharedPreferences sharedPrefs) {
+    return new UserSession(sharedPrefs);
   }
 }

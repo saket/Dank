@@ -155,7 +155,7 @@ public class MessagesNotificationManager {
 
   public Completable displayNotification(Context context, List<Message> unreadMessages) {
     return Completable.fromAction(() -> {
-      String loggedInUserName = Dank.reddit().loggedInUserName();
+      String loggedInUserName = Dank.userSession().loggedInUserName();
 
       Comparator<Message> oldestMessageFirstComparator = (first, second) -> {
         Date firstDate = first.getCreated();

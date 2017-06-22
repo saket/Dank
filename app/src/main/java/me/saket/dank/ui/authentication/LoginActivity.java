@@ -1,6 +1,6 @@
 package me.saket.dank.ui.authentication;
 
-import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
 import android.app.Activity;
 import android.content.Intent;
@@ -16,6 +16,7 @@ import android.widget.Toast;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
@@ -71,7 +72,7 @@ public class LoginActivity extends DankActivity {
       }
     });
 
-    userLoginHelper = Dank.reddit().userLoginHelper();
+    userLoginHelper = Dank.reddit().createUserLoginHelper();
     webView.loadUrl(userLoginHelper.authorizationUrl());
   }
 
@@ -80,8 +81,8 @@ public class LoginActivity extends DankActivity {
 
     // TODO: 10/02/17 Test error cases here.
     userLoginHelper.parseOAuthSuccessUrl(successUrl)
-        .map(__ -> Dank.reddit().loggedInUserName())
-        .compose(applySchedulers())
+        .andThen(Single.just(Dank.userSession().loggedInUserName()))
+        .compose(applySchedulersSingle())
         .subscribe(userName -> {
           Toast.makeText(LoginActivity.this, getString(R.string.login_welcome_user, userName), Toast.LENGTH_SHORT).show();
           setResult(RESULT_OK);
