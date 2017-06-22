@@ -9,7 +9,9 @@ import net.dean.jraw.models.VoteDirection;
 
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
+import me.saket.dank.data.OnLoginRequiredListener;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.ui.user.messages.ComposeReplyActivity;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.widgets.swipe.SwipeAction;
@@ -32,11 +34,17 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
 
   private final Context context;
   private final VotingManager votingManager;
+  private final UserSession userSession;
+  private OnLoginRequiredListener onLoginRequiredListener;
   private final SwipeActions commentSwipeActions;
 
-  public CommentSwipeActionsProvider(Context context, VotingManager votingManager) {
+  public CommentSwipeActionsProvider(Context context, VotingManager votingManager, UserSession userSession,
+      OnLoginRequiredListener onLoginRequiredListener)
+  {
     this.context = context;
     this.votingManager = votingManager;
+    this.userSession = userSession;
+    this.onLoginRequiredListener = onLoginRequiredListener;
 
     commentSwipeActions = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
@@ -98,6 +106,11 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
   }
 
   public void performSwipeAction(SwipeAction swipeAction, CommentNode commentNode, SwipeableLayout swipeableLayout) {
+    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSession.isUserLoggedIn()) {
+      onLoginRequiredListener.onLoginRequired();
+      return;
+    }
+
     Comment comment = commentNode.getComment();
     boolean isUndoAction;
 
@@ -111,7 +124,7 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
         Timber.i("TODO: %s", swipeAction.name());
         swipeableLayout.postDelayed(
             () -> ComposeReplyActivity.start(context, comment.getAuthor()),
-            SwipeableLayout.ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION * 9/10
+            SwipeableLayout.ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION * 9 / 10
         );
         isUndoAction = false;
         break;

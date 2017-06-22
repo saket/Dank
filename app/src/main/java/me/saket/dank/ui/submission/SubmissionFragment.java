@@ -57,11 +57,13 @@ import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
+import me.saket.dank.data.OnLoginRequiredListener;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.OpenUrlActivity;
+import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.Animations;
@@ -209,9 +211,20 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private void setupCommentList(DankLinkMovementMethod linkMovementMethod) {
     // Swipe gestures.
+    OnLoginRequiredListener onLoginRequiredListener = () -> LoginActivity.start(getActivity());
+    SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(
+        Dank.submissions(),
+        Dank.voting(),
+        Dank.userSession(),
+        onLoginRequiredListener
+    );
+    CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(
+        getActivity(),
+        Dank.voting(),
+        Dank.userSession(),
+        onLoginRequiredListener
+    );
     commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
-    SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(Dank.submissions(), Dank.voting());
-    CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(getActivity(), Dank.voting());
 
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
     SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator().withInterpolator(Animations.INTERPOLATOR);

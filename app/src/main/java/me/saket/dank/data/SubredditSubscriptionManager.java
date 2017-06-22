@@ -154,7 +154,7 @@ public class SubredditSubscriptionManager {
         .toCompletable();
   }
 
-  @NonNull
+  @CheckResult
   private Single<List<SubredditSubscription>> refreshSubscriptions(List<SubredditSubscription> localSubs) {
     return fetchRemoteSubscriptions(localSubs).doOnSuccess(saveSubscriptionsToDatabase());
   }
@@ -277,6 +277,7 @@ public class SubredditSubscriptionManager {
 
 // ======== REMOTE SUBREDDITS ======== //
 
+  @CheckResult
   private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
     Single<List<String>> subredditsStream = userSession.isUserLoggedIn() ? loggedInUserSubreddits() : Single.just(loggedOutSubreddits());
     return subredditsStream

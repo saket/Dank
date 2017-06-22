@@ -217,6 +217,7 @@ public class DankRedditClient {
     Action revokeAccessTokenAction = () -> {
       // Bug workaround: revokeAccessToken() method crashes if logging is enabled.
       redditClient.getOAuthHelper().revokeAccessToken(loggedInUserCredentials);
+      userSession.setLoggedInUsername(null);
     };
 
     return Completable

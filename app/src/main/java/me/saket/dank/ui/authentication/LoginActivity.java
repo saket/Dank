@@ -1,8 +1,9 @@
 package me.saket.dank.ui.authentication;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
@@ -16,7 +17,6 @@ import android.widget.Toast;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
@@ -30,6 +30,10 @@ public class LoginActivity extends DankActivity {
 
   private DankRedditClient.UserLoginHelper userLoginHelper;
   private boolean loggedIn;
+
+  public static void start(Context context) {
+    context.startActivity(new Intent(context, LoginActivity.class));
+  }
 
   public static void startForResult(Activity activity, int requestCode) {
     activity.startActivityForResult(new Intent(activity, LoginActivity.class), requestCode);
@@ -81,10 +85,10 @@ public class LoginActivity extends DankActivity {
 
     // TODO: 10/02/17 Test error cases here.
     userLoginHelper.parseOAuthSuccessUrl(successUrl)
-        .andThen(Single.just(Dank.userSession().loggedInUserName()))
-        .compose(applySchedulersSingle())
-        .subscribe(userName -> {
-          Toast.makeText(LoginActivity.this, getString(R.string.login_welcome_user, userName), Toast.LENGTH_SHORT).show();
+        .compose(applySchedulersCompletable())
+        .subscribe(() -> {
+          String loggedInUserName = Dank.userSession().loggedInUserName();
+          Toast.makeText(LoginActivity.this, getString(R.string.login_welcome_user, loggedInUserName), Toast.LENGTH_SHORT).show();
           setResult(RESULT_OK);
           finish();
 
