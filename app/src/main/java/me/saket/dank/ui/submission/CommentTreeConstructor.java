@@ -23,16 +23,17 @@ import me.saket.dank.utils.Commons;
 import timber.log.Timber;
 
 /**
- * Helps in flattening a comments tree with collapsed child comments ignored.
+ * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more" & "continue thread ->" items.
  */
-public class CommentsTreeConstructor {
+public class CommentTreeConstructor {
 
-  private Set<String> collapsedCommentNodeIds = new HashSet<>();    // Comments that are collapsed.
-  private Set<String> loadingMoreCommentNodeIds = new HashSet<>();  // Comments for which more replies are being fetched.
+  private Set<String> collapsedCommentNodeIds = new HashSet<>();      // Comments that are collapsed.
+  private Set<String> loadingMoreCommentNodeIds = new HashSet<>();    // Comments for which more replies are being fetched.
+  private Set<String> replyActiveForCommentNodeIds = new HashSet<>(); // Comments for which reply fields are active.
   private CommentNode rootCommentNode;
   private Relay<Object> changesRequiredStream = PublishRelay.create();
 
-  public CommentsTreeConstructor() {
+  public CommentTreeConstructor() {
   }
 
   /**
@@ -68,6 +69,9 @@ public class CommentsTreeConstructor {
         .map(Commons.toImmutable());
   }
 
+  /**
+   * Collapse/expand a comment.
+   */
   public void toggleCollapse(CommentNode nodeToCollapse) {
     if (isCollapsed(nodeToCollapse)) {
       collapsedCommentNodeIds.remove(nodeToCollapse.getComment().getId());
@@ -81,6 +85,9 @@ public class CommentsTreeConstructor {
     return collapsedCommentNodeIds.contains(commentNode.getComment().getId());
   }
 
+  /**
+   * Enable "loading more…" progress indicator.
+   */
   public Consumer<CommentNode> setMoreCommentsLoading(boolean loading) {
     return commentNode -> {
       if (loading) {
@@ -94,6 +101,22 @@ public class CommentsTreeConstructor {
 
   public boolean areMoreCommentsLoadingFor(CommentNode commentNode) {
     return loadingMoreCommentNodeIds.contains(commentNode.getComment().getId());
+  }
+
+  /**
+   * Show/hide reply field for a comment.
+   */
+  public void toggleReply(CommentNode nodeToReply) {
+    if (isReplyActiveFor(nodeToReply)) {
+      replyActiveForCommentNodeIds.remove(nodeToReply.getComment().getId());
+    } else {
+      replyActiveForCommentNodeIds.add(nodeToReply.getComment().getId());
+    }
+    changesRequiredStream.accept(Notification.INSTANCE);
+  }
+
+  private boolean isReplyActiveFor(CommentNode commentNode) {
+    return replyActiveForCommentNodeIds.contains(commentNode.getComment().getId());
   }
 
   /**
@@ -121,7 +144,12 @@ public class CommentsTreeConstructor {
     boolean isCommentNodeCollapsed = isCollapsed(nextNode);
     if (nextNode.getDepth() != 0) {
       //Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
+      // TODO: Add a field to DankCommentNode to indicate whether a reply for it is active. When it's active, we remove the item separator.
       flattenComments.add(DankCommentNode.create(nextNode, isCommentNodeCollapsed));
+    }
+
+    if (isReplyActiveFor(nextNode) && !isCommentNodeCollapsed) {
+      flattenComments.add(CommentReplyItem.create(nextNode));
     }
 
     if (nextNode.isEmpty() && !nextNode.hasMoreComments()) {

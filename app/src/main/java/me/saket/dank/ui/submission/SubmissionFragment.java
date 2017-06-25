@@ -112,7 +112,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private CommentsAdapter commentsAdapter;
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
-  private CommentsTreeConstructor commentsTreeConstructor;
+  private CommentTreeConstructor commentTreeConstructor;
   private Submission activeSubmission;
   private DankSubmissionRequest activeSubmissionRequest;
   private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
@@ -219,11 +219,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         onLoginRequiredListener
     );
     CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(
-        getActivity(),
         Dank.voting(),
         Dank.userSession(),
         onLoginRequiredListener
     );
+    commentSwipeActionsProvider.setOnReplySwipeActionListener(commentNodeToReply -> commentTreeConstructor.toggleReply(commentNodeToReply));
     commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
 
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -239,19 +239,19 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   /**
-   * {@link CommentsTreeConstructor} helps in collapsing comments and helping {@link CommentsAdapter} in indicating
+   * {@link CommentTreeConstructor} helps in collapsing comments and helping {@link CommentsAdapter} in indicating
    * progress when more comments are being fetched for a CommentNode.
    * <p>
    * The direction of modifications/updates to comments is unidirectional. All mods are made on
-   * {@link CommentsTreeConstructor} and {@link CommentsAdapter} subscribes to its updates.
+   * {@link CommentTreeConstructor} and {@link CommentsAdapter} subscribes to its updates.
    */
   private void setupCommentsHelper() {
-    commentsTreeConstructor = new CommentsTreeConstructor();
+    commentTreeConstructor = new CommentTreeConstructor();
 
     Pair<List<SubmissionCommentRow>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
 
     unsubscribeOnDestroy(
-        commentsTreeConstructor.streamUpdates()
+        commentTreeConstructor.streamUpdates()
             .toFlowable(BackpressureStrategy.LATEST)
             .scan(initialPair, (pair, next) -> {
               CommentsDiffCallback callback = new CommentsDiffCallback(pair.first, next);
@@ -271,7 +271,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Comment clicks.
     unsubscribeOnDestroy(
-        commentsAdapter.streamCommentClicks().subscribe(clickEvent -> commentsTreeConstructor.toggleCollapse(clickEvent.commentNode()))
+        commentsAdapter.streamCommentClicks().subscribe(clickEvent -> commentTreeConstructor.toggleCollapse(clickEvent.commentNode()))
     );
 
     // Load-more-comment clicks.
@@ -293,9 +293,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               } else {
                 return Observable.just(loadMoreClickEvent.parentCommentNode())
                     .observeOn(io())
-                    .doOnNext(commentsTreeConstructor.setMoreCommentsLoading(true))
+                    .doOnNext(commentTreeConstructor.setMoreCommentsLoading(true))
                     .map(Dank.reddit().loadMoreComments())
-                    .doOnNext(commentsTreeConstructor.setMoreCommentsLoading(false));
+                    .doOnNext(commentTreeConstructor.setMoreCommentsLoading(false));
               }
             })
             .subscribe(doNothing(), error -> {
@@ -412,7 +412,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
     commentList.scrollTo(0, 0);
-    commentsTreeConstructor.reset();
+    commentTreeConstructor.reset();
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);
 
     // Update submission information. Everything that
@@ -431,13 +431,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           .compose(doOnSingleStartAndTerminate(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
           .doOnSuccess(submissionWithComments -> activeSubmission = submissionWithComments)
           .subscribe(
-              submissionWithComments -> commentsTreeConstructor.setComments(submissionWithComments),
+              submissionWithComments -> commentTreeConstructor.setComments(submissionWithComments),
               handleSubmissionLoadError()
           )
       );
 
     } else {
-      commentsTreeConstructor.setComments(submission);
+      commentTreeConstructor.setComments(submission);
     }
   }
 

@@ -42,7 +42,8 @@ import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentRow, RecyclerView.ViewHolder> {
 
   private static final int VIEW_TYPE_USER_COMMENT = 100;
-  private static final int VIEW_TYPE_LOAD_MORE = 101;
+  private static final int VIEW_TYPE_LOAD_MORE =101;
+  private static final int VIEW_TYPE_REPLY = 102;
 
   private final BetterLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
@@ -114,18 +115,37 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   @Override
   public int getItemViewType(int position) {
     SubmissionCommentRow commentItem = getItem(position);
-    return commentItem.type() == SubmissionCommentRow.Type.USER_COMMENT ? VIEW_TYPE_USER_COMMENT : VIEW_TYPE_LOAD_MORE;
+    switch (commentItem.type()) {
+      case USER_COMMENT:
+        return VIEW_TYPE_USER_COMMENT;
+
+      case LOAD_MORE_COMMENTS:
+        return VIEW_TYPE_LOAD_MORE;
+
+      case REPLY:
+        return VIEW_TYPE_REPLY;
+
+      default:
+        throw new UnsupportedOperationException();
+    }
   }
 
   @Override
   protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-    if (viewType == VIEW_TYPE_USER_COMMENT) {
-      UserCommentViewHolder holder = UserCommentViewHolder.create(inflater, parent, linkMovementMethod);
-      holder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
-      return holder;
+    switch (viewType) {
+      case VIEW_TYPE_USER_COMMENT:
+        UserCommentViewHolder holder = UserCommentViewHolder.create(inflater, parent, linkMovementMethod);
+        holder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
+        return holder;
 
-    } else {
-      return LoadMoreCommentViewHolder.create(inflater, parent);
+      case VIEW_TYPE_REPLY:
+        return ReplyViewHolder.create(inflater, parent);
+
+      case VIEW_TYPE_LOAD_MORE:
+        return LoadMoreCommentViewHolder.create(inflater, parent);
+
+      default:
+        throw new UnsupportedOperationException();
     }
   }
 
@@ -133,39 +153,50 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
     SubmissionCommentRow commentItem = getItem(position);
 
-    if (commentItem.type() == SubmissionCommentRow.Type.USER_COMMENT) {
-      DankCommentNode dankCommentNode = (DankCommentNode) commentItem;
-      CommentNode commentNode = dankCommentNode.commentNode();
-      Comment comment = commentNode.getComment();
+    switch (commentItem.type()) {
+      case USER_COMMENT:
+        DankCommentNode dankCommentNode = (DankCommentNode) commentItem;
+        CommentNode commentNode = dankCommentNode.commentNode();
+        Comment comment = commentNode.getComment();
 
-      VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.getVote());
-      int commentScore = votingManager.getScoreAfterAdjustingPendingVote(comment);
-      boolean isAuthorOP = commentNode.getComment().getAuthor().equalsIgnoreCase(submissionAuthor);
+        VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.getVote());
+        int commentScore = votingManager.getScoreAfterAdjustingPendingVote(comment);
+        boolean isAuthorOP = commentNode.getComment().getAuthor().equalsIgnoreCase(submissionAuthor);
 
-      UserCommentViewHolder commentViewHolder = (UserCommentViewHolder) holder;
-      commentViewHolder.bind(dankCommentNode, pendingOrDefaultVoteDirection, commentScore, isAuthorOP);
-      commentViewHolder.itemView.setOnClickListener(v -> {
-        commentClickStream.accept(CommentClickEvent.create(commentNode, commentViewHolder.itemView, !dankCommentNode.isCollapsed()));
-      });
+        UserCommentViewHolder commentViewHolder = (UserCommentViewHolder) holder;
+        commentViewHolder.bind(dankCommentNode, pendingOrDefaultVoteDirection, commentScore, isAuthorOP);
+        commentViewHolder.itemView.setOnClickListener(v -> {
+          commentClickStream.accept(CommentClickEvent.create(commentNode, commentViewHolder.itemView, !dankCommentNode.isCollapsed()));
+        });
 
-      SwipeableLayout swipeableLayout = commentViewHolder.getSwipeableLayout();
-      swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions());
-      swipeableLayout.setOnPerformSwipeActionListener(action -> {
-        swipeActionsProvider.performSwipeAction(action, commentNode, swipeableLayout);
+        SwipeableLayout swipeableLayout = commentViewHolder.getSwipeableLayout();
+        swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions());
+        swipeableLayout.setOnPerformSwipeActionListener(action -> {
+          swipeActionsProvider.performSwipeAction(action, commentNode, swipeableLayout);
 
-        // We should ideally only be updating the backing data-set and let onBind() handle the
-        // changes, but RecyclerView's item animator reset's the View's x-translation which we
-        // don't want. So we manually update the Views here.
-        onBindViewHolder(holder, holder.getAdapterPosition() - 1 /* -1 for parent adapter's offset for header item. */);
-      });
+          // We should ideally only be updating the backing data-set and let onBind() handle the
+          // changes, but RecyclerView's item animator reset's the View's x-translation which we
+          // don't want. So we manually update the Views here.
+          onBindViewHolder(holder, holder.getAdapterPosition() - 1 /* -1 for parent adapter's offset for header item. */);
+        });
+        break;
 
-    } else {
-      LoadMoreCommentItem loadMoreItem = ((LoadMoreCommentItem) commentItem);
-      ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
+      case REPLY:
+        CommentReplyItem commentReplyItem = (CommentReplyItem) commentItem;
+        ((ReplyViewHolder) holder).bind(commentReplyItem);
+        break;
 
-      holder.itemView.setOnClickListener(__ -> {
-        loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreItem.parentCommentNode(), holder.itemView));
-      });
+      case LOAD_MORE_COMMENTS:
+        LoadMoreCommentItem loadMoreItem = ((LoadMoreCommentItem) commentItem);
+        ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
+
+        holder.itemView.setOnClickListener(__ -> {
+          loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreItem.parentCommentNode(), holder.itemView));
+        });
+        break;
+
+      default:
+        throw new UnsupportedOperationException();
     }
   }
 
@@ -267,6 +298,24 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
   }
 
+  public static class ReplyViewHolder extends RecyclerView.ViewHolder {
+    @BindView(R.id.item_comment_reply_indented_container) IndentedLayout indentedLayout;
+
+    public static RecyclerView.ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
+      return new ReplyViewHolder(inflater.inflate(R.layout.list_item_comment_reply, parent, false));
+    }
+
+    public ReplyViewHolder(View itemView) {
+      super(itemView);
+      ButterKnife.bind(this, itemView);
+    }
+
+    public void bind(CommentReplyItem commentReplyItem) {
+      CommentNode commentNodeToReply = commentReplyItem.commentNodeToReply();
+      indentedLayout.setIndentationDepth(commentNodeToReply.getDepth());
+    }
+  }
+
   public static class LoadMoreCommentViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.item_loadmorecomments_load_more) TextView loadMoreView;
     @BindView(R.id.item_loadmorecomments_indented_container) IndentedLayout indentedContainer;
@@ -283,7 +332,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     public void bind(LoadMoreCommentItem loadMoreCommentsItem) {
       CommentNode parentCommentNode = loadMoreCommentsItem.parentCommentNode();
 
-      // Add a +1 depth to align it with sibling comments.
       indentedContainer.setIndentationDepth(parentCommentNode.getDepth());
 
       if (loadMoreCommentsItem.progressVisible()) {

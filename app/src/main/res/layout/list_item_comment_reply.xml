@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.IndentedLayout android:id="@+id/item_comment_reply_indented_container"
+  style="@style/DankSubmissionCommentItem"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  tools:layout_marginTop="25dp">
+
+  <EditText
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/gray_850"
+    android:hint="@string/submission_comment_reply_hint"
+    android:paddingBottom="@dimen/spacing16"
+    android:paddingTop="@dimen/spacing16"
+    android:paddingEnd="@dimen/spacing8"
+    android:paddingStart="@dimen/spacing8"
+    android:textSize="@dimen/textsize14" />
+</me.saket.dank.widgets.IndentedLayout>

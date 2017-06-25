@@ -7,6 +7,7 @@ public interface SubmissionCommentRow {
 
   enum Type {
     USER_COMMENT,
+    REPLY,
     LOAD_MORE_COMMENTS,
   }
 

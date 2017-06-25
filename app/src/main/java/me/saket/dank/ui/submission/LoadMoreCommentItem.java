@@ -5,7 +5,7 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.CommentNode;
 
 /**
- * An item in a submission comments that can load more comments for its parent.
+ * An item in comment list that can load more comments for its parent.
  */
 @AutoValue
 public abstract class LoadMoreCommentItem implements SubmissionCommentRow {
@@ -29,7 +29,7 @@ public abstract class LoadMoreCommentItem implements SubmissionCommentRow {
   }
 
   public static LoadMoreCommentItem create(CommentNode parentNode, boolean progressVisible) {
-    int id = (parentNode.getComment().getId() + "_loadMore").hashCode();
+    long id = (parentNode.getComment().getId() + "_loadMore").hashCode();
     return new AutoValue_LoadMoreCommentItem(parentNode, progressVisible, id);
   }
 }

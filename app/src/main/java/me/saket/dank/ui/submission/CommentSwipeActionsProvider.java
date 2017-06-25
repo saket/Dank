@@ -1,6 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import android.content.Context;
 import android.support.annotation.Nullable;
 
 import net.dean.jraw.models.Comment;
@@ -12,7 +11,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequiredListener;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.user.UserSession;
-import me.saket.dank.ui.user.messages.ComposeReplyActivity;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
@@ -32,16 +30,17 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
   private static final String ACTION_NAME_UPVOTE = "CommentUpvote";
   private static final String ACTION_NAME_DOWNVOTE = "CommentDownvote";
 
-  private final Context context;
   private final VotingManager votingManager;
   private final UserSession userSession;
-  private OnLoginRequiredListener onLoginRequiredListener;
+  private final OnLoginRequiredListener onLoginRequiredListener;
   private final SwipeActions commentSwipeActions;
+  private OnReplySwipeActionListener onReplySwipeActionListener;
 
-  public CommentSwipeActionsProvider(Context context, VotingManager votingManager, UserSession userSession,
-      OnLoginRequiredListener onLoginRequiredListener)
-  {
-    this.context = context;
+  public interface OnReplySwipeActionListener {
+    void onReplySwipeAction(CommentNode commentNodeToReply);
+  }
+
+  public CommentSwipeActionsProvider(VotingManager votingManager, UserSession userSession, OnLoginRequiredListener onLoginRequiredListener) {
     this.votingManager = votingManager;
     this.userSession = userSession;
     this.onLoginRequiredListener = onLoginRequiredListener;
@@ -56,6 +55,10 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
             .add(SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 1f))
             .build())
         .build();
+  }
+
+  public void setOnReplySwipeActionListener(OnReplySwipeActionListener listener) {
+    onReplySwipeActionListener = listener;
   }
 
   public SwipeActions getSwipeActions() {
@@ -121,11 +124,7 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
         break;
 
       case ACTION_NAME_REPLY:
-        Timber.i("TODO: %s", swipeAction.name());
-        swipeableLayout.postDelayed(
-            () -> ComposeReplyActivity.start(context, comment.getAuthor()),
-            SwipeableLayout.ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION * 9 / 10
-        );
+        onReplySwipeActionListener.onReplySwipeAction(commentNode);
         isUndoAction = false;
         break;
 
