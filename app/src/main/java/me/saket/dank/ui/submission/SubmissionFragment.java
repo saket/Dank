@@ -411,8 +411,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Reset everything.
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
-    commentsHelper.reset();
     commentList.scrollTo(0, 0);
+    commentsHelper.reset();
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);
 
     // Update submission information. Everything that

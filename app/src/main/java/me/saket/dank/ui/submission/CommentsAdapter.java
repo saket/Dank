@@ -156,7 +156,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         // We should ideally only be updating the backing data-set and let onBind() handle the
         // changes, but RecyclerView's item animator reset's the View's x-translation which we
         // don't want. So we manually update the Views here.
-        onBindViewHolder(holder, position);
+        onBindViewHolder(holder, holder.getAdapterPosition() - 1 /* -1 for parent adapter's offset for header item. */);
       });
 
     } else {

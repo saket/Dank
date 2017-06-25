@@ -11,6 +11,7 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -19,6 +20,7 @@ import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.utils.Commons;
+import timber.log.Timber;
 
 /**
  * Helps in flattening a comments tree with collapsed child comments ignored.
@@ -42,6 +44,7 @@ public class CommentsHelper {
   }
 
   public void reset() {
+    changesRequiredStream.accept(Notification.INSTANCE);
     rootCommentNode = null;
     collapsedCommentNodeIds.clear();
   }
@@ -51,6 +54,17 @@ public class CommentsHelper {
     return changesRequiredStream
         .observeOn(Schedulers.io())
         .map(o -> constructComments())
+        .doOnNext(submissionCommentRows -> {
+          for (SubmissionCommentRow submissionCommentRow : submissionCommentRows) {
+            if (SubmissionCommentRow.Type.USER_COMMENT.equals(submissionCommentRow.type())) {
+              CommentNode commentNode = ((DankCommentNode) submissionCommentRow).commentNode();
+              if (commentNode.getParent() == commentNode || commentNode.getParent().equals(commentNode)) {
+                Timber.w("CommentNode: %s", commentNode);
+                throw new IllegalStateException("Infinite loop detected.");
+              }
+            }
+          }
+        })
         .map(Commons.toImmutable());
   }
 
@@ -86,6 +100,10 @@ public class CommentsHelper {
    * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
    */
   private List<SubmissionCommentRow> constructComments() {
+    if (rootCommentNode == null) {
+      return Collections.emptyList();
+    }
+    //Timber.d("-----------------------------------------------");
     return constructComments(new ArrayList<>(rootCommentNode.getTotalSize()), rootCommentNode);
   }
 
@@ -93,16 +111,16 @@ public class CommentsHelper {
    * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
    */
   private List<SubmissionCommentRow> constructComments(List<SubmissionCommentRow> flattenComments, CommentNode nextNode) {
-//    String indentation = "";
-//    if (nextNode.getDepth() != 0) {
-//      for (int step = 0; step < nextNode.getDepth(); step++) {
-//        indentation += "  ";
-//      }
-//    }
+    //String indentation = "";
+    //if (nextNode.getDepth() != 0) {
+    //  for (int step = 0; step < nextNode.getDepth(); step++) {
+    //    indentation += "  ";
+    //  }
+    //}
 
     boolean isCommentNodeCollapsed = isCollapsed(nextNode);
     if (nextNode.getDepth() != 0) {
-//            Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
+      //Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
       flattenComments.add(DankCommentNode.create(nextNode, isCommentNodeCollapsed));
     }
 
@@ -118,15 +136,14 @@ public class CommentsHelper {
         }
 
         if (nextNode.hasMoreComments()) {
-//                    Timber.d("%s(%s) %s has %d MORE ---------->",
-//                            indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getMoreChildren().getCount()
-//                    );
-//                    Timber.d("%s %s", indentation, nextNode.getMoreChildren().getChildrenIds());
+          //Timber.d("%s(%s) %s has %d MORE ---------->",
+          //    indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getMoreChildren().getCount()
+          //);
+          //Timber.d("%s %s", indentation, nextNode.getMoreChildren().getChildrenIds());
           flattenComments.add(LoadMoreCommentItem.create(nextNode, areMoreCommentsLoadingFor(nextNode)));
         }
       }
       return flattenComments;
     }
   }
-
 }
