@@ -25,14 +25,14 @@ import timber.log.Timber;
 /**
  * Helps in flattening a comments tree with collapsed child comments ignored.
  */
-public class CommentsHelper {
+public class CommentsTreeConstructor {
 
   private Set<String> collapsedCommentNodeIds = new HashSet<>();    // Comments that are collapsed.
   private Set<String> loadingMoreCommentNodeIds = new HashSet<>();  // Comments for which more replies are being fetched.
   private CommentNode rootCommentNode;
   private Relay<Object> changesRequiredStream = PublishRelay.create();
 
-  public CommentsHelper() {
+  public CommentsTreeConstructor() {
   }
 
   /**

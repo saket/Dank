@@ -112,7 +112,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private CommentsAdapter commentsAdapter;
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
-  private CommentsHelper commentsHelper;
+  private CommentsTreeConstructor commentsTreeConstructor;
   private Submission activeSubmission;
   private DankSubmissionRequest activeSubmissionRequest;
   private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
@@ -239,19 +239,19 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   /**
-   * {@link CommentsHelper} helps in collapsing comments and helping {@link CommentsAdapter} in indicating
+   * {@link CommentsTreeConstructor} helps in collapsing comments and helping {@link CommentsAdapter} in indicating
    * progress when more comments are being fetched for a CommentNode.
    * <p>
    * The direction of modifications/updates to comments is unidirectional. All mods are made on
-   * {@link CommentsHelper} and {@link CommentsAdapter} subscribes to its updates.
+   * {@link CommentsTreeConstructor} and {@link CommentsAdapter} subscribes to its updates.
    */
   private void setupCommentsHelper() {
-    commentsHelper = new CommentsHelper();
+    commentsTreeConstructor = new CommentsTreeConstructor();
 
     Pair<List<SubmissionCommentRow>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
 
     unsubscribeOnDestroy(
-        commentsHelper.streamUpdates()
+        commentsTreeConstructor.streamUpdates()
             .toFlowable(BackpressureStrategy.LATEST)
             .scan(initialPair, (pair, next) -> {
               CommentsDiffCallback callback = new CommentsDiffCallback(pair.first, next);
@@ -271,7 +271,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Comment clicks.
     unsubscribeOnDestroy(
-        commentsAdapter.streamCommentClicks().subscribe(clickEvent -> commentsHelper.toggleCollapse(clickEvent.commentNode()))
+        commentsAdapter.streamCommentClicks().subscribe(clickEvent -> commentsTreeConstructor.toggleCollapse(clickEvent.commentNode()))
     );
 
     // Load-more-comment clicks.
@@ -293,9 +293,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               } else {
                 return Observable.just(loadMoreClickEvent.parentCommentNode())
                     .observeOn(io())
-                    .doOnNext(commentsHelper.setMoreCommentsLoading(true))
+                    .doOnNext(commentsTreeConstructor.setMoreCommentsLoading(true))
                     .map(Dank.reddit().loadMoreComments())
-                    .doOnNext(commentsHelper.setMoreCommentsLoading(false));
+                    .doOnNext(commentsTreeConstructor.setMoreCommentsLoading(false));
               }
             })
             .subscribe(doNothing(), error -> {
@@ -412,7 +412,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
     commentList.scrollTo(0, 0);
-    commentsHelper.reset();
+    commentsTreeConstructor.reset();
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);
 
     // Update submission information. Everything that
@@ -431,13 +431,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           .compose(doOnSingleStartAndTerminate(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
           .doOnSuccess(submissionWithComments -> activeSubmission = submissionWithComments)
           .subscribe(
-              submissionWithComments -> commentsHelper.setComments(submissionWithComments),
+              submissionWithComments -> commentsTreeConstructor.setComments(submissionWithComments),
               handleSubmissionLoadError()
           )
       );
 
     } else {
-      commentsHelper.setComments(submission);
+      commentsTreeConstructor.setComments(submission);
     }
   }
 
