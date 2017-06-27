@@ -29,6 +29,7 @@ import io.reactivex.Observable;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
@@ -49,6 +50,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   private final BetterLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
+  private final UserSession userSession;
   private final CommentSwipeActionsProvider swipeActionsProvider;
   private final BehaviorRelay<CommentClickEvent> commentClickStream = BehaviorRelay.create();
   private final BehaviorRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = BehaviorRelay.create();
@@ -96,11 +98,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
   }
 
-  public CommentsAdapter(BetterLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager,
+  public CommentsAdapter(BetterLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSession userSession,
       CommentSwipeActionsProvider swipeActionsProvider)
   {
     this.linkMovementMethod = commentsLinkMovementMethod;
     this.votingManager = votingManager;
+    this.userSession = userSession;
     this.swipeActionsProvider = swipeActionsProvider;
     setHasStableIds(true);
   }
@@ -198,7 +201,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       case REPLY:
         CommentReplyItem commentReplyItem = (CommentReplyItem) commentItem;
-        ((ReplyViewHolder) holder).bind(commentReplyItem, replyActionsListener);
+        ((ReplyViewHolder) holder).bind(commentReplyItem, replyActionsListener, userSession);
         break;
 
       case LOAD_MORE_COMMENTS:
@@ -316,6 +319,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   public static class ReplyViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.item_comment_reply_indented_container) IndentedLayout indentedLayout;
     @BindView(R.id.item_comment_reply_discard) ImageButton discardButton;
+    @BindView(R.id.item_comment_reply_author_hint) TextView authorUsernameHintView;
     @BindView(R.id.item_comment_reply_go_fullscreen) ImageButton goFullscreenButton;
     @BindView(R.id.item_comment_reply_send) ImageButton sendButton;
     @BindView(R.id.item_comment_reply_message) EditText replyMessageField;
@@ -329,9 +333,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       ButterKnife.bind(this, itemView);
     }
 
-    public void bind(CommentReplyItem commentReplyItem, ReplyActionsListener replyActionsListener) {
+    public void bind(CommentReplyItem commentReplyItem, ReplyActionsListener replyActionsListener, UserSession userSession) {
       CommentNode commentNodeToReply = commentReplyItem.commentNodeToReply();
       indentedLayout.setIndentationDepth(commentNodeToReply.getDepth());
+
+      authorUsernameHintView.setText(authorUsernameHintView.getResources().getString(
+          R.string.submission_comment_reply_author_hint,
+          userSession.loggedInUserName()
+      ));
 
       discardButton.setOnClickListener(o -> replyActionsListener.onClickDiscardReply(commentNodeToReply));
       goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(commentNodeToReply));
@@ -344,7 +353,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_loadmorecomments_indented_container) IndentedLayout indentedContainer;
 
     public static LoadMoreCommentViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-      return new LoadMoreCommentViewHolder(inflater.inflate(R.layout.list_item_load_more_comments, parent, false));
+      return new LoadMoreCommentViewHolder(inflater.inflate(R.layout.list_item_comment_load_more, parent, false));
     }
 
     public LoadMoreCommentViewHolder(View itemView) {

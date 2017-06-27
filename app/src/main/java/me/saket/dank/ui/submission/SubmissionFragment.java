@@ -240,7 +240,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentList.setItemAnimator(itemAnimator);
 
     // Add submission Views as a header so that it scrolls with the list.
-    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), commentSwipeActionsProvider);
+    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), Dank.userSession(), commentSwipeActionsProvider);
     adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView, Dank.voting(), submissionSwipeActionsProvider);
     commentList.setAdapter(adapterWithSubmissionHeader);
 

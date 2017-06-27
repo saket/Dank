@@ -123,6 +123,7 @@
   <string name="cd_submission_comment_reply_send">Send reply</string>
   <string name="cd_submission_comment_reply_go_fullscreen">Compose reply in fullscreen mode</string>
   <string name="cd_submission_comment_reply_discard">Discard reply</string>
+  <string name="submission_comment_reply_author_hint">Replying as %s</string> <!-- Replying as {username} -->
 
   <plurals name="submission_comment_hidden_comments">
     <item quantity="one">1 hidden</item>
