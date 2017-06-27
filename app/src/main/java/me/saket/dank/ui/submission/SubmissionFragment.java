@@ -234,7 +234,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
 
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
-    SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator().withInterpolator(Animations.INTERPOLATOR);
+    int commentItemViewElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
+    SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator(commentItemViewElevation).withInterpolator(Animations.INTERPOLATOR);
     itemAnimator.setRemoveDuration(250);
     itemAnimator.setAddDuration(250);
     commentList.setItemAnimator(itemAnimator);

@@ -35,6 +35,7 @@
   <dimen name="submission_link_title_container_vert_padding_link">@dimen/spacing16</dimen>
   <dimen name="submission_link_title_container_vert_padding_album">32dp</dimen>
   <dimen name="submission_comment_body_expanded">@dimen/textsize14</dimen>
+  <dimen name="submission_comment_elevation">1dp</dimen>
 
   <dimen name="one_line_progress_indicator_size">24dp</dimen>
 

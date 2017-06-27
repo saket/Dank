@@ -13,6 +13,12 @@ import android.view.View;
  */
 public class SlideDownAlphaAnimator extends DefaultAnimator<SlideDownAlphaAnimator> {
 
+  private int itemViewElevation;
+
+  public SlideDownAlphaAnimator(int itemViewElevation) {
+    this.itemViewElevation = itemViewElevation;
+  }
+
   @Override
   public void addAnimationPrepare(RecyclerView.ViewHolder holder) {
     ViewCompat.setTranslationY(holder.itemView, getAnimationTranslationY(holder.itemView));
@@ -46,7 +52,7 @@ public class SlideDownAlphaAnimator extends DefaultAnimator<SlideDownAlphaAnimat
   public void addAnimationCleanup(RecyclerView.ViewHolder holder) {
     ViewCompat.setTranslationY(holder.itemView, 0);
     ViewCompat.setAlpha(holder.itemView, 1);
-    holder.itemView.setElevation(dpToPx(1, holder.itemView.getContext()));
+    holder.itemView.setElevation(itemViewElevation);
   }
 
   @Override
@@ -78,6 +84,6 @@ public class SlideDownAlphaAnimator extends DefaultAnimator<SlideDownAlphaAnimat
   public void removeAnimationCleanup(RecyclerView.ViewHolder holder) {
     ViewCompat.setTranslationY(holder.itemView, 0);
     ViewCompat.setAlpha(holder.itemView, 1);
-    holder.itemView.setElevation(dpToPx(1, holder.itemView.getContext()));
+    holder.itemView.setElevation(itemViewElevation);
   }
 }

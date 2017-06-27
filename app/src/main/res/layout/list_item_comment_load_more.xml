@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.IndentedLayout android:id="@+id/item_loadmorecomments_indented_container"
+  style="@style/DankSubmissionCommentItem"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="@color/window_background"
+  android:elevation="@dimen/submission_comment_elevation"
+  android:outlineProvider="none"
+  tools:layout_marginTop="25dp">
+
+  <me.saket.dank.widgets.TintableCompoundDrawableButton
+    android:id="@+id/item_loadmorecomments_load_more"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="@dimen/spacing8"
+    android:layout_marginStart="@dimen/spacing8"
+    android:backgroundTint="@color/gray_900"
+    android:clickable="false"
+    android:drawableEnd="@drawable/ic_arrow_forward_12dp"
+    android:drawablePadding="@dimen/spacing4"
+    android:duplicateParentState="true"
+    android:minHeight="0dp"
+    android:minWidth="0dp"
+    android:paddingBottom="@dimen/spacing12"
+    android:paddingTop="@dimen/spacing12"
+    android:text="@string/submission_load_more_comments"
+    android:textColor="@color/gray_500"
+    android:textSize="@dimen/textsize12" />
+</me.saket.dank.widgets.IndentedLayout>

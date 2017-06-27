@@ -282,7 +282,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         bylineBuilder.append(comment.getAuthor());
         bylineBuilder.popSpan();
         Flair authorFlair = comment.getAuthorFlair();
-        if (authorFlair != null) {
+        if (authorFlair != null && authorFlair.getText() != null) {
           bylineBuilder.append(bylineItemSeparator);
           bylineBuilder.append(authorFlair.getText());
         }
