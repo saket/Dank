@@ -1,5 +1,5 @@
 package me.saket.dank.data;
 
-public interface OnLoginRequiredListener {
+public interface OnLoginRequireListener {
   void onLoginRequired();
 }

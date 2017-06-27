@@ -121,8 +121,6 @@ public class UrlMetadataParser {
       }
     }
 
-    Timber.i("linkTitle: %s", linkTitle);
-
     return LinkMetadata.create(url, linkTitle, faviconUrl, linkImage);
   }
 

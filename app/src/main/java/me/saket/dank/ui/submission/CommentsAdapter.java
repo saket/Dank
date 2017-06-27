@@ -9,6 +9,8 @@ import android.text.style.ForegroundColorSpan;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.EditText;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
@@ -42,7 +44,7 @@ import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentRow, RecyclerView.ViewHolder> {
 
   private static final int VIEW_TYPE_USER_COMMENT = 100;
-  private static final int VIEW_TYPE_LOAD_MORE =101;
+  private static final int VIEW_TYPE_LOAD_MORE = 101;
   private static final int VIEW_TYPE_REPLY = 102;
 
   private final BetterLinkMovementMethod linkMovementMethod;
@@ -51,6 +53,15 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private final BehaviorRelay<CommentClickEvent> commentClickStream = BehaviorRelay.create();
   private final BehaviorRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = BehaviorRelay.create();
   private String submissionAuthor;
+  private ReplyActionsListener replyActionsListener;
+
+  public interface ReplyActionsListener {
+    void onClickDiscardReply(CommentNode nodeBeingRepliedTo);
+
+    void onClickEditReplyInFullscreenMode(CommentNode nodeBeingRepliedTo);
+
+    void onClickSendReply(CommentNode nodeBeingRepliedTo, String replyMessage);
+  }
 
   @AutoValue
   abstract static class CommentClickEvent {
@@ -110,6 +121,10 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
    */
   public void updateSubmissionAuthor(String submissionAuthor) {
     this.submissionAuthor = submissionAuthor;
+  }
+
+  public void setReplyActionsListener(ReplyActionsListener listener) {
+    replyActionsListener = listener;
   }
 
   @Override
@@ -183,7 +198,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       case REPLY:
         CommentReplyItem commentReplyItem = (CommentReplyItem) commentItem;
-        ((ReplyViewHolder) holder).bind(commentReplyItem);
+        ((ReplyViewHolder) holder).bind(commentReplyItem, replyActionsListener);
         break;
 
       case LOAD_MORE_COMMENTS:
@@ -209,6 +224,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_comment_indented_container) IndentedLayout indentedContainer;
     @BindView(R.id.item_comment_byline) TextView bylineView;
     @BindView(R.id.item_comment_body) TextView commentBodyView;
+    @BindView(R.id.item_comment_separator) View separatorView;
 
     @BindColor(R.color.submission_comment_byline_author) int bylineAuthorNameColor;
     @BindColor(R.color.submission_comment_byline_author_op) int bylineAuthorNameColorForOP;
@@ -237,7 +253,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         if (isCollapsed) {
           return false;
         }
-
         boolean handledByMovementMethod = linkMovementMethod.onTouchEvent(commentBodyView, (Spannable) commentBodyView.getText(), event);
         return handledByMovementMethod || itemView.onTouchEvent(event);
       });
@@ -246,7 +261,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     public void bind(DankCommentNode dankCommentNode, VoteDirection voteDirection, int commentScore, boolean isAuthorOP) {
       indentedContainer.setIndentationDepth(dankCommentNode.commentNode().getDepth() - 1);
       Comment comment = dankCommentNode.commentNode().getComment();
-      isCollapsed = dankCommentNode.isCollapsed();
+      isCollapsed = dankCommentNode.isCollapsed();  // Storing as an instance field so that it can be used in UserCommentViewHolder().
 
       // Byline: author, flair, score and timestamp.
       Truss bylineBuilder = new Truss();
@@ -300,6 +315,10 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   public static class ReplyViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.item_comment_reply_indented_container) IndentedLayout indentedLayout;
+    @BindView(R.id.item_comment_reply_discard) ImageButton discardButton;
+    @BindView(R.id.item_comment_reply_go_fullscreen) ImageButton goFullscreenButton;
+    @BindView(R.id.item_comment_reply_send) ImageButton sendButton;
+    @BindView(R.id.item_comment_reply_message) EditText replyMessageField;
 
     public static RecyclerView.ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new ReplyViewHolder(inflater.inflate(R.layout.list_item_comment_reply, parent, false));
@@ -310,9 +329,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       ButterKnife.bind(this, itemView);
     }
 
-    public void bind(CommentReplyItem commentReplyItem) {
+    public void bind(CommentReplyItem commentReplyItem, ReplyActionsListener replyActionsListener) {
       CommentNode commentNodeToReply = commentReplyItem.commentNodeToReply();
       indentedLayout.setIndentationDepth(commentNodeToReply.getDepth());
+
+      discardButton.setOnClickListener(o -> replyActionsListener.onClickDiscardReply(commentNodeToReply));
+      goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(commentNodeToReply));
+      sendButton.setOnClickListener(o -> replyActionsListener.onClickSendReply(commentNodeToReply, replyMessageField.getText().toString()));
     }
   }
 

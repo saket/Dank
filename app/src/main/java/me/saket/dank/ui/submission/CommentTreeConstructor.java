@@ -81,7 +81,7 @@ public class CommentTreeConstructor {
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
-  private boolean isCollapsed(CommentNode commentNode) {
+  public boolean isCollapsed(CommentNode commentNode) {
     return collapsedCommentNodeIds.contains(commentNode.getComment().getId());
   }
 
@@ -106,16 +106,21 @@ public class CommentTreeConstructor {
   /**
    * Show/hide reply field for a comment.
    */
-  public void toggleReply(CommentNode nodeToReply) {
-    if (isReplyActiveFor(nodeToReply)) {
-      replyActiveForCommentNodeIds.remove(nodeToReply.getComment().getId());
-    } else {
-      replyActiveForCommentNodeIds.add(nodeToReply.getComment().getId());
-    }
+  public void hideReply(CommentNode nodeToReply) {
+    replyActiveForCommentNodeIds.remove(nodeToReply.getComment().getId());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
-  private boolean isReplyActiveFor(CommentNode commentNode) {
+  /**
+   * Show/hide reply field for a comment.
+   */
+  public void showReplyAndExpandComments(CommentNode nodeToReply) {
+    replyActiveForCommentNodeIds.add(nodeToReply.getComment().getId());
+    collapsedCommentNodeIds.remove(nodeToReply.getComment().getId());
+    changesRequiredStream.accept(Notification.INSTANCE);
+  }
+
+  public boolean isReplyActiveFor(CommentNode commentNode) {
     return replyActiveForCommentNodeIds.contains(commentNode.getComment().getId());
   }
 
@@ -142,13 +147,14 @@ public class CommentTreeConstructor {
     //}
 
     boolean isCommentNodeCollapsed = isCollapsed(nextNode);
+    boolean isReplyActive = isReplyActiveFor(nextNode);
+
     if (nextNode.getDepth() != 0) {
       //Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
-      // TODO: Add a field to DankCommentNode to indicate whether a reply for it is active. When it's active, we remove the item separator.
       flattenComments.add(DankCommentNode.create(nextNode, isCommentNodeCollapsed));
     }
 
-    if (isReplyActiveFor(nextNode) && !isCommentNodeCollapsed) {
+    if (isReplyActive && !isCommentNodeCollapsed) {
       flattenComments.add(CommentReplyItem.create(nextNode));
     }
 

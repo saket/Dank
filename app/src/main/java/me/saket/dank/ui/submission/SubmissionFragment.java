@@ -37,6 +37,7 @@ import com.alexvasilkov.gestures.State;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
 
+import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
 import java.util.Collections;
@@ -57,7 +58,7 @@ import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
-import me.saket.dank.data.OnLoginRequiredListener;
+import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.di.Dank;
@@ -211,19 +212,25 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private void setupCommentList(DankLinkMovementMethod linkMovementMethod) {
     // Swipe gestures.
-    OnLoginRequiredListener onLoginRequiredListener = () -> LoginActivity.start(getActivity());
+    OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.start(getActivity());
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(
         Dank.submissions(),
         Dank.voting(),
         Dank.userSession(),
-        onLoginRequiredListener
+        onLoginRequireListener
     );
     CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(
         Dank.voting(),
         Dank.userSession(),
-        onLoginRequiredListener
+        onLoginRequireListener
     );
-    commentSwipeActionsProvider.setOnReplySwipeActionListener(commentNodeToReply -> commentTreeConstructor.toggleReply(commentNodeToReply));
+    commentSwipeActionsProvider.setOnReplySwipeActionListener(commentNodeToReply -> {
+      if (commentTreeConstructor.isCollapsed(commentNodeToReply) || !commentTreeConstructor.isReplyActiveFor(commentNodeToReply)) {
+        commentTreeConstructor.showReplyAndExpandComments(commentNodeToReply);
+      } else {
+        commentTreeConstructor.hideReply(commentNodeToReply);
+      }
+    });
     commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
 
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -236,6 +243,23 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), commentSwipeActionsProvider);
     adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView, Dank.voting(), submissionSwipeActionsProvider);
     commentList.setAdapter(adapterWithSubmissionHeader);
+
+    commentsAdapter.setReplyActionsListener(new CommentsAdapter.ReplyActionsListener() {
+      @Override
+      public void onClickDiscardReply(CommentNode nodeBeingRepliedTo) {
+        commentTreeConstructor.hideReply(nodeBeingRepliedTo);
+      }
+
+      @Override
+      public void onClickEditReplyInFullscreenMode(CommentNode nodeBeingRepliedTo) {
+        // TODO.
+      }
+
+      @Override
+      public void onClickSendReply(CommentNode nodeBeingRepliedTo, String replyMessage) {
+        // TODO.
+      }
+    });
   }
 
   /**

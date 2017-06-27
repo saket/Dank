@@ -52,7 +52,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.DankApplication;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.OnLoginRequiredListener;
+import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
@@ -332,12 +332,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     submissionList.setExpandablePage(submissionPage, toolbarContainer);
 
     // Swipe gestures.
-    OnLoginRequiredListener onLoginRequiredListener = () -> LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
+    OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
     SubmissionSwipeActionsProvider swipeActionsProvider = new SubmissionSwipeActionsProvider(
         Dank.submissions(),
         Dank.voting(),
         Dank.userSession(),
-        onLoginRequiredListener
+        onLoginRequireListener
     );
     submissionList.addOnItemTouchListener(new RecyclerSwipeListener(submissionList));
 

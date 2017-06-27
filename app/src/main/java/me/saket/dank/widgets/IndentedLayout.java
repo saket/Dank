@@ -71,7 +71,7 @@ public class IndentedLayout extends LinearLayout {
   public void setIndentationDepth(@IntRange(from = 0, to = 1) int depth) {
     indentationDepth = depth;
 
-    int indentationSpacing = indentationDepth * spacePerDepthPx;
+    int indentationSpacing = (int) (indentationDepth * spacePerDepthPx + indentationLinePaint.getStrokeWidth());
     setPaddingRelative(originalPaddingStart + indentationSpacing, getPaddingTop(), getPaddingEnd(), getPaddingBottom());
 
     invalidate();

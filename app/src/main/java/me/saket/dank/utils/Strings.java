@@ -60,4 +60,8 @@ public class Strings {
       return MILLIONS_FORMATTER.format(score / 1_000_000f);
     }
   }
+
+  public static String safeSubstring(String string, int endIndex) {
+    return string.substring(0, Math.min(string.length(), endIndex));
+  }
 }

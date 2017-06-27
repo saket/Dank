@@ -8,7 +8,7 @@ import net.dean.jraw.models.VoteDirection;
 
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
-import me.saket.dank.data.OnLoginRequiredListener;
+import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.Animations;
@@ -32,7 +32,7 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
 
   private final VotingManager votingManager;
   private final UserSession userSession;
-  private final OnLoginRequiredListener onLoginRequiredListener;
+  private final OnLoginRequireListener onLoginRequireListener;
   private final SwipeActions commentSwipeActions;
   private OnReplySwipeActionListener onReplySwipeActionListener;
 
@@ -40,10 +40,10 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
     void onReplySwipeAction(CommentNode commentNodeToReply);
   }
 
-  public CommentSwipeActionsProvider(VotingManager votingManager, UserSession userSession, OnLoginRequiredListener onLoginRequiredListener) {
+  public CommentSwipeActionsProvider(VotingManager votingManager, UserSession userSession, OnLoginRequireListener onLoginRequireListener) {
     this.votingManager = votingManager;
     this.userSession = userSession;
-    this.onLoginRequiredListener = onLoginRequiredListener;
+    this.onLoginRequireListener = onLoginRequireListener;
 
     commentSwipeActions = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
@@ -110,7 +110,7 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
 
   public void performSwipeAction(SwipeAction swipeAction, CommentNode commentNode, SwipeableLayout swipeableLayout) {
     if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSession.isUserLoggedIn()) {
-      onLoginRequiredListener.onLoginRequired();
+      onLoginRequireListener.onLoginRequired();
       return;
     }
 

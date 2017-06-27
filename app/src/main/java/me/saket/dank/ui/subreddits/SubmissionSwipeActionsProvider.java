@@ -7,7 +7,7 @@ import net.dean.jraw.models.VoteDirection;
 
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
-import me.saket.dank.data.OnLoginRequiredListener;
+import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.user.UserSession;
@@ -36,15 +36,15 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   private final SubmissionManager submissionManager;
   private VotingManager votingManager;
   private final UserSession userSession;
-  private final OnLoginRequiredListener onLoginRequiredListener;
+  private final OnLoginRequireListener onLoginRequireListener;
 
   public SubmissionSwipeActionsProvider(SubmissionManager submissionManager, VotingManager votingManager, UserSession userSession,
-      OnLoginRequiredListener onLoginRequiredListener)
+      OnLoginRequireListener onLoginRequireListener)
   {
     this.submissionManager = submissionManager;
     this.votingManager = votingManager;
     this.userSession = userSession;
-    this.onLoginRequiredListener = onLoginRequiredListener;
+    this.onLoginRequireListener = onLoginRequireListener;
 
     SwipeAction saveSwipeAction = SwipeAction.create(ACTION_NAME_SAVE, R.color.list_item_swipe_save, 1f);
     SwipeAction unSaveSwipeAction = SwipeAction.create(ACTION_NAME_UNSAVE, R.color.list_item_swipe_save, 1f);
@@ -125,7 +125,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
   public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
     if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSession.isUserLoggedIn()) {
-      onLoginRequiredListener.onLoginRequired();
+      onLoginRequireListener.onLoginRequired();
       return;
     }
 
