@@ -48,6 +48,7 @@ public class CommentTreeConstructor {
     changesRequiredStream.accept(Notification.INSTANCE);
     rootCommentNode = null;
     collapsedCommentNodeIds.clear();
+    replyActiveForCommentNodeIds.clear();
   }
 
   @CheckResult
