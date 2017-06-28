@@ -59,8 +59,8 @@ public class CommentsDiffCallback extends DiffUtil.Callback {
     try {
       return oldCommentRow.equals(newCommentRow);
     } catch (StackOverflowError e) {
-      Timber.e("StackOverflowError while equals. oldCommentRow: %s, newCommentRow: %s", oldCommentRow, newCommentRow);
       e.printStackTrace();
+      Timber.e("StackOverflowError while equals. oldCommentRow: %s, newCommentRow: %s", oldCommentRow, newCommentRow);
       return false;
     }
   }
