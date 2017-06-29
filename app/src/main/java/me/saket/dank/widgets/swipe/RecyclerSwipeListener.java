@@ -37,7 +37,7 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
 
   private GestureDetector createSwipeGestureDetector(RecyclerView recyclerView) {
     return new GestureDetector(recyclerView.getContext(), new GestureDetector.SimpleOnGestureListener() {
-      Rect viewGlobalVisibleRect = new Rect();
+      private Rect viewGlobalVisibleRect = new Rect();
 
       @Override
       public boolean onDown(MotionEvent e) {
@@ -86,6 +86,11 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
 
         if (!isSwiping) {
           return false;
+        }
+
+        // Add inertia if swiping isn't enabled.
+        if (!viewBeingSwiped.isSwipeEnabled()) {
+          distanceX /= 10;
         }
 
         float newTranslationX = viewBeingSwiped.getSwipeTranslation() - distanceX;

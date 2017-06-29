@@ -64,6 +64,7 @@ public class SwipeableLayout extends FrameLayout {
     backgroundDrawable = new BackgroundDrawable(new ColorDrawable(Color.TRANSPARENT), new ColorDrawable(Color.DKGRAY));
     backgroundDrawable.setCallback(this);
 
+    setSwipeEnabled(true);
     setSwipeDistanceThresholdCrossed(false);  // Controls the background color's gray tint.
 
     setWillNotDraw(false);
@@ -85,6 +86,11 @@ public class SwipeableLayout extends FrameLayout {
 
   public void setSwipeEnabled(boolean enabled) {
     swipeEnabled = enabled;
+
+    if (!enabled) {
+      activeSwipeAction = null;
+      setSwipeDistanceThresholdCrossed(false);
+    }
   }
 
   @Override
@@ -135,7 +141,6 @@ public class SwipeableLayout extends FrameLayout {
     }
 
     swipeableChild.setTranslationX(translationX);
-    swipeActionTriggerDrawable.setBounds((int) translationX, 0, (int) (getWidth() + translationX), getHeight());
 
     // We want to draw the background drawable in only the visible portion of the background to avoid a redraw.
     boolean swipingFromEndToStart = translationX < 0f;
@@ -145,38 +150,42 @@ public class SwipeableLayout extends FrameLayout {
       backgroundDrawable.setBounds(0, 0, (int) translationX, getBottom() - getTop());
     }
 
-    if (translationX == 0f) {
-      backgroundDrawable.animateColorTransition(Color.TRANSPARENT);
-      setSwipeDistanceThresholdCrossed(false);
-      activeSwipeAction = null;
+    if (swipeEnabled) {
+      swipeActionTriggerDrawable.setBounds((int) translationX, 0, (int) (getWidth() + translationX), getHeight());
 
-    } else {
-      // Move the icon along with the View being swiped.
-      if (swipingFromEndToStart) {
-        actionIconView.setTranslationX(swipeableChild.getRight() + translationX);
+      if (translationX == 0f) {
+        backgroundDrawable.animateColorTransition(Color.TRANSPARENT);
+        setSwipeDistanceThresholdCrossed(false);
+        activeSwipeAction = null;
+
       } else {
-        actionIconView.setTranslationX(translationX - actionIconView.getWidth());
-      }
-
-      if (!isSettlingBackToPosition()) {
-        SwipeAction swipeAction = swipingFromEndToStart
-            ? swipeActions.endActions().findActionAtSwipeDistance(getWidth(), Math.abs(translationX), SwipeDirection.END_TO_START)
-            : swipeActions.startActions().findActionAtSwipeDistance(getWidth(), Math.abs(translationX), SwipeDirection.START_TO_END);
-
-        if (activeSwipeAction != swipeAction) {
-          SwipeAction oldAction = activeSwipeAction;
-          activeSwipeAction = swipeAction;
-
-          // Request an update to the icon.
-          swipeActionIconProvider.showSwipeActionIcon(actionIconView, oldAction, swipeAction);
-
-          // Animate the background color transition only if the swipe threshold is passed.
-          backgroundDrawable.animateColorTransition(ContextCompat.getColor(getContext(), swipeAction.backgroundColorRes()));
+        // Move the icon along with the View being swiped.
+        if (swipingFromEndToStart) {
+          actionIconView.setTranslationX(swipeableChild.getRight() + translationX);
+        } else {
+          actionIconView.setTranslationX(translationX - actionIconView.getWidth());
         }
 
-        // Tint the background gray until the swipe threshold is crossed.
-        boolean swipeThresholdCrossed = Math.abs(translationX) > actionIconView.getWidth() * 3 / 4;
-        setSwipeDistanceThresholdCrossed(swipeThresholdCrossed);
+        if (!isSettlingBackToPosition()) {
+          SwipeAction swipeAction = swipingFromEndToStart
+              ? swipeActions.endActions().findActionAtSwipeDistance(getWidth(), Math.abs(translationX), SwipeDirection.END_TO_START)
+              : swipeActions.startActions().findActionAtSwipeDistance(getWidth(), Math.abs(translationX), SwipeDirection.START_TO_END);
+
+          if (activeSwipeAction != swipeAction) {
+            SwipeAction oldAction = activeSwipeAction;
+            activeSwipeAction = swipeAction;
+
+            // Request an update to the icon.
+            swipeActionIconProvider.showSwipeActionIcon(actionIconView, oldAction, swipeAction);
+
+            // Animate the background color transition only if the swipe threshold is passed.
+            backgroundDrawable.animateColorTransition(ContextCompat.getColor(getContext(), swipeAction.backgroundColorRes()));
+          }
+
+          // Tint the background gray until the swipe threshold is crossed.
+          boolean swipeThresholdCrossed = Math.abs(translationX) > actionIconView.getWidth() * 3 / 4;
+          setSwipeDistanceThresholdCrossed(swipeThresholdCrossed);
+        }
       }
     }
   }
@@ -209,7 +218,7 @@ public class SwipeableLayout extends FrameLayout {
   }
 
   private void setSwipeDistanceThresholdCrossed(boolean thresholdCrossed) {
-    if (hasCrossedSwipeDistanceThreshold() == thresholdCrossed) {
+    if (swipeDistanceThresholdCrossed == thresholdCrossed) {
       return;
     }
     swipeDistanceThresholdCrossed = thresholdCrossed;
@@ -218,6 +227,10 @@ public class SwipeableLayout extends FrameLayout {
 
   public boolean hasCrossedSwipeDistanceThreshold() {
     return swipeDistanceThresholdCrossed;
+  }
+
+  public boolean isSwipeEnabled() {
+    return swipeEnabled;
   }
 
   private static class BackgroundDrawable extends LayerDrawable {
