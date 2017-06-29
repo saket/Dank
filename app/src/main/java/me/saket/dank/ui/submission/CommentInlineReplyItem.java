@@ -10,7 +10,8 @@ import net.dean.jraw.models.CommentNode;
 @AutoValue
 public abstract class CommentInlineReplyItem implements SubmissionCommentRow {
 
-  public abstract long id();
+  @Override
+  public abstract String fullName();
 
   public abstract CommentNode parentCommentNode();
 
@@ -20,7 +21,7 @@ public abstract class CommentInlineReplyItem implements SubmissionCommentRow {
   }
 
   public static CommentInlineReplyItem create(CommentNode parentCommentNode) {
-    long id = (parentCommentNode.getComment().getId() + "_reply").hashCode();
-    return new AutoValue_CommentInlineReplyItem(id, parentCommentNode);
+    String fullName = parentCommentNode.getComment().getFullName() + "_reply";
+    return new AutoValue_CommentInlineReplyItem(fullName, parentCommentNode);
   }
 }

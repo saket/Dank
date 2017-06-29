@@ -317,7 +317,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Comment clicks.
     unsubscribeOnDestroy(
-        commentsAdapter.streamCommentClicks().subscribe(clickEvent -> commentTreeConstructor.toggleCollapse(clickEvent.commentNode()))
+        commentsAdapter.streamCommentClicks().subscribe(clickEvent -> {
+          commentTreeConstructor.toggleCollapse(clickEvent.commentRow());
+        })
     );
 
     // Load-more-comment clicks.

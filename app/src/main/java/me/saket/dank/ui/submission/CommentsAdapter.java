@@ -45,7 +45,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   private static final int VIEW_TYPE_USER_COMMENT = 100;
   private static final int VIEW_TYPE_LOAD_MORE = 101;
-  private static final int VIEW_TYPE_REPLY =102;
+  private static final int VIEW_TYPE_REPLY = 102;
   private static final int VIEW_TYPE_PENDING_SYNC_REPLY = 103;
 
   private final BetterLinkMovementMethod linkMovementMethod;
@@ -67,17 +67,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   @AutoValue
   abstract static class CommentClickEvent {
-    public abstract CommentNode commentNode();
+    public abstract SubmissionCommentRow commentRow();
 
     public abstract View commentItemView();
 
-    /**
-     * Whether the comment was clicked to collapse.
-     */
-    public abstract boolean isCollapsing();
-
-    public static CommentClickEvent create(CommentNode commentNode, View commentItemView, boolean isCollapsing) {
-      return new AutoValue_CommentsAdapter_CommentClickEvent(commentNode, commentItemView, isCollapsing);
+    public static CommentClickEvent create(SubmissionCommentRow commentRow, View commentItemView) {
+      return new AutoValue_CommentsAdapter_CommentClickEvent(commentRow, commentItemView);
     }
   }
 
@@ -168,6 +163,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       case VIEW_TYPE_PENDING_SYNC_REPLY:
         PendingSyncReplyViewHolder pendingReplyHolder = PendingSyncReplyViewHolder.create(inflater, parent, linkMovementMethod);
         pendingReplyHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider.getSwipeActionIconProvider());
+        pendingReplyHolder.getSwipeableLayout().setSwipeEnabled(false);
         return pendingReplyHolder;
 
       default:
@@ -191,10 +187,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
         UserCommentViewHolder commentViewHolder = (UserCommentViewHolder) holder;
         commentViewHolder.bind(dankCommentNode, pendingOrDefaultVoteDirection, commentScore, isAuthorOP);
+
+        // Collapse on click.
         commentViewHolder.itemView.setOnClickListener(v -> {
-          commentClickStream.accept(CommentClickEvent.create(commentNode, commentViewHolder.itemView, !dankCommentNode.isCollapsed()));
+          commentClickStream.accept(CommentClickEvent.create(commentItem, commentViewHolder.itemView));
         });
 
+        // Gestures.
         SwipeableLayout swipeableLayout = commentViewHolder.getSwipeableLayout();
         swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions());
         swipeableLayout.setOnPerformSwipeActionListener(action -> {
@@ -223,10 +222,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       case PENDING_SYNC_REPLY:
         CommentPendingSyncReplyItem commentPendingSyncReplyItem = (CommentPendingSyncReplyItem) commentItem;
-        ((PendingSyncReplyViewHolder) holder).bind(commentPendingSyncReplyItem);
+        PendingSyncReplyViewHolder pendingSyncReplyViewHolder = (PendingSyncReplyViewHolder) holder;
 
-        // TODO: collapse on click.
-        // TODO: Swipe actions.
+        // Collapse on click.
+        pendingSyncReplyViewHolder.bind(commentPendingSyncReplyItem);
+        pendingSyncReplyViewHolder.itemView.setOnClickListener(v -> {
+          commentClickStream.accept(CommentClickEvent.create(commentItem, pendingSyncReplyViewHolder.itemView));
+        });
         break;
 
       default:
@@ -236,7 +238,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   @Override
   public long getItemId(int position) {
-    return getItem(position).id();
+    return getItem(position).fullName().hashCode();
   }
 
   public static class UserCommentViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
@@ -277,13 +279,29 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       });
     }
 
-    public void bind(String author, String authorFlairText, boolean isAuthorOP, String bodyHtml, long createdTimeMillis, VoteDirection voteDirection,
-        int commentScore, int commentNodeDepth, int childCommentsCount, boolean isCollapsed)
-    {
+    public void bind(CharSequence byline, String bodyHtml, int commentNodeDepth, boolean isCollapsed) {
       indentedContainer.setIndentationDepth(commentNodeDepth - 1);    // TODO: Why are we subtracting 1 here?
       this.isCollapsed = isCollapsed;
 
-      // Byline: author, flair, score and timestamp.
+      bylineView.setTextColor(isCollapsed ? collapsedBodyColor : bylineDefaultColor);
+      bylineView.setText(byline);
+
+      // Body.
+      if (isCollapsed) {
+        commentBodyView.setText(Markdown.stripMarkdown(bodyHtml));
+        commentBodyView.setMovementMethod(null);
+      } else {
+        commentBodyView.setText(Markdown.parseRedditMarkdownHtml(bodyHtml, commentBodyView.getPaint()));
+        commentBodyView.setMovementMethod(linkMovementMethod);
+      }
+      commentBodyView.setMaxLines(isCollapsed ? 1 : Integer.MAX_VALUE);
+      commentBodyView.setEllipsize(isCollapsed ? TextUtils.TruncateAt.END : null);
+      commentBodyView.setTextColor(isCollapsed ? collapsedBodyColor : expandedBodyColor);
+    }
+
+    protected CharSequence constructByline(String author, String authorFlairText, boolean isAuthorOP, long createdTimeMillis,
+        VoteDirection voteDirection, int commentScore, int childCommentsCount, boolean isCollapsed)
+    {
       Truss bylineBuilder = new Truss();
       if (isCollapsed) {
         bylineBuilder.append(author);
@@ -308,20 +326,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         bylineBuilder.append(bylineItemSeparator);
         bylineBuilder.append(Dates.createTimestamp(itemView.getResources(), createdTimeMillis));
       }
-      bylineView.setTextColor(isCollapsed ? collapsedBodyColor : bylineDefaultColor);
-      bylineView.setText(bylineBuilder.build());
-
-      // Body.
-      if (isCollapsed) {
-        commentBodyView.setText(Markdown.stripMarkdown(bodyHtml));
-        commentBodyView.setMovementMethod(null);
-      } else {
-        commentBodyView.setText(Markdown.parseRedditMarkdownHtml(bodyHtml, commentBodyView.getPaint()));
-        commentBodyView.setMovementMethod(linkMovementMethod);
-      }
-      commentBodyView.setMaxLines(isCollapsed ? 1 : Integer.MAX_VALUE);
-      commentBodyView.setEllipsize(isCollapsed ? TextUtils.TruncateAt.END : null);
-      commentBodyView.setTextColor(isCollapsed ? collapsedBodyColor : expandedBodyColor);
+      return bylineBuilder.build();
     }
 
     public void bind(DankCommentNode dankCommentNode, VoteDirection voteDirection, int commentScore, boolean isAuthorOP) {
@@ -333,18 +338,17 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
       int childCommentsCount = dankCommentNode.commentNode().getTotalSize();
 
-      bind(
+      CharSequence byline = constructByline(
           comment.getAuthor(),
           authorFlairText,
           isAuthorOP,
-          commentBodyHtml,
           createdTimeMillis,
           voteDirection,
           commentScore,
-          dankCommentNode.commentNode().getDepth(),
           childCommentsCount,
           dankCommentNode.isCollapsed()
       );
+      bind(byline, commentBodyHtml, dankCommentNode.commentNode().getDepth(), dankCommentNode.isCollapsed());
     }
 
     @Override
@@ -353,7 +357,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
   }
 
-  // TODO: Implement ViewHolderWithSwipeActions.
   // TODO: Show post indicator.
   public static class PendingSyncReplyViewHolder extends UserCommentViewHolder {
 
@@ -367,18 +370,18 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
     public void bind(CommentPendingSyncReplyItem commentPendingSyncReplyItem) {
       PendingSyncReply pendingSyncReply = commentPendingSyncReplyItem.pendingSyncReply();
-      bind(
+      CharSequence byline = constructByline(
           pendingSyncReply.author(),
           null /* authorFlairText */,
           true /* isAuthorOP */,
-          pendingSyncReply.body(),
           pendingSyncReply.createdTimeMillis(),
           VoteDirection.UPVOTE /* voteDirection */,
           1 /* commentScore */,
-          commentPendingSyncReplyItem.parentCommentNodeDepth(),
           0 /* childCommentsCount */,
           commentPendingSyncReplyItem.isCollapsed()
       );
+
+      bind(byline, pendingSyncReply.body(), commentPendingSyncReplyItem.parentCommentNodeDepth(), commentPendingSyncReplyItem.isCollapsed());
     }
   }
 

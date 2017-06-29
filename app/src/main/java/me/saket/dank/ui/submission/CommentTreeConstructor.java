@@ -29,12 +29,12 @@ import io.reactivex.schedulers.Schedulers;
  */
 public class CommentTreeConstructor {
 
-  private Set<String> collapsedCommentNodeIds = new HashSet<>();        // Comments that are collapsed.
-  private Set<String> loadingMoreCommentNodeIds = new HashSet<>();      // Comments for which more replies are being fetched.
-  private Set<String> replyActiveForCommentNodeIds = new HashSet<>();   // Comments for which reply fields are active.
+  private Set<String> collapsedCommentNodeFullNames = new HashSet<>();        // Comments that are collapsed.
+  private Set<String> loadingMoreCommentNodeFullNames = new HashSet<>();      // Comments for which more replies are being fetched.
+  private Set<String> replyActiveForCommentNodeFullNames = new HashSet<>();   // Comments for which reply fields are active.
   private Relay<Object> changesRequiredStream = PublishRelay.create();
-  private CommentNode rootCommentNode;
   private Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();  // Key: comment full-name.
+  private CommentNode rootCommentNode;
 
   public CommentTreeConstructor() {}
 
@@ -64,8 +64,8 @@ public class CommentTreeConstructor {
   public void reset() {
     changesRequiredStream.accept(Notification.INSTANCE);
     rootCommentNode = null;
-    collapsedCommentNodeIds.clear();
-    replyActiveForCommentNodeIds.clear();
+    collapsedCommentNodeFullNames.clear();
+    replyActiveForCommentNodeFullNames.clear();
   }
 
   @CheckResult
@@ -79,21 +79,25 @@ public class CommentTreeConstructor {
   /**
    * Collapse/expand a comment.
    */
-  public void toggleCollapse(CommentNode nodeToCollapse) {
-    if (isCollapsed(nodeToCollapse)) {
-      collapsedCommentNodeIds.remove(nodeToCollapse.getComment().getId());
+  public void toggleCollapse(SubmissionCommentRow commentRow) {
+    if (isCollapsed(commentRow)) {
+      collapsedCommentNodeFullNames.remove(commentRow.fullName());
     } else {
-      collapsedCommentNodeIds.add(nodeToCollapse.getComment().getId());
+      collapsedCommentNodeFullNames.add(commentRow.fullName());
     }
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
-  public boolean isCollapsed(String commentId) {
-    return collapsedCommentNodeIds.contains(commentId);
+  private boolean isCollapsed(String commentRowFullName) {
+    return collapsedCommentNodeFullNames.contains(commentRowFullName);
+  }
+
+  public boolean isCollapsed(SubmissionCommentRow commentRow) {
+    return isCollapsed(commentRow.fullName());
   }
 
   public boolean isCollapsed(CommentNode commentNode) {
-    return isCollapsed(commentNode.getComment().getId());
+    return isCollapsed(commentNode.getComment().getFullName());
   }
 
   /**
@@ -102,23 +106,23 @@ public class CommentTreeConstructor {
   public Consumer<CommentNode> setMoreCommentsLoading(boolean loading) {
     return commentNode -> {
       if (loading) {
-        loadingMoreCommentNodeIds.add(commentNode.getComment().getId());
+        loadingMoreCommentNodeFullNames.add(commentNode.getComment().getFullName());
       } else {
-        loadingMoreCommentNodeIds.remove(commentNode.getComment().getId());
+        loadingMoreCommentNodeFullNames.remove(commentNode.getComment().getFullName());
       }
       changesRequiredStream.accept(Notification.INSTANCE);
     };
   }
 
   public boolean areMoreCommentsLoadingFor(CommentNode commentNode) {
-    return loadingMoreCommentNodeIds.contains(commentNode.getComment().getId());
+    return loadingMoreCommentNodeFullNames.contains(commentNode.getComment().getFullName());
   }
 
   /**
    * Show/hide reply field for a comment.
    */
   public void hideReply(CommentNode nodeToReply) {
-    replyActiveForCommentNodeIds.remove(nodeToReply.getComment().getId());
+    replyActiveForCommentNodeFullNames.remove(nodeToReply.getComment().getFullName());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
@@ -126,13 +130,13 @@ public class CommentTreeConstructor {
    * Show/hide reply field for a comment.
    */
   public void showReplyAndExpandComments(CommentNode nodeToReply) {
-    replyActiveForCommentNodeIds.add(nodeToReply.getComment().getId());
-    collapsedCommentNodeIds.remove(nodeToReply.getComment().getId());
+    replyActiveForCommentNodeFullNames.add(nodeToReply.getComment().getFullName());
+    collapsedCommentNodeFullNames.remove(nodeToReply.getComment().getFullName());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
   public boolean isReplyActiveFor(CommentNode commentNode) {
-    return replyActiveForCommentNodeIds.contains(commentNode.getComment().getId());
+    return replyActiveForCommentNodeFullNames.contains(commentNode.getComment().getFullName());
   }
 
   /**
@@ -161,7 +165,7 @@ public class CommentTreeConstructor {
     boolean isReplyActive = isReplyActiveFor(nextNode);
 
     if (nextNode.getDepth() != 0) {
-      //Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
+      //Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getFullName(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
       flattenComments.add(DankCommentNode.create(nextNode, isCommentNodeCollapsed));
     }
 
@@ -176,9 +180,11 @@ public class CommentTreeConstructor {
       List<PendingSyncReply> pendingSyncReplies = pendingReplyMap.get(commentFullName);
       for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
         PendingSyncReply pendingSyncReply = pendingSyncReplies.get(i);
-        boolean isPendingReplyItemCollapsed = false;  // TODO: Solve this.
-        int depth = nextNode.getDepth() + 1;
-        flattenComments.add(CommentPendingSyncReplyItem.create(nextNode, pendingSyncReply, depth, isPendingReplyItemCollapsed));
+        String replyFullName = nextNode.getComment().getId() + "_reply_ " + pendingSyncReply.createdTimeMillis();
+        boolean isReplyCollapsed = isCollapsed(replyFullName);  // TODO: Solve this.
+        int replyDepth = nextNode.getDepth() + 1;
+
+        flattenComments.add(CommentPendingSyncReplyItem.create(replyFullName, pendingSyncReply, replyDepth, isReplyCollapsed));
       }
     }
 
@@ -197,7 +203,7 @@ public class CommentTreeConstructor {
 
         if (nextNode.hasMoreComments()) {
           //Timber.d("%s(%s) %s has %d MORE ---------->",
-          //    indentation, nextNode.getComment().getId(), nextNode.getComment().getAuthor(), nextNode.getMoreChildren().getCount()
+          //    indentation, nextNode.getComment().getFullName(), nextNode.getComment().getAuthor(), nextNode.getMoreChildren().getCount()
           //);
           //Timber.d("%s %s", indentation, nextNode.getMoreChildren().getChildrenIds());
           flattenComments.add(LoadMoreCommentItem.create(nextNode, areMoreCommentsLoadingFor(nextNode)));

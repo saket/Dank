@@ -34,7 +34,7 @@ public abstract class PendingSyncReply {
   public static final String QUERY_GET_ALL_PENDING_OR_POSTED_FOR_SUBMISSION =
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_PARENT_SUBMISSION_FULL_NAME + " == ?"
-          + " AND (" + COLUMN_TYPE + " == '" + State.POST_PENDING + "'"
+          + " AND (" + COLUMN_TYPE + " == '" + State.POSTING + "'"
           + " OR " + COLUMN_TYPE + " == '" + State.POSTED + "')";
 
   /**
@@ -53,8 +53,9 @@ public abstract class PendingSyncReply {
   public abstract long createdTimeMillis();
 
   public enum State {
-    POST_PENDING,
+    POSTING,
     POSTED,
+    FAILED,
   }
 
   public static PendingSyncReply create(String parentCommentFullName, String reply, State state, String parentSubmissionFullName, String author,

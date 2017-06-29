@@ -35,7 +35,7 @@ public class CommentsDiffCallback extends DiffUtil.Callback {
   public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
     SubmissionCommentRow oldCommentRow = oldComments.get(oldItemPosition);
     SubmissionCommentRow newCommentRow = newComments.get(newItemPosition);
-    return oldCommentRow.id() == newCommentRow.id();
+    return oldCommentRow.fullName().equals(newCommentRow.fullName());
   }
 
   /**

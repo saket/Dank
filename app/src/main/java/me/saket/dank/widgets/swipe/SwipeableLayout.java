@@ -35,6 +35,7 @@ public class SwipeableLayout extends FrameLayout {
   private ObjectAnimator translationAnimator;
   private BackgroundDrawable backgroundDrawable;
   private SwipeTriggerRippleDrawable swipeActionTriggerDrawable;
+  private boolean swipeEnabled;
 
   private OnPerformSwipeActionListener onPerformSwipeActionListener;
   private SwipeActionIconProvider swipeActionIconProvider;
@@ -80,6 +81,10 @@ public class SwipeableLayout extends FrameLayout {
 
   public void setOnPerformSwipeActionListener(OnPerformSwipeActionListener listener) {
     onPerformSwipeActionListener = listener;
+  }
+
+  public void setSwipeEnabled(boolean enabled) {
+    swipeEnabled = enabled;
   }
 
   @Override

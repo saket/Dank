@@ -21,6 +21,7 @@ import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.ui.user.UserSession;
+import timber.log.Timber;
 
 /**
  * Manages sending of replies and saving of drafts.
@@ -42,26 +43,31 @@ public class CommentsManager {
 
   @CheckResult
   public Completable sendReply(CommentNode parentCommentNode, String reply) {
-    return Completable.fromAction(() -> {
-      String parentSubmissionFullName = parentCommentNode.getSubmissionName();
-      Comment parentComment = parentCommentNode.getComment();
+    String parentSubmissionFullName = parentCommentNode.getSubmissionName();
+    Comment parentComment = parentCommentNode.getComment();
+    long replyCreatedTime = System.currentTimeMillis();
 
-      long replyCreatedTime = System.currentTimeMillis();
-      PendingSyncReply pendingSyncReply = PendingSyncReply.create(
-          parentComment.getFullName(),
-          reply,
-          PendingSyncReply.State.POST_PENDING,
-          parentSubmissionFullName,
-          userSession.loggedInUserName(),
-          replyCreatedTime
-      );
-      database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
+    PendingSyncReply pendingSyncReply = PendingSyncReply.create(
+        parentComment.getFullName(),
+        reply,
+        PendingSyncReply.State.POSTING,
+        parentSubmissionFullName,
+        userSession.loggedInUserName(),
+        replyCreatedTime
+    );
 
-      dankRedditClient.userAccountManager().reply(parentComment, reply);
-
-      PendingSyncReply updatedPendingSyncReply = pendingSyncReply.withType(PendingSyncReply.State.POSTED);
-      database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
-    });
+    return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
+        .andThen(Completable.fromAction(() -> dankRedditClient.userAccountManager().reply(parentComment, reply)))
+        .andThen(Completable.fromAction(() -> {
+          PendingSyncReply updatedPendingSyncReply = pendingSyncReply.withType(PendingSyncReply.State.POSTED);
+          database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
+        }))
+        .onErrorResumeNext(error -> {
+          PendingSyncReply updatedPendingSyncReply = pendingSyncReply.withType(PendingSyncReply.State.FAILED);
+          database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
+          Timber.e(error, "Couldn't post reply");
+          return Completable.complete();
+        });
   }
 
   /**

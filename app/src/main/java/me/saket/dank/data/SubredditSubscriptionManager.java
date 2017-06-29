@@ -193,14 +193,6 @@ public class SubredditSubscriptionManager {
   }
 
   @CheckResult
-  public Completable unsubscribe(Subreddit subreddit) {
-    return toV2Observable(database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_SINGLE, subreddit.getDisplayName())
-        .mapToOne(SubredditSubscription.MAPPER))
-        .firstOrError()
-        .flatMapCompletable(subredditSubscription -> unsubscribe(subredditSubscription));
-  }
-
-  @CheckResult
   public Completable setHidden(SubredditSubscription subscription, boolean hidden) {
     return Completable.fromAction(() -> {
       if (subscription.pendingState() == PendingState.PENDING_UNSUBSCRIBE) {
