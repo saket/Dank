@@ -15,6 +15,7 @@ import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
+import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.ImgurManager;
 import me.saket.dank.utils.JacksonHelper;
@@ -95,5 +96,9 @@ public class Dank {
 
   public static UserSession userSession() {
     return appComponent.userSession();
+  }
+
+  public static CommentsManager comments() {
+    return appComponent.commentsManager();
   }
 }

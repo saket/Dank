@@ -18,7 +18,6 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.Flair;
 import net.dean.jraw.models.VoteDirection;
 
 import butterknife.BindColor;
@@ -46,7 +45,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   private static final int VIEW_TYPE_USER_COMMENT = 100;
   private static final int VIEW_TYPE_LOAD_MORE = 101;
-  private static final int VIEW_TYPE_REPLY = 102;
+  private static final int VIEW_TYPE_REPLY =102;
+  private static final int VIEW_TYPE_PENDING_SYNC_REPLY = 103;
 
   private final BetterLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
@@ -143,6 +143,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       case REPLY:
         return VIEW_TYPE_REPLY;
 
+      case PENDING_SYNC_REPLY:
+        return VIEW_TYPE_PENDING_SYNC_REPLY;
+
       default:
         throw new UnsupportedOperationException();
     }
@@ -152,15 +155,20 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
     switch (viewType) {
       case VIEW_TYPE_USER_COMMENT:
-        UserCommentViewHolder holder = UserCommentViewHolder.create(inflater, parent, linkMovementMethod);
-        holder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
-        return holder;
-
-      case VIEW_TYPE_REPLY:
-        return ReplyViewHolder.create(inflater, parent);
+        UserCommentViewHolder commentHolder = UserCommentViewHolder.create(inflater, parent, linkMovementMethod);
+        commentHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider.getSwipeActionIconProvider());
+        return commentHolder;
 
       case VIEW_TYPE_LOAD_MORE:
         return LoadMoreCommentViewHolder.create(inflater, parent);
+
+      case VIEW_TYPE_REPLY:
+        return InlineReplyViewHolder.create(inflater, parent);
+
+      case VIEW_TYPE_PENDING_SYNC_REPLY:
+        PendingSyncReplyViewHolder pendingReplyHolder = PendingSyncReplyViewHolder.create(inflater, parent, linkMovementMethod);
+        pendingReplyHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider.getSwipeActionIconProvider());
+        return pendingReplyHolder;
 
       default:
         throw new UnsupportedOperationException();
@@ -199,11 +207,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         });
         break;
 
-      case REPLY:
-        CommentReplyItem commentReplyItem = (CommentReplyItem) commentItem;
-        ((ReplyViewHolder) holder).bind(commentReplyItem, replyActionsListener, userSession);
-        break;
-
       case LOAD_MORE_COMMENTS:
         LoadMoreCommentItem loadMoreItem = ((LoadMoreCommentItem) commentItem);
         ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
@@ -211,6 +214,19 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         holder.itemView.setOnClickListener(__ -> {
           loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreItem.parentCommentNode(), holder.itemView));
         });
+        break;
+
+      case REPLY:
+        CommentInlineReplyItem commentInlineReplyItem = (CommentInlineReplyItem) commentItem;
+        ((InlineReplyViewHolder) holder).bind(commentInlineReplyItem, replyActionsListener, userSession);
+        break;
+
+      case PENDING_SYNC_REPLY:
+        CommentPendingSyncReplyItem commentPendingSyncReplyItem = (CommentPendingSyncReplyItem) commentItem;
+        ((PendingSyncReplyViewHolder) holder).bind(commentPendingSyncReplyItem);
+
+        // TODO: collapse on click.
+        // TODO: Swipe actions.
         break;
 
       default:
@@ -261,53 +277,74 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       });
     }
 
-    public void bind(DankCommentNode dankCommentNode, VoteDirection voteDirection, int commentScore, boolean isAuthorOP) {
-      indentedContainer.setIndentationDepth(dankCommentNode.commentNode().getDepth() - 1);
-      Comment comment = dankCommentNode.commentNode().getComment();
-      isCollapsed = dankCommentNode.isCollapsed();  // Storing as an instance field so that it can be used in UserCommentViewHolder().
+    public void bind(String author, String authorFlairText, boolean isAuthorOP, String bodyHtml, long createdTimeMillis, VoteDirection voteDirection,
+        int commentScore, int commentNodeDepth, int childCommentsCount, boolean isCollapsed)
+    {
+      indentedContainer.setIndentationDepth(commentNodeDepth - 1);    // TODO: Why are we subtracting 1 here?
+      this.isCollapsed = isCollapsed;
 
       // Byline: author, flair, score and timestamp.
       Truss bylineBuilder = new Truss();
       if (isCollapsed) {
-        bylineBuilder.append(comment.getAuthor());
+        bylineBuilder.append(author);
         bylineBuilder.append(bylineItemSeparator);
 
-        // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
-        int hiddenCommentsCount = dankCommentNode.commentNode().getTotalSize() + 1;   // +1 for the parent comment itself.
+        int hiddenCommentsCount = childCommentsCount + 1;   // +1 for the parent comment itself.
         String hiddenCommentsString = itemView.getResources().getQuantityString(R.plurals.submission_comment_hidden_comments, hiddenCommentsCount);
         bylineBuilder.append(String.format(hiddenCommentsString, hiddenCommentsCount));
 
       } else {
         bylineBuilder.pushSpan(new ForegroundColorSpan(isAuthorOP ? bylineAuthorNameColorForOP : bylineAuthorNameColor));
-        bylineBuilder.append(comment.getAuthor());
+        bylineBuilder.append(author);
         bylineBuilder.popSpan();
-        Flair authorFlair = comment.getAuthorFlair();
-        if (authorFlair != null && authorFlair.getText() != null) {
+        if (authorFlairText != null) {
           bylineBuilder.append(bylineItemSeparator);
-          bylineBuilder.append(authorFlair.getText());
+          bylineBuilder.append(authorFlairText);
         }
         bylineBuilder.append(bylineItemSeparator);
         bylineBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(itemView.getContext(), Commons.voteColor(voteDirection))));
         bylineBuilder.append(String.format(bylineItemScoreString, Strings.abbreviateScore(commentScore)));
         bylineBuilder.popSpan();
         bylineBuilder.append(bylineItemSeparator);
-        bylineBuilder.append(Dates.createTimestamp(itemView.getResources(), JrawUtils.createdTimeUtc(comment)));
+        bylineBuilder.append(Dates.createTimestamp(itemView.getResources(), createdTimeMillis));
       }
       bylineView.setTextColor(isCollapsed ? collapsedBodyColor : bylineDefaultColor);
       bylineView.setText(bylineBuilder.build());
 
       // Body.
-      String commentBody = comment.getDataNode().get("body_html").asText();
       if (isCollapsed) {
-        commentBodyView.setText(Markdown.stripMarkdown(commentBody));
+        commentBodyView.setText(Markdown.stripMarkdown(bodyHtml));
         commentBodyView.setMovementMethod(null);
       } else {
-        commentBodyView.setText(Markdown.parseRedditMarkdownHtml(commentBody, commentBodyView.getPaint()));
+        commentBodyView.setText(Markdown.parseRedditMarkdownHtml(bodyHtml, commentBodyView.getPaint()));
         commentBodyView.setMovementMethod(linkMovementMethod);
       }
       commentBodyView.setMaxLines(isCollapsed ? 1 : Integer.MAX_VALUE);
       commentBodyView.setEllipsize(isCollapsed ? TextUtils.TruncateAt.END : null);
       commentBodyView.setTextColor(isCollapsed ? collapsedBodyColor : expandedBodyColor);
+    }
+
+    public void bind(DankCommentNode dankCommentNode, VoteDirection voteDirection, int commentScore, boolean isAuthorOP) {
+      Comment comment = dankCommentNode.commentNode().getComment();
+      String authorFlairText = comment.getAuthorFlair() != null ? comment.getAuthorFlair().getText() : null;
+      long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
+      String commentBodyHtml = comment.getDataNode().get("body_html").asText();
+
+      // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
+      int childCommentsCount = dankCommentNode.commentNode().getTotalSize();
+
+      bind(
+          comment.getAuthor(),
+          authorFlairText,
+          isAuthorOP,
+          commentBodyHtml,
+          createdTimeMillis,
+          voteDirection,
+          commentScore,
+          dankCommentNode.commentNode().getDepth(),
+          childCommentsCount,
+          dankCommentNode.isCollapsed()
+      );
     }
 
     @Override
@@ -316,7 +353,36 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
   }
 
-  public static class ReplyViewHolder extends RecyclerView.ViewHolder {
+  // TODO: Implement ViewHolderWithSwipeActions.
+  // TODO: Show post indicator.
+  public static class PendingSyncReplyViewHolder extends UserCommentViewHolder {
+
+    public static PendingSyncReplyViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
+      return new PendingSyncReplyViewHolder(inflater.inflate(R.layout.list_item_comment, parent, false), linkMovementMethod);
+    }
+
+    public PendingSyncReplyViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
+      super(itemView, linkMovementMethod);
+    }
+
+    public void bind(CommentPendingSyncReplyItem commentPendingSyncReplyItem) {
+      PendingSyncReply pendingSyncReply = commentPendingSyncReplyItem.pendingSyncReply();
+      bind(
+          pendingSyncReply.author(),
+          null /* authorFlairText */,
+          true /* isAuthorOP */,
+          pendingSyncReply.body(),
+          pendingSyncReply.createdTimeMillis(),
+          VoteDirection.UPVOTE /* voteDirection */,
+          1 /* commentScore */,
+          commentPendingSyncReplyItem.parentCommentNodeDepth(),
+          0 /* childCommentsCount */,
+          commentPendingSyncReplyItem.isCollapsed()
+      );
+    }
+  }
+
+  public static class InlineReplyViewHolder extends RecyclerView.ViewHolder {
     @BindView(R.id.item_comment_reply_indented_container) IndentedLayout indentedLayout;
     @BindView(R.id.item_comment_reply_discard) ImageButton discardButton;
     @BindView(R.id.item_comment_reply_author_hint) TextView authorUsernameHintView;
@@ -324,17 +390,17 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_comment_reply_send) ImageButton sendButton;
     @BindView(R.id.item_comment_reply_message) EditText replyMessageField;
 
-    public static RecyclerView.ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-      return new ReplyViewHolder(inflater.inflate(R.layout.list_item_comment_reply, parent, false));
+    public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent) {
+      return new InlineReplyViewHolder(inflater.inflate(R.layout.list_item_comment_reply, parent, false));
     }
 
-    public ReplyViewHolder(View itemView) {
+    public InlineReplyViewHolder(View itemView) {
       super(itemView);
       ButterKnife.bind(this, itemView);
     }
 
-    public void bind(CommentReplyItem commentReplyItem, ReplyActionsListener replyActionsListener, UserSession userSession) {
-      CommentNode commentNodeToReply = commentReplyItem.commentNodeToReply();
+    public void bind(CommentInlineReplyItem commentInlineReplyItem, ReplyActionsListener replyActionsListener, UserSession userSession) {
+      CommentNode commentNodeToReply = commentInlineReplyItem.parentCommentNode();
       indentedLayout.setIndentationDepth(commentNodeToReply.getDepth());
 
       authorUsernameHintView.setText(authorUsernameHintView.getResources().getString(

@@ -35,8 +35,8 @@ public abstract class CachedSubmission {
           + COLUMN_FETCH_TIME + " INTEGER NOT NULL, "
           + COLUMN_USER_VOTE_DIRECTION + " TEXT NOT NULL, "
           + COLUMN_IS_SAVED_BY_USER + " INTEGER NOT NULL, "
-          + "PRIMARY KEY (" + COLUMN_FULLNAME + ", " + COLUMN_FOLDER + ")" +
-          ")";
+          + "PRIMARY KEY (" + COLUMN_FULLNAME + ", " + COLUMN_FOLDER + ")"
+          + ")";
 
   public abstract String fullName();
 

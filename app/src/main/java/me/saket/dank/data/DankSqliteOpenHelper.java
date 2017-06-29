@@ -5,6 +5,7 @@ import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
 import me.saket.dank.ui.submission.CachedSubmission;
+import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.user.messages.CachedMessage;
 
 public class DankSqliteOpenHelper extends SQLiteOpenHelper {
@@ -21,6 +22,7 @@ public class DankSqliteOpenHelper extends SQLiteOpenHelper {
     db.execSQL(SubredditSubscription.QUERY_CREATE_TABLE);
     db.execSQL(CachedMessage.QUERY_CREATE_TABLE);
     db.execSQL(CachedSubmission.QUERY_CREATE_TABLE);
+    db.execSQL(PendingSyncReply.QUERY_CREATE_TABLE);
   }
 
   @Override

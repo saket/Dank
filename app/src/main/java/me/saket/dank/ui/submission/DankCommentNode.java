@@ -4,6 +4,9 @@ import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.CommentNode;
 
+/**
+ * Represents a comment received from remote.
+ */
 @AutoValue
 public abstract class DankCommentNode implements SubmissionCommentRow {
 

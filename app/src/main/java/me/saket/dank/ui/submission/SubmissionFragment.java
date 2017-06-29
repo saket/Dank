@@ -3,6 +3,8 @@ package me.saket.dank.ui.submission;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.Commons.findOptimizedImage;
+import static me.saket.dank.utils.RxUtils.applySchedulers;
+import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
@@ -36,6 +38,8 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
@@ -72,6 +76,7 @@ import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
+import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.SubmissionAdapterWithHeader;
 import me.saket.dank.utils.UrlParser;
@@ -118,6 +123,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private DankSubmissionRequest activeSubmissionRequest;
   private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
   private Link activeSubmissionContentLink;
+  private Relay<Submission> submissionWithCommentsStream = PublishRelay.create();
 
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
@@ -179,7 +185,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
     setupCommentList(linkMovementMethod);
-    setupCommentsHelper();
+    setupCommentTreeConstructor();
     setupContentImageView(view);
     setupContentVideoView(view);
     setupCommentsSheet();
@@ -258,25 +264,40 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
       @Override
       public void onClickSendReply(CommentNode nodeBeingRepliedTo, String replyMessage) {
-        // TODO.
+        Dank.comments().sendReply(nodeBeingRepliedTo, replyMessage)
+            .doOnSubscribe(o -> commentTreeConstructor.hideReply(nodeBeingRepliedTo))
+            .compose(applySchedulersCompletable())
+            .subscribe(
+                () -> Timber.i("Reply sent!"),
+                error -> logError("Reply failed. TODO: Send notification.")
+            );
       }
     });
   }
 
   /**
-   * {@link CommentTreeConstructor} helps in collapsing comments and helping {@link CommentsAdapter} in indicating
-   * progress when more comments are being fetched for a CommentNode.
-   * <p>
    * The direction of modifications/updates to comments is unidirectional. All mods are made on
    * {@link CommentTreeConstructor} and {@link CommentsAdapter} subscribes to its updates.
    */
-  private void setupCommentsHelper() {
+  private void setupCommentTreeConstructor() {
     commentTreeConstructor = new CommentTreeConstructor();
 
-    Pair<List<SubmissionCommentRow>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
-
     unsubscribeOnDestroy(
-        commentTreeConstructor.streamUpdates()
+        submissionWithCommentsStream
+            .switchMap(submissionWithComments -> Dank.comments()
+                .pendingSncRepliesForSubmission(submissionWithComments)
+                .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies))
+            )
+            .compose(applySchedulers())
+            .subscribe(submissionRepliesPair ->
+                commentTreeConstructor.setCommentsAndPendingReplies(submissionRepliesPair.first, submissionRepliesPair.second)
+            )
+    );
+
+    // Animate changes.
+    Pair<List<SubmissionCommentRow>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
+    unsubscribeOnDestroy(
+        commentTreeConstructor.streamTreeUpdates()
             .toFlowable(BackpressureStrategy.LATEST)
             .scan(initialPair, (pair, next) -> {
               CommentsDiffCallback callback = new CommentsDiffCallback(pair.first, next);
@@ -455,14 +476,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           .compose(applySchedulersSingle())
           .compose(doOnSingleStartAndTerminate(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
           .doOnSuccess(submissionWithComments -> activeSubmission = submissionWithComments)
-          .subscribe(
-              submissionWithComments -> commentTreeConstructor.setComments(submissionWithComments),
-              handleSubmissionLoadError()
-          )
+          .subscribe(submissionWithCommentsStream, handleSubmissionLoadError())
       );
 
     } else {
-      commentTreeConstructor.setComments(submission);
+      submissionWithCommentsStream.accept(submission);
     }
   }
 
@@ -630,6 +648,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   @Override
   public void onPageAboutToCollapse(long collapseAnimDuration) {
+    Keyboards.hide(getActivity(), commentList);
   }
 
   @Override
@@ -642,5 +661,4 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     onCollapseSubscriptions.add(subscription);
     unsubscribeOnDestroy(subscription);
   }
-
 }

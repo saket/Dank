@@ -1,7 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import android.support.annotation.Nullable;
-
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.VoteDirection;
@@ -18,12 +16,13 @@ import me.saket.dank.widgets.swipe.SwipeActions;
 import me.saket.dank.widgets.swipe.SwipeActionsHolder;
 import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable.RippleType;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
+import me.saket.dank.widgets.swipe.SwipeableLayout.SwipeActionIconProvider;
 import timber.log.Timber;
 
 /**
  * Controls gesture actions on comments and submission details.
  */
-public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionIconProvider {
+public class CommentSwipeActionsProvider {
 
   private static final String ACTION_NAME_REPLY = "CommentReply";
   private static final String ACTION_NAME_OPTIONS = "CommentOptions";
@@ -34,6 +33,7 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
   private final UserSession userSession;
   private final OnLoginRequireListener onLoginRequireListener;
   private final SwipeActions commentSwipeActions;
+  private final SwipeActionIconProvider swipeActionIconProvider;
   private OnReplySwipeActionListener onReplySwipeActionListener;
 
   public interface OnReplySwipeActionListener {
@@ -55,6 +55,8 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
             .add(SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 1f))
             .build())
         .build();
+
+    swipeActionIconProvider = createActionIconProvider();
   }
 
   public void setOnReplySwipeActionListener(OnReplySwipeActionListener listener) {
@@ -65,42 +67,47 @@ public class CommentSwipeActionsProvider implements SwipeableLayout.SwipeActionI
     return commentSwipeActions;
   }
 
-  @Override
-  public void showSwipeActionIcon(SwipeActionIconView imageView, @Nullable SwipeAction oldAction, SwipeAction newAction) {
-    switch (newAction.name()) {
-      case ACTION_NAME_OPTIONS:
-        resetIconRotation(imageView);
-        imageView.setImageResource(R.drawable.ic_more_horiz_24dp);
-        break;
+  public SwipeActionIconProvider getSwipeActionIconProvider() {
+    return swipeActionIconProvider;
+  }
 
-      case ACTION_NAME_REPLY:
-        resetIconRotation(imageView);
-        imageView.setImageResource(R.drawable.ic_reply_24dp);
-        break;
-
-      case ACTION_NAME_UPVOTE:
-        if (oldAction != null && ACTION_NAME_DOWNVOTE.equals(oldAction.name())) {
-          imageView.setRotation(180);
-          imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
-        } else {
+  public SwipeActionIconProvider createActionIconProvider() {
+    return (imageView, oldAction, newAction) -> {
+      switch (newAction.name()) {
+        case ACTION_NAME_OPTIONS:
           resetIconRotation(imageView);
-          imageView.setImageResource(R.drawable.ic_arrow_upward_24dp);
-        }
-        break;
+          imageView.setImageResource(R.drawable.ic_more_horiz_24dp);
+          break;
 
-      case ACTION_NAME_DOWNVOTE:
-        if (oldAction != null && ACTION_NAME_UPVOTE.equals(oldAction.name())) {
-          imageView.setRotation(0);
-          imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
-        } else {
+        case ACTION_NAME_REPLY:
           resetIconRotation(imageView);
-          imageView.setImageResource(R.drawable.ic_arrow_downward_24dp);
-        }
-        break;
+          imageView.setImageResource(R.drawable.ic_reply_24dp);
+          break;
 
-      default:
-        throw new UnsupportedOperationException("Unknown swipe action: " + newAction);
-    }
+        case ACTION_NAME_UPVOTE:
+          if (oldAction != null && ACTION_NAME_DOWNVOTE.equals(oldAction.name())) {
+            imageView.setRotation(180);
+            imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
+          } else {
+            resetIconRotation(imageView);
+            imageView.setImageResource(R.drawable.ic_arrow_upward_24dp);
+          }
+          break;
+
+        case ACTION_NAME_DOWNVOTE:
+          if (oldAction != null && ACTION_NAME_UPVOTE.equals(oldAction.name())) {
+            imageView.setRotation(0);
+            imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
+          } else {
+            resetIconRotation(imageView);
+            imageView.setImageResource(R.drawable.ic_arrow_downward_24dp);
+          }
+          break;
+
+        default:
+          throw new UnsupportedOperationException("Unknown swipe action: " + newAction);
+      }
+    };
   }
 
   private void resetIconRotation(SwipeActionIconView imageView) {

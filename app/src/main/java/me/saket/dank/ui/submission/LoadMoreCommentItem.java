@@ -5,7 +5,7 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.CommentNode;
 
 /**
- * An item in comment list that can load more comments for its parent.
+ * Represents an item that can load more comments for its parent.
  */
 @AutoValue
 public abstract class LoadMoreCommentItem implements SubmissionCommentRow {

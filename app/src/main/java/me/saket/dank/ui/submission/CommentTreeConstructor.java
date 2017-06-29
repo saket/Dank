@@ -1,6 +1,8 @@
 package me.saket.dank.ui.submission;
 
 
+import static me.saket.dank.utils.Commons.toImmutable;
+
 import android.support.annotation.CheckResult;
 
 import com.jakewharton.rxbinding2.internal.Notification;
@@ -12,35 +14,50 @@ import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
-import me.saket.dank.utils.Commons;
-import timber.log.Timber;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more" & "continue thread ->" items.
  */
 public class CommentTreeConstructor {
 
-  private Set<String> collapsedCommentNodeIds = new HashSet<>();      // Comments that are collapsed.
-  private Set<String> loadingMoreCommentNodeIds = new HashSet<>();    // Comments for which more replies are being fetched.
-  private Set<String> replyActiveForCommentNodeIds = new HashSet<>(); // Comments for which reply fields are active.
-  private CommentNode rootCommentNode;
+  private Set<String> collapsedCommentNodeIds = new HashSet<>();        // Comments that are collapsed.
+  private Set<String> loadingMoreCommentNodeIds = new HashSet<>();      // Comments for which more replies are being fetched.
+  private Set<String> replyActiveForCommentNodeIds = new HashSet<>();   // Comments for which reply fields are active.
   private Relay<Object> changesRequiredStream = PublishRelay.create();
+  private CommentNode rootCommentNode;
+  private Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();  // Key: comment full-name.
 
-  public CommentTreeConstructor() {
-  }
+  public CommentTreeConstructor() {}
 
   /**
    * Set the root comment of a submission.
    */
-  public void setComments(Submission submissionWithComments) {
+  public void setCommentsAndPendingReplies(Submission submissionWithComments, List<PendingSyncReply> pendingReplies) {
     rootCommentNode = submissionWithComments.getComments();
+
+    // TODO: test performance.
+    pendingReplyMap.clear();
+    for (PendingSyncReply pendingSyncReply : pendingReplies) {
+      String parentCommentFullName = pendingSyncReply.parentCommentFullName();
+
+      if (!pendingReplyMap.containsKey(parentCommentFullName)) {
+        pendingReplyMap.put(parentCommentFullName, new ArrayList<>());
+      }
+
+      List<PendingSyncReply> existingReplies = pendingReplyMap.get(parentCommentFullName);
+      existingReplies.add(pendingSyncReply);
+      pendingReplyMap.put(parentCommentFullName, existingReplies);
+    }
+
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
@@ -52,22 +69,11 @@ public class CommentTreeConstructor {
   }
 
   @CheckResult
-  public Observable<List<SubmissionCommentRow>> streamUpdates() {
+  public Observable<List<SubmissionCommentRow>> streamTreeUpdates() {
     return changesRequiredStream
         .observeOn(Schedulers.io())
         .map(o -> constructComments())
-        .doOnNext(submissionCommentRows -> {
-          for (SubmissionCommentRow submissionCommentRow : submissionCommentRows) {
-            if (SubmissionCommentRow.Type.USER_COMMENT.equals(submissionCommentRow.type())) {
-              CommentNode commentNode = ((DankCommentNode) submissionCommentRow).commentNode();
-              if (commentNode.getParent() == commentNode || commentNode.getParent().equals(commentNode)) {
-                Timber.w("CommentNode: %s", commentNode);
-                throw new IllegalStateException("Infinite loop detected.");
-              }
-            }
-          }
-        })
-        .map(Commons.toImmutable());
+        .map(toImmutable());
   }
 
   /**
@@ -82,8 +88,12 @@ public class CommentTreeConstructor {
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
+  public boolean isCollapsed(String commentId) {
+    return collapsedCommentNodeIds.contains(commentId);
+  }
+
   public boolean isCollapsed(CommentNode commentNode) {
-    return collapsedCommentNodeIds.contains(commentNode.getComment().getId());
+    return isCollapsed(commentNode.getComment().getId());
   }
 
   /**
@@ -155,10 +165,24 @@ public class CommentTreeConstructor {
       flattenComments.add(DankCommentNode.create(nextNode, isCommentNodeCollapsed));
     }
 
+    // Reply box.
     if (isReplyActive && !isCommentNodeCollapsed) {
-      flattenComments.add(CommentReplyItem.create(nextNode));
+      flattenComments.add(CommentInlineReplyItem.create(nextNode));
     }
 
+    // Pending-sync replies.
+    String commentFullName = nextNode.getComment().getFullName();
+    if (!isCommentNodeCollapsed && pendingReplyMap.containsKey(commentFullName)) {
+      List<PendingSyncReply> pendingSyncReplies = pendingReplyMap.get(commentFullName);
+      for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
+        PendingSyncReply pendingSyncReply = pendingSyncReplies.get(i);
+        boolean isPendingReplyItemCollapsed = false;  // TODO: Solve this.
+        int depth = nextNode.getDepth() + 1;
+        flattenComments.add(CommentPendingSyncReplyItem.create(nextNode, pendingSyncReply, depth, isPendingReplyItemCollapsed));
+      }
+    }
+
+    // Next, the child comment tree.
     if (nextNode.isEmpty() && !nextNode.hasMoreComments()) {
       return flattenComments;
 
@@ -166,7 +190,8 @@ public class CommentTreeConstructor {
       // Ignore collapsed children.
       if (!isCommentNodeCollapsed) {
         List<CommentNode> childCommentsTree = nextNode.getChildren();
-        for (CommentNode node : childCommentsTree) {
+        for (int i = 0; i < childCommentsTree.size(); i++) {  // Intentionally avoiding thrashing Iterator objects.
+          CommentNode node = childCommentsTree.get(i);
           constructComments(flattenComments, node);
         }
 
