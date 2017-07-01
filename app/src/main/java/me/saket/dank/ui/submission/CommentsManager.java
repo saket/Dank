@@ -11,6 +11,7 @@ import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.utils.Strings;
 import timber.log.Timber;
 
 /**
@@ -81,10 +83,43 @@ public class CommentsManager {
             .mapToList(PendingSyncReply.MAPPER));
   }
 
-  // TODO.
+  /**
+   * Removes "pending-sync" replies for a submission once they're found in the submission's comments.
+   */
   @CheckResult
   public Completable removeSyncPendingPostedRepliesForSubmission(Submission submission) {
-    return Completable.complete();
+    return pendingSncRepliesForSubmission(submission)
+        .firstOrError()
+        .map(pendingSyncReplies -> {
+          Map<String, PendingSyncReply> parentFullNameToPendingSyncReplyMap = new HashMap<>(pendingSyncReplies.size(), 1);
+          for (PendingSyncReply pendingSyncReply : pendingSyncReplies) {
+            parentFullNameToPendingSyncReplyMap.put(pendingSyncReply.parentCommentFullName(), pendingSyncReply);
+          }
+
+          List<PendingSyncReply> pendingSyncRepliesToRemove = new ArrayList<>();
+
+          for (CommentNode commentNode : submission.getComments().walkTree()) {
+            String commentFullName = commentNode.getComment().getFullName();
+            if (parentFullNameToPendingSyncReplyMap.containsKey(commentFullName)) {
+              pendingSyncRepliesToRemove.add(parentFullNameToPendingSyncReplyMap.get(commentFullName));
+            }
+          }
+
+          return pendingSyncRepliesToRemove;
+        })
+        .flatMapCompletable(pendingSyncRepliesToRemove -> Completable.fromAction(() -> {
+          try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+            for (PendingSyncReply replyToRemove : pendingSyncRepliesToRemove) {
+              database.delete(
+                  PendingSyncReply.TABLE_NAME,
+                  PendingSyncReply.WHERE_BODY_AND_CREATED_TIME_2,
+                  replyToRemove.body(),
+                  String.valueOf(replyToRemove.createdTimeMillis())
+              );
+            }
+            transaction.markSuccessful();
+          }
+        }));
   }
 
   @CheckResult

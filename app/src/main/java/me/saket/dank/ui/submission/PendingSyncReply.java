@@ -24,17 +24,21 @@ public abstract class PendingSyncReply {
   public static final String QUERY_CREATE_TABLE =
       "CREATE TABLE " + TABLE_NAME + " ("
           + COLUMN_PARENT_COMMENT_FULL_NAME + " TEXT NOT NULL, "
-          + COLUMN_BODY + " TEXT NOT NULL PRIMARY KEY, "
+          + COLUMN_BODY + " TEXT NOT NULL, "
           + COLUMN_TYPE + " TEXT NOT NULL, "
           + COLUMN_PARENT_SUBMISSION_FULL_NAME + " TEXT NOT NULL, "
           + COLUMN_AUTHOR + " TEXT NOT NULL, "
-          + COLUMN_CREATED_TIME_MILLIS + " INTEGER NOT NULL"
+          + COLUMN_CREATED_TIME_MILLIS + " INTEGER NOT NULL, "
+          + "PRIMARY KEY (" + COLUMN_BODY + ", " + COLUMN_CREATED_TIME_MILLIS + ")"
           + ")";
 
   public static final String QUERY_GET_ALL_FOR_SUBMISSION =
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_PARENT_SUBMISSION_FULL_NAME + " == ?"
           + " ORDER BY " + COLUMN_CREATED_TIME_MILLIS + " DESC";
+
+  public static final String WHERE_BODY_AND_CREATED_TIME_2 =
+      COLUMN_BODY + " = ? AND " + COLUMN_CREATED_TIME_MILLIS + " = ?";
 
   /**
    * Full-name of parent comment node.

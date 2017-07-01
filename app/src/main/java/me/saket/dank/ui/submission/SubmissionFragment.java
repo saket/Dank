@@ -284,9 +284,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     unsubscribeOnDestroy(
         submissionWithCommentsStream
-            .switchMap(submissionWithComments -> Dank.comments()
-                .pendingSncRepliesForSubmission(submissionWithComments)
-                .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies))
+            .switchMap(submissionWithComments ->
+                Dank.comments().removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
+                    .andThen(Dank.comments().pendingSncRepliesForSubmission(submissionWithComments))
+                    .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies))
             )
             .compose(applySchedulers())
             .subscribe(submissionRepliesPair ->

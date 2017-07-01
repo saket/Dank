@@ -23,6 +23,7 @@ import java.util.Set;
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
+import timber.log.Timber;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more" & "continue thread ->" items.
@@ -43,6 +44,7 @@ public class CommentTreeConstructor {
    */
   public void setCommentsAndPendingReplies(Submission submissionWithComments, List<PendingSyncReply> pendingReplies) {
     rootCommentNode = submissionWithComments.getComments();
+    Timber.i("%s comments", rootCommentNode.getTotalSize());
 
     // TODO: test performance.
     pendingReplyMap.clear();
