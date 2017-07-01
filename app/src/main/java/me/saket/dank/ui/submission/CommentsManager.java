@@ -24,7 +24,7 @@ import me.saket.dank.ui.user.UserSession;
 import timber.log.Timber;
 
 /**
- * Manages sending of replies and saving of drafts.
+ * Manages sending replies and saving drafts.
  */
 public class CommentsManager {
 
@@ -77,7 +77,7 @@ public class CommentsManager {
   @CheckResult
   public Observable<List<PendingSyncReply>> pendingSncRepliesForSubmission(Submission submission) {
     return toV2Observable(
-        database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_PENDING_OR_POSTED_FOR_SUBMISSION, submission.getFullName())
+        database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FOR_SUBMISSION, submission.getFullName())
             .mapToList(PendingSyncReply.MAPPER));
   }
 

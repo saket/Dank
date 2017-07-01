@@ -10,12 +10,12 @@ import net.dean.jraw.models.CommentNode;
 @AutoValue
 public abstract class CommentPendingSyncReplyItem implements SubmissionCommentRow {
 
+  public abstract CommentNode parentCommentNode();
+
   @Override
   public abstract String fullName();
 
   public abstract PendingSyncReply pendingSyncReply();
-
-  public abstract int parentCommentNodeDepth();
 
   public abstract boolean isCollapsed();
 
@@ -24,7 +24,9 @@ public abstract class CommentPendingSyncReplyItem implements SubmissionCommentRo
     return Type.PENDING_SYNC_REPLY;
   }
 
-  public static CommentPendingSyncReplyItem create(String fullName, PendingSyncReply pendingSyncReply, int depth, boolean isCollapsed) {
-    return new AutoValue_CommentPendingSyncReplyItem(fullName, pendingSyncReply, depth, isCollapsed);
+  public static CommentPendingSyncReplyItem create(CommentNode parentCommentNode, String fullName, PendingSyncReply pendingSyncReply,
+      boolean isCollapsed)
+  {
+    return new AutoValue_CommentPendingSyncReplyItem(parentCommentNode, fullName, pendingSyncReply, isCollapsed);
   }
 }

@@ -181,10 +181,8 @@ public class CommentTreeConstructor {
       for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
         PendingSyncReply pendingSyncReply = pendingSyncReplies.get(i);
         String replyFullName = nextNode.getComment().getId() + "_reply_ " + pendingSyncReply.createdTimeMillis();
-        boolean isReplyCollapsed = isCollapsed(replyFullName);  // TODO: Solve this.
-        int replyDepth = nextNode.getDepth() + 1;
-
-        flattenComments.add(CommentPendingSyncReplyItem.create(replyFullName, pendingSyncReply, replyDepth, isReplyCollapsed));
+        boolean isReplyCollapsed = isCollapsed(replyFullName);
+        flattenComments.add(CommentPendingSyncReplyItem.create(nextNode, replyFullName, pendingSyncReply, isReplyCollapsed));
       }
     }
 

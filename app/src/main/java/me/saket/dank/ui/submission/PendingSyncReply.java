@@ -31,11 +31,10 @@ public abstract class PendingSyncReply {
           + COLUMN_CREATED_TIME_MILLIS + " INTEGER NOT NULL"
           + ")";
 
-  public static final String QUERY_GET_ALL_PENDING_OR_POSTED_FOR_SUBMISSION =
+  public static final String QUERY_GET_ALL_FOR_SUBMISSION =
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_PARENT_SUBMISSION_FULL_NAME + " == ?"
-          + " AND (" + COLUMN_TYPE + " == '" + State.POSTING + "'"
-          + " OR " + COLUMN_TYPE + " == '" + State.POSTED + "')";
+          + " ORDER BY " + COLUMN_CREATED_TIME_MILLIS + " DESC";
 
   /**
    * Full-name of parent comment node.
@@ -44,7 +43,7 @@ public abstract class PendingSyncReply {
 
   public abstract String body();
 
-  public abstract State type();
+  public abstract State state();
 
   public abstract String parentSubmissionFullName();
 
@@ -72,7 +71,7 @@ public abstract class PendingSyncReply {
     ContentValues contentValues = new ContentValues(6);
     contentValues.put(COLUMN_PARENT_COMMENT_FULL_NAME, parentCommentFullName());
     contentValues.put(COLUMN_BODY, body());
-    contentValues.put(COLUMN_TYPE, type().name());
+    contentValues.put(COLUMN_TYPE, state().name());
     contentValues.put(COLUMN_PARENT_SUBMISSION_FULL_NAME, parentSubmissionFullName());
     contentValues.put(COLUMN_AUTHOR, author());
     contentValues.put(COLUMN_CREATED_TIME_MILLIS, createdTimeMillis());

@@ -69,4 +69,5 @@
   <color name="submission_comment_byline_default_color">@color/vote_direction_none</color>
   <color name="submission_comment_body_expanded">@color/gray_200</color>
   <color name="submission_comment_body_collapsed">@color/gray_600</color>
+  <color name="submission_comment_byline_failed_to_post">@color/error_text_color</color>
 </resources>

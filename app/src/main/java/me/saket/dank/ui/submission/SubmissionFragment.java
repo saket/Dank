@@ -264,7 +264,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
       @Override
       public void onClickSendReply(CommentNode nodeBeingRepliedTo, String replyMessage) {
-        Dank.comments().sendReply(nodeBeingRepliedTo, replyMessage)
+        Dank.reddit().withAuth(Dank.comments().sendReply(nodeBeingRepliedTo, replyMessage))
             .doOnSubscribe(o -> commentTreeConstructor.hideReply(nodeBeingRepliedTo))
             .compose(applySchedulersCompletable())
             .subscribe(
@@ -317,9 +317,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Comment clicks.
     unsubscribeOnDestroy(
-        commentsAdapter.streamCommentClicks().subscribe(clickEvent -> {
-          commentTreeConstructor.toggleCollapse(clickEvent.commentRow());
-        })
+        commentsAdapter.streamCommentCollapseExpandEvents().subscribe(clickEvent -> commentTreeConstructor.toggleCollapse(clickEvent.commentRow()))
     );
 
     // Load-more-comment clicks.

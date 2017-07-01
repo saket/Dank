@@ -104,7 +104,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   }
 
   @CheckResult
-  public Observable<CommentClickEvent> streamCommentClicks() {
+  public Observable<CommentClickEvent> streamCommentCollapseExpandEvents() {
     return commentClickStream;
   }
 
@@ -227,7 +227,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         // Collapse on click.
         pendingSyncReplyViewHolder.bind(commentPendingSyncReplyItem);
         pendingSyncReplyViewHolder.itemView.setOnClickListener(v -> {
-          commentClickStream.accept(CommentClickEvent.create(commentItem, pendingSyncReplyViewHolder.itemView));
+          PendingSyncReply pendingSyncReply = commentPendingSyncReplyItem.pendingSyncReply();
+          if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
+            // Handle "tap to retry".
+            replyActionsListener.onClickSendReply(commentPendingSyncReplyItem.parentCommentNode(), pendingSyncReply.body());
+          } else {
+            commentClickStream.accept(CommentClickEvent.create(commentItem, pendingSyncReplyViewHolder.itemView));
+          }
         });
         break;
 
@@ -299,7 +305,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       commentBodyView.setTextColor(isCollapsed ? collapsedBodyColor : expandedBodyColor);
     }
 
-    protected CharSequence constructByline(String author, String authorFlairText, boolean isAuthorOP, long createdTimeMillis,
+    protected CharSequence constructCommentByline(String author, String authorFlairText, boolean isAuthorOP, long createdTimeMillis,
         VoteDirection voteDirection, int commentScore, int childCommentsCount, boolean isCollapsed)
     {
       Truss bylineBuilder = new Truss();
@@ -338,7 +344,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
       int childCommentsCount = dankCommentNode.commentNode().getTotalSize();
 
-      CharSequence byline = constructByline(
+      CharSequence byline = constructCommentByline(
           comment.getAuthor(),
           authorFlairText,
           isAuthorOP,
@@ -359,6 +365,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   // TODO: Show post indicator.
   public static class PendingSyncReplyViewHolder extends UserCommentViewHolder {
+    @BindColor(R.color.submission_comment_byline_failed_to_post) int bylineCommentPostErrorColor;
 
     public static PendingSyncReplyViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
       return new PendingSyncReplyViewHolder(inflater.inflate(R.layout.list_item_comment, parent, false), linkMovementMethod);
@@ -366,22 +373,51 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
     public PendingSyncReplyViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
       super(itemView, linkMovementMethod);
+      ButterKnife.bind(this, itemView);
     }
 
     public void bind(CommentPendingSyncReplyItem commentPendingSyncReplyItem) {
       PendingSyncReply pendingSyncReply = commentPendingSyncReplyItem.pendingSyncReply();
-      CharSequence byline = constructByline(
-          pendingSyncReply.author(),
-          null /* authorFlairText */,
-          true /* isAuthorOP */,
-          pendingSyncReply.createdTimeMillis(),
-          VoteDirection.UPVOTE /* voteDirection */,
-          1 /* commentScore */,
-          0 /* childCommentsCount */,
-          commentPendingSyncReplyItem.isCollapsed()
-      );
+      CharSequence byline;
 
-      bind(byline, pendingSyncReply.body(), commentPendingSyncReplyItem.parentCommentNodeDepth(), commentPendingSyncReplyItem.isCollapsed());
+      if (pendingSyncReply.state() == PendingSyncReply.State.POSTED) {
+        byline = constructCommentByline(
+            pendingSyncReply.author(),
+            null /* authorFlairText */,
+            true /* isAuthorOP */,
+            pendingSyncReply.createdTimeMillis(),
+            VoteDirection.UPVOTE /* voteDirection */,
+            1 /* commentScore */,
+            0 /* childCommentsCount */,
+            commentPendingSyncReplyItem.isCollapsed()
+        );
+
+      } else {
+        Truss bylineBuilder = new Truss();
+        if (commentPendingSyncReplyItem.isCollapsed()) {
+          bylineBuilder.append(pendingSyncReply.author());
+        } else {
+          bylineBuilder.pushSpan(new ForegroundColorSpan(bylineAuthorNameColorForOP));
+          bylineBuilder.append(pendingSyncReply.author());
+          bylineBuilder.popSpan();
+        }
+        bylineBuilder.append(bylineItemSeparator);
+
+        if (pendingSyncReply.state() == PendingSyncReply.State.POSTING) {
+          bylineBuilder.append("Posting comment…");
+        } else if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
+          bylineBuilder.pushSpan(new ForegroundColorSpan(bylineCommentPostErrorColor));
+          bylineBuilder.append("Failed to post. Tap to retry.");
+          bylineBuilder.popSpan();
+        } else {
+          throw new AssertionError();
+        }
+
+        byline = bylineBuilder.build();
+      }
+
+      int replyDepth = commentPendingSyncReplyItem.parentCommentNode().getDepth() + 1;
+      bind(byline, pendingSyncReply.body(), replyDepth, commentPendingSyncReplyItem.isCollapsed());
     }
   }
 
