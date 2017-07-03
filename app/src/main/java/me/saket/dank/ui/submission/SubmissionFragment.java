@@ -310,7 +310,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true /* detectMoves */);
               return Pair.create(next, result);
             })
-            .skip(1)  // To skip the initial value.
+            .skip(1)  // Skip the initial empty value.
             .observeOn(mainThread())
             .subscribe(dataAndDiff -> {
               List<SubmissionCommentRow> newComments = dataAndDiff.first;

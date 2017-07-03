@@ -10,12 +10,10 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import java.lang.ref.WeakReference;
-import java.util.List;
 
 import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
@@ -23,9 +21,7 @@ import me.saket.dank.utils.RecyclerViewArrayAdapter;
 /**
  * Adapter for displaying a list of subreddits.
  */
-public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscription, SubredditAdapter.SubredditViewHolder>
-    implements Consumer<List<SubredditSubscription>>
-{
+public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscription, SubredditAdapter.SubredditViewHolder> {
 
   private OnSubredditClickListener clickListener;
   private SubredditSubscription highlightedSubscription;
@@ -46,11 +42,6 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
 
   public void temporarilyHighlight(SubredditSubscription subscription) {
     highlightedSubscription = subscription;
-  }
-
-  @Override
-  public void accept(List<SubredditSubscription> subscriptions) {
-    updateDataAndNotifyDatasetChanged(subscriptions);
   }
 
   @Override

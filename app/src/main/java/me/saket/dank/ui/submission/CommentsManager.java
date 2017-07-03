@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission;
 
 import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
+import static me.saket.dank.utils.Commons.toImmutable;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
@@ -109,7 +110,8 @@ public class CommentsManager {
   public Observable<List<PendingSyncReply>> streamPendingSncRepliesForSubmission(Submission submission) {
     return toV2Observable(
         database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FOR_SUBMISSION, submission.getFullName())
-            .mapToList(PendingSyncReply.MAPPER));
+            .mapToList(PendingSyncReply.MAPPER))
+        .map(toImmutable());
   }
 
   /**
@@ -153,7 +155,8 @@ public class CommentsManager {
 
   @CheckResult
   public Observable<List<PendingSyncReply>> streamFailedReplies() {
-    return toV2Observable(database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FAILED).mapToList(PendingSyncReply.MAPPER));
+    return toV2Observable(database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FAILED).mapToList(PendingSyncReply.MAPPER))
+        .map(toImmutable());
   }
 
 // ======== DRAFTS ======== //

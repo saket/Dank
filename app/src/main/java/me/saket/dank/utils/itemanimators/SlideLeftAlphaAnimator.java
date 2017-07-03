@@ -2,18 +2,18 @@ package me.saket.dank.utils.itemanimators;
 
 import android.view.View;
 
-public class SlideDownAlphaAnimator extends SlideAlphaAnimator<SlideDownAlphaAnimator> {
+public class SlideLeftAlphaAnimator extends SlideAlphaAnimator<SlideLeftAlphaAnimator> {
 
-  public SlideDownAlphaAnimator(int itemViewElevation) {
+  public SlideLeftAlphaAnimator(int itemViewElevation) {
     super(itemViewElevation);
   }
 
-  @Override
   protected float getAnimationTranslationX(View itemView) {
-    return 0;
+    return -dpToPx(32, itemView.getContext());
   }
 
+  @Override
   protected float getAnimationTranslationY(View itemView) {
-    return -dpToPx(32, itemView.getContext());
+    return 0;
   }
 }

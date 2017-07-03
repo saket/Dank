@@ -19,9 +19,10 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v7.widget.DefaultItemAnimator;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
+import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -38,6 +39,7 @@ import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.common.collect.ImmutableList;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.Subreddit;
 
@@ -50,17 +52,21 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.itemanimators.SlideLeftAlphaAnimator;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
 
@@ -100,6 +106,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   private SheetState sheetState;
   private BehaviorRelay<Boolean> showHiddenSubredditsSubject;
   private Runnable pendingOnWindowDetachedRunnable;
+  private SlideLeftAlphaAnimator itemAnimator;
 
   enum SheetState {
     BROWSE_SUBS,
@@ -134,6 +141,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     sheetState = SheetState.BROWSE_SUBS;
     subscriptions = new CompositeDisposable();
     showHiddenSubredditsSubject = BehaviorRelay.createDefault(false);
+    itemAnimator = new SlideLeftAlphaAnimator(0);
   }
 
   public boolean shouldInterceptPullToCollapse(float downX, float downY) {
@@ -155,7 +163,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     subredditAdapter = new SubredditAdapter();
     subredditAdapter.setOnSubredditClickListener(this);
     subredditList.setAdapter(subredditAdapter);
-    subredditList.setItemAnimator(null);
 
     setupSubredditsSearch();
 
@@ -211,6 +218,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   // TODO: 15/04/17 Handle error.
   // TODO: 15/04/17 Empty state.
   private void setupSubredditsSearch() {
+    Relay<List<SubredditSubscription>> subscriptionsStream = BehaviorRelay.create();
+
     // RxTextView emits an initial event on subscribe, so the following code will result in loading all subreddits.
     subscriptions.add(RxTextView.textChanges(searchView)
         .map(searchTerm -> {
@@ -262,7 +271,29 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         .compose(onStartAndFirstEvent(setSubredditLoadProgressVisible()))
         .compose(RxUtils.doOnceAfterNext(o -> listenToBackgroundRefreshes()))
         .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
-        .subscribe(subredditAdapter)
+        .subscribe(subscriptionsStream)
+    );
+
+    // Animate changes.
+    Pair<List<SubredditSubscription>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
+    subscriptions.add(
+        subscriptionsStream
+            .toFlowable(BackpressureStrategy.LATEST)
+            .observeOn(Schedulers.io())
+            .scan(initialPair, (pair, next) -> {
+              SubredditSubscriptionDiffCallbacks callback = new SubredditSubscriptionDiffCallbacks(pair.first, next);
+              DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true /* detectMoves */);
+              return Pair.create(next, result);
+            })
+            .skip(1)  // Skip the initial empty value.
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(dataAndDiff -> {
+              List<SubredditSubscription> newComments = dataAndDiff.first;
+              subredditAdapter.updateData(newComments);
+
+              DiffUtil.DiffResult commentsDiffResult = dataAndDiff.second;
+              commentsDiffResult.dispatchUpdatesTo(subredditAdapter);
+            }, logError("Error while diff-ing comments"))
     );
   }
 
@@ -394,8 +425,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     overflowMenu.getMenu().findItem(R.id.action_show_hidden_subreddits).setVisible(!showHiddenSubredditsSubject.getValue());
     overflowMenu.getMenu().findItem(R.id.action_hide_hidden_subreddits).setVisible(showHiddenSubredditsSubject.getValue());
 
-    // Enable item change animation, until the user starts searching.
-    subredditList.setItemAnimator(new DefaultItemAnimator());
+    // Enable item change animation in case refresh is clicked or hidden subs are toggled.
+    subredditList.setItemAnimator(itemAnimator);
 
     overflowMenu.setOnMenuItemClickListener(item -> {
       switch (item.getItemId()) {
@@ -432,7 +463,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     popupMenu.getMenu().findItem(R.id.action_unhide_subreddit).setVisible(subscription.isHidden());
 
     // Enable item change animation, until the user starts searching.
-    subredditList.setItemAnimator(new DefaultItemAnimator());
+    subredditList.setItemAnimator(itemAnimator);
 
     popupMenu.setOnMenuItemClickListener(item -> {
       switch (item.getItemId()) {
@@ -445,7 +476,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
             Dank.subscriptions().resetDefaultSubreddit();
           }
 
-          Timber.i("Poop 1");
           Dank.subscriptions()
               .unsubscribe(subscription)
               .compose(applySchedulersCompletable())
@@ -510,7 +540,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     });
 
     // Enable item change animation, until the user starts searching.
-    subredditList.setItemAnimator(new DefaultItemAnimator());
+    subredditList.setItemAnimator(itemAnimator);
 
     subscriptions.add(Dank.subscriptions().subscribe(newSubreddit)
         .andThen(Completable.fromAction(findAndHighlightSubredditAction))
