@@ -1,5 +1,7 @@
 package me.saket.dank.ui.submission;
 
+import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+
 import android.support.annotation.CheckResult;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
@@ -25,6 +27,9 @@ import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.VotingManager;
@@ -51,6 +56,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private final BetterLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
   private final UserSession userSession;
+  private final ReplyDraftStore replyDraftStore;
   private final CommentSwipeActionsProvider swipeActionsProvider;
   private final BehaviorRelay<CommentClickEvent> commentClickStream = BehaviorRelay.create();
   private final BehaviorRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = BehaviorRelay.create();
@@ -96,11 +102,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   }
 
   public CommentsAdapter(BetterLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSession userSession,
-      CommentSwipeActionsProvider swipeActionsProvider)
+      ReplyDraftStore replyDraftStore, CommentSwipeActionsProvider swipeActionsProvider)
   {
     this.linkMovementMethod = commentsLinkMovementMethod;
     this.votingManager = votingManager;
     this.userSession = userSession;
+    this.replyDraftStore = replyDraftStore;
     this.swipeActionsProvider = swipeActionsProvider;
     setHasStableIds(true);
   }
@@ -219,7 +226,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       case REPLY:
         CommentInlineReplyItem commentInlineReplyItem = (CommentInlineReplyItem) commentItem;
-        ((InlineReplyViewHolder) holder).bind(commentInlineReplyItem, replyActionsListener, userSession);
+        ((InlineReplyViewHolder) holder).bind(commentInlineReplyItem, replyActionsListener, userSession, replyDraftStore);
         break;
 
       case PENDING_SYNC_REPLY:
@@ -247,6 +254,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   @Override
   public long getItemId(int position) {
     return getItem(position).fullName().hashCode();
+  }
+
+  @Override
+  public void onViewRecycled(RecyclerView.ViewHolder holder) {
+    if (holder instanceof InlineReplyViewHolder) {
+      ((InlineReplyViewHolder) holder).handleOnRecycle(replyDraftStore);
+    }
+    super.onViewRecycled(holder);
   }
 
   public static class UserCommentViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
@@ -431,6 +446,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_comment_reply_send) ImageButton sendButton;
     @BindView(R.id.item_comment_reply_message) EditText replyMessageField;
 
+    private Disposable draftDisposable = Disposables.disposed();
+    private CommentNode parentCommentNode;
+
     public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new InlineReplyViewHolder(inflater.inflate(R.layout.list_item_comment_reply, parent, false));
     }
@@ -440,18 +458,39 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       ButterKnife.bind(this, itemView);
     }
 
-    public void bind(CommentInlineReplyItem commentInlineReplyItem, ReplyActionsListener replyActionsListener, UserSession userSession) {
-      CommentNode commentNodeToReply = commentInlineReplyItem.parentCommentNode();
-      indentedLayout.setIndentationDepth(commentNodeToReply.getDepth());
-
+    public void bind(CommentInlineReplyItem commentInlineReplyItem, ReplyActionsListener replyActionsListener, UserSession userSession,
+        ReplyDraftStore replyDraftStore)
+    {
+      parentCommentNode = commentInlineReplyItem.parentCommentNode();
+      indentedLayout.setIndentationDepth(parentCommentNode.getDepth());
       authorUsernameHintView.setText(authorUsernameHintView.getResources().getString(
           R.string.submission_comment_reply_author_hint,
           userSession.loggedInUserName()
       ));
 
-      discardButton.setOnClickListener(o -> replyActionsListener.onClickDiscardReply(commentNodeToReply));
-      goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(commentNodeToReply));
-      sendButton.setOnClickListener(o -> replyActionsListener.onClickSendReply(commentNodeToReply, replyMessageField.getText().toString()));
+      discardButton.setOnClickListener(o -> replyActionsListener.onClickDiscardReply(parentCommentNode));
+      goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(parentCommentNode));
+      sendButton.setOnClickListener(o -> replyActionsListener.onClickSendReply(parentCommentNode, replyMessageField.getText().toString()));
+
+      draftDisposable = replyDraftStore.getDraft(parentCommentNode.getComment())
+          .compose(applySchedulersSingle())
+          .subscribe(replyDraft -> {
+            replyMessageField.setText(replyDraft);
+            if (replyDraft != null) {
+              replyMessageField.setSelection(replyDraft.length());
+            }
+          });
+    }
+
+    public void handleOnRecycle(ReplyDraftStore replyDraftStore) {
+      // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
+      replyDraftStore
+          .saveDraft(parentCommentNode.getComment(), replyMessageField.getText().toString())
+          .subscribeOn(Schedulers.io())
+          .subscribe();
+
+      draftDisposable.dispose();
+      parentCommentNode = null;
     }
   }
 

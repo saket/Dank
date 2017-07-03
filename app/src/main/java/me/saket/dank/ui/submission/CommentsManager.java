@@ -3,9 +3,12 @@ package me.saket.dank.ui.submission;
 import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
 import static me.saket.dank.utils.Commons.toImmutable;
 
+import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 
 import net.dean.jraw.models.Comment;
@@ -29,19 +32,22 @@ import timber.log.Timber;
 /**
  * Manages sending replies and saving drafts.
  */
-public class CommentsManager {
+public class CommentsManager implements ReplyDraftStore {
 
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase database;
   private final UserSession userSession;
+  private final SharedPreferences sharedPreferences;
+  private final Moshi moshi;
 
-  // TODO: Remove this.
-  private final Map<String, String> inMemoryDraftMap = new HashMap<>();
-
-  public CommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession) {
+  public CommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession, SharedPreferences sharedPreferences,
+      Moshi moshi)
+  {
     this.dankRedditClient = dankRedditClient;
     this.database = database;
     this.userSession = userSession;
+    this.sharedPreferences = sharedPreferences;
+    this.moshi = moshi;
   }
 
 // ======== REPLY ======== //
@@ -159,23 +165,47 @@ public class CommentsManager {
         .map(toImmutable());
   }
 
-// ======== DRAFTS ======== //
-
   @CheckResult
-  public Completable saveDraft(Comment parentComment, String draft) {
-    return Completable.fromAction(() -> inMemoryDraftMap.put(parentComment.getFullName(), draft));
-  }
-
-  @CheckResult
-  public Single<String> getDraft(Comment parentComment) {
-    return Single.just(inMemoryDraftMap.get(parentComment.getFullName()));
-  }
-
-  @CheckResult
-  public Completable removeAll() {
+  public Completable removeAllPendingSyncReplies() {
     if (!BuildConfig.DEBUG) {
       throw new IllegalStateException();
     }
     return Completable.fromAction(() -> database.delete(PendingSyncReply.TABLE_NAME, null));
+  }
+
+// ======== DRAFTS ======== //
+
+  @Override
+  @CheckResult
+  public Completable saveDraft(Comment parentComment, String draftBody) {
+    return Completable.fromAction(() -> {
+      long draftCreatedTimeMillis = System.currentTimeMillis();
+      ReplyDraft replyDraft = ReplyDraft.create(draftBody, draftCreatedTimeMillis);
+
+      JsonAdapter<ReplyDraft> jsonAdapter = moshi.adapter(ReplyDraft.class);
+      String replyDraftJson = jsonAdapter.toJson(replyDraft);
+      sharedPreferences.edit().putString(keyForDraft(parentComment), replyDraftJson).apply();
+
+      // TODO:
+      // Recycle old drafts.
+    });
+  }
+
+  @Override
+  @CheckResult
+  public Single<String> getDraft(Comment parentComment) {
+    return Single.fromCallable(() -> {
+      String replyDraftJson = sharedPreferences.getString(keyForDraft(parentComment), "");
+      if ("".equals(replyDraftJson)) {
+        return "";
+      }
+
+      ReplyDraft replyDraft = moshi.adapter(ReplyDraft.class).fromJson(replyDraftJson);
+      return replyDraft.body();
+    });
+  }
+
+  private static String keyForDraft(Comment parentComment) {
+    return "replyDraftFor_" + parentComment.getFullName();
   }
 }

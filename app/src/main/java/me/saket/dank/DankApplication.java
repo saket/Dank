@@ -39,7 +39,7 @@ public class DankApplication extends Application {
       e = Dank.errors().findActualCause(e);
 
       if (e instanceof IOException) {
-        // Fine, irrelevant network problem or API that throws on cancellation.
+        // Fine, file/network problem or API that throws on cancellation.
         Timber.w("IOException");
         return;
       }

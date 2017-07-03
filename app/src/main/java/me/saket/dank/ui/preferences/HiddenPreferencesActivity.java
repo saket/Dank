@@ -91,7 +91,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     });
 
     addButton("Clear pending sync replies", o -> {
-      Dank.comments().removeAll()
+      Dank.comments().removeAllPendingSyncReplies()
           .subscribeOn(Schedulers.io())
           .subscribe();
     });

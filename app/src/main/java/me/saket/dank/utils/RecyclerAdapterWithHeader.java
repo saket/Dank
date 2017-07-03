@@ -73,6 +73,48 @@ public abstract class RecyclerAdapterWithHeader<HVH extends RecyclerView.ViewHol
     adapterToWrap.onDetachedFromRecyclerView(recyclerView);
   }
 
+  @Override
+  public void setHasStableIds(boolean hasStableIds) {
+    super.setHasStableIds(hasStableIds);
+    adapterToWrap.setHasStableIds(hasStableIds);
+  }
+
+  @Override
+  public void onViewRecycled(VH holder) {
+    if (isHeaderItem(holder.getAdapterPosition())) {
+      super.onViewRecycled(holder);
+    } else {
+      adapterToWrap.onViewRecycled(holder);
+    }
+  }
+
+  @Override
+  public void onViewAttachedToWindow(VH holder) {
+    if (isHeaderItem(holder.getAdapterPosition())) {
+      super.onViewAttachedToWindow(holder);
+    } else {
+      adapterToWrap.onViewAttachedToWindow(holder);
+    }
+  }
+
+  @Override
+  public void onViewDetachedFromWindow(VH holder) {
+    if (isHeaderItem(holder.getAdapterPosition())) {
+      super.onViewDetachedFromWindow(holder);
+    } else {
+      adapterToWrap.onViewDetachedFromWindow(holder);
+    }
+  }
+
+  @Override
+  public boolean onFailedToRecycleView(VH holder) {
+    if (isHeaderItem(holder.getAdapterPosition())) {
+      return super.onFailedToRecycleView(holder);
+    } else {
+      return adapterToWrap.onFailedToRecycleView(holder);
+    }
+  }
+
   protected abstract boolean isHeaderVisible();
 
   protected abstract HVH onCreateHeaderViewHolder(View headerView);

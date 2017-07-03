@@ -1,6 +1,7 @@
 package me.saket.dank.di;
 
 import android.app.Application;
+import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -24,6 +25,7 @@ import net.dean.jraw.http.UserAgent;
 
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -260,7 +262,16 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  CommentsManager provideCommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession) {
-    return new CommentsManager(dankRedditClient, database, userSession);
+  CommentsManager provideCommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession,
+      @Named("replyDraftStore") SharedPreferences sharedPreferences, Moshi moshi)
+  {
+    return new CommentsManager(dankRedditClient, database, userSession, sharedPreferences, moshi);
+  }
+
+  @Provides
+  @Singleton
+  @Named("replyDraftStore")
+  SharedPreferences provideSharedPreferencesForReplyDraftStore() {
+    return appContext.getSharedPreferences("replyDraftStore", Context.MODE_PRIVATE);
   }
 }
