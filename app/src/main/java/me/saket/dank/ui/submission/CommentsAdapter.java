@@ -62,7 +62,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
     void onClickEditReplyInFullscreenMode(CommentNode nodeBeingRepliedTo);
 
-    void onClickSendReply(CommentNode nodeBeingRepliedTo, String replyMessage);
+    void onClickSendReply(CommentNode parentCommentNode, String replyMessage);
+
+    void onClickRetrySendingReply(CommentNode parentCommentNode, PendingSyncReply pendingSyncReply);
   }
 
   @AutoValue
@@ -229,8 +231,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         pendingSyncReplyViewHolder.itemView.setOnClickListener(v -> {
           PendingSyncReply pendingSyncReply = commentPendingSyncReplyItem.pendingSyncReply();
           if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
-            // Handle "tap to retry".
-            replyActionsListener.onClickSendReply(commentPendingSyncReplyItem.parentCommentNode(), pendingSyncReply.body());
+            // "Tap to retry".
+            replyActionsListener.onClickRetrySendingReply(commentPendingSyncReplyItem.parentCommentNode(), pendingSyncReply);
           } else {
             commentClickStream.accept(CommentClickEvent.create(commentItem, pendingSyncReplyViewHolder.itemView));
           }
@@ -404,10 +406,10 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         bylineBuilder.append(bylineItemSeparator);
 
         if (pendingSyncReply.state() == PendingSyncReply.State.POSTING) {
-          bylineBuilder.append("Posting comment…");
+          bylineBuilder.append(itemView.getResources().getString(R.string.submission_comment_reply_byline_posting_status));
         } else if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
           bylineBuilder.pushSpan(new ForegroundColorSpan(bylineCommentPostErrorColor));
-          bylineBuilder.append("Failed to post. Tap to retry.");
+          bylineBuilder.append(itemView.getResources().getString(R.string.submission_comment_reply_byline_failed_status));
           bylineBuilder.popSpan();
         } else {
           throw new AssertionError();

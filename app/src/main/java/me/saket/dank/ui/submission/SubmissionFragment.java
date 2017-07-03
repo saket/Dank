@@ -3,10 +3,10 @@ package me.saket.dank.ui.submission;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.Commons.findOptimizedImage;
-import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
+import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
@@ -59,6 +59,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
@@ -263,14 +264,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       }
 
       @Override
-      public void onClickSendReply(CommentNode nodeBeingRepliedTo, String replyMessage) {
-        Dank.reddit().withAuth(Dank.comments().sendReply(nodeBeingRepliedTo, replyMessage))
-            .doOnSubscribe(o -> commentTreeConstructor.hideReply(nodeBeingRepliedTo))
+      public void onClickSendReply(CommentNode parentCommentNode, String replyMessage) {
+        Dank.reddit().withAuth(Dank.comments().sendReply(parentCommentNode, replyMessage))
+            .doOnSubscribe(o -> commentTreeConstructor.hideReply(parentCommentNode))
             .compose(applySchedulersCompletable())
-            .subscribe(
-                () -> Timber.i("Reply sent!"),
-                error -> logError("Reply failed. TODO: Send notification.")
-            );
+            .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
+      }
+
+      @Override
+      public void onClickRetrySendingReply(CommentNode parentCommentNode, PendingSyncReply pendingSyncReply) {
+        Dank.reddit().withAuth(Dank.comments().reSendReply(pendingSyncReply))
+            .compose(applySchedulersCompletable())
+            .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
       }
     });
   }
@@ -284,12 +289,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     unsubscribeOnDestroy(
         submissionWithCommentsStream
+            .observeOn(Schedulers.io())
             .switchMap(submissionWithComments ->
                 Dank.comments().removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
-                    .andThen(Dank.comments().pendingSncRepliesForSubmission(submissionWithComments))
+                    .andThen(Dank.comments().streamPendingSncRepliesForSubmission(submissionWithComments))
                     .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies))
             )
-            .compose(applySchedulers())
             .subscribe(submissionRepliesPair ->
                 commentTreeConstructor.setCommentsAndPendingReplies(submissionRepliesPair.first, submissionRepliesPair.second)
             )
@@ -458,7 +463,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Reset everything.
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
-    commentList.scrollTo(0, 0);
+    commentList.scrollToPosition(0);
     commentTreeConstructor.reset();
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);
 

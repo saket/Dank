@@ -19,7 +19,6 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.NavUtils;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -143,7 +142,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     if (isPullCollapsible) {
       expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
       toolbarCloseButton.setVisibility(View.VISIBLE);
-      toolbarCloseButton.setOnClickListener(__ -> NavUtils.navigateUpFromSameTask(this));
+      toolbarCloseButton.setOnClickListener(o -> finish());
     }
     contentPage.setNestedExpandablePage(submissionPage);
   }

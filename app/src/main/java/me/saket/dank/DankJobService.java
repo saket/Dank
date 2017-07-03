@@ -35,6 +35,8 @@ public abstract class DankJobService extends JobService {
 
   protected static final int ID_VOTE = 8;
 
+  protected static final int ID_RETRY_REPLY = 9;
+
   private CompositeDisposable onDestroyDisposables;
 
   protected void unsubscribeOnDestroy(Disposable subscription) {

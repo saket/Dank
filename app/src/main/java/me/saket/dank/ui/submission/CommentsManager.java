@@ -20,9 +20,9 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
+import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.ui.user.UserSession;
-import me.saket.dank.utils.Strings;
 import timber.log.Timber;
 
 /**
@@ -43,23 +43,43 @@ public class CommentsManager {
     this.userSession = userSession;
   }
 
-  @CheckResult
-  public Completable sendReply(CommentNode parentCommentNode, String reply) {
-    String parentSubmissionFullName = parentCommentNode.getSubmissionName();
-    Comment parentComment = parentCommentNode.getComment();
-    long replyCreatedTime = System.currentTimeMillis();
+// ======== REPLY ======== //
 
+  /**
+   * This exists to ensure a duplicate reply does not get stored when re-sending the same reply.
+   */
+  @CheckResult
+  public Completable reSendReply(PendingSyncReply pendingSyncReply) {
+    String parentSubmissionFullName = pendingSyncReply.parentSubmissionFullName();
+    String parentCommentFullName = pendingSyncReply.parentCommentFullName();
+    String replyBody = pendingSyncReply.body();
+    long replyCreatedTimeMillis = pendingSyncReply.createdTimeMillis();
+    return sendReply(parentSubmissionFullName, parentCommentFullName, replyBody, replyCreatedTimeMillis);
+  }
+
+  @CheckResult
+  public Completable sendReply(CommentNode parentCommentNode, String replyBody) {
+    String parentSubmissionFullName = parentCommentNode.getSubmissionName();
+    String parentCommentFullName = parentCommentNode.getComment().getFullName();
+    long replyCreatedTimeMillis = System.currentTimeMillis();
+    return sendReply(parentSubmissionFullName, parentCommentFullName, replyBody, replyCreatedTimeMillis);
+  }
+
+  @CheckResult
+  private Completable sendReply(String parentSubmissionFullName, String parentCommentFullName, String replyBody, long replyCreatedTimeMillis) {
     PendingSyncReply pendingSyncReply = PendingSyncReply.create(
-        parentComment.getFullName(),
-        reply,
+        parentCommentFullName,
+        replyBody,
         PendingSyncReply.State.POSTING,
         parentSubmissionFullName,
         userSession.loggedInUserName(),
-        replyCreatedTime
+        replyCreatedTimeMillis
     );
 
+    ContributionFullNameWrapper fakeParentComment = ContributionFullNameWrapper.create(parentCommentFullName);
+
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
-        .andThen(Completable.fromAction(() -> dankRedditClient.userAccountManager().reply(parentComment, reply)))
+        .andThen(Completable.fromAction(() -> dankRedditClient.userAccountManager().reply(fakeParentComment, replyBody)))
         .andThen(Completable.fromAction(() -> {
           PendingSyncReply updatedPendingSyncReply = pendingSyncReply.withType(PendingSyncReply.State.POSTED);
           database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
@@ -67,8 +87,8 @@ public class CommentsManager {
         .onErrorResumeNext(error -> {
           PendingSyncReply updatedPendingSyncReply = pendingSyncReply.withType(PendingSyncReply.State.FAILED);
           database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
-          Timber.e(error, "Couldn't post reply");
-          return Completable.complete();
+          Timber.e(error, "Couldn't send reply");
+          return Completable.error(error);
         });
   }
 
@@ -77,7 +97,7 @@ public class CommentsManager {
    * haven't been refreshed for <var>submission</var> yet.
    */
   @CheckResult
-  public Observable<List<PendingSyncReply>> pendingSncRepliesForSubmission(Submission submission) {
+  public Observable<List<PendingSyncReply>> streamPendingSncRepliesForSubmission(Submission submission) {
     return toV2Observable(
         database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FOR_SUBMISSION, submission.getFullName())
             .mapToList(PendingSyncReply.MAPPER));
@@ -88,7 +108,7 @@ public class CommentsManager {
    */
   @CheckResult
   public Completable removeSyncPendingPostedRepliesForSubmission(Submission submission) {
-    return pendingSncRepliesForSubmission(submission)
+    return streamPendingSncRepliesForSubmission(submission)
         .firstOrError()
         .map(pendingSyncReplies -> {
           Map<String, PendingSyncReply> parentFullNameToPendingSyncReplyMap = new HashMap<>(pendingSyncReplies.size(), 1);
@@ -121,6 +141,13 @@ public class CommentsManager {
           }
         }));
   }
+
+  @CheckResult
+  public Observable<List<PendingSyncReply>> streamFailedReplies() {
+    return toV2Observable(database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FAILED).mapToList(PendingSyncReply.MAPPER));
+  }
+
+// ======== DRAFTS ======== //
 
   @CheckResult
   public Completable saveDraft(Comment parentComment, String draft) {

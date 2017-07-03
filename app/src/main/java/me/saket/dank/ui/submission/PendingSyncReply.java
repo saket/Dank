@@ -16,7 +16,7 @@ public abstract class PendingSyncReply {
   public static final String TABLE_NAME = "PendingReply";
   private static final String COLUMN_PARENT_COMMENT_FULL_NAME = "parent_comment_full_name";
   private static final String COLUMN_BODY = "body";
-  private static final String COLUMN_TYPE = "type";
+  private static final String COLUMN_STATE = "state";
   private static final String COLUMN_PARENT_SUBMISSION_FULL_NAME = "parent_submission_full_name";
   private static final String COLUMN_AUTHOR = "author";
   private static final String COLUMN_CREATED_TIME_MILLIS = "created_time_millis";
@@ -25,7 +25,7 @@ public abstract class PendingSyncReply {
       "CREATE TABLE " + TABLE_NAME + " ("
           + COLUMN_PARENT_COMMENT_FULL_NAME + " TEXT NOT NULL, "
           + COLUMN_BODY + " TEXT NOT NULL, "
-          + COLUMN_TYPE + " TEXT NOT NULL, "
+          + COLUMN_STATE + " TEXT NOT NULL, "
           + COLUMN_PARENT_SUBMISSION_FULL_NAME + " TEXT NOT NULL, "
           + COLUMN_AUTHOR + " TEXT NOT NULL, "
           + COLUMN_CREATED_TIME_MILLIS + " INTEGER NOT NULL, "
@@ -36,6 +36,15 @@ public abstract class PendingSyncReply {
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_PARENT_SUBMISSION_FULL_NAME + " == ?"
           + " ORDER BY " + COLUMN_CREATED_TIME_MILLIS + " DESC";
+
+  public static final String QUERY_GET_ALL_POSTING_OR_FAILED =
+      "SELECT * FROM " + TABLE_NAME
+          + " WHERE " + COLUMN_STATE + " == '" + State.POSTING + "'" +
+          " OR " + COLUMN_STATE + " == '" + State.FAILED + "'";
+
+  public static final String QUERY_GET_ALL_FAILED =
+      "SELECT * FROM " + TABLE_NAME
+          + " WHERE " + COLUMN_STATE + " == '" + State.FAILED + "'";
 
   public static final String WHERE_BODY_AND_CREATED_TIME_2 =
       COLUMN_BODY + " = ? AND " + COLUMN_CREATED_TIME_MILLIS + " = ?";
@@ -75,7 +84,7 @@ public abstract class PendingSyncReply {
     ContentValues contentValues = new ContentValues(6);
     contentValues.put(COLUMN_PARENT_COMMENT_FULL_NAME, parentCommentFullName());
     contentValues.put(COLUMN_BODY, body());
-    contentValues.put(COLUMN_TYPE, state().name());
+    contentValues.put(COLUMN_STATE, state().name());
     contentValues.put(COLUMN_PARENT_SUBMISSION_FULL_NAME, parentSubmissionFullName());
     contentValues.put(COLUMN_AUTHOR, author());
     contentValues.put(COLUMN_CREATED_TIME_MILLIS, createdTimeMillis());
@@ -85,7 +94,7 @@ public abstract class PendingSyncReply {
   public static final Func1<Cursor, PendingSyncReply> MAPPER = cursor -> {
     String parentCommentFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PARENT_COMMENT_FULL_NAME));
     String body = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY));
-    State state = State.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TYPE)));
+    State state = State.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATE)));
     String parentSubmissionFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PARENT_SUBMISSION_FULL_NAME));
     String author = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_AUTHOR));
     long createdTime = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_CREATED_TIME_MILLIS));
