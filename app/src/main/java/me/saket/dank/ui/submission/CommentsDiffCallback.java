@@ -1,29 +1,14 @@
 package me.saket.dank.ui.submission;
 
-import android.support.v7.util.DiffUtil;
-
 import java.util.List;
 
+import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
 import timber.log.Timber;
 
-public class CommentsDiffCallback extends DiffUtil.Callback {
-
-  private final List<SubmissionCommentRow> oldComments;
-  private final List<SubmissionCommentRow> newComments;
+public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionCommentRow> {
 
   public CommentsDiffCallback(List<SubmissionCommentRow> oldComments, List<SubmissionCommentRow> newComments) {
-    this.oldComments = oldComments;
-    this.newComments = newComments;
-  }
-
-  @Override
-  public int getOldListSize() {
-    return oldComments.size();
-  }
-
-  @Override
-  public int getNewListSize() {
-    return newComments.size();
+    super(oldComments, newComments);
   }
 
   /**
@@ -32,9 +17,7 @@ public class CommentsDiffCallback extends DiffUtil.Callback {
    * For example, if your items have unique ids, this method should check their id equality.
    */
   @Override
-  public boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-    SubmissionCommentRow oldCommentRow = oldComments.get(oldItemPosition);
-    SubmissionCommentRow newCommentRow = newComments.get(newItemPosition);
+  public boolean areItemsTheSame(SubmissionCommentRow oldCommentRow, SubmissionCommentRow newCommentRow) {
     return oldCommentRow.fullName().equals(newCommentRow.fullName());
   }
 
@@ -52,10 +35,7 @@ public class CommentsDiffCallback extends DiffUtil.Callback {
    * {@code true} for these items.
    */
   @Override
-  public boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-    SubmissionCommentRow oldCommentRow = oldComments.get(oldItemPosition);
-    SubmissionCommentRow newCommentRow = newComments.get(newItemPosition);
-
+  protected boolean areContentsTheSame(SubmissionCommentRow oldCommentRow, SubmissionCommentRow newCommentRow) {
     try {
       return oldCommentRow.equals(newCommentRow);
     } catch (StackOverflowError e) {
