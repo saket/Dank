@@ -42,6 +42,7 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import net.dean.jraw.models.Subreddit;
 
 import java.util.Collections;
+import java.util.List;
 
 import butterknife.BindColor;
 import butterknife.BindDimen;
@@ -145,7 +146,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   protected void onAttachedToWindow() {
     super.onAttachedToWindow();
 
-    FlexboxLayoutManager flexboxLayoutManager = new FlexboxLayoutManager();
+    FlexboxLayoutManager flexboxLayoutManager = new FlexboxLayoutManager(getContext());
     flexboxLayoutManager.setFlexDirection(FlexDirection.ROW);
     flexboxLayoutManager.setFlexWrap(FlexWrap.WRAP);
     flexboxLayoutManager.setAlignItems(AlignItems.STRETCH);
@@ -492,13 +493,15 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
    */
   public void subscribeTo(Subreddit newSubreddit) {
     Action findAndHighlightSubredditAction = () -> Views.executeOnNextLayout(subredditList, () -> {
-      for (int position = 0; position < subredditAdapter.getItemCount(); position++) {
-        SubredditSubscription subscription = subredditAdapter.getItem(position);
+      List<SubredditSubscription> subscriptions = subredditAdapter.getData();
+
+      for (int position = 0; position < subscriptions.size(); position++) {
+        SubredditSubscription subscription = subscriptions.get(position);
         if (subscription.name().equalsIgnoreCase(newSubreddit.getDisplayName())) {
           subredditAdapter.temporarilyHighlight(subscription);
           subredditAdapter.notifyItemChanged(position);
 
-          // FlexboxLayoutManager doesn't support smooth scrolling :(
+          // Smooth scrolling doesn't seem to work.
           final int finalPosition = position;
           subredditList.post(() -> subredditList.scrollToPosition(finalPosition));
           break;
@@ -509,13 +512,10 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     // Enable item change animation, until the user starts searching.
     subredditList.setItemAnimator(new DefaultItemAnimator());
 
-    subscriptions.add(Dank.subscriptions()
-        .subscribe(newSubreddit)
-        // Add some delay to ensure the list's dataset has been updated with this new subreddit.
+    subscriptions.add(Dank.subscriptions().subscribe(newSubreddit)
         .andThen(Completable.fromAction(findAndHighlightSubredditAction))
         .compose(applySchedulersCompletable())
         .subscribe(doNothingCompletable(), doNothing())
     );
   }
-
 }

@@ -88,9 +88,11 @@
     android:layout_height="match_parent"
     android:layout_below="@+id/subredditpicker_search"
     android:layout_marginBottom="@dimen/spacing16"
-    android:layout_marginEnd="@dimen/spacing12"
-    android:layout_marginStart="@dimen/spacing12"
-    android:clipToPadding="false" />
+    android:paddingEnd="@dimen/spacing12"
+    android:paddingStart="@dimen/spacing12"
+    android:clipToPadding="false"
+    android:scrollbarStyle="outsideOverlay"
+    android:scrollbars="vertical" />
 
   <FrameLayout
     android:id="@+id/subredditpicker_load_progress"

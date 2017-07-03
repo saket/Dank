@@ -107,7 +107,7 @@ dependencies {
     compile 'com.github.bumptech.glide:glide:3.7.0'
     compile 'com.squareup.sqlbrite:sqlbrite:1.1.1'
     compile "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet. TODO: Remove this. SQLBrite is on Rx2.
-    compile 'com.google.android:flexbox:0.3.0-alpha3'
+    compile 'com.google.android:flexbox:0.3.0'
     compile 'com.github.zagum:Android-ExpandIcon:1.1.1'
     compile 'com.github.Saketme:Better-Link-Movement-Method:40b13980d4'
     compile 'org.sufficientlysecure:html-textview:3.3'
