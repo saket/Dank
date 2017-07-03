@@ -2,6 +2,7 @@ package me.saket.dank.ui.submission;
 
 import android.content.ContentValues;
 import android.database.Cursor;
+import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 
@@ -20,6 +21,7 @@ public abstract class PendingSyncReply {
   private static final String COLUMN_PARENT_SUBMISSION_FULL_NAME = "parent_submission_full_name";
   private static final String COLUMN_AUTHOR = "author";
   private static final String COLUMN_CREATED_TIME_MILLIS = "created_time_millis";
+  private static final String COLUMN_POSTED_FULLNAME = "posted_fullname";
 
   public static final String QUERY_CREATE_TABLE =
       "CREATE TABLE " + TABLE_NAME + " ("
@@ -29,6 +31,7 @@ public abstract class PendingSyncReply {
           + COLUMN_PARENT_SUBMISSION_FULL_NAME + " TEXT NOT NULL, "
           + COLUMN_AUTHOR + " TEXT NOT NULL, "
           + COLUMN_CREATED_TIME_MILLIS + " INTEGER NOT NULL, "
+          + COLUMN_POSTED_FULLNAME + " TEXT NOT NULL, "
           + "PRIMARY KEY (" + COLUMN_BODY + ", " + COLUMN_CREATED_TIME_MILLIS + ")"
           + ")";
 
@@ -36,11 +39,6 @@ public abstract class PendingSyncReply {
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_PARENT_SUBMISSION_FULL_NAME + " == ?"
           + " ORDER BY " + COLUMN_CREATED_TIME_MILLIS + " DESC";
-
-  public static final String QUERY_GET_ALL_POSTING_OR_FAILED =
-      "SELECT * FROM " + TABLE_NAME
-          + " WHERE " + COLUMN_STATE + " == '" + State.POSTING + "'" +
-          " OR " + COLUMN_STATE + " == '" + State.FAILED + "'";
 
   public static final String QUERY_GET_ALL_FAILED =
       "SELECT * FROM " + TABLE_NAME
@@ -64,30 +62,51 @@ public abstract class PendingSyncReply {
 
   public abstract long createdTimeMillis();
 
+  /**
+   * Full-name of this comment on remote if it has been posted.
+   */
+  @Nullable
+  public abstract String postedFullName();
+
   public enum State {
     POSTING,
     POSTED,
     FAILED,
   }
 
-  public static PendingSyncReply create(String parentCommentFullName, String reply, State state, String parentSubmissionFullName, String author,
+  public static PendingSyncReply create(String body, State state, String parentSubmissionFullName, String parentCommentFullName, String author,
       long createdTime)
   {
-    return new AutoValue_PendingSyncReply(parentCommentFullName, reply, state, parentSubmissionFullName, author, createdTime);
+    return create(body, state, parentSubmissionFullName, parentCommentFullName, author, createdTime, null);
   }
 
-  public PendingSyncReply withType(State newState) {
-    return create(parentCommentFullName(), body(), newState, parentSubmissionFullName(), author(), createdTimeMillis());
+  private static PendingSyncReply create(String body, State state, String parentSubmissionFullName, String parentCommentFullName, String author,
+      long createdTime, @Nullable String postedFullName)
+  {
+    return new AutoValue_PendingSyncReply.Builder()
+        .body(body)
+        .state(state)
+        .parentSubmissionFullName(parentSubmissionFullName)
+        .parentCommentFullName(parentCommentFullName)
+        .author(author)
+        .createdTimeMillis(createdTime)
+        .postedFullName(postedFullName)
+        .build();
+  }
+
+  public PendingSyncReply.Builder toBuilder() {
+    return new AutoValue_PendingSyncReply.Builder(this);
   }
 
   public ContentValues toValues() {
-    ContentValues contentValues = new ContentValues(6);
+    ContentValues contentValues = new ContentValues(7);
     contentValues.put(COLUMN_PARENT_COMMENT_FULL_NAME, parentCommentFullName());
     contentValues.put(COLUMN_BODY, body());
     contentValues.put(COLUMN_STATE, state().name());
     contentValues.put(COLUMN_PARENT_SUBMISSION_FULL_NAME, parentSubmissionFullName());
     contentValues.put(COLUMN_AUTHOR, author());
     contentValues.put(COLUMN_CREATED_TIME_MILLIS, createdTimeMillis());
+    contentValues.put(COLUMN_POSTED_FULLNAME, postedFullName());
     return contentValues;
   }
 
@@ -98,6 +117,26 @@ public abstract class PendingSyncReply {
     String parentSubmissionFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PARENT_SUBMISSION_FULL_NAME));
     String author = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_AUTHOR));
     long createdTime = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_CREATED_TIME_MILLIS));
-    return create(parentCommentFullName, body, state, parentSubmissionFullName, author, createdTime);
+    String postedFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_POSTED_FULLNAME));
+    return create(body, state, parentSubmissionFullName, parentCommentFullName, author, createdTime, postedFullName);
   };
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder parentCommentFullName(String parentCommentFullName);
+
+    public abstract Builder body(String body);
+
+    public abstract Builder state(State state);
+
+    public abstract Builder parentSubmissionFullName(String parentSubmissionFullName);
+
+    public abstract Builder author(String author);
+
+    public abstract Builder createdTimeMillis(long createdTimeMillis);
+
+    public abstract Builder postedFullName(String postedFullName);
+
+    public abstract PendingSyncReply build();
+  }
 }

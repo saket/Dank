@@ -68,10 +68,10 @@ public class CommentsManager {
   @CheckResult
   private Completable sendReply(String parentSubmissionFullName, String parentCommentFullName, String replyBody, long replyCreatedTimeMillis) {
     PendingSyncReply pendingSyncReply = PendingSyncReply.create(
-        parentCommentFullName,
         replyBody,
         PendingSyncReply.State.POSTING,
         parentSubmissionFullName,
+        parentCommentFullName,
         userSession.loggedInUserName(),
         replyCreatedTimeMillis
     );
@@ -79,13 +79,22 @@ public class CommentsManager {
     ContributionFullNameWrapper fakeParentComment = ContributionFullNameWrapper.create(parentCommentFullName);
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
-        .andThen(Completable.fromAction(() -> dankRedditClient.userAccountManager().reply(fakeParentComment, replyBody)))
-        .andThen(Completable.fromAction(() -> {
-          PendingSyncReply updatedPendingSyncReply = pendingSyncReply.withType(PendingSyncReply.State.POSTED);
+        .andThen(Single.fromCallable(() -> {
+          String postedReplyId = dankRedditClient.userAccountManager().reply(fakeParentComment, replyBody);
+          return "t1_" + postedReplyId;   // full-name.
+        }))
+        .flatMapCompletable(postedReplyFullName -> Completable.fromAction(() -> {
+          PendingSyncReply updatedPendingSyncReply = pendingSyncReply
+              .toBuilder()
+              .state(PendingSyncReply.State.POSTED)
+              .postedFullName(postedReplyFullName)
+              .build();
           database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
         }))
         .onErrorResumeNext(error -> {
-          PendingSyncReply updatedPendingSyncReply = pendingSyncReply.withType(PendingSyncReply.State.FAILED);
+          PendingSyncReply updatedPendingSyncReply = pendingSyncReply.toBuilder()
+              .state(PendingSyncReply.State.FAILED)
+              .build();
           database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
           Timber.e(error, "Couldn't send reply");
           return Completable.error(error);
