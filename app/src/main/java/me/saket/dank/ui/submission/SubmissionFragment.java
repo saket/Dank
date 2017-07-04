@@ -98,7 +98,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
 
   @BindView(R.id.toolbar) Toolbar toolbar;
-  @BindView(R.id.submission_toolbar_shadow) View toolbarShadows;
+  @BindView(R.id.submission_toolbar_gradient) View toolbarShadows;
   @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
   @BindView(R.id.submission_content_progress_bar) SubmissionAnimatedProgressBar contentLoadProgressView;
   @BindView(R.id.submission_image) ZoomableImageView contentImageView;

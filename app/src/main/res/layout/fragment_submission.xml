@@ -27,6 +27,7 @@
     android:background="@drawable/background_submission_image_scroll_hint"
     android:drawablePadding="@dimen/spacing4"
     android:drawableStart="@drawable/ic_arrow_downward_18dp"
+    android:elevation="@dimen/elevation_toolbar"
     android:foreground="?attr/selectableItemBackgroundBorderless"
     android:gravity="center_vertical"
     android:paddingBottom="@dimen/spacing4"
@@ -53,10 +54,10 @@
       app:useTextureViewBacking="true" />
   </LinearLayout>
 
-  <!-- Shadow behind the toolbar so that when the toolbar is transparent (in
+  <!-- Gradient behind the toolbar so that when the toolbar is transparent (in
        case of photo/video submissions, the toolbar icons are still visible. -->
   <View
-    android:id="@+id/submission_toolbar_shadow"
+    android:id="@+id/submission_toolbar_gradient"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_alignBottom="@id/toolbar"
@@ -223,6 +224,7 @@
     android:layout_height="match_parent"
     android:layout_below="@id/toolbar"
     android:background="@color/window_background"
+    android:elevation="@dimen/elevation_toolbar"
     tools:layout_below="@+id/submission_comments_header">
 
     <android.support.v7.widget.RecyclerView
@@ -240,7 +242,8 @@
   <me.saket.dank.widgets.SubmissionAnimatedProgressBar
     android:id="@+id/submission_content_progress_bar"
     style="@style/DankProgressBar.Horizontal.TopAligned"
-    android:layout_below="@id/toolbar" />
+    android:layout_below="@id/toolbar"
+    android:elevation="@dimen/elevation_toolbar" />
 
   <!-- Acts as the toolbar's background. -->
   <me.saket.dank.widgets.AnimatedToolbarBackground
@@ -248,7 +251,7 @@
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
     android:background="@color/toolbar"
-    android:translationZ="@dimen/elevation_toolbar"
+    android:translationZ="5dp"
     tools:layout_marginTop="25dp" />
 
   <!-- Note: the elevation to this toolbar is set on
@@ -257,6 +260,7 @@
     android:id="@id/toolbar"
     style="@style/DankToolbar"
     android:background="@color/transparent"
+    android:translationZ="5dp"
     app:navigationIcon="@drawable/ic_toolbar_close_24dp"
     app:navigationIconTint="@color/white"
     tools:layout_marginTop="25dp" />
