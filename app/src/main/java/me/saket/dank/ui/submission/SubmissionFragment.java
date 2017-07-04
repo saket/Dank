@@ -469,6 +469,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       if (commentTreeConstructor.isReplyActiveFor(activeSubmission)) {
         commentTreeConstructor.hideReply(activeSubmission);
       } else {
+        commentList.smoothScrollToPosition(0);
         commentTreeConstructor.showReply(activeSubmission);
       }
     });
