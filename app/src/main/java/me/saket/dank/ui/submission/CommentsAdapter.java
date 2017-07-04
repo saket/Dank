@@ -5,6 +5,7 @@ import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import android.support.annotation.CheckResult;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
 import android.text.Spannable;
 import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
@@ -40,6 +41,7 @@ import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
+import me.saket.dank.utils.SimpleTextWatcher;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.Views;
@@ -458,6 +460,15 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     public InlineReplyViewHolder(View itemView) {
       super(itemView);
       ButterKnife.bind(this, itemView);
+
+      replyMessageField.addTextChangedListener(new SimpleTextWatcher() {
+        @Override
+        public void afterTextChanged(Editable text) {
+          boolean hasValidReply = text.toString().trim().length() > 0;
+          sendButton.setEnabled(hasValidReply);
+        }
+      });
+      sendButton.setEnabled(false);
     }
 
     public void bind(CommentInlineReplyItem commentInlineReplyItem, ReplyActionsListener replyActionsListener, UserSession userSession,
@@ -473,11 +484,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       discardButton.setOnClickListener(o -> replyActionsListener.onClickDiscardReply(parentContribution));
       goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(parentContribution));
 
-      isSendingReply = false;
       sendButton.setOnClickListener(o -> {
         isSendingReply = true;
-        replyActionsListener.onClickSendReply(parentContribution, replyMessageField.getText().toString());
+        String replyMessage = replyMessageField.getText().toString().trim();
+        replyActionsListener.onClickSendReply(parentContribution, replyMessage);
       });
+      isSendingReply = false;
 
       draftDisposable.dispose();
       draftDisposable = replyDraftStore.getDraft(parentContribution)
