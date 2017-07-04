@@ -31,7 +31,7 @@ public abstract class PendingSyncReply {
           + COLUMN_PARENT_SUBMISSION_FULL_NAME + " TEXT NOT NULL, "
           + COLUMN_AUTHOR + " TEXT NOT NULL, "
           + COLUMN_CREATED_TIME_MILLIS + " INTEGER NOT NULL, "
-          + COLUMN_POSTED_FULLNAME + " TEXT NOT NULL, "
+          + COLUMN_POSTED_FULLNAME + " TEXT, "
           + "PRIMARY KEY (" + COLUMN_BODY + ", " + COLUMN_CREATED_TIME_MILLIS + ")"
           + ")";
 
