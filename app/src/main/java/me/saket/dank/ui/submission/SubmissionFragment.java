@@ -80,7 +80,6 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
-import me.saket.dank.utils.SubmissionAdapterWithHeader;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
@@ -253,7 +252,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Add submission Views as a header so that it scrolls with the list.
     commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), Dank.userSession(), Dank.comments(), commentSwipeActionsProvider);
-    adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(commentsAdapter, commentsHeaderView, Dank.voting(), submissionSwipeActionsProvider);
+    adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(
+        commentsAdapter,
+        commentsHeaderView,
+        Dank.voting(),
+        Dank.comments(),
+        submissionSwipeActionsProvider
+    );
     commentList.setAdapter(adapterWithSubmissionHeader);
 
     commentsAdapter.setReplyActionsListener(new CommentsAdapter.ReplyActionsListener() {
@@ -488,7 +493,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Reset everything.
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
-    commentList.scrollToPosition(0);
     commentTreeConstructor.reset();
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);
     replyFAB.show();

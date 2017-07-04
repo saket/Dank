@@ -82,6 +82,8 @@ public abstract class RecyclerAdapterWithHeader<HVH extends RecyclerView.ViewHol
   @Override
   public void onViewRecycled(VH holder) {
     if (isHeaderItem(holder.getAdapterPosition())) {
+      //noinspection unchecked
+      onHeaderViewRecycled((HVH) holder);
       super.onViewRecycled(holder);
     } else {
       adapterToWrap.onViewRecycled(holder);
@@ -122,6 +124,8 @@ public abstract class RecyclerAdapterWithHeader<HVH extends RecyclerView.ViewHol
   protected abstract void onBindHeaderViewHolder(HVH holder, int position);
 
   protected abstract Object getHeaderItem();
+
+  protected void onHeaderViewRecycled(HVH holder) {}
 
   @Override
   public void updateDataAndNotifyDatasetChanged(List<Object> items) {
