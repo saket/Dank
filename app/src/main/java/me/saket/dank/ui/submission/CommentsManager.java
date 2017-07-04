@@ -205,13 +205,24 @@ public class CommentsManager implements ReplyDraftStore {
   @CheckResult
   public Single<String> getDraft(PublicContribution parentContribution) {
     return Single.fromCallable(() -> {
-      String replyDraftJson = sharedPreferences.getString(keyForDraft(parentContribution), "");
+      String key = keyForDraft(parentContribution);
+      String replyDraftJson = sharedPreferences.getString(key, "");
       if ("".equals(replyDraftJson)) {
         return "";
       }
 
       ReplyDraft replyDraft = moshi.adapter(ReplyDraft.class).fromJson(replyDraftJson);
+      Timber.i("Found reply for %s: %s", key, replyDraft.body());
       return replyDraft.body();
+    });
+  }
+
+  @Override
+  public Completable removeDraft(PublicContribution parentContribution) {
+    return Completable.fromAction(() -> {
+      String key = keyForDraft(parentContribution);
+      Timber.i("Removing draft for %s", key);
+      sharedPreferences.edit().remove(key).apply();
     });
   }
 

@@ -14,4 +14,7 @@ public interface ReplyDraftStore {
 
   @CheckResult
   Single<String> getDraft(PublicContribution parentContribution);
+
+  @CheckResult
+  Completable removeDraft(PublicContribution parentContribution);
 }

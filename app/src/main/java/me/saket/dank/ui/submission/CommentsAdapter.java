@@ -449,6 +449,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
     private Disposable draftDisposable = Disposables.disposed();
     private PublicContribution parentContribution;
+    private boolean isSendingReply;
 
     public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new InlineReplyViewHolder(inflater.inflate(R.layout.list_item_comment_reply, parent, false));
@@ -471,8 +472,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       discardButton.setOnClickListener(o -> replyActionsListener.onClickDiscardReply(parentContribution));
       goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(parentContribution));
-      sendButton.setOnClickListener(o -> replyActionsListener.onClickSendReply(parentContribution, replyMessageField.getText().toString()));
 
+      isSendingReply = false;
+      sendButton.setOnClickListener(o -> {
+        isSendingReply = true;
+        replyActionsListener.onClickSendReply(parentContribution, replyMessageField.getText().toString());
+      });
+
+      draftDisposable.dispose();
       draftDisposable = replyDraftStore.getDraft(parentContribution)
           .compose(applySchedulersSingle())
           .subscribe(replyDraft -> {
@@ -484,11 +491,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
 
     public void handleOnRecycle(ReplyDraftStore replyDraftStore) {
-      // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
-      replyDraftStore
-          .saveDraft(parentContribution, replyMessageField.getText().toString())
-          .subscribeOn(Schedulers.io())
-          .subscribe();
+      if (!isSendingReply) {
+        // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
+        replyDraftStore
+            .saveDraft(parentContribution, replyMessageField.getText().toString())
+            .subscribeOn(Schedulers.io())
+            .subscribe();
+      }
 
       draftDisposable.dispose();
       parentContribution = null;
