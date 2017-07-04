@@ -52,8 +52,8 @@ public abstract class PendingSyncReply {
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_STATE + " == '" + State.FAILED + "'";
 
-  public static final String WHERE_BODY_AND_CREATED_TIME_2 =
-      COLUMN_BODY + " = ? AND " + COLUMN_CREATED_TIME_MILLIS + " = ?";
+  public static final String WHERE_STATE_AND_SUBMISSION_FULL_NAME =
+      COLUMN_STATE + " = ? AND " + COLUMN_PARENT_SUBMISSION_FULL_NAME + " = ?";
 
   public abstract String body();
 

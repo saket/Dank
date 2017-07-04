@@ -11,14 +11,10 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 
-import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -141,38 +137,11 @@ public class CommentsManager implements ReplyDraftStore {
    */
   @CheckResult
   public Completable removeSyncPendingPostedRepliesForSubmission(Submission submission) {
-    return streamPendingSyncPostedRepliesForSubmission(submission)
-        .firstOrError()
-        .map(pendingSyncReplies -> {
-          Map<String, PendingSyncReply> postedFullNameToPendingSyncReplyMap = new HashMap<>(pendingSyncReplies.size(), 1);
-          for (PendingSyncReply pendingSyncReply : pendingSyncReplies) {
-            postedFullNameToPendingSyncReplyMap.put(pendingSyncReply.postedFullName(), pendingSyncReply);
-          }
-
-          List<PendingSyncReply> pendingSyncRepliesToRemove = new ArrayList<>();
-
-          for (CommentNode commentNode : submission.getComments().walkTree()) {
-            String commentFullName = commentNode.getComment().getFullName();
-            if (postedFullNameToPendingSyncReplyMap.containsKey(commentFullName)) {
-              pendingSyncRepliesToRemove.add(postedFullNameToPendingSyncReplyMap.get(commentFullName));
-            }
-          }
-
-          return pendingSyncRepliesToRemove;
-        })
-        .flatMapCompletable(pendingSyncRepliesToRemove -> Completable.fromAction(() -> {
-          try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-            for (PendingSyncReply replyToRemove : pendingSyncRepliesToRemove) {
-              database.delete(
-                  PendingSyncReply.TABLE_NAME,
-                  PendingSyncReply.WHERE_BODY_AND_CREATED_TIME_2,
-                  replyToRemove.body(),
-                  String.valueOf(replyToRemove.createdTimeMillis())
-              );
-            }
-            transaction.markSuccessful();
-          }
-        }));
+    return Completable.fromAction(() -> database.delete(
+        PendingSyncReply.TABLE_NAME,
+        PendingSyncReply.WHERE_STATE_AND_SUBMISSION_FULL_NAME,
+        PendingSyncReply.State.POSTED.name(), submission.getFullName()
+    ));
   }
 
   @CheckResult
