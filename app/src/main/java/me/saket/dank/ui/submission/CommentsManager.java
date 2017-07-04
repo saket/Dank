@@ -11,8 +11,8 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 
-import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
@@ -65,9 +65,8 @@ public class CommentsManager implements ReplyDraftStore {
   }
 
   @CheckResult
-  public Completable sendReply(CommentNode parentCommentNode, String replyBody) {
-    String parentSubmissionFullName = parentCommentNode.getSubmissionName();
-    String parentCommentFullName = parentCommentNode.getComment().getFullName();
+  public Completable sendReply(PublicContribution parentContribution, String parentSubmissionFullName, String replyBody) {
+    String parentCommentFullName = parentContribution.getFullName();
     long replyCreatedTimeMillis = System.currentTimeMillis();
     return sendReply(parentSubmissionFullName, parentCommentFullName, replyBody, replyCreatedTimeMillis);
   }
@@ -177,14 +176,14 @@ public class CommentsManager implements ReplyDraftStore {
 
   @Override
   @CheckResult
-  public Completable saveDraft(Comment parentComment, String draftBody) {
+  public Completable saveDraft(PublicContribution parentContribution, String draftBody) {
     return Completable.fromAction(() -> {
       long draftCreatedTimeMillis = System.currentTimeMillis();
       ReplyDraft replyDraft = ReplyDraft.create(draftBody, draftCreatedTimeMillis);
 
       JsonAdapter<ReplyDraft> jsonAdapter = moshi.adapter(ReplyDraft.class);
       String replyDraftJson = jsonAdapter.toJson(replyDraft);
-      sharedPreferences.edit().putString(keyForDraft(parentComment), replyDraftJson).apply();
+      sharedPreferences.edit().putString(keyForDraft(parentContribution), replyDraftJson).apply();
 
       // TODO:
       // Recycle old drafts.
@@ -193,9 +192,9 @@ public class CommentsManager implements ReplyDraftStore {
 
   @Override
   @CheckResult
-  public Single<String> getDraft(Comment parentComment) {
+  public Single<String> getDraft(PublicContribution parentContribution) {
     return Single.fromCallable(() -> {
-      String replyDraftJson = sharedPreferences.getString(keyForDraft(parentComment), "");
+      String replyDraftJson = sharedPreferences.getString(keyForDraft(parentContribution), "");
       if ("".equals(replyDraftJson)) {
         return "";
       }
@@ -205,7 +204,7 @@ public class CommentsManager implements ReplyDraftStore {
     });
   }
 
-  private static String keyForDraft(Comment parentComment) {
-    return "replyDraftFor_" + parentComment.getFullName();
+  private static String keyForDraft(PublicContribution parentContribution) {
+    return "replyDraftFor_" + parentContribution.getFullName();
   }
 }

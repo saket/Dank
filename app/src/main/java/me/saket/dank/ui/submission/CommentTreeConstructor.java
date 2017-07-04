@@ -10,9 +10,11 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -34,7 +36,7 @@ public class CommentTreeConstructor {
   private Relay<Object> changesRequiredStream = PublishRelay.create();
   private Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();  // Key: comment full-name.
   private CommentNode rootCommentNode;
-  private boolean replyActiveForSubmission;
+  private Submission submission;
 
   public CommentTreeConstructor() {}
 
@@ -42,7 +44,8 @@ public class CommentTreeConstructor {
    * Set the root comment of a submission.
    */
   public void setCommentsAndPendingReplies(Submission submissionWithComments, List<PendingSyncReply> pendingReplies) {
-    rootCommentNode = submissionWithComments.getComments();
+    this.submission = submissionWithComments;
+    this.rootCommentNode = submissionWithComments.getComments();
 
     // TODO: test performance.
     pendingReplyMap.clear();
@@ -96,8 +99,8 @@ public class CommentTreeConstructor {
     return isCollapsed(commentRow.fullName());
   }
 
-  public boolean isCollapsed(CommentNode commentNode) {
-    return isCollapsed(commentNode.getComment().getFullName());
+  public boolean isCollapsed(PublicContribution parentContribution) {
+    return isCollapsed(parentContribution.getFullName());
   }
 
   /**
@@ -119,33 +122,32 @@ public class CommentTreeConstructor {
   }
 
   /**
-   * Show reply field for a comment.
+   * Show reply field for a comment and also expand any hidden comments.
    */
-  public void showReplyAndExpandComments(CommentNode nodeToReply) {
-    replyActiveForCommentNodeFullNames.add(nodeToReply.getComment().getFullName());
-    collapsedCommentNodeFullNames.remove(nodeToReply.getComment().getFullName());
+  public void showReplyAndExpandComments(PublicContribution parentContribution) {
+    replyActiveForCommentNodeFullNames.add(parentContribution.getFullName());
+    collapsedCommentNodeFullNames.remove(parentContribution.getFullName());
+    changesRequiredStream.accept(Notification.INSTANCE);
+  }
+
+  /**
+   * Show reply field for the submission or a comment.
+   */
+  public void showReply(PublicContribution parentContribution) {
+    replyActiveForCommentNodeFullNames.add(parentContribution.getFullName());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
   /**
    * Hide reply field for a comment.
    */
-  public void hideReply(CommentNode nodeToReply) {
-    replyActiveForCommentNodeFullNames.remove(nodeToReply.getComment().getFullName());
+  public void hideReply(PublicContribution parentContribution) {
+    replyActiveForCommentNodeFullNames.remove(parentContribution.getFullName());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
-  /**
-   * Show/hide reply field for the submission. We're not using the root CommentNode so that reply
-   * can be used even when the comments haven't been fetched.
-   */
-  public void toggleReplyForSubmission() {
-    replyActiveForSubmission = !replyActiveForSubmission;
-    changesRequiredStream.accept(Notification.INSTANCE);
-  }
-
-  public boolean isReplyActiveFor(CommentNode commentNode) {
-    return replyActiveForCommentNodeFullNames.contains(commentNode.getComment().getFullName());
+  public boolean isReplyActiveFor(PublicContribution parentContribution) {
+    return replyActiveForCommentNodeFullNames.contains(parentContribution.getFullName());
   }
 
   /**
@@ -153,15 +155,10 @@ public class CommentTreeConstructor {
    */
   private List<SubmissionCommentRow> constructComments() {
     //Timber.d("-----------------------------------------------");
-    ArrayList<SubmissionCommentRow> flattenComments = new ArrayList<>(rootCommentNode.getTotalSize() + (replyActiveForSubmission ? 1 : 0));
-    if (replyActiveForSubmission) {
-
-    }
-
     if (rootCommentNode == null) {
-      return flattenComments;
+      return Collections.emptyList();
     }
-
+    ArrayList<SubmissionCommentRow> flattenComments = new ArrayList<>(rootCommentNode.getTotalSize());
     return constructComments(flattenComments, rootCommentNode);
   }
 
@@ -176,8 +173,8 @@ public class CommentTreeConstructor {
     //  }
     //}
 
-    boolean isCommentNodeCollapsed = isCollapsed(nextNode);
-    boolean isReplyActive = isReplyActiveFor(nextNode);
+    boolean isCommentNodeCollapsed = isCollapsed(nextNode.getComment());
+    boolean isReplyActive = isReplyActiveFor(nextNode.getComment());
 
     if (nextNode.getDepth() != 0) {
       //Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getFullName(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
@@ -186,7 +183,7 @@ public class CommentTreeConstructor {
 
     // Reply box.
     if (isReplyActive && !isCommentNodeCollapsed) {
-      flattenComments.add(CommentInlineReplyItem.create(nextNode));
+      flattenComments.add(CommentInlineReplyItem.create(nextNode.getComment(), nextNode.getDepth()));
     }
 
     // Pending-sync replies.
@@ -197,7 +194,8 @@ public class CommentTreeConstructor {
         PendingSyncReply pendingSyncReply = pendingSyncReplies.get(i);
         String replyFullName = nextNode.getComment().getId() + "_reply_ " + pendingSyncReply.createdTimeMillis();
         boolean isReplyCollapsed = isCollapsed(replyFullName);
-        flattenComments.add(CommentPendingSyncReplyItem.create(nextNode, replyFullName, pendingSyncReply, isReplyCollapsed));
+        int depth = nextNode.getDepth() + 1;
+        flattenComments.add(CommentPendingSyncReplyItem.create(nextNode.getComment(), replyFullName, pendingSyncReply, isReplyCollapsed, depth));
       }
     }
 

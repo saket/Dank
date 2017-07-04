@@ -20,6 +20,7 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.VoteDirection;
 
 import butterknife.BindColor;
@@ -64,13 +65,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private ReplyActionsListener replyActionsListener;
 
   public interface ReplyActionsListener {
-    void onClickDiscardReply(CommentNode nodeBeingRepliedTo);
+    void onClickDiscardReply(PublicContribution parentContribution);
 
-    void onClickEditReplyInFullscreenMode(CommentNode nodeBeingRepliedTo);
+    void onClickEditReplyInFullscreenMode(PublicContribution parentContribution);
 
-    void onClickSendReply(CommentNode parentCommentNode, String replyMessage);
+    void onClickSendReply(PublicContribution parentContribution, String replyMessage);
 
-    void onClickRetrySendingReply(CommentNode parentCommentNode, PendingSyncReply pendingSyncReply);
+    void onClickRetrySendingReply(PendingSyncReply pendingSyncReply);
   }
 
   @AutoValue
@@ -239,7 +240,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
           PendingSyncReply pendingSyncReply = commentPendingSyncReplyItem.pendingSyncReply();
           if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
             // "Tap to retry".
-            replyActionsListener.onClickRetrySendingReply(commentPendingSyncReplyItem.parentCommentNode(), pendingSyncReply);
+            replyActionsListener.onClickRetrySendingReply(pendingSyncReply);
           } else {
             commentClickStream.accept(CommentClickEvent.create(commentItem, pendingSyncReplyViewHolder.itemView));
           }
@@ -433,7 +434,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         byline = bylineBuilder.build();
       }
 
-      int replyDepth = commentPendingSyncReplyItem.parentCommentNode().getDepth() + 1;
+      int replyDepth = commentPendingSyncReplyItem.depth();
       bind(byline, pendingSyncReply.body(), replyDepth, commentPendingSyncReplyItem.isCollapsed());
     }
   }
@@ -447,7 +448,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_comment_reply_message) EditText replyMessageField;
 
     private Disposable draftDisposable = Disposables.disposed();
-    private CommentNode parentCommentNode;
+    private PublicContribution parentContribution;
 
     public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new InlineReplyViewHolder(inflater.inflate(R.layout.list_item_comment_reply, parent, false));
@@ -461,18 +462,18 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     public void bind(CommentInlineReplyItem commentInlineReplyItem, ReplyActionsListener replyActionsListener, UserSession userSession,
         ReplyDraftStore replyDraftStore)
     {
-      parentCommentNode = commentInlineReplyItem.parentCommentNode();
-      indentedLayout.setIndentationDepth(parentCommentNode.getDepth());
+      parentContribution = commentInlineReplyItem.parentContribution();
+      indentedLayout.setIndentationDepth(commentInlineReplyItem.depth());
       authorUsernameHintView.setText(authorUsernameHintView.getResources().getString(
           R.string.submission_comment_reply_author_hint,
           userSession.loggedInUserName()
       ));
 
-      discardButton.setOnClickListener(o -> replyActionsListener.onClickDiscardReply(parentCommentNode));
-      goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(parentCommentNode));
-      sendButton.setOnClickListener(o -> replyActionsListener.onClickSendReply(parentCommentNode, replyMessageField.getText().toString()));
+      discardButton.setOnClickListener(o -> replyActionsListener.onClickDiscardReply(parentContribution));
+      goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(parentContribution));
+      sendButton.setOnClickListener(o -> replyActionsListener.onClickSendReply(parentContribution, replyMessageField.getText().toString()));
 
-      draftDisposable = replyDraftStore.getDraft(parentCommentNode.getComment())
+      draftDisposable = replyDraftStore.getDraft(parentContribution)
           .compose(applySchedulersSingle())
           .subscribe(replyDraft -> {
             replyMessageField.setText(replyDraft);
@@ -485,12 +486,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     public void handleOnRecycle(ReplyDraftStore replyDraftStore) {
       // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
       replyDraftStore
-          .saveDraft(parentCommentNode.getComment(), replyMessageField.getText().toString())
+          .saveDraft(parentContribution, replyMessageField.getText().toString())
           .subscribeOn(Schedulers.io())
           .subscribe();
 
       draftDisposable.dispose();
-      parentCommentNode = null;
+      parentContribution = null;
     }
   }
 

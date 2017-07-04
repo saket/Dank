@@ -42,7 +42,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
-import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 
 import java.util.Collections;
@@ -235,11 +235,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         Dank.userSession(),
         onLoginRequireListener
     );
-    commentSwipeActionsProvider.setOnReplySwipeActionListener(commentNodeToReply -> {
-      if (commentTreeConstructor.isCollapsed(commentNodeToReply) || !commentTreeConstructor.isReplyActiveFor(commentNodeToReply)) {
-        commentTreeConstructor.showReplyAndExpandComments(commentNodeToReply);
+    commentSwipeActionsProvider.setOnReplySwipeActionListener(parentComment -> {
+      if (commentTreeConstructor.isCollapsed(parentComment) || !commentTreeConstructor.isReplyActiveFor(parentComment)) {
+        commentTreeConstructor.showReplyAndExpandComments(parentComment);
       } else {
-        commentTreeConstructor.hideReply(commentNodeToReply);
+        commentTreeConstructor.hideReply(parentComment);
       }
     });
     commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
@@ -258,25 +258,25 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     commentsAdapter.setReplyActionsListener(new CommentsAdapter.ReplyActionsListener() {
       @Override
-      public void onClickDiscardReply(CommentNode nodeBeingRepliedTo) {
-        commentTreeConstructor.hideReply(nodeBeingRepliedTo);
+      public void onClickDiscardReply(PublicContribution parentContribution) {
+        commentTreeConstructor.hideReply(parentContribution);
       }
 
       @Override
-      public void onClickEditReplyInFullscreenMode(CommentNode nodeBeingRepliedTo) {
+      public void onClickEditReplyInFullscreenMode(PublicContribution parentContribution) {
         // TODO.
       }
 
       @Override
-      public void onClickSendReply(CommentNode parentCommentNode, String replyMessage) {
-        Dank.reddit().withAuth(Dank.comments().sendReply(parentCommentNode, replyMessage))
-            .doOnSubscribe(o -> commentTreeConstructor.hideReply(parentCommentNode))
+      public void onClickSendReply(PublicContribution parentContribution, String replyMessage) {
+        Dank.reddit().withAuth(Dank.comments().sendReply(parentContribution, activeSubmission.getFullName(), replyMessage))
+            .doOnSubscribe(o -> commentTreeConstructor.hideReply(parentContribution))
             .compose(applySchedulersCompletable())
             .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
       }
 
       @Override
-      public void onClickRetrySendingReply(CommentNode parentCommentNode, PendingSyncReply pendingSyncReply) {
+      public void onClickRetrySendingReply(PendingSyncReply pendingSyncReply) {
         Dank.reddit().withAuth(Dank.comments().reSendReply(pendingSyncReply))
             .compose(applySchedulersCompletable())
             .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
@@ -466,7 +466,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     });
 
     replyFAB.setOnClickListener(o -> {
-      commentTreeConstructor.showReplyAndExpandComments(activeSubmission.getComments());
+      if (commentTreeConstructor.isReplyActiveFor(activeSubmission)) {
+        commentTreeConstructor.hideReply(activeSubmission);
+      } else {
+        commentTreeConstructor.showReply(activeSubmission);
+      }
     });
   }
 

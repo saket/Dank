@@ -37,7 +37,7 @@ public class CommentSwipeActionsProvider {
   private OnReplySwipeActionListener onReplySwipeActionListener;
 
   public interface OnReplySwipeActionListener {
-    void onReplySwipeAction(CommentNode commentNodeToReply);
+    void onReplySwipeAction(Comment parentComment);
   }
 
   public CommentSwipeActionsProvider(VotingManager votingManager, UserSession userSession, OnLoginRequireListener onLoginRequireListener) {
@@ -131,7 +131,7 @@ public class CommentSwipeActionsProvider {
         break;
 
       case ACTION_NAME_REPLY:
-        onReplySwipeActionListener.onReplySwipeAction(commentNode);
+        onReplySwipeActionListener.onReplySwipeAction(comment);
         isUndoAction = false;
         break;
 
