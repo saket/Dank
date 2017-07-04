@@ -24,6 +24,7 @@ import java.util.Set;
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
+import timber.log.Timber;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more" & "continue thread ->" items.
@@ -36,7 +37,6 @@ public class CommentTreeConstructor {
   private Relay<Object> changesRequiredStream = PublishRelay.create();
   private Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();  // Key: comment full-name.
   private CommentNode rootCommentNode;
-  private Submission submission;
 
   public CommentTreeConstructor() {}
 
@@ -44,13 +44,12 @@ public class CommentTreeConstructor {
    * Set the root comment of a submission.
    */
   public void setCommentsAndPendingReplies(Submission submissionWithComments, List<PendingSyncReply> pendingReplies) {
-    this.submission = submissionWithComments;
     this.rootCommentNode = submissionWithComments.getComments();
 
-    // TODO: test performance.
+    // Build a map of pending reply list so that they can later be accessed at o(1).
     pendingReplyMap.clear();
     for (PendingSyncReply pendingSyncReply : pendingReplies) {
-      String parentCommentFullName = pendingSyncReply.parentCommentFullName();
+      String parentCommentFullName = pendingSyncReply.parentContributionFullName();
 
       if (!pendingReplyMap.containsKey(parentCommentFullName)) {
         pendingReplyMap.put(parentCommentFullName, new ArrayList<>());

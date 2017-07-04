@@ -58,35 +58,35 @@ public class CommentsManager implements ReplyDraftStore {
   @CheckResult
   public Completable reSendReply(PendingSyncReply pendingSyncReply) {
     String parentSubmissionFullName = pendingSyncReply.parentSubmissionFullName();
-    String parentCommentFullName = pendingSyncReply.parentCommentFullName();
+    String parentContributionFullName = pendingSyncReply.parentContributionFullName();
     String replyBody = pendingSyncReply.body();
     long replyCreatedTimeMillis = pendingSyncReply.createdTimeMillis();
-    return sendReply(parentSubmissionFullName, parentCommentFullName, replyBody, replyCreatedTimeMillis);
+    return sendReply(parentSubmissionFullName, parentContributionFullName, replyBody, replyCreatedTimeMillis);
   }
 
   @CheckResult
   public Completable sendReply(PublicContribution parentContribution, String parentSubmissionFullName, String replyBody) {
-    String parentCommentFullName = parentContribution.getFullName();
+    String parentContributionFullName = parentContribution.getFullName();
     long replyCreatedTimeMillis = System.currentTimeMillis();
-    return sendReply(parentSubmissionFullName, parentCommentFullName, replyBody, replyCreatedTimeMillis);
+    return sendReply(parentSubmissionFullName, parentContributionFullName, replyBody, replyCreatedTimeMillis);
   }
 
   @CheckResult
-  private Completable sendReply(String parentSubmissionFullName, String parentCommentFullName, String replyBody, long replyCreatedTimeMillis) {
+  private Completable sendReply(String parentSubmissionFullName, String parentContributionFullName, String replyBody, long replyCreatedTimeMillis) {
     PendingSyncReply pendingSyncReply = PendingSyncReply.create(
         replyBody,
         PendingSyncReply.State.POSTING,
         parentSubmissionFullName,
-        parentCommentFullName,
+        parentContributionFullName,
         userSession.loggedInUserName(),
         replyCreatedTimeMillis
     );
 
-    ContributionFullNameWrapper fakeParentComment = ContributionFullNameWrapper.create(parentCommentFullName);
+    ContributionFullNameWrapper fakeParentContribution = ContributionFullNameWrapper.create(parentContributionFullName);
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
         .andThen(Single.fromCallable(() -> {
-          String postedReplyId = dankRedditClient.userAccountManager().reply(fakeParentComment, replyBody);
+          String postedReplyId = dankRedditClient.userAccountManager().reply(fakeParentContribution, replyBody);
           return "t1_" + postedReplyId;   // full-name.
         }))
         .flatMapCompletable(postedReplyFullName -> Completable.fromAction(() -> {
@@ -98,11 +98,12 @@ public class CommentsManager implements ReplyDraftStore {
           database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
         }))
         .onErrorResumeNext(error -> {
+          Timber.e(error, "Couldn't send reply");
+
           PendingSyncReply updatedPendingSyncReply = pendingSyncReply.toBuilder()
               .state(PendingSyncReply.State.FAILED)
               .build();
           database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
-          Timber.e(error, "Couldn't send reply");
           return Completable.error(error);
         });
   }
@@ -129,7 +130,7 @@ public class CommentsManager implements ReplyDraftStore {
         .map(pendingSyncReplies -> {
           Map<String, PendingSyncReply> parentFullNameToPendingSyncReplyMap = new HashMap<>(pendingSyncReplies.size(), 1);
           for (PendingSyncReply pendingSyncReply : pendingSyncReplies) {
-            parentFullNameToPendingSyncReplyMap.put(pendingSyncReply.parentCommentFullName(), pendingSyncReply);
+            parentFullNameToPendingSyncReplyMap.put(pendingSyncReply.parentContributionFullName(), pendingSyncReply);
           }
 
           List<PendingSyncReply> pendingSyncRepliesToRemove = new ArrayList<>();
