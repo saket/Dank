@@ -26,7 +26,7 @@
   <dimen name="popup_menu_vertical_offset_for_button">6dp</dimen> <!-- that includes padding to make space for shadow. -->
 
   <!-- Submission -->
-  <dimen name="submission_commentssheet_minimum_visible_height">70dp</dimen>
+  <dimen name="submission_commentssheet_minimum_visible_height">76dp</dimen>
   <dimen name="submission_link_thumbnail_width_reddit_link">60dp</dimen>
   <dimen name="submission_link_thumbnail_width_external_link">100dp</dimen>
   <dimen name="submission_link_thumbnail_width_album">140dp</dimen>

@@ -13,7 +13,6 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -35,6 +34,7 @@ public class CommentTreeConstructor {
   private Relay<Object> changesRequiredStream = PublishRelay.create();
   private Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();  // Key: comment full-name.
   private CommentNode rootCommentNode;
+  private boolean replyActiveForSubmission;
 
   public CommentTreeConstructor() {}
 
@@ -119,7 +119,16 @@ public class CommentTreeConstructor {
   }
 
   /**
-   * Show/hide reply field for a comment.
+   * Show reply field for a comment.
+   */
+  public void showReplyAndExpandComments(CommentNode nodeToReply) {
+    replyActiveForCommentNodeFullNames.add(nodeToReply.getComment().getFullName());
+    collapsedCommentNodeFullNames.remove(nodeToReply.getComment().getFullName());
+    changesRequiredStream.accept(Notification.INSTANCE);
+  }
+
+  /**
+   * Hide reply field for a comment.
    */
   public void hideReply(CommentNode nodeToReply) {
     replyActiveForCommentNodeFullNames.remove(nodeToReply.getComment().getFullName());
@@ -127,11 +136,11 @@ public class CommentTreeConstructor {
   }
 
   /**
-   * Show/hide reply field for a comment.
+   * Show/hide reply field for the submission. We're not using the root CommentNode so that reply
+   * can be used even when the comments haven't been fetched.
    */
-  public void showReplyAndExpandComments(CommentNode nodeToReply) {
-    replyActiveForCommentNodeFullNames.add(nodeToReply.getComment().getFullName());
-    collapsedCommentNodeFullNames.remove(nodeToReply.getComment().getFullName());
+  public void toggleReplyForSubmission() {
+    replyActiveForSubmission = !replyActiveForSubmission;
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
@@ -143,11 +152,17 @@ public class CommentTreeConstructor {
    * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
    */
   private List<SubmissionCommentRow> constructComments() {
-    if (rootCommentNode == null) {
-      return Collections.emptyList();
-    }
     //Timber.d("-----------------------------------------------");
-    return constructComments(new ArrayList<>(rootCommentNode.getTotalSize()), rootCommentNode);
+    ArrayList<SubmissionCommentRow> flattenComments = new ArrayList<>(rootCommentNode.getTotalSize() + (replyActiveForSubmission ? 1 : 0));
+    if (replyActiveForSubmission) {
+
+    }
+
+    if (rootCommentNode == null) {
+      return flattenComments;
+    }
+
+    return constructComments(flattenComments, rootCommentNode);
   }
 
   /**

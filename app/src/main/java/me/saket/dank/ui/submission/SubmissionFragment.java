@@ -22,6 +22,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -107,10 +108,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindView(R.id.submission_video) VideoView contentVideoView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
   @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
+  @BindView(R.id.submission_byline) TextView submissionBylineView;
   @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
   @BindView(R.id.submission_link_container) ViewGroup linkDetailsView;
   @BindView(R.id.submission_comment_list) RecyclerView commentList;
   @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
+  @BindView(R.id.submission_reply) FloatingActionButton replyFAB;
 
   @BindDrawable(R.drawable.ic_toolbar_close_24dp) Drawable closeIconDrawable;
   @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
@@ -190,6 +193,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     setupContentImageView(view);
     setupContentVideoView(view);
     setupCommentsSheet();
+    setupReplyFAB();
 
     linkDetailsViewHolder = new SubmissionLinkHolder(linkDetailsView, submissionPageLayout);
 
@@ -450,6 +454,22 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     });
   }
 
+  private void setupReplyFAB() {
+    // Show only if it'll not overlap the submission byline.
+    commentListParentSheet.addOnSheetScrollChangeListener(sheetScrollY -> {
+      float bylineBottom = submissionBylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
+      if (bylineBottom >= replyFAB.getTop()) {
+        replyFAB.hide();
+      } else {
+        replyFAB.show();
+      }
+    });
+
+    replyFAB.setOnClickListener(o -> {
+      commentTreeConstructor.showReplyAndExpandComments(activeSubmission.getComments());
+    });
+  }
+
   /**
    * Update the submission to be shown. Since this Fragment is retained by {@link SubredditActivity},
    * we only update the UI everytime a new submission is to be shown.
@@ -466,6 +486,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentList.scrollToPosition(0);
     commentTreeConstructor.reset();
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);
+    replyFAB.show();
 
     // Update submission information. Everything that
     adapterWithSubmissionHeader.updateSubmission(submission);
