@@ -121,7 +121,7 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
       titleView.setText(titleBuilder.build());
 
       pendingSyncReplyCountDisposable.dispose();
-      pendingSyncReplyCountDisposable = commentsManager.streamPendingSncRepliesForSubmission(submission)
+      pendingSyncReplyCountDisposable = commentsManager.streamPendingSyncRepliesForSubmission(submission)
           .map(pendingSyncReplies -> pendingSyncReplies.size())
           .startWith(0)
           .compose(applySchedulers())

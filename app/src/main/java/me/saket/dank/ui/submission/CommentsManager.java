@@ -82,6 +82,8 @@ public class CommentsManager implements ReplyDraftStore {
         replyCreatedTimeMillis
     );
 
+    Timber.i("Sending reply to: %s", parentContributionFullName);
+
     ContributionFullNameWrapper fakeParentContribution = ContributionFullNameWrapper.create(parentContributionFullName);
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
@@ -113,9 +115,23 @@ public class CommentsManager implements ReplyDraftStore {
    * haven't been refreshed for <var>submission</var> yet.
    */
   @CheckResult
-  public Observable<List<PendingSyncReply>> streamPendingSncRepliesForSubmission(Submission submission) {
+  public Observable<List<PendingSyncReply>> streamPendingSyncRepliesForSubmission(Submission submission) {
     return toV2Observable(
         database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FOR_SUBMISSION, submission.getFullName())
+            .mapToList(PendingSyncReply.MAPPER))
+        .map(toImmutable());
+  }
+
+  @CheckResult
+  public Observable<List<PendingSyncReply>> streamFailedReplies() {
+    return toV2Observable(database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FAILED).mapToList(PendingSyncReply.MAPPER))
+        .map(toImmutable());
+  }
+
+  @CheckResult
+  private Observable<List<PendingSyncReply>> streamPendingSyncPostedRepliesForSubmission(Submission submission) {
+    return toV2Observable(
+        database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_POSTED_FOR_SUBMISSION, submission.getFullName())
             .mapToList(PendingSyncReply.MAPPER))
         .map(toImmutable());
   }
@@ -125,20 +141,20 @@ public class CommentsManager implements ReplyDraftStore {
    */
   @CheckResult
   public Completable removeSyncPendingPostedRepliesForSubmission(Submission submission) {
-    return streamPendingSncRepliesForSubmission(submission)
+    return streamPendingSyncPostedRepliesForSubmission(submission)
         .firstOrError()
         .map(pendingSyncReplies -> {
-          Map<String, PendingSyncReply> parentFullNameToPendingSyncReplyMap = new HashMap<>(pendingSyncReplies.size(), 1);
+          Map<String, PendingSyncReply> postedFullNameToPendingSyncReplyMap = new HashMap<>(pendingSyncReplies.size(), 1);
           for (PendingSyncReply pendingSyncReply : pendingSyncReplies) {
-            parentFullNameToPendingSyncReplyMap.put(pendingSyncReply.parentContributionFullName(), pendingSyncReply);
+            postedFullNameToPendingSyncReplyMap.put(pendingSyncReply.postedFullName(), pendingSyncReply);
           }
 
           List<PendingSyncReply> pendingSyncRepliesToRemove = new ArrayList<>();
 
           for (CommentNode commentNode : submission.getComments().walkTree()) {
             String commentFullName = commentNode.getComment().getFullName();
-            if (parentFullNameToPendingSyncReplyMap.containsKey(commentFullName)) {
-              pendingSyncRepliesToRemove.add(parentFullNameToPendingSyncReplyMap.get(commentFullName));
+            if (postedFullNameToPendingSyncReplyMap.containsKey(commentFullName)) {
+              pendingSyncRepliesToRemove.add(postedFullNameToPendingSyncReplyMap.get(commentFullName));
             }
           }
 
@@ -157,12 +173,6 @@ public class CommentsManager implements ReplyDraftStore {
             transaction.markSuccessful();
           }
         }));
-  }
-
-  @CheckResult
-  public Observable<List<PendingSyncReply>> streamFailedReplies() {
-    return toV2Observable(database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FAILED).mapToList(PendingSyncReply.MAPPER))
-        .map(toImmutable());
   }
 
   @CheckResult

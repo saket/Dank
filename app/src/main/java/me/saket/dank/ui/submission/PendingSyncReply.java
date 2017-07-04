@@ -42,6 +42,12 @@ public abstract class PendingSyncReply {
           + " WHERE " + COLUMN_PARENT_SUBMISSION_FULL_NAME + " == ?"
           + " ORDER BY " + COLUMN_CREATED_TIME_MILLIS + " DESC";
 
+  public static final String QUERY_GET_ALL_POSTED_FOR_SUBMISSION =
+      "SELECT * FROM " + TABLE_NAME
+          + " WHERE " + COLUMN_PARENT_SUBMISSION_FULL_NAME + " == ?"
+          + " AND " + COLUMN_STATE + " == '" + State.POSTED + "'"
+          + " ORDER BY " + COLUMN_CREATED_TIME_MILLIS + " DESC";
+
   public static final String QUERY_GET_ALL_FAILED =
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_STATE + " == '" + State.FAILED + "'";

@@ -301,7 +301,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .observeOn(Schedulers.io())
             .switchMap(submissionWithComments ->
                 Dank.comments().removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
-                    .andThen(Dank.comments().streamPendingSncRepliesForSubmission(submissionWithComments))
+                    .andThen(Dank.comments().streamPendingSyncRepliesForSubmission(submissionWithComments))
                     .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies))
             )
             .subscribe(submissionRepliesPair ->
