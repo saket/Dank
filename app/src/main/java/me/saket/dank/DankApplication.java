@@ -7,7 +7,6 @@ import android.support.annotation.CheckResult;
 import com.facebook.stetho.Stetho;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.tspoon.traceur.Traceur;
 
 import java.io.IOException;
@@ -32,7 +31,6 @@ public class DankApplication extends Application {
     }
 
     Dank.initDependencies(this);
-    AndroidThreeTen.init(this);
     Traceur.enableLogging();
 
     RxJavaPlugins.setErrorHandler(e -> {

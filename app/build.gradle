@@ -113,7 +113,7 @@ dependencies {
     compile 'org.sufficientlysecure:html-textview:3.3'
     compile 'org.jsoup:jsoup:1.10.2'
     compile 'com.trello.navi2:navi:2.0'
-    compile 'com.jakewharton.threetenabp:threetenabp:1.0.5'
+    compile 'com.darwinsys:hirondelle-date4j:1.5.1'
     compile 'com.squareup.tape2:tape:2.0.0-SNAPSHOT'
 
     // Reddit API wrapper.

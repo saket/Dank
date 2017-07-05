@@ -7,10 +7,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 
-import org.threeten.bp.Clock;
-import org.threeten.bp.LocalDateTime;
-import org.threeten.bp.ZoneOffset;
+import java.util.TimeZone;
 
+import hirondelle.date4j.DateTime;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -139,18 +138,20 @@ public class ImgurManager {
 
   private void resetRateLimitsIfMonthChanged() {
     long lastCheckedMillis = rateLimitsLastCheckedAtMillis(-1);
-    if (lastCheckedMillis != -1) {
-      LocalDateTime lastCheckedDateTime = LocalDateTime.ofEpochSecond(lastCheckedMillis / 1000, 0, ZoneOffset.UTC);
-      LocalDateTime nowDateTime = LocalDateTime.now(Clock.systemUTC());
+    if (lastCheckedMillis == -1) {
+      return;
+    }
 
-      Timber.i("Now month: %s, Last checked month: %s", nowDateTime.getMonthValue(), lastCheckedDateTime.getMonthValue());
+    DateTime lastCheckedDateTime = DateTime.forInstant(lastCheckedMillis, TimeZone.getTimeZone("UTC"));
+    DateTime nowDateTime = DateTime.now(TimeZone.getTimeZone("UTC"));
 
-      if (nowDateTime.getMonthValue() > lastCheckedDateTime.getMonthValue()) {
-        Timber.i("Months have changed. Resetting Imgur rate limit");
+    Timber.i("Now month: %s, Last checked month: %s", nowDateTime.getMonth(), lastCheckedDateTime.getMonth());
 
-        // Months have changed! Reset the limits.
-        sharedPreferences.edit().clear().apply();
-      }
+    if (nowDateTime.getMonth() > lastCheckedDateTime.getMonth()) {
+      Timber.i("Months have changed. Resetting Imgur rate limit");
+
+      // Months have changed! Reset the limits.
+      sharedPreferences.edit().clear().apply();
     }
   }
 
@@ -197,5 +198,4 @@ public class ImgurManager {
     }
     return false;
   }
-
 }
