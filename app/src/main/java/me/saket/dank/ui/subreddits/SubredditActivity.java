@@ -79,7 +79,7 @@ import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
 
-  private static final int REQUEST_CODE_LOGIN = 100;
+  public static final int REQUEST_CODE_LOGIN = 100;
   protected static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
   private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
   private static final String KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE = "isSubredditPickerVisible";
@@ -615,7 +615,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       }
 
       // Show user's profile.
-      showUserProfileSheet();
+      if (!submissionPage.isExpanded()) {
+        showUserProfileSheet();
+      }
 
       firstRefreshDoneForSubredditFolders.clear();
 

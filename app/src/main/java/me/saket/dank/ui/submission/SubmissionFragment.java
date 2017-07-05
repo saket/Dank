@@ -222,7 +222,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private void setupCommentList(DankLinkMovementMethod linkMovementMethod) {
     // Swipe gestures.
-    OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.start(getActivity());
+    OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.startForResult(getActivity(), SubredditActivity.REQUEST_CODE_LOGIN);
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(
         Dank.submissions(),
         Dank.voting(),
@@ -472,6 +472,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     });
 
     replyFAB.setOnClickListener(o -> {
+      if (!Dank.userSession().isUserLoggedIn()) {
+        LoginActivity.startForResult(getActivity(), SubredditActivity.REQUEST_CODE_LOGIN);
+        return;
+      }
+
       if (commentTreeConstructor.isReplyActiveFor(activeSubmission)) {
         commentTreeConstructor.hideReply(activeSubmission);
       } else {
