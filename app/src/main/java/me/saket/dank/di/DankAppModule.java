@@ -88,10 +88,9 @@ public class DankAppModule {
     return redditClient;
   }
 
+  // Already singleton.
   @Provides
-    // Already singleton.
-  AuthenticationManager provideRedditAuthManager()
-  {
+  AuthenticationManager provideRedditAuthManager() {
     return AuthenticationManager.get();
   }
 
@@ -264,16 +263,16 @@ public class DankAppModule {
   @Provides
   @Singleton
   CommentsManager provideCommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession,
-      @Named("replyDraftStore") SharedPreferences sharedPreferences, Moshi moshi)
+      @Named("replyDraftStore") SharedPreferences sharedPrefs, Moshi moshi)
   {
     int recycleDraftsOlderThanNumDays = appContext.getResources().getInteger(R.integer.recycle_drafts_older_than_num_days);
-    return new CommentsManager(dankRedditClient, database, userSession, sharedPreferences, moshi, recycleDraftsOlderThanNumDays);
+    return new CommentsManager(dankRedditClient, database, userSession, sharedPrefs, moshi, recycleDraftsOlderThanNumDays);
   }
 
   @Provides
   @Singleton
   @Named("replyDraftStore")
-  SharedPreferences provideSharedPreferencesForReplyDraftStore() {
+  SharedPreferences provideSharedPrefsForReplyDraftStore() {
     return appContext.getSharedPreferences("replyDraftStore", Context.MODE_PRIVATE);
   }
 }

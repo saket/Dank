@@ -297,6 +297,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private void setupCommentTreeConstructor() {
     commentTreeConstructor = new CommentTreeConstructor();
 
+    // Add pending-sync replies to the comment tree.
     unsubscribeOnDestroy(
         submissionWithCommentsStream
             .observeOn(Schedulers.io())
@@ -333,7 +334,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Comment clicks.
     unsubscribeOnDestroy(
-        commentsAdapter.streamCommentCollapseExpandEvents().subscribe(clickEvent -> commentTreeConstructor.toggleCollapse(clickEvent.commentRow()))
+        commentsAdapter.streamCommentCollapseExpandEvents().subscribe(clickEvent -> {
+          if (clickEvent.willCollapseOnClick()) {
+            int firstCompletelyVisiblePos = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
+            boolean commentExtendsBeyondWindowTopEdge = firstCompletelyVisiblePos == -1 || clickEvent.commentRowPosition() < firstCompletelyVisiblePos;
+            if (commentExtendsBeyondWindowTopEdge) {
+              float viewTop = clickEvent.commentItemView().getY();
+              commentList.smoothScrollBy(0, (int) viewTop);
+            }
+          }
+
+          commentTreeConstructor.toggleCollapse(clickEvent.commentRow());
+        })
     );
 
     // Load-more-comment clicks.
@@ -479,7 +491,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
       int firstVisiblePosition = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstVisibleItemPosition();
       boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
-      
+
       if (commentTreeConstructor.isReplyActiveFor(activeSubmission) && isSubmissionReplyVisible) {
         // Hide reply only if it's visible. Otherwise the user won't understand why the
         // reply FAB did not do anything.

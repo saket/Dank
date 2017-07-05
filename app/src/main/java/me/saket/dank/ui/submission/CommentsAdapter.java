@@ -80,10 +80,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   abstract static class CommentClickEvent {
     public abstract SubmissionCommentRow commentRow();
 
+    public abstract int commentRowPosition();
+
     public abstract View commentItemView();
 
-    public static CommentClickEvent create(SubmissionCommentRow commentRow, View commentItemView) {
-      return new AutoValue_CommentsAdapter_CommentClickEvent(commentRow, commentItemView);
+    public abstract boolean willCollapseOnClick();
+
+    public static CommentClickEvent create(SubmissionCommentRow commentRow, int commentRowPosition, View commentItemView, boolean willCollapseOnClick) {
+      return new AutoValue_CommentsAdapter_CommentClickEvent(commentRow, commentRowPosition, commentItemView, willCollapseOnClick);
     }
   }
 
@@ -202,7 +206,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
         // Collapse on click.
         commentViewHolder.itemView.setOnClickListener(v -> {
-          commentClickStream.accept(CommentClickEvent.create(commentItem, commentViewHolder.itemView));
+          boolean willCollapse = !dankCommentNode.isCollapsed();
+          commentClickStream.accept(CommentClickEvent.create(
+              commentItem,
+              commentViewHolder.getAdapterPosition(),
+              commentViewHolder.itemView,
+              willCollapse
+          ));
         });
 
         // Gestures.
@@ -244,7 +254,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
             // "Tap to retry".
             replyActionsListener.onClickRetrySendingReply(pendingSyncReply);
           } else {
-            commentClickStream.accept(CommentClickEvent.create(commentItem, pendingSyncReplyViewHolder.itemView));
+            boolean willCollapse = !commentPendingSyncReplyItem.isCollapsed();
+            commentClickStream.accept(CommentClickEvent.create(
+                commentItem,
+                pendingSyncReplyViewHolder.getAdapterPosition(),
+                pendingSyncReplyViewHolder.itemView,
+                willCollapse
+            ));
           }
         });
         break;
@@ -305,7 +321,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       });
     }
 
-    public void bind(CharSequence byline, String bodyHtml, int commentNodeDepth, boolean isCollapsed) {
+    protected void bind(CharSequence byline, String bodyHtml, int commentNodeDepth, boolean isCollapsed) {
       indentedContainer.setIndentationDepth(commentNodeDepth - 1);    // TODO: Why are we subtracting 1 here?
       this.isCollapsed = isCollapsed;
 
