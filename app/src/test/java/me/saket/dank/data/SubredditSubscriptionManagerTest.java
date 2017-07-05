@@ -45,5 +45,4 @@ public class SubredditSubscriptionManagerTest {
     List<SubredditSubscription> mergedList = subscriptionManager.mergeRemoteSubscriptionsWithLocal(localSubs).apply(remoteSubNames);
     Assert.assertEquals(expectedMergedList, mergedList);
   }
-
 }

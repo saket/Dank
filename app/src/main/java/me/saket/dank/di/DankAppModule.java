@@ -31,6 +31,7 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import me.saket.dank.BuildConfig;
+import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorManager;
@@ -265,7 +266,8 @@ public class DankAppModule {
   CommentsManager provideCommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession,
       @Named("replyDraftStore") SharedPreferences sharedPreferences, Moshi moshi)
   {
-    return new CommentsManager(dankRedditClient, database, userSession, sharedPreferences, moshi);
+    int recycleDraftsOlderThanNumDays = appContext.getResources().getInteger(R.integer.recycle_drafts_older_than_num_days);
+    return new CommentsManager(dankRedditClient, database, userSession, sharedPreferences, moshi, recycleDraftsOlderThanNumDays);
   }
 
   @Provides

@@ -6,6 +6,7 @@ import static me.saket.dank.utils.Commons.toImmutable;
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
+import android.support.annotation.VisibleForTesting;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
@@ -14,8 +15,12 @@ import com.squareup.sqlbrite.BriteDatabase;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.TimeZone;
 
+import hirondelle.date4j.DateTime;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -33,17 +38,19 @@ public class CommentsManager implements ReplyDraftStore {
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase database;
   private final UserSession userSession;
-  private final SharedPreferences sharedPreferences;
+  private final SharedPreferences sharedPrefs;
   private final Moshi moshi;
+  private final int recycleDraftsOlderThanNumDays;
 
-  public CommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession, SharedPreferences sharedPreferences,
-      Moshi moshi)
+  public CommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession, SharedPreferences sharedPrefs,
+      Moshi moshi, int recycleDraftsOlderThanNumDays)
   {
     this.dankRedditClient = dankRedditClient;
     this.database = database;
     this.userSession = userSession;
-    this.sharedPreferences = sharedPreferences;
+    this.sharedPrefs = sharedPrefs;
     this.moshi = moshi;
+    this.recycleDraftsOlderThanNumDays = recycleDraftsOlderThanNumDays;
   }
 
 // ======== REPLY ======== //
@@ -77,8 +84,6 @@ public class CommentsManager implements ReplyDraftStore {
         userSession.loggedInUserName(),
         replyCreatedTimeMillis
     );
-
-    Timber.i("Sending reply to: %s", parentContributionFullName);
 
     ContributionFullNameWrapper fakeParentContribution = ContributionFullNameWrapper.create(parentContributionFullName);
 
@@ -124,14 +129,6 @@ public class CommentsManager implements ReplyDraftStore {
         .map(toImmutable());
   }
 
-  @CheckResult
-  private Observable<List<PendingSyncReply>> streamPendingSyncPostedRepliesForSubmission(Submission submission) {
-    return toV2Observable(
-        database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_POSTED_FOR_SUBMISSION, submission.getFullName())
-            .mapToList(PendingSyncReply.MAPPER))
-        .map(toImmutable());
-  }
-
   /**
    * Removes "pending-sync" replies for a submission once they're found in the submission's comments.
    */
@@ -163,25 +160,49 @@ public class CommentsManager implements ReplyDraftStore {
 
       JsonAdapter<ReplyDraft> jsonAdapter = moshi.adapter(ReplyDraft.class);
       String replyDraftJson = jsonAdapter.toJson(replyDraft);
-      sharedPreferences.edit().putString(keyForDraft(parentContribution), replyDraftJson).apply();
+      sharedPrefs.edit().putString(keyForDraft(parentContribution), replyDraftJson).apply();
 
-      // TODO:
       // Recycle old drafts.
+      Map<String, ?> allDraftJsons = new HashMap<>(sharedPrefs.getAll());
+      Map<String, ReplyDraft> allDrafts = new HashMap<>(allDraftJsons.size());
+      for (Map.Entry<String, ?> entry : allDraftJsons.entrySet()) {
+        String draftEntryJson = (String) entry.getValue();
+        ReplyDraft draftEntry = jsonAdapter.fromJson(draftEntryJson);
+        allDrafts.put(entry.getKey(), draftEntry);
+      }
+      recycleOldDrafts(allDrafts);
     });
+  }
+
+  @VisibleForTesting
+  void recycleOldDrafts(Map<String, ReplyDraft> allDrafts) {
+    DateTime nowDateTime = DateTime.now(TimeZone.getTimeZone("UTC"));
+    DateTime draftDateLimit = nowDateTime.minusDays(recycleDraftsOlderThanNumDays);
+    long draftDateLimitMillis = draftDateLimit.getMilliseconds(TimeZone.getTimeZone("UTC"));
+
+    SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.edit();
+
+    for (Map.Entry<String, ReplyDraft> entry : allDrafts.entrySet()) {
+      ReplyDraft draftEntry = entry.getValue();
+      if (draftEntry.createdTimeMillis() < draftDateLimitMillis) {
+        // Stale draft.
+        sharedPrefsEditor.remove(entry.getKey());
+      }
+    }
+
+    sharedPrefsEditor.apply();
   }
 
   @Override
   @CheckResult
   public Single<String> getDraft(PublicContribution parentContribution) {
     return Single.fromCallable(() -> {
-      String key = keyForDraft(parentContribution);
-      String replyDraftJson = sharedPreferences.getString(key, "");
+      String replyDraftJson = sharedPrefs.getString(keyForDraft(parentContribution), "");
       if ("".equals(replyDraftJson)) {
         return "";
       }
 
       ReplyDraft replyDraft = moshi.adapter(ReplyDraft.class).fromJson(replyDraftJson);
-      Timber.i("Found reply for %s: %s", key, replyDraft.body());
       return replyDraft.body();
     });
   }
@@ -189,13 +210,15 @@ public class CommentsManager implements ReplyDraftStore {
   @Override
   public Completable removeDraft(PublicContribution parentContribution) {
     return Completable.fromAction(() -> {
-      String key = keyForDraft(parentContribution);
-      Timber.i("Removing draft for %s", key);
-      sharedPreferences.edit().remove(key).apply();
+      sharedPrefs.edit().remove(keyForDraft(parentContribution)).apply();
     });
   }
 
-  private static String keyForDraft(PublicContribution parentContribution) {
+  @VisibleForTesting
+  static String keyForDraft(PublicContribution parentContribution) {
+    if (parentContribution.getFullName() == null) {
+      throw new NullPointerException("Wut");
+    }
     return "replyDraftFor_" + parentContribution.getFullName();
   }
 }

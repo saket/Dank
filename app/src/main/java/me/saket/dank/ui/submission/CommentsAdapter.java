@@ -383,7 +383,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
   }
 
-  // TODO: Show post indicator.
   public static class PendingSyncReplyViewHolder extends UserCommentViewHolder {
     @BindColor(R.color.submission_comment_byline_failed_to_post) int bylineCommentPostErrorColor;
 

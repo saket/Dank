@@ -3,6 +3,8 @@
   <string name="reddit_app_client_id">E-TcdjXmZ4tVXg</string>
   <string name="reddit_app_redirect_url">http://saket.me</string>
 
+  <integer name="recycle_drafts_older_than_num_days">14</integer>
+
   <string-array name="default_subreddits">
     <item>Frontpage</item>
     <item>Popular</item>
