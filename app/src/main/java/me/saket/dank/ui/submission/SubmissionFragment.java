@@ -477,7 +477,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         return;
       }
 
-      if (commentTreeConstructor.isReplyActiveFor(activeSubmission)) {
+      int firstVisiblePosition = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstVisibleItemPosition();
+      boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
+      
+      if (commentTreeConstructor.isReplyActiveFor(activeSubmission) && isSubmissionReplyVisible) {
+        // Hide reply only if it's visible. Otherwise the user won't understand why the
+        // reply FAB did not do anything.
         commentTreeConstructor.hideReply(activeSubmission);
       } else {
         commentList.smoothScrollToPosition(0);
