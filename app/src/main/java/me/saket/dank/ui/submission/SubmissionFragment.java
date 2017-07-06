@@ -15,6 +15,7 @@ import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
+import android.animation.LayoutTransition;
 import android.annotation.SuppressLint;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -163,8 +164,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   @Override
-  public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-    super.onViewCreated(view, savedInstanceState);
+  public void onViewCreated(View fragmentLayout, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(fragmentLayout, savedInstanceState);
 
     DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
     linkMovementMethod.setOnLinkClickListener((textView, url) -> {
@@ -183,18 +184,20 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     });
     selfPostTextView.setMovementMethod(linkMovementMethod);
 
-    submissionPageLayout = ((ExpandablePageLayout) view.getParent());
+    submissionPageLayout = ((ExpandablePageLayout) fragmentLayout.getParent());
     submissionPageLayout.addStateCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
     setupCommentList(linkMovementMethod);
     setupCommentTreeConstructor();
-    setupContentImageView(view);
-    setupContentVideoView(view);
+    setupContentImageView(fragmentLayout);
+    setupContentVideoView(fragmentLayout);
     setupCommentsSheet();
     setupReplyFAB();
 
     linkDetailsViewHolder = new SubmissionLinkHolder(linkDetailsView, submissionPageLayout);
+    linkDetailsView.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
+    linkDetailsViewHolder.titleSubtitleContainer.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
 
     // Restore submission if the Activity was recreated.
     if (savedInstanceState != null) {

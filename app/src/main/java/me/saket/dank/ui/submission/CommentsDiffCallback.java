@@ -39,7 +39,6 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionCom
     try {
       return oldCommentRow.equals(newCommentRow);
     } catch (StackOverflowError e) {
-      e.printStackTrace();
       Timber.e("StackOverflowError while equals. oldCommentRow: %s, newCommentRow: %s", oldCommentRow, newCommentRow);
       return false;
     }

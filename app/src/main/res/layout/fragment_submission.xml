@@ -70,6 +70,7 @@
     android:id="@+id/submission_comments_header"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:animateLayoutChanges="true"
     tools:layout_below="@+id/toolbar">
 
     <me.saket.dank.widgets.swipe.SwipeActionIconView style="@style/DankSwipeableLayoutIcon" />
@@ -78,6 +79,7 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:orientation="vertical"
+      android:animateLayoutChanges="true"
       android:paddingTop="@dimen/spacing16">
 
       <TextView
@@ -118,6 +120,7 @@
         android:layout_marginBottom="@dimen/spacing16"
         android:layout_marginEnd="@dimen/spacing16"
         android:layout_marginStart="@dimen/spacing16"
+        android:animateLayoutChanges="true"
         android:background="@drawable/background_submission_link"
         android:foreground="?attr/selectableItemBackground"
         android:orientation="horizontal"
