@@ -14,9 +14,7 @@ import android.view.View;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import me.saket.dank.utils.Views;
 import timber.log.Timber;
@@ -29,11 +27,13 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   @Nullable private View activityToolbar;  // Toolbar inside the parent page, not in this page.
   @Nullable ExpandablePageLayout nestedPage;
 
-  private State currentState;
   private PullToCollapseListener pullToCollapseListener;
   private OnPullToCollapseIntercepter onPullToCollapseIntercepter;
   private List<StateChangeCallbacks> stateChangeCallbacks;
-  private Map<String, InternalPageCallbacks> internalStateCallbacks = new HashMap<>(2);
+  private InternalPageCallbacks internalStateChangeCallbacksForNestedPage;
+  private InternalPageCallbacks internalStateChangeCallbacksForInboxRecyclerView;
+
+  private State currentState;
   private ValueAnimator toolbarAnimator;
   private float expandedAlpha;
   private float collapsedAlpha;
@@ -294,6 +294,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   /**
    * Expands this page instantly, without any animation. Use this when the user wants to directly
    * navigate to this page, by-passing the list.
+   * <p>
+   * It's allowed to call this directly without a RecyclerView in cases where there is no list. Like: DankPullCollapsibleActivity.
    */
   public void expandImmediately() {
     // Ignore if already expanded.
@@ -578,20 +580,20 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 // ======== CALLBACKS ======== //
 
   private void dispatchOnPagePullCallbacks(float deltaY) {
-    for (InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-      if (internalCallback == null) {
-        continue;
-      }
-      internalCallback.onPagePull(deltaY);
+    if (internalStateChangeCallbacksForNestedPage != null) {
+      internalStateChangeCallbacksForNestedPage.onPagePull(deltaY);
+    }
+    if (internalStateChangeCallbacksForInboxRecyclerView != null) {
+      internalStateChangeCallbacksForInboxRecyclerView.onPagePull(deltaY);
     }
   }
 
   private void dispatchOnPageReleasedCallback(boolean collapseEligible) {
-    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-      if (internalCallback == null) {
-        continue;
-      }
-      internalCallback.onPageRelease(collapseEligible);
+    if (internalStateChangeCallbacksForNestedPage != null) {
+      internalStateChangeCallbacksForNestedPage.onPageRelease(collapseEligible);
+    }
+    if (internalStateChangeCallbacksForInboxRecyclerView != null) {
+      internalStateChangeCallbacksForInboxRecyclerView.onPageRelease(collapseEligible);
     }
   }
 
@@ -601,7 +603,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     changeState(State.EXPANDING);
 
     if (stateChangeCallbacks != null) {
-      for (int i = 0; i < stateChangeCallbacks.size(); i++) {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
+      for (int i = 0; i < stateChangeCallbacks.size(); i++)
+      {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
         stateChangeCallbacks.get(i).onPageAboutToExpand(getAnimationDuration());
       }
     }
@@ -625,11 +628,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
    * usually when the user is pulling the page.
    */
   private void dispatchOnPageFullyCoveredCallback() {
-    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-      if (internalCallback == null) {
-        continue;
-      }
-      internalCallback.onPageFullyCovered();
+    if (internalStateChangeCallbacksForNestedPage != null) {
+      internalStateChangeCallbacksForNestedPage.onPageFullyCovered();
+    }
+    if (internalStateChangeCallbacksForInboxRecyclerView != null) {
+      internalStateChangeCallbacksForInboxRecyclerView.onPageFullyCovered();
     }
   }
 
@@ -637,11 +640,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     // The state change must happen after the subscribers have been notified that the page is going to collapse.
     changeState(State.COLLAPSING);
 
-    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-      if (internalCallback == null) {
-        continue;
-      }
-      internalCallback.onPageAboutToCollapse();
+    if (internalStateChangeCallbacksForNestedPage != null) {
+      internalStateChangeCallbacksForNestedPage.onPageAboutToCollapse();
+    }
+    if (internalStateChangeCallbacksForInboxRecyclerView != null) {
+      internalStateChangeCallbacksForInboxRecyclerView.onPageAboutToCollapse();
     }
 
     if (stateChangeCallbacks != null) {
@@ -654,11 +657,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   private void dispatchOnPageCollapsedCallback() {
     changeState(State.COLLAPSED);
 
-    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
-      if (internalCallback == null) {
-        continue;
-      }
-      internalCallback.onPageFullyCollapsed();
+    if (internalStateChangeCallbacksForNestedPage != null) {
+      internalStateChangeCallbacksForNestedPage.onPageFullyCollapsed();
+    }
+    if (internalStateChangeCallbacksForInboxRecyclerView != null) {
+      internalStateChangeCallbacksForInboxRecyclerView.onPageFullyCollapsed();
     }
 
     if (stateChangeCallbacks != null) {
@@ -695,11 +698,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
    * Calls for the associated InboxRecyclerView.
    */
   void setInternalStateCallbacksForList(InternalPageCallbacks listCallbacks) {
-    internalStateCallbacks.put("List", listCallbacks);
+    internalStateChangeCallbacksForNestedPage = listCallbacks;
   }
 
-  void setInternalStateCallbacksForNestedPage(InternalPageCallbacks pageCallbacks) {
-    internalStateCallbacks.put("NestedPage", pageCallbacks);
+  void setInternalStateCallbacksForNestedPage(InternalPageCallbacks nestedPageCallbacks) {
+    internalStateChangeCallbacksForInboxRecyclerView = nestedPageCallbacks;
   }
 
   public boolean isExpanded() {
