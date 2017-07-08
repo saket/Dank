@@ -14,7 +14,6 @@ import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -24,7 +23,6 @@ import java.util.Set;
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
-import timber.log.Timber;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more" & "continue thread ->" items.
@@ -37,14 +35,19 @@ public class CommentTreeConstructor {
   private Relay<Object> changesRequiredStream = PublishRelay.create();
   private Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();  // Key: comment full-name.
   private CommentNode rootCommentNode;
+  private Submission submission;
 
   public CommentTreeConstructor() {}
+
+  public void setSubmission(Submission submission) {
+    this.submission = submission;
+  }
 
   /**
    * Set the root comment of a submission.
    */
-  public void setCommentsAndPendingReplies(Submission submissionWithComments, List<PendingSyncReply> pendingReplies) {
-    this.rootCommentNode = submissionWithComments.getComments();
+  public void setComments(CommentNode rootCommentNode, List<PendingSyncReply> pendingReplies) {
+    this.rootCommentNode = rootCommentNode;
 
     // Build a map of pending reply list so that they can later be accessed at o(1).
     pendingReplyMap.clear();
@@ -64,7 +67,9 @@ public class CommentTreeConstructor {
   }
 
   public void reset() {
-    changesRequiredStream.accept(Notification.INSTANCE);
+    if (rootCommentNode != null) {
+      changesRequiredStream.accept(Notification.INSTANCE);
+    }
     rootCommentNode = null;
     collapsedCommentNodeFullNames.clear();
     replyActiveForCommentNodeFullNames.clear();
@@ -73,6 +78,12 @@ public class CommentTreeConstructor {
   @CheckResult
   public Observable<List<SubmissionCommentRow>> streamTreeUpdates() {
     return changesRequiredStream
+        .map(o -> {
+          if (submission == null) {
+            throw new AssertionError("How did we even reach here??");
+          }
+          return o;
+        })
         .observeOn(Schedulers.io())
         .map(o -> constructComments())
         .map(toImmutable());
@@ -154,11 +165,24 @@ public class CommentTreeConstructor {
    */
   private List<SubmissionCommentRow> constructComments() {
     //Timber.d("-----------------------------------------------");
-    if (rootCommentNode == null) {
-      return Collections.emptyList();
+    int totalRowsSize = 0;
+    if (isReplyActiveFor(submission)) {
+      totalRowsSize += 1;
     }
-    ArrayList<SubmissionCommentRow> flattenComments = new ArrayList<>(rootCommentNode.getTotalSize());
-    return constructComments(flattenComments, rootCommentNode);
+    if (rootCommentNode != null) {
+      totalRowsSize += rootCommentNode.getTotalSize();
+    }
+
+    ArrayList<SubmissionCommentRow> flattenComments = new ArrayList<>(totalRowsSize);
+    if (isReplyActiveFor(submission)) {
+      flattenComments.add(CommentInlineReplyItem.create(submission, 0));
+    }
+
+    if (rootCommentNode == null) {
+      return flattenComments;
+    } else {
+      return constructComments(flattenComments, rootCommentNode);
+    }
   }
 
   /**
@@ -181,7 +205,9 @@ public class CommentTreeConstructor {
     }
 
     // Reply box.
-    if (isReplyActive && !isCommentNodeCollapsed) {
+    // Skip for root-node because we already added a reply for the submission in constructComments().
+    boolean isSubmission = nextNode.getComment().getFullName().equals(submission.getFullName());
+    if (!isSubmission && isReplyActive && !isCommentNodeCollapsed) {
       flattenComments.add(CommentInlineReplyItem.create(nextNode.getComment(), nextNode.getDepth()));
     }
 

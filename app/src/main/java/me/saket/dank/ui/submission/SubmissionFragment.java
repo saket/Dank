@@ -310,7 +310,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                     .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies))
             )
             .subscribe(submissionRepliesPair ->
-                commentTreeConstructor.setCommentsAndPendingReplies(submissionRepliesPair.first, submissionRepliesPair.second)
+                commentTreeConstructor.setComments(submissionRepliesPair.first.getComments(), submissionRepliesPair.second)
             )
     );
 
@@ -532,6 +532,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     loadSubmissionContent(submission, contentLink);
 
     // Load new comments.
+    commentTreeConstructor.setSubmission(submission);
     if (submission.getComments() == null) {
       unsubscribeOnCollapse(Dank.reddit().submission(activeSubmissionRequest)
           .flatMap(retryWithCorrectSortIfNeeded())
