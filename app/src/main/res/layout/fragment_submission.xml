@@ -70,7 +70,6 @@
     android:id="@+id/submission_comments_header"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:animateLayoutChanges="true"
     tools:layout_below="@+id/toolbar">
 
     <me.saket.dank.widgets.swipe.SwipeActionIconView style="@style/DankSwipeableLayoutIcon" />
@@ -79,7 +78,6 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:orientation="vertical"
-      android:animateLayoutChanges="true"
       android:paddingTop="@dimen/spacing16">
 
       <TextView
