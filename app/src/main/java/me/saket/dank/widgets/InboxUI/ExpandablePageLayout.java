@@ -32,7 +32,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   private State currentState;
   private PullToCollapseListener pullToCollapseListener;
   private OnPullToCollapseIntercepter onPullToCollapseIntercepter;
-  private List<StateCallbacks> stateCallbacks;
+  private List<StateChangeCallbacks> stateChangeCallbacks;
   private Map<String, InternalPageCallbacks> internalStateCallbacks = new HashMap<>(2);
   private ValueAnimator toolbarAnimator;
   private float expandedAlpha;
@@ -68,10 +68,10 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
   /**
    * Implement this to receive state callbacks about an <code>ExpandingPage</code>. Use with
-   * {@link ExpandablePageLayout#addStateCallbacks(StateCallbacks...)}. If you use a Fragment
+   * {@link ExpandablePageLayout#addStateCallbacks(StateChangeCallbacks...)}. If you use a Fragment
    * inside your <code>ExpandablePage</code>, it's best to make your Fragment implement this interface.
    */
-  public interface StateCallbacks {
+  public interface StateChangeCallbacks {
     /**
      * Called when the user has selected an item and the <code>ExpandablePage</code> is going to be expand.
      */
@@ -578,7 +578,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 // ======== CALLBACKS ======== //
 
   private void dispatchOnPagePullCallbacks(float deltaY) {
-    for (final InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
+    for (InternalPageCallbacks internalCallback : internalStateCallbacks.values()) {
       if (internalCallback == null) {
         continue;
       }
@@ -600,9 +600,9 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     // notified that the page is going to expand
     changeState(State.EXPANDING);
 
-    if (stateCallbacks != null) {
-      for (int i = 0; i < stateCallbacks.size(); i++) {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
-        stateCallbacks.get(i).onPageAboutToExpand(getAnimationDuration());
+    if (stateChangeCallbacks != null) {
+      for (int i = 0; i < stateChangeCallbacks.size(); i++) {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
+        stateChangeCallbacks.get(i).onPageAboutToExpand(getAnimationDuration());
       }
     }
   }
@@ -612,8 +612,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     changeState(State.EXPANDED);
     dispatchOnPageFullyCoveredCallback();
 
-    if (stateCallbacks != null) {
-      for (final StateCallbacks callback : stateCallbacks) {
+    if (stateChangeCallbacks != null) {
+      for (final StateChangeCallbacks callback : stateChangeCallbacks) {
         callback.onPageExpanded();
       }
     }
@@ -644,8 +644,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       internalCallback.onPageAboutToCollapse();
     }
 
-    if (stateCallbacks != null) {
-      for (final StateCallbacks callback : stateCallbacks) {
+    if (stateChangeCallbacks != null) {
+      for (final StateChangeCallbacks callback : stateChangeCallbacks) {
         callback.onPageAboutToCollapse(getAnimationDuration());
       }
     }
@@ -661,8 +661,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       internalCallback.onPageFullyCollapsed();
     }
 
-    if (stateCallbacks != null) {
-      for (final StateCallbacks callback : stateCallbacks) {
+    if (stateChangeCallbacks != null) {
+      for (final StateChangeCallbacks callback : stateChangeCallbacks) {
         callback.onPageCollapsed();
       }
     }
@@ -734,11 +734,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     return currentState == State.COLLAPSING || currentState == State.COLLAPSED;
   }
 
-  public void addStateCallbacks(StateCallbacks... callbacks) {
-    if (this.stateCallbacks == null) {
-      this.stateCallbacks = new ArrayList<>(4);
+  public void addStateCallbacks(StateChangeCallbacks... callbacks) {
+    if (this.stateChangeCallbacks == null) {
+      this.stateChangeCallbacks = new ArrayList<>(4);
     }
-    Collections.addAll(this.stateCallbacks, callbacks);
+    Collections.addAll(this.stateChangeCallbacks, callbacks);
   }
 
   public void setPullToCollapseIntercepter(OnPullToCollapseIntercepter intercepter) {

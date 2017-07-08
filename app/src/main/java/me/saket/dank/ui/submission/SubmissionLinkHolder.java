@@ -30,7 +30,6 @@ import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.SizeReadyCallback;
 
 import java.util.Locale;
-import java.util.concurrent.TimeUnit;
 
 import butterknife.BindColor;
 import butterknife.BindDimen;
@@ -50,7 +49,7 @@ import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.UrlMetadataParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
-import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateCallbacks;
+import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import timber.log.Timber;
 
@@ -94,7 +93,7 @@ public class SubmissionLinkHolder {
     ButterKnife.bind(this, linkedRedditLinkView);
     linkedRedditLinkView.setClipToOutline(true);
 
-    submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateCallbacks() {
+    submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
       @Override
       public void onPageCollapsed() {
         resetViews();

@@ -91,7 +91,7 @@ import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.StateCallbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
+public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.StateChangeCallbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
 
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";

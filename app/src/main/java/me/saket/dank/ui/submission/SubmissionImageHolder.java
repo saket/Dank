@@ -21,7 +21,7 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
-import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateCallbacks;
+import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
 import timber.log.Timber;
@@ -58,7 +58,7 @@ public class SubmissionImageHolder {
     imageView.setGravity(Gravity.TOP);
 
     // Reset everything when the page is collapsed.
-    submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateCallbacks() {
+    submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
       @Override
       public void onPageCollapsed() {
         resetViews();
@@ -151,7 +151,7 @@ public class SubmissionImageHolder {
       if (submissionPageLayout.isExpanded()) {
         hintEntryAnimationRunnable.run();
       } else {
-        submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateCallbacks() {
+        submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
           @Override
           public void onPageExpanded() {
             hintEntryAnimationRunnable.run();
