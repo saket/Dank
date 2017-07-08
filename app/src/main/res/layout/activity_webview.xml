@@ -1,26 +1,26 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout style="@style/DankPullCollapsibleActivityPage"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:id="@+id/webviewfallback_root"
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/webviewfallback_root"
+  style="@style/DankPullCollapsibleActivityPage"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical">
+
+  <WebView
+    android:id="@+id/webviewfallback_webview"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical">
+    android:layout_below="@+id/toolbar" />
 
-    <WebView
-        android:id="@+id/webviewfallback_webview"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/toolbar" />
+  <me.saket.dank.widgets.DankToolbar
+    android:id="@+id/toolbar"
+    style="@style/DankToolbar"
+    android:fitsSystemWindows="true"
+    app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
-    <me.saket.dank.widgets.DankToolbar
-        android:id="@+id/toolbar"
-        style="@style/DankToolbar"
-        android:fitsSystemWindows="true"
-        app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
-
-    <me.saket.dank.widgets.SubmissionAnimatedProgressBar
-        android:id="@+id/webviewfallback_progress"
-        style="@style/DankProgressBar.Horizontal.TopAligned"
-        android:layout_below="@+id/toolbar" />
+  <me.saket.dank.widgets.SubmissionAnimatedProgressBar
+    android:id="@+id/webviewfallback_progress"
+    style="@style/DankProgressBar.Horizontal.TopAligned"
+    android:layout_below="@+id/toolbar" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

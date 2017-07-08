@@ -1,49 +1,48 @@
 <?xml version="1.0" encoding="utf-8"?>
 <me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/userprofile_root"
-    style="@style/DankPullCollapsibleActivityPage"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+  style="@style/DankPullCollapsibleActivityPage"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  tools:layout_marginTop="25dp">
+
+  <me.saket.dank.widgets.DankToolbar
+    android:id="@+id/toolbar"
+    style="@style/DankToolbar"
+    android:fitsSystemWindows="true"
+    app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
+
+  <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:layout_marginTop="25dp">
+    android:layout_below="@+id/toolbar"
+    android:orientation="vertical">
 
-    <me.saket.dank.widgets.DankToolbar
-        android:id="@+id/toolbar"
-        style="@style/DankToolbar"
-        android:fitsSystemWindows="true"
-        app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
+    <TextView
+      android:id="@+id/userprofile_karma"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="@dimen/spacing16"
+      android:layout_marginStart="@dimen/spacing16"
+      android:layout_marginTop="@dimen/spacing16"
+      android:fontFamily="sans-serif-light"
+      android:text="@string/userprofile_karma_count"
+      android:textSize="32sp"
+      tools:text="23k karma" />
 
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@+id/toolbar"
-        android:orientation="vertical">
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="@dimen/spacing16"
+      android:layout_marginStart="@dimen/spacing16"
+      android:layout_marginTop="@dimen/spacing4"
+      android:text="Redditor for 5 years"
+      android:textSize="@dimen/textsize16" />
 
-        <TextView
-            android:id="@+id/userprofile_karma"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/spacing16"
-            android:layout_marginStart="@dimen/spacing16"
-            android:layout_marginTop="@dimen/spacing16"
-            android:fontFamily="sans-serif-light"
-            android:text="@string/userprofile_karma_count"
-            android:textSize="32sp"
-            tools:text="23k karma" />
-
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginEnd="@dimen/spacing16"
-            android:layout_marginStart="@dimen/spacing16"
-            android:textSize="@dimen/textsize16"
-            android:layout_marginTop="@dimen/spacing4"
-            android:text="Redditor for 5 years" />
-
-        <Button
-            style="@style/DankButton.UserProfileSheet"
-            android:text="Send a private message"
-            />
-    </LinearLayout>
+    <Button
+      style="@style/DankButton.UserProfileSheet"
+      android:text="Send a private message" />
+  </LinearLayout>
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>
