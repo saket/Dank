@@ -60,9 +60,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     setupPreferencesFragment();
     setupPreferencesGroupList(savedInstanceState);
 
-    if (BuildConfig.DEBUG) {
-      hiddenOptionsButton.setVisibility(View.VISIBLE);
-    }
+    hiddenOptionsButton.setVisibility(BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
   }
 
   @Override
