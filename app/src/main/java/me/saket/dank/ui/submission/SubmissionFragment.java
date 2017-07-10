@@ -14,10 +14,13 @@ import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.LayoutTransition;
+import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
+import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -73,6 +76,7 @@ import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
@@ -180,7 +184,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     selfPostTextView.setMovementMethod(linkMovementMethod);
 
     submissionPageLayout = ((ExpandablePageLayout) fragmentLayout.getParent());
-    submissionPageLayout.addStateCallbacks(this);
+    submissionPageLayout.addStateChangeCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
     setupCommentList(linkMovementMethod);
@@ -189,6 +193,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     setupContentVideoView(fragmentLayout);
     setupCommentsSheet();
     setupReplyFAB();
+    setupStatusBarTint();
 
     linkDetailsViewHolder = new SubmissionLinkHolder(linkDetailsView, submissionPageLayout);
     linkDetailsView.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
@@ -383,7 +388,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
 
     contentImageViewHolder = new SubmissionImageHolder(fragmentLayout, contentLoadProgressView, submissionPageLayout, deviceDisplayWidth);
-    contentImageViewHolder.setup();
   }
 
   private void setupContentVideoView(View fragmentLayout) {
@@ -391,7 +395,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
     contentVideoViewHolder = new SubmissionVideoHolder(fragmentLayout, contentLoadProgressView, submissionPageLayout, exoPlayerManager);
-    contentVideoViewHolder.setup();
   }
 
   private void setupCommentsSheet() {
@@ -499,6 +502,44 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentTreeConstructor.showReply(activeSubmission);
       }
     });
+  }
+
+  private void setupStatusBarTint() {
+    Observable<Bitmap> contentBitmapStream = contentImageViewHolder.streamImageBitmaps();
+    SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(getActivity());
+
+    unsubscribeOnDestroy(
+        statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout)
+            .subscribe(statusBarTint -> {
+              ValueAnimator tintChangeAnim = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
+              tintChangeAnim.addUpdateListener(animation -> getActivity().getWindow().setStatusBarColor((int) animation.getAnimatedValue()));
+              tintChangeAnim.setDuration(300L);
+              tintChangeAnim.setInterpolator(Animations.INTERPOLATOR);
+              tintChangeAnim.start();
+
+              Timber.i("Tint: %s", Colors.colorIntToHex(statusBarTint.color()));
+
+              // Set a light status bar on M+.
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                int flags = submissionPageLayout.getSystemUiVisibility();
+                if (!statusBarTint.isDarkColor()) {
+                  Timber.i("Light status bar");
+                  flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                  submissionPageLayout.setSystemUiVisibility(flags);
+
+                } else {
+                  flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                  submissionPageLayout.setSystemUiVisibility(flags);
+                }
+              }
+
+              if (!statusBarTint.isDarkColor()) {
+                // TODO: Use darker colors on light images.
+                //back.setColorFilter(ContextCompat.getColor(DribbbleShot.this, R.color.dark_icon));
+              }
+              Timber.d("------------");
+            })
+    );
   }
 
   /**

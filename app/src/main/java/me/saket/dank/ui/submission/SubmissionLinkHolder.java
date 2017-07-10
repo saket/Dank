@@ -93,7 +93,7 @@ public class SubmissionLinkHolder {
     ButterKnife.bind(this, linkedRedditLinkView);
     linkedRedditLinkView.setClipToOutline(true);
 
-    submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
+    submissionPageLayout.addStateChangeCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
       @Override
       public void onPageCollapsed() {
         resetViews();

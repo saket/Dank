@@ -68,7 +68,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
   /**
    * Implement this to receive state callbacks about an <code>ExpandingPage</code>. Use with
-   * {@link ExpandablePageLayout#addStateCallbacks(StateChangeCallbacks...)}. If you use a Fragment
+   * {@link ExpandablePageLayout#addStateChangeCallbacks(StateChangeCallbacks...)}. If you use a Fragment
    * inside your <code>ExpandablePage</code>, it's best to make your Fragment implement this interface.
    */
   public interface StateChangeCallbacks {
@@ -138,7 +138,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
     // Handles pull-to-collapse-this-page gestures
     setPullToCollapseEnabled(true);
-    pullToCollapseListener = new PullToCollapseListener(getContext(), this, this);
+    pullToCollapseListener = new PullToCollapseListener(getContext(), this);
+    pullToCollapseListener.addOnPullListeners(this);
   }
 
   public void setup(View parentActivityToolbar) {
@@ -193,7 +194,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   }
 
   @Override
-  public void onPull(float deltaY, float currentTranslationY, boolean upwardPull, boolean deltaUpwardPull) {
+  public void onPull(float deltaY, float currentTranslationY, boolean upwardPull, boolean deltaUpwardPull, boolean collapseEligible) {
     // In case the user pulled the page before it could fully open (and while the toolbar was still hiding).
     stopToolbarAnimation();
 
@@ -223,15 +224,16 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       changeState(State.EXPANDED);
       stopAnyOngoingPageAnimation();
 
-      // Restore everything to their expanded position
+      // Restore everything to their expanded position.
       // 1. Hide Toolbar again
       if (activityToolbar != null) {
         animateToolbar(false, 0f);
       }
 
-      // 2. Expand page again
+      // 2. Expand page again.
       if (getTranslationY() != 0f) {
-        animate().translationY(0f)
+        animate()
+            .translationY(0f)
             .alpha(expandedAlpha)
             .setDuration(getAnimationDuration())
             .setInterpolator(getAnimationInterpolator())
@@ -737,7 +739,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     return currentState == State.COLLAPSING || currentState == State.COLLAPSED;
   }
 
-  public void addStateCallbacks(StateChangeCallbacks... callbacks) {
+  public void addStateChangeCallbacks(StateChangeCallbacks... callbacks) {
     if (this.stateChangeCallbacks == null) {
       this.stateChangeCallbacks = new ArrayList<>(4);
     }
@@ -749,10 +751,16 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   }
 
   /**
+   * Listener that gets called when this page is being pulled.
+   */
+  public void addOnPullCallbacks(PullToCollapseListener.OnPullListener listener) {
+    pullToCollapseListener.addOnPullListeners(listener);
+  }
+
+  /**
    * Alpha of this page when it's collapsed.
    */
   public void setCollapsedAlpha(float collapsedAlpha) {
     this.collapsedAlpha = collapsedAlpha;
   }
-
 }

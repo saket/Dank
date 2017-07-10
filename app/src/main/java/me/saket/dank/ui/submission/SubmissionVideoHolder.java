@@ -53,12 +53,10 @@ public class SubmissionVideoHolder {
     this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
     this.exoPlayerManager = exoPlayerManager;
-  }
 
-  public void setup() {
     controlsView = new DankVideoControlsView(contentVideoView.getContext());
-    contentVideoView.setControls(controlsView);
     controlsView.insertSeekBarIn(contentVideoViewContainer);
+    contentVideoView.setControls(controlsView);
   }
 
   public Disposable load(MediaLink mediaLink) {
@@ -124,7 +122,7 @@ public class SubmissionVideoHolder {
     // TODO: Transition colors smoothly + use default colors on start.
 
     controlsView.setVideoProgressChangeListener(() -> {
-      final long startTime = System.currentTimeMillis();
+      //final long startTime = System.currentTimeMillis();
       if (videoBitmap == null) {
         videoBitmap = Bitmap.createBitmap(textureVideoView.getResources().getDisplayMetrics(), 10, 10, Bitmap.Config.RGB_565);
       }

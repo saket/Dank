@@ -2,6 +2,8 @@ package me.saket.dank.ui.submission;
 
 import static me.saket.dank.utils.Views.executeOnMeasure;
 
+import android.graphics.Bitmap;
+import android.support.annotation.CheckResult;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -11,10 +13,15 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
 import com.bumptech.glide.load.resource.drawable.GlideDrawable;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.utils.Animations;
@@ -38,8 +45,8 @@ public class SubmissionImageHolder {
   private final int deviceDisplayWidth;
   private final ExpandablePageLayout submissionPageLayout;
   private final ProgressBar contentLoadProgressView;
-
   private GestureController.OnStateChangeListener imageScrollListener;
+  private Relay<GlideDrawable> imageStream;
 
   /**
    * God knows why (if he/she exists), ButterKnife is failing to bind <var>contentLoadProgressView</var>,
@@ -52,18 +59,22 @@ public class SubmissionImageHolder {
     this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
     this.deviceDisplayWidth = deviceDisplayWidth;
-  }
 
-  public void setup() {
     imageView.setGravity(Gravity.TOP);
+    imageStream = PublishRelay.create();
 
     // Reset everything when the page is collapsed.
-    submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
+    submissionPageLayout.addStateChangeCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
       @Override
       public void onPageCollapsed() {
         resetViews();
       }
     });
+  }
+
+  @CheckResult
+  public Observable<Bitmap> streamImageBitmaps() {
+    return imageStream.map(drawable -> getBitmapFromDrawable(drawable));
   }
 
   private void resetViews() {
@@ -78,15 +89,17 @@ public class SubmissionImageHolder {
     contentLoadProgressView.setIndeterminate(true);
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
+    Timber.i("Loading image: %s", contentLink.optimizedImageUrl(deviceDisplayWidth));
+
     Glide.with(imageView.getContext())
         .load(contentLink.optimizedImageUrl(deviceDisplayWidth))
         .priority(Priority.IMMEDIATE)
         .listener(new GlideUtils.SimpleRequestListener<String, GlideDrawable>() {
           @Override
-          public void onResourceReady(GlideDrawable resource) {
+          public void onResourceReady(GlideDrawable drawable) {
             executeOnMeasure(imageView, () -> {
-              float widthResizeFactor = deviceDisplayWidth / (float) resource.getMinimumWidth();
-              float imageHeight = resource.getIntrinsicHeight() * widthResizeFactor;
+              float widthResizeFactor = deviceDisplayWidth / (float) drawable.getMinimumWidth();
+              float imageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
               float visibleImageHeight = Math.min(imageHeight, imageView.getHeight());
 
               // Reveal the image smoothly or right away depending upon whether or not this
@@ -94,10 +107,6 @@ public class SubmissionImageHolder {
               Views.executeOnNextLayout(commentListParentSheet, () -> {
                 int revealDistance = (int) (visibleImageHeight - commentListParentSheet.getTop());
                 commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
-                //Timber.i("revealDistance: %s", revealDistance);
-                //Timber.i("visibleImageHeight: %s", visibleImageHeight);
-                //Timber.i("commentListParentSheet.getTop(): %s", commentListParentSheet.getTop());
-                // TODO: 04/04/17 How do we handle images smaller than the toolbar's bottom?
 
                 if (revealDistance < 0) {
                   Toast.makeText(imageView.getContext(), "Image is smaller than the toolbar+status bar", Toast.LENGTH_SHORT).show();
@@ -113,6 +122,7 @@ public class SubmissionImageHolder {
               });
             });
 
+            imageStream.accept(drawable);
             contentLoadProgressView.setVisibility(View.GONE);
           }
 
@@ -151,7 +161,7 @@ public class SubmissionImageHolder {
       if (submissionPageLayout.isExpanded()) {
         hintEntryAnimationRunnable.run();
       } else {
-        submissionPageLayout.addStateCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
+        submissionPageLayout.addStateChangeCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
           @Override
           public void onPageExpanded() {
             hintEntryAnimationRunnable.run();
@@ -194,4 +204,13 @@ public class SubmissionImageHolder {
     imageView.getController().addOnStateChangeListener(imageScrollListener);
   }
 
+  private static Bitmap getBitmapFromDrawable(GlideDrawable drawable) {
+    if (drawable instanceof GlideBitmapDrawable) {
+      return ((GlideBitmapDrawable) drawable).getBitmap();
+    } else if (drawable instanceof GifDrawable) {
+      return ((GifDrawable) drawable).getFirstFrame();
+    } else {
+      throw new IllegalStateException("Unknown Drawable: " + drawable);
+    }
+  }
 }

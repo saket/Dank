@@ -5,6 +5,9 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewConfiguration;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * Handles pull-to-dispatch gesture for an {@link ExpandablePageLayout}.
  */
@@ -14,7 +17,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
   private final int touchSlop;
 
   private ExpandablePageLayout expandablePage;
-  private OnPullListener onPullListener;
+  private List<OnPullListener> onPullListeners = new ArrayList<>(3);
   private int collapseDistanceThreshold;
   private float downX;
   private float downY;
@@ -23,7 +26,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
   private Boolean horizontalSwipingConfirmed;
   private Boolean interceptedUntilNextGesture;
 
-  interface OnPullListener {
+  public interface OnPullListener {
     /**
      * Called when the user is pulling down / up the expandable page or the list.
      *
@@ -31,8 +34,9 @@ public class PullToCollapseListener implements View.OnTouchListener {
      * @param currentTranslationY Current translation-Y of the page.
      * @param upwardPull          Whether or not the page is being pulled in the upward direction.
      * @param deltaUpwardPull     Whether or not the last delta-pull was made in the upward direction.
+     * @param collapseEligible    Whether or not the pull distance was enough to trigger a collapse.
      */
-    void onPull(float deltaY, float currentTranslationY, boolean upwardPull, boolean deltaUpwardPull);
+    void onPull(float deltaY, float currentTranslationY, boolean upwardPull, boolean deltaUpwardPull, boolean collapseEligible);
 
     /**
      * Called when the user's finger is lifted.
@@ -42,10 +46,13 @@ public class PullToCollapseListener implements View.OnTouchListener {
     void onRelease(boolean collapseEligible);
   }
 
-  public PullToCollapseListener(Context context, ExpandablePageLayout expandablePage, OnPullListener onPullListener) {
+  public PullToCollapseListener(Context context, ExpandablePageLayout expandablePage) {
     touchSlop = ViewConfiguration.get(context).getScaledTouchSlop();
     this.expandablePage = expandablePage;
-    this.onPullListener = onPullListener;
+  }
+
+  public void addOnPullListeners(OnPullListener listener) {
+    onPullListeners.add(listener);
   }
 
   /**
@@ -155,7 +162,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
         // the pull distance
         float totalSwipeDistanceY = event.getRawY() - downY;
         if (Math.abs(totalSwipeDistanceY) >= touchSlop) {
-          dispatchReleaseCallback(eligibleForCollapse);
+          dispatchReleaseCallback();
         }
         break;
     }
@@ -163,16 +170,21 @@ public class PullToCollapseListener implements View.OnTouchListener {
     return false;
   }
 
-  private void dispatchReleaseCallback(boolean eligibleForCollapse) {
-    onPullListener.onRelease(eligibleForCollapse);
+  private void dispatchReleaseCallback() {
+    for (int i = 0; i < onPullListeners.size(); i++) {
+      OnPullListener onPullListener = onPullListeners.get(i);
+      onPullListener.onRelease(eligibleForCollapse);
+    }
   }
 
   private void dispatchPulledCallback(float deltaY, float translationY, boolean upwardPull, boolean deltaUpwardPull) {
-    onPullListener.onPull(deltaY, translationY, upwardPull, deltaUpwardPull);
+    for (int i = 0; i < onPullListeners.size(); i++) {
+      OnPullListener onPullListener = onPullListeners.get(i);
+      onPullListener.onPull(deltaY, translationY, upwardPull, deltaUpwardPull, eligibleForCollapse);
+    }
   }
 
   private void cancelAnyOngoingAnimations() {
     expandablePage.stopAnyOngoingPageAnimation();
   }
-
 }
