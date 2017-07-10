@@ -13,8 +13,8 @@
 
     <item name="android:windowBackground">@color/window_background</item>
     <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-    <item name="android:statusBarColor">@color/color_primary_dark</item>
     <item name="android:navigationBarColor">@color/navigation_bar</item>
+    <item name="android:windowTranslucentStatus">true</item>
     <item name="android:backgroundDimEnabled">false</item>
 
     <item name="alertDialogTheme">@style/DankDialogTheme</item>
@@ -31,6 +31,8 @@
   </style>
 
   <style name="DankDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
+    <!-- Translucent systemUi results in softInputMode getting ignored :| -->
+    <item name="android:windowTranslucentStatus">false</item>
     <item name="android:windowTitleStyle">@style/DankDialogTitleStyle</item>
   </style>
 

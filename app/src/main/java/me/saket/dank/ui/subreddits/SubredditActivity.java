@@ -11,6 +11,7 @@ import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setMarginTop;
 import static me.saket.dank.utils.Views.setPaddingTop;
+import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.LayoutTransition;
@@ -126,8 +127,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     setupContentExpandablePage(contentPage);
 
     // Add top-margin to make room for the status bar.
-    executeOnMeasure(toolbar, () -> setMarginTop(sortingModeContainer, toolbar.getHeight()));
-    executeOnMeasure(sortingModeContainer, () -> setPaddingTop(submissionList, sortingModeContainer.getHeight() + toolbar.getHeight()));
+    int statusBarHeight = statusBarHeight(getResources());
+    setMarginTop(toolbarTitleContainer, statusBarHeight);
+    setPaddingTop(toolbar, statusBarHeight);
+    setPaddingTop(toolbarSheet, statusBarHeight);
+    executeOnMeasure(toolbar, () -> setMarginTop(sortingModeContainer, statusBarHeight + toolbar.getHeight()));
+    executeOnMeasure(sortingModeContainer, () -> {
+      setPaddingTop(submissionList, sortingModeContainer.getHeight() + toolbar.getHeight() + statusBarHeight);
+    });
 
     findAndSetupToolbar();
     getSupportActionBar().setDisplayShowTitleEnabled(false);

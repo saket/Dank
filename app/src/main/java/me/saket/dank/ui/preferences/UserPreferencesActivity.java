@@ -1,5 +1,8 @@
 package me.saket.dank.ui.preferences;
 
+import static me.saket.dank.utils.Views.setMarginTop;
+import static me.saket.dank.utils.Views.setPaddingTop;
+import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
@@ -44,6 +47,10 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     setContentView(R.layout.activity_user_preferences);
     ButterKnife.bind(this);
     findAndSetupToolbar();
+
+    int statusBarHeight = statusBarHeight(getResources());
+    setPaddingTop(toolbar, statusBarHeight);
+    setMarginTop(preferenceList, statusBarHeight);
 
     setupContentExpandablePage(activityContentPage);
     activityContentPage.setNestedExpandablePage(preferencesPage);
