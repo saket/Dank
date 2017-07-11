@@ -152,11 +152,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     View fragmentLayout = inflater.inflate(R.layout.fragment_submission, container, false);
     ButterKnife.bind(this, fragmentLayout);
 
-    int statusBarHeight = statusBarHeight(getResources());
-    setMarginTop(toolbar, statusBarHeight);
-    executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight));
-    toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
-
     // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
     deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
 
@@ -166,6 +161,14 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @Override
   public void onViewCreated(View fragmentLayout, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(fragmentLayout, savedInstanceState);
+
+    int statusBarHeight = statusBarHeight(getResources());
+    setMarginTop(toolbar, statusBarHeight);
+    executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight));
+    toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
+
+    // Don't let the system add any paddings because of fitsSystemWindows=true.
+    fragmentLayout.setOnApplyWindowInsetsListener((view, windowInsets) -> windowInsets.consumeSystemWindowInsets());
 
     DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
     linkMovementMethod.setOnLinkClickListener((textView, url) -> {
