@@ -14,17 +14,16 @@ import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.LayoutTransition;
-import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -76,7 +75,6 @@ import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
@@ -101,7 +99,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
 
   @BindView(R.id.toolbar) Toolbar toolbar;
-  @BindView(R.id.submission_toolbar_gradient) View toolbarShadows;
   @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
   @BindView(R.id.submission_content_progress_bar) SubmissionAnimatedProgressBar contentLoadProgressView;
   @BindView(R.id.submission_image) ZoomableImageView contentImageView;
@@ -386,13 +383,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private void setupContentImageView(View fragmentLayout) {
     Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
-
     contentImageViewHolder = new SubmissionImageHolder(fragmentLayout, contentLoadProgressView, submissionPageLayout, deviceDisplayWidth);
   }
 
   private void setupContentVideoView(View fragmentLayout) {
     Views.setMarginBottom(contentVideoViewContainer, commentsSheetMinimumVisibleHeight);
-
     ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
     contentVideoViewHolder = new SubmissionVideoHolder(fragmentLayout, contentLoadProgressView, submissionPageLayout, exoPlayerManager);
   }
@@ -506,40 +501,44 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private void setupStatusBarTint() {
     Observable<Bitmap> contentBitmapStream = contentImageViewHolder.streamImageBitmaps();
-    SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(getActivity());
+    int defaultStatusBarColor = ContextCompat.getColor(getActivity(), R.color.color_primary_dark);
+    SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(getActivity(), defaultStatusBarColor);
 
-    unsubscribeOnDestroy(
-        statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout)
-            .subscribe(statusBarTint -> {
-              ValueAnimator tintChangeAnim = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
-              tintChangeAnim.addUpdateListener(animation -> getActivity().getWindow().setStatusBarColor((int) animation.getAnimatedValue()));
-              tintChangeAnim.setDuration(300L);
-              tintChangeAnim.setInterpolator(Animations.INTERPOLATOR);
-              tintChangeAnim.start();
-
-              Timber.i("Tint: %s", Colors.colorIntToHex(statusBarTint.color()));
-
-              // Set a light status bar on M+.
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                int flags = submissionPageLayout.getSystemUiVisibility();
-                if (!statusBarTint.isDarkColor()) {
-                  Timber.i("Light status bar");
-                  flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                  submissionPageLayout.setSystemUiVisibility(flags);
-
-                } else {
-                  flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                  submissionPageLayout.setSystemUiVisibility(flags);
-                }
-              }
-
-              if (!statusBarTint.isDarkColor()) {
-                // TODO: Use darker colors on light images.
-                //back.setColorFilter(ContextCompat.getColor(DribbbleShot.this, R.color.dark_icon));
-              }
-              Timber.d("------------");
-            })
-    );
+//    ColorDrawable statusBarOverlayDrawable = new ColorDrawable(defaultStatusBarColor);
+//    statusBarOverlayView.setBackground(statusBarOverlayDrawable);
+//
+//    unsubscribeOnDestroy(
+//        statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout)
+//            .subscribe(statusBarTint -> {
+//              ValueAnimator tintChangeAnim = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
+//              tintChangeAnim.addUpdateListener(animation -> statusBarOverlayDrawable.setColor((int) animation.getAnimatedValue()));
+//              tintChangeAnim.setDuration(300L);
+//              tintChangeAnim.setInterpolator(Animations.INTERPOLATOR);
+//              tintChangeAnim.start();
+//
+//              Timber.i("Tint: %s", Colors.colorIntToHex(statusBarTint.color()));
+//
+//              // Set a light status bar on M+.
+//              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+//                int flags = submissionPageLayout.getSystemUiVisibility();
+//                if (!statusBarTint.isDarkColor()) {
+//                  Timber.i("Light status bar");
+//                  flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+//                  submissionPageLayout.setSystemUiVisibility(flags);
+//
+//                } else {
+//                  flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+//                  submissionPageLayout.setSystemUiVisibility(flags);
+//                }
+//              }
+//
+//              if (!statusBarTint.isDarkColor()) {
+//                // TODO: Use darker colors on light images.
+//                //back.setColorFilter(ContextCompat.getColor(DribbbleShot.this, R.color.dark_icon));
+//              }
+//              Timber.d("------------");
+//            })
+//    );
   }
 
   /**
@@ -627,7 +626,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
     boolean transparentToolbar = contentLink.isImageOrGif() || contentLink.isVideo();
     toolbarBackground.setSyncScrollEnabled(transparentToolbar);
-    toolbarShadows.setVisibility(transparentToolbar ? View.VISIBLE : View.GONE);
 
     if (contentLink instanceof MediaLink.ImgurUnresolvedGallery) {
       contentLoadProgressView.show();

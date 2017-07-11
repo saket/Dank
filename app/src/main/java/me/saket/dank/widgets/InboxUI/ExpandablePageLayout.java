@@ -8,6 +8,7 @@ import android.content.Context;
 import android.graphics.Canvas;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.annotation.Px;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
@@ -39,6 +40,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   private float collapsedAlpha;
   private boolean isFullyCoveredByNestedPage;
   private boolean pullToCollapseEnabled;
+  private int negativeMarginWithToolbar;
 
   public enum State {
     COLLAPSING,
@@ -146,7 +148,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     activityToolbar = parentActivityToolbar;
 
     Views.executeOnMeasure(activityToolbar, () -> {
-      setPullToCollapseDistanceThreshold(parentActivityToolbar.getHeight());
+      setPullToCollapseDistanceThreshold(parentActivityToolbar.getHeight() - negativeMarginWithToolbar);
     });
   }
 
@@ -366,7 +368,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         expandInfo.expandedItemLocationRect.width(),
         expandInfo.expandedItemLocationRect.height()
     );
-    setTranslationY(expandInfo.expandedItemLocationRect.top);
+    setTranslationY(expandInfo.expandedItemLocationRect.top - negativeMarginWithToolbar);
   }
 
   protected void alignPageToCoverScreen() {
@@ -375,8 +377,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   }
 
   protected void animatePageExpandCollapse(boolean expand, int targetWidth, int targetHeight, InboxRecyclerView.ExpandInfo expandInfo) {
-    float targetPageTranslationY = expand ? 0f : expandInfo.expandedItemLocationRect.top;
-    final float targetPageTranslationX = expand ? 0f : expandInfo.expandedItemLocationRect.left;
+    float targetPageTranslationX = expand ? 0f : expandInfo.expandedItemLocationRect.left;
+    float targetPageTranslationY = expand ? 0f : expandInfo.expandedItemLocationRect.top - negativeMarginWithToolbar;
 
     // If there's no record about the expanded list item (from whose place this page was expanded),
     // collapse just below the toolbar and not the window top to avoid closing the toolbar upon hiding.
@@ -453,7 +455,12 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       return;
     }
 
-    final float toolbarCurrentBottom = activityToolbar != null ? activityToolbar.getBottom() + activityToolbar.getTranslationY() : 0;
+    final float toolbarCurrentBottom;
+    if (activityToolbar != null) {
+      toolbarCurrentBottom = activityToolbar.getBottom() + activityToolbar.getTranslationY() - negativeMarginWithToolbar;
+    } else {
+      toolbarCurrentBottom = 0;
+    }
     final float fromTy = Math.max(toolbarCurrentBottom, getTranslationY());
 
     // The hide animation happens a bit too quickly if the page has to travel a large
@@ -475,11 +482,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   }
 
   /**
-   * Helper method for showing / hiding the toolbar depending upon this page's current translationY.
+   * Ensure that the toolbar always stays above this page.
    */
   private void updateToolbarTranslationY(boolean show, float pageTranslationY) {
     //noinspection ConstantConditions
-    final int toolbarHeight = activityToolbar.getBottom();
+    final int toolbarHeight = activityToolbar.getBottom() - negativeMarginWithToolbar;
     float targetTranslationY = pageTranslationY - toolbarHeight;
 
     if (show) {
@@ -762,5 +769,18 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
    */
   public void setCollapsedAlpha(float collapsedAlpha) {
     this.collapsedAlpha = collapsedAlpha;
+  }
+
+  /**
+   * Adds a negative offset to the gap between the toolbar and this page. The gap is used for
+   * computing the position of the toolbar in a way that it always stays above this page.
+   */
+  public void setNegativeMarginWithToolbar(@Px int negativeMarginWithToolbar) {
+    this.negativeMarginWithToolbar = negativeMarginWithToolbar;
+    setup(activityToolbar);
+  }
+
+  public int getNegativeMarginWithToolbar() {
+    return negativeMarginWithToolbar;
   }
 }
