@@ -66,7 +66,6 @@ import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderFooterInfo;
 import me.saket.dank.utils.Keyboards;
-import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
@@ -323,7 +322,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     submissionList.setLayoutManager(submissionList.createLayoutManager());
     submissionList.setItemAnimator(new DefaultItemAnimator());
     submissionList.setExpandablePage(submissionPage, toolbarContainer);
-    submissionPage.setNegativeMarginWithToolbar(Views.statusBarHeight(getResources()));
 
     // Swipe gestures.
     OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);

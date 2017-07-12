@@ -8,14 +8,12 @@ import android.view.ViewConfiguration;
 import java.util.ArrayList;
 import java.util.List;
 
-import timber.log.Timber;
-
 /**
  * Handles pull-to-dispatch gesture for an {@link ExpandablePageLayout}.
  */
 public class PullToCollapseListener implements View.OnTouchListener {
 
-  private static final float COLLAPSE_THRESHOLD_DISTANCE_FACTOR = 1f;   // This gets multiplied with the toolbar height
+  private static final float COLLAPSE_THRESHOLD_DISTANCE_FACTOR = 0.85f;   // This gets multiplied with the toolbar height
   private final int touchSlop;
 
   private ExpandablePageLayout expandablePage;
@@ -140,8 +138,6 @@ public class PullToCollapseListener implements View.OnTouchListener {
             ? expandablePage.getTranslationY() <= -collapseThresholdDistance
             : expandablePage.getTranslationY() >= collapseThresholdDistance;
         float resistedDeltaY = deltaY / resistanceFactor;
-
-        Timber.i("eligibleForCollapse: %s", eligibleForCollapse);
 
         // Once it's eligible, start resisting more as an indicator that the
         // page / list is being overscrolled. This will also prevent the user
