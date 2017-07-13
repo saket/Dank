@@ -62,8 +62,7 @@ public class StatusBarTintProvider {
         statusBarColor = TintColorUtils.scrimify(topSwatch.getRgb(), isDarkPalette, SCRIM_ADJUSTMENT);
       }
 
-      //statusBarColor = ColorUtils.scrimify(topSwatch.getRgb(), 0.075f);
-
+      //statusBarColor = TintColorUtils.scrimify(topSwatch.getRgb(), 0.075f);
       return StatusBarTint.create(statusBarColor, isDarkPalette);
     };
   }

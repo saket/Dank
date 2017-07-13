@@ -17,6 +17,7 @@ import android.animation.LayoutTransition;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
@@ -29,12 +30,12 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v7.widget.Toolbar;
 import android.util.Pair;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -102,7 +103,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
 
-  @BindView(R.id.toolbar) Toolbar toolbar;
+  @BindView(R.id.submission_toolbar) View toolbar;
+  @BindView(R.id.submission_toolbar_close) ImageButton toolbarCloseButton;
   @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
   @BindView(R.id.submission_content_progress_bar) SubmissionAnimatedProgressBar contentLoadProgressView;
   @BindView(R.id.submission_image) ZoomableImageView contentImageView;
@@ -165,7 +167,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     super.onViewCreated(fragmentLayout, savedInstanceState);
 
     executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight()));
-    toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
+    toolbarCloseButton.setOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
 
     DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
     linkMovementMethod.setOnLinkClickListener((textView, url) -> {
@@ -531,9 +533,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 submissionPageLayout.setSystemUiVisibility(flags);
               }
 
-              if (!statusBarTint.isDarkColor()) {
-                // TODO: Use darker colors on light images.
-                //back.setColorFilter(ContextCompat.getColor(DribbbleShot.this, R.color.dark_icon));
+              // Use darker colors on light images.
+              if (submissionPageLayout.getTranslationY() == 0f) {
+                toolbarCloseButton.setColorFilter(statusBarTint.isDarkColor() ? Color.WHITE : Color.DKGRAY);
               }
             })
     );
