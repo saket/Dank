@@ -1,8 +1,5 @@
 package me.saket.dank.ui.preferences;
 
-import static me.saket.dank.utils.Views.setPaddingTop;
-import static me.saket.dank.utils.Views.statusBarHeight;
-
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -44,8 +41,6 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     setContentView(R.layout.activity_hidden_preferences);
     ButterKnife.bind(this);
     findAndSetupToolbar();
-
-    setPaddingTop(toolbar, statusBarHeight(getResources()));
 
     setupContentExpandablePage(activityContentPage);
     expandFromBelowToolbar();

@@ -3,8 +3,6 @@ package me.saket.dank.ui.user.messages;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setPaddingBottom;
-import static me.saket.dank.utils.Views.setPaddingTop;
-import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
@@ -69,9 +67,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     ButterKnife.bind(this);
     findAndSetupToolbar();
 
-    // Using fitsSystemWindows=true on the toolbar results in the entire layout
-    // getting pushed to the bottom when keyboard is visible.
-    setPaddingTop(toolbar, statusBarHeight(getResources()));
     setTitle(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME));
 
     setupContentExpandablePage(contentPage);

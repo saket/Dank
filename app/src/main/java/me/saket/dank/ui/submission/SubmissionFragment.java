@@ -11,8 +11,6 @@ import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
-import static me.saket.dank.utils.Views.setMarginTop;
-import static me.saket.dank.utils.Views.statusBarHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.LayoutTransition;
@@ -148,7 +146,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
-
     View fragmentLayout = inflater.inflate(R.layout.fragment_submission, container, false);
     ButterKnife.bind(this, fragmentLayout);
 
@@ -162,13 +159,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   public void onViewCreated(View fragmentLayout, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(fragmentLayout, savedInstanceState);
 
-    int statusBarHeight = statusBarHeight(getResources());
-    setMarginTop(toolbar, statusBarHeight);
-    executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight() + statusBarHeight));
+    executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight()));
     toolbar.setNavigationOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
-
-    // Don't let the system add any paddings because of fitsSystemWindows=true.
-    fragmentLayout.setOnApplyWindowInsetsListener((view, windowInsets) -> windowInsets.consumeSystemWindowInsets());
 
     DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
     linkMovementMethod.setOnLinkClickListener((textView, url) -> {
