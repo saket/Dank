@@ -55,16 +55,6 @@
       app:useTextureViewBacking="true" />
   </LinearLayout>
 
-  <!-- Gradient behind the toolbar so that when the toolbar is transparent (in
-       case of photo/video submissions, the toolbar icons are still visible. -->
-  <View
-    android:id="@+id/submission_toolbar_gradient"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_alignBottom="@id/toolbar"
-    android:layout_alignParentTop="true"
-    android:background="@drawable/background_submission_toolbar_shadows" />
-
   <!-- At runtime, this ViewGroup is moved to inside the
        comment list as the header and its top-padding is set. -->
   <me.saket.dank.widgets.swipe.SwipeableLayout

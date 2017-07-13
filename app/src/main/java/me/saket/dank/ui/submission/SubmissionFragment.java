@@ -25,6 +25,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -50,6 +51,7 @@ import net.dean.jraw.models.Submission;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindDimen;
 import butterknife.BindDrawable;
@@ -58,6 +60,7 @@ import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
@@ -76,7 +79,6 @@ import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
@@ -504,43 +506,37 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private void setupStatusBarTint() {
     Observable<Bitmap> contentBitmapStream = contentImageViewHolder.streamImageBitmaps();
     int defaultStatusBarColor = ContextCompat.getColor(getActivity(), R.color.color_primary_dark);
-    SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(getActivity(), defaultStatusBarColor);
+    int statusBarHeight = Views.statusBarHeight(getResources());
+    SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(defaultStatusBarColor, statusBarHeight);
 
-//    ColorDrawable statusBarOverlayDrawable = new ColorDrawable(defaultStatusBarColor);
-//    statusBarOverlayView.setBackground(statusBarOverlayDrawable);
-//
-//    unsubscribeOnDestroy(
-//        statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout)
-//            .subscribe(statusBarTint -> {
-//              ValueAnimator tintChangeAnim = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
-//              tintChangeAnim.addUpdateListener(animation -> statusBarOverlayDrawable.setColor((int) animation.getAnimatedValue()));
-//              tintChangeAnim.setDuration(300L);
-//              tintChangeAnim.setInterpolator(Animations.INTERPOLATOR);
-//              tintChangeAnim.start();
-//
-//              Timber.i("Tint: %s", Colors.colorIntToHex(statusBarTint.color()));
-//
-//              // Set a light status bar on M+.
-//              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-//                int flags = submissionPageLayout.getSystemUiVisibility();
-//                if (!statusBarTint.isDarkColor()) {
-//                  Timber.i("Light status bar");
-//                  flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-//                  submissionPageLayout.setSystemUiVisibility(flags);
-//
-//                } else {
-//                  flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-//                  submissionPageLayout.setSystemUiVisibility(flags);
-//                }
-//              }
-//
-//              if (!statusBarTint.isDarkColor()) {
-//                // TODO: Use darker colors on light images.
-//                //back.setColorFilter(ContextCompat.getColor(DribbbleShot.this, R.color.dark_icon));
-//              }
-//              Timber.d("------------");
-//            })
-//    );
+    unsubscribeOnDestroy(
+        statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout, commentListParentSheet)
+            .delay(statusBarTint -> Observable.just(statusBarTint).delay(statusBarTint.delayedTransition() ? 100 : 0, TimeUnit.MILLISECONDS))
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(statusBarTint -> {
+              ValueAnimator tintChangeAnim = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
+              tintChangeAnim.addUpdateListener(animation -> getActivity().getWindow().setStatusBarColor((int) animation.getAnimatedValue()));
+              tintChangeAnim.setDuration(150L);
+              tintChangeAnim.setInterpolator(Animations.INTERPOLATOR);
+              tintChangeAnim.start();
+
+              // Set a light status bar on M+.
+              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                int flags = submissionPageLayout.getSystemUiVisibility();
+                if (!statusBarTint.isDarkColor()) {
+                  flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                } else {
+                  flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                }
+                submissionPageLayout.setSystemUiVisibility(flags);
+              }
+
+              if (!statusBarTint.isDarkColor()) {
+                // TODO: Use darker colors on light images.
+                //back.setColorFilter(ContextCompat.getColor(DribbbleShot.this, R.color.dark_icon));
+              }
+            })
+    );
   }
 
   /**

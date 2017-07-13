@@ -13,7 +13,6 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import me.saket.dank.utils.Views;
@@ -68,7 +67,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
   /**
    * Implement this to receive state callbacks about an <code>ExpandingPage</code>. Use with
-   * {@link ExpandablePageLayout#addStateChangeCallbacks(StateChangeCallbacks...)}. If you use a Fragment
+   * {@link ExpandablePageLayout#addStateChangeCallbacks(StateChangeCallbacks)}. If you use a Fragment
    * inside your <code>ExpandablePage</code>, it's best to make your Fragment implement this interface.
    */
   public interface StateChangeCallbacks {
@@ -139,7 +138,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     // Handles pull-to-collapse-this-page gestures
     setPullToCollapseEnabled(true);
     pullToCollapseListener = new PullToCollapseListener(getContext(), this);
-    pullToCollapseListener.addOnPullListeners(this);
+    pullToCollapseListener.addOnPullListener(this);
   }
 
   public void setup(View parentActivityToolbar) {
@@ -739,11 +738,15 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     return currentState == State.COLLAPSING || currentState == State.COLLAPSED;
   }
 
-  public void addStateChangeCallbacks(StateChangeCallbacks... callbacks) {
+  public void addStateChangeCallbacks(StateChangeCallbacks callbacks) {
     if (this.stateChangeCallbacks == null) {
       this.stateChangeCallbacks = new ArrayList<>(4);
     }
-    Collections.addAll(this.stateChangeCallbacks, callbacks);
+    stateChangeCallbacks.add(callbacks);
+  }
+
+  public void removeStateChangeCallbacks(StateChangeCallbacks callbacks) {
+    stateChangeCallbacks.remove(callbacks);
   }
 
   public void setPullToCollapseIntercepter(OnPullToCollapseIntercepter intercepter) {
@@ -753,8 +756,12 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   /**
    * Listener that gets called when this page is being pulled.
    */
-  public void addOnPullCallbacks(PullToCollapseListener.OnPullListener listener) {
-    pullToCollapseListener.addOnPullListeners(listener);
+  public void addOnPullListener(PullToCollapseListener.OnPullListener listener) {
+    pullToCollapseListener.addOnPullListener(listener);
+  }
+
+  public void removeOnPullListener(PullToCollapseListener.OnPullListener pullListener) {
+    pullToCollapseListener.removeOnPullListener(pullListener);
   }
 
   /**

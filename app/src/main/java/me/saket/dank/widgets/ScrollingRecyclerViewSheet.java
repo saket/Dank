@@ -86,6 +86,10 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     scrollChangeListeners.add(listener);
   }
 
+  public void removeOnSheetScrollChangeListener(SheetScrollChangeListener listener) {
+    scrollChangeListeners.remove(listener);
+  }
+
   /**
    * True if either the sheet is fully expanded and cannot scroll up any further.
    */
@@ -213,7 +217,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     return currentTopY() >= maxScrollY();
   }
 
-  private float currentTopY() {
+  public float currentTopY() {
     return getTranslationY();
   }
 

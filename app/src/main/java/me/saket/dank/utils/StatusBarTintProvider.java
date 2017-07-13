@@ -11,7 +11,6 @@ import android.support.v7.graphics.Palette;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
 import me.saket.dank.data.StatusBarTint;
-import timber.log.Timber;
 
 /**
  * Extracts colors from Bitmap and tweaks them for making them suitable for the status bar.
@@ -41,20 +40,13 @@ public class StatusBarTintProvider {
         .setRegion(0, 0, bitmap.getWidth(), statusBarHeight)
         .generate());
   }
-  
+
   private Function<Palette, StatusBarTint> generateTintFromPalette(Bitmap bitmap) {
     return palette -> {
       // Color the status bar. Set a complementary dark color on L,
       // light or dark color on M (with matching status bar icons).
       int statusBarColor = defaultStatusBarColor;
       Palette.Swatch topSwatch = palette.getDominantSwatch();
-      if (topSwatch != null) {
-        Timber.i("Palette: %s", Colors.colorIntToHex(topSwatch.getRgb()));
-        Timber.i("Is palette light? %s", TintColorUtils.isDark(topSwatch));
-      } else {
-        Timber.i("Swatch is null");
-      }
-
       TintColorUtils.Lightness lightness = topSwatch != null
           ? TintColorUtils.isDark(topSwatch)
           : TintColorUtils.Lightness.LIGHTNESS_UNKNOWN;
@@ -63,6 +55,7 @@ public class StatusBarTintProvider {
           ? TintColorUtils.isDark(bitmap, bitmap.getWidth() / 2 /* backupPixelX */, 0 /* backupPixelY */)
           : lightness == TintColorUtils.Lightness.IS_DARK;
 
+      // TODO: Uncomment the condition after testing on Lollipop.
       if (topSwatch != null
         //&& (isDarkPalette || Build.VERSION.SDK_INT >= Build.VERSION_CODES.M)
           ) {

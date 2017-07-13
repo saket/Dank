@@ -51,8 +51,12 @@ public class PullToCollapseListener implements View.OnTouchListener {
     this.expandablePage = expandablePage;
   }
 
-  public void addOnPullListeners(OnPullListener listener) {
+  public void addOnPullListener(OnPullListener listener) {
     onPullListeners.add(listener);
+  }
+
+  public void removeOnPullListener(OnPullListener listener) {
+    onPullListeners.remove(listener);
   }
 
   /**

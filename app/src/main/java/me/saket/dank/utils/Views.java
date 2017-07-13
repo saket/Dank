@@ -1,9 +1,8 @@
 package me.saket.dank.utils;
 
+import android.content.res.Resources;
 import android.graphics.Rect;
-import android.os.Build;
 import android.support.annotation.DrawableRes;
-import android.support.annotation.RequiresApi;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
@@ -77,6 +76,14 @@ public class Views {
     });
   }
 
+  public static int statusBarHeight(Resources resources) {
+    int resourceId = resources.getIdentifier("status_bar_height", "dimen", "android");
+    if (resourceId > 0) {
+      return resources.getDimensionPixelSize(resourceId);
+    }
+    return 0;
+  }
+
   public static void setPaddingTop(View view, int paddingTop) {
     view.setPaddingRelative(view.getPaddingStart(), paddingTop, view.getPaddingEnd(), view.getPaddingBottom());
   }
@@ -105,6 +112,12 @@ public class Views {
   public static void setHeight(View view, int height) {
     ViewGroup.LayoutParams params = view.getLayoutParams();
     params.height = height;
+    view.setLayoutParams(params);
+  }
+
+  public static void setMarginStart(View view, int marginStart) {
+    ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
+    params.leftMargin = marginStart;
     view.setLayoutParams(params);
   }
 

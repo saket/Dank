@@ -101,5 +101,4 @@ public class AnimatedToolbarBackground extends View {
     canvas.clipRect(0, getHeight() - (getHeight() * currentFillFactor), getRight(), getBottom());
     super.draw(canvas);
   }
-
 }

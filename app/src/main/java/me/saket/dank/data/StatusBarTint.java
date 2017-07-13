@@ -12,7 +12,17 @@ public abstract class StatusBarTint {
 
   public abstract boolean isDarkColor();
 
+  public abstract boolean delayedTransition();
+
   public static StatusBarTint create(int color, boolean isDarkColor) {
-    return new AutoValue_StatusBarTint(color, isDarkColor);
+    return new AutoValue_StatusBarTint(color, isDarkColor, false);
+  }
+
+  public static StatusBarTint create(int color, boolean isDarkColor, boolean delayedTransition) {
+    return new AutoValue_StatusBarTint(color, isDarkColor, delayedTransition);
+  }
+
+  public StatusBarTint withDelayedTransition(boolean delayedTransition) {
+    return create(color(), isDarkColor(), delayedTransition);
   }
 }
