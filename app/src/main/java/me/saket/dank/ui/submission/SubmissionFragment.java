@@ -503,7 +503,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     Observable<Bitmap> contentBitmapStream = contentImageViewHolder.streamImageBitmaps();
     int defaultStatusBarColor = ContextCompat.getColor(getActivity(), R.color.color_primary_dark);
     int statusBarHeight = Views.statusBarHeight(getResources());
-    SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(defaultStatusBarColor, statusBarHeight);
+
+    SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(
+        defaultStatusBarColor,
+        statusBarHeight,
+        deviceDisplayWidth
+    );
 
     unsubscribeOnDestroy(
         statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout, commentListParentSheet)

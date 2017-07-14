@@ -19,9 +19,9 @@ class SubmissionStatusBarTintProvider {
   /**
    * @param statusBarHeight Used with Palette for setting the photo's region from where the color will be extracted.
    */
-  SubmissionStatusBarTintProvider(int defaultStatusBarColor, int statusBarHeight) {
+  SubmissionStatusBarTintProvider(int defaultStatusBarColor, int statusBarHeight, int displayWidth) {
     this.defaultStatusBarColor = defaultStatusBarColor;
-    statusBarTintProvider = new StatusBarTintProvider(statusBarHeight, this.defaultStatusBarColor);
+    this.statusBarTintProvider = new StatusBarTintProvider(this.defaultStatusBarColor, statusBarHeight, displayWidth);
   }
 
   @CheckResult

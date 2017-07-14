@@ -21,10 +21,12 @@ public class StatusBarTintProvider {
 
   private final int statusBarHeight;
   private final int defaultStatusBarColor;
+  private final int displayWidth;
 
-  public StatusBarTintProvider(int statusBarHeight, int defaultStatusBarColor) {
+  public StatusBarTintProvider(int defaultStatusBarColor, int statusBarHeight, int displayWidth) {
     this.statusBarHeight = statusBarHeight;
     this.defaultStatusBarColor = defaultStatusBarColor;
+    this.displayWidth = displayWidth;
   }
 
   @CheckResult
@@ -34,11 +36,17 @@ public class StatusBarTintProvider {
 
   @CheckResult
   private Single<Palette> generatePaletteFromBitmap(Bitmap bitmap) {
-    return Single.fromCallable(() -> Palette.from(bitmap)
-        .maximumColorCount(3)
-        .clearFilters() /* by default palette ignore certain hues (e.g. pure black/white) but we don't want this. */
-        .setRegion(0, 0, bitmap.getWidth(), statusBarHeight)
-        .generate());
+    return Single.fromCallable(() -> {
+      int imageHeightToUse = bitmap.getWidth() < displayWidth
+          ? statusBarHeight
+          : (int) (statusBarHeight * ((float) bitmap.getWidth() / displayWidth));
+
+      return Palette.from(bitmap)
+          .maximumColorCount(3)
+          .clearFilters() /* by default palette ignore certain hues (e.g. pure black/white) but we don't want this. */
+          .setRegion(0, 0, bitmap.getWidth(), imageHeightToUse)
+          .generate();
+    });
   }
 
   private Function<Palette, StatusBarTint> generateTintFromPalette(Bitmap bitmap) {
