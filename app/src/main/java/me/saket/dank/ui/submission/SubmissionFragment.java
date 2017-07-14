@@ -553,8 +553,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Reset everything.
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
-    commentTreeConstructor.reset();
-    commentsAdapter.updateDataAndNotifyDatasetChanged(null);
+    commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
     replyFAB.show();
 
     // Update submission information. Everything that
@@ -751,6 +750,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   public void onPageCollapsed() {
     contentVideoViewHolder.pausePlayback();
     onCollapseSubscriptions.clear();
+    commentTreeConstructor.reset();
   }
 
   private void unsubscribeOnCollapse(Disposable subscription) {
