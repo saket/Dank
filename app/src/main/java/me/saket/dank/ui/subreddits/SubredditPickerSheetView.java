@@ -19,10 +19,8 @@ import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.res.ColorStateList;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
-import android.util.Pair;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -39,7 +37,6 @@ import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.common.collect.ImmutableList;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
-import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.Subreddit;
 
@@ -52,14 +49,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
-import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.di.Dank;
@@ -218,8 +212,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   // TODO: 15/04/17 Handle error.
   // TODO: 15/04/17 Empty state.
   private void setupSubredditsSearch() {
-    Relay<List<SubredditSubscription>> subscriptionsStream = BehaviorRelay.create();
-
     // RxTextView emits an initial event on subscribe, so the following code will result in loading all subreddits.
     subscriptions.add(RxTextView.textChanges(searchView)
         .map(searchTerm -> {
@@ -271,29 +263,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         .compose(onStartAndFirstEvent(setSubredditLoadProgressVisible()))
         .compose(RxUtils.doOnceAfterNext(o -> listenToBackgroundRefreshes()))
         .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
-        .subscribe(subscriptionsStream)
-    );
-
-    // Animate changes.
-    Pair<List<SubredditSubscription>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
-    subscriptions.add(
-        subscriptionsStream
-            .toFlowable(BackpressureStrategy.LATEST)
-            .observeOn(Schedulers.io())
-            .scan(initialPair, (pair, next) -> {
-              SubredditSubscriptionDiffCallbacks callback = new SubredditSubscriptionDiffCallbacks(pair.first, next);
-              DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true /* detectMoves */);
-              return Pair.create(next, result);
-            })
-            .skip(1)  // Skip the initial empty value.
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(dataAndDiff -> {
-              List<SubredditSubscription> newComments = dataAndDiff.first;
-              subredditAdapter.updateData(newComments);
-
-              DiffUtil.DiffResult commentsDiffResult = dataAndDiff.second;
-              commentsDiffResult.dispatchUpdatesTo(subredditAdapter);
-            }, logError("Error while diff-ing comments"))
+        .subscribe(subreddits -> subredditAdapter.updateDataAndNotifyDatasetChanged(subreddits))
     );
   }
 
