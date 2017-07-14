@@ -401,7 +401,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private void setupCommentsSheet() {
     toolbarBackground.syncPositionWithSheet(commentListParentSheet);
     commentListParentSheet.setScrollingEnabled(false);
-
     contentLoadProgressView.syncPositionWithSheet(commentListParentSheet);
     contentLoadProgressView.setSyncScrollEnabled(true);
 
@@ -422,10 +421,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     contentImageView.setOnClickListener(v -> {
       commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate());
     });
-
     // and on submission title click.
     commentsHeaderView.setOnClickListener(v -> {
-      if (activeSubmissionContentLink instanceof MediaLink && commentListParentSheet.isAtPeekHeightState()) {
+      if (activeSubmissionContentLink instanceof MediaLink && commentListParentSheet.isAtMaxScrollY()) {
         commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate());
       }
     });
@@ -436,10 +434,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       return (int) commentListParentSheet.getY() == (int) contentImageView.getVisibleZoomedImageHeight();
     };
 
-    // Keep the comments sheet always beneath the image.
     contentImageView.getController().addOnStateChangeListener(new GestureController.OnStateChangeListener() {
       float lastZoom = contentImageView.getZoom();
-
       @Override
       public void onStateChanged(State state) {
         if (contentImageView.getDrawable() == null) {
@@ -449,26 +445,24 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         boolean isZoomingOut = lastZoom > state.getZoom();
         lastZoom = state.getZoom();
 
+        // Scroll the comment sheet along with the image if it's zoomed in. This ensures that the sheet always sticks to the bottom of the image.
         int boundedVisibleImageHeight = (int) Math.min(contentImageView.getHeight(), contentImageView.getVisibleZoomedImageHeight());
-        int imageRevealDistance = boundedVisibleImageHeight - commentListParentSheet.getTop();
-        commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - imageRevealDistance);
+        int boundedVisibleImageHeightMinusToolbar = boundedVisibleImageHeight - commentListParentSheet.getTop();
+        commentListParentSheet.setMaxScrollY(boundedVisibleImageHeightMinusToolbar);
 
         if (isCommentSheetBeneathImage
             // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
             // it becomes difficult to lock the comments sheet beneath the image.
             || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
         {
-          commentListParentSheet.scrollTo(imageRevealDistance);
+          commentListParentSheet.scrollTo(boundedVisibleImageHeightMinusToolbar);
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
       }
 
       @Override
-      public void onStateReset(State oldState, State newState) {
-
-      }
+      public void onStateReset(State oldState, State newState) {}
     });
-
     commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
       isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
     });

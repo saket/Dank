@@ -89,8 +89,6 @@ public class SubmissionImageHolder {
     contentLoadProgressView.setIndeterminate(true);
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    Timber.i("Loading image: %s", contentLink.optimizedImageUrl(deviceDisplayWidth));
-
     Glide.with(imageView.getContext())
         .load(contentLink.optimizedImageUrl(deviceDisplayWidth))
         .priority(Priority.IMMEDIATE)
@@ -105,15 +103,10 @@ public class SubmissionImageHolder {
               // Reveal the image smoothly or right away depending upon whether or not this
               // page is already expanded and visible.
               Views.executeOnNextLayout(commentListParentSheet, () -> {
-                int revealDistance = (int) (visibleImageHeight - commentListParentSheet.getTop());
-                commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
-
-                if (revealDistance < 0) {
-                  Toast.makeText(imageView.getContext(), "Image is smaller than the toolbar+status bar", Toast.LENGTH_SHORT).show();
-                }
-
+                int imageHeightMinusToolbar = (int) (visibleImageHeight - commentListParentSheet.getTop());
                 commentListParentSheet.setScrollingEnabled(true);
-                commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpanded() /* smoothScroll */);
+                commentListParentSheet.setMaxScrollY(imageHeightMinusToolbar);
+                commentListParentSheet.scrollTo(imageHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);
 
                 if (imageHeight > visibleImageHeight) {
                   // Image is scrollable. Let the user know about this.

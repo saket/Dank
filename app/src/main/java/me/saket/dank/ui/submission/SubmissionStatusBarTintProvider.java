@@ -100,7 +100,7 @@ class SubmissionStatusBarTintProvider {
       emitter.setCancellable(() -> commentListParentSheet.removeOnSheetScrollChangeListener(scrollChangeListener));
 
       // Initial callbacks
-      scrollChangeListener.onScrollChange(commentListParentSheet.currentTopY());
+      scrollChangeListener.onScrollChange(commentListParentSheet.currentScrollY());
     });
   }
 }

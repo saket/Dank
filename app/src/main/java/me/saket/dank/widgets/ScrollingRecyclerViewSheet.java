@@ -2,7 +2,6 @@ package me.saket.dank.widgets;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
-import android.content.res.TypedArray;
 import android.os.Handler;
 import android.support.annotation.Px;
 import android.support.v4.view.NestedScrollingParent;
@@ -17,8 +16,8 @@ import android.widget.Scroller;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.saket.dank.R;
 import me.saket.dank.utils.Animations;
+import timber.log.Timber;
 
 /**
  * A scrollable sheet that can wrap a RecyclerView and scroll together (not in parallel) in a nested manner.
@@ -32,22 +31,17 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
   private final int minimumFlingVelocity;
   private final int maximumFlingVelocity;
 
-  private SheetStateChangeListener stateChangeListener;
   private RecyclerView childRecyclerView;
   private State currentState;
   private ValueAnimator scrollAnimator;
-  private int peekHeight;
   private boolean scrollingEnabled;
+
+  private int maxScrollY;
 
   public enum State {
     EXPANDED,
     DRAGGING,
-    AT_PEEK_HEIGHT,
-  }
-
-  public interface SheetStateChangeListener {
-
-    void onStateChange(State newState);
+    AT_MAX_SCROLL_Y,
   }
 
   public interface SheetScrollChangeListener {
@@ -66,17 +60,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     if (hasSheetReachedTheTop()) {
       currentState = State.EXPANDED;
     }
-
-    TypedArray properties = context.obtainStyledAttributes(attrs, R.styleable.ScrollingRecyclerViewSheet);
-    setPeekHeight(properties.getDimensionPixelSize(R.styleable.ScrollingRecyclerViewSheet_peekHeight, 0));
-    properties.recycle();
-
     setScrollingEnabled(true);
-  }
-
-  public void setOnStateChangeListener(SheetStateChangeListener listener) {
-    stateChangeListener = listener;
-    listener.onStateChange(currentState);
   }
 
   /**
@@ -91,24 +75,10 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
   }
 
   /**
-   * True if either the sheet is fully expanded and cannot scroll up any further.
-   */
-  public boolean isExpanded() {
-    return currentState == State.EXPANDED;
-  }
-
-  /**
-   * True if either the sheet is fully hidden or at its peek-height.
-   */
-  public boolean isAtPeekHeightState() {
-    return currentState == State.AT_PEEK_HEIGHT;
-  }
-
-  /**
    * Whether the sheet (and the list within) can scroll up any further when pulled downwards.
    */
   public boolean canScrollDownwardsAnyFurther() {
-    boolean canSheetScrollDownwards = currentTopY() != maxScrollY();
+    boolean canSheetScrollDownwards = currentScrollY() < maxScrollY;
     boolean canListScrollDownwards = childRecyclerView.canScrollVertically(-1);
 
     if (scrollingEnabled) {
@@ -122,22 +92,19 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
    * Whether the sheet (and the list within) can scroll down any further when pulled upwards.
    */
   public boolean canScrollUpwardsAnyFurther() {
-    return currentTopY() != 0 || childRecyclerView.canScrollVertically(1);
+    return currentScrollY() != 0 || childRecyclerView.canScrollVertically(1);
   }
 
   /**
-   * Set the visible height of this sheet when it's fully collapsed and docked at the bottom.
+   * Set the maximum Y this sheet can scroll to.
    */
-  public void setPeekHeight(int peekHeight) {
-    this.peekHeight = peekHeight;
-  }
-
-  public int getPeekHeight() {
-    return peekHeight;
+  public void setMaxScrollY(int maxScrollY) {
+    Timber.i("maxScrollY: %s", maxScrollY);
+    this.maxScrollY = maxScrollY;
   }
 
   public void scrollTo(@Px int y) {
-    attemptToConsumeScrollY(currentTopY() - y);
+    attemptToConsumeScrollY(currentScrollY() - y);
   }
 
   @Override
@@ -150,14 +117,14 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
       scrollAnimator.cancel();
     }
 
-    if (currentTopY() == y) {
+    if (currentScrollY() == y) {
       // Already at the same location.
       return;
     }
 
-    scrollAnimator = ValueAnimator.ofFloat(currentTopY(), y);
+    scrollAnimator = ValueAnimator.ofFloat(currentScrollY(), y);
     scrollAnimator.setInterpolator(Animations.INTERPOLATOR);
-    scrollAnimator.addUpdateListener(animation -> attemptToConsumeScrollY(currentTopY() - ((Float) animation.getAnimatedValue())));
+    scrollAnimator.addUpdateListener(animation -> attemptToConsumeScrollY(currentScrollY() - ((Float) animation.getAnimatedValue())));
     scrollAnimator.start();
   }
 
@@ -179,18 +146,6 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
 // ======== PUBLIC APIs END ======== //
 
-  /**
-   * Maximum this sheet can scroll before it reaches its peek height.
-   */
-  public int maxScrollY() {
-    int masScrollY = getHeight() - peekHeight;
-    if (masScrollY < 0) {
-      return 0;
-    } else {
-      return masScrollY;
-    }
-  }
-
   @Override
   public void addView(View child, int index, ViewGroup.LayoutParams params) {
     if (getChildCount() != 0) {
@@ -207,17 +162,17 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
   }
 
   private boolean hasSheetReachedTheTop() {
-    return currentTopY() <= 0;
+    return currentScrollY() <= 0;
   }
 
   /**
-   * True if the sheet is docked at the bottom and is only peeking.
+   * True if the sheet has reached its max scroll Y and cannot scroll further.
    */
-  private boolean isSheetAtPeekHeight() {
-    return currentTopY() >= maxScrollY();
+  public boolean isAtMaxScrollY() {
+    return currentScrollY() >= maxScrollY;
   }
 
-  public float currentTopY() {
+  public float currentScrollY() {
     return getTranslationY();
   }
 
@@ -228,9 +183,9 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     if (scrollingDownwards) {
       if (!hasSheetReachedTheTop()) {
         float adjustedDy = dy;
-        if (currentTopY() - dy < 0) {
+        if (currentScrollY() - dy < 0) {
           // Don't let the sheet go beyond its top bounds.
-          adjustedDy = currentTopY();
+          adjustedDy = currentScrollY();
         }
 
         adjustOffsetBy(adjustedDy);
@@ -239,11 +194,11 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
     } else {
       boolean canChildViewScrollDownwardsAnymore = childRecyclerView.canScrollVertically(-1);
-      if (!isSheetAtPeekHeight() && !canChildViewScrollDownwardsAnymore) {
+      if (!isAtMaxScrollY() && !canChildViewScrollDownwardsAnymore) {
         float adjustedDy = dy;
-        if (currentTopY() - dy > maxScrollY()) {
+        if (currentScrollY() - dy > maxScrollY) {
           // Don't let the sheet go beyond its bottom bounds.
-          adjustedDy = currentTopY() - maxScrollY();
+          adjustedDy = currentScrollY() - maxScrollY;
         }
 
         adjustOffsetBy(adjustedDy);
@@ -260,7 +215,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     // Send a callback if the state changed.
     State newState;
     if (!canScrollDownwardsAnyFurther()) {
-      newState = State.AT_PEEK_HEIGHT;
+      newState = State.AT_MAX_SCROLL_Y;
     } else if (hasSheetReachedTheTop()) {
       newState = State.EXPANDED;
     } else {
@@ -269,10 +224,6 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
     if (newState != currentState) {
       currentState = newState;
-
-      if (stateChangeListener != null) {
-        stateChangeListener.onStateChange(newState);
-      }
     }
 
     // Scroll callback.

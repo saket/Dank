@@ -95,9 +95,9 @@ public class SubmissionVideoHolder {
           contentLoadProgressView.setVisibility(View.GONE);
           commentListParentSheet.setScrollingEnabled(true);
 
-          int revealDistance = contentVideoViewContainer.getHeight() - commentListParentSheet.getTop();
-          commentListParentSheet.setPeekHeight(commentListParentSheet.getHeight() - revealDistance);
-          commentListParentSheet.scrollTo(revealDistance, submissionPageLayout.isExpanded() /* smoothScroll */);
+          int videoHeightMinusToolbar = contentVideoViewContainer.getHeight() - commentListParentSheet.getTop();
+          commentListParentSheet.setMaxScrollY(videoHeightMinusToolbar);
+          commentListParentSheet.scrollTo(videoHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);
 
           exoPlayerManager.setOnVideoSizeChangeListener(null);
         });
