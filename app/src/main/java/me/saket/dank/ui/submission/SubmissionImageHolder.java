@@ -45,8 +45,8 @@ public class SubmissionImageHolder {
   private final int deviceDisplayWidth;
   private final ExpandablePageLayout submissionPageLayout;
   private final ProgressBar contentLoadProgressView;
+  private final Relay<GlideDrawable> imageStream = PublishRelay.create();
   private GestureController.OnStateChangeListener imageScrollListener;
-  private Relay<GlideDrawable> imageStream;
 
   /**
    * God knows why (if he/she exists), ButterKnife is failing to bind <var>contentLoadProgressView</var>,
@@ -61,7 +61,6 @@ public class SubmissionImageHolder {
     this.deviceDisplayWidth = deviceDisplayWidth;
 
     imageView.setGravity(Gravity.TOP);
-    imageStream = PublishRelay.create();
 
     // Reset everything when the page is collapsed.
     submissionPageLayout.addStateChangeCallbacks(new SimpleExpandablePageStateChangeCallbacks() {

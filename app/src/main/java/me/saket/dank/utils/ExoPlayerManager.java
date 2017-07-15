@@ -1,7 +1,10 @@
 package me.saket.dank.utils;
 
+import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.net.Uri;
 
+import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
 import com.google.android.exoplayer2.extractor.ExtractorsFactory;
@@ -14,14 +17,18 @@ import com.google.android.exoplayer2.util.Util;
 import com.trello.navi2.Event;
 import com.trello.navi2.NaviComponent;
 
+import me.saket.dank.R;
+
 public class ExoPlayerManager {
 
-  private VideoView playerView;
+  private final VideoView playerView;
+  private final ExoTextureVideoView textureVideoView;
   private OnVideoSizeChangeListener videoSizeChangeListener;
   private boolean wasPlayingUponPause;
+  private Bitmap cachedBitmapForFrameCapture;
 
   public interface OnVideoSizeChangeListener {
-    void onVideoSizeChange(int videoWidth, int videoHeight);
+    void onVideoSizeChange(int resizedVideoWidth, int resizedVideoHeight, int actualVideoWidth, int actualVideoHeight);
   }
 
   public static ExoPlayerManager newInstance(NaviComponent naviComponent, VideoView playerView) {
@@ -41,6 +48,7 @@ public class ExoPlayerManager {
 
   public ExoPlayerManager(VideoView playerView) {
     this.playerView = playerView;
+    this.textureVideoView = (ExoTextureVideoView) playerView.findViewById(R.id.exomedia_video_view);
   }
 
   public void setOnVideoSizeChangeListener(OnVideoSizeChangeListener listener) {
@@ -53,7 +61,7 @@ public class ExoPlayerManager {
         float widthFactor = (float) playerView.getWidth() / videoWidth;
         int videoWidthAfterResize = (int) (videoWidth * widthFactor);
         int videoHeightAfterResize = (int) (videoHeight * widthFactor);
-        videoSizeChangeListener.onVideoSizeChange(videoWidthAfterResize, videoHeightAfterResize);
+        videoSizeChangeListener.onVideoSizeChange(videoWidthAfterResize, videoHeightAfterResize, videoWidth, videoHeight);
       }
     });
   }
@@ -61,8 +69,7 @@ public class ExoPlayerManager {
   public void playVideoInLoop(Uri videoUri) {
     // Produces DataSource instances through which media data is loaded.
     DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(playerView.getContext(),
-        Util.getUserAgent(playerView.getContext(), playerView.getContext().getPackageName()),
-        null
+        Util.getUserAgent(playerView.getContext(), playerView.getContext().getPackageName())
     );
 
     // Produces Extractor instances for parsing the media data.
@@ -71,7 +78,6 @@ public class ExoPlayerManager {
     MediaSource videoSource = new LoopingMediaSource(new ExtractorMediaSource(videoUri, dataSourceFactory, extractorsFactory, null, null));
 
     playerView.setVideoURI(videoUri, videoSource);
-    //playerView.setOnPreparedListener(() -> playerView.start());
   }
 
   private void resumeVideoPlayback() {
@@ -87,4 +93,15 @@ public class ExoPlayerManager {
     playerView.release();
   }
 
+  public Bitmap getBitmapOfCurrentVideoFrame(int width, int height, Bitmap.Config bitmapConfig) {
+    if (cachedBitmapForFrameCapture == null) {
+      cachedBitmapForFrameCapture = Bitmap.createBitmap(width, height, bitmapConfig);
+    } else {
+      if (cachedBitmapForFrameCapture.getWidth() != width && cachedBitmapForFrameCapture.getHeight() != height) {
+        throw new IllegalStateException("Use the same dimensions so that bitmap can be cached");
+      }
+      cachedBitmapForFrameCapture.eraseColor(Color.TRANSPARENT);
+    }
+    return textureVideoView.getBitmap(cachedBitmapForFrameCapture);
+  }
 }

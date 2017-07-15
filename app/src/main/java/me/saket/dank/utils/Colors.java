@@ -39,6 +39,6 @@ public class Colors {
    * Example: 0xFFFFFFFF -> #FFFFFF
    */
   public static String colorIntToHex(@ColorInt int colorInt) {
-    return "#" + Integer.toHexString(colorInt).toUpperCase();
+    return "#" + Integer.toHexString(colorInt).toUpperCase().substring(2);
   }
 }

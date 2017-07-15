@@ -11,6 +11,7 @@ import android.support.v7.graphics.Palette;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
 import me.saket.dank.data.StatusBarTint;
+import timber.log.Timber;
 
 /**
  * Extracts colors from Bitmap and tweaks them for making them suitable for the status bar.
@@ -31,15 +32,15 @@ public class StatusBarTintProvider {
 
   @CheckResult
   public Single<StatusBarTint> generateTint(Bitmap bitmap) {
-    return generatePaletteFromBitmap(bitmap).map(generateTintFromPalette(bitmap));
+    return generatePaletteFromBitmap(bitmap)
+        .map(generateTintFromPalette(bitmap))
+        .doOnSuccess(statusBarTint -> Timber.i("Palette color: %s", Colors.colorIntToHex(statusBarTint.color())));
   }
 
   @CheckResult
   private Single<Palette> generatePaletteFromBitmap(Bitmap bitmap) {
     return Single.fromCallable(() -> {
-      int imageHeightToUse = bitmap.getWidth() < displayWidth
-          ? statusBarHeight
-          : (int) (statusBarHeight * ((float) bitmap.getWidth() / displayWidth));
+      int imageHeightToUse = (int) (statusBarHeight * ((float) bitmap.getWidth() / displayWidth));
 
       return Palette.from(bitmap)
           .maximumColorCount(3)

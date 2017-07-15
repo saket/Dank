@@ -72,6 +72,7 @@ import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.RedditLink;
+import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
@@ -193,7 +194,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     setupCommentList(linkMovementMethod);
     setupCommentTreeConstructor();
     setupContentImageView(fragmentLayout);
-    setupContentVideoView(fragmentLayout);
+    setupContentVideoView();
     setupCommentsSheet();
     setupReplyFAB();
     setupStatusBarTint();
@@ -392,10 +393,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     contentImageViewHolder = new SubmissionImageHolder(fragmentLayout, contentLoadProgressView, submissionPageLayout, deviceDisplayWidth);
   }
 
-  private void setupContentVideoView(View fragmentLayout) {
+  private void setupContentVideoView() {
     Views.setMarginBottom(contentVideoViewContainer, commentsSheetMinimumVisibleHeight);
     ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
-    contentVideoViewHolder = new SubmissionVideoHolder(fragmentLayout, contentLoadProgressView, submissionPageLayout, exoPlayerManager);
+
+    contentVideoViewHolder = new SubmissionVideoHolder(
+        contentVideoViewContainer,
+        contentVideoView,
+        commentListParentSheet,
+        contentLoadProgressView,
+        submissionPageLayout,
+        exoPlayerManager
+    );
   }
 
   private void setupCommentsSheet() {
@@ -500,9 +509,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   private void setupStatusBarTint() {
-    Observable<Bitmap> contentBitmapStream = contentImageViewHolder.streamImageBitmaps();
     int defaultStatusBarColor = ContextCompat.getColor(getActivity(), R.color.color_primary_dark);
     int statusBarHeight = Views.statusBarHeight(getResources());
+    Observable<Bitmap> contentBitmapStream = Observable.merge(
+        contentImageViewHolder.streamImageBitmaps(),
+        contentVideoViewHolder.streamVideoFirstFrameBitmaps(statusBarHeight)
+    );
 
     SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(
         defaultStatusBarColor,
@@ -514,29 +526,36 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout, commentListParentSheet)
             .delay(statusBarTint -> Observable.just(statusBarTint).delay(statusBarTint.delayedTransition() ? 100 : 0, TimeUnit.MILLISECONDS))
             .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(statusBarTint -> {
-              ValueAnimator tintChangeAnim = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
-              tintChangeAnim.addUpdateListener(animation -> getActivity().getWindow().setStatusBarColor((int) animation.getAnimatedValue()));
-              tintChangeAnim.setDuration(150L);
-              tintChangeAnim.setInterpolator(Animations.INTERPOLATOR);
-              tintChangeAnim.start();
-
-              // Set a light status bar on M+.
-              if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                int flags = submissionPageLayout.getSystemUiVisibility();
-                if (!statusBarTint.isDarkColor()) {
-                  flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                } else {
-                  flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            .subscribe(new Consumer<StatusBarTint>() {
+              public ValueAnimator tintChangeAnimator;
+              @Override
+              public void accept(StatusBarTint statusBarTint) throws Exception {
+                if (tintChangeAnimator != null) {
+                  tintChangeAnimator.cancel();
                 }
-                submissionPageLayout.setSystemUiVisibility(flags);
-              }
+                tintChangeAnimator = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
+                tintChangeAnimator.addUpdateListener(animation -> getActivity().getWindow().setStatusBarColor((int) animation.getAnimatedValue()));
+                tintChangeAnimator.setDuration(150L);
+                tintChangeAnimator.setInterpolator(Animations.INTERPOLATOR);
+                tintChangeAnimator.start();
 
-              // Use darker colors on light images.
-              if (submissionPageLayout.getTranslationY() == 0f) {
-                toolbarCloseButton.setColorFilter(statusBarTint.isDarkColor() ? Color.WHITE : Color.DKGRAY);
+                // Set a light status bar on M+.
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+                  int flags = submissionPageLayout.getSystemUiVisibility();
+                  if (!statusBarTint.isDarkColor()) {
+                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                  } else {
+                    flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+                  }
+                  submissionPageLayout.setSystemUiVisibility(flags);
+                }
+
+                // Use darker colors on light images.
+                if (submissionPageLayout.getTranslationY() == 0f) {
+                  toolbarCloseButton.setColorFilter(statusBarTint.isDarkColor() ? Color.WHITE : Color.DKGRAY);
+                }
               }
-            })
+            }, logError("Wut?"))
     );
   }
 
