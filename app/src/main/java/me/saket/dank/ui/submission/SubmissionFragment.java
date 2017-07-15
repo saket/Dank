@@ -43,8 +43,7 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.jakewharton.rxrelay2.PublishRelay;
-import com.jakewharton.rxrelay2.Relay;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
@@ -129,11 +128,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
   private CommentTreeConstructor commentTreeConstructor;
-  private Submission activeSubmission;
   private DankSubmissionRequest activeSubmissionRequest;
   private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
   private Link activeSubmissionContentLink;
-  private Relay<Submission> submissionWithCommentsStream = PublishRelay.create();
+  private BehaviorRelay<Submission> submissionStream = BehaviorRelay.create();
 
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
@@ -211,8 +209,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
-    if (activeSubmission != null) {
-      outState.putString(KEY_SUBMISSION_JSON, Dank.jackson().toJson(activeSubmission));
+    if (submissionStream.getValue() != null) {
+      outState.putString(KEY_SUBMISSION_JSON, Dank.jackson().toJson(submissionStream.getValue()));
       outState.putParcelable(KEY_SUBMISSION_REQUEST, activeSubmissionRequest);
     }
     super.onSaveInstanceState(outState);
@@ -282,7 +280,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       @Override
       public void onClickSendReply(PublicContribution parentContribution, String replyMessage) {
         Dank.comments().removeDraft(parentContribution)
-            .andThen(Dank.reddit().withAuth(Dank.comments().sendReply(parentContribution, activeSubmission.getFullName(), replyMessage)))
+            .andThen(Dank.reddit().withAuth(Dank.comments().sendReply(parentContribution, submissionStream.getValue().getFullName(), replyMessage)))
             .doOnSubscribe(o -> commentTreeConstructor.hideReply(parentContribution))
             .compose(applySchedulersCompletable())
             .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
@@ -306,7 +304,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Add pending-sync replies to the comment tree.
     unsubscribeOnDestroy(
-        submissionWithCommentsStream
+        submissionStream
+            .filter(subm -> subm.getComments() != null)
             .observeOn(Schedulers.io())
             .switchMap(submissionWithComments ->
                 Dank.comments().removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
@@ -497,13 +496,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       int firstVisiblePosition = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstVisibleItemPosition();
       boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
 
-      if (commentTreeConstructor.isReplyActiveFor(activeSubmission) && isSubmissionReplyVisible) {
+      if (commentTreeConstructor.isReplyActiveFor(submissionStream.getValue()) && isSubmissionReplyVisible) {
         // Hide reply only if it's visible. Otherwise the user won't understand why the
         // reply FAB did not do anything.
-        commentTreeConstructor.hideReply(activeSubmission);
+        commentTreeConstructor.hideReply(submissionStream.getValue());
       } else {
         commentList.smoothScrollToPosition(0);
-        commentTreeConstructor.showReply(activeSubmission);
+        commentTreeConstructor.showReply(submissionStream.getValue());
       }
     });
   }
@@ -566,8 +565,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
    * @param submissionRequest used for loading the comments of this submission.
    */
   public void populateUi(Submission submission, DankSubmissionRequest submissionRequest) {
-    activeSubmission = submission;
     activeSubmissionRequest = submissionRequest;
+    submissionStream.accept(submission);
 
     // Reset everything.
     commentListParentSheet.scrollTo(0);
@@ -590,12 +589,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           .flatMap(retryWithCorrectSortIfNeeded())
           .compose(applySchedulersSingle())
           .compose(doOnSingleStartAndTerminate(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
-          .doOnSuccess(submissionWithComments -> activeSubmission = submissionWithComments)
-          .subscribe(submissionWithCommentsStream, handleSubmissionLoadError())
+          .subscribe(submissionStream, handleSubmissionLoadError())
       );
 
     } else {
-      submissionWithCommentsStream.accept(submission);
+      submissionStream.accept(submission);
     }
   }
 
@@ -646,7 +644,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     if (contentLink instanceof MediaLink.ImgurUnresolvedGallery) {
       contentLoadProgressView.show();
-      String redditSuppliedThumbnail = findOptimizedImage(activeSubmission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidthForAlbum());
+      String redditSuppliedThumbnail = findOptimizedImage(submission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidthForAlbum());
 
       unsubscribeOnCollapse(Dank.imgur()
           .gallery((MediaLink.ImgurUnresolvedGallery) contentLink)
@@ -710,7 +708,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       case EXTERNAL:
         contentLoadProgressView.hide();
         String redditSuppliedThumbnail = findOptimizedImage(
-            activeSubmission.getThumbnails(),
+            submission.getThumbnails(),
             linkDetailsViewHolder.thumbnailWidthForExternalLink()
         );
         linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
