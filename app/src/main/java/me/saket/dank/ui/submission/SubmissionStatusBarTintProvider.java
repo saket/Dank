@@ -5,13 +5,11 @@ import android.support.annotation.CheckResult;
 
 import io.reactivex.Observable;
 import me.saket.dank.data.StatusBarTint;
-import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.StatusBarTintProvider;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.PullToCollapseListener;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
-import timber.log.Timber;
 
 class SubmissionStatusBarTintProvider {
 
@@ -73,8 +71,7 @@ class SubmissionStatusBarTintProvider {
           // Short-circuit this switchMap chain if the page collapses. We'll resume when a new content is received.
           return filteredTintStream.takeUntil(pageStateStream.filter(state -> state == SubmissionPageState.COLLAPSED));
         })
-        .distinctUntilChanged((prevTint, newTint) -> prevTint.color() == newTint.color())
-        .doOnNext(statusBarTint -> Timber.i("Generated tint: %s", Colors.colorIntToHex(statusBarTint.color())));
+        .distinctUntilChanged((prevTint, newTint) -> prevTint.color() == newTint.color());
   }
 
   private Observable<SubmissionPageState> streamPageState(ExpandablePageLayout expandablePageLayout) {

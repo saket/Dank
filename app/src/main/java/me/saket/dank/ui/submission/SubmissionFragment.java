@@ -44,6 +44,8 @@ import com.alexvasilkov.gestures.State;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
@@ -132,6 +134,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
   private Link activeSubmissionContentLink;
   private BehaviorRelay<Submission> submissionStream = BehaviorRelay.create();
+  private Relay<Link> submissionContentStream = PublishRelay.create();
 
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
@@ -444,6 +447,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     contentImageView.getController().addOnStateChangeListener(new GestureController.OnStateChangeListener() {
       float lastZoom = contentImageView.getZoom();
+
       @Override
       public void onStateChanged(State state) {
         if (contentImageView.getDrawable() == null) {
@@ -521,12 +525,14 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         deviceDisplayWidth
     );
 
+    // For images and videos.
     unsubscribeOnDestroy(
         statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout, commentListParentSheet)
             .delay(statusBarTint -> Observable.just(statusBarTint).delay(statusBarTint.delayedTransition() ? 100 : 0, TimeUnit.MILLISECONDS))
             .observeOn(AndroidSchedulers.mainThread())
             .subscribe(new Consumer<StatusBarTint>() {
               public ValueAnimator tintChangeAnimator;
+
               @Override
               public void accept(StatusBarTint statusBarTint) throws Exception {
                 if (tintChangeAnimator != null) {
@@ -556,6 +562,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               }
             }, logError("Wut?"))
     );
+
+    // For self-posts and reddit-hosted links.
+    unsubscribeOnDestroy(
+        submissionContentStream
+            .filter(link -> link.isRedditHosted())
+            .subscribe(o -> toolbarCloseButton.setColorFilter(Color.WHITE))
+    );
   }
 
   /**
@@ -580,6 +593,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Load content
     Link contentLink = UrlParser.parse(submission.getUrl(), submission.getThumbnails());
+    submissionContentStream.accept(contentLink);
     loadSubmissionContent(submission, contentLink);
 
     // Load new comments.
