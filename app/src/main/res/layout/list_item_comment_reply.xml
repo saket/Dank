@@ -45,17 +45,16 @@
         android:paddingEnd="@dimen/spacing16"
         android:paddingStart="@dimen/spacing16"
         android:text="@string/submission_comment_reply_author_hint"
-        android:textColor="@color/submission_comment_byline_author_op"
-        android:textSize="@dimen/textsize12" />
+        android:textColor="@color/submission_comment_byline_author_op" />
 
       <ImageButton
         android:id="@+id/item_comment_reply_go_fullscreen"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/cd_submission_comment_reply_go_fullscreen"
         android:padding="@dimen/spacing12"
-        android:src="@drawable/ic_fullscreen_20dp"
+        android:src="@drawable/ic_fullscreen_24dp"
         android:tint="@color/gray_400" />
 
       <ImageButton

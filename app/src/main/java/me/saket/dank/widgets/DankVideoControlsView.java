@@ -2,9 +2,11 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.support.annotation.IntRange;
-import android.view.ViewGroup;
 import android.widget.ImageButton;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.TextView;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoControls;
 
@@ -17,8 +19,7 @@ import me.saket.dank.R;
  */
 public class DankVideoControlsView extends VideoControls {
 
-  @BindView(R.id.exomedia_controls_play_image) ImageButton playButton;
-  @BindView(R.id.exomedia_controls_seekbar_container) ViewGroup seekBarContainer;
+  @BindView(R.id.exomedia_controls_play_icon) ImageView playIconView;
   @BindView(R.id.exomedia_controls_video_seek) SeekBar progressSeekBar;
 
   private boolean userInteractingWithSeek;
@@ -32,11 +33,6 @@ public class DankVideoControlsView extends VideoControls {
     super(context);
   }
 
-  public void insertSeekBarIn(ViewGroup viewGroup) {
-    ((ViewGroup) seekBarContainer.getParent()).removeView(seekBarContainer);
-    viewGroup.addView(seekBarContainer, seekBarContainer.getLayoutParams());
-  }
-
   public void setVideoProgressChangeListener(VideoProgressChangeListener listener) {
     progressChangeListener = listener;
   }
@@ -47,8 +43,15 @@ public class DankVideoControlsView extends VideoControls {
 
   @Override
   protected void retrieveViews() {
-    super.retrieveViews();
     ButterKnife.bind(this, this);
+
+    playPauseButton = ButterKnife.findById(this, R.id.exomedia_controls_play_pause_btn);
+    loadingProgressBar = ButterKnife.findById(this, R.id.exomedia_controls_video_loading);
+
+    // Cannot remove these because ExoMedia expects them to be non-null.
+    descriptionTextView = currentTimeTextView = endTimeTextView = titleTextView = subTitleTextView = new TextView(getContext());
+    previousButton = nextButton = new ImageButton(getContext());
+    textContainer = new LinearLayout(getContext());
   }
 
   @Override
@@ -88,7 +91,7 @@ public class DankVideoControlsView extends VideoControls {
   protected void registerListeners() {
     super.registerListeners();
     progressSeekBar.setOnSeekBarChangeListener(new SeekBarChanged());
-    playButton.setOnClickListener(__ -> onPlayPauseClick());
+    playPauseButton.setOnClickListener(__ -> onPlayPauseClick());
   }
 
   @Override
@@ -129,7 +132,7 @@ public class DankVideoControlsView extends VideoControls {
   @Override
   public void updatePlayPauseImage(boolean isPlaying) {
     if (!userInteractingWithSeek) {
-      playButton.setVisibility(isPlaying ? GONE : VISIBLE);
+      playIconView.setVisibility(isPlaying ? GONE : VISIBLE);
     }
   }
 

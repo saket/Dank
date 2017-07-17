@@ -27,7 +27,6 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
-import timber.log.Timber;
 
 /**
  * Manages loading of video in {@link SubmissionFragment}.
@@ -60,13 +59,10 @@ public class SubmissionVideoHolder {
     this.contentLoadProgressView = contentLoadProgressView;
     this.exoPlayerManager = exoPlayerManager;
 
-    controlsView = new DankVideoControlsView(this.contentVideoView.getContext());
-    controlsView.insertSeekBarIn(this.contentVideoViewContainer);
+    controlsView = new DankVideoControlsView(contentVideoView.getContext());
     contentVideoView.setControls(controlsView);
-    contentVideoView.setOnPreparedListener(() -> {
-      Timber.i("Emitting video prepared");
-      videoPreparedStream.accept(Notification.INSTANCE);
-    });
+
+    contentVideoView.setOnPreparedListener(() -> videoPreparedStream.accept(Notification.INSTANCE));
   }
 
   public Disposable load(MediaLink mediaLink) {
@@ -119,8 +115,6 @@ public class SubmissionVideoHolder {
           commentListParentSheet.scrollTo(videoHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);
 
           exoPlayerManager.setOnVideoSizeChangeListener(null);
-
-          Timber.i("Emitting video width change");
           videoWidthChangeStream.accept(actualVideoWidth);
         });
       });

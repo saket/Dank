@@ -190,4 +190,8 @@
   <string name="composereply_compose_field_hint">Write a reply…</string>
   <string name="composereply_send">Send</string>
   <string name="composereply_title_reply_to">re: %s</string>
+
+  <!-- Media -->
+  <string name="cd_videoplayer_toggle_mute">Toggle mute</string>
+  <string name="cd_videoplayer_toggle_fullscreen">Toggle fullscreen</string>
 </resources>
