@@ -103,6 +103,11 @@ public class SubmissionImageHolder {
               // page is already expanded and visible.
               Views.executeOnNextLayout(commentListParentSheet, () -> {
                 int imageHeightMinusToolbar = (int) (visibleImageHeight - commentListParentSheet.getTop());
+
+                if (imageHeightMinusToolbar <= 0) {
+                  Toast.makeText(imageView.getContext(), "Image height <= toolbar height", Toast.LENGTH_LONG).show();
+                }
+
                 commentListParentSheet.setScrollingEnabled(true);
                 commentListParentSheet.setMaxScrollY(imageHeightMinusToolbar);
                 commentListParentSheet.scrollTo(imageHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);

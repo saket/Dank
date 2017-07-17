@@ -525,6 +525,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         deviceDisplayWidth
     );
 
+    // Reset the toolbar icons' tint until the content is loaded.
+    unsubscribeOnDestroy(
+        submissionContentStream
+            .subscribe(o -> toolbarCloseButton.setColorFilter(Color.WHITE))
+    );
+
     // For images and videos.
     unsubscribeOnDestroy(
         statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout, commentListParentSheet)
@@ -561,13 +567,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 }
               }
             }, logError("Wut?"))
-    );
-
-    // For self-posts and reddit-hosted links.
-    unsubscribeOnDestroy(
-        submissionContentStream
-            .filter(link -> link.isRedditHosted())
-            .subscribe(o -> toolbarCloseButton.setColorFilter(Color.WHITE))
     );
   }
 
