@@ -40,8 +40,7 @@ public class GlideCircularTransformation implements Transformation<Bitmap> {
 
     Canvas canvas = new Canvas(bitmap);
     Paint paint = new Paint();
-    BitmapShader shader =
-        new BitmapShader(source, BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP);
+    BitmapShader shader = new BitmapShader(source, BitmapShader.TileMode.CLAMP, BitmapShader.TileMode.CLAMP);
     if (width != 0 || height != 0) {
       // source isn't square, move viewport to center
       Matrix matrix = new Matrix();

@@ -67,7 +67,7 @@ public class MessagesNotificationManager {
             if (!seenMessageIds.contains(unfilteredMessage.getId())) {
               unseenMessages.add(unfilteredMessage);
             } else {
-              Timber.w("Already seen: %s", unfilteredMessage.getBody());
+              Timber.w("Already seen: %s", Strings.safeSubstring(unfilteredMessage.getBody(), 50));
             }
           }
 
@@ -106,7 +106,7 @@ public class MessagesNotificationManager {
           updatedSeenMessageIds.addAll(oldSeenMessageIds);
           Timber.d("---------------------");
           for (Message message : messages) {
-            Timber.i("Removing seen for: %s", message.getBody().substring(0, Math.min(50, message.getBody().length())));
+            Timber.i("Removing seen for: %s", Strings.safeSubstring(message.getBody(), 50));
             updatedSeenMessageIds.remove(message.getId());
           }
           return Collections.unmodifiableSet(updatedSeenMessageIds);
@@ -175,7 +175,7 @@ public class MessagesNotificationManager {
 
       Timber.i("Creating notifs for:");
       for (Message sortedMessage : sortedMessages) {
-        Timber.i("%s (%s)", sortedMessage.getBody(), sortedMessage.getCreated());
+        Timber.i("%s (%s)", Strings.safeSubstring(sortedMessage.getBody(), 50), sortedMessage.getCreated());
       }
       createNotifications(context, Collections.unmodifiableList(sortedMessages), loggedInUserName);
     });

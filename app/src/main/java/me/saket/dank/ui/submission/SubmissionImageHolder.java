@@ -3,6 +3,7 @@ package me.saket.dank.ui.submission;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 
 import android.graphics.Bitmap;
+import android.graphics.Color;
 import android.support.annotation.CheckResult;
 import android.view.Gravity;
 import android.view.View;
@@ -25,6 +26,7 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.GlidePaddingTransformation;
 import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -46,6 +48,7 @@ public class SubmissionImageHolder {
   private final ExpandablePageLayout submissionPageLayout;
   private final ProgressBar contentLoadProgressView;
   private final Relay<GlideDrawable> imageStream = PublishRelay.create();
+  private final GlidePaddingTransformation glidePaddingTransformation;
   private GestureController.OnStateChangeListener imageScrollListener;
 
   /**
@@ -69,6 +72,24 @@ public class SubmissionImageHolder {
         resetViews();
       }
     });
+
+    // This transformation adds padding to images that are way too small (presently < 2 x toolbar height).
+    glidePaddingTransformation = new GlidePaddingTransformation(imageView.getContext(), Color.DKGRAY) {
+      @Override
+      public int getVerticalPadding(int imageWidth, int imageHeight) {
+        int minDesiredImageHeight = commentListParentSheet.getTop() * 2;
+        float widthResizeFactor = deviceDisplayWidth / (float) imageWidth;  // Because ZoomableImageView will resize the image to fill space.
+
+        if (imageHeight < minDesiredImageHeight) {
+          // Image is too small to be displayed.
+          int minImageHeightBeforeResizing = (int) (minDesiredImageHeight / widthResizeFactor);
+          return (minImageHeightBeforeResizing - imageHeight) / 2;
+
+        } else {
+          return 0;
+        }
+      }
+    };
   }
 
   @CheckResult
@@ -91,6 +112,7 @@ public class SubmissionImageHolder {
     Glide.with(imageView.getContext())
         .load(contentLink.optimizedImageUrl(deviceDisplayWidth))
         .priority(Priority.IMMEDIATE)
+        .bitmapTransform(glidePaddingTransformation)
         .listener(new GlideUtils.SimpleRequestListener<String, GlideDrawable>() {
           @Override
           public void onResourceReady(GlideDrawable drawable) {
@@ -103,11 +125,6 @@ public class SubmissionImageHolder {
               // page is already expanded and visible.
               Views.executeOnNextLayout(commentListParentSheet, () -> {
                 int imageHeightMinusToolbar = (int) (visibleImageHeight - commentListParentSheet.getTop());
-
-                if (imageHeightMinusToolbar <= 0) {
-                  Toast.makeText(imageView.getContext(), "Image height <= toolbar height", Toast.LENGTH_LONG).show();
-                }
-
                 commentListParentSheet.setScrollingEnabled(true);
                 commentListParentSheet.setMaxScrollY(imageHeightMinusToolbar);
                 commentListParentSheet.scrollTo(imageHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);
@@ -210,4 +227,5 @@ public class SubmissionImageHolder {
       throw new IllegalStateException("Unknown Drawable: " + drawable);
     }
   }
+
 }
