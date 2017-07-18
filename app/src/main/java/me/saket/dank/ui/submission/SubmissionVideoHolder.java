@@ -16,10 +16,15 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import java.util.concurrent.TimeUnit;
+
 import io.reactivex.Observable;
+import io.reactivex.ObservableSource;
 import io.reactivex.Single;
+import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
@@ -40,7 +45,6 @@ public class SubmissionVideoHolder {
   private final ExpandablePageLayout submissionPageLayout;
   private final ExoPlayerManager exoPlayerManager;
   private final ProgressBar contentLoadProgressView;
-  private final DankVideoControlsView controlsView;
   private final Relay<Integer> videoWidthChangeStream = PublishRelay.create();
   private final Relay<Object> videoPreparedStream = BehaviorRelay.create();
 
@@ -59,9 +63,8 @@ public class SubmissionVideoHolder {
     this.contentLoadProgressView = contentLoadProgressView;
     this.exoPlayerManager = exoPlayerManager;
 
-    controlsView = new DankVideoControlsView(contentVideoView.getContext());
+    DankVideoControlsView controlsView = new DankVideoControlsView(contentVideoView.getContext());
     contentVideoView.setControls(controlsView);
-
     contentVideoView.setOnPreparedListener(() -> videoPreparedStream.accept(Notification.INSTANCE));
   }
 
@@ -85,6 +88,21 @@ public class SubmissionVideoHolder {
   public Observable<Bitmap> streamVideoFirstFrameBitmaps(int statusBarHeight) {
     return Observable
         .zip(videoPreparedStream, videoWidthChangeStream, (o, videoWidth) -> videoWidth)
+        .delay(new Function<Integer, ObservableSource<Integer>>() {
+          private boolean firstDelayDone;
+
+          @Override
+          public ObservableSource<Integer> apply(@NonNull Integer videoWidth) throws Exception {
+            // onPrepared() gets called way too early when loading a video for the first time.
+            // We'll manually add a delay.
+            if (firstDelayDone) {
+              return Observable.just(videoWidth);
+            } else {
+              firstDelayDone = true;
+              return Observable.just(videoWidth).delay(200, TimeUnit.MILLISECONDS);
+            }
+          }
+        })
         .map(videoWidth -> exoPlayerManager.getBitmapOfCurrentVideoFrame(videoWidth, statusBarHeight, Bitmap.Config.RGB_565));
   }
 
