@@ -110,7 +110,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindView(R.id.submission_toolbar_background) AnimatedToolbarBackground toolbarBackground;
   @BindView(R.id.submission_content_progress_bar) SubmissionAnimatedProgressBar contentLoadProgressView;
   @BindView(R.id.submission_image) ZoomableImageView contentImageView;
-  @BindView(R.id.submission_image_scroll_hint) View contentImageScrollHintView;
   @BindView(R.id.submission_video_container) ViewGroup contentVideoViewContainer;
   @BindView(R.id.submission_video) VideoView contentVideoView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;

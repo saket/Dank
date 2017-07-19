@@ -242,7 +242,8 @@ public class CommentTreeConstructor {
           //    indentation, nextNode.getComment().getFullName(), nextNode.getComment().getAuthor(), nextNode.getMoreChildren().getCount()
           //);
           //Timber.d("%s %s", indentation, nextNode.getMoreChildren().getChildrenIds());
-          flattenComments.add(LoadMoreCommentItem.create(nextNode, areMoreCommentsLoadingFor(nextNode)));
+          String nextNodeFullname = nextNode.getComment().getFullName();
+          flattenComments.add(LoadMoreCommentItem.create(nextNodeFullname, nextNode, areMoreCommentsLoadingFor(nextNode)));
         }
       }
       return flattenComments;

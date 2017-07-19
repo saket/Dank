@@ -1,7 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static android.R.attr.id;
-
 import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.CommentNode;
@@ -30,8 +28,11 @@ public abstract class LoadMoreCommentItem implements SubmissionCommentRow {
     return Type.LOAD_MORE_COMMENTS;
   }
 
-  public static LoadMoreCommentItem create(CommentNode parentNode, boolean progressVisible) {
-    String fullName = parentNode.getComment().getId() + "_loadMore";
+  public static LoadMoreCommentItem create(String parentNodeFullname, CommentNode parentNode, boolean progressVisible) {
+    if (parentNodeFullname == null) {
+      throw new NullPointerException();
+    }
+    String fullName = parentNodeFullname + "_loadMore";
     return new AutoValue_LoadMoreCommentItem(fullName, parentNode, progressVisible);
   }
 }
