@@ -179,6 +179,7 @@ public class SubmissionImageHolder {
           @Override
           public void onPageExpanded() {
             hintEntryAnimationRunnable.run();
+            submissionPageLayout.removeStateChangeCallbacks(this);
           }
         });
       }

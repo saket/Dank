@@ -1,7 +1,10 @@
 package me.saket.dank.widgets;
 
 import android.content.Context;
+import android.graphics.Outline;
 import android.support.annotation.IntRange;
+import android.view.View;
+import android.view.ViewOutlineProvider;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -52,6 +55,13 @@ public class DankVideoControlsView extends VideoControls {
     descriptionTextView = currentTimeTextView = endTimeTextView = titleTextView = subTitleTextView = new TextView(getContext());
     previousButton = nextButton = new ImageButton(getContext());
     textContainer = new LinearLayout(getContext());
+
+    playIconView.setOutlineProvider(new ViewOutlineProvider() {
+      @Override
+      public void getOutline(View view, Outline outline) {
+        outline.setOval(0, 0, view.getWidth(), view.getHeight());
+      }
+    });
   }
 
   @Override
