@@ -133,7 +133,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private DankSubmissionRequest activeSubmissionRequest;
   private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
   private Link activeSubmissionContentLink;
-  private BehaviorRelay<Submission> submissionStream = BehaviorRelay.create();
+  private BehaviorRelay<Submission> submissionChangeStream = BehaviorRelay.create();
   private Relay<Link> submissionContentStream = PublishRelay.create();
 
   private SubmissionVideoHolder contentVideoViewHolder;
@@ -212,8 +212,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
-    if (submissionStream.getValue() != null) {
-      outState.putString(KEY_SUBMISSION_JSON, Dank.jackson().toJson(submissionStream.getValue()));
+    if (submissionChangeStream.getValue() != null) {
+      outState.putString(KEY_SUBMISSION_JSON, Dank.jackson().toJson(submissionChangeStream.getValue()));
       outState.putParcelable(KEY_SUBMISSION_REQUEST, activeSubmissionRequest);
     }
     super.onSaveInstanceState(outState);
@@ -252,23 +252,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 .take(1)
                 .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
                 .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(replyBindEvent -> {
-                  commentList.post(() -> {
-                    Keyboards.show(replyBindEvent.replyField());
-                  });
-//                  Views.executeOnNextLayout(replyBindEvent.replyField(), () -> {
-////                    replyBindEvent.replyField().requestFocus();
-////                    replyBindEvent.replyField().performClick();
-//                    Keyboards.show(replyBindEvent.replyField());
-////                    InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
-////                    inputMethodManager.showSoftInput(replyBindEvent.replyField(), InputMethodManager.SHOW_IMPLICIT, new ResultReceiver(null) {
-////                      @Override
-////                      protected void onReceiveResult(int resultCode, Bundle resultData) {
-////                        Timber.i("resultCode: %s", resultCode);
-////                      }
-////                    });
-//                  });
-                })
+                .subscribe(replyBindEvent -> commentList.post(() -> Keyboards.show(replyBindEvent.replyField())))
         );
 
       } else {
@@ -309,7 +293,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       @Override
       public void onClickSendReply(PublicContribution parentContribution, String replyMessage) {
         Dank.comments().removeDraft(parentContribution)
-            .andThen(Dank.reddit().withAuth(Dank.comments().sendReply(parentContribution, submissionStream.getValue().getFullName(), replyMessage)))
+            .andThen(Dank.reddit().withAuth(Dank.comments().sendReply(parentContribution, submissionChangeStream.getValue().getFullName(), replyMessage)))
             .doOnSubscribe(o -> commentTreeConstructor.hideReply(parentContribution))
             .compose(applySchedulersCompletable())
             .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
@@ -333,7 +317,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Add pending-sync replies to the comment tree.
     unsubscribeOnDestroy(
-        submissionStream
+        submissionChangeStream
             .filter(subm -> subm.getComments() != null)
             .observeOn(Schedulers.io())
             .switchMap(submissionWithComments ->
@@ -507,15 +491,28 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   private void setupReplyFAB() {
-    // Show only if it'll not overlap the submission byline.
+    // Show the FAB while the keyboard is hidden and there's space available.
+    Observable<Boolean> keyboardVisibilityChanges = Keyboards.streamKeyboardVisibilityChanges(getActivity(), submissionPageLayout);
+    Relay<Boolean> spaceAvailabilityChanges = PublishRelay.create();
     commentListParentSheet.addOnSheetScrollChangeListener(sheetScrollY -> {
       float bylineBottom = submissionBylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
-      if (bylineBottom >= replyFAB.getTop()) {
-        replyFAB.hide();
-      } else {
-        replyFAB.show();
-      }
+      spaceAvailabilityChanges.accept(bylineBottom < replyFAB.getTop());
     });
+
+    unsubscribeOnDestroy(
+        submissionChangeStream
+            .doOnNext(o -> replyFAB.show())
+            .switchMap(o -> Observable.combineLatest(keyboardVisibilityChanges, spaceAvailabilityChanges,
+                (keyboardVisible, spaceAvailable) -> !keyboardVisible && spaceAvailable)
+            )
+            .subscribe(canShowReplyFAB -> {
+              if (canShowReplyFAB) {
+                replyFAB.show();
+              } else {
+                replyFAB.hide();
+              }
+            })
+    );
 
     replyFAB.setOnClickListener(o -> {
       if (!Dank.userSession().isUserLoggedIn()) {
@@ -526,13 +523,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       int firstVisiblePosition = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstVisibleItemPosition();
       boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
 
-      if (commentTreeConstructor.isReplyActiveFor(submissionStream.getValue()) && isSubmissionReplyVisible) {
+      if (commentTreeConstructor.isReplyActiveFor(submissionChangeStream.getValue()) && isSubmissionReplyVisible) {
         // Hide reply only if it's visible. Otherwise the user won't understand why the
         // reply FAB did not do anything.
-        commentTreeConstructor.hideReply(submissionStream.getValue());
+        commentTreeConstructor.hideReply(submissionChangeStream.getValue());
       } else {
         commentList.smoothScrollToPosition(0);
-        commentTreeConstructor.showReply(submissionStream.getValue());
+        commentTreeConstructor.showReply(submissionChangeStream.getValue());
       }
     });
   }
@@ -604,13 +601,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
    */
   public void populateUi(Submission submission, DankSubmissionRequest submissionRequest) {
     activeSubmissionRequest = submissionRequest;
-    submissionStream.accept(submission);
+    submissionChangeStream.accept(submission);
 
     // Reset everything.
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
-    replyFAB.show();
 
     // Update submission information. Everything that
     adapterWithSubmissionHeader.updateSubmission(submission);
@@ -628,11 +624,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           .flatMap(retryWithCorrectSortIfNeeded())
           .compose(applySchedulersSingle())
           .compose(doOnSingleStartAndTerminate(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
-          .subscribe(submissionStream, handleSubmissionLoadError())
+          .subscribe(submissionChangeStream, handleSubmissionLoadError())
       );
 
     } else {
-      submissionStream.accept(submission);
+      submissionChangeStream.accept(submission);
     }
   }
 
