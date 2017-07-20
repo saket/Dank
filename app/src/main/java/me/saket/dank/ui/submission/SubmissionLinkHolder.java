@@ -24,29 +24,26 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.ImageViewTarget;
-import com.bumptech.glide.request.target.SizeReadyCallback;
-
-import java.util.Locale;
-
 import butterknife.BindColor;
 import butterknife.BindDimen;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.target.ImageViewTarget;
+import com.bumptech.glide.request.target.SizeReadyCallback;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
+import java.util.Locale;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.LinkMetadata;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.RedditLink;
+import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.GlideUtils;
-import me.saket.dank.utils.UrlMetadataParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
@@ -105,7 +102,7 @@ public class SubmissionLinkHolder {
     linkDetailsContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
   }
 
-  public int thumbnailWidthForExternalLink() {
+  public int getThumbnailWidthForExternalLink() {
     return thumbnailWidthForExternalLink;
   }
 
@@ -179,7 +176,9 @@ public class SubmissionLinkHolder {
 
   private Disposable populateSubmissionTitle(RedditLink.Submission submissionLink) {
     // Downloading the page's HTML to get the title is faster than getting the submission's data from the API.
-    return UrlMetadataParser.parse(submissionLink.url, true)
+    //noinspection ConstantConditions
+    return Dank.api().unfurlUrl(submissionLink.url, true)
+        .map(response -> response.data().linkMetadata())
         .compose(applySchedulersSingle())
         .compose(doOnSingleStartAndTerminate(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
         .subscribe(linkMetadata -> {
@@ -253,7 +252,7 @@ public class SubmissionLinkHolder {
     subtitleView.setText(parseDomainName(externalLink.url));
     progressView.setVisibility(View.VISIBLE);
 
-    boolean isGooglePlayLink = UrlMetadataParser.isGooglePlayLink(externalLink.url);
+    boolean isGooglePlayLink = isGooglePlayLink(externalLink.url);
 
     // Attempt to load image provided by Reddit. By doing this, we'll be able to load the image and
     // the URL meta-data in parallel. Additionally, reddit's supplied image will also be optimized
@@ -264,9 +263,11 @@ public class SubmissionLinkHolder {
       loadLinkThumbnail(isGooglePlayLink, redditSuppliedThumbnail, null, false /* hideProgressOnLoad */);
     }
 
-    return UrlMetadataParser.parse(externalLink.url, false)
+    //noinspection ConstantConditions
+    return Dank.api().unfurlUrl(externalLink.url, true)
+        .map(response -> response.data().linkMetadata())
         .compose(applySchedulersSingle())
-        .doOnError(__ -> progressView.setVisibility(View.GONE))
+        .doOnError(o -> progressView.setVisibility(View.GONE))
         .subscribe(linkMetadata -> {
           // TODO: Move all of subscribe() to within the chain so that image loads aren't sent after the activity is destroyed.
           if (isEmpty(linkMetadata.title())) {
@@ -452,4 +453,7 @@ public class SubmissionLinkHolder {
     colorAnimator.start();
   }
 
+  public static boolean isGooglePlayLink(String url) {
+    return Uri.parse(url).getHost().contains("play.google");
+  }
 }

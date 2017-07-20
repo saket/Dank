@@ -750,7 +750,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         contentLoadProgressView.hide();
         String redditSuppliedThumbnail = findOptimizedImage(
             submission.getThumbnails(),
-            linkDetailsViewHolder.thumbnailWidthForExternalLink()
+            linkDetailsViewHolder.getThumbnailWidthForExternalLink()
         );
         linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
 

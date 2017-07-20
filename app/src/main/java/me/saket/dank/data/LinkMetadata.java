@@ -2,13 +2,12 @@ package me.saket.dank.data;
 
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
-
 import com.google.auto.value.AutoValue;
-
-import me.saket.dank.utils.UrlMetadataParser;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 /**
- * Details of a URL, parsed by {@link UrlMetadataParser}.
+ * Meta-data of a URL.
  */
 @AutoValue
 public abstract class LinkMetadata {
@@ -36,4 +35,7 @@ public abstract class LinkMetadata {
     return new AutoValue_LinkMetadata(url, title, faviconUrl, imageUrl);
   }
 
+  public static JsonAdapter<LinkMetadata> jsonAdapter(Moshi moshi) {
+    return new AutoValue_LinkMetadata.MoshiJsonAdapter(moshi);
+  }
 }

@@ -56,8 +56,7 @@ public class ImgurManager {
    * @throws ImgurApiRateLimitReachedException If Imgur's API limit is reached and no more API requests can be made till the next month.
    */
   public Single<ImgurResponse> gallery(MediaLink.ImgurUnresolvedGallery imgurUnresolvedGalleryLink) {
-    return Dank.api()
-        .imgurAlbumPaid(imgurUnresolvedGalleryLink.albumId())
+    return Dank.api().imgurAlbumPaid(imgurUnresolvedGalleryLink.albumId())
         .map(throwIfHttpError())
         .doOnSuccess(saveImgurApiRateLimits())
         .map(extractResponseBody())

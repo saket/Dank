@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.preference.PreferenceManager;
-
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -17,19 +16,12 @@ import com.ryanharter.auto.value.moshi.AutoValueMoshiAdapterFactory;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 import com.squareup.sqlbrite.SqlBrite;
-
-import net.dean.jraw.RedditClient;
-import net.dean.jraw.auth.AuthenticationManager;
-import net.dean.jraw.http.LoggingMode;
-import net.dean.jraw.http.UserAgent;
-
+import dagger.Module;
+import dagger.Provides;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
-
-import dagger.Module;
-import dagger.Provides;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -48,6 +40,11 @@ import me.saket.dank.utils.ImgurManager;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.MoshiMessageAdapter;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
+import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
+import net.dean.jraw.RedditClient;
+import net.dean.jraw.auth.AuthenticationManager;
+import net.dean.jraw.http.LoggingMode;
+import net.dean.jraw.http.UserAgent;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -159,6 +156,7 @@ public class DankAppModule {
       builder.addInterceptor(logging);
       builder.addNetworkInterceptor(new StethoInterceptor());
     }
+    builder.addNetworkInterceptor(new OkHttpWholesomeAuthIntercepter());
 
     return builder.build();
   }
