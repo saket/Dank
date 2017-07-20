@@ -3,7 +3,6 @@ package me.saket.dank.ui.submission;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 
 import android.graphics.Bitmap;
-import android.graphics.Color;
 import android.support.annotation.CheckResult;
 import android.view.Gravity;
 import android.view.View;
@@ -20,6 +19,7 @@ import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
@@ -43,6 +43,7 @@ public class SubmissionImageHolder {
   @BindView(R.id.submission_image_scroll_hint) View imageScrollHintView;
   @BindView(R.id.submission_image) ZoomableImageView imageView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
+  @BindColor(R.color.gray_900) int paddingColorForSmallImages;
 
   private final int deviceDisplayWidth;
   private final ExpandablePageLayout submissionPageLayout;
@@ -74,7 +75,7 @@ public class SubmissionImageHolder {
     });
 
     // This transformation adds padding to images that are way too small (presently < 2 x toolbar height).
-    glidePaddingTransformation = new GlidePaddingTransformation(imageView.getContext(), Color.DKGRAY) {
+    glidePaddingTransformation = new GlidePaddingTransformation(imageView.getContext(), paddingColorForSmallImages) {
       @Override
       public int getVerticalPadding(int imageWidth, int imageHeight) {
         int minDesiredImageHeight = commentListParentSheet.getTop() * 2;
