@@ -34,7 +34,6 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
   private State currentState;
   private ValueAnimator scrollAnimator;
   private boolean scrollingEnabled;
-
   private int maxScrollY;
 
   public enum State {
@@ -60,6 +59,18 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
       currentState = State.EXPANDED;
     }
     setScrollingEnabled(true);
+  }
+
+  @Override
+  protected void onSizeChanged(int w, int h, int oldw, int oldh) {
+    super.onSizeChanged(w, h, oldw, oldh);
+
+    // Maintain scroll when keyboard shows up. In case (h < oldH) turns out to be too generic,
+    // consider using (getBottom() + statusBarHeight < deviceDisplayHeight) for checking if
+    // keyboard is visible.
+    if (h < oldh) {
+      scrollTo(h - oldh);
+    }
   }
 
   /**

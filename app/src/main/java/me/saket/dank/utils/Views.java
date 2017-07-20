@@ -17,6 +17,8 @@ import timber.log.Timber;
  */
 public class Views {
 
+  private static int statusBarHeight = -1;
+
   /**
    * Execute a runnable when the next global layout happens for a <code>View</code>. Example usage includes
    * waiting for a list to draw its children just after you have updated its adapter's data-set.
@@ -77,11 +79,15 @@ public class Views {
   }
 
   public static int statusBarHeight(Resources resources) {
-    int resourceId = resources.getIdentifier("status_bar_height", "dimen", "android");
-    if (resourceId > 0) {
-      return resources.getDimensionPixelSize(resourceId);
+    if (statusBarHeight == -1) {
+      int resourceId = resources.getIdentifier("status_bar_height", "dimen", "android");
+      if (resourceId > 0) {
+        statusBarHeight = resources.getDimensionPixelSize(resourceId);
+      } else {
+        statusBarHeight = 0;
+      }
     }
-    return 0;
+    return statusBarHeight;
   }
 
   public static void setPaddingTop(View view, int paddingTop) {
