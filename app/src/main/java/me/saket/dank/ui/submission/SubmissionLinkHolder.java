@@ -380,11 +380,14 @@ public class SubmissionLinkHolder {
           public void onException(Exception e) {
             if (e != null) {
               Timber.e(e, "Couldn't load favicon");
+            } else {
+              Timber.e("Couldn't load favicon");
             }
 
             // Show a generic icon if the favicon couldn't be fetched.
             if (!hasLinkThumbnail) {
               iconView.setImageResource(R.drawable.ic_link_black_24dp);
+              progressView.setVisibility(View.GONE);
             }
           }
         })
