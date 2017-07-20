@@ -306,6 +306,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
       }
     });
+
+    // Bottom-spacing for FAB.
+    Views.executeOnMeasure(replyFAB, () -> {
+      int spaceForFab = replyFAB.getHeight() + ((ViewGroup.MarginLayoutParams) replyFAB.getLayoutParams()).bottomMargin * 2;
+      Views.setPaddingBottom(commentList, spaceForFab);
+    });
   }
 
   /**

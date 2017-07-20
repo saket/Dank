@@ -222,6 +222,7 @@
       android:id="@+id/submission_comment_list"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
+      android:clipToPadding="false"
       android:scrollbarStyle="insideOverlay"
       android:scrollbars="vertical"
       tools:paddingStart="@dimen/spacing16"
@@ -258,9 +259,9 @@
     <ImageButton
       android:id="@+id/submission_toolbar_close"
       android:layout_width="wrap_content"
-      android:contentDescription="@string/cd_submission_return_to_submissions"
       android:layout_height="match_parent"
       android:background="?attr/selectableItemBackgroundBorderless"
+      android:contentDescription="@string/cd_submission_return_to_submissions"
       android:padding="@dimen/spacing16"
       android:src="@drawable/ic_toolbar_close_24dp"
       android:tint="@color/white" />
