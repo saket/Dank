@@ -104,6 +104,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
+  private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = 250;
 
   @BindView(R.id.submission_toolbar) View toolbar;
   @BindView(R.id.submission_toolbar_close) ImageButton toolbarCloseButton;
@@ -244,6 +245,32 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentSwipeActionsProvider.setOnReplySwipeActionListener(parentComment -> {
       if (commentTreeConstructor.isCollapsed(parentComment) || !commentTreeConstructor.isReplyActiveFor(parentComment)) {
         commentTreeConstructor.showReplyAndExpandComments(parentComment);
+
+        unsubscribeOnDestroy(
+            commentsAdapter.streamReplyItemViewBinds()
+                .filter(replyBindEvent -> replyBindEvent.replyItem().parentContribution().getFullName().equals(parentComment.getFullName()))
+                .take(1)
+                .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(replyBindEvent -> {
+                  commentList.post(() -> {
+                    Keyboards.show(replyBindEvent.replyField());
+                  });
+//                  Views.executeOnNextLayout(replyBindEvent.replyField(), () -> {
+////                    replyBindEvent.replyField().requestFocus();
+////                    replyBindEvent.replyField().performClick();
+//                    Keyboards.show(replyBindEvent.replyField());
+////                    InputMethodManager inputMethodManager = (InputMethodManager) getActivity().getSystemService(Context.INPUT_METHOD_SERVICE);
+////                    inputMethodManager.showSoftInput(replyBindEvent.replyField(), InputMethodManager.SHOW_IMPLICIT, new ResultReceiver(null) {
+////                      @Override
+////                      protected void onReceiveResult(int resultCode, Bundle resultData) {
+////                        Timber.i("resultCode: %s", resultCode);
+////                      }
+////                    });
+//                  });
+                })
+        );
+
       } else {
         commentTreeConstructor.hideReply(parentComment);
       }
@@ -253,8 +280,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
     int commentItemViewElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
     SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator(commentItemViewElevation).withInterpolator(Animations.INTERPOLATOR);
-    itemAnimator.setRemoveDuration(250);
-    itemAnimator.setAddDuration(250);
+    itemAnimator.setRemoveDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
+    itemAnimator.setAddDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
     commentList.setItemAnimator(itemAnimator);
 
     // Add submission Views as a header so that it scrolls with the list.

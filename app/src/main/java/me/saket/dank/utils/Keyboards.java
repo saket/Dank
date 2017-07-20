@@ -13,10 +13,10 @@ public class Keyboards {
   /**
    * Show the keyboard on <var>editText</var>.
    */
-  public static void show(EditText editText) {
+  public static boolean show(EditText editText) {
     editText.requestFocus();
-    InputMethodManager imm = (InputMethodManager) editText.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
-    imm.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
+    InputMethodManager inputMethodManager = (InputMethodManager) editText.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+    return inputMethodManager.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
   }
 
   /**
@@ -26,5 +26,4 @@ public class Keyboards {
     InputMethodManager inputManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
     inputManager.hideSoftInputFromWindow(anyViewInLayout.getWindowToken(), 0);
   }
-
 }

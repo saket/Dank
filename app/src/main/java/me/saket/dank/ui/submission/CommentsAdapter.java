@@ -18,6 +18,8 @@ import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
@@ -65,6 +67,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private final BehaviorRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = BehaviorRelay.create();
   private String submissionAuthor;
   private ReplyActionsListener replyActionsListener;
+  private Relay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
 
   public interface ReplyActionsListener {
     void onClickDiscardReply(PublicContribution parentContribution);
@@ -108,6 +111,17 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
   }
 
+  @AutoValue
+  abstract static class ReplyItemViewBindEvent {
+    abstract CommentInlineReplyItem replyItem();
+
+    abstract EditText replyField();
+
+    public static ReplyItemViewBindEvent create(CommentInlineReplyItem replyItem, EditText replyField) {
+      return new AutoValue_CommentsAdapter_ReplyItemViewBindEvent(replyItem, replyField);
+    }
+  }
+
   public CommentsAdapter(BetterLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSession userSession,
       ReplyDraftStore replyDraftStore, CommentSwipeActionsProvider swipeActionsProvider)
   {
@@ -139,6 +153,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   public void setReplyActionsListener(ReplyActionsListener listener) {
     replyActionsListener = listener;
+  }
+
+  @CheckResult
+  public Relay<ReplyItemViewBindEvent> streamReplyItemViewBinds() {
+    return replyViewBindStream;
   }
 
   @Override
@@ -240,6 +259,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       case REPLY:
         CommentInlineReplyItem commentInlineReplyItem = (CommentInlineReplyItem) commentItem;
         ((InlineReplyViewHolder) holder).bind(commentInlineReplyItem, replyActionsListener, userSession, replyDraftStore);
+        replyViewBindStream.accept(ReplyItemViewBindEvent.create(commentInlineReplyItem, ((InlineReplyViewHolder) holder).replyMessageField));
         break;
 
       case PENDING_SYNC_REPLY:
