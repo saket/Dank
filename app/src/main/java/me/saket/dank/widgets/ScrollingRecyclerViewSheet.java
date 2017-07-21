@@ -219,7 +219,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
   }
 
   private void adjustOffsetBy(float dy) {
-    setTranslationY(getTranslationY() - dy);
+    setTranslationY(currentScrollY() - dy);
 
     // Send a callback if the state changed.
     State newState;
@@ -237,7 +237,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
     // Scroll callback.
     for (int i = 0; i < scrollChangeListeners.size(); i++) {
-      scrollChangeListeners.get(i).onScrollChange(getTranslationY());
+      scrollChangeListeners.get(i).onScrollChange(currentScrollY());
     }
   }
 

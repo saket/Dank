@@ -68,10 +68,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private String submissionAuthor;
   private ReplyActionsListener replyActionsListener;
   private Relay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
+  private Relay<ReplyDiscardEvent> replyDiscardStream = PublishRelay.create();
 
   public interface ReplyActionsListener {
-    void onClickDiscardReply(PublicContribution parentContribution);
-
     void onClickEditReplyInFullscreenMode(PublicContribution parentContribution);
 
     void onClickSendReply(PublicContribution parentContribution, String replyMessage);
@@ -122,6 +121,15 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
   }
 
+  @AutoValue
+  abstract static class ReplyDiscardEvent {
+    public abstract PublicContribution parentContribution();
+
+    public static ReplyDiscardEvent create(PublicContribution parentContribution) {
+      return new AutoValue_CommentsAdapter_ReplyDiscardEvent(parentContribution);
+    }
+  }
+
   public CommentsAdapter(BetterLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSession userSession,
       ReplyDraftStore replyDraftStore, CommentSwipeActionsProvider swipeActionsProvider)
   {
@@ -141,6 +149,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   @CheckResult
   public Observable<LoadMoreCommentsClickEvent> streamLoadMoreCommentsClicks() {
     return loadMoreCommentsClickStream;
+  }
+
+  @CheckResult
+  public Observable<ReplyDiscardEvent> streamReplyDiscards() {
+    return replyDiscardStream;
   }
 
   /**
@@ -258,7 +271,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       case REPLY:
         CommentInlineReplyItem commentInlineReplyItem = (CommentInlineReplyItem) commentItem;
-        ((InlineReplyViewHolder) holder).bind(commentInlineReplyItem, replyActionsListener, userSession, replyDraftStore);
+        ((InlineReplyViewHolder) holder).bind(commentInlineReplyItem, replyActionsListener, userSession, replyDraftStore, replyDiscardStream);
         replyViewBindStream.accept(ReplyItemViewBindEvent.create(commentInlineReplyItem, ((InlineReplyViewHolder) holder).replyMessageField));
         break;
 
@@ -507,7 +520,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
 
     public void bind(CommentInlineReplyItem commentInlineReplyItem, ReplyActionsListener replyActionsListener, UserSession userSession,
-        ReplyDraftStore replyDraftStore)
+        ReplyDraftStore replyDraftStore, Relay<ReplyDiscardEvent> replyDiscardEventObserver)
     {
       parentContribution = commentInlineReplyItem.parentContribution();
       indentedLayout.setIndentationDepth(commentInlineReplyItem.depth());
@@ -516,7 +529,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
           userSession.loggedInUserName()
       ));
 
-      discardButton.setOnClickListener(o -> replyActionsListener.onClickDiscardReply(parentContribution));
+      discardButton.setOnClickListener(o -> replyDiscardEventObserver.accept(ReplyDiscardEvent.create(parentContribution)));
       goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(parentContribution));
 
       sendButton.setOnClickListener(o -> {

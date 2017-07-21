@@ -6,44 +6,64 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 
+import com.google.auto.value.AutoValue;
+
 import io.reactivex.Observable;
+import io.reactivex.ObservableOnSubscribe;
 
 public class KeyboardVisibilityDetector {
 
-  private final View activityContentLayout;
-  private final ViewGroup contentLayout;
-  private final int statusBarHeight;
+  private final Observable<KeyboardVisibilityChangeEvent> keyboardVisibilityChanges;
+  private int activityContentHeightPrevious = -1;
 
-  public KeyboardVisibilityDetector(Activity activity, ViewGroup contentLayout, int statusBarHeight) {
-    this.activityContentLayout = getDecorViewChild(activity);
-    this.contentLayout = contentLayout;
-    this.statusBarHeight = statusBarHeight;
+  @AutoValue
+  public abstract static class KeyboardVisibilityChangeEvent {
+    public abstract boolean visible();
+
+    public abstract int contentHeightPrevious();
+
+    public abstract int contentHeightCurrent();
+
+    public static KeyboardVisibilityChangeEvent create(boolean visible, int contentHeightPrevious, int contentHeightCurrent) {
+      return new AutoValue_KeyboardVisibilityDetector_KeyboardVisibilityChangeEvent(visible, contentHeightPrevious, contentHeightCurrent);
+    }
+  }
+
+  public KeyboardVisibilityDetector(Activity activity, int statusBarHeight) {
+    View rootResizableLayout = getWindowRootResizableLayout(activity);
+    View rootNonResizableLayout = ((View) rootResizableLayout.getParent());
+
+    keyboardVisibilityChanges = Observable.create((ObservableOnSubscribe<KeyboardVisibilityChangeEvent>) emitter -> {
+      ViewTreeObserver.OnGlobalLayoutListener layoutListener = () -> {
+        int activityContentHeight = rootResizableLayout.getHeight();
+
+        if (activityContentHeightPrevious == -1) {
+          activityContentHeightPrevious = rootNonResizableLayout.getHeight() - statusBarHeight;
+        }
+        boolean isKeyboardVisible = activityContentHeight < rootNonResizableLayout.getHeight() - statusBarHeight;
+        emitter.onNext(KeyboardVisibilityChangeEvent.create(isKeyboardVisible, activityContentHeightPrevious, activityContentHeight));
+
+        activityContentHeightPrevious = activityContentHeight;
+      };
+      rootResizableLayout.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
+      emitter.setCancellable(() -> rootResizableLayout.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener));
+      rootResizableLayout.post(() -> layoutListener.onGlobalLayout());      // Initial value.
+    })
+        .distinctUntilChanged((prevEvent, currentEvent) -> prevEvent.visible() == currentEvent.visible())
+        .share();
   }
 
   @CheckResult
-  public Observable<Boolean> streamKeyboardVisibilityChanges() {
-    return Observable.create(emitter -> {
-      ViewTreeObserver.OnGlobalLayoutListener layoutListener = () -> {
-        boolean isKeyboardVisible = contentLayout.getHeight() < activityContentLayout.getHeight() - statusBarHeight;
-        emitter.onNext(isKeyboardVisible);
-      };
-      contentLayout.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
-      emitter.setCancellable(() -> contentLayout.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener));
-
-      // Initial value.
-      contentLayout.post(() -> layoutListener.onGlobalLayout());
-    });
+  public Observable<KeyboardVisibilityChangeEvent> streamKeyboardVisibilityChanges() {
+    return keyboardVisibilityChanges;
   }
 
   /**
-   * Finds the first grand-child of Window's decor-View, which does not get resized when the keyboard is shown and does
-   * not contain space for any System Ui bars either.
-   * <p>
    * DecorView <- does not get resized and contains space for system Ui bars.
    * - LinearLayout <- does not get resized and contains space for only status bar.
-   * -- Activity content <- Gets resized.
+   * -- Activity content <- gets resized.
    */
-  private View getDecorViewChild(Activity activity) {
-    return ((ViewGroup) activity.getWindow().getDecorView()).getChildAt(0);
+  public View getWindowRootResizableLayout(Activity activity) {
+    return ((ViewGroup) ((ViewGroup) activity.getWindow().getDecorView()).getChildAt(0)).getChildAt(1);
   }
 }

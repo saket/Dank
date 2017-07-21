@@ -14,6 +14,7 @@ import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.LayoutTransition;
+import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.graphics.Bitmap;
@@ -35,6 +36,7 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
@@ -93,6 +95,7 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
+import me.saket.dank.widgets.KeyboardVisibilityDetector.KeyboardVisibilityChangeEvent;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
@@ -105,6 +108,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
   private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = 250;
+  private static final long ACTIVITY_CONTENT_RESIZE_ANIM_DURATION = 300;
 
   @BindView(R.id.submission_toolbar) View toolbar;
   @BindView(R.id.submission_toolbar_close) ImageButton toolbarCloseButton;
@@ -135,6 +139,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private Link activeSubmissionContentLink;
   private BehaviorRelay<Submission> submissionChangeStream = BehaviorRelay.create();
   private Relay<Link> submissionContentStream = PublishRelay.create();
+  private Observable<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream;
 
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
@@ -192,13 +197,16 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     submissionPageLayout.addStateChangeCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
+    keyboardVisibilityChangeStream = Keyboards.streamKeyboardVisibilityChanges(getActivity(), Views.statusBarHeight(getResources()));
+
     setupCommentList(linkMovementMethod);
     setupCommentTreeConstructor();
     setupContentImageView(fragmentLayout);
     setupContentVideoView();
     setupCommentsSheet();
-    setupReplyFAB();
     setupStatusBarTint();
+    setupReplyFAB();
+    setupSoftInputModeChangesAnimation();
 
     linkDetailsViewHolder = new SubmissionLinkHolder(linkDetailsView, submissionPageLayout);
     linkDetailsView.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
@@ -242,10 +250,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         Dank.userSession(),
         onLoginRequireListener
     );
+
     commentSwipeActionsProvider.setOnReplySwipeActionListener(parentComment -> {
       if (commentTreeConstructor.isCollapsed(parentComment) || !commentTreeConstructor.isReplyActiveFor(parentComment)) {
         commentTreeConstructor.showReplyAndExpandComments(parentComment);
 
+        // Show keyboard once the View is ready.
         unsubscribeOnDestroy(
             commentsAdapter.streamReplyItemViewBinds()
                 .filter(replyBindEvent -> replyBindEvent.replyItem().parentContribution().getFullName().equals(parentComment.getFullName()))
@@ -279,12 +289,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     );
     commentList.setAdapter(adapterWithSubmissionHeader);
 
+    // TODO: Convert all these to streams.
     commentsAdapter.setReplyActionsListener(new CommentsAdapter.ReplyActionsListener() {
-      @Override
-      public void onClickDiscardReply(PublicContribution parentContribution) {
-        commentTreeConstructor.hideReply(parentContribution);
-      }
-
       @Override
       public void onClickEditReplyInFullscreenMode(PublicContribution parentContribution) {
         // TODO.
@@ -306,6 +312,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
       }
     });
+
+    // Reply discards.
+    unsubscribeOnDestroy(
+        commentsAdapter.streamReplyDiscards()
+            .doOnNext(discardEvent -> commentTreeConstructor.hideReply(discardEvent.parentContribution()))
+            .delay(ACTIVITY_CONTENT_RESIZE_ANIM_DURATION, TimeUnit.MILLISECONDS)
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(o -> Keyboards.hide(getActivity(), commentList))
+    );
 
     // Bottom-spacing for FAB.
     Views.executeOnMeasure(replyFAB, () -> {
@@ -498,18 +513,21 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private void setupReplyFAB() {
     // Show the FAB while the keyboard is hidden and there's space available.
-    Observable<Boolean> keyboardVisibilityChanges = Keyboards.streamKeyboardVisibilityChanges(getActivity(), submissionPageLayout);
-    Relay<Boolean> spaceAvailabilityChanges = PublishRelay.create();
-    commentListParentSheet.addOnSheetScrollChangeListener(sheetScrollY -> {
+    Relay<Boolean> spaceAvailabilityChanges = BehaviorRelay.create();
+    ScrollingRecyclerViewSheet.SheetScrollChangeListener sheetScrollChangeListener = sheetScrollY -> {
       float bylineBottom = submissionBylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
       spaceAvailabilityChanges.accept(bylineBottom < replyFAB.getTop());
-    });
+    };
+    commentListParentSheet.addOnSheetScrollChangeListener(sheetScrollChangeListener);
+    commentListParentSheet.post(() ->
+        sheetScrollChangeListener.onScrollChange(commentListParentSheet.currentScrollY())  // Initial value.
+    );
 
     unsubscribeOnDestroy(
         submissionChangeStream
             .doOnNext(o -> replyFAB.show())
-            .switchMap(o -> Observable.combineLatest(keyboardVisibilityChanges, spaceAvailabilityChanges,
-                (keyboardVisible, spaceAvailable) -> !keyboardVisible && spaceAvailable)
+            .switchMap(o -> Observable.combineLatest(keyboardVisibilityChangeStream, spaceAvailabilityChanges,
+                (keyboardVisibilityChangeEvent, spaceAvailable) -> !keyboardVisibilityChangeEvent.visible() && spaceAvailable)
             )
             .subscribe(canShowReplyFAB -> {
               if (canShowReplyFAB) {
@@ -538,6 +556,33 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentTreeConstructor.showReply(submissionChangeStream.getValue());
       }
     });
+  }
+
+  private void setupSoftInputModeChangesAnimation() {
+    unsubscribeOnDestroy(
+        keyboardVisibilityChangeStream.subscribe(new Consumer<KeyboardVisibilityChangeEvent>() {
+          private ValueAnimator heightAnimator;
+          private ViewGroup contentViewGroup;
+
+          @Override
+          public void accept(@NonNull KeyboardVisibilityChangeEvent changeEvent) throws Exception {
+            if (contentViewGroup == null) {
+              contentViewGroup = (ViewGroup) getActivity().findViewById(Window.ID_ANDROID_CONTENT);
+            }
+
+            if (heightAnimator != null) {
+              heightAnimator.cancel();
+            }
+            heightAnimator = ObjectAnimator.ofInt(changeEvent.contentHeightPrevious(), changeEvent.contentHeightCurrent());
+            heightAnimator.addUpdateListener(animation -> {
+              Views.setHeight(contentViewGroup, (int) animation.getAnimatedValue());
+            });
+            heightAnimator.setInterpolator(Animations.INTERPOLATOR);
+            heightAnimator.setDuration(ACTIVITY_CONTENT_RESIZE_ANIM_DURATION);
+            heightAnimator.start();
+          }
+        })
+    );
   }
 
   private void setupStatusBarTint() {

@@ -4,12 +4,12 @@ import android.app.Activity;
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 
 import io.reactivex.Observable;
 import me.saket.dank.widgets.KeyboardVisibilityDetector;
+import me.saket.dank.widgets.KeyboardVisibilityDetector.KeyboardVisibilityChangeEvent;
 
 /**
  * Utility methods for the soft-keyboard.
@@ -34,7 +34,7 @@ public class Keyboards {
   }
 
   @CheckResult
-  public static Observable<Boolean> streamKeyboardVisibilityChanges(Activity activity, ViewGroup contentLayout) {
-    return new KeyboardVisibilityDetector(activity, contentLayout, Views.statusBarHeight(activity.getResources())).streamKeyboardVisibilityChanges();
+  public static Observable<KeyboardVisibilityChangeEvent> streamKeyboardVisibilityChanges(Activity activity, int statusBarHeight) {
+    return new KeyboardVisibilityDetector(activity, statusBarHeight).streamKeyboardVisibilityChanges();
   }
 }
