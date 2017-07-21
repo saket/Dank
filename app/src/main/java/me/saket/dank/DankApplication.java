@@ -3,16 +3,13 @@ package me.saket.dank;
 import android.app.Activity;
 import android.app.Application;
 import android.support.annotation.CheckResult;
-
 import com.facebook.stetho.Stetho;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.tspoon.traceur.Traceur;
-
+import io.reactivex.plugins.RxJavaPlugins;
 import java.io.IOException;
 import java.io.InterruptedIOException;
-
-import io.reactivex.plugins.RxJavaPlugins;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.SimpleActivityLifecycleCallbacks;
 import timber.log.Timber;
@@ -28,10 +25,10 @@ public class DankApplication extends Application {
     if (BuildConfig.DEBUG) {
       Timber.plant(new Timber.DebugTree());
       Stetho.initializeWithDefaults(this);
+      Traceur.enableLogging();
     }
 
     Dank.initDependencies(this);
-    Traceur.enableLogging();
 
     RxJavaPlugins.setErrorHandler(e -> {
       e = Dank.errors().findActualCause(e);
@@ -83,11 +80,11 @@ public class DankApplication extends Application {
 
   /**
    * An Observable that emits whenever all activities of the app are minimized/stopped.
-   * Note 1: Unsubscribe only in onDestroy(). Unsubscribing in onStop() will be incorrect.
+   * Note 1: Unsubscribe only in onDestroy(). Unsubscribing in onStop() will be incorrect because the callbacks rely on onStop().
    * Note 2: Do not forget #1.
    */
   @CheckResult
-  public static Relay<Object> appMinimizeStream() {
+  public static Relay<Object> streamAppMinimizes() {
     return dankMinimizeRelay;
   }
 }

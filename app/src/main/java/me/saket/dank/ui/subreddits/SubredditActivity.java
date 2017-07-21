@@ -151,7 +151,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     }
     // Force refresh all subreddits when the app (not this Activity) returns to background.
     unsubscribeOnDestroy(
-        DankApplication.appMinimizeStream().subscribe(o -> firstRefreshDoneForSubredditFolders.clear())
+        DankApplication.streamAppMinimizes().subscribe(o -> firstRefreshDoneForSubredditFolders.clear())
     );
 
     setupSubmissionList(savedState);
