@@ -33,13 +33,17 @@ public class KeyboardVisibilityDetector {
     View rootResizableLayout = getWindowRootResizableLayout(activity);
     View rootNonResizableLayout = ((View) rootResizableLayout.getParent());
 
-    keyboardVisibilityChanges = Observable.create((ObservableOnSubscribe<KeyboardVisibilityChangeEvent>) emitter -> {
+    ObservableOnSubscribe<KeyboardVisibilityChangeEvent> subscriber = emitter -> {
       ViewTreeObserver.OnGlobalLayoutListener layoutListener = () -> {
-        int activityContentHeight = rootResizableLayout.getHeight();
-
         if (activityContentHeightPrevious == -1) {
           activityContentHeightPrevious = rootNonResizableLayout.getHeight() - statusBarHeight;
         }
+
+        int activityContentHeight = rootResizableLayout.getHeight();
+        if (activityContentHeight == activityContentHeightPrevious) {
+          return;
+        }
+
         boolean isKeyboardVisible = activityContentHeight < rootNonResizableLayout.getHeight() - statusBarHeight;
         emitter.onNext(KeyboardVisibilityChangeEvent.create(isKeyboardVisible, activityContentHeightPrevious, activityContentHeight));
 
@@ -48,8 +52,10 @@ public class KeyboardVisibilityDetector {
       rootResizableLayout.getViewTreeObserver().addOnGlobalLayoutListener(layoutListener);
       emitter.setCancellable(() -> rootResizableLayout.getViewTreeObserver().removeOnGlobalLayoutListener(layoutListener));
       rootResizableLayout.post(() -> layoutListener.onGlobalLayout());      // Initial value.
-    })
-        .distinctUntilChanged((prevEvent, currentEvent) -> prevEvent.visible() == currentEvent.visible())
+    };
+
+    keyboardVisibilityChanges = Observable.create(subscriber)
+        .distinctUntilChanged()
         .share();
   }
 

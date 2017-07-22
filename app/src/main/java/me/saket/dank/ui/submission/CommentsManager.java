@@ -53,7 +53,7 @@ public class CommentsManager implements ReplyDraftStore {
     this.recycleDraftsOlderThanNumDays = recycleDraftsOlderThanNumDays;
   }
 
-// ======== REPLY ======== //
+// ======== INLINE_REPLY ======== //
 
   /**
    * This exists to ensure a duplicate reply does not get stored when re-sending the same reply.

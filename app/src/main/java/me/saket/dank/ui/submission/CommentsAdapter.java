@@ -50,6 +50,7 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.IndentedLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
+import timber.log.Timber;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentRow, RecyclerView.ViewHolder> {
 
@@ -183,7 +184,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       case LOAD_MORE_COMMENTS:
         return VIEW_TYPE_LOAD_MORE;
 
-      case REPLY:
+      case INLINE_REPLY:
         return VIEW_TYPE_REPLY;
 
       case PENDING_SYNC_REPLY:
@@ -269,7 +270,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         });
         break;
 
-      case REPLY:
+      case INLINE_REPLY:
+        Timber.i("Showing reply");
         CommentInlineReplyItem commentInlineReplyItem = (CommentInlineReplyItem) commentItem;
         ((InlineReplyViewHolder) holder).bind(commentInlineReplyItem, replyActionsListener, userSession, replyDraftStore, replyDiscardStream);
         replyViewBindStream.accept(ReplyItemViewBindEvent.create(commentInlineReplyItem, ((InlineReplyViewHolder) holder).replyMessageField));

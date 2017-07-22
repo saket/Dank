@@ -139,7 +139,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private Link activeSubmissionContentLink;
   private BehaviorRelay<Submission> submissionChangeStream = BehaviorRelay.create();
   private Relay<Link> submissionContentStream = PublishRelay.create();
-  private Observable<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream;
+  private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
+  private Relay<PublicContribution> inlineReplyStream = PublishRelay.create();
 
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
@@ -197,7 +198,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     submissionPageLayout.addStateChangeCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
-    keyboardVisibilityChangeStream = Keyboards.streamKeyboardVisibilityChanges(getActivity(), Views.statusBarHeight(getResources()));
+    unsubscribeOnDestroy(
+        Keyboards
+            .streamKeyboardVisibilityChanges(getActivity(), Views.statusBarHeight(getResources()))
+            .subscribe(keyboardVisibilityChangeStream)
+    );
 
     setupCommentList(linkMovementMethod);
     setupCommentTreeConstructor();
@@ -250,21 +255,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         Dank.userSession(),
         onLoginRequireListener
     );
-
     commentSwipeActionsProvider.setOnReplySwipeActionListener(parentComment -> {
       if (commentTreeConstructor.isCollapsed(parentComment) || !commentTreeConstructor.isReplyActiveFor(parentComment)) {
         commentTreeConstructor.showReplyAndExpandComments(parentComment);
-
-        // Show keyboard once the View is ready.
-        unsubscribeOnDestroy(
-            commentsAdapter.streamReplyItemViewBinds()
-                .filter(replyBindEvent -> replyBindEvent.replyItem().parentContribution().getFullName().equals(parentComment.getFullName()))
-                .take(1)
-                .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(replyBindEvent -> commentList.post(() -> Keyboards.show(replyBindEvent.replyField())))
-        );
-
+        inlineReplyStream.accept(parentComment);
       } else {
         commentTreeConstructor.hideReply(parentComment);
       }
@@ -288,6 +282,19 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         submissionSwipeActionsProvider
     );
     commentList.setAdapter(adapterWithSubmissionHeader);
+
+    // Inline reply additions.
+    // Wait till the reply's View is added to the list and show keyboard.
+    unsubscribeOnDestroy(
+        inlineReplyStream
+            .flatMap(parentContribution -> commentsAdapter.streamReplyItemViewBinds()
+                .filter(replyBindEvent -> replyBindEvent.replyItem().parentContribution().getFullName().equals(parentContribution.getFullName()))
+                .take(1)
+                .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
+                .observeOn(AndroidSchedulers.mainThread())
+                .doOnNext(replyBindEvent -> commentList.post(() -> Keyboards.show(replyBindEvent.replyField()))))
+            .subscribe()
+    );
 
     // TODO: Convert all these to streams.
     commentsAdapter.setReplyActionsListener(new CommentsAdapter.ReplyActionsListener() {
@@ -316,10 +323,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Reply discards.
     unsubscribeOnDestroy(
         commentsAdapter.streamReplyDiscards()
-            .doOnNext(discardEvent -> commentTreeConstructor.hideReply(discardEvent.parentContribution()))
-            .delay(ACTIVITY_CONTENT_RESIZE_ANIM_DURATION, TimeUnit.MILLISECONDS)
-            .observeOn(AndroidSchedulers.mainThread())
-            .subscribe(o -> Keyboards.hide(getActivity(), commentList))
+            .subscribe(discardEvent -> {
+              Keyboards.hide(getActivity(), commentList);
+              commentTreeConstructor.hideReply(discardEvent.parentContribution());
+            })
     );
 
     // Bottom-spacing for FAB.
@@ -554,6 +561,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       } else {
         commentList.smoothScrollToPosition(0);
         commentTreeConstructor.showReply(submissionChangeStream.getValue());
+        inlineReplyStream.accept(submissionChangeStream.getValue());
       }
     });
   }

@@ -2,7 +2,6 @@ package me.saket.dank.ui.submission;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.PublicContribution;
 
 /**
@@ -20,7 +19,7 @@ public abstract class CommentInlineReplyItem implements SubmissionCommentRow {
 
   @Override
   public Type type() {
-    return Type.REPLY;
+    return Type.INLINE_REPLY;
   }
 
   public static CommentInlineReplyItem create(PublicContribution parentContribution, int depth) {
