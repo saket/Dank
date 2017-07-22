@@ -307,7 +307,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       public void onClickSendReply(PublicContribution parentContribution, String replyMessage) {
         Dank.comments().removeDraft(parentContribution)
             .andThen(Dank.reddit().withAuth(Dank.comments().sendReply(parentContribution, submissionChangeStream.getValue().getFullName(), replyMessage)))
-            .doOnSubscribe(o -> commentTreeConstructor.hideReply(parentContribution))
+            .doOnSubscribe(o -> {
+              Keyboards.hide(getActivity(), commentList);
+              commentTreeConstructor.hideReply(parentContribution);
+            })
             .compose(applySchedulersCompletable())
             .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
       }
