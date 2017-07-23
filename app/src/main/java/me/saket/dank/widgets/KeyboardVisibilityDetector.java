@@ -35,13 +35,13 @@ public class KeyboardVisibilityDetector {
 
     ObservableOnSubscribe<KeyboardVisibilityChangeEvent> subscriber = emitter -> {
       ViewTreeObserver.OnGlobalLayoutListener layoutListener = () -> {
-        if (activityContentHeightPrevious == -1) {
-          activityContentHeightPrevious = rootNonResizableLayout.getHeight() - statusBarHeight;
-        }
-
         int activityContentHeight = rootResizableLayout.getHeight();
         if (activityContentHeight == activityContentHeightPrevious) {
           return;
+        }
+
+        if (activityContentHeightPrevious == -1) {
+          activityContentHeightPrevious = rootNonResizableLayout.getHeight() - statusBarHeight;
         }
 
         boolean isKeyboardVisible = activityContentHeight < rootNonResizableLayout.getHeight() - statusBarHeight;
