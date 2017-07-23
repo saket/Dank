@@ -646,6 +646,14 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               heightAnimator.cancel();
             }
 
+            if (!commentListParentSheet.hasSheetReachedTheTop()) {
+              // Bug workaround: when the sheet is not at the top, avoid smoothly animating the size change.
+              // The sheet gets anyway pushed by the keyboard smoothly. Otherwise, only the list was getting
+              // scrolled by the keyboard and the sheet wasn't receiving any nested scroll callbacks.
+              Views.setHeight(contentViewGroup, changeEvent.contentHeightCurrent());
+              return;
+            }
+
             heightAnimator = ObjectAnimator.ofInt(changeEvent.contentHeightPrevious(), changeEvent.contentHeightCurrent());
             heightAnimator.addUpdateListener(animation -> {
               Views.setHeight(contentViewGroup, (int) animation.getAnimatedValue());
