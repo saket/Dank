@@ -68,8 +68,8 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     // Maintain scroll when keyboard shows up. In case (h < oldH) turns out to be too generic,
     // consider using (getBottom() + statusBarHeight < deviceDisplayHeight) for checking if
     // keyboard is visible.
-    if (h < oldh) {
-      scrollTo(h - oldh);
+    if (oldh != 0 && h != oldh) {
+      smoothScrollTo(h - oldh);
     }
   }
 
@@ -170,7 +170,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
     childRecyclerView.setOverScrollMode(OVER_SCROLL_NEVER);
   }
 
-  private boolean hasSheetReachedTheTop() {
+  public boolean hasSheetReachedTheTop() {
     return currentScrollY() <= 0;
   }
 
@@ -321,5 +321,4 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
       }
     }
   };
-
 }
