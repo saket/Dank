@@ -43,7 +43,7 @@ public class SubmissionImageHolder {
   @BindView(R.id.submission_image_scroll_hint) View imageScrollHintView;
   @BindView(R.id.submission_image) ZoomableImageView imageView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
-  @BindColor(R.color.gray_900) int paddingColorForSmallImages;
+  @BindColor(R.color.submission_media_content_background_padding) int paddingColorForSmallImages;
 
   private final int deviceDisplayWidth;
   private final ExpandablePageLayout submissionPageLayout;

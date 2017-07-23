@@ -44,6 +44,8 @@ public class SubmissionVideoHolder {
 
   private final ExpandablePageLayout submissionPageLayout;
   private final ExoPlayerManager exoPlayerManager;
+  private final int deviceDisplayHeight;
+  private final int minimumGapWithBottom;
   private final ProgressBar contentLoadProgressView;
   private final Relay<Integer> videoWidthChangeStream = PublishRelay.create();
   private final Relay<Object> videoPreparedStream = BehaviorRelay.create();
@@ -52,9 +54,13 @@ public class SubmissionVideoHolder {
    * <var>displayWidth</var> and <var>statusBarHeight</var> are used for capturing the video's bitmap,
    * which is in turn used for generating status bar tint. To minimize bitmap creation time, a Bitmap
    * of height statusBarHeight is created instead of the entire video height.
+   *
+   * @param deviceDisplayHeight
+   * @param minimumGapWithBottom The difference between video's bottom and the window's bottom will
    */
   public SubmissionVideoHolder(ViewGroup contentVideoViewContainer, VideoView contentVideoView, ScrollingRecyclerViewSheet commentListParentSheet,
-      ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout, ExoPlayerManager exoPlayerManager)
+      ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout, ExoPlayerManager exoPlayerManager,
+      int deviceDisplayHeight, int minimumGapWithBottom)
   {
     this.contentVideoViewContainer = contentVideoViewContainer;
     this.contentVideoView = contentVideoView;
@@ -62,6 +68,8 @@ public class SubmissionVideoHolder {
     this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
     this.exoPlayerManager = exoPlayerManager;
+    this.deviceDisplayHeight = deviceDisplayHeight;
+    this.minimumGapWithBottom = minimumGapWithBottom;
 
     DankVideoControlsView controlsView = new DankVideoControlsView(contentVideoView.getContext());
     contentVideoView.setControls(controlsView);
@@ -121,14 +129,15 @@ public class SubmissionVideoHolder {
   private Consumer<String> loadVideo() {
     return videoUrl -> {
       exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
-        Views.setHeight(contentVideoView, resizedVideoHeight);
+        int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - Views.statusBarHeight(contentVideoView.getResources());
+        Views.setHeight(contentVideoView, Math.min(contentHeightWithoutKeyboard, resizedVideoHeight));
 
         // Wait for the height change to happen and then reveal the video.
         Views.executeOnNextLayout(contentVideoView, () -> {
           contentLoadProgressView.setVisibility(View.GONE);
-          commentListParentSheet.setScrollingEnabled(true);
 
-          int videoHeightMinusToolbar = contentVideoViewContainer.getHeight() - commentListParentSheet.getTop();
+          int videoHeightMinusToolbar = contentVideoView.getHeight() - commentListParentSheet.getTop();
+          commentListParentSheet.setScrollingEnabled(true);
           commentListParentSheet.setMaxScrollY(videoHeightMinusToolbar);
           commentListParentSheet.scrollTo(videoHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);
 
@@ -141,33 +150,6 @@ public class SubmissionVideoHolder {
       exoPlayerManager.playVideoInLoop(Uri.parse(cachedVideoUrl));
     };
   }
-
-//  private void tintVideoControlsWithVideo() {
-//    LayerDrawable seekBarDrawable = (LayerDrawable) controlsView.getProgressSeekBar().getProgressDrawable();
-//    Drawable progressDrawable = seekBarDrawable.findDrawableByLayerId(android.R.id.progress);
-//    Drawable bufferDrawable = seekBarDrawable.findDrawableByLayerId(android.R.id.secondaryProgress);
-//
-//    // TODO: Move this to an async code block.
-//    // TODO: Transition colors smoothly + use default colors on start.
-//
-//    controlsView.setVideoProgressChangeListener(() -> {
-//      //final long startTime = System.currentTimeMillis();
-//      Bitmap currentFrameBitmap = getBitmapOfCurrentVideoFrame(10, 10);
-//
-//      Timber.i("Progress change");
-//
-//      Palette.from(currentFrameBitmap)
-//          .generate(palette -> {
-//            int progressColor = palette.getMutedColor(palette.getVibrantColor(-1));
-//            if (progressColor != -1) {
-//              progressDrawable.setTint(progressColor);
-//              bufferDrawable.setTint(Colors.applyAlpha(progressColor, 2f));
-//              controlsView.setVideoProgressChangeListener(null);
-//            }
-//          });
-//      //Timber.i("Palette in: %sms", System.currentTimeMillis() - startTime);
-//    });
-//  }
 
   public void pausePlayback() {
     exoPlayerManager.pauseVideoPlayback();

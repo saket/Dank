@@ -147,7 +147,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private SubmissionImageHolder contentImageViewHolder;
   private SubmissionLinkHolder linkDetailsViewHolder;
 
-  private int deviceDisplayWidth;
+  private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
   private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
 
@@ -168,6 +168,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
     deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
+    deviceDisplayHeight = fragmentLayout.getResources().getDisplayMetrics().heightPixels;
 
     return fragmentLayout;
   }
@@ -496,7 +497,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   private void setupContentVideoView() {
-    Views.setMarginBottom(contentVideoViewContainer, commentsSheetMinimumVisibleHeight);
     ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
 
     contentVideoViewHolder = new SubmissionVideoHolder(
@@ -505,7 +505,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentListParentSheet,
         contentLoadProgressView,
         submissionPageLayout,
-        exoPlayerManager
+        exoPlayerManager,
+        deviceDisplayHeight,
+        commentsSheetMinimumVisibleHeight
     );
   }
 
@@ -585,7 +587,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     Relay<Boolean> spaceAvailabilityChanges = BehaviorRelay.create();
     ScrollingRecyclerViewSheet.SheetScrollChangeListener sheetScrollChangeListener = sheetScrollY -> {
       float bylineBottom = submissionBylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
-      spaceAvailabilityChanges.accept(bylineBottom < replyFAB.getTop());
+      boolean fabHasSpaceAvailable = bylineBottom < replyFAB.getTop();
+      spaceAvailabilityChanges.accept(fabHasSpaceAvailable);
     };
     commentListParentSheet.addOnSheetScrollChangeListener(sheetScrollChangeListener);
     commentListParentSheet.post(() ->
