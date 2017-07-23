@@ -24,6 +24,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -148,6 +149,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private int deviceDisplayWidth;
   private boolean isCommentSheetBeneathImage;
+  private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
 
   public interface Callbacks {
     void onClickSubmissionToolbarUp();
@@ -286,13 +288,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
     unsubscribeOnDestroy(
-        inlineReplyStream.flatMap(parentContribution ->
-            commentsAdapter.streamReplyItemViewBinds()
-                .filter(replyBindEvent -> replyBindEvent.replyItem().parentContribution().getFullName().equals(parentContribution.getFullName()))
-                .take(1)
-                .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
-                .observeOn(AndroidSchedulers.mainThread())
-                .doOnNext(replyBindEvent -> commentList.post(() -> Keyboards.show(replyBindEvent.replyField()))))
+        inlineReplyStream
+            .switchMap(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution))
+            .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
             .subscribe()
     );
 
@@ -341,12 +339,62 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         })
     );
 
-
     // Bottom-spacing for FAB.
     Views.executeOnMeasure(replyFAB, () -> {
       int spaceForFab = replyFAB.getHeight() + ((ViewGroup.MarginLayoutParams) replyFAB.getLayoutParams()).bottomMargin * 2;
       Views.setPaddingBottom(commentList, spaceForFab);
     });
+  }
+
+  /**
+   * Scroll to <var>parentContribution</var>'s reply if it's not going to be visible because it's located beyond the visible window.
+   */
+  @CheckResult
+  private Observable<PublicContribution> scrollToNewlyAddedReplyIfHidden(PublicContribution parentContribution) {
+    if (submissionChangeStream.getValue() == parentContribution) {
+      // Submission reply.
+      return Observable.just(parentContribution).doOnNext(o -> commentList.smoothScrollToPosition(1));
+    }
+
+    return commentsAdapterDatasetUpdatesStream
+        .take(1)
+        .map(newItems -> {
+          int replyPosition = -1;
+          for (int i = 0; i < newItems.size(); i++) {
+            // Find the reply item's position.
+            SubmissionCommentRow commentRow = newItems.get(i);
+            if (commentRow instanceof CommentInlineReplyItem) {
+              if (((CommentInlineReplyItem) commentRow).parentContribution() == parentContribution) {
+                replyPosition = i + adapterWithSubmissionHeader.getVisibleHeaderItemCount();
+                break;
+              }
+            }
+          }
+          return replyPosition;
+        })
+        .doOnNext(replyPosition -> {
+          RecyclerView.ViewHolder parentContributionItemVH = commentList.findViewHolderForAdapterPosition(replyPosition - 1);
+          int parentContributionBottom = parentContributionItemVH.itemView.getBottom() + commentListParentSheet.getTop();
+          boolean willReplyBeHidden = parentContributionBottom >= submissionPageLayout.getBottom();
+          if (willReplyBeHidden) {
+            int dy = parentContributionItemVH.itemView.getHeight();
+            commentList.smoothScrollBy(0, dy);
+          }
+        })
+        .map(o -> parentContribution);
+  }
+
+  /**
+   * Wait for <var>parentContribution</var>'s reply View to bind and show keyboard once it's visible.
+   */
+  @CheckResult
+  private Observable<CommentsAdapter.ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(PublicContribution parentContribution) {
+    return commentsAdapter.streamReplyItemViewBinds()
+        .filter(replyBindEvent -> replyBindEvent.replyItem().parentContribution().getFullName().equals(parentContribution.getFullName()))
+        .take(1)
+        .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
+        .observeOn(AndroidSchedulers.mainThread())
+        .doOnNext(replyBindEvent -> commentList.post(() -> Keyboards.show(replyBindEvent.replyField())));
   }
 
   /**
@@ -386,6 +434,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .subscribe(dataAndDiff -> {
               List<SubmissionCommentRow> newComments = dataAndDiff.first;
               commentsAdapter.updateData(newComments);
+              commentsAdapterDatasetUpdatesStream.accept(newComments);
 
               DiffUtil.DiffResult commentsDiffResult = dataAndDiff.second;
               commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
@@ -572,7 +621,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         // reply FAB did not do anything.
         commentTreeConstructor.hideReply(submissionChangeStream.getValue());
       } else {
-        commentList.smoothScrollToPosition(0);
         commentTreeConstructor.showReply(submissionChangeStream.getValue());
         inlineReplyStream.accept(submissionChangeStream.getValue());
       }
@@ -594,6 +642,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             if (heightAnimator != null) {
               heightAnimator.cancel();
             }
+
             heightAnimator = ObjectAnimator.ofInt(changeEvent.contentHeightPrevious(), changeEvent.contentHeightCurrent());
             heightAnimator.addUpdateListener(animation -> {
               Views.setHeight(contentViewGroup, (int) animation.getAnimatedValue());

@@ -50,7 +50,6 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.IndentedLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
-import timber.log.Timber;
 
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentRow, RecyclerView.ViewHolder> {
 
@@ -301,13 +300,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         LoadMoreCommentItem loadMoreItem = ((LoadMoreCommentItem) commentItem);
         ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
 
-        holder.itemView.setOnClickListener(__ -> {
+        holder.itemView.setOnClickListener(o -> {
           loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreItem.parentCommentNode(), holder.itemView));
         });
         break;
 
       case INLINE_REPLY:
-        Timber.i("Showing reply");
         CommentInlineReplyItem commentInlineReplyItem = (CommentInlineReplyItem) commentItem;
         ((InlineReplyViewHolder) holder).bind(
             commentInlineReplyItem,
