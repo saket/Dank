@@ -67,17 +67,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private final BehaviorRelay<CommentClickEvent> commentClickStream = BehaviorRelay.create();
   private final BehaviorRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = BehaviorRelay.create();
   private String submissionAuthor;
-  private ReplyActionsListener replyActionsListener;
   private Relay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
-  private Relay<ReplyDiscardEvent> replyDiscardStream = PublishRelay.create();
-
-  public interface ReplyActionsListener {
-    void onClickEditReplyInFullscreenMode(PublicContribution parentContribution);
-
-    void onClickSendReply(PublicContribution parentContribution, String replyMessage);
-
-    void onClickRetrySendingReply(PendingSyncReply pendingSyncReply);
-  }
+  private Relay<ReplyDiscardClickEvent> replyDiscardClickStream = PublishRelay.create();
+  private Relay<ReplySendClickEvent> replySendClickStream = PublishRelay.create();
+  private Relay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
+  private Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
 
   @AutoValue
   abstract static class CommentClickEvent {
@@ -123,11 +117,42 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   }
 
   @AutoValue
-  abstract static class ReplyDiscardEvent {
+  abstract static class ReplyDiscardClickEvent {
     public abstract PublicContribution parentContribution();
 
-    public static ReplyDiscardEvent create(PublicContribution parentContribution) {
-      return new AutoValue_CommentsAdapter_ReplyDiscardEvent(parentContribution);
+    public static ReplyDiscardClickEvent create(PublicContribution parentContribution) {
+      return new AutoValue_CommentsAdapter_ReplyDiscardClickEvent(parentContribution);
+    }
+  }
+
+  @AutoValue
+  abstract static class ReplyFullscreenClickEvent {
+    public abstract PublicContribution parentContribution();
+
+    public abstract String replyMessage();
+
+    public static ReplyFullscreenClickEvent create(PublicContribution parentContribution, String replyMessage) {
+      return new AutoValue_CommentsAdapter_ReplyFullscreenClickEvent(parentContribution, replyMessage);
+    }
+  }
+
+  @AutoValue
+  abstract static class ReplySendClickEvent {
+    public abstract PublicContribution parentContribution();
+
+    public abstract String replyMessage();
+
+    public static ReplySendClickEvent create(PublicContribution parentContribution, String replyMessage) {
+      return new AutoValue_CommentsAdapter_ReplySendClickEvent(parentContribution, replyMessage);
+    }
+  }
+
+  @AutoValue
+  abstract static class ReplyRetrySendClickEvent {
+    public abstract PendingSyncReply failedPendingSyncReply();
+
+    public static ReplyRetrySendClickEvent create(PendingSyncReply failedPendingSyncReply) {
+      return new AutoValue_CommentsAdapter_ReplyRetrySendClickEvent(failedPendingSyncReply);
     }
   }
 
@@ -153,8 +178,23 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   }
 
   @CheckResult
-  public Observable<ReplyDiscardEvent> streamReplyDiscards() {
-    return replyDiscardStream;
+  public Observable<ReplyDiscardClickEvent> streamReplyDiscardClicks() {
+    return replyDiscardClickStream;
+  }
+
+  @CheckResult
+  public Observable<ReplySendClickEvent> streamReplySendClicks() {
+    return replySendClickStream;
+  }
+
+  @CheckResult
+  public Observable<ReplyRetrySendClickEvent> streamReplyRetrySendClicks() {
+    return replyRetrySendClickStream;
+  }
+
+  @CheckResult
+  public Observable<ReplyFullscreenClickEvent> streamReplyFullscreenClicks() {
+    return replyFullscreenClickStream;
   }
 
   /**
@@ -163,10 +203,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
    */
   public void updateSubmissionAuthor(String submissionAuthor) {
     this.submissionAuthor = submissionAuthor;
-  }
-
-  public void setReplyActionsListener(ReplyActionsListener listener) {
-    replyActionsListener = listener;
   }
 
   @CheckResult
@@ -273,7 +309,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       case INLINE_REPLY:
         Timber.i("Showing reply");
         CommentInlineReplyItem commentInlineReplyItem = (CommentInlineReplyItem) commentItem;
-        ((InlineReplyViewHolder) holder).bind(commentInlineReplyItem, replyActionsListener, userSession, replyDraftStore, replyDiscardStream);
+        ((InlineReplyViewHolder) holder).bind(
+            commentInlineReplyItem,
+            userSession,
+            replyDraftStore,
+            replyDiscardClickStream,
+            replyFullscreenClickStream,
+            replySendClickStream
+        );
         replyViewBindStream.accept(ReplyItemViewBindEvent.create(commentInlineReplyItem, ((InlineReplyViewHolder) holder).replyMessageField));
         break;
 
@@ -281,14 +324,15 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         CommentPendingSyncReplyItem commentPendingSyncReplyItem = (CommentPendingSyncReplyItem) commentItem;
         PendingSyncReplyViewHolder pendingSyncReplyViewHolder = (PendingSyncReplyViewHolder) holder;
 
-        // Collapse on click.
         pendingSyncReplyViewHolder.bind(commentPendingSyncReplyItem);
         pendingSyncReplyViewHolder.itemView.setOnClickListener(v -> {
           PendingSyncReply pendingSyncReply = commentPendingSyncReplyItem.pendingSyncReply();
           if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
             // "Tap to retry".
-            replyActionsListener.onClickRetrySendingReply(pendingSyncReply);
+            replyRetrySendClickStream.accept(ReplyRetrySendClickEvent.create(pendingSyncReply));
+
           } else {
+            // Collapse on click.
             boolean willCollapse = !commentPendingSyncReplyItem.isCollapsed();
             commentClickStream.accept(CommentClickEvent.create(
                 commentItem,
@@ -521,8 +565,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       sendButton.setEnabled(false);
     }
 
-    public void bind(CommentInlineReplyItem commentInlineReplyItem, ReplyActionsListener replyActionsListener, UserSession userSession,
-        ReplyDraftStore replyDraftStore, Relay<ReplyDiscardEvent> replyDiscardEventObserver)
+    public void bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession,
+        ReplyDraftStore replyDraftStore, Relay<ReplyDiscardClickEvent> replyDiscardEventObserver,
+        Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream, Relay<ReplySendClickEvent> replySendClickStream)
     {
       parentContribution = commentInlineReplyItem.parentContribution();
       indentedLayout.setIndentationDepth(commentInlineReplyItem.depth());
@@ -531,13 +576,16 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
           userSession.loggedInUserName()
       ));
 
-      discardButton.setOnClickListener(o -> replyDiscardEventObserver.accept(ReplyDiscardEvent.create(parentContribution)));
-      goFullscreenButton.setOnClickListener(o -> replyActionsListener.onClickEditReplyInFullscreenMode(parentContribution));
+      discardButton.setOnClickListener(o -> replyDiscardEventObserver.accept(ReplyDiscardClickEvent.create(parentContribution)));
+      goFullscreenButton.setOnClickListener(o -> {
+        String replyMessage = replyMessageField.getText().toString().trim();
+        replyFullscreenClickStream.accept(ReplyFullscreenClickEvent.create(parentContribution, replyMessage));
+      });
 
       sendButton.setOnClickListener(o -> {
         isSendingReply = true;
         String replyMessage = replyMessageField.getText().toString().trim();
-        replyActionsListener.onClickSendReply(parentContribution, replyMessage);
+        replySendClickStream.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
       });
       isSendingReply = false;
 

@@ -286,8 +286,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
     unsubscribeOnDestroy(
-        inlineReplyStream
-            .flatMap(parentContribution -> commentsAdapter.streamReplyItemViewBinds()
+        inlineReplyStream.flatMap(parentContribution ->
+            commentsAdapter.streamReplyItemViewBinds()
                 .filter(replyBindEvent -> replyBindEvent.replyItem().parentContribution().getFullName().equals(parentContribution.getFullName()))
                 .take(1)
                 .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
@@ -296,41 +296,51 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .subscribe()
     );
 
-    // TODO: Convert all these to streams.
-    commentsAdapter.setReplyActionsListener(new CommentsAdapter.ReplyActionsListener() {
-      @Override
-      public void onClickEditReplyInFullscreenMode(PublicContribution parentContribution) {
-        // TODO.
-      }
-
-      @Override
-      public void onClickSendReply(PublicContribution parentContribution, String replyMessage) {
-        Dank.comments().removeDraft(parentContribution)
-            .andThen(Dank.reddit().withAuth(Dank.comments().sendReply(parentContribution, submissionChangeStream.getValue().getFullName(), replyMessage)))
-            .doOnSubscribe(o -> {
-              Keyboards.hide(getActivity(), commentList);
-              commentTreeConstructor.hideReply(parentContribution);
-            })
-            .compose(applySchedulersCompletable())
-            .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
-      }
-
-      @Override
-      public void onClickRetrySendingReply(PendingSyncReply pendingSyncReply) {
-        Dank.reddit().withAuth(Dank.comments().reSendReply(pendingSyncReply))
-            .compose(applySchedulersCompletable())
-            .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
-      }
-    });
-
     // Reply discards.
     unsubscribeOnDestroy(
-        commentsAdapter.streamReplyDiscards()
+        commentsAdapter.streamReplyDiscardClicks()
             .subscribe(discardEvent -> {
               Keyboards.hide(getActivity(), commentList);
               commentTreeConstructor.hideReply(discardEvent.parentContribution());
             })
     );
+
+    // Reply fullscreen clicks.
+    unsubscribeOnDestroy(
+        commentsAdapter.streamReplyFullscreenClicks().subscribe(fullscreenClickEvent -> {
+          // TODO.
+        })
+    );
+
+    // Reply sends.
+    unsubscribeOnDestroy(
+        commentsAdapter.streamReplySendClicks().subscribe(sendClickEvent -> {
+          // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
+          Dank.comments().removeDraft(sendClickEvent.parentContribution())
+              .andThen(Dank.reddit().withAuth(Dank.comments().sendReply(
+                  sendClickEvent.parentContribution(),
+                  submissionChangeStream.getValue().getFullName(),
+                  sendClickEvent.replyMessage()))
+              )
+              .doOnSubscribe(o -> {
+                Keyboards.hide(getActivity(), commentList);
+                commentTreeConstructor.hideReply(sendClickEvent.parentContribution());
+              })
+              .compose(applySchedulersCompletable())
+              .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
+        })
+    );
+
+    // Reply retry-sends.
+    unsubscribeOnDestroy(
+        commentsAdapter.streamReplyRetrySendClicks().subscribe(retrySendEvent -> {
+          // Re-sending is not a part of the chain so that it does not get unsubscribed on destroy.
+          Dank.reddit().withAuth(Dank.comments().reSendReply(retrySendEvent.failedPendingSyncReply()))
+              .compose(applySchedulersCompletable())
+              .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
+        })
+    );
+
 
     // Bottom-spacing for FAB.
     Views.executeOnMeasure(replyFAB, () -> {
