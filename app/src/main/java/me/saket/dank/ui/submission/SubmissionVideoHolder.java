@@ -55,7 +55,6 @@ public class SubmissionVideoHolder {
    * which is in turn used for generating status bar tint. To minimize bitmap creation time, a Bitmap
    * of height statusBarHeight is created instead of the entire video height.
    *
-   * @param deviceDisplayHeight
    * @param minimumGapWithBottom The difference between video's bottom and the window's bottom will
    */
   public SubmissionVideoHolder(ViewGroup contentVideoViewContainer, VideoView contentVideoView, ScrollingRecyclerViewSheet commentListParentSheet,

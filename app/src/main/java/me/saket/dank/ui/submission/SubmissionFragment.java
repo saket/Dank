@@ -492,6 +492,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   private void setupContentImageView(View fragmentLayout) {
+    // TODO: remove margin and set height manually.
     Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
     contentImageViewHolder = new SubmissionImageHolder(fragmentLayout, contentLoadProgressView, submissionPageLayout, deviceDisplayWidth);
   }
@@ -560,7 +561,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         lastZoom = state.getZoom();
 
         // Scroll the comment sheet along with the image if it's zoomed in. This ensures that the sheet always sticks to the bottom of the image.
-        int boundedVisibleImageHeight = (int) Math.min(contentImageView.getHeight(), contentImageView.getVisibleZoomedImageHeight());
+        int minimumGapWithBottom = 0; // TODO.
+        int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - Views.statusBarHeight(contentVideoView.getResources());
+
+        int boundedVisibleImageHeight = (int) Math.min(contentHeightWithoutKeyboard, contentImageView.getVisibleZoomedImageHeight());
+
+        Timber.i("---------------------");
+        Timber.i("boundedVisibleImageHeight: %s", boundedVisibleImageHeight);
+        Timber.i("contentHeightWithoutKeyboard: %s", contentHeightWithoutKeyboard);
+        Timber.i("ImageView visible h: %s", contentImageView.getVisibleZoomedImageHeight());
         int boundedVisibleImageHeightMinusToolbar = boundedVisibleImageHeight - commentListParentSheet.getTop();
         commentListParentSheet.setMaxScrollY(boundedVisibleImageHeightMinusToolbar);
 

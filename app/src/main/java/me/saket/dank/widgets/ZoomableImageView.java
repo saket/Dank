@@ -68,8 +68,7 @@ public class ZoomableImageView extends GestureImageView {
   public float getVisibleZoomedImageHeight() {
     float zoomedImageHeight = getZoomedImageHeight();
 
-    // Subtract the portion that has gone outside limits due to zooming in, because they are
-    // longer visible.
+    // Subtract the portion that has gone outside limits due to zooming in, because they are longer visible.
     float heightNotVisible = getController().getState().getY();
     if (heightNotVisible < 0) {
       zoomedImageHeight += heightNotVisible;

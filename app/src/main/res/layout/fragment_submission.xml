@@ -7,11 +7,13 @@
   tools:background="@color/window_background">
 
   <!-- TODO: set content-description in code. -->
-  <!-- For image/gif. -->
+  <!-- For image/gif. This has a background to avoid leaking the
+       background when image is zoomed out. -->
   <me.saket.dank.widgets.ZoomableImageView
     android:id="@+id/submission_image"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/window_background"
     android:visibility="gone"
     tools:ignore="ContentDescription" />
 

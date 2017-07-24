@@ -17,6 +17,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.saket.dank.utils.Animations;
+import timber.log.Timber;
 
 /**
  * A scrollable sheet that can wrap a RecyclerView and scroll together (not in parallel) in a nested manner.
@@ -109,6 +110,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
    * Set the maximum Y this sheet can scroll to.
    */
   public void setMaxScrollY(int maxScrollY) {
+    Timber.d("Setting maxScrollY to %s", maxScrollY);
     this.maxScrollY = maxScrollY;
   }
 
@@ -188,8 +190,8 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 // ======== NESTED SCROLLING ======== //
 
   private float attemptToConsumeScrollY(float dy) {
-    boolean scrollingDownwards = dy > 0;
-    if (scrollingDownwards) {
+    boolean listScrollingDownwards = dy > 0;
+    if (listScrollingDownwards) {
       if (!hasSheetReachedTheTop()) {
         float adjustedDy = dy;
         if (currentScrollY() - dy < 0) {
