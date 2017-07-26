@@ -166,8 +166,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     ButterKnife.bind(this, fragmentLayout);
 
     // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
-    deviceDisplayWidth = fragmentLayout.getResources().getDisplayMetrics().widthPixels;
-    deviceDisplayHeight = fragmentLayout.getResources().getDisplayMetrics().heightPixels;
+    deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+    deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels;
 
     return fragmentLayout;
   }

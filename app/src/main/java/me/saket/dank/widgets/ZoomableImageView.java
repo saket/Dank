@@ -58,10 +58,6 @@ public class ZoomableImageView extends GestureImageView {
     getController().getSettings().setGravity(gravity);
   }
 
-  public int getImageHeight() {
-    return getController().getSettings().getImageH();
-  }
-
   /**
    * Calculate height of the image that is currently visible.
    */
@@ -81,8 +77,12 @@ public class ZoomableImageView extends GestureImageView {
     return zoomedImageHeight;
   }
 
+  private float getZoomedImageWidth() {
+    return (float) getController().getSettings().getImageW() * getZoom();
+  }
+
   private float getZoomedImageHeight() {
-    return (float) getImageHeight() * getZoom();
+    return (float) getController().getSettings().getImageH() * getZoom();
   }
 
   public float getZoom() {
@@ -97,7 +97,21 @@ public class ZoomableImageView extends GestureImageView {
     if (upwardPan) {
       return imageY != 0;
     } else {
-      return getHeight() - getZoomedImageHeight() != imageY;
+      // Casting to int is intentional to ignore values like 1080.0002f.
+      return getHeight() - (int) getZoomedImageHeight() != imageY;
+    }
+  }
+
+  /**
+   * Whether the image can be panned anymore horizontally.
+   */
+  public boolean canPanHorizontally(boolean towardsRight) {
+    float imageX = getController().getState().getX();
+    if (towardsRight) {
+      return imageX < 0;
+    } else {
+      // Casting to int is intentional to ignore values like 1080.0002f.
+      return getWidth() - (int) getZoomedImageWidth() != imageX;
     }
   }
 
@@ -112,5 +126,4 @@ public class ZoomableImageView extends GestureImageView {
 
     return super.onTouchEvent(event);
   }
-
 }

@@ -70,6 +70,10 @@
       android:label="Playground"
       android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
+    <activity
+      android:name=".ui.media.MediaAlbumViewerActivity"
+      android:theme="@style/DankTheme.TransparentBackground.Fullscreen" />
+
     <service
       android:name=".ui.subreddits.SubredditSubscriptionsSyncJob"
       android:exported="true"

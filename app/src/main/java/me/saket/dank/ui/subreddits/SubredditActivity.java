@@ -25,11 +25,19 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+
+import com.github.zagum.expandicon.ExpandIconView;
+import com.jakewharton.rxrelay2.BehaviorRelay;
+
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Subreddit;
+import net.dean.jraw.paginators.Sorting;
+
+import java.util.HashSet;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import com.github.zagum.expandicon.ExpandIconView;
-import com.jakewharton.rxrelay2.BehaviorRelay;
 import io.reactivex.Completable;
 import io.reactivex.CompletableSource;
 import io.reactivex.Observable;
@@ -39,7 +47,6 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
-import java.util.HashSet;
 import me.saket.dank.DankApplication;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -49,8 +56,8 @@ import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
-import me.saket.dank.ui.PlaygroundActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
+import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionFragment;
@@ -67,9 +74,6 @@ import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Subreddit;
-import net.dean.jraw.paginators.Sorting;
 import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
@@ -505,8 +509,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         return true;
 
       case R.id.action_preferences:
-        //UserPreferencesActivity.start(this);
-        PlaygroundActivity.start(this);
+        UserPreferencesActivity.start(this);
         return true;
 
       default:

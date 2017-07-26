@@ -30,6 +30,11 @@
     <item name="android:windowBackground">@android:color/transparent</item>
   </style>
 
+  <style name="DankTheme.TransparentBackground.Fullscreen">
+    <item name="android:windowTranslucentStatus">true</item>
+    <item name="android:windowTranslucentNavigation">true</item>
+  </style>
+
   <style name="DankDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
     <item name="android:windowTitleStyle">@style/DankDialogTitleStyle</item>
   </style>

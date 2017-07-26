@@ -229,5 +229,4 @@ public class MediaLink extends Link {
       return new ImgurAlbum(albumUrl, albumTitle, coverImageUrl, imageCount);
     }
   }
-
 }
