@@ -1,4 +1,4 @@
-package me.saket.dank.ui.media;
+package me.saket.dank.widgets.binoculars;
 
 import android.support.annotation.FloatRange;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
@@ -10,7 +10,6 @@ import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 
 import me.saket.dank.widgets.ZoomableImageView;
-import timber.log.Timber;
 
 /**
  * Listeners for a flick gesture and also moves around the View with user's finger.
@@ -21,6 +20,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   private static final boolean ROTATION_ENABLED = true;
 
   @FloatRange(from = 0, to = 1) private float flickThresholdSlop;
+
   private ZoomableImageView imageView;
   private final int touchSlop;                // Min. distance to move before registering a gesture.
   private final int maximumFlingVelocity;     // Px per second.
@@ -29,16 +29,18 @@ public class FlickGestureListener implements View.OnTouchListener {
   private float lastTouchY;
   private boolean touchStartedOnLeftSide;
   private VelocityTracker velocityTracker;
+  private boolean isSwiping;
   private OnGestureIntercepter onGestureIntercepter;
-  private boolean isListeningToGesturesSinceDown;
+  private boolean gestureInterceptedUntilNextTouchDown;
 
   public interface OnGestureIntercepter {
     /**
-     * Called everytime a touch event is registered.
+     * Called once everytime a scroll gesture is registered. When this returns true, gesture detection is
+     * skipped until the next touch-down is registered.
      *
      * @return True to intercept the gesture, false otherwise to let it go.
      */
-    boolean shouldIntercept();
+    boolean shouldIntercept(float deltaY);
   }
 
   public interface GestureCallbacks {
@@ -53,11 +55,21 @@ public class FlickGestureListener implements View.OnTouchListener {
      * @param moveRatio Distance moved (from the View's original position) as a ratio of the View's height.
      */
     void onMoveMedia(@FloatRange(from = -1, to = 1) float moveRatio);
+
+    /**
+     * Stupid GestureViews has fucked up the way touch events are passed to the pager so we've to manually
+     * disable scrolling.
+     */
+    void setViewPagerScrollingBlocked(boolean blocked);
   }
 
   public FlickGestureListener(ViewConfiguration viewConfiguration) {
     touchSlop = viewConfiguration.getScaledTouchSlop();
     maximumFlingVelocity = viewConfiguration.getScaledMaximumFlingVelocity();
+  }
+
+  public void setOnGestureIntercepter(OnGestureIntercepter intercepter) {
+    onGestureIntercepter = intercepter;
   }
 
   /**
@@ -74,34 +86,21 @@ public class FlickGestureListener implements View.OnTouchListener {
     this.gestureCallbacks = gestureCallbacks;
   }
 
-  public void setOnGestureIntercepter(OnGestureIntercepter onGestureIntercepter) {
-    this.onGestureIntercepter = onGestureIntercepter;
-  }
-
   @Override
   public boolean onTouch(View view, MotionEvent event) {
     float touchX = event.getRawX();
     float touchY = event.getRawY();
 
+    float distanceX = touchX - downX;
     float distanceY = touchY - downY;
-    float distanceXAbs = Math.abs(touchX - downX);
+    float distanceXAbs = Math.abs(distanceX);
     float distanceYAbs = Math.abs(distanceY);
-    float deltaDistanceY = touchY - lastTouchY;
+    float deltaY = touchY - lastTouchY;
 
     lastTouchY = touchY;
-    boolean isListeningToGestures = !onGestureIntercepter.shouldIntercept();
 
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
-        isListeningToGesturesSinceDown = isListeningToGestures;
-        if (!isListeningToGestures) {
-          return false;
-        }
-
-        Timber.i("Requesting disallow");
-        Timber.i("view: %s", view);
-        view.getParent().requestDisallowInterceptTouchEvent(true);
-
         downX = touchX;
         downY = touchY;
         touchStartedOnLeftSide = touchX < view.getWidth() / 2;
@@ -112,50 +111,65 @@ public class FlickGestureListener implements View.OnTouchListener {
           velocityTracker.clear();
         }
         velocityTracker.addMovement(event);
-        return true;
+        return false;
 
       case MotionEvent.ACTION_CANCEL:
       case MotionEvent.ACTION_UP:
-        if (!isListeningToGestures) {
+        if (isSwiping) {
+          boolean flickRegistered = hasFingerMovedEnoughToFlick(distanceYAbs);
+          boolean wasSwipedDownwards = distanceY > 0;
+
+          if (flickRegistered) {
+            animateViewFlick(view, wasSwipedDownwards);
+
+          } else {
+            // Figure out if the View was fling'd and if the velocity + swiped distance is enough to dismiss this View.
+            velocityTracker.computeCurrentVelocity(1_000 /* px per second */);
+            float yVelocityAbs = Math.abs(velocityTracker.getYVelocity());
+            int requiredYVelocity = view.getHeight() * 6 / 10;
+            int minSwipeDistanceForFling = view.getHeight() / 10;
+
+            if (yVelocityAbs > requiredYVelocity && yVelocityAbs < maximumFlingVelocity && distanceYAbs >= minSwipeDistanceForFling) {
+              // Fling detected!
+              animateViewFlick(view, wasSwipedDownwards, 100);
+
+            } else {
+              // Distance moved wasn't enough to dismiss. Move back to original position.
+              animateViewBackToPosition(view);
+            }
+          }
+
+          gestureCallbacks.setViewPagerScrollingBlocked(false);
+        }
+
+        velocityTracker.recycle();
+        velocityTracker = null;
+        isSwiping = false;
+        gestureInterceptedUntilNextTouchDown = false;
+        return false;
+
+      case MotionEvent.ACTION_MOVE:
+        if (gestureInterceptedUntilNextTouchDown) {
           return false;
         }
 
-        boolean flickRegistered = hasFingerMovedEnoughToFlick(distanceYAbs);
-        boolean wasSwipedDownwards = distanceY > 0;
-        if (flickRegistered) {
-          animateViewFlick(view, wasSwipedDownwards);
-        } else {
-          // Figure out if the View was fling'd and if the velocity + swiped distance is enough to dismiss this View.
-          velocityTracker.computeCurrentVelocity(1_000 /* px per second */);
-          float yVelocityAbs = Math.abs(velocityTracker.getYVelocity());
-          int requiredYVelocity = view.getHeight() * 6 / 10;
-          int minSwipeDistanceForFling = view.getHeight() / 10;
-
-          if (yVelocityAbs > requiredYVelocity && yVelocityAbs < maximumFlingVelocity && distanceYAbs >= minSwipeDistanceForFling) {
-            // Fling detected!
-            animateViewFlick(view, wasSwipedDownwards, 100);
-
-          } else {
-            // Distance moved wasn't enough to dismiss. Move back to original position.
-            animateViewBackToPosition(view);
-          }
-        }
-        velocityTracker.recycle();
-        velocityTracker = null;
-        return true;
-
-      case MotionEvent.ACTION_MOVE:
-        if (!isListeningToGesturesSinceDown || onGestureIntercepter.shouldIntercept()) {
+        // The listener only gets once chance to block the flick -- only if it's not already being moved.
+        if (!isSwiping && onGestureIntercepter.shouldIntercept(deltaY)) {
+          gestureInterceptedUntilNextTouchDown = true;
           return false;
         }
 
         if (distanceYAbs > touchSlop && distanceYAbs > distanceXAbs) {
+          isSwiping = true;
+
           // Distance enough to register a gesture.
-          view.setTranslationY(view.getTranslationY() + deltaDistanceY);
+          view.setTranslationY(view.getTranslationY() + deltaY);
+
+          gestureCallbacks.setViewPagerScrollingBlocked(true);
 
           // Rotate the card because we naturally make a swipe gesture in a circular path while holding our phones.
           if (ROTATION_ENABLED) {
-            float moveRatioDelta = deltaDistanceY / view.getHeight();
+            float moveRatioDelta = deltaY / view.getHeight();
             view.setRotation(view.getRotation() + moveRatioDelta * 20 * (touchStartedOnLeftSide ? -1 : 1));
           }
 
@@ -165,10 +179,14 @@ public class FlickGestureListener implements View.OnTouchListener {
           // Track the velocity so that we can later figure out if this View was fling'd (instead of dragged).
           velocityTracker.addMovement(event);
           return true;
+
+        } else {
+          return false;
         }
+
+      default:
         return false;
     }
-    return false;
   }
 
   private void dispatchOnPhotoMoveCallback(View view) {

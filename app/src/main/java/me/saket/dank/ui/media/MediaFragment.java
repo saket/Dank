@@ -15,6 +15,7 @@ import com.bumptech.glide.Glide;
 import me.saket.dank.R;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
+import me.saket.dank.widgets.binoculars.FlickGestureListener;
 
 /**
  * Contains an image or a video.
@@ -87,10 +88,10 @@ public class MediaFragment extends Fragment {
     FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(getContext()));
     flickListener.setFlickThresholdSlop(.5f, imageView);    // Dismiss once the image is swiped 50% away from its original location.
     flickListener.setGestureCallbacks((FlickGestureListener.GestureCallbacks) getActivity());
-    flickListener.setOnGestureIntercepter(() -> {
-      // Don't listen for flick gestures if the image is zoomed in.
-      //return !imageView.isZoomedInOrOut();
-      return false;
+    flickListener.setOnGestureIntercepter((deltaY) -> {
+      // Don't listen for flick gestures if the image can pan further.
+      boolean isScrollingUpwards = deltaY < 0;
+      return imageView.canPanFurtherVertically(isScrollingUpwards);
     });
     imageContainerView.setFlickGestureListener(flickListener);
   }

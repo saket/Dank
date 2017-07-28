@@ -6,8 +6,8 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
-import android.support.v4.view.ViewPager;
 import android.view.ViewGroup;
+import android.view.Window;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,13 +19,14 @@ import me.saket.dank.data.MediaLink;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.UrlParser;
+import me.saket.dank.widgets.binoculars.FlickGestureListener;
 
 public class MediaAlbumViewerActivity extends DankActivity
     implements MediaFragment.OnMediaItemClickListener, FlickGestureListener.GestureCallbacks, SystemUiHelper.OnSystemUiVisibilityChangeListener
 {
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
-  @BindView(R.id.mediaalbumviewer_pager) ViewPager imagePager;
+  @BindView(R.id.mediaalbumviewer_pager) ViewPagerWithManualScrollBlock mediaPager;
 
   private SystemUiHelper systemUiHelper;
   private Drawable activityBackgroundDrawable;
@@ -38,6 +39,8 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
+    requestWindowFeature(Window.FEATURE_SWIPE_TO_DISMISS);
+
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_media_album_viewer);
     ButterKnife.bind(this);
@@ -49,7 +52,7 @@ public class MediaAlbumViewerActivity extends DankActivity
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.redd.it/u5dszwd3qjaz.jpg")));
 
     MediaAlbumPagerAdapter albumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
-    imagePager.setAdapter(albumAdapter);
+    mediaPager.setAdapter(albumAdapter);
   }
 
   @Override
@@ -81,6 +84,11 @@ public class MediaAlbumViewerActivity extends DankActivity
       rootLayout.setBackground(activityBackgroundDrawable);
     }
     activityBackgroundDrawable.setAlpha(dim);
+  }
+
+  @Override
+  public void setViewPagerScrollingBlocked(boolean blocked) {
+    mediaPager.setScrollingBlocked(blocked);
   }
 
   @Override

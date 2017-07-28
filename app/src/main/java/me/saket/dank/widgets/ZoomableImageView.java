@@ -93,27 +93,27 @@ public class ZoomableImageView extends GestureImageView {
   }
 
   /**
-   * Whether the image can be panned anymore vertically, upwards or downwards depending upon <var>upwardPan</var>.
+   * Whether the image can be panned anymore vertically, upwards or downwards depending upon <var>downwardPan</var>.
    */
-  public boolean canPanFurtherVertically(boolean upwardPan) {
+  public boolean canPanFurtherVertically(boolean downwardPan) {
     State state = getController().getState();
-    getController().getStateController().getMovementArea(state, TEMP_RECT);
+    getController().getStateController().getMovementArea(state, IMAGE_MOVEMENT_RECT);
 
-    return (upwardPan && State.compare(state.getX(), TEMP_RECT.bottom) < 0f)
-        || (!upwardPan && State.compare(state.getX(), TEMP_RECT.top) > 0f);
+    return (!downwardPan && State.compare(state.getY(), IMAGE_MOVEMENT_RECT.bottom) < 0f)
+        || (downwardPan && State.compare(state.getY(), IMAGE_MOVEMENT_RECT.top) > 0f);
   }
 
-  private final RectF TEMP_RECT = new RectF();
+  private final RectF IMAGE_MOVEMENT_RECT = new RectF();
 
   /**
    * Whether the image can be panned anymore horizontally.
    */
   public boolean canPanFurtherHorizontally(boolean towardsRight) {
     State state = getController().getState();
-    getController().getStateController().getMovementArea(state, TEMP_RECT);
+    getController().getStateController().getMovementArea(state, IMAGE_MOVEMENT_RECT);
 
-    return (towardsRight && State.compare(state.getX(), TEMP_RECT.right) < 0f)
-        || (!towardsRight && State.compare(state.getX(), TEMP_RECT.left) > 0f);
+    return (towardsRight && State.compare(state.getX(), IMAGE_MOVEMENT_RECT.right) < 0f)
+        || (!towardsRight && State.compare(state.getX(), IMAGE_MOVEMENT_RECT.left) > 0f);
   }
 
   public void setGestureRotationEnabled(boolean rotationEnabled) {

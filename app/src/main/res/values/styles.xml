@@ -31,11 +31,8 @@
   </style>
 
   <style name="DankTheme.TransparentBackground.Fullscreen">
-    <!--<item name="android:windowTranslucentStatus">true</item>-->
-    <!--<item name="android:windowTranslucentNavigation">true</item>-->
-    <item name="android:windowDrawsSystemBarBackgrounds">true</item>
-    <item name="android:statusBarColor">@color/transparent</item>
-    <item name="android:navigationBarColor">@color/transparent</item>
+    <item name="android:windowTranslucentStatus">true</item>
+    <item name="android:windowTranslucentNavigation">true</item>
   </style>
 
   <style name="DankDialogTheme" parent="Theme.AppCompat.Dialog.Alert">

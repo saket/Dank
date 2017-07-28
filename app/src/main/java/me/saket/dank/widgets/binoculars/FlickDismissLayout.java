@@ -5,8 +5,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.widget.FrameLayout;
 
-import me.saket.dank.ui.media.FlickGestureListener;
-
 /**
  * A ViewGroup that can be dismissed by flicking it in any direction.
  */
@@ -25,7 +23,8 @@ public class FlickDismissLayout extends FrameLayout {
    */
   @Override
   public boolean onInterceptTouchEvent(MotionEvent ev) {
-    return flickGestureListener.onTouch(this, ev) && super.onInterceptTouchEvent(ev);
+    boolean intercepted = flickGestureListener.onTouch(this, ev);
+    return intercepted || super.onInterceptTouchEvent(ev);
   }
 
   @Override
