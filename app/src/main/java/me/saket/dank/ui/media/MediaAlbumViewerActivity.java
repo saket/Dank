@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
 import android.view.ViewGroup;
-import android.view.Window;
+import android.view.WindowManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,7 +39,7 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
-    requestWindowFeature(Window.FEATURE_SWIPE_TO_DISMISS);
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_media_album_viewer);

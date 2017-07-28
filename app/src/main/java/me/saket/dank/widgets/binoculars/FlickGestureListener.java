@@ -26,6 +26,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   private final int maximumFlingVelocity;     // Px per second.
   private GestureCallbacks gestureCallbacks;
   private float downX, downY;
+  private float lastTouchX;
   private float lastTouchY;
   private boolean touchStartedOnLeftSide;
   private VelocityTracker velocityTracker;
@@ -95,8 +96,10 @@ public class FlickGestureListener implements View.OnTouchListener {
     float distanceY = touchY - downY;
     float distanceXAbs = Math.abs(distanceX);
     float distanceYAbs = Math.abs(distanceY);
+    float deltaX = touchX - lastTouchX;
     float deltaY = touchY - lastTouchY;
 
+    lastTouchX = touchX;
     lastTouchY = touchY;
 
     switch (event.getAction()) {
@@ -159,10 +162,12 @@ public class FlickGestureListener implements View.OnTouchListener {
           return false;
         }
 
-        if (distanceYAbs > touchSlop && distanceYAbs > distanceXAbs) {
+        boolean isScrollingVertically = distanceYAbs > touchSlop && distanceYAbs > distanceXAbs;
+
+        if (isSwiping || isScrollingVertically) {
           isSwiping = true;
 
-          // Distance enough to register a gesture.
+          view.setTranslationX(view.getTranslationX() + deltaX);
           view.setTranslationY(view.getTranslationY() + deltaY);
 
           gestureCallbacks.setViewPagerScrollingBlocked(true);
