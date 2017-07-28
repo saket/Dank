@@ -3,7 +3,7 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:background="@color/black_opacity_20"
+  android:background="@color/black_opacity_40"
   android:orientation="vertical">
 
   <me.saket.dank.ui.media.ViewPagerWithManualScrollBlock

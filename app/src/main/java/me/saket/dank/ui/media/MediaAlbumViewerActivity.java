@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
 import android.view.ViewGroup;
-import android.view.WindowManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,8 +38,6 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
-    getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
-
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_media_album_viewer);
     ButterKnife.bind(this);
@@ -53,21 +50,28 @@ public class MediaAlbumViewerActivity extends DankActivity
 
     MediaAlbumPagerAdapter albumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
     mediaPager.setAdapter(albumAdapter);
+
+    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_LEAN_BACK, 0 /* flags */, null /* listener */);
+  }
+
+  @Override
+  protected void onPostCreate(@Nullable Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
+
+    activityBackgroundDrawable = rootLayout.getBackground().mutate();
+    rootLayout.setBackground(activityBackgroundDrawable);
   }
 
   @Override
   public void finish() {
     super.finish();
-    overridePendingTransition(0, 0);
+    overridePendingTransition(0, R.anim.fade_out);
   }
 
-  // ======== MEDIA FRAGMENT ======== //
+// ======== MEDIA FRAGMENT ======== //
 
   @Override
   public void onClickMediaItem() {
-    if (systemUiHelper == null) {
-      systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_LOW_PROFILE, 0 /* flags */, null /* listener */);
-    }
     systemUiHelper.toggle();
   }
 
@@ -78,16 +82,20 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @Override
   public void onMoveMedia(@FloatRange(from = -1, to = 1) float moveRatio) {
-    int dim = (int) (255 * (1f - Math.min(1f, Math.abs(moveRatio * 2))));
-    if (activityBackgroundDrawable == null) {
-      activityBackgroundDrawable = rootLayout.getBackground().mutate();
-      rootLayout.setBackground(activityBackgroundDrawable);
-    }
-    activityBackgroundDrawable.setAlpha(dim);
+    updateBackgroundDimmingAlpha(Math.abs(moveRatio));
+  }
+
+  /**
+   * @param targetTransparencyFactor 1f for maximum transparency. 0f for none.
+   */
+  private void updateBackgroundDimmingAlpha(@FloatRange(from = -1, to = 1) float targetTransparencyFactor) {
+    // Increase dimming exponentially so that the background is fully transparent while the image has been moved by half.
+    float dimming = 1f - Math.min(1f, targetTransparencyFactor * 2);
+    activityBackgroundDrawable.setAlpha((int) (dimming * 255));
   }
 
   @Override
-  public void setViewPagerScrollingBlocked(boolean blocked) {
+  public void setMediaListScrollingBlocked(boolean blocked) {
     mediaPager.setScrollingBlocked(blocked);
   }
 

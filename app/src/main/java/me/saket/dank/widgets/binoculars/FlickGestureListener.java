@@ -61,7 +61,7 @@ public class FlickGestureListener implements View.OnTouchListener {
      * Stupid GestureViews has fucked up the way touch events are passed to the pager so we've to manually
      * disable scrolling.
      */
-    void setViewPagerScrollingBlocked(boolean blocked);
+    void setMediaListScrollingBlocked(boolean blocked);
   }
 
   public FlickGestureListener(ViewConfiguration viewConfiguration) {
@@ -142,7 +142,7 @@ public class FlickGestureListener implements View.OnTouchListener {
             }
           }
 
-          gestureCallbacks.setViewPagerScrollingBlocked(false);
+          gestureCallbacks.setMediaListScrollingBlocked(false);
         }
 
         velocityTracker.recycle();
@@ -170,7 +170,7 @@ public class FlickGestureListener implements View.OnTouchListener {
           view.setTranslationX(view.getTranslationX() + deltaX);
           view.setTranslationY(view.getTranslationY() + deltaY);
 
-          gestureCallbacks.setViewPagerScrollingBlocked(true);
+          gestureCallbacks.setMediaListScrollingBlocked(true);
 
           // Rotate the card because we naturally make a swipe gesture in a circular path while holding our phones.
           if (ROTATION_ENABLED) {
