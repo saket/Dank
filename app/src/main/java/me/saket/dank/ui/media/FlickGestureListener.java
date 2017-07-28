@@ -10,6 +10,7 @@ import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 
 import me.saket.dank.widgets.ZoomableImageView;
+import timber.log.Timber;
 
 /**
  * Listeners for a flick gesture and also moves around the View with user's finger.
@@ -17,7 +18,7 @@ import me.saket.dank.widgets.ZoomableImageView;
 public class FlickGestureListener implements View.OnTouchListener {
 
   private static final Interpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
-  private static final boolean ROTATION_ENABLED = false;
+  private static final boolean ROTATION_ENABLED = true;
 
   @FloatRange(from = 0, to = 1) private float flickThresholdSlop;
   private ZoomableImageView imageView;
@@ -44,14 +45,14 @@ public class FlickGestureListener implements View.OnTouchListener {
     /**
      * Called when the View gets flicked and the Activity should be dismissed.
      */
-    void onPhotoFlick();
+    void onFlickDismiss();
 
     /**
      * Called while this View is being moved around.
      *
      * @param moveRatio Distance moved (from the View's original position) as a ratio of the View's height.
      */
-    void onPhotoMove(@FloatRange(from = -1, to = 1) float moveRatio);
+    void onMoveMedia(@FloatRange(from = -1, to = 1) float moveRatio);
   }
 
   public FlickGestureListener(ViewConfiguration viewConfiguration) {
@@ -88,7 +89,7 @@ public class FlickGestureListener implements View.OnTouchListener {
     float deltaDistanceY = touchY - lastTouchY;
 
     lastTouchY = touchY;
-    boolean isListeningToGestures = onGestureIntercepter.shouldIntercept();
+    boolean isListeningToGestures = !onGestureIntercepter.shouldIntercept();
 
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
@@ -96,6 +97,10 @@ public class FlickGestureListener implements View.OnTouchListener {
         if (!isListeningToGestures) {
           return false;
         }
+
+        Timber.i("Requesting disallow");
+        Timber.i("view: %s", view);
+        view.getParent().requestDisallowInterceptTouchEvent(true);
 
         downX = touchX;
         downY = touchY;
@@ -140,7 +145,7 @@ public class FlickGestureListener implements View.OnTouchListener {
         return true;
 
       case MotionEvent.ACTION_MOVE:
-        if (!isListeningToGesturesSinceDown || !onGestureIntercepter.shouldIntercept()) {
+        if (!isListeningToGesturesSinceDown || onGestureIntercepter.shouldIntercept()) {
           return false;
         }
 
@@ -168,7 +173,7 @@ public class FlickGestureListener implements View.OnTouchListener {
 
   private void dispatchOnPhotoMoveCallback(View view) {
     float moveRatio = view.getTranslationY() / view.getHeight();
-    gestureCallbacks.onPhotoMove(moveRatio);
+    gestureCallbacks.onMoveMedia(moveRatio);
   }
 
   private void animateViewBackToPosition(View view) {
@@ -194,7 +199,7 @@ public class FlickGestureListener implements View.OnTouchListener {
     view.animate().cancel();
     view.animate()
         .translationY(downwards ? parentHeight : -parentHeight)
-        .withEndAction(() -> gestureCallbacks.onPhotoFlick())
+        .withEndAction(() -> gestureCallbacks.onFlickDismiss())
         .setDuration(flickAnimDuration)
         .setInterpolator(ANIM_INTERPOLATOR)
         .start();
@@ -204,7 +209,7 @@ public class FlickGestureListener implements View.OnTouchListener {
     if (imageView.getDrawable() == null) {
       return false;
     }
-    float thresholdDistanceY = imageView.getDrawable().getIntrinsicHeight() * flickThresholdSlop;
+    float thresholdDistanceY = imageView.getVisibleZoomedImageHeight() * flickThresholdSlop;
     return distanceYAbs > thresholdDistanceY;
   }
 }

@@ -2,8 +2,7 @@ package me.saket.dank.ui.media;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
-import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
@@ -29,9 +28,12 @@ public class MediaAlbumViewerActivity extends DankActivity
   @BindView(R.id.mediaalbumviewer_pager) ViewPager imagePager;
 
   private SystemUiHelper systemUiHelper;
+  private Drawable activityBackgroundDrawable;
 
   public static void start(Context context, MediaLink mediaLink) {
-    context.startActivity(new Intent(context, MediaAlbumViewerActivity.class));
+    Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
+    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
+    context.startActivity(intent);
   }
 
   @Override
@@ -50,7 +52,13 @@ public class MediaAlbumViewerActivity extends DankActivity
     imagePager.setAdapter(albumAdapter);
   }
 
-// ======== MEDIA FRAGMENT ======== //
+  @Override
+  public void finish() {
+    super.finish();
+    overridePendingTransition(0, 0);
+  }
+
+  // ======== MEDIA FRAGMENT ======== //
 
   @Override
   public void onClickMediaItem() {
@@ -61,18 +69,18 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   @Override
-  public void onPhotoFlick() {
+  public void onFlickDismiss() {
     finish();
   }
 
   @Override
-  public void onPhotoMove(@FloatRange(from = -1, to = 1) float moveRatio) {
+  public void onMoveMedia(@FloatRange(from = -1, to = 1) float moveRatio) {
     int dim = (int) (255 * (1f - Math.min(1f, Math.abs(moveRatio * 2))));
-    if (rootLayout.getBackground() == null) {
-      ColorDrawable backgroundDimDrawable = new ColorDrawable(Color.BLACK);
-      rootLayout.setBackground(backgroundDimDrawable);
+    if (activityBackgroundDrawable == null) {
+      activityBackgroundDrawable = rootLayout.getBackground().mutate();
+      rootLayout.setBackground(activityBackgroundDrawable);
     }
-    rootLayout.getBackground().setAlpha(dim);
+    activityBackgroundDrawable.setAlpha(dim);
   }
 
   @Override
