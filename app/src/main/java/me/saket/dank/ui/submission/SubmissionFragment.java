@@ -910,7 +910,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           ? commentListParentSheet.canScrollUpwardsAnyFurther()
           : commentListParentSheet.canScrollDownwardsAnyFurther();
     } else {
-      return touchLiesOn(contentImageView, downX, downY) && contentImageView.canPanVertically(!upwardPagePull);
+      return touchLiesOn(contentImageView, downX, downY) && contentImageView.canPanFurtherVertically(!upwardPagePull);
     }
   }
 

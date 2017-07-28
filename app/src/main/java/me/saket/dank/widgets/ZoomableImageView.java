@@ -1,13 +1,16 @@
 package me.saket.dank.widgets;
 
 import android.content.Context;
+import android.graphics.RectF;
 import android.support.annotation.NonNull;
+import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.Settings;
+import com.alexvasilkov.gestures.State;
 import com.alexvasilkov.gestures.views.GestureImageView;
 
 /**
@@ -92,27 +95,42 @@ public class ZoomableImageView extends GestureImageView {
   /**
    * Whether the image can be panned anymore vertically, upwards or downwards depending upon <var>upwardPan</var>.
    */
-  public boolean canPanVertically(boolean upwardPan) {
-    float imageY = getController().getState().getY();
-    if (upwardPan) {
-      return imageY != 0;
-    } else {
-      // Casting to int is intentional to ignore values like 1080.0002f.
-      return getHeight() - (int) getZoomedImageHeight() != imageY;
-    }
+  public boolean canPanFurtherVertically(boolean upwardPan) {
+    State state = getController().getState();
+    getController().getStateController().getMovementArea(state, TEMP_RECT);
+
+    return (upwardPan && State.compare(state.getX(), TEMP_RECT.bottom) < 0f)
+        || (!upwardPan && State.compare(state.getX(), TEMP_RECT.top) > 0f);
   }
+
+  private final RectF TEMP_RECT = new RectF();
 
   /**
    * Whether the image can be panned anymore horizontally.
    */
-  public boolean canPanHorizontally(boolean towardsRight) {
-    float imageX = getController().getState().getX();
-    if (towardsRight) {
-      return imageX < 0;
-    } else {
-      // Casting to int is intentional to ignore values like 1080.0002f.
-      return getWidth() - (int) getZoomedImageWidth() != imageX;
-    }
+  public boolean canPanFurtherHorizontally(boolean towardsRight) {
+    State state = getController().getState();
+    getController().getStateController().getMovementArea(state, TEMP_RECT);
+
+    return (towardsRight && State.compare(state.getX(), TEMP_RECT.right) < 0f)
+        || (!towardsRight && State.compare(state.getX(), TEMP_RECT.left) > 0f);
+  }
+
+  public void setGestureRotationEnabled(boolean rotationEnabled) {
+    Settings settings = getController().getSettings();
+    settings.setRotationEnabled(rotationEnabled);
+    settings.setRestrictRotation(rotationEnabled);
+  }
+
+  public void enableScrollInViewPager(ViewPager pager) {
+    getController().enableScrollInViewPager(pager);
+  }
+
+  /**
+   * Reset zoom, rotation, etc.
+   */
+  public void resetState() {
+    getController().resetState();
   }
 
   @Override

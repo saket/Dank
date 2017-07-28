@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.binoculars.FlickDismissLayout android:id="@+id/photopage_flickdismisslayout"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent">
+
+  <me.saket.dank.widgets.ZoomableImageView
+    android:id="@+id/photopage_imageview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="center"
+    tools:background="#48D48D" />
+</me.saket.dank.widgets.binoculars.FlickDismissLayout>
