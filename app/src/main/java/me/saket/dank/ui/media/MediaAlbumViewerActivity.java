@@ -51,7 +51,7 @@ public class MediaAlbumViewerActivity extends DankActivity
     MediaAlbumPagerAdapter albumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
     mediaPager.setAdapter(albumAdapter);
 
-    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_LEAN_BACK, 0 /* flags */, null /* listener */);
+    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0 /* flags */, null /* listener */);
   }
 
   @Override

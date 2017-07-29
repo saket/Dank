@@ -58,7 +58,9 @@ public abstract class GlidePaddingTransformation implements Transformation<Bitma
     Canvas canvas = new Canvas(bitmap);
 
     canvas.drawRect(0, 0, targetWidth, targetHeight, paint);              // Padding.
-    canvas.drawBitmap(source, horizontalPadding, verticalPadding, null);  // Original bitmap.
+    if (!source.isRecycled()) {
+      canvas.drawBitmap(source, horizontalPadding, verticalPadding, null);  // Original bitmap.
+    }
 
     Timber.i("done in: %sms", System.currentTimeMillis() - startTime);
     return BitmapResource.obtain(bitmap, bitmapPool);
