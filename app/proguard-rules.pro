@@ -15,3 +15,6 @@
 #-keepclassmembers class fqcn.of.javascript.interface.for.webview {
 #   public *;
 #}
+
+# Glide + OkHttp integration.
+-keep class com.bumptech.glide.integration.okhttp3.OkHttpGlideModule

@@ -56,8 +56,8 @@ import timber.log.Timber;
 @Module
 public class DankAppModule {
 
-  private static final int NETWORK_CONNECT_TIMEOUT_SECONDS = 15;
-  private static final int NETWORK_READ_TIMEOUT_SECONDS = 10;
+  public static final int NETWORK_CONNECT_TIMEOUT_SECONDS = 15;
+  public static final int NETWORK_READ_TIMEOUT_SECONDS = 10;
   private Application appContext;
 
   public DankAppModule(Application appContext) {

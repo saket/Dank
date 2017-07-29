@@ -14,15 +14,21 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
+import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.bumptech.glide.request.target.Target;
+import com.pnikosis.materialishprogress.ProgressWheel;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.utils.GlidePaddingTransformation;
 import me.saket.dank.utils.GlideUtils;
+import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import timber.log.Timber;
 
 /**
  * Contains an image or a video.
@@ -31,8 +37,9 @@ public class MediaFragment extends Fragment {
 
   private static final String KEY_MEDIA_ITEM = "mediaItem";
 
-  @BindView(R.id.imageviewer_imageview) ZoomableImageView imageView;
   @BindView(R.id.imageviewer_flickdismisslayout) FlickDismissLayout imageContainerView;
+  @BindView(R.id.imageviewer_imageview) ZoomableImageView imageView;
+  @BindView(R.id.imageviewer_progress) ProgressWheel progressView;
 
   interface OnMediaItemClickListener {
     void onClickMediaItem();
@@ -79,9 +86,18 @@ public class MediaFragment extends Fragment {
     assert mediaAlbumItem != null;
 
     imageView.setVisibility(View.INVISIBLE);
+
+    ImageLoadProgressTarget<Bitmap> progressTarget = new ImageLoadProgressTarget<>(new BitmapImageViewTarget(imageView), progressView);
+    String imageUrl = mediaAlbumItem.mediaLink().optimizedImageUrl(deviceDisplayWidth);
+    progressTarget.setModel(imageUrl);
+
     Glide.with(this)
-        .load(mediaAlbumItem.mediaLink().optimizedImageUrl(deviceDisplayWidth))
+        .load(imageUrl)
         .asBitmap()
+
+        .skipMemoryCache(true)
+        .diskCacheStrategy(DiskCacheStrategy.NONE)
+
         .transform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
           @Override
           public Size getPadding(int imageWidth, int imageHeight) {
@@ -99,7 +115,7 @@ public class MediaFragment extends Fragment {
             super.onException(e);
           }
         })
-        .into(imageView);
+        .into(progressTarget);
 
     // Make the image flick-dismissible.
     setupFlickGestures(imageContainerView);
@@ -129,6 +145,42 @@ public class MediaFragment extends Fragment {
     if (!isVisibleToUser && imageView != null) {
       // Photo is no longer visible.
       imageView.resetState();
+    }
+  }
+
+  private static class ImageLoadProgressTarget<Z> extends GlideProgressTarget<String, Z> {
+    private final ProgressWheel progressView;
+
+    public ImageLoadProgressTarget(Target<Z> target, ProgressWheel progressView) {
+      super(target);
+      this.progressView = progressView;
+    }
+
+    @Override
+    public float getGranularityPercentage() {
+      return 0.1f; // this matches the format string for #text below
+    }
+
+    @Override
+    protected void onConnecting() {
+      progressView.spin();
+      progressView.setVisibility(View.VISIBLE);
+    }
+
+    @Override
+    protected void onDownloading(long bytesRead, long expectedLength) {
+      float progress = (float) bytesRead / expectedLength;
+      progressView.setProgress(progress);
+    }
+
+    @Override
+    protected void onDownloaded() {
+      progressView.spin();
+    }
+
+    @Override
+    protected void onDelivered() {
+      progressView.setVisibility(View.GONE);
     }
   }
 }

@@ -1,5 +1,7 @@
 package me.saket.dank.ui.media;
 
+import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.Drawable;
@@ -16,6 +18,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
@@ -52,14 +55,18 @@ public class MediaAlbumViewerActivity extends DankActivity
     mediaPager.setAdapter(albumAdapter);
 
     systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0 /* flags */, null /* listener */);
-  }
 
-  @Override
-  protected void onPostCreate(@Nullable Bundle savedInstanceState) {
-    super.onPostCreate(savedInstanceState);
-
+    // Fade in background.
     activityBackgroundDrawable = rootLayout.getBackground().mutate();
     rootLayout.setBackground(activityBackgroundDrawable);
+    ValueAnimator fadeInAnimator = ObjectAnimator.ofFloat(1f, 0f);
+    fadeInAnimator.setDuration(300);
+    fadeInAnimator.setInterpolator(Animations.INTERPOLATOR);
+    fadeInAnimator.addUpdateListener(animation -> {
+      float transparencyFactor = (float) animation.getAnimatedValue();
+      updateBackgroundDimmingAlpha(transparencyFactor);
+    });
+    fadeInAnimator.start();
   }
 
   @Override

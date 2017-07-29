@@ -36,7 +36,6 @@ public abstract class GlidePaddingTransformation implements Transformation<Bitma
   @Override
   public Resource<Bitmap> transform(Resource<Bitmap> resource, int outWidth, int outHeight) {
     Bitmap source = resource.get();
-    final long startTime = System.currentTimeMillis();
 
     Size padding = getPadding(source.getWidth(), source.getHeight());
     int verticalPadding = padding.getHeight();
@@ -61,8 +60,6 @@ public abstract class GlidePaddingTransformation implements Transformation<Bitma
     if (!source.isRecycled()) {
       canvas.drawBitmap(source, horizontalPadding, verticalPadding, null);  // Original bitmap.
     }
-
-    Timber.i("done in: %sms", System.currentTimeMillis() - startTime);
     return BitmapResource.obtain(bitmap, bitmapPool);
   }
 

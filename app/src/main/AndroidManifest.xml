@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest package="me.saket.dank"
-  xmlns:android="http://schemas.android.com/apk/res/android">
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools">
 
   <uses-permission android:name="android.permission.INTERNET" />
 
@@ -100,5 +101,14 @@
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <receiver android:name=".notifs.NotificationActionReceiver" />
+
+    <meta-data
+      android:name="me.saket.dank.utils.glide.GlideOkHttpProgressModule"
+      android:value="GlideModule" />
+
+    <meta-data
+      android:name="com.bumptech.glide.integration.okhttp3.OkHttpGlideModule"
+      android:value="GlideModule"
+      tools:node="remove" />
   </application>
 </manifest>
