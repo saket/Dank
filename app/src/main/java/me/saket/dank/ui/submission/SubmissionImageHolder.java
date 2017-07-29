@@ -4,6 +4,7 @@ import static me.saket.dank.utils.Views.executeOnMeasure;
 
 import android.graphics.Bitmap;
 import android.support.annotation.CheckResult;
+import android.util.Size;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -77,17 +78,17 @@ public class SubmissionImageHolder {
     // This transformation adds padding to images that are way too small (presently < 2 x toolbar height).
     glidePaddingTransformation = new GlidePaddingTransformation(imageView.getContext(), paddingColorForSmallImages) {
       @Override
-      public int getVerticalPadding(int imageWidth, int imageHeight) {
+      public Size getPadding(int imageWidth, int imageHeight) {
         int minDesiredImageHeight = commentListParentSheet.getTop() * 2;
         float widthResizeFactor = deviceDisplayWidth / (float) imageWidth;  // Because ZoomableImageView will resize the image to fill space.
 
         if (imageHeight < minDesiredImageHeight) {
           // Image is too small to be displayed.
           int minImageHeightBeforeResizing = (int) (minDesiredImageHeight / widthResizeFactor);
-          return (minImageHeightBeforeResizing - imageHeight) / 2;
+          return new Size(0, (minImageHeightBeforeResizing - imageHeight) / 2);
 
         } else {
-          return 0;
+          return new Size(0, 0);
         }
       }
     };

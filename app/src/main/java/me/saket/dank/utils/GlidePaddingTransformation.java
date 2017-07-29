@@ -4,12 +4,15 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.util.Size;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.Transformation;
 import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapResource;
+
+import timber.log.Timber;
 
 /**
  * Adds empty spaces to inflate the height of images.
@@ -28,20 +31,23 @@ public abstract class GlidePaddingTransformation implements Transformation<Bitma
     paint.setColor(paddingColor);
   }
 
-  public abstract int getVerticalPadding(int imageWidth, int imageHeight);
+  public abstract Size getPadding(int imageWidth, int imageHeight);
 
   @Override
   public Resource<Bitmap> transform(Resource<Bitmap> resource, int outWidth, int outHeight) {
     Bitmap source = resource.get();
+    final long startTime = System.currentTimeMillis();
 
-    int verticalPadding = getVerticalPadding(source.getWidth(), source.getHeight());
+    Size padding = getPadding(source.getWidth(), source.getHeight());
+    int verticalPadding = padding.getHeight();
+    int horizontalPadding = padding.getWidth();
 
-    if (verticalPadding == 0) {
+    if (verticalPadding == 0 && horizontalPadding == 0) {
       // Nothing to do here.
       return BitmapResource.obtain(source, bitmapPool);
     }
 
-    int targetWidth = source.getWidth();
+    int targetWidth = source.getWidth() + horizontalPadding * 2;
     int targetHeight = source.getHeight() + verticalPadding * 2;
 
     Bitmap bitmap = bitmapPool.get(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
@@ -51,14 +57,10 @@ public abstract class GlidePaddingTransformation implements Transformation<Bitma
 
     Canvas canvas = new Canvas(bitmap);
 
-    // Draw original image.
-    canvas.drawBitmap(source, 0, verticalPadding, null);
+    canvas.drawRect(0, 0, targetWidth, targetHeight, paint);              // Padding.
+    canvas.drawBitmap(source, horizontalPadding, verticalPadding, null);  // Original bitmap.
 
-    // Draw paddings.
-    canvas.drawRect(0, 0, targetWidth, verticalPadding, paint);
-    int bottomPaddingStartY = verticalPadding + source.getHeight() + 1;
-    canvas.drawRect(0, bottomPaddingStartY, targetWidth, bottomPaddingStartY + verticalPadding, paint);
-
+    Timber.i("done in: %sms", System.currentTimeMillis() - startTime);
     return BitmapResource.obtain(bitmap, bitmapPool);
   }
 

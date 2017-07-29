@@ -1,10 +1,12 @@
 package me.saket.dank.ui.media;
 
 import android.content.Context;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
+import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewConfiguration;
@@ -13,6 +15,7 @@ import android.view.ViewGroup;
 import com.bumptech.glide.Glide;
 
 import me.saket.dank.R;
+import me.saket.dank.utils.GlidePaddingTransformation;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
@@ -72,9 +75,18 @@ public class MediaFragment extends Fragment {
     int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
     assert mediaAlbumItem != null;
 
+    GlidePaddingTransformation glidePaddingTransformation = new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
+      final Size onePxTransparentBorder = new Size(1, 1);
+      @Override
+      public Size getPadding(int imageWidth, int imageHeight) {
+        return onePxTransparentBorder;
+      }
+    };
+
     Glide.with(this)
         .load(mediaAlbumItem.mediaLink().optimizedImageUrl(deviceDisplayWidth))
         .asBitmap()
+        .transform(glidePaddingTransformation)
         .into(imageView);
 
     // Make the image flick-dismissible.
