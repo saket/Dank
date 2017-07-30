@@ -30,7 +30,8 @@ public class FlickGestureListener implements View.OnTouchListener {
   private float lastTouchY;
   private boolean touchStartedOnLeftSide;
   private VelocityTracker velocityTracker;
-  private boolean isSwiping;
+  private boolean verticalScrollRegistered;
+  private boolean gestureCanceledUntilNextTouchDown;
   private OnGestureIntercepter onGestureIntercepter;
   private boolean gestureInterceptedUntilNextTouchDown;
 
@@ -118,7 +119,7 @@ public class FlickGestureListener implements View.OnTouchListener {
 
       case MotionEvent.ACTION_CANCEL:
       case MotionEvent.ACTION_UP:
-        if (isSwiping) {
+        if (verticalScrollRegistered) {
           boolean flickRegistered = hasFingerMovedEnoughToFlick(distanceYAbs);
           boolean wasSwipedDownwards = distanceY > 0;
 
@@ -147,25 +148,33 @@ public class FlickGestureListener implements View.OnTouchListener {
 
         velocityTracker.recycle();
         velocityTracker = null;
-        isSwiping = false;
+        verticalScrollRegistered = false;
         gestureInterceptedUntilNextTouchDown = false;
+        gestureCanceledUntilNextTouchDown = false;
         return false;
 
       case MotionEvent.ACTION_MOVE:
-        if (gestureInterceptedUntilNextTouchDown) {
+        if (gestureInterceptedUntilNextTouchDown || gestureCanceledUntilNextTouchDown) {
           return false;
         }
 
         // The listener only gets once chance to block the flick -- only if it's not already being moved.
-        if (!isSwiping && onGestureIntercepter.shouldIntercept(deltaY)) {
+        if (!verticalScrollRegistered && onGestureIntercepter.shouldIntercept(deltaY)) {
           gestureInterceptedUntilNextTouchDown = true;
           return false;
         }
 
         boolean isScrollingVertically = distanceYAbs > touchSlop && distanceYAbs > distanceXAbs;
+        boolean isScrollingHorizontally = distanceXAbs > touchSlop && distanceYAbs < distanceXAbs;
 
-        if (isSwiping || isScrollingVertically) {
-          isSwiping = true;
+        // Avoid reading the gesture if the user is scrolling the horizontal list.
+        if (!verticalScrollRegistered && isScrollingHorizontally) {
+          gestureCanceledUntilNextTouchDown = true;
+          return false;
+        }
+
+        if (verticalScrollRegistered || isScrollingVertically) {
+          verticalScrollRegistered = true;
 
           view.setTranslationX(view.getTranslationX() + deltaX);
           view.setTranslationY(view.getTranslationY() + deltaY);
