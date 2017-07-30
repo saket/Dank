@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.view.ViewPager;
 import android.util.Size;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -77,14 +76,12 @@ public class MediaFragment extends DankFragment {
   public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
-    imageView.enableScrollInViewPager((ViewPager) view.getParent());
-    imageView.setGestureRotationEnabled(true);
-
     //noinspection ConstantConditions
     MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
     int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
     assert mediaAlbumItem != null;
 
+    imageView.setGestureRotationEnabled(true);
     imageView.setVisibility(View.INVISIBLE);
     loadImage(mediaAlbumItem.mediaLink().optimizedImageUrl(deviceDisplayWidth));
 
@@ -134,9 +131,12 @@ public class MediaFragment extends DankFragment {
   }
 
   private void setupFlickGestures(FlickDismissLayout imageContainerView) {
-    FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(getContext()));
+    FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(getContext()), imageView);
     flickListener.setFlickThresholdSlop(.5f, imageView);    // Dismiss once the image is swiped 50% away from its original location.
     flickListener.setGestureCallbacks((FlickGestureListener.GestureCallbacks) getActivity());
+    flickListener.setContentHeightProvider(() -> {
+      return (int) imageView.getZoomedImageHeight();
+    });
     flickListener.setOnGestureIntercepter((deltaY) -> {
       // Don't listen for flick gestures if the image can pan further.
       boolean isScrollingUpwards = deltaY < 0;

@@ -8,6 +8,7 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
+import android.support.v4.view.ViewPager;
 import android.view.ViewGroup;
 
 import java.util.ArrayList;
@@ -28,7 +29,7 @@ public class MediaAlbumViewerActivity extends DankActivity
 {
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
-  @BindView(R.id.mediaalbumviewer_pager) ViewPagerWithManualScrollBlock mediaPager;
+  @BindView(R.id.mediaalbumviewer_pager) ViewPager mediaPager;
 
   private SystemUiHelper systemUiHelper;
   private Drawable activityBackgroundDrawable;
@@ -99,11 +100,6 @@ public class MediaAlbumViewerActivity extends DankActivity
     // Increase dimming exponentially so that the background is fully transparent while the image has been moved by half.
     float dimming = 1f - Math.min(1f, targetTransparencyFactor * 2);
     activityBackgroundDrawable.setAlpha((int) (dimming * 255));
-  }
-
-  @Override
-  public void setMediaListScrollingBlocked(boolean blocked) {
-    mediaPager.setScrollingBlocked(blocked);
   }
 
   @Override

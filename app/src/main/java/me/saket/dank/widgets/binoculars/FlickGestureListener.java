@@ -6,7 +6,6 @@ import android.view.MotionEvent;
 import android.view.VelocityTracker;
 import android.view.View;
 import android.view.ViewConfiguration;
-import android.view.ViewGroup;
 import android.view.animation.Interpolator;
 
 import me.saket.dank.widgets.ZoomableImageView;
@@ -24,6 +23,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   private ZoomableImageView imageView;
   private final int touchSlop;                // Min. distance to move before registering a gesture.
   private final int maximumFlingVelocity;     // Px per second.
+  private final ZoomableImageView zoomableImageView;
   private GestureCallbacks gestureCallbacks;
   private float downX, downY;
   private float lastTouchX;
@@ -33,6 +33,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   private boolean verticalScrollRegistered;
   private boolean gestureCanceledUntilNextTouchDown;
   private OnGestureIntercepter onGestureIntercepter;
+  private ContentHeightProvider contentHeightProvider;
   private boolean gestureInterceptedUntilNextTouchDown;
 
   public interface OnGestureIntercepter {
@@ -43,6 +44,13 @@ public class FlickGestureListener implements View.OnTouchListener {
      * @return True to intercept the gesture, false otherwise to let it go.
      */
     boolean shouldIntercept(float deltaY);
+  }
+
+  public interface ContentHeightProvider {
+    /**
+     * Height of the media content multiplied by its zoomed in ratio.
+     */
+    int getZoomedInMediaHeight();
   }
 
   public interface GestureCallbacks {
@@ -57,17 +65,12 @@ public class FlickGestureListener implements View.OnTouchListener {
      * @param moveRatio Distance moved (from the View's original position) as a ratio of the View's height.
      */
     void onMoveMedia(@FloatRange(from = -1, to = 1) float moveRatio);
-
-    /**
-     * Stupid GestureViews has fucked up the way touch events are passed to the pager so we've to manually
-     * disable scrolling.
-     */
-    void setMediaListScrollingBlocked(boolean blocked);
   }
 
-  public FlickGestureListener(ViewConfiguration viewConfiguration) {
+  public FlickGestureListener(ViewConfiguration viewConfiguration, ZoomableImageView zoomableImageView) {
     touchSlop = viewConfiguration.getScaledTouchSlop();
     maximumFlingVelocity = viewConfiguration.getScaledMaximumFlingVelocity();
+    this.zoomableImageView = zoomableImageView;
   }
 
   public void setOnGestureIntercepter(OnGestureIntercepter intercepter) {
@@ -86,6 +89,10 @@ public class FlickGestureListener implements View.OnTouchListener {
 
   public void setGestureCallbacks(GestureCallbacks gestureCallbacks) {
     this.gestureCallbacks = gestureCallbacks;
+  }
+
+  public void setContentHeightProvider(ContentHeightProvider contentHeightProvider) {
+    this.contentHeightProvider = contentHeightProvider;
   }
 
   @Override
@@ -142,8 +149,6 @@ public class FlickGestureListener implements View.OnTouchListener {
               animateViewBackToPosition(view);
             }
           }
-
-          gestureCallbacks.setMediaListScrollingBlocked(false);
         }
 
         velocityTracker.recycle();
@@ -179,7 +184,7 @@ public class FlickGestureListener implements View.OnTouchListener {
           view.setTranslationX(view.getTranslationX() + deltaX);
           view.setTranslationY(view.getTranslationY() + deltaY);
 
-          gestureCallbacks.setMediaListScrollingBlocked(true);
+          view.getParent().requestDisallowInterceptTouchEvent(true);
 
           // Rotate the card because we naturally make a swipe gesture in a circular path while holding our phones.
           if (ROTATION_ENABLED) {
@@ -221,16 +226,16 @@ public class FlickGestureListener implements View.OnTouchListener {
   }
 
   private void animateViewFlick(View view, boolean downwards) {
-    animateViewFlick(view, downwards, 100);
+    animateViewFlick(view, downwards, 200);
   }
 
   @SuppressWarnings("ConstantConditions")
   private void animateViewFlick(View view, boolean downwards, long flickAnimDuration) {
-    int parentHeight = ((ViewGroup) view.getParent()).getHeight();
+    int throwDistance = Math.max(contentHeightProvider.getZoomedInMediaHeight(), view.getRootView().getHeight());
 
     view.animate().cancel();
     view.animate()
-        .translationY(downwards ? parentHeight : -parentHeight)
+        .translationY(downwards ? throwDistance : -throwDistance)
         .withEndAction(() -> gestureCallbacks.onFlickDismiss())
         .setDuration(flickAnimDuration)
         .setInterpolator(ANIM_INTERPOLATOR)

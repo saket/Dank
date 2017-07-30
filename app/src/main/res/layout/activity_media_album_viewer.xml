@@ -6,7 +6,7 @@
   android:background="@color/black_opacity_40"
   android:orientation="vertical">
 
-  <me.saket.dank.ui.media.ViewPagerWithManualScrollBlock
+  <me.saket.dank.widgets.MediaAlbumViewPager
     android:id="@+id/mediaalbumviewer_pager"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />

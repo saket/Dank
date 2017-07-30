@@ -84,7 +84,7 @@ public class ZoomableImageView extends GestureImageView {
     return (float) getController().getSettings().getImageW() * getZoom();
   }
 
-  private float getZoomedImageHeight() {
+  public float getZoomedImageHeight() {
     return (float) getController().getSettings().getImageH() * getZoom();
   }
 

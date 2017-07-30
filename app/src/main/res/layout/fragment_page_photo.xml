@@ -14,24 +14,12 @@
     android:layout_gravity="center"
     tools:background="@color/blue_gray_800" />
 
-  <!--<com.pnikosis.materialishprogress.ProgressWheel-->
-  <!--android:id="@+id/imageviewer_progress2"-->
-  <!--android:layout_width="80dp"-->
-  <!--android:layout_height="80dp"-->
-  <!--android:layout_gravity="center"-->
-  <!--android:visibility="gone"-->
-  <!--tools:visibility="visible"-->
-  <!--wheel:matProg_barColor="@color/color_accent"-->
-  <!--wheel:matProg_progressIndeterminate="true" />-->
-
   <com.github.rahatarmanahmed.cpv.CircularProgressView
     android:id="@+id/imageviewer_progress"
     android:layout_width="48dp"
-
     android:layout_height="48dp"
     android:layout_gravity="center"
     android:visibility="gone"
-
     app:cpv_color="@color/color_accent"
     tools:visibility="visible" />
 </me.saket.dank.widgets.binoculars.FlickDismissLayout>
