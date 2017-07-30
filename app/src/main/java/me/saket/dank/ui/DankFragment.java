@@ -44,5 +44,4 @@ public class DankFragment extends NaviFragment {
     }
     onDestroyDisposables.add(subscription);
   }
-
 }

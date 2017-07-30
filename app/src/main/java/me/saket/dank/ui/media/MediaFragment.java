@@ -5,7 +5,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.app.Fragment;
 import android.support.v4.view.ViewPager;
 import android.util.Size;
 import android.view.LayoutInflater;
@@ -14,32 +13,32 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.bumptech.glide.request.target.Target;
-import com.pnikosis.materialishprogress.ProgressWheel;
+import com.github.rahatarmanahmed.cpv.CircularProgressView;
+import com.github.rahatarmanahmed.cpv.CircularProgressViewAdapter;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.GlidePaddingTransformation;
 import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
-import timber.log.Timber;
 
 /**
  * Contains an image or a video.
  */
-public class MediaFragment extends Fragment {
+public class MediaFragment extends DankFragment {
 
   private static final String KEY_MEDIA_ITEM = "mediaItem";
 
   @BindView(R.id.imageviewer_flickdismisslayout) FlickDismissLayout imageContainerView;
   @BindView(R.id.imageviewer_imageview) ZoomableImageView imageView;
-  @BindView(R.id.imageviewer_progress) ProgressWheel progressView;
+  @BindView(R.id.imageviewer_progress) CircularProgressView progressView;
 
   interface OnMediaItemClickListener {
     void onClickMediaItem();
@@ -68,6 +67,7 @@ public class MediaFragment extends Fragment {
   @Nullable
   @Override
   public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+    super.onCreateView(inflater, container, savedInstanceState);
     View layout = inflater.inflate(R.layout.fragment_page_photo, container, false);
     ButterKnife.bind(this, layout);
     return layout;
@@ -86,22 +86,37 @@ public class MediaFragment extends Fragment {
     assert mediaAlbumItem != null;
 
     imageView.setVisibility(View.INVISIBLE);
+    loadImage(mediaAlbumItem.mediaLink().optimizedImageUrl(deviceDisplayWidth));
 
+    // CircularProgressView smoothly animates the progress, which means there's a certain delay between
+    // updating its progress and the radial progress bar reaching the progress. So setting its
+    // visibility based on the progress is not an option. We use its provided listener instead to hide
+    // progress only once it has reached 100%.
+    progressView.addListener(new CircularProgressViewAdapter() {
+      @Override
+      public void onProgressUpdateEnd(float currentProgress) {
+        progressView.setVisibility(currentProgress < 100 ? View.VISIBLE : View.GONE);
+      }
+    });
+
+    // Make the image flick-dismissible.
+    setupFlickGestures(imageContainerView);
+
+    // Toggle immersive when the user clicks anywhere.
+    imageView.setOnClickListener(v -> ((OnMediaItemClickListener) getActivity()).onClickMediaItem());
+  }
+
+  private void loadImage(String imageUrl) {
     ImageLoadProgressTarget<Bitmap> progressTarget = new ImageLoadProgressTarget<>(new BitmapImageViewTarget(imageView), progressView);
-    String imageUrl = mediaAlbumItem.mediaLink().optimizedImageUrl(deviceDisplayWidth);
     progressTarget.setModel(imageUrl);
 
     Glide.with(this)
         .load(imageUrl)
         .asBitmap()
-
-        .skipMemoryCache(true)
-        .diskCacheStrategy(DiskCacheStrategy.NONE)
-
         .transform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
           @Override
           public Size getPadding(int imageWidth, int imageHeight) {
-            return new Size(0, 0);
+            return new Size(1, 1);
           }
         })
         .listener(new GlideUtils.SimpleRequestListener<String, Bitmap>() {
@@ -116,12 +131,6 @@ public class MediaFragment extends Fragment {
           }
         })
         .into(progressTarget);
-
-    // Make the image flick-dismissible.
-    setupFlickGestures(imageContainerView);
-
-    // Toggle immersive when the user clicks anywhere.
-    imageView.setOnClickListener(v -> ((OnMediaItemClickListener) getActivity()).onClickMediaItem());
   }
 
   private void setupFlickGestures(FlickDismissLayout imageContainerView) {
@@ -149,38 +158,35 @@ public class MediaFragment extends Fragment {
   }
 
   private static class ImageLoadProgressTarget<Z> extends GlideProgressTarget<String, Z> {
-    private final ProgressWheel progressView;
+    private final CircularProgressView progressView;
 
-    public ImageLoadProgressTarget(Target<Z> target, ProgressWheel progressView) {
+    public ImageLoadProgressTarget(Target<Z> target, CircularProgressView progressView) {
       super(target);
       this.progressView = progressView;
     }
 
     @Override
     public float getGranularityPercentage() {
-      return 0.1f; // this matches the format string for #text below
+      return 0.1f;
     }
 
     @Override
     protected void onConnecting() {
-      progressView.spin();
-      progressView.setVisibility(View.VISIBLE);
     }
 
     @Override
     protected void onDownloading(long bytesRead, long expectedLength) {
-      float progress = (float) bytesRead / expectedLength;
+      int progress = (int) (100 * (float) bytesRead / expectedLength);
       progressView.setProgress(progress);
     }
 
     @Override
     protected void onDownloaded() {
-      progressView.spin();
+      progressView.setProgress(100);
     }
 
     @Override
     protected void onDelivered() {
-      progressView.setVisibility(View.GONE);
     }
   }
 }

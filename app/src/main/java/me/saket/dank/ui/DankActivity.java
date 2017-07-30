@@ -74,5 +74,4 @@ public class DankActivity extends AppCompatActivity {
     //noinspection ConstantConditions
     return super.getSupportActionBar();
   }
-
 }
