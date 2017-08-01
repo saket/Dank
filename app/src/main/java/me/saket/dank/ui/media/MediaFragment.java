@@ -85,6 +85,13 @@ public class MediaFragment extends DankFragment {
     imageView.setVisibility(View.INVISIBLE);
     loadImage(mediaAlbumItem.mediaLink().optimizedImageUrl(deviceDisplayWidth));
 
+    // TODO: remove
+//    {
+//      progressView.setIndeterminate(true);
+//      progressView.startAnimation();
+//      progressView.setVisibility(View.VISIBLE);
+//    }
+
     // CircularProgressView smoothly animates the progress, which means there's a certain delay between
     // updating its progress and the radial progress bar reaching the progress. So setting its
     // visibility based on the progress is not an option. We use its provided listener instead to hide
@@ -110,6 +117,10 @@ public class MediaFragment extends DankFragment {
     Glide.with(this)
         .load(imageUrl)
         .asBitmap()
+
+//        .skipMemoryCache(true)
+//        .diskCacheStrategy(DiskCacheStrategy.NONE)
+
         .transform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
           @Override
           public Size getPadding(int imageWidth, int imageHeight) {

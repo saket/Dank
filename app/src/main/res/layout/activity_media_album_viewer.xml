@@ -3,11 +3,70 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:background="@color/black_opacity_40"
+  android:background="@color/black_opacity_60"
+  android:fitsSystemWindows="true"
   android:orientation="vertical">
 
   <me.saket.dank.widgets.MediaAlbumViewPager
     android:id="@+id/mediaalbumviewer_pager"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
+
+  <LinearLayout
+    android:id="@+id/mediaalbumviewer_options_container"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_gravity="bottom"
+    android:background="@color/transparent"
+    android:elevation="10dp"
+    android:gravity="bottom">
+
+    <ImageButton
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:elevation="10dp"
+      android:layout_marginStart="@dimen/spacing8"
+      android:layout_marginEnd="@dimen/spacing8"
+      android:layout_marginBottom="@dimen/spacing24"
+      android:padding="@dimen/spacing4"
+      android:src="@drawable/ic_share_24dp" />
+
+    <ImageButton
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:elevation="10dp"
+      android:layout_marginStart="@dimen/spacing8"
+      android:layout_marginEnd="@dimen/spacing8"
+      android:layout_marginBottom="@dimen/spacing24"
+      android:padding="@dimen/spacing4"
+      android:src="@drawable/ic_cloud_download_24dp" />
+
+    <ImageButton
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:elevation="10dp"
+      android:layout_marginStart="@dimen/spacing8"
+      android:layout_marginEnd="@dimen/spacing8"
+      android:layout_marginBottom="@dimen/spacing24"
+      android:padding="@dimen/spacing4"
+      android:src="@drawable/ic_open_in_browser_24dp" />
+
+    <ImageButton
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:elevation="10dp"
+      android:layout_marginStart="@dimen/spacing8"
+      android:layout_marginEnd="@dimen/spacing8"
+      android:layout_marginBottom="@dimen/spacing24"
+      android:padding="@dimen/spacing4"
+      android:src="@drawable/ic_hd_24dp" />
+  </LinearLayout>
 </FrameLayout>

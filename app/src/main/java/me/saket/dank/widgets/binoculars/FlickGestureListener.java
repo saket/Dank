@@ -55,9 +55,11 @@ public class FlickGestureListener implements View.OnTouchListener {
 
   public interface GestureCallbacks {
     /**
-     * Called when the View gets flicked and the Activity should be dismissed.
+     * Called when the View has been flicked and the Activity should be dismissed.
+     *
+     * @param viewFlickAnimationDuration Time the Activity should wait to finish for the flick animation to complete.
      */
-    void onFlickDismiss();
+    void onFlickDismissEnd(long viewFlickAnimationDuration);
 
     /**
      * Called while this View is being moved around.
@@ -236,7 +238,7 @@ public class FlickGestureListener implements View.OnTouchListener {
     view.animate().cancel();
     view.animate()
         .translationY(downwards ? throwDistance : -throwDistance)
-        .withEndAction(() -> gestureCallbacks.onFlickDismiss())
+        .withStartAction(() -> gestureCallbacks.onFlickDismissEnd(flickAnimDuration))
         .setDuration(flickAnimDuration)
         .setInterpolator(ANIM_INTERPOLATOR)
         .start();

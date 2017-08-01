@@ -1,6 +1,7 @@
 package me.saket.dank.ui.media;
 
 import android.animation.ObjectAnimator;
+import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.content.Intent;
@@ -9,19 +10,25 @@ import android.os.Bundle;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
 import android.support.v4.view.ViewPager;
+import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.AccelerateInterpolator;
+import android.view.animation.DecelerateInterpolator;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.UrlParser;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 
 public class MediaAlbumViewerActivity extends DankActivity
@@ -30,6 +37,7 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
   @BindView(R.id.mediaalbumviewer_pager) ViewPager mediaPager;
+  @BindView(R.id.mediaalbumviewer_options_container) ViewGroup optionButtonsContainer;
 
   private SystemUiHelper systemUiHelper;
   private Drawable activityBackgroundDrawable;
@@ -51,11 +59,10 @@ public class MediaAlbumViewerActivity extends DankActivity
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.redd.it/psqmkjvtu0bz.jpg")));
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/5WT2RQF.jpg")));
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.redd.it/u5dszwd3qjaz.jpg")));
-
     MediaAlbumPagerAdapter albumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
     mediaPager.setAdapter(albumAdapter);
 
-    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0 /* flags */, null /* listener */);
+    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0 /* flags */, this /* listener */);
 
     // Fade in background.
     activityBackgroundDrawable = rootLayout.getBackground().mutate();
@@ -68,6 +75,12 @@ public class MediaAlbumViewerActivity extends DankActivity
       updateBackgroundDimmingAlpha(transparencyFactor);
     });
     fadeInAnimator.start();
+
+    rootLayout.setOnApplyWindowInsetsListener((view, windowInsets) -> {
+      int navBarHeight = windowInsets.getSystemWindowInsetBottom();
+      Views.setPaddingBottom(optionButtonsContainer, navBarHeight);
+      return windowInsets.consumeStableInsets();
+    });
   }
 
   @Override
@@ -84,8 +97,12 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   @Override
-  public void onFlickDismiss() {
-    finish();
+  public void onFlickDismissEnd(long viewFlickAnimationDurationMs) {
+    unsubscribeOnDestroy(
+        Observable.timer(viewFlickAnimationDurationMs, TimeUnit.MILLISECONDS)
+            .doOnSubscribe(o -> animateMediaOptionsVisibility(false, Animations.INTERPOLATOR, 100))
+            .subscribe(o -> finish())
+    );
   }
 
   @Override
@@ -104,5 +121,21 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @Override
   public void onSystemUiVisibilityChange(boolean systemUiVisible) {
+    TimeInterpolator interpolator = systemUiVisible ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(2f);
+    long animationDuration = 300;
+    animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration);
+  }
+
+  private void animateMediaOptionsVisibility(boolean showOptions, TimeInterpolator interpolator, long animationDuration) {
+    for (int i = 0; i < optionButtonsContainer.getChildCount(); i++) {
+      View childView = optionButtonsContainer.getChildAt(i);
+      childView.animate().cancel();
+      childView.animate()
+          .translationY(showOptions ? 0f : childView.getHeight())
+          .alpha(showOptions ? 1f : 0f)
+          .setDuration(animationDuration)
+          .setInterpolator(interpolator)
+          .start();
+    }
   }
 }
