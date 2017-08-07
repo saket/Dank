@@ -1,14 +1,15 @@
 package me.saket.dank.utils.glide;
 
+import android.content.Context;
 import android.graphics.drawable.Drawable;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.model.GlideUrl;
 import com.bumptech.glide.load.model.stream.BaseGlideUrlLoader;
-import com.bumptech.glide.request.animation.GlideAnimation;
 import com.bumptech.glide.request.target.Target;
+import com.bumptech.glide.request.transition.Transition;
 
-public abstract class GlideProgressTarget<T, Z> extends GlideWrappingTarget<Z> implements GlideOkHttpProgressModule.UIProgressListener {
+public abstract class GlideProgressTarget<T, Z> extends GlideWrappingTarget<Z> implements GlideOkHttpProgressModule.UiProgressListener {
 
   private T model;
   private boolean ignoreProgress = true;
@@ -26,8 +27,8 @@ public abstract class GlideProgressTarget<T, Z> extends GlideWrappingTarget<Z> i
     return model;
   }
 
-  public final void setModel(T model) {
-    Glide.clear(this); // indirectly calls cleanup
+  public final void setModel(Context context, T model) {
+    Glide.with(context).clear(this); // indirectly calls cleanup
     this.model = model;
   }
 
@@ -110,15 +111,15 @@ public abstract class GlideProgressTarget<T, Z> extends GlideWrappingTarget<Z> i
   }
 
   @Override
-  public void onResourceReady(Z resource, GlideAnimation<? super Z> animation) {
+  public void onResourceReady(Z resource, Transition<? super Z> transition) {
     cleanup();
-    super.onResourceReady(resource, animation);
+    super.onResourceReady(resource, transition);
   }
 
   @Override
-  public void onLoadFailed(Exception e, Drawable errorDrawable) {
+  public void onLoadFailed(Drawable errorDrawable) {
     cleanup();
-    super.onLoadFailed(e, errorDrawable);
+    super.onLoadFailed(errorDrawable);
   }
 
   @Override

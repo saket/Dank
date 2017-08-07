@@ -24,16 +24,21 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
+
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.bitmap.BitmapTransitionOptions;
+import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.ImageViewTarget;
+import com.bumptech.glide.request.target.SizeReadyCallback;
+
+import java.util.Locale;
+
 import butterknife.BindColor;
 import butterknife.BindDimen;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import com.bumptech.glide.Glide;
-import com.bumptech.glide.request.target.ImageViewTarget;
-import com.bumptech.glide.request.target.SizeReadyCallback;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
-import java.util.Locale;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.LinkMetadata;
@@ -42,9 +47,9 @@ import me.saket.dank.data.RedditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
-import me.saket.dank.utils.GlideCircularTransformation;
-import me.saket.dank.utils.GlideUtils;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.glide.GlideCircularTransformation;
+import me.saket.dank.utils.glide.GlideUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
@@ -112,8 +117,8 @@ public class SubmissionLinkHolder {
 
   private void resetViews() {
     // Stop loading of any pending images.
-    Glide.clear(thumbnailView);
-    Glide.clear(iconView);
+    Glide.with(thumbnailView.getContext()).clear(thumbnailView);
+    Glide.with(iconView.getContext()).clear(iconView);
 
     linkDetailsContainer.setBackgroundTintList(null);
     thumbnailView.setImageDrawable(null);
@@ -313,9 +318,9 @@ public class SubmissionLinkHolder {
    */
   private void loadLinkThumbnail(boolean isGooglePlayLink, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnLoad) {
     Glide.with(thumbnailView.getContext())
-        .load(thumbnailUrl)
         .asBitmap()
-        .listener(new GlideUtils.SimpleRequestListener<String, Bitmap>() {
+        .load(thumbnailUrl)
+        .listener(new GlideUtils.SimpleRequestListener<Bitmap>() {
           @Override
           public void onResourceReady(Bitmap resource) {
             generateTintColorFromImage(isGooglePlayLink, resource, tintColor -> {
@@ -332,7 +337,7 @@ public class SubmissionLinkHolder {
           }
 
           @Override
-          public void onException(Exception e) {
+          public void onLoadFailed(Exception e) {
             if (linkMetadata != null && linkMetadata.hasFavicon()) {
               loadLinkFavicon(linkMetadata, false, isGooglePlayLink);
             }
@@ -354,9 +359,9 @@ public class SubmissionLinkHolder {
     }
 
     Glide.with(iconView.getContext())
-        .load(linkMetadata.faviconUrl())
         .asBitmap()
-        .listener(new GlideUtils.SimpleRequestListener<String, Bitmap>() {
+        .load(linkMetadata.faviconUrl())
+        .listener(new GlideUtils.SimpleRequestListener<Bitmap>() {
           @Override
           public void onResourceReady(Bitmap resource) {
             if (!hasLinkThumbnail) {
@@ -377,7 +382,7 @@ public class SubmissionLinkHolder {
           }
 
           @Override
-          public void onException(Exception e) {
+          public void onLoadFailed(Exception e) {
             if (e != null) {
               Timber.e(e, "Couldn't load favicon");
             } else {
@@ -391,7 +396,8 @@ public class SubmissionLinkHolder {
             }
           }
         })
-        .transform(new GlideCircularTransformation(iconView.getContext()))
+        .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
+        .transition(BitmapTransitionOptions.withCrossFade())
         .into(new ImageViewTarget<Bitmap>(iconView) {
           @Override
           protected void setResource(Bitmap resource) {

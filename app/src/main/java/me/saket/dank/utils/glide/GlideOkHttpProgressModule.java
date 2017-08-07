@@ -5,10 +5,11 @@ import android.os.Handler;
 import android.os.Looper;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.GlideBuilder;
+import com.bumptech.glide.Registry;
+import com.bumptech.glide.annotation.GlideModule;
 import com.bumptech.glide.integration.okhttp3.OkHttpUrlLoader;
 import com.bumptech.glide.load.model.GlideUrl;
-import com.bumptech.glide.module.GlideModule;
+import com.bumptech.glide.module.LibraryGlideModule;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -30,23 +31,18 @@ import okio.ForwardingSource;
 import okio.Okio;
 import okio.Source;
 
-// TODO add <meta-data android:value="GlideModule" android:name="....OkHttpProgressGlideModule" />
-// TODO add <meta-data android:value="GlideModule" tools:node="remove" android:name="com.bumptech.glide.integration.okhttp.OkHttpGlideModule" />
-// or not use 'okhttp@aar' in Gradle depdendencies
-public class GlideOkHttpProgressModule implements GlideModule {
+@GlideModule
+public class GlideOkHttpProgressModule extends LibraryGlideModule {
 
   @Override
-  public void applyOptions(Context context, GlideBuilder builder) {}
-
-  @Override
-  public void registerComponents(Context context, Glide glide) {
+  public void registerComponents(Context context, Glide glide, Registry registry) {
     OkHttpClient okHttpClient = new OkHttpClient.Builder()
         .connectTimeout(DankAppModule.NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .readTimeout(DankAppModule.NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .addNetworkInterceptor(createInterceptor(new DispatchingProgressListener()))
         .build();
 
-    glide.register(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(okHttpClient));
+    registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(okHttpClient));
   }
 
   private static Interceptor createInterceptor(final ResponseProgressListener listener) {
@@ -59,7 +55,7 @@ public class GlideOkHttpProgressModule implements GlideModule {
     };
   }
 
-  public interface UIProgressListener {
+  public interface UiProgressListener {
     void onProgress(long bytesRead, long expectedLength);
 
     /**
@@ -74,7 +70,7 @@ public class GlideOkHttpProgressModule implements GlideModule {
     DispatchingProgressListener.forget(url);
   }
 
-  public static void expect(String url, UIProgressListener listener) {
+  public static void expect(String url, UiProgressListener listener) {
     DispatchingProgressListener.expect(url, listener);
   }
 
@@ -83,7 +79,7 @@ public class GlideOkHttpProgressModule implements GlideModule {
   }
 
   private static class DispatchingProgressListener implements ResponseProgressListener {
-    private static final Map<String, UIProgressListener> LISTENERS = new HashMap<>();
+    private static final Map<String, UiProgressListener> LISTENERS = new HashMap<>();
     private static final Map<String, Long> PROGRESSES = new HashMap<>();
 
     private final Handler handler;
@@ -97,7 +93,7 @@ public class GlideOkHttpProgressModule implements GlideModule {
       PROGRESSES.remove(url);
     }
 
-    static void expect(String url, UIProgressListener listener) {
+    static void expect(String url, UiProgressListener listener) {
       LISTENERS.put(url, listener);
     }
 
@@ -105,7 +101,7 @@ public class GlideOkHttpProgressModule implements GlideModule {
     public void update(HttpUrl url, final long bytesRead, final long contentLength) {
       //System.out.printf("%s: %d/%d = %.2f%%%n", url, bytesRead, contentLength, (100f * bytesRead) / contentLength);
       String key = url.toString();
-      final UIProgressListener listener = LISTENERS.get(key);
+      final UiProgressListener listener = LISTENERS.get(key);
       if (listener == null) {
         return;
       }

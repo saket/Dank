@@ -101,14 +101,5 @@
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <receiver android:name=".notifs.NotificationActionReceiver" />
-
-    <meta-data
-      android:name="me.saket.dank.utils.glide.GlideOkHttpProgressModule"
-      android:value="GlideModule" />
-
-    <meta-data
-      android:name="com.bumptech.glide.integration.okhttp3.OkHttpGlideModule"
-      android:value="GlideModule"
-      tools:node="remove" />
   </application>
 </manifest>

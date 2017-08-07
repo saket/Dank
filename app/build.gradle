@@ -65,6 +65,7 @@ android {
 
 ext {
     supportLibVersion = '25.3.1'
+    glideLibVersion = '4.0.0'
 }
 
 dependencies {
@@ -104,8 +105,9 @@ dependencies {
     compile 'com.squareup.retrofit2:retrofit:2.2.0'
     compile 'com.squareup.retrofit2:adapter-rxjava2:2.2.0'
     compile 'com.squareup.retrofit2:converter-moshi:2.0.2'
-    compile 'com.github.bumptech.glide:glide:3.7.0'
-    compile 'com.github.bumptech.glide:okhttp3-integration:1.5.0@aar'
+    compile "com.github.bumptech.glide:glide:${glideLibVersion}"
+    apt "com.github.bumptech.glide:compiler:${glideLibVersion}"
+    compile "com.github.bumptech.glide:okhttp3-integration:${glideLibVersion}"
     compile 'com.squareup.sqlbrite:sqlbrite:1.1.1'
     compile "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet. TODO: Remove this. SQLBrite is on Rx2.
     compile 'com.google.android:flexbox:0.3.0'

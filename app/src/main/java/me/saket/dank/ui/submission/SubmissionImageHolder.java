@@ -3,6 +3,8 @@ package me.saket.dank.ui.submission;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 
 import android.graphics.Bitmap;
+import android.graphics.drawable.BitmapDrawable;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
 import android.util.Size;
 import android.view.Gravity;
@@ -14,9 +16,8 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
-import com.bumptech.glide.load.resource.bitmap.GlideBitmapDrawable;
-import com.bumptech.glide.load.resource.drawable.GlideDrawable;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.request.RequestOptions;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
@@ -27,8 +28,8 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.GlidePaddingTransformation;
-import me.saket.dank.utils.GlideUtils;
+import me.saket.dank.utils.glide.GlidePaddingTransformation;
+import me.saket.dank.utils.glide.GlideUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
@@ -49,7 +50,7 @@ public class SubmissionImageHolder {
   private final int deviceDisplayWidth;
   private final ExpandablePageLayout submissionPageLayout;
   private final ProgressBar contentLoadProgressView;
-  private final Relay<GlideDrawable> imageStream = PublishRelay.create();
+  private final Relay<Drawable> imageStream = PublishRelay.create();
   private final GlidePaddingTransformation glidePaddingTransformation;
   private GestureController.OnStateChangeListener imageScrollListener;
 
@@ -103,7 +104,7 @@ public class SubmissionImageHolder {
     if (imageScrollListener != null) {
       imageView.getController().removeOnStateChangeListener(imageScrollListener);
     }
-    Glide.clear(imageView);
+    Glide.with(imageView.getContext()).clear(imageView);
     imageScrollHintView.setVisibility(View.GONE);
   }
 
@@ -113,11 +114,13 @@ public class SubmissionImageHolder {
 
     Glide.with(imageView.getContext())
         .load(contentLink.optimizedImageUrl(deviceDisplayWidth))
-        .priority(Priority.IMMEDIATE)
-        .bitmapTransform(glidePaddingTransformation)
-        .listener(new GlideUtils.SimpleRequestListener<String, GlideDrawable>() {
+        .apply(new RequestOptions()
+            .priority(Priority.IMMEDIATE)
+            .transform(glidePaddingTransformation)
+        )
+        .listener(new GlideUtils.SimpleRequestListener<Drawable>() {
           @Override
-          public void onResourceReady(GlideDrawable drawable) {
+          public void onResourceReady(Drawable drawable) {
             executeOnMeasure(imageView, () -> {
               float widthResizeFactor = deviceDisplayWidth / (float) drawable.getMinimumWidth();
               float imageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
@@ -143,7 +146,7 @@ public class SubmissionImageHolder {
           }
 
           @Override
-          public void onException(Exception e) {
+          public void onLoadFailed(Exception e) {
             Timber.e("Couldn't load image");
             contentLoadProgressView.setVisibility(View.GONE);
 
@@ -221,9 +224,9 @@ public class SubmissionImageHolder {
     imageView.getController().addOnStateChangeListener(imageScrollListener);
   }
 
-  private static Bitmap getBitmapFromDrawable(GlideDrawable drawable) {
-    if (drawable instanceof GlideBitmapDrawable) {
-      return ((GlideBitmapDrawable) drawable).getBitmap();
+  private static Bitmap getBitmapFromDrawable(Drawable drawable) {
+    if (drawable instanceof BitmapDrawable) {
+      return ((BitmapDrawable) drawable).getBitmap();
     } else if (drawable instanceof GifDrawable) {
       return ((GifDrawable) drawable).getFirstFrame();
     } else {

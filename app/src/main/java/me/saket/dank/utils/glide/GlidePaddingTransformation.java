@@ -1,4 +1,4 @@
-package me.saket.dank.utils;
+package me.saket.dank.utils.glide;
 
 import android.content.Context;
 import android.graphics.Bitmap;
@@ -12,12 +12,15 @@ import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapResource;
 
-import timber.log.Timber;
+import java.security.MessageDigest;
 
 /**
  * Adds empty spaces to inflate the height of images.
  */
 public abstract class GlidePaddingTransformation implements Transformation<Bitmap> {
+  private static final String ID = "me.saket.dank.utils.glide.GlidePaddingTransformation";
+  private static final byte[] ID_BYTES = ID.getBytes(CHARSET);
+
   private final BitmapPool bitmapPool;
   private final Paint paint;
 
@@ -34,7 +37,7 @@ public abstract class GlidePaddingTransformation implements Transformation<Bitma
   public abstract Size getPadding(int imageWidth, int imageHeight);
 
   @Override
-  public Resource<Bitmap> transform(Resource<Bitmap> resource, int outWidth, int outHeight) {
+  public Resource<Bitmap> transform(Context context, Resource<Bitmap> resource, int outWidth, int outHeight) {
     Bitmap source = resource.get();
 
     Size padding = getPadding(source.getWidth(), source.getHeight());
@@ -50,10 +53,6 @@ public abstract class GlidePaddingTransformation implements Transformation<Bitma
     int targetHeight = source.getHeight() + verticalPadding * 2;
 
     Bitmap bitmap = bitmapPool.get(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
-    if (bitmap == null) {
-      bitmap = Bitmap.createBitmap(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
-    }
-
     Canvas canvas = new Canvas(bitmap);
 
     canvas.drawRect(0, 0, targetWidth, targetHeight, paint);              // Padding.
@@ -64,7 +63,7 @@ public abstract class GlidePaddingTransformation implements Transformation<Bitma
   }
 
   @Override
-  public String getId() {
-    return "GlidePaddingTransformation()";
+  public void updateDiskCacheKey(MessageDigest messageDigest) {
+    messageDigest.update(ID_BYTES);
   }
 }

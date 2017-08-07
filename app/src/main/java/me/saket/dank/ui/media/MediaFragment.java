@@ -12,6 +12,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.BitmapImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 import com.github.rahatarmanahmed.cpv.CircularProgressView;
@@ -21,9 +22,9 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankFragment;
-import me.saket.dank.utils.GlidePaddingTransformation;
-import me.saket.dank.utils.GlideUtils;
+import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;
+import me.saket.dank.utils.glide.GlideUtils;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
@@ -112,30 +113,29 @@ public class MediaFragment extends DankFragment {
 
   private void loadImage(String imageUrl) {
     ImageLoadProgressTarget<Bitmap> progressTarget = new ImageLoadProgressTarget<>(new BitmapImageViewTarget(imageView), progressView);
-    progressTarget.setModel(imageUrl);
+    progressTarget.setModel(getActivity(), imageUrl);
 
-    Glide.with(this)
-        .load(imageUrl)
+    Glide.with(getActivity())
         .asBitmap()
+        .load(imageUrl)
 
-//        .skipMemoryCache(true)
-//        .diskCacheStrategy(DiskCacheStrategy.NONE)
+        //.apply(new RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
 
-        .transform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
+        .apply(RequestOptions.bitmapTransform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
           @Override
           public Size getPadding(int imageWidth, int imageHeight) {
             return new Size(1, 1);
           }
-        })
-        .listener(new GlideUtils.SimpleRequestListener<String, Bitmap>() {
+        }))
+        .listener(new GlideUtils.SimpleRequestListener<Bitmap>() {
           @Override
           public void onResourceReady(Bitmap resource) {
             imageView.setVisibility(View.VISIBLE);
           }
 
           @Override
-          public void onException(Exception e) {
-            super.onException(e);
+          public void onLoadFailed(Exception e) {
+            super.onLoadFailed(e);
           }
         })
         .into(progressTarget);

@@ -12,6 +12,8 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
+import com.bumptech.glide.request.RequestOptions;
 
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
@@ -26,10 +28,10 @@ import me.saket.dank.R;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.utils.Commons;
-import me.saket.dank.utils.GlideCircularTransformation;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.utils.glide.GlideCircularTransformation;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
@@ -205,8 +207,10 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
     }
 
     private void loadThumbnailFromUrl(String thumbnailUrl) {
-      Glide.with(itemView.getContext()).load(thumbnailUrl)
-          .bitmapTransform(new GlideCircularTransformation(itemView.getContext()))
+      Glide.with(itemView.getContext())
+          .load(thumbnailUrl)
+          .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
+          .transition(DrawableTransitionOptions.withCrossFade())
           .into(thumbnailView);
 
       thumbnailView.setColorFilter(null);
