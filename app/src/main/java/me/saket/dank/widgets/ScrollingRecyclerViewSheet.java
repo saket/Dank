@@ -312,8 +312,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
         // the fling to NonSnappingBottomSheet as soon as the recyclerView reaches the top.
         boolean hasReachedTop = recyclerView.computeVerticalScrollOffset() == 0;
         if (hasReachedTop) {
-          // For some reasons, the sheet starts scrolling at a much higher velocity when the
-          // fling is transferred.
+          // For some reasons, the sheet starts scrolling at a much higher velocity when the fling is transferred.
           float transferVelocity = flingScroller.getCurrVelocity() / 4;
           if (dy < 0) {
             transferVelocity *= -1;

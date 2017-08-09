@@ -41,7 +41,10 @@ import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import butterknife.BindDimen;
+import butterknife.BindDrawable;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
@@ -49,19 +52,6 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-
-import net.dean.jraw.models.PublicContribution;
-import net.dean.jraw.models.Submission;
-
-import java.util.Collections;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-
-import butterknife.BindDimen;
-import butterknife.BindDrawable;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -71,6 +61,10 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
@@ -84,6 +78,7 @@ import me.saket.dank.ui.OpenUrlActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -101,10 +96,14 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
+import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Submission;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.StateChangeCallbacks, ExpandablePageLayout.OnPullToCollapseIntercepter {
+public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.StateChangeCallbacks,
+    ExpandablePageLayout.OnPullToCollapseIntercepter
+{
 
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
@@ -152,6 +151,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
 
   public interface Callbacks {
+
     void onClickSubmissionToolbarUp();
   }
 
@@ -187,7 +187,14 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         Link parsedLink = UrlParser.parse(url);
         Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
         Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
-        OpenUrlActivity.handle(getActivity(), parsedLink, clickedUrlCoordinatesRect);
+
+        if (parsedLink instanceof RedditLink.User) {
+          UserProfilePopup userProfilePopup = new UserProfilePopup(getActivity());
+          userProfilePopup.loadUserProfile(((RedditLink.User) parsedLink));
+          userProfilePopup.show(textView);
+        } else {
+          OpenUrlActivity.handle(getActivity(), parsedLink, clickedUrlCoordinatesRect);
+        }
         return true;
 
       } catch (Exception e) {
@@ -447,7 +454,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsAdapter.streamCommentCollapseExpandEvents().subscribe(clickEvent -> {
           if (clickEvent.willCollapseOnClick()) {
             int firstCompletelyVisiblePos = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
-            boolean commentExtendsBeyondWindowTopEdge = firstCompletelyVisiblePos == -1 || clickEvent.commentRowPosition() < firstCompletelyVisiblePos;
+            boolean commentExtendsBeyondWindowTopEdge =
+                firstCompletelyVisiblePos == -1 || clickEvent.commentRowPosition() < firstCompletelyVisiblePos;
             if (commentExtendsBeyondWindowTopEdge) {
               float viewTop = clickEvent.commentItemView().getY();
               commentList.smoothScrollBy(0, (int) viewTop);
@@ -576,15 +584,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         if (isCommentSheetBeneathImage
             // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
             // it becomes difficult to lock the comments sheet beneath the image.
-            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
-        {
+            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
           commentListParentSheet.scrollTo(boundedVisibleImageHeightMinusToolbar);
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
       }
 
       @Override
-      public void onStateReset(State oldState, State newState) {}
+      public void onStateReset(State oldState, State newState) {
+      }
     });
     commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
       isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
@@ -877,7 +885,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           contentLoadProgressView.hide();
           //noinspection ConstantConditions
           unsubscribeOnCollapse(linkDetailsViewHolder.populate(((RedditLink) contentLink)));
-          linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
+          linkDetailsView.setOnClickListener(o -> OpenUrlActivity.handle(getContext(), contentLink, null));
         }
         break;
 
@@ -887,7 +895,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             submission.getThumbnails(),
             linkDetailsViewHolder.getThumbnailWidthForExternalLink()
         );
-        linkDetailsView.setOnClickListener(__ -> OpenUrlActivity.handle(getContext(), contentLink, null));
+        linkDetailsView.setOnClickListener(o -> OpenUrlActivity.handle(getContext(), contentLink, null));
 
         if (isImgurAlbum) {
           linkDetailsViewHolder.populate(((MediaLink.ImgurAlbum) contentLink), redditSuppliedThumbnail);

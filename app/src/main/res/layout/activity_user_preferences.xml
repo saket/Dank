@@ -17,7 +17,7 @@
 
   <Button
     android:id="@+id/userpreferences_hiddenoptions"
-    style="@style/DankButton.Borderless"
+    style="@style/DankButton.Borderless.Colored"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_alignParentBottom="true"

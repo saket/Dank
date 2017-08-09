@@ -7,13 +7,11 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.WindowManager;
 import android.widget.Toast;
-
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
-import me.saket.dank.ui.user.UserProfileActivity;
 import me.saket.dank.ui.webview.WebViewActivity;
 import timber.log.Timber;
 
@@ -50,8 +48,7 @@ public class OpenUrlActivity extends DankActivity {
       finish();
 
     } else if (link instanceof RedditLink.User) {
-      UserProfileActivity.start(this, ((RedditLink.User) link).name, expandFromShape);
-      finish();
+      throw new IllegalStateException("Use UserProfilePopup instead");
 
     } else if (link.isExternal()) {
       String url = link instanceof Link.External ? ((Link.External) link).url : ((MediaLink.ImgurAlbum) link).albumUrl();
@@ -63,5 +60,4 @@ public class OpenUrlActivity extends DankActivity {
       finish();
     }
   }
-
 }

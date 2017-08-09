@@ -46,8 +46,6 @@
 
     <activity android:name=".ui.submission.SubmissionFragmentActivity" />
 
-    <activity android:name=".ui.user.UserProfileActivity" />
-
     <activity
       android:name=".ui.user.messages.InboxActivity"
       android:label="@string/activity_inbox"

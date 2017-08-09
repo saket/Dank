@@ -3,9 +3,21 @@ package me.saket.dank.data;
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
-
 import com.jakewharton.rxrelay2.BehaviorRelay;
-
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Function;
+import java.util.List;
+import me.saket.dank.R;
+import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.messages.InboxFolder;
+import me.saket.dank.utils.AndroidTokenStore;
+import me.saket.dank.utils.DankSubmissionRequest;
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.auth.AuthenticationState;
@@ -17,6 +29,7 @@ import net.dean.jraw.http.oauth.Credentials;
 import net.dean.jraw.http.oauth.OAuthData;
 import net.dean.jraw.http.oauth.OAuthHelper;
 import net.dean.jraw.managers.AccountManager;
+import net.dean.jraw.models.Account;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.LoggedInAccount;
@@ -25,24 +38,7 @@ import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
-
 import org.reactivestreams.Publisher;
-
-import java.util.List;
-
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import io.reactivex.functions.Action;
-import io.reactivex.functions.Function;
-import me.saket.dank.R;
-import me.saket.dank.di.Dank;
-import me.saket.dank.ui.user.UserSession;
-import me.saket.dank.ui.user.messages.InboxFolder;
-import me.saket.dank.utils.AndroidTokenStore;
-import me.saket.dank.utils.DankSubmissionRequest;
 import timber.log.Timber;
 
 /**
@@ -266,7 +262,7 @@ public class DankRedditClient {
     }
   }
 
-// ======== USER ACCOUNT ======== //
+// ======== LOGGED IN USER ACCOUNT ======== //
 
   // TODO: Move to UserSession.java
   public Single<LoggedInAccount> loggedInUserAccount() {
@@ -286,6 +282,16 @@ public class DankRedditClient {
    */
   public InboxPaginator userMessagePaginator(InboxFolder folder) {
     return new InboxPaginator(redditClient, folder.value());
+  }
+
+// ======== OTHER USERS ======== //
+
+  /**
+   * For accessing information about other users.
+   */
+  @CheckResult
+  public Single<Account> userProfile(String username) {
+    return withAuth(Single.fromCallable(() -> redditClient.getUser(username)));
   }
 
 // ======== SUBREDDITS ======== //

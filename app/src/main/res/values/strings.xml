@@ -5,6 +5,7 @@
   <string name="comma_separator_for_multiple_words">,</string>
   <string name="and_suffix_for_comma_separated_words">and</string>
   <string name="timestamp_just_now">Just now</string>
+  <string name="work_in_progress">Work in progress</string>
 
   <!-- Common errors -->
   <string name="common_error_retry">Retry</string>
@@ -81,7 +82,7 @@
   <string name="sorting_time_period_year">Year</string>
   <string name="sorting_time_period_alltime">All time</string>
 
-  <!-- User profile -->
+  <!-- Logged in user profile -->
   <string name="userprofile_comments">Comments</string>
   <string name="userprofile_submissions">Submissions</string>
   <string name="userprofile_karma_count">%s karma</string>
@@ -194,4 +195,14 @@
   <!-- Media -->
   <string name="cd_videoplayer_toggle_mute">Toggle mute</string>
   <string name="cd_videoplayer_toggle_fullscreen">Toggle fullscreen</string>
+
+  <!-- User profile popup -->
+  <string name="userprofilepopup_send_a_private_message">Send a private message</string>
+  <string name="userprofilepopup_view_full_profile">View full profile</string>
+  <string name="userprofilepopup_body">Redditor for %1$d years \n%2$s post &amp; %3$s comment karma</string>
+  <string name="cd_userprofilepopup_cover_image">Cover image of %s\</string>
+  <string name="cd_userprofilepopup_profile_image">User image of %s</string>
+  <string name="userprofilepopup_redditor_since">Redditor\nsince</string>
+  <string name="userprofilepopup_link_karma">Link\nkarma</string>
+  <string name="userprofilepopup_comment_karma">Comment\nkarma</string>
 </resources>

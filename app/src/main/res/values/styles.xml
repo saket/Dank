@@ -72,7 +72,11 @@
     <item name="android:fontFamily">@string/dank_default_font_family</item>
   </style>
 
-  <style name="DankButton.Borderless" parent="@style/Widget.AppCompat.Button.Borderless.Colored">
+  <style name="DankButton.Borderless" parent="@style/Widget.AppCompat.Button.Borderless">
+    <item name="android:fontFamily">@string/dank_default_font_family</item>
+  </style>
+
+  <style name="DankButton.Borderless.Colored" parent="@style/Widget.AppCompat.Button.Borderless.Colored">
     <item name="android:fontFamily">@string/dank_default_font_family</item>
   </style>
 
@@ -117,6 +121,17 @@
 
   <style name="DankPopupMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow" />
 
+  <style name="DankPopupWindow">
+    <item name="android:popupElevation">@dimen/spacing16</item>
+  </style>
+
+  <style name="PopupAnimation">
+    <!--<item name="android:windowEnterAnimation">@transition/popupwindow_enter</item>-->
+    <!--<item name="android:windowExitAnimation">@transition/popupwindow_exit</item>-->
+    <!--<item name="android:popupEnterTransition">@transition/popupwindow_exit</item>-->
+    <!--<item name="android:popupExitTransition">@transition/popupwindow_exit</item>-->
+  </style>
+
   <style name="DankPopupMenuTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Large">
   </style>
 
@@ -137,14 +152,14 @@
     <item name="android:elevation">8dp</item>
   </style>
 
-  <style name="EmptyStateEmoji">
+  <style name="ErrorStateEmoji">
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:textColor">@color/gray_400</item>
     <item name="android:textSize">24sp</item>
   </style>
 
-  <style name="EmptyStateMessage">
+  <style name="ErrorStateMessage">
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:layout_marginEnd">@dimen/spacing16</item>
@@ -153,6 +168,12 @@
     <item name="android:lineSpacingExtra">@dimen/spacing4</item>
     <item name="android:textColor">@color/gray_500</item>
     <item name="android:textSize">@dimen/textsize14</item>
+  </style>
+
+  <style name="ErrorStateRetryButton" parent="DankButton.Borderless.Colored">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_marginTop">@dimen/spacing8</item>
   </style>
 
   <style name="DankInfiniteScrollHeaderFooterTextWithIcon">
@@ -274,5 +295,28 @@
     <item name="android:paddingStart">@dimen/spacing12</item>
     <item name="android:paddingTop">@dimen/spacing12</item>
     <item name="android:textColor">@color/gray_300</item>
+  </style>
+
+  <!-- User profile popup -->
+  <style name="DankUserProfilePopupStatsContainer">
+    <item name="android:layout_width">0dp</item>
+    <item name="android:layout_weight">1</item>
+    <item name="android:orientation">vertical</item>
+    <item name="android:layout_height">wrap_content</item>
+  </style>
+
+  <style name="DankUserProfilePopupStatsValue">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:textColor">@color/gray_300</item>
+    <item name="android:textSize">@dimen/textsize18</item>
+  </style>
+
+  <style name="DankUserProfilePopupStatsLabel">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:textSize">@dimen/textsize14</item>
+    <item name="android:textColor">@color/gray_500</item>
+    <item name="android:layout_marginTop">@dimen/spacing4</item>
   </style>
 </resources>

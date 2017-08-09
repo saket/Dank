@@ -47,6 +47,7 @@ public class Strings {
    * <li>89331     -> 89.3k</li>
    * <li>8_933_100 -> 8.9m</li>
    */
+  // TODO: Move to another utility class.
   public static String abbreviateScore(float score) {
     if (score % 1 != 0) {
       throw new UnsupportedOperationException("Decimals weren't planned to be supported");

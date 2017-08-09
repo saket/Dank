@@ -14,4 +14,12 @@
     <attr name="indentationLineColor" format="color" />
     <attr name="indentationLineWidth" format="dimension" />
   </declare-styleable>
+
+  <declare-styleable name="ViewFlipperWithDebugPreview">
+    <attr name="debug_displayedChild" format="integer" />
+  </declare-styleable>
+
+  <declare-styleable name="ErrorStateView">
+    <attr name="emojiVisible" format="boolean" />
+  </declare-styleable>
 </resources>

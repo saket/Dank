@@ -1,0 +1,173 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content"
+  android:background="@color/window_background"
+  android:orientation="vertical">
+
+  <RelativeLayout
+    android:id="@+id/userprofilepopup_header"
+    android:layout_width="284dp"
+    android:layout_height="wrap_content">
+
+    <!-- ContentDescription set in code. -->
+    <ImageView
+      android:id="@+id/userprofilepopup_cover_image"
+      android:layout_width="284dp"
+      android:layout_height="72dp"
+      android:background="@color/gray_900"
+      android:visibility="visible"
+      tools:ignore="ContentDescription" />
+
+    <!-- ContentDescription set in code. -->
+    <ImageView
+      android:id="@+id/userprofilepopup_profile_image"
+      android:layout_width="72dp"
+      android:layout_height="72dp"
+      android:layout_marginStart="@dimen/spacing16"
+      android:layout_alignBottom="@+id/userprofilepopup_username"
+      android:background="@drawable/shape_user_profile_popup_image_placeholder"
+      android:visibility="visible"
+      tools:ignore="ContentDescription" />
+
+    <TextView
+      android:id="@+id/userprofilepopup_username"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="@dimen/spacing12"
+      android:layout_marginStart="@dimen/spacing16"
+      android:layout_marginEnd="@dimen/spacing16"
+      android:layout_below="@+id/userprofilepopup_cover_image"
+      android:layout_toEndOf="@+id/userprofilepopup_profile_image"
+      android:paddingBottom="@dimen/spacing4"
+      android:textColor="@color/color_accent"
+      android:textSize="@dimen/textsize18"
+      tools:text="u/saketme" />
+  </RelativeLayout>
+
+  <LinearLayout
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignEnd="@+id/userprofilepopup_header"
+    android:layout_alignStart="@+id/userprofilepopup_header"
+    android:layout_below="@+id/userprofilepopup_header"
+    android:orientation="vertical">
+
+    <me.saket.dank.widgets.ViewFlipperWithDebugPreview
+      android:id="@+id/userprofilepopup_stats_viewflipper"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:paddingTop="@dimen/spacing16"
+      android:paddingStart="@dimen/spacing16"
+      android:paddingEnd="@dimen/spacing16"
+      android:inAnimation="@anim/fade_in"
+      android:outAnimation="@anim/fade_out"
+      app:debug_displayedChild="0">
+
+      <LinearLayout
+        android:id="@+id/userprofilepopup_stats_container"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <LinearLayout style="@style/DankUserProfilePopupStatsContainer">
+
+          <TextView
+            android:id="@+id/userprofilepopup_account_age"
+            style="@style/DankUserProfilePopupStatsValue"
+            tools:text="5y" />
+
+          <TextView
+            style="@style/DankUserProfilePopupStatsLabel"
+            android:text="@string/userprofilepopup_redditor_since" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/DankUserProfilePopupStatsContainer">
+
+          <TextView
+            android:id="@+id/userprofilepopup_link_karma"
+            style="@style/DankUserProfilePopupStatsValue"
+            tools:text="1.6k" />
+
+          <TextView
+            style="@style/DankUserProfilePopupStatsLabel"
+            android:text="@string/userprofilepopup_link_karma" />
+        </LinearLayout>
+
+        <LinearLayout style="@style/DankUserProfilePopupStatsContainer">
+
+          <TextView
+            android:id="@+id/userprofilepopup_comment_karma"
+            style="@style/DankUserProfilePopupStatsValue"
+            tools:text="2.8k" />
+
+          <TextView
+            style="@style/DankUserProfilePopupStatsLabel"
+            android:text="@string/userprofilepopup_comment_karma" />
+        </LinearLayout>
+      </LinearLayout>
+
+      <FrameLayout
+        android:id="@+id/userprofilepopup_stats_load_progress"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/window_background">
+
+        <ProgressBar
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center"
+          android:indeterminate="true"
+          android:indeterminateTint="@color/white_opacity_40" />
+      </FrameLayout>
+
+      <LinearLayout
+        android:id="@+id/userprofilepopup_stats_load_error"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center_horizontal"
+        android:orientation="vertical">
+
+        <TextView
+          android:id="@+id/userprofilepopup_stats_load_error_message"
+          style="@style/ErrorStateMessage"
+          tools:text="Failed to load profile" />
+
+        <Button
+          android:id="@+id/userprofilepopup_stats_load_error_retry"
+          style="@style/ErrorStateRetryButton"
+          android:layout_marginTop="0dp"
+          android:text="@string/common_error_retry" />
+      </LinearLayout>
+    </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
+
+    <View
+      style="@style/DankSeparator.VerticalContent"
+      android:layout_marginTop="@dimen/spacing16" />
+
+    <Button
+      android:id="@+id/userprofilepopup_send_private_message"
+      style="@style/DankButton.Borderless"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:paddingStart="@dimen/spacing16"
+      android:paddingEnd="@dimen/spacing16"
+      android:background="?attr/selectableItemBackground"
+      android:gravity="start|center_vertical"
+      android:text="@string/userprofilepopup_send_a_private_message" />
+
+    <View style="@style/DankSeparator.VerticalContent" />
+
+    <Button
+      android:id="@+id/userprofilepopup_view_full_profile"
+      style="@style/DankButton.Borderless"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:paddingStart="@dimen/spacing16"
+      android:paddingEnd="@dimen/spacing16"
+      android:background="?attr/selectableItemBackground"
+      android:gravity="start|center_vertical"
+      android:text="@string/userprofilepopup_view_full_profile" />
+  </LinearLayout>
+</RelativeLayout>

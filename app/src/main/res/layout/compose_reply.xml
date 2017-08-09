@@ -61,7 +61,7 @@
 
       <Button
         android:id="@+id/composereply_send"
-        style="@style/DankButton.Borderless"
+        style="@style/DankButton.Borderless.Colored"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/composereply_send" />

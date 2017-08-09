@@ -8,13 +8,13 @@
 
     <TextView
         android:id="@+id/emptystate_emoji"
-        style="@style/EmptyStateEmoji"
+        style="@style/ErrorStateEmoji"
         android:layout_marginBottom="@dimen/spacing8"
         tools:text="@string/inbox_empty_state_title" />
 
     <TextView
         android:id="@+id/emptystate_message"
-        style="@style/EmptyStateMessage"
+        style="@style/ErrorStateMessage"
         android:layout_marginTop="@dimen/spacing4"
         tools:text="@string/inbox_empty_state_message_for_username_mentions" />
 </LinearLayout>
