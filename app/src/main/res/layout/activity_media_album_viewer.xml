@@ -1,6 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <FrameLayout android:id="@+id/mediaalbumviewer_root"
   xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   android:background="@color/black_opacity_60"
@@ -18,55 +19,28 @@
     android:layout_height="match_parent"
     android:layout_gravity="bottom"
     android:background="@color/transparent"
-    android:elevation="10dp"
-    android:gravity="bottom">
+    android:gravity="bottom"
+    tools:ignore="ContentDescription">
 
+    <!-- ContentDescription for these buttons are set programatically -->
     <ImageButton
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_weight="1"
-      android:background="?attr/selectableItemBackgroundBorderless"
-      android:elevation="10dp"
-      android:layout_marginStart="@dimen/spacing8"
-      android:layout_marginEnd="@dimen/spacing8"
-      android:layout_marginBottom="@dimen/spacing24"
-      android:padding="@dimen/spacing4"
+      android:id="@+id/mediaalbumviewer_share"
+      style="@style/DankMediaAlbumViewerOption"
       android:src="@drawable/ic_share_24dp" />
 
     <ImageButton
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_weight="1"
-      android:background="?attr/selectableItemBackgroundBorderless"
-      android:elevation="10dp"
-      android:layout_marginStart="@dimen/spacing8"
-      android:layout_marginEnd="@dimen/spacing8"
-      android:layout_marginBottom="@dimen/spacing24"
-      android:padding="@dimen/spacing4"
+      android:id="@+id/mediaalbumviewer_download"
+      style="@style/DankMediaAlbumViewerOption"
       android:src="@drawable/ic_cloud_download_24dp" />
 
     <ImageButton
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_weight="1"
-      android:background="?attr/selectableItemBackgroundBorderless"
-      android:elevation="10dp"
-      android:layout_marginStart="@dimen/spacing8"
-      android:layout_marginEnd="@dimen/spacing8"
-      android:layout_marginBottom="@dimen/spacing24"
-      android:padding="@dimen/spacing4"
-      android:src="@drawable/ic_open_in_browser_24dp" />
+      android:id="@+id/mediaalbumviewer_open_in_browser"
+      style="@style/DankMediaAlbumViewerOption"
+      android:src="@drawable/ic_web_browser_24dp" />
 
     <ImageButton
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_weight="1"
-      android:background="?attr/selectableItemBackgroundBorderless"
-      android:elevation="10dp"
-      android:layout_marginStart="@dimen/spacing8"
-      android:layout_marginEnd="@dimen/spacing8"
-      android:layout_marginBottom="@dimen/spacing24"
-      android:padding="@dimen/spacing4"
+      android:id="@+id/mediaalbumviewer_reload_in_hd"
+      style="@style/DankMediaAlbumViewerOption"
       android:src="@drawable/ic_hd_24dp" />
   </LinearLayout>
 </FrameLayout>

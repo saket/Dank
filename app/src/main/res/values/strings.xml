@@ -137,7 +137,7 @@
   <!-- WebView -->
   <string name="webview_open_in_browser">Open in browser</string>
   <string name="webview_share">Share…</string>
-  <string name="webview_share_via">Share via</string>
+  <string name="webview_share_sheet_title">Share with</string>
   <string name="webview_refresh">Refresh</string>
 
   <!-- User Preferences -->
@@ -195,6 +195,19 @@
   <!-- Media -->
   <string name="cd_videoplayer_toggle_mute">Toggle mute</string>
   <string name="cd_videoplayer_toggle_fullscreen">Toggle fullscreen</string>
+  <string name="cd_mediaalbumviewer_share_image">Share image</string>
+  <string name="cd_mediaalbumviewer_download_image">Download image</string>
+  <string name="cd_mediaalbumviewer_open_image_in_browser">Open image in browser</string>
+  <string name="cd_mediaalbumviewer_reload_image_in_high_def">Load full-resolution image</string>
+  <string name="cd_mediaalbumviewer_share_video">Share video</string>
+  <string name="cd_mediaalbumviewer_download_video">Download video</string>
+  <string name="cd_mediaalbumviewer_open_video_in_browser">Open video in browser</string>
+  <string name="cd_mediaalbumviewer_reload_video_in_high_def">Load full-resolution video</string>
+  <string name="mediaalbumviewer_share_image">Share image</string>
+  <string name="mediaalbumviewer_share_image_link">Share image link</string>
+  <string name="mediaalbumviewer_share_sheet_title">Share with</string>
+  <string name="mediaalbumviewer_share_image_not_loaded_yet">Image hasn\'t been loaded yet</string>
+  <string name="mediaalbumviewer_share_video_not_loaded_yet">Video hasn\'t been loaded yet</string>
 
   <!-- User profile popup -->
   <string name="userprofilepopup_send_a_private_message">Message</string>

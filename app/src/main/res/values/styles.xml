@@ -227,7 +227,6 @@
   <style name="DankPopupMenu.SubredditOptions">
     <item name="android:dropDownHorizontalOffset">@dimen/popup_menu_horizontal_offset_for_button</item>
     <item name="android:dropDownVerticalOffset">-4dp</item>
-
     <item name="overlapAnchor">false</item>
     <item name="android:overlapAnchor">false</item>
   </style>
@@ -316,5 +315,16 @@
     <item name="android:textSize">@dimen/textsize14</item>
     <item name="android:textColor">@color/gray_500</item>
     <item name="android:layout_marginTop">@dimen/spacing4</item>
+  </style>
+
+  <style name="DankMediaAlbumViewerOption">
+    <item name="android:layout_width">0dp</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_weight">1</item>
+    <item name="android:background">?attr/selectableItemBackgroundBorderless</item>
+    <item name="android:layout_marginStart">@dimen/spacing8</item>
+    <item name="android:layout_marginEnd">@dimen/spacing8</item>
+    <item name="android:layout_marginBottom">@dimen/spacing24</item>
+    <item name="android:padding">@dimen/spacing4</item>
   </style>
 </resources>

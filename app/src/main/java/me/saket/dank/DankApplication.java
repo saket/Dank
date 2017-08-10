@@ -38,6 +38,7 @@ public class DankApplication extends Application {
       if (e instanceof IOException) {
         // Fine, file/network problem or API that throws on cancellation.
         Timber.w("IOException");
+        e.printStackTrace();
         return;
       }
       if (e instanceof InterruptedException || e.getCause() instanceof InterruptedIOException) {

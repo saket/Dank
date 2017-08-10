@@ -308,5 +308,4 @@ public class UrlParser {
   private static boolean isGifUrlPath(String urlPath) {
     return urlPath.endsWith(".gif");
   }
-
 }

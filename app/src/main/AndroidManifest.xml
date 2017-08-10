@@ -1,7 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest package="me.saket.dank"
-  xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:tools="http://schemas.android.com/tools">
+  xmlns:android="http://schemas.android.com/apk/res/android">
 
   <uses-permission android:name="android.permission.INTERNET" />
 
@@ -73,6 +72,7 @@
 
     <activity
       android:name=".ui.media.MediaAlbumViewerActivity"
+      android:exported="true"
       android:theme="@style/DankTheme.TransparentBackground.Fullscreen" />
 
     <service
@@ -101,5 +101,16 @@
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <receiver android:name=".notifs.NotificationActionReceiver" />
+
+    <provider
+      android:name="android.support.v4.content.FileProvider"
+      android:authorities="@string/file_provider_authority"
+      android:exported="false"
+      android:grantUriPermissions="true">
+      <meta-data
+        android:name="android.support.FILE_PROVIDER_PATHS"
+        android:resource="@xml/file_provider_paths" />
+    </provider>
+
   </application>
 </manifest>

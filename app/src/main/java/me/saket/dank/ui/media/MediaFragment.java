@@ -1,8 +1,8 @@
 package me.saket.dank.ui.media;
 
 import android.content.Context;
-import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Size;
@@ -13,7 +13,7 @@ import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.BitmapImageViewTarget;
+import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 import com.github.rahatarmanahmed.cpv.CircularProgressView;
 import com.github.rahatarmanahmed.cpv.CircularProgressViewAdapter;
@@ -40,8 +40,9 @@ public class MediaFragment extends DankFragment {
   @BindView(R.id.imageviewer_imageview) ZoomableImageView imageView;
   @BindView(R.id.imageviewer_progress) CircularProgressView progressView;
 
-  interface OnMediaItemClickListener {
+  interface Callbacks {
     void onClickMediaItem();
+    int getDeviceDisplayWidth();
   }
 
   static MediaFragment create(MediaAlbumItem mediaAlbumItem) {
@@ -56,7 +57,7 @@ public class MediaFragment extends DankFragment {
   public void onAttach(Context context) {
     super.onAttach(context);
 
-    if (!(getActivity() instanceof OnMediaItemClickListener)) {
+    if (!(getActivity() instanceof Callbacks)) {
       throw new AssertionError("Activity doesn't implement OnMediaItemClickListener");
     }
     if (!(getActivity() instanceof FlickGestureListener.GestureCallbacks)) {
@@ -79,7 +80,7 @@ public class MediaFragment extends DankFragment {
 
     //noinspection ConstantConditions
     MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
-    int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+    int deviceDisplayWidth = ((Callbacks) getActivity()).getDeviceDisplayWidth();
     assert mediaAlbumItem != null;
 
     imageView.setGestureRotationEnabled(true);
@@ -108,15 +109,14 @@ public class MediaFragment extends DankFragment {
     setupFlickGestures(imageContainerView);
 
     // Toggle immersive when the user clicks anywhere.
-    imageView.setOnClickListener(v -> ((OnMediaItemClickListener) getActivity()).onClickMediaItem());
+    imageView.setOnClickListener(v -> ((Callbacks) getActivity()).onClickMediaItem());
   }
 
   private void loadImage(String imageUrl) {
-    ImageLoadProgressTarget<Bitmap> progressTarget = new ImageLoadProgressTarget<>(new BitmapImageViewTarget(imageView), progressView);
+    ImageLoadProgressTarget<Drawable> progressTarget = new ImageLoadProgressTarget<>(new DrawableImageViewTarget(imageView), progressView);
     progressTarget.setModel(getActivity(), imageUrl);
 
     Glide.with(getActivity())
-        .asBitmap()
         .load(imageUrl)
 
         //.apply(new RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
@@ -127,9 +127,9 @@ public class MediaFragment extends DankFragment {
             return new Size(1, 1);
           }
         }))
-        .listener(new GlideUtils.SimpleRequestListener<Bitmap>() {
+        .listener(new GlideUtils.SimpleRequestListener<Drawable>() {
           @Override
-          public void onResourceReady(Bitmap resource) {
+          public void onResourceReady(Drawable resource) {
             imageView.setVisibility(View.VISIBLE);
           }
 
@@ -145,9 +145,7 @@ public class MediaFragment extends DankFragment {
     FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(getContext()), imageView);
     flickListener.setFlickThresholdSlop(.5f, imageView);    // Dismiss once the image is swiped 50% away from its original location.
     flickListener.setGestureCallbacks((FlickGestureListener.GestureCallbacks) getActivity());
-    flickListener.setContentHeightProvider(() -> {
-      return (int) imageView.getZoomedImageHeight();
-    });
+    flickListener.setContentHeightProvider(() -> (int) imageView.getZoomedImageHeight());
     flickListener.setOnGestureIntercepter((deltaY) -> {
       // Don't listen for flick gestures if the image can pan further.
       boolean isScrollingUpwards = deltaY < 0;

@@ -24,4 +24,8 @@ public class MediaAlbumPagerAdapter extends FragmentStatePagerAdapter {
   public int getCount() {
     return albumItems != null ? albumItems.size() : 0;
   }
+
+  public List<MediaAlbumItem> getDataSet() {
+    return albumItems;
+  }
 }

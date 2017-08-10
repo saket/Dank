@@ -1,8 +1,11 @@
 package me.saket.dank.utils;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
+import android.support.annotation.Nullable;
+import android.support.v4.app.ShareCompat;
 
 /**
  * Utility methods related to Intents.
@@ -19,21 +22,30 @@ public class Intents {
   }
 
   /**
-   * Create an Intent for opening an Url in the browser.
+   * For opening an Url in the browser.
    */
   public static Intent createForOpeningUrl(String url) {
     return new Intent(Intent.ACTION_VIEW).setData(Uri.parse(url));
   }
 
   /**
-   * Create an Intent for sharing an Url and its title. Not all apps support reading the title though.
+   * For sharing an Url and its title. Not all apps support reading the title though.
    */
-  public static Intent createForSharingUrl(String title, String url) {
+  public static Intent createForSharingUrl(@Nullable String title, String url) {
     Intent intent = new Intent(Intent.ACTION_SEND);
     intent.setType("text/plain");
+    if (title != null && !title.isEmpty()) {
+      intent.putExtra(Intent.EXTRA_SUBJECT, title);
+    }
     intent.putExtra(Intent.EXTRA_TEXT, url);
-    intent.putExtra(Intent.EXTRA_SUBJECT, title);
     return intent;
   }
 
+  public static Intent createForSharingImage(Activity activity, Uri imageContentUri) {
+    return ShareCompat.IntentBuilder.from(activity)
+        .addStream(imageContentUri)
+        .setType("image/*")
+        .getIntent()
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+  }
 }

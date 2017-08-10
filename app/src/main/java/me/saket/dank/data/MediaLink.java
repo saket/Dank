@@ -44,6 +44,10 @@ public class MediaLink extends Link {
     return type;
   }
 
+  public String originalUrl() {
+    return url;
+  }
+
   /**
    * Used in {@link #optimizedImageUrl(int)}.
    */
@@ -59,6 +63,10 @@ public class MediaLink extends Link {
    * Use this only for images.
    */
   public String optimizedImageUrl(int optimizeForWidth) {
+    if (isVideo()) {
+      throw new IllegalStateException("Cannot optimize video URLs");
+    }
+
     if (canUseRedditOptimizedImageUrl && redditSuppliedImages != null) {
       return Commons.findOptimizedImage(redditSuppliedImages, optimizeForWidth);
     } else {

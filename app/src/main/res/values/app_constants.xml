@@ -4,6 +4,7 @@
   <string name="reddit_app_redirect_url">http://saket.me</string>
 
   <integer name="recycle_drafts_older_than_num_days">14</integer>
+  <string name="file_provider_authority">me.saket.dank.fileprovider</string>
 
   <string-array name="default_subreddits">
     <item>Frontpage</item>
