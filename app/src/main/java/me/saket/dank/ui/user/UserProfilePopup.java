@@ -2,6 +2,7 @@ package me.saket.dank.ui.user;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
+import android.content.res.Resources;
 import android.support.annotation.IdRes;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -14,13 +15,16 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.disposables.CompositeDisposable;
-import java.util.Date;
 import me.saket.dank.R;
 import me.saket.dank.data.RedditLink;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Strings;
+import org.threeten.bp.Instant;
+import org.threeten.bp.LocalDate;
+import org.threeten.bp.Period;
+import org.threeten.bp.ZoneId;
 
 public class UserProfilePopup extends PopupWindowWithTransition {
 
@@ -70,9 +74,13 @@ public class UserProfilePopup extends PopupWindowWithTransition {
                 userAccount -> {
                   showStatsLoadState(StatsLoadState.FETCHED);
 
-                  accountAgeView.setText(constructAccountAgeSinceText(userAccount.getCreated()));
                   linkKarmaView.setText(Strings.abbreviateScore(userAccount.getLinkKarma()));
                   commentKarmaView.setText(Strings.abbreviateScore(userAccount.getCommentKarma()));
+
+                  LocalDate accountCreationDate = Instant.ofEpochMilli(userAccount.getCreated().getTime()).atZone(ZoneId.of("UTC")).toLocalDate();
+                  LocalDate nowDate = LocalDate.now(ZoneId.of("UTC"));
+                  String timeDuration = constructShortTimeDuration(accountCreationDate, nowDate);
+                  accountAgeView.setText(timeDuration);
                 },
                 error -> {
                   showStatsLoadState(StatsLoadState.ERROR);
@@ -84,13 +92,17 @@ public class UserProfilePopup extends PopupWindowWithTransition {
     );
   }
 
-  private String constructAccountAgeSinceText(Date createdDate) {
-    // TODO: Implement this.
-    //DateTime accountCreationDate = DateTime.forInstant(createdDate.getTime(), TimeZone.getTimeZone("UTC"));
-    //DateTime nowDate = DateTime.forInstant(System.currentTimeMillis(), TimeZone.getTimeZone("UTC"));
-    //int diffYear = endCalendar.get(Calendar.YEAR) - startCalendar.get(Calendar.YEAR);
-    //int diffMonth = diffYear * 12 + endCalendar.get(Calendar.MONTH) - startCalendar.get(Calendar.MONTH);
-    return "2m";
+  private String constructShortTimeDuration(LocalDate startDate, LocalDate endDate) {
+    Period period = startDate.until(endDate);
+    Resources resources = accountAgeView.getResources();
+
+    if (period.getMonths() < 0) {
+      return resources.getString(R.string.userprofilepopup_account_age_in_days, period.getDays());
+    } else if (period.getYears() < 0) {
+      return resources.getString(R.string.userprofilepopup_account_age_in_months, period.getMonths());
+    } else {
+      return resources.getString(R.string.userprofilepopup_account_age_in_years, period.getYears());
+    }
   }
 
   private void showStatsLoadState(StatsLoadState loadState) {

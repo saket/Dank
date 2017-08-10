@@ -115,6 +115,7 @@ dependencies {
     compile 'com.trello.navi2:navi:2.0'
     compile 'com.darwinsys:hirondelle-date4j:1.5.1'
     compile 'com.squareup.tape2:tape:2.0.0-SNAPSHOT'
+    compile 'com.jakewharton.threetenabp:threetenabp:1.0.5'
 
     // Reddit API wrapper.
     compile 'com.github.Saketme:JRAW:6864908f28'
