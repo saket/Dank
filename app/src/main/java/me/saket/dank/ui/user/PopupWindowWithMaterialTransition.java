@@ -17,16 +17,15 @@ import android.view.WindowManager;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import me.saket.dank.R;
-import timber.log.Timber;
 
 /**
  * Mimics {@link PopupMenu}'s API 23+ entry animation and enables dismiss-on-outside-touch.
  */
-public abstract class PopupWindowWithTransition extends PopupWindow {
+public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
 
   private final WindowManager windowManager;
 
-  public PopupWindowWithTransition(Context context) {
+  public PopupWindowWithMaterialTransition(Context context) {
     super(context, null, 0, R.style.DankPopupWindow);
     windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
   }

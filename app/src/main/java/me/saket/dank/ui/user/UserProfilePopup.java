@@ -28,7 +28,7 @@ import org.threeten.bp.LocalDate;
 import org.threeten.bp.Period;
 import org.threeten.bp.ZoneId;
 
-public class UserProfilePopup extends PopupWindowWithTransition {
+public class UserProfilePopup extends PopupWindowWithMaterialTransition {
 
   @BindView(R.id.userprofilepopup_cover_image) ImageView coverImageView;
   @BindView(R.id.userprofilepopup_profile_image) ImageView profileImageView;
