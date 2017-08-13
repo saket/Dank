@@ -53,7 +53,7 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     showAtLocation(anchorView, Gravity.TOP | Gravity.START, positionToShow.x, positionToShow.y);
 
     addBackgroundDimming();
-    playPopupEnterTransition(anchorView, showLocation);
+    playPopupEnterTransition(showLocation);
   }
 
   private void addBackgroundDimming() {
@@ -64,7 +64,7 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     windowManager.updateViewLayout(decorView, params);
   }
 
-  private void playPopupEnterTransition(View anchorView, Point showLocation) {
+  private void playPopupEnterTransition(Point showLocation) {
     ViewGroup popupDecorView = (ViewGroup) getContentView().getRootView();
     final Transition enterTransition = TransitionInflater.from(popupDecorView.getContext()).inflateTransition(R.transition.popupwindow_enter);
 
@@ -78,7 +78,8 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
           observer.removeOnGlobalLayoutListener(this);
         }
 
-        final Rect epicenter = calculateEpicenterBounds(anchorView, showLocation);
+        // Note: EpicenterTranslateClipReveal uses the epicenter's center location for animation.
+        Rect epicenter = new Rect(showLocation.x, showLocation.y, showLocation.x, showLocation.y);
         enterTransition.setEpicenterCallback(new EpicenterCallback() {
           @Override
           public Rect onGetEpicenter(Transition transition) {
@@ -101,23 +102,6 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
         }
       }
     });
-  }
-
-  /**
-   * Note: {@link EpicenterTranslateClipReveal} uses the epicenter's center location for animation.
-   */
-  private Rect calculateEpicenterBounds(View anchorView, Point showLocation) {
-    int[] anchorLocation = new int[2];
-    anchorView.getLocationOnScreen(anchorLocation);
-
-    int[] decorLocation = new int[2];
-    View decorView = getContentView().getRootView();
-    decorView.getLocationOnScreen(decorLocation);
-
-    // Compute the position of the anchor relative to the popup.
-    final Rect bounds = new Rect(showLocation.x, showLocation.y, showLocation.x, showLocation.y);
-    bounds.offset(anchorLocation[0] - decorLocation[0], anchorLocation[1] - decorLocation[1]);
-    return bounds;
   }
 
   public Point calculatePositionToAvoidGoingOutsideWindow(Point anchorLocation, View contentView, boolean isTopGravity) {
