@@ -15,6 +15,7 @@
     <me.saket.dank.widgets.DankToolbar
       android:id="@+id/toolbar"
       style="@style/DankToolbar"
+      android:layout_marginBottom="220dp"
       app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
     <Button
@@ -22,7 +23,7 @@
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:layout_marginTop="@dimen/spacing16"
-      android:layout_marginStart="16dp"
+      android:layout_marginStart="@dimen/spacing16"
       android:text="User profile"
       tools:ignore="HardcodedText" />
 
@@ -30,7 +31,7 @@
       android:id="@+id/playground_menupopup"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_marginStart="16dp"
+      android:layout_marginStart="@dimen/spacing16"
       android:text="User profile"
       tools:ignore="HardcodedText" />
   </LinearLayout>

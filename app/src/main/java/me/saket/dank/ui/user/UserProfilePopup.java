@@ -3,7 +3,9 @@ package me.saket.dank.ui.user;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
+import android.graphics.Point;
 import android.support.annotation.IdRes;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.widget.Button;
@@ -90,6 +92,14 @@ public class UserProfilePopup extends PopupWindowWithTransition {
                   errorStateRetryButton.setOnClickListener(v -> loadUserProfile(userLink));
                 })
     );
+  }
+
+  public void showWithAnchor(View anchorView) {
+    super.showWithAnchor(anchorView, Gravity.TOP | Gravity.START);
+  }
+
+  public void showAtLocation(View anchorView, Point location) {
+    super.showAtLocation(anchorView, Gravity.TOP | Gravity.START, location);
   }
 
   private String constructShortTimeDuration(LocalDate startDate, LocalDate endDate) {

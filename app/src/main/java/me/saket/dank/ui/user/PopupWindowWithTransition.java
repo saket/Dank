@@ -1,19 +1,23 @@
 package me.saket.dank.ui.user;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.transition.Transition;
 import android.transition.Transition.EpicenterCallback;
 import android.transition.TransitionInflater;
 import android.transition.TransitionManager;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.ViewGroup.LayoutParams;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.WindowManager;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import me.saket.dank.R;
+import timber.log.Timber;
 
 /**
  * Mimics {@link PopupMenu}'s API 23+ entry animation and enables dismiss-on-outside-touch.
@@ -27,13 +31,13 @@ public abstract class PopupWindowWithTransition extends PopupWindow {
     windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
   }
 
-  /**
-   * In case there is stuff to do right before displaying.
-   */
-  protected void onShow() {
+  public void showWithAnchor(View anchorView, int gravity) {
+    int[] anchorViewLoc = new int[2];
+    anchorView.getLocationOnScreen(anchorViewLoc);
+    showAtLocation(anchorView, gravity, new Point(anchorViewLoc[0], anchorViewLoc[1]));
   }
 
-  public void show(View anchorView) {
+  public void showAtLocation(View anchorView, int gravity, Point showLocation) {
     if (getContentView() == null) {
       throw new IllegalStateException("setContentView was not called with a view to display.");
     }
@@ -45,13 +49,12 @@ public abstract class PopupWindowWithTransition extends PopupWindow {
     setFocusable(true);
     setOutsideTouchable(true);
 
-    // Callback for subclasses.
-    onShow();
-
-    showAsDropDown(anchorView);
+    boolean isTopGravity = (gravity | Gravity.TOP) == gravity;
+    Point positionToShow = calculatePositionToAvoidGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
+    showAtLocation(anchorView, Gravity.TOP | Gravity.START, positionToShow.x, positionToShow.y);
 
     addBackgroundDimming();
-    playPopupEnterTransition(anchorView);
+    playPopupEnterTransition(anchorView, showLocation);
   }
 
   private void addBackgroundDimming() {
@@ -62,7 +65,7 @@ public abstract class PopupWindowWithTransition extends PopupWindow {
     windowManager.updateViewLayout(decorView, params);
   }
 
-  private void playPopupEnterTransition(View anchorView) {
+  private void playPopupEnterTransition(View anchorView, Point showLocation) {
     ViewGroup popupDecorView = (ViewGroup) getContentView().getRootView();
     final Transition enterTransition = TransitionInflater.from(popupDecorView.getContext()).inflateTransition(R.transition.popupwindow_enter);
 
@@ -76,7 +79,7 @@ public abstract class PopupWindowWithTransition extends PopupWindow {
           observer.removeOnGlobalLayoutListener(this);
         }
 
-        final Rect epicenter = calculateEpicenterBounds(anchorView);
+        final Rect epicenter = calculateEpicenterBounds(anchorView, showLocation);
         enterTransition.setEpicenterCallback(new EpicenterCallback() {
           @Override
           public Rect onGetEpicenter(Transition transition) {
@@ -99,21 +102,47 @@ public abstract class PopupWindowWithTransition extends PopupWindow {
         }
       }
     });
-
   }
 
-  private Rect calculateEpicenterBounds(View anchorView) {
+  /**
+   * Note: {@link EpicenterTranslateClipReveal} uses the epicenter's center location for animation.
+   */
+  private Rect calculateEpicenterBounds(View anchorView, Point showLocation) {
     int[] anchorLocation = new int[2];
     anchorView.getLocationOnScreen(anchorLocation);
 
-    int[] popupLocation = new int[2];
+    int[] decorLocation = new int[2];
     View decorView = getContentView().getRootView();
-    decorView.getLocationOnScreen(popupLocation);
-
+    decorView.getLocationOnScreen(decorLocation);
 
     // Compute the position of the anchor relative to the popup.
-    final Rect bounds = new Rect(0, 0, anchorView.getWidth(), anchorView.getHeight());
-    bounds.offset(anchorLocation[0] - popupLocation[0], anchorLocation[1] - popupLocation[1]);
+    final Rect bounds = new Rect(showLocation.x, showLocation.y, showLocation.x, showLocation.y);
+    bounds.offset(anchorLocation[0] - decorLocation[0], anchorLocation[1] - decorLocation[1]);
     return bounds;
+  }
+
+  public Point calculatePositionToAvoidGoingOutsideWindow(Point anchorLocation, View contentView, boolean isTopGravity) {
+    contentView.measure(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
+    int contentWidth = contentView.getMeasuredWidth();
+    int contentHeight = contentView.getMeasuredHeight();
+
+    Point displaySize = new Point();
+    windowManager.getDefaultDisplay().getSize(displaySize);
+    int screenWidth = displaySize.x;
+    int screenHeight = displaySize.y;
+
+    int xPos = anchorLocation.x;
+    int yPos = anchorLocation.y;
+
+    // Display above the anchor view.
+    if (isTopGravity || yPos + contentHeight > screenHeight) {
+      yPos = anchorLocation.y - contentHeight;
+    }
+
+    // Keep the right edge of the popup on the screen.
+    if (xPos + contentWidth > screenWidth) {
+      xPos = anchorLocation.x - ((anchorLocation.x + contentWidth) - screenWidth);
+    }
+    return new Point(xPos, yPos);
   }
 }

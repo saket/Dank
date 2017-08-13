@@ -191,7 +191,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         if (parsedLink instanceof RedditLink.User) {
           UserProfilePopup userProfilePopup = new UserProfilePopup(getActivity());
           userProfilePopup.loadUserProfile(((RedditLink.User) parsedLink));
-          userProfilePopup.show(textView);
+          userProfilePopup.showAtLocation(textView, clickedUrlCoordinates);
         } else {
           OpenUrlActivity.handle(getActivity(), parsedLink, clickedUrlCoordinatesRect);
         }
@@ -573,26 +573,21 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - Views.statusBarHeight(contentVideoView.getResources());
 
         int boundedVisibleImageHeight = (int) Math.min(contentHeightWithoutKeyboard, contentImageView.getVisibleZoomedImageHeight());
-
-        Timber.i("---------------------");
-        Timber.i("boundedVisibleImageHeight: %s", boundedVisibleImageHeight);
-        Timber.i("contentHeightWithoutKeyboard: %s", contentHeightWithoutKeyboard);
-        Timber.i("ImageView visible h: %s", contentImageView.getVisibleZoomedImageHeight());
         int boundedVisibleImageHeightMinusToolbar = boundedVisibleImageHeight - commentListParentSheet.getTop();
         commentListParentSheet.setMaxScrollY(boundedVisibleImageHeightMinusToolbar);
 
         if (isCommentSheetBeneathImage
             // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
             // it becomes difficult to lock the comments sheet beneath the image.
-            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
+            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
+        {
           commentListParentSheet.scrollTo(boundedVisibleImageHeightMinusToolbar);
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
       }
 
       @Override
-      public void onStateReset(State oldState, State newState) {
-      }
+      public void onStateReset(State oldState, State newState) {}
     });
     commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
       isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();

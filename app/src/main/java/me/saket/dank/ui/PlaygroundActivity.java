@@ -34,7 +34,7 @@ public class PlaygroundActivity extends DankPullCollapsibleActivity {
   void onClickShowProfilePopup(Button button) {
     UserProfilePopup userProfilePopup = new UserProfilePopup(this);
     userProfilePopup.loadUserProfile((User) UrlParser.parse("http://reddit.com/u/saketme"));
-    userProfilePopup.show(button);
+    userProfilePopup.showWithAnchor(button);
   }
 
   @OnClick(R.id.playground_menupopup)
@@ -45,5 +45,4 @@ public class PlaygroundActivity extends DankPullCollapsibleActivity {
     popupMenu.getMenu().add("Poop");
     popupMenu.show();
   }
-
 }
