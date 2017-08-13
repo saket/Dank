@@ -74,11 +74,10 @@ import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
-import me.saket.dank.ui.OpenUrlActivity;
+import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
-import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -182,25 +181,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
     linkMovementMethod.setOnLinkClickListener((textView, url) -> {
-      // TODO: 18/03/17 Remove try/catch block
-      try {
-        Link parsedLink = UrlParser.parse(url);
-        Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
-        Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
+      Link parsedLink = UrlParser.parse(url);
+      Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
 
-        if (parsedLink instanceof RedditLink.User) {
-          UserProfilePopup userProfilePopup = new UserProfilePopup(getActivity());
-          userProfilePopup.loadUserProfile(((RedditLink.User) parsedLink));
-          userProfilePopup.showAtLocation(textView, clickedUrlCoordinates);
-        } else {
-          OpenUrlActivity.handle(getActivity(), parsedLink, clickedUrlCoordinatesRect);
-        }
-        return true;
-
-      } catch (Exception e) {
-        Timber.i(e, "Couldn't parse URL: %s", url);
-        return false;
+      if (parsedLink instanceof RedditLink.User) {
+        UrlRouter.openUserProfilePopup(((RedditLink.User) parsedLink), textView, clickedUrlCoordinates);
+      } else {
+        UrlRouter.resolveAndOpen(parsedLink, getActivity(), clickedUrlCoordinates);
       }
+      return true;
     });
     selfPostTextView.setMovementMethod(linkMovementMethod);
 
@@ -579,15 +568,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         if (isCommentSheetBeneathImage
             // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
             // it becomes difficult to lock the comments sheet beneath the image.
-            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
-        {
+            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
           commentListParentSheet.scrollTo(boundedVisibleImageHeightMinusToolbar);
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
       }
 
       @Override
-      public void onStateReset(State oldState, State newState) {}
+      public void onStateReset(State oldState, State newState) {
+      }
     });
     commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
       isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
@@ -880,7 +869,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           contentLoadProgressView.hide();
           //noinspection ConstantConditions
           unsubscribeOnCollapse(linkDetailsViewHolder.populate(((RedditLink) contentLink)));
-          linkDetailsView.setOnClickListener(o -> OpenUrlActivity.handle(getContext(), contentLink, null));
+          linkDetailsView.setOnClickListener(o -> UrlRouter.resolveAndOpen(contentLink, getContext()));
         }
         break;
 
@@ -890,7 +879,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             submission.getThumbnails(),
             linkDetailsViewHolder.getThumbnailWidthForExternalLink()
         );
-        linkDetailsView.setOnClickListener(o -> OpenUrlActivity.handle(getContext(), contentLink, null));
+        linkDetailsView.setOnClickListener(o -> UrlRouter.resolveAndOpen(contentLink, getContext()));
 
         if (isImgurAlbum) {
           linkDetailsViewHolder.populate(((MediaLink.ImgurAlbum) contentLink), redditSuppliedThumbnail);

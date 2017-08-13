@@ -33,7 +33,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
-import me.saket.dank.ui.OpenUrlActivity;
+import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.UrlParser;
@@ -95,7 +95,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
       Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
 
       Link parsedLink = UrlParser.parse(url);
-      OpenUrlActivity.handle(this, parsedLink, clickedUrlCoordinatesRect);
+      UrlRouter.resolveAndOpen(parsedLink, this, clickedUrlCoordinatesRect);
       return true;
     });
 

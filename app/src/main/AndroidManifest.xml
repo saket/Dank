@@ -42,8 +42,6 @@
 
     <activity android:name=".ui.webview.WebViewActivity" />
 
-    <activity android:name=".ui.OpenUrlActivity" />
-
     <activity android:name=".ui.submission.SubmissionFragmentActivity" />
 
     <activity

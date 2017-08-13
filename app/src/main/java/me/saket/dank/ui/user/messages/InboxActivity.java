@@ -37,7 +37,7 @@ import me.saket.dank.data.Link;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.NotificationActionReceiver;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
-import me.saket.dank.ui.OpenUrlActivity;
+import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.utils.Arrays;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.JrawUtils;
@@ -184,7 +184,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
 
       Link parsedLink = UrlParser.parse(url);
-      OpenUrlActivity.handle(this, parsedLink, clickedUrlCoordinatesRect);
+      UrlRouter.resolveAndOpen(parsedLink, this, clickedUrlCoordinatesRect);
       return true;
     });
     return commentLinkMovementMethod;
@@ -199,7 +199,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     if (message.isComment()) {
       String commentUrl = "https://reddit.com" + message.getDataNode().get("context").asText();
       Link parsedLink = UrlParser.parse(commentUrl);
-      OpenUrlActivity.handle(this, parsedLink, messageItemViewRect);
+      UrlRouter.resolveAndOpen(parsedLink, this, messageItemViewRect);
 
     } else {
       String secondPartyName = JrawUtils.secondPartyName(getResources(), message, Dank.userSession().loggedInUserName());
