@@ -7,6 +7,7 @@ import android.transition.Transition;
 import android.transition.Transition.EpicenterCallback;
 import android.transition.TransitionInflater;
 import android.transition.TransitionManager;
+import android.util.Size;
 import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
@@ -17,6 +18,7 @@ import android.view.WindowManager;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 import me.saket.dank.R;
+import timber.log.Timber;
 
 /**
  * Mimics {@link PopupMenu}'s API 23+ entry animation and enables dismiss-on-outside-touch.
@@ -24,6 +26,8 @@ import me.saket.dank.R;
 public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
 
   private final WindowManager windowManager;
+  private int gravity;
+  private Point showLocation;
 
   public PopupWindowWithMaterialTransition(Context context) {
     super(context, null, 0, R.style.DankPopupWindow);
@@ -37,6 +41,9 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
   }
 
   public void showAtLocation(View anchorView, int gravity, Point showLocation) {
+    this.gravity = gravity;
+    this.showLocation = showLocation;
+
     if (getContentView() == null) {
       throw new IllegalStateException("setContentView was not called with a view to display.");
     }
@@ -49,11 +56,42 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     setOutsideTouchable(true);
 
     boolean isTopGravity = (gravity | Gravity.TOP) == gravity;
-    Point positionToShow = calculatePositionToAvoidGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
+    Point positionToShow = calculatePositionWithAnchorWithoutGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
     showAtLocation(anchorView, Gravity.TOP | Gravity.START, positionToShow.x, positionToShow.y);
 
     addBackgroundDimming();
     playPopupEnterTransition(showLocation);
+
+    getContentView().getViewTreeObserver().addOnGlobalLayoutListener(updatePopupPositionOnContentSizeChangeListener);
+  }
+
+  @Override
+  public void dismiss() {
+    getContentView().getViewTreeObserver().removeOnGlobalLayoutListener(updatePopupPositionOnContentSizeChangeListener);
+    super.dismiss();
+  }
+
+  private OnGlobalLayoutListener updatePopupPositionOnContentSizeChangeListener = new OnGlobalLayoutListener() {
+    private Size contentSize = new Size(0, 0);
+
+    @Override
+    public void onGlobalLayout() {
+      Timber.i("Global layout");
+
+      if (getContentView().getWidth() != contentSize.getWidth() || getContentView().getHeight() != contentSize.getHeight()) {
+        contentSize = new Size(getContentView().getWidth(), getContentView().getHeight());
+        Timber.i("Content size changed: %s", contentSize);
+
+        // This will also run on the 1st time, but PopupWindow will ignore it when
+        updatePopupLocationWithNewDimensions();
+      }
+    }
+  };
+
+  public void updatePopupLocationWithNewDimensions() {
+    boolean isTopGravity = (gravity | Gravity.TOP) == gravity;
+    Point positionToShow = calculatePositionWithAnchorWithoutGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
+    update(positionToShow.x, positionToShow.y, -1, -1);
   }
 
   private void addBackgroundDimming() {
@@ -104,7 +142,7 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     });
   }
 
-  public Point calculatePositionToAvoidGoingOutsideWindow(Point anchorLocation, View contentView, boolean isTopGravity) {
+  public Point calculatePositionWithAnchorWithoutGoingOutsideWindow(Point showLocation, View contentView, boolean isTopGravity) {
     contentView.measure(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     int contentWidth = contentView.getMeasuredWidth();
     int contentHeight = contentView.getMeasuredHeight();
@@ -114,17 +152,17 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     int screenWidth = displaySize.x;
     int screenHeight = displaySize.y;
 
-    int xPos = anchorLocation.x;
-    int yPos = anchorLocation.y;
+    int xPos = showLocation.x;
+    int yPos = showLocation.y;
 
     // Display above the anchor view.
     if (isTopGravity || yPos + contentHeight > screenHeight) {
-      yPos = anchorLocation.y - contentHeight;
+      yPos = showLocation.y - contentHeight;
     }
 
     // Keep the right edge of the popup on the screen.
     if (xPos + contentWidth > screenWidth) {
-      xPos = anchorLocation.x - ((anchorLocation.x + contentWidth) - screenWidth);
+      xPos = showLocation.x - ((showLocation.x + contentWidth) - screenWidth);
     }
     return new Point(xPos, yPos);
   }
