@@ -10,6 +10,7 @@ import java.util.Set;
 
 import me.saket.dank.di.DankApi;
 import me.saket.dank.utils.Commons;
+import timber.log.Timber;
 
 /**
  * Details of an image (including GIF) or a video that can be played within in the app.
@@ -100,6 +101,18 @@ public class MediaLink extends Link {
 
   public static MediaLink createGeneric(String url, boolean canUseRedditOptimizedImageUrl, Type type) {
     return new MediaLink(url, canUseRedditOptimizedImageUrl, type);
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    Timber.w("Equals() isn't implemented!");
+    return super.equals(obj);
+  }
+
+  @Override
+  public int hashCode() {
+    Timber.w("hashCode() isn't implemented!");
+    return super.hashCode();
   }
 
   public static class Gfycat extends MediaLink {

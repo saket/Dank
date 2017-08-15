@@ -208,6 +208,10 @@
   <string name="mediaalbumviewer_share_sheet_title">Share with</string>
   <string name="mediaalbumviewer_share_image_not_loaded_yet">Image hasn\'t been loaded yet</string>
   <string name="mediaalbumviewer_share_video_not_loaded_yet">Video hasn\'t been loaded yet</string>
+  <string name="mediaalbumviewer_download_notification_title_for_image">Downloading image</string>
+  <string name="mediadownloadnotification_failed_to_save_image">Failed to save image</string>
+  <string name="mediadownloadnotification_failed_to_save_video">Failed to save video</string>
+  <string name="mediadownloadnotification_tap_to_retry_url">Tap to retry %s</string>
 
   <!-- User profile popup -->
   <string name="userprofilepopup_send_a_private_message">Message</string>

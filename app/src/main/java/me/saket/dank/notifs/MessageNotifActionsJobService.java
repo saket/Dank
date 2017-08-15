@@ -28,7 +28,7 @@ import timber.log.Timber;
  * We're using JobScheduler for executing notification actions so that it also handles auto-retrying when
  * there's no network or reddit's servers are down.
  */
-public class NotificationActionsJobService extends DankJobService {
+public class MessageNotifActionsJobService extends DankJobService {
 
   private static final String KEY_MESSAGE_JSON = "messageJson";
   private static final String KEY_MESSAGE_ARRAY_JSON = "messageArrayJson";
@@ -48,7 +48,7 @@ public class NotificationActionsJobService extends DankJobService {
     // Each job needs a unique ID and since we create a separate job for each message.
     int jobId = ID_SEND_DIRECT_MESSAGE_REPLY + replyToMessage.getId().hashCode();
 
-    JobInfo markAsReadJob = new JobInfo.Builder(jobId, new ComponentName(context, NotificationActionsJobService.class))
+    JobInfo markAsReadJob = new JobInfo.Builder(jobId, new ComponentName(context, MessageNotifActionsJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)
         .setExtras(extras)
@@ -68,7 +68,7 @@ public class NotificationActionsJobService extends DankJobService {
 
     int jobId = ID_MARK_MESSAGE_AS_READ + Arrays.hashCode(messages);
 
-    JobInfo markAsReadJob = new JobInfo.Builder(jobId, new ComponentName(context, NotificationActionsJobService.class))
+    JobInfo markAsReadJob = new JobInfo.Builder(jobId, new ComponentName(context, MessageNotifActionsJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)
         .setExtras(extras)
@@ -83,7 +83,7 @@ public class NotificationActionsJobService extends DankJobService {
     PersistableBundle extras = new PersistableBundle(1);
     extras.putString(KEY_ACTION, ACTION_MARK_ALL_MESSAGES_AS_READ);
 
-    JobInfo markAsReadJob = new JobInfo.Builder(ID_MARK_ALL_MESSAGES_AS_READ, new ComponentName(context, NotificationActionsJobService.class))
+    JobInfo markAsReadJob = new JobInfo.Builder(ID_MARK_ALL_MESSAGES_AS_READ, new ComponentName(context, MessageNotifActionsJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)
         .setExtras(extras)

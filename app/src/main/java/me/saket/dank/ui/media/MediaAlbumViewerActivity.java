@@ -12,6 +12,7 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.PopupMenu;
@@ -41,11 +42,13 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
+import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Intents;
@@ -54,6 +57,7 @@ import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import timber.log.Timber;
 
 public class MediaAlbumViewerActivity extends DankActivity
     implements MediaFragment.Callbacks, FlickGestureListener.GestureCallbacks, SystemUiHelper.OnSystemUiVisibilityChangeListener
@@ -284,14 +288,28 @@ public class MediaAlbumViewerActivity extends DankActivity
         .firstOrError();
   }
 
+  @OnClick(R.id.mediaalbumviewer_download)
   void onClickDownloadMedia() {
-    // TODO
+    MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
+    MediaDownloadService.enqueueDownload(this, activeMediaItem.mediaLink());
   }
 
   @OnClick(R.id.mediaalbumviewer_open_in_browser)
   void onClickOpenMediaInBrowser() {
+    if (BuildConfig.DEBUG) {
+      Timber.w("TODO: remove");
+      // TODO: remove.
+      NotificationManagerCompat.from(this).cancelAll();
+      return;
+    }
+
     MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
     startActivity(Intents.createForOpeningUrl(activeMediaItem.mediaLink().originalUrl()));
+
+    if (mediaAlbumAdapter.getCount() == 1) {
+      // User prefers viewing this media in the browser.
+      finish();
+    }
   }
 
   @OnClick(R.id.mediaalbumviewer_reload_in_hd)

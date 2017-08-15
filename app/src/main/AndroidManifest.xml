@@ -86,7 +86,7 @@
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <service
-      android:name=".notifs.NotificationActionsJobService"
+      android:name=".notifs.MessageNotifActionsJobService"
       android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
@@ -100,7 +100,17 @@
       android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
-    <receiver android:name=".notifs.NotificationActionReceiver" />
+    <service
+      android:name=".notifs.MediaDownloadService"
+      android:exported="false" />
+
+    <receiver
+      android:name=".notifs.MessageNotifActionReceiver"
+      android:exported="false" />
+
+    <receiver
+      android:name=".notifs.MediaNotifActionReceiver"
+      android:exported="false" />
 
     <provider
       android:name="android.support.v4.content.FileProvider"
@@ -111,6 +121,5 @@
         android:name="android.support.FILE_PROVIDER_PATHS"
         android:resource="@xml/file_provider_paths" />
     </provider>
-
   </application>
 </manifest>

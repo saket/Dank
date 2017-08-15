@@ -39,14 +39,12 @@ import timber.log.Timber;
 
 public class MessagesNotificationManager {
 
-  private static final int NOTIF_ID_BUNDLE_SUMMARY = 100;
   private static final int P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN = 200;
   private static final int P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_READ = 201;
   private static final int P_INTENT_REQ_ID_MARK_AS_READ = 202;
   private static final int P_INTENT_REQ_ID_MARK_AS_SEEN = 203;
   private static final int P_INTENT_REQ_ID_DIRECT_REPLY = 204;
   private static final int P_INTENT_REQ_ID_OPEN_INBOX = 205;
-  private static final String BUNDLED_NOTIFS_KEY = "unreadMessages";
 
   private final SeenUnreadMessageIdStore seenMessageIdsStore;
 
@@ -198,12 +196,12 @@ public class MessagesNotificationManager {
     PendingIntent onSummaryClickPendingIntent = PendingIntent.getBroadcast(
         context,
         P_INTENT_REQ_ID_OPEN_INBOX,
-        NotificationActionReceiver.createMarkAllSeenAndOpenInboxIntent(context, unreadMessages),
+        MessageNotifActionReceiver.createMarkAllSeenAndOpenInboxIntent(context, unreadMessages),
         PendingIntent.FLAG_UPDATE_CURRENT
     );
 
     Notification summaryNotification = summaryNotifBuilder
-        .setGroup(BUNDLED_NOTIFS_KEY)
+        .setGroup(NotificationIds.UNREAD_MESSAGE_BUNDLE_NOTIFS_GROUP_KEY)
         .setGroupSummary(true)
         .setShowWhen(true)
         .setColor(ContextCompat.getColor(context, R.color.notification_icon_color))
@@ -213,7 +211,7 @@ public class MessagesNotificationManager {
         .setContentIntent(onSummaryClickPendingIntent)
         .setAutoCancel(true)
         .build();
-    notificationManager.notify(NOTIF_ID_BUNDLE_SUMMARY, summaryNotification);
+    notificationManager.notify(NotificationIds.UNREAD_MESSAGES_BUNDLE_SUMMARY, summaryNotification);
 
     // Add bundled notifications (Nougat+).
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -227,7 +225,7 @@ public class MessagesNotificationManager {
         Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
 
         // Direct reply action.
-        Intent directReplyIntent = NotificationActionReceiver.createDirectReplyIntent(context, unreadMessage, Dank.moshi(), notificationId);
+        Intent directReplyIntent = MessageNotifActionReceiver.createDirectReplyIntent(context, unreadMessage, Dank.moshi(), notificationId);
         PendingIntent directReplyPendingIntent = PendingIntent.getBroadcast(
             context,
             P_INTENT_REQ_ID_DIRECT_REPLY + notificationId,
@@ -235,7 +233,7 @@ public class MessagesNotificationManager {
             PendingIntent.FLAG_UPDATE_CURRENT
         );
         Action replyAction = new Action.Builder(0, context.getString(R.string.messagenotification_reply), directReplyPendingIntent)
-            .addRemoteInput(new RemoteInput.Builder(NotificationActionReceiver.KEY_DIRECT_REPLY_MESSAGE)
+            .addRemoteInput(new RemoteInput.Builder(MessageNotifActionReceiver.KEY_DIRECT_REPLY_MESSAGE)
                 .setLabel(context.getString(R.string.messagenotification_reply_to_user, unreadMessage.getAuthor()))
                 .build())
             .setAllowGeneratedReplies(true)
@@ -248,7 +246,7 @@ public class MessagesNotificationManager {
         PendingIntent onClickPendingIntent = PendingIntent.getBroadcast(
             context,
             P_INTENT_REQ_ID_OPEN_INBOX,
-            NotificationActionReceiver.createMarkAsSeenAndOpenInboxIntent(context, unreadMessage),
+            MessageNotifActionReceiver.createMarkAsSeenAndOpenInboxIntent(context, unreadMessage),
             PendingIntent.FLAG_UPDATE_CURRENT
         );
 
@@ -261,7 +259,7 @@ public class MessagesNotificationManager {
             .setShowWhen(true)
             .setWhen(JrawUtils.createdTimeUtc(unreadMessage))
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setGroup(BUNDLED_NOTIFS_KEY)
+            .setGroup(NotificationIds.UNREAD_MESSAGE_BUNDLE_NOTIFS_GROUP_KEY)
             .setAutoCancel(true)
             .setColor(ContextCompat.getColor(context, R.color.color_accent))
             .addAction(markAsReadAction)
@@ -329,7 +327,7 @@ public class MessagesNotificationManager {
     }
 
     // Mark all as seen on summary notif dismissal.
-    Intent markAllAsSeenIntent = NotificationActionReceiver.createMarkAllAsSeenIntent(context, unreadMessages);
+    Intent markAllAsSeenIntent = MessageNotifActionReceiver.createMarkAllAsSeenIntent(context, unreadMessages);
     PendingIntent summaryDeletePendingIntent = PendingIntent.getBroadcast(
         context,
         P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN,
@@ -338,7 +336,7 @@ public class MessagesNotificationManager {
     );
 
     // Mark all as read action. Will only show up on < Nougat.
-    Intent markAllAsReadIntent = NotificationActionReceiver.createMarkAllAsReadIntent(context, unreadMessages);
+    Intent markAllAsReadIntent = MessageNotifActionReceiver.createMarkAllAsReadIntent(context, unreadMessages);
     PendingIntent markAllAsReadPendingIntent = PendingIntent.getBroadcast(
         context,
         P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_READ,
@@ -373,20 +371,20 @@ public class MessagesNotificationManager {
   }
 
   private PendingIntent createMarkAsReadPendingIntent(Context context, Message unreadMessage, int requestId) {
-    Intent markAsReadIntent = NotificationActionReceiver.createMarkAsReadIntent(context, Dank.moshi(), unreadMessage);
+    Intent markAsReadIntent = MessageNotifActionReceiver.createMarkAsReadIntent(context, Dank.moshi(), unreadMessage);
     return PendingIntent.getBroadcast(context, requestId, markAsReadIntent, PendingIntent.FLAG_UPDATE_CURRENT);
   }
 
   private PendingIntent createMarkAsSeenPendingIntent(Context context, Message unreadMessage, int requestId) {
-    Intent markAsSeenIntent = NotificationActionReceiver.createMarkAsSeenIntent(context, unreadMessage);
+    Intent markAsSeenIntent = MessageNotifActionReceiver.createMarkAsSeenIntent(context, unreadMessage);
     return PendingIntent.getBroadcast(context, requestId, markAsSeenIntent, PendingIntent.FLAG_UPDATE_CURRENT);
   }
 
   /**
-   * Id used for generating a notification for <var>message</var>. This can be used for dismissing it if it's active.
+   * Id used for generating a notification for <var>message</var>. Used for dismissing it if it's active.
    */
   public static int createNotificationIdFor(Message message) {
-    return message.getId().hashCode();
+    return (NotificationIds.UNREAD_MESSAGE_PREFIX_ + message.getId()).hashCode();
   }
 
   @CheckResult
@@ -412,8 +410,7 @@ public class MessagesNotificationManager {
     return Completable.fromAction(() -> {
       //Timber.i("Dismissing all notifs");
       NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-      notificationManager.cancel(NOTIF_ID_BUNDLE_SUMMARY);
+      notificationManager.cancel(NotificationIds.UNREAD_MESSAGES_BUNDLE_SUMMARY);
     });
   }
-
 }

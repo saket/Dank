@@ -35,7 +35,7 @@ import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.Link;
 import me.saket.dank.di.Dank;
-import me.saket.dank.notifs.NotificationActionReceiver;
+import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.utils.Arrays;
@@ -220,7 +220,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     }
 
     Message[] seenMessagesArray = Arrays.toArray(seenUnreadMessages, Message.class);
-    sendBroadcast(NotificationActionReceiver.createMarkAsReadIntent(this, Dank.moshi(), seenMessagesArray));
+    sendBroadcast(MessageNotifActionReceiver.createMarkAsReadIntent(this, Dank.moshi(), seenMessagesArray));
 
     Dank.inbox().refreshMessages(InboxFolder.UNREAD, false /* replaceAllMessages */)
         .compose(applySchedulersSingle())
@@ -229,7 +229,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   @Override
   public void markAllUnreadMessagesAsReadAndExit(List<Message> unreadMessages) {
-    sendBroadcast(NotificationActionReceiver.createMarkAllAsReadIntent(this, unreadMessages));
+    sendBroadcast(MessageNotifActionReceiver.createMarkAllAsReadIntent(this, unreadMessages));
     finish();
   }
 
