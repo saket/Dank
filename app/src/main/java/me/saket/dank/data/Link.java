@@ -69,5 +69,4 @@ public abstract class Link implements Serializable {
       return new External(url);
     }
   }
-
 }

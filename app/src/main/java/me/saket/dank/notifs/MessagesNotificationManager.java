@@ -201,7 +201,7 @@ public class MessagesNotificationManager {
     );
 
     Notification summaryNotification = summaryNotifBuilder
-        .setGroup(NotificationIds.UNREAD_MESSAGE_BUNDLE_NOTIFS_GROUP_KEY)
+        .setGroup(NotificationConstants.UNREAD_MESSAGE_BUNDLE_NOTIFS_GROUP_KEY)
         .setGroupSummary(true)
         .setShowWhen(true)
         .setColor(ContextCompat.getColor(context, R.color.notification_icon_color))
@@ -211,7 +211,7 @@ public class MessagesNotificationManager {
         .setContentIntent(onSummaryClickPendingIntent)
         .setAutoCancel(true)
         .build();
-    notificationManager.notify(NotificationIds.UNREAD_MESSAGES_BUNDLE_SUMMARY, summaryNotification);
+    notificationManager.notify(NotificationConstants.UNREAD_MESSAGES_BUNDLE_SUMMARY, summaryNotification);
 
     // Add bundled notifications (Nougat+).
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -259,7 +259,7 @@ public class MessagesNotificationManager {
             .setShowWhen(true)
             .setWhen(JrawUtils.createdTimeUtc(unreadMessage))
             .setSmallIcon(R.mipmap.ic_launcher)
-            .setGroup(NotificationIds.UNREAD_MESSAGE_BUNDLE_NOTIFS_GROUP_KEY)
+            .setGroup(NotificationConstants.UNREAD_MESSAGE_BUNDLE_NOTIFS_GROUP_KEY)
             .setAutoCancel(true)
             .setColor(ContextCompat.getColor(context, R.color.color_accent))
             .addAction(markAsReadAction)
@@ -384,7 +384,7 @@ public class MessagesNotificationManager {
    * Id used for generating a notification for <var>message</var>. Used for dismissing it if it's active.
    */
   public static int createNotificationIdFor(Message message) {
-    return (NotificationIds.UNREAD_MESSAGE_PREFIX_ + message.getId()).hashCode();
+    return (NotificationConstants.UNREAD_MESSAGE_PREFIX_ + message.getId()).hashCode();
   }
 
   @CheckResult
@@ -410,7 +410,7 @@ public class MessagesNotificationManager {
     return Completable.fromAction(() -> {
       //Timber.i("Dismissing all notifs");
       NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-      notificationManager.cancel(NotificationIds.UNREAD_MESSAGES_BUNDLE_SUMMARY);
+      notificationManager.cancel(NotificationConstants.UNREAD_MESSAGES_BUNDLE_SUMMARY);
     });
   }
 }

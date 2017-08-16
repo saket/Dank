@@ -3,8 +3,10 @@ package me.saket.dank.ui.media;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
+import android.app.Notification;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -13,8 +15,10 @@ import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.support.v4.app.NotificationManagerCompat;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
+import android.support.v7.app.NotificationCompat;
 import android.support.v7.widget.PopupMenu;
 import android.view.View;
 import android.view.ViewGroup;
@@ -26,6 +30,8 @@ import android.widget.Toast;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.SimpleTarget;
+import com.bumptech.glide.request.transition.Transition;
 import com.google.common.io.Files;
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 
@@ -49,6 +55,7 @@ import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MediaDownloadService;
+import me.saket.dank.notifs.NotificationConstants;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Intents;
@@ -292,6 +299,57 @@ public class MediaAlbumViewerActivity extends DankActivity
   void onClickDownloadMedia() {
     MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
     MediaDownloadService.enqueueDownload(this, activeMediaItem.mediaLink());
+  }
+
+  private void updateIndividualProgressNotification(MediaDownloadJob mediaDownloadJob, int notificationId) {
+    String urlWithoutScheme = mediaDownloadJob.mediaLink().originalUrl();
+    String notificationTitle = "Downloading " + urlWithoutScheme;
+    boolean indeterminateProgress = mediaDownloadJob.progressState() == MediaDownloadJob.ProgressState.CONNECTING;
+
+    Notification notification = new NotificationCompat.Builder(this)
+        .setContentTitle(notificationTitle)
+        .setContentText(mediaDownloadJob.downloadProgress() + "%")
+        .setSmallIcon(android.R.drawable.stat_sys_download)
+        .setWhen(0)
+        .setColor(ContextCompat.getColor(this, R.color.notification_icon_color))
+        .setProgress(100 /* max */, mediaDownloadJob.downloadProgress(), indeterminateProgress)
+        .build();
+
+    NotificationManagerCompat.from(this).notify(notificationId, notification);
+  }
+
+  private void displaySuccessNotification(MediaDownloadJob completedDownloadJob, int notificationId) {
+    Glide.with(this)
+        .asBitmap()
+        .load(completedDownloadJob.mediaLink().originalUrl())
+        .into(new SimpleTarget<Bitmap>() {
+          @Override
+          public void onResourceReady(Bitmap resource, Transition<? super Bitmap> transition) {
+            Timber.i("Displaying success notif");
+
+            Notification successNotification = new NotificationCompat.Builder(MediaAlbumViewerActivity.this)
+                .setContentTitle(getString(
+                    completedDownloadJob.mediaLink().isVideo()
+                        ? R.string.mediadownloadnotification_video_saved
+                        : R.string.mediadownloadnotification_image_saved
+                ))
+                .setContentText(completedDownloadJob.mediaLink().originalUrl())
+                .setSmallIcon(R.drawable.ic_cloud_download_24dp)
+                .setOngoing(false)
+                .setGroup(NotificationConstants.MEDIA_DOWNLOAD_BUNDLE_NOTIFS_GROUP_KEY)
+                .setLocalOnly(true)
+                .setWhen(System.currentTimeMillis())
+                .setColor(ContextCompat.getColor(MediaAlbumViewerActivity.this, R.color.notification_icon_color))
+//        .setContentIntent(viewImagePendingIntent)
+//        .addAction(shareImageAction)
+//        .addAction(deleteImageAction)
+                .setAutoCancel(true)
+                .setStyle(new NotificationCompat.BigPictureStyle().bigPicture(resource))
+                .build();
+
+            NotificationManagerCompat.from(MediaAlbumViewerActivity.this).notify(notificationId, successNotification);
+          }
+        });
   }
 
   @OnClick(R.id.mediaalbumviewer_open_in_browser)

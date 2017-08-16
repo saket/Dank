@@ -17,7 +17,7 @@ public abstract class MediaDownloadJob implements Parcelable {
     CONNECTING,
     IN_FLIGHT,
     FAILED,
-    DOWNLOADED
+    DOWNLOADED,
   }
 
   public abstract MediaLink mediaLink();

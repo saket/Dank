@@ -10,7 +10,6 @@ import java.util.Set;
 
 import me.saket.dank.di.DankApi;
 import me.saket.dank.utils.Commons;
-import timber.log.Timber;
 
 /**
  * Details of an image (including GIF) or a video that can be played within in the app.
@@ -104,15 +103,35 @@ public class MediaLink extends Link {
   }
 
   @Override
-  public boolean equals(Object obj) {
-    Timber.w("Equals() isn't implemented!");
-    return super.equals(obj);
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof MediaLink)) {
+      return false;
+    }
+
+    MediaLink mediaLink = (MediaLink) o;
+
+    if (canUseRedditOptimizedImageUrl != mediaLink.canUseRedditOptimizedImageUrl) {
+      return false;
+    }
+    if (!url.equals(mediaLink.url)) {
+      return false;
+    }
+    if (type != mediaLink.type) {
+      return false;
+    }
+    return redditSuppliedImages != null ? redditSuppliedImages.equals(mediaLink.redditSuppliedImages) : mediaLink.redditSuppliedImages == null;
   }
 
   @Override
   public int hashCode() {
-    Timber.w("hashCode() isn't implemented!");
-    return super.hashCode();
+    int result = url.hashCode();
+    result = 31 * result + type.hashCode();
+    result = 31 * result + (redditSuppliedImages != null ? redditSuppliedImages.hashCode() : 0);
+    result = 31 * result + (canUseRedditOptimizedImageUrl ? 1 : 0);
+    return result;
   }
 
   public static class Gfycat extends MediaLink {

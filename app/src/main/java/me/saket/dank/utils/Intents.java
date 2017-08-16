@@ -1,6 +1,5 @@
 package me.saket.dank.utils;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -41,11 +40,21 @@ public class Intents {
     return intent;
   }
 
-  public static Intent createForSharingImage(Activity activity, Uri imageContentUri) {
-    return ShareCompat.IntentBuilder.from(activity)
-        .addStream(imageContentUri)
+  public static Intent createForSharingImage(Context context, Uri imageContentUri) {
+    return new Intent().setAction(Intent.ACTION_SEND)
+        .putExtra(ShareCompat.EXTRA_CALLING_PACKAGE, context.getPackageName())
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+        .putExtra(Intent.EXTRA_STREAM, imageContentUri)
         .setType("image/*")
-        .getIntent()
+        .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+  }
+
+  public static Intent createForViewingImage(Context context, Uri imageContentUri) {
+    return new Intent().setAction(Intent.ACTION_VIEW)
+        .putExtra(ShareCompat.EXTRA_CALLING_PACKAGE, context.getPackageName())
+        .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
+        .putExtra(Intent.EXTRA_STREAM, imageContentUri)
+        .setType("image/*")
         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
   }
 }
