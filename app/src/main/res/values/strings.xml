@@ -216,6 +216,10 @@
   <string name="mediadownloadnotification_image_saved">Image saved</string>
   <string name="mediaalbumviewer_download_notification_share">Share</string>
   <string name="mediaalbumviewer_download_notification_delete">Delete</string>
+  <string name="mediadownloadnotification_sucesss_title_for_video">Video saved</string>
+  <string name="mediadownloadnotification_success_title_for_image">Image saved</string>
+  <string name="mediadownloadnotification_share">Share</string>
+  <string name="mediadownloadnotification_delete">Delete</string>
 
   <!-- User profile popup -->
   <string name="userprofilepopup_send_a_private_message">Message</string>

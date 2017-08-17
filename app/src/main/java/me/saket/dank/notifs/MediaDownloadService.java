@@ -79,6 +79,7 @@ public class MediaDownloadService extends Service {
     super.onCreate();
 
     // Create a summary notification + stop service when all downloads finish.
+    long startTimeMillis = System.currentTimeMillis();
     disposables.add(
         downloadJobStream.subscribe(downloadJobs -> {
           boolean allMediaDownloaded = true;
@@ -89,7 +90,7 @@ public class MediaDownloadService extends Service {
           }
 
           if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            Notification bundleSummaryNotification = createOrUpdateBundleSummaryNotification(downloadJobs, allMediaDownloaded);
+            Notification bundleSummaryNotification = createOrUpdateBundleSummaryNotification(downloadJobs, allMediaDownloaded, startTimeMillis);
             NotificationManagerCompat.from(this).notify(NotificationConstants.MEDIA_DOWNLOAD_BUNDLE_SUMMARY, bundleSummaryNotification);
           }
 
@@ -163,7 +164,7 @@ public class MediaDownloadService extends Service {
   }
 
   @TargetApi(Build.VERSION_CODES.N)
-  private Notification createOrUpdateBundleSummaryNotification(Collection<MediaDownloadJob> downloadJobs, boolean isCancelable) {
+  private Notification createOrUpdateBundleSummaryNotification(Collection<MediaDownloadJob> downloadJobs, boolean isCancelable, long startTimeMillis) {
     return new NotificationCompat.Builder(this)
         .setSmallIcon(R.mipmap.ic_launcher)
         .setGroup(NotificationConstants.MEDIA_DOWNLOAD_BUNDLE_NOTIFS_GROUP_KEY)
@@ -172,7 +173,7 @@ public class MediaDownloadService extends Service {
         .setColor(ContextCompat.getColor(this, R.color.notification_icon_color))
         .setCategory(Notification.CATEGORY_PROGRESS)
         .setOnlyAlertOnce(true)
-        .setWhen(0)
+        .setWhen(startTimeMillis)
         .setOngoing(!isCancelable)
         .build();
   }
@@ -251,7 +252,7 @@ public class MediaDownloadService extends Service {
         PendingIntent.FLAG_CANCEL_CURRENT
     );
     NotificationCompat.Action shareImageAction = new NotificationCompat.Action(0,
-        getString(R.string.mediaalbumviewer_download_notification_share),
+        getString(R.string.mediadownloadnotification_share),
         shareImagePendingIntent
     );
 
@@ -262,7 +263,7 @@ public class MediaDownloadService extends Service {
         PendingIntent.FLAG_CANCEL_CURRENT
     );
     NotificationCompat.Action deleteImageAction = new NotificationCompat.Action(0,
-        getString(R.string.mediaalbumviewer_download_notification_delete),
+        getString(R.string.mediadownloadnotification_delete),
         deleteImagePendingIntent
     );
 
@@ -275,15 +276,15 @@ public class MediaDownloadService extends Service {
             Notification successNotification = new NotificationCompat.Builder(MediaDownloadService.this)
                 .setContentTitle(getString(
                     completedDownloadJob.mediaLink().isVideo()
-                        ? R.string.mediadownloadnotification_video_saved
-                        : R.string.mediadownloadnotification_image_saved
+                        ? R.string.mediadownloadnotification_sucesss_title_for_video
+                        : R.string.mediadownloadnotification_success_title_for_image
                 ))
                 .setContentText(completedDownloadJob.mediaLink().originalUrl())
                 .setSmallIcon(R.drawable.ic_cloud_download_24dp)
                 .setOngoing(false)
                 .setGroup(NotificationConstants.MEDIA_DOWNLOAD_BUNDLE_NOTIFS_GROUP_KEY)
                 .setLocalOnly(true)
-                .setWhen(System.currentTimeMillis())
+                .setWhen(completedDownloadJob.timestamp())
                 .setColor(ContextCompat.getColor(MediaDownloadService.this, R.color.notification_icon_color))
                 .setContentIntent(viewImagePendingIntent)
                 .addAction(shareImageAction)
@@ -301,21 +302,23 @@ public class MediaDownloadService extends Service {
   // TODO: Remove random url.
   private Observable<MediaDownloadJob> downloadImage(MediaLink mediaLink) {
     String imageUrl = mediaLink.originalUrl()
-        //+ "?" + String.valueOf(System.currentTimeMillis())
-        ;
+        + "?" + String.valueOf(System.currentTimeMillis());
+    long downloadStartTimeMillis = System.currentTimeMillis();
 
     return Observable.create(emitter -> {
       Target<File> fileFutureTarget = new SimpleTarget<File>() {
         @Override
         public void onResourceReady(File downloadedFile, Transition<? super File> transition) {
-          emitter.onNext(MediaDownloadJob.createProgress(mediaLink, 100));
-          emitter.onNext(MediaDownloadJob.createDownloaded(mediaLink, downloadedFile));
+          long downloadCompleteTimeMillis = System.currentTimeMillis();
+          emitter.onNext(MediaDownloadJob.createProgress(mediaLink, 100, downloadStartTimeMillis));
+          emitter.onNext(MediaDownloadJob.createDownloaded(mediaLink, downloadedFile, downloadCompleteTimeMillis));
           emitter.onComplete();
         }
 
         @Override
         public void onLoadFailed(@Nullable Drawable errorDrawable) {
-          emitter.onNext(MediaDownloadJob.createFailed(mediaLink));
+          long downloadFailTimeMillis = System.currentTimeMillis();
+          emitter.onNext(MediaDownloadJob.createFailed(mediaLink, downloadFailTimeMillis));
           emitter.onComplete();
         }
       };
@@ -328,13 +331,13 @@ public class MediaDownloadService extends Service {
 
         @Override
         protected void onConnecting() {
-          emitter.onNext(MediaDownloadJob.createConnecting(mediaLink));
+          emitter.onNext(MediaDownloadJob.createConnecting(mediaLink, downloadStartTimeMillis));
         }
 
         @Override
         protected void onDownloading(long bytesRead, long expectedLength) {
           int progress = (int) (100 * (float) bytesRead / expectedLength);
-          emitter.onNext(MediaDownloadJob.createProgress(mediaLink, progress));
+          emitter.onNext(MediaDownloadJob.createProgress(mediaLink, progress, downloadStartTimeMillis));
         }
 
         @Override
