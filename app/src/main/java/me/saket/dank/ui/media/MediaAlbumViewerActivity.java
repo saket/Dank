@@ -300,6 +300,7 @@ public class MediaAlbumViewerActivity extends DankActivity
       Timber.w("TODO: remove");
       // TODO: remove.
       NotificationManagerCompat.from(this).cancelAll();
+      stopService(new Intent(this, MediaDownloadService.class));
       return;
     }
 

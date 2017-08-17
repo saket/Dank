@@ -212,12 +212,10 @@
   <string name="mediadownloadnotification_failed_to_save_image">Failed to save image</string>
   <string name="mediadownloadnotification_failed_to_save_video">Failed to save video</string>
   <string name="mediadownloadnotification_tap_to_retry_url">Tap to retry %s</string>
-  <string name="mediadownloadnotification_video_saved">Video saved</string>
-  <string name="mediadownloadnotification_image_saved">Image saved</string>
-  <string name="mediaalbumviewer_download_notification_share">Share</string>
-  <string name="mediaalbumviewer_download_notification_delete">Delete</string>
   <string name="mediadownloadnotification_sucesss_title_for_video">Video saved</string>
   <string name="mediadownloadnotification_success_title_for_image">Image saved</string>
+  <string name="mediadownloadnotification_success_body">Expand notification for more options.</string>
+  <string name="mediadownloadnotification_cancel">Cancel</string>
   <string name="mediadownloadnotification_share">Share</string>
   <string name="mediadownloadnotification_delete">Delete</string>
 

@@ -4,7 +4,6 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.FileProvider;
 
 import me.saket.dank.R;
@@ -60,7 +59,7 @@ public class MediaNotifActionReceiver extends BroadcastReceiver {
         Uri imageContentUri = FileProvider.getUriForFile(context, context.getString(R.string.file_provider_authority), downloadJob.downloadedFile());
         Intent shareIntent = Intents.createForSharingImage(context, imageContentUri);
         context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.mediaalbumviewer_share_sheet_title)));
-        dismissNotification(context, downloadJob);
+        MediaDownloadService.dismissNotification(context, downloadJob.mediaLink());
         break;
 
       case DELETE_IMAGE:
@@ -69,18 +68,11 @@ public class MediaNotifActionReceiver extends BroadcastReceiver {
         if (!deleted) {
           throw new AssertionError("Couldn't delete image: " + downloadJob.downloadedFile());
         }
-        dismissNotification(context, downloadJob);
+        MediaDownloadService.dismissNotification(context, downloadJob.mediaLink());
         break;
 
       default:
         throw new UnsupportedOperationException();
     }
-  }
-
-  /**
-   * We should ideally be asking MediaDownloadService for dismissing the notification, but whatever.
-   */
-  private void dismissNotification(Context context, MediaDownloadJob downloadJob) {
-    NotificationManagerCompat.from(context).cancel(MediaDownloadService.createNotificationIdFor(downloadJob));
   }
 }
