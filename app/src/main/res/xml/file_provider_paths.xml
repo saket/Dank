@@ -3,4 +3,8 @@
   <cache-path
     name="dank-images"
     path="image_manager_disk_cache/" />
+
+  <external-path
+    name="dank-images"
+    path="Pictures/Dank" />
 </paths>

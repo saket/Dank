@@ -10,6 +10,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Environment;
 import android.os.IBinder;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationManagerCompat;
@@ -21,10 +22,12 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
+import com.google.common.io.Files;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -40,6 +43,7 @@ import me.saket.dank.data.MediaLink;
 import me.saket.dank.ui.media.MediaDownloadJob;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import timber.log.Timber;
 
@@ -143,6 +147,19 @@ public class MediaDownloadService extends Service {
               updateIndividualProgressNotification(downloadJobToQueue, createNotificationIdFor(linkToQueue));
             })
             .concatMap(linkToDownload -> downloadImage(linkToDownload)
+                .map(downloadJobUpdate -> {
+                  if (downloadJobUpdate.progressState() == DOWNLOADED) {
+                    // Move file to user's space.
+                    String mediaFileName = Urls.parseFileNameWithExtension(downloadJobUpdate.mediaLink().originalUrl());
+                    File userAccessibleFile = copyFileToUserAccessibleDirectory(downloadJobUpdate.downloadedFile(), mediaFileName);
+                    return MediaDownloadJob.createDownloaded(downloadJobUpdate.mediaLink(), userAccessibleFile, downloadJobUpdate.timestamp());
+
+                  } else {
+                    return downloadJobUpdate;
+                  }
+                })
+                .doOnError(e -> Timber.e(e, "Couldn't download media"))
+                .onErrorReturnItem(MediaDownloadJob.createFailed(linkToDownload, System.currentTimeMillis()))
                 .takeUntil(downloadCancellationStream.filter(linkToCancel -> linkToCancel.equals(linkToDownload)))
                 .doOnTerminate(() -> ongoingDownloadUrls.remove(linkToDownload.originalUrl()))
                 .sample(201, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread(), true)
@@ -288,6 +305,8 @@ public class MediaDownloadService extends Service {
   private void displaySuccessNotification(MediaDownloadJob completedDownloadJob, int notificationId) {
     // Content intent.
     Uri imageContentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), completedDownloadJob.downloadedFile());
+    Timber.i("imageContentUri: %s", imageContentUri);
+
     PendingIntent viewImagePendingIntent = PendingIntent.getActivity(this,
         createPendingIntentRequestId(REQUESTCODE_OPEN_IMAGE_PREFIX_, notificationId),
         Intents.createForViewingImage(this, imageContentUri),
@@ -351,8 +370,8 @@ public class MediaDownloadService extends Service {
 
   // TODO: Remove random url.
   private Observable<MediaDownloadJob> downloadImage(MediaLink mediaLink) {
-    String imageUrl = mediaLink.originalUrl()
-        + "?" + String.valueOf(System.currentTimeMillis());
+    String imageUrl = mediaLink.originalUrl();
+        //+ "?" + String.valueOf(System.currentTimeMillis());
     long downloadStartTimeMillis = System.currentTimeMillis();
 
     return Observable.create(emitter -> {
@@ -400,6 +419,24 @@ public class MediaDownloadService extends Service {
       Glide.with(this).download(imageUrl).into(progressTarget);
       emitter.setCancellable(() -> Glide.with(this).clear(progressTarget));
     });
+  }
+
+  public File copyFileToUserAccessibleDirectory(File fileToCopy, String newFileName) throws IOException {
+    File publicDirectory = new File(
+        Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(),
+        getString(R.string.image_download_directory_name
+        )
+    );
+    File userAccessibleFile = new File(publicDirectory, newFileName);
+
+    //noinspection ResultOfMethodCallIgnored
+    boolean folderCreated = publicDirectory.mkdirs();
+    //noinspection ResultOfMethodCallIgnored
+    userAccessibleFile.createNewFile();
+
+    //noinspection ConstantConditions
+    Files.copy(fileToCopy, userAccessibleFile);
+    return userAccessibleFile;
   }
 
   public static int createNotificationIdFor(MediaLink mediaLink) {

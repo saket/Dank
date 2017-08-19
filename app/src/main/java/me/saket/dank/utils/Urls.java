@@ -32,4 +32,8 @@ public class Urls {
     return domainName;
   }
 
+  public static String parseFileNameWithExtension(String url) {
+    String path = Uri.parse(url).getPath();
+    return path.substring(path.lastIndexOf('/') + 1);
+  }
 }
