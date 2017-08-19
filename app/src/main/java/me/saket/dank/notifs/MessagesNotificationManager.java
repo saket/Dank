@@ -211,7 +211,7 @@ public class MessagesNotificationManager {
         .setContentIntent(onSummaryClickPendingIntent)
         .setAutoCancel(true)
         .build();
-    notificationManager.notify(NotificationConstants.UNREAD_MESSAGES_BUNDLE_SUMMARY, summaryNotification);
+    notificationManager.notify(NotificationConstants.ID_UNREAD_MESSAGES_BUNDLE_SUMMARY, summaryNotification);
 
     // Add bundled notifications (Nougat+).
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
@@ -410,7 +410,7 @@ public class MessagesNotificationManager {
     return Completable.fromAction(() -> {
       //Timber.i("Dismissing all notifs");
       NotificationManagerCompat notificationManager = NotificationManagerCompat.from(context);
-      notificationManager.cancel(NotificationConstants.UNREAD_MESSAGES_BUNDLE_SUMMARY);
+      notificationManager.cancel(NotificationConstants.ID_UNREAD_MESSAGES_BUNDLE_SUMMARY);
     });
   }
 }

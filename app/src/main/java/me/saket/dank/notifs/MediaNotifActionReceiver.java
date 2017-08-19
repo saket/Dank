@@ -19,7 +19,6 @@ public class MediaNotifActionReceiver extends BroadcastReceiver {
     RETRY_DOWNLOAD,
     SHARE_IMAGE,
     DELETE_IMAGE,
-    NOTIFICATION_DISMISSED,
   }
 
   public static Intent createRetryDownloadIntent(Context context, MediaDownloadJob failedDownloadJob) {
@@ -59,7 +58,7 @@ public class MediaNotifActionReceiver extends BroadcastReceiver {
         Uri imageContentUri = FileProvider.getUriForFile(context, context.getString(R.string.file_provider_authority), downloadJob.downloadedFile());
         Intent shareIntent = Intents.createForSharingImage(context, imageContentUri);
         context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.mediaalbumviewer_share_sheet_title)));
-        MediaDownloadService.dismissNotification(context, downloadJob.mediaLink());
+        MediaDownloadService.cancelNotification(context, downloadJob.mediaLink());
         break;
 
       case DELETE_IMAGE:
@@ -68,7 +67,7 @@ public class MediaNotifActionReceiver extends BroadcastReceiver {
         if (!deleted) {
           throw new AssertionError("Couldn't delete image: " + downloadJob.downloadedFile());
         }
-        MediaDownloadService.dismissNotification(context, downloadJob.mediaLink());
+        MediaDownloadService.cancelNotification(context, downloadJob.mediaLink());
         break;
 
       default:

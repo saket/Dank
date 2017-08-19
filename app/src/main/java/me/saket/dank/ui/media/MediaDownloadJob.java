@@ -14,6 +14,7 @@ import me.saket.dank.data.MediaLink;
 public abstract class MediaDownloadJob implements Parcelable {
 
   public enum ProgressState {
+    QUEUED,
     CONNECTING,
     IN_FLIGHT,
     FAILED,
@@ -34,6 +35,10 @@ public abstract class MediaDownloadJob implements Parcelable {
   public abstract File downloadedFile();
 
   public abstract long timestamp();
+
+  public static MediaDownloadJob createQueued(MediaLink mediaLink, long queueTimeMillis) {
+    return new AutoValue_MediaDownloadJob(mediaLink, ProgressState.QUEUED, 0, null, queueTimeMillis);
+  }
 
   public static MediaDownloadJob createConnecting(MediaLink mediaLink, long startTimeMillis) {
     return new AutoValue_MediaDownloadJob(mediaLink, ProgressState.CONNECTING, 0, null, startTimeMillis);
