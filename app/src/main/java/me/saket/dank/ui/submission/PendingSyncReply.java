@@ -102,9 +102,7 @@ public abstract class PendingSyncReply {
         .build();
   }
 
-  public PendingSyncReply.Builder toBuilder() {
-    return new AutoValue_PendingSyncReply.Builder(this);
-  }
+  public abstract PendingSyncReply.Builder toBuilder();
 
   public ContentValues toValues() {
     ContentValues contentValues = new ContentValues(7);

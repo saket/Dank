@@ -32,9 +32,7 @@ public abstract class DankSubmissionRequest implements Parcelable {
     return new AutoValue_DankSubmissionRequest.Builder().id(id);
   }
 
-  public Builder toBuilder() {
-    return new AutoValue_DankSubmissionRequest.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   @Nullable
   public abstract Integer commentLimit();

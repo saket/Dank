@@ -81,9 +81,7 @@ public abstract class SubredditSubscription implements Parcelable {
     return pendingState() == PendingState.PENDING_SUBSCRIBE;
   }
 
-  public Builder toBuilder() {
-    return new AutoValue_SubredditSubscription.Builder(this);
-  }
+  public abstract Builder toBuilder();
 
   public ContentValues toContentValues() {
     ContentValues values = new ContentValues(3);
