@@ -127,6 +127,18 @@ public class MediaAlbumViewerActivity extends DankActivity
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
 
+    if (mediaAlbumAdapter.getCount() > 1) {
+      List<MediaAlbumItem> items = mediaAlbumAdapter.getDataSet();
+      for (MediaAlbumItem item : items) {
+        if (item.mediaLink().isVideo()) {
+          // For adding support for multiple videos, we need to:
+          // 1. Intercept ViewPager scroll if seek-bar is being touched.
+          // 2. Think about immersive mode. What if immersive mode was enabled from a previous image. Should we disable it now?
+          throw new UnsupportedOperationException("Only one video is supported right now");
+        }
+      }
+    }
+
     unsubscribeOnDestroy(
         RxViewPager.pageSelections(mediaAlbumPager)
             .map(currentItem -> mediaAlbumAdapter.getDataSet().get(currentItem))
