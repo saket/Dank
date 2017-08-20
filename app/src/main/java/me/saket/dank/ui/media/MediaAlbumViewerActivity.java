@@ -44,7 +44,6 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
-import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
@@ -91,8 +90,8 @@ public class MediaAlbumViewerActivity extends DankActivity
     ButterKnife.bind(this);
 
     List<MediaAlbumItem> mediaLinks = new ArrayList<>();
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/WGDG7WH.jpg")));
-    mediaLinks.add(MediaAlbumItem.create(MediaLink.createGeneric("https://i.imgur.com/afYItU4.gif", false, Link.Type.IMAGE_OR_GIF)));
+    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/WhGHrBE.jpg")));
+    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/01v3bw0.jpg")));
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/rQ7IogD.gifv")));
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://streamable.com/p9by5")));
     mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
@@ -142,7 +141,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   @Override
   public void finish() {
     super.finish();
-    overridePendingTransition(0, 0);
+    overridePendingTransition(0, R.anim.fade_out);
   }
 
 // ======== MEDIA FRAGMENT ======== //

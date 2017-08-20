@@ -10,12 +10,11 @@ import android.view.ViewGroup;
 import android.widget.FrameLayout;
 
 /**
- * A ViewGroup that forwards all its touch events to its child View. Used as a replacement for touch-delegate.
+ * A ViewGroup that forwards all its touch events to its 0th child View. Used as a replacement for touch-delegate.
  */
 public class TouchForwardingFrameLayout extends FrameLayout {
 
   private View childView;
-  private boolean isChildAViewGroup;
 
   public TouchForwardingFrameLayout(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
@@ -23,11 +22,7 @@ public class TouchForwardingFrameLayout extends FrameLayout {
 
   @Override
   public void addView(View child, ViewGroup.LayoutParams params) {
-    if (getChildCount() > 0) {
-      throw new AssertionError("Can only have 1 child");
-    }
     childView = child;
-    isChildAViewGroup = child instanceof ViewGroup;
     super.addView(child, params);
   }
 
@@ -38,16 +33,12 @@ public class TouchForwardingFrameLayout extends FrameLayout {
 
   @Override
   public boolean onInterceptTouchEvent(MotionEvent ev) {
-    if (isChildAViewGroup) {
-      return ((ViewGroup) childView).onInterceptTouchEvent(ev);
-    } else {
-      return super.onInterceptTouchEvent(ev);
-    }
+    throw new UnsupportedOperationException();
   }
 
   @Override
   @SuppressLint("ClickableViewAccessibility")
   public boolean onTouchEvent(MotionEvent event) {
-    return childView.onTouchEvent(event);
+    throw new UnsupportedOperationException();
   }
 }

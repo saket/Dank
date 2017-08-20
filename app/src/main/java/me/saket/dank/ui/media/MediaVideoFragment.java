@@ -78,12 +78,18 @@ public class MediaVideoFragment extends DankFragment {
     exoPlayerManager = ExoPlayerManager.newInstance(this, videoView);
     DankVideoControlsView videoControlsView = new DankVideoControlsView(getActivity());
     videoView.setControls(videoControlsView);
+    videoControlsView.showVideoState(DankVideoControlsView.VideoState.PREPARING);
 
     // The preview image takes time to be drawn. Fade the video in slowly.
     LayoutTransition layoutTransition = ((ViewGroup) videoView.getParent()).getLayoutTransition();
-    layoutTransition.setDuration(500);
-    videoView.setVisibility(View.GONE);
-    videoView.setOnPreparedListener(() -> videoView.setVisibility(View.VISIBLE));
+    videoView.setLayoutTransition(layoutTransition);
+    View textureViewContainer = ((ViewGroup) exoPlayerManager.getTextureView().getParent());
+    textureViewContainer.setVisibility(View.INVISIBLE);
+
+    videoView.setOnPreparedListener(() -> {
+      textureViewContainer.setVisibility(View.VISIBLE);
+      videoControlsView.showVideoState(DankVideoControlsView.VideoState.PREPARED);
+    });
 
     MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
     assert mediaAlbumItem != null;
@@ -122,8 +128,8 @@ public class MediaVideoFragment extends DankFragment {
         .map(link -> loadHighQualityVideo ? link.highQualityVideoUrl() : link.lowQualityVideoUrl())
         .subscribe(
             videoUrl -> {
-              String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
-              exoPlayerManager.playVideoInLoop(Uri.parse(cachedVideoUrl));
+              // TODO Cache: String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
+              exoPlayerManager.playVideoInLoop(Uri.parse(videoUrl));
             },
             error -> {
               // TODO: 01/04/17 Handle error.

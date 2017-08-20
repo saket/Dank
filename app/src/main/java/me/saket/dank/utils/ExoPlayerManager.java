@@ -3,6 +3,7 @@ package me.saket.dank.utils;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.view.View;
 
 import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
@@ -55,6 +56,10 @@ public class ExoPlayerManager {
     videoSizeChangeListener = listener;
   }
 
+  public View getTextureView() {
+    return textureVideoView;
+  }
+
   public void setupVideoView() {
     playerView.setVideoSizeChangeListener((videoWidth, videoHeight) -> {
       if (videoSizeChangeListener != null) {
@@ -74,7 +79,6 @@ public class ExoPlayerManager {
 
     // Produces Extractor instances for parsing the media data.
     ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-
     MediaSource videoSource = new LoopingMediaSource(new ExtractorMediaSource(videoUri, dataSourceFactory, extractorsFactory, null, null));
 
     playerView.setVideoURI(videoUri, videoSource);

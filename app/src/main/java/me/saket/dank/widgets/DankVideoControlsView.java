@@ -34,6 +34,11 @@ public class DankVideoControlsView extends VideoControls {
   private boolean userInteractingWithSeek;
   private VideoProgressChangeListener progressChangeListener;
 
+  public enum VideoState {
+    PREPARING,
+    PREPARED
+  }
+
   public interface VideoProgressChangeListener {
     void onProgressChange();
   }
@@ -52,6 +57,21 @@ public class DankVideoControlsView extends VideoControls {
   @Px
   public int getBottomExtraSpaceForProgressSeekBar() {
     return progressSeekBar.getHeight() + progressSeekBarContainer.getPaddingBottom();
+  }
+
+  public void showVideoState(VideoState videoState) {
+    switch (videoState) {
+      case PREPARING:
+        loadingProgressBar.setVisibility(VISIBLE);
+        progressSeekBarContainer.setVisibility(INVISIBLE);
+        playPauseButton.setClickable(false);
+        break;
+
+      case PREPARED:
+        playPauseButton.setClickable(true);
+        progressSeekBarContainer.setVisibility(VISIBLE);
+        break;
+    }
   }
 
   @Override
@@ -152,7 +172,6 @@ public class DankVideoControlsView extends VideoControls {
   @Override
   public void finishLoading() {
     loadingProgressBar.setVisibility(GONE);
-
     updatePlayPauseImage(videoView != null && videoView.isPlaying());
   }
 
