@@ -99,9 +99,6 @@ public class MediaVideoFragment extends DankFragment {
         load(mediaAlbumItem.mediaLink(), loadHighQualityVideo)
     );
 
-    // Toggle immersive when the user clicks anywhere.
-    flickDismissViewGroup.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).onClickMediaItem());
-
     // VideoView internally sets its height to match-parent. Forcefully resize it to match the video height.
     exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
       Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar());
