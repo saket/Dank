@@ -12,7 +12,6 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
-import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.PopupMenu;
@@ -42,7 +41,6 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.ResolvedError;
@@ -90,9 +88,9 @@ public class MediaAlbumViewerActivity extends DankActivity
     ButterKnife.bind(this);
 
     List<MediaAlbumItem> mediaLinks = new ArrayList<>();
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/WhGHrBE.jpg")));
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/01v3bw0.jpg")));
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/rQ7IogD.gifv")));
+//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/WhGHrBE.jpg")));
+//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/01v3bw0.jpg")));
+//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/rQ7IogD.gifv")));
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://streamable.com/p9by5")));
     mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
     mediaAlbumPager.setAdapter(mediaAlbumAdapter);
@@ -247,7 +245,8 @@ public class MediaAlbumViewerActivity extends DankActivity
         return true;
 
       }
-      if (item.getTitle().equals(getString(R.string.mediaalbumviewer_share_image_link))) {
+      if (item.getTitle().equals(getString(R.string.mediaalbumviewer_share_image_link))
+          || item.getTitle().equals(getString(R.string.mediaalbumviewer_share_video_link))) {
         Intent shareUrlIntent = Intents.createForSharingUrl(null, activeMediaItem.mediaLink().originalUrl());
         startActivity(Intent.createChooser(shareUrlIntent, getString(R.string.webview_share_sheet_title)));
         return true;
@@ -305,14 +304,6 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @OnClick(R.id.mediaalbumviewer_open_in_browser)
   void onClickOpenMediaInBrowser() {
-    if (BuildConfig.DEBUG) {
-      Timber.w("TODO: remove");
-      // TODO: remove.
-      NotificationManagerCompat.from(this).cancelAll();
-      stopService(new Intent(this, MediaDownloadService.class));
-      return;
-    }
-
     MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
     startActivity(Intents.createForOpeningUrl(activeMediaItem.mediaLink().originalUrl()));
 
