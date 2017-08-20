@@ -55,6 +55,7 @@ import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.UrlParser;
+import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 import timber.log.Timber;
@@ -210,7 +211,8 @@ public class MediaAlbumViewerActivity extends DankActivity
                 .map(imageFile -> {
                   // Certain apps like Messaging fail to parse images if there's no file format,
                   // so we'll have to create a copy. ".jpg" seems to also work for gifs.
-                  File imageFileCopy = new File(imageFile.getAbsolutePath() + ".jpg");
+                  String mediaFileName = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().originalUrl());
+                  File imageFileCopy = new File(imageFile.getParent(), mediaFileName);
                   Files.copy(imageFile, imageFileCopy);
                   return imageFileCopy;
                 })

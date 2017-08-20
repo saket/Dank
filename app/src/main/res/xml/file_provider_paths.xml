@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
   <cache-path
-    name="dank-images"
+    name="dank-images-cache"
     path="image_manager_disk_cache/" />
 
   <external-path
