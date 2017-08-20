@@ -1,13 +1,11 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.logError;
 
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.CheckResult;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.ProgressBar;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
@@ -28,6 +26,7 @@ import io.reactivex.functions.Function;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
+import me.saket.dank.utils.StreamableRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -38,12 +37,12 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
  */
 public class SubmissionVideoHolder {
 
-  private final ViewGroup contentVideoViewContainer;
   private final VideoView contentVideoView;
   private final ScrollingRecyclerViewSheet commentListParentSheet;
 
   private final ExpandablePageLayout submissionPageLayout;
   private final ExoPlayerManager exoPlayerManager;
+  private final StreamableRepository streamableRepository;
   private final int deviceDisplayHeight;
   private final int minimumGapWithBottom;
   private final ProgressBar contentLoadProgressView;
@@ -57,16 +56,16 @@ public class SubmissionVideoHolder {
    *
    * @param minimumGapWithBottom The difference between video's bottom and the window's bottom will
    */
-  public SubmissionVideoHolder(ViewGroup contentVideoViewContainer, VideoView contentVideoView, ScrollingRecyclerViewSheet commentListParentSheet,
+  public SubmissionVideoHolder(VideoView contentVideoView, ScrollingRecyclerViewSheet commentListParentSheet,
       ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout, ExoPlayerManager exoPlayerManager,
-      int deviceDisplayHeight, int minimumGapWithBottom)
+      StreamableRepository streamableRepository, int deviceDisplayHeight, int minimumGapWithBottom)
   {
-    this.contentVideoViewContainer = contentVideoViewContainer;
     this.contentVideoView = contentVideoView;
     this.commentListParentSheet = commentListParentSheet;
     this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
     this.exoPlayerManager = exoPlayerManager;
+    this.streamableRepository = streamableRepository;
     this.deviceDisplayHeight = deviceDisplayHeight;
     this.minimumGapWithBottom = minimumGapWithBottom;
 
@@ -75,14 +74,14 @@ public class SubmissionVideoHolder {
     contentVideoView.setOnPreparedListener(() -> videoPreparedStream.accept(Notification.INSTANCE));
   }
 
-  public Disposable load(MediaLink mediaLink) {
-    Single<? extends MediaLink> videoUrlObservable = mediaLink instanceof MediaLink.StreamableUnknown
-        ? getStreamableVideoDetails(((MediaLink.StreamableUnknown) mediaLink))
+  public Disposable load(MediaLink mediaLink, boolean loadHighQualityVideo) {
+    Single<? extends MediaLink> videoUrlObservable = mediaLink instanceof MediaLink.StreamableUnresolved
+        ? streamableRepository.video(((MediaLink.StreamableUnresolved) mediaLink).videoId())
         : Single.just(mediaLink);
 
     return videoUrlObservable
         .doOnSubscribe(__ -> contentLoadProgressView.setVisibility(View.VISIBLE))
-        .map(link -> link.lowQualityVideoUrl())
+        .map(link -> loadHighQualityVideo ? link.highQualityVideoUrl() : link.lowQualityVideoUrl())
         .subscribe(loadVideo(), logError("Couldn't load video"));
     // TODO: 01/04/17 Handle error.
   }
@@ -93,8 +92,7 @@ public class SubmissionVideoHolder {
    */
   @CheckResult
   public Observable<Bitmap> streamVideoFirstFrameBitmaps(int statusBarHeight) {
-    return Observable
-        .zip(videoPreparedStream, videoWidthChangeStream, (o, videoWidth) -> videoWidth)
+    return Observable.zip(videoPreparedStream, videoWidthChangeStream, (o, videoWidth) -> videoWidth)
         .delay(new Function<Integer, ObservableSource<Integer>>() {
           private boolean firstDelayDone;
 
@@ -111,18 +109,6 @@ public class SubmissionVideoHolder {
           }
         })
         .map(videoWidth -> exoPlayerManager.getBitmapOfCurrentVideoFrame(videoWidth, statusBarHeight, Bitmap.Config.RGB_565));
-  }
-
-  // TODO: 01/04/17 Cache.
-  private Single<MediaLink.Streamable> getStreamableVideoDetails(MediaLink.StreamableUnknown streamableLink) {
-    return Dank.api()
-        .streamableVideoDetails(streamableLink.videoId())
-        .compose(applySchedulersSingle())
-        .map(response -> MediaLink.Streamable.create(
-            response.url(),
-            response.files().lowQualityVideo().url(),
-            response.files().highQualityVideo().url()
-        ));
   }
 
   private Consumer<String> loadVideo() {

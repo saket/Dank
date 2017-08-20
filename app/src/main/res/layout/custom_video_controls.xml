@@ -10,8 +10,8 @@
     android:id="@+id/exomedia_controls_play_pause_btn"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_above="@+id/exomedia_controls_video_seek"
-    android:background="@null"
+    android:background="?attr/selectableItemBackground"
+    android:layout_marginBottom="@dimen/videocontrols_seekbar_extra_vertical_touch_area"
     tools:ignore="ContentDescription" />
 
   <ImageView
@@ -19,10 +19,10 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_centerInParent="true"
-    android:elevation="20dp"
-    android:outlineProvider="bounds"
     android:background="?attr/selectableItemBackgroundBorderless"
     android:contentDescription="@string/submission_cd_play_video"
+    android:elevation="20dp"
+    android:outlineProvider="bounds"
     android:src="@drawable/ic_play_circle_76dp" />
 
   <ProgressBar
@@ -34,19 +34,35 @@
     android:visibility="gone"
     tools:visibility="gone" />
 
-  <SeekBar
-    android:id="@+id/exomedia_controls_video_seek"
-    style="?android:seekBarStyle"
+  <View
     android:layout_width="match_parent"
-    android:layout_height="20dp"
+    android:layout_height="@dimen/videocontrols_seekbar_height"
+    android:layout_alignTop="@+id/exomedia_controls_video_seek_container"
+    android:layout_marginTop="@dimen/videocontrols_seekbar_extra_vertical_touch_area"
+    android:background="@color/gray_900" />
+
+  <!-- Extra touch area for the seek-bar, because it's too small in itself.
+       This is moved downwards in code so that the seek-bar is aligned with
+       the video's bottom. -->
+  <me.saket.dank.widgets.TouchForwardingFrameLayout
+    android:id="@+id/exomedia_controls_video_seek_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
     android:layout_alignParentBottom="true"
-    android:maxHeight="20dp"
-    android:paddingEnd="0dp"
-    android:paddingStart="0dp"
-    android:paddingTop="16dp"
-    android:progressDrawable="@drawable/seekbar_video_progress"
-    android:splitTrack="false"
-    android:thumb="@color/transparent"
-    android:thumbTint="@color/color_primary_dark"
-    tools:progress="50" />
+    android:paddingBottom="@dimen/videocontrols_seekbar_extra_vertical_touch_area"
+    android:paddingTop="@dimen/videocontrols_seekbar_extra_vertical_touch_area">
+
+    <SeekBar
+      android:id="@+id/exomedia_controls_video_seek"
+      style="?android:seekBarStyle"
+      android:layout_width="match_parent"
+      android:layout_height="@dimen/videocontrols_seekbar_height"
+      android:paddingEnd="0dp"
+      android:paddingStart="0dp"
+      android:progressDrawable="@drawable/seekbar_video_progress"
+      android:splitTrack="false"
+      android:thumb="@color/transparent"
+      android:thumbTint="@color/color_primary_dark"
+      tools:progress="50" />
+  </me.saket.dank.widgets.TouchForwardingFrameLayout>
 </RelativeLayout>

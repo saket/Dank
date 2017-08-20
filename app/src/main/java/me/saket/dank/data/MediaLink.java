@@ -161,10 +161,10 @@ public class MediaLink extends Link {
    * Container for a streamable video's ID, which can only be used after its video URL has been
    * fetched using {@link DankApi#streamableVideoDetails(String)}.
    */
-  public static class StreamableUnknown extends MediaLink {
+  public static class StreamableUnresolved extends MediaLink {
     private final String videoId;
 
-    public StreamableUnknown(String url, String videoId) {
+    public StreamableUnresolved(String url, String videoId) {
       super(url, false, Type.VIDEO);
       this.videoId = videoId;
     }
@@ -180,8 +180,8 @@ public class MediaLink extends Link {
           '}';
     }
 
-    public static StreamableUnknown create(String url, String videoId) {
-      return new StreamableUnknown(url, videoId);
+    public static StreamableUnresolved create(String url, String videoId) {
+      return new StreamableUnresolved(url, videoId);
     }
   }
 

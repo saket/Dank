@@ -9,17 +9,16 @@ import com.squareup.sqlbrite.BriteDatabase;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorManager;
 import me.saket.dank.data.InboxManager;
-import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.SharedPrefsManager;
+import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.user.UserSession;
-import me.saket.dank.utils.ImgurManager;
+import me.saket.dank.utils.ImgurRepository;
 import me.saket.dank.utils.JacksonHelper;
-import okhttp3.OkHttpClient;
 
 public class Dank {
   private static DankAppComponent appComponent;
@@ -28,6 +27,10 @@ public class Dank {
     appComponent = DaggerDankAppComponent.builder()
         .dankAppModule(new DankAppModule(application))
         .build();
+  }
+
+  public static DankAppComponent dependencyInjector() {
+    return appComponent;
   }
 
   public static DankRedditClient reddit() {
@@ -42,10 +45,6 @@ public class Dank {
     return appComponent.userPrefs();
   }
 
-  public static OkHttpClient okHttpClient() {
-    return appComponent.okHttpClient();
-  }
-
   public static HttpProxyCacheServer httpProxyCacheServer() {
     return appComponent.httpProxyCacheServer();
   }
@@ -54,7 +53,7 @@ public class Dank {
     return appComponent.api();
   }
 
-  public static ImgurManager imgur() {
+  public static ImgurRepository imgur() {
     return appComponent.imgur();
   }
 

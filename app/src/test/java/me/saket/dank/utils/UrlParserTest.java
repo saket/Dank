@@ -341,8 +341,8 @@ public class UrlParserTest {
 
         Link parsedLink = UrlParser.parse(url);
 
-        assertEquals(parsedLink instanceof MediaLink.StreamableUnknown, true);
-        assertEquals(((MediaLink.StreamableUnknown) parsedLink).videoId(), "jawcl");
+        assertEquals(parsedLink instanceof MediaLink.StreamableUnresolved, true);
+        assertEquals(((MediaLink.StreamableUnresolved) parsedLink).videoId(), "jawcl");
         assertEquals(parsedLink.type(), Link.Type.VIDEO);
     }
 

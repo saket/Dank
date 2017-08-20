@@ -16,11 +16,13 @@ import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
+import me.saket.dank.ui.media.MediaAlbumViewerActivity;
+import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.submission.CommentsManager;
+import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.user.UserSession;
-import me.saket.dank.utils.ImgurManager;
+import me.saket.dank.utils.ImgurRepository;
 import me.saket.dank.utils.JacksonHelper;
-import okhttp3.OkHttpClient;
 
 @Component(modules = DankAppModule.class)
 @Singleton
@@ -29,15 +31,13 @@ public interface DankAppComponent {
 
   SharedPrefsManager sharedPrefs();
 
-  OkHttpClient okHttpClient();
-
   HttpProxyCacheServer httpProxyCacheServer();
 
   DankApi api();
 
   UserPrefsManager userPrefs();
 
-  ImgurManager imgur();
+  ImgurRepository imgur();
 
   SubredditSubscriptionManager subredditSubscriptionManager();
 
@@ -60,4 +60,10 @@ public interface DankAppComponent {
   UserSession userSession();
 
   CommentsManager commentsManager();
+
+  void inject(MediaAlbumViewerActivity activity);
+
+  void inject(MediaVideoFragment fragment);
+
+  void inject(SubmissionFragment fragment);
 }

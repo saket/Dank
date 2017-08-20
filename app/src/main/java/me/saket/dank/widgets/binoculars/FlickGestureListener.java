@@ -8,8 +8,6 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 
-import me.saket.dank.widgets.ZoomableImageView;
-
 /**
  * Listeners for a flick gesture and also moves around the View with user's finger.
  */
@@ -20,10 +18,8 @@ public class FlickGestureListener implements View.OnTouchListener {
 
   @FloatRange(from = 0, to = 1) private float flickThresholdSlop;
 
-  private ZoomableImageView imageView;
   private final int touchSlop;                // Min. distance to move before registering a gesture.
   private final int maximumFlingVelocity;     // Px per second.
-  private final ZoomableImageView zoomableImageView;
   private GestureCallbacks gestureCallbacks;
   private float downX, downY;
   private float lastTouchX;
@@ -57,9 +53,9 @@ public class FlickGestureListener implements View.OnTouchListener {
     /**
      * Called when the View has been flicked and the Activity should be dismissed.
      *
-     * @param viewFlickAnimationDuration Time the Activity should wait to finish for the flick animation to complete.
+     * @param flickAnimationDuration Time the Activity should wait to finish for the flick animation to complete.
      */
-    void onFlickDismissEnd(long viewFlickAnimationDuration);
+    void onFlickDismissEnd(long flickAnimationDuration);
 
     /**
      * Called while this View is being moved around.
@@ -69,10 +65,12 @@ public class FlickGestureListener implements View.OnTouchListener {
     void onMoveMedia(@FloatRange(from = -1, to = 1) float moveRatio);
   }
 
-  public FlickGestureListener(ViewConfiguration viewConfiguration, ZoomableImageView zoomableImageView) {
+  public FlickGestureListener(ViewConfiguration viewConfiguration) {
     touchSlop = viewConfiguration.getScaledTouchSlop();
     maximumFlingVelocity = viewConfiguration.getScaledMaximumFlingVelocity();
-    this.zoomableImageView = zoomableImageView;
+
+    // Default gesture intercepter: don't intercept anything.
+    onGestureIntercepter = o -> false;
   }
 
   public void setOnGestureIntercepter(OnGestureIntercepter intercepter) {
@@ -80,13 +78,11 @@ public class FlickGestureListener implements View.OnTouchListener {
   }
 
   /**
-   * Set maximum distance the user's finger should move (in percentage of the View's dimensions) after which a flick should be registered.
-   *
-   * @param imageView The imageView whose Drawable's height will be matched against the flick distance..
+   * Set minimum distance the user's finger should move (in percentage of the View's dimensions) after which a flick
+   * can be registered.
    */
-  public void setFlickThresholdSlop(@FloatRange(from = 0, to = 1) float flickThresholdSlop, ZoomableImageView imageView) {
+  public void setFlickThresholdSlop(@FloatRange(from = 0, to = 1) float flickThresholdSlop) {
     this.flickThresholdSlop = flickThresholdSlop;
-    this.imageView = imageView;
   }
 
   public void setGestureCallbacks(GestureCallbacks gestureCallbacks) {
@@ -245,10 +241,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   }
 
   private boolean hasFingerMovedEnoughToFlick(float distanceYAbs) {
-    if (imageView.getDrawable() == null) {
-      return false;
-    }
-    float thresholdDistanceY = imageView.getVisibleZoomedImageHeight() * flickThresholdSlop;
+    float thresholdDistanceY = contentHeightProvider.getZoomedInMediaHeight() * flickThresholdSlop;
     return distanceYAbs > thresholdDistanceY;
   }
 }

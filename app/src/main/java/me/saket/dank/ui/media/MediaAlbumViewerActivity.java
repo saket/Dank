@@ -61,7 +61,7 @@ import me.saket.dank.widgets.binoculars.FlickGestureListener;
 import timber.log.Timber;
 
 public class MediaAlbumViewerActivity extends DankActivity
-    implements MediaFragment.Callbacks, FlickGestureListener.GestureCallbacks, SystemUiHelper.OnSystemUiVisibilityChangeListener
+    implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks, SystemUiHelper.OnSystemUiVisibilityChangeListener
 {
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
@@ -85,6 +85,7 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
+    Dank.dependencyInjector().inject(this);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_media_album_viewer);
     ButterKnife.bind(this);
@@ -92,14 +93,19 @@ public class MediaAlbumViewerActivity extends DankActivity
     List<MediaAlbumItem> mediaLinks = new ArrayList<>();
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/WGDG7WH.jpg")));
     mediaLinks.add(MediaAlbumItem.create(MediaLink.createGeneric("https://i.imgur.com/afYItU4.gif", false, Link.Type.IMAGE_OR_GIF)));
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/5WT2RQF.jpg")));
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.redd.it/u5dszwd3qjaz.jpg")));
+    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/rQ7IogD.gifv")));
+    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://streamable.com/p9by5")));
     mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
     mediaAlbumPager.setAdapter(mediaAlbumAdapter);
 
+    Timber.i("Parsed links:");
+    for (MediaAlbumItem item : mediaLinks) {
+      Timber.i("%s, isVideo? %s", item.mediaLink().originalUrl(), item.mediaLink().isVideo());
+    }
+
     // TODO: Show media options only when we have adapter data.
 
-    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0 /* flags */, this /* listener */);
+    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, this);
 
     // Fade in background.
     activityBackgroundDrawable = rootLayout.getBackground().mutate();
@@ -136,7 +142,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   @Override
   public void finish() {
     super.finish();
-    overridePendingTransition(0, R.anim.fade_out);
+    overridePendingTransition(0, 0);
   }
 
 // ======== MEDIA FRAGMENT ======== //
@@ -152,9 +158,9 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   @Override
-  public void onFlickDismissEnd(long viewFlickAnimationDurationMs) {
+  public void onFlickDismissEnd(long flickAnimationDuration) {
     unsubscribeOnDestroy(
-        Observable.timer(viewFlickAnimationDurationMs, TimeUnit.MILLISECONDS)
+        Observable.timer(flickAnimationDuration, TimeUnit.MILLISECONDS)
             .doOnSubscribe(o -> animateMediaOptionsVisibility(false, Animations.INTERPOLATOR, 100))
             .subscribe(o -> finish())
     );
@@ -200,11 +206,13 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @OnClick(R.id.mediaalbumviewer_share)
   void onClickShareMedia() {
+    MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
+    boolean isVideo = activeMediaItem.mediaLink().isVideo();
+
     PopupMenu shareMenu = new PopupMenu(this, shareButton);
-    shareMenu.getMenu().add(R.string.mediaalbumviewer_share_image);
-    shareMenu.getMenu().add(R.string.mediaalbumviewer_share_image_link);
+    shareMenu.getMenu().add(isVideo ? R.string.mediaalbumviewer_share_video : R.string.mediaalbumviewer_share_image);
+    shareMenu.getMenu().add(isVideo ? R.string.mediaalbumviewer_share_video_link : R.string.mediaalbumviewer_share_image_link);
     shareMenu.setOnMenuItemClickListener(item -> {
-      MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
       if (item.getTitle().equals(getString(R.string.mediaalbumviewer_share_image))) {
         unsubscribeOnDestroy(
             findHighestResImageFileFromCache(activeMediaItem)
@@ -344,10 +352,19 @@ public class MediaAlbumViewerActivity extends DankActivity
    * Enable HD button if a higher-res version can be shown and is not already visible.
    */
   private void enableHighDefButtonIfPossible(MediaAlbumItem activeMediaItem) {
-    String originalUrl = activeMediaItem.mediaLink().originalUrl();
-    String optimizedUrl = activeMediaItem.mediaLink().optimizedImageUrl(getDeviceDisplayWidth());
+    String highQualityUrl;
+    String optimizedUrl;
 
-    boolean hasHighDefVersion = !optimizedUrl.equals(originalUrl);
+    if (activeMediaItem.mediaLink().isVideo()) {
+      highQualityUrl = activeMediaItem.mediaLink().highQualityVideoUrl();
+      optimizedUrl = activeMediaItem.mediaLink().lowQualityVideoUrl();
+
+    } else {
+      highQualityUrl = activeMediaItem.mediaLink().originalUrl();
+      optimizedUrl = activeMediaItem.mediaLink().optimizedImageUrl(getDeviceDisplayWidth());
+    }
+
+    boolean hasHighDefVersion = !optimizedUrl.equals(highQualityUrl);
     boolean isAlreadyShowingHighDefVersion = mediaItemsWithHighDefEnabled.contains(activeMediaItem);
     reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
   }

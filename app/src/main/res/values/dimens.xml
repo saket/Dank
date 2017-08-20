@@ -41,4 +41,9 @@
   <!-- Messages -->
   <dimen name="viewpager_tablayout_start_spacing_with_toolbar_title">60dp</dimen>
   <dimen name="elevation_nested_expandable_sheet">10dp</dimen>
+
+  <!-- Media -->
+  <dimen name="videocontrols_seekbar_height">4dp</dimen>
+  <dimen name="videocontrols_seekbar_height_with_extra_touch_area">20dp</dimen>
+  <dimen name="videocontrols_seekbar_extra_vertical_touch_area">@dimen/spacing16</dimen>
 </resources>

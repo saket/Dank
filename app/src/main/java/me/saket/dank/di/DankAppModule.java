@@ -43,12 +43,13 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.user.UserSession;
-import me.saket.dank.utils.ImgurManager;
+import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
+import me.saket.dank.utils.ImgurRepository;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.MoshiMessageAdapter;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
-import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
+import me.saket.dank.utils.StreamableRepository;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -208,8 +209,13 @@ public class DankAppModule {
   }
 
   @Provides
-  ImgurManager provideImgurManager() {
-    return new ImgurManager(appContext);
+  ImgurRepository provideImgurRepository() {
+    return new ImgurRepository(appContext);
+  }
+
+  @Provides
+  StreamableRepository provideStreamableRepository() {
+    return new StreamableRepository();
   }
 
   @Provides

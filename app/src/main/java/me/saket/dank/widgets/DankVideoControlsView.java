@@ -3,19 +3,24 @@ package me.saket.dank.widgets;
 import android.content.Context;
 import android.graphics.Outline;
 import android.support.annotation.IntRange;
+import android.support.annotation.Px;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewOutlineProvider;
 import android.widget.ImageButton;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoControls;
+import com.devbrackets.android.exomedia.ui.widget.VideoView;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.utils.Views;
 
 /**
  * Playback controls for a video.
@@ -24,6 +29,7 @@ public class DankVideoControlsView extends VideoControls {
 
   @BindView(R.id.exomedia_controls_play_icon) ImageView playIconView;
   @BindView(R.id.exomedia_controls_video_seek) SeekBar progressSeekBar;
+  @BindView(R.id.exomedia_controls_video_seek_container) ViewGroup progressSeekBarContainer;
 
   private boolean userInteractingWithSeek;
   private VideoProgressChangeListener progressChangeListener;
@@ -40,8 +46,31 @@ public class DankVideoControlsView extends VideoControls {
     progressChangeListener = listener;
   }
 
-  public SeekBar getProgressSeekBar() {
-    return progressSeekBar;
+  /**
+   * Extra space required below the video so that the progress seek-bar and its extra touch space are visible.
+   */
+  @Px
+  public int getBottomExtraSpaceForProgressSeekBar() {
+    return progressSeekBar.getHeight() + progressSeekBarContainer.getPaddingBottom();
+  }
+
+  @Override
+  public void setVideoView(VideoView videoView) {
+    super.setVideoView(videoView);
+
+    // We want the seek-bar to be positioned below the video.
+    // The current View hierarchy of VideoView is this:
+    // ViewView (RelativeLayout)
+    // - RelativeLayout
+    //   - TextureView
+    //   - ImageView (for preview)
+    // - Controls View.
+    Views.executeOnMeasure(progressSeekBarContainer, () -> {
+      View videoTextureViewContainer = videoView.getChildAt(0);
+      RelativeLayout.LayoutParams textureViewContainerParams = ((RelativeLayout.LayoutParams) videoTextureViewContainer.getLayoutParams());
+      textureViewContainerParams.topMargin = -progressSeekBarContainer.getPaddingBottom();
+      videoTextureViewContainer.setLayoutParams(textureViewContainerParams);
+    });
   }
 
   @Override
@@ -181,5 +210,4 @@ public class DankVideoControlsView extends VideoControls {
       }
     }
   }
-
 }

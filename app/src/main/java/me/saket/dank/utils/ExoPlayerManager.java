@@ -48,7 +48,7 @@ public class ExoPlayerManager {
 
   public ExoPlayerManager(VideoView playerView) {
     this.playerView = playerView;
-    this.textureVideoView = (ExoTextureVideoView) playerView.findViewById(R.id.exomedia_video_view);
+    this.textureVideoView = playerView.findViewById(R.id.exomedia_video_view);
   }
 
   public void setOnVideoSizeChangeListener(OnVideoSizeChangeListener listener) {

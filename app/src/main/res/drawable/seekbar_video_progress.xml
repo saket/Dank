@@ -2,7 +2,7 @@
 <layer-list xmlns:android="http://schemas.android.com/apk/res/android">
 
     <item android:id="@android:id/secondaryProgress">
-        <clip android:drawable="@color/black_opacity_20" />
+        <clip android:drawable="@color/videoplayer_buffer_color" />
     </item>
 
     <item android:id="@android:id/progress">

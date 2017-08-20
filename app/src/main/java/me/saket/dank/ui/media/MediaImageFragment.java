@@ -29,24 +29,16 @@ import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 
-/**
- * Contains an image or a video.
- */
-public class MediaFragment extends DankFragment {
+public class MediaImageFragment extends DankFragment {
 
   private static final String KEY_MEDIA_ITEM = "mediaItem";
 
-  @BindView(R.id.imageviewer_flickdismisslayout) FlickDismissLayout imageContainerView;
-  @BindView(R.id.imageviewer_imageview) ZoomableImageView imageView;
-  @BindView(R.id.imageviewer_progress) CircularProgressView progressView;
+  @BindView(R.id.albumviewerimage_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
+  @BindView(R.id.albumviewerimage_imageview) ZoomableImageView imageView;
+  @BindView(R.id.albumviewerimage_progress) CircularProgressView progressView;
 
-  interface Callbacks {
-    void onClickMediaItem();
-    int getDeviceDisplayWidth();
-  }
-
-  static MediaFragment create(MediaAlbumItem mediaAlbumItem) {
-    MediaFragment fragment = new MediaFragment();
+  static MediaImageFragment create(MediaAlbumItem mediaAlbumItem) {
+    MediaImageFragment fragment = new MediaImageFragment();
     Bundle args = new Bundle(1);
     args.putParcelable(KEY_MEDIA_ITEM, mediaAlbumItem);
     fragment.setArguments(args);
@@ -57,11 +49,8 @@ public class MediaFragment extends DankFragment {
   public void onAttach(Context context) {
     super.onAttach(context);
 
-    if (!(getActivity() instanceof Callbacks)) {
-      throw new AssertionError("Activity doesn't implement OnMediaItemClickListener");
-    }
-    if (!(getActivity() instanceof FlickGestureListener.GestureCallbacks)) {
-      throw new AssertionError("Activity doesn't implement FlickGestureListener.GestureCallbacks");
+    if (!(getActivity() instanceof MediaFragmentCallbacks) || !(getActivity() instanceof FlickGestureListener.GestureCallbacks)) {
+      throw new AssertionError();
     }
   }
 
@@ -69,7 +58,7 @@ public class MediaFragment extends DankFragment {
   @Override
   public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
-    View layout = inflater.inflate(R.layout.fragment_page_photo, container, false);
+    View layout = inflater.inflate(R.layout.fragment_album_viewer_page_image, container, false);
     ButterKnife.bind(this, layout);
     return layout;
   }
@@ -80,7 +69,7 @@ public class MediaFragment extends DankFragment {
 
     //noinspection ConstantConditions
     MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
-    int deviceDisplayWidth = ((Callbacks) getActivity()).getDeviceDisplayWidth();
+    int deviceDisplayWidth = ((MediaFragmentCallbacks) getActivity()).getDeviceDisplayWidth();
     assert mediaAlbumItem != null;
 
     imageView.setGestureRotationEnabled(true);
@@ -106,10 +95,10 @@ public class MediaFragment extends DankFragment {
     });
 
     // Make the image flick-dismissible.
-    setupFlickGestures(imageContainerView);
+    setupFlickGestures(flickDismissViewGroup);
 
     // Toggle immersive when the user clicks anywhere.
-    imageView.setOnClickListener(v -> ((Callbacks) getActivity()).onClickMediaItem());
+    imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).onClickMediaItem());
   }
 
   private void loadImage(String imageUrl) {
@@ -140,8 +129,8 @@ public class MediaFragment extends DankFragment {
   }
 
   private void setupFlickGestures(FlickDismissLayout imageContainerView) {
-    FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(getContext()), imageView);
-    flickListener.setFlickThresholdSlop(.5f, imageView);    // Dismiss once the image is swiped 50% away from its original location.
+    FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(getContext()));
+    flickListener.setFlickThresholdSlop(.5f);    // Dismiss once the image is swiped 50% away.
     flickListener.setGestureCallbacks((FlickGestureListener.GestureCallbacks) getActivity());
     flickListener.setContentHeightProvider(() -> (int) imageView.getZoomedImageHeight());
     flickListener.setOnGestureIntercepter((deltaY) -> {

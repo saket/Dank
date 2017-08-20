@@ -17,7 +17,10 @@ public class MediaAlbumPagerAdapter extends FragmentStatePagerAdapter {
 
   @Override
   public Fragment getItem(int position) {
-    return MediaFragment.create(albumItems.get(position));
+    MediaAlbumItem mediaAlbumItem = albumItems.get(position);
+    return mediaAlbumItem.mediaLink().isVideo()
+        ? MediaVideoFragment.create(mediaAlbumItem)
+        : MediaImageFragment.create(mediaAlbumItem);
   }
 
   @Override

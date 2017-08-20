@@ -17,6 +17,7 @@ import android.animation.LayoutTransition;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -52,6 +53,20 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
+
+import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Submission;
+
+import java.util.Collections;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
+
+import butterknife.BindDimen;
+import butterknife.BindDrawable;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -85,6 +100,7 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.StreamableRepository;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
@@ -128,6 +144,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindDrawable(R.drawable.ic_toolbar_close_24dp) Drawable closeIconDrawable;
   @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
 
+  @Inject StreamableRepository streamableRepository;
+
   private ExpandablePageLayout submissionPageLayout;
   private CommentsAdapter commentsAdapter;
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
@@ -140,11 +158,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private Relay<Link> submissionContentStream = PublishRelay.create();
   private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
   private Relay<PublicContribution> inlineReplyStream = PublishRelay.create();
-
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
   private SubmissionLinkHolder linkDetailsViewHolder;
-
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
   private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
@@ -156,6 +172,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   public static SubmissionFragment create() {
     return new SubmissionFragment();
+  }
+
+  @Override
+  public void onAttach(Context context) {
+    Dank.dependencyInjector().inject(this);
+    super.onAttach(context);
   }
 
   @Nullable
@@ -443,8 +465,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsAdapter.streamCommentCollapseExpandEvents().subscribe(clickEvent -> {
           if (clickEvent.willCollapseOnClick()) {
             int firstCompletelyVisiblePos = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
-            boolean commentExtendsBeyondWindowTopEdge =
-                firstCompletelyVisiblePos == -1 || clickEvent.commentRowPosition() < firstCompletelyVisiblePos;
+            boolean commentExtendsBeyondWindowTopEdge = firstCompletelyVisiblePos == -1 || clickEvent.commentRowPosition() < firstCompletelyVisiblePos;
             if (commentExtendsBeyondWindowTopEdge) {
               float viewTop = clickEvent.commentItemView().getY();
               commentList.smoothScrollBy(0, (int) viewTop);
@@ -498,12 +519,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
 
     contentVideoViewHolder = new SubmissionVideoHolder(
-        contentVideoViewContainer,
         contentVideoView,
         commentListParentSheet,
         contentLoadProgressView,
         submissionPageLayout,
         exoPlayerManager,
+        streamableRepository,
         deviceDisplayHeight,
         commentsSheetMinimumVisibleHeight
     );
@@ -568,15 +589,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         if (isCommentSheetBeneathImage
             // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
             // it becomes difficult to lock the comments sheet beneath the image.
-            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
+            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
+        {
           commentListParentSheet.scrollTo(boundedVisibleImageHeightMinusToolbar);
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
       }
 
       @Override
-      public void onStateReset(State oldState, State newState) {
-      }
+      public void onStateReset(State oldState, State newState) {}
     });
     commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
       isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
@@ -814,41 +835,41 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       contentLoadProgressView.show();
       String redditSuppliedThumbnail = findOptimizedImage(submission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidthForAlbum());
 
-      unsubscribeOnCollapse(Dank.imgur()
-          .gallery((MediaLink.ImgurUnresolvedGallery) contentLink)
-          .compose(applySchedulersSingle())
-          .subscribe(imgurResponse -> {
-            if (imgurResponse.isAlbum()) {
-              String coverImageUrl;
-              if (redditSuppliedThumbnail != null) {
-                coverImageUrl = redditSuppliedThumbnail;
-              } else {
-                coverImageUrl = imgurResponse.images().get(0).url();
-              }
+      unsubscribeOnCollapse(
+          Dank.imgur().gallery((MediaLink.ImgurUnresolvedGallery) contentLink)
+              .compose(applySchedulersSingle())
+              .subscribe(imgurResponse -> {
+                if (imgurResponse.isAlbum()) {
+                  String coverImageUrl;
+                  if (redditSuppliedThumbnail != null) {
+                    coverImageUrl = redditSuppliedThumbnail;
+                  } else {
+                    coverImageUrl = imgurResponse.images().get(0).url();
+                  }
 
-              String albumUrl = ((MediaLink.ImgurUnresolvedGallery) contentLink).albumUrl();
-              int imageCount = imgurResponse.images().size();
-              MediaLink.ImgurAlbum albumLink = MediaLink.ImgurAlbum.create(albumUrl, imgurResponse.albumTitle(), coverImageUrl, imageCount);
-              loadSubmissionContent(submission, albumLink);
+                  String albumUrl = ((MediaLink.ImgurUnresolvedGallery) contentLink).albumUrl();
+                  int imageCount = imgurResponse.images().size();
+                  MediaLink.ImgurAlbum albumLink = MediaLink.ImgurAlbum.create(albumUrl, imgurResponse.albumTitle(), coverImageUrl, imageCount);
+                  loadSubmissionContent(submission, albumLink);
 
-            } else {
-              Link coverImageLink = UrlParser.parse(imgurResponse.images().get(0).url(), submission.getThumbnails());
-              loadSubmissionContent(submission, coverImageLink);
-            }
+                } else {
+                  Link coverImageLink = UrlParser.parse(imgurResponse.images().get(0).url(), submission.getThumbnails());
+                  loadSubmissionContent(submission, coverImageLink);
+                }
 
-          }, error -> {
-            // Open this album in browser if Imgur rate limits have reached.
-            if (error instanceof ImgurApiRateLimitReachedException) {
-              String albumUrl = ((MediaLink.ImgurUnresolvedGallery) contentLink).albumUrl();
-              loadSubmissionContent(submission, Link.External.create(albumUrl));
+              }, error -> {
+                // Open this album in browser if Imgur rate limits have reached.
+                if (error instanceof ImgurApiRateLimitReachedException) {
+                  String albumUrl = ((MediaLink.ImgurUnresolvedGallery) contentLink).albumUrl();
+                  loadSubmissionContent(submission, Link.External.create(albumUrl));
 
-            } else {
-              // TODO: 05/04/17 Handle errors (including InvalidImgurAlbumException).
-              Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
-              Timber.e(error, "Couldn't load album cover image");
-              contentLoadProgressView.hide();
-            }
-          }));
+                } else {
+                  // TODO: 05/04/17 Handle errors (including InvalidImgurAlbumException).
+                  Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
+                  Timber.e(error, "Couldn't load album cover image");
+                  contentLoadProgressView.hide();
+                }
+              }));
       return;
     }
 
@@ -889,7 +910,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         break;
 
       case VIDEO:
-        unsubscribeOnCollapse(contentVideoViewHolder.load((MediaLink) contentLink));
+        boolean loadHighQualityVideo = false; // TODO: Get this from user's data preferences.
+        //noinspection ConstantConditions
+        unsubscribeOnCollapse(
+            contentVideoViewHolder.load((MediaLink) contentLink, loadHighQualityVideo)
+        );
         break;
 
       default:

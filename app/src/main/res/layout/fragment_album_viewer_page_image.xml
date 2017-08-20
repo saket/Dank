@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.binoculars.FlickDismissLayout android:id="@+id/imageviewer_flickdismisslayout"
+<me.saket.dank.widgets.binoculars.FlickDismissLayout android:id="@+id/albumviewerimage_flickdismisslayout"
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
@@ -9,14 +9,14 @@
   android:fitsSystemWindows="true">
 
   <me.saket.dank.widgets.ZoomableImageView
-    android:id="@+id/imageviewer_imageview"
+    android:id="@+id/albumviewerimage_imageview"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="center"
     tools:background="@color/blue_gray_800" />
 
   <com.github.rahatarmanahmed.cpv.CircularProgressView
-    android:id="@+id/imageviewer_progress"
+    android:id="@+id/albumviewerimage_progress"
     android:layout_width="48dp"
     android:layout_height="48dp"
     android:layout_gravity="center"

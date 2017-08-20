@@ -285,7 +285,7 @@ public class UrlParser {
     Matcher streamableIdMatcher = STREAMABLE_ID_PATTERN.matcher(streamableUri.getPath());
     if (streamableIdMatcher.matches()) {
       String videoId = streamableIdMatcher.group(1);
-      return MediaLink.StreamableUnknown.create(url, videoId);
+      return MediaLink.StreamableUnresolved.create(url, videoId);
 
     } else {
       // Fallback.

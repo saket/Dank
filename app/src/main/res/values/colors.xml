@@ -71,4 +71,6 @@
   <color name="submission_comment_body_collapsed">@color/gray_600</color>
   <color name="submission_comment_byline_failed_to_post">@color/error_text_color</color>
   <color name="submission_media_content_background_padding">@color/gray_900</color>
+
+  <color name="videoplayer_buffer_color">@color/gray_800</color>
 </resources>

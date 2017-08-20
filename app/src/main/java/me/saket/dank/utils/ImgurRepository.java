@@ -28,7 +28,7 @@ import timber.log.Timber;
 /**
  * TODO: Tests.
  */
-public class ImgurManager {
+public class ImgurRepository {
 
   private static final String KEY_REQUEST_LIMIT = "requestsLimit";
   private static final String KEY_REMAINING_REQUESTS = "remainingRequests";
@@ -43,7 +43,7 @@ public class ImgurManager {
 
   private final SharedPreferences sharedPreferences;
 
-  public ImgurManager(Context context) {
+  public ImgurRepository(Context context) {
     sharedPreferences = context.getSharedPreferences(context.getPackageName() + "_imgur_ratelimits", Context.MODE_PRIVATE);
   }
 
