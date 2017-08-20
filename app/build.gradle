@@ -62,6 +62,7 @@ ext {
     supportLibVersion = '25.3.1'
     glideLibVersion = '4.0.0'
     autoValueVersion = '1.4'
+    autoValueMoshiVersion = '0.4.3'
 }
 
 dependencies {
@@ -83,6 +84,8 @@ dependencies {
     annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
     annotationProcessor 'frankiesardo:auto-parcel:1.0.3'
     provided "com.jakewharton.auto.value:auto-value-annotations:${autoValueVersion}"
+    annotationProcessor "com.ryanharter.auto.value:auto-value-moshi:${autoValueMoshiVersion}"
+    provided "com.ryanharter.auto.value:auto-value-moshi-annotations:${autoValueMoshiVersion}"
     compile 'com.jakewharton.timber:timber:4.1.2'
     compile 'com.jakewharton:butterknife:8.5.1'
     annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'

@@ -12,7 +12,6 @@ import static org.mockito.Mockito.when;
 import android.annotation.SuppressLint;
 import android.content.SharedPreferences;
 
-import com.ryanharter.auto.value.moshi.AutoValueMoshiAdapterFactory;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
@@ -33,6 +32,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import hirondelle.date4j.DateTime;
+import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 
 public class CommentsManagerShould {
 
@@ -49,7 +49,7 @@ public class CommentsManagerShould {
   @Before
   @SuppressLint("CommitPrefEdits")
   public void setUp() throws Exception {
-    Moshi moshi = new Moshi.Builder().add(new AutoValueMoshiAdapterFactory()).build();
+    Moshi moshi = new Moshi.Builder().add(AutoValueMoshiAdapterFactory.create()).build();
     commentsManager = spy(new CommentsManager(null, null, null, sharedPrefs, moshi, RECYCLE_DRAFTS_IN_DAYS));
     replyDraftJsonAdapter = moshi.adapter(ReplyDraft.class);
 
