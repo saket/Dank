@@ -132,7 +132,7 @@ public class SubmissionVideoHolder {
       });
 
       String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
-      exoPlayerManager.playVideoInLoop(Uri.parse(cachedVideoUrl));
+      exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
     };
   }
 

@@ -69,8 +69,8 @@ public class MediaVideoFragment extends DankFragment {
   }
 
   @Override
-  public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
-    super.onViewCreated(view, savedInstanceState);
+  public void onViewCreated(View fragmentLayout, @Nullable Bundle savedInstanceState) {
+    super.onViewCreated(fragmentLayout, savedInstanceState);
 
     // Make the image flick-dismissible.
     setupFlickGestures(flickDismissViewGroup);
@@ -89,6 +89,7 @@ public class MediaVideoFragment extends DankFragment {
     videoView.setOnPreparedListener(() -> {
       textureViewContainer.setVisibility(View.VISIBLE);
       videoControlsView.showVideoState(DankVideoControlsView.VideoState.PREPARED);
+      exoPlayerManager.startVideoPlayback();
     });
 
     MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
@@ -99,7 +100,7 @@ public class MediaVideoFragment extends DankFragment {
     );
 
     // Toggle immersive when the user clicks anywhere.
-    videoView.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).onClickMediaItem());
+    flickDismissViewGroup.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).onClickMediaItem());
 
     // VideoView internally sets its height to match-parent. Forcefully resize it to match the video height.
     exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
@@ -129,7 +130,7 @@ public class MediaVideoFragment extends DankFragment {
         .subscribe(
             videoUrl -> {
               // TODO Cache: String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
-              exoPlayerManager.playVideoInLoop(Uri.parse(videoUrl));
+              exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(videoUrl));
             },
             error -> {
               // TODO: 01/04/17 Handle error.

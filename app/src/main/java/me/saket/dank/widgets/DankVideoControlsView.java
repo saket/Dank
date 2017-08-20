@@ -166,13 +166,13 @@ public class DankVideoControlsView extends VideoControls {
   @Override
   public void showLoading(boolean initialLoad) {
     loadingProgressBar.setVisibility(VISIBLE);
-    updatePlayPauseImage(false);
+    //updatePlayPauseImage(false);
   }
 
   @Override
   public void finishLoading() {
     loadingProgressBar.setVisibility(GONE);
-    updatePlayPauseImage(videoView != null && videoView.isPlaying());
+    //updatePlayPauseImage(videoView != null && videoView.isPlaying());
   }
 
   @Override

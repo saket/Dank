@@ -29,7 +29,8 @@ public class FlickDismissLayout extends FrameLayout {
 
   @Override
   public boolean onTouchEvent(MotionEvent event) {
-    return flickGestureListener.onTouch(this, event);
+    boolean handled = flickGestureListener.onTouch(this, event);
+    return handled || super.onTouchEvent(event);
   }
 
   public void setFlickGestureListener(FlickGestureListener flickGestureListener) {

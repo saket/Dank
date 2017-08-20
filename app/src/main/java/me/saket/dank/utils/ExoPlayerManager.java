@@ -40,7 +40,7 @@ public class ExoPlayerManager {
     naviComponent.addListener(Event.PAUSE, o -> exoPlayerManager.pauseVideoPlayback());
     naviComponent.addListener(Event.RESUME, o -> {
       if (exoPlayerManager.wasPlayingUponPause) {
-        exoPlayerManager.resumeVideoPlayback();
+        exoPlayerManager.startVideoPlayback();
       }
     });
 
@@ -71,7 +71,7 @@ public class ExoPlayerManager {
     });
   }
 
-  public void playVideoInLoop(Uri videoUri) {
+  public void setVideoUriToPlayInLoop(Uri videoUri) {
     // Produces DataSource instances through which media data is loaded.
     DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(playerView.getContext(),
         Util.getUserAgent(playerView.getContext(), playerView.getContext().getPackageName())
@@ -79,12 +79,18 @@ public class ExoPlayerManager {
 
     // Produces Extractor instances for parsing the media data.
     ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-    MediaSource videoSource = new LoopingMediaSource(new ExtractorMediaSource(videoUri, dataSourceFactory, extractorsFactory, null, null));
+    MediaSource videoSource = new LoopingMediaSource(new ExtractorMediaSource(
+        videoUri,
+        dataSourceFactory,
+        extractorsFactory,
+        null,
+        null
+    ));
 
     playerView.setVideoURI(videoUri, videoSource);
   }
 
-  private void resumeVideoPlayback() {
+  public void startVideoPlayback() {
     playerView.start();
   }
 

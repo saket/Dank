@@ -5,15 +5,14 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:animateLayoutChanges="true"
   android:fitsSystemWindows="true">
 
   <!-- Height is re-set in code. -->
   <com.devbrackets.android.exomedia.ui.widget.VideoView
     android:id="@+id/albumviewervideo_video"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="240dp"
     android:layout_gravity="center"
     app:useTextureViewBacking="true"
-    tools:layout_height="240dp" />
+    tools:background="@color/blue_gray_800" />
 </me.saket.dank.widgets.binoculars.FlickDismissLayout>
