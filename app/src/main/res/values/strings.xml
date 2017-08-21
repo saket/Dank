@@ -197,10 +197,9 @@
   <string name="cd_videoplayer_toggle_fullscreen">Toggle fullscreen</string>
 
   <!-- User profile popup -->
-  <string name="userprofilepopup_send_a_private_message">Send a private message</string>
-  <string name="userprofilepopup_view_full_profile">View full profile</string>
+  <string name="userprofilepopup_send_a_private_message">Message</string>
+  <string name="userprofilepopup_view_full_profile">Full profile</string>
   <string name="userprofilepopup_body">Redditor for %1$d years \n%2$s post &amp; %3$s comment karma</string>
-  <string name="cd_userprofilepopup_cover_image">Cover image of %s\</string>
   <string name="cd_userprofilepopup_profile_image">User image of %s</string>
   <string name="userprofilepopup_redditor_since">Redditor\nsince</string>
   <string name="userprofilepopup_link_karma">Link\nkarma</string>
@@ -208,4 +207,5 @@
   <string name="userprofilepopup_account_age_in_days">%dd</string>
   <string name="userprofilepopup_account_age_in_months">%dm</string>
   <string name="userprofilepopup_account_age_in_years">%dy</string>
+  <string name="userprofilepopup_error_message_tap_to_retry">%s. Tap to retry.</string>
 </resources>

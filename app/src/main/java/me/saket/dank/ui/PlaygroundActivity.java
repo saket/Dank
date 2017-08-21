@@ -33,7 +33,7 @@ public class PlaygroundActivity extends DankPullCollapsibleActivity {
   @OnClick(R.id.playground_user_profile_popup)
   void onClickShowProfilePopup(Button button) {
     UserProfilePopup userProfilePopup = new UserProfilePopup(this);
-    userProfilePopup.loadUserProfile((User) UrlParser.parse("http://reddit.com/u/saketme"));
+    userProfilePopup.loadUserProfile((User) UrlParser.parse("http://reddit.com/u/kn0thing"));
     userProfilePopup.showWithAnchor(button);
   }
 

@@ -1,17 +1,13 @@
 package me.saket.dank.utils;
 
-import android.support.annotation.Nullable;
-
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-
-import net.dean.jraw.models.Contribution;
-
+import io.reactivex.exceptions.Exceptions;
 import java.io.IOException;
 import java.io.InputStream;
-
+import net.dean.jraw.models.Contribution;
 import timber.log.Timber;
 
 /**
@@ -33,7 +29,6 @@ public class JacksonHelper {
     return toJson(objectWithDataNode.getDataNode());
   }
 
-  @Nullable
   public <T> String toJson(T object) {
     if (object instanceof Contribution) {
       throw new UnsupportedOperationException("Pass object's dataNode instead");
@@ -42,28 +37,26 @@ public class JacksonHelper {
     try {
       return jsonPrinter.writeValueAsString(object);
     } catch (JsonProcessingException e) {
-      return null;
+      throw Exceptions.propagate(e);
     }
   }
 
-  @Nullable
   public JsonNode parseJsonNode(String json) {
     try {
       return objectMapper.readTree(json);
     } catch (IOException e) {
       Timber.e(e, "Couldn't deserialize json: %s", json);
-      return null;
+      throw Exceptions.propagate(e);
     }
   }
 
-  @Nullable
   public <T> T fromJson(InputStream jsonInputStream, Class<T> dataClass) {
     try {
       return objectMapper.readValue(jsonInputStream, dataClass);
 
     } catch (IOException e) {
       Timber.e(e, "Couldn't deserialize jsonInputStream");
-      return null;
+      throw Exceptions.propagate(e);
     }
   }
 }

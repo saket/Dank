@@ -49,7 +49,7 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     setOutsideTouchable(true);
 
     boolean isTopGravity = (gravity | Gravity.TOP) == gravity;
-    Point positionToShow = calculatePositionToAvoidGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
+    Point positionToShow = calculatePositionWithAnchorWithoutGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
     showAtLocation(anchorView, Gravity.TOP | Gravity.START, positionToShow.x, positionToShow.y);
 
     addBackgroundDimming();
@@ -104,7 +104,7 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     });
   }
 
-  public Point calculatePositionToAvoidGoingOutsideWindow(Point anchorLocation, View contentView, boolean isTopGravity) {
+  public Point calculatePositionWithAnchorWithoutGoingOutsideWindow(Point showLocation, View contentView, boolean isTopGravity) {
     contentView.measure(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     int contentWidth = contentView.getMeasuredWidth();
     int contentHeight = contentView.getMeasuredHeight();
@@ -114,17 +114,17 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     int screenWidth = displaySize.x;
     int screenHeight = displaySize.y;
 
-    int xPos = anchorLocation.x;
-    int yPos = anchorLocation.y;
+    int xPos = showLocation.x;
+    int yPos = showLocation.y;
 
     // Display above the anchor view.
     if (isTopGravity || yPos + contentHeight > screenHeight) {
-      yPos = anchorLocation.y - contentHeight;
+      yPos = showLocation.y - contentHeight;
     }
 
     // Keep the right edge of the popup on the screen.
     if (xPos + contentWidth > screenWidth) {
-      xPos = anchorLocation.x - ((anchorLocation.x + contentWidth) - screenWidth);
+      xPos = showLocation.x - ((showLocation.x + contentWidth) - screenWidth);
     }
     return new Point(xPos, yPos);
   }

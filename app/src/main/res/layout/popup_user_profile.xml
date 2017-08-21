@@ -4,48 +4,42 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="wrap_content"
   android:layout_height="wrap_content"
-  android:background="@color/window_background"
+  android:background="@drawable/background_popup_window"
   android:orientation="vertical">
 
-  <RelativeLayout
+  <LinearLayout
     android:id="@+id/userprofilepopup_header"
     android:layout_width="284dp"
-    android:layout_height="wrap_content">
-
-    <!-- ContentDescription set in code. -->
-    <ImageView
-      android:id="@+id/userprofilepopup_cover_image"
-      android:layout_width="284dp"
-      android:layout_height="72dp"
-      android:background="@color/gray_900"
-      android:visibility="visible"
-      tools:ignore="ContentDescription" />
+    android:layout_height="wrap_content"
+    android:layout_marginTop="@dimen/spacing12"
+    android:animateLayoutChanges="true"
+    android:orientation="horizontal"
+    tools:ignore="UseCompoundDrawables">
 
     <!-- ContentDescription set in code. -->
     <ImageView
       android:id="@+id/userprofilepopup_profile_image"
-      android:layout_width="72dp"
-      android:layout_height="72dp"
+      android:layout_width="36dp"
+      android:layout_height="36dp"
       android:layout_marginStart="@dimen/spacing16"
-      android:layout_alignBottom="@+id/userprofilepopup_username"
+      android:layout_gravity="center_vertical"
       android:background="@drawable/shape_user_profile_popup_image_placeholder"
-      android:visibility="visible"
+      android:visibility="gone"
       tools:ignore="ContentDescription" />
 
     <TextView
       android:id="@+id/userprofilepopup_username"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_marginTop="@dimen/spacing12"
       android:layout_marginStart="@dimen/spacing16"
       android:layout_marginEnd="@dimen/spacing16"
-      android:layout_below="@+id/userprofilepopup_cover_image"
-      android:layout_toEndOf="@+id/userprofilepopup_profile_image"
-      android:paddingBottom="@dimen/spacing4"
+      android:layout_gravity="center_vertical"
+      android:paddingTop="6dp"
+      android:paddingBottom="10dp"
       android:textColor="@color/color_accent"
       android:textSize="@dimen/textsize18"
       tools:text="u/saketme" />
-  </RelativeLayout>
+  </LinearLayout>
 
   <LinearLayout
     android:layout_width="wrap_content"
@@ -59,7 +53,6 @@
       android:id="@+id/userprofilepopup_stats_viewflipper"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:paddingTop="@dimen/spacing16"
       android:paddingStart="@dimen/spacing16"
       android:paddingEnd="@dimen/spacing16"
       android:inAnimation="@anim/fade_in"
@@ -69,7 +62,9 @@
       <LinearLayout
         android:id="@+id/userprofilepopup_stats_container"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:paddingTop="@dimen/spacing12"
+        android:paddingBottom="@dimen/spacing16">
 
         <LinearLayout style="@style/DankUserProfilePopupStatsContainer">
 
@@ -111,7 +106,7 @@
       <FrameLayout
         android:id="@+id/userprofilepopup_stats_load_progress"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:background="@color/window_background">
 
         <ProgressBar
@@ -122,52 +117,45 @@
           android:indeterminateTint="@color/white_opacity_40" />
       </FrameLayout>
 
-      <LinearLayout
-        android:id="@+id/userprofilepopup_stats_load_error"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center_horizontal"
-        android:orientation="vertical">
-
-        <TextView
-          android:id="@+id/userprofilepopup_stats_load_error_message"
-          style="@style/ErrorStateMessage"
-          tools:text="Failed to load profile" />
-
-        <Button
-          android:id="@+id/userprofilepopup_stats_load_error_retry"
-          style="@style/ErrorStateRetryButton"
-          android:layout_marginTop="0dp"
-          android:text="@string/common_error_retry" />
-      </LinearLayout>
+      <TextView
+        android:id="@+id/userprofilepopup_stats_load_error_message"
+        style="@style/ErrorStateMessage"
+        android:layout_gravity="center"
+        tools:text="Failed to load profile. Tap to retry." />
     </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
-
-    <View
-      style="@style/DankSeparator.VerticalContent"
-      android:layout_marginTop="@dimen/spacing16" />
-
-    <Button
-      android:id="@+id/userprofilepopup_send_private_message"
-      style="@style/DankButton.Borderless"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:paddingStart="@dimen/spacing16"
-      android:paddingEnd="@dimen/spacing16"
-      android:background="?attr/selectableItemBackground"
-      android:gravity="start|center_vertical"
-      android:text="@string/userprofilepopup_send_a_private_message" />
 
     <View style="@style/DankSeparator.VerticalContent" />
 
-    <Button
-      android:id="@+id/userprofilepopup_view_full_profile"
-      style="@style/DankButton.Borderless"
+    <LinearLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:paddingStart="@dimen/spacing16"
-      android:paddingEnd="@dimen/spacing16"
-      android:background="?attr/selectableItemBackground"
-      android:gravity="start|center_vertical"
-      android:text="@string/userprofilepopup_view_full_profile" />
+      android:orientation="horizontal">
+
+      <Button
+        android:id="@+id/userprofilepopup_send_private_message"
+        style="@style/DankButton.Borderless"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingStart="@dimen/spacing16"
+        android:paddingEnd="@dimen/spacing16"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="start|center_vertical"
+        android:text="@string/userprofilepopup_send_a_private_message" />
+
+      <View style="@style/DankSeparator.HorizontalContent" />
+
+      <Button
+        android:id="@+id/userprofilepopup_view_full_profile"
+        style="@style/DankButton.Borderless"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:paddingStart="@dimen/spacing16"
+        android:paddingEnd="@dimen/spacing16"
+        android:background="?attr/selectableItemBackground"
+        android:gravity="start|center_vertical"
+        android:text="@string/userprofilepopup_view_full_profile" />
+    </LinearLayout>
   </LinearLayout>
 </RelativeLayout>

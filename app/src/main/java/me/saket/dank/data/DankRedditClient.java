@@ -3,7 +3,9 @@ package me.saket.dank.data;
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.squareup.moshi.JsonAdapter;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -14,7 +16,9 @@ import io.reactivex.functions.Function;
 import java.util.List;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.UserProfile;
 import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSubreddit;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -289,9 +293,20 @@ public class DankRedditClient {
   /**
    * For accessing information about other users.
    */
-  @CheckResult
-  public Single<Account> userProfile(String username) {
-    return withAuth(Single.fromCallable(() -> redditClient.getUser(username)));
+  public Single<UserProfile> userProfile(String username) {
+    return withAuth(Single.fromCallable(() -> {
+      Account userAccount = redditClient.getUser(username);
+
+      JsonNode subredditJsonNode = userAccount.getDataNode().get("subreddit");
+      if (subredditJsonNode.isNull()) {
+        return UserProfile.create(userAccount, null);
+
+      } else {
+        JsonAdapter<UserSubreddit> userSubredditJsonAdapter = Dank.moshi().adapter(UserSubreddit.class);
+        UserSubreddit userSubreddit = userSubredditJsonAdapter.fromJson(Dank.jackson().toJson(subredditJsonNode));
+        return UserProfile.create(userAccount, userSubreddit);
+      }
+    }));
   }
 
 // ======== SUBREDDITS ======== //
