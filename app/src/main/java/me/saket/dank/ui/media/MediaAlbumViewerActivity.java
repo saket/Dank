@@ -76,7 +76,6 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   public static void start(Context context, MediaLink mediaLink) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
-    intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
     context.startActivity(intent);
   }
 
@@ -84,6 +83,8 @@ public class MediaAlbumViewerActivity extends DankActivity
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     Dank.dependencyInjector().inject(this);
     super.onCreate(savedInstanceState);
+    overridePendingTransition(R.anim.fade_in, 0);
+
     setContentView(R.layout.activity_media_album_viewer);
     ButterKnife.bind(this);
 
