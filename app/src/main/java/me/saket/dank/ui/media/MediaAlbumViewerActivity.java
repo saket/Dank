@@ -75,6 +75,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   @BindView(R.id.mediaalbumviewer_download) ImageButton downloadButton;
   @BindView(R.id.mediaalbumviewer_open_in_browser) ImageButton openInBrowserButton;
   @BindView(R.id.mediaalbumviewer_reload_in_hd) ImageButton reloadInHighDefButton;
+  @BindView(R.id.mediaalbumviewer_options_background_gradient) View optionButtonsBackgroundGradientView;
 
   @Inject VideoHostRepository videoHostRepository;
   @Inject HttpProxyCacheServer videoCacheServer;
@@ -104,7 +105,9 @@ public class MediaAlbumViewerActivity extends DankActivity
 
     List<MediaAlbumItem> mediaLinks = new ArrayList<>();
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/WhGHrBE.jpg")));
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/01v3bw0.jpg")));
+    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/eYveT4s.jpg")));
+    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.redd.it/mis36nxfe5hz.jpg")));
+    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/QtD7iMr.jpg")));
 //    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/rQ7IogD.gifv")));
 //    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/Cj9XeIY.gifv")));
     mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
@@ -127,9 +130,11 @@ public class MediaAlbumViewerActivity extends DankActivity
     fadeInAnimator.start();
 
     int navBarHeight = Views.getNavigationBarSize(this).y;
-    Views.setPaddingBottom(optionButtonsContainer, navBarHeight);
-
+    Views.setMarginBottom(optionButtonsContainer, navBarHeight);
     Views.executeOnMeasure(optionButtonsContainer, () -> {
+      int shareButtonTop = Views.globalVisibleRect(shareButton).top + shareButton.getPaddingTop();
+      int gradientHeight = optionButtonsBackgroundGradientView.getTop() - shareButtonTop;
+      Views.setHeight(optionButtonsBackgroundGradientView, gradientHeight);
       animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
     });
 
@@ -408,6 +413,19 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   private void animateMediaOptionsVisibility(boolean showOptions, TimeInterpolator interpolator, long animationDuration, boolean setInitialValues) {
+    if (setInitialValues) {
+      optionButtonsBackgroundGradientView.setAlpha(showOptions ? 0f : 1f);
+      optionButtonsBackgroundGradientView.setTranslationY(showOptions ? optionButtonsBackgroundGradientView.getHeight() : 0f);
+    }
+
+    optionButtonsBackgroundGradientView.animate().cancel();
+    optionButtonsBackgroundGradientView.animate()
+        .translationY(showOptions ? 0f : optionButtonsBackgroundGradientView.getHeight())
+        .alpha(showOptions ? 1f : 0f)
+        .setDuration((long) (animationDuration * (showOptions ? 1.5f : 1)))
+        .setInterpolator(interpolator)
+        .start();
+
     // Animating the child Views so that they get clipped by their parent container.
     for (int i = 0; i < optionButtonsContainer.getChildCount(); i++) {
       View childView = optionButtonsContainer.getChildAt(i);

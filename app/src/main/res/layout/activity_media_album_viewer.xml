@@ -1,24 +1,32 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.ui.media.PopView android:id="@+id/mediaalbumviewer_root"
+<FrameLayout android:id="@+id/mediaalbumviewer_root"
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   android:background="@color/black_opacity_60"
   android:fitsSystemWindows="true"
-  android:orientation="vertical">
+  android:orientation="vertical"
+  tools:background="@color/black_opacity_10">
 
   <me.saket.dank.widgets.MediaAlbumViewPager
     android:id="@+id/mediaalbumviewer_pager"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
 
+  <!-- The top of this View is programmatically set to align with the options. -->
+  <View
+    android:id="@+id/mediaalbumviewer_options_background_gradient"
+    android:layout_width="match_parent"
+    android:layout_height="0dp"
+    android:layout_gravity="bottom"
+    android:background="@drawable/background_media_viewer_options_gradient" />
+
   <LinearLayout
     android:id="@+id/mediaalbumviewer_options_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="bottom"
-    android:background="@color/transparent"
     android:gravity="bottom"
     tools:ignore="ContentDescription">
 
@@ -43,4 +51,4 @@
       style="@style/DankMediaAlbumViewerOption"
       android:src="@drawable/ic_hd_24dp" />
   </LinearLayout>
-</me.saket.dank.ui.media.PopView>
+</FrameLayout>
