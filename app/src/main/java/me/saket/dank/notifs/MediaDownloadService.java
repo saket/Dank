@@ -2,36 +2,42 @@ package me.saket.dank.notifs;
 
 import static me.saket.dank.ui.media.MediaDownloadJob.ProgressState.DOWNLOADED;
 
+import android.Manifest;
 import android.app.Notification;
 import android.app.PendingIntent;
 import android.app.Service;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
+import android.os.Build;
 import android.os.IBinder;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
-import android.support.v7.app.NotificationCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
 import com.bumptech.glide.request.target.Target;
 import com.bumptech.glide.request.transition.Transition;
+import com.danikula.videocache.HttpProxyCacheServer;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -39,12 +45,22 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
+import me.saket.dank.di.Dank;
 import me.saket.dank.ui.media.MediaDownloadJob;
 import me.saket.dank.utils.Files2;
 import me.saket.dank.utils.Intents;
+import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Urls;
+import me.saket.dank.utils.VideoHostRepository;
 import me.saket.dank.utils.glide.GlideProgressTarget;
+import me.saket.dank.utils.okhttp.OkHttpResponseBodyWithProgress;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
+import okio.BufferedSink;
+import okio.BufferedSource;
+import okio.Okio;
 import timber.log.Timber;
 
 /**
@@ -62,6 +78,16 @@ public class MediaDownloadService extends Service {
   private static final String REQUESTCODE_DELETE_IMAGE_PREFIX_ = "302";
   private static final String REQUESTCODE_OPEN_IMAGE_PREFIX_ = "303";
   private static final String REQUESTCODE_CANCEL_DOWNLOAD_PREFIX_ = "304";
+
+  /**
+   * Starting from Nougat, Android has a rate limiter in place which puts a certain
+   * threshold between every update. The exact value is somewhere between 100ms to 200ms.
+   */
+  private static final int MINIMUM_GAP_BETWEEN_NOTIFICATION_UPDATEs = 201;
+
+  @Inject HttpProxyCacheServer videoCacheServer;
+  @Inject OkHttpClient okHttpClient;
+  @Inject VideoHostRepository videoHostRepository;
 
   private CompositeDisposable disposables = new CompositeDisposable();
   private final Set<String> ongoingDownloadUrls = new HashSet<>();
@@ -107,6 +133,7 @@ public class MediaDownloadService extends Service {
 
   @Override
   public void onCreate() {
+    Dank.dependencyInjector().inject(this);
     super.onCreate();
 
     // Stop service when all downloads finish.
@@ -131,30 +158,39 @@ public class MediaDownloadService extends Service {
     );
 
     disposables.add(
-        downloadCancellationStream.subscribe(mediaLinkToCancel ->
-            NotificationManagerCompat.from(this).cancel(createNotificationIdFor(mediaLinkToCancel))
-        )
+        downloadCancellationStream.subscribe(mediaLinkToCancel -> {
+          ongoingDownloadUrls.remove(mediaLinkToCancel.originalUrl());
+          NotificationManagerCompat.from(this).cancel(createNotificationIdFor(mediaLinkToCancel));
+        })
     );
 
     disposables.add(
         downloadRequestStream
-            // Starting from Nougat, Android has a rate limiter in place which puts a certain
-            // threshold between every update. The exact value is somewhere between 100ms to 200ms.
-            .sample(201, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+            .sample(MINIMUM_GAP_BETWEEN_NOTIFICATION_UPDATEs, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
             .doOnNext(linkToQueue -> {
               MediaDownloadJob downloadJobToQueue = MediaDownloadJob.createQueued(linkToQueue, System.currentTimeMillis());
               downloadJobsWithVisibleNotif.put(downloadJobToQueue.mediaLink().originalUrl(), downloadJobToQueue);
               updateIndividualProgressNotification(downloadJobToQueue, createNotificationIdFor(linkToQueue));
             })
-            .concatMap(linkToDownload ->
-                downloadImage(linkToDownload)
-                    .map(moveFileToUserSpaceOnDownload())
-                    .doOnTerminate(() -> ongoingDownloadUrls.remove(linkToDownload.originalUrl()))
-                    .doOnError(e -> Timber.e(e, "Couldn't download media"))
-                    .onErrorReturnItem(MediaDownloadJob.createFailed(linkToDownload, System.currentTimeMillis()))
-                    .takeUntil(downloadCancellationStream.filter(linkToCancel -> linkToCancel.equals(linkToDownload)))
-                    .sample(201, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread(), true)
-            )
+            .concatMap(linkToDownload -> {
+              Observable<MediaDownloadJob> downloadStream;
+
+              if (linkToDownload.isVideo()) {
+                downloadStream = videoHostRepository.fetchActualVideoUrlIfNeeded(linkToDownload)
+                    .flatMapObservable(resolvedLink -> downloadVideoAndStreamProgress(resolvedLink))
+                    .compose(RxUtils.applySchedulers());
+              } else {
+                downloadStream = downloadImageAndStreamProgress(linkToDownload);
+              }
+
+              return downloadStream
+                  .map(moveFileToUserSpaceOnDownload())
+                  .doOnTerminate(() -> ongoingDownloadUrls.remove(linkToDownload.originalUrl()))
+                  .doOnError(e -> Timber.e(e, "Couldn't download media"))
+                  .onErrorReturnItem(MediaDownloadJob.createFailed(linkToDownload, System.currentTimeMillis()))
+                  .takeUntil(downloadCancellationStream.filter(linkToCancel -> linkToCancel.equals(linkToDownload)))
+                  .sample(MINIMUM_GAP_BETWEEN_NOTIFICATION_UPDATEs, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread(), true);
+            })
             .subscribe(downloadJob -> {
               int notificationId = createNotificationIdFor(downloadJob.mediaLink());
 
@@ -196,7 +232,6 @@ public class MediaDownloadService extends Service {
   @Override
   public int onStartCommand(Intent intent, int flags, int startId) {
     Action serviceAction = (Action) intent.getSerializableExtra(KEY_ACTION);
-
     switch (serviceAction) {
       case ENQUEUE_DOWNLOAD:
         MediaLink mediaLinkToDownload = (MediaLink) intent.getSerializableExtra(KEY_MEDIA_LINK_TO_DOWNLOAD);
@@ -204,6 +239,8 @@ public class MediaDownloadService extends Service {
         if (!isDownloadAlreadyOngoing) {
           ongoingDownloadUrls.add(mediaLinkToDownload.originalUrl());
           downloadRequestStream.accept(mediaLinkToDownload);
+        } else {
+          Timber.w("Ignoring ongoing download");
         }
         break;
 
@@ -240,9 +277,8 @@ public class MediaDownloadService extends Service {
         )
     );
 
-    Notification notification = new NotificationCompat.Builder(this)
+    NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
         .setContentTitle(notificationTitle)
-        .setContentText(mediaDownloadJob.downloadProgress() + "%")
         .setSmallIcon(android.R.drawable.stat_sys_download)
         .setOngoing(true)
         .setLocalOnly(true)   // Hide from wearables.
@@ -251,9 +287,13 @@ public class MediaDownloadService extends Service {
         // Keep notification of ongoing-download above queued-downloads.
         .setPriority(isQueued ? Notification.PRIORITY_LOW : Notification.PRIORITY_DEFAULT)
         .setProgress(100 /* max */, mediaDownloadJob.downloadProgress(), indeterminateProgress)
-        .addAction(cancelAction)
-        .build();
+        .addAction(cancelAction);
 
+    if (mediaDownloadJob.progressState() != MediaDownloadJob.ProgressState.CONNECTING) {
+      notificationBuilder = notificationBuilder.setContentText(mediaDownloadJob.downloadProgress() + "%");
+    }
+
+    Notification notification = notificationBuilder.build();
     NotificationManagerCompat.from(this).notify(notificationId, notification);
   }
 
@@ -293,14 +333,16 @@ public class MediaDownloadService extends Service {
     NotificationManagerCompat.from(this).notify(notificationId, errorNotification);
   }
 
+  /**
+   * Generate a notification with a preview of the media. Images and videos both work, thanks to Glide.
+   */
   private void displaySuccessNotification(MediaDownloadJob completedDownloadJob, int notificationId) {
     // Content intent.
-    Uri imageContentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), completedDownloadJob.downloadedFile());
-    Timber.i("imageContentUri: %s", imageContentUri);
+    Uri mediaContentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), completedDownloadJob.downloadedFile());
 
     PendingIntent viewImagePendingIntent = PendingIntent.getActivity(this,
         createPendingIntentRequestId(REQUESTCODE_OPEN_IMAGE_PREFIX_, notificationId),
-        Intents.createForViewingImage(this, imageContentUri),
+        Intents.createForViewingImage(this, mediaContentUri),
         PendingIntent.FLAG_CANCEL_CURRENT
     );
 
@@ -359,7 +401,10 @@ public class MediaDownloadService extends Service {
         });
   }
 
-  private Observable<MediaDownloadJob> downloadImage(MediaLink mediaLink) {
+  /**
+   * Download an image and streams progress updates.
+   */
+  private Observable<MediaDownloadJob> downloadImageAndStreamProgress(MediaLink mediaLink) {
     String imageUrl = mediaLink.originalUrl();
     long downloadStartTimeMillis = System.currentTimeMillis();
 
@@ -410,13 +455,80 @@ public class MediaDownloadService extends Service {
     });
   }
 
+  /**
+   * Download a video and streams progress updates.
+   */
+  private Observable<MediaDownloadJob> downloadVideoAndStreamProgress(MediaLink linkToDownload) {
+    return Observable.create(emitter -> {
+      String videoUrl = linkToDownload.highQualityVideoUrl();
+      long downloadStartTimeMillis = System.currentTimeMillis();
+
+      if (videoCacheServer.isCached(videoUrl)) {
+        emitter.onNext(MediaDownloadJob.createConnecting(linkToDownload, downloadStartTimeMillis));
+
+        String cachedVideoFileUrl = videoCacheServer.getProxyUrl(videoUrl);
+        File cachedVideoFile = new File(Uri.parse(cachedVideoFileUrl).getPath());
+        emitter.onNext(MediaDownloadJob.createDownloaded(linkToDownload, cachedVideoFile, System.currentTimeMillis()));
+
+      } else {
+        // Proxy through VideoCacheServer so that the downloaded video also gets saved to cache.
+        String videoProxyUrl = videoCacheServer.getProxyUrl(videoUrl, false);
+
+        emitter.onNext(MediaDownloadJob.createConnecting(linkToDownload, downloadStartTimeMillis));
+
+        // Emit progress updates while reading the video's input stream.
+        Request downloadRequest = new Request.Builder()
+            .url(videoProxyUrl)
+            .get()
+            .build();
+        Response videoResponse = okHttpClient.newCall(downloadRequest).execute();
+        Response responseWithProgressListener = videoResponse.newBuilder()
+            .body(new OkHttpResponseBodyWithProgress(
+                downloadRequest.url(),
+                videoResponse.body(),
+                (url, bytesRead, expectedContentLength) -> {
+                  if (bytesRead < expectedContentLength) {
+                    int progress = (int) (100 * (float) bytesRead / expectedContentLength);
+                    emitter.onNext(MediaDownloadJob.createProgress(linkToDownload, progress, downloadStartTimeMillis));
+                  }
+                }
+            ))
+            .build();
+
+        if (!responseWithProgressListener.isSuccessful()) {
+          throw new IOException("Unexpected code: " + responseWithProgressListener);
+        }
+
+        // Write to a temporary file, that will later get replaced by moveFileToUserSpaceOnDownload().
+        File videoTempFile = new File(getCacheDir(), Urls.parseFileNameWithExtension(videoUrl));
+        try (BufferedSource bufferedSource = responseWithProgressListener.body().source()) {
+          BufferedSink bufferedSink = Okio.buffer(Okio.sink(videoTempFile));
+          bufferedSink.writeAll(bufferedSource);
+          bufferedSink.close();
+        }
+
+        long downloadCompleteTimeMillis = System.currentTimeMillis();
+        emitter.onNext(MediaDownloadJob.createDownloaded(linkToDownload, videoTempFile, downloadCompleteTimeMillis));
+        emitter.onComplete();
+      }
+    });
+  }
+
   @NonNull
   private Function<MediaDownloadJob, MediaDownloadJob> moveFileToUserSpaceOnDownload() {
     return downloadJobUpdate -> {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        if (checkSelfPermission(Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+          throw new AssertionError("Storage permission not granted");
+        }
+      }
+
       if (downloadJobUpdate.progressState() == DOWNLOADED) {
-        String mediaFileName = Urls.parseFileNameWithExtension(downloadJobUpdate.mediaLink().originalUrl());
+        MediaLink downloadedMediaLink = downloadJobUpdate.mediaLink();
+        String mediaUrl = downloadedMediaLink.isVideo() ? downloadedMediaLink.highQualityVideoUrl() : downloadedMediaLink.originalUrl();
+        String mediaFileName = Urls.parseFileNameWithExtension(mediaUrl);
         File userAccessibleFile = Files2.copyFileToPicturesDirectory(getResources(), downloadJobUpdate.downloadedFile(), mediaFileName);
-        return MediaDownloadJob.createDownloaded(downloadJobUpdate.mediaLink(), userAccessibleFile, downloadJobUpdate.timestamp());
+        return MediaDownloadJob.createDownloaded(downloadedMediaLink, userAccessibleFile, downloadJobUpdate.timestamp());
 
       } else {
         return downloadJobUpdate;

@@ -16,14 +16,14 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.Single;
 import io.reactivex.disposables.Disposable;
 import me.saket.dank.R;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.ExoPlayerManager;
-import me.saket.dank.utils.StreamableRepository;
+import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.VideoHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
@@ -37,7 +37,7 @@ public class MediaVideoFragment extends DankFragment {
   @BindView(R.id.albumviewervideo_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
   @BindView(R.id.albumviewervideo_video) VideoView videoView;
 
-  @Inject StreamableRepository streamableRepository;
+  @Inject VideoHostRepository videoHostRepository;
 
   private ExoPlayerManager exoPlayerManager;
 
@@ -114,20 +114,16 @@ public class MediaVideoFragment extends DankFragment {
   }
 
   public Disposable load(MediaLink mediaLink, boolean loadHighQualityVideo) {
-    return Single.just(mediaLink)
-        .flatMap(link -> {
-          if (link instanceof MediaLink.StreamableUnresolved) {
-            return streamableRepository.video(((MediaLink.StreamableUnresolved) link).videoId());
-          } else {
-            return Single.just(link);
-          }
-        })
+    return videoHostRepository.fetchActualVideoUrlIfNeeded(mediaLink)
+        .compose(RxUtils.applySchedulersSingle())
         .doOnSubscribe(o -> Timber.i("TODO: show loading progress indicator"))
         .map(link -> loadHighQualityVideo ? link.highQualityVideoUrl() : link.lowQualityVideoUrl())
         .subscribe(
             videoUrl -> {
-              // TODO Cache: String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
-              exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(videoUrl));
+              // TODO Cache:
+              String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
+              exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
+              //exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(videoUrl));
             },
             error -> {
               // TODO: 01/04/17 Handle error.

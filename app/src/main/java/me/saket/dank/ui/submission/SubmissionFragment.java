@@ -100,8 +100,8 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
-import me.saket.dank.utils.StreamableRepository;
 import me.saket.dank.utils.UrlParser;
+import me.saket.dank.utils.VideoHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
@@ -144,7 +144,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindDrawable(R.drawable.ic_toolbar_close_24dp) Drawable closeIconDrawable;
   @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
 
-  @Inject StreamableRepository streamableRepository;
+  @Inject VideoHostRepository videoHostRepository;
 
   private ExpandablePageLayout submissionPageLayout;
   private CommentsAdapter commentsAdapter;
@@ -524,7 +524,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         contentLoadProgressView,
         submissionPageLayout,
         exoPlayerManager,
-        streamableRepository,
+        videoHostRepository,
         deviceDisplayHeight,
         commentsSheetMinimumVisibleHeight
     );

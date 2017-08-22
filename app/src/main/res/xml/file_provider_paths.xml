@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <paths>
   <cache-path
-    name="dank-images-cache"
+    name="dank-media-cache"
     path="image_manager_disk_cache/" />
 
   <external-path
-    name="dank-images"
+    name="dank-media"
     path="Pictures/Dank" />
 </paths>

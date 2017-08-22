@@ -9,11 +9,15 @@ import java.io.File;
 import java.io.IOException;
 
 import me.saket.dank.R;
+import timber.log.Timber;
 
 /**
  * Because {@link Files} already exists.
  */
 public class Files2 {
+
+  private Files2() {
+  }
 
   public static File copyFileToPicturesDirectory(Resources resources, File fileToCopy, String newFileName) throws IOException {
     File picturesDirectory = new File(
@@ -21,6 +25,7 @@ public class Files2 {
         resources.getString(R.string.image_download_directory_name)
     );
     File userAccessibleFile = new File(picturesDirectory, newFileName);
+    Timber.i("userAccessibleFile: %s", userAccessibleFile);
 
     //noinspection ResultOfMethodCallIgnored
     picturesDirectory.mkdirs();

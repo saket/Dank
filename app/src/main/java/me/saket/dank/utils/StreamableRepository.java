@@ -17,7 +17,6 @@ public class StreamableRepository {
   // TODO: 01/04/17 Cache.
   public Single<MediaLink.Streamable> video(String videoId) {
     return Dank.api().streamableVideoDetails(videoId)
-        .compose(RxUtils.applySchedulersSingle())
         .map(response -> {
           String videoUrl = response.url();
           String lowQualityVideoUrl = response.files().lowQualityVideo().url();
