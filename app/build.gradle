@@ -117,6 +117,7 @@ dependencies {
   compile 'com.squareup.tape2:tape:2.0.0-SNAPSHOT'
   compile 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
   compile 'com.jakewharton.threetenabp:threetenabp:1.0.5'
+  implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.4@aar'
 
   // Reddit API wrapper.
   compile 'com.github.Saketme:JRAW:6864908f28'
