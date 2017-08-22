@@ -1,5 +1,6 @@
 package me.saket.dank.ui.media;
 
+import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
@@ -28,6 +29,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.google.common.io.Files;
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
+import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import junit.framework.Assert;
 
@@ -82,6 +84,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   private MediaAlbumPagerAdapter mediaAlbumAdapter;
   private Set<MediaAlbumItem> mediaItemsWithHighDefEnabled = new HashSet<>();
   private PopupMenu sharePopupMenu;
+  private RxPermissions rxPermissions;
 
   public static void start(Context context, MediaLink mediaLink) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
@@ -135,6 +138,8 @@ public class MediaAlbumViewerActivity extends DankActivity
     Views.executeOnMeasure(optionButtonsContainer, () -> {
       animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
     });
+
+    rxPermissions = new RxPermissions(this);
   }
 
   @Override
@@ -376,8 +381,13 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @OnClick(R.id.mediaalbumviewer_download)
   void onClickDownloadMedia() {
-    MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
-    MediaDownloadService.enqueueDownload(this, activeMediaItem.mediaLink());
+    rxPermissions
+        .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        .filter(permissionGranted -> permissionGranted)
+        .subscribe(o -> {
+          MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
+          MediaDownloadService.enqueueDownload(this, activeMediaItem.mediaLink());
+        });
   }
 
   @OnClick(R.id.mediaalbumviewer_open_in_browser)
