@@ -132,8 +132,9 @@ public class MediaAlbumViewerActivity extends DankActivity
       return windowInsets.consumeStableInsets();
     });
 
-    sharePopupMenu = createSharePopupMenu();
-    shareButton.setOnTouchListener(sharePopupMenu.getDragToOpenListener());
+    Views.executeOnMeasure(optionButtonsContainer, () -> {
+      animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
+    });
   }
 
   @Override
@@ -152,6 +153,9 @@ public class MediaAlbumViewerActivity extends DankActivity
         }
       }
     }
+
+    sharePopupMenu = createSharePopupMenu();
+    shareButton.setOnTouchListener(sharePopupMenu.getDragToOpenListener());
 
     unsubscribeOnDestroy(
         RxViewPager.pageSelections(mediaAlbumPager)
@@ -284,7 +288,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   public void onFlickDismissEnd(long flickAnimationDuration) {
     unsubscribeOnDestroy(
         Observable.timer(flickAnimationDuration, TimeUnit.MILLISECONDS)
-            .doOnSubscribe(o -> animateMediaOptionsVisibility(false, Animations.INTERPOLATOR, 100))
+            .doOnSubscribe(o -> animateMediaOptionsVisibility(false, Animations.INTERPOLATOR, 100, false))
             .subscribe(o -> finish())
     );
   }
@@ -307,7 +311,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   public void onSystemUiVisibilityChange(boolean systemUiVisible) {
     TimeInterpolator interpolator = systemUiVisible ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(2f);
     long animationDuration = 300;
-    animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration);
+    animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
   }
 
 // ======== MEDIA OPTIONS ======== //
@@ -399,9 +403,16 @@ public class MediaAlbumViewerActivity extends DankActivity
     // TODO: Update data-set.
   }
 
-  private void animateMediaOptionsVisibility(boolean showOptions, TimeInterpolator interpolator, long animationDuration) {
+  private void animateMediaOptionsVisibility(boolean showOptions, TimeInterpolator interpolator, long animationDuration, boolean setInitialValues) {
+    // Animating the child Views so that they get clipped by their parent container.
     for (int i = 0; i < optionButtonsContainer.getChildCount(); i++) {
       View childView = optionButtonsContainer.getChildAt(i);
+
+      if (setInitialValues) {
+        childView.setAlpha(showOptions ? 0f : 1f);
+        childView.setTranslationY(showOptions ? childView.getHeight() : 0f);
+      }
+
       childView.animate().cancel();
       childView.animate()
           .translationY(showOptions ? 0f : childView.getHeight())
