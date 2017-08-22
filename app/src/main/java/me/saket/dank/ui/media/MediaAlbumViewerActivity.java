@@ -18,6 +18,7 @@ import android.support.v4.view.ViewPager;
 import android.support.v7.widget.PopupMenu;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
@@ -62,7 +63,6 @@ import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.VideoHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
-import timber.log.Timber;
 
 public class MediaAlbumViewerActivity extends DankActivity
     implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks, SystemUiHelper.OnSystemUiVisibilityChangeListener
@@ -94,6 +94,8 @@ public class MediaAlbumViewerActivity extends DankActivity
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     Dank.dependencyInjector().inject(this);
+    getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
+
     super.onCreate(savedInstanceState);
     overridePendingTransition(R.anim.fade_in, 0);
 
@@ -107,11 +109,6 @@ public class MediaAlbumViewerActivity extends DankActivity
 //    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/Cj9XeIY.gifv")));
     mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
     mediaAlbumPager.setAdapter(mediaAlbumAdapter);
-
-    Timber.i("Parsed links:");
-    for (MediaAlbumItem item : mediaLinks) {
-      Timber.i("%s, isVideo? %s", item.mediaLink().originalUrl(), item.mediaLink().isVideo());
-    }
 
     // TODO: Show media options only when we have adapter data.
 
@@ -129,11 +126,8 @@ public class MediaAlbumViewerActivity extends DankActivity
     });
     fadeInAnimator.start();
 
-    rootLayout.setOnApplyWindowInsetsListener((view, windowInsets) -> {
-      int navBarHeight = windowInsets.getSystemWindowInsetBottom();
-      Views.setPaddingBottom(optionButtonsContainer, navBarHeight);
-      return windowInsets.consumeStableInsets();
-    });
+    int navBarHeight = Views.getNavigationBarSize(this).y;
+    Views.setPaddingBottom(optionButtonsContainer, navBarHeight);
 
     Views.executeOnMeasure(optionButtonsContainer, () -> {
       animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
