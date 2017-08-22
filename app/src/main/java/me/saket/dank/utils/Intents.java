@@ -40,21 +40,21 @@ public class Intents {
     return intent;
   }
 
-  public static Intent createForSharingImage(Context context, Uri imageContentUri) {
+  public static Intent createForSharingMedia(Context context, Uri mediaContentUri) {
     return new Intent().setAction(Intent.ACTION_SEND)
         .putExtra(ShareCompat.EXTRA_CALLING_PACKAGE, context.getPackageName())
         .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-        .putExtra(Intent.EXTRA_STREAM, imageContentUri)
-        .setType("image/*")
+        .putExtra(Intent.EXTRA_STREAM, mediaContentUri)
+        .setType(context.getContentResolver().getType(mediaContentUri))
         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
   }
 
-  public static Intent createForViewingImage(Context context, Uri imageContentUri) {
+  public static Intent createForViewingMedia(Context context, Uri mediaContentUri) {
     return new Intent().setAction(Intent.ACTION_VIEW)
         .putExtra(ShareCompat.EXTRA_CALLING_PACKAGE, context.getPackageName())
         .addFlags(Intent.FLAG_ACTIVITY_NEW_DOCUMENT)
-        .putExtra(Intent.EXTRA_STREAM, imageContentUri)
-        .setType("image/*")
+        .putExtra(Intent.EXTRA_STREAM, mediaContentUri)
+        .setType(context.getContentResolver().getType(mediaContentUri))
         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
   }
 }

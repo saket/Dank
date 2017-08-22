@@ -176,6 +176,7 @@ public class MediaDownloadService extends Service {
               Observable<MediaDownloadJob> downloadStream;
 
               if (linkToDownload.isVideo()) {
+                // TODO: Once we resolve all links on start of MediaAlbumViewerActivity, this shouldn't be needed:
                 downloadStream = videoHostRepository.fetchActualVideoUrlIfNeeded(linkToDownload)
                     .flatMapObservable(resolvedLink -> downloadVideoAndStreamProgress(resolvedLink))
                     .compose(RxUtils.applySchedulers());
@@ -342,7 +343,7 @@ public class MediaDownloadService extends Service {
 
     PendingIntent viewImagePendingIntent = PendingIntent.getActivity(this,
         createPendingIntentRequestId(REQUESTCODE_OPEN_IMAGE_PREFIX_, notificationId),
-        Intents.createForViewingImage(this, mediaContentUri),
+        Intents.createForViewingMedia(this, mediaContentUri),
         PendingIntent.FLAG_CANCEL_CURRENT
     );
 

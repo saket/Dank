@@ -56,7 +56,7 @@ public class MediaNotifActionReceiver extends BroadcastReceiver {
 
       case SHARE_IMAGE:
         Uri imageContentUri = FileProvider.getUriForFile(context, context.getString(R.string.file_provider_authority), downloadJob.downloadedFile());
-        Intent shareIntent = Intents.createForSharingImage(context, imageContentUri);
+        Intent shareIntent = Intents.createForSharingMedia(context, imageContentUri);
         context.startActivity(Intent.createChooser(shareIntent, context.getString(R.string.mediaalbumviewer_share_sheet_title)));
         MediaDownloadService.cancelNotification(context, downloadJob.mediaLink());
         break;

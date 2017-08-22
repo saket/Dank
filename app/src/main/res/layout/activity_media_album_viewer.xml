@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout android:id="@+id/mediaalbumviewer_root"
+<me.saket.dank.ui.media.PopView android:id="@+id/mediaalbumviewer_root"
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
@@ -43,4 +43,4 @@
       style="@style/DankMediaAlbumViewerOption"
       android:src="@drawable/ic_hd_24dp" />
   </LinearLayout>
-</FrameLayout>
+</me.saket.dank.ui.media.PopView>
