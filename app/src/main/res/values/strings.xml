@@ -7,6 +7,15 @@
   <string name="timestamp_just_now">Just now</string>
   <string name="work_in_progress">Work in progress</string>
 
+  <!-- Notification channels -->
+  <string name="notification_channel_unread_messages">Unread messages</string>
+  <string name="notification_channel_unread_messages_id">unread_messages</string>
+  <string name="notification_channel_unread_messages_description">Direct messages and comment replies from lesser redditors</string>
+  <string name="notification_channel_messaging_comment_replies_id">@string/notification_channel_unread_messages_id</string>
+  <string name="notification_channel_media_downloads">Media downloads</string>
+  <string name="notification_channel_media_downloads_id">media_downloads</string>
+  <string name="notification_channel_media_downloads_description">Image and video downloads</string>
+
   <!-- Common errors -->
   <string name="common_error_retry">Retry</string>
 

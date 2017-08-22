@@ -288,6 +288,7 @@ public class MediaDownloadService extends Service {
         // Keep notification of ongoing-download above queued-downloads.
         .setPriority(isQueued ? Notification.PRIORITY_LOW : Notification.PRIORITY_DEFAULT)
         .setProgress(100 /* max */, mediaDownloadJob.downloadProgress(), indeterminateProgress)
+        .setChannelId(getString(R.string.notification_channel_media_downloads_id))
         .addAction(cancelAction);
 
     if (mediaDownloadJob.progressState() != MediaDownloadJob.ProgressState.CONNECTING) {
@@ -330,6 +331,7 @@ public class MediaDownloadService extends Service {
         .setColor(ContextCompat.getColor(this, R.color.notification_icon_color))
         .setContentIntent(retryPendingIntent)
         .setAutoCancel(false)
+        .setChannelId(getString(R.string.notification_channel_media_downloads_id))
         .build();
     NotificationManagerCompat.from(this).notify(notificationId, errorNotification);
   }
@@ -396,6 +398,7 @@ public class MediaDownloadService extends Service {
                     .bigPicture(imageBitmap)
                     .setSummaryText(completedDownloadJob.mediaLink().originalUrl())
                 )
+                .setChannelId(getString(R.string.notification_channel_media_downloads_id))
                 .build();
             NotificationManagerCompat.from(MediaDownloadService.this).notify(notificationId, successNotification);
           }

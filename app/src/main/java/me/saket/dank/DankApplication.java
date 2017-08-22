@@ -1,16 +1,26 @@
 package me.saket.dank;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
 import android.app.Application;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
+import android.content.Context;
+import android.os.Build;
 import android.support.annotation.CheckResult;
+import android.support.annotation.NonNull;
+
 import com.facebook.stetho.Stetho;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.tspoon.traceur.Traceur;
+import com.jakewharton.threetenabp.AndroidThreeTen;
 import io.reactivex.plugins.RxJavaPlugins;
 import java.io.IOException;
 import java.io.InterruptedIOException;
+import java.util.Arrays;
+
+import io.reactivex.functions.Consumer;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.SimpleActivityLifecycleCallbacks;
 import timber.log.Timber;
@@ -26,13 +36,69 @@ public class DankApplication extends Application {
     if (BuildConfig.DEBUG) {
       Timber.plant(new Timber.DebugTree());
       Stetho.initializeWithDefaults(this);
-      Traceur.enableLogging();
+      Traceur.enableLogging();  // Throws an exception in every operator, so better enable only on debug builds
     }
 
     AndroidThreeTen.init(this);
     Dank.initDependencies(this);
+    RxJavaPlugins.setErrorHandler(createUndeliveredExceptionsHandler());
 
-    RxJavaPlugins.setErrorHandler(e -> {
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      createNotificationChannels();
+    }
+
+    registerActivityLifecycleCallbacks(new SimpleActivityLifecycleCallbacks() {
+      int activeActivitiesCount = 0;
+
+      @Override
+      public void onActivityStarted(Activity activity) {
+        ++activeActivitiesCount;
+      }
+
+      @Override
+      public void onActivityStopped(Activity activity) {
+        --activeActivitiesCount;
+
+        if (activeActivitiesCount == 0) {
+          dankMinimizeRelay.accept(new Object());
+        }
+      }
+    });
+  }
+
+  @TargetApi(Build.VERSION_CODES.O)
+  private void createNotificationChannels() {
+    NotificationManager notificationManager = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+
+    //noinspection ConstantConditions
+    if (notificationManager.getNotificationChannel(getString(R.string.notification_channel_unread_messages_id)) != null) {
+      // Channels already exist. Abort mission.
+      return;
+    }
+
+    // Unread messages.
+    NotificationChannel privateMessagesChannel = new NotificationChannel(
+        getString(R.string.notification_channel_unread_messages_id),
+        getString(R.string.notification_channel_unread_messages),
+        NotificationManager.IMPORTANCE_DEFAULT
+    );
+    privateMessagesChannel.setDescription(getString(R.string.notification_channel_unread_messages_description));
+
+    // Media downloads.
+    NotificationChannel mediaDownloadsChannel = new NotificationChannel(
+        getString(R.string.notification_channel_media_downloads_id),
+        getString(R.string.notification_channel_media_downloads),
+        NotificationManager.IMPORTANCE_DEFAULT
+    );
+    mediaDownloadsChannel.setDescription(getString(R.string.notification_channel_media_downloads_description));
+    mediaDownloadsChannel.enableLights(false);
+
+    notificationManager.createNotificationChannels(Arrays.asList(privateMessagesChannel, mediaDownloadsChannel));
+  }
+
+  @NonNull
+  private Consumer<Throwable> createUndeliveredExceptionsHandler() {
+    return e -> {
       e = Dank.errors().findActualCause(e);
 
       if (e instanceof IOException) {
@@ -60,31 +126,13 @@ public class DankApplication extends Application {
       }
 
       Timber.e(e, "Undeliverable exception received, not sure what to do.");
-    });
-
-    registerActivityLifecycleCallbacks(new SimpleActivityLifecycleCallbacks() {
-      int activeActivitiesCount = 0;
-
-      @Override
-      public void onActivityStarted(Activity activity) {
-        ++activeActivitiesCount;
-      }
-
-      @Override
-      public void onActivityStopped(Activity activity) {
-        --activeActivitiesCount;
-
-        if (activeActivitiesCount == 0) {
-          dankMinimizeRelay.accept(new Object());
-        }
-      }
-    });
+    };
   }
 
   /**
    * An Observable that emits whenever all activities of the app are minimized/stopped.
    * Note 1: Unsubscribe only in onDestroy(). Unsubscribing in onStop() will be incorrect because the callbacks rely on onStop().
-   * Note 2: Do not forget #1.
+   * Note 2: Do not forget note #1.
    */
   @CheckResult
   public static Relay<Object> streamAppMinimizes() {

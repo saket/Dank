@@ -210,6 +210,7 @@ public class MessagesNotificationManager {
         .setOnlyAlertOnce(true)
         .setContentIntent(onSummaryClickPendingIntent)
         .setAutoCancel(true)
+        .setChannelId(context.getString(R.string.notification_channel_unread_messages_id))
         .build();
     notificationManager.notify(NotificationConstants.ID_UNREAD_MESSAGES_BUNDLE_SUMMARY, summaryNotification);
 
@@ -267,6 +268,7 @@ public class MessagesNotificationManager {
             .setContentIntent(onClickPendingIntent)
             .setDeleteIntent(deletePendingIntent)
             .setCategory(Notification.CATEGORY_MESSAGE)
+            .setChannelId(context.getString(R.string.notification_channel_unread_messages_id))
             .build();
         notificationManager.notify(notificationId, bundledNotification);
       }
