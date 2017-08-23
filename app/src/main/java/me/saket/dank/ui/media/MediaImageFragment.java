@@ -22,6 +22,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankFragment;
+import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.utils.glide.GlideUtils;
@@ -118,6 +119,15 @@ public class MediaImageFragment extends DankFragment {
           @Override
           public void onResourceReady(Drawable resource) {
             imageView.setVisibility(View.VISIBLE);
+
+            // Entry transition.
+            imageView.setTranslationY(resource.getIntrinsicHeight() / 20);
+            imageView.setRotation(-2);
+            imageView.animate()
+                .translationY(0f)
+                .rotation(0)
+                .setInterpolator(Animations.INTERPOLATOR)
+                .start();
           }
 
           @Override
