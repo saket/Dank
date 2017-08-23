@@ -1,7 +1,7 @@
 <resources>
   <string name="app_name">Dank</string>
   <string name="subreddit_name_r_prefix">r/%s</string>
-  <string name="user_name_u_prefix">/u/%s</string>
+  <string name="user_name_u_prefix">u/%s</string>
   <string name="comma_separator_for_multiple_words">,</string>
   <string name="and_suffix_for_comma_separated_words">and</string>
   <string name="timestamp_just_now">Just now</string>
