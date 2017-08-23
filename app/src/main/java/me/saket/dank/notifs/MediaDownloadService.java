@@ -286,6 +286,7 @@ public class MediaDownloadService extends Service {
         .setSmallIcon(android.R.drawable.stat_sys_download)
         .setOngoing(true)
         .setLocalOnly(true)   // Hide from wearables.
+        .setGroup(NotificationConstants.MEDIA_DOWNLOAD_GROUP)
         .setWhen(mediaDownloadJob.timestamp())
         .setColor(ContextCompat.getColor(this, R.color.notification_icon_color))
         // Keep notification of ongoing-download above queued-downloads.
@@ -329,6 +330,7 @@ public class MediaDownloadService extends Service {
         .setSmallIcon(R.drawable.ic_error_24dp)
         .setOngoing(false)
         .setLocalOnly(true)   // Hide from wearables.
+        .setGroup(NotificationConstants.MEDIA_DOWNLOAD_GROUP)
         .setWhen(failedDownloadJob.timestamp()) // TODO: set this.
         .setColor(ContextCompat.getColor(this, R.color.notification_icon_color))
         .setContentIntent(retryPendingIntent)
@@ -391,6 +393,7 @@ public class MediaDownloadService extends Service {
                 .setSmallIcon(R.drawable.ic_done_24dp)
                 .setOngoing(false)
                 .setLocalOnly(true)
+                .setGroup(NotificationConstants.MEDIA_DOWNLOAD_GROUP)
                 .setWhen(completedDownloadJob.timestamp())
                 .setContentIntent(viewImagePendingIntent)
                 .addAction(shareImageAction)
