@@ -57,6 +57,7 @@ import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.VideoHostRepository;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.utils.okhttp.OkHttpResponseBodyWithProgress;
+import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
@@ -280,7 +281,7 @@ public class MediaDownloadService extends Service {
         )
     );
 
-    NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this)
+    NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(this, getString(R.string.notification_channel_media_downloads_id))
         .setContentTitle(notificationTitle)
         .setSmallIcon(android.R.drawable.stat_sys_download)
         .setOngoing(true)
@@ -290,7 +291,6 @@ public class MediaDownloadService extends Service {
         // Keep notification of ongoing-download above queued-downloads.
         .setPriority(isQueued ? Notification.PRIORITY_LOW : Notification.PRIORITY_DEFAULT)
         .setProgress(100 /* max */, mediaDownloadJob.downloadProgress(), indeterminateProgress)
-        .setChannelId(getString(R.string.notification_channel_media_downloads_id))
         .addAction(cancelAction);
 
     if (mediaDownloadJob.progressState() != MediaDownloadJob.ProgressState.CONNECTING) {
@@ -319,7 +319,7 @@ public class MediaDownloadService extends Service {
         PendingIntent.FLAG_UPDATE_CURRENT
     );
 
-    Notification errorNotification = new NotificationCompat.Builder(this)
+    Notification errorNotification = new NotificationCompat.Builder(this, getString(R.string.notification_channel_media_downloads_id))
         .setContentTitle(getString(
             failedDownloadJob.mediaLink().isVideo()
                 ? R.string.mediadownloadnotification_failed_to_save_video
@@ -333,7 +333,6 @@ public class MediaDownloadService extends Service {
         .setColor(ContextCompat.getColor(this, R.color.notification_icon_color))
         .setContentIntent(retryPendingIntent)
         .setAutoCancel(false)
-        .setChannelId(getString(R.string.notification_channel_media_downloads_id))
         .build();
     NotificationManagerCompat.from(this).notify(notificationId, errorNotification);
   }
@@ -381,7 +380,9 @@ public class MediaDownloadService extends Service {
         .into(new SimpleTarget<Bitmap>() {
           @Override
           public void onResourceReady(Bitmap imageBitmap, Transition<? super Bitmap> transition) {
-            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(MediaDownloadService.this)
+            String notificationChannelId = getString(R.string.notification_channel_media_downloads_id);
+
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(MediaDownloadService.this, notificationChannelId)
                 .setContentTitle(getString(
                     completedDownloadJob.mediaLink().isVideo()
                         ? R.string.mediadownloadnotification_sucesss_title_for_video
@@ -395,8 +396,7 @@ public class MediaDownloadService extends Service {
                 .addAction(shareImageAction)
                 .addAction(deleteImageAction)
                 .setAutoCancel(true)
-                .setDefaults(Notification.DEFAULT_ALL)
-                .setChannelId(getString(R.string.notification_channel_media_downloads_id));
+                .setDefaults(Notification.DEFAULT_ALL);
 
             // Taking advantage of O's tinted media notifications! I feel bad for this.
             // Let's see if anyone from Google asks me to remove this.
@@ -510,11 +510,12 @@ public class MediaDownloadService extends Service {
             .url(videoProxyUrl)
             .get()
             .build();
-        Response videoResponse = okHttpClient.newCall(downloadRequest).execute();
-        Response responseWithProgressListener = videoResponse.newBuilder()
+        Call networkCall = okHttpClient.newCall(downloadRequest);
+        Response response = networkCall.execute();
+        Response responseWithProgressListener = response.newBuilder()
             .body(new OkHttpResponseBodyWithProgress(
                 downloadRequest.url(),
-                videoResponse.body(),
+                response.body(),
                 (url, bytesRead, expectedContentLength) -> {
                   if (bytesRead < expectedContentLength) {
                     int progress = (int) (100 * (float) bytesRead / expectedContentLength);
@@ -536,9 +537,17 @@ public class MediaDownloadService extends Service {
           bufferedSink.close();
         }
 
-        long downloadCompleteTimeMillis = System.currentTimeMillis();
-        emitter.onNext(MediaDownloadJob.createDownloaded(linkToDownload, videoTempFile, downloadCompleteTimeMillis));
-        emitter.onComplete();
+        Timber.i("Download complete.");
+
+        if (!emitter.isDisposed()) {
+          long downloadCompleteTimeMillis = System.currentTimeMillis();
+          emitter.onNext(MediaDownloadJob.createDownloaded(linkToDownload, videoTempFile, downloadCompleteTimeMillis));
+          emitter.onComplete();
+        }
+
+        emitter.setCancellable(() -> {
+          networkCall.cancel();
+        });
       }
     });
   }

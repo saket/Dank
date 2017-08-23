@@ -210,7 +210,6 @@ public class MessagesNotificationManager {
         .setOnlyAlertOnce(true)
         .setContentIntent(onSummaryClickPendingIntent)
         .setAutoCancel(true)
-        .setChannelId(context.getString(R.string.notification_channel_unread_messages_id))
         .build();
     notificationManager.notify(NotificationConstants.ID_UNREAD_MESSAGES_BUNDLE_SUMMARY, summaryNotification);
 
@@ -253,7 +252,7 @@ public class MessagesNotificationManager {
 
         String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
 
-        Notification bundledNotification = new NotificationCompat.Builder(context)
+        Notification bundledNotification = new NotificationCompat.Builder(context, context.getString(R.string.notification_channel_unread_messages_id))
             .setContentTitle(unreadMessage.getAuthor())
             .setContentText(markdownStrippedBody)
             .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
@@ -268,7 +267,6 @@ public class MessagesNotificationManager {
             .setContentIntent(onClickPendingIntent)
             .setDeleteIntent(deletePendingIntent)
             .setCategory(Notification.CATEGORY_MESSAGE)
-            .setChannelId(context.getString(R.string.notification_channel_unread_messages_id))
             .build();
         notificationManager.notify(notificationId, bundledNotification);
       }
@@ -289,7 +287,7 @@ public class MessagesNotificationManager {
     // Update: Lol using some tags crashes Android's SystemUi. We'll have to remove all markdown tags.
     String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
 
-    return new NotificationCompat.Builder(context)
+    return new NotificationCompat.Builder(context, context.getString(R.string.notification_channel_unread_messages_id))
         .setContentTitle(unreadMessage.getAuthor())
         .setContentText(markdownStrippedBody)
         .setStyle(new NotificationCompat.BigTextStyle()
@@ -363,7 +361,7 @@ public class MessagesNotificationManager {
         ? context.getString(R.string.messagenotification_below_nougat_body_from_single_author, messageAuthors.iterator().next())
         : Strings.concatenateWithCommaAndAnd(context.getResources(), messageAuthors);
 
-    return new NotificationCompat.Builder(context)
+    return new NotificationCompat.Builder(context, context.getString(R.string.notification_channel_unread_messages_id))
         .setContentTitle(notificationTitle)
         .setContentText(notifBody)
         .setSmallIcon(R.mipmap.ic_launcher)
