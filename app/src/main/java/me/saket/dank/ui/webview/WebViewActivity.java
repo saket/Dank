@@ -137,5 +137,4 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
       super.onBackPressed();
     }
   }
-
 }

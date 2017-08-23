@@ -1,16 +1,14 @@
 package me.saket.dank.ui;
 
 import android.content.Context;
+import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.view.View;
-
-import net.dean.jraw.models.Thumbnails;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
@@ -20,7 +18,9 @@ import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.webview.WebViewActivity;
+import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
+import net.dean.jraw.models.Thumbnails;
 
 @Singleton
 public class UrlRouter {
@@ -95,7 +95,16 @@ public class UrlRouter {
         MediaAlbumViewerActivity.start(context, ((MediaLink) link), null, jacksonHelper);
 
       } else if (link.isExternal()) {
-        WebViewActivity.start(context, link.unparsedUrl());
+        String url = link.unparsedUrl();
+        String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
+        if (packageNameForDeepLink != null && isPackageNameInstalled(context, packageNameForDeepLink)) {
+          android.content.Intent openUrlIntent = Intents.createForOpeningUrl(url);
+          openUrlIntent.setPackage(packageNameForDeepLink);
+          context.startActivity(openUrlIntent);
+
+        } else {
+          WebViewActivity.start(context, url);
+        }
 
       } else {
         throw new UnsupportedOperationException("Unknown external link: " + link);
@@ -104,6 +113,7 @@ public class UrlRouter {
   }
 
   public static class MediaIntent extends UrlRouter {
+
     @Nullable private Thumbnails redditSuppliedImages;
     private final MediaLink link;
     private final JacksonHelper jacksonHelper;
@@ -146,5 +156,35 @@ public class UrlRouter {
       userProfilePopup.loadUserProfile(link);
       userProfilePopup.showAtLocation(anchorView, expandFromPoint);
     }
+  }
+
+  /**
+   * I'd ideally like to send a deeplink intent if any app can open a URL, but I also don't
+   * want web browsers to open a link because Dank already has an internal web browser. So
+   * we're selectively checking if we want to let an app take over the URL.
+   */
+  @Nullable
+  public static String findAllowedPackageNameForDeepLink(String url) {
+    String urlHost = Uri.parse(url).getHost();
+    if (urlHost.endsWith("youtube.com")) {
+      return "com.google.android.youtube";
+
+    } else if (urlHost.endsWith("play.google.com")) {
+      return "com.android.vending";
+
+    } else {
+      return null;
+    }
+  }
+
+  public static boolean isPackageNameInstalled(Context context, String packageName) {
+    PackageManager packageManager = context.getPackageManager();
+    try {
+      packageManager.getPackageInfo(packageName, PackageManager.GET_ACTIVITIES);
+      return true;
+
+    } catch (PackageManager.NameNotFoundException ignored) {
+    }
+    return false;
   }
 }
