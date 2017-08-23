@@ -116,6 +116,7 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
 
       case R.id.action_open_in_external_browser:
         startActivity(Intents.createForOpeningUrl(webView.getUrl()));
+        finish();
         return true;
 
       default:
