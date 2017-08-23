@@ -292,6 +292,7 @@ public class MediaDownloadService extends Service {
         // Keep notification of ongoing-download above queued-downloads.
         .setPriority(isQueued ? Notification.PRIORITY_LOW : Notification.PRIORITY_DEFAULT)
         .setProgress(100 /* max */, mediaDownloadJob.downloadProgress(), indeterminateProgress)
+        .setOnlyAlertOnce(true)
         .addAction(cancelAction);
 
     if (mediaDownloadJob.progressState() != MediaDownloadJob.ProgressState.CONNECTING) {
@@ -399,6 +400,7 @@ public class MediaDownloadService extends Service {
                 .addAction(shareImageAction)
                 .addAction(deleteImageAction)
                 .setAutoCancel(true)
+                .setOnlyAlertOnce(true)
                 .setDefaults(Notification.DEFAULT_ALL);
 
             // Taking advantage of O's tinted media notifications! I feel bad for this.
@@ -496,8 +498,6 @@ public class MediaDownloadService extends Service {
       long downloadStartTimeMillis = System.currentTimeMillis();
 
       if (videoCacheServer.isCached(videoUrl)) {
-        emitter.onNext(MediaDownloadJob.createConnecting(linkToDownload, downloadStartTimeMillis));
-
         String cachedVideoFileUrl = videoCacheServer.getProxyUrl(videoUrl);
         File cachedVideoFile = new File(Uri.parse(cachedVideoFileUrl).getPath());
         emitter.onNext(MediaDownloadJob.createDownloaded(linkToDownload, cachedVideoFile, System.currentTimeMillis()));
@@ -540,15 +540,12 @@ public class MediaDownloadService extends Service {
           bufferedSink.close();
         }
 
-        Timber.i("Download complete.");
-
-        if (!emitter.isDisposed()) {
-          long downloadCompleteTimeMillis = System.currentTimeMillis();
-          emitter.onNext(MediaDownloadJob.createDownloaded(linkToDownload, videoTempFile, downloadCompleteTimeMillis));
-          emitter.onComplete();
-        }
+        long downloadCompleteTimeMillis = System.currentTimeMillis();
+        emitter.onNext(MediaDownloadJob.createDownloaded(linkToDownload, videoTempFile, downloadCompleteTimeMillis));
+        emitter.onComplete();
 
         emitter.setCancellable(() -> {
+          // Note: BufferedSink#writeAll() will also receive a thread interruption so file copy will stop.
           networkCall.cancel();
         });
       }

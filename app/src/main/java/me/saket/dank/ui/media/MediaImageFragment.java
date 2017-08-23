@@ -108,7 +108,6 @@ public class MediaImageFragment extends DankFragment {
 
     Glide.with(getActivity())
         .load(imageUrl)
-        //.apply(new RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
         .apply(RequestOptions.bitmapTransform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
           @Override
           public Size getPadding(int imageWidth, int imageHeight) {
