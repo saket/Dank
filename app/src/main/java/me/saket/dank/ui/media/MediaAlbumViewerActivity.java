@@ -16,6 +16,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v4.view.ViewPager;
 import android.support.v7.widget.PopupMenu;
+import android.view.Gravity;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -105,10 +106,10 @@ public class MediaAlbumViewerActivity extends DankActivity
 
     List<MediaAlbumItem> mediaLinks = new ArrayList<>();
     mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/WhGHrBE.jpg")));
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/eYveT4s.jpg")));
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.redd.it/mis36nxfe5hz.jpg")));
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/QtD7iMr.jpg")));
-//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/rQ7IogD.gifv")));
+//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/eYveT4s.jpg")));
+//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.redd.it/mis36nxfe5hz.jpg")));
+//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/QtD7iMr.jpg")));
+//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://streamable.com/fcill")));
 //    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/Cj9XeIY.gifv")));
     mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
     mediaAlbumPager.setAdapter(mediaAlbumAdapter);
@@ -117,7 +118,7 @@ public class MediaAlbumViewerActivity extends DankActivity
 
     systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, this);
 
-    // Fade in background.
+    // Fade in background dimming.
     activityBackgroundDrawable = rootLayout.getBackground().mutate();
     rootLayout.setBackground(activityBackgroundDrawable);
     ValueAnimator fadeInAnimator = ObjectAnimator.ofFloat(1f, 0f);
@@ -130,7 +131,7 @@ public class MediaAlbumViewerActivity extends DankActivity
     fadeInAnimator.start();
 
     int navBarHeight = Views.getNavigationBarSize(this).y;
-    Views.setMarginBottom(optionButtonsContainer, navBarHeight);
+    Views.setPaddingBottom(optionButtonsContainer, navBarHeight);
     Views.executeOnMeasure(optionButtonsContainer, () -> {
       int shareButtonTop = Views.globalVisibleRect(shareButton).top + shareButton.getPaddingTop();
       int gradientHeight = optionButtonsBackgroundGradientView.getTop() - shareButtonTop;
@@ -181,7 +182,10 @@ public class MediaAlbumViewerActivity extends DankActivity
    * Menu items get inflated in {@link #onPostCreate(Bundle)} on page change depending upon the current media's type (image or video).
    */
   private PopupMenu createSharePopupMenu() {
-    PopupMenu sharePopupMenu = new PopupMenu(this, shareButton);
+    // Note: the style sets a negative top offset so that the popup appears on top of the share button.
+    // Unfortunately, setting WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS on the Window causes
+    // PopupMenu to not position itself within the window limits, regardless of using top gravity.
+    PopupMenu sharePopupMenu = new PopupMenu(this, shareButton, Gravity.TOP, 0, R.style.DankPopupMenu_AlbumViewerOption);
     sharePopupMenu.setOnMenuItemClickListener(item -> {
       MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
 

@@ -317,6 +317,7 @@
     <item name="android:layout_marginTop">@dimen/spacing4</item>
   </style>
 
+  <!-- Media -->
   <style name="DankMediaAlbumViewerOption">
     <item name="android:layout_width">0dp</item>
     <item name="android:layout_height">wrap_content</item>
@@ -326,5 +327,9 @@
     <item name="android:layout_marginEnd">@dimen/spacing8</item>
     <item name="android:layout_marginBottom">@dimen/spacing24</item>
     <item name="android:padding">@dimen/spacing4</item>
+  </style>
+
+  <style name="DankPopupMenu.AlbumViewerOption">
+    <item name="android:dropDownVerticalOffset">-96dip</item>
   </style>
 </resources>
