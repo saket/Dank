@@ -11,6 +11,7 @@ import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
+import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
@@ -20,6 +21,7 @@ import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.content.FileProvider;
+import android.support.v4.media.session.MediaSessionCompat;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.SimpleTarget;
@@ -355,7 +357,8 @@ public class MediaDownloadService extends Service {
         MediaNotifActionReceiver.createShareImageIntent(this, completedDownloadJob),
         PendingIntent.FLAG_CANCEL_CURRENT
     );
-    NotificationCompat.Action shareImageAction = new NotificationCompat.Action(0,
+    NotificationCompat.Action shareImageAction = new NotificationCompat.Action(
+        R.drawable.ic_share_20dp,
         getString(R.string.mediadownloadnotification_share),
         shareImagePendingIntent
     );
@@ -366,7 +369,8 @@ public class MediaDownloadService extends Service {
         MediaNotifActionReceiver.createDeleteImageIntent(this, completedDownloadJob),
         PendingIntent.FLAG_CANCEL_CURRENT
     );
-    NotificationCompat.Action deleteImageAction = new NotificationCompat.Action(0,
+    NotificationCompat.Action deleteImageAction = new NotificationCompat.Action(
+        R.drawable.ic_delete_20dp,
         getString(R.string.mediadownloadnotification_delete),
         deleteImagePendingIntent
     );
@@ -377,29 +381,50 @@ public class MediaDownloadService extends Service {
         .into(new SimpleTarget<Bitmap>() {
           @Override
           public void onResourceReady(Bitmap imageBitmap, Transition<? super Bitmap> transition) {
-            Notification successNotification = new NotificationCompat.Builder(MediaDownloadService.this)
+            NotificationCompat.Builder notificationBuilder = new NotificationCompat.Builder(MediaDownloadService.this)
                 .setContentTitle(getString(
                     completedDownloadJob.mediaLink().isVideo()
                         ? R.string.mediadownloadnotification_sucesss_title_for_video
                         : R.string.mediadownloadnotification_success_title_for_image
                 ))
-                .setContentText(getString(R.string.mediadownloadnotification_success_body))
                 .setSmallIcon(R.drawable.ic_done_24dp)
                 .setOngoing(false)
                 .setLocalOnly(true)
                 .setWhen(completedDownloadJob.timestamp())
-                .setColor(ContextCompat.getColor(MediaDownloadService.this, R.color.notification_icon_color))
                 .setContentIntent(viewImagePendingIntent)
                 .addAction(shareImageAction)
                 .addAction(deleteImageAction)
                 .setAutoCancel(true)
                 .setDefaults(Notification.DEFAULT_ALL)
-                .setStyle(new NotificationCompat.BigPictureStyle()
-                    .bigPicture(imageBitmap)
-                    .setSummaryText(completedDownloadJob.mediaLink().originalUrl())
-                )
-                .setChannelId(getString(R.string.notification_channel_media_downloads_id))
-                .build();
+                .setChannelId(getString(R.string.notification_channel_media_downloads_id));
+
+            // Taking advantage of O's tinted media notifications! I feel bad for this.
+            // Let's see if anyone from Google asks me to remove this.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+              MediaSession poop = new MediaSession(getBaseContext(), "me.saket.Dank.dummyMediaSession");
+              MediaSessionCompat.Token dummyTokenCompat = MediaSessionCompat.Token.fromToken(poop.getSessionToken());
+              poop.release();
+
+              notificationBuilder = notificationBuilder
+                  .setLargeIcon(imageBitmap)
+                  .setStyle(new android.support.v4.media.app.NotificationCompat.MediaStyle()
+                      .setMediaSession(dummyTokenCompat)
+                      .setShowActionsInCompactView(0 /* index of share action */)
+                  )
+                  .setContentText(completedDownloadJob.mediaLink().originalUrl())
+              ;
+
+            } else {
+              notificationBuilder = notificationBuilder
+                  .setColor(ContextCompat.getColor(MediaDownloadService.this, R.color.notification_icon_color))
+                  .setStyle(new NotificationCompat.BigPictureStyle()
+                      .bigPicture(imageBitmap)
+                      .setSummaryText(completedDownloadJob.mediaLink().originalUrl())
+                  )
+                  .setContentText(getString(R.string.mediadownloadnotification_success_body));
+            }
+
+            Notification successNotification = notificationBuilder.build();
             NotificationManagerCompat.from(MediaDownloadService.this).notify(notificationId, successNotification);
           }
         });
