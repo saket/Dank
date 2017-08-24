@@ -4,20 +4,19 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
+import android.support.annotation.NonNull;
 import android.util.Size;
 
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.Transformation;
-import com.bumptech.glide.load.engine.Resource;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
-import com.bumptech.glide.load.resource.bitmap.BitmapResource;
+import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
 
 import java.security.MessageDigest;
 
 /**
  * Adds empty spaces to inflate the height of images.
  */
-public abstract class GlidePaddingTransformation implements Transformation<Bitmap> {
+public abstract class GlidePaddingTransformation extends BitmapTransformation {
   private static final String ID = "me.saket.dank.utils.glide.GlidePaddingTransformation";
   private static final byte[] ID_BYTES = ID.getBytes(CHARSET);
 
@@ -37,29 +36,27 @@ public abstract class GlidePaddingTransformation implements Transformation<Bitma
   public abstract Size getPadding(int imageWidth, int imageHeight);
 
   @Override
-  public Resource<Bitmap> transform(Context context, Resource<Bitmap> resource, int outWidth, int outHeight) {
-    Bitmap source = resource.get();
-
-    Size padding = getPadding(source.getWidth(), source.getHeight());
+  protected Bitmap transform(@NonNull BitmapPool pool, @NonNull Bitmap toTransform, int outWidth, int outHeight) {
+    Size padding = getPadding(toTransform.getWidth(), toTransform.getHeight());
     int verticalPadding = padding.getHeight();
     int horizontalPadding = padding.getWidth();
 
     if (verticalPadding == 0 && horizontalPadding == 0) {
       // Nothing to do here.
-      return BitmapResource.obtain(source, bitmapPool);
+      return toTransform;
     }
 
-    int targetWidth = source.getWidth() + horizontalPadding * 2;
-    int targetHeight = source.getHeight() + verticalPadding * 2;
+    int targetWidth = toTransform.getWidth() + horizontalPadding * 2;
+    int targetHeight = toTransform.getHeight() + verticalPadding * 2;
 
-    Bitmap bitmap = bitmapPool.get(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
-    Canvas canvas = new Canvas(bitmap);
+    Bitmap bitmapWithPadding = bitmapPool.get(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
+    Canvas canvas = new Canvas(bitmapWithPadding);
 
     canvas.drawRect(0, 0, targetWidth, targetHeight, paint);              // Padding.
-    if (!source.isRecycled()) {
-      canvas.drawBitmap(source, horizontalPadding, verticalPadding, null);  // Original bitmap.
+    if (!toTransform.isRecycled()) {
+      canvas.drawBitmap(toTransform, horizontalPadding, verticalPadding, null);  // Original bitmap.
     }
-    return BitmapResource.obtain(bitmap, bitmapPool);
+    return bitmapWithPadding;
   }
 
   @Override
