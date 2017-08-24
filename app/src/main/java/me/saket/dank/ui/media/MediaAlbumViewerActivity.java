@@ -57,11 +57,11 @@ import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Intents;
+import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Urls;
-import me.saket.dank.utils.VideoHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 
@@ -78,7 +78,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   @BindView(R.id.mediaalbumviewer_reload_in_hd) ImageButton reloadInHighDefButton;
   @BindView(R.id.mediaalbumviewer_options_background_gradient) View optionButtonsBackgroundGradientView;
 
-  @Inject VideoHostRepository videoHostRepository;
+  @Inject MediaHostRepository mediaHostRepository;
   @Inject HttpProxyCacheServer videoCacheServer;
 
   private SystemUiHelper systemUiHelper;
@@ -130,6 +130,7 @@ public class MediaAlbumViewerActivity extends DankActivity
     });
     fadeInAnimator.start();
 
+    // Show the option buttons above the navigation bar + fade-in the options.
     int navBarHeight = Views.getNavigationBarSize(this).y;
     Views.setPaddingBottom(optionButtonsContainer, navBarHeight);
     Views.executeOnMeasure(optionButtonsContainer, () -> {
@@ -140,6 +141,7 @@ public class MediaAlbumViewerActivity extends DankActivity
     });
 
     rxPermissions = new RxPermissions(this);
+    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, this);
   }
 
   @Override
@@ -196,8 +198,8 @@ public class MediaAlbumViewerActivity extends DankActivity
                   .map(imageFile -> {
                     // Glide uses random file names, without any extensions. Certain apps like Messaging
                     // fail to parse images if there's no file format, so we'll have to create a copy.
-                    String mediaFileName = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().originalUrl());
-                    File imageFileWithExtension = new File(imageFile.getParent(), mediaFileName);
+                    String imageNameWithExtension = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().originalUrl());
+                    File imageFileWithExtension = new File(imageFile.getParent(), imageNameWithExtension);
                     Files.copy(imageFile, imageFileWithExtension);
                     return imageFileWithExtension;
                   })
@@ -225,7 +227,7 @@ public class MediaAlbumViewerActivity extends DankActivity
         case R.id.action_share_video:
           unsubscribeOnDestroy(
               // TODO: Once we resolve all links at the beginning, this shouldn't be needed:
-              videoHostRepository.fetchActualVideoUrlIfNeeded(activeMediaItem.mediaLink())
+              mediaHostRepository.resolveActualLinkIfNeeded(activeMediaItem.mediaLink())
                   .compose(RxUtils.applySchedulersSingle())
                   .map(resolvedVideoLink -> {
                     if (videoCacheServer.isCached(resolvedVideoLink.highQualityVideoUrl())) {

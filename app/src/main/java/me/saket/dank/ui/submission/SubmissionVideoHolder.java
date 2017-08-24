@@ -25,8 +25,8 @@ import io.reactivex.functions.Function;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
+import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
-import me.saket.dank.utils.VideoHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -42,7 +42,7 @@ public class SubmissionVideoHolder {
 
   private final ExpandablePageLayout submissionPageLayout;
   private final ExoPlayerManager exoPlayerManager;
-  private final VideoHostRepository videoHostRepository;
+  private final MediaHostRepository mediaHostRepository;
   private final int deviceDisplayHeight;
   private final int minimumGapWithBottom;
   private final ProgressBar contentLoadProgressView;
@@ -58,14 +58,14 @@ public class SubmissionVideoHolder {
    */
   public SubmissionVideoHolder(VideoView contentVideoView, ScrollingRecyclerViewSheet commentListParentSheet,
       ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout, ExoPlayerManager exoPlayerManager,
-      VideoHostRepository videoHostRepository, int deviceDisplayHeight, int minimumGapWithBottom)
+      MediaHostRepository mediaHostRepository, int deviceDisplayHeight, int minimumGapWithBottom)
   {
     this.contentVideoView = contentVideoView;
     this.commentListParentSheet = commentListParentSheet;
     this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
     this.exoPlayerManager = exoPlayerManager;
-    this.videoHostRepository = videoHostRepository;
+    this.mediaHostRepository = mediaHostRepository;
     this.deviceDisplayHeight = deviceDisplayHeight;
     this.minimumGapWithBottom = minimumGapWithBottom;
 
@@ -77,7 +77,7 @@ public class SubmissionVideoHolder {
   public Disposable load(MediaLink mediaLink, boolean loadHighQualityVideo) {
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    return videoHostRepository.fetchActualVideoUrlIfNeeded(mediaLink)
+    return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .compose(RxUtils.applySchedulersSingle())
         .map(link -> loadHighQualityVideo ? link.highQualityVideoUrl() : link.lowQualityVideoUrl())
         .subscribe(loadVideo(), logError("Couldn't load video"));

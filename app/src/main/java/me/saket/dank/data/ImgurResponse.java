@@ -12,4 +12,5 @@ public interface ImgurResponse {
 
   String albumTitle();
 
+  String albumCoverImageUrl();
 }

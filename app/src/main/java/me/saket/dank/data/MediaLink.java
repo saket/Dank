@@ -6,6 +6,7 @@ import net.dean.jraw.models.Thumbnails;
 
 import java.util.Arrays;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import me.saket.dank.di.DankApi;
@@ -240,13 +241,13 @@ public class MediaLink extends Link {
   public static class ImgurAlbum extends MediaLink {
     private final String albumTitle;
     private final String coverImageUrl;
-    private final int imageCount;
+    private final List<ImgurImage> images;
 
-    protected ImgurAlbum(String albumUrl, String albumTitle, String coverImageUrl, int imageCount) {
+    protected ImgurAlbum(String albumUrl, String albumTitle, String coverImageUrl, List<ImgurImage> images) {
       super(albumUrl, false, Type.EXTERNAL);
       this.albumTitle = albumTitle;
       this.coverImageUrl = coverImageUrl;
-      this.imageCount = imageCount;
+      this.images = images;
     }
 
     public String albumUrl() {
@@ -257,16 +258,20 @@ public class MediaLink extends Link {
       return coverImageUrl;
     }
 
-    public int imageCount() {
-      return imageCount;
-    }
-
     public String albumTitle() {
       return albumTitle;
     }
 
-    public static ImgurAlbum create(String albumUrl, String albumTitle, String coverImageUrl, int imageCount) {
-      return new ImgurAlbum(albumUrl, albumTitle, coverImageUrl, imageCount);
+    public List<ImgurImage> images() {
+      return images;
+    }
+
+    public ImgurAlbum withCoverImageUrl(String newCoverImageUrl) {
+      return create(albumUrl(), albumTitle(), newCoverImageUrl, images());
+    }
+
+    public static ImgurAlbum create(String albumUrl, String albumTitle, String coverImageUrl, List<ImgurImage> images) {
+      return new ImgurAlbum(albumUrl, albumTitle, coverImageUrl, images);
     }
   }
 }

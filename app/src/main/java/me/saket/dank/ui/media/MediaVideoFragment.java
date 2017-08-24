@@ -22,8 +22,8 @@ import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.ExoPlayerManager;
+import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
-import me.saket.dank.utils.VideoHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
@@ -37,7 +37,7 @@ public class MediaVideoFragment extends DankFragment {
   @BindView(R.id.albumviewervideo_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
   @BindView(R.id.albumviewervideo_video) VideoView videoView;
 
-  @Inject VideoHostRepository videoHostRepository;
+  @Inject MediaHostRepository mediaHostRepository;
 
   private ExoPlayerManager exoPlayerManager;
 
@@ -89,6 +89,8 @@ public class MediaVideoFragment extends DankFragment {
     videoView.setOnPreparedListener(() -> {
       textureViewContainer.setVisibility(View.VISIBLE);
       videoControlsView.showVideoState(DankVideoControlsView.VideoState.PREPARED);
+
+      // Auto-play on start.
       exoPlayerManager.startVideoPlayback();
     });
 
@@ -114,7 +116,7 @@ public class MediaVideoFragment extends DankFragment {
   }
 
   public Disposable load(MediaLink mediaLink, boolean loadHighQualityVideo) {
-    return videoHostRepository.fetchActualVideoUrlIfNeeded(mediaLink)
+    return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .compose(RxUtils.applySchedulersSingle())
         .doOnSubscribe(o -> Timber.i("TODO: show loading progress indicator"))
         .map(link -> loadHighQualityVideo ? link.highQualityVideoUrl() : link.lowQualityVideoUrl())

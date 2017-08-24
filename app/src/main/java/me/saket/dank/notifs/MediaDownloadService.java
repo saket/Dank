@@ -54,7 +54,7 @@ import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Urls;
-import me.saket.dank.utils.VideoHostRepository;
+import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.utils.okhttp.OkHttpResponseBodyWithProgress;
 import okhttp3.Call;
@@ -90,7 +90,7 @@ public class MediaDownloadService extends Service {
 
   @Inject HttpProxyCacheServer videoCacheServer;
   @Inject OkHttpClient okHttpClient;
-  @Inject VideoHostRepository videoHostRepository;
+  @Inject MediaHostRepository mediaHostRepository;
 
   private CompositeDisposable disposables = new CompositeDisposable();
   private final Set<String> ongoingDownloadUrls = new HashSet<>();
@@ -180,7 +180,7 @@ public class MediaDownloadService extends Service {
 
               if (linkToDownload.isVideo()) {
                 // TODO: Once we resolve all links on start of MediaAlbumViewerActivity, this shouldn't be needed:
-                downloadStream = videoHostRepository.fetchActualVideoUrlIfNeeded(linkToDownload)
+                downloadStream = mediaHostRepository.resolveActualLinkIfNeeded(linkToDownload)
                     .flatMapObservable(resolvedLink -> downloadVideoAndStreamProgress(resolvedLink))
                     .compose(RxUtils.applySchedulers());
               } else {

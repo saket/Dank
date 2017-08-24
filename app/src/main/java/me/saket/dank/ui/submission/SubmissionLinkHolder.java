@@ -228,10 +228,10 @@ public class SubmissionLinkHolder {
     thumbnailView.setContentDescription(titleView.getText());
     if (isEmpty(imgurAlbumLink.albumTitle())) {
       titleView.setText(R.string.submission_image_album);
-      subtitleView.setText(resources.getString(R.string.submission_image_album_image_count, imgurAlbumLink.imageCount()));
+      subtitleView.setText(resources.getString(R.string.submission_image_album_image_count, imgurAlbumLink.images().size()));
     } else {
       titleView.setText(imgurAlbumLink.albumTitle());
-      subtitleView.setText(resources.getString(R.string.submission_image_album_label_with_image_count, imgurAlbumLink.imageCount()));
+      subtitleView.setText(resources.getString(R.string.submission_image_album_label_with_image_count, imgurAlbumLink.images().size()));
       titleView.setMaxLines(Integer.MAX_VALUE);
     }
 

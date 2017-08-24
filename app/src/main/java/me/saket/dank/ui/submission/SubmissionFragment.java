@@ -100,8 +100,8 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.UrlParser;
-import me.saket.dank.utils.VideoHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
@@ -144,7 +144,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindDrawable(R.drawable.ic_toolbar_close_24dp) Drawable closeIconDrawable;
   @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
 
-  @Inject VideoHostRepository videoHostRepository;
+  @Inject MediaHostRepository mediaHostRepository;
 
   private ExpandablePageLayout submissionPageLayout;
   private CommentsAdapter commentsAdapter;
@@ -524,7 +524,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         contentLoadProgressView,
         submissionPageLayout,
         exoPlayerManager,
-        videoHostRepository,
+        mediaHostRepository,
         deviceDisplayHeight,
         commentsSheetMinimumVisibleHeight
     );
@@ -833,43 +833,38 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     if (contentLink instanceof MediaLink.ImgurUnresolvedGallery) {
       contentLoadProgressView.show();
-      String redditSuppliedThumbnail = findOptimizedImage(submission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidthForAlbum());
+      String redditSuppliedThumbnailUrl = findOptimizedImage(submission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidthForAlbum());
 
       unsubscribeOnCollapse(
-          Dank.imgur().gallery((MediaLink.ImgurUnresolvedGallery) contentLink)
+          mediaHostRepository.resolveActualLinkIfNeeded(((MediaLink) contentLink))
+              .map(resolvedLink -> resolvedLink.setRedditSuppliedImages(submission.getThumbnails()))
+              .map(resolvedLink -> {
+                // Replace Imgur's cover image URL with reddit supplied URL, which will already be cached by Glide.
+                if (resolvedLink instanceof MediaLink.ImgurAlbum && redditSuppliedThumbnailUrl != null) {
+                  return ((MediaLink.ImgurAlbum) resolvedLink).withCoverImageUrl(redditSuppliedThumbnailUrl);
+                }
+                return resolvedLink;
+              })
               .compose(applySchedulersSingle())
-              .subscribe(imgurResponse -> {
-                if (imgurResponse.isAlbum()) {
-                  String coverImageUrl;
-                  if (redditSuppliedThumbnail != null) {
-                    coverImageUrl = redditSuppliedThumbnail;
-                  } else {
-                    coverImageUrl = imgurResponse.images().get(0).url();
+              .subscribe(
+                  resolvedLink -> {
+                    loadSubmissionContent(submission, resolvedLink);
+                  },
+                  error -> {
+                    // Open this album in browser if Imgur rate limits have reached.
+                    if (error instanceof ImgurApiRateLimitReachedException) {
+                      String albumUrl = ((MediaLink.ImgurUnresolvedGallery) contentLink).albumUrl();
+                      loadSubmissionContent(submission, Link.External.create(albumUrl));
+
+                    } else {
+                      // TODO: 05/04/17 Handle errors (including InvalidImgurAlbumException).
+                      Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
+                      Timber.e(error, "Couldn't load album cover image");
+                      contentLoadProgressView.hide();
+                    }
                   }
-
-                  String albumUrl = ((MediaLink.ImgurUnresolvedGallery) contentLink).albumUrl();
-                  int imageCount = imgurResponse.images().size();
-                  MediaLink.ImgurAlbum albumLink = MediaLink.ImgurAlbum.create(albumUrl, imgurResponse.albumTitle(), coverImageUrl, imageCount);
-                  loadSubmissionContent(submission, albumLink);
-
-                } else {
-                  Link coverImageLink = UrlParser.parse(imgurResponse.images().get(0).url(), submission.getThumbnails());
-                  loadSubmissionContent(submission, coverImageLink);
-                }
-
-              }, error -> {
-                // Open this album in browser if Imgur rate limits have reached.
-                if (error instanceof ImgurApiRateLimitReachedException) {
-                  String albumUrl = ((MediaLink.ImgurUnresolvedGallery) contentLink).albumUrl();
-                  loadSubmissionContent(submission, Link.External.create(albumUrl));
-
-                } else {
-                  // TODO: 05/04/17 Handle errors (including InvalidImgurAlbumException).
-                  Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
-                  Timber.e(error, "Couldn't load album cover image");
-                  contentLoadProgressView.hide();
-                }
-              }));
+              )
+      );
       return;
     }
 
@@ -881,7 +876,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       case REDDIT_HOSTED:
         if (submission.isSelfPost()) {
           contentLoadProgressView.hide();
-          String selfTextHtml = submission.getDataNode().get("selftext_html").asText("");
+          String selfTextHtml = submission.getDataNode().get("selftext_html").asText(submission.getSelftext() /* defaultValue */);
           CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
           selfPostTextView.setVisibility(markdownHtml.length() > 0 ? View.VISIBLE : View.GONE);
           selfPostTextView.setText(markdownHtml);

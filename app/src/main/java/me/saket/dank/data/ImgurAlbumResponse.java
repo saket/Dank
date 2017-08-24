@@ -3,6 +3,7 @@ package me.saket.dank.data;
 import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.squareup.moshi.Json;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
@@ -12,7 +13,7 @@ import java.util.List;
 import me.saket.dank.di.DankApi;
 
 /**
- * API response body of {@link DankApi#imgurAlbumPaid(String)}.
+ * API response body of {@link DankApi#imgurAlbum(String)}.
  */
 @AutoValue
 public abstract class ImgurAlbumResponse implements ImgurResponse {
@@ -40,6 +41,17 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
     return data().albumTitle();
   }
 
+  @Memoized
+  @Override
+  public String albumCoverImageUrl() {
+    String coverImageId = data().coverImageId();
+    if (coverImageId != null) {
+      return "https://i.imgur.com/" + coverImageId + ".jpg";
+    } else {
+      return images().get(0).url();
+    }
+  }
+
   public static ImgurAlbumResponse createEmpty() {
     return new AutoValue_ImgurAlbumResponse(new Data() {
       @Override
@@ -56,11 +68,19 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
       public String albumTitle() {
         return null;
       }
+
+      @Nullable
+      @Override
+      public String coverImageId() {
+        return null;
+      }
     });
   }
 
   @AutoValue
   public abstract static class Data {
+    // Fields that aren't present in the free AJAX API are marked as nullable.
+
     @Json(name = "images_count")
     abstract int imageCount();
 
@@ -71,6 +91,10 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
     @Json(name = "title")
     public abstract String albumTitle();
 
+    @Nullable
+    @Json(name = "cover")
+    public abstract String coverImageId();
+
     public static JsonAdapter<Data> jsonAdapter(Moshi moshi) {
       return new AutoValue_ImgurAlbumResponse_Data.MoshiJsonAdapter(moshi);
     }
@@ -79,5 +103,4 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
   public static JsonAdapter<ImgurAlbumResponse> jsonAdapter(Moshi moshi) {
     return new AutoValue_ImgurAlbumResponse.MoshiJsonAdapter(moshi);
   }
-
 }

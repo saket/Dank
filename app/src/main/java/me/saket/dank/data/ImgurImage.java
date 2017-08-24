@@ -1,14 +1,16 @@
 package me.saket.dank.data;
 
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.squareup.moshi.Json;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 @AutoValue
-public abstract class ImgurImage {
+public abstract class ImgurImage implements Parcelable {
 
   @Nullable
   @Json(name = "title")
@@ -40,12 +42,13 @@ public abstract class ImgurImage {
   @Json(name = "ext")
   abstract String imageFormat();
 
+  @Memoized
   public String url() {
     if (videoLink() != null) {
       return videoLink();
 
     } else if (staticImageLink() != null) {
-      // link is only present in the paid API's response.
+      // link is only present in the paid API response.
       return staticImageLink();
 
     } else {
@@ -56,5 +59,4 @@ public abstract class ImgurImage {
   public static JsonAdapter<ImgurImage> jsonAdapter(Moshi moshi) {
     return new AutoValue_ImgurImage.MoshiJsonAdapter(moshi);
   }
-
 }

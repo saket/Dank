@@ -1,6 +1,7 @@
 package me.saket.dank.data;
 
 import com.google.auto.value.AutoValue;
+import com.google.auto.value.extension.memoized.Memoized;
 import com.squareup.moshi.Json;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
@@ -11,7 +12,7 @@ import java.util.List;
 import me.saket.dank.di.DankApi;
 
 /**
- * API response body of {@link DankApi#imgurImagePaid(String)}.
+ * API response body of {@link DankApi#imgurImage(String)}.
  */
 @AutoValue
 public abstract class ImgurImageResponse implements ImgurResponse {
@@ -28,6 +29,7 @@ public abstract class ImgurImageResponse implements ImgurResponse {
     return false;
   }
 
+  @Memoized
   @Override
   public List<ImgurImage> images() {
     return Collections.singletonList(image());
@@ -37,6 +39,11 @@ public abstract class ImgurImageResponse implements ImgurResponse {
   public String albumTitle() {
     // Not valid.
     throw new UnsupportedOperationException("Image doesn't have any album title");
+  }
+
+  @Override
+  public String albumCoverImageUrl() {
+    return image().url();
   }
 
   public static JsonAdapter<ImgurImageResponse> jsonAdapter(Moshi moshi) {

@@ -51,12 +51,13 @@ public class ImgurRepository {
    * TODO: Cache.
    * <p>
    * TODO: If needed, get the rate limits if they're not cached.
+   * Remember to handle {@link ImgurApiRateLimitReachedException}.
    *
    * @throws InvalidImgurAlbumException        If an invalid Imgur link was found.
    * @throws ImgurApiRateLimitReachedException If Imgur's API limit is reached and no more API requests can be made till the next month.
    */
   public Single<ImgurResponse> gallery(MediaLink.ImgurUnresolvedGallery imgurUnresolvedGalleryLink) {
-    return Dank.api().imgurAlbumPaid(imgurUnresolvedGalleryLink.albumId())
+    return Dank.api().imgurAlbum(imgurUnresolvedGalleryLink.albumId())
         .map(throwIfHttpError())
         .doOnSuccess(saveImgurApiRateLimits())
         .map(extractResponseBody())
@@ -78,8 +79,7 @@ public class ImgurRepository {
 
           } else {
             // Okay, let's check if it was a single image.
-            return Dank.api()
-                .imgurImagePaid(imgurUnresolvedGalleryLink.albumId())
+            return Dank.api().imgurImage(imgurUnresolvedGalleryLink.albumId())
                 .doOnSuccess(saveImgurApiRateLimits())
                 .map(extractResponseBody());
           }

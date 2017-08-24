@@ -13,8 +13,8 @@ import retrofit2.http.Query;
 
 public interface DankApi {
 
-  String HEADER_MASHAPE_KEY = "X-Mashape-Key: VOjpM0pXeAmshuRGE4Hhe6KY9Ouep1YCLx8jsnaivCFNYALpN5";
   String HEADER_IMGUR_AUTH = "Authorization: Client-ID 87450e5590435e9";
+  String HEADER_MASHAPE_KEY = "X-Mashape-Key: VOjpM0pXeAmshuRGE4Hhe6KY9Ouep1YCLx8jsnaivCFNYALpN5";
   String HEADER_WHOLESOME_API_AUTH = "Authorization";
   String WHOLESOME_API_HOST = "dank-wholesome.herokuapp.com";
 
@@ -23,17 +23,17 @@ public interface DankApi {
    * is wrapped in {@link Response} so that the headers can be extracted for checking Imgur rate-limits.
    */
   @GET("https://imgur-apiv3.p.mashape.com/3/album/{albumId}")
-  @Headers({ HEADER_IMGUR_AUTH, HEADER_MASHAPE_KEY })
-  Single<Response<ImgurAlbumResponse>> imgurAlbumPaid(
+  @Headers({ HEADER_IMGUR_AUTH, HEADER_MASHAPE_KEY, "User-Agent: Paw/3.1.1 (Macintosh; OS X/10.12.5) GCDHTTPRequest" })
+  Single<Response<ImgurAlbumResponse>> imgurAlbum(
       @Path("albumId") String albumId
   );
 
   /**
    * Get an image's details from Imgur. This is also a paid API.
    */
-  @GET("https://imgur-apiv3.p.mashape.com/3/gallery/image/{imageId}")
+  @GET("https://imgur-apiv3.p.mashape.com/3/image/{imageId}")
   @Headers({ HEADER_IMGUR_AUTH, HEADER_MASHAPE_KEY })
-  Single<Response<ImgurImageResponse>> imgurImagePaid(
+  Single<Response<ImgurImageResponse>> imgurImage(
       @Path("imageId") String imageId
   );
 

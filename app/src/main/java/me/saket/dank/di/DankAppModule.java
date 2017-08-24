@@ -157,7 +157,7 @@ public class DankAppModule {
 
     if (BuildConfig.DEBUG) {
       HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> Timber.tag("OkHttp").d(message));
-      logging.setLevel(HttpLoggingInterceptor.Level.NONE);
+      logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
       builder.addInterceptor(logging);
       builder.addNetworkInterceptor(new StethoInterceptor());
     }
