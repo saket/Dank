@@ -2,15 +2,15 @@ package me.saket.dank.utils;
 
 import android.support.annotation.NonNull;
 
-import com.nytimes.android.external.fs2.FSReader;
-import com.nytimes.android.external.fs2.FSWriter;
-import com.nytimes.android.external.fs2.PathResolver;
-import com.nytimes.android.external.fs2.filesystem.FileSystem;
-import com.nytimes.android.external.store2.base.Clearable;
-import com.nytimes.android.external.store2.base.Persister;
-import com.nytimes.android.external.store2.base.RecordProvider;
-import com.nytimes.android.external.store2.base.RecordState;
-import com.nytimes.android.external.store2.util.ParserException;
+import com.nytimes.android.external.fs3.FSReader;
+import com.nytimes.android.external.fs3.FSWriter;
+import com.nytimes.android.external.fs3.PathResolver;
+import com.nytimes.android.external.fs3.filesystem.FileSystem;
+import com.nytimes.android.external.store3.base.Clearable;
+import com.nytimes.android.external.store3.base.Persister;
+import com.nytimes.android.external.store3.base.RecordProvider;
+import com.nytimes.android.external.store3.base.RecordState;
+import com.nytimes.android.external.store3.util.ParserException;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 

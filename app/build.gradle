@@ -57,33 +57,35 @@ android {
   }
 }
 
-ext {
-  supportLibVersion = '26.0.1'
-  glideLibVersion = '4.0.0'
-  autoValueVersion = '1.4'
-  autoValueMoshiVersion = '0.4.3'
-}
+ext.versions = [
+    supportLib    : '26.0.1',
+    glideLib      : '4.0.0',
+    autoValue     : '1.4',
+    autoValueMoshi: '0.4.3',
+    stetho        : '1.5.0',
+    nytStore      : '3.0.0-beta'
+]
 
 dependencies {
   testCompile 'junit:junit:4.12'
   testCompile "org.powermock:powermock-module-junit4:1.6.6"
   testCompile "org.powermock:powermock-api-mockito:1.6.6"
 
-  compile "com.android.support:recyclerview-v7:${supportLibVersion}"
-  compile "com.android.support:support-annotations:${supportLibVersion}"
-  compile "com.android.support:design:${supportLibVersion}"
-  compile "com.android.support:customtabs:${supportLibVersion}"
-  compile "com.android.support:palette-v7:${supportLibVersion}"
+  compile "com.android.support:recyclerview-v7:$versions.supportLib"
+  compile "com.android.support:support-annotations:$versions.supportLib"
+  compile "com.android.support:design:$versions.supportLib"
+  compile "com.android.support:customtabs:$versions.supportLib"
+  compile "com.android.support:palette-v7:$versions.supportLib"
 
   // Included to resolve dependency conflict between butterknife-compiler:8.0.1 and auto-value-moshi:0.3.2.
   annotationProcessor 'com.squareup:javapoet:1.8.0'
 
   // Cannot live without these.
   compile 'com.squareup.moshi:moshi:1.3.1'
-  annotationProcessor "com.google.auto.value:auto-value:${autoValueVersion}"
-  provided "com.jakewharton.auto.value:auto-value-annotations:${autoValueVersion}"
-  annotationProcessor "com.ryanharter.auto.value:auto-value-moshi:${autoValueMoshiVersion}"
-  provided "com.ryanharter.auto.value:auto-value-moshi-annotations:${autoValueMoshiVersion}"
+  annotationProcessor "com.google.auto.value:auto-value:$versions.autoValue"
+  provided "com.jakewharton.auto.value:auto-value-annotations:$versions.autoValue"
+  annotationProcessor "com.ryanharter.auto.value:auto-value-moshi:$versions.autoValueMoshi"
+  provided "com.ryanharter.auto.value:auto-value-moshi-annotations:$versions.autoValueMoshi"
   annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:0.2.5'
   compile 'com.jakewharton.timber:timber:4.1.2'
   compile 'com.jakewharton:butterknife:8.5.1'
@@ -102,9 +104,9 @@ dependencies {
   compile 'com.squareup.retrofit2:retrofit:2.2.0'
   compile 'com.squareup.retrofit2:adapter-rxjava2:2.2.0'
   compile 'com.squareup.retrofit2:converter-moshi:2.0.2'
-  compile "com.github.bumptech.glide:glide:${glideLibVersion}"
-  annotationProcessor "com.github.bumptech.glide:compiler:${glideLibVersion}"
-  compile "com.github.bumptech.glide:okhttp3-integration:${glideLibVersion}"
+  compile "com.github.bumptech.glide:glide:$versions.glideLib"
+  annotationProcessor "com.github.bumptech.glide:compiler:$versions.glideLib"
+  compile "com.github.bumptech.glide:okhttp3-integration:$versions.glideLib"
   compile 'com.squareup.sqlbrite:sqlbrite:1.1.1'
   compile "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet. TODO: Remove this. SQLBrite is on Rx2.
   compile 'com.google.android:flexbox:0.3.0'
@@ -118,6 +120,7 @@ dependencies {
   compile 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
   compile 'com.jakewharton.threetenabp:threetenabp:1.0.5'
   implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.4@aar'
+  compile 'it.gilvegliach.android:transparent-text-textview:1.0.3'
 
   // Reddit API wrapper.
   compile 'com.github.Saketme:JRAW:6864908f28'
@@ -131,12 +134,11 @@ dependencies {
   compile 'com.danikula:videocache:2.6.4'
 
   // Caching.
-  compile 'com.github.NYTimes.Store:cache:20445fff13'
-  compile 'com.github.NYTimes.Store:store2:20445fff13'
-  compile 'com.github.NYTimes.Store:middleware-moshi2:20445fff13'
-  compile 'com.github.NYTimes.Store:filesystem2:20445fff13'
+  compile "com.nytimes.android:cache3:$versions.nytStore"
+  compile "com.nytimes.android:store3:$versions.nytStore"
+  compile "com.nytimes.android:middleware-moshi3:$versions.nytStore"
+  compile "com.nytimes.android:filesystem3:$versions.nytStore"
 
-  compile 'com.facebook.stetho:stetho:1.5.0'
-  compile 'com.facebook.stetho:stetho-okhttp3:1.5.0'
-  compile 'it.gilvegliach.android:transparent-text-textview:1.0.3'
+  compile "com.facebook.stetho:stetho:$versions.stetho"
+  compile "com.facebook.stetho:stetho-okhttp3:$versions.stetho"
 }

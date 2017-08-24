@@ -10,9 +10,6 @@ import android.preference.PreferenceManager;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.nytimes.android.external.fs2.filesystem.FileSystem;
-import com.nytimes.android.external.fs2.filesystem.FileSystemFactory;
-import com.nytimes.android.external.store2.base.impl.MemoryPolicy;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 import com.squareup.sqlbrite.SqlBrite;
@@ -22,7 +19,6 @@ import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.http.LoggingMode;
 import net.dean.jraw.http.UserAgent;
 
-import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -230,25 +226,25 @@ public class DankAppModule {
     briteDatabase.setLoggingEnabled(false);
     return briteDatabase;
   }
-
-  @Singleton
-  @Provides
-  MemoryPolicy provideCachingPolicy() {
-    return MemoryPolicy.builder()
-        .setExpireAfter(1)
-        .setExpireAfterTimeUnit(TimeUnit.DAYS)
-        .build();
-  }
-
-  @Provides
-  @Singleton
-  FileSystem provideCacheFileSystem() {
-    try {
-      return FileSystemFactory.create(appContext.getCacheDir());
-    } catch (IOException e) {
-      throw new RuntimeException("Couldn't create FileSystemFactory. Cache dir: " + appContext.getCacheDir());
-    }
-  }
+//
+//  @Singleton
+//  @Provides
+//  MemoryPolicy provideCachingPolicy() {
+//    return MemoryPolicy.builder()
+//        .setExpireAfter(1)
+//        .setExpireAfterTimeUnit(TimeUnit.DAYS)
+//        .build();
+//  }
+//
+//  @Provides
+//  @Singleton
+//  FileSystem provideCacheFileSystem() {
+//    try {
+//      return FileSystemFactory.create(appContext.getCacheDir());
+//    } catch (IOException e) {
+//      throw new RuntimeException("Couldn't create FileSystemFactory. Cache dir: " + appContext.getCacheDir());
+//    }
+//  }
 
   @Provides
   @Singleton
