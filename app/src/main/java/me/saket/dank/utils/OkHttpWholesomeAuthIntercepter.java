@@ -1,7 +1,9 @@
 package me.saket.dank.utils;
 
 import android.support.annotation.NonNull;
+
 import java.io.IOException;
+
 import me.saket.dank.di.DankApi;
 import okhttp3.Credentials;
 import okhttp3.Interceptor;
@@ -14,10 +16,14 @@ public class OkHttpWholesomeAuthIntercepter implements Interceptor {
   @Override
   public Response intercept(@NonNull Chain chain) throws IOException {
     Request originalRequest = chain.request();
-    Builder newRequestBuilder = originalRequest.newBuilder();
 
-    newRequestBuilder.header(DankApi.HEADER_WHOLESOME_API_AUTH, Credentials.basic("triggered", "epochs-ramrod-diseuse-sioux"));
+    if (originalRequest.url().host().contains(DankApi.WHOLESOME_API_HOST)) {
+      Builder newRequestBuilder = originalRequest.newBuilder();
+      newRequestBuilder.header(DankApi.HEADER_WHOLESOME_API_AUTH, Credentials.basic("triggered", "epochs-ramrod-diseuse-sioux"));
+      return chain.proceed(newRequestBuilder.build());
 
-    return chain.proceed(newRequestBuilder.build());
+    } else {
+      return chain.proceed(originalRequest);
+    }
   }
 }

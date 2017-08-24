@@ -16,6 +16,7 @@ public interface DankApi {
   String HEADER_MASHAPE_KEY = "X-Mashape-Key: VOjpM0pXeAmshuRGE4Hhe6KY9Ouep1YCLx8jsnaivCFNYALpN5";
   String HEADER_IMGUR_AUTH = "Authorization: Client-ID 87450e5590435e9";
   String HEADER_WHOLESOME_API_AUTH = "Authorization";
+  String WHOLESOME_API_HOST = "dank-wholesome.herokuapp.com";
 
   /**
    * Get images in an Imgur album. This is a paid API so we try to minimize its usage. The response
@@ -44,7 +45,7 @@ public interface DankApi {
       @Path("videoId") String videoId
   );
 
-  @GET("https://dank-wholesome.herokuapp.com/unfurl")
+  @GET("https://" + WHOLESOME_API_HOST + "/unfurl")
   Single<UnfurlLinkResponse> unfurlUrl(
       @Query("url") String url,
       @Query("ignoreSocialMetadata") boolean ignoreSocialMetadata
