@@ -63,82 +63,89 @@ ext.versions = [
     autoValue     : '1.4',
     autoValueMoshi: '0.4.3',
     stetho        : '1.5.0',
-    nytStore      : '3.0.0-beta'
+    nytStore      : '3.0.0-beta',
+    okHttp        : '3.6.0',
+    retrofit      : '2.2.0',
+    rxBindings    : '2.0.0',
+    dagger        : '2.10',
+    butterKnife   : '8.5.1'
 ]
 
 dependencies {
-  testCompile 'junit:junit:4.12'
-  testCompile "org.powermock:powermock-module-junit4:1.6.6"
-  testCompile "org.powermock:powermock-api-mockito:1.6.6"
+  testImplementation 'junit:junit:4.12'
+  testImplementation "org.powermock:powermock-module-junit4:1.6.6"
+  testImplementation "org.powermock:powermock-api-mockito:1.6.6"
 
-  compile "com.android.support:recyclerview-v7:$versions.supportLib"
-  compile "com.android.support:support-annotations:$versions.supportLib"
-  compile "com.android.support:design:$versions.supportLib"
-  compile "com.android.support:customtabs:$versions.supportLib"
-  compile "com.android.support:palette-v7:$versions.supportLib"
+  implementation "com.android.support:recyclerview-v7:$versions.supportLib"
+  implementation "com.android.support:support-annotations:$versions.supportLib"
+  implementation "com.android.support:design:$versions.supportLib"
+  implementation "com.android.support:customtabs:$versions.supportLib"
+  implementation "com.android.support:palette-v7:$versions.supportLib"
 
   // Included to resolve dependency conflict between butterknife-compiler:8.0.1 and auto-value-moshi:0.3.2.
   annotationProcessor 'com.squareup:javapoet:1.8.0'
 
   // Cannot live without these.
-  compile 'com.squareup.moshi:moshi:1.3.1'
+  implementation 'com.squareup.moshi:moshi:1.3.1'
   annotationProcessor "com.google.auto.value:auto-value:$versions.autoValue"
   provided "com.jakewharton.auto.value:auto-value-annotations:$versions.autoValue"
   annotationProcessor "com.ryanharter.auto.value:auto-value-moshi:$versions.autoValueMoshi"
   provided "com.ryanharter.auto.value:auto-value-moshi-annotations:$versions.autoValueMoshi"
   annotationProcessor 'com.ryanharter.auto.value:auto-value-parcel:0.2.5'
-  compile 'com.jakewharton.timber:timber:4.1.2'
-  compile 'com.jakewharton:butterknife:8.5.1'
-  annotationProcessor 'com.jakewharton:butterknife-compiler:8.5.1'
-  compile "io.reactivex.rxjava2:rxjava:2.0.9"
-  compile 'io.reactivex.rxjava2:rxandroid:2.0.1'
-  compile 'com.jakewharton.rxbinding2:rxbinding:2.0.0'
-  compile 'com.jakewharton.rxbinding2:rxbinding-recyclerview-v7:2.0.0'
-  compile 'com.jakewharton.rxrelay2:rxrelay:2.0.0'
-  compile 'com.jakewharton.rxbinding2:rxbinding-support-v4:2.0.0'
-  compile 'com.tspoon.traceur:traceur:1.0.1'
-  compile 'com.google.dagger:dagger:2.10'
-  annotationProcessor 'com.google.dagger:dagger-compiler:2.10'
-  compile 'com.squareup.okhttp3:okhttp:3.6.0'
-  compile 'com.squareup.okhttp3:logging-interceptor:3.6.0'
-  compile 'com.squareup.retrofit2:retrofit:2.2.0'
-  compile 'com.squareup.retrofit2:adapter-rxjava2:2.2.0'
-  compile 'com.squareup.retrofit2:converter-moshi:2.0.2'
-  compile "com.github.bumptech.glide:glide:$versions.glideLib"
+  implementation 'com.jakewharton.timber:timber:4.1.2'
+  implementation "com.jakewharton:butterknife:$versions.butterKnife"
+  annotationProcessor "com.jakewharton:butterknife-compiler:$versions.butterKnife"
+  implementation "io.reactivex.rxjava2:rxjava:2.0.9"
+  implementation "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet. TODO: Remove this. SQLBrite is on Rx2.
+  implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+  implementation "com.jakewharton.rxbinding2:rxbinding:$versions.rxBindings"
+  implementation "com.jakewharton.rxbinding2:rxbinding-recyclerview-v7:$versions.rxBindings"
+  implementation "com.jakewharton.rxrelay2:rxrelay:$versions.rxBindings"
+  implementation "com.jakewharton.rxbinding2:rxbinding-support-v4:$versions.rxBindings"
+  implementation 'com.tspoon.traceur:traceur:1.0.1'
+  implementation "com.google.dagger:dagger:$versions.dagger"
+  annotationProcessor "com.google.dagger:dagger-compiler:$versions.dagger"
+  implementation "com.squareup.okhttp3:okhttp:$versions.okHttp"
+  implementation "com.squareup.okhttp3:logging-interceptor:$versions.okHttp"
+  implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
+  implementation "com.squareup.retrofit2:adapter-rxjava2:$versions.retrofit"
+  implementation "com.squareup.retrofit2:converter-moshi:$versions.retrofit"
+  implementation "com.github.bumptech.glide:glide:$versions.glideLib"
   annotationProcessor "com.github.bumptech.glide:compiler:$versions.glideLib"
-  compile "com.github.bumptech.glide:okhttp3-integration:$versions.glideLib"
-  compile 'com.squareup.sqlbrite:sqlbrite:1.1.1'
-  compile "com.github.akarnokd:rxjava2-interop:0.9.6" // Because Sqlbrite hasn't updated to RxJava2 yet. TODO: Remove this. SQLBrite is on Rx2.
-  compile 'com.google.android:flexbox:0.3.0'
-  compile 'com.github.zagum:Android-ExpandIcon:1.1.1'
-  compile 'com.github.Saketme:Better-Link-Movement-Method:40b13980d4'
-  compile 'org.sufficientlysecure:html-textview:3.3'
-  compile 'org.jsoup:jsoup:1.10.2'
-  compile 'com.trello.navi2:navi:2.0'
-  compile 'com.darwinsys:hirondelle-date4j:1.5.1'
-  compile 'com.squareup.tape2:tape:2.0.0-SNAPSHOT'
-  compile 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
-  compile 'com.jakewharton.threetenabp:threetenabp:1.0.5'
+  implementation "com.github.bumptech.glide:okhttp3-integration:$versions.glideLib"
+  implementation 'com.squareup.sqlbrite:sqlbrite:1.1.1'
+  implementation 'com.google.android:flexbox:0.3.0'
+  implementation 'com.github.zagum:Android-ExpandIcon:1.1.1'
+  implementation 'com.github.Saketme:Better-Link-Movement-Method:40b13980d4'
+  implementation 'org.sufficientlysecure:html-textview:3.3'
+  implementation 'org.jsoup:jsoup:1.10.2'
+  implementation 'com.trello.navi2:navi:2.0'
+  implementation 'com.squareup.tape2:tape:2.0.0-SNAPSHOT'
+  implementation 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
   implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.4@aar'
-  compile 'it.gilvegliach.android:transparent-text-textview:1.0.3'
+  implementation 'it.gilvegliach.android:transparent-text-textview:1.0.3'
+
+  // TODO: Replace all Date4J usages with ThreeTenAbp.
+  implementation 'com.darwinsys:hirondelle-date4j:1.5.1'
+  implementation 'com.jakewharton.threetenabp:threetenabp:1.0.5'
 
   // Reddit API wrapper.
-  compile 'com.github.Saketme:JRAW:6864908f28'
+  implementation 'com.github.Saketme:JRAW:6864908f28'
 
   // ImageViewer that supports pan, zoom gestures + can decode large images.
-  compile 'com.alexvasilkov:gesture-views:2.2.0'
+  implementation 'com.alexvasilkov:gesture-views:2.2.0'
 
   // Videos!
-  compile 'com.google.android.exoplayer:exoplayer:r2.3.1'
-  compile 'com.github.Saketme:ExoMedia:3ba6565f07'
-  compile 'com.danikula:videocache:2.6.4'
+  implementation 'com.google.android.exoplayer:exoplayer:r2.3.1'
+  implementation 'com.github.Saketme:ExoMedia:3ba6565f07'
+  implementation 'com.danikula:videocache:2.6.4'
 
   // Caching.
-  compile "com.nytimes.android:cache3:$versions.nytStore"
-  compile "com.nytimes.android:store3:$versions.nytStore"
-  compile "com.nytimes.android:middleware-moshi3:$versions.nytStore"
-  compile "com.nytimes.android:filesystem3:$versions.nytStore"
+  implementation "com.nytimes.android:cache3:$versions.nytStore"
+  implementation "com.nytimes.android:store3:$versions.nytStore"
+  implementation "com.nytimes.android:middleware-moshi3:$versions.nytStore"
+  implementation "com.nytimes.android:filesystem3:$versions.nytStore"
 
-  compile "com.facebook.stetho:stetho:$versions.stetho"
-  compile "com.facebook.stetho:stetho-okhttp3:$versions.stetho"
+  implementation "com.facebook.stetho:stetho:$versions.stetho"
+  implementation "com.facebook.stetho:stetho-okhttp3:$versions.stetho"
 }
