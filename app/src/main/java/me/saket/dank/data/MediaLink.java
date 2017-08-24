@@ -1,13 +1,11 @@
 package me.saket.dank.data;
 
 import android.net.Uri;
+import android.support.annotation.Nullable;
 
 import net.dean.jraw.models.Thumbnails;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 import me.saket.dank.di.DankApi;
 import me.saket.dank.utils.Commons;
@@ -197,20 +195,28 @@ public class MediaLink extends Link {
   }
 
   public static class Imgur extends MediaLink {
-    private static final Set<String> DOMAINS = new HashSet<>(Arrays.asList(
-        "imgur.com",        // Link to an Imgur submission.
-        "i.imgur.com",      // Direct link to Imgur submission's image/video.
-        "b.bildgur.de",     // Bildgur is Imgur's german cousin.
-        "bildgur.de"
-    ));
+    @Nullable private String title;
+    @Nullable private String description;
 
-    private Imgur(String url, boolean canUseRedditOptimizedImageUrl, Type type) {
-      super(url, canUseRedditOptimizedImageUrl, type);
+    public static Imgur create(String url, boolean canUseRedditOptimizedImageUrl, String title, String description) {
+      Type type = url.endsWith("mp4") ? Type.VIDEO : Type.IMAGE_OR_GIF;
+      return new Imgur(url, canUseRedditOptimizedImageUrl, type, title, description);
     }
 
-    public static Imgur create(String url, boolean canUseRedditOptimizedImageUrl) {
-      Type type = url.endsWith("mp4") ? Type.VIDEO : Type.IMAGE_OR_GIF;
-      return new Imgur(url, canUseRedditOptimizedImageUrl, type);
+    private Imgur(String url, boolean canUseRedditOptimizedImageUrl, Type type, @Nullable String title, @Nullable String description) {
+      super(url, canUseRedditOptimizedImageUrl, type);
+      this.title = title;
+      this.description = description;
+    }
+
+    @Nullable
+    public String title() {
+      return title;
+    }
+
+    @Nullable
+    public String description() {
+      return description;
     }
   }
 
@@ -241,9 +247,9 @@ public class MediaLink extends Link {
   public static class ImgurAlbum extends MediaLink {
     private final String albumTitle;
     private final String coverImageUrl;
-    private final List<ImgurImage> images;
+    private final List<MediaLink.Imgur> images;
 
-    protected ImgurAlbum(String albumUrl, String albumTitle, String coverImageUrl, List<ImgurImage> images) {
+    protected ImgurAlbum(String albumUrl, String albumTitle, String coverImageUrl, List<MediaLink.Imgur> images) {
       super(albumUrl, false, Type.EXTERNAL);
       this.albumTitle = albumTitle;
       this.coverImageUrl = coverImageUrl;
@@ -262,7 +268,7 @@ public class MediaLink extends Link {
       return albumTitle;
     }
 
-    public List<ImgurImage> images() {
+    public List<MediaLink.Imgur> images() {
       return images;
     }
 
@@ -270,7 +276,7 @@ public class MediaLink extends Link {
       return create(albumUrl(), albumTitle(), newCoverImageUrl, images());
     }
 
-    public static ImgurAlbum create(String albumUrl, String albumTitle, String coverImageUrl, List<ImgurImage> images) {
+    public static ImgurAlbum create(String albumUrl, String albumTitle, String coverImageUrl, List<MediaLink.Imgur> images) {
       return new ImgurAlbum(albumUrl, albumTitle, coverImageUrl, images);
     }
   }

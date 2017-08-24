@@ -14,6 +14,13 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
 
+  <ProgressBar
+    android:id="@+id/mediaalbumviewer_progress"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:indeterminate="true" />
+
   <!-- The top of this View is programmatically set to align with the options. -->
   <View
     android:id="@+id/mediaalbumviewer_options_background_gradient"

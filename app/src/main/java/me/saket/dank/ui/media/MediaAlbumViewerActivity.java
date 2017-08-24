@@ -23,6 +23,7 @@ import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -33,10 +34,9 @@ import com.google.common.io.Files;
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
-import junit.framework.Assert;
-
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
@@ -60,14 +60,16 @@ import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
-import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import timber.log.Timber;
 
 public class MediaAlbumViewerActivity extends DankActivity
     implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks, SystemUiHelper.OnSystemUiVisibilityChangeListener
 {
+
+  private static final String KEY_MEDIA_LINK_TO_SHOW = "mediaLinkToShow";
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
   @BindView(R.id.mediaalbumviewer_pager) ViewPager mediaAlbumPager;
@@ -77,6 +79,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   @BindView(R.id.mediaalbumviewer_open_in_browser) ImageButton openInBrowserButton;
   @BindView(R.id.mediaalbumviewer_reload_in_hd) ImageButton reloadInHighDefButton;
   @BindView(R.id.mediaalbumviewer_options_background_gradient) View optionButtonsBackgroundGradientView;
+  @BindView(R.id.mediaalbumviewer_progress) ProgressBar progressBar;
 
   @Inject MediaHostRepository mediaHostRepository;
   @Inject HttpProxyCacheServer videoCacheServer;
@@ -90,6 +93,7 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   public static void start(Context context, MediaLink mediaLink) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
+    intent.putExtra(KEY_MEDIA_LINK_TO_SHOW, mediaLink);
     context.startActivity(intent);
   }
 
@@ -104,20 +108,6 @@ public class MediaAlbumViewerActivity extends DankActivity
     setContentView(R.layout.activity_media_album_viewer);
     ButterKnife.bind(this);
 
-    List<MediaAlbumItem> mediaLinks = new ArrayList<>();
-    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/WhGHrBE.jpg")));
-//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/eYveT4s.jpg")));
-//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.redd.it/mis36nxfe5hz.jpg")));
-//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("http://i.imgur.com/QtD7iMr.jpg")));
-//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://streamable.com/fcill")));
-//    mediaLinks.add(MediaAlbumItem.create((MediaLink) UrlParser.parse("https://i.imgur.com/Cj9XeIY.gifv")));
-    mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaLinks);
-    mediaAlbumPager.setAdapter(mediaAlbumAdapter);
-
-    // TODO: Show media options only when we have adapter data.
-
-    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, this);
-
     // Fade in background dimming.
     activityBackgroundDrawable = rootLayout.getBackground().mutate();
     rootLayout.setBackground(activityBackgroundDrawable);
@@ -130,14 +120,16 @@ public class MediaAlbumViewerActivity extends DankActivity
     });
     fadeInAnimator.start();
 
-    // Show the option buttons above the navigation bar + fade-in the options.
+    // Animated once images are fetched.
+    optionButtonsContainer.setVisibility(View.INVISIBLE);
+
+    // Show the option buttons above the navigation bar.
     int navBarHeight = Views.getNavigationBarSize(this).y;
     Views.setPaddingBottom(optionButtonsContainer, navBarHeight);
     Views.executeOnMeasure(optionButtonsContainer, () -> {
       int shareButtonTop = Views.globalVisibleRect(shareButton).top + shareButton.getPaddingTop();
       int gradientHeight = optionButtonsBackgroundGradientView.getTop() - shareButtonTop;
       Views.setHeight(optionButtonsBackgroundGradientView, gradientHeight);
-      animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
     });
 
     rxPermissions = new RxPermissions(this);
@@ -149,21 +141,61 @@ public class MediaAlbumViewerActivity extends DankActivity
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
 
-    if (mediaAlbumAdapter.getCount() > 1) {
-      List<MediaAlbumItem> items = mediaAlbumAdapter.getDataSet();
-      for (MediaAlbumItem item : items) {
-        if (item.mediaLink().isVideo()) {
-          // For adding support for multiple videos, we need to:
-          // 1. Intercept ViewPager scroll if seek-bar is being touched.
-          // 2. Think about immersive mode. What if immersive mode was enabled from a previous image. Should we disable it now?
-          throw new UnsupportedOperationException("Only one video is supported right now");
-        }
-      }
-    }
+//    if (mediaAlbumAdapter.getCount() > 1) {
+//      List<MediaAlbumItem> items = mediaAlbumAdapter.getDataSet();
+//      for (MediaAlbumItem item : items) {
+//        if (item.mediaLink().isVideo()) {
+//          // For adding support for multiple videos, we need to:
+//          // 1. Intercept ViewPager scroll if seek-bar is being touched.
+//          // 2. Think about immersive mode. What if immersive mode was enabled from a previous image. Should we disable it now?
+//          throw new UnsupportedOperationException("Only one video is supported right now");
+//        }
+//      }
+//    }
 
     sharePopupMenu = createSharePopupMenu();
     shareButton.setOnTouchListener(sharePopupMenu.getDragToOpenListener());
 
+    MediaLink mediaLinkToDisplay = (MediaLink) getIntent().getSerializableExtra(KEY_MEDIA_LINK_TO_SHOW);
+    unsubscribeOnDestroy(
+        mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
+            .map(resolvedMediaLink -> {
+              if (resolvedMediaLink instanceof MediaLink.ImgurAlbum) {
+                return ((MediaLink.ImgurAlbum) resolvedMediaLink).images();
+              } else {
+                return Collections.singletonList(resolvedMediaLink);
+              }
+            })
+            .map(mediaLinks -> {
+              List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
+              for (MediaLink mediaLink : mediaLinks) {
+                mediaAlbumItems.add(MediaAlbumItem.create(mediaLink));
+              }
+              return mediaAlbumItems;
+            })
+            .compose(RxUtils.applySchedulersSingle())
+            .compose(RxUtils.doOnSingleStartAndTerminate(start -> progressBar.setVisibility(start ? View.VISIBLE : View.GONE)))
+            .subscribe(
+                mediaAlbumItems -> {
+                  // Show media options now that we have adapter data.
+                  optionButtonsContainer.setVisibility(View.VISIBLE);
+                  Views.executeOnMeasure(optionButtonsContainer, () -> {
+                    animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
+                  });
+
+                  mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaAlbumItems);
+                  mediaAlbumPager.setAdapter(mediaAlbumAdapter);
+                  startListeningToViewPagerPageChanges();
+                },
+                error -> {
+                  // TODO: Handle error.
+                  Timber.e(error, "Couldn't resolve media link");
+                }
+            )
+    );
+  }
+
+  private void startListeningToViewPagerPageChanges() {
     unsubscribeOnDestroy(
         RxViewPager.pageSelections(mediaAlbumPager)
             .map(currentItem -> mediaAlbumAdapter.getDataSet().get(currentItem))
@@ -212,9 +244,7 @@ public class MediaAlbumViewerActivity extends DankActivity
                       },
                       error -> {
                         if (error instanceof NoSuchElementException) {
-                          Assert.assertEquals(activeMediaItem.mediaLink().isVideo(), false);
                           Toast.makeText(this, R.string.mediaalbumviewer_share_image_not_loaded_yet, Toast.LENGTH_SHORT).show();
-
                         } else {
                           ResolvedError resolvedError = Dank.errors().resolve(error);
                           Toast.makeText(this, resolvedError.errorMessageRes(), Toast.LENGTH_LONG).show();
@@ -226,16 +256,14 @@ public class MediaAlbumViewerActivity extends DankActivity
 
         case R.id.action_share_video:
           unsubscribeOnDestroy(
-              // TODO: Once we resolve all links at the beginning, this shouldn't be needed:
-              mediaHostRepository.resolveActualLinkIfNeeded(activeMediaItem.mediaLink())
-                  .compose(RxUtils.applySchedulersSingle())
-                  .map(resolvedVideoLink -> {
-                    if (videoCacheServer.isCached(resolvedVideoLink.highQualityVideoUrl())) {
-                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(resolvedVideoLink.highQualityVideoUrl());
+              Single.just(activeMediaItem.mediaLink())
+                  .map(mediaLink -> {
+                    if (videoCacheServer.isCached(mediaLink.highQualityVideoUrl())) {
+                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.highQualityVideoUrl());
                       return new File(Uri.parse(cachedVideoFileUrl).getPath());
 
-                    } else if (videoCacheServer.isCached(resolvedVideoLink.lowQualityVideoUrl())) {
-                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(resolvedVideoLink.lowQualityVideoUrl());
+                    } else if (videoCacheServer.isCached(mediaLink.lowQualityVideoUrl())) {
+                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.lowQualityVideoUrl());
                       return new File(Uri.parse(cachedVideoFileUrl).getPath());
 
                     } else {
@@ -419,6 +447,8 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   private void animateMediaOptionsVisibility(boolean showOptions, TimeInterpolator interpolator, long animationDuration, boolean setInitialValues) {
+    Timber.i("animateMediaOptionsVisibility() -> showOptions: %s", showOptions);
+
     if (setInitialValues) {
       optionButtonsBackgroundGradientView.setAlpha(showOptions ? 0f : 1f);
       optionButtonsBackgroundGradientView.setTranslationY(showOptions ? optionButtonsBackgroundGradientView.getHeight() : 0f);
@@ -441,6 +471,7 @@ public class MediaAlbumViewerActivity extends DankActivity
         childView.setTranslationY(showOptions ? childView.getHeight() : 0f);
       }
 
+      Timber.i("Animating to %s", childView.getHeight());
       childView.animate().cancel();
       childView.animate()
           .translationY(showOptions ? 0f : childView.getHeight())

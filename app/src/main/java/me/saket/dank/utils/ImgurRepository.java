@@ -7,6 +7,8 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.TimeZone;
 
 import hirondelle.date4j.DateTime;
@@ -14,6 +16,7 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import me.saket.dank.data.ImgurAlbumResponse;
+import me.saket.dank.data.ImgurImage;
 import me.saket.dank.data.ImgurResponse;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
@@ -196,5 +199,13 @@ public class ImgurRepository {
       }
     }
     return false;
+  }
+
+  public List<MediaLink.Imgur> convertImgurImagesToImgurMediaLinks(List<ImgurImage> imgurImages) {
+    List<MediaLink.Imgur> imgurImageLinks = new ArrayList<>(imgurImages.size());
+    for (ImgurImage imgurImage : imgurImages) {
+      imgurImageLinks.add(UrlParser.createImgurLink(imgurImage.url(), imgurImage.title(), imgurImage.description()));
+    }
+    return imgurImageLinks;
   }
 }

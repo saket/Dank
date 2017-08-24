@@ -16,9 +16,7 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.disposables.Disposable;
 import me.saket.dank.R;
-import me.saket.dank.data.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.ExoPlayerManager;
@@ -28,7 +26,6 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
-import timber.log.Timber;
 
 public class MediaVideoFragment extends DankFragment {
 
@@ -94,17 +91,18 @@ public class MediaVideoFragment extends DankFragment {
       exoPlayerManager.startVideoPlayback();
     });
 
-    MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
-    assert mediaAlbumItem != null;
-    boolean loadHighQualityVideo = false; // TODO: Get this from user's data preferences.
-    unsubscribeOnDestroy(
-        load(mediaAlbumItem.mediaLink(), loadHighQualityVideo)
-    );
-
     // VideoView internally sets its height to match-parent. Forcefully resize it to match the video height.
     exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
       Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar());
     });
+
+    MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
+    assert mediaAlbumItem != null;
+    boolean loadHighQualityVideo = false; // TODO: Get this from user's data preferences.
+
+    String videoUrl = loadHighQualityVideo ? mediaAlbumItem.mediaLink().highQualityVideoUrl() : mediaAlbumItem.mediaLink().lowQualityVideoUrl();
+    String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
+    exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
   }
 
   private void setupFlickGestures(FlickDismissLayout flickDismissLayout) {
@@ -113,24 +111,5 @@ public class MediaVideoFragment extends DankFragment {
     flickListener.setGestureCallbacks((FlickGestureListener.GestureCallbacks) getActivity());
     flickListener.setContentHeightProvider(() -> videoView.getHeight());
     flickDismissLayout.setFlickGestureListener(flickListener);
-  }
-
-  public Disposable load(MediaLink mediaLink, boolean loadHighQualityVideo) {
-    return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
-        .compose(RxUtils.applySchedulersSingle())
-        .doOnSubscribe(o -> Timber.i("TODO: show loading progress indicator"))
-        .map(link -> loadHighQualityVideo ? link.highQualityVideoUrl() : link.lowQualityVideoUrl())
-        .subscribe(
-            videoUrl -> {
-              // TODO Cache:
-              String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
-              exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
-              //exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(videoUrl));
-            },
-            error -> {
-              // TODO: 01/04/17 Handle error.
-              Timber.e(error, "Couldn't load video");
-            }
-        );
   }
 }

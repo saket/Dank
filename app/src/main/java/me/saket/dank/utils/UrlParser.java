@@ -171,7 +171,7 @@ public class UrlParser {
         return createUnresolvedImgurGallery(url);
 
       } else {
-        return createImgurLink(url);
+        return createImgurLink(url, null, null);
       }
 
     } else if (urlDomain.contains("gfycat.com")) {
@@ -215,7 +215,7 @@ public class UrlParser {
     }
   }
 
-  private static MediaLink.Imgur createImgurLink(String url) {
+  public static MediaLink.Imgur createImgurLink(String url, String title, String description) {
     // Convert GIFs to MP4s that are insanely light weight in size.
     String[] gifFormats = new String[] { ".gif", ".gifv" };
     for (String gifFormat : gifFormats) {
@@ -237,7 +237,7 @@ public class UrlParser {
     // Reddit provides its own copies for the content in multiple sizes. Use that only in
     // case of images because otherwise it'll be a static image for GIFs or videos.
     boolean canUseRedditOptimizedImageUrl = isImageUrlPath(url);
-    return MediaLink.Imgur.create(contentURI.toString(), canUseRedditOptimizedImageUrl);
+    return MediaLink.Imgur.create(contentURI.toString(), canUseRedditOptimizedImageUrl, title, description);
   }
 
   /**

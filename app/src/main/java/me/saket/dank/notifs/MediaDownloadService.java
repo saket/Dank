@@ -177,12 +177,8 @@ public class MediaDownloadService extends Service {
             })
             .concatMap(linkToDownload -> {
               Observable<MediaDownloadJob> downloadStream;
-
               if (linkToDownload.isVideo()) {
-                // TODO: Once we resolve all links on start of MediaAlbumViewerActivity, this shouldn't be needed:
-                downloadStream = mediaHostRepository.resolveActualLinkIfNeeded(linkToDownload)
-                    .flatMapObservable(resolvedLink -> downloadVideoAndStreamProgress(resolvedLink))
-                    .compose(RxUtils.applySchedulers());
+                downloadStream = downloadVideoAndStreamProgress(linkToDownload).compose(RxUtils.applySchedulers());
               } else {
                 downloadStream = downloadImageAndStreamProgress(linkToDownload);
               }

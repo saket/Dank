@@ -1,5 +1,8 @@
 package me.saket.dank.utils;
 
+import static java.util.Collections.unmodifiableList;
+
+import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -32,7 +35,8 @@ public class MediaHostRepository {
           .map(imgurResponse -> {
             if (imgurResponse.isAlbum()) {
               String albumUrl = ((MediaLink.ImgurUnresolvedGallery) unresolvedLink).albumUrl();
-              return MediaLink.ImgurAlbum.create(albumUrl, imgurResponse.albumTitle(), imgurResponse.albumCoverImageUrl(), imgurResponse.images());
+              List<MediaLink.Imgur> images = unmodifiableList(imgurRepository.convertImgurImagesToImgurMediaLinks(imgurResponse.images()));
+              return MediaLink.ImgurAlbum.create(albumUrl, imgurResponse.albumTitle(), imgurResponse.albumCoverImageUrl(), images);
 
             } else {
               // Single image.
