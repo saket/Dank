@@ -447,8 +447,6 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   private void animateMediaOptionsVisibility(boolean showOptions, TimeInterpolator interpolator, long animationDuration, boolean setInitialValues) {
-    Timber.i("animateMediaOptionsVisibility() -> showOptions: %s", showOptions);
-
     if (setInitialValues) {
       optionButtonsBackgroundGradientView.setAlpha(showOptions ? 0f : 1f);
       optionButtonsBackgroundGradientView.setTranslationY(showOptions ? optionButtonsBackgroundGradientView.getHeight() : 0f);
@@ -471,7 +469,6 @@ public class MediaAlbumViewerActivity extends DankActivity
         childView.setTranslationY(showOptions ? childView.getHeight() : 0f);
       }
 
-      Timber.i("Animating to %s", childView.getHeight());
       childView.animate().cancel();
       childView.animate()
           .translationY(showOptions ? 0f : childView.getHeight())

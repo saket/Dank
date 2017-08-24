@@ -15,7 +15,7 @@ public class StreamableRepository {
   }
 
   // TODO: 01/04/17 Cache.
-  public Single<MediaLink.Streamable> video(String videoId) {
+  public Single<MediaLink> video(String videoId) {
     return Dank.api().streamableVideoDetails(videoId)
         .map(response -> {
           String videoUrl = response.url();

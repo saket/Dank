@@ -6,9 +6,11 @@ import android.graphics.Rect;
 import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.Toast;
+
 import me.saket.dank.data.Link;
 import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.RedditLink;
+import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfilePopup;
@@ -47,9 +49,17 @@ public class UrlRouter {
     } else if (link instanceof RedditLink.User) {
       throw new IllegalStateException("Use UserProfilePopup instead");
 
+    } else if (link instanceof MediaLink) {
+      MediaAlbumViewerActivity.start(context, ((MediaLink) link));
+
     } else if (link.isExternal()) {
-      String url = link instanceof Link.External ? ((Link.External) link).url : ((MediaLink.ImgurAlbum) link).albumUrl();
-      WebViewActivity.start(context, url);
+      if (link instanceof Link.External) {
+        String url = ((Link.External) link).url;
+        WebViewActivity.start(context, url);
+
+      } else {
+        throw new UnsupportedOperationException("Unknown external link: " + link);
+      }
 
     } else {
       Toast.makeText(context, "TODO: " + link.getClass().getSimpleName(), Toast.LENGTH_SHORT).show();

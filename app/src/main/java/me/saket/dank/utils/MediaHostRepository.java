@@ -2,6 +2,9 @@ package me.saket.dank.utils;
 
 import static java.util.Collections.unmodifiableList;
 
+import com.nytimes.android.external.store3.base.impl.Store;
+import com.nytimes.android.external.store3.base.impl.StoreBuilder;
+
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -15,18 +18,30 @@ public class MediaHostRepository {
 
   private final StreamableRepository streamableRepository;
   private final ImgurRepository imgurRepository;
+  private final Store<MediaLink, MediaLink> cacheStore;
 
   @Inject
   public MediaHostRepository(StreamableRepository streamableRepository, ImgurRepository imgurRepository) {
     this.streamableRepository = streamableRepository;
     this.imgurRepository = imgurRepository;
+
+    cacheStore = StoreBuilder.<MediaLink, MediaLink>key()
+        .fetcher(unresolvedMediaLink -> resolveFromNetwork(unresolvedMediaLink))
+        .open();
   }
 
   /**
    * Remember to handle {@link ImgurApiRateLimitReachedException}.
    */
-  // TODO: 01/04/17 Cache.
-  public Single<? extends MediaLink> resolveActualLinkIfNeeded(MediaLink unresolvedLink) {
+  public Single<MediaLink> resolveActualLinkIfNeeded(MediaLink unresolvedLink) {
+    if (unresolvedLink instanceof MediaLink.StreamableUnresolved || unresolvedLink instanceof MediaLink.ImgurUnresolvedGallery) {
+      return cacheStore.get(unresolvedLink);
+    } else {
+      return Single.just(unresolvedLink);
+    }
+  }
+
+  private Single<MediaLink> resolveFromNetwork(MediaLink unresolvedLink) {
     if (unresolvedLink instanceof MediaLink.StreamableUnresolved) {
       return streamableRepository.video(((MediaLink.StreamableUnresolved) unresolvedLink).videoId());
 
