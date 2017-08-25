@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 
 import me.saket.dank.R;
-import me.saket.dank.data.RedditLink;
+import me.saket.dank.data.links.RedditSubredditLink;
 
 /**
  * Android doesn't like activities that have transparent background, especially if it's the launcher activity.
@@ -23,7 +23,7 @@ public class SubredditActivityWithTransparentWindowBackground extends SubredditA
   /**
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
    */
-  public static void start(Context context, RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape) {
+  public static void start(Context context, RedditSubredditLink subredditLink, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, SubredditActivityWithTransparentWindowBackground.class);
     addStartExtrasToIntent(subredditLink, expandFromShape, intent);
     context.startActivity(intent);

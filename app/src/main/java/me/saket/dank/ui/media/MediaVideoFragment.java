@@ -21,7 +21,6 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.MediaHostRepository;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
@@ -100,7 +99,7 @@ public class MediaVideoFragment extends DankFragment {
     assert mediaAlbumItem != null;
     boolean loadHighQualityVideo = false; // TODO: Get this from user's data preferences.
 
-    String videoUrl = loadHighQualityVideo ? mediaAlbumItem.mediaLink().highQualityVideoUrl() : mediaAlbumItem.mediaLink().lowQualityVideoUrl();
+    String videoUrl = loadHighQualityVideo ? mediaAlbumItem.mediaLink().highQualityUrl() : mediaAlbumItem.mediaLink().lowQualityUrl();
     String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
     exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
   }

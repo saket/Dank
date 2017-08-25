@@ -36,8 +36,8 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.disposables.CompositeDisposable;
 import me.saket.dank.R;
-import me.saket.dank.data.RedditLink;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RxUtils;
@@ -73,8 +73,8 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
     setOnDismissListener(() -> onDismissDisposables.clear());
   }
 
-  public void loadUserProfile(RedditLink.User userLink) {
-    String username = userLink.name;
+  public void loadUserProfile(RedditUserLink userLink) {
+    String username = userLink.name();
     profileImageView.setContentDescription(profileImageView.getResources().getString(R.string.cd_userprofilepopup_profile_image, username));
     usernameView.setText(usernameView.getResources().getString(R.string.user_name_u_prefix, username));
 

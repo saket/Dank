@@ -33,7 +33,7 @@ import butterknife.ButterKnife;
 import io.reactivex.Completable;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
-import me.saket.dank.data.Link;
+import me.saket.dank.data.links.Link;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -184,7 +184,9 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
 
       Link parsedLink = UrlParser.parse(url);
-      UrlRouter.resolveAndOpen(parsedLink, this, clickedUrlCoordinatesRect);
+      UrlRouter.with(this)
+          .expandFrom(clickedUrlCoordinatesRect)
+          .resolveIntentAndOpen(parsedLink);
       return true;
     });
     return commentLinkMovementMethod;
@@ -199,7 +201,9 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     if (message.isComment()) {
       String commentUrl = "https://reddit.com" + message.getDataNode().get("context").asText();
       Link parsedLink = UrlParser.parse(commentUrl);
-      UrlRouter.resolveAndOpen(parsedLink, this, messageItemViewRect);
+      UrlRouter.with(this)
+          .expandFrom(messageItemViewRect)
+          .resolveIntentAndOpen(parsedLink);
 
     } else {
       String secondPartyName = JrawUtils.secondPartyName(getResources(), message, Dank.userSession().loggedInUserName());

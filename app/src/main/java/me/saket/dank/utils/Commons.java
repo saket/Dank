@@ -25,6 +25,8 @@ public class Commons {
   /**
    * Find a thumbnail provided by Reddit that is the closest to <var>optimizeForWidth</var>.
    * Gives preference to higher-res thumbnails if needed.
+   *
+   * @deprecated Use {@link MediaHostRepository#findOptimizedQualityImageForDevice(String, Thumbnails, int)}.
    */
   public static String findOptimizedImage(@Nullable Thumbnails redditSuppliedImages, int optimizeForWidth) {
     if (redditSuppliedImages == null) {

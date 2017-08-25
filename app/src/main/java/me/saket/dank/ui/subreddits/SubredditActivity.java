@@ -51,8 +51,8 @@ import me.saket.dank.DankApplication;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.OnLoginRequireListener;
-import me.saket.dank.data.RedditLink;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -110,7 +110,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private BehaviorRelay<String> subredditChangesRelay = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesRelay = BehaviorRelay.create();
 
-  protected static void addStartExtrasToIntent(RedditLink.Subreddit subredditLink, @Nullable Rect expandFromShape, Intent intent) {
+  protected static void addStartExtrasToIntent(RedditSubredditLink subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
   }
@@ -367,7 +367,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       //noinspection ConstantConditions
       subredditChangesRelay.accept(retainedSub);
     } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
-      String requestedSub = ((RedditLink.Subreddit) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name;
+      String requestedSub = ((RedditSubredditLink) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name();
       subredditChangesRelay.accept(requestedSub);
     } else {
       subredditChangesRelay.accept(Dank.subscriptions().defaultSubreddit());

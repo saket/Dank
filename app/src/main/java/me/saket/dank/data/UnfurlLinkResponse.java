@@ -5,6 +5,8 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.Json;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
+
+import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.di.DankApi;
 
 /**

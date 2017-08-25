@@ -18,11 +18,15 @@ import com.bumptech.glide.request.target.Target;
 import com.github.rahatarmanahmed.cpv.CircularProgressView;
 import com.github.rahatarmanahmed.cpv.CircularProgressViewAdapter;
 
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.utils.glide.GlideUtils;
@@ -38,6 +42,8 @@ public class MediaImageFragment extends DankFragment {
   @BindView(R.id.albumviewerimage_imageview) ZoomableImageView imageView;
   @BindView(R.id.albumviewerimage_progress) CircularProgressView progressView;
 
+  @Inject MediaHostRepository mediaHostRepository;
+
   static MediaImageFragment create(MediaAlbumItem mediaAlbumItem) {
     MediaImageFragment fragment = new MediaImageFragment();
     Bundle args = new Bundle(1);
@@ -48,6 +54,7 @@ public class MediaImageFragment extends DankFragment {
 
   @Override
   public void onAttach(Context context) {
+    Dank.dependencyInjector().inject(this);
     super.onAttach(context);
 
     if (!(getActivity() instanceof MediaFragmentCallbacks) || !(getActivity() instanceof FlickGestureListener.GestureCallbacks)) {
@@ -70,12 +77,17 @@ public class MediaImageFragment extends DankFragment {
 
     //noinspection ConstantConditions
     MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
-    int deviceDisplayWidth = ((MediaFragmentCallbacks) getActivity()).getDeviceDisplayWidth();
     assert mediaAlbumItem != null;
 
     imageView.setGestureRotationEnabled(true);
     imageView.setVisibility(View.INVISIBLE);
-    loadImage(mediaAlbumItem.mediaLink().optimizedImageUrl(deviceDisplayWidth));
+
+    String optimizedImageUrl = mediaHostRepository.findOptimizedQualityImageForDevice(
+        mediaAlbumItem.mediaLink().lowQualityUrl(),
+        ((MediaFragmentCallbacks) getActivity()).getRedditSuppliedImages(),
+        ((MediaFragmentCallbacks) getActivity()).getDeviceDisplayWidth()
+    );
+    loadImage(optimizedImageUrl);
 
     // TODO: remove
 //    {

@@ -7,9 +7,15 @@ import android.support.annotation.Nullable;
 import android.view.View;
 import android.widget.Toast;
 
-import me.saket.dank.data.Link;
-import me.saket.dank.data.MediaLink;
-import me.saket.dank.data.RedditLink;
+import net.dean.jraw.models.Thumbnails;
+
+import me.saket.dank.data.exceptions.SerializableThumbnails;
+import me.saket.dank.data.links.ExternalLink;
+import me.saket.dank.data.links.Link;
+import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.data.links.RedditSubmissionLink;
+import me.saket.dank.data.links.RedditSubredditLink;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
@@ -19,43 +25,66 @@ import timber.log.Timber;
 
 public class UrlRouter {
 
-  public static void resolveAndOpen(Link link, Context context) {
-    resolveAndOpen(link, context, (Rect) null);
+  @Nullable private Point expandFromPoint;
+  @Nullable private Rect expandFromRect;
+  @Nullable private SerializableThumbnails redditSuppliedImages;
+
+  private final Context context;
+
+  public static UrlRouter with(Context context) {
+    return new UrlRouter(context);
   }
 
-  public static void resolveAndOpen(Link link, Context context, Point expandFromPoint) {
-    Rect expandFromShapeRect;
-    if (expandFromPoint != null) {
-      int deviceDisplayWidthPx = context.getResources().getDisplayMetrics().widthPixels;
-      expandFromShapeRect = new Rect(0, expandFromPoint.y, deviceDisplayWidthPx, expandFromPoint.y);
-    } else {
-      expandFromShapeRect = null;
-    }
-    resolveAndOpen(link, context, expandFromShapeRect);
+  private UrlRouter(Context context) {
+    this.context = context;
+  }
+
+  public UrlRouter expandFrom(Point expandFromPoint) {
+    this.expandFromPoint = expandFromPoint;
+    return this;
+  }
+
+  public UrlRouter expandFrom(Rect expandFromRect) {
+    this.expandFromRect = expandFromRect;
+    return this;
   }
 
   /**
-   * @param expandFromShape The initial shape of the target Activity from where it will begin its entry expand animation.
+   * Just makes the entry animation explicit for the code reader; nothing else.
    */
-  public static void resolveAndOpen(Link link, Context context, @Nullable Rect expandFromShape) {
+  public UrlRouter expandFromBelowToolbar() {
+    return expandFrom((Rect) null);
+  }
+
+  public UrlRouter useRedditSuppliedImages(@Nullable Thumbnails redditSuppliedImages) {
+    if (redditSuppliedImages != null) {
+      this.redditSuppliedImages = new SerializableThumbnails(redditSuppliedImages.getDataNode());
+    }
+    return this;
+  }
+
+  public void resolveIntentAndOpen(Link link) {
     Timber.i("%s", link);
+    if (expandFromRect == null && expandFromPoint != null) {
+      int deviceDisplayWidthPx = context.getResources().getDisplayMetrics().widthPixels;
+      expandFromRect = new Rect(0, expandFromPoint.y, deviceDisplayWidthPx, expandFromPoint.y);
+    }
 
-    if (link instanceof RedditLink.Subreddit) {
-      SubredditActivityWithTransparentWindowBackground.start(context, (RedditLink.Subreddit) link, expandFromShape);
+    if (link instanceof RedditSubredditLink) {
+      SubredditActivityWithTransparentWindowBackground.start(context, (RedditSubredditLink) link, expandFromRect);
 
-    } else if (link instanceof RedditLink.Submission) {
-      SubmissionFragmentActivity.start(context, (RedditLink.Submission) link, expandFromShape);
+    } else if (link instanceof RedditSubmissionLink) {
+      SubmissionFragmentActivity.start(context, (RedditSubmissionLink) link, expandFromRect);
 
-    } else if (link instanceof RedditLink.User) {
+    } else if (link instanceof RedditUserLink) {
       throw new IllegalStateException("Use UserProfilePopup instead");
 
     } else if (link instanceof MediaLink) {
-      MediaAlbumViewerActivity.start(context, ((MediaLink) link));
+      MediaAlbumViewerActivity.start(context, ((MediaLink) link), redditSuppliedImages);
 
     } else if (link.isExternal()) {
-      if (link instanceof Link.External) {
-        String url = ((Link.External) link).url;
-        WebViewActivity.start(context, url);
+      if (link instanceof ExternalLink) {
+        WebViewActivity.start(context, link.unparsedUrl());
 
       } else {
         throw new UnsupportedOperationException("Unknown external link: " + link);
@@ -66,9 +95,9 @@ public class UrlRouter {
     }
   }
 
-  public static void openUserProfilePopup(RedditLink.User link, View anchorView, Point clickedUrlCoordinates) {
+  public void openUserProfile(RedditUserLink userLink, View anchorView) {
     UserProfilePopup userProfilePopup = new UserProfilePopup(anchorView.getContext());
-    userProfilePopup.loadUserProfile(link);
-    userProfilePopup.showAtLocation(anchorView, clickedUrlCoordinates);
+    userProfilePopup.loadUserProfile(userLink);
+    userProfilePopup.showAtLocation(anchorView, expandFromPoint);
   }
 }

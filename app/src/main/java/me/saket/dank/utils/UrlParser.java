@@ -6,14 +6,22 @@ import android.text.Html;
 import android.text.TextUtils;
 
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
 
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import me.saket.dank.data.Link;
-import me.saket.dank.data.MediaLink;
-import me.saket.dank.data.RedditLink;
+import me.saket.dank.data.links.ExternalLink;
+import me.saket.dank.data.links.GenericMediaLink;
+import me.saket.dank.data.links.GfycatLink;
+import me.saket.dank.data.links.GiphyLink;
+import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
+import me.saket.dank.data.links.ImgurLink;
+import me.saket.dank.data.links.Link;
+import me.saket.dank.data.links.RedditCommentLink;
+import me.saket.dank.data.links.RedditSubmissionLink;
+import me.saket.dank.data.links.RedditSubredditLink;
+import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.data.links.StreamableUnresolvedLink;
 
 /**
  * Parses URLs found in the wilderness of Reddit and categorizes them into {@link Link} subclasses.
@@ -89,7 +97,7 @@ public class UrlParser {
   /**
    * Determine type of the url.
    *
-   * @return null if the url couldn't be identified. A class implementing {@link RedditLink} otherwise.
+   * @return null if the url couldn't be identified. A class implementing {@link Link} otherwise.
    */
   @NonNull
   public static Link parse(String url) {
@@ -102,12 +110,12 @@ public class UrlParser {
 
     Matcher subredditMatcher = SUBREDDIT_PATTERN.matcher(urlPath);
     if (subredditMatcher.matches()) {
-      return RedditLink.Subreddit.create(subredditMatcher.group(1));
+      return RedditSubredditLink.create(url, subredditMatcher.group(1));
     }
 
     Matcher userMatcher = USER_PATTERN.matcher(urlPath);
     if (userMatcher.matches()) {
-      return RedditLink.User.create(userMatcher.group(1));
+      return RedditUserLink.create(url, userMatcher.group(1));
     }
 
     if (urlDomain.endsWith("reddit.com")) {
@@ -118,25 +126,25 @@ public class UrlParser {
         String commentId = submissionOrCommentMatcher.group(5);
 
         if (TextUtils.isEmpty(commentId)) {
-          return RedditLink.Submission.create(url, submissionId, subredditName);
+          return RedditSubmissionLink.create(url, submissionId, subredditName);
 
         } else {
           String contextParamValue = linkUri.getQueryParameter("context");
           int contextCount = TextUtils.isEmpty(contextParamValue) ? 0 : Integer.parseInt(contextParamValue);
-          RedditLink.Comment initialComment = RedditLink.Comment.create(commentId, contextCount);
-          return RedditLink.Submission.createWithComment(url, submissionId, subredditName, initialComment);
+          RedditCommentLink initialComment = RedditCommentLink.create(url, commentId, contextCount);
+          return RedditSubmissionLink.createWithComment(url, submissionId, subredditName, initialComment);
         }
       }
 
       Matcher liveThreadMatcher = LIVE_THREAD_PATTERN.matcher(urlPath);
       if (liveThreadMatcher.matches()) {
-        return RedditLink.UnsupportedYet.create(url);
+        return ExternalLink.create(url);
       }
 
-    } else if (urlDomain.endsWith("redd.it") && !isImageUrlPath(urlPath)) {
+    } else if (urlDomain.endsWith("redd.it") && !isImageOrGifUrlPath(urlPath) && !isVideoPath(urlPath)) {
       // Short redd.it url. Format: redd.it/post_id. Eg., https://redd.it/5524cd
       String submissionId = urlPath.substring(1);  // Remove the leading slash.
-      return RedditLink.Submission.create(url, submissionId, null);
+      return RedditSubmissionLink.create(url, submissionId, null);
 
     } else if (urlDomain.contains("google") && urlPath.startsWith("/amp/s/amp.reddit.com")) {
       // Google AMP url.
@@ -148,14 +156,6 @@ public class UrlParser {
     return parseNonRedditUrl(url);
   }
 
-  public static Link parse(String url, Thumbnails redditSuppliedThumbnails) {
-    Link parsedLink = parse(url);
-    if (parsedLink instanceof MediaLink) {
-      ((MediaLink) parsedLink).setRedditSuppliedImages(redditSuppliedThumbnails);
-    }
-    return parsedLink;
-  }
-
   @NonNull
   private static Link parseNonRedditUrl(String url) {
     Uri contentURI = Uri.parse(url);
@@ -165,10 +165,10 @@ public class UrlParser {
     if ((urlDomain.contains("imgur.com") || urlDomain.contains("bildgur.de"))) {
       if (isUnsupportedImgurLink(urlPath)) {
         // These are links that Imgur no longer uses so Dank does not expect them either.
-        return Link.External.create(url);
+        return ExternalLink.create(url);
 
       } else if (isImgurAlbum(urlPath)) {
-        return createUnresolvedImgurGallery(url);
+        return createUnresolvedImgurAlbum(url);
 
       } else {
         return createImgurLink(url, null, null);
@@ -181,41 +181,39 @@ public class UrlParser {
       return createGiphyLink(contentURI);
 
     } else if (urlDomain.contains("streamable.com")) {
-      return createUnknownStreamableLink(contentURI);
+      return createUnresolvedStreamableLink(contentURI);
 
     } else if ((urlDomain.contains("reddituploads.com"))) {
-      // Reddit sends HTML-escaped URLs. Decode them again.
+      // Reddit sends HTML-escaped URLs for reddituploads.com. Decode them again.
       //noinspection deprecation
       String htmlUnescapedUrl = Html.fromHtml(url).toString();
-      return MediaLink.createGeneric(htmlUnescapedUrl, !isGifUrlPath(urlPath), Link.Type.IMAGE_OR_GIF);
+      return GenericMediaLink.create(htmlUnescapedUrl, Link.Type.SINGLE_IMAGE_OR_GIF);
 
-    } else if (isImageUrlPath(urlPath)) {
-      return MediaLink.createGeneric(url, !isGifUrlPath(urlPath), Link.Type.IMAGE_OR_GIF);
+    } else if (isImageOrGifUrlPath(urlPath)) {
+      return GenericMediaLink.create(url, Link.Type.SINGLE_IMAGE_OR_GIF);
 
-    } else if (urlPath.endsWith(".mp4")) {
-      return MediaLink.createGeneric(url, !isGifUrlPath(urlPath), Link.Type.VIDEO);
+    } else if (isVideoPath(urlPath)) {
+      return GenericMediaLink.create(url, Link.Type.SINGLE_VIDEO);
 
     } else {
-      return Link.External.create(url);
+      return ExternalLink.create(url);
     }
   }
 
   /**
    * It's titled as unresolved because we don't know if the gallery contains a single image or multiple images.
    */
-  private static Link createUnresolvedImgurGallery(String albumUrl) {
+  private static ImgurAlbumUnresolvedLink createUnresolvedImgurAlbum(String albumUrl) {
     Matcher albumUrlMatcher = IMGUR_ALBUM_PATTERN.matcher(Uri.parse(albumUrl).getPath());
-    if (albumUrlMatcher.matches()) {
+    if (albumUrlMatcher.matches()) {  // matches() is important or else groups don't get formed.
       String albumId = albumUrlMatcher.group(1);
-      return MediaLink.ImgurUnresolvedGallery.create(albumUrl, albumId);
-
+      return ImgurAlbumUnresolvedLink.create(albumUrl, albumId);
     } else {
-      // Fallback.
-      return Link.External.create(albumUrl);
+      throw new IllegalStateException("Couldn't match regex. Album URL: " + albumUrl);
     }
   }
 
-  public static MediaLink.Imgur createImgurLink(String url, String title, String description) {
+  public static ImgurLink createImgurLink(String url, String title, String description) {
     // Convert GIFs to MP4s that are insanely light weight in size.
     String[] gifFormats = new String[] { ".gif", ".gifv" };
     for (String gifFormat : gifFormats) {
@@ -224,20 +222,15 @@ public class UrlParser {
       }
     }
 
-    Uri contentURI = Uri.parse(url);
+    Uri directLinkURI = Uri.parse(url);
 
     // Attempt to get direct links to images from Imgur submissions.
     // For example, convert 'http://imgur.com/djP1IZC' to 'http://i.imgur.com/djP1IZC.jpg'.
-    if (!isImageUrlPath(url) && !url.endsWith("mp4")) {
-      // If this happened to be a GIF submission, the user sadly will be forced to see it
-      // instead of its GIFV.
-      contentURI = Uri.parse(contentURI.getScheme() + "://i.imgur.com" + contentURI.getPath() + ".jpg");
+    if (!isImageOrGifUrlPath(url) && !url.endsWith("mp4")) {
+      // If this happened to be a GIF submission, the user sadly will be forced to see it instead of its GIFV.
+      directLinkURI = Uri.parse(directLinkURI.getScheme() + "://i.imgur.com" + directLinkURI.getPath() + ".jpg");
     }
-
-    // Reddit provides its own copies for the content in multiple sizes. Use that only in
-    // case of images because otherwise it'll be a static image for GIFs or videos.
-    boolean canUseRedditOptimizedImageUrl = isImageUrlPath(url);
-    return MediaLink.Imgur.create(contentURI.toString(), canUseRedditOptimizedImageUrl, title, description);
+    return ImgurLink.create(url, title, description, directLinkURI.toString());
   }
 
   /**
@@ -256,11 +249,14 @@ public class UrlParser {
     Matcher matcher = GFYCAT_ID_PATTERN.matcher(gfycatURI.getPath());
     if (matcher.matches()) {
       String gfycatThreeWordId = matcher.group(1);
-      return MediaLink.Gfycat.create(gfycatURI.getScheme() + "://gfycat.com" + gfycatThreeWordId);
+      String url = gfycatURI.getScheme() + "://gfycat.com" + gfycatThreeWordId;
+      String highQualityVideoUrl = gfycatURI.getScheme() + "://zippy.gfycat.com" + gfycatURI.getPath() + ".webm";
+      String lowQualityVideoUrl = gfycatURI.getScheme() + "://thumbs.gfycat.com" + gfycatURI.getPath() + "-mobile.mp4";
+      return GfycatLink.create(url, highQualityVideoUrl, lowQualityVideoUrl);
 
     } else {
       // Fallback.
-      return Link.External.create(gfycatURI.toString());
+      return ExternalLink.create(gfycatURI.toString());
     }
   }
 
@@ -271,41 +267,50 @@ public class UrlParser {
     Matcher giphyIdMatcher = GIPHY_ID_PATTERN.matcher(urlPath);
     if (giphyIdMatcher.matches()) {
       String videoId = giphyIdMatcher.group(1);
-      return MediaLink.Giphy.create(giphyURI.getScheme() + "://i.giphy.com/" + videoId + ".mp4");
+      String gifVideoUrl = giphyURI.getScheme() + "://i.giphy.com/" + videoId + ".mp4";
+      return GiphyLink.create(url, gifVideoUrl);
 
     } else {
       // Fallback.
-      return Link.External.create(url);
+      return ExternalLink.create(url);
     }
   }
 
-  private static Link createUnknownStreamableLink(Uri streamableUri) {
+  private static Link createUnresolvedStreamableLink(Uri streamableUri) {
     String url = streamableUri.toString();
 
     Matcher streamableIdMatcher = STREAMABLE_ID_PATTERN.matcher(streamableUri.getPath());
     if (streamableIdMatcher.matches()) {
       String videoId = streamableIdMatcher.group(1);
-      return MediaLink.StreamableUnresolved.create(url, videoId);
+      return StreamableUnresolvedLink.create(url, videoId);
 
     } else {
       // Fallback.
-      return Link.External.create(url);
+      return ExternalLink.create(url);
     }
   }
 
   static boolean isImgurAlbum(String urlPath) {
-    return urlPath.startsWith("/gallery/") || urlPath.startsWith("/a/") || urlPath.startsWith("/t/");
+    return IMGUR_ALBUM_PATTERN.matcher(urlPath).matches();
   }
 
   private static boolean isUnsupportedImgurLink(String urlPath) {
     return urlPath.contains(",") || urlPath.startsWith("/g/");
   }
 
-  private static boolean isImageUrlPath(String urlPath) {
-    return urlPath.endsWith(".png") || urlPath.endsWith(".jpg") || urlPath.endsWith(".jpeg") || isGifUrlPath(urlPath);
+  public static boolean isImagePath(String urlPath) {
+    return urlPath.endsWith(".png") || urlPath.endsWith(".jpg") || urlPath.endsWith(".jpeg");
+  }
+
+  private static boolean isImageOrGifUrlPath(String urlPath) {
+    return isImagePath(urlPath) || isGifUrlPath(urlPath);
   }
 
   private static boolean isGifUrlPath(String urlPath) {
     return urlPath.endsWith(".gif");
+  }
+
+  private static boolean isVideoPath(String urlPath) {
+    return urlPath.endsWith(".mp4") || urlPath.endsWith(".webm");
   }
 }

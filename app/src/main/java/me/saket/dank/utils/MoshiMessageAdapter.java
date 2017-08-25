@@ -25,5 +25,4 @@ public class MoshiMessageAdapter {
   String messageToJson(Message message) {
     return jacksonHelper.toJson(message);
   }
-
 }

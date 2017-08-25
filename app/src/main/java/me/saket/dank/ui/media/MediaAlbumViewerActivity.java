@@ -34,6 +34,8 @@ import com.google.common.io.Files;
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
+import net.dean.jraw.models.Thumbnails;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,8 +52,10 @@ import butterknife.OnClick;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.R;
-import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.exceptions.SerializableThumbnails;
+import me.saket.dank.data.links.MediaAlbumLink;
+import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.ui.DankActivity;
@@ -70,6 +74,7 @@ public class MediaAlbumViewerActivity extends DankActivity
 {
 
   private static final String KEY_MEDIA_LINK_TO_SHOW = "mediaLinkToShow";
+  private static final String KEY_REDDIT_SUPPLIED_IMAGES = "redditSuppliedImages";
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
   @BindView(R.id.mediaalbumviewer_pager) ViewPager mediaAlbumPager;
@@ -91,9 +96,12 @@ public class MediaAlbumViewerActivity extends DankActivity
   private PopupMenu sharePopupMenu;
   private RxPermissions rxPermissions;
 
-  public static void start(Context context, MediaLink mediaLink) {
+  public static void start(Context context, MediaLink mediaLink, @Nullable SerializableThumbnails redditSuppliedImages) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
     intent.putExtra(KEY_MEDIA_LINK_TO_SHOW, mediaLink);
+    if (redditSuppliedImages != null) {
+      intent.putExtra(KEY_REDDIT_SUPPLIED_IMAGES, redditSuppliedImages);
+    }
     context.startActivity(intent);
   }
 
@@ -160,8 +168,8 @@ public class MediaAlbumViewerActivity extends DankActivity
     unsubscribeOnDestroy(
         mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
             .map(resolvedMediaLink -> {
-              if (resolvedMediaLink instanceof MediaLink.ImgurAlbum) {
-                return ((MediaLink.ImgurAlbum) resolvedMediaLink).images();
+              if (resolvedMediaLink.isMediaAlbum()) {
+                return ((MediaAlbumLink) resolvedMediaLink).images();
               } else {
                 return Collections.singletonList(resolvedMediaLink);
               }
@@ -230,7 +238,7 @@ public class MediaAlbumViewerActivity extends DankActivity
                   .map(imageFile -> {
                     // Glide uses random file names, without any extensions. Certain apps like Messaging
                     // fail to parse images if there's no file format, so we'll have to create a copy.
-                    String imageNameWithExtension = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().originalUrl());
+                    String imageNameWithExtension = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().highQualityUrl());
                     File imageFileWithExtension = new File(imageFile.getParent(), imageNameWithExtension);
                     Files.copy(imageFile, imageFileWithExtension);
                     return imageFileWithExtension;
@@ -258,12 +266,12 @@ public class MediaAlbumViewerActivity extends DankActivity
           unsubscribeOnDestroy(
               Single.just(activeMediaItem.mediaLink())
                   .map(mediaLink -> {
-                    if (videoCacheServer.isCached(mediaLink.highQualityVideoUrl())) {
-                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.highQualityVideoUrl());
+                    if (videoCacheServer.isCached(mediaLink.highQualityUrl())) {
+                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.highQualityUrl());
                       return new File(Uri.parse(cachedVideoFileUrl).getPath());
 
-                    } else if (videoCacheServer.isCached(mediaLink.lowQualityVideoUrl())) {
-                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.lowQualityVideoUrl());
+                    } else if (videoCacheServer.isCached(mediaLink.lowQualityUrl())) {
+                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.lowQualityUrl());
                       return new File(Uri.parse(cachedVideoFileUrl).getPath());
 
                     } else {
@@ -290,7 +298,7 @@ public class MediaAlbumViewerActivity extends DankActivity
 
         case R.id.action_share_image_url:
         case R.id.action_share_video_url:
-          Intent shareUrlIntent = Intents.createForSharingUrl(null, activeMediaItem.mediaLink().originalUrl());
+          Intent shareUrlIntent = Intents.createForSharingUrl(null, activeMediaItem.mediaLink().highQualityUrl());
           startActivity(Intent.createChooser(shareUrlIntent, getString(R.string.webview_share_sheet_title)));
           break;
 
@@ -320,6 +328,16 @@ public class MediaAlbumViewerActivity extends DankActivity
   @Override
   public int getDeviceDisplayWidth() {
     return getResources().getDisplayMetrics().widthPixels;
+  }
+
+  @Nullable
+  @Override
+  public Thumbnails getRedditSuppliedImages() {
+    if (getIntent().hasExtra(KEY_REDDIT_SUPPLIED_IMAGES)) {
+      return (Thumbnails) getIntent().getSerializableExtra(KEY_REDDIT_SUPPLIED_IMAGES);
+    } else {
+      return null;
+    }
   }
 
   @Override
@@ -373,7 +391,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   private Single<File> findHighestResImageFileFromCache(MediaAlbumItem albumItem) {
     Observable<File> highResImageFileStream = Observable.create(emitter -> {
       FutureTarget<File> highResolutionImageTarget = Glide.with(this)
-          .download(albumItem.mediaLink().originalUrl())
+          .download(albumItem.mediaLink().highQualityUrl())
           .apply(new RequestOptions().onlyRetrieveFromCache(true))
           .submit();
 
@@ -387,12 +405,18 @@ public class MediaAlbumViewerActivity extends DankActivity
     });
 
     Observable<File> optimizedResImageFileStream = Observable.create(emitter -> {
-      FutureTarget<File> lowerResolutionImageTarget = Glide.with(this)
-          .download(albumItem.mediaLink().optimizedImageUrl(getDeviceDisplayWidth()))
+      String optimizedQualityImageForDevice = mediaHostRepository.findOptimizedQualityImageForDevice(
+          albumItem.mediaLink().lowQualityUrl(),
+          getRedditSuppliedImages(),
+          getDeviceDisplayWidth()
+      );
+
+      FutureTarget<File> optimizedResolutionImageTarget = Glide.with(this)
+          .download(optimizedQualityImageForDevice)
           .apply(new RequestOptions().onlyRetrieveFromCache(true))
           .submit();
 
-      File optimizedResImageFile = lowerResolutionImageTarget.get();
+      File optimizedResImageFile = optimizedResolutionImageTarget.get();
 
       if (optimizedResImageFile != null) {
         emitter.onNext(optimizedResImageFile);
@@ -426,7 +450,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   @OnClick(R.id.mediaalbumviewer_open_in_browser)
   void onClickOpenMediaInBrowser() {
     MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
-    startActivity(Intents.createForOpeningUrl(activeMediaItem.mediaLink().originalUrl()));
+    startActivity(Intents.createForOpeningUrl(activeMediaItem.mediaLink().highQualityUrl()));
 
     if (mediaAlbumAdapter.getCount() == 1) {
       // User prefers viewing this media in the browser.
@@ -483,19 +507,10 @@ public class MediaAlbumViewerActivity extends DankActivity
    * Enable HD button if a higher-res version can be shown and is not already visible.
    */
   private void enableHighDefButtonIfPossible(MediaAlbumItem activeMediaItem) {
-    String highQualityUrl;
-    String optimizedUrl;
+    String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
+    String lowQualityUrl = activeMediaItem.mediaLink().lowQualityUrl();
+    boolean hasHighDefVersion = !lowQualityUrl.equals(highQualityUrl);
 
-    if (activeMediaItem.mediaLink().isVideo()) {
-      highQualityUrl = activeMediaItem.mediaLink().highQualityVideoUrl();
-      optimizedUrl = activeMediaItem.mediaLink().lowQualityVideoUrl();
-
-    } else {
-      highQualityUrl = activeMediaItem.mediaLink().originalUrl();
-      optimizedUrl = activeMediaItem.mediaLink().optimizedImageUrl(getDeviceDisplayWidth());
-    }
-
-    boolean hasHighDefVersion = !optimizedUrl.equals(highQualityUrl);
     boolean isAlreadyShowingHighDefVersion = mediaItemsWithHighDefEnabled.contains(activeMediaItem);
     reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
   }

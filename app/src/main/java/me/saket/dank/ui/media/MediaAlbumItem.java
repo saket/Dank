@@ -4,10 +4,11 @@ import android.os.Parcelable;
 
 import com.google.auto.value.AutoValue;
 
-import me.saket.dank.data.MediaLink;
+import me.saket.dank.data.links.MediaLink;
 
 @AutoValue
 public abstract class MediaAlbumItem implements Parcelable {
+
   public abstract MediaLink mediaLink();
 
   public static MediaAlbumItem create(MediaLink mediaLink) {

@@ -18,14 +18,13 @@ public class MoshiSubmissionAdapter {
   }
 
   @FromJson
-  Submission messageFromJson(String messageJson) {
+  Submission submissionFromJson(String messageJson) {
     JsonNode jsonNode = jacksonHelper.parseJsonNode(messageJson);
     return new Submission(jsonNode);
   }
 
   @ToJson
-  String messageToJson(Submission message) {
-    return jacksonHelper.toJson(message);
+  String submissionToJson(Submission submission) {
+    return jacksonHelper.toJson(submission);
   }
-
 }

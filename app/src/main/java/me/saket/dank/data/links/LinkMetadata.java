@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.data.links;
 
 import android.support.annotation.Nullable;
 import android.text.TextUtils;

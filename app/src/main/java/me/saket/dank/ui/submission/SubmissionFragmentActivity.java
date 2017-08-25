@@ -12,7 +12,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.RedditLink;
+import me.saket.dank.data.links.RedditCommentLink;
+import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
@@ -39,7 +40,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
   /**
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
    */
-  public static void start(Context context, RedditLink.Submission submissionLink, @Nullable Rect expandFromShape) {
+  public static void start(Context context, RedditSubmissionLink submissionLink, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, SubmissionFragmentActivity.class);
     intent.putExtra(KEY_SUBMISSION_LINK, submissionLink);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
@@ -68,7 +69,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
     setupSubmissionFragment();
     if (savedInstanceState == null) {
       if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
-        loadSubmission((RedditLink.Submission) getIntent().getSerializableExtra(KEY_SUBMISSION_LINK));
+        loadSubmission((RedditSubmissionLink) getIntent().getSerializableExtra(KEY_SUBMISSION_LINK));
       } else {
         loadSubmission((DankSubmissionRequest) getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
       }
@@ -88,18 +89,18 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
         .commitNow();
   }
 
-  private void loadSubmission(RedditLink.Submission submissionLink) {
+  private void loadSubmission(RedditSubmissionLink submissionLink) {
     // We don't know the suggested sort yet. Attempt with the default sort and if it's found
     // to be different, then do another load.
     DankSubmissionRequest.Builder submissionReqBuilder = DankSubmissionRequest
-        .builder(submissionLink.id)
+        .builder(submissionLink.id())
         .commentSort(DankRedditClient.DEFAULT_COMMENT_SORT);
 
-    RedditLink.Comment initialComment = submissionLink.initialComment;
+    RedditCommentLink initialComment = submissionLink.initialComment();
     if (initialComment != null) {
       submissionReqBuilder
-          .focusComment(initialComment.id)
-          .contextCount(initialComment.contextCount);
+          .focusComment(initialComment.id())
+          .contextCount(initialComment.contextCount());
     }
 
     loadSubmission(submissionReqBuilder.build());

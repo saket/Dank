@@ -23,16 +23,19 @@ import com.bumptech.glide.request.target.ImageViewTarget;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import net.dean.jraw.models.Thumbnails;
+
 import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.data.MediaLink;
+import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.MediaHostRepository;
+import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideUtils;
-import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -44,6 +47,7 @@ import timber.log.Timber;
  */
 public class SubmissionImageHolder {
 
+  private final MediaHostRepository mediaHostRepository;
   @BindView(R.id.submission_image_scroll_hint) View imageScrollHintView;
   @BindView(R.id.submission_image) ZoomableImageView imageView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
@@ -61,9 +65,10 @@ public class SubmissionImageHolder {
    * so we're supplying it manually from the fragment.
    */
   public SubmissionImageHolder(View submissionLayout, ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout,
-      int deviceDisplayWidth)
+      MediaHostRepository mediaHostRepository, int deviceDisplayWidth)
   {
     ButterKnife.bind(this, submissionLayout);
+    this.mediaHostRepository = mediaHostRepository;
     this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
     this.deviceDisplayWidth = deviceDisplayWidth;
@@ -110,12 +115,12 @@ public class SubmissionImageHolder {
     imageScrollHintView.setVisibility(View.GONE);
   }
 
-  public void load(MediaLink contentLink) {
+  public void load(MediaLink contentLink, Thumbnails redditSuppliedImages) {
     contentLoadProgressView.setIndeterminate(true);
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
     Glide.with(imageView.getContext())
-        .load(contentLink.optimizedImageUrl(deviceDisplayWidth))
+        .load(mediaHostRepository.findOptimizedQualityImageForDevice(contentLink.lowQualityUrl(), redditSuppliedImages, deviceDisplayWidth))
         .apply(new RequestOptions()
             .priority(Priority.IMMEDIATE)
             .transform(glidePaddingTransformation)
@@ -159,7 +164,6 @@ public class SubmissionImageHolder {
         .into(new ImageViewTarget<Drawable>(imageView) {
           @Override
           protected void setResource(@Nullable Drawable resource) {
-            Timber.i("Setting image: %s", contentLink.originalUrl());
             imageView.setImageDrawable(resource);
           }
         });

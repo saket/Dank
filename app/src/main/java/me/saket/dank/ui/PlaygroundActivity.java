@@ -9,7 +9,7 @@ import android.widget.Button;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
-import me.saket.dank.data.RedditLink.User;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.utils.UrlParser;
 
@@ -33,7 +33,7 @@ public class PlaygroundActivity extends DankPullCollapsibleActivity {
   @OnClick(R.id.playground_user_profile_popup)
   void onClickShowProfilePopup(Button button) {
     UserProfilePopup userProfilePopup = new UserProfilePopup(this);
-    userProfilePopup.loadUserProfile((User) UrlParser.parse("http://reddit.com/u/kn0thing"));
+    userProfilePopup.loadUserProfile((RedditUserLink) UrlParser.parse("http://reddit.com/u/kn0thing"));
     userProfilePopup.showWithAnchor(button);
   }
 

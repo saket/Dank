@@ -18,6 +18,7 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
+import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.submission.SubmissionFragment;
@@ -69,4 +70,6 @@ public interface DankAppComponent {
   void inject(SubmissionFragment fragment);
 
   void inject(MediaDownloadService service);
+
+  void inject(MediaImageFragment fragment);
 }

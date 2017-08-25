@@ -4,7 +4,6 @@ import static android.text.TextUtils.isEmpty;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.RxUtils.logError;
-import static me.saket.dank.utils.Urls.parseDomainName;
 import static me.saket.dank.utils.Views.setDimensions;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setPaddingVertical;
@@ -40,13 +39,17 @@ import butterknife.ButterKnife;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
-import me.saket.dank.data.Link;
-import me.saket.dank.data.LinkMetadata;
-import me.saket.dank.data.MediaLink;
-import me.saket.dank.data.RedditLink;
+import me.saket.dank.data.links.ExternalLink;
+import me.saket.dank.data.links.LinkMetadata;
+import me.saket.dank.data.links.MediaAlbumLink;
+import me.saket.dank.data.links.RedditLink;
+import me.saket.dank.data.links.RedditSubmissionLink;
+import me.saket.dank.data.links.RedditSubredditLink;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
+import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
 import me.saket.dank.utils.glide.GlideUtils;
@@ -150,27 +153,27 @@ public class SubmissionLinkHolder {
     Resources resources = titleView.getResources();
     iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
 
-    if (redditLink instanceof RedditLink.Subreddit) {
+    if (redditLink instanceof RedditSubredditLink) {
       iconView.setContentDescription(resources.getString(R.string.submission_link_linked_subreddit));
       iconView.setImageResource(R.drawable.ic_subreddits_24dp);
-      titleView.setText(resources.getString(R.string.subreddit_name_r_prefix, ((RedditLink.Subreddit) redditLink).name));
+      titleView.setText(resources.getString(R.string.subreddit_name_r_prefix, ((RedditSubredditLink) redditLink).name()));
       subtitleView.setText(R.string.submission_link_tap_to_open_subreddit);
       progressView.setVisibility(View.GONE);
       return Disposables.disposed();
 
-    } else if (redditLink instanceof RedditLink.User) {
+    } else if (redditLink instanceof RedditUserLink) {
       iconView.setContentDescription(resources.getString(R.string.submission_link_linked_profile));
       iconView.setImageResource(R.drawable.ic_user_profile_24dp);
-      titleView.setText(resources.getString(R.string.user_name_u_prefix, ((RedditLink.User) redditLink).name));
+      titleView.setText(resources.getString(R.string.user_name_u_prefix, ((RedditUserLink) redditLink).name()));
       subtitleView.setText(R.string.submission_link_tap_to_open_profile);
       progressView.setVisibility(View.GONE);
       return Disposables.disposed();
 
-    } else if (redditLink instanceof RedditLink.Submission) {
-      RedditLink.Submission submissionLink = (RedditLink.Submission) redditLink;
+    } else if (redditLink instanceof RedditSubmissionLink) {
+      RedditSubmissionLink submissionLink = (RedditSubmissionLink) redditLink;
       iconView.setContentDescription(resources.getString(R.string.submission_link_linked_submission));
       iconView.setImageResource(R.drawable.ic_submission_24dp);
-      titleView.setText(Uri.parse(submissionLink.url).getPath());
+      titleView.setText(Uri.parse(submissionLink.unparsedUrl()).getPath());
       subtitleView.setText(R.string.submission_link_tap_to_open_submission);
       return populateSubmissionTitle(submissionLink);
 
@@ -179,10 +182,10 @@ public class SubmissionLinkHolder {
     }
   }
 
-  private Disposable populateSubmissionTitle(RedditLink.Submission submissionLink) {
+  private Disposable populateSubmissionTitle(RedditSubmissionLink submissionLink) {
     // Downloading the page's HTML to get the title is faster than getting the submission's data from the API.
     //noinspection ConstantConditions
-    return Dank.api().unfurlUrl(submissionLink.url, true)
+    return Dank.api().unfurlUrl(submissionLink.unparsedUrl(), true)
         .map(response -> response.data().linkMetadata())
         .compose(applySchedulersSingle())
         .compose(doOnSingleStartAndTerminate(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
@@ -199,13 +202,13 @@ public class SubmissionLinkHolder {
             titleView.setMaxLines(Integer.MAX_VALUE);
             //noinspection deprecation
             titleView.setText(Html.fromHtml(submissionPageTitle));
-            subtitleView.setText(subtitleView.getResources().getString(R.string.subreddit_name_r_prefix, submissionLink.subredditName));
+            subtitleView.setText(subtitleView.getResources().getString(R.string.subreddit_name_r_prefix, submissionLink.subredditName()));
           }
 
-        }, logError("Couldn't get link's meta-data: " + submissionLink.url));
+        }, logError("Couldn't get link's meta-data: " + submissionLink.unparsedUrl()));
   }
 
-  public void populate(MediaLink.ImgurAlbum imgurAlbumLink, String redditSuppliedThumbnail) {
+  public void populate(MediaAlbumLink imgurAlbumLink, String redditSuppliedThumbnail) {
     // Animate the holder's entry. This block of code is really fragile and the animation only
     // works if these lines are called in their current order. Animating the dimensions of a
     // View is sadly difficult to do the right way.
@@ -245,7 +248,7 @@ public class SubmissionLinkHolder {
   /**
    * Show information of an external link. Extracts meta-data from the URL to get the favicon and the title.
    */
-  public Disposable populate(Link.External externalLink, @Nullable String redditSuppliedThumbnail) {
+  public Disposable populate(ExternalLink externalLink, @Nullable String redditSuppliedThumbnail) {
     setWidth(iconContainer, thumbnailWidthForExternalLink);
     setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForLink);
 
@@ -253,11 +256,11 @@ public class SubmissionLinkHolder {
     thumbnailView.setContentDescription(null);
     iconView.setContentDescription(resources.getString(R.string.submission_link_linked_url));
     iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
-    titleView.setText(externalLink.url);
-    subtitleView.setText(parseDomainName(externalLink.url));
+    titleView.setText(externalLink.unparsedUrl());
+    subtitleView.setText(Urls.parseDomainName(externalLink.unparsedUrl()));
     progressView.setVisibility(View.VISIBLE);
 
-    boolean isGooglePlayLink = isGooglePlayLink(externalLink.url);
+    boolean isGooglePlayLink = isGooglePlayLink(externalLink.unparsedUrl());
 
     // Attempt to load image provided by Reddit. By doing this, we'll be able to load the image and
     // the URL meta-data in parallel. Additionally, reddit's supplied image will also be optimized
@@ -269,7 +272,7 @@ public class SubmissionLinkHolder {
     }
 
     //noinspection ConstantConditions
-    return Dank.api().unfurlUrl(externalLink.url, true)
+    return Dank.api().unfurlUrl(externalLink.unparsedUrl(), true)
         .map(response -> response.data().linkMetadata())
         .compose(applySchedulersSingle())
         .doOnError(o -> progressView.setVisibility(View.GONE))
@@ -299,7 +302,7 @@ public class SubmissionLinkHolder {
 
         }, error -> {
           if (!(error instanceof IllegalArgumentException) || !error.getMessage().contains("String must not be empty")) {
-            Timber.e(error, "Couldn't get link's meta-data: " + externalLink.url);
+            Timber.e(error, "Couldn't get link's meta-data: " + externalLink.unparsedUrl());
           }
           // Else, Link wasn't a webpage. Probably an image or a video.
         });

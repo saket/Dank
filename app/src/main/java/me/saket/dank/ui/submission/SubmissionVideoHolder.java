@@ -22,7 +22,7 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import me.saket.dank.data.MediaLink;
+import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.MediaHostRepository;
@@ -79,7 +79,7 @@ public class SubmissionVideoHolder {
 
     return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .compose(RxUtils.applySchedulersSingle())
-        .map(link -> loadHighQualityVideo ? link.highQualityVideoUrl() : link.lowQualityVideoUrl())
+        .map(link -> loadHighQualityVideo ? link.highQualityUrl() : link.lowQualityUrl())
         .subscribe(loadVideo(), logError("Couldn't load video"));
     // TODO: 01/04/17 Handle error.
   }

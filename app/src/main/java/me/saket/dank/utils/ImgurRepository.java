@@ -7,8 +7,6 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.TimeZone;
 
 import hirondelle.date4j.DateTime;
@@ -16,11 +14,10 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import me.saket.dank.data.ImgurAlbumResponse;
-import me.saket.dank.data.ImgurImage;
 import me.saket.dank.data.ImgurResponse;
-import me.saket.dank.data.MediaLink;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.data.exceptions.InvalidImgurAlbumException;
+import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
 import me.saket.dank.di.Dank;
 import okhttp3.Headers;
 import retrofit2.HttpException;
@@ -59,8 +56,8 @@ public class ImgurRepository {
    * @throws InvalidImgurAlbumException        If an invalid Imgur link was found.
    * @throws ImgurApiRateLimitReachedException If Imgur's API limit is reached and no more API requests can be made till the next month.
    */
-  public Single<ImgurResponse> gallery(MediaLink.ImgurUnresolvedGallery imgurUnresolvedGalleryLink) {
-    return Dank.api().imgurAlbum(imgurUnresolvedGalleryLink.albumId())
+  public Single<ImgurResponse> gallery(ImgurAlbumUnresolvedLink imgurAlbumUnresolvedLink) {
+    return Dank.api().imgurAlbum(imgurAlbumUnresolvedLink.albumId())
         .map(throwIfHttpError())
         .doOnSuccess(saveImgurApiRateLimits())
         .map(extractResponseBody())
@@ -82,7 +79,7 @@ public class ImgurRepository {
 
           } else {
             // Okay, let's check if it was a single image.
-            return Dank.api().imgurImage(imgurUnresolvedGalleryLink.albumId())
+            return Dank.api().imgurImage(imgurAlbumUnresolvedLink.albumId())
                 .doOnSuccess(saveImgurApiRateLimits())
                 .map(extractResponseBody());
           }
@@ -199,13 +196,5 @@ public class ImgurRepository {
       }
     }
     return false;
-  }
-
-  public List<MediaLink.Imgur> convertImgurImagesToImgurMediaLinks(List<ImgurImage> imgurImages) {
-    List<MediaLink.Imgur> imgurImageLinks = new ArrayList<>(imgurImages.size());
-    for (ImgurImage imgurImage : imgurImages) {
-      imgurImageLinks.add(UrlParser.createImgurLink(imgurImage.url(), imgurImage.title(), imgurImage.description()));
-    }
-    return imgurImageLinks;
   }
 }

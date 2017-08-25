@@ -30,7 +30,7 @@ import butterknife.OnClick;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import me.saket.dank.R;
-import me.saket.dank.data.Link;
+import me.saket.dank.data.links.Link;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
@@ -95,7 +95,9 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
       Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
 
       Link parsedLink = UrlParser.parse(url);
-      UrlRouter.resolveAndOpen(parsedLink, this, clickedUrlCoordinatesRect);
+      UrlRouter.with(this)
+          .expandFrom(clickedUrlCoordinatesRect)
+          .resolveIntentAndOpen(parsedLink);
       return true;
     });
 
