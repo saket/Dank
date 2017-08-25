@@ -164,7 +164,7 @@ public class MediaAlbumViewerActivity extends DankActivity
     sharePopupMenu = createSharePopupMenu();
     shareButton.setOnTouchListener(sharePopupMenu.getDragToOpenListener());
 
-    MediaLink mediaLinkToDisplay = (MediaLink) getIntent().getSerializableExtra(KEY_MEDIA_LINK_TO_SHOW);
+    MediaLink mediaLinkToDisplay = getIntent().getParcelableExtra(KEY_MEDIA_LINK_TO_SHOW);
     unsubscribeOnDestroy(
         mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
             .map(resolvedMediaLink -> {

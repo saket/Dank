@@ -234,7 +234,7 @@ public class MediaDownloadService extends Service {
     Action serviceAction = (Action) intent.getSerializableExtra(KEY_ACTION);
     switch (serviceAction) {
       case ENQUEUE_DOWNLOAD:
-        MediaLink mediaLinkToDownload = (MediaLink) intent.getSerializableExtra(KEY_MEDIA_LINK_TO_DOWNLOAD);
+        MediaLink mediaLinkToDownload = intent.getParcelableExtra(KEY_MEDIA_LINK_TO_DOWNLOAD);
         boolean isDownloadAlreadyOngoing = ongoingDownloadLinks.contains(mediaLinkToDownload);
         if (!isDownloadAlreadyOngoing) {
           ongoingDownloadLinks.add(mediaLinkToDownload);
@@ -245,12 +245,12 @@ public class MediaDownloadService extends Service {
         break;
 
       case CANCEL_DOWNLOAD:
-        MediaLink mediaLinkToCancel = (MediaLink) intent.getSerializableExtra(KEY_MEDIA_LINK_TO_CANCEL_DOWNLOAD);
+        MediaLink mediaLinkToCancel = intent.getParcelableExtra(KEY_MEDIA_LINK_TO_CANCEL_DOWNLOAD);
         downloadCancellationStream.accept(mediaLinkToCancel);
         break;
 
       case CANCEL_NOTIFICATION:
-        MediaLink mediaLinkToCancelNotif = (MediaLink) intent.getSerializableExtra(KEY_MEDIA_LINK_TO_CANCEL_NOTIF);
+        MediaLink mediaLinkToCancelNotif = intent.getParcelableExtra(KEY_MEDIA_LINK_TO_CANCEL_NOTIF);
         downloadCancellationStream.accept(mediaLinkToCancelNotif);
         break;
 
