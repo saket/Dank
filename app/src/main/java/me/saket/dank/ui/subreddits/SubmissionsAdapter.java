@@ -207,7 +207,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
     }
 
     private void loadThumbnailFromUrl(String thumbnailUrl) {
-      Glide.with(itemView.getContext())
+      Glide.with(itemView)
           .load(thumbnailUrl)
           .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
           .transition(DrawableTransitionOptions.withCrossFade())

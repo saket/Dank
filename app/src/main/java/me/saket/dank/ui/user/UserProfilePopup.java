@@ -102,7 +102,7 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
                     profileImageView.setVisibility(View.VISIBLE);
 
                     //noinspection ConstantConditions
-                    Glide.with(profileImageView.getContext())
+                    Glide.with(profileImageView)
                         .load(userProfile.userSubreddit().profileImageUrl())
                         .apply(new RequestOptions()
                             .centerCrop()

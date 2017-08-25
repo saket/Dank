@@ -111,7 +111,7 @@ public class SubmissionImageHolder {
     if (imageScrollListener != null) {
       imageView.getController().removeOnStateChangeListener(imageScrollListener);
     }
-    Glide.with(imageView.getContext()).clear(imageView);
+    Glide.with(imageView).clear(imageView);
     imageScrollHintView.setVisibility(View.GONE);
   }
 
@@ -119,7 +119,7 @@ public class SubmissionImageHolder {
     contentLoadProgressView.setIndeterminate(true);
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    Glide.with(imageView.getContext())
+    Glide.with(imageView)
         .load(mediaHostRepository.findOptimizedQualityImageForDevice(contentLink.lowQualityUrl(), redditSuppliedImages, deviceDisplayWidth))
         .apply(new RequestOptions()
             .priority(Priority.IMMEDIATE)

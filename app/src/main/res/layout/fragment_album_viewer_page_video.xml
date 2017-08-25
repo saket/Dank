@@ -2,7 +2,6 @@
 <me.saket.dank.widgets.binoculars.FlickDismissLayout android:id="@+id/albumviewervideo_flickdismisslayout"
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
-  xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   android:fitsSystemWindows="true">
@@ -13,6 +12,6 @@
     android:layout_width="match_parent"
     android:layout_height="240dp"
     android:layout_gravity="center"
-    app:useTextureViewBacking="true"
-    tools:background="@color/blue_gray_800" />
+    app:background="@color/blue_gray_800"
+    app:useTextureViewBacking="true" />
 </me.saket.dank.widgets.binoculars.FlickDismissLayout>

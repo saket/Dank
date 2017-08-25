@@ -120,8 +120,8 @@ public class SubmissionLinkHolder {
 
   private void resetViews() {
     // Stop loading of any pending images.
-    Glide.with(thumbnailView.getContext()).clear(thumbnailView);
-    Glide.with(iconView.getContext()).clear(iconView);
+    Glide.with(thumbnailView).clear(thumbnailView);
+    Glide.with(iconView).clear(iconView);
 
     linkDetailsContainer.setBackgroundTintList(null);
     thumbnailView.setImageDrawable(null);
@@ -320,7 +320,7 @@ public class SubmissionLinkHolder {
    * @param linkMetadata For loading the favicon. Can be null to ignore favicon.
    */
   private void loadLinkThumbnail(boolean isGooglePlayLink, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnLoad) {
-    Glide.with(thumbnailView.getContext())
+    Glide.with(thumbnailView)
         .asBitmap()
         .load(thumbnailUrl)
         .listener(new GlideUtils.SimpleRequestListener<Bitmap>() {
@@ -361,7 +361,7 @@ public class SubmissionLinkHolder {
       progressView.setVisibility(View.VISIBLE);
     }
 
-    Glide.with(iconView.getContext())
+    Glide.with(iconView)
         .asBitmap()
         .load(linkMetadata.faviconUrl())
         .listener(new GlideUtils.SimpleRequestListener<Bitmap>() {
