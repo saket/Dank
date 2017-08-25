@@ -5,6 +5,8 @@ import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 @AutoValue
 public abstract class ImgurLink extends MediaLink implements Parcelable {
@@ -31,5 +33,9 @@ public abstract class ImgurLink extends MediaLink implements Parcelable {
 
   public static ImgurLink create(String unparsedUrl, String title, String description, String imageUrl) {
     return new AutoValue_ImgurLink(unparsedUrl, title, description, imageUrl, imageUrl);
+  }
+
+  public static JsonAdapter<ImgurLink> jsonAdapter(Moshi moshi) {
+    return new AutoValue_ImgurLink.MoshiJsonAdapter(moshi);
   }
 }

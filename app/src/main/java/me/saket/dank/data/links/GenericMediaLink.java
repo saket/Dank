@@ -3,6 +3,8 @@ package me.saket.dank.data.links;
 import android.os.Parcelable;
 
 import com.google.auto.value.AutoValue;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 /**
  * Direct link to a media hosted by an unknown/unsupported-yet website.
@@ -28,5 +30,9 @@ public abstract class GenericMediaLink extends MediaLink implements Parcelable {
 
   public static GenericMediaLink create(String unparsedUrl, Link.Type type) {
     return new AutoValue_GenericMediaLink(unparsedUrl, type);
+  }
+
+  public static JsonAdapter<GenericMediaLink> jsonAdapter(Moshi moshi) {
+    return new AutoValue_GenericMediaLink.MoshiJsonAdapter(moshi);
   }
 }

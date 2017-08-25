@@ -41,7 +41,7 @@ import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.LinkMetadata;
-import me.saket.dank.data.links.MediaAlbumLink;
+import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
@@ -208,7 +208,7 @@ public class SubmissionLinkHolder {
         }, logError("Couldn't get link's meta-data: " + submissionLink.unparsedUrl()));
   }
 
-  public void populate(MediaAlbumLink imgurAlbumLink, String redditSuppliedThumbnail) {
+  public void populate(ImgurAlbumLink imgurAlbumLink, String redditSuppliedThumbnail) {
     // Animate the holder's entry. This block of code is really fragile and the animation only
     // works if these lines are called in their current order. Animating the dimensions of a
     // View is sadly difficult to do the right way.

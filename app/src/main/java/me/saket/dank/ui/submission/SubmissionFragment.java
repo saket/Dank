@@ -79,9 +79,9 @@ import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.data.links.ExternalLink;
+import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
 import me.saket.dank.data.links.Link;
-import me.saket.dank.data.links.MediaAlbumLink;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditUserLink;
@@ -828,7 +828,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 //            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
 //        }
 
-    boolean isImgurAlbum = contentLink instanceof MediaAlbumLink;
+    boolean isImgurAlbum = contentLink instanceof ImgurAlbumLink;
     linkDetailsViewHolder.setVisible(!isImgurAlbum && contentLink.isExternal() || contentLink.isRedditHosted() && !submission.isSelfPost());
     selfPostTextView.setVisibility(submission.isSelfPost() ? View.VISIBLE : View.GONE);
     contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
@@ -846,8 +846,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           mediaHostRepository.resolveActualLinkIfNeeded(((MediaLink) contentLink))
               .map(resolvedLink -> {
                 // Replace Imgur's cover image URL with reddit supplied URL, which will already be cached by Glide.
-                if (resolvedLink instanceof MediaAlbumLink && redditSuppliedThumbnailUrl != null) {
-                  return ((MediaAlbumLink) resolvedLink).withCoverImageUrl(redditSuppliedThumbnailUrl);
+                if (resolvedLink instanceof ImgurAlbumLink && redditSuppliedThumbnailUrl != null) {
+                  return ((ImgurAlbumLink) resolvedLink).withCoverImageUrl(redditSuppliedThumbnailUrl);
                 }
                 return resolvedLink;
               })
@@ -907,7 +907,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         linkDetailsView.setOnClickListener(o -> UrlRouter.with(getContext()).resolveIntentAndOpen(contentLink));
 
         if (isImgurAlbum) {
-          linkDetailsViewHolder.populate(((MediaAlbumLink) contentLink), redditSuppliedThumbnail);
+          linkDetailsViewHolder.populate(((ImgurAlbumLink) contentLink), redditSuppliedThumbnail);
         } else {
           unsubscribeOnCollapse(linkDetailsViewHolder.populate(((ExternalLink) contentLink), redditSuppliedThumbnail));
         }

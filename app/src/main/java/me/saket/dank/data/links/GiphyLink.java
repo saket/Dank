@@ -3,6 +3,8 @@ package me.saket.dank.data.links;
 import android.os.Parcelable;
 
 import com.google.auto.value.AutoValue;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 /**
  * Giphy.com for GIFs (converted to MP4s).
@@ -24,5 +26,9 @@ public abstract class GiphyLink extends MediaLink implements Parcelable {
 
   public static GiphyLink create(String unparsedUrl, String gifVideoUrl) {
     return new AutoValue_GiphyLink(unparsedUrl, gifVideoUrl, gifVideoUrl);
+  }
+
+  public static JsonAdapter<GiphyLink> jsonAdapter(Moshi moshi) {
+    return new AutoValue_GiphyLink.MoshiJsonAdapter(moshi);
   }
 }

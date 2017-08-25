@@ -54,7 +54,7 @@ import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.exceptions.SerializableThumbnails;
-import me.saket.dank.data.links.MediaAlbumLink;
+import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MediaDownloadService;
@@ -169,7 +169,7 @@ public class MediaAlbumViewerActivity extends DankActivity
         mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
             .map(resolvedMediaLink -> {
               if (resolvedMediaLink.isMediaAlbum()) {
-                return ((MediaAlbumLink) resolvedMediaLink).images();
+                return ((ImgurAlbumLink) resolvedMediaLink).images();
               } else {
                 return Collections.singletonList(resolvedMediaLink);
               }

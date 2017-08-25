@@ -3,6 +3,8 @@ package me.saket.dank.data.links;
 import android.os.Parcelable;
 
 import com.google.auto.value.AutoValue;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 @AutoValue
 public abstract class StreamableLink extends MediaLink implements Parcelable {
@@ -23,5 +25,9 @@ public abstract class StreamableLink extends MediaLink implements Parcelable {
 
   public static StreamableLink create(String unparsedUrl, String lowQualityVideoUrl, String highQualityVideoUrl) {
     return new AutoValue_StreamableLink(unparsedUrl, lowQualityVideoUrl, highQualityVideoUrl);
+  }
+
+  public static JsonAdapter<StreamableLink> jsonAdapter(Moshi moshi) {
+    return new AutoValue_StreamableLink.MoshiJsonAdapter(moshi);
   }
 }

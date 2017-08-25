@@ -33,6 +33,7 @@ import me.saket.dank.utils.glide.GlideUtils;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import timber.log.Timber;
 
 public class MediaImageFragment extends DankFragment {
 
@@ -87,6 +88,7 @@ public class MediaImageFragment extends DankFragment {
         ((MediaFragmentCallbacks) getActivity()).getRedditSuppliedImages(),
         ((MediaFragmentCallbacks) getActivity()).getDeviceDisplayWidth()
     );
+    Timber.i("optimizedImageUrl: %s", optimizedImageUrl);
     loadImage(optimizedImageUrl);
 
     // TODO: remove
