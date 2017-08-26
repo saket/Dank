@@ -14,7 +14,6 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
-import android.support.v4.view.ViewPager;
 import android.support.v7.widget.PopupMenu;
 import android.view.Gravity;
 import android.view.View;
@@ -67,6 +66,8 @@ import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.ScrollInterceptibleViewPager;
+import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 import timber.log.Timber;
 
@@ -78,7 +79,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   private static final String KEY_REDDIT_SUPPLIED_IMAGES = "redditSuppliedImages";
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
-  @BindView(R.id.mediaalbumviewer_pager) ViewPager mediaAlbumPager;
+  @BindView(R.id.mediaalbumviewer_pager) ScrollInterceptibleViewPager mediaAlbumPager;
   @BindView(R.id.mediaalbumviewer_options_container) ViewGroup optionButtonsContainer;
   @BindView(R.id.mediaalbumviewer_share) ImageButton shareButton;
   @BindView(R.id.mediaalbumviewer_download) ImageButton downloadButton;
@@ -142,6 +143,15 @@ public class MediaAlbumViewerActivity extends DankActivity
       Views.setHeight(optionButtonsBackgroundGradientView, gradientHeight);
     });
 
+    mediaAlbumPager.setOnInterceptScrollListener((view, deltaX, touchX, touchY) -> {
+      if (view instanceof ZoomableImageView) {
+        return ((ZoomableImageView) view).canPanAnyFurtherHorizontally(deltaX);
+      } else {
+        // Avoid paging when a video's SeekBar is being used.
+        return view.getId() == R.id.exomedia_controls_video_seek || view.getId() == R.id.exomedia_controls_video_seek_container;
+      }
+    });
+
     rxPermissions = new RxPermissions(this);
     systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, this);
   }
@@ -185,6 +195,7 @@ public class MediaAlbumViewerActivity extends DankActivity
             .map(mediaLinks -> {
               List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
               for (MediaLink mediaLink : mediaLinks) {
+                // TODO: Remove multiple items
                 mediaAlbumItems.add(MediaAlbumItem.create(mediaLink));
                 mediaAlbumItems.add(MediaAlbumItem.create(mediaLink));
               }
@@ -334,6 +345,13 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   @Override
+  public void onSystemUiVisibilityChange(boolean systemUiVisible) {
+    TimeInterpolator interpolator = systemUiVisible ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(2f);
+    long animationDuration = 300;
+    animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
+  }
+
+  @Override
   public int getDeviceDisplayWidth() {
     return getResources().getDisplayMetrics().widthPixels;
   }
@@ -369,13 +387,6 @@ public class MediaAlbumViewerActivity extends DankActivity
     // Increase dimming exponentially so that the background is fully transparent while the image has been moved by half.
     float dimming = 1f - Math.min(1f, targetTransparencyFactor * 2);
     activityBackgroundDrawable.setAlpha((int) (dimming * 255));
-  }
-
-  @Override
-  public void onSystemUiVisibilityChange(boolean systemUiVisible) {
-    TimeInterpolator interpolator = systemUiVisible ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(2f);
-    long animationDuration = 300;
-    animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
   }
 
 // ======== MEDIA OPTIONS ======== //

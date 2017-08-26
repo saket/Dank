@@ -6,17 +6,29 @@ import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
-import android.widget.SeekBar;
 
 import timber.log.Timber;
 
 /**
  * Intercepts scrolling if the current image can be panned further.
  */
-public class MediaAlbumViewPager extends ViewPager {
+public class ScrollInterceptibleViewPager extends ViewPager {
 
-  public MediaAlbumViewPager(Context context, AttributeSet attrs) {
+  private OnInterceptScrollListener onInterceptScrollListener;
+
+  public interface OnInterceptScrollListener {
+    /**
+     * Return true if the scroll should be intercepted before it reaches this ViewPager.
+     */
+    boolean onInterceptScroll(View view, int deltaX, int touchX, int touchY);
+  }
+
+  public ScrollInterceptibleViewPager(Context context, AttributeSet attrs) {
     super(context, attrs);
+  }
+
+  public void setOnInterceptScrollListener(OnInterceptScrollListener listener) {
+    onInterceptScrollListener = listener;
   }
 
   /**
@@ -24,13 +36,12 @@ public class MediaAlbumViewPager extends ViewPager {
    */
   @Override
   protected boolean canScroll(View view, boolean checkView, int dx, int x, int y) {
-    if (view instanceof ZoomableImageView) {
-      return ((ZoomableImageView) view).canPanAnyFurtherHorizontally(dx);
+    boolean intercepted = onInterceptScrollListener.onInterceptScroll(view, dx, x, y);
 
+    if (intercepted) {
+      Timber.w("shouldn't scroll");
+      return true;
     } else {
-      if (view instanceof SeekBar) {
-        Timber.i("canScroll() -> view: %s", view);
-      }
       return super.canScroll(view, checkView, dx, x, y);
     }
   }

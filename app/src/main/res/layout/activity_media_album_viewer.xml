@@ -9,7 +9,7 @@
   android:orientation="vertical"
   tools:background="@color/black_opacity_10">
 
-  <me.saket.dank.widgets.MediaAlbumViewPager
+  <me.saket.dank.widgets.ScrollInterceptibleViewPager
     android:id="@+id/mediaalbumviewer_pager"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
