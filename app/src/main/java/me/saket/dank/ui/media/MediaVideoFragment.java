@@ -11,6 +11,7 @@ import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import javax.inject.Inject;
 
@@ -36,6 +37,7 @@ public class MediaVideoFragment extends DankFragment {
   @Inject MediaHostRepository mediaHostRepository;
 
   private ExoPlayerManager exoPlayerManager;
+  private BehaviorRelay<Boolean> fragmentVisibleToUserStream = BehaviorRelay.create();
 
   static MediaVideoFragment create(MediaAlbumItem mediaAlbumItem) {
     MediaVideoFragment fragment = new MediaVideoFragment();
@@ -86,8 +88,16 @@ public class MediaVideoFragment extends DankFragment {
       textureViewContainer.setVisibility(View.VISIBLE);
       videoControlsView.showVideoState(DankVideoControlsView.VideoState.PREPARED);
 
-      // Auto-play on start.
-      exoPlayerManager.startVideoPlayback();
+      // Auto-play when this Fragment becomes visible.
+      unsubscribeOnDestroy(
+          fragmentVisibleToUserStream
+              .subscribe(visibleToUser -> {
+                if (!visibleToUser) {
+                  exoPlayerManager.pauseVideoPlayback();
+                } else {
+                  exoPlayerManager.startVideoPlayback();
+                }
+              }));
     });
 
     // VideoView internally sets its height to match-parent. Forcefully resize it to match the video height.
@@ -102,6 +112,12 @@ public class MediaVideoFragment extends DankFragment {
     String videoUrl = loadHighQualityVideo ? mediaAlbumItem.mediaLink().highQualityUrl() : mediaAlbumItem.mediaLink().lowQualityUrl();
     String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
     exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
+  }
+
+  @Override
+  public void setUserVisibleHint(boolean isVisibleToUser) {
+    super.setUserVisibleHint(isVisibleToUser);
+    fragmentVisibleToUserStream.accept(isVisibleToUser);
   }
 
   private void setupFlickGestures(FlickDismissLayout flickDismissLayout) {

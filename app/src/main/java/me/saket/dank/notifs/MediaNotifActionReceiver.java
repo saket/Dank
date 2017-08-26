@@ -6,6 +6,8 @@ import android.content.Intent;
 import android.net.Uri;
 import android.support.v4.content.FileProvider;
 
+import java.io.File;
+
 import me.saket.dank.R;
 import me.saket.dank.ui.media.MediaDownloadJob;
 import me.saket.dank.utils.Intents;
@@ -62,10 +64,11 @@ public class MediaNotifActionReceiver extends BroadcastReceiver {
         break;
 
       case DELETE_IMAGE:
+        File downloadedFile = downloadJob.downloadedFile();
         //noinspection ConstantConditions
-        boolean deleted = downloadJob.downloadedFile().delete();
-        if (!deleted) {
-          throw new AssertionError("Couldn't delete image: " + downloadJob.downloadedFile());
+        boolean deleted = downloadedFile.delete();
+        if (!deleted && downloadedFile.exists()) {
+          throw new AssertionError("Couldn't delete image: " + downloadedFile);
         }
         MediaDownloadService.cancelNotification(context, downloadJob.mediaLink());
         break;
