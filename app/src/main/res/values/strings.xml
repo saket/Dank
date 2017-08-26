@@ -212,6 +212,7 @@
   <string name="cd_mediaalbumviewer_download_video">Download video</string>
   <string name="cd_mediaalbumviewer_open_video_in_browser">Open video in browser</string>
   <string name="cd_mediaalbumviewer_reload_video_in_high_def">Load full-resolution video</string>
+  <string name="mediaalbumviewer_media_position">%1$d of %2$d</string>
   <string name="mediaalbumviewer_share_image">Share image</string>
   <string name="mediaalbumviewer_share_video">Share video</string>
   <string name="mediaalbumviewer_share_image_link">Share image link</string>

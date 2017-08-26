@@ -4,7 +4,7 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:background="@color/black_opacity_60"
+  android:background="@color/black_opacity_75"
   android:fitsSystemWindows="true"
   android:orientation="vertical"
   tools:background="@color/black_opacity_10">
@@ -27,35 +27,59 @@
     android:layout_width="match_parent"
     android:layout_height="0dp"
     android:layout_gravity="bottom"
-    android:background="@drawable/background_media_viewer_options_gradient" />
+    android:background="@drawable/background_mediaalbumviewer_options_gradient" />
 
   <LinearLayout
     android:id="@+id/mediaalbumviewer_options_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_gravity="bottom"
-    android:gravity="bottom"
+    android:gravity="bottom|end"
     tools:ignore="ContentDescription">
 
+    <TextView
+      android:id="@+id/mediaalbumviewer_media_position"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/spacing8"
+      android:layout_marginStart="@dimen/spacing20"
+      android:layout_weight="1"
+      android:paddingBottom="@dimen/spacing8"
+      android:paddingTop="@dimen/spacing4"
+      android:text="@string/mediaalbumviewer_media_position"
+      android:textColor="@color/color_accent"
+      android:textSize="@dimen/textsize16"
+      android:textStyle="bold"
+      android:visibility="gone"
+      tools:text="3 of 24" />
+
     <!-- ContentDescription for these buttons are set programatically -->
-    <ImageButton
-      android:id="@+id/mediaalbumviewer_share"
-      style="@style/DankMediaAlbumViewerOption"
-      android:src="@drawable/ic_share_24dp" />
+    <LinearLayout
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:gravity="bottom">
 
-    <ImageButton
-      android:id="@+id/mediaalbumviewer_download"
-      style="@style/DankMediaAlbumViewerOption"
-      android:src="@drawable/ic_cloud_download_24dp" />
+      <ImageButton
+        android:id="@+id/mediaalbumviewer_share"
+        style="@style/DankMediaAlbumViewerOption"
+        android:src="@drawable/ic_share_24dp" />
 
-    <ImageButton
-      android:id="@+id/mediaalbumviewer_open_in_browser"
-      style="@style/DankMediaAlbumViewerOption"
-      android:src="@drawable/ic_web_browser_24dp" />
+      <ImageButton
+        android:id="@+id/mediaalbumviewer_download"
+        style="@style/DankMediaAlbumViewerOption"
+        android:src="@drawable/ic_cloud_download_24dp" />
 
-    <ImageButton
-      android:id="@+id/mediaalbumviewer_reload_in_hd"
-      style="@style/DankMediaAlbumViewerOption"
-      android:src="@drawable/ic_hd_24dp" />
+      <ImageButton
+        android:id="@+id/mediaalbumviewer_open_in_browser"
+        style="@style/DankMediaAlbumViewerOption"
+        android:src="@drawable/ic_web_browser_24dp" />
+
+      <ImageButton
+        android:id="@+id/mediaalbumviewer_reload_in_hd"
+        style="@style/DankMediaAlbumViewerOption"
+        android:src="@drawable/ic_hd_24dp" />
+    </LinearLayout>
+
   </LinearLayout>
 </FrameLayout>

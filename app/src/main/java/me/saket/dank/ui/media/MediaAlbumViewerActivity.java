@@ -24,6 +24,7 @@ import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.ProgressBar;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.bumptech.glide.Glide;
@@ -85,6 +86,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   @BindView(R.id.mediaalbumviewer_reload_in_hd) ImageButton reloadInHighDefButton;
   @BindView(R.id.mediaalbumviewer_options_background_gradient) View optionButtonsBackgroundGradientView;
   @BindView(R.id.mediaalbumviewer_progress) ProgressBar progressBar;
+  @BindView(R.id.mediaalbumviewer_media_position) TextView mediaPositionTextView;
 
   @Inject MediaHostRepository mediaHostRepository;
   @Inject HttpProxyCacheServer videoCacheServer;
@@ -145,6 +147,12 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   @Override
+  public void finish() {
+    super.finish();
+    overridePendingTransition(0, R.anim.fade_out);
+  }
+
+  @Override
   @SuppressLint("ClickableViewAccessibility")
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
@@ -183,6 +191,7 @@ public class MediaAlbumViewerActivity extends DankActivity
             })
             .compose(RxUtils.applySchedulersSingle())
             .compose(RxUtils.doOnSingleStartAndTerminate(start -> progressBar.setVisibility(start ? View.VISIBLE : View.GONE)))
+            .doAfterSuccess(o -> startListeningToViewPagerPageChanges())
             .subscribe(
                 mediaAlbumItems -> {
                   // Show media options now that we have adapter data.
@@ -193,7 +202,6 @@ public class MediaAlbumViewerActivity extends DankActivity
 
                   mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaAlbumItems);
                   mediaAlbumPager.setAdapter(mediaAlbumAdapter);
-                  startListeningToViewPagerPageChanges();
                 },
                 error -> {
                   // TODO: Handle error.
@@ -209,12 +217,17 @@ public class MediaAlbumViewerActivity extends DankActivity
             .map(currentItem -> mediaAlbumAdapter.getDataSet().get(currentItem))
             .doOnNext(activeMediaItem -> updateContentDescriptionOfOptionButtonsAccordingTo(activeMediaItem))
             .doOnNext(activeMediaItem -> enableHighDefButtonIfPossible(activeMediaItem))
+            .doOnNext(activeMediaItem -> updateShareMenuFor(activeMediaItem))
             .doOnNext(activeMediaItem -> {
-              sharePopupMenu.getMenu().clear();
-              getMenuInflater().inflate(
-                  activeMediaItem.mediaLink().isVideo() ? R.menu.menu_share_video : R.menu.menu_share_image,
-                  sharePopupMenu.getMenu()
-              );
+              if (mediaAlbumAdapter.getCount() > 1) {
+                // We're dealing with an album.
+                mediaPositionTextView.setVisibility(View.VISIBLE);
+                mediaPositionTextView.setText(getString(
+                    R.string.mediaalbumviewer_media_position,
+                    mediaAlbumPager.getCurrentItem() + 1,
+                    mediaAlbumAdapter.getCount()
+                ));
+              }
             })
             .subscribe()
     );
@@ -310,12 +323,6 @@ public class MediaAlbumViewerActivity extends DankActivity
     });
 
     return sharePopupMenu;
-  }
-
-  @Override
-  public void finish() {
-    super.finish();
-    overridePendingTransition(0, R.anim.fade_out);
   }
 
 // ======== MEDIA FRAGMENT ======== //
@@ -429,6 +436,14 @@ public class MediaAlbumViewerActivity extends DankActivity
         .onErrorResumeNext(Observable.empty())
         .concatWith(optimizedResImageFileStream.onErrorResumeNext(Observable.empty()))
         .firstOrError();
+  }
+
+  private void updateShareMenuFor(MediaAlbumItem activeMediaItem) {
+    sharePopupMenu.getMenu().clear();
+    getMenuInflater().inflate(
+        activeMediaItem.mediaLink().isVideo() ? R.menu.menu_share_video : R.menu.menu_share_image,
+        sharePopupMenu.getMenu()
+    );
   }
 
   @OnClick(R.id.mediaalbumviewer_share)
