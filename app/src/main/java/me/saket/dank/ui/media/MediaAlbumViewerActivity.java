@@ -186,6 +186,7 @@ public class MediaAlbumViewerActivity extends DankActivity
               List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
               for (MediaLink mediaLink : mediaLinks) {
                 mediaAlbumItems.add(MediaAlbumItem.create(mediaLink));
+                mediaAlbumItems.add(MediaAlbumItem.create(mediaLink));
               }
               return mediaAlbumItems;
             })

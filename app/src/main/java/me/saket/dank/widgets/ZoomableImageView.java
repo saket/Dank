@@ -1,9 +1,9 @@
 package me.saket.dank.widgets;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.RectF;
 import android.support.annotation.NonNull;
-import android.support.v4.view.ViewPager;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -21,6 +21,7 @@ public class ZoomableImageView extends GestureImageView {
 
   private static final float MAX_OVER_ZOOM = 4f;
   private static final float MIN_OVER_ZOOM = 1f;
+  private final RectF IMAGE_MOVEMENT_RECT = new RectF();
 
   private GestureDetector gestureDetector;
 
@@ -103,27 +104,34 @@ public class ZoomableImageView extends GestureImageView {
         || (downwardPan && State.compare(state.getY(), IMAGE_MOVEMENT_RECT.top) > 0f);
   }
 
-  private final RectF IMAGE_MOVEMENT_RECT = new RectF();
+  public boolean canPanAnyFurtherHorizontally(int deltaX) {
+    float minZoom = getController().getStateController().getMinZoom(getController().getState());
+    float zoom = getController().getState().getZoom();
 
-  /**
-   * Whether the image can be panned anymore horizontally.
-   */
-  public boolean canPanFurtherHorizontally(boolean towardsRight) {
-    State state = getController().getState();
-    getController().getStateController().getMovementArea(state, IMAGE_MOVEMENT_RECT);
+    // if zoom factor == min zoom factor => just let the view pager handle the scroll
+    float eps = 0.001f;
+    if (Math.abs(minZoom - zoom) < eps) {
+      return false;
+    }
 
-    return (towardsRight && State.compare(state.getX(), IMAGE_MOVEMENT_RECT.right) < 0f)
-        || (!towardsRight && State.compare(state.getX(), IMAGE_MOVEMENT_RECT.left) > 0f);
+    getController().getStateController().getMovementArea(getController().getState(), IMAGE_MOVEMENT_RECT);
+
+    float stateX = getController().getState().getX();
+    float width = IMAGE_MOVEMENT_RECT.width();
+
+    // If user reached left edge && is swiping left => let the view pager handle the scroll
+    if (Math.abs(stateX) < eps && deltaX > 0) {
+      return false;
+    }
+
+    // If user reached right edge && is swiping right => let the view pager handle the scroll
+    return !(Math.abs(stateX + width) < eps && deltaX < 0);
   }
 
   public void setGestureRotationEnabled(boolean rotationEnabled) {
     Settings settings = getController().getSettings();
     settings.setRotationEnabled(rotationEnabled);
     settings.setRestrictRotation(rotationEnabled);
-  }
-
-  public void enableScrollInViewPager(ViewPager pager) {
-    getController().enableScrollInViewPager(pager);
   }
 
   /**
@@ -134,6 +142,7 @@ public class ZoomableImageView extends GestureImageView {
   }
 
   @Override
+  @SuppressLint("ClickableViewAccessibility")
   public boolean onTouchEvent(@NonNull MotionEvent event) {
     gestureDetector.onTouchEvent(event);
 
