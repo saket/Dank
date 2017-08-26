@@ -44,18 +44,18 @@
       android:layout_marginBottom="@dimen/spacing8"
       android:layout_marginStart="@dimen/spacing20"
       android:layout_weight="1"
-      android:paddingBottom="@dimen/spacing8"
+      android:paddingBottom="@dimen/spacing4"
       android:paddingTop="@dimen/spacing4"
       android:text="@string/mediaalbumviewer_media_position"
       android:textColor="@color/color_accent"
       android:textSize="@dimen/textsize16"
       android:textStyle="bold"
-      android:visibility="gone"
+      android:visibility="visible"
       tools:text="3 of 24" />
 
     <!-- ContentDescription for these buttons are set programatically -->
     <LinearLayout
-      android:layout_width="0dp"
+      android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:layout_weight="1"
       android:gravity="bottom">
@@ -80,6 +80,5 @@
         style="@style/DankMediaAlbumViewerOption"
         android:src="@drawable/ic_hd_24dp" />
     </LinearLayout>
-
   </LinearLayout>
 </FrameLayout>

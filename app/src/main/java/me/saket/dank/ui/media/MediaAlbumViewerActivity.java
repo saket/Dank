@@ -195,8 +195,6 @@ public class MediaAlbumViewerActivity extends DankActivity
             .map(mediaLinks -> {
               List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
               for (MediaLink mediaLink : mediaLinks) {
-                // TODO: Remove multiple items
-                mediaAlbumItems.add(MediaAlbumItem.create(mediaLink));
                 mediaAlbumItems.add(MediaAlbumItem.create(mediaLink));
               }
               return mediaAlbumItems;
@@ -231,9 +229,9 @@ public class MediaAlbumViewerActivity extends DankActivity
             .doOnNext(activeMediaItem -> enableHighDefButtonIfPossible(activeMediaItem))
             .doOnNext(activeMediaItem -> updateShareMenuFor(activeMediaItem))
             .doOnNext(activeMediaItem -> {
+              mediaPositionTextView.setVisibility(mediaAlbumAdapter.getCount() > 1 ? View.VISIBLE : View.GONE);
               if (mediaAlbumAdapter.getCount() > 1) {
                 // We're dealing with an album.
-                mediaPositionTextView.setVisibility(View.VISIBLE);
                 mediaPositionTextView.setText(getString(
                     R.string.mediaalbumviewer_media_position,
                     mediaAlbumPager.getCurrentItem() + 1,
