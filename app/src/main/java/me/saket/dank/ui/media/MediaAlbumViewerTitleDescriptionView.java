@@ -22,6 +22,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.utils.Views;
+import timber.log.Timber;
 
 public class MediaAlbumViewerTitleDescriptionView extends RelativeLayout {
 
@@ -47,6 +48,7 @@ public class MediaAlbumViewerTitleDescriptionView extends RelativeLayout {
 
     scrollView.setClipToPadding(false);
     scrollView.setVisibility(INVISIBLE);   // Set to VISIBLE once title & description are set, and the description is clipped to 2.5 lines.
+    scrollHintView.setVisibility(INVISIBLE);
 
     scrollView.getViewTreeObserver().addOnScrollChangedListener(() -> {
       dimmingRequiredForTitleAndDescriptionStream.accept(scrollView.getScrollY() > 0 ? Boolean.TRUE : Boolean.FALSE);

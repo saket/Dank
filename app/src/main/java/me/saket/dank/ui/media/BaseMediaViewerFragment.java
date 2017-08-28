@@ -23,6 +23,7 @@ public class BaseMediaViewerFragment extends DankFragment {
 
   public void setTitleDescriptionView(MediaAlbumViewerTitleDescriptionView titleDescriptionView) {
     this.titleDescriptionView = titleDescriptionView;
+    Views.setMarginTop(titleDescriptionView, Views.statusBarHeight(getResources()));
   }
 
   public void setImageDimmingView(View imageDimmingView) {

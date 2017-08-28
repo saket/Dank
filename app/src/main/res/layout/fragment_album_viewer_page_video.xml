@@ -1,17 +1,35 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.binoculars.FlickDismissLayout android:id="@+id/albumviewervideo_flickdismisslayout"
-  xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:fitsSystemWindows="true">
+  android:animateLayoutChanges="true">
 
-  <!-- Height is re-set in code. -->
-  <com.devbrackets.android.exomedia.ui.widget.VideoView
-    android:id="@+id/albumviewervideo_video"
+  <me.saket.dank.widgets.binoculars.FlickDismissLayout
+    android:id="@+id/albumviewervideo_flickdismisslayout"
     android:layout_width="match_parent"
-    android:layout_height="240dp"
-    android:layout_gravity="center"
-    app:background="@color/blue_gray_800"
-    app:useTextureViewBacking="true" />
-</me.saket.dank.widgets.binoculars.FlickDismissLayout>
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    android:fitsSystemWindows="true">
+
+    <!-- Height is re-set in code. -->
+    <com.devbrackets.android.exomedia.ui.widget.VideoView
+      android:id="@+id/albumviewervideo_video"
+      android:layout_width="match_parent"
+      android:layout_height="240dp"
+      android:layout_gravity="center"
+      app:background="@color/blue_gray_800"
+      app:useTextureViewBacking="true" />
+  </me.saket.dank.widgets.binoculars.FlickDismissLayout>
+
+  <View
+    android:id="@+id/albumviewervideo_title_description_dimming"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black_opacity_30" />
+
+  <me.saket.dank.ui.media.MediaAlbumViewerTitleDescriptionView
+    android:id="@+id/albumviewervideo_title_description"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+</FrameLayout>

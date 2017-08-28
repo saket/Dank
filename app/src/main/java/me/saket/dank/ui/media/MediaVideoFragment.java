@@ -7,7 +7,6 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
@@ -19,7 +18,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.Views;
@@ -27,15 +25,18 @@ import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 
-public class MediaVideoFragment extends DankFragment {
+public class MediaVideoFragment extends BaseMediaViewerFragment {
 
   private static final String KEY_MEDIA_ITEM = "mediaItem";
 
   @BindView(R.id.albumviewervideo_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
   @BindView(R.id.albumviewervideo_video) VideoView videoView;
+  @BindView(R.id.albumviewervideo_title_description) MediaAlbumViewerTitleDescriptionView titleDescriptionView;
+  @BindView(R.id.albumviewervideo_title_description_dimming) View titleDescriptionBackgroundDimmingView;
 
   @Inject MediaHostRepository mediaHostRepository;
 
+  private MediaAlbumItem mediaAlbumItem;
   private ExoPlayerManager exoPlayerManager;
   private BehaviorRelay<Boolean> fragmentVisibleToUserStream = BehaviorRelay.create();
 
@@ -63,6 +64,13 @@ public class MediaVideoFragment extends DankFragment {
     super.onCreateView(inflater, container, savedInstanceState);
     View layout = inflater.inflate(R.layout.fragment_album_viewer_page_video, container, false);
     ButterKnife.bind(this, layout);
+
+    mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
+    //noinspection ConstantConditions
+    super.setMediaLink(mediaAlbumItem.mediaLink());
+    super.setTitleDescriptionView(titleDescriptionView);
+    super.setImageDimmingView(titleDescriptionBackgroundDimmingView);
+
     return layout;
   }
 
@@ -105,7 +113,6 @@ public class MediaVideoFragment extends DankFragment {
       Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar());
     });
 
-    MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
     assert mediaAlbumItem != null;
     boolean loadHighQualityVideo = false; // TODO: Get this from user's data preferences.
 
@@ -121,9 +128,7 @@ public class MediaVideoFragment extends DankFragment {
   }
 
   private void setupFlickGestures(FlickDismissLayout flickDismissLayout) {
-    FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(getContext()));
-    flickListener.setFlickThresholdSlop(.5f);    // Dismiss once the video is swiped 50% away.
-    flickListener.setGestureCallbacks((FlickGestureListener.GestureCallbacks) getActivity());
+    FlickGestureListener flickListener = super.createFlickGestureListener(((FlickGestureListener.GestureCallbacks) getActivity()));
     flickListener.setContentHeightProvider(() -> videoView.getHeight());
     flickDismissLayout.setFlickGestureListener(flickListener);
   }
