@@ -898,6 +898,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         }
         break;
 
+      case MEDIA_ALBUM:
       case EXTERNAL:
         contentLoadProgressView.hide();
         String redditSuppliedThumbnail = findOptimizedImage(

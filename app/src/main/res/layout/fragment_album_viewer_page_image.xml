@@ -1,26 +1,46 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.binoculars.FlickDismissLayout android:id="@+id/albumviewerimage_flickdismisslayout"
-  xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:animateLayoutChanges="true"
-  android:fitsSystemWindows="true">
+  android:animateLayoutChanges="true">
 
-  <me.saket.dank.widgets.ZoomableImageView
-    android:id="@+id/albumviewerimage_imageview"
+  <me.saket.dank.widgets.binoculars.FlickDismissLayout
+    android:id="@+id/albumviewerimage_flickdismisslayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_gravity="center"
-    tools:background="@color/blue_gray_800" />
+    android:animateLayoutChanges="true"
+    android:fitsSystemWindows="true">
 
-  <com.github.rahatarmanahmed.cpv.CircularProgressView
-    android:id="@+id/albumviewerimage_progress"
-    android:layout_width="48dp"
-    android:layout_height="48dp"
-    android:layout_gravity="center"
-    android:visibility="gone"
-    app:cpv_color="@color/color_accent"
-    tools:visibility="visible" />
-</me.saket.dank.widgets.binoculars.FlickDismissLayout>
+    <me.saket.dank.widgets.ZoomableImageView
+      android:id="@+id/albumviewerimage_imageview"
+      android:layout_width="match_parent"
+      android:layout_height="match_parent"
+      android:layout_gravity="center"
+      tools:background="@color/blue_gray_800"
+      tools:layout_height="240dp" />
+
+    <com.github.rahatarmanahmed.cpv.CircularProgressView
+      android:id="@+id/albumviewerimage_progress"
+      android:layout_width="48dp"
+      android:layout_height="48dp"
+      android:layout_gravity="center"
+      android:visibility="gone"
+      app:cpv_color="@color/color_accent"
+      tools:visibility="visible" />
+  </me.saket.dank.widgets.binoculars.FlickDismissLayout>
+
+  <View
+    android:id="@+id/albumviewerimage_title_description_dimming"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/black_opacity_30" />
+
+  <!-- TODO: Add status bar's height as the top margin. -->
+  <me.saket.dank.ui.media.MediaAlbumViewerTitleDescriptionView
+    android:id="@+id/albumviewerimage_title_description"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_marginTop="@dimen/spacing24" />
+</FrameLayout>

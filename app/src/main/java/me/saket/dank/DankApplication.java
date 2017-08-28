@@ -13,14 +13,15 @@ import android.support.annotation.NonNull;
 import com.facebook.stetho.Stetho;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-import com.tspoon.traceur.Traceur;
 import com.jakewharton.threetenabp.AndroidThreeTen;
-import io.reactivex.plugins.RxJavaPlugins;
+import com.tspoon.traceur.Traceur;
+
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.Arrays;
 
 import io.reactivex.functions.Consumer;
+import io.reactivex.plugins.RxJavaPlugins;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.SimpleActivityLifecycleCallbacks;
 import timber.log.Timber;
@@ -114,13 +115,13 @@ public class DankApplication extends Application {
       }
       if ((e instanceof NullPointerException) || (e instanceof IllegalArgumentException)) {
         // That's likely a bug in the application.
-        Timber.w(e.getMessage());
+        Timber.e(e.getMessage());
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
         return;
       }
       if (e instanceof IllegalStateException) {
         // That's a bug in RxJava or in a custom operator.
-        Timber.w(e.getMessage());
+        Timber.e(e.getMessage());
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
         return;
       }

@@ -1,5 +1,6 @@
 package me.saket.dank.widgets.binoculars;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -28,9 +29,15 @@ public class FlickDismissLayout extends FrameLayout {
   }
 
   @Override
+  @SuppressLint("ClickableViewAccessibility")
   public boolean onTouchEvent(MotionEvent event) {
     boolean handled = flickGestureListener.onTouch(this, event);
     return handled || super.onTouchEvent(event);
+  }
+
+  @Override
+  public void requestDisallowInterceptTouchEvent(boolean disallowIntercept) {
+    super.requestDisallowInterceptTouchEvent(disallowIntercept);
   }
 
   public void setFlickGestureListener(FlickGestureListener flickGestureListener) {

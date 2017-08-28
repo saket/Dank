@@ -32,6 +32,8 @@ import com.bumptech.glide.request.RequestOptions;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.google.common.io.Files;
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
+import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.jakewharton.rxrelay2.Relay;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
 import net.dean.jraw.models.Thumbnails;
@@ -80,12 +82,13 @@ public class MediaAlbumViewerActivity extends DankActivity
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
   @BindView(R.id.mediaalbumviewer_pager) ScrollInterceptibleViewPager mediaAlbumPager;
-  @BindView(R.id.mediaalbumviewer_options_container) ViewGroup optionButtonsContainer;
+  @BindView(R.id.mediaalbumviewer_media_content_info_container) ViewGroup contentInfoContainerView;
+  @BindView(R.id.mediaalbumviewer_position_and_options_container) ViewGroup contentOptionButtonsContainerView;
   @BindView(R.id.mediaalbumviewer_share) ImageButton shareButton;
   @BindView(R.id.mediaalbumviewer_download) ImageButton downloadButton;
   @BindView(R.id.mediaalbumviewer_open_in_browser) ImageButton openInBrowserButton;
   @BindView(R.id.mediaalbumviewer_reload_in_hd) ImageButton reloadInHighDefButton;
-  @BindView(R.id.mediaalbumviewer_options_background_gradient) View optionButtonsBackgroundGradientView;
+  @BindView(R.id.mediaalbumviewer_content_info_background_gradient) View contentInfoBackgroundGradientView;
   @BindView(R.id.mediaalbumviewer_progress) ProgressBar progressBar;
   @BindView(R.id.mediaalbumviewer_media_position) TextView mediaPositionTextView;
 
@@ -98,6 +101,7 @@ public class MediaAlbumViewerActivity extends DankActivity
   private Set<MediaAlbumItem> mediaItemsWithHighDefEnabled = new HashSet<>();
   private PopupMenu sharePopupMenu;
   private RxPermissions rxPermissions;
+  private Relay<Boolean> systemUiVisibilityStream = BehaviorRelay.create();
 
   public static void start(Context context, MediaLink mediaLink, @Nullable SerializableThumbnails redditSuppliedImages) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
@@ -132,16 +136,11 @@ public class MediaAlbumViewerActivity extends DankActivity
     fadeInAnimator.start();
 
     // Animated once images are fetched.
-    optionButtonsContainer.setVisibility(View.INVISIBLE);
+    contentInfoContainerView.setVisibility(View.INVISIBLE);
 
     // Show the option buttons above the navigation bar.
     int navBarHeight = Views.getNavigationBarSize(this).y;
-    Views.setPaddingBottom(optionButtonsContainer, navBarHeight);
-    Views.executeOnMeasure(optionButtonsContainer, () -> {
-      int shareButtonTop = Views.globalVisibleRect(shareButton).top + shareButton.getPaddingTop();
-      int gradientHeight = optionButtonsBackgroundGradientView.getTop() - shareButtonTop;
-      Views.setHeight(optionButtonsBackgroundGradientView, gradientHeight);
-    });
+    Views.setPaddingBottom(contentOptionButtonsContainerView, navBarHeight);
 
     mediaAlbumPager.setOnInterceptScrollListener((view, deltaX, touchX, touchY) -> {
       if (view instanceof ZoomableImageView) {
@@ -193,8 +192,8 @@ public class MediaAlbumViewerActivity extends DankActivity
             .subscribe(
                 mediaAlbumItems -> {
                   // Show media options now that we have adapter data.
-                  optionButtonsContainer.setVisibility(View.VISIBLE);
-                  Views.executeOnMeasure(optionButtonsContainer, () -> {
+                  contentInfoContainerView.setVisibility(View.VISIBLE);
+                  Views.executeOnMeasure(contentInfoContainerView, () -> {
                     animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
                   });
 
@@ -206,28 +205,6 @@ public class MediaAlbumViewerActivity extends DankActivity
                   Timber.e(error, "Couldn't resolve media link");
                 }
             )
-    );
-  }
-
-  private void startListeningToViewPagerPageChanges() {
-    unsubscribeOnDestroy(
-        RxViewPager.pageSelections(mediaAlbumPager)
-            .map(currentItem -> mediaAlbumAdapter.getDataSet().get(currentItem))
-            .doOnNext(activeMediaItem -> updateContentDescriptionOfOptionButtonsAccordingTo(activeMediaItem))
-            .doOnNext(activeMediaItem -> enableHighDefButtonIfPossible(activeMediaItem))
-            .doOnNext(activeMediaItem -> updateShareMenuFor(activeMediaItem))
-            .doOnNext(activeMediaItem -> {
-              mediaPositionTextView.setVisibility(mediaAlbumAdapter.getCount() > 1 ? View.VISIBLE : View.GONE);
-              if (mediaAlbumAdapter.getCount() > 1) {
-                // We're dealing with an album.
-                mediaPositionTextView.setText(getString(
-                    R.string.mediaalbumviewer_media_position,
-                    mediaAlbumPager.getCurrentItem() + 1,
-                    mediaAlbumAdapter.getCount()
-                ));
-              }
-            })
-            .subscribe()
     );
   }
 
@@ -323,6 +300,29 @@ public class MediaAlbumViewerActivity extends DankActivity
     return sharePopupMenu;
   }
 
+  private void startListeningToViewPagerPageChanges() {
+    unsubscribeOnDestroy(
+        RxViewPager.pageSelections(mediaAlbumPager)
+            .map(currentItem -> mediaAlbumAdapter.getDataSet().get(currentItem))
+            .doOnNext(activeMediaItem -> updateContentDescriptionOfOptionButtonsAccordingTo(activeMediaItem))
+            .doOnNext(activeMediaItem -> enableHighDefButtonIfPossible(activeMediaItem))
+            .doOnNext(activeMediaItem -> updateShareMenuFor(activeMediaItem))
+            .doOnNext(activeMediaItem -> updateMediaDisplayPosition())
+            .subscribe()
+    );
+  }
+
+  private void updateMediaDisplayPosition() {
+    int totalMediaItems = mediaAlbumAdapter.getCount();
+    mediaPositionTextView.setVisibility(totalMediaItems > 1 ? View.VISIBLE : View.GONE);
+
+    if (totalMediaItems > 1) {
+      // We're dealing with an album.
+      mediaPositionTextView.setText(getString(R.string.mediaalbumviewer_media_position, mediaAlbumPager.getCurrentItem() + 1, totalMediaItems
+      ));
+    }
+  }
+
 // ======== MEDIA FRAGMENT ======== //
 
   @Override
@@ -335,6 +335,8 @@ public class MediaAlbumViewerActivity extends DankActivity
     TimeInterpolator interpolator = systemUiVisible ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(2f);
     long animationDuration = 300;
     animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
+
+    systemUiVisibilityStream.accept(systemUiVisible);
   }
 
   @Override
@@ -353,10 +355,24 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   @Override
+  public Single<Integer> optionButtonsHeight() {
+    return Single.create(emitter ->
+        Views.executeOnMeasure(contentOptionButtonsContainerView,
+            () -> emitter.onSuccess(contentOptionButtonsContainerView.getHeight())
+        )
+    );
+  }
+
+  @Override
+  public Observable<Boolean> systemUiVisibilityStream() {
+    return systemUiVisibilityStream;
+  }
+
+  @Override
   public void onFlickDismissEnd(long flickAnimationDuration) {
     unsubscribeOnDestroy(
         Observable.timer(flickAnimationDuration, TimeUnit.MILLISECONDS)
-            .doOnSubscribe(o -> animateMediaOptionsVisibility(false, Animations.INTERPOLATOR, 100, false))
+            .doOnSubscribe(o -> animateMediaOptionsVisibility(false, Animations.INTERPOLATOR, 200, false))
             .subscribe(o -> finish())
     );
   }
@@ -483,23 +499,35 @@ public class MediaAlbumViewerActivity extends DankActivity
     // TODO: Update data-set.
   }
 
+  /**
+   * Enable HD button if a higher-res version can be shown and is not already visible.
+   */
+  private void enableHighDefButtonIfPossible(MediaAlbumItem activeMediaItem) {
+    String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
+    String lowQualityUrl = activeMediaItem.mediaLink().lowQualityUrl();
+    boolean hasHighDefVersion = !lowQualityUrl.equals(highQualityUrl);
+
+    boolean isAlreadyShowingHighDefVersion = mediaItemsWithHighDefEnabled.contains(activeMediaItem);
+    reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
+  }
+
   private void animateMediaOptionsVisibility(boolean showOptions, TimeInterpolator interpolator, long animationDuration, boolean setInitialValues) {
     if (setInitialValues) {
-      optionButtonsBackgroundGradientView.setAlpha(showOptions ? 0f : 1f);
-      optionButtonsBackgroundGradientView.setTranslationY(showOptions ? optionButtonsBackgroundGradientView.getHeight() : 0f);
+      contentInfoBackgroundGradientView.setAlpha(showOptions ? 0f : 1f);
+      contentInfoBackgroundGradientView.setTranslationY(showOptions ? contentInfoBackgroundGradientView.getHeight() : 0f);
     }
 
-    optionButtonsBackgroundGradientView.animate().cancel();
-    optionButtonsBackgroundGradientView.animate()
-        .translationY(showOptions ? 0f : optionButtonsBackgroundGradientView.getHeight())
+    contentInfoBackgroundGradientView.animate().cancel();
+    contentInfoBackgroundGradientView.animate()
+        .translationY(showOptions ? 0f : contentInfoBackgroundGradientView.getHeight())
         .alpha(showOptions ? 1f : 0f)
         .setDuration((long) (animationDuration * (showOptions ? 1.5f : 1)))
         .setInterpolator(interpolator)
         .start();
 
     // Animating the child Views so that they get clipped by their parent container.
-    for (int i = 0; i < optionButtonsContainer.getChildCount(); i++) {
-      View childView = optionButtonsContainer.getChildAt(i);
+    for (int i = 0; i < contentInfoContainerView.getChildCount(); i++) {
+      View childView = contentInfoContainerView.getChildAt(i);
 
       if (setInitialValues) {
         childView.setAlpha(showOptions ? 0f : 1f);
@@ -514,17 +542,5 @@ public class MediaAlbumViewerActivity extends DankActivity
           .setInterpolator(interpolator)
           .start();
     }
-  }
-
-  /**
-   * Enable HD button if a higher-res version can be shown and is not already visible.
-   */
-  private void enableHighDefButtonIfPossible(MediaAlbumItem activeMediaItem) {
-    String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
-    String lowQualityUrl = activeMediaItem.mediaLink().lowQualityUrl();
-    boolean hasHighDefVersion = !lowQualityUrl.equals(highQualityUrl);
-
-    boolean isAlreadyShowingHighDefVersion = mediaItemsWithHighDefEnabled.contains(activeMediaItem);
-    reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
   }
 }

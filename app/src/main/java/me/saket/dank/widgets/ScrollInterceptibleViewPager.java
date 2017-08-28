@@ -7,8 +7,6 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import timber.log.Timber;
-
 /**
  * Intercepts scrolling if the current image can be panned further.
  */
@@ -39,7 +37,6 @@ public class ScrollInterceptibleViewPager extends ViewPager {
     boolean intercepted = onInterceptScrollListener.onInterceptScroll(view, dx, x, y);
 
     if (intercepted) {
-      Timber.w("shouldn't scroll");
       return true;
     } else {
       return super.canScroll(view, checkView, dx, x, y);

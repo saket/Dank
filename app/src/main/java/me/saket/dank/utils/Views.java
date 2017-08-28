@@ -31,10 +31,10 @@ public class Views {
     view.getViewTreeObserver().addOnGlobalLayoutListener(new ViewTreeObserver.OnGlobalLayoutListener() {
       @Override
       public void onGlobalLayout() {
-        runnable.run();
-
         //noinspection deprecation
         view.getViewTreeObserver().removeGlobalOnLayoutListener(this);
+
+        runnable.run();
       }
     });
   }
@@ -63,10 +63,10 @@ public class Views {
       @Override
       public boolean onPreDraw() {
         if (view.isLaidOut()) {
-          onMeasureRunnable.run();
-
           //noinspection deprecation
           view.getViewTreeObserver().removeOnPreDrawListener(this);
+
+          onMeasureRunnable.run();
 
           if (consumeOnPreDraw) {
             return false;
@@ -199,5 +199,20 @@ public class Views {
     Point size = new Point();
     display.getRealSize(size);
     return size;
+  }
+
+  public static int getTopRelativeToParent(ViewGroup parent, View view) {
+    int top = 0;
+    View nextViewToCheck = view;
+
+    while (true) {
+      top += nextViewToCheck.getTop();
+      if (parent == nextViewToCheck.getParent()) {
+        break;
+      }
+      nextViewToCheck = ((ViewGroup) nextViewToCheck.getParent());
+    }
+
+    return top;
   }
 }

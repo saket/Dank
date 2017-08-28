@@ -4,6 +4,9 @@ import android.support.annotation.Nullable;
 
 import net.dean.jraw.models.Thumbnails;
 
+import io.reactivex.Observable;
+import io.reactivex.Single;
+
 public interface MediaFragmentCallbacks {
   void onClickMediaItem();
 
@@ -11,4 +14,8 @@ public interface MediaFragmentCallbacks {
 
   @Nullable
   Thumbnails getRedditSuppliedImages();
+
+  Single<Integer> optionButtonsHeight();
+
+  Observable<Boolean> systemUiVisibilityStream();
 }

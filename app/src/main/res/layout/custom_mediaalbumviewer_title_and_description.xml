@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical"
+  tools:parentTag="android.widget.RelativeLayout">
+
+  <ScrollView
+    android:id="@+id/mediaalbumviewer_titledescription_scrollview"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_above="@+id/mediaalbumviewer_titledescription_scroll_hint"
+    android:layout_gravity="bottom"
+    android:scrollbars="none">
+
+    <LinearLayout
+      android:id="@+id/mediaalbumviewer_titledescription_scrollview_child"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:paddingEnd="@dimen/spacing16"
+      android:paddingStart="@dimen/spacing16"
+      android:paddingTop="@dimen/spacing16">
+
+      <TextView
+        android:id="@+id/mediaalbumviewer_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:fontFamily="sans-serif-medium"
+        android:textColor="@color/white_opacity_90"
+        tools:text="Ruslan and the Giant Illustration" />
+
+      <TextView
+        android:id="@+id/mediaalbumviewer_description"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="@dimen/spacing8"
+        android:ellipsize="end"
+        android:lineSpacingExtra="2dp"
+        android:textColor="@color/white"
+        tools:text="This is an illustration based on a Russian fairy tale called Ruslan and Liudmila in which the hero Ruslan battles a giant head. I have been planning and executing this piece for months in 2014 with the sole purpose of submitting it (and hopefully getting in) to a fantasy/scifi yearly book called Spectrum." />
+    </LinearLayout>
+  </ScrollView>
+
+  <!-- Note: use padding instead of margins on this View. MediaAlbumViewerTitleDescription
+       currently does not take margins into consideration. -->
+  <TextView
+    android:id="@+id/mediaalbumviewer_titledescription_scroll_hint"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:layout_marginStart="@dimen/spacing16"
+    android:paddingTop="@dimen/spacing12"
+    android:text="@string/albummediaviewer_description_scroll_hint"
+    android:textAllCaps="true"
+    android:textSize="@dimen/textsize12" />
+</merge>

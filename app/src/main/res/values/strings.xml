@@ -231,6 +231,7 @@
   <string name="mediadownloadnotification_cancel">Cancel</string>
   <string name="mediadownloadnotification_share">Share</string>
   <string name="mediadownloadnotification_delete">Delete</string>
+  <string name="albummediaviewer_description_scroll_hint">Scroll to read more</string>
 
   <!-- User profile popup -->
   <string name="userprofilepopup_send_a_private_message">Message</string>

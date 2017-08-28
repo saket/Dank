@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout android:id="@+id/mediaalbumviewer_root"
+<RelativeLayout android:id="@+id/mediaalbumviewer_root"
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:background="@color/black_opacity_75"
+  android:background="@color/black_opacity_90"
   android:fitsSystemWindows="true"
   android:orientation="vertical"
   tools:background="@color/black_opacity_10">
@@ -18,67 +18,79 @@
     android:id="@+id/mediaalbumviewer_progress"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_gravity="center"
+    android:layout_centerInParent="true"
     android:indeterminate="true" />
 
-  <!-- The top of this View is programmatically set to align with the options. -->
-  <View
-    android:id="@+id/mediaalbumviewer_options_background_gradient"
+  <RelativeLayout
+    android:id="@+id/mediaalbumviewer_media_content_info_container"
     android:layout_width="match_parent"
-    android:layout_height="0dp"
-    android:layout_gravity="bottom"
-    android:background="@drawable/background_mediaalbumviewer_options_gradient" />
-
-  <LinearLayout
-    android:id="@+id/mediaalbumviewer_options_container"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:layout_gravity="bottom"
+    android:layout_height="wrap_content"
     android:gravity="bottom|end"
+    android:orientation="vertical"
     tools:ignore="ContentDescription">
 
-    <TextView
-      android:id="@+id/mediaalbumviewer_media_position"
-      android:layout_width="0dp"
-      android:layout_height="wrap_content"
-      android:layout_marginBottom="@dimen/spacing8"
-      android:layout_marginStart="@dimen/spacing20"
-      android:layout_weight="1"
-      android:paddingBottom="@dimen/spacing4"
-      android:paddingTop="@dimen/spacing4"
-      android:text="@string/mediaalbumviewer_media_position"
-      android:textColor="@color/color_accent"
-      android:textSize="@dimen/textsize16"
-      android:textStyle="bold"
-      android:visibility="visible"
-      tools:text="3 of 24" />
+    <!-- Background gradient for option buttons -->
+    <View
+      android:id="@+id/mediaalbumviewer_content_info_background_gradient"
+      android:layout_width="match_parent"
+      android:layout_height="0dp"
+      android:layout_alignParentBottom="true"
+      android:layout_alignTop="@+id/mediaalbumviewer_position_and_options_container"
+      android:layout_gravity="bottom"
+      android:background="@drawable/background_mediaalbumviewer_options_gradient" />
 
-    <!-- ContentDescription for these buttons are set programatically -->
+    <!-- Requires atleast 22dp of top-padding for the option button ripples
+         (in their current size) to not get clipped. -->
     <LinearLayout
-      android:layout_width="wrap_content"
+      android:id="@+id/mediaalbumviewer_position_and_options_container"
+      android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:layout_weight="1"
-      android:gravity="bottom">
+      android:layout_alignParentBottom="true"
+      android:layout_marginTop="@dimen/spacing20"
+      android:background="@color/transparent"
+      android:orientation="horizontal"
+      android:paddingTop="@dimen/spacing24">
 
-      <ImageButton
-        android:id="@+id/mediaalbumviewer_share"
-        style="@style/DankMediaAlbumViewerOption"
-        android:src="@drawable/ic_share_24dp" />
+      <TextView
+        android:id="@+id/mediaalbumviewer_media_position"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="@dimen/spacing20"
+        android:layout_weight="1"
+        android:fontFamily="sans-serif-medium"
+        android:text="@string/mediaalbumviewer_media_position"
+        android:textColor="@color/color_accent"
+        android:textSize="@dimen/textsize16"
+        android:visibility="visible"
+        tools:text="3 of 24" />
 
-      <ImageButton
-        android:id="@+id/mediaalbumviewer_download"
-        style="@style/DankMediaAlbumViewerOption"
-        android:src="@drawable/ic_cloud_download_24dp" />
+      <!-- ContentDescription for these buttons are set programmatically -->
+      <LinearLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:gravity="bottom">
 
-      <ImageButton
-        android:id="@+id/mediaalbumviewer_open_in_browser"
-        style="@style/DankMediaAlbumViewerOption"
-        android:src="@drawable/ic_web_browser_24dp" />
+        <ImageButton
+          android:id="@+id/mediaalbumviewer_share"
+          style="@style/DankMediaAlbumViewerOption"
+          android:src="@drawable/ic_share_24dp" />
 
-      <ImageButton
-        android:id="@+id/mediaalbumviewer_reload_in_hd"
-        style="@style/DankMediaAlbumViewerOption"
-        android:src="@drawable/ic_hd_24dp" />
+        <ImageButton
+          android:id="@+id/mediaalbumviewer_download"
+          style="@style/DankMediaAlbumViewerOption"
+          android:src="@drawable/ic_cloud_download_24dp" />
+
+        <ImageButton
+          android:id="@+id/mediaalbumviewer_open_in_browser"
+          style="@style/DankMediaAlbumViewerOption"
+          android:src="@drawable/ic_web_browser_24dp" />
+
+        <ImageButton
+          android:id="@+id/mediaalbumviewer_reload_in_hd"
+          style="@style/DankMediaAlbumViewerOption"
+          android:src="@drawable/ic_hd_24dp" />
+      </LinearLayout>
     </LinearLayout>
-  </LinearLayout>
-</FrameLayout>
+  </RelativeLayout>
+</RelativeLayout>
