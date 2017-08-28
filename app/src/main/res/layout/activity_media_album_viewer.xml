@@ -4,7 +4,8 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:background="@color/black_opacity_90"
+  android:animateLayoutChanges="true"
+  android:background="@color/black_opacity_75"
   android:fitsSystemWindows="true"
   android:orientation="vertical"
   tools:background="@color/black_opacity_10">
@@ -25,6 +26,7 @@
     android:id="@+id/mediaalbumviewer_media_content_info_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
+    android:animateLayoutChanges="true"
     android:gravity="bottom|end"
     android:orientation="vertical"
     tools:ignore="ContentDescription">

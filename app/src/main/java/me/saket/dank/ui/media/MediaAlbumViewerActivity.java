@@ -73,9 +73,7 @@ import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 import timber.log.Timber;
 
-public class MediaAlbumViewerActivity extends DankActivity
-    implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks, SystemUiHelper.OnSystemUiVisibilityChangeListener
-{
+public class MediaAlbumViewerActivity extends DankActivity implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks {
 
   private static final String KEY_MEDIA_LINK_TO_SHOW = "mediaLinkToShow";
   private static final String KEY_REDDIT_SUPPLIED_IMAGES = "redditSuppliedImages";
@@ -137,6 +135,7 @@ public class MediaAlbumViewerActivity extends DankActivity
 
     // Animated once images are fetched.
     contentInfoContainerView.setVisibility(View.INVISIBLE);
+    ((ViewGroup) contentInfoContainerView.getParent()).getLayoutTransition().setDuration(200);
 
     // Show the option buttons above the navigation bar.
     int navBarHeight = Views.getNavigationBarSize(this).y;
@@ -152,7 +151,9 @@ public class MediaAlbumViewerActivity extends DankActivity
     });
 
     rxPermissions = new RxPermissions(this);
-    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, this);
+    systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, systemUiVisible -> {
+      systemUiVisibilityStream.accept(systemUiVisible);
+    });
   }
 
   @Override
@@ -205,6 +206,16 @@ public class MediaAlbumViewerActivity extends DankActivity
                   Timber.e(error, "Couldn't resolve media link");
                 }
             )
+    );
+
+    // Hide all content when Activity goes immersive.
+    unsubscribeOnDestroy(
+        systemUiVisibilityStream
+            .subscribe(systemUiVisible -> {
+              TimeInterpolator interpolator = systemUiVisible ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(2f);
+              long animationDuration = 300;
+              animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
+            })
     );
   }
 
@@ -331,15 +342,6 @@ public class MediaAlbumViewerActivity extends DankActivity
   }
 
   @Override
-  public void onSystemUiVisibilityChange(boolean systemUiVisible) {
-    TimeInterpolator interpolator = systemUiVisible ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(2f);
-    long animationDuration = 300;
-    animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
-
-    systemUiVisibilityStream.accept(systemUiVisible);
-  }
-
-  @Override
   public int getDeviceDisplayWidth() {
     return getResources().getDisplayMetrics().widthPixels;
   }
@@ -380,6 +382,9 @@ public class MediaAlbumViewerActivity extends DankActivity
   @Override
   public void onMoveMedia(@FloatRange(from = -1, to = 1) float moveRatio) {
     updateBackgroundDimmingAlpha(Math.abs(moveRatio));
+
+    boolean isImageBeingMoved = moveRatio != 0f;
+    contentInfoContainerView.setVisibility(isImageBeingMoved ? View.GONE : View.VISIBLE);
   }
 
   /**
