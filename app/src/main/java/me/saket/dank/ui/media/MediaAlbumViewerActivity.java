@@ -492,8 +492,14 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
   @OnClick(R.id.mediaalbumviewer_open_in_browser)
   void onClickOpenMediaInBrowser() {
-    MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
-    startActivity(Intents.createForOpeningUrl(activeMediaItem.mediaLink().highQualityUrl()));
+    // Open the entire album in the browser.
+    if (resolvedMediaLink.isMediaAlbum()) {
+      startActivity(Intents.createForOpeningUrl(resolvedMediaLink.unparsedUrl()));
+
+    } else {
+      MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
+      startActivity(Intents.createForOpeningUrl(activeMediaItem.mediaLink().highQualityUrl()));
+    }
 
     if (mediaAlbumAdapter.getCount() == 1) {
       // User prefers viewing this media in the browser.
