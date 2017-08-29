@@ -34,6 +34,7 @@ import io.reactivex.Completable;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.links.Link;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -180,13 +181,18 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     DankLinkMovementMethod commentLinkMovementMethod = DankLinkMovementMethod.newInstance();
     commentLinkMovementMethod.setOnLinkClickListener((textView, url) -> {
       Point clickedUrlCoordinates = commentLinkMovementMethod.getLastUrlClickCoordinates();
-      int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
-      Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
-
       Link parsedLink = UrlParser.parse(url);
-      UrlRouter.with(this)
-          .expandFrom(clickedUrlCoordinatesRect)
-          .resolveIntentAndOpen(parsedLink);
+
+      if (parsedLink instanceof RedditUserLink) {
+        UrlRouter.with(this)
+            .expandFrom(clickedUrlCoordinates)
+            .openUserProfile(((RedditUserLink) parsedLink), textView);
+
+      } else {
+        UrlRouter.with(this)
+            .expandFrom(clickedUrlCoordinates)
+            .resolveIntentAndOpen(parsedLink);
+      }
       return true;
     });
     return commentLinkMovementMethod;

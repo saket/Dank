@@ -2,6 +2,8 @@ package me.saket.dank.ui.media;
 
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.text.method.LinkMovementMethod;
+import android.text.util.Linkify;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
@@ -64,7 +66,15 @@ public class BaseMediaViewerFragment extends DankFragment {
               Views.setPaddingBottom(titleDescriptionView, titleDescriptionView.getPaddingBottom() + optionsHeight);
 
               if (mediaLinkToShow instanceof ImgurLink) {
-                titleDescriptionView.setTitleAndDescription(((ImgurLink) mediaLinkToShow).title(), ((ImgurLink) mediaLinkToShow).description());
+                String title = ((ImgurLink) mediaLinkToShow).title();
+                String description = ((ImgurLink) mediaLinkToShow).description();
+                titleDescriptionView.setTitleAndDescription(title, description);
+
+                if (description != null) {
+                  LinkMovementMethod linkMovementMethod = ((MediaFragmentCallbacks) getActivity()).getMediaDescriptionLinkMovementMethod();
+                  titleDescriptionView.descriptionView.setMovementMethod(linkMovementMethod);
+                  Linkify.addLinks(titleDescriptionView.descriptionView, Linkify.ALL);
+                }
               }
             })
     );

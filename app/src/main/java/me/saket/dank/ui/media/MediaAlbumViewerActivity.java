@@ -7,6 +7,7 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,6 +16,7 @@ import android.support.annotation.FloatRange;
 import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v7.widget.PopupMenu;
+import android.text.method.LinkMovementMethod;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
@@ -58,15 +60,20 @@ import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.exceptions.SerializableThumbnails;
 import me.saket.dank.data.links.ImgurAlbumLink;
+import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
+import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ScrollInterceptibleViewPager;
@@ -102,6 +109,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   private RxPermissions rxPermissions;
   private Relay<Boolean> systemUiVisibilityStream = BehaviorRelay.create();
   private MediaLink resolvedMediaLink;
+  private DankLinkMovementMethod linkMovementMethod;
 
   public static void start(Context context, MediaLink mediaLink, @Nullable SerializableThumbnails redditSuppliedImages) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
@@ -279,6 +287,30 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @Override
   public Observable<Boolean> systemUiVisibilityStream() {
     return systemUiVisibilityStream;
+  }
+
+  @Override
+  public LinkMovementMethod getMediaDescriptionLinkMovementMethod() {
+    if (linkMovementMethod == null) {
+      linkMovementMethod = DankLinkMovementMethod.newInstance();
+      linkMovementMethod.setOnLinkClickListener((textView, url) -> {
+        Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
+        Link parsedLink = UrlParser.parse(url);
+
+        if (parsedLink instanceof RedditUserLink) {
+          UrlRouter.with(this)
+              .expandFrom(clickedUrlCoordinates)
+              .openUserProfile(((RedditUserLink) parsedLink), textView);
+
+        } else {
+          UrlRouter.with(this)
+              .expandFrom(clickedUrlCoordinates)
+              .resolveIntentAndOpen(parsedLink);
+        }
+        return true;
+      });
+    }
+    return linkMovementMethod;
   }
 
   @Override

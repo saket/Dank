@@ -86,7 +86,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     super.onViewCreated(view, savedInstanceState);
 
     imageView.setGestureRotationEnabled(true);
-    imageView.setVisibility(View.INVISIBLE);
+    imageView.setVisibility(View.INVISIBLE);    // Becomes VISIBLE when the image actually loads.
 
     MediaLink mediaLinkToShow = mediaAlbumItem.mediaLink();
     String optimizedImageUrl = mediaHostRepository.findOptimizedQualityImageForDevice(
