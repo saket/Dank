@@ -14,7 +14,6 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
-import com.github.rahatarmanahmed.cpv.CircularProgressView;
 import com.github.rahatarmanahmed.cpv.CircularProgressViewAdapter;
 
 import javax.inject.Inject;
@@ -25,10 +24,12 @@ import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.FileSizeUnit;
 import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.utils.glide.GlideUtils;
+import me.saket.dank.widgets.ProgressWithFileSizeView;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
@@ -39,7 +40,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
   @BindView(R.id.albumviewerimage_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
   @BindView(R.id.albumviewerimage_imageview) ZoomableImageView imageView;
-  @BindView(R.id.albumviewerimage_progress) CircularProgressView progressView;
+  @BindView(R.id.albumviewerimage_progress) ProgressWithFileSizeView progressView;
   @BindView(R.id.albumviewerimage_title_description) MediaAlbumViewerTitleDescriptionView titleDescriptionView;
   @BindView(R.id.albumviewerimage_title_description_dimming) View titleDescriptionBackgroundDimmingView;
 
@@ -100,7 +101,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     // updating its progress and the radial progress bar reaching the progress. So setting its
     // visibility based on the progress is not an option. We use its provided listener instead to hide
     // progress only once it has reached 100%.
-    progressView.addListener(new CircularProgressViewAdapter() {
+    progressView.addProgressAnimationListener(new CircularProgressViewAdapter() {
       @Override
       public void onProgressUpdateEnd(float currentProgress) {
         progressView.setVisibility(currentProgress < 100 ? View.VISIBLE : View.GONE);
@@ -115,8 +116,8 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   }
 
   private void loadImage(String imageUrl) {
-    ImageLoadProgressTarget<Drawable> progressTarget = new ImageLoadProgressTarget<>(new DrawableImageViewTarget(imageView), progressView);
-    progressTarget.setModel(getActivity(), imageUrl);
+    ImageLoadProgressTarget<Drawable> targetWithProgress = new ImageLoadProgressTarget<>(new DrawableImageViewTarget(imageView), progressView);
+    targetWithProgress.setModel(getActivity(), imageUrl);
 
     Glide.with(this)
         .load(imageUrl)
@@ -146,7 +147,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
             super.onLoadFailed(e);
           }
         })
-        .into(progressTarget);
+        .into(targetWithProgress);
   }
 
   private void setupFlickGestures(FlickDismissLayout imageContainerView) {
@@ -174,11 +175,11 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   }
 
   private static class ImageLoadProgressTarget<Z> extends GlideProgressTarget<String, Z> {
-    private final CircularProgressView progressView;
+    private final ProgressWithFileSizeView progressWithFileSizeView;
 
-    public ImageLoadProgressTarget(Target<Z> target, CircularProgressView progressView) {
+    public ImageLoadProgressTarget(Target<Z> target, ProgressWithFileSizeView progressWithFileSizeView) {
       super(target);
-      this.progressView = progressView;
+      this.progressWithFileSizeView = progressWithFileSizeView;
     }
 
     @Override
@@ -191,14 +192,15 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     }
 
     @Override
-    protected void onDownloading(long bytesRead, long expectedLength) {
-      int progress = (int) (100 * (float) bytesRead / expectedLength);
-      progressView.setProgress(progress);
+    protected void onDownloading(long bytesRead, long expectedBytes) {
+      int progress = (int) (100 * (float) bytesRead / expectedBytes);
+      progressWithFileSizeView.setFileSizeBytes(expectedBytes, FileSizeUnit.BYTES);
+      progressWithFileSizeView.setProgress(progress);
     }
 
     @Override
     protected void onDownloaded() {
-      progressView.setProgress(100);
+      progressWithFileSizeView.setProgress(100);
     }
 
     @Override

@@ -466,8 +466,8 @@ public class MediaDownloadService extends Service {
         }
 
         @Override
-        protected void onDownloading(long bytesRead, long expectedLength) {
-          int progress = (int) (100 * (float) bytesRead / expectedLength);
+        protected void onDownloading(long bytesRead, long expectedBytes) {
+          int progress = (int) (100 * (float) bytesRead / expectedBytes);
           emitter.onNext(MediaDownloadJob.createProgress(mediaLink, progress, downloadStartTimeMillis));
         }
 

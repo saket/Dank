@@ -50,16 +50,16 @@ public abstract class GlideProgressTarget<T, Z> extends GlideWrappingTarget<Z> i
   }
 
   @Override
-  public void onProgress(long bytesRead, long expectedLength) {
+  public void onProgress(long bytesRead, long expectedBytes) {
     if (ignoreProgress) {
       return;
     }
-    if (expectedLength == Long.MAX_VALUE) {
+    if (expectedBytes == Long.MAX_VALUE) {
       onConnecting();
-    } else if (bytesRead == expectedLength) {
+    } else if (bytesRead == expectedBytes) {
       onDownloaded();
     } else {
-      onDownloading(bytesRead, expectedLength);
+      onDownloading(bytesRead, expectedBytes);
     }
   }
 
@@ -73,7 +73,7 @@ public abstract class GlideProgressTarget<T, Z> extends GlideWrappingTarget<Z> i
    * Called when there's any progress on the download; not called when loading from cache.
    * At this time we know how many bytes have been transferred through the wire.
    */
-  protected abstract void onDownloading(long bytesRead, long expectedLength);
+  protected abstract void onDownloading(long bytesRead, long expectedBytes);
 
   /**
    * Called when the bytes downloaded reach the length reported by the server; not called when loading from cache.

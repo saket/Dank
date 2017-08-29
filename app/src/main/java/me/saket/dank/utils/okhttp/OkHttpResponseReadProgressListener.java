@@ -8,7 +8,7 @@ import okhttp3.HttpUrl;
 public interface OkHttpResponseReadProgressListener {
 
   /**
-   * @param expectedContentLength Expected length reported by the server. This may or may not be exact.
+   * @param expectedContentBytes Expected length reported by the server. This may or may not be exact.
    */
-  void update(HttpUrl url, long bytesRead, long expectedContentLength);
+  void update(HttpUrl url, long bytesRead, long expectedContentBytes);
 }

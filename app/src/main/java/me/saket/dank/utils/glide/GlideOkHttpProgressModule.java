@@ -45,7 +45,7 @@ public class GlideOkHttpProgressModule extends LibraryGlideModule {
   }
 
   public interface UiProgressListener {
-    void onProgress(long bytesRead, long expectedLength);
+    void onProgress(long bytesRead, long expectedLengthBytes);
 
     /**
      * Control how often the listener needs an update. 0% and 100% will always be dispatched.

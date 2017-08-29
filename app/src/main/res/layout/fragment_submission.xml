@@ -232,7 +232,7 @@
       tools:paddingTop="@dimen/spacing16" />
   </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
 
-  <!-- This progressView scrolls with the comments sheet, until the
+  <!-- TprogressWithFileSizeViewView scrolls with the comments sheet, until the
      toolbar is reached. -->
   <me.saket.dank.widgets.SubmissionAnimatedProgressBar
     android:id="@+id/submission_content_progress_bar"

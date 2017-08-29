@@ -38,18 +38,18 @@ public class OkHttpProgressListenersRepository implements OkHttpResponseReadProg
   }
 
   @Override
-  public void update(HttpUrl url, final long bytesRead, final long expectedContentLength) {
+  public void update(HttpUrl url, final long bytesRead, final long expectedContentBytes) {
     //System.out.printf("%s: %d/%d = %.2f%%%n", url, bytesRead, contentLength, (100f * bytesRead) / contentLength);
     String key = url.toString();
     final GlideOkHttpProgressModule.UiProgressListener listener = LISTENERS.get(key);
     if (listener == null) {
       return;
     }
-    if (expectedContentLength <= bytesRead) {
+    if (expectedContentBytes <= bytesRead) {
       removeUiProgressListener(key);
     }
-    if (needsDispatch(key, bytesRead, expectedContentLength, listener.getGranularityPercentage())) {
-      handler.post(() -> listener.onProgress(bytesRead, expectedContentLength));
+    if (needsDispatch(key, bytesRead, expectedContentBytes, listener.getGranularityPercentage())) {
+      handler.post(() -> listener.onProgress(bytesRead, expectedContentBytes));
     }
   }
 

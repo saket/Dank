@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <string name="filesize_bytes">%d B</string>
+  <string name="filesize_kilobytes">%d KB</string>
+  <string name="filesize_megabytes">%d MB</string>
+  <string name="filesize_gigabytes">%d GB</string>
+</resources>
