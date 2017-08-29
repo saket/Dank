@@ -121,6 +121,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
     Glide.with(this)
         .load(imageUrl)
+        // Adding a 1px transparent border improves anti-aliasing.
         .apply(RequestOptions.bitmapTransform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
           @Override
           public Size getPadding(int imageWidth, int imageHeight) {

@@ -30,6 +30,7 @@ public class DankVideoControlsView extends VideoControls {
   @BindView(R.id.exomedia_controls_play_icon) ImageView playIconView;
   @BindView(R.id.exomedia_controls_video_seek) SeekBar progressSeekBar;
   @BindView(R.id.exomedia_controls_video_seek_container) ViewGroup progressSeekBarContainer;
+  @BindView(R.id.exomedia_controls_video_loading) ProgressWithFileSizeView loadingProgressBar;
 
   private boolean userInteractingWithSeek;
   private VideoProgressChangeListener progressChangeListener;
@@ -98,7 +99,8 @@ public class DankVideoControlsView extends VideoControls {
     ButterKnife.bind(this, this);
 
     playPauseButton = ButterKnife.findById(this, R.id.exomedia_controls_play_pause_btn);
-    loadingProgressBar = ButterKnife.findById(this, R.id.exomedia_controls_video_loading);
+    loadingProgressBar.setIndeterminate(true);
+    loadingProgressBar.setProgressBackgroundFillEnabled(false);
 
     // Cannot remove these because ExoMedia expects them to be non-null.
     descriptionTextView = currentTimeTextView = endTimeTextView = titleTextView = subTitleTextView = new TextView(getContext());

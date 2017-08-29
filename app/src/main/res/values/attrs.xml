@@ -22,4 +22,8 @@
   <declare-styleable name="ErrorStateView">
     <attr name="emojiVisible" format="boolean" />
   </declare-styleable>
+
+  <declare-styleable name="ProgressWithFileSizeView">
+    <attr name="progressBarSize" format="dimension" />
+  </declare-styleable>
 </resources>

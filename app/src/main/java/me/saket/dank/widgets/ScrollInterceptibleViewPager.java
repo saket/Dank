@@ -35,12 +35,7 @@ public class ScrollInterceptibleViewPager extends ViewPager {
   @Override
   protected boolean canScroll(View view, boolean checkView, int dx, int x, int y) {
     boolean intercepted = onInterceptScrollListener.onInterceptScroll(view, dx, x, y);
-
-    if (intercepted) {
-      return true;
-    } else {
-      return super.canScroll(view, checkView, dx, x, y);
-    }
+    return intercepted || super.canScroll(view, checkView, dx, x, y);
   }
 
   @Override

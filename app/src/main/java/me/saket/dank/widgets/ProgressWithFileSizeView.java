@@ -1,6 +1,7 @@
 package me.saket.dank.widgets;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
@@ -16,6 +17,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.utils.FileSizeUnit;
+import me.saket.dank.utils.Views;
 
 public class ProgressWithFileSizeView extends LinearLayout {
 
@@ -31,8 +33,17 @@ public class ProgressWithFileSizeView extends LinearLayout {
     LayoutInflater.from(context).inflate(R.layout.custom_progress_bar_with_file_size, this, true);
     ButterKnife.bind(this, this);
 
+    TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.ProgressWithFileSizeView);
+    if (attributes.hasValue(R.styleable.ProgressWithFileSizeView_progressBarSize)) {
+      int progressBarSize = attributes.getDimensionPixelSize(R.styleable.ProgressWithFileSizeView_progressBarSize, 0);
+      Views.setDimensions(progressBackgroundView, progressBarSize, progressBarSize);
+      Views.setDimensions(progressView, progressBarSize, progressBarSize);
+    }
+    attributes.recycle();
+
     progressBackgroundView.setMaxProgress(100);
     progressBackgroundView.setProgress(100);
+
     fileSizeView.setVisibility(GONE); // Set to VISIBLE when setFileSizeBytes() gets called.
     setOrientation(VERTICAL);
   }
@@ -43,6 +54,19 @@ public class ProgressWithFileSizeView extends LinearLayout {
 
   public CircularProgressView getProgressView() {
     return progressView;
+  }
+
+  public void setProgress(int progress) {
+    progressView.setProgress(progress);
+  }
+
+  public void setProgressBackgroundFillEnabled(boolean enabled) {
+    progressBackgroundView.setVisibility(enabled ? VISIBLE : GONE);
+  }
+
+  public void setIndeterminate(boolean indeterminate) {
+    progressView.setIndeterminate(indeterminate);
+    progressView.startAnimation();
   }
 
   public void setFileSizeBytes(double size, FileSizeUnit sizeUnit) {
@@ -70,9 +94,5 @@ public class ProgressWithFileSizeView extends LinearLayout {
 
     fileSizeView.setVisibility(VISIBLE);
     fileSizeView.setText(fileSizeView.getResources().getString(stringTemplateInSensibleUnitRes, (int) sizeInSensibleUnit));
-  }
-
-  public void setProgress(int progress) {
-    progressView.setProgress(progress);
   }
 }

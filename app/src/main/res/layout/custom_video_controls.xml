@@ -3,6 +3,7 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
   android:layout_below="@+id/exomedia_video_view"
   tools:background="@color/blue_gray_800">
 
@@ -25,14 +26,14 @@
     android:outlineProvider="bounds"
     android:src="@drawable/ic_play_circle_72dp" />
 
-  <ProgressBar
+  <me.saket.dank.widgets.ProgressWithFileSizeView
     android:id="@+id/exomedia_controls_video_loading"
-    style="?android:progressBarStyleLarge"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_centerInParent="true"
+    app:progressBarSize="74dp"
     android:visibility="gone"
-    tools:visibility="gone" />
+    tools:visibility="visible" />
 
   <!-- Extra touch area for the seek-bar, because it's too small in itself.
        This is moved downwards in code so that the seek-bar is aligned with

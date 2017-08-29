@@ -10,6 +10,7 @@
   <FrameLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"><!-- Acts as the background for the following indeterminate progress bar. -->
+
     <com.github.rahatarmanahmed.cpv.CircularProgressView
       android:id="@+id/progressbarwithfilesize_progress_fill"
       android:layout_width="48dp"
@@ -40,6 +41,6 @@
     android:paddingEnd="@dimen/spacing8"
     android:paddingStart="@dimen/spacing8"
     android:paddingTop="@dimen/spacing2"
-    tools:text="260 KB"
-    android:textAllCaps="true" />
+    android:textAllCaps="true"
+    tools:text="260 KB" />
 </merge>
