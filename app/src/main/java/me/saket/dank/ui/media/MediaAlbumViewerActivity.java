@@ -16,6 +16,7 @@ import android.support.annotation.Nullable;
 import android.support.v4.content.FileProvider;
 import android.support.v7.widget.PopupMenu;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
@@ -100,6 +101,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   private PopupMenu sharePopupMenu;
   private RxPermissions rxPermissions;
   private Relay<Boolean> systemUiVisibilityStream = BehaviorRelay.create();
+  private MediaLink resolvedMediaLink;
 
   public static void start(Context context, MediaLink mediaLink, @Nullable SerializableThumbnails redditSuppliedImages) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
@@ -173,6 +175,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     MediaLink mediaLinkToDisplay = getIntent().getParcelableExtra(KEY_MEDIA_LINK_TO_SHOW);
     unsubscribeOnDestroy(
         mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
+            .doOnSuccess(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
             .map(resolvedMediaLink -> {
               if (resolvedMediaLink.isMediaAlbum()) {
                 return ((ImgurAlbumLink) resolvedMediaLink).images();
@@ -217,98 +220,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
               animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
             })
     );
-  }
-
-  /**
-   * Menu items get inflated in {@link #onPostCreate(Bundle)} on page change depending upon the current media's type (image or video).
-   */
-  private PopupMenu createSharePopupMenu() {
-    // Note: the style sets a negative top offset so that the popup appears on top of the share button.
-    // Unfortunately, setting WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS on the Window causes
-    // PopupMenu to not position itself within the window limits, regardless of using top gravity.
-    PopupMenu sharePopupMenu = new PopupMenu(this, shareButton, Gravity.TOP, 0, R.style.DankPopupMenu_AlbumViewerOption);
-    sharePopupMenu.setOnMenuItemClickListener(item -> {
-      MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
-
-      switch (item.getItemId()) {
-        case R.id.action_share_image:
-          unsubscribeOnDestroy(
-              findHighestResImageFileFromCache(activeMediaItem)
-                  .map(imageFile -> {
-                    // Glide uses random file names, without any extensions. Certain apps like Messaging
-                    // fail to parse images if there's no file format, so we'll have to create a copy.
-                    String imageNameWithExtension = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().highQualityUrl());
-                    File imageFileWithExtension = new File(imageFile.getParent(), imageNameWithExtension);
-                    Files.copy(imageFile, imageFileWithExtension);
-                    return imageFileWithExtension;
-                  })
-                  .compose(RxUtils.applySchedulersSingle())
-                  .subscribe(
-                      imageFile -> {
-                        Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), imageFile);
-                        Intent intent = Intents.createForSharingMedia(this, contentUri);
-                        startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
-                      },
-                      error -> {
-                        if (error instanceof NoSuchElementException) {
-                          Toast.makeText(this, R.string.mediaalbumviewer_share_image_not_loaded_yet, Toast.LENGTH_SHORT).show();
-                        } else {
-                          ResolvedError resolvedError = Dank.errors().resolve(error);
-                          Toast.makeText(this, resolvedError.errorMessageRes(), Toast.LENGTH_LONG).show();
-                        }
-                      }
-                  )
-          );
-          break;
-
-        case R.id.action_share_video:
-          unsubscribeOnDestroy(
-              Single.just(activeMediaItem.mediaLink())
-                  .map(mediaLink -> {
-                    if (videoCacheServer.isCached(mediaLink.highQualityUrl())) {
-                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.highQualityUrl());
-                      return new File(Uri.parse(cachedVideoFileUrl).getPath());
-
-                    } else if (videoCacheServer.isCached(mediaLink.lowQualityUrl())) {
-                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.lowQualityUrl());
-                      return new File(Uri.parse(cachedVideoFileUrl).getPath());
-
-                    } else {
-                      throw new NoSuchElementException();
-                    }
-                  })
-                  .subscribe(
-                      videoFile -> {
-                        Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), videoFile);
-                        Intent intent = Intents.createForSharingMedia(this, contentUri);
-                        startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
-                      },
-                      error -> {
-                        if (error instanceof NoSuchElementException) {
-                          Toast.makeText(this, R.string.mediaalbumviewer_share_video_not_loaded_yet, Toast.LENGTH_SHORT).show();
-                        } else {
-                          ResolvedError resolvedError = Dank.errors().resolve(error);
-                          Toast.makeText(this, resolvedError.errorMessageRes(), Toast.LENGTH_LONG).show();
-                        }
-                      }
-                  )
-          );
-          break;
-
-        case R.id.action_share_image_url:
-        case R.id.action_share_video_url:
-          Intent shareUrlIntent = Intents.createForSharingUrl(null, activeMediaItem.mediaLink().highQualityUrl());
-          startActivity(Intent.createChooser(shareUrlIntent, getString(R.string.webview_share_sheet_title)));
-          break;
-
-        default:
-          throw new AssertionError();
-      }
-
-      return true;
-    });
-
-    return sharePopupMenu;
   }
 
   private void startListeningToViewPagerPageChanges() {
@@ -457,12 +368,110 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         .firstOrError();
   }
 
+  /**
+   * Menu items get inflated in {@link #onPostCreate(Bundle)} on page change depending upon the current media's type (image or video).
+   */
+  private PopupMenu createSharePopupMenu() {
+    // Note: the style sets a negative top offset so that the popup appears on top of the share button.
+    // Unfortunately, setting WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS on the Window causes
+    // PopupMenu to not position itself within the window limits, regardless of using top gravity.
+    PopupMenu sharePopupMenu = new PopupMenu(this, shareButton, Gravity.TOP, 0, R.style.DankPopupMenu_AlbumViewerOption);
+    sharePopupMenu.setOnMenuItemClickListener(item -> {
+      MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
+
+      switch (item.getItemId()) {
+        case R.id.action_share_image:
+          unsubscribeOnDestroy(
+              findHighestResImageFileFromCache(activeMediaItem)
+                  .map(imageFile -> {
+                    // Glide uses random file names, without any extensions. Certain apps like Messaging
+                    // fail to parse images if there's no file format, so we'll have to create a copy.
+                    String imageNameWithExtension = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().highQualityUrl());
+                    File imageFileWithExtension = new File(imageFile.getParent(), imageNameWithExtension);
+                    Files.copy(imageFile, imageFileWithExtension);
+                    return imageFileWithExtension;
+                  })
+                  .compose(RxUtils.applySchedulersSingle())
+                  .subscribe(
+                      imageFile -> {
+                        Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), imageFile);
+                        Intent intent = Intents.createForSharingMedia(this, contentUri);
+                        startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
+                      },
+                      error -> {
+                        if (error instanceof NoSuchElementException) {
+                          Toast.makeText(this, R.string.mediaalbumviewer_share_image_not_loaded_yet, Toast.LENGTH_SHORT).show();
+                        } else {
+                          ResolvedError resolvedError = Dank.errors().resolve(error);
+                          Toast.makeText(this, resolvedError.errorMessageRes(), Toast.LENGTH_LONG).show();
+                        }
+                      }
+                  )
+          );
+          break;
+
+        case R.id.action_share_video:
+          unsubscribeOnDestroy(
+              Single.just(activeMediaItem.mediaLink())
+                  .map(mediaLink -> {
+                    if (videoCacheServer.isCached(mediaLink.highQualityUrl())) {
+                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.highQualityUrl());
+                      return new File(Uri.parse(cachedVideoFileUrl).getPath());
+
+                    } else if (videoCacheServer.isCached(mediaLink.lowQualityUrl())) {
+                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.lowQualityUrl());
+                      return new File(Uri.parse(cachedVideoFileUrl).getPath());
+
+                    } else {
+                      throw new NoSuchElementException();
+                    }
+                  })
+                  .subscribe(
+                      videoFile -> {
+                        Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), videoFile);
+                        Intent intent = Intents.createForSharingMedia(this, contentUri);
+                        startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
+                      },
+                      error -> {
+                        if (error instanceof NoSuchElementException) {
+                          Toast.makeText(this, R.string.mediaalbumviewer_share_video_not_loaded_yet, Toast.LENGTH_SHORT).show();
+                        } else {
+                          ResolvedError resolvedError = Dank.errors().resolve(error);
+                          Toast.makeText(this, resolvedError.errorMessageRes(), Toast.LENGTH_LONG).show();
+                        }
+                      }
+                  )
+          );
+          break;
+
+        case R.id.action_share_album_url:
+          Intent shareAlbumUrlIntent = Intents.createForSharingUrl(null, resolvedMediaLink.unparsedUrl());
+          startActivity(Intent.createChooser(shareAlbumUrlIntent, getString(R.string.webview_share_sheet_title)));
+          break;
+
+        case R.id.action_share_image_url:
+        case R.id.action_share_video_url:
+          Intent shareMediaUrlIntent = Intents.createForSharingUrl(null, activeMediaItem.mediaLink().highQualityUrl());
+          startActivity(Intent.createChooser(shareMediaUrlIntent, getString(R.string.webview_share_sheet_title)));
+          break;
+
+        default:
+          throw new AssertionError();
+      }
+
+      return true;
+    });
+
+    return sharePopupMenu;
+  }
+
   private void updateShareMenuFor(MediaAlbumItem activeMediaItem) {
     sharePopupMenu.getMenu().clear();
-    getMenuInflater().inflate(
-        activeMediaItem.mediaLink().isVideo() ? R.menu.menu_share_video : R.menu.menu_share_image,
-        sharePopupMenu.getMenu()
-    );
+    int menuRes = activeMediaItem.mediaLink().isVideo() ? R.menu.menu_share_video : R.menu.menu_share_image;
+    getMenuInflater().inflate(menuRes, sharePopupMenu.getMenu());
+
+    MenuItem shareAlbumMenuItem = sharePopupMenu.getMenu().findItem(R.id.action_share_album_url);
+    shareAlbumMenuItem.setVisible(resolvedMediaLink.isMediaAlbum());
   }
 
   @OnClick(R.id.mediaalbumviewer_share)

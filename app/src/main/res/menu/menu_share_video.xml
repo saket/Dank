@@ -8,4 +8,8 @@
   <item
     android:id="@+id/action_share_video_url"
     android:title="@string/mediaalbumviewer_share_video_link" />
+
+  <item
+    android:id="@+id/action_share_album_url"
+    android:title="@string/mediaalbumviewer_share_album_link" />
 </menu>

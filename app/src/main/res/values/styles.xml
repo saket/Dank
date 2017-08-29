@@ -328,6 +328,7 @@
   </style>
 
   <style name="DankPopupMenu.AlbumViewerOption">
-    <item name="android:dropDownVerticalOffset">-96dip</item>
+    <item name="android:dropDownVerticalOffset">-120dip</item>
+    <item name="android:dropDownHorizontalOffset">8dip</item>
   </style>
 </resources>

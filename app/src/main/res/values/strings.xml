@@ -245,4 +245,5 @@
   <string name="userprofilepopup_account_age_in_months">%dm</string>
   <string name="userprofilepopup_account_age_in_years">%dy</string>
   <string name="userprofilepopup_error_message_tap_to_retry">%s. Tap to retry.</string>
+  <string name="mediaalbumviewer_share_album_link">Share album link</string>
 </resources>

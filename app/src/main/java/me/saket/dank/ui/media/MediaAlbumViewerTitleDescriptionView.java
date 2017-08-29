@@ -22,7 +22,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.utils.Views;
-import timber.log.Timber;
 
 public class MediaAlbumViewerTitleDescriptionView extends RelativeLayout {
 
@@ -69,8 +68,6 @@ public class MediaAlbumViewerTitleDescriptionView extends RelativeLayout {
 
     titleView.setVisibility(TextUtils.isEmpty(title) ? View.GONE : View.VISIBLE);
     descriptionView.setVisibility(TextUtils.isEmpty(description) ? View.GONE : View.VISIBLE);
-
-    // TODO: Avoid doing measurement if description is empty?
 
     Views.executeOnNextLayout(this, () -> {
       int extraTopPadding;
