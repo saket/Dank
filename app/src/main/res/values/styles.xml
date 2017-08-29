@@ -331,4 +331,19 @@
     <item name="android:dropDownVerticalOffset">-120dip</item>
     <item name="android:dropDownHorizontalOffset">8dip</item>
   </style>
+
+  <style name="DankMediaImageScrollHint">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">@drawable/background_submission_image_scroll_hint</item>
+    <item name="android:drawablePadding">@dimen/spacing4</item>
+    <item name="android:drawableStart">@drawable/ic_arrow_downward_18dp</item>
+    <item name="android:elevation">@dimen/elevation_toolbar</item>
+    <item name="android:foreground">?attr/selectableItemBackgroundBorderless</item>
+    <item name="android:paddingBottom">@dimen/spacing4</item>
+    <item name="android:paddingEnd">@dimen/spacing8</item>
+    <item name="android:paddingStart">@dimen/spacing8</item>
+    <item name="android:paddingTop">@dimen/spacing4</item>
+    <item name="android:textColor">@color/black</item>
+  </style>
 </resources>

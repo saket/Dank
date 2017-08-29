@@ -21,23 +21,12 @@
        hinting them that the image can be scrolled. -->
   <me.saket.dank.widgets.TintableCompoundDrawableTextView
     android:id="@+id/submission_image_scroll_hint"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
+    style="@style/DankMediaImageScrollHint"
     android:layout_alignBottom="@+id/submission_image"
     android:layout_centerHorizontal="true"
     android:layout_marginBottom="@dimen/spacing16"
-    android:background="@drawable/background_submission_image_scroll_hint"
-    android:drawablePadding="@dimen/spacing4"
-    android:drawableStart="@drawable/ic_arrow_downward_18dp"
-    android:elevation="@dimen/elevation_toolbar"
-    android:foreground="?attr/selectableItemBackgroundBorderless"
     android:gravity="center_vertical"
-    android:paddingBottom="@dimen/spacing4"
-    android:paddingEnd="@dimen/spacing8"
-    android:paddingStart="@dimen/spacing8"
-    android:paddingTop="@dimen/spacing4"
     android:text="@string/submission_image_scroll_down_hint"
-    android:textColor="@color/black"
     android:visibility="gone" />
 
   <!-- This has a background to avoid leaking the background when video is zoomed out. -->

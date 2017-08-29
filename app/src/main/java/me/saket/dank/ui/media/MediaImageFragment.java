@@ -6,10 +6,13 @@ import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.util.Size;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
+import com.alexvasilkov.gestures.GestureController;
+import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
@@ -26,6 +29,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.FileSizeUnit;
 import me.saket.dank.utils.MediaHostRepository;
+import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.utils.glide.GlideUtils;
@@ -43,6 +47,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   @BindView(R.id.albumviewerimage_progress) ProgressWithFileSizeView progressView;
   @BindView(R.id.albumviewerimage_title_description) MediaAlbumViewerTitleDescriptionView titleDescriptionView;
   @BindView(R.id.albumviewerimage_title_description_dimming) View titleDescriptionBackgroundDimmingView;
+  @BindView(R.id.albumviewerimage_long_image_scroll_hint) View longImageScrollHint;
 
   @Inject MediaHostRepository mediaHostRepository;
 
@@ -88,6 +93,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
     imageView.setGestureRotationEnabled(true);
     imageView.setVisibility(View.INVISIBLE);    // Becomes VISIBLE when the image actually loads.
+    imageView.setGravity(Gravity.TOP);
 
     MediaLink mediaLinkToShow = mediaAlbumItem.mediaLink();
     String optimizedImageUrl = mediaHostRepository.findOptimizedQualityImageForDevice(
@@ -113,6 +119,19 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
     // Toggle immersive when the user clicks anywhere.
     imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).onClickMediaItem());
+  }
+
+  /**
+   * Called when the fragment becomes visible / hidden to the user.
+   */
+  @Override
+  public void setUserVisibleHint(boolean isVisibleToUser) {
+    super.setUserVisibleHint(isVisibleToUser);
+    if (!isVisibleToUser && imageView != null) {
+      // Photo is no longer visible.
+      titleDescriptionView.resetScrollY();
+      imageView.resetState();
+    }
   }
 
   private void loadImage(String imageUrl) {
@@ -141,6 +160,19 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
                 .rotation(0)
                 .setInterpolator(Animations.INTERPOLATOR)
                 .start();
+
+            unsubscribeOnDestroy(
+                ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
+                    .doOnSuccess(optionButtonsHeight -> {
+                      int defaultBottomMargin = getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_scroll_hint_bottom_margin);
+                      Views.setMarginBottom(longImageScrollHint, optionButtonsHeight + defaultBottomMargin);
+                    })
+                    .subscribe(optionButtonsHeight -> {
+                      if (resource.getIntrinsicHeight() > imageView.getHeight()) {
+                        showImageScrollHint(resource.getIntrinsicHeight(), imageView.getHeight());
+                      }
+                    })
+            );
           }
 
           @Override
@@ -163,16 +195,55 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   }
 
   /**
-   * Called when the fragment becomes visible / hidden to the user.
+   * Show a tooltip at the bottom of the image, hinting the user that the image is long and can be scrolled.
    */
-  @Override
-  public void setUserVisibleHint(boolean isVisibleToUser) {
-    super.setUserVisibleHint(isVisibleToUser);
-    if (!isVisibleToUser && imageView != null) {
-      // Photo is no longer visible.
-      titleDescriptionView.resetScrollY();
-      imageView.resetState();
-    }
+  private void showImageScrollHint(float imageHeight, float visibleImageHeight) {
+    longImageScrollHint.setVisibility(View.VISIBLE);
+    longImageScrollHint.setAlpha(0f);
+
+    // Postpone till measure because we need the height.
+    Views.executeOnMeasure(longImageScrollHint, () -> {
+      longImageScrollHint.setTranslationY(longImageScrollHint.getHeight() / 2);
+      longImageScrollHint.animate()
+          .alpha(1f)
+          .translationY(0f)
+          .setDuration(300)
+          .setInterpolator(Animations.INTERPOLATOR)
+          .start();
+    });
+
+    // Hide the tooltip once the user starts scrolling the image.
+    GestureController.OnStateChangeListener imageScrollListener = new GestureController.OnStateChangeListener() {
+      private boolean hidden = false;
+
+      @Override
+      public void onStateChanged(State state) {
+        if (hidden) {
+          return;
+        }
+
+        float distanceScrolledY = Math.abs(state.getY());
+        float distanceScrollableY = imageHeight - visibleImageHeight;
+        float scrolledPercentage = distanceScrolledY / distanceScrollableY;
+
+        // Hide it after the image has been scrolled 10% of its height.
+        if (scrolledPercentage > 0.1f) {
+          hidden = true;
+          longImageScrollHint.animate()
+              .alpha(0f)
+              .translationY(-longImageScrollHint.getHeight() / 2)
+              .setDuration(300)
+              .setInterpolator(Animations.INTERPOLATOR)
+              //.withEndAction(() -> longImageScrollHint.setVisibility(View.INVISIBLE))
+              .start();
+        }
+      }
+
+      @Override
+      public void onStateReset(State oldState, State newState) {
+      }
+    };
+    imageView.getController().addOnStateChangeListener(imageScrollListener);
   }
 
   private static class ImageLoadProgressTarget<Z> extends GlideProgressTarget<String, Z> {

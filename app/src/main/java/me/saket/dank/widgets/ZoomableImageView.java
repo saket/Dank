@@ -95,6 +95,7 @@ public class ZoomableImageView extends GestureImageView {
 
   /**
    * Whether the image can be panned anymore vertically, upwards or downwards depending upon <var>downwardPan</var>.
+   * downwardPan == upwards scroll.
    */
   public boolean canPanFurtherVertically(boolean downwardPan) {
     State state = getController().getState();

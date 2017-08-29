@@ -27,6 +27,20 @@
       android:layout_gravity="center"
       android:visibility="gone"
       tools:visibility="visible" />
+
+    <!-- Visible for images longer than the display window,
+         hinting them that the image can be scrolled. -->
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
+      android:id="@+id/albumviewerimage_long_image_scroll_hint"
+      style="@style/DankMediaImageScrollHint"
+      android:layout_alignBottom="@+id/submission_image"
+      android:layout_centerHorizontal="true"
+      android:layout_gravity="bottom|center_horizontal"
+      android:gravity="center_vertical"
+      android:layout_marginBottom="@dimen/mediaalbumviewer_image_scroll_hint_bottom_margin"
+      android:text="@string/submission_image_scroll_down_hint"
+      android:visibility="gone"
+      tools:visibility="visible" />
   </me.saket.dank.widgets.binoculars.FlickDismissLayout>
 
   <View

@@ -52,7 +52,7 @@ public class ErrorManager {
       // Stupid JRAW wraps all HTTP exceptions with RuntimeException.
       error = error.getCause();
     }
-    if (error instanceof IllegalStateException && error.getMessage().contains("Reached retry limit")) {
+    if (error instanceof IllegalStateException && error.getMessage() != null && error.getMessage().contains("Reached retry limit")) {
       error = error.getCause();
     }
     return error;
