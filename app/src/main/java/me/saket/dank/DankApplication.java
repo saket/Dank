@@ -115,13 +115,13 @@ public class DankApplication extends Application {
       }
       if ((e instanceof NullPointerException) || (e instanceof IllegalArgumentException)) {
         // That's likely a bug in the application.
-        Timber.e(e.getMessage());
+        Timber.e(e, e.getMessage());
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
         return;
       }
       if (e instanceof IllegalStateException) {
         // That's a bug in RxJava or in a custom operator.
-        Timber.e(e.getMessage());
+        Timber.e(e, e.getMessage());
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
         return;
       }

@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -57,6 +58,8 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @BindView(R.id.inbox_tablayout) TabLayout tabLayout;
   @BindView(R.id.inbox_viewpager) ViewPager viewPager;
 
+  @Inject UrlRouter urlRouter;
+
   private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.ALL.length);
   private InboxPagerAdapter inboxPagerAdapter;
   private Set<Message> seenUnreadMessages = new HashSet<>();
@@ -74,6 +77,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
+    Dank.dependencyInjector().inject(this);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_inbox);
     ButterKnife.bind(this);
@@ -184,14 +188,14 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       Link parsedLink = UrlParser.parse(url);
 
       if (parsedLink instanceof RedditUserLink) {
-        UrlRouter.with(this)
+        urlRouter.forLink(((RedditUserLink) parsedLink))
             .expandFrom(clickedUrlCoordinates)
-            .openUserProfile(((RedditUserLink) parsedLink), textView);
+            .open(textView);
 
       } else {
-        UrlRouter.with(this)
+        urlRouter.forLink(parsedLink)
             .expandFrom(clickedUrlCoordinates)
-            .resolveIntentAndOpen(parsedLink);
+            .open(this);
       }
       return true;
     });
@@ -207,9 +211,9 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     if (message.isComment()) {
       String commentUrl = "https://reddit.com" + message.getDataNode().get("context").asText();
       Link parsedLink = UrlParser.parse(commentUrl);
-      UrlRouter.with(this)
+      urlRouter.forLink(parsedLink)
           .expandFrom(messageItemViewRect)
-          .resolveIntentAndOpen(parsedLink);
+          .open(this);
 
     } else {
       String secondPartyName = JrawUtils.secondPartyName(getResources(), message, Dank.userSession().loggedInUserName());

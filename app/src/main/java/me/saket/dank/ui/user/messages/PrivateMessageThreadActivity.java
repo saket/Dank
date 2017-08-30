@@ -23,6 +23,7 @@ import net.dean.jraw.models.Message;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -31,6 +32,7 @@ import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.links.Link;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
@@ -50,6 +52,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.privatemessagethread_message_list) RecyclerView messageRecyclerView;
   @BindView(R.id.privatemessagethread_reply) FloatingActionButton replyButton;
 
+  @Inject UrlRouter urlRouter;
+
   private ThreadedMessagesAdapter messagesAdapter;
 
   public static void start(Context context, String messageId, String threadSecondPartyName, @Nullable Rect expandFromShape) {
@@ -62,6 +66,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
+    Dank.dependencyInjector().inject(this);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_private_message_thread);
     ButterKnife.bind(this);
@@ -91,13 +96,18 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
     linkMovementMethod.setOnLinkClickListener((textView, url) -> {
       Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
-      int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
-      Rect clickedUrlCoordinatesRect = new Rect(0, clickedUrlCoordinates.y, deviceDisplayWidth, clickedUrlCoordinates.y);
-
       Link parsedLink = UrlParser.parse(url);
-      UrlRouter.with(this)
-          .expandFrom(clickedUrlCoordinatesRect)
-          .resolveIntentAndOpen(parsedLink);
+
+      if (parsedLink instanceof RedditUserLink) {
+        urlRouter.forLink(((RedditUserLink) parsedLink))
+            .expandFrom(clickedUrlCoordinates)
+            .open(textView);
+
+      } else {
+        urlRouter.forLink(parsedLink)
+            .expandFrom(clickedUrlCoordinates)
+            .open(this);
+      }
       return true;
     });
 

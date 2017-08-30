@@ -141,6 +141,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
 
   @Inject MediaHostRepository mediaHostRepository;
+  @Inject UrlRouter urlRouter;
 
   private ExpandablePageLayout submissionPageLayout;
   private CommentsAdapter commentsAdapter;
@@ -203,14 +204,14 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
 
       if (parsedLink instanceof RedditUserLink) {
-        UrlRouter.with(getContext())
+        urlRouter.forLink(((RedditUserLink) parsedLink))
             .expandFrom(clickedUrlCoordinates)
-            .openUserProfile(((RedditUserLink) parsedLink), textView);
+            .open(textView);
 
       } else {
-        UrlRouter.with(getContext())
+        urlRouter.forLink(parsedLink)
             .expandFrom(clickedUrlCoordinates)
-            .resolveIntentAndOpen(parsedLink);
+            .open(getContext());
       }
       return true;
     });
@@ -878,6 +879,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       case SINGLE_IMAGE_OR_GIF:
         Thumbnails redditSuppliedImages = submission.getThumbnails();
         contentImageViewHolder.load((MediaLink) contentLink, redditSuppliedImages);
+
+        // Open media in full-screen on click.
+        contentImageView.setOnClickListener(o -> {
+          urlRouter.forLink(((MediaLink) contentLink))
+              .withRedditSuppliedImages(submission.getThumbnails())
+              .open(getContext());
+        });
         break;
 
       case REDDIT_HOSTED:
@@ -893,7 +901,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           //noinspection ConstantConditions
           unsubscribeOnCollapse(linkDetailsViewHolder.populate(((RedditLink) contentLink)));
           linkDetailsView.setOnClickListener(o -> {
-            UrlRouter.with(getContext()).expandFromBelowToolbar().resolveIntentAndOpen(contentLink);
+            urlRouter.forLink(contentLink)
+                .expandFromBelowToolbar()
+                .open(getContext());
           });
         }
         break;
@@ -905,7 +915,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             submission.getThumbnails(),
             linkDetailsViewHolder.getThumbnailWidthForExternalLink()
         );
-        linkDetailsView.setOnClickListener(o -> UrlRouter.with(getContext()).resolveIntentAndOpen(contentLink));
+        linkDetailsView.setOnClickListener(o -> {
+          urlRouter.forLink(contentLink)
+              .expandFromBelowToolbar()
+              .open(getContext());
+        });
 
         if (isImgurAlbum) {
           linkDetailsViewHolder.populate(((ImgurAlbumLink) contentLink), redditSuppliedThumbnail);

@@ -5,12 +5,12 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.support.annotation.Nullable;
 import android.view.View;
-import android.widget.Toast;
 
 import net.dean.jraw.models.Thumbnails;
 
-import me.saket.dank.data.exceptions.SerializableThumbnails;
-import me.saket.dank.data.links.ExternalLink;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
@@ -19,85 +19,127 @@ import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
-import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.webview.WebViewActivity;
-import timber.log.Timber;
+import me.saket.dank.utils.JacksonHelper;
 
+@Singleton
 public class UrlRouter {
 
-  @Nullable private Point expandFromPoint;
-  @Nullable private Rect expandFromRect;
-  @Nullable private SerializableThumbnails redditSuppliedImages;
+  @Inject JacksonHelper jacksonHelper;
 
-  private final Context context;
-
-  public static UrlRouter with(Context context) {
-    return new UrlRouter(context);
+  @Inject
+  protected UrlRouter() {
   }
 
-  private UrlRouter(Context context) {
-    this.context = context;
-  }
-
-  public UrlRouter expandFrom(Point expandFromPoint) {
-    this.expandFromPoint = expandFromPoint;
-    return this;
-  }
-
-  public UrlRouter expandFrom(Rect expandFromRect) {
-    this.expandFromRect = expandFromRect;
-    return this;
+  public UrlRouter.UserProfilePopup forLink(RedditUserLink redditUserLink) {
+    return new UserProfilePopup(redditUserLink);
   }
 
   /**
-   * Just makes the entry animation explicit for the code reader; nothing else.
+   * For cases where {@link UrlRouter.MediaIntent#withRedditSuppliedImages(Thumbnails)} cab be used.
    */
-  public UrlRouter expandFromBelowToolbar() {
-    return expandFrom((Rect) null);
+  public UrlRouter.MediaIntent forLink(MediaLink mediaLink) {
+    return new MediaIntent(mediaLink, jacksonHelper);
   }
 
-  public UrlRouter useRedditSuppliedImages(@Nullable Thumbnails redditSuppliedImages) {
-    if (redditSuppliedImages != null) {
-      this.redditSuppliedImages = new SerializableThumbnails(redditSuppliedImages.getDataNode());
+  public UrlRouter.Intent forLink(Link link) {
+    if (link instanceof RedditUserLink) {
+      throw new UnsupportedOperationException("Use forLink(RedditUserLink) instead.");
     }
-    return this;
+    return new Intent(link);
   }
 
-  public void resolveIntentAndOpen(Link link) {
-    Timber.i("%s", link);
-    if (expandFromRect == null && expandFromPoint != null) {
-      int deviceDisplayWidthPx = context.getResources().getDisplayMetrics().widthPixels;
-      expandFromRect = new Rect(0, expandFromPoint.y, deviceDisplayWidthPx, expandFromPoint.y);
+  public static class Intent extends UrlRouter {
+    private Link link;
+
+    @Nullable private Point expandFromPoint;
+    @Nullable private Rect expandFromRect;
+
+    public Intent(Link link) {
+      this.link = link;
     }
 
-    if (link instanceof RedditSubredditLink) {
-      SubredditActivityWithTransparentWindowBackground.start(context, (RedditSubredditLink) link, expandFromRect);
+    /**
+     * Just makes the entry animation explicit for the code reader; nothing else.
+     */
+    public Intent expandFromBelowToolbar() {
+      return expandFrom((Rect) null);
+    }
 
-    } else if (link instanceof RedditSubmissionLink) {
-      SubmissionFragmentActivity.start(context, (RedditSubmissionLink) link, expandFromRect);
+    public Intent expandFrom(Point expandFromPoint) {
+      this.expandFromPoint = expandFromPoint;
+      return this;
+    }
 
-    } else if (link instanceof RedditUserLink) {
-      throw new IllegalStateException("Use UserProfilePopup instead");
+    public Intent expandFrom(Rect expandFromRect) {
+      this.expandFromRect = expandFromRect;
+      return this;
+    }
 
-    } else if (link instanceof MediaLink) {
-      MediaAlbumViewerActivity.start(context, ((MediaLink) link), redditSuppliedImages);
+    public void open(Context context) {
+      if (expandFromRect == null && expandFromPoint != null) {
+        int deviceDisplayWidthPx = context.getResources().getDisplayMetrics().widthPixels;
+        expandFromRect = new Rect(0, expandFromPoint.y, deviceDisplayWidthPx, expandFromPoint.y);
+      }
 
-    } else if (link.isExternal()) {
-      if (link instanceof ExternalLink) {
+      if (link instanceof RedditSubredditLink) {
+        SubredditActivityWithTransparentWindowBackground.start(context, (RedditSubredditLink) link, expandFromRect);
+
+      } else if (link instanceof RedditSubmissionLink) {
+        SubmissionFragmentActivity.start(context, (RedditSubmissionLink) link, expandFromRect);
+
+      } else if (link instanceof RedditUserLink) {
+        throw new IllegalStateException("Use UserProfilePopup instead");
+
+      } else if (link instanceof MediaLink) {
+        MediaAlbumViewerActivity.start(context, ((MediaLink) link), null, jacksonHelper);
+
+      } else if (link.isExternal()) {
         WebViewActivity.start(context, link.unparsedUrl());
 
       } else {
         throw new UnsupportedOperationException("Unknown external link: " + link);
       }
-
-    } else {
-      Toast.makeText(context, "TODO: " + link.getClass().getSimpleName(), Toast.LENGTH_SHORT).show();
     }
   }
 
-  public void openUserProfile(RedditUserLink userLink, View anchorView) {
-    UserProfilePopup userProfilePopup = new UserProfilePopup(anchorView.getContext());
-    userProfilePopup.loadUserProfile(userLink);
-    userProfilePopup.showAtLocation(anchorView, expandFromPoint);
+  public static class MediaIntent extends UrlRouter {
+    @Nullable private Thumbnails redditSuppliedImages;
+    private final MediaLink link;
+    private final JacksonHelper jacksonHelper;
+
+    public MediaIntent(MediaLink link, JacksonHelper jacksonHelper) {
+      this.link = link;
+      this.jacksonHelper = jacksonHelper;
+    }
+
+    public MediaIntent withRedditSuppliedImages(@Nullable Thumbnails redditSuppliedImages) {
+      this.redditSuppliedImages = redditSuppliedImages;
+      return this;
+    }
+
+    public void open(Context context) {
+      MediaAlbumViewerActivity.start(context, link, redditSuppliedImages, jacksonHelper);
+    }
+  }
+
+  public static class UserProfilePopup extends UrlRouter {
+    private RedditUserLink link;
+    @Nullable private Point expandFromPoint;
+
+    public UserProfilePopup(RedditUserLink link) {
+      this.link = link;
+    }
+
+    public UserProfilePopup expandFrom(Point expandFromPoint) {
+      this.expandFromPoint = expandFromPoint;
+      return this;
+    }
+
+    public void open(View anchorView) {
+      me.saket.dank.ui.user.UserProfilePopup userProfilePopup = new me.saket.dank.ui.user.UserProfilePopup(anchorView.getContext());
+      userProfilePopup.loadUserProfile(link);
+      userProfilePopup.showAtLocation(anchorView, expandFromPoint);
+    }
   }
 }

@@ -58,7 +58,6 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.data.exceptions.SerializableThumbnails;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
@@ -70,6 +69,7 @@ import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Intents;
+import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
@@ -84,7 +84,7 @@ import timber.log.Timber;
 public class MediaAlbumViewerActivity extends DankActivity implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks {
 
   private static final String KEY_MEDIA_LINK_TO_SHOW = "mediaLinkToShow";
-  private static final String KEY_REDDIT_SUPPLIED_IMAGES = "redditSuppliedImages";
+  private static final String KEY_REDDIT_SUPPLIED_IMAGE_JSON = "redditSuppliedImageJson";
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
   @BindView(R.id.mediaalbumviewer_pager) ScrollInterceptibleViewPager mediaAlbumPager;
@@ -100,6 +100,8 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
   @Inject MediaHostRepository mediaHostRepository;
   @Inject HttpProxyCacheServer videoCacheServer;
+  @Inject JacksonHelper jacksonHelper;
+  @Inject UrlRouter urlRouter;
 
   private SystemUiHelper systemUiHelper;
   private Drawable activityBackgroundDrawable;
@@ -111,11 +113,12 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   private MediaLink resolvedMediaLink;
   private DankLinkMovementMethod linkMovementMethod;
 
-  public static void start(Context context, MediaLink mediaLink, @Nullable SerializableThumbnails redditSuppliedImages) {
+  public static void start(Context context, MediaLink mediaLink, @Nullable Thumbnails redditSuppliedImages, JacksonHelper jacksonHelper) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
     intent.putExtra(KEY_MEDIA_LINK_TO_SHOW, mediaLink);
     if (redditSuppliedImages != null) {
-      intent.putExtra(KEY_REDDIT_SUPPLIED_IMAGES, redditSuppliedImages);
+      String redditSuppliedImageJson = jacksonHelper.toJson(redditSuppliedImages.getDataNode());
+      intent.putExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON, redditSuppliedImageJson);
     }
     context.startActivity(intent);
   }
@@ -268,8 +271,9 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @Nullable
   @Override
   public Thumbnails getRedditSuppliedImages() {
-    if (getIntent().hasExtra(KEY_REDDIT_SUPPLIED_IMAGES)) {
-      return (Thumbnails) getIntent().getSerializableExtra(KEY_REDDIT_SUPPLIED_IMAGES);
+    if (getIntent().hasExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON)) {
+      String redditSuppliedImagesJson = getIntent().getStringExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON);
+      return new Thumbnails(jacksonHelper.parseJsonNode(redditSuppliedImagesJson));
     } else {
       return null;
     }
@@ -298,14 +302,14 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         Link parsedLink = UrlParser.parse(url);
 
         if (parsedLink instanceof RedditUserLink) {
-          UrlRouter.with(this)
+          urlRouter.forLink(((RedditUserLink) parsedLink))
               .expandFrom(clickedUrlCoordinates)
-              .openUserProfile(((RedditUserLink) parsedLink), textView);
+              .open(textView);
 
         } else {
-          UrlRouter.with(this)
+          urlRouter.forLink(parsedLink)
               .expandFrom(clickedUrlCoordinates)
-              .resolveIntentAndOpen(parsedLink);
+              .open(this);
         }
         return true;
       });
