@@ -69,7 +69,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
     setupSubmissionFragment();
     if (savedInstanceState == null) {
       if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
-        loadSubmission((RedditSubmissionLink) getIntent().getSerializableExtra(KEY_SUBMISSION_LINK));
+        loadSubmission((RedditSubmissionLink) getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
       } else {
         loadSubmission((DankSubmissionRequest) getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
       }

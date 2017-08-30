@@ -367,7 +367,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       //noinspection ConstantConditions
       subredditChangesRelay.accept(retainedSub);
     } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
-      String requestedSub = ((RedditSubredditLink) getIntent().getSerializableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name();
+      String requestedSub = ((RedditSubredditLink) getIntent().getParcelableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name();
       subredditChangesRelay.accept(requestedSub);
     } else {
       subredditChangesRelay.accept(Dank.subscriptions().defaultSubreddit());
