@@ -16,6 +16,8 @@ import com.alexvasilkov.gestures.views.GestureImageView;
 /**
  * This wrapper exists so that we can easily change libraries in the future. It has happened once so far
  * and can happen again.
+ * <p>
+ * Does not support a foreground ripple, because it intercepts all touch events for handling scale and pan.
  */
 public class ZoomableImageView extends GestureImageView {
 

@@ -36,8 +36,8 @@
       android:layout_alignBottom="@+id/submission_image"
       android:layout_centerHorizontal="true"
       android:layout_gravity="bottom|center_horizontal"
-      android:gravity="center_vertical"
       android:layout_marginBottom="@dimen/mediaalbumviewer_image_scroll_hint_bottom_margin"
+      android:gravity="center_vertical"
       android:text="@string/submission_image_scroll_down_hint"
       android:visibility="gone"
       tools:visibility="visible" />

@@ -122,6 +122,11 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
   }
 
   @Override
+  public void handleMediaItemUpdate(MediaAlbumItem updatedMediaAlbumItem) {
+    // TODO.
+  }
+
+  @Override
   public void setUserVisibleHint(boolean isVisibleToUser) {
     super.setUserVisibleHint(isVisibleToUser);
     fragmentVisibleToUserStream.accept(isVisibleToUser);

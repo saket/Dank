@@ -128,7 +128,7 @@ public class MediaHostRepository {
     return imgurImageLinks;
   }
 
-  public String findOptimizedQualityImageForDevice(String defaultImageUrl, @Nullable Thumbnails redditSuppliedImages, int deviceDisplayWidth) {
+  public String findOptimizedQualityImageForDisplay(@Nullable Thumbnails redditSuppliedImages, int deviceDisplayWidth, String defaultImageUrl) {
     if (redditSuppliedImages != null && UrlParser.isImagePath(defaultImageUrl)) {
       return Commons.findOptimizedImage(redditSuppliedImages, deviceDisplayWidth);
     } else {

@@ -106,12 +106,14 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   private SystemUiHelper systemUiHelper;
   private Drawable activityBackgroundDrawable;
   private MediaAlbumPagerAdapter mediaAlbumAdapter;
-  private Set<MediaAlbumItem> mediaItemsWithHighDefEnabled = new HashSet<>();
   private PopupMenu sharePopupMenu;
   private RxPermissions rxPermissions;
   private Relay<Boolean> systemUiVisibilityStream = BehaviorRelay.create();
   private MediaLink resolvedMediaLink;
   private DankLinkMovementMethod linkMovementMethod;
+  private Set<MediaLink> hdEnabledMediaLinks = new HashSet<>();
+  private Relay<Set<MediaLink>> hdEnabledMediaLinksStream = BehaviorRelay.create();
+  private Relay<MediaAlbumItem> viewpagerPageChangeStream = BehaviorRelay.create();
 
   public static void start(Context context, MediaLink mediaLink, @Nullable Thumbnails redditSuppliedImages, JacksonHelper jacksonHelper) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
@@ -183,37 +185,71 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     sharePopupMenu = createSharePopupMenu();
     shareButton.setOnTouchListener(sharePopupMenu.getDragToOpenListener());
 
+    mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager());
+    mediaAlbumPager.setAdapter(mediaAlbumAdapter);
+    hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);  // Initial value.
+
+    progressBar.setVisibility(View.VISIBLE);
+
     MediaLink mediaLinkToDisplay = getIntent().getParcelableExtra(KEY_MEDIA_LINK_TO_SHOW);
     unsubscribeOnDestroy(
         mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
             .doOnSuccess(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
             .map(resolvedMediaLink -> {
+              Timber.i("resolvedMediaLink: %s", resolvedMediaLink);
+
+              // Find all child images under an album.
               if (resolvedMediaLink.isMediaAlbum()) {
                 return ((ImgurAlbumLink) resolvedMediaLink).images();
               } else {
                 return Collections.singletonList(resolvedMediaLink);
               }
             })
-            .map(mediaLinks -> {
-              List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
-              for (MediaLink mediaLink : mediaLinks) {
-                mediaAlbumItems.add(MediaAlbumItem.create(mediaLink));
-              }
-              return mediaAlbumItems;
-            })
             .compose(RxUtils.applySchedulersSingle())
-            .compose(RxUtils.doOnSingleStartAndTerminate(start -> progressBar.setVisibility(start ? View.VISIBLE : View.GONE)))
-            .doAfterSuccess(o -> startListeningToViewPagerPageChanges())
+            .doAfterTerminate(() -> progressBar.setVisibility(View.GONE))
+            .doOnSuccess(mediaLinks -> {
+              // Toggle HD for all images with the default value.
+              boolean loadHighQualityImageByDefault = false; // TODO: Get this from user's mobile-data preferences.
+
+              if (loadHighQualityImageByDefault) {
+                hdEnabledMediaLinks.addAll(mediaLinks);
+                hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);
+              }
+            })
+            .flatMapObservable(mediaLinks ->
+                hdEnabledMediaLinksStream
+                    .map(hdEnabledMediaLinks -> {
+                      List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
+                      for (MediaLink mediaLink : mediaLinks) {
+                        boolean highDefEnabled = hdEnabledMediaLinks.contains(mediaLink);
+
+                        mediaAlbumItems.add(MediaAlbumItem.create(mediaLink, highDefEnabled));
+                      }
+                      return mediaAlbumItems;
+                    })
+            )
             .subscribe(
                 mediaAlbumItems -> {
-                  // Show media options now that we have adapter data.
-                  contentInfoContainerView.setVisibility(View.VISIBLE);
-                  Views.executeOnMeasure(contentInfoContainerView, () -> {
-                    animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
-                  });
+                  // Note: FragmentStatePagerAdapter does not refresh any active Fragments so the changes
+                  // won't be reflected right away. As a workaround, onClickReloadMediaInHighDefinition()
+                  // calls a refresh method on the active Fragment directly.
+                  boolean isFirstDataChange = mediaAlbumAdapter.getCount() == 0;
+                  mediaAlbumAdapter.setAlbumItems(mediaAlbumItems);
 
-                  mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager(), mediaAlbumItems);
-                  mediaAlbumPager.setAdapter(mediaAlbumAdapter);
+                  if (isFirstDataChange) {
+                    startListeningToViewPagerPageChanges();
+
+                    // Show media options now that we have adapter data.
+                    contentInfoContainerView.setVisibility(View.VISIBLE);
+                    Views.executeOnMeasure(contentInfoContainerView, () -> {
+                      animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
+                    });
+
+                  } else {
+                    // Note: FragmentStatePagerAdapter does not refresh any active Fragments so doing it manually.
+                    MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
+                    mediaAlbumAdapter.getActiveFragment().handleMediaItemUpdate(activeMediaItem);
+                  }
                 },
                 error -> {
                   // TODO: Handle error.
@@ -231,6 +267,26 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
               animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
             })
     );
+
+    // Toggle HD button's visibility if a higher-res version can be shown and is not already visible.
+    unsubscribeOnDestroy(
+        viewpagerPageChangeStream
+            .concatMap(activeMediaItem -> hdEnabledMediaLinksStream
+                .map(o -> activeMediaItem)
+            )
+            .subscribe(activeMediaItem -> {
+              String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
+              String optimizedQualityUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
+                  getRedditSuppliedImages(),
+                  getResources().getDisplayMetrics().widthPixels,
+                  activeMediaItem.mediaLink().lowQualityUrl() /* defaultValue */
+              );
+
+              boolean hasHighDefVersion = !optimizedQualityUrl.equals(highQualityUrl);
+              boolean isAlreadyShowingHighDefVersion = hdEnabledMediaLinks.contains(activeMediaItem.mediaLink());
+              reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
+            })
+    );
   }
 
   private void startListeningToViewPagerPageChanges() {
@@ -238,10 +294,9 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         RxViewPager.pageSelections(mediaAlbumPager)
             .map(currentItem -> mediaAlbumAdapter.getDataSet().get(currentItem))
             .doOnNext(activeMediaItem -> updateContentDescriptionOfOptionButtonsAccordingTo(activeMediaItem))
-            .doOnNext(activeMediaItem -> enableHighDefButtonIfPossible(activeMediaItem))
             .doOnNext(activeMediaItem -> updateShareMenuFor(activeMediaItem))
             .doOnNext(activeMediaItem -> updateMediaDisplayPosition())
-            .subscribe()
+            .subscribe(viewpagerPageChangeStream)
     );
   }
 
@@ -378,10 +433,8 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     });
 
     Observable<File> optimizedResImageFileStream = Observable.create(emitter -> {
-      String optimizedQualityImageForDevice = mediaHostRepository.findOptimizedQualityImageForDevice(
-          albumItem.mediaLink().lowQualityUrl(),
-          getRedditSuppliedImages(),
-          getDeviceDisplayWidth()
+      String optimizedQualityImageForDevice = mediaHostRepository.findOptimizedQualityImageForDisplay(
+          getRedditSuppliedImages(), getDeviceDisplayWidth(), albumItem.mediaLink().lowQualityUrl()
       );
 
       FutureTarget<File> optimizedResolutionImageTarget = Glide.with(this)
@@ -546,25 +599,12 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @OnClick(R.id.mediaalbumviewer_reload_in_hd)
   void onClickReloadMediaInHighDefinition() {
     MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
-    if (mediaItemsWithHighDefEnabled.contains(activeMediaItem)) {
-      mediaItemsWithHighDefEnabled.remove(activeMediaItem);
+    if (hdEnabledMediaLinks.contains(activeMediaItem.mediaLink())) {
+      hdEnabledMediaLinks.remove(activeMediaItem.mediaLink());
     } else {
-      mediaItemsWithHighDefEnabled.add(activeMediaItem);
+      hdEnabledMediaLinks.add(activeMediaItem.mediaLink());
     }
-
-    // TODO: Update data-set.
-  }
-
-  /**
-   * Enable HD button if a higher-res version can be shown and is not already visible.
-   */
-  private void enableHighDefButtonIfPossible(MediaAlbumItem activeMediaItem) {
-    String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
-    String lowQualityUrl = activeMediaItem.mediaLink().lowQualityUrl();
-    boolean hasHighDefVersion = !lowQualityUrl.equals(highQualityUrl);
-
-    boolean isAlreadyShowingHighDefVersion = mediaItemsWithHighDefEnabled.contains(activeMediaItem);
-    reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
+    hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);
   }
 
   private void animateMediaOptionsVisibility(boolean showOptions, TimeInterpolator interpolator, long animationDuration, boolean setInitialValues) {

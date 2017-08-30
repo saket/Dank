@@ -3,16 +3,22 @@ package me.saket.dank.ui.media;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
+import android.view.ViewGroup;
 
 import java.util.List;
 
 public class MediaAlbumPagerAdapter extends FragmentStatePagerAdapter {
 
   private List<MediaAlbumItem> albumItems;
+  private BaseMediaViewerFragment activeFragment;
 
-  public MediaAlbumPagerAdapter(FragmentManager manager, List<MediaAlbumItem> albumItems) {
+  public MediaAlbumPagerAdapter(FragmentManager manager) {
     super(manager);
+  }
+
+  public void setAlbumItems(List<MediaAlbumItem> albumItems) {
     this.albumItems = albumItems;
+    notifyDataSetChanged();
   }
 
   @Override
@@ -26,6 +32,16 @@ public class MediaAlbumPagerAdapter extends FragmentStatePagerAdapter {
   @Override
   public int getCount() {
     return albumItems != null ? albumItems.size() : 0;
+  }
+
+  @Override
+  public void setPrimaryItem(ViewGroup container, int position, Object object) {
+    super.setPrimaryItem(container, position, object);
+    activeFragment = ((BaseMediaViewerFragment) object);
+  }
+
+  public BaseMediaViewerFragment getActiveFragment() {
+    return activeFragment;
   }
 
   public List<MediaAlbumItem> getDataSet() {

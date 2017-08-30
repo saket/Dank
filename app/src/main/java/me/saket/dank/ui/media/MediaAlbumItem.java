@@ -11,7 +11,9 @@ public abstract class MediaAlbumItem implements Parcelable {
 
   public abstract MediaLink mediaLink();
 
-  public static MediaAlbumItem create(MediaLink mediaLink) {
-    return new AutoValue_MediaAlbumItem(mediaLink);
+  public abstract boolean highDefinitionEnabled();
+
+  public static MediaAlbumItem create(MediaLink mediaLink, boolean highDefinitionEnabled) {
+    return new AutoValue_MediaAlbumItem(mediaLink, highDefinitionEnabled);
   }
 }

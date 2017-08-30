@@ -17,11 +17,16 @@ import me.saket.dank.widgets.binoculars.FlickGestureListener;
 /**
  * Includes common logic for showing title & description and dimming the image when the description is scrolled.
  */
-public class BaseMediaViewerFragment extends DankFragment {
+public abstract class BaseMediaViewerFragment extends DankFragment {
 
   private MediaAlbumViewerTitleDescriptionView titleDescriptionView;
   private View imageDimmingView;
   private MediaLink mediaLinkToShow;
+
+  /**
+   * Called when the data-set changes for this fragment. Currently happens when the HD button is toggled.
+   */
+  public abstract void handleMediaItemUpdate(MediaAlbumItem updatedMediaAlbumItem);
 
   public void setTitleDescriptionView(MediaAlbumViewerTitleDescriptionView titleDescriptionView) {
     this.titleDescriptionView = titleDescriptionView;

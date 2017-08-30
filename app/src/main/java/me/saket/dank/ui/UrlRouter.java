@@ -113,6 +113,11 @@ public class UrlRouter {
       this.jacksonHelper = jacksonHelper;
     }
 
+    /**
+     * I have considered parsing reddit-supplied images and including them in {@link MediaLink}
+     * as low-quality URL, but that wouldn't work. The logic for filtering reddit's images is
+     * done based on the display width, which will change on config changes.
+     */
     public MediaIntent withRedditSuppliedImages(@Nullable Thumbnails redditSuppliedImages) {
       this.redditSuppliedImages = redditSuppliedImages;
       return this;

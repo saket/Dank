@@ -120,7 +120,7 @@ public class SubmissionImageHolder {
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
     Glide.with(imageView)
-        .load(mediaHostRepository.findOptimizedQualityImageForDevice(contentLink.lowQualityUrl(), redditSuppliedImages, deviceDisplayWidth))
+        .load(mediaHostRepository.findOptimizedQualityImageForDisplay(redditSuppliedImages, deviceDisplayWidth, contentLink.lowQualityUrl()))
         .apply(new RequestOptions()
             .priority(Priority.IMMEDIATE)
             .transform(glidePaddingTransformation)

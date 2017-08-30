@@ -24,7 +24,6 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
-import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.FileSizeUnit;
@@ -93,15 +92,8 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
     imageView.setGestureRotationEnabled(true);
     imageView.setVisibility(View.INVISIBLE);    // Becomes VISIBLE when the image actually loads.
-    imageView.setGravity(Gravity.TOP);
 
-    MediaLink mediaLinkToShow = mediaAlbumItem.mediaLink();
-    String optimizedImageUrl = mediaHostRepository.findOptimizedQualityImageForDevice(
-        mediaLinkToShow.lowQualityUrl(),
-        ((MediaFragmentCallbacks) getActivity()).getRedditSuppliedImages(),
-        ((MediaFragmentCallbacks) getActivity()).getDeviceDisplayWidth()
-    );
-    loadImage(optimizedImageUrl);
+    loadImage(mediaAlbumItem, true);
 
     // CircularProgressView smoothly animates the progress, which means there's a certain delay between
     // updating its progress and the radial progress bar reaching the progress. So setting its
@@ -119,6 +111,15 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
     // Toggle immersive when the user clicks anywhere.
     imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).onClickMediaItem());
+
+    // Show title and description above the Activity option buttons.
+    unsubscribeOnDestroy(
+        ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
+            .subscribe(optionButtonsHeight -> {
+              int defaultBottomMargin = getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_scroll_hint_bottom_margin);
+              Views.setMarginBottom(longImageScrollHint, optionButtonsHeight + defaultBottomMargin);
+            })
+    );
   }
 
   /**
@@ -134,7 +135,25 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     }
   }
 
-  private void loadImage(String imageUrl) {
+  @Override
+  public void handleMediaItemUpdate(MediaAlbumItem updatedMediaAlbumItem) {
+    loadImage(updatedMediaAlbumItem, false);
+  }
+
+  private void loadImage(MediaAlbumItem mediaAlbumItemToShow, boolean isFirstLoad) {
+    String imageUrl;
+
+    if (mediaAlbumItemToShow.highDefinitionEnabled()) {
+      imageUrl = mediaAlbumItemToShow.mediaLink().highQualityUrl();
+
+    } else {
+      imageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
+          ((MediaFragmentCallbacks) getActivity()).getRedditSuppliedImages(),
+          ((MediaFragmentCallbacks) getActivity()).getDeviceDisplayWidth(),
+          mediaAlbumItemToShow.mediaLink().lowQualityUrl()
+      );
+    }
+
     ImageLoadProgressTarget<Drawable> targetWithProgress = new ImageLoadProgressTarget<>(new DrawableImageViewTarget(imageView), progressView);
     targetWithProgress.setModel(getActivity(), imageUrl);
 
@@ -149,30 +168,33 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
         }))
         .listener(new GlideUtils.SimpleRequestListener<Drawable>() {
           @Override
-          public void onResourceReady(Drawable resource) {
-            imageView.setVisibility(View.VISIBLE);
+          public void onResourceReady(Drawable drawable) {
+            if (!imageView.isLaidOut()) {
+              throw new AssertionError("ImageView needs to get laid.");
+            }
 
-            // Entry transition.
-            imageView.setTranslationY(resource.getIntrinsicHeight() / 20);
-            imageView.setRotation(-2);
-            imageView.animate()
-                .translationY(0f)
-                .rotation(0)
-                .setInterpolator(Animations.INTERPOLATOR)
-                .start();
+            int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+            float widthResizeFactor = deviceDisplayWidth / (float) drawable.getMinimumWidth();
+            float resizedImageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
+            boolean isImageLongerThanWindow = resizedImageHeight > imageView.getHeight();
 
-            unsubscribeOnDestroy(
-                ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
-                    .doOnSuccess(optionButtonsHeight -> {
-                      int defaultBottomMargin = getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_scroll_hint_bottom_margin);
-                      Views.setMarginBottom(longImageScrollHint, optionButtonsHeight + defaultBottomMargin);
-                    })
-                    .subscribe(optionButtonsHeight -> {
-                      if (resource.getIntrinsicHeight() > imageView.getHeight()) {
-                        showImageScrollHint(resource.getIntrinsicHeight(), imageView.getHeight());
-                      }
-                    })
-            );
+            if (isImageLongerThanWindow) {
+              imageView.setGravity(Gravity.TOP);
+              showImageScrollHint(drawable.getIntrinsicHeight(), imageView.getHeight());
+            }
+
+            if (isFirstLoad) {
+              imageView.setVisibility(View.VISIBLE);
+
+              // Entry transition.
+              imageView.setTranslationY(drawable.getIntrinsicHeight() / 20);
+              imageView.setRotation(-2);
+              imageView.animate()
+                  .translationY(0f)
+                  .rotation(0)
+                  .setInterpolator(Animations.INTERPOLATOR)
+                  .start();
+            }
           }
 
           @Override
@@ -270,8 +292,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     }
 
     @Override
-    protected void onConnecting() {
-    }
+    protected void onConnecting() {}
 
     @Override
     protected void onDownloading(long bytesRead, long expectedBytes) {
@@ -280,6 +301,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
       progressWithFileSizeView.setProgress(progress);
     }
 
+    // Not called when the image is fetched from cache.
     @Override
     protected void onDownloaded() {
       progressWithFileSizeView.setProgress(100);
