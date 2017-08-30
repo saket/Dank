@@ -190,6 +190,7 @@ public class FlickGestureListener implements View.OnTouchListener {
           // Rotate the card because we naturally make a swipe gesture in a circular path while holding our phones.
           if (ROTATION_ENABLED) {
             float moveRatioDelta = deltaY / view.getHeight();
+            view.setPivotY(0);
             view.setRotation(view.getRotation() + moveRatioDelta * 20 * (touchStartedOnLeftSide ? -1 : 1));
           }
 
@@ -232,7 +233,13 @@ public class FlickGestureListener implements View.OnTouchListener {
 
   @SuppressWarnings("ConstantConditions")
   private void animateViewFlick(View view, boolean downwards, long flickAnimDuration) {
-    int throwDistance = Math.max(contentHeightProvider.getZoomedInContentHeight(), view.getRootView().getHeight());
+    if (view.getPivotY() != 0f) {
+      throw new AssertionError("Formula used for calculating distance rotated only works if the pivot is at (x,0");
+    }
+
+    float rotationAngle = view.getRotation();
+    int distanceRotated = (int) Math.ceil(Math.abs(Math.sin(Math.toRadians(rotationAngle)) * view.getWidth() / 2));
+    int throwDistance = distanceRotated + Math.max(contentHeightProvider.getZoomedInContentHeight(), view.getRootView().getHeight());
 
     view.animate().cancel();
     view.animate()
