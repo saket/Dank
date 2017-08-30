@@ -185,7 +185,17 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
   private void setupFlickGestures(FlickDismissLayout imageContainerView) {
     FlickGestureListener flickListener = super.createFlickGestureListener(((FlickGestureListener.GestureCallbacks) getActivity()));
-    flickListener.setContentHeightProvider(() -> (int) imageView.getZoomedImageHeight());
+    flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
+      @Override
+      public int getZoomedInContentHeight() {
+        return (int) imageView.getZoomedImageHeight();
+      }
+
+      @Override
+      public int getContentHeight() {
+        return imageView.getHeight();
+      }
+    });
     flickListener.setOnGestureIntercepter((deltaY) -> {
       // Don't listen for flick gestures if the image can pan further.
       boolean isScrollingUpwards = deltaY < 0;

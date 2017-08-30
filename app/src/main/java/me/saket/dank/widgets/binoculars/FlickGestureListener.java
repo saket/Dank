@@ -44,9 +44,12 @@ public class FlickGestureListener implements View.OnTouchListener {
 
   public interface ContentHeightProvider {
     /**
-     * Height of the media content multiplied by its zoomed in ratio.
+     * Height of the media content multiplied by its zoomed in ratio. Only used for animating the content out
+     * of the window when a flick is registered.
      */
-    int getZoomedInMediaHeight();
+    int getZoomedInContentHeight();
+
+    int getContentHeight();
   }
 
   public interface GestureCallbacks {
@@ -229,7 +232,7 @@ public class FlickGestureListener implements View.OnTouchListener {
 
   @SuppressWarnings("ConstantConditions")
   private void animateViewFlick(View view, boolean downwards, long flickAnimDuration) {
-    int throwDistance = Math.max(contentHeightProvider.getZoomedInMediaHeight(), view.getRootView().getHeight());
+    int throwDistance = Math.max(contentHeightProvider.getZoomedInContentHeight(), view.getRootView().getHeight());
 
     view.animate().cancel();
     view.animate()
@@ -241,7 +244,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   }
 
   private boolean hasFingerMovedEnoughToFlick(float distanceYAbs) {
-    float thresholdDistanceY = contentHeightProvider.getZoomedInMediaHeight() * flickThresholdSlop;
+    float thresholdDistanceY = contentHeightProvider.getContentHeight() * flickThresholdSlop;
     return distanceYAbs > thresholdDistanceY;
   }
 }

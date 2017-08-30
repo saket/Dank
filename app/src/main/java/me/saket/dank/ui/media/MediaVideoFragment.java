@@ -129,7 +129,17 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
   private void setupFlickGestures(FlickDismissLayout flickDismissLayout) {
     FlickGestureListener flickListener = super.createFlickGestureListener(((FlickGestureListener.GestureCallbacks) getActivity()));
-    flickListener.setContentHeightProvider(() -> videoView.getHeight());
+    flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
+      @Override
+      public int getZoomedInContentHeight() {
+        return videoView.getHeight();
+      }
+
+      @Override
+      public int getContentHeight() {
+        return videoView.getHeight();
+      }
+    });
     flickDismissLayout.setFlickGestureListener(flickListener);
   }
 }
