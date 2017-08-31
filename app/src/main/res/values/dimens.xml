@@ -47,4 +47,5 @@
   <dimen name="videocontrols_seekbar_height_with_extra_touch_area">20dp</dimen>
   <dimen name="videocontrols_seekbar_extra_vertical_touch_area">@dimen/spacing16</dimen>
   <dimen name="mediaalbumviewer_image_scroll_hint_bottom_margin">@dimen/spacing24</dimen>
+  <dimen name="mediaalbumviewer_image_height_when_empty">240dp</dimen>
 </resources>

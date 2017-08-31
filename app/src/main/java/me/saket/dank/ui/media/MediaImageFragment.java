@@ -18,7 +18,6 @@ import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
-import com.github.rahatarmanahmed.cpv.CircularProgressViewAdapter;
 
 import javax.inject.Inject;
 
@@ -96,17 +95,6 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     imageView.setVisibility(View.INVISIBLE);    // Becomes VISIBLE when the image actually loads.
 
     loadImage(mediaAlbumItem, true);
-
-    // CircularProgressView smoothly animates the progress, which means there's a certain delay between
-    // updating its progress and the radial progress bar reaching the progress. So setting its
-    // visibility based on the progress is not an option. We use its provided listener instead to hide
-    // progress only once it has reached 100%.
-    progressView.addProgressAnimationListener(new CircularProgressViewAdapter() {
-      @Override
-      public void onProgressUpdateEnd(float currentProgress) {
-        progressView.setVisibility(currentProgress < 100 ? View.VISIBLE : View.GONE);
-      }
-    });
 
     // Make the image flick-dismissible.
     setupFlickGestures(flickDismissViewGroup);
@@ -208,118 +196,126 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
           }
         })
         .into(targetWithProgress);
-  }
+    }
 
-  private void setupFlickGestures(FlickDismissLayout imageContainerView) {
-    FlickGestureListener flickListener = super.createFlickGestureListener(((FlickGestureListener.GestureCallbacks) getActivity()));
-    flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
-      @Override
-      public int getZoomedInContentHeight() {
-        return (int) imageView.getZoomedImageHeight();
-      }
-
-      @Override
-      public int getContentHeight() {
-        return imageView.getHeight();
-      }
-    });
-    flickListener.setOnGestureIntercepter((deltaY) -> {
-      // Don't listen for flick gestures if the image can pan further.
-      boolean isScrollingUpwards = deltaY < 0;
-      return imageView.canPanFurtherVertically(isScrollingUpwards);
-    });
-    flickListener.setOnTouchDownReturnValueProvider(() -> {
-      // Bug workaround: ViewPager is not calling its canScroll() method when an image is
-      // being loaded, no idea why. As a result, flick-to-dismiss does not work until the
-      // image is loaded.
-      return progressView.getProgress() < 100;
-    });
-    imageContainerView.setFlickGestureListener(flickListener);
-  }
-
-  /**
-   * Show a tooltip at the bottom of the image, hinting the user that the image is long and can be scrolled.
-   */
-  private void showImageScrollHint(float imageHeight, float visibleImageHeight) {
-    longImageScrollHint.setVisibility(View.VISIBLE);
-    longImageScrollHint.setAlpha(0f);
-
-    // Postpone till measure because we need the height.
-    Views.executeOnMeasure(longImageScrollHint, () -> {
-      longImageScrollHint.setTranslationY(longImageScrollHint.getHeight() / 2);
-      longImageScrollHint.animate()
-          .alpha(1f)
-          .translationY(0f)
-          .setDuration(300)
-          .setInterpolator(Animations.INTERPOLATOR)
-          .start();
-    });
-
-    // Hide the tooltip once the user starts scrolling the image.
-    GestureController.OnStateChangeListener imageScrollListener = new GestureController.OnStateChangeListener() {
-      private boolean hidden = false;
-
-      @Override
-      public void onStateChanged(State state) {
-        if (hidden) {
-          return;
+    private void setupFlickGestures(FlickDismissLayout imageContainerView) {
+      FlickGestureListener flickListener = super.createFlickGestureListener(((FlickGestureListener.GestureCallbacks) getActivity()));
+      flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
+        @Override
+        public int getZoomedInContentHeight() {
+          return (int) imageView.getZoomedImageHeight();
         }
 
-        float distanceScrolledY = Math.abs(state.getY());
-        float distanceScrollableY = imageHeight - visibleImageHeight;
-        float scrolledPercentage = distanceScrolledY / distanceScrollableY;
-
-        // Hide it after the image has been scrolled 10% of its height.
-        if (scrolledPercentage > 0.1f) {
-          hidden = true;
-          longImageScrollHint.animate()
-              .alpha(0f)
-              .translationY(-longImageScrollHint.getHeight() / 2)
-              .setDuration(300)
-              .setInterpolator(Animations.INTERPOLATOR)
-              //.withEndAction(() -> longImageScrollHint.setVisibility(View.INVISIBLE))
-              .start();
+        @Override
+        public int getContentHeight() {
+          // A non-MATCH_PARENT height is important so that the user can easily dismiss the image if it's taking too long to load.
+          if (imageView.getDrawable() == null) {
+            return getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_height_when_empty);
+          }
+          return imageView.getHeight();
         }
+      });
+      flickListener.setOnGestureIntercepter((deltaY) -> {
+        // Don't listen for flick gestures if the image can pan further.
+        boolean isScrollingUpwards = deltaY < 0;
+        return imageView.canPanFurtherVertically(isScrollingUpwards);
+      });
+      flickListener.setOnTouchDownReturnValueProvider(() -> {
+        // Bug workaround: ViewPager is not calling its canScroll() method when an image is
+        // being loaded, no idea why. As a result, flick-to-dismiss does not work until the
+        // image is loaded.
+        return progressView.getProgress() < 100;
+      });
+      imageContainerView.setFlickGestureListener(flickListener);
+    }
+
+    /**
+     * Show a tooltip at the bottom of the image, hinting the user that the image is long and can be scrolled.
+     */
+    private void showImageScrollHint(float imageHeight, float visibleImageHeight) {
+      longImageScrollHint.setVisibility(View.VISIBLE);
+      longImageScrollHint.setAlpha(0f);
+
+      // Postpone till measure because we need the height.
+      Views.executeOnMeasure(longImageScrollHint, () -> {
+        longImageScrollHint.setTranslationY(longImageScrollHint.getHeight() / 2);
+        longImageScrollHint.animate()
+            .alpha(1f)
+            .translationY(0f)
+            .setDuration(300)
+            .setInterpolator(Animations.INTERPOLATOR)
+            .start();
+      });
+
+      // Hide the tooltip once the user starts scrolling the image.
+      GestureController.OnStateChangeListener imageScrollListener = new GestureController.OnStateChangeListener() {
+        private boolean hidden = false;
+
+        @Override
+        public void onStateChanged(State state) {
+          if (hidden) {
+            return;
+          }
+
+          float distanceScrolledY = Math.abs(state.getY());
+          float distanceScrollableY = imageHeight - visibleImageHeight;
+          float scrolledPercentage = distanceScrolledY / distanceScrollableY;
+
+          // Hide it after the image has been scrolled 10% of its height.
+          if (scrolledPercentage > 0.1f) {
+            hidden = true;
+            longImageScrollHint.animate()
+                .alpha(0f)
+                .translationY(-longImageScrollHint.getHeight() / 2)
+                .setDuration(300)
+                .setInterpolator(Animations.INTERPOLATOR)
+                .withEndAction(() -> longImageScrollHint.setVisibility(View.INVISIBLE))
+                .start();
+          }
+        }
+
+        @Override
+        public void onStateReset(State oldState, State newState) {
+        }
+      };
+      imageView.getController().addOnStateChangeListener(imageScrollListener);
+    }
+
+    private static class ImageLoadProgressTarget<Z> extends GlideProgressTarget<String, Z> {
+      private final ProgressWithFileSizeView progressWithFileSizeView;
+
+      public ImageLoadProgressTarget(Target<Z> target, ProgressWithFileSizeView progressWithFileSizeView) {
+        super(target);
+        this.progressWithFileSizeView = progressWithFileSizeView;
       }
 
       @Override
-      public void onStateReset(State oldState, State newState) {
+      public float getGranularityPercentage() {
+        return 0.1f;
       }
-    };
-    imageView.getController().addOnStateChangeListener(imageScrollListener);
-  }
 
-  private static class ImageLoadProgressTarget<Z> extends GlideProgressTarget<String, Z> {
-    private final ProgressWithFileSizeView progressWithFileSizeView;
+      @Override
+      protected void onConnecting() {
+        progressWithFileSizeView.setProgress(0);
+      }
 
-    public ImageLoadProgressTarget(Target<Z> target, ProgressWithFileSizeView progressWithFileSizeView) {
-      super(target);
-      this.progressWithFileSizeView = progressWithFileSizeView;
-    }
+      @Override
+      protected void onDownloading(long bytesRead, long expectedBytes) {
+        int progress = (int) (100 * (float) bytesRead / expectedBytes);
+        progressWithFileSizeView.setFileSizeBytes(expectedBytes, FileSizeUnit.BYTES);
+        progressWithFileSizeView.setProgress(progress);
+      }
 
-    @Override
-    public float getGranularityPercentage() {
-      return 0.1f;
-    }
+      // Not called when the image is fetched from cache.
+      @Override
+      protected void onDownloaded() {
+        progressWithFileSizeView.setProgress(100);
+      }
 
-    @Override
-    protected void onConnecting() {}
-
-    @Override
-    protected void onDownloading(long bytesRead, long expectedBytes) {
-      int progress = (int) (100 * (float) bytesRead / expectedBytes);
-      progressWithFileSizeView.setFileSizeBytes(expectedBytes, FileSizeUnit.BYTES);
-      progressWithFileSizeView.setProgress(progress);
-    }
-
-    // Not called when the image is fetched from cache.
-    @Override
-    protected void onDownloaded() {
-      progressWithFileSizeView.setProgress(100);
-    }
-
-    @Override
-    protected void onDelivered() {
+      @Override
+      protected void onDelivered() {
+        progressWithFileSizeView.setProgress(100);
+        progressWithFileSizeView.setVisibility(View.GONE);
     }
   }
 }
