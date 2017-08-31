@@ -35,6 +35,9 @@ public class DankVideoControlsView extends VideoControls {
   private boolean userInteractingWithSeek;
   private VideoProgressChangeListener progressChangeListener;
 
+  /**
+   * See {@link #showVideoState(VideoState)}.
+   */
   public enum VideoState {
     PREPARING,
     PREPARED

@@ -49,6 +49,9 @@ public class FlickGestureListener implements View.OnTouchListener {
      */
     int getZoomedInContentHeight();
 
+    /**
+     * Used for calculating if the content can be dismissed on finger up.
+     */
     int getContentHeight();
   }
 

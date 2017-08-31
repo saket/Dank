@@ -114,17 +114,24 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
       Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar());
     });
 
-    assert mediaAlbumItem != null;
-    boolean loadHighQualityVideo = false; // TODO: Get this from user's data preferences.
+    loadVideo(mediaAlbumItem);
+  }
 
-    String videoUrl = loadHighQualityVideo ? mediaAlbumItem.mediaLink().highQualityUrl() : mediaAlbumItem.mediaLink().lowQualityUrl();
+  private void loadVideo(MediaAlbumItem mediaAlbumItem) {
+    String videoUrl = mediaAlbumItem.highDefinitionEnabled()
+        ? mediaAlbumItem.mediaLink().highQualityUrl()
+        : mediaAlbumItem.mediaLink().lowQualityUrl();
     String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
     exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
   }
 
   @Override
   public void handleMediaItemUpdate(MediaAlbumItem updatedMediaAlbumItem) {
-    // TODO.
+    long positionBeforeReloadMillis = videoView.getCurrentPosition();
+
+    loadVideo(updatedMediaAlbumItem);
+
+    videoView.seekTo(positionBeforeReloadMillis);
   }
 
   @Override
