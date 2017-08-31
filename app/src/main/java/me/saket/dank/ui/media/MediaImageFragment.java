@@ -32,6 +32,7 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.utils.glide.GlideUtils;
+import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.ProgressWithFileSizeView;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;

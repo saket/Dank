@@ -22,6 +22,7 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
+import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 

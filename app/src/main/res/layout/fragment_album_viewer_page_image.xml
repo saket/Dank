@@ -49,7 +49,7 @@
     android:layout_height="match_parent"
     android:background="@color/black_opacity_30" />
 
-  <me.saket.dank.ui.media.MediaAlbumViewerTitleDescriptionView
+  <me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView
     android:id="@+id/albumviewerimage_title_description"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />

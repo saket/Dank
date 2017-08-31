@@ -1,4 +1,4 @@
-package me.saket.dank.ui.media;
+package me.saket.dank.widgets;
 
 import android.annotation.SuppressLint;
 import android.content.Context;
@@ -27,8 +27,8 @@ public class MediaAlbumViewerTitleDescriptionView extends RelativeLayout {
 
   private static final int MAX_LINES_IN_COLLAPSED_STATE = 2;
 
-  @BindView(R.id.mediaalbumviewer_title) TextView titleView;
-  @BindView(R.id.mediaalbumviewer_description) TextView descriptionView;
+  @BindView(R.id.mediaalbumviewer_title) public TextView titleView;
+  @BindView(R.id.mediaalbumviewer_description) public TextView descriptionView;
   @BindView(R.id.mediaalbumviewer_titledescription_scrollview) ScrollView scrollView;
   @BindView(R.id.mediaalbumviewer_titledescription_scrollview_child) ViewGroup scrollableChild;
   @BindView(R.id.mediaalbumviewer_titledescription_scroll_hint) View scrollHintView;

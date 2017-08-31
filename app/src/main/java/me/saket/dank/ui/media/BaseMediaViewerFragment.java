@@ -12,6 +12,7 @@ import me.saket.dank.data.links.ImgurLink;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 
 /**
