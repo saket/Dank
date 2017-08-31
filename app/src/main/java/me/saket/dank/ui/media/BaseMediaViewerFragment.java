@@ -46,7 +46,7 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
   public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
-    // Toggle background dimming when the description is scrolled or Activity goes immersive.
+    // Toggle description's background dimming when the description is scrolled or Activity goes immersive.
     ((ViewGroup) view).getLayoutTransition().setDuration(200);
     unsubscribeOnDestroy(
         titleDescriptionView.streamDimmingRequiredForTitleAndDescription()

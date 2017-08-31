@@ -14,6 +14,7 @@ import android.view.ViewGroup;
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
@@ -91,7 +92,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
-    imageView.setGestureRotationEnabled(true);
+    //imageView.setGestureRotationEnabled(true);
     imageView.setVisibility(View.INVISIBLE);    // Becomes VISIBLE when the image actually loads.
 
     loadImage(mediaAlbumItem, true);
@@ -167,6 +168,9 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
             return new Size(1, 1);
           }
         }))
+
+        .apply(new RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
+
         .listener(new GlideUtils.SimpleRequestListener<Drawable>() {
           @Override
           public void onResourceReady(Drawable drawable) {
@@ -223,6 +227,12 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
       // Don't listen for flick gestures if the image can pan further.
       boolean isScrollingUpwards = deltaY < 0;
       return imageView.canPanFurtherVertically(isScrollingUpwards);
+    });
+    flickListener.setOnTouchDownReturnValueProvider(() -> {
+      // Bug workaround: ViewPager is not calling its canScroll() method when an image is
+      // being loaded, no idea why. As a result, flick-to-dismiss does not work until the
+      // image is loaded.
+      return progressView.getProgress() < 100;
     });
     imageContainerView.setFlickGestureListener(flickListener);
   }

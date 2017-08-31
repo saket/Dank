@@ -24,7 +24,7 @@
     style="@style/DankMediaImageScrollHint"
     android:layout_alignBottom="@+id/submission_image"
     android:layout_centerHorizontal="true"
-    android:layout_marginBottom="@dimen/spacing16"
+    android:layout_marginBottom="@dimen/spacing24"
     android:gravity="center_vertical"
     android:text="@string/submission_image_scroll_down_hint"
     android:visibility="gone" />

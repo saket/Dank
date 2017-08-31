@@ -30,6 +30,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   private boolean gestureCanceledUntilNextTouchDown;
   private OnGestureIntercepter onGestureIntercepter;
   private ContentHeightProvider contentHeightProvider;
+  private OnTouchDownReturnValueProvider onTouchDownReturnValueProvider;
   private boolean gestureInterceptedUntilNextTouchDown;
 
   public interface OnGestureIntercepter {
@@ -71,6 +72,14 @@ public class FlickGestureListener implements View.OnTouchListener {
     void onMoveMedia(@FloatRange(from = -1, to = 1) float moveRatio);
   }
 
+  public interface OnTouchDownReturnValueProvider {
+    /**
+     * For reasons unknown to even bhagwan ji, flick-dismiss isn't working while an image is loading.
+     * Returning true from onTouch on touch down seems to solve the problem.
+     */
+    boolean shouldReturnTrueOnTouchDown();
+  }
+
   public FlickGestureListener(ViewConfiguration viewConfiguration) {
     touchSlop = viewConfiguration.getScaledTouchSlop();
     maximumFlingVelocity = viewConfiguration.getScaledMaximumFlingVelocity();
@@ -97,6 +106,10 @@ public class FlickGestureListener implements View.OnTouchListener {
 
   public void setContentHeightProvider(ContentHeightProvider contentHeightProvider) {
     this.contentHeightProvider = contentHeightProvider;
+  }
+
+  public void setOnTouchDownReturnValueProvider(OnTouchDownReturnValueProvider listener) {
+    onTouchDownReturnValueProvider = listener;
   }
 
   @Override
@@ -126,7 +139,7 @@ public class FlickGestureListener implements View.OnTouchListener {
           velocityTracker.clear();
         }
         velocityTracker.addMovement(event);
-        return false;
+        return onTouchDownReturnValueProvider != null && onTouchDownReturnValueProvider.shouldReturnTrueOnTouchDown();
 
       case MotionEvent.ACTION_CANCEL:
       case MotionEvent.ACTION_UP:

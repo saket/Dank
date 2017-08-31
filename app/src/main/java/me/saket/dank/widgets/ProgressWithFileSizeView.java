@@ -60,6 +60,10 @@ public class ProgressWithFileSizeView extends LinearLayout {
     progressView.setProgress(progress);
   }
 
+  public float getProgress() {
+    return progressView.getProgress();
+  }
+
   public void setProgressBackgroundFillEnabled(boolean enabled) {
     progressBackgroundView.setVisibility(enabled ? VISIBLE : GONE);
   }

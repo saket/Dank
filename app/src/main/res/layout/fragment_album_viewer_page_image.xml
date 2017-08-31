@@ -12,13 +12,14 @@
     android:animateLayoutChanges="true"
     android:fitsSystemWindows="true">
 
+    <!-- A non-MATCH_PARENT height is important so that the user can easily
+        dismiss the image if it's taking too long to load. -->
     <me.saket.dank.widgets.ZoomableImageView
       android:id="@+id/albumviewerimage_imageview"
       android:layout_width="match_parent"
-      android:layout_height="match_parent"
+      android:layout_height="240dp"
       android:layout_gravity="center"
-      tools:background="@color/blue_gray_700"
-      tools:layout_height="240dp" />
+      tools:background="@color/blue_gray_800" />
 
     <me.saket.dank.widgets.ProgressWithFileSizeView
       android:id="@+id/albumviewerimage_progress"
@@ -47,10 +48,12 @@
     android:id="@+id/albumviewerimage_title_description_dimming"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="@color/black_opacity_30" />
+    android:background="@color/black_opacity_30"
+    android:visibility="gone" />
 
   <me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView
     android:id="@+id/albumviewerimage_title_description"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+    android:layout_height="match_parent"
+    android:visibility="gone" />
 </FrameLayout>
