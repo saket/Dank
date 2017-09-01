@@ -17,8 +17,8 @@
       android:layout_width="48dp"
       android:layout_height="48dp"
       android:layout_gravity="center"
-      app:cpv_animSyncDuration="0"
       app:cpv_color="@color/gray_600"
+      app:cpv_animSyncDuration="0"
       app:cpv_indeterminate="false"
       app:cpv_maxProgress="100"
       app:cpv_progress="100" />

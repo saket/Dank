@@ -7,7 +7,7 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ViewSwitcher;
+import android.widget.ViewFlipper;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -22,7 +22,7 @@ public class PreferencesFragment extends DankFragment {
   private static final String KEY_ACTIVE_PREFERENCE_GROUP = "activePreferenceGroup";
 
   @BindView(R.id.toolbar) Toolbar toolbar;
-  @BindView(R.id.userpreferences_viewswitcher) ViewSwitcher layoutSwitcher;
+  @BindView(R.id.userpreferences_viewswitcher) ViewFlipper layoutFlipper;
 
   private UserPreferenceGroup activePreferenceGroup;
 
@@ -57,12 +57,14 @@ public class PreferencesFragment extends DankFragment {
   public void populatePreferences(UserPreferenceGroup preferenceGroup) {
     activePreferenceGroup = preferenceGroup;
 
-    @IdRes int groupLayoutRes = -1;
+    @IdRes int groupLayoutRes;
     switch (preferenceGroup) {
       case LOOK_AND_FEEL:
+        groupLayoutRes = R.id.userpreferences_container_empty;
         break;
 
       case FILTERS:
+        groupLayoutRes = R.id.userpreferences_container_empty;
         break;
 
       case DATA_USAGE:
@@ -74,13 +76,14 @@ public class PreferencesFragment extends DankFragment {
         break;
 
       case ABOUT_DANK:
+        groupLayoutRes = R.id.userpreferences_container_empty;
         break;
+
+      default:
+        throw new UnsupportedOperationException("Unknown preference" + preferenceGroup);
     }
 
     toolbar.setTitle(preferenceGroup.titleRes);
-    if (groupLayoutRes != -1) {
-      layoutSwitcher.setDisplayedChild(layoutSwitcher.indexOfChild(layoutSwitcher.findViewById(groupLayoutRes)));
-    }
+    layoutFlipper.setDisplayedChild(layoutFlipper.indexOfChild(layoutFlipper.findViewById(groupLayoutRes)));
   }
-
 }

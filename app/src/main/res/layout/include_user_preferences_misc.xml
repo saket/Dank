@@ -1,19 +1,20 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingTop="@dimen/spacing16"
-    tools:background="@color/window_background"
-    tools:layout_marginTop="25dp">
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:paddingTop="@dimen/spacing16"
+  tools:background="@color/window_background"
+  tools:layout_marginTop="25dp">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing16"
-        android:layout_marginStart="@dimen/spacing16"
-        android:text="Group subtitle"
-        android:textAllCaps="true"
-        android:textSize="@dimen/textsize12" />
+  <TextView
+    style="@style/DankPreferencesSubtitle"
+    android:text="@string/userpreferences_misc_link_handling" />
+
+  <me.saket.dank.widgets.UserPreferenceButton
+    style="@style/DankPreferencesButton"
+    app:subtitle="@string/userprefs_misc_open_links_in_apps_subtitle"
+    app:title="@string/userprefs_misc_open_links_in_apps" />
 </LinearLayout>

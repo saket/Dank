@@ -7,8 +7,12 @@ import android.graphics.Rect;
 import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.view.View;
+
+import net.dean.jraw.models.Thumbnails;
+
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
@@ -17,10 +21,10 @@ import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.submission.SubmissionFragmentActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
+import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.webview.WebViewActivity;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
-import net.dean.jraw.models.Thumbnails;
 
 @Singleton
 public class UrlRouter {
@@ -31,47 +35,47 @@ public class UrlRouter {
   protected UrlRouter() {
   }
 
-  public UrlRouter.UserProfilePopup forLink(RedditUserLink redditUserLink) {
-    return new UserProfilePopup(redditUserLink);
+  public UserProfilePopupRouter forLink(RedditUserLink redditUserLink) {
+    return new UserProfilePopupRouter(redditUserLink);
   }
 
   /**
-   * For cases where {@link UrlRouter.MediaIntent#withRedditSuppliedImages(Thumbnails)} cab be used.
+   * For cases where {@link MediaIntentRouter#withRedditSuppliedImages(Thumbnails)} cab be used.
    */
-  public UrlRouter.MediaIntent forLink(MediaLink mediaLink) {
-    return new MediaIntent(mediaLink, jacksonHelper);
+  public MediaIntentRouter forLink(MediaLink mediaLink) {
+    return new MediaIntentRouter(mediaLink, jacksonHelper);
   }
 
-  public UrlRouter.Intent forLink(Link link) {
+  public IntentRouter forLink(Link link) {
     if (link instanceof RedditUserLink) {
       throw new UnsupportedOperationException("Use forLink(RedditUserLink) instead.");
     }
-    return new Intent(link);
+    return new IntentRouter(link);
   }
 
-  public static class Intent extends UrlRouter {
+  public static class IntentRouter extends UrlRouter {
     private Link link;
 
     @Nullable private Point expandFromPoint;
     @Nullable private Rect expandFromRect;
 
-    public Intent(Link link) {
+    public IntentRouter(Link link) {
       this.link = link;
     }
 
     /**
      * Just makes the entry animation explicit for the code reader; nothing else.
      */
-    public Intent expandFromBelowToolbar() {
+    public IntentRouter expandFromBelowToolbar() {
       return expandFrom((Rect) null);
     }
 
-    public Intent expandFrom(Point expandFromPoint) {
+    public IntentRouter expandFrom(Point expandFromPoint) {
       this.expandFromPoint = expandFromPoint;
       return this;
     }
 
-    public Intent expandFrom(Rect expandFromRect) {
+    public IntentRouter expandFrom(Rect expandFromRect) {
       this.expandFromRect = expandFromRect;
       return this;
     }
@@ -112,13 +116,13 @@ public class UrlRouter {
     }
   }
 
-  public static class MediaIntent extends UrlRouter {
+  public static class MediaIntentRouter extends UrlRouter {
 
     @Nullable private Thumbnails redditSuppliedImages;
     private final MediaLink link;
     private final JacksonHelper jacksonHelper;
 
-    public MediaIntent(MediaLink link, JacksonHelper jacksonHelper) {
+    public MediaIntentRouter(MediaLink link, JacksonHelper jacksonHelper) {
       this.link = link;
       this.jacksonHelper = jacksonHelper;
     }
@@ -128,7 +132,7 @@ public class UrlRouter {
      * as low-quality URL, but that wouldn't work. The logic for filtering reddit's images is
      * done based on the display width, which will change on config changes.
      */
-    public MediaIntent withRedditSuppliedImages(@Nullable Thumbnails redditSuppliedImages) {
+    public MediaIntentRouter withRedditSuppliedImages(@Nullable Thumbnails redditSuppliedImages) {
       this.redditSuppliedImages = redditSuppliedImages;
       return this;
     }
@@ -138,21 +142,21 @@ public class UrlRouter {
     }
   }
 
-  public static class UserProfilePopup extends UrlRouter {
+  public static class UserProfilePopupRouter extends UrlRouter {
     private RedditUserLink link;
     @Nullable private Point expandFromPoint;
 
-    public UserProfilePopup(RedditUserLink link) {
+    public UserProfilePopupRouter(RedditUserLink link) {
       this.link = link;
     }
 
-    public UserProfilePopup expandFrom(Point expandFromPoint) {
+    public UserProfilePopupRouter expandFrom(Point expandFromPoint) {
       this.expandFromPoint = expandFromPoint;
       return this;
     }
 
     public void open(View anchorView) {
-      me.saket.dank.ui.user.UserProfilePopup userProfilePopup = new me.saket.dank.ui.user.UserProfilePopup(anchorView.getContext());
+      UserProfilePopup userProfilePopup = new UserProfilePopup(anchorView.getContext());
       userProfilePopup.loadUserProfile(link);
       userProfilePopup.showAtLocation(anchorView, expandFromPoint);
     }

@@ -165,6 +165,12 @@
   <string name="userpreferences_about_description">The team behind</string>
 
   <string name="userpreferences_datausage_new_messages">New Messages</string>
+  <string name="userprefs_datausage_check_for_new_messages">Check for new messages</string>
+  <string name="userprefs_datausage_message_sync_period_and_connection">Every 30 minutes and only on WiFi</string>
+
+  <string name="userpreferences_misc_link_handling">Link handling</string>
+  <string name="userprefs_misc_open_links_in_apps">Open links in apps</string>
+  <string name="userprefs_misc_open_links_in_apps_subtitle">Links to always open in external apps, bypassing the browser.</string>
 
   <!-- Inbox -->
   <string name="activity_inbox">Inbox</string>

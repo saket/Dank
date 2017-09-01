@@ -1,31 +1,37 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:clickable="true"
+  android:focusable="false"
+  android:orientation="vertical"
+  tools:background="@color/window_background"
+  tools:ignore="KeyboardInaccessibleWidget">
+
+  <me.saket.dank.widgets.DankToolbar
+    android:id="@id/toolbar"
+    style="@style/DankToolbar"
+    android:fitsSystemWindows="true"
+    app:navigationIcon="@drawable/ic_toolbar_close_24dp"
+    tools:layout_marginTop="25dp" />
+
+  <ViewFlipper
+    android:id="@+id/userpreferences_viewswitcher"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:clickable="true"
-    android:orientation="vertical"
-    tools:background="@color/window_background">
+    android:layout_height="match_parent">
 
-    <me.saket.dank.widgets.DankToolbar
-        android:id="@id/toolbar"
-        style="@style/DankToolbar"
-        android:fitsSystemWindows="true"
-        app:navigationIcon="@drawable/ic_toolbar_close_24dp"
-        tools:layout_marginTop="25dp" />
+    <include
+      android:id="@+id/userpreferences_container_empty"
+      layout="@layout/include_user_preferences_empty" />
 
-    <ViewSwitcher
-        android:id="@+id/userpreferences_viewswitcher"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
+    <include
+      android:id="@+id/userpreferences_container_data_usage"
+      layout="@layout/include_user_preferences_data_usage" />
 
-        <include
-            android:id="@+id/userpreferences_container_misc"
-            layout="@layout/include_user_preferences_misc" />
-
-        <include
-            android:id="@+id/userpreferences_container_data_usage"
-            layout="@layout/include_user_preferences_data_usage" />
-    </ViewSwitcher>
+    <include
+      android:id="@+id/userpreferences_container_misc"
+      layout="@layout/include_user_preferences_misc" />
+  </ViewFlipper>
 </LinearLayout>

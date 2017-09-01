@@ -1,46 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:paddingTop="@dimen/spacing16"
-    tools:background="@color/window_background"
-    tools:layout_marginTop="25dp">
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  android:paddingTop="@dimen/spacing16"
+  tools:background="@color/window_background">
 
-    <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="@dimen/spacing8"
-        android:layout_marginEnd="@dimen/spacing16"
-        android:layout_marginStart="@dimen/spacing16"
-        android:text="@string/userpreferences_datausage_new_messages"
-        android:textAllCaps="true"
-        android:textSize="@dimen/textsize12" />
+  <TextView
+    android:text="@string/userpreferences_datausage_new_messages"
+    style="@style/DankPreferencesSubtitle" />
 
-    <me.saket.dank.widgets.UserPreferenceButton
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="@dimen/spacing16"
-        android:paddingEnd="@dimen/spacing16"
-        android:paddingStart="@dimen/spacing16"
-        android:paddingTop="@dimen/spacing16"
-        app:subtitle="Every 30 minutes and only on WiFi"
-        app:title="Check for new messages" />
+  <me.saket.dank.widgets.UserPreferenceButton
+    app:subtitle="@string/userprefs_datausage_message_sync_period_and_connection"
+    app:title="@string/userprefs_datausage_check_for_new_messages"
+    style="@style/DankPreferencesButton" />
 
-    <View
-        style="@style/DankSeparator.VerticalContent"
-        android:visibility="gone"
-        android:background="#3c3c3c" />
-
-    <me.saket.dank.widgets.UserPreferenceButton
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:paddingBottom="@dimen/spacing16"
-        android:paddingEnd="@dimen/spacing16"
-        android:paddingStart="@dimen/spacing16"
-        android:paddingTop="@dimen/spacing16"
-        android:visibility="gone"
-        app:title="Only check on WiFi" />
+  <!--<View-->
+    <!--style="@style/DankSeparator.VerticalContent"-->
+    <!--android:background="#3c3c3c"-->
+    <!--android:visibility="gone" />-->
 </LinearLayout>

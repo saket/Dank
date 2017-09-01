@@ -357,4 +357,24 @@
     <item name="android:paddingStart">@dimen/spacing16</item>
     <item name="android:paddingTop">@dimen/spacing16</item>
   </style>
+
+  <!-- User Preferences -->
+  <style name="DankPreferencesSubtitle">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_marginBottom">@dimen/spacing8</item>
+    <item name="android:layout_marginEnd">@dimen/spacing16</item>
+    <item name="android:layout_marginStart">@dimen/spacing16</item>
+    <item name="android:textAllCaps">true</item>
+    <item name="android:textSize">@dimen/textsize12</item>
+  </style>
+
+  <style name="DankPreferencesButton">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:paddingBottom">@dimen/spacing16</item>
+    <item name="android:paddingEnd">@dimen/spacing16</item>
+    <item name="android:paddingStart">@dimen/spacing16</item>
+    <item name="android:paddingTop">@dimen/spacing16</item>
+  </style>
 </resources>
