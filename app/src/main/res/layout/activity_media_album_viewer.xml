@@ -15,15 +15,8 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
 
-  <ProgressBar
-    android:id="@+id/mediaalbumviewer_progress"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_centerInParent="true"
-    android:indeterminate="true" />
-
   <RelativeLayout
-    android:id="@+id/mediaalbumviewer_media_content_info_container"
+    android:id="@+id/mediaalbumviewer_media_options_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:animateLayoutChanges="true"
@@ -33,7 +26,7 @@
 
     <!-- Background gradient for option buttons -->
     <View
-      android:id="@+id/mediaalbumviewer_content_info_background_gradient"
+      android:id="@+id/mediaalbumviewer_options_background_gradient"
       android:layout_width="match_parent"
       android:layout_height="0dp"
       android:layout_alignParentBottom="true"
@@ -95,4 +88,18 @@
       </LinearLayout>
     </LinearLayout>
   </RelativeLayout>
+
+  <me.saket.dank.widgets.binoculars.FlickDismissLayout
+    android:id="@+id/mediaalbumviewer_progress_flick_dismiss_layout"
+    android:layout_width="match_parent"
+    android:layout_height="240dp"
+    android:layout_centerInParent="true">
+
+    <ProgressBar
+      android:id="@+id/mediaalbumviewer_progress"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="center"
+      android:indeterminate="true" />
+  </me.saket.dank.widgets.binoculars.FlickDismissLayout>
 </RelativeLayout>

@@ -48,12 +48,12 @@ public class FlickGestureListener implements View.OnTouchListener {
      * Height of the media content multiplied by its zoomed in ratio. Only used for animating the content out
      * of the window when a flick is registered.
      */
-    int getZoomedInContentHeight();
+    int getContentHeightForDismissAnimation();
 
     /**
      * Used for calculating if the content can be dismissed on finger up.
      */
-    int getContentHeight();
+    int getContentHeightForCalculatingThreshold();
   }
 
   public interface GestureCallbacks {
@@ -181,7 +181,7 @@ public class FlickGestureListener implements View.OnTouchListener {
         }
 
         // The listener only gets once chance to block the flick -- only if it's not already being moved.
-        if (!verticalScrollRegistered && onGestureIntercepter.shouldIntercept(deltaY)) {
+        if (!verticalScrollRegistered && onGestureIntercepter != null && onGestureIntercepter.shouldIntercept(deltaY)) {
           gestureInterceptedUntilNextTouchDown = true;
           return false;
         }
@@ -255,7 +255,7 @@ public class FlickGestureListener implements View.OnTouchListener {
 
     float rotationAngle = view.getRotation();
     int distanceRotated = (int) Math.ceil(Math.abs(Math.sin(Math.toRadians(rotationAngle)) * view.getWidth() / 2));
-    int throwDistance = distanceRotated + Math.max(contentHeightProvider.getZoomedInContentHeight(), view.getRootView().getHeight());
+    int throwDistance = distanceRotated + Math.max(contentHeightProvider.getContentHeightForDismissAnimation(), view.getRootView().getHeight());
 
     view.animate().cancel();
     view.animate()
@@ -267,7 +267,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   }
 
   private boolean hasFingerMovedEnoughToFlick(float distanceYAbs) {
-    float thresholdDistanceY = contentHeightProvider.getContentHeight() * flickThresholdSlop;
+    float thresholdDistanceY = contentHeightProvider.getContentHeightForCalculatingThreshold() * flickThresholdSlop;
     return distanceYAbs > thresholdDistanceY;
   }
 }

@@ -202,12 +202,12 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
       FlickGestureListener flickListener = super.createFlickGestureListener(((FlickGestureListener.GestureCallbacks) getActivity()));
       flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
         @Override
-        public int getZoomedInContentHeight() {
+        public int getContentHeightForDismissAnimation() {
           return (int) imageView.getZoomedImageHeight();
         }
 
         @Override
-        public int getContentHeight() {
+        public int getContentHeightForCalculatingThreshold() {
           // A non-MATCH_PARENT height is important so that the user can easily dismiss the image if it's taking too long to load.
           if (imageView.getDrawable() == null) {
             return getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_height_when_empty);

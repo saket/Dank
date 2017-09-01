@@ -20,12 +20,12 @@ import android.text.method.LinkMovementMethod;
 import android.view.Gravity;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.animation.AccelerateInterpolator;
 import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -78,6 +78,7 @@ import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ScrollInterceptibleViewPager;
 import me.saket.dank.widgets.ZoomableImageView;
+import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 import timber.log.Timber;
 
@@ -88,14 +89,14 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
   @BindView(R.id.mediaalbumviewer_pager) ScrollInterceptibleViewPager mediaAlbumPager;
-  @BindView(R.id.mediaalbumviewer_media_content_info_container) ViewGroup contentInfoContainerView;
+  @BindView(R.id.mediaalbumviewer_media_options_container) ViewGroup contentInfoContainerView;
   @BindView(R.id.mediaalbumviewer_position_and_options_container) ViewGroup contentOptionButtonsContainerView;
   @BindView(R.id.mediaalbumviewer_share) ImageButton shareButton;
   @BindView(R.id.mediaalbumviewer_download) ImageButton downloadButton;
   @BindView(R.id.mediaalbumviewer_open_in_browser) ImageButton openInBrowserButton;
   @BindView(R.id.mediaalbumviewer_reload_in_hd) ImageButton reloadInHighDefButton;
-  @BindView(R.id.mediaalbumviewer_content_info_background_gradient) View contentInfoBackgroundGradientView;
-  @BindView(R.id.mediaalbumviewer_progress) ProgressBar progressBar;
+  @BindView(R.id.mediaalbumviewer_options_background_gradient) View contentInfoBackgroundGradientView;
+  @BindView(R.id.mediaalbumviewer_progress_flick_dismiss_layout) FlickDismissLayout progressBarFlickDismissLayout;
   @BindView(R.id.mediaalbumviewer_media_position) TextView mediaPositionTextView;
 
   @Inject MediaHostRepository mediaHostRepository;
@@ -189,15 +190,15 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     mediaAlbumPager.setAdapter(mediaAlbumAdapter);
     hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);  // Initial value.
 
-    progressBar.setVisibility(View.VISIBLE);
+    // Since only the image/video is flick-dismissible and not the entire Activity, we
+    // have another flick-dismiss container for the initial progress View.
+    setupFlickDismissForProgressView();
 
     MediaLink mediaLinkToDisplay = getIntent().getParcelableExtra(KEY_MEDIA_LINK_TO_SHOW);
     unsubscribeOnDestroy(
         mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
             .doOnSuccess(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
             .map(resolvedMediaLink -> {
-              Timber.i("resolvedMediaLink: %s", resolvedMediaLink);
-
               // Find all child images under an album.
               if (resolvedMediaLink.isMediaAlbum()) {
                 return ((ImgurAlbumLink) resolvedMediaLink).images();
@@ -206,7 +207,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
               }
             })
             .compose(RxUtils.applySchedulersSingle())
-            .doAfterTerminate(() -> progressBar.setVisibility(View.GONE))
+            .doAfterTerminate(() -> progressBarFlickDismissLayout.setVisibility(View.GONE))
             .doOnSuccess(mediaLinks -> {
               // Toggle HD for all images with the default value.
               boolean loadHighQualityImageByDefault = false; // TODO: Get this from user's mobile-data preferences.
@@ -216,23 +217,22 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                 hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);
               }
             })
-            .flatMapObservable(mediaLinks ->
-                hdEnabledMediaLinksStream
-                    .map(hdEnabledMediaLinks -> {
-                      List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
-                      for (MediaLink mediaLink : mediaLinks) {
-                        boolean highDefEnabled = hdEnabledMediaLinks.contains(mediaLink);
+            .flatMapObservable(mediaLinks -> {
 
-                        mediaAlbumItems.add(MediaAlbumItem.create(mediaLink, highDefEnabled));
-                      }
-                      return mediaAlbumItems;
-                    })
-            )
+              // Enable HD flag if it's turned on.
+              return hdEnabledMediaLinksStream
+                  .map(hdEnabledMediaLinks -> {
+                    List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
+                    for (MediaLink mediaLink : mediaLinks) {
+                      boolean highDefEnabled = hdEnabledMediaLinks.contains(mediaLink);
+
+                      mediaAlbumItems.add(MediaAlbumItem.create(mediaLink, highDefEnabled));
+                    }
+                    return mediaAlbumItems;
+                  });
+            })
             .subscribe(
                 mediaAlbumItems -> {
-                  // Note: FragmentStatePagerAdapter does not refresh any active Fragments so the changes
-                  // won't be reflected right away. As a workaround, onClickReloadMediaInHighDefinition()
-                  // calls a refresh method on the active Fragment directly.
                   boolean isFirstDataChange = mediaAlbumAdapter.getCount() == 0;
                   mediaAlbumAdapter.setAlbumItems(mediaAlbumItems);
 
@@ -271,9 +271,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     // Toggle HD button's visibility if a higher-res version can be shown and is not already visible.
     unsubscribeOnDestroy(
         viewpagerPageChangeStream
-            .concatMap(activeMediaItem -> hdEnabledMediaLinksStream
-                .map(o -> activeMediaItem)
-            )
+            .concatMap(activeMediaItem -> hdEnabledMediaLinksStream.map(o -> activeMediaItem))
             .subscribe(activeMediaItem -> {
               String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
               String optimizedQualityUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
@@ -309,6 +307,37 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
       mediaPositionTextView.setText(getString(R.string.mediaalbumviewer_media_position, mediaAlbumPager.getCurrentItem() + 1, totalMediaItems
       ));
     }
+  }
+
+  private void setupFlickDismissForProgressView() {
+    FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(this));
+    flickListener.setFlickThresholdSlop(.5f);    // Dismiss once the image is swiped 50% away.
+    flickListener.setGestureCallbacks(new FlickGestureListener.GestureCallbacks() {
+      @Override
+      public void onFlickDismissEnd(long flickAnimationDuration) {
+        if (resolvedMediaLink != null) {
+          // Link has been resolved and image/video has started loading. Ignore this flick.
+          return;
+        }
+        MediaAlbumViewerActivity.this.onFlickDismissEnd(flickAnimationDuration);
+      }
+
+      @Override
+      public void onMoveMedia(float moveRatio) {}
+    });
+    flickListener.setOnTouchDownReturnValueProvider(() -> true);
+    flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
+      @Override
+      public int getContentHeightForDismissAnimation() {
+        return progressBarFlickDismissLayout.getHeight();
+      }
+
+      @Override
+      public int getContentHeightForCalculatingThreshold() {
+        return progressBarFlickDismissLayout.getHeight();
+      }
+    });
+    progressBarFlickDismissLayout.setFlickGestureListener(flickListener);
   }
 
 // ======== MEDIA FRAGMENT ======== //
