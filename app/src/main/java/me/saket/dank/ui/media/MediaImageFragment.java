@@ -14,7 +14,6 @@ import android.view.ViewGroup;
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
@@ -157,7 +156,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
           }
         }))
 
-        .apply(new RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
+        //.apply(new RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
 
         .listener(new GlideUtils.SimpleRequestListener<Drawable>() {
           @Override
@@ -212,7 +211,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
           if (imageView.getDrawable() == null) {
             return getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_height_when_empty);
           }
-          return imageView.getHeight();
+          return imageView.getDrawable().getIntrinsicHeight();
         }
       });
       flickListener.setOnGestureIntercepter((deltaY) -> {
