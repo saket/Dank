@@ -5,7 +5,7 @@ import android.support.annotation.StringRes;
 import com.google.auto.value.AutoValue;
 
 /**
- * Details of an error resolved by {@link ErrorManager}.
+ * Details of an error resolved by {@link ErrorResolver}.
  */
 @AutoValue
 public abstract class ResolvedError {

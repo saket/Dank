@@ -7,7 +7,7 @@ import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite.BriteDatabase;
 
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.ErrorManager;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubmissionManager;
@@ -65,7 +65,7 @@ public class Dank {
     return appComponent.jacksonHelper();
   }
 
-  public static ErrorManager errors() {
+  public static ErrorResolver errors() {
     return appComponent.errorManager();
   }
 

@@ -57,7 +57,7 @@ import butterknife.OnClick;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.R;
-import me.saket.dank.data.ErrorManager;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
@@ -82,7 +82,6 @@ import me.saket.dank.widgets.ScrollInterceptibleViewPager;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
-import timber.log.Timber;
 
 public class MediaAlbumViewerActivity extends DankActivity implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks {
 
@@ -108,7 +107,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @Inject HttpProxyCacheServer videoCacheServer;
   @Inject JacksonHelper jacksonHelper;
   @Inject UrlRouter urlRouter;
-  @Inject ErrorManager errorManager;
+  @Inject ErrorResolver errorResolver;
 
   private SystemUiHelper systemUiHelper;
   private Drawable activityBackgroundDrawable;
@@ -249,8 +248,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   }
 
   private void resolveMediaLinkAndDisplayContent(MediaLink mediaLinkToDisplay) {
-    Timber.i("resolving");
-
     unsubscribeOnDestroy(
         mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
             .doOnSuccess(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
@@ -309,7 +306,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                 error -> {
                   moveToScreenState(ScreenState.FAILED);
 
-                  ResolvedError resolvedError = errorManager.resolve(error);
+                  ResolvedError resolvedError = errorResolver.resolve(error);
                   resolveErrorView.applyFrom(resolvedError);
                   resolveErrorView.setOnRetryClickListener(o -> resolveMediaLinkAndDisplayContent(mediaLinkToDisplay));
                 }

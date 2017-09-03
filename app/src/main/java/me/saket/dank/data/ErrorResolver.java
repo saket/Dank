@@ -13,7 +13,7 @@ import rx.exceptions.OnErrorThrowable;
  * Resolves commonly encountered errors and and constructs a user understandable
  * title and message that can be shown by the View.
  */
-public class ErrorManager {
+public class ErrorResolver {
 
   public ResolvedError resolve(Throwable error) {
     error = findActualCause(error);
@@ -42,6 +42,12 @@ public class ErrorManager {
   }
 
   public Throwable findActualCause(Throwable error) {
+    if (error instanceof io.reactivex.exceptions.CompositeException) {
+      error = error.getCause();
+    }
+    if (error instanceof rx.exceptions.CompositeException) {
+      error = error.getCause();
+    }
     if (error instanceof UndeliverableException) {
       error = error.getCause();
     }
