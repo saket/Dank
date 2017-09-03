@@ -51,6 +51,5 @@
   <me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView
     android:id="@+id/albumviewerimage_title_description"
     android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:visibility="gone" />
+    android:layout_height="match_parent" />
 </FrameLayout>

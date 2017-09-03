@@ -34,10 +34,10 @@ public class MediaAlbumViewerTitleDescriptionView extends RelativeLayout {
   @BindView(R.id.mediaalbumviewer_titledescription_scroll_hint) View scrollHintView;
 
   private boolean isDescriptionCollapsed = true;
-  private boolean touchStartedOnScrollableChild;
   private final Rect tempRect = new Rect();
 
   private BehaviorRelay<Boolean> dimmingRequiredForTitleAndDescriptionStream = BehaviorRelay.create();
+  private boolean touchStartedOnScrollableChild;
 
   @SuppressLint("SetTextI18n")
   public MediaAlbumViewerTitleDescriptionView(Context context, AttributeSet attrs) {
@@ -60,6 +60,10 @@ public class MediaAlbumViewerTitleDescriptionView extends RelativeLayout {
           + "a giant head. I have been planning and executing this piece for months in 2014 with the sole purpose of submitting it (and hopefully "
           + "getting in) to a fantasy/scifi yearly book called Spectrum.");
     }
+
+    if (getVisibility() == GONE) {
+      throw new AssertionError("GONE not supported");
+    }
   }
 
   public void setTitleAndDescription(@Nullable String title, @Nullable String description) {
@@ -69,66 +73,68 @@ public class MediaAlbumViewerTitleDescriptionView extends RelativeLayout {
     titleView.setVisibility(TextUtils.isEmpty(title) ? View.GONE : View.VISIBLE);
     descriptionView.setVisibility(TextUtils.isEmpty(description) ? View.GONE : View.VISIBLE);
 
-    Views.executeOnNextLayout(this, () -> {
-      int extraTopPadding;
+    Views.executeOnMeasure(this, () ->
+        Views.executeOnNextLayout(this, () -> {
+          int extraTopPadding;
 
-      if (isDescriptionCollapsed) {
-        Layout descriptionViewLayout = descriptionView.getLayout();
+          if (isDescriptionCollapsed) {
+            Layout descriptionViewLayout = descriptionView.getLayout();
 
-        if (descriptionViewLayout == null) {  // TODO: remove true.
-          int descriptionViewWidth = getWidth() - scrollableChild.getPaddingStart() - scrollableChild.getPaddingEnd()
-              - scrollView.getPaddingStart() - scrollView.getPaddingEnd();
+            if (descriptionViewLayout == null) {  // TODO: remove true.
+              int descriptionViewWidth = getWidth() - scrollableChild.getPaddingStart() - scrollableChild.getPaddingEnd()
+                  - scrollView.getPaddingStart() - scrollView.getPaddingEnd();
 
-          descriptionViewLayout = new StaticLayout(
-              descriptionView.getText().toString(),
-              descriptionView.getPaint(),
-              descriptionViewWidth,
-              Layout.Alignment.ALIGN_NORMAL,
-              descriptionView.getLineSpacingMultiplier(),
-              descriptionView.getLineSpacingExtra(),
-              true
-          );
-        }
+              descriptionViewLayout = new StaticLayout(
+                  descriptionView.getText().toString(),
+                  descriptionView.getPaint(),
+                  descriptionViewWidth,
+                  Layout.Alignment.ALIGN_NORMAL,
+                  descriptionView.getLineSpacingMultiplier(),
+                  descriptionView.getLineSpacingExtra(),
+                  true
+              );
+            }
 
-        if (descriptionViewLayout.getLineCount() > MAX_LINES_IN_COLLAPSED_STATE) {
-          // We want to keep the description visible till 2.5 lines. 0.5 lines extra so that the user knows the description is clipped.
-          // Update: the calculation of 2.5th line's location is actually slightly incorrect. I couldn't figure out the error, but I
-          // managed to get it visually working.
-          int thirdLineTop = descriptionViewLayout.getLineTop(MAX_LINES_IN_COLLAPSED_STATE);
-          int thirdLineAscent = descriptionViewLayout.getLineAscent(MAX_LINES_IN_COLLAPSED_STATE);
-          int keepDescriptionVisibleTillDistance = (int) (thirdLineTop + (-thirdLineAscent * 0.75f));
+            if (descriptionViewLayout.getLineCount() > MAX_LINES_IN_COLLAPSED_STATE) {
+              // We want to keep the description visible till 2.5 lines. 0.5 lines extra so that the user knows the description is clipped.
+              // Update: the calculation of 2.5th line's location is actually slightly incorrect. I couldn't figure out the error, but I
+              // managed to get it visually working.
+              int thirdLineTop = descriptionViewLayout.getLineTop(MAX_LINES_IN_COLLAPSED_STATE);
+              int thirdLineAscent = descriptionViewLayout.getLineAscent(MAX_LINES_IN_COLLAPSED_STATE);
+              int keepDescriptionVisibleTillDistance = (int) (thirdLineTop + (-thirdLineAscent * 0.75f));
 
-          int totalSpaceAvailable = getHeight() - getPaddingBottom() - scrollHintView.getHeight();
-          int scrollViewHeight = scrollView.getHeight();
-          int descriptionTopInScrollView = Views.getTopRelativeToParent(scrollView, descriptionView);
-          int distanceFromTopToScrollableChild = totalSpaceAvailable - scrollViewHeight;
-          int sizeOfDescriptionToHide = scrollViewHeight - (descriptionTopInScrollView + keepDescriptionVisibleTillDistance);
-          extraTopPadding = distanceFromTopToScrollableChild + sizeOfDescriptionToHide;
+              int totalSpaceAvailable = getHeight() - getPaddingBottom() - scrollHintView.getHeight();
+              int scrollViewHeight = scrollView.getHeight();
+              int descriptionTopInScrollView = Views.getTopRelativeToParent(scrollView, descriptionView);
+              int distanceFromTopToScrollableChild = totalSpaceAvailable - scrollViewHeight;
+              int sizeOfDescriptionToHide = scrollViewHeight - (descriptionTopInScrollView + keepDescriptionVisibleTillDistance);
+              extraTopPadding = distanceFromTopToScrollableChild + sizeOfDescriptionToHide;
 
-          //Timber.i("totalSpaceAvailable: %s", totalSpaceAvailable);
-          //Timber.i("scrollViewHeight: %s", scrollViewHeight);
-          //Timber.i("descriptionTopInScrollView: %s", descriptionTopInScrollView);
-          //Timber.i("distanceFromTopToScrollableChild: %s", distanceFromTopToScrollableChild);
-          //Timber.i("sizeOfDescriptionToHide: %s", sizeOfDescriptionToHide);
+              //Timber.i("totalSpaceAvailable: %s", totalSpaceAvailable);
+              //Timber.i("scrollViewHeight: %s", scrollViewHeight);
+              //Timber.i("descriptionTopInScrollView: %s", descriptionTopInScrollView);
+              //Timber.i("distanceFromTopToScrollableChild: %s", distanceFromTopToScrollableChild);
+              //Timber.i("sizeOfDescriptionToHide: %s", sizeOfDescriptionToHide);
 
-        } else {
-          extraTopPadding = 0;
-        }
+            } else {
+              extraTopPadding = 0;
+            }
 
-      } else {
-        extraTopPadding = 0;
-      }
+          } else {
+            extraTopPadding = 0;
+          }
 
-      Views.setPaddingTop(scrollView, extraTopPadding);
-      scrollView.post(() -> scrollView.setVisibility(VISIBLE));
+          Views.setPaddingTop(scrollView, extraTopPadding);
+          scrollView.post(() -> scrollView.setVisibility(VISIBLE));
 
-      boolean isDescriptionScrollable = extraTopPadding > 0;
-      scrollHintView.setVisibility(isDescriptionScrollable ? VISIBLE : GONE);
-      if (scrollHintView.getVisibility() == GONE) {
-        // ScrollView is aligned above the scroll hint View. Move it to parent bottom if the hint is removed.
-        ((RelativeLayout.LayoutParams) scrollView.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
-      }
-    });
+          boolean isDescriptionScrollable = extraTopPadding > 0;
+          scrollHintView.setVisibility(isDescriptionScrollable ? VISIBLE : GONE);
+          if (scrollHintView.getVisibility() == GONE) {
+            // ScrollView is aligned above the scroll hint View. Move it to parent bottom if the hint is removed.
+            ((RelativeLayout.LayoutParams) scrollView.getLayoutParams()).addRule(RelativeLayout.ALIGN_PARENT_BOTTOM, RelativeLayout.TRUE);
+          }
+        })
+    );
   }
 
   /**
@@ -144,20 +150,32 @@ public class MediaAlbumViewerTitleDescriptionView extends RelativeLayout {
   }
 
   @Override
+  public void setVisibility(int visibility) {
+    if (visibility == GONE) {
+      throw new AssertionError("GONE not supported");
+    }
+    super.setVisibility(visibility);
+  }
+
+  @Override
   public boolean dispatchTouchEvent(MotionEvent ev) {
     if (ev.getAction() == MotionEvent.ACTION_DOWN) {
-      // Register touch events only if they are made on the scrollable content, because this ScrollView's height could be MATCH_PARENT.
-      scrollableChild.getGlobalVisibleRect(tempRect);
-      touchStartedOnScrollableChild = tempRect.contains((int) ev.getX(), (int) ev.getY());
+      if (getVisibility() == VISIBLE) {
+        // Register touch events only if they are made on the scrollable content, because this ScrollView's height could be MATCH_PARENT.
+        scrollableChild.getGlobalVisibleRect(tempRect);
+        touchStartedOnScrollableChild = tempRect.contains((int) ev.getX(), (int) ev.getY());
 
-      if (!touchStartedOnScrollableChild) {
-        scrollHintView.getGlobalVisibleRect(tempRect);
-        boolean touchStartedOnScrollHint = tempRect.contains((int) ev.getX(), (int) ev.getY());
-        if (touchStartedOnScrollHint) {
-          // ScrollView isn't going to scroll in response to this event, so might as
-          // well ignore block it so that the image doesn't accidentally get flicked.
-          return true;
+        if (!touchStartedOnScrollableChild) {
+          scrollHintView.getGlobalVisibleRect(tempRect);
+          boolean touchStartedOnScrollHint = tempRect.contains((int) ev.getX(), (int) ev.getY());
+          if (touchStartedOnScrollHint) {
+            // ScrollView isn't going to scroll in response to this event, so might as
+            // well ignore block it so that the image doesn't accidentally get flicked.
+            return true;
+          }
         }
+      } else {
+        touchStartedOnScrollableChild = false;
       }
     }
 

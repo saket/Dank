@@ -61,7 +61,7 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
     unsubscribeOnDestroy(
         ((MediaFragmentCallbacks) getActivity()).systemUiVisibilityStream()
             .subscribe(systemUiVisible -> {
-              titleDescriptionView.setVisibility(systemUiVisible ? View.VISIBLE : View.GONE);
+              titleDescriptionView.setVisibility(systemUiVisible ? View.VISIBLE : View.INVISIBLE);
             })
     );
 
@@ -100,7 +100,7 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
         wrappedGestureCallbacks.onMoveMedia(moveRatio);
 
         boolean isImageBeingMoved = moveRatio != 0f;
-        titleDescriptionView.setVisibility(!isImageBeingMoved ? View.VISIBLE : View.GONE);
+        titleDescriptionView.setVisibility(!isImageBeingMoved ? View.VISIBLE : View.INVISIBLE);
 
         boolean showDimming = !isImageBeingMoved && titleDescriptionView.streamDimmingRequiredForTitleAndDescription().getValue();
         imageDimmingView.setVisibility(showDimming ? View.VISIBLE : View.GONE);
