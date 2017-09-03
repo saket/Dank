@@ -1,6 +1,7 @@
 package me.saket.dank.data.links;
 
 import android.os.Parcelable;
+import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
@@ -16,6 +17,7 @@ public abstract class ImgurAlbumLink extends MediaLink implements Parcelable {
 
   public abstract String albumUrl();
 
+  @Nullable
   public abstract String albumTitle();
 
   public abstract String coverImageUrl();
@@ -41,7 +43,7 @@ public abstract class ImgurAlbumLink extends MediaLink implements Parcelable {
     return create(albumUrl(), albumTitle(), newCoverImageUrl, images());
   }
 
-  public static ImgurAlbumLink create(String albumUrl, String albumTitle, String coverImageUrl, List<ImgurLink> images) {
+  public static ImgurAlbumLink create(String albumUrl, @Nullable String albumTitle, String coverImageUrl, List<ImgurLink> images) {
     return new AutoValue_ImgurAlbumLink(albumUrl /* unparsedUrl */, albumUrl, albumTitle, coverImageUrl, images);
   }
 

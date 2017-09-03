@@ -111,7 +111,7 @@ public class ImgurRepository {
   }
 
   @NonNull
-  private <T extends ImgurResponse> io.reactivex.functions.Function<Response<T>, T> extractResponseBody() {
+  private <T extends ImgurResponse> Function<Response<T>, T> extractResponseBody() {
     return response -> response.body();
   }
 

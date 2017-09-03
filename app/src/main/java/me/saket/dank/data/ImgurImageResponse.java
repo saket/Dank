@@ -49,5 +49,4 @@ public abstract class ImgurImageResponse implements ImgurResponse {
   public static JsonAdapter<ImgurImageResponse> jsonAdapter(Moshi moshi) {
     return new AutoValue_ImgurImageResponse.MoshiJsonAdapter(moshi);
   }
-
 }

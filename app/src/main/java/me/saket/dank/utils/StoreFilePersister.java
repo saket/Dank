@@ -35,9 +35,9 @@ public class StoreFilePersister<Key, Value> implements Persister<Value, Key>, Cl
   private final JsonParser<Key, Value> jsonParser;
 
   public interface JsonParser<Key, Value> {
-    Value fromJson(Key key, BufferedSource jsonBufferedSource) throws IOException;
+    Value fromJson(BufferedSource jsonBufferedSource) throws IOException;
 
-    String toJson(Key key, Value raw);
+    String toJson(Value raw);
   }
 
   public StoreFilePersister(FileSystem fileSystem, PathResolver<Key> pathResolver, JsonParser<Key, Value> jsonParser) {
@@ -54,13 +54,13 @@ public class StoreFilePersister<Key, Value> implements Persister<Value, Key>, Cl
   public Maybe<Value> read(@Nonnull Key key) {
     return fileReader
         .read(key)
-        .map(bufferedSource -> jsonParser.fromJson(key, bufferedSource));
+        .map(bufferedSource -> jsonParser.fromJson(bufferedSource));
   }
 
   @Nonnull
   @Override
   public Single<Boolean> write(@Nonnull Key key, @Nonnull Value value) {
-    String rawJson = jsonParser.toJson(key, value);
+    String rawJson = jsonParser.toJson(value);
     InputStream stream = new ByteArrayInputStream(rawJson.getBytes(StandardCharsets.UTF_8));
     BufferedSource jsonBufferedSource = Okio.buffer(Okio.source(stream));
 
