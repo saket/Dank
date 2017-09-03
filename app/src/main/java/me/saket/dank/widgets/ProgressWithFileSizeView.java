@@ -1,5 +1,6 @@
 package me.saket.dank.widgets;
 
+import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
@@ -41,10 +42,11 @@ public class ProgressWithFileSizeView extends LinearLayout {
     }
     attributes.recycle();
 
+    setLayoutTransition(new LayoutTransition());
     progressBackgroundView.setMaxProgress(100);
     progressBackgroundView.setProgress(100);
 
-    fileSizeView.setVisibility(GONE); // Set to VISIBLE when setFileSizeBytes() gets called.
+    fileSizeView.setVisibility(INVISIBLE); // Set to VISIBLE when setFileSizeBytes() gets called.
     setOrientation(VERTICAL);
   }
 

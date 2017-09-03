@@ -8,14 +8,16 @@
   tools:parentTag="android.widget.LinearLayout">
 
   <FrameLayout
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"><!-- Acts as the background for the following indeterminate progress bar. -->
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"><!-- Acts as the background for the following indeterminate progress bar. -->
 
     <com.github.rahatarmanahmed.cpv.CircularProgressView
       android:id="@+id/progressbarwithfilesize_progress_fill"
       android:layout_width="48dp"
       android:layout_height="48dp"
       android:layout_gravity="center"
+      app:cpv_animSyncDuration="0"
       app:cpv_color="@color/gray_600"
       app:cpv_indeterminate="false"
       app:cpv_maxProgress="100"
@@ -41,6 +43,5 @@
     android:paddingEnd="@dimen/spacing8"
     android:paddingStart="@dimen/spacing8"
     android:paddingTop="@dimen/spacing2"
-    android:textAllCaps="true"
-    tools:text="260 KB" />
+    android:textAllCaps="true" />
 </merge>
