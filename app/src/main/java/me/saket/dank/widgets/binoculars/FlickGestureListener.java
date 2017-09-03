@@ -263,6 +263,7 @@ public class FlickGestureListener implements View.OnTouchListener {
         .withStartAction(() -> gestureCallbacks.onFlickDismissEnd(flickAnimDuration))
         .setDuration(flickAnimDuration)
         .setInterpolator(ANIM_INTERPOLATOR)
+        .setUpdateListener(animation -> dispatchOnPhotoMoveCallback(view))
         .start();
   }
 
