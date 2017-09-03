@@ -10,11 +10,6 @@
   android:orientation="vertical"
   tools:background="@color/black_opacity_10">
 
-  <me.saket.dank.widgets.ScrollInterceptibleViewPager
-    android:id="@+id/mediaalbumviewer_pager"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent" />
-
   <RelativeLayout
     android:id="@+id/mediaalbumviewer_media_options_container"
     android:layout_width="match_parent"
@@ -90,10 +85,10 @@
   </RelativeLayout>
 
   <me.saket.dank.widgets.binoculars.FlickDismissLayout
-    android:id="@+id/mediaalbumviewer_progress_flick_dismiss_layout"
+    android:id="@+id/mediaalbumviewer_flick_dismiss_layout"
     android:layout_width="match_parent"
-    android:layout_height="240dp"
-    android:layout_centerInParent="true">
+    android:layout_height="200dp"
+    android:layout_centerVertical="true">
 
     <ProgressBar
       android:id="@+id/mediaalbumviewer_progress"
@@ -101,5 +96,28 @@
       android:layout_height="wrap_content"
       android:layout_gravity="center"
       android:indeterminate="true" />
+
+    <FrameLayout
+      android:id="@+id/mediaalbumviewer_error_container"
+      android:layout_width="wrap_content"
+      android:layout_height="match_parent"
+      android:layout_gravity="center"
+      android:layout_margin="@dimen/spacing24"
+      android:background="@drawable/background_mediaalbumviewer_error_state"
+      android:paddingEnd="@dimen/spacing16"
+      android:paddingStart="@dimen/spacing16"
+      android:paddingTop="@dimen/spacing16">
+
+      <me.saket.dank.widgets.ErrorStateView
+        android:id="@+id/mediaalbumviewer_error"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center" />
+    </FrameLayout>
   </me.saket.dank.widgets.binoculars.FlickDismissLayout>
+
+  <me.saket.dank.widgets.ScrollInterceptibleViewPager
+    android:id="@+id/mediaalbumviewer_pager"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
 </RelativeLayout>

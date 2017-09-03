@@ -15,6 +15,7 @@
   <dimen name="spacing32">32dp</dimen>
 
   <dimen name="elevation_toolbar">4dp</dimen>
+  <dimen name="card_corner_radius">4dp</dimen>
 
   <!-- Subreddit -->
   <dimen name="subreddit_toolbar_sheet_elevation">10dp</dimen>

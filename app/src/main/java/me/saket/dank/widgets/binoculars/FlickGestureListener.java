@@ -8,6 +8,8 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 
+import timber.log.Timber;
+
 /**
  * Listeners for a flick gesture and also moves around the View with user's finger.
  */
@@ -77,7 +79,7 @@ public class FlickGestureListener implements View.OnTouchListener {
      * For reasons unknown to even bhagwan ji, flick-dismiss isn't working while an image is loading.
      * Returning true from onTouch on touch down seems to solve the problem.
      */
-    boolean shouldReturnTrueOnTouchDown();
+    boolean shouldReturnTrueOnTouchDown(MotionEvent event);
   }
 
   public FlickGestureListener(ViewConfiguration viewConfiguration) {
@@ -139,7 +141,9 @@ public class FlickGestureListener implements View.OnTouchListener {
           velocityTracker.clear();
         }
         velocityTracker.addMovement(event);
-        return onTouchDownReturnValueProvider != null && onTouchDownReturnValueProvider.shouldReturnTrueOnTouchDown();
+        boolean returnn = onTouchDownReturnValueProvider != null && onTouchDownReturnValueProvider.shouldReturnTrueOnTouchDown(event);
+        Timber.i("returnn: %s", returnn);
+        return returnn;
 
       case MotionEvent.ACTION_CANCEL:
       case MotionEvent.ACTION_UP:

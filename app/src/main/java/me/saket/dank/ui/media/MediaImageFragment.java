@@ -8,6 +8,7 @@ import android.support.annotation.Nullable;
 import android.util.Size;
 import android.view.Gravity;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -219,7 +220,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
         boolean isScrollingUpwards = deltaY < 0;
         return imageView.canPanFurtherVertically(isScrollingUpwards);
       });
-      flickListener.setOnTouchDownReturnValueProvider(() -> {
+      flickListener.setOnTouchDownReturnValueProvider((MotionEvent event) -> {
         // Bug workaround: ViewPager is not calling its canScroll() method when an image is
         // being loaded, no idea why. As a result, flick-to-dismiss does not work until the
         // image is loaded.

@@ -57,6 +57,7 @@ import butterknife.OnClick;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.R;
+import me.saket.dank.data.ErrorManager;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
@@ -76,6 +77,7 @@ import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.ScrollInterceptibleViewPager;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
@@ -89,20 +91,24 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
   @BindView(R.id.mediaalbumviewer_pager) ScrollInterceptibleViewPager mediaAlbumPager;
-  @BindView(R.id.mediaalbumviewer_media_options_container) ViewGroup contentInfoContainerView;
+  @BindView(R.id.mediaalbumviewer_media_options_container) ViewGroup optionButtonsContainerView;
   @BindView(R.id.mediaalbumviewer_position_and_options_container) ViewGroup contentOptionButtonsContainerView;
   @BindView(R.id.mediaalbumviewer_share) ImageButton shareButton;
   @BindView(R.id.mediaalbumviewer_download) ImageButton downloadButton;
   @BindView(R.id.mediaalbumviewer_open_in_browser) ImageButton openInBrowserButton;
   @BindView(R.id.mediaalbumviewer_reload_in_hd) ImageButton reloadInHighDefButton;
   @BindView(R.id.mediaalbumviewer_options_background_gradient) View contentInfoBackgroundGradientView;
-  @BindView(R.id.mediaalbumviewer_progress_flick_dismiss_layout) FlickDismissLayout progressBarFlickDismissLayout;
+  @BindView(R.id.mediaalbumviewer_flick_dismiss_layout) FlickDismissLayout flickDismissLayout;
   @BindView(R.id.mediaalbumviewer_media_position) TextView mediaPositionTextView;
+  @BindView(R.id.mediaalbumviewer_progress) View resolveProgressView;
+  @BindView(R.id.mediaalbumviewer_error_container) ViewGroup resolveErrorViewContainer;
+  @BindView(R.id.mediaalbumviewer_error) ErrorStateView resolveErrorView;
 
   @Inject MediaHostRepository mediaHostRepository;
   @Inject HttpProxyCacheServer videoCacheServer;
   @Inject JacksonHelper jacksonHelper;
   @Inject UrlRouter urlRouter;
+  @Inject ErrorManager errorManager;
 
   private SystemUiHelper systemUiHelper;
   private Drawable activityBackgroundDrawable;
@@ -115,6 +121,20 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   private Set<MediaLink> hdEnabledMediaLinks = new HashSet<>();
   private Relay<Set<MediaLink>> hdEnabledMediaLinksStream = BehaviorRelay.create();
   private Relay<MediaAlbumItem> viewpagerPageChangeStream = BehaviorRelay.create();
+
+  private enum ScreenState {
+    /**
+     * Hitting the API of Imgur, Streamable, etc to fetch image links in case it's an album link.
+     */
+    RESOLVING_LINK,
+
+    /**
+     * Images/videos ready to be loaded.
+     */
+    LINK_RESOLVED,
+
+    FAILED,
+  }
 
   public static void start(Context context, MediaLink mediaLink, @Nullable Thumbnails redditSuppliedImages, JacksonHelper jacksonHelper) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
@@ -137,6 +157,8 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     setContentView(R.layout.activity_media_album_viewer);
     ButterKnife.bind(this);
 
+    moveToScreenState(ScreenState.RESOLVING_LINK);
+
     // Fade in background dimming.
     activityBackgroundDrawable = rootLayout.getBackground().mutate();
     rootLayout.setBackground(activityBackgroundDrawable);
@@ -150,21 +172,12 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     fadeInAnimator.start();
 
     // Animated once images are fetched.
-    contentInfoContainerView.setVisibility(View.INVISIBLE);
-    ((ViewGroup) contentInfoContainerView.getParent()).getLayoutTransition().setDuration(200);
+    optionButtonsContainerView.setVisibility(View.INVISIBLE);
+    ((ViewGroup) optionButtonsContainerView.getParent()).getLayoutTransition().setDuration(200);
 
     // Show the option buttons above the navigation bar.
     int navBarHeight = Views.getNavigationBarSize(this).y;
     Views.setPaddingBottom(contentOptionButtonsContainerView, navBarHeight);
-
-    mediaAlbumPager.setOnInterceptScrollListener((view, deltaX, touchX, touchY) -> {
-      if (view instanceof ZoomableImageView) {
-        return ((ZoomableImageView) view).canPanAnyFurtherHorizontally(deltaX);
-      } else {
-        // Avoid paging when a video's SeekBar is being used.
-        return view.getId() == R.id.exomedia_controls_video_seek || view.getId() == R.id.exomedia_controls_video_seek_container;
-      }
-    });
 
     rxPermissions = new RxPermissions(this);
     systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, systemUiVisible -> {
@@ -195,68 +208,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     setupFlickDismissForProgressView();
 
     MediaLink mediaLinkToDisplay = getIntent().getParcelableExtra(KEY_MEDIA_LINK_TO_SHOW);
-    unsubscribeOnDestroy(
-        mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
-            .doOnSuccess(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
-            .map(resolvedMediaLink -> {
-              // Find all child images under an album.
-              if (resolvedMediaLink.isMediaAlbum()) {
-                return ((ImgurAlbumLink) resolvedMediaLink).images();
-              } else {
-                return Collections.singletonList(resolvedMediaLink);
-              }
-            })
-            .compose(RxUtils.applySchedulersSingle())
-            .doAfterTerminate(() -> progressBarFlickDismissLayout.setVisibility(View.GONE))
-            .doOnSuccess(mediaLinks -> {
-              // Toggle HD for all images with the default value.
-              boolean loadHighQualityImageByDefault = false; // TODO: Get this from user's mobile-data preferences.
-
-              if (loadHighQualityImageByDefault) {
-                hdEnabledMediaLinks.addAll(mediaLinks);
-                hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);
-              }
-            })
-            .flatMapObservable(mediaLinks -> {
-
-              // Enable HD flag if it's turned on.
-              return hdEnabledMediaLinksStream
-                  .map(hdEnabledMediaLinks -> {
-                    List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
-                    for (MediaLink mediaLink : mediaLinks) {
-                      boolean highDefEnabled = hdEnabledMediaLinks.contains(mediaLink);
-
-                      mediaAlbumItems.add(MediaAlbumItem.create(mediaLink, highDefEnabled));
-                    }
-                    return mediaAlbumItems;
-                  });
-            })
-            .subscribe(
-                mediaAlbumItems -> {
-                  boolean isFirstDataChange = mediaAlbumAdapter.getCount() == 0;
-                  mediaAlbumAdapter.setAlbumItems(mediaAlbumItems);
-
-                  if (isFirstDataChange) {
-                    startListeningToViewPagerPageChanges();
-
-                    // Show media options now that we have adapter data.
-                    contentInfoContainerView.setVisibility(View.VISIBLE);
-                    Views.executeOnMeasure(contentInfoContainerView, () -> {
-                      animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
-                    });
-
-                  } else {
-                    // Note: FragmentStatePagerAdapter does not refresh any active Fragments so doing it manually.
-                    MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
-                    mediaAlbumAdapter.getActiveFragment().handleMediaItemUpdate(activeMediaItem);
-                  }
-                },
-                error -> {
-                  // TODO: Handle error.
-                  Timber.e(error, "Couldn't resolve media link");
-                }
-            )
-    );
+    resolveMediaLinkAndDisplayContent(mediaLinkToDisplay);
 
     // Hide all content when Activity goes immersive.
     unsubscribeOnDestroy(
@@ -285,6 +237,90 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
               reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
             })
     );
+
+    mediaAlbumPager.setOnInterceptScrollListener((view, deltaX, touchX, touchY) -> {
+      if (view instanceof ZoomableImageView) {
+        return ((ZoomableImageView) view).canPanAnyFurtherHorizontally(deltaX);
+      } else {
+        // Avoid paging when a video's SeekBar is being used.
+        return view.getId() == R.id.exomedia_controls_video_seek || view.getId() == R.id.exomedia_controls_video_seek_container;
+      }
+    });
+  }
+
+  private void resolveMediaLinkAndDisplayContent(MediaLink mediaLinkToDisplay) {
+    Timber.i("resolving");
+
+    unsubscribeOnDestroy(
+        mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
+            .doOnSuccess(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
+            .map(resolvedMediaLink -> {
+              // Find all child images under an album.
+              if (resolvedMediaLink.isMediaAlbum()) {
+                return ((ImgurAlbumLink) resolvedMediaLink).images();
+              } else {
+                return Collections.singletonList(resolvedMediaLink);
+              }
+            })
+            .compose(RxUtils.applySchedulersSingle())
+            .doOnSuccess(mediaLinks -> {
+              // Toggle HD for all images with the default value.
+              boolean loadHighQualityImageByDefault = false; // TODO: Get this from user's mobile-data preferences.
+
+              if (loadHighQualityImageByDefault) {
+                hdEnabledMediaLinks.addAll(mediaLinks);
+                hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);
+              }
+            })
+            .flatMapObservable(mediaLinks -> {
+              // Enable HD flag if it's turned on.
+              return hdEnabledMediaLinksStream
+                  .map(hdEnabledMediaLinks -> {
+                    List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
+                    for (MediaLink mediaLink : mediaLinks) {
+                      boolean highDefEnabled = hdEnabledMediaLinks.contains(mediaLink);
+
+                      mediaAlbumItems.add(MediaAlbumItem.create(mediaLink, highDefEnabled));
+                    }
+                    return mediaAlbumItems;
+                  });
+            })
+            .subscribe(
+                mediaAlbumItems -> {
+                  boolean isFirstDataChange = mediaAlbumAdapter.getCount() == 0;
+                  mediaAlbumAdapter.setAlbumItems(mediaAlbumItems);
+                  moveToScreenState(ScreenState.LINK_RESOLVED);
+
+                  if (isFirstDataChange) {
+                    startListeningToViewPagerPageChanges();
+
+                    // Show media options now that we have adapter data.
+                    optionButtonsContainerView.setVisibility(View.VISIBLE);
+                    Views.executeOnMeasure(optionButtonsContainerView, () -> {
+                      animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
+                    });
+
+                  } else {
+                    // Note: FragmentStatePagerAdapter does not refresh any active Fragments so doing it manually.
+                    MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
+                    mediaAlbumAdapter.getActiveFragment().handleMediaItemUpdate(activeMediaItem);
+                  }
+                },
+                error -> {
+                  moveToScreenState(ScreenState.FAILED);
+
+                  ResolvedError resolvedError = errorManager.resolve(error);
+                  resolveErrorView.applyFrom(resolvedError);
+                  resolveErrorView.setOnRetryClickListener(o -> resolveMediaLinkAndDisplayContent(mediaLinkToDisplay));
+                }
+            )
+    );
+  }
+
+  private void moveToScreenState(ScreenState screenState) {
+    resolveProgressView.setVisibility(screenState == ScreenState.RESOLVING_LINK ? View.VISIBLE : View.GONE);
+    resolveErrorViewContainer.setVisibility(screenState == ScreenState.FAILED ? View.VISIBLE : View.GONE);
+    mediaAlbumPager.setVisibility(screenState == ScreenState.LINK_RESOLVED ? View.VISIBLE : View.GONE);
   }
 
   private void startListeningToViewPagerPageChanges() {
@@ -325,19 +361,22 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
       @Override
       public void onMoveMedia(float moveRatio) {}
     });
-    flickListener.setOnTouchDownReturnValueProvider(() -> true);
+    flickListener.setOnTouchDownReturnValueProvider(motionEvent -> {
+      // Hackkyyy hacckkk. Ugh.
+      return !Views.touchLiesOn(resolveErrorView.getRetryButton(), motionEvent.getRawX(), motionEvent.getRawY());
+    });
     flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
       @Override
       public int getContentHeightForDismissAnimation() {
-        return progressBarFlickDismissLayout.getHeight();
+        return flickDismissLayout.getHeight();
       }
 
       @Override
       public int getContentHeightForCalculatingThreshold() {
-        return progressBarFlickDismissLayout.getHeight();
+        return flickDismissLayout.getHeight();
       }
     });
-    progressBarFlickDismissLayout.setFlickGestureListener(flickListener);
+    flickDismissLayout.setFlickGestureListener(flickListener);
   }
 
 // ======== MEDIA FRAGMENT ======== //
@@ -415,13 +454,13 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     updateBackgroundDimmingAlpha(Math.abs(moveRatio));
 
     boolean isImageBeingMoved = moveRatio != 0f;
-    contentInfoContainerView.setVisibility(isImageBeingMoved ? View.GONE : View.VISIBLE);
+    optionButtonsContainerView.setVisibility(isImageBeingMoved ? View.GONE : View.VISIBLE);
   }
 
   /**
    * @param targetTransparencyFactor 1f for maximum transparency. 0f for none.
    */
-  private void updateBackgroundDimmingAlpha(@FloatRange(from = -1, to = 1) float targetTransparencyFactor) {
+  private void updateBackgroundDimmingAlpha(@FloatRange(from = 0, to = 1) float targetTransparencyFactor) {
     // Increase dimming exponentially so that the background is fully transparent while the image has been moved by half.
     float dimming = 1f - Math.min(1f, targetTransparencyFactor * 2);
     activityBackgroundDrawable.setAlpha((int) (dimming * 255));
@@ -651,8 +690,8 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         .start();
 
     // Animating the child Views so that they get clipped by their parent container.
-    for (int i = 0; i < contentInfoContainerView.getChildCount(); i++) {
-      View childView = contentInfoContainerView.getChildAt(i);
+    for (int i = 0; i < optionButtonsContainerView.getChildCount(); i++) {
+      View childView = optionButtonsContainerView.getChildAt(i);
 
       if (setInitialValues) {
         childView.setAlpha(showOptions ? 0f : 1f);

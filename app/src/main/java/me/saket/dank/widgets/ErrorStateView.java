@@ -8,6 +8,7 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
@@ -21,6 +22,7 @@ public class ErrorStateView extends LinearLayout {
 
   @BindView(R.id.errorstate_emoji) TextView emojiView;
   @BindView(R.id.errorstate_message) TextView messageView;
+  @BindView(R.id.errorstate_retry) Button retryButton;
 
   private View.OnClickListener onClickRetryListener;
 
@@ -60,5 +62,9 @@ public class ErrorStateView extends LinearLayout {
       throw new AssertionError("No retry listener present");
     }
     onClickRetryListener.onClick(button);
+  }
+
+  public Button getRetryButton() {
+    return retryButton;
   }
 }

@@ -73,7 +73,7 @@ public class Views {
           }
 
         } else if (view.getVisibility() == View.GONE) {
-          Timber.w("View's visibility is set to Gone. It'll never be measured.");
+          Timber.w("View's visibility is set to Gone. It'll never be measured: %s", view);
           view.getViewTreeObserver().removeOnPreDrawListener(this);
         }
 
