@@ -5,17 +5,19 @@ import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.widget.FrameLayout;
+import android.widget.LinearLayout;
 import android.widget.TextView;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
 
-public class ErrorStateView extends FrameLayout {
+public class ErrorStateView extends LinearLayout {
 
   @BindView(R.id.errorstate_emoji) TextView emojiView;
   @BindView(R.id.errorstate_message) TextView messageView;
@@ -25,6 +27,9 @@ public class ErrorStateView extends FrameLayout {
   public ErrorStateView(@NonNull Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
     init(attrs);
+
+    setOrientation(VERTICAL);
+    setGravity(Gravity.CENTER);
   }
 
   private void init(AttributeSet attrs) {
