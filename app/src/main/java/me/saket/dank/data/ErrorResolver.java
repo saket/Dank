@@ -1,5 +1,7 @@
 package me.saket.dank.data;
 
+import android.support.annotation.Nullable;
+
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -15,7 +17,7 @@ import rx.exceptions.OnErrorThrowable;
  */
 public class ErrorResolver {
 
-  public ResolvedError resolve(Throwable error) {
+  public ResolvedError resolve(@Nullable Throwable error) {
     error = findActualCause(error);
 
     if (error instanceof SocketException || error instanceof SocketTimeoutException || error instanceof UnknownHostException) {
@@ -41,7 +43,7 @@ public class ErrorResolver {
     }
   }
 
-  public Throwable findActualCause(Throwable error) {
+  public Throwable findActualCause(@Nullable Throwable error) {
     if (error instanceof io.reactivex.exceptions.CompositeException) {
       error = error.getCause();
     }

@@ -8,8 +8,6 @@ import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.animation.Interpolator;
 
-import timber.log.Timber;
-
 /**
  * Listeners for a flick gesture and also moves around the View with user's finger.
  */
@@ -141,9 +139,7 @@ public class FlickGestureListener implements View.OnTouchListener {
           velocityTracker.clear();
         }
         velocityTracker.addMovement(event);
-        boolean returnn = onTouchDownReturnValueProvider != null && onTouchDownReturnValueProvider.shouldReturnTrueOnTouchDown(event);
-        Timber.i("returnn: %s", returnn);
-        return returnn;
+        return onTouchDownReturnValueProvider != null && onTouchDownReturnValueProvider.shouldReturnTrueOnTouchDown(event);
 
       case MotionEvent.ACTION_CANCEL:
       case MotionEvent.ACTION_UP:

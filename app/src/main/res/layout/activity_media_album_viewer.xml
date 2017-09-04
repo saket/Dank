@@ -99,14 +99,7 @@
 
     <FrameLayout
       android:id="@+id/mediaalbumviewer_error_container"
-      android:layout_width="wrap_content"
-      android:layout_height="match_parent"
-      android:layout_gravity="center"
-      android:layout_margin="@dimen/spacing24"
-      android:background="@drawable/background_mediaalbumviewer_error_state"
-      android:paddingEnd="@dimen/spacing16"
-      android:paddingStart="@dimen/spacing16"
-      android:paddingTop="@dimen/spacing16">
+      style="@style/DankMediaAlbumViewer">
 
       <me.saket.dank.widgets.ErrorStateView
         android:id="@+id/mediaalbumviewer_error"

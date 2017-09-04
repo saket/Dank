@@ -82,6 +82,7 @@ import me.saket.dank.widgets.ScrollInterceptibleViewPager;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import timber.log.Timber;
 
 public class MediaAlbumViewerActivity extends DankActivity implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks {
 
@@ -309,6 +310,10 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                   ResolvedError resolvedError = errorResolver.resolve(error);
                   resolveErrorView.applyFrom(resolvedError);
                   resolveErrorView.setOnRetryClickListener(o -> resolveMediaLinkAndDisplayContent(mediaLinkToDisplay));
+
+                  if (resolvedError.isUnknown()) {
+                    Timber.e(error, "Error while loading image: %s", mediaLinkToDisplay.unparsedUrl());
+                  }
                 }
             )
     );
@@ -356,7 +361,9 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
       }
 
       @Override
-      public void onMoveMedia(float moveRatio) {}
+      public void onMoveMedia(float moveRatio) {
+        // Intentionally ignored to avoid resetting dimming when images/videos eventually load.
+      }
     });
     flickListener.setOnTouchDownReturnValueProvider(motionEvent -> {
       // Hackkyyy hacckkk. Ugh.
