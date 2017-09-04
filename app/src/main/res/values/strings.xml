@@ -220,6 +220,7 @@
   <string name="mediaalbumviewer_share_sheet_title">Share with</string>
   <string name="mediaalbumviewer_share_image_not_loaded_yet">Image hasn\'t been loaded yet</string>
   <string name="mediaalbumviewer_share_video_not_loaded_yet">Video hasn\'t been streamed fully yet. Try download instead?</string>
+  <string name="mediaalbumviewer_share_album_link">Share album link</string>
   <string name="mediadownloadnotification_queued_title">Queued %s</string>
   <string name="mediadownloadnotification_progress_title">Saving %s</string>
   <string name="mediadownloadnotification_failed_to_save_image">Failed to save image</string>
@@ -245,5 +246,5 @@
   <string name="userprofilepopup_account_age_in_months">%dm</string>
   <string name="userprofilepopup_account_age_in_years">%dy</string>
   <string name="userprofilepopup_error_message_tap_to_retry">%s. Tap to retry.</string>
-  <string name="mediaalbumviewer_share_album_link">Share album link</string>
+  <string name="userprofilepopup_user_not_found">Nada. This user does not exist.</string>
 </resources>

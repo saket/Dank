@@ -22,6 +22,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.ImageViewTarget;
 
+import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Account;
 
 import org.threeten.bp.Instant;
@@ -30,12 +31,14 @@ import org.threeten.bp.Period;
 import org.threeten.bp.ZoneId;
 
 import java.util.Date;
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.disposables.CompositeDisposable;
 import me.saket.dank.R;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
@@ -43,6 +46,7 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
+import timber.log.Timber;
 
 public class UserProfilePopup extends PopupWindowWithMaterialTransition {
 
@@ -53,8 +57,12 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
   @BindView(R.id.userprofilepopup_link_karma) TextView linkKarmaView;
   @BindView(R.id.userprofilepopup_comment_karma) TextView commentKarmaView;
   @BindView(R.id.userprofilepopup_stats_load_error_message) TextView errorStateMessageView;
+  @BindView(R.id.userprofilepopup_send_private_message) Button messageButton;
+  @BindView(R.id.userprofilepopup_view_full_profile) Button viewFullProfileButton;
 
   private CompositeDisposable onDismissDisposables = new CompositeDisposable();
+
+  @Inject ErrorResolver errorResolver;
 
   private enum StatsLoadState {
     IN_FLIGHT,
@@ -65,6 +73,7 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
   @SuppressLint("InflateParams")
   public UserProfilePopup(Context context) {
     super(context);
+    Dank.dependencyInjector().inject(this);
 
     View popupView = LayoutInflater.from(context).inflate(R.layout.popup_user_profile, null);
     ButterKnife.bind(this, popupView);
@@ -127,13 +136,25 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
                   }
                 },
                 error -> {
+                  error.printStackTrace();
                   showStatsLoadState(StatsLoadState.ERROR);
 
-                  ResolvedError resolvedError = Dank.errors().resolve(error);
-                  errorStateMessageView.setText(errorStateMessageView.getResources().getString(
-                      R.string.userprofilepopup_error_message_tap_to_retry,
-                      errorStateMessageView.getResources().getString(resolvedError.errorMessageRes())
-                  ));
+                  if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 404) {
+                    // User not found.
+                    errorStateMessageView.setText(R.string.userprofilepopup_user_not_found);
+                    messageButton.setEnabled(false);
+                    viewFullProfileButton.setEnabled(false);
+
+                  } else {
+                    ResolvedError resolvedError = errorResolver.resolve(error);
+                    if (resolvedError.isUnknown()) {
+                      Timber.e(error, "Couldn't fetch profile for: %s", userLink.unparsedUrl());
+                    }
+                    errorStateMessageView.setText(errorStateMessageView.getResources().getString(
+                        R.string.userprofilepopup_error_message_tap_to_retry,
+                        errorStateMessageView.getResources().getString(resolvedError.errorMessageRes())
+                    ));
+                  }
                 })
     );
   }

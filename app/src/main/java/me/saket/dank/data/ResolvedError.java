@@ -39,5 +39,4 @@ public abstract class ResolvedError {
   public static ResolvedError create(Type type, @StringRes int errorEmoji, @StringRes int errorMessage) {
     return new AutoValue_ResolvedError(type, errorEmoji, errorMessage);
   }
-
 }

@@ -22,6 +22,7 @@ import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
@@ -78,4 +79,6 @@ public interface DankAppComponent {
   void inject(InboxActivity activity);
 
   void inject(PrivateMessageThreadActivity activity);
+
+  void inject(UserProfilePopup popup);
 }
