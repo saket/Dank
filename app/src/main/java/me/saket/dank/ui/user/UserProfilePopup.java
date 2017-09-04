@@ -150,10 +150,16 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
                     if (resolvedError.isUnknown()) {
                       Timber.e(error, "Couldn't fetch profile for: %s", userLink.unparsedUrl());
                     }
-                    errorStateMessageView.setText(errorStateMessageView.getResources().getString(
-                        R.string.userprofilepopup_error_message_tap_to_retry,
-                        errorStateMessageView.getResources().getString(resolvedError.errorMessageRes())
-                    ));
+
+                    Resources resources = errorStateMessageView.getResources();
+                    String errorMessage = resources.getString(resolvedError.errorMessageRes());
+                    String tapToRetryText = resources.getString(R.string.userprofilepopup_error_message_tap_to_retry);
+                    if (!errorMessage.endsWith(resources.getString(R.string.userprofilepopup_error_message_full_period))) {
+                      errorMessage += resources.getString(R.string.userprofilepopup_error_message_full_period);
+                    }
+                    errorMessage += " " + tapToRetryText;
+                    errorStateMessageView.setText(errorMessage);
+                    errorStateMessageView.setOnClickListener(o -> loadUserProfile(userLink));
                   }
                 })
     );

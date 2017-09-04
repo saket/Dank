@@ -245,6 +245,7 @@
   <string name="userprofilepopup_account_age_in_days">%dd</string>
   <string name="userprofilepopup_account_age_in_months">%dm</string>
   <string name="userprofilepopup_account_age_in_years">%dy</string>
-  <string name="userprofilepopup_error_message_tap_to_retry">%s. Tap to retry.</string>
+  <string name="userprofilepopup_error_message_tap_to_retry">Tap to retry.</string>
+  <string name="userprofilepopup_error_message_full_period">.</string>  <!-- Full-stop in english. -->
   <string name="userprofilepopup_user_not_found">Nada. This user does not exist.</string>
 </resources>
