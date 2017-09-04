@@ -1,5 +1,6 @@
 package me.saket.dank.ui.media;
 
+import android.animation.LayoutTransition;
 import android.content.Context;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
@@ -310,14 +311,19 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
               .translationY(-longImageScrollHint.getHeight() / 2)
               .setDuration(300)
               .setInterpolator(Animations.INTERPOLATOR)
-              .withEndAction(() -> longImageScrollHint.setVisibility(View.INVISIBLE))
+              .withEndAction(() -> {
+                ViewGroup parent = (ViewGroup) longImageScrollHint.getParent();
+                LayoutTransition layoutTransitionBak = parent.getLayoutTransition();
+                parent.setLayoutTransition(null);
+                longImageScrollHint.setVisibility(View.GONE);
+                parent.setLayoutTransition(layoutTransitionBak);
+              })
               .start();
         }
       }
 
       @Override
-      public void onStateReset(State oldState, State newState) {
-      }
+      public void onStateReset(State oldState, State newState) {}
     };
     imageView.getController().addOnStateChangeListener(imageScrollListener);
   }
