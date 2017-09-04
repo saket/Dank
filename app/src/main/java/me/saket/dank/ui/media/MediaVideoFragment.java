@@ -6,8 +6,10 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ViewFlipper;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -17,25 +19,38 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.MediaHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
+import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import timber.log.Timber;
 
 public class MediaVideoFragment extends BaseMediaViewerFragment {
 
   private static final String KEY_MEDIA_ITEM = "mediaItem";
 
-  @BindView(R.id.albumviewervideo_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
-  @BindView(R.id.albumviewervideo_video) VideoView videoView;
-  @BindView(R.id.albumviewervideo_title_description) MediaAlbumViewerTitleDescriptionView titleDescriptionView;
-  @BindView(R.id.albumviewervideo_title_description_dimming) View titleDescriptionBackgroundDimmingView;
+  @BindView(R.id.albumviewer_video_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
+  @BindView(R.id.albumviewer_video_video) VideoView videoView;
+  @BindView(R.id.albumviewer_video_title_description) MediaAlbumViewerTitleDescriptionView titleDescriptionView;
+  @BindView(R.id.albumviewer_video_title_description_dimming) View titleDescriptionBackgroundDimmingView;
+  @BindView(R.id.albumviewer_video_error) ErrorStateView loadErrorStateView;
+  @BindView(R.id.albumviewer_video_content_flipper) ViewFlipper contentViewFlipper;
 
   @Inject MediaHostRepository mediaHostRepository;
+  @Inject ErrorResolver errorResolver;
+
+  private enum ScreenState {
+    LOADING_VIDEO_OR_READY,
+    FAILED
+    // There's no progress state, because ExoMedia internally maintains a progress indicator for buffering.
+  }
 
   private MediaAlbumItem mediaAlbumItem;
   private ExoPlayerManager exoPlayerManager;
@@ -71,6 +86,8 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     super.setMediaLink(mediaAlbumItem.mediaLink());
     super.setTitleDescriptionView(titleDescriptionView);
     super.setImageDimmingView(titleDescriptionBackgroundDimmingView);
+
+    moveToScreenState(ScreenState.LOADING_VIDEO_OR_READY);
 
     return layout;
   }
@@ -117,10 +134,39 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     loadVideo(mediaAlbumItem);
   }
 
+  private void moveToScreenState(ScreenState screenState) {
+    if (screenState == ScreenState.LOADING_VIDEO_OR_READY) {
+      contentViewFlipper.setDisplayedChild(contentViewFlipper.indexOfChild(videoView));
+
+    } else if (screenState == ScreenState.FAILED) {
+      contentViewFlipper.setDisplayedChild(contentViewFlipper.indexOfChild(contentViewFlipper.findViewById(R.id.albumviewer_video_error_container)));
+
+    } else {
+      throw new UnsupportedOperationException();
+    }
+  }
+
   private void loadVideo(MediaAlbumItem mediaAlbumItem) {
+    moveToScreenState(ScreenState.LOADING_VIDEO_OR_READY);
+
     String videoUrl = mediaAlbumItem.highDefinitionEnabled()
         ? mediaAlbumItem.mediaLink().highQualityUrl()
         : mediaAlbumItem.mediaLink().lowQualityUrl();
+
+    videoView.setOnErrorListener(error -> {
+      moveToScreenState(ScreenState.FAILED);
+
+      ResolvedError resolvedError = errorResolver.resolve(error);
+      loadErrorStateView.applyFrom(resolvedError);
+      loadErrorStateView.setOnRetryClickListener(o -> loadVideo(mediaAlbumItem));
+
+      if (resolvedError.isUnknown()) {
+        Timber.e(error, "Error while loading video: %s", videoUrl);
+      }
+
+      return true;    // True to indicate it was handled.
+    });
+
     String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
     exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
   }
@@ -152,6 +198,10 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
       public int getContentHeightForCalculatingThreshold() {
         return videoView.getHeight();
       }
+    });
+    flickListener.setOnTouchDownReturnValueProvider((MotionEvent event) -> {
+      // Hackkyyy hacckkk. Ugh.
+      return !Views.touchLiesOn(loadErrorStateView.getRetryButton(), event.getRawX(), event.getRawY());
     });
     flickDismissLayout.setFlickGestureListener(flickListener);
   }

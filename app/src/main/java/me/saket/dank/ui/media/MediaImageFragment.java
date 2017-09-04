@@ -46,14 +46,14 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
   private static final String KEY_MEDIA_ITEM = "mediaItem";
 
-  @BindView(R.id.albumviewerimage_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
-  @BindView(R.id.albumviewerimage_imageview) ZoomableImageView imageView;
-  @BindView(R.id.albumviewerimage_progress) ProgressWithFileSizeView progressView;
-  @BindView(R.id.albumviewerimage_title_description) MediaAlbumViewerTitleDescriptionView titleDescriptionView;
-  @BindView(R.id.albumviewerimage_title_description_dimming) View titleDescriptionBackgroundDimmingView;
-  @BindView(R.id.albumviewerimage_long_image_scroll_hint) View longImageScrollHint;
-  @BindView(R.id.mediaalbumviewer_image_error_container) ViewGroup loadErrorContainerView;
-  @BindView(R.id.mediaalbumviewer_image_error) ErrorStateView loadErrorStateView;
+  @BindView(R.id.albumviewer_image_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
+  @BindView(R.id.albumviewer_image_imageview) ZoomableImageView imageView;
+  @BindView(R.id.albumviewer_image_progress) ProgressWithFileSizeView progressView;
+  @BindView(R.id.albumviewer_image_title_description) MediaAlbumViewerTitleDescriptionView titleDescriptionView;
+  @BindView(R.id.albumviewer_image_title_description_dimming) View titleDescriptionBackgroundDimmingView;
+  @BindView(R.id.albumviewer_image_long_image_scroll_hint) View longImageScrollHint;
+  @BindView(R.id.albumviewer_image_error_container) ViewGroup loadErrorContainerView;
+  @BindView(R.id.albumviewer_image_error) ErrorStateView loadErrorStateView;
 
   @Inject MediaHostRepository mediaHostRepository;
   @Inject ErrorResolver errorResolver;

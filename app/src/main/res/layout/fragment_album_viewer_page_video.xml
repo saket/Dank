@@ -6,30 +6,49 @@
   android:animateLayoutChanges="true">
 
   <me.saket.dank.widgets.binoculars.FlickDismissLayout
-    android:id="@+id/albumviewervideo_flickdismisslayout"
+    android:id="@+id/albumviewer_video_flickdismisslayout"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:animateLayoutChanges="true"
-    android:fitsSystemWindows="true">
+    android:animateLayoutChanges="true">
 
-    <!-- Height is re-set in code. -->
-    <com.devbrackets.android.exomedia.ui.widget.VideoView
-      android:id="@+id/albumviewervideo_video"
+    <me.saket.dank.widgets.ViewFlipperWithDebugPreview
+      android:id="@+id/albumviewer_video_content_flipper"
       android:layout_width="match_parent"
-      android:layout_height="240dp"
-      android:layout_gravity="center"
-      app:background="@color/blue_gray_800"
-      app:useTextureViewBacking="true" />
+      android:layout_height="match_parent"
+      android:animateFirstView="false"
+      android:inAnimation="@anim/fade_in"
+      android:outAnimation="@anim/fade_out">
+
+      <!-- Height is re-set in code. -->
+      <com.devbrackets.android.exomedia.ui.widget.VideoView
+        android:id="@+id/albumviewer_video_video"
+        android:layout_width="match_parent"
+        android:layout_height="240dp"
+        android:layout_gravity="center"
+        app:background="@color/blue_gray_800"
+        app:useTextureViewBacking="true" />
+
+      <FrameLayout
+        android:id="@+id/albumviewer_video_error_container"
+        style="@style/DankMediaAlbumViewer">
+
+        <me.saket.dank.widgets.ErrorStateView
+          android:id="@+id/albumviewer_video_error"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:layout_gravity="center" />
+      </FrameLayout>
+    </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
   </me.saket.dank.widgets.binoculars.FlickDismissLayout>
 
   <View
-    android:id="@+id/albumviewervideo_title_description_dimming"
+    android:id="@+id/albumviewer_video_title_description_dimming"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/black_opacity_30" />
 
   <me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView
-    android:id="@+id/albumviewervideo_title_description"
+    android:id="@+id/albumviewer_video_title_description"
     android:layout_width="match_parent"
     android:layout_height="match_parent" />
 </FrameLayout>
