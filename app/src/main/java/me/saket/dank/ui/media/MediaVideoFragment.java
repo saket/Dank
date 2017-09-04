@@ -96,8 +96,22 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
   public void onViewCreated(View fragmentLayout, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(fragmentLayout, savedInstanceState);
 
-    // Make the image flick-dismissible.
+    // Make the video flick-dismissible.
     setupFlickGestures(flickDismissViewGroup);
+
+    // Keep the video below the status bar and above the control buttons.
+    unsubscribeOnDestroy(
+        ((MediaFragmentCallbacks) getActivity())
+            .optionButtonsHeight()
+            .subscribe(optionButtonsHeight -> {
+              int statusBarHeight = Views.statusBarHeight(getResources());
+              Views.setPaddingVertical(
+                  contentViewFlipper,
+                  contentViewFlipper.getPaddingTop() + statusBarHeight,
+                  contentViewFlipper.getPaddingBottom() + optionButtonsHeight
+              );
+            })
+    );
 
     exoPlayerManager = ExoPlayerManager.newInstance(this, videoView);
     DankVideoControlsView videoControlsView = new DankVideoControlsView(getActivity());
