@@ -8,7 +8,7 @@ import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Contribution;
 
-import rx.functions.Func1;
+import io.reactivex.functions.Function;
 
 /**
  * See {@link CommentsManager}.
@@ -116,7 +116,7 @@ public abstract class PendingSyncReply {
     return contentValues;
   }
 
-  public static final Func1<Cursor, PendingSyncReply> MAPPER = cursor -> {
+  public static final Function<Cursor, PendingSyncReply> MAPPER = cursor -> {
     String parentContributionFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PARENT_CONTRIBUTION_FULL_NAME));
     String body = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY));
     State state = State.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATE)));

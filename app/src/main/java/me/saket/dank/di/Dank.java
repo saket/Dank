@@ -4,7 +4,6 @@ import android.app.Application;
 
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.squareup.moshi.Moshi;
-import com.squareup.sqlbrite.BriteDatabase;
 
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
@@ -83,10 +82,6 @@ public class Dank {
 
   public static Moshi moshi() {
     return appComponent.moshi();
-  }
-
-  public static BriteDatabase database() {
-    return appComponent.briteDatabase();
   }
 
   public static VotingManager voting() {

@@ -11,7 +11,7 @@ import net.dean.jraw.models.VoteDirection;
 
 import java.io.IOException;
 
-import rx.functions.Func1;
+import io.reactivex.functions.Function;
 
 @AutoValue
 public abstract class CachedSubmission {
@@ -84,10 +84,10 @@ public abstract class CachedSubmission {
         + " WHERE " + COLUMN_FOLDER + " == '" + folder.serialize() + "'";
   }
 
-  public static Func1<Cursor, CachedSubmission> mapFromCursor(Moshi moshi) {
+  public static Function<Cursor, CachedSubmission> mapFromCursor(Moshi moshi) {
     return cursor -> {
       String fullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FULLNAME));
-      Submission submission = mapSubmissionFromCursor(moshi).call(cursor);
+      Submission submission = mapSubmissionFromCursor(moshi).apply(cursor);
       CachedSubmissionFolder folder = CachedSubmissionFolder.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER)));
       long fetchTimeMillis = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_FETCH_TIME));
       VoteDirection userVoteDirection = VoteDirection.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_USER_VOTE_DIRECTION)));
@@ -96,7 +96,7 @@ public abstract class CachedSubmission {
     };
   }
 
-  public static Func1<Cursor, Submission> mapSubmissionFromCursor(Moshi moshi) {
+  public static Function<Cursor, Submission> mapSubmissionFromCursor(Moshi moshi) {
     return cursor -> submissionFromJson(moshi, cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SUBMISSION_JSON)));
   }
 

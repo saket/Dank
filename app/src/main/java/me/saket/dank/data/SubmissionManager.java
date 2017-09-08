@@ -1,6 +1,5 @@
 package me.saket.dank.data;
 
-import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
 import static me.saket.dank.utils.Commons.toImmutable;
 
 import android.database.sqlite.SQLiteDatabase;
@@ -8,7 +7,7 @@ import android.support.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.Moshi;
-import com.squareup.sqlbrite.BriteDatabase;
+import com.squareup.sqlbrite2.BriteDatabase;
 
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Submission;
@@ -51,9 +50,9 @@ public class SubmissionManager {
 
   @CheckResult
   public Observable<List<Submission>> submissions(CachedSubmissionFolder folder) {
-    return toV2Observable(briteDatabase
+    return briteDatabase
         .createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetAll(folder))
-        .mapToList(CachedSubmission.mapSubmissionFromCursor(moshi)))
+        .mapToList(CachedSubmission.mapSubmissionFromCursor(moshi))
         .map(toImmutable());
   }
 
@@ -183,9 +182,9 @@ public class SubmissionManager {
    */
   @CheckResult
   private Single<PaginationAnchor> lastPaginationAnchor(CachedSubmissionFolder folder) {
-    return toV2Observable(briteDatabase
+    return briteDatabase
         .createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetLastSubmission(folder))
-        .mapToList(CachedSubmission.mapFromCursor(moshi)))
+        .mapToList(CachedSubmission.mapFromCursor(moshi))
         // list will only have one value because the query places a limit of 1.
         .map(cachedSubmissions -> cachedSubmissions.isEmpty()
             ? PaginationAnchor.createEmpty()
@@ -196,8 +195,8 @@ public class SubmissionManager {
 
   @CheckResult
   public Single<Boolean> hasSubmissions(CachedSubmissionFolder folder) {
-    return toV2Observable(briteDatabase.createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetCount(folder))
-        .mapToOne(cursor -> cursor.getInt(0) > 0))
+    return briteDatabase.createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetCount(folder))
+        .mapToOne(cursor -> cursor.getInt(0) > 0)
         .firstOrError();
   }
 

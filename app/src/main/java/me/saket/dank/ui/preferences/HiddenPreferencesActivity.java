@@ -11,6 +11,10 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.squareup.sqlbrite2.BriteDatabase;
+
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Completable;
@@ -30,12 +34,15 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.hiddenpreferences_content) ViewGroup contentContainer;
 
+  @Inject BriteDatabase briteDatabase;
+
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
   }
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    Dank.dependencyInjector().inject(this);
     setPullToCollapseEnabled(true);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_hidden_preferences);
@@ -60,8 +67,8 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     addButton("Drop messages table", v -> {
       Completable
           .fromAction(() -> {
-            Dank.database().executeAndTrigger(CachedMessage.TABLE_NAME, "DROP TABLE " + CachedMessage.TABLE_NAME);
-            Dank.database().executeAndTrigger(CachedMessage.TABLE_NAME, CachedMessage.QUERY_CREATE_TABLE);
+            briteDatabase.executeAndTrigger(CachedMessage.TABLE_NAME, "DROP TABLE " + CachedMessage.TABLE_NAME);
+            briteDatabase.executeAndTrigger(CachedMessage.TABLE_NAME, CachedMessage.QUERY_CREATE_TABLE);
           })
           .compose(RxUtils.applySchedulersCompletable())
           .subscribe(() -> {

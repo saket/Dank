@@ -1,14 +1,12 @@
 package me.saket.dank.data;
 
-import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
-import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Single;
 import static java.util.Collections.unmodifiableList;
 
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
 import com.squareup.moshi.Moshi;
-import com.squareup.sqlbrite.BriteDatabase;
+import com.squareup.sqlbrite2.BriteDatabase;
 
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
@@ -49,9 +47,9 @@ public class InboxManager {
    */
   @CheckResult
   public Observable<List<Message>> messages(InboxFolder folder) {
-    return toV2Observable(briteDatabase
+    return briteDatabase
         .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
-        .mapToList(CachedMessage.mapMessageFromCursor(moshi)))
+        .mapToList(CachedMessage.mapMessageFromCursor(moshi))
         .map(mutableList -> unmodifiableList(mutableList));
   }
 
@@ -62,9 +60,9 @@ public class InboxManager {
    */
   @CheckResult
   public Observable<Message> message(String messageId, InboxFolder folder) {
-    return toV2Observable(briteDatabase
+    return briteDatabase
         .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_SINGLE, messageId, folder.name())
-        .mapToOne(CachedMessage.mapMessageFromCursor(moshi)));
+        .mapToOne(CachedMessage.mapMessageFromCursor(moshi));
   }
 
   /**
@@ -142,11 +140,12 @@ public class InboxManager {
    */
   @CheckResult
   private Single<PaginationAnchor> getPaginationAnchor(InboxFolder folder) {
-    CachedMessage dummyDefaultValue = CachedMessage.create("-1", new PrivateMessage(null), 0, InboxFolder.PRIVATE_MESSAGES);
+    PrivateMessage dummyPrivateMessage = new PrivateMessage(null);
+    CachedMessage dummyDefaultValue = CachedMessage.create("-1", dummyPrivateMessage, 0, InboxFolder.PRIVATE_MESSAGES);
 
-    return toV2Single(briteDatabase.createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
+    return briteDatabase.createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
         .mapToOneOrDefault(CachedMessage.mapFromCursor(moshi), dummyDefaultValue)
-        .first()
+        .firstOrError()
         .map(lastStoredMessage -> {
           if (lastStoredMessage == dummyDefaultValue) {
             return PaginationAnchor.createEmpty();
@@ -166,8 +165,7 @@ public class InboxManager {
 
             return PaginationAnchor.create(lastMessage.getFullName());
           }
-        })
-        .toSingle());
+        });
   }
 
   /**

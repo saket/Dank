@@ -13,7 +13,7 @@ import net.dean.jraw.models.PrivateMessage;
 
 import java.io.IOException;
 
-import rx.functions.Func1;
+import io.reactivex.functions.Function;
 
 /**
  * {@link Message} stored in the DB.
@@ -80,16 +80,16 @@ public abstract class CachedMessage {
     return values;
   }
 
-  public static Func1<Cursor, CachedMessage> mapFromCursor(Moshi moshi) {
+  public static Function<Cursor, CachedMessage> mapFromCursor(Moshi moshi) {
     return cursor -> {
-      Message message = mapMessageFromCursor(moshi).call(cursor);
+      Message message = mapMessageFromCursor(moshi).apply(cursor);
       long latestMessageTimestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_LATEST_MESSAGE_TIME));
       InboxFolder folder = InboxFolder.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER)));
       return create(message.getId(), message, latestMessageTimestamp, folder);
     };
   }
 
-  public static Func1<Cursor, Message> mapMessageFromCursor(Moshi moshi) {
+  public static Function<Cursor, Message> mapMessageFromCursor(Moshi moshi) {
     return cursor -> {
       JsonAdapter<Message> adapter = moshi.adapter(Message.class);
       try {

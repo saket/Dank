@@ -13,8 +13,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.fs3.filesystem.FileSystemFactory;
 import com.squareup.moshi.Moshi;
-import com.squareup.sqlbrite.BriteDatabase;
-import com.squareup.sqlbrite.SqlBrite;
+import com.squareup.sqlbrite2.BriteDatabase;
+import com.squareup.sqlbrite2.SqlBrite;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
@@ -28,6 +28,7 @@ import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -54,7 +55,6 @@ import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava2.RxJava2CallAdapterFactory;
 import retrofit2.converter.moshi.MoshiConverterFactory;
-import rx.schedulers.Schedulers;
 import timber.log.Timber;
 
 @Module
@@ -238,7 +238,7 @@ public class DankAppModule {
 //        .setExpireAfterTimeUnit(TimeUnit.DAYS)
 //        .build();
 //  }
-//
+
   @Provides
   @Singleton
   FileSystem provideCacheFileSystem() {

@@ -1,6 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
 import static me.saket.dank.utils.Commons.toImmutable;
 
 import android.content.SharedPreferences;
@@ -10,7 +9,7 @@ import android.support.annotation.VisibleForTesting;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
-import com.squareup.sqlbrite.BriteDatabase;
+import com.squareup.sqlbrite2.BriteDatabase;
 
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
@@ -117,15 +116,15 @@ public class CommentsManager implements ReplyDraftStore {
    */
   @CheckResult
   public Observable<List<PendingSyncReply>> streamPendingSyncRepliesForSubmission(Submission submission) {
-    return toV2Observable(
-        database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FOR_SUBMISSION, submission.getFullName())
-            .mapToList(PendingSyncReply.MAPPER))
+    return database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FOR_SUBMISSION, submission.getFullName())
+        .mapToList(PendingSyncReply.MAPPER)
         .map(toImmutable());
   }
 
   @CheckResult
   public Observable<List<PendingSyncReply>> streamFailedReplies() {
-    return toV2Observable(database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FAILED).mapToList(PendingSyncReply.MAPPER))
+    return database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FAILED)
+        .mapToList(PendingSyncReply.MAPPER)
         .map(toImmutable());
   }
 
@@ -203,6 +202,7 @@ public class CommentsManager implements ReplyDraftStore {
       }
 
       ReplyDraft replyDraft = moshi.adapter(ReplyDraft.class).fromJson(replyDraftJson);
+      //noinspection ConstantConditions
       return replyDraft.body();
     });
   }

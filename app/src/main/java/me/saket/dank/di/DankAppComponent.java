@@ -2,7 +2,6 @@ package me.saket.dank.di;
 
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.squareup.moshi.Moshi;
-import com.squareup.sqlbrite.BriteDatabase;
 
 import javax.inject.Singleton;
 
@@ -20,6 +19,7 @@ import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
+import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.user.UserProfilePopup;
@@ -56,8 +56,6 @@ public interface DankAppComponent {
 
   Moshi moshi();
 
-  BriteDatabase briteDatabase();
-
   SubmissionManager submissionManager();
 
   VotingManager votingManager();
@@ -81,4 +79,6 @@ public interface DankAppComponent {
   void inject(PrivateMessageThreadActivity activity);
 
   void inject(UserProfilePopup popup);
+
+  void inject(HiddenPreferencesActivity activity);
 }

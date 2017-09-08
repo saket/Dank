@@ -1,6 +1,5 @@
 package me.saket.dank.data;
 
-import static hu.akarnokd.rxjava.interop.RxJavaInterop.toV2Observable;
 import static me.saket.dank.utils.Commons.toImmutable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
@@ -11,7 +10,7 @@ import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
-import com.squareup.sqlbrite.BriteDatabase;
+import com.squareup.sqlbrite2.BriteDatabase;
 
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Subreddit;
@@ -78,16 +77,16 @@ public class SubredditSubscriptionManager {
         ? SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN
         : SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_EXCLUDING_HIDDEN;
 
-    return toV2Observable(database
+    return database
         .createQuery(SubredditSubscription.TABLE_NAME, getQuery, "%" + filterTerm + "%")
-        .mapToList(SubredditSubscription.MAPPER))
+        .mapToList(SubredditSubscription.MAPPER)
         .map(toImmutable())
         .flatMap(filteredSubs -> {
           if (filteredSubs.isEmpty()) {
             // Check if the database is empty and fetch fresh subscriptions from remote if needed.
-            return toV2Observable(database
+            return database
                 .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
-                .mapToList(SubredditSubscription.MAPPER))
+                .mapToList(SubredditSubscription.MAPPER)
                 .firstOrError()
                 .flatMapObservable(localSubs -> {
                   if (localSubs.isEmpty()) {
@@ -146,9 +145,9 @@ public class SubredditSubscriptionManager {
    */
   @CheckResult
   public Completable refreshSubscriptions() {
-    return toV2Observable(database
+    return database
         .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
-        .mapToList(SubredditSubscription.MAPPER))
+        .mapToList(SubredditSubscription.MAPPER)
         .firstOrError()
         .flatMap(localSubscriptions -> refreshSubscriptions(localSubscriptions))
         .toCompletable();
@@ -217,9 +216,9 @@ public class SubredditSubscriptionManager {
    * Execute pending-subscribe and pending-unsubscribe actions that failed earlier because of some error.
    */
   public Completable executePendingSubscribesAndUnsubscribes() {
-    return toV2Observable(database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL_PENDING)
+    return database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL_PENDING)
         .mapToList(SubredditSubscription.MAPPER)
-        .first())
+        .take(1)
         .flatMapIterable(subscriptions -> subscriptions)
         .flatMap(pendingSubscription -> {
           if (pendingSubscription.isSubscribePending()) {
@@ -288,9 +287,7 @@ public class SubredditSubscriptionManager {
       // So we've received subreddits from the server. Before overriding our database table with these,
       // retain pending-subscribe items and pending-unsubscribe items.
       Set<String> remoteSubsNamesSet = new HashSet<>(remoteSubNames.size());
-      for (String remoteSubName : remoteSubNames) {
-        remoteSubsNamesSet.add(remoteSubName);
-      }
+      remoteSubsNamesSet.addAll(remoteSubNames);
 
       ImmutableList.Builder<SubredditSubscription> syncedListBuilder = ImmutableList.builder();
 
