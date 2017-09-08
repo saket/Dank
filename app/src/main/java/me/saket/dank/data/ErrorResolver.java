@@ -9,7 +9,6 @@ import java.net.UnknownHostException;
 import io.reactivex.exceptions.UndeliverableException;
 import me.saket.dank.R;
 import retrofit2.HttpException;
-import rx.exceptions.OnErrorThrowable;
 
 /**
  * Resolves commonly encountered errors and and constructs a user understandable
@@ -47,13 +46,7 @@ public class ErrorResolver {
     if (error instanceof io.reactivex.exceptions.CompositeException) {
       error = error.getCause();
     }
-    if (error instanceof rx.exceptions.CompositeException) {
-      error = error.getCause();
-    }
     if (error instanceof UndeliverableException) {
-      error = error.getCause();
-    }
-    if (error instanceof OnErrorThrowable) {
       error = error.getCause();
     }
     if (error instanceof RuntimeException && error.getCause() != null) {

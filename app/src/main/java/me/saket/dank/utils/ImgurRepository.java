@@ -1,6 +1,5 @@
 package me.saket.dank.utils;
 
-import static io.reactivex.Single.just;
 import static java.lang.Integer.parseInt;
 
 import android.content.Context;
@@ -22,7 +21,6 @@ import me.saket.dank.di.Dank;
 import okhttp3.Headers;
 import retrofit2.HttpException;
 import retrofit2.Response;
-import rx.exceptions.OnErrorThrowable;
 import timber.log.Timber;
 
 /**
@@ -62,15 +60,11 @@ public class ImgurRepository {
         .doOnSuccess(saveImgurApiRateLimits())
         .map(extractResponseBody())
         .onErrorResumeNext(error -> {
-          if (error instanceof OnErrorThrowable) {
-            error = error.getCause();
-          }
-
           // Api returns a 404 when it was a single image and not an album.
           if (error instanceof HttpException && ((HttpException) error).code() == 404) {
-            return just(ImgurAlbumResponse.createEmpty());
+            return Single.just(ImgurAlbumResponse.createEmpty());
           } else {
-            throw OnErrorThrowable.from(error);
+            return Single.error(error);
           }
         })
         .flatMap(albumResponse -> {
@@ -86,7 +80,7 @@ public class ImgurRepository {
         })
         .doOnSuccess(albumResponse -> {
           if (!albumResponse.hasImages()) {
-            throw OnErrorThrowable.from(new InvalidImgurAlbumException());
+            throw new InvalidImgurAlbumException();
           }
         })
         .doOnSubscribe(o -> {
@@ -105,7 +99,7 @@ public class ImgurRepository {
       if (response.isSuccessful()) {
         return response;
       } else {
-        throw OnErrorThrowable.from(new HttpException(response));
+        throw new HttpException(response);
       }
     };
   }
