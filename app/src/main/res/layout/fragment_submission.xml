@@ -227,7 +227,8 @@
     android:id="@+id/submission_content_progress_bar"
     style="@style/DankProgressBar.Horizontal.TopAligned"
     android:layout_below="@+id/submission_toolbar"
-    android:elevation="@dimen/elevation_toolbar" />
+    android:elevation="@dimen/elevation_toolbar"
+    android:visibility="gone" />
 
   <!-- Acts as the toolbar's background. -->
   <me.saket.dank.widgets.AnimatedToolbarBackground

@@ -2,9 +2,7 @@ package me.saket.dank.ui.submission;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
-import static me.saket.dank.utils.Commons.findOptimizedImage;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
@@ -66,9 +64,10 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -77,11 +76,11 @@ import me.saket.dank.data.SubmissionRepository;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.ImgurAlbumLink;
-import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.UrlRouter;
@@ -89,7 +88,6 @@ import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
@@ -149,10 +147,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private CommentsAdapter commentsAdapter;
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
-  private Link activeSubmissionContentLink;
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Submission> submissionStream = BehaviorRelay.create();
-  private Relay<Link> submissionContentStream = PublishRelay.create();
+  private BehaviorRelay<Link> submissionContentStream = BehaviorRelay.create();
   private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
   private Relay<PublicContribution> inlineReplyStream = PublishRelay.create();
   private SubmissionVideoHolder contentVideoViewHolder;
@@ -242,7 +239,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     unsubscribeOnDestroy(
         submissionRequestStream
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(mainThread())
             .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
             .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
                 .compose(RxUtils.applySchedulers())
@@ -272,7 +269,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     unsubscribeOnDestroy(
         submissionStream
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(mainThread())
             .subscribe(submission -> {
               adapterWithSubmissionHeader.updateSubmission(submission);
               commentsAdapter.setSubmissionAuthor(submission.getAuthor());
@@ -466,7 +463,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         })
         .take(1)
         .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
-        .observeOn(AndroidSchedulers.mainThread())
+        .observeOn(mainThread())
         .doOnNext(replyBindEvent -> commentList.post(() -> Keyboards.show(replyBindEvent.replyField())));
   }
 
@@ -606,7 +603,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     Function0<Integer> mediaRevealDistanceFunc = () -> {
       // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
       // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
-      float mediaVisibleHeight = activeSubmissionContentLink.isImageOrGif()
+      float mediaVisibleHeight = submissionContentStream.getValue().isImageOrGif()
           ? contentImageView.getVisibleZoomedImageHeight()
           : contentVideoViewContainer.getHeight();
 
@@ -622,7 +619,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     });
     // and on submission title click.
     commentsHeaderView.setOnClickListener(v -> {
-      if (activeSubmissionContentLink instanceof MediaLink && commentListParentSheet.isAtMaxScrollY()) {
+      if (submissionContentStream.getValue() instanceof MediaLink && commentListParentSheet.isAtMaxScrollY()) {
         commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate());
       }
     });
@@ -686,7 +683,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Show the FAB while the keyboard is hidden and there's space available.
     unsubscribeOnDestroy(
         submissionStream
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(mainThread())
             .doOnNext(o -> replyFAB.show())
             .switchMap(o -> Observable.combineLatest(keyboardVisibilityChangeStream, spaceAvailabilityChanges,
                 (keyboardVisibilityChangeEvent, spaceAvailable) -> !keyboardVisibilityChangeEvent.visible() && spaceAvailable)
@@ -729,7 +726,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           @Override
           public void accept(@NonNull KeyboardVisibilityChangeEvent changeEvent) throws Exception {
             if (contentViewGroup == null) {
-              contentViewGroup = (ViewGroup) getActivity().findViewById(Window.ID_ANDROID_CONTENT);
+              contentViewGroup = getActivity().findViewById(Window.ID_ANDROID_CONTENT);
             }
 
             if (heightAnimator != null) {
@@ -780,7 +777,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     unsubscribeOnDestroy(
         statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout, commentListParentSheet)
             .delay(statusBarTint -> Observable.just(statusBarTint).delay(statusBarTint.delayedTransition() ? 100 : 0, TimeUnit.MILLISECONDS))
-            .observeOn(AndroidSchedulers.mainThread())
+            .observeOn(mainThread())
             .subscribe(new Consumer<StatusBarTint>() {
               public ValueAnimator tintChangeAnimator;
 
@@ -827,143 +824,161 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentListParentSheet.setScrollingEnabled(false);
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
 
-    // Load content.
-    Link contentLink = UrlParser.parse(submission.getUrl());
-    submissionContentStream.accept(contentLink);
-    loadSubmissionContent(submission, contentLink);
-
     // This will setup the title, byline and content immediately.
     submissionStream.accept(submission);
 
     // This will load comments and then again update the title, byline and content.
     submissionRequestStream.accept(submissionRequest);
+
+    unsubscribeOnCollapse(
+        loadSubmissionContent(submission)
+    );
   }
 
   public Consumer<Throwable> handleSubmissionLoadError() {
     return error -> Timber.e(error, error.getMessage());
   }
 
-  private void loadSubmissionContent(Submission submission, Link contentLink) {
-    activeSubmissionContentLink = contentLink;
+  private Disposable loadSubmissionContent(Submission submission) {
+    // Hide everything.
+    linkDetailsViewHolder.setVisible(false);
+    selfPostTextView.setVisibility(View.GONE);
+    contentImageView.setVisibility(View.GONE);
+    contentVideoViewContainer.setVisibility(View.GONE);
+    toolbarBackground.setSyncScrollEnabled(false);
 
-//        Timber.d("-------------------------------------------");
-//        Timber.i("%s", submission.getTitle());
-//        Timber.i("Post hint: %s, URL: %s", submission.getPostHint(), submission.getUrl());
-//        Timber.i("Parsed content: %s, type: %s", contentLink, contentLink.type());
-//        if (submissionContent.type() == SubmissionContent.Type.IMAGE) {
-//            Timber.i("Optimized image: %s", submissionContent.imageContentUrl(deviceDisplayWidth));
-//        }
+    return Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
+        .subscribeOn(io())
+        .observeOn(mainThread())
+        .flatMap(parsedLink -> {
+          if (!(parsedLink instanceof UnresolvedMediaLink)) {
+            return Single.just(parsedLink);
+          }
 
-    boolean isImgurAlbum = contentLink instanceof ImgurAlbumLink;
-    linkDetailsViewHolder.setVisible(!isImgurAlbum && contentLink.isExternal() || contentLink.isRedditHosted() && !submission.isSelfPost());
-    selfPostTextView.setVisibility(submission.isSelfPost() ? View.VISIBLE : View.GONE);
-    contentImageView.setVisibility(contentLink.isImageOrGif() ? View.VISIBLE : View.GONE);
-    contentVideoViewContainer.setVisibility(contentLink.isVideo() ? View.VISIBLE : View.GONE);
-
-    // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
-    boolean transparentToolbar = contentLink.isImageOrGif() || contentLink.isVideo();
-    toolbarBackground.setSyncScrollEnabled(transparentToolbar);
-
-    if (contentLink instanceof ImgurAlbumUnresolvedLink) {
-      contentLoadProgressView.show();
-      String redditSuppliedThumbnailUrl = findOptimizedImage(submission.getThumbnails(), linkDetailsViewHolder.getThumbnailWidthForAlbum());
-
-      unsubscribeOnCollapse(
-          mediaHostRepository.resolveActualLinkIfNeeded(((MediaLink) contentLink))
-              .map(resolvedLink -> {
+          return mediaHostRepository.resolveActualLinkIfNeeded(((MediaLink) parsedLink))
+              .subscribeOn(io())
+              .doOnSubscribe(o -> {
+                // Progress bar is later hidden in the subscribe() block.
+                contentLoadProgressView.setIndeterminate(true);
+                contentLoadProgressView.show();
+              })
+              .map((Link resolvedLink) -> {
                 // Replace Imgur's cover image URL with reddit supplied URL, which will already be cached by Glide.
-                if (resolvedLink instanceof ImgurAlbumLink && redditSuppliedThumbnailUrl != null) {
-                  return ((ImgurAlbumLink) resolvedLink).withCoverImageUrl(redditSuppliedThumbnailUrl);
+                if (resolvedLink instanceof ImgurAlbumLink) {
+                  String albumCoverImageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
+                      submission.getThumbnails(),
+                      linkDetailsViewHolder.getThumbnailWidthForAlbum(),
+                      ((ImgurAlbumLink) resolvedLink).coverImageUrl()
+                  );
+                  return ((ImgurAlbumLink) resolvedLink).withCoverImageUrl(albumCoverImageUrl);
                 }
                 return resolvedLink;
               })
-              .compose(applySchedulersSingle())
-              .subscribe(
-                  resolvedLink -> {
-                    loadSubmissionContent(submission, resolvedLink);
-                  },
-                  error -> {
-                    // Open this album in browser if Imgur rate limits have reached.
-                    if (error instanceof ImgurApiRateLimitReachedException) {
-                      String albumUrl = ((ImgurAlbumUnresolvedLink) contentLink).albumUrl();
-                      loadSubmissionContent(submission, ExternalLink.create(albumUrl));
+              .onErrorReturn(error -> {
+                // Open this album in browser if Imgur rate limits have reached.
+                if (error instanceof ImgurApiRateLimitReachedException) {
+                  return ExternalLink.create(parsedLink.unparsedUrl());
+                } else {
+                  Timber.e(error, "Couldn't resolve image url: %s", parsedLink.unparsedUrl());
+                  throw Exceptions.propagate(error);
+                }
+              });
+        })
+        .observeOn(mainThread())
+        .doOnSuccess(resolvedLink -> {
+          boolean isImgurAlbum = resolvedLink instanceof ImgurAlbumLink;
+          boolean isRedditHostedLink = resolvedLink.isRedditHosted() && !submission.isSelfPost();
+          linkDetailsViewHolder.setVisible(!isImgurAlbum && resolvedLink.isExternal() || isRedditHostedLink);
+          selfPostTextView.setVisibility(submission.isSelfPost() ? View.VISIBLE : View.GONE);
+          contentImageView.setVisibility(resolvedLink.isImageOrGif() ? View.VISIBLE : View.GONE);
+          contentVideoViewContainer.setVisibility(resolvedLink.isVideo() ? View.VISIBLE : View.GONE);
 
-                    } else {
-                      // TODO: 05/04/17 Handle errors (including InvalidImgurAlbumException).
-                      Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
-                      Timber.e(error, "Couldn't load album cover image");
-                      contentLoadProgressView.hide();
-                    }
+          // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
+          boolean transparentToolbar = resolvedLink.isImageOrGif() || resolvedLink.isVideo();
+          toolbarBackground.setSyncScrollEnabled(transparentToolbar);
+        })
+        .subscribe(
+            resolvedLink -> {
+              submissionContentStream.accept(resolvedLink);
+
+              switch (resolvedLink.type()) {
+                case SINGLE_IMAGE_OR_GIF:
+                  Thumbnails redditSuppliedImages = submission.getThumbnails();
+                  contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages);
+
+                  // Open media in full-screen on click.
+                  contentImageView.setOnClickListener(o -> {
+                    urlRouter.forLink(((MediaLink) resolvedLink))
+                        .withRedditSuppliedImages(submission.getThumbnails())
+                        .open(getContext());
+                  });
+                  break;
+
+                case REDDIT_HOSTED:
+                  if (submission.isSelfPost()) {
+                    contentLoadProgressView.hide();
+                    String selfTextHtml = submission.getDataNode().get("selftext_html").asText(submission.getSelftext() /* defaultValue */);
+                    CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
+                    selfPostTextView.setVisibility(markdownHtml.length() > 0 ? View.VISIBLE : View.GONE);
+                    selfPostTextView.setText(markdownHtml);
+
+                  } else {
+                    contentLoadProgressView.hide();
+                    //noinspection ConstantConditions
+                    unsubscribeOnCollapse(linkDetailsViewHolder.populate(((RedditLink) resolvedLink)));
+                    linkDetailsView.setOnClickListener(o -> {
+                      urlRouter.forLink(resolvedLink)
+                          .expandFromBelowToolbar()
+                          .open(getContext());
+                    });
                   }
-              )
-      );
-      return;
-    }
+                  break;
 
-    switch (contentLink.type()) {
-      case SINGLE_IMAGE_OR_GIF:
-        Thumbnails redditSuppliedImages = submission.getThumbnails();
-        contentImageViewHolder.load((MediaLink) contentLink, redditSuppliedImages);
+                case MEDIA_ALBUM:
+                case EXTERNAL:
+                  contentLoadProgressView.hide();
+                  linkDetailsView.setOnClickListener(o -> urlRouter.forLink(resolvedLink)
+                      .expandFromBelowToolbar()
+                      .open(getContext())
+                  );
 
-        // Open media in full-screen on click.
-        contentImageView.setOnClickListener(o -> {
-          urlRouter.forLink(((MediaLink) contentLink))
-              .withRedditSuppliedImages(submission.getThumbnails())
-              .open(getContext());
-        });
-        break;
+                  if (resolvedLink instanceof ImgurAlbumLink) {
+                    String redditSuppliedThumbnail = mediaHostRepository.findOptimizedQualityImageForDisplay(
+                        submission.getThumbnails(),
+                        linkDetailsViewHolder.getThumbnailWidthForExternalLink(),
+                        ((ImgurAlbumLink) resolvedLink).coverImageUrl()
+                    );
+                    linkDetailsViewHolder.populate(((ImgurAlbumLink) resolvedLink), redditSuppliedThumbnail);
 
-      case REDDIT_HOSTED:
-        if (submission.isSelfPost()) {
-          contentLoadProgressView.hide();
-          String selfTextHtml = submission.getDataNode().get("selftext_html").asText(submission.getSelftext() /* defaultValue */);
-          CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
-          selfPostTextView.setVisibility(markdownHtml.length() > 0 ? View.VISIBLE : View.GONE);
-          selfPostTextView.setText(markdownHtml);
+                  } else {
+                    String redditSuppliedThumbnail = mediaHostRepository.findOptimizedQualityImageForDisplay(
+                        submission.getThumbnails(),
+                        linkDetailsViewHolder.getThumbnailWidthForExternalLink(),
+                        null
+                    );
+                    unsubscribeOnCollapse(
+                        linkDetailsViewHolder.populate(((ExternalLink) resolvedLink), redditSuppliedThumbnail)
+                    );
+                  }
+                  break;
 
-        } else {
-          contentLoadProgressView.hide();
-          //noinspection ConstantConditions
-          unsubscribeOnCollapse(linkDetailsViewHolder.populate(((RedditLink) contentLink)));
-          linkDetailsView.setOnClickListener(o -> {
-            urlRouter.forLink(contentLink)
-                .expandFromBelowToolbar()
-                .open(getContext());
-          });
-        }
-        break;
+                case SINGLE_VIDEO:
+                  boolean loadHighQualityVideo = false; // TODO: Get this from user's data preferences.
+                  //noinspection ConstantConditions
+                  unsubscribeOnCollapse(
+                      contentVideoViewHolder.load((MediaLink) resolvedLink, loadHighQualityVideo)
+                  );
+                  break;
 
-      case MEDIA_ALBUM:
-      case EXTERNAL:
-        contentLoadProgressView.hide();
-        String redditSuppliedThumbnail = Commons.findOptimizedImage(
-            submission.getThumbnails(),
-            linkDetailsViewHolder.getThumbnailWidthForExternalLink()
+                default:
+                  throw new UnsupportedOperationException("Unknown content: " + resolvedLink);
+              }
+            }, error -> {
+              // TODO: 05/04/17 Handle errors properly (including InvalidImgurAlbumException).
+              Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
+              contentLoadProgressView.hide();
+            }
         );
-        linkDetailsView.setOnClickListener(o -> {
-          urlRouter.forLink(contentLink)
-              .expandFromBelowToolbar()
-              .open(getContext());
-        });
-
-        if (isImgurAlbum) {
-          linkDetailsViewHolder.populate(((ImgurAlbumLink) contentLink), redditSuppliedThumbnail);
-        } else {
-          unsubscribeOnCollapse(linkDetailsViewHolder.populate(((ExternalLink) contentLink), redditSuppliedThumbnail));
-        }
-        break;
-
-      case SINGLE_VIDEO:
-        boolean loadHighQualityVideo = false; // TODO: Get this from user's data preferences.
-        //noinspection ConstantConditions
-        unsubscribeOnCollapse(
-            contentVideoViewHolder.load((MediaLink) contentLink, loadHighQualityVideo)
-        );
-        break;
-
-      default:
-        throw new UnsupportedOperationException("Unknown content: " + contentLink);
-    }
   }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //

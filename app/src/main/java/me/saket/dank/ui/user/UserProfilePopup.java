@@ -136,7 +136,6 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
                   }
                 },
                 error -> {
-                  error.printStackTrace();
                   showStatsLoadState(StatsLoadState.ERROR);
 
                   if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 404) {

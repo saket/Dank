@@ -208,7 +208,7 @@ public class SubmissionLinkHolder {
         }, logError("Couldn't get link's meta-data: " + submissionLink.unparsedUrl()));
   }
 
-  public void populate(ImgurAlbumLink imgurAlbumLink, String redditSuppliedThumbnail) {
+  public void populate(ImgurAlbumLink imgurAlbumLink, @Nullable String redditSuppliedThumbnail) {
     // Animate the holder's entry. This block of code is really fragile and the animation only
     // works if these lines are called in their current order. Animating the dimensions of a
     // View is sadly difficult to do the right way.
