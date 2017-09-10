@@ -8,7 +8,9 @@ import com.squareup.sqlbrite2.BriteDatabase;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.utils.DankSubmissionRequest;
 
 @Singleton
@@ -36,19 +38,25 @@ public class SubmissionRepository {
         .mapToList(CachedSubmission.cursorMapper(moshi))
         .flatMap(cachedSubmissions -> {
           if (cachedSubmissions.isEmpty()) {
-            return dankRedditClient.submission(submissionRequest)
-                .flatMapObservable(submission -> {
-                  long saveTimeMillis = System.currentTimeMillis();
-                  CachedSubmission cachedSubmission = CachedSubmission.create(submissionRequest, submission, saveTimeMillis);
-                  briteDatabase.insert(CachedSubmission.TABLE_NAME, cachedSubmission.toContentValues(moshi));
-
-                  // Inserting an item into the DB will trigger another update, so terminate this flatmap stream here.
-                  return Observable.empty();
-                });
+            // Starting a new Observable here so that it doesn't get canceled when the DB stream is disposed.
+            fetchCommentsFromRemote(submissionRequest)
+                .subscribeOn(Schedulers.io())
+                .subscribe();
+            return Observable.empty();
 
           } else {
             return Observable.just(cachedSubmissions.get(0));
           }
         });
+  }
+
+  @CheckResult
+  private Completable fetchCommentsFromRemote(DankSubmissionRequest submissionRequest) {
+    return dankRedditClient.submission(submissionRequest)
+        .flatMapCompletable(submission -> Completable.fromAction(() -> {
+          long saveTimeMillis = System.currentTimeMillis();
+          CachedSubmission cachedSubmission = CachedSubmission.create(submissionRequest, submission, saveTimeMillis);
+          briteDatabase.insert(CachedSubmission.TABLE_NAME, cachedSubmission.toContentValues(moshi));
+        }));
   }
 }
