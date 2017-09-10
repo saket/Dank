@@ -241,13 +241,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     unsubscribeOnDestroy(
         submissionRequestStream
             .observeOn(mainThread())
-            .doOnNext(o -> {
-              // Reset everything.
-              commentListParentSheet.scrollTo(0);
-              commentListParentSheet.setScrollingEnabled(false);
-              commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
-              commentsLoadProgressView.setVisibility(View.VISIBLE);
-            })
+            .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
             .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
                 .compose(RxUtils.applySchedulers())
                 .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
@@ -1035,6 +1029,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     contentVideoViewHolder.pausePlayback();
     onCollapseSubscriptions.clear();
     commentTreeConstructor.reset();
+
+    commentListParentSheet.scrollTo(0);
+    commentListParentSheet.setScrollingEnabled(false);
+    commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
   }
 
   private void unsubscribeOnCollapse(Disposable subscription) {

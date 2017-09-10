@@ -39,6 +39,7 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
   private final CommentsManager commentsManager;
   private final SubmissionSwipeActionsProvider swipeActionsProvider;
   private Submission submission;
+  private SubmissionHeaderViewHolder headerViewHolder;
 
   public static SubmissionAdapterWithHeader wrap(RecyclerViewArrayAdapter<?, ViewHolder> commentsAdapter, View headerView,
       VotingManager votingManager, CommentsManager commentsManager, SubmissionSwipeActionsProvider swipeActionsProvider)
@@ -60,7 +61,11 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
 
   public void updateSubmission(Submission submission) {
     this.submission = submission;
-    // TODO notifyItemChanged(0);
+
+    // RecyclerView does not support moving Views inflated manually into the list. We'll have to fix this in the future.
+    if (headerViewHolder != null) {
+      headerViewHolder.bind(votingManager, submission, commentsManager);
+    }
   }
 
   @Override
@@ -70,9 +75,12 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
 
   @Override
   protected SubmissionHeaderViewHolder onCreateHeaderViewHolder(View headerView) {
-    SubmissionHeaderViewHolder holder = new SubmissionHeaderViewHolder(headerView);
-    holder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
-    return holder;
+    if (headerViewHolder != null) {
+      throw new AssertionError("Header is already present!");
+    }
+    headerViewHolder = new SubmissionHeaderViewHolder(headerView);
+    headerViewHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
+    return headerViewHolder;
   }
 
   @Override
