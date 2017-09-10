@@ -155,7 +155,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private Relay<PublicContribution> inlineReplyStream = PublishRelay.create();
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
-  private SubmissionLinkHolder linkDetailsViewHolder;
+  private SubmissionLinkViewHolder linkDetailsViewHolder;
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
   private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
@@ -234,7 +234,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     setupReplyFAB();
     setupSoftInputModeChangesAnimation();
 
-    linkDetailsViewHolder = new SubmissionLinkHolder(linkDetailsView, submissionPageLayout);
+    linkDetailsViewHolder = new SubmissionLinkViewHolder(linkDetailsView, submissionPageLayout);
     linkDetailsView.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
     linkDetailsViewHolder.titleSubtitleContainer.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
 

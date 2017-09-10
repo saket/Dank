@@ -62,7 +62,7 @@ import timber.log.Timber;
  * Used when a submission points to a Reddit hosted URL, which can be another submission or a subreddit or a user.
  * Manages Views for showing details of the linked URL.
  */
-public class SubmissionLinkHolder {
+public class SubmissionLinkViewHolder {
 
   private static final int TINT_TRANSITION_ANIMATION_DURATION = 300;
 
@@ -93,7 +93,7 @@ public class SubmissionLinkHolder {
   private final ViewGroup linkDetailsContainer;
   private ValueAnimator holderHeightAnimator;
 
-  public SubmissionLinkHolder(ViewGroup linkedRedditLinkView, ExpandablePageLayout submissionPageLayout) {
+  public SubmissionLinkViewHolder(ViewGroup linkedRedditLinkView, ExpandablePageLayout submissionPageLayout) {
     this.linkDetailsContainer = linkedRedditLinkView;
     ButterKnife.bind(this, linkedRedditLinkView);
     linkedRedditLinkView.setClipToOutline(true);
