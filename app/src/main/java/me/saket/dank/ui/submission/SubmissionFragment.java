@@ -161,6 +161,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
   private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
+  private SubmissionFragmentLifecycleProvider lifecycleProvider;
 
   public interface Callbacks {
 
@@ -221,6 +222,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     submissionPageLayout.addStateChangeCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
+    lifecycleProvider = new SubmissionFragmentLifecycleProvider(submissionPageLayout);
+
     unsubscribeOnDestroy(
         Keyboards
             .streamKeyboardVisibilityChanges(getActivity(), Views.statusBarHeight(getResources()))
@@ -245,6 +248,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .observeOn(mainThread())
             .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
             .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
+                .takeUntil(lifecycleProvider.onPageCollapse())
                 .compose(RxUtils.applySchedulers())
                 .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
                 .map(cachedSubmission -> cachedSubmission.submission())
