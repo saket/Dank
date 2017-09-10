@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import me.saket.dank.data.MediaHostRepository;
 import me.saket.dank.data.links.ImgurLink;
 import me.saket.dank.data.links.MediaLink;
 import okio.Okio;

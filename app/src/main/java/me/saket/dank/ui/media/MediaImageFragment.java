@@ -30,7 +30,7 @@ import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.FileSizeUnit;
-import me.saket.dank.utils.MediaHostRepository;
+import me.saket.dank.data.MediaHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;

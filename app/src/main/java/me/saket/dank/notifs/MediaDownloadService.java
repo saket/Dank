@@ -51,7 +51,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.media.MediaDownloadJob;
 import me.saket.dank.utils.Files2;
 import me.saket.dank.utils.Intents;
-import me.saket.dank.utils.MediaHostRepository;
+import me.saket.dank.data.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Urls;

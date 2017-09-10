@@ -10,7 +10,6 @@ import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.ImgurLink;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.StreamableLink;
-import me.saket.dank.utils.MediaHostRepository;
 
 /**
  * Used by {@link MediaHostRepository} to figure out the wrapped class type for deserializing the actual resolved link.

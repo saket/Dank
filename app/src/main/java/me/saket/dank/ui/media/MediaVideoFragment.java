@@ -23,7 +23,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
-import me.saket.dank.utils.MediaHostRepository;
+import me.saket.dank.data.MediaHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.ErrorStateView;
