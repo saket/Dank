@@ -50,6 +50,7 @@ class SubmissionStatusBarTintProvider {
                   // When the comment list reaches the top, the toolbar's background is filled to make it opaque.
                   // We'll delay the tint transition to coordinate with that animation.
                   return defaultTint.withDelayedTransition(true /* delayedTransition */);
+
                 } else {
                   switch (submissionPageState) {
                     case BEING_PULLED_BUT_WILL_SNAP_BACK:

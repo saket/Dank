@@ -788,7 +788,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // For images and videos.
     unsubscribeOnDestroy(
         statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout, commentListParentSheet)
-            .delay(statusBarTint -> Observable.just(statusBarTint).delay(statusBarTint.delayedTransition() ? 100 : 0, TimeUnit.MILLISECONDS))
+            // Using switchMap() instead of delay() here so that any pending delay gets canceled in case a new tint is received.
+            .switchMap(statusBarTint -> Observable.just(statusBarTint).delay(statusBarTint.delayedTransition() ? 100 : 0, TimeUnit.MILLISECONDS))
             .observeOn(mainThread())
             .subscribe(new Consumer<StatusBarTint>() {
               public ValueAnimator tintChangeAnimator;

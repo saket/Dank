@@ -245,5 +245,4 @@ public class SubmissionImageHolder {
       throw new IllegalStateException("Unknown Drawable: " + drawable);
     }
   }
-
 }
