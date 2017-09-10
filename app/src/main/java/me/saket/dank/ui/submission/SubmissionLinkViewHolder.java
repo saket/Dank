@@ -30,8 +30,6 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.SizeReadyCallback;
 
-import java.util.Locale;
-
 import butterknife.BindColor;
 import butterknife.BindDimen;
 import butterknife.BindView;
@@ -40,8 +38,8 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
 import me.saket.dank.data.links.ExternalLink;
-import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.data.links.ImgurAlbumLink;
+import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
@@ -242,7 +240,7 @@ public class SubmissionLinkViewHolder {
     iconView.setImageResource(R.drawable.ic_photo_library_24dp);
 
     String thumbnailUrl = isEmpty(redditSuppliedThumbnail) ? imgurAlbumLink.coverImageUrl() : redditSuppliedThumbnail;
-    loadLinkThumbnail(false, thumbnailUrl, null, true /* hideProgressBarOnLoad */);
+    loadLinkThumbnail(false, thumbnailUrl, null, true);
   }
 
   /**
@@ -265,19 +263,18 @@ public class SubmissionLinkViewHolder {
     // Attempt to load image provided by Reddit. By doing this, we'll be able to load the image and
     // the URL meta-data in parallel. Additionally, reddit's supplied image will also be optimized
     // for the thumbnail size.
-    if (isEmpty(redditSuppliedThumbnail)) {
+    if (redditSuppliedThumbnail == null) {
       iconView.setImageResource(R.drawable.ic_link_black_24dp);
     } else {
-      loadLinkThumbnail(isGooglePlayLink, redditSuppliedThumbnail, null, false /* hideProgressOnLoad */);
+      loadLinkThumbnail(isGooglePlayLink, redditSuppliedThumbnail, null, false);
     }
 
     //noinspection ConstantConditions
-    return Dank.api().unfurlUrl(externalLink.unparsedUrl(), true)
+    return Dank.api().unfurlUrl(externalLink.unparsedUrl(), false)
         .map(response -> response.data().linkMetadata())
         .compose(applySchedulersSingle())
         .doOnError(o -> progressView.setVisibility(View.GONE))
         .subscribe(linkMetadata -> {
-          // TODO: Move all of subscribe() to within the chain so that image loads aren't sent after the activity is destroyed.
           if (isEmpty(linkMetadata.title())) {
             titleView.setText(linkMetadata.url());
           } else {
@@ -288,17 +285,16 @@ public class SubmissionLinkViewHolder {
           thumbnailView.setContentDescription(titleView.getText());
 
           // Use link's image if Reddit did not supply with anything.
-          if (isEmpty(redditSuppliedThumbnail) && linkMetadata.hasImage()) {
-            // Resize down large images. This is not required for reddit supplied images
-            // because they're already chosen according to their size.
-            String linkImageUrl = getResizedImageUrl(linkMetadata.imageUrl());
-            loadLinkThumbnail(isGooglePlayLink, linkImageUrl, linkMetadata, true /* hideProgressOnLoad */);
-
+          if (redditSuppliedThumbnail == null && linkMetadata.hasImage()) {
+            loadLinkThumbnail(isGooglePlayLink, linkMetadata.imageUrl(), linkMetadata, true);
           } else {
             progressView.setVisibility(View.GONE);
           }
-          boolean hasLinkThumbnail = linkMetadata.hasImage() || !isEmpty(redditSuppliedThumbnail);
-          loadLinkFavicon(linkMetadata, hasLinkThumbnail, isGooglePlayLink);
+
+          if (linkMetadata.hasFavicon()) {
+            boolean hasLinkThumbnail = linkMetadata.hasImage() || redditSuppliedThumbnail != null;
+            loadLinkFavicon(linkMetadata, hasLinkThumbnail, isGooglePlayLink);
+          }
 
         }, error -> {
           if (!(error instanceof IllegalArgumentException) || !error.getMessage().contains("String must not be empty")) {
@@ -306,14 +302,6 @@ public class SubmissionLinkViewHolder {
           }
           // Else, Link wasn't a webpage. Probably an image or a video.
         });
-  }
-
-  private String getResizedImageUrl(String imageUrl) {
-    return String.format(Locale.ENGLISH,
-        "http://rsz.io/%s?width=%d",
-        imageUrl.substring((Uri.parse(imageUrl).getScheme() + "://").length(), imageUrl.length()),
-        thumbnailWidthForExternalLink
-    );
   }
 
   /**
@@ -326,12 +314,15 @@ public class SubmissionLinkViewHolder {
         .listener(new GlideUtils.SimpleRequestListener<Bitmap>() {
           @Override
           public void onResourceReady(Bitmap resource) {
-            generateTintColorFromImage(isGooglePlayLink, resource, tintColor -> {
-              if (!isGooglePlayLink) {
-                thumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
-              }
-              tintViews(tintColor);
-            });
+            generateTintColorFromImage(
+                isGooglePlayLink,
+                resource,
+                tintColor -> {
+                  if (!isGooglePlayLink) {
+                    thumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
+                  }
+                  tintViews(tintColor);
+                });
 
             if (hideProgressBarOnLoad) {
               progressView.setVisibility(View.GONE);
@@ -360,6 +351,8 @@ public class SubmissionLinkViewHolder {
     if (!hasLinkThumbnail) {
       progressView.setVisibility(View.VISIBLE);
     }
+
+    Timber.i("loadLinkFavicon() -> favicon: %s, has thumbnail? %s", linkMetadata.faviconUrl(), hasLinkThumbnail);
 
     Glide.with(iconView)
         .asBitmap()
