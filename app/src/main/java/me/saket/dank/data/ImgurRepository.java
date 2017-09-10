@@ -1,4 +1,4 @@
-package me.saket.dank.utils;
+package me.saket.dank.data;
 
 import static java.lang.Integer.parseInt;
 
@@ -12,8 +12,6 @@ import hirondelle.date4j.DateTime;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import me.saket.dank.data.ImgurAlbumResponse;
-import me.saket.dank.data.ImgurResponse;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.data.exceptions.InvalidImgurAlbumException;
 import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;

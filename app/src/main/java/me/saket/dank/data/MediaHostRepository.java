@@ -29,7 +29,6 @@ import me.saket.dank.data.links.StreamableLink;
 import me.saket.dank.data.links.StreamableUnresolvedLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.utils.Commons;
-import me.saket.dank.utils.ImgurRepository;
 import me.saket.dank.utils.StoreFilePersister;
 import me.saket.dank.utils.StreamableRepository;
 import me.saket.dank.utils.UrlParser;

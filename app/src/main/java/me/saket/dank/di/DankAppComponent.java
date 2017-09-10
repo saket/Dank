@@ -26,7 +26,7 @@ import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
-import me.saket.dank.utils.ImgurRepository;
+import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.utils.JacksonHelper;
 
 @Component(modules = DankAppModule.class)
