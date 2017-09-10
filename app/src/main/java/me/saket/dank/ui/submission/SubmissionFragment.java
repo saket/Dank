@@ -53,6 +53,7 @@ import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -113,8 +114,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     ExpandablePageLayout.OnPullToCollapseIntercepter
 {
 
-  //private static final String KEY_SUBMISSION_JSON = "submissionJson";
-  //private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
+  private static final String KEY_SUBMISSION_JSON = "submissionJson";
+  private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
   private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = 250;
   private static final long ACTIVITY_CONTENT_RESIZE_ANIM_DURATION = 300;
 
@@ -240,7 +241,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     unsubscribeOnDestroy(
         submissionRequestStream
             .observeOn(mainThread())
-            .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
+            .doOnNext(o -> {
+              // Reset everything.
+              commentListParentSheet.scrollTo(0);
+              commentListParentSheet.setScrollingEnabled(false);
+              commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
+              commentsLoadProgressView.setVisibility(View.VISIBLE);
+            })
             .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
                 .compose(RxUtils.applySchedulers())
                 .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
@@ -263,7 +270,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 .doOnError(error -> {
                   Timber.e(error, error.getMessage());
                 })
-                .onErrorResumeNext(Observable.empty()))
+                .onErrorResumeNext(Observable.never()))
             .subscribe(submissionStream)
     );
 
@@ -284,29 +291,34 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
-//    if (submissionStream.getValue() != null && submissionStream.getValue().getComments() == null) {
-//      // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
-//      // show UI on orientation change, we unfortunately will have to manually retain this submission.
-//      outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(submissionStream.getValue()));
-//    }
-//
-//    if (submissionRequestStream.getValue() != null) {
-//      outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
-//    }
+    if (submissionRequestStream.getValue() != null) {
+      if (submissionStream.getValue() != null && submissionStream.getValue().getComments() == null) {
+        // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
+        // show UI on orientation change, we unfortunately will have to manually retain this submission.
+        outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(submissionStream.getValue()));
+      }
+      outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
+    }
     super.onSaveInstanceState(outState);
   }
 
-  // TODO: Serialize Submission with comments.
   private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
-//    if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
-//
-//      moshi.adapter(Submission.class).fromJson(submissionStream.getValue())
-//
-//      JsonNode jsonNode = Dank.jackson().parseJsonNode(savedInstanceState.getString(KEY_SUBMISSION_JSON));
-//      if (jsonNode != null) {
-//        populateUi(new Submission(jsonNode), savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST));
-//      }
-//    }
+    if (savedInstanceState.containsKey(KEY_SUBMISSION_REQUEST)) {
+      Submission retainedSubmission = null;
+      DankSubmissionRequest retainedRequest = savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST);
+
+      if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
+        String retainedSubmissionJson = savedInstanceState.getString(KEY_SUBMISSION_JSON);
+        try {
+          //noinspection ConstantConditions
+          retainedSubmission = moshi.adapter(Submission.class).fromJson(retainedSubmissionJson);
+        } catch (IOException e) {
+          Timber.e(e, "Couldn't deserialize submission");
+        }
+      }
+
+      populateUi(retainedSubmission, retainedRequest);
+    }
   }
 
   private void setupCommentRecyclerView(DankLinkMovementMethod linkMovementMethod) {
@@ -818,25 +830,32 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
    *
    * @param submissionRequest used for loading the comments of this submission.
    */
-  public void populateUi(Submission submission, DankSubmissionRequest submissionRequest) {
-    // Reset everything.
-    commentListParentSheet.scrollTo(0);
-    commentListParentSheet.setScrollingEnabled(false);
-    commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
-
+  public void populateUi(@Nullable Submission submission, DankSubmissionRequest submissionRequest) {
     // This will setup the title, byline and content immediately.
-    submissionStream.accept(submission);
+    if (submission != null) {
+      submissionStream.accept(submission);
+    }
 
     // This will load comments and then again update the title, byline and content.
     submissionRequestStream.accept(submissionRequest);
 
-    unsubscribeOnCollapse(
-        loadSubmissionContent(submission)
-    );
-  }
+    if (submission != null) {
+      unsubscribeOnCollapse(
+          loadSubmissionContent(submission)
+      );
 
-  public Consumer<Throwable> handleSubmissionLoadError() {
-    return error -> Timber.e(error, error.getMessage());
+    } else {
+      // Wait till the submission is fetched before loading content.
+      unsubscribeOnDestroy(
+          submissionStream
+              .take(1)
+              .subscribe(fetchedSubmission -> {
+                unsubscribeOnCollapse(
+                    loadSubmissionContent(fetchedSubmission)
+                );
+              })
+      );
+    }
   }
 
   private Disposable loadSubmissionContent(Submission submission) {

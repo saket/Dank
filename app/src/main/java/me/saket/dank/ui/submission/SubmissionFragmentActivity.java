@@ -1,7 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -14,7 +12,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.links.RedditCommentLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
-import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -67,11 +64,12 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
     expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
 
     setupSubmissionFragment();
+
     if (savedInstanceState == null) {
       if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
-        loadSubmission((RedditSubmissionLink) getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
+        loadSubmission(getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
       } else {
-        loadSubmission((DankSubmissionRequest) getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
+        submissionFragment.populateUi(null, getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
       }
     }
     // Else, SubmissionFragment will handle retaining its data.
@@ -103,23 +101,11 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
           .contextCount(initialComment.contextCount());
     }
 
-    loadSubmission(submissionReqBuilder.build());
-  }
-
-  private void loadSubmission(DankSubmissionRequest submissionRequest) {
-    unsubscribeOnDestroy(
-        Dank.reddit().submission(submissionRequest)
-            .compose(applySchedulersSingle())
-            .subscribe(
-                submission -> submissionFragment.populateUi(submission, submissionRequest),
-                submissionFragment.handleSubmissionLoadError()
-            )
-    );
+    submissionFragment.populateUi(null, submissionReqBuilder.build());
   }
 
   @Override
   public void onClickSubmissionToolbarUp() {
     finish();
   }
-
 }
