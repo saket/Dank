@@ -37,6 +37,7 @@ import butterknife.ButterKnife;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
+import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.LinkMetadata;
@@ -44,7 +45,6 @@ import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
-import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.Urls;
@@ -88,13 +88,18 @@ public class SubmissionLinkViewHolder {
   @BindColor(R.color.submission_link_title_dark) int titleTextColorForDarkBackground;
   @BindColor(R.color.submission_link_subtitle_dark) int subtitleTextColorForDarkBackground;
 
+  private final LinkMetadataRepository linkMetadataRepository;
   private final ViewGroup linkDetailsContainer;
   private ValueAnimator holderHeightAnimator;
 
-  public SubmissionLinkViewHolder(ViewGroup linkedRedditLinkView, ExpandablePageLayout submissionPageLayout) {
-    this.linkDetailsContainer = linkedRedditLinkView;
-    ButterKnife.bind(this, linkedRedditLinkView);
-    linkedRedditLinkView.setClipToOutline(true);
+  public SubmissionLinkViewHolder(LinkMetadataRepository linkMetadataRepository, ViewGroup linkDetailsView,
+      ExpandablePageLayout submissionPageLayout)
+  {
+    this.linkMetadataRepository = linkMetadataRepository;
+    this.linkDetailsContainer = linkDetailsView;
+
+    ButterKnife.bind(this, linkDetailsView);
+    linkDetailsView.setClipToOutline(true);
 
     submissionPageLayout.addStateChangeCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
       @Override
@@ -183,8 +188,7 @@ public class SubmissionLinkViewHolder {
   private Disposable populateSubmissionTitle(RedditSubmissionLink submissionLink) {
     // Downloading the page's HTML to get the title is faster than getting the submission's data from the API.
     //noinspection ConstantConditions
-    return Dank.api().unfurlUrl(submissionLink.unparsedUrl(), true)
-        .map(response -> response.data().linkMetadata())
+    return linkMetadataRepository.unfurl(submissionLink)
         .compose(applySchedulersSingle())
         .compose(doOnSingleStartAndTerminate(start -> progressView.setVisibility(start ? View.VISIBLE : View.GONE)))
         .subscribe(linkMetadata -> {
@@ -270,8 +274,7 @@ public class SubmissionLinkViewHolder {
     }
 
     //noinspection ConstantConditions
-    return Dank.api().unfurlUrl(externalLink.unparsedUrl(), false)
-        .map(response -> response.data().linkMetadata())
+    return linkMetadataRepository.unfurl(externalLink)
         .compose(applySchedulersSingle())
         .doOnError(o -> progressView.setVisibility(View.GONE))
         .subscribe(linkMetadata -> {
@@ -351,8 +354,6 @@ public class SubmissionLinkViewHolder {
     if (!hasLinkThumbnail) {
       progressView.setVisibility(View.VISIBLE);
     }
-
-    Timber.i("loadLinkFavicon() -> favicon: %s, has thumbnail? %s", linkMetadata.faviconUrl(), hasLinkThumbnail);
 
     Glide.with(iconView)
         .asBitmap()

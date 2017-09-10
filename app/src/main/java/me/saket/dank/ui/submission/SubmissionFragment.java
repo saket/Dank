@@ -71,6 +71,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.SubmissionRepository;
@@ -143,6 +144,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @Inject UrlRouter urlRouter;
   @Inject CommentTreeConstructor commentTreeConstructor;
   @Inject Moshi moshi;
+  @Inject LinkMetadataRepository linkMetadataRepository;
 
   private ExpandablePageLayout submissionPageLayout;
   private CommentsAdapter commentsAdapter;
@@ -234,7 +236,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     setupReplyFAB();
     setupSoftInputModeChangesAnimation();
 
-    linkDetailsViewHolder = new SubmissionLinkViewHolder(linkDetailsView, submissionPageLayout);
+    linkDetailsViewHolder = new SubmissionLinkViewHolder(linkMetadataRepository, linkDetailsView, submissionPageLayout);
     linkDetailsView.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
     linkDetailsViewHolder.titleSubtitleContainer.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
 

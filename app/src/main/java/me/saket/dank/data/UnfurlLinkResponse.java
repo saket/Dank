@@ -10,7 +10,7 @@ import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.di.DankApi;
 
 /**
- * Api response for {@link DankApi#unfurlUrl(String, String, boolean)}.
+ * Api response for {@link DankApi#unfurlUrl(String, boolean)}.
  */
 @AutoValue
 public abstract class UnfurlLinkResponse {
