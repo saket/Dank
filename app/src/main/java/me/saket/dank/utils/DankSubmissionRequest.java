@@ -4,13 +4,15 @@ import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.CommentSort;
 
 /**
- * Because {@link SubmissionRequest} does not have a toBuilder() method.
+ * Because {@link SubmissionRequest} does not have a toBuilder() method. Update: Then send a PR to JRAW?
  */
 @AutoValue
 public abstract class DankSubmissionRequest implements Parcelable {
@@ -76,4 +78,7 @@ public abstract class DankSubmissionRequest implements Parcelable {
     public abstract DankSubmissionRequest build();
   }
 
+  public static JsonAdapter<DankSubmissionRequest> jsonAdapter(Moshi moshi) {
+    return new AutoValue_DankSubmissionRequest.MoshiJsonAdapter(moshi);
+  }
 }

@@ -18,10 +18,6 @@ import me.saket.dank.R;
  */
 public class Commons {
 
-  public static <T> T defaultIfNull(T valueToCheck, T defaultValue) {
-    return valueToCheck != null ? valueToCheck : defaultValue;
-  }
-
   /**
    * Find a thumbnail provided by Reddit that is the closest to <var>optimizeForWidth</var>.
    * Gives preference to higher-res thumbnails if needed.

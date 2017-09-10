@@ -60,7 +60,7 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
 
   public void updateSubmission(Submission submission) {
     this.submission = submission;
-    notifyItemChanged(0);
+    // TODO notifyItemChanged(0);
   }
 
   @Override

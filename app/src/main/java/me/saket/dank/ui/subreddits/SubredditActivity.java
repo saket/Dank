@@ -1,7 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
 import static me.saket.dank.di.Dank.subscriptions;
-import static me.saket.dank.utils.Commons.defaultIfNull;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
@@ -336,7 +335,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     SubmissionsAdapter submissionsAdapter = new SubmissionsAdapter(Dank.voting(), Dank.userPrefs(), swipeActionsProvider);
     submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
       DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
-          .commentSort(defaultIfNull(submission.getSuggestedSort(), DankRedditClient.DEFAULT_COMMENT_SORT))
+          .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : DankRedditClient.DEFAULT_COMMENT_SORT)
           .build();
       submissionFragment.populateUi(submission, submissionRequest);
 

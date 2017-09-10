@@ -23,7 +23,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.submission.CachedSubmission;
+import me.saket.dank.ui.submission.CachedSubmissionDeprecated;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import timber.log.Timber;
 
@@ -51,28 +51,28 @@ public class SubmissionManager {
   @CheckResult
   public Observable<List<Submission>> submissions(CachedSubmissionFolder folder) {
     return briteDatabase
-        .createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetAll(folder))
-        .mapToList(CachedSubmission.mapSubmissionFromCursor(moshi))
+        .createQuery(CachedSubmissionDeprecated.TABLE_NAME, CachedSubmissionDeprecated.constructQueryToGetAll(folder))
+        .mapToList(CachedSubmissionDeprecated.mapSubmissionFromCursor(moshi))
         .map(toImmutable());
   }
 
   @CheckResult
-  public Single<List<CachedSubmission>> fetchAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
+  public Single<List<CachedSubmissionDeprecated>> fetchAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
     return lastPaginationAnchor(folder)
         .doOnSuccess(paginationAnchor -> Timber.i("paginationAnchor: %s", paginationAnchor))
         .map(anchor -> {
-          List<CachedSubmission> cachedSubmissions = Collections.emptyList();
+          List<CachedSubmissionDeprecated> cachedSubmissionDeprecateds = Collections.emptyList();
           FetchResult fetchResult = FetchResult.create(Collections.emptyList(), true);
 
           // saveNewSubmissions() ignores duplicates. Which means that we might have to do
           // another fetch if all fetched submissions turned out to be duplicates.
-          while (cachedSubmissions.isEmpty() && fetchResult.hasMoreItems()) {
+          while (cachedSubmissionDeprecateds.isEmpty() && fetchResult.hasMoreItems()) {
             fetchResult = fetchSubmissionsFromAnchor(folder, anchor).blockingGet();
             List<Submission> fetchedSubmissions = fetchResult.fetchedSubmissions();
-            cachedSubmissions = saveNewSubmissions(fetchedSubmissions, folder, false).blockingGet();
+            cachedSubmissionDeprecateds = saveNewSubmissions(fetchedSubmissions, folder, false).blockingGet();
           }
 
-          return Collections.unmodifiableList(cachedSubmissions);
+          return Collections.unmodifiableList(cachedSubmissionDeprecateds);
         });
   }
 
@@ -89,7 +89,7 @@ public class SubmissionManager {
    * Fetch and save fresh submissions under <var>folder</var>.
    */
   @CheckResult
-  public Single<List<CachedSubmission>> fetchAndSaveFromRemote(CachedSubmissionFolder folder, boolean removeExistingSubmissions) {
+  public Single<List<CachedSubmissionDeprecated>> fetchAndSaveFromRemote(CachedSubmissionFolder folder, boolean removeExistingSubmissions) {
     return fetchFromRemote(folder)
         .flatMap(fetchedSubmissions -> Dank.submissions().saveNewSubmissions(fetchedSubmissions, folder, removeExistingSubmissions));
   }
@@ -100,15 +100,15 @@ public class SubmissionManager {
    * @param removeExistingSubmissions Whether to remove existing submissions under <var>folder</var>.
    */
   @CheckResult
-  private Single<List<CachedSubmission>> saveNewSubmissions(List<Submission> submissionsToSave, CachedSubmissionFolder folder,
+  private Single<List<CachedSubmissionDeprecated>> saveNewSubmissions(List<Submission> submissionsToSave, CachedSubmissionFolder folder,
       boolean removeExistingSubmissions)
   {
     return Single.fromCallable(() -> {
-      List<CachedSubmission> cachedSubmissions = new ArrayList<>(submissionsToSave.size());
+      List<CachedSubmissionDeprecated> cachedSubmissionDeprecateds = new ArrayList<>(submissionsToSave.size());
 
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
         if (removeExistingSubmissions) {
-          briteDatabase.delete(CachedSubmission.TABLE_NAME, CachedSubmission.constructWhere(folder));
+          briteDatabase.delete(CachedSubmissionDeprecated.TABLE_NAME, CachedSubmissionDeprecated.constructWhere(folder));
         }
 
         for (int i = 0; i < submissionsToSave.size(); i++) {
@@ -120,7 +120,7 @@ public class SubmissionManager {
           Submission submission = submissionsToSave.get(i);
           boolean isSavedByUser = false;  // TODO: Get this value from DB.
 
-          CachedSubmission cachedSubmission = CachedSubmission.create(
+          CachedSubmissionDeprecated cachedSubmissionDeprecated = CachedSubmissionDeprecated.create(
               submission.getFullName(),
               submission,
               folder,
@@ -131,16 +131,16 @@ public class SubmissionManager {
 
           // It's possible to receive a duplicate submission from Reddit if the submissions got
           // reordered because of changes in their votes. We'll ignore them.
-          long inserted = briteDatabase.insert(CachedSubmission.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_IGNORE);
+          long inserted = briteDatabase.insert(CachedSubmissionDeprecated.TABLE_NAME, cachedSubmissionDeprecated.toContentValues(moshi), SQLiteDatabase.CONFLICT_IGNORE);
           if (inserted != -1) {
-            cachedSubmissions.add(cachedSubmission);
+            cachedSubmissionDeprecateds.add(cachedSubmissionDeprecated);
           }
         }
 
         transaction.markSuccessful();
       }
 
-      return cachedSubmissions;
+      return cachedSubmissionDeprecateds;
     });
   }
 
@@ -183,8 +183,8 @@ public class SubmissionManager {
   @CheckResult
   private Single<PaginationAnchor> lastPaginationAnchor(CachedSubmissionFolder folder) {
     return briteDatabase
-        .createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetLastSubmission(folder))
-        .mapToList(CachedSubmission.mapFromCursor(moshi))
+        .createQuery(CachedSubmissionDeprecated.TABLE_NAME, CachedSubmissionDeprecated.constructQueryToGetLastSubmission(folder))
+        .mapToList(CachedSubmissionDeprecated.mapFromCursor(moshi))
         // list will only have one value because the query places a limit of 1.
         .map(cachedSubmissions -> cachedSubmissions.isEmpty()
             ? PaginationAnchor.createEmpty()
@@ -195,19 +195,19 @@ public class SubmissionManager {
 
   @CheckResult
   public Single<Boolean> hasSubmissions(CachedSubmissionFolder folder) {
-    return briteDatabase.createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.constructQueryToGetCount(folder))
+    return briteDatabase.createQuery(CachedSubmissionDeprecated.TABLE_NAME, CachedSubmissionDeprecated.constructQueryToGetCount(folder))
         .mapToOne(cursor -> cursor.getInt(0) > 0)
         .firstOrError();
   }
 
   @CheckResult
   public Completable removeAllCached() {
-    return Completable.fromAction(() -> briteDatabase.delete(CachedSubmission.TABLE_NAME, null));
+    return Completable.fromAction(() -> briteDatabase.delete(CachedSubmissionDeprecated.TABLE_NAME, null));
   }
 
   @CheckResult
   public Completable removeAllCachedInFolder(CachedSubmissionFolder folder) {
-    return Completable.fromAction(() -> briteDatabase.delete(CachedSubmission.TABLE_NAME, CachedSubmission.constructWhere(folder)));
+    return Completable.fromAction(() -> briteDatabase.delete(CachedSubmissionDeprecated.TABLE_NAME, CachedSubmissionDeprecated.constructWhere(folder)));
   }
 
 // ======== SAVE ======== //

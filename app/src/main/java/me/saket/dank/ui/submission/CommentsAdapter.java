@@ -200,7 +200,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
    * OP of a submission, highlighted in comments. This is being set manually instead of {@link Comment#getSubmissionAuthor()},
    * because that's always null. Not sure where I'm going wrong.
    */
-  public void updateSubmissionAuthor(String submissionAuthor) {
+  public void setSubmissionAuthor(String submissionAuthor) {
     this.submissionAuthor = submissionAuthor;
   }
 

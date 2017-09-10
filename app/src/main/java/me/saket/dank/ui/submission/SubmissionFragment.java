@@ -7,7 +7,6 @@ import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
-import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
@@ -46,17 +45,17 @@ import android.widget.Toast;
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
+import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
 import java.util.Collections;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -67,16 +66,14 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
-import io.reactivex.functions.Function;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.StatusBarTint;
+import me.saket.dank.data.SubmissionRepository;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.ImgurAlbumLink;
@@ -92,6 +89,7 @@ import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
@@ -99,6 +97,7 @@ import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.MediaHostRepository;
+import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
@@ -116,8 +115,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     ExpandablePageLayout.OnPullToCollapseIntercepter
 {
 
-  private static final String KEY_SUBMISSION_JSON = "submissionJson";
-  private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
+  //private static final String KEY_SUBMISSION_JSON = "submissionJson";
+  //private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
   private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = 250;
   private static final long ACTIVITY_CONTENT_RESIZE_ANIM_DURATION = 300;
 
@@ -140,18 +139,19 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindDrawable(R.drawable.ic_toolbar_close_24dp) Drawable closeIconDrawable;
   @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
 
+  @Inject SubmissionRepository submissionRepository;
   @Inject MediaHostRepository mediaHostRepository;
   @Inject UrlRouter urlRouter;
+  @Inject CommentTreeConstructor commentTreeConstructor;
+  @Inject Moshi moshi;
 
   private ExpandablePageLayout submissionPageLayout;
   private CommentsAdapter commentsAdapter;
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
-  private CommentTreeConstructor commentTreeConstructor;
-  private DankSubmissionRequest activeSubmissionRequest;
-  private List<Runnable> pendingOnExpandRunnables = new LinkedList<>();
   private Link activeSubmissionContentLink;
-  private BehaviorRelay<Submission> submissionChangeStream = BehaviorRelay.create();
+  private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
+  private BehaviorRelay<Submission> submissionStream = BehaviorRelay.create();
   private Relay<Link> submissionContentStream = PublishRelay.create();
   private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
   private Relay<PublicContribution> inlineReplyStream = PublishRelay.create();
@@ -227,8 +227,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .subscribe(keyboardVisibilityChangeStream)
     );
 
-    setupCommentList(linkMovementMethod);
-    setupCommentTreeConstructor();
+    setupCommentRecyclerView(linkMovementMethod);
+    setupCommentTree();
     setupContentImageView(fragmentLayout);
     setupContentVideoView();
     setupCommentsSheet();
@@ -240,6 +240,45 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     linkDetailsView.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
     linkDetailsViewHolder.titleSubtitleContainer.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
 
+    unsubscribeOnDestroy(
+        submissionRequestStream
+            .observeOn(AndroidSchedulers.mainThread())
+            .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
+            .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
+                .compose(RxUtils.applySchedulers())
+                .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
+                .map(cachedSubmission -> cachedSubmission.submission())
+                .flatMap(submissionWithComments -> {
+                  // The aim is to always load comments in the sort mode suggested by a subreddit. In case we
+                  // load with the wrong sort (possibly because the submission's details were unknown), reload
+                  // comments using the suggested sort.
+                  CommentSort suggestedSort = submissionWithComments.getSuggestedSort();
+                  if (suggestedSort != null && suggestedSort != submissionRequest.commentSort()) {
+                    submissionRequestStream.accept(submissionRequest.toBuilder()
+                        .commentSort(suggestedSort)
+                        .build());
+                    return Observable.empty();
+
+                  } else {
+                    return Observable.just(submissionWithComments);
+                  }
+                })
+                .doOnError(error -> {
+                  Timber.e(error, error.getMessage());
+                })
+                .onErrorResumeNext(Observable.empty()))
+            .subscribe(submissionStream)
+    );
+
+    unsubscribeOnDestroy(
+        submissionStream
+            .observeOn(AndroidSchedulers.mainThread())
+            .subscribe(submission -> {
+              adapterWithSubmissionHeader.updateSubmission(submission);
+              commentsAdapter.setSubmissionAuthor(submission.getAuthor());
+            })
+    );
+
     // Restore submission if the Activity was recreated.
     if (savedInstanceState != null) {
       onRestoreSavedInstanceState(savedInstanceState);
@@ -248,23 +287,32 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
-    if (submissionChangeStream.getValue() != null) {
-      outState.putString(KEY_SUBMISSION_JSON, Dank.jackson().toJson(submissionChangeStream.getValue()));
-      outState.putParcelable(KEY_SUBMISSION_REQUEST, activeSubmissionRequest);
-    }
+//    if (submissionStream.getValue() != null && submissionStream.getValue().getComments() == null) {
+//      // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
+//      // show UI on orientation change, we unfortunately will have to manually retain this submission.
+//      outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(submissionStream.getValue()));
+//    }
+//
+//    if (submissionRequestStream.getValue() != null) {
+//      outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
+//    }
     super.onSaveInstanceState(outState);
   }
 
+  // TODO: Serialize Submission with comments.
   private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
-    if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
-      JsonNode jsonNode = Dank.jackson().parseJsonNode(savedInstanceState.getString(KEY_SUBMISSION_JSON));
-      if (jsonNode != null) {
-        populateUi(new Submission(jsonNode), savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST));
-      }
-    }
+//    if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
+//
+//      moshi.adapter(Submission.class).fromJson(submissionStream.getValue())
+//
+//      JsonNode jsonNode = Dank.jackson().parseJsonNode(savedInstanceState.getString(KEY_SUBMISSION_JSON));
+//      if (jsonNode != null) {
+//        populateUi(new Submission(jsonNode), savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST));
+//      }
+//    }
   }
 
-  private void setupCommentList(DankLinkMovementMethod linkMovementMethod) {
+  private void setupCommentRecyclerView(DankLinkMovementMethod linkMovementMethod) {
     // Swipe gestures.
     OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.startForResult(getActivity(), SubredditActivity.REQUEST_CODE_LOGIN);
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(
@@ -338,7 +386,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           Dank.comments().removeDraft(sendClickEvent.parentContribution())
               .andThen(Dank.reddit().withAuth(Dank.comments().sendReply(
                   sendClickEvent.parentContribution(),
-                  submissionChangeStream.getValue().getFullName(),
+                  submissionStream.getValue().getFullName(),
                   sendClickEvent.replyMessage()))
               )
               .doOnSubscribe(o -> {
@@ -372,7 +420,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
    */
   @CheckResult
   private Observable<PublicContribution> scrollToNewlyAddedReplyIfHidden(PublicContribution parentContribution) {
-    if (submissionChangeStream.getValue() == parentContribution) {
+    if (submissionStream.getValue() == parentContribution) {
       // Submission reply.
       return Observable.just(parentContribution).doOnNext(o -> commentList.smoothScrollToPosition(1));
     }
@@ -411,7 +459,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @CheckResult
   private Observable<CommentsAdapter.ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(PublicContribution parentContribution) {
     return commentsAdapter.streamReplyItemViewBinds()
-        .filter(replyBindEvent -> replyBindEvent.replyItem().parentContribution().getFullName().equals(parentContribution.getFullName()))
+        .filter(replyBindEvent -> {
+          // This filter exists so that the keyboard is shown only for the target reply item
+          // instead of another reply item that was found while scrolling to the target reply item.
+          return replyBindEvent.replyItem().parentContribution().getFullName().equals(parentContribution.getFullName());
+        })
         .take(1)
         .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
         .observeOn(AndroidSchedulers.mainThread())
@@ -422,22 +474,24 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
    * The direction of modifications/updates to comments is unidirectional. All mods are made on
    * {@link CommentTreeConstructor} and {@link CommentsAdapter} subscribes to its updates.
    */
-  private void setupCommentTreeConstructor() {
-    commentTreeConstructor = new CommentTreeConstructor();
-
-    // Add pending-sync replies to the comment tree.
+  private void setupCommentTree() {
     unsubscribeOnDestroy(
-        submissionChangeStream
-            .filter(subm -> subm.getComments() != null)
-            .observeOn(Schedulers.io())
-            .switchMap(submissionWithComments ->
-                Dank.comments().removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
-                    .andThen(Dank.comments().streamPendingSyncRepliesForSubmission(submissionWithComments))
-                    .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies))
-            )
-            .subscribe(submissionRepliesPair ->
-                commentTreeConstructor.setComments(submissionRepliesPair.first.getComments(), submissionRepliesPair.second)
-            )
+        submissionStream
+            .filter(submission -> submission.getComments() != null)
+            .observeOn(io())
+            .switchMap(submissionWithComments -> {
+              // Add pending-sync replies to the comment tree.
+              return Dank.comments().removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
+                  .andThen(Dank.comments().streamPendingSyncRepliesForSubmission(submissionWithComments))
+                  .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies));
+            })
+            .subscribe(pair -> {
+              Submission submission = pair.first;
+              List<PendingSyncReply> pendingSyncReplies = pair.second;
+
+              commentTreeConstructor.setSubmission(submission);
+              commentTreeConstructor.setComments(submission.getComments(), pendingSyncReplies);
+            })
     );
 
     // Animate changes.
@@ -445,12 +499,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     unsubscribeOnDestroy(
         commentTreeConstructor.streamTreeUpdates()
             .toFlowable(BackpressureStrategy.LATEST)
+            .observeOn(io())
             .scan(initialPair, (pair, next) -> {
               CommentsDiffCallback callback = new CommentsDiffCallback(pair.first, next);
               DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true /* detectMoves */);
               return Pair.create(next, result);
             })
-            .skip(1)  // Skip the initial empty value.
+            .skip(1)  // Initial value is dummy.
             .observeOn(mainThread())
             .subscribe(dataAndDiff -> {
               List<SubmissionCommentRow> newComments = dataAndDiff.first;
@@ -462,7 +517,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             }, logError("Error while diff-ing comments"))
     );
 
-    // Comment clicks.
+    // Toggle collapse on comment clicks.
     unsubscribeOnDestroy(
         commentsAdapter.streamCommentCollapseExpandEvents().subscribe(clickEvent -> {
           if (clickEvent.willCollapseOnClick()) {
@@ -485,14 +540,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .streamLoadMoreCommentsClicks()
             .flatMap(loadMoreClickEvent -> {
               if (loadMoreClickEvent.parentCommentNode().isThreadContinuation()) {
-                DankSubmissionRequest continueThreadRequest = activeSubmissionRequest.toBuilder()
-                    .focusComment(loadMoreClickEvent.parentCommentNode().getComment().getId())
-                    .build();
-                Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
-                expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
-                SubmissionFragmentActivity.start(getContext(), continueThreadRequest, expandFromShape);
+                return submissionRequestStream
+                    .take(1)
+                    .doOnNext(activeRequest -> {
+                      DankSubmissionRequest continueThreadRequest = submissionRequestStream.getValue().toBuilder()
+                          .focusComment(loadMoreClickEvent.parentCommentNode().getComment().getId())
+                          .build();
 
-                return Observable.empty();
+                      Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
+                      expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
+                      SubmissionFragmentActivity.start(getContext(), continueThreadRequest, expandFromShape);
+                    })
+                    .flatMap(o -> Observable.empty());
 
               } else {
                 return Observable.just(loadMoreClickEvent.parentCommentNode())
@@ -613,7 +672,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   private void setupReplyFAB() {
-    // Show the FAB while the keyboard is hidden and there's space available.
     Relay<Boolean> spaceAvailabilityChanges = BehaviorRelay.create();
     ScrollingRecyclerViewSheet.SheetScrollChangeListener sheetScrollChangeListener = sheetScrollY -> {
       float bylineBottom = submissionBylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
@@ -625,8 +683,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         sheetScrollChangeListener.onScrollChange(commentListParentSheet.currentScrollY())  // Initial value.
     );
 
+    // Show the FAB while the keyboard is hidden and there's space available.
     unsubscribeOnDestroy(
-        submissionChangeStream
+        submissionStream
+            .observeOn(AndroidSchedulers.mainThread())
             .doOnNext(o -> replyFAB.show())
             .switchMap(o -> Observable.combineLatest(keyboardVisibilityChangeStream, spaceAvailabilityChanges,
                 (keyboardVisibilityChangeEvent, spaceAvailable) -> !keyboardVisibilityChangeEvent.visible() && spaceAvailable)
@@ -649,13 +709,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       int firstVisiblePosition = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstVisibleItemPosition();
       boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
 
-      if (commentTreeConstructor.isReplyActiveFor(submissionChangeStream.getValue()) && isSubmissionReplyVisible) {
+      if (commentTreeConstructor.isReplyActiveFor(submissionStream.getValue()) && isSubmissionReplyVisible) {
         // Hide reply only if it's visible. Otherwise the user won't understand why the
         // reply FAB did not do anything.
-        commentTreeConstructor.hideReply(submissionChangeStream.getValue());
+        commentTreeConstructor.hideReply(submissionStream.getValue());
       } else {
-        commentTreeConstructor.showReply(submissionChangeStream.getValue());
-        inlineReplyStream.accept(submissionChangeStream.getValue());
+        commentTreeConstructor.showReply(submissionStream.getValue());
+        inlineReplyStream.accept(submissionStream.getValue());
       }
     });
   }
@@ -762,56 +822,21 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
    * @param submissionRequest used for loading the comments of this submission.
    */
   public void populateUi(Submission submission, DankSubmissionRequest submissionRequest) {
-    activeSubmissionRequest = submissionRequest;
-    submissionChangeStream.accept(submission);
-
     // Reset everything.
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
 
-    // Update submission information. Everything that
-    adapterWithSubmissionHeader.updateSubmission(submission);
-    commentsAdapter.updateSubmissionAuthor(submission.getAuthor());
-
-    // Load content
+    // Load content.
     Link contentLink = UrlParser.parse(submission.getUrl());
     submissionContentStream.accept(contentLink);
     loadSubmissionContent(submission, contentLink);
 
-    // Load new comments.
-    commentTreeConstructor.setSubmission(submission);
-    if (submission.getComments() == null) {
-      unsubscribeOnCollapse(Dank.reddit().submission(activeSubmissionRequest)
-          .flatMap(retryWithCorrectSortIfNeeded())
-          .compose(applySchedulersSingle())
-          .compose(doOnSingleStartAndTerminate(start -> commentsLoadProgressView.setVisibility(start ? View.VISIBLE : View.GONE)))
-          .subscribe(submissionChangeStream, handleSubmissionLoadError())
-      );
+    // This will setup the title, byline and content immediately.
+    submissionStream.accept(submission);
 
-    } else {
-      submissionChangeStream.accept(submission);
-    }
-  }
-
-  /**
-   * The aim is to always load comments in the sort mode suggested by a subreddit. In case we accidentally
-   * load in the wrong mode (maybe because the submission's details were unknown), this function reloads
-   * the submission's data using its suggested sort.
-   */
-  @NonNull
-  private Function<Submission, Single<Submission>> retryWithCorrectSortIfNeeded() {
-    return submWithComments -> {
-      if (submWithComments.getSuggestedSort() != null && submWithComments.getSuggestedSort() != activeSubmissionRequest.commentSort()) {
-        activeSubmissionRequest = activeSubmissionRequest.toBuilder()
-            .commentSort(submWithComments.getSuggestedSort())
-            .build();
-        return Dank.reddit().submission(activeSubmissionRequest);
-
-      } else {
-        return Single.just(submWithComments);
-      }
-    };
+    // This will load comments and then again update the title, byline and content.
+    submissionRequestStream.accept(submissionRequest);
   }
 
   public Consumer<Throwable> handleSubmissionLoadError() {
@@ -911,7 +936,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       case MEDIA_ALBUM:
       case EXTERNAL:
         contentLoadProgressView.hide();
-        String redditSuppliedThumbnail = findOptimizedImage(
+        String redditSuppliedThumbnail = Commons.findOptimizedImage(
             submission.getThumbnails(),
             linkDetailsViewHolder.getThumbnailWidthForExternalLink()
         );
@@ -963,12 +988,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   @Override
-  public void onPageExpanded() {
-    for (Runnable runnable : pendingOnExpandRunnables) {
-      runnable.run();
-      pendingOnExpandRunnables.remove(runnable);
-    }
-  }
+  public void onPageExpanded() {}
 
   @Override
   public void onPageAboutToCollapse(long collapseAnimDuration) {

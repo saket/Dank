@@ -14,9 +14,9 @@ import java.io.IOException;
 import io.reactivex.functions.Function;
 
 @AutoValue
-public abstract class CachedSubmission {
+public abstract class CachedSubmissionDeprecated {
 
-  public static final String TABLE_NAME = "CachedSubmission";
+  public static final String TABLE_NAME = "CachedSubmissionDeprecated";
   private static final String COLUMN_FULLNAME = "full_name";
   private static final String COLUMN_SUBMISSION_JSON = "submission_json";
   private static final String COLUMN_FOLDER = "sort_info";
@@ -84,7 +84,7 @@ public abstract class CachedSubmission {
         + " WHERE " + COLUMN_FOLDER + " == '" + folder.serialize() + "'";
   }
 
-  public static Function<Cursor, CachedSubmission> mapFromCursor(Moshi moshi) {
+  public static Function<Cursor, CachedSubmissionDeprecated> mapFromCursor(Moshi moshi) {
     return cursor -> {
       String fullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FULLNAME));
       Submission submission = mapSubmissionFromCursor(moshi).apply(cursor);
@@ -108,9 +108,9 @@ public abstract class CachedSubmission {
     }
   }
 
-  public static CachedSubmission create(String fullName, Submission submission, CachedSubmissionFolder folder, long fetchTimeMillis,
+  public static CachedSubmissionDeprecated create(String fullName, Submission submission, CachedSubmissionFolder folder, long fetchTimeMillis,
       VoteDirection userVoteDirection, boolean isSavedByUser)
   {
-    return new AutoValue_CachedSubmission(fullName, submission, folder, fetchTimeMillis, userVoteDirection, isSavedByUser);
+    return new AutoValue_CachedSubmissionDeprecated(fullName, submission, folder, fetchTimeMillis, userVoteDirection, isSavedByUser);
   }
 }

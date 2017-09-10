@@ -1,13 +1,17 @@
 package me.saket.dank.utils;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
-import io.reactivex.exceptions.Exceptions;
+
+import net.dean.jraw.models.Contribution;
+
 import java.io.IOException;
 import java.io.InputStream;
-import net.dean.jraw.models.Contribution;
+
+import io.reactivex.exceptions.Exceptions;
 import timber.log.Timber;
 
 /**
@@ -56,6 +60,15 @@ public class JacksonHelper {
 
     } catch (IOException e) {
       Timber.e(e, "Couldn't deserialize jsonInputStream");
+      throw Exceptions.propagate(e);
+    }
+  }
+
+  public <T> T fromJson(String json, TypeReference<T> typeReference) {
+    try {
+      return objectMapper.readValue(json, typeReference);
+    } catch (IOException e) {
+      Timber.e(e, "Couldn't deserialize json: %s", json);
       throw Exceptions.propagate(e);
     }
   }

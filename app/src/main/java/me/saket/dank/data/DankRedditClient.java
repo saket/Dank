@@ -3,25 +3,11 @@ package me.saket.dank.data;
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
+
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.squareup.moshi.JsonAdapter;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Completable;
-import io.reactivex.Flowable;
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import io.reactivex.functions.Action;
-import io.reactivex.functions.Function;
-import java.util.List;
-import me.saket.dank.R;
-import me.saket.dank.di.Dank;
-import me.saket.dank.ui.user.UserProfile;
-import me.saket.dank.ui.user.UserSession;
-import me.saket.dank.ui.user.UserSubreddit;
-import me.saket.dank.ui.user.messages.InboxFolder;
-import me.saket.dank.utils.AndroidTokenStore;
-import me.saket.dank.utils.DankSubmissionRequest;
+
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.auth.AuthenticationState;
@@ -42,7 +28,26 @@ import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.SubredditPaginator;
 import net.dean.jraw.paginators.UserSubredditsPaginator;
+
 import org.reactivestreams.Publisher;
+
+import java.util.List;
+
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Completable;
+import io.reactivex.Flowable;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.functions.Action;
+import io.reactivex.functions.Function;
+import me.saket.dank.R;
+import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.UserProfile;
+import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSubreddit;
+import me.saket.dank.ui.user.messages.InboxFolder;
+import me.saket.dank.utils.AndroidTokenStore;
+import me.saket.dank.utils.DankSubmissionRequest;
 import timber.log.Timber;
 
 /**
@@ -92,7 +97,7 @@ public class DankRedditClient {
     }
   }
 
-  // TODO: Move to SubmissionManager.
+  @CheckResult
   public Single<Submission> submission(DankSubmissionRequest submissionRequest) {
     SubmissionRequest jrawSubmissionRequest = new SubmissionRequest.Builder(submissionRequest.id())
         .sort(submissionRequest.commentSort())
