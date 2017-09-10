@@ -51,7 +51,7 @@ public class MediaHostRepository {
     PathResolver<MediaLink> pathResolver = key -> key.getClass().getSimpleName() + "_" + Urls.parseFileNameWithExtension(key.unparsedUrl());
 
     cacheStore = StoreBuilder.<MediaLink, MediaLink>key()
-        .fetcher(unresolvedMediaLink -> resolveFromNetwork(unresolvedMediaLink))
+        .fetcher(unresolvedMediaLink -> resolveFromRemote(unresolvedMediaLink))
         .persister(new StoreFilePersister<>(cacheFileSystem, pathResolver, jsonParser))
         .open();
   }
@@ -110,7 +110,7 @@ public class MediaHostRepository {
     }
   }
 
-  private Single<MediaLink> resolveFromNetwork(MediaLink unresolvedLink) {
+  private Single<MediaLink> resolveFromRemote(MediaLink unresolvedLink) {
     if (unresolvedLink instanceof StreamableUnresolvedLink) {
       return streamableRepository.video(((StreamableUnresolvedLink) unresolvedLink).videoId()).cast(MediaLink.class);
 

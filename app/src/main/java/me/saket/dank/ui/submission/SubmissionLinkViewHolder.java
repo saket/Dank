@@ -9,6 +9,8 @@ import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setPaddingVertical;
 import static me.saket.dank.utils.Views.setWidth;
 
+import android.animation.Animator;
+import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.res.ColorStateList;
@@ -211,26 +213,17 @@ public class SubmissionLinkViewHolder {
   }
 
   public void populate(ImgurAlbumLink imgurAlbumLink, @Nullable String redditSuppliedThumbnail) {
-    // Animate the holder's entry. This block of code is really fragile and the animation only
-    // works if these lines are called in their current order. Animating the dimensions of a
-    // View is sadly difficult to do the right way.
     linkDetailsContainer.setVisibility(View.INVISIBLE);
-    Views.executeOnMeasure(titleSubtitleContainer, true /* consumeOnPreDraw (This is important to avoid glitches) */, () -> {
-      linkDetailsContainer.setVisibility(View.VISIBLE);
-
-      holderHeightAnimator = ObjectAnimator.ofInt(0, titleSubtitleContainer.getHeight());
-      holderHeightAnimator.addUpdateListener(animation -> setHeight(linkDetailsContainer, (int) animation.getAnimatedValue()));
-      holderHeightAnimator.setDuration(300);
-      holderHeightAnimator.setInterpolator(Animations.INTERPOLATOR);
-      holderHeightAnimator.start();
-    });
-
     setWidth(iconContainer, thumbnailWidthForAlbum);
     setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForAlbum);
     progressView.setVisibility(View.VISIBLE);
 
     Resources resources = titleView.getResources();
     thumbnailView.setContentDescription(titleView.getText());
+    iconView.setImageTintList(null);
+    iconView.setContentDescription(resources.getString(R.string.submission_link_imgur_gallery));
+    iconView.setImageResource(R.drawable.ic_photo_library_24dp);
+
     if (isEmpty(imgurAlbumLink.albumTitle())) {
       titleView.setText(R.string.submission_image_album);
       subtitleView.setText(resources.getString(R.string.submission_image_album_image_count, imgurAlbumLink.images().size()));
@@ -240,11 +233,31 @@ public class SubmissionLinkViewHolder {
       titleView.setMaxLines(Integer.MAX_VALUE);
     }
 
-    iconView.setContentDescription(resources.getString(R.string.submission_link_imgur_gallery));
-    iconView.setImageResource(R.drawable.ic_photo_library_24dp);
-
     String thumbnailUrl = isEmpty(redditSuppliedThumbnail) ? imgurAlbumLink.coverImageUrl() : redditSuppliedThumbnail;
     loadLinkThumbnail(false, thumbnailUrl, null, true);
+
+    // Animate the holder's entry. This block of code is really fragile and the animation only
+    // works if these lines are called in their current order. Animating the dimensions of a
+    // View is sadly difficult to do the right way.
+    titleSubtitleContainer.measure(
+        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
+        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
+    );
+    int measuredHeight = titleSubtitleContainer.getMeasuredHeight();
+
+    Views.executeOnNextLayout(titleSubtitleContainer, () -> {
+      holderHeightAnimator = ObjectAnimator.ofInt(0, measuredHeight);
+      holderHeightAnimator.addUpdateListener(animation -> setHeight(linkDetailsContainer, (int) animation.getAnimatedValue()));
+      holderHeightAnimator.setDuration(300);
+      holderHeightAnimator.addListener(new AnimatorListenerAdapter() {
+        @Override
+        public void onAnimationStart(Animator animation) {
+          linkDetailsContainer.post(() -> linkDetailsContainer.setVisibility(View.VISIBLE));
+        }
+      });
+      holderHeightAnimator.setInterpolator(Animations.INTERPOLATOR);
+      holderHeightAnimator.start();
+    });
   }
 
   /**

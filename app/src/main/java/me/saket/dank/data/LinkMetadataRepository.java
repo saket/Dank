@@ -36,7 +36,7 @@ public class LinkMetadataRepository {
     };
 
     linkMetadataStore = StoreBuilder.<Link, LinkMetadata>key()
-        .fetcher(link -> unfurlLinkFromNetwork(link))
+        .fetcher(link -> unfurlLinkFromRemote(link))
         .persister(new StoreFilePersister<>(cacheFileSystem, pathResolver, jsonParser))
         .open();
   }
@@ -63,7 +63,7 @@ public class LinkMetadataRepository {
     }
   }
 
-  private Single<LinkMetadata> unfurlLinkFromNetwork(Link link) {
+  private Single<LinkMetadata> unfurlLinkFromRemote(Link link) {
     // Reddit uses different title for sharing to social media, which we don't want.
     boolean ignoreSocialMetadata = link.isRedditHosted();
     return dankApi.unfurlUrl(link.unparsedUrl(), ignoreSocialMetadata)
