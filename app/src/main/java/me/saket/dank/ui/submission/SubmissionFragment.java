@@ -512,7 +512,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .observeOn(io())
             .scan(initialPair, (pair, next) -> {
               CommentsDiffCallback callback = new CommentsDiffCallback(pair.first, next);
-              DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true /* detectMoves */);
+              DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
               return Pair.create(next, result);
             })
             .skip(1)  // Initial value is dummy.

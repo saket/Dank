@@ -58,7 +58,7 @@ public class StatusBarTintProvider {
           : TintColorUtils.Lightness.LIGHTNESS_UNKNOWN;
 
       boolean isDarkPalette = lightness == TintColorUtils.Lightness.LIGHTNESS_UNKNOWN
-          ? TintColorUtils.isDark(bitmap, bitmap.getWidth() / 2 /* backupPixelX */, 0 /* backupPixelY */)
+          ? TintColorUtils.isDark(bitmap, bitmap.getWidth() / 2, 0)
           : lightness == TintColorUtils.Lightness.IS_DARK;
 
       // TODO: Uncomment the condition after testing on Lollipop.

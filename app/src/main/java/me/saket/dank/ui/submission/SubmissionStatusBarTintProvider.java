@@ -36,7 +36,7 @@ class SubmissionStatusBarTintProvider {
   public Observable<StatusBarTint> streamStatusBarTintColor(Observable<Bitmap> contentBitmapStream, ExpandablePageLayout expandablePageLayout,
       ScrollingRecyclerViewSheet commentListParentSheet)
   {
-    StatusBarTint defaultTint = StatusBarTint.create(defaultStatusBarColor, true /* isDark */);
+    StatusBarTint defaultTint = StatusBarTint.create(defaultStatusBarColor, true);
     return contentBitmapStream
         .switchMapSingle(bitmap -> statusBarTintProvider.generateTint(bitmap))
         .startWith(defaultTint)

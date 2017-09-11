@@ -60,7 +60,7 @@ public class VoteJobService extends DankJobService {
         .subscribe(
             () -> {
               Timber.i("Finis");
-              jobFinished(params, false /* needsReschedule */);
+              jobFinished(params, false);
             },
             error -> {
               ResolvedError resolvedError = Dank.errors().resolve(error);

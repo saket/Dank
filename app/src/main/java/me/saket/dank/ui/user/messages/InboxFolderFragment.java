@@ -128,11 +128,11 @@ public class InboxFolderFragment extends DankFragment {
     unsubscribeOnStop(Dank.inbox().messages(folder)
         .compose(applySchedulers())
         .compose(doOnceAfterNext(o -> {
-          startInfiniteScroll(false /* isRetrying */);
+          startInfiniteScroll(false);
 
           // Refresh messages once we've received the messages from database for the first time.
           if (!callbacks.isFirstRefreshDone(folder)) {
-            refreshMessages(false /* replaceAllExistingMessages */);
+            refreshMessages(false);
           }
         }))
         .doOnNext(messages -> {
@@ -167,7 +167,7 @@ public class InboxFolderFragment extends DankFragment {
    */
   protected void handleOnClickRefreshMenuItem() {
     if (!isRefreshOngoing) {
-      refreshMessages(true /* deleteAllMessages */);
+      refreshMessages(true);
     }
   }
 
@@ -257,7 +257,7 @@ public class InboxFolderFragment extends DankFragment {
         .doOnError(error -> {
           messagesAdapterWithProgress.setFooter(HeaderFooterInfo.createError(
               R.string.inbox_error_failed_to_load_more_messages,
-              o -> startInfiniteScroll(true /* isRetrying */)
+              o -> startInfiniteScroll(true)
           ));
         });
   }

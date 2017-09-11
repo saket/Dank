@@ -34,7 +34,7 @@ public class RetryReplyJobService extends DankJobService {
             .flatMapIterable(failedReplies -> failedReplies)
             .flatMapCompletable(failedReply -> Dank.comments().reSendReply(failedReply))
             .subscribe(
-                () -> jobFinished(params, false /* needsReschedule */),
+                () -> jobFinished(params, false),
                 error -> {
                   ResolvedError resolvedError = Dank.errors().resolve(error);
                   boolean canReschedule = resolvedError.isNetworkError() || resolvedError.isRedditServerError();

@@ -381,7 +381,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     Completable refreshBeforeLoadCompletable;
     boolean isFirstRefresh = !firstRefreshDoneForSubredditFolders.contains(folder);
     if (isFirstRefresh) {
-      refreshBeforeLoadCompletable = Dank.submissions().fetchAndSaveFromRemote(folder, true /* removeExisting */)
+      refreshBeforeLoadCompletable = Dank.submissions().fetchAndSaveFromRemote(folder, true)
           .toCompletable()
           .compose(applySchedulersCompletable())
           .doOnComplete(() -> firstRefreshDoneForSubredditFolders.add(folder));
@@ -399,7 +399,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     ongoingSubmissionsLoadDisposable = refreshBeforeLoadCompletable
         .onErrorResumeNext(swallowErrorUnlessCacheIsEmpty(folder))
         .doOnTerminate(() -> firstLoadProgressView.setVisibility(View.GONE))
-        .doOnComplete(() -> startInfiniteScroll(false /* isRetrying */))
+        .doOnComplete(() -> startInfiniteScroll(false))
         .andThen(Dank.submissions().submissions(folder))
         .compose(applySchedulers())
         .subscribe(submissionAdapterWithProgress, doNothing());
@@ -453,7 +453,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .doOnSuccess(o -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createHidden()))
         .doOnError(error -> submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createError(
             R.string.subreddit_error_failed_to_load_more_submissions,
-            o -> startInfiniteScroll(true /* isRetrying */)
+            o -> startInfiniteScroll(true)
         )));
   }
 

@@ -88,7 +88,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
    * Fetch unread messages and display notification immediately.
    */
   public static void syncImmediately(Context context) {
-    syncImmediately(context, true /* refreshMessages */);
+    syncImmediately(context, true);
   }
 
   /**
@@ -96,7 +96,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
    * getting refreshed automatically. Thus the name.
    */
   public static void refreshNotifications(Context context) {
-    syncImmediately(context, false /* refreshMessages */);
+    syncImmediately(context, false);
   }
 
   @Override
@@ -107,7 +107,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
     Completable refreshCompletable = Dank.inbox()
         .messages(InboxFolder.UNREAD)
         .firstOrError()
-        .flatMapCompletable(existingUnreads -> Dank.inbox().refreshMessages(InboxFolder.UNREAD, false /* replaceAllMessages */)
+        .flatMapCompletable(existingUnreads -> Dank.inbox().refreshMessages(InboxFolder.UNREAD, false)
             .map(receivedUnreads -> {
               List<Message> staleMessages = new ArrayList<>(existingUnreads.size());
               staleMessages.addAll(existingUnreads);

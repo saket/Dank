@@ -76,7 +76,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
               if (params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB) {
                 displayDebugNotification(0, "Subreddits synced");
               }
-              jobFinished(params, false /* needsReschedule */);
+              jobFinished(params, false);
             },
             error -> {
               ResolvedError resolvedError = Dank.errors().resolve(error);

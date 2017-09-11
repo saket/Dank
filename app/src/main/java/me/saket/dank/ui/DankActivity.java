@@ -15,7 +15,7 @@ import me.saket.dank.R;
 /**
  * Base class for all activities.
  */
-public class DankActivity extends AppCompatActivity {
+public abstract class DankActivity extends AppCompatActivity {
 
   private CompositeDisposable onStopDisposables;
   private CompositeDisposable onDestroyDisposables;

@@ -167,7 +167,7 @@ public class SubredditSubscriptionManager {
           return Single.just(PendingState.PENDING_SUBSCRIBE);
         })
         .doOnSuccess(pendingState -> {
-          SubredditSubscription subscription = SubredditSubscription.create(subreddit.getDisplayName(), pendingState, false /* isHidden */);
+          SubredditSubscription subscription = SubredditSubscription.create(subreddit.getDisplayName(), pendingState, false);
           database.insert(SubredditSubscription.TABLE_NAME, subscription.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
         })
         .toCompletable();

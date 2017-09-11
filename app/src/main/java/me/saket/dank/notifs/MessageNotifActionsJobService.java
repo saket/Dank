@@ -131,7 +131,7 @@ public class MessageNotifActionsJobService extends DankJobService {
             )
             .compose(applySchedulersCompletable())
             .subscribe(
-                () -> jobFinished(params, false /* needsReschedule */),
+                () -> jobFinished(params, false),
                 rescheduleJobIfNetworkOrRedditError(params)
             )
     );
