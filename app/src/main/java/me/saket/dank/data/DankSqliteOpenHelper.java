@@ -23,7 +23,7 @@ public class DankSqliteOpenHelper extends SQLiteOpenHelper {
     db.execSQL(CachedMessage.QUERY_CREATE_TABLE);
     db.execSQL(CachedSubmissionDeprecated.QUERY_CREATE_TABLE);
     db.execSQL(PendingSyncReply.QUERY_CREATE_TABLE);
-    db.execSQL(CachedSubmission.QUERY_CREATE_TABLE);
+    db.execSQL(CachedSubmissionWithComments.QUERY_CREATE_TABLE);
   }
 
   @Override

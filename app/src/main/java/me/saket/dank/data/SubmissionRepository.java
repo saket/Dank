@@ -31,11 +31,11 @@ public class SubmissionRepository {
    * Get from DB or from the network if not present in DB.
    */
   @CheckResult
-  public Observable<CachedSubmission> submissionWithComments(DankSubmissionRequest submissionRequest) {
+  public Observable<CachedSubmissionWithComments> submissionWithComments(DankSubmissionRequest submissionRequest) {
     String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(submissionRequest);
 
-    return briteDatabase.createQuery(CachedSubmission.TABLE_NAME, CachedSubmission.SELECT_BY_REQUEST_JSON, requestJson)
-        .mapToList(CachedSubmission.cursorMapper(moshi))
+    return briteDatabase.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
+        .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
         .flatMap(cachedSubmissions -> {
           if (cachedSubmissions.isEmpty()) {
             // Starting a new Observable here so that it doesn't get canceled when the DB stream is disposed.
@@ -55,8 +55,8 @@ public class SubmissionRepository {
     return dankRedditClient.submission(submissionRequest)
         .flatMapCompletable(submission -> Completable.fromAction(() -> {
           long saveTimeMillis = System.currentTimeMillis();
-          CachedSubmission cachedSubmission = CachedSubmission.create(submissionRequest, submission, saveTimeMillis);
-          briteDatabase.insert(CachedSubmission.TABLE_NAME, cachedSubmission.toContentValues(moshi));
+          CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
+          briteDatabase.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi));
         }));
   }
 }

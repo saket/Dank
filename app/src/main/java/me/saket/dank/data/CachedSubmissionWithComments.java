@@ -12,9 +12,9 @@ import io.reactivex.functions.Function;
 import me.saket.dank.utils.DankSubmissionRequest;
 
 @AutoValue
-public abstract class CachedSubmission {
+public abstract class CachedSubmissionWithComments {
 
-  public static final String TABLE_NAME = "CachedSubmission";
+  public static final String TABLE_NAME = "CachedSubmissionWithComments";
   private static final String COLUMN_REQUEST_JSON = "request_json";
   private static final String COLUMN_JSON = "json";
   private static final String COLUMN_SAVE_TIME = "save_time";
@@ -39,11 +39,11 @@ public abstract class CachedSubmission {
 
   public abstract long saveTimeMillis();
 
-  public static CachedSubmission create(DankSubmissionRequest request, Submission submission, long saveTimeMillis) {
+  public static CachedSubmissionWithComments create(DankSubmissionRequest request, Submission submission, long saveTimeMillis) {
     if (submission.getSuggestedSort() != null && submission.getSuggestedSort() != request.commentSort()) {
       new Exception("Suggested sort is different from request").printStackTrace();
     }
-    return new AutoValue_CachedSubmission(request, submission, saveTimeMillis);
+    return new AutoValue_CachedSubmissionWithComments(request, submission, saveTimeMillis);
   }
 
   public ContentValues toContentValues(Moshi moshi) {
@@ -54,7 +54,7 @@ public abstract class CachedSubmission {
     return contentValues;
   }
 
-  public static Function<Cursor, CachedSubmission> cursorMapper(Moshi moshi) {
+  public static Function<Cursor, CachedSubmissionWithComments> cursorMapper(Moshi moshi) {
     return cursor -> {
       String requestJson = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_REQUEST_JSON));
       String submissionJson = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_JSON));
