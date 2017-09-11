@@ -4,18 +4,18 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.ActionBar;
-import android.support.v7.app.AppCompatActivity;
 import android.view.View;
 
 import butterknife.ButterKnife;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import me.saket.dank.R;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 
 /**
  * Base class for all activities.
  */
-public abstract class DankActivity extends AppCompatActivity {
+public abstract class DankActivity extends LifecycleOwnerActivity {
 
   private CompositeDisposable onStopDisposables;
   private CompositeDisposable onDestroyDisposables;
