@@ -18,6 +18,8 @@ import android.support.v7.widget.Toolbar;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.TextView;
 
+import me.saket.dank.ui.compose.ComposeReplyActivity;
+import me.saket.dank.ui.compose.ComposeStartOptions;
 import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
@@ -137,15 +139,18 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .subscribe(messagesAdapter)
     );
 
-    contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-      return touchLiesOn(messageRecyclerView, downX, downY) && messageRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1);
-    });
+    contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
+      touchLiesOn(messageRecyclerView, downX, downY) && messageRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1)
+    );
   }
 
   @OnClick(R.id.privatemessagethread_reply)
   void onClickReply() {
     List<Message> messages = messagesAdapter.getData();
     Message latestMessage = messages.get(messages.size() - 1);
-    ComposeReplyActivity.start(this, getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME));
+    ComposeStartOptions startOptions = ComposeStartOptions.builder()
+        .secondPartyName(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME))
+        .build();
+    ComposeReplyActivity.start(this, startOptions);
   }
 }

@@ -48,6 +48,9 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
 
+import me.saket.dank.ui.compose.ComposeReplyActivity;
+import me.saket.dank.ui.compose.ComposeStartOptions;
+import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
@@ -376,7 +379,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Reply fullscreen clicks.
     unsubscribeOnDestroy(
         commentsAdapter.streamReplyFullscreenClicks().subscribe(fullscreenClickEvent -> {
-          // TODO.
+          ComposeStartOptions startOptions = ComposeStartOptions.builder()
+              .secondPartyName("secondPartyName")
+              .build();
+          ComposeReplyActivity.start(getActivity(), startOptions);
         })
     );
 
@@ -503,8 +509,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .toFlowable(BackpressureStrategy.LATEST)
             .observeOn(io())
             .scan(initialPair, (pair, next) -> {
-              Timber.d("Applying diff");
-
               CommentsDiffCallback callback = new CommentsDiffCallback(pair.first, next);
               DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
               return Pair.create(next, result);

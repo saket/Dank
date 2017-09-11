@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Copyright (C) 2015-2017 Emanuel Moecklin
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+      http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+  -->
+
+<resources xmlns:xliff="urn:oasis:names:tc:xliff:document:1.2">
+
+    <string name="rte_link_enter_url">URL</string>
+    <string name="rte_link_enter_url_text">Testo del link (facoltativo)</string>
+    <string name="rte_create_a_link">Crea un link</string>
+    <string name="rte_invalid_link"><xliff:g id="link">%s</xliff:g> non è un indirizzo valido</string>
+    <string name="rte_remove_action">Rimuovi</string>
+
+    <string name="rte_pick_image">Seleziona un\'immagine</string>
+    <string name="rte_pick_audio">Seleziona un file audio</string>
+    <string name="rte_pick_video">Seleziona un video</string>
+    <string name="rte_processing_image">Elaborazione immagine\u2026</string>
+    <string name="rte_processing">Elaborazione.\nPazienta prego\u2026</string>
+    <string name="rte_add_image_error">Non c\'è abbastanza memoria per aggiungere questa immagine.</string>
+
+</resources>

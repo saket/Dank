@@ -604,8 +604,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     changeState(State.EXPANDING);
 
     if (stateChangeCallbacks != null) {
-      for (int i = 0; i < stateChangeCallbacks.size(); i++)
-      {    // Note: DO NOT convert to for-each loop which generates an iterator object on each call.
+      // Reverse loop to let listeners remove themselves while in the loop.
+      for (int i = stateChangeCallbacks.size() - 1; i >= 0; i--) {
         stateChangeCallbacks.get(i).onPageAboutToExpand(getAnimationDuration());
       }
     }
@@ -617,8 +617,9 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     dispatchOnPageFullyCoveredCallback();
 
     if (stateChangeCallbacks != null) {
-      for (final StateChangeCallbacks callback : stateChangeCallbacks) {
-        callback.onPageExpanded();
+      // Reverse loop to let listeners remove themselves while in the loop.
+      for (int i = stateChangeCallbacks.size() - 1; i >= 0; i--) {
+        stateChangeCallbacks.get(i).onPageExpanded();
       }
     }
   }

@@ -67,8 +67,7 @@
       android:windowSoftInputMode="adjustNothing" />
 
     <activity
-      android:name=".ui.user.messages.ComposeReplyActivity"
-      android:theme="@style/DankTheme.DialogLikeActivity"
+      android:name=".ui.compose.ComposeReplyActivity"
       android:windowSoftInputMode="adjustResize|stateVisible" />
 
     <activity
