@@ -15,6 +15,7 @@ public abstract class CachedSubmissionFolder implements Serializable {
 
   private static final String SEPARATOR = "____";
 
+  // Why do we also need the subreddit name here?
   public abstract String subredditName();
 
   public abstract SortingAndTimePeriod sortingAndTimePeriod();
@@ -31,7 +32,7 @@ public abstract class CachedSubmissionFolder implements Serializable {
    * Used for storing this into DB. Not using moshi because this will be searcheable.
    */
   public String serialize() {
-    return subredditName() + SEPARATOR + sortingAndTimePeriod().sortOrder().name() + SEPARATOR + sortingAndTimePeriod().timePeriod().name();
+    return subredditName() + SEPARATOR + sortingAndTimePeriod().serialize();
   }
 
   public static CachedSubmissionFolder valueOf(String serializedSrtingAndTimePeriod) {

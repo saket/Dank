@@ -1,18 +1,14 @@
 package me.saket.dank;
 
 import android.annotation.TargetApi;
-import android.app.Activity;
 import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 
 import com.facebook.stetho.Stetho;
-import com.jakewharton.rxrelay2.PublishRelay;
-import com.jakewharton.rxrelay2.Relay;
 import com.jakewharton.threetenabp.AndroidThreeTen;
 import com.tspoon.traceur.Traceur;
 
@@ -23,12 +19,9 @@ import java.util.Arrays;
 import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
 import me.saket.dank.di.Dank;
-import me.saket.dank.utils.SimpleActivityLifecycleCallbacks;
 import timber.log.Timber;
 
 public class DankApplication extends Application {
-
-  private static Relay<Object> dankMinimizeRelay = PublishRelay.create();
 
   @Override
   public void onCreate() {
@@ -47,24 +40,6 @@ public class DankApplication extends Application {
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       createNotificationChannels();
     }
-
-    registerActivityLifecycleCallbacks(new SimpleActivityLifecycleCallbacks() {
-      int activeActivitiesCount = 0;
-
-      @Override
-      public void onActivityStarted(Activity activity) {
-        ++activeActivitiesCount;
-      }
-
-      @Override
-      public void onActivityStopped(Activity activity) {
-        --activeActivitiesCount;
-
-        if (activeActivitiesCount == 0) {
-          dankMinimizeRelay.accept(new Object());
-        }
-      }
-    });
   }
 
   @TargetApi(Build.VERSION_CODES.O)
@@ -128,15 +103,5 @@ public class DankApplication extends Application {
 
       Timber.e(e, "Undeliverable exception received, not sure what to do.");
     };
-  }
-
-  /**
-   * An Observable that emits whenever all activities of the app are minimized/stopped.
-   * Note 1: Unsubscribe only in onDestroy(). Unsubscribing in onStop() will be incorrect because the callbacks rely on onStop().
-   * Note 2: Do not forget note #1.
-   */
-  @CheckResult
-  public static Relay<Object> streamAppMinimizes() {
-    return dankMinimizeRelay;
   }
 }

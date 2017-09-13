@@ -4,6 +4,8 @@ import android.os.Parcelable;
 import android.support.annotation.StringRes;
 
 import com.google.auto.value.AutoValue;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.paginators.Sorting;
 import net.dean.jraw.paginators.TimePeriod;
@@ -14,6 +16,8 @@ import me.saket.dank.R;
 
 @AutoValue
 public abstract class SortingAndTimePeriod implements Parcelable, Serializable {
+
+  private static final String SEPARATOR = "____";
 
   public abstract Sorting sortOrder();
 
@@ -28,6 +32,10 @@ public abstract class SortingAndTimePeriod implements Parcelable, Serializable {
 
   public static SortingAndTimePeriod create(Sorting sortOrder, TimePeriod timePeriod) {
     return new AutoValue_SortingAndTimePeriod(sortOrder, timePeriod);
+  }
+
+  public String serialize() {
+    return sortOrder().name() + SEPARATOR + timePeriod().name();
   }
 
   @StringRes
@@ -78,5 +86,9 @@ public abstract class SortingAndTimePeriod implements Parcelable, Serializable {
       default:
         throw new UnsupportedOperationException("Unknown time period: " + timePeriod());
     }
+  }
+
+  public static JsonAdapter<SortingAndTimePeriod> jsonAdapter(Moshi moshi) {
+    return new AutoValue_SortingAndTimePeriod.MoshiJsonAdapter(moshi);
   }
 }

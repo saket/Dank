@@ -50,7 +50,7 @@ public class GlideUtils {
 
     public void onResourceReady(R resource) {}
 
-    public void onLoadFailed(Exception e) {
+    public void onLoadFailed(@Nullable Exception e) {
       if (e != null) {
         e.printStackTrace();
       } else {

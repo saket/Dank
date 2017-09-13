@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.media;
 
 import static java.util.Collections.unmodifiableList;
 
@@ -20,6 +20,9 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Single;
+import me.saket.dank.data.CachedResolvedLinkInfo;
+import me.saket.dank.data.ImgurImage;
+import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;

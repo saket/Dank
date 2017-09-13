@@ -75,7 +75,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.StatusBarTint;
-import me.saket.dank.data.SubmissionRepository;
 import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.ImgurAlbumLink;
@@ -97,7 +96,7 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
-import me.saket.dank.data.MediaHostRepository;
+import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -252,7 +251,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 .takeUntil(lifecycleProvider.onPageCollapse())
                 .compose(RxUtils.applySchedulers())
                 .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
-                .map(cachedSubmission -> cachedSubmission.submission())
                 .flatMap(submissionWithComments -> {
                   // The aim is to always load comments in the sort mode suggested by a subreddit. In case we
                   // load with the wrong sort (possibly because the submission's details were unknown), reload

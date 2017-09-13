@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.submission;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -18,9 +18,6 @@ public abstract class CachedSubmissionWithComments {
   private static final String COLUMN_REQUEST_JSON = "request_json";
   private static final String COLUMN_JSON = "json";
   private static final String COLUMN_SAVE_TIME = "save_time";
-
-  private static final int BOOLEAN_TRUE_INT = 1;
-  private static final int BOOLEAN_FALSE_INT = 0;
 
   public static final String QUERY_CREATE_TABLE =
       "CREATE TABLE " + TABLE_NAME + " ("

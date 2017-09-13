@@ -9,7 +9,6 @@ import com.jakewharton.rxbinding2.support.v7.widget.RecyclerViewScrollEvent;
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 
 import io.reactivex.Observable;
-import io.reactivex.functions.Predicate;
 
 /**
  * Listens for scroll events and dispatches
@@ -40,6 +39,9 @@ public class InfiniteScrollListener {
     this.recyclerView = recyclerView;
   }
 
+  /**
+   * Pause/resume listening to scroll events.
+   */
   public void setLoadOngoing(boolean loadOngoing) {
     isLoadOngoing = loadOngoing;
   }
@@ -50,8 +52,8 @@ public class InfiniteScrollListener {
   }
 
   @CheckResult
-  public Observable<RecyclerViewScrollEvent> emitWhenLoadNeeded() {
-    // RxRecyclerView doesn't emit an initial value, unlike all other bindings. So do it manually.
+  public Observable<Object> emitWhenLoadNeeded() {
+    // RxRecyclerView doesn't emit an initial value, so do it manually.
     RecyclerViewScrollEvent initialScrollEvent = RecyclerViewScrollEvent.create(recyclerView, 0, 0);
 
     Observable<RecyclerViewScrollEvent> scrollEventsStream = RxRecyclerView.scrollEvents(recyclerView);
@@ -60,20 +62,16 @@ public class InfiniteScrollListener {
     }
 
     return scrollEventsStream
-        .filter(event -> event.dy() != 0)  // This ensures the list has enough items to scroll.
-        .filter(o -> !isLoadOngoing)
-        .filter(shouldLoadMore());
+        .filter(event -> !isLoadOngoing && shouldLoadMore(event) && event.dy() != 0 /* list should have enough items to scroll */)
+        .cast(Object.class);
   }
 
-  private Predicate<RecyclerViewScrollEvent> shouldLoadMore() {
-    return scrollEvent -> {
-      RecyclerView recyclerView = scrollEvent.view();
-      int totalItemCount = recyclerView.getAdapter().getItemCount();
-      int lastVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findLastVisibleItemPosition();
+  private boolean shouldLoadMore(RecyclerViewScrollEvent scrollEvent) {
+    RecyclerView recyclerView = scrollEvent.view();
+    int totalItemCount = recyclerView.getAdapter().getItemCount();
+    int lastVisibleItemPosition = ((LinearLayoutManager) recyclerView.getLayoutManager()).findLastVisibleItemPosition();
 
-      float threshold = (float) totalItemCount * loadThresholdFactor;
-      return lastVisibleItemPosition + 1 >= threshold;
-    };
+    float threshold = (float) totalItemCount * loadThresholdFactor;
+    return lastVisibleItemPosition + 1 >= threshold;
   }
-
 }

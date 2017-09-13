@@ -26,5 +26,4 @@ public abstract class PaginationAnchor {
   public boolean isEmpty() {
     return fullName().length() == 0;
   }
-
 }

@@ -32,7 +32,7 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.data.MediaHostRepository;
+import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideUtils;

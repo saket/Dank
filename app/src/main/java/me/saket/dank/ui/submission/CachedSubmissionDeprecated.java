@@ -13,6 +13,7 @@ import java.io.IOException;
 
 import io.reactivex.functions.Function;
 
+@Deprecated
 @AutoValue
 public abstract class CachedSubmissionDeprecated {
 

@@ -22,6 +22,7 @@ import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.ui.user.messages.InboxActivity;
@@ -81,4 +82,6 @@ public interface DankAppComponent {
   void inject(UserProfilePopup popup);
 
   void inject(HiddenPreferencesActivity activity);
+
+  void inject(SubredditActivity activity);
 }

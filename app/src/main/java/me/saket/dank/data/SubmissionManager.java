@@ -29,6 +29,8 @@ import timber.log.Timber;
 
 /**
  * Handles saving and un-saving submissions.
+ *
+ * @deprecated TODO: use SubmissionRepository instead.
  */
 public class SubmissionManager {
 
@@ -131,8 +133,12 @@ public class SubmissionManager {
 
           // It's possible to receive a duplicate submission from Reddit if the submissions got
           // reordered because of changes in their votes. We'll ignore them.
-          long inserted = briteDatabase.insert(CachedSubmissionDeprecated.TABLE_NAME, cachedSubmissionDeprecated.toContentValues(moshi), SQLiteDatabase.CONFLICT_IGNORE);
-          if (inserted != -1) {
+          long insertedRowId = briteDatabase.insert(
+              CachedSubmissionDeprecated.TABLE_NAME,
+              cachedSubmissionDeprecated.toContentValues(moshi),
+              SQLiteDatabase.CONFLICT_IGNORE
+          );
+          if (insertedRowId != -1) {
             cachedSubmissionDeprecateds.add(cachedSubmissionDeprecated);
           }
         }
