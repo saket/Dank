@@ -24,6 +24,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.github.zagum.expandicon.ExpandIconView;
 import com.jakewharton.rxbinding2.internal.Notification;
@@ -35,6 +36,7 @@ import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.Sorting;
 
+import java.util.List;
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -43,6 +45,7 @@ import butterknife.OnClick;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.functions.Predicate;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -60,7 +63,6 @@ import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
 import me.saket.dank.utils.Keyboards;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
@@ -93,7 +95,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
   @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
   @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
-  @BindView(R.id.subreddit_progress) View firstLoadProgressView;
+  @BindView(R.id.subreddit_progress) View fullscreenProgressView;
   @BindView(R.id.subreddit_submission_emptyState) EmptyStateView emptyStateView;
   @BindView(R.id.subreddit_submission_errorState) ErrorStateView firstLoadErrorStateView;
 
@@ -101,8 +103,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   private SubmissionFragment submissionFragment;
   private InfiniteScrollRecyclerAdapter<Submission, ?> submissionAdapterWithProgress;
-  private BehaviorRelay<String> subredditChangesRelay = BehaviorRelay.create();
-  private BehaviorRelay<SortingAndTimePeriod> sortingChangesRelay = BehaviorRelay.create();
+  private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
+  private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
   private Relay<Object> refreshRequestStream = PublishRelay.create();
 
   protected static void addStartExtrasToIntent(RedditSubredditLink subredditLink, @Nullable Rect expandFromShape, Intent intent) {
@@ -168,12 +170,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     if (savedState != null && savedState.containsKey(KEY_SORTING_AND_TIME_PERIOD)) {
       //noinspection ConstantConditions
-      sortingChangesRelay.accept(savedState.getParcelable(KEY_SORTING_AND_TIME_PERIOD));
+      sortingChangesStream.accept(savedState.getParcelable(KEY_SORTING_AND_TIME_PERIOD));
     } else {
-      sortingChangesRelay.accept(SortingAndTimePeriod.create(Sorting.HOT));
+      sortingChangesStream.accept(SortingAndTimePeriod.create(Sorting.HOT));
     }
     unsubscribeOnDestroy(
-        sortingChangesRelay.subscribe(sortingAndTimePeriod -> {
+        sortingChangesStream.subscribe(sortingAndTimePeriod -> {
           if (sortingAndTimePeriod.sortOrder().requiresTimePeriod()) {
             sortingModeButton.setText(getString(
                 R.string.subreddit_sorting_mode_with_time_period,
@@ -191,12 +193,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // Toggle the subscribe button's visibility.
     unsubscribeOnDestroy(
-        subredditChangesRelay
+        subredditChangesStream
             .switchMap(subredditName -> Dank.subscriptions().isSubscribed(subredditName))
             .compose(applySchedulers())
             .startWith(Boolean.FALSE)
             .onErrorResumeNext(error -> {
-              logError("Couldn't get subscribed status for %s", subredditChangesRelay.getValue()).accept(error);
+              logError("Couldn't get subscribed status for %s", subredditChangesStream.getValue()).accept(error);
               return Observable.just(false);
             })
             .subscribe(isSubscribed -> subscribeButton.setVisibility(isSubscribed ? View.GONE : View.VISIBLE))
@@ -205,7 +207,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   @OnClick(R.id.subreddit_subscribe)
   public void onClickSubscribeToSubreddit() {
-    String subredditName = subredditChangesRelay.getValue();
+    String subredditName = subredditChangesStream.getValue();
     subscribeButton.setVisibility(View.GONE);
 
     // Intentionally not unsubscribing from this API call on Activity destroy.
@@ -219,11 +221,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Override
   protected void onSaveInstanceState(Bundle outState) {
     submissionList.handleOnSaveInstance(outState);
-    if (subredditChangesRelay.hasValue()) {
-      outState.putString(KEY_ACTIVE_SUBREDDIT, subredditChangesRelay.getValue());
+    if (subredditChangesStream.hasValue()) {
+      outState.putString(KEY_ACTIVE_SUBREDDIT, subredditChangesStream.getValue());
     }
-    if (sortingChangesRelay.hasValue()) {
-      outState.putParcelable(KEY_SORTING_AND_TIME_PERIOD, sortingChangesRelay.getValue());
+    if (sortingChangesStream.hasValue()) {
+      outState.putParcelable(KEY_SORTING_AND_TIME_PERIOD, sortingChangesStream.getValue());
     }
     outState.putBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE, isSubredditPickerVisible());
     outState.putBoolean(KEY_IS_USER_PROFILE_SHEET_VISIBLE, isUserProfileSheetVisible());
@@ -288,7 +290,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
           } else if (isUserProfileSheetVisible()) {
             // This will update the title.
-            setTitle(subredditChangesRelay.getValue());
+            setTitle(subredditChangesStream.getValue());
           }
           toolbarTitleArrowView.setState(ExpandIconView.MORE, true);
           break;
@@ -338,7 +340,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     submissionAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(submissionsAdapter);
     submissionList.setAdapter(submissionAdapterWithProgress);
 
-    subredditChangesRelay
+    subredditChangesStream
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(subreddit -> setTitle(subreddit));
@@ -349,12 +351,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     if (savedState != null && savedState.containsKey(KEY_ACTIVE_SUBREDDIT)) {
       String retainedSub = savedState.getString(KEY_ACTIVE_SUBREDDIT);
       //noinspection ConstantConditions
-      subredditChangesRelay.accept(retainedSub);
+      subredditChangesStream.accept(retainedSub);
     } else if (getIntent().hasExtra(KEY_INITIAL_SUBREDDIT_LINK)) {
       String requestedSub = ((RedditSubredditLink) getIntent().getParcelableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name();
-      subredditChangesRelay.accept(requestedSub);
+      subredditChangesStream.accept(requestedSub);
     } else {
-      subredditChangesRelay.accept(Dank.subscriptions().defaultSubreddit());
+      subredditChangesStream.accept(Dank.subscriptions().defaultSubreddit());
     }
 
     if (savedState != null) {
@@ -368,8 +370,19 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // TODO: Handle errors.
     // TODO: Add refresh stream to this chain.
 
-    Observable<CachedSubmissionFolder> submissionFolderStream = subredditChangesRelay.zipWith(sortingChangesRelay, CachedSubmissionFolder::create);
-    Relay<Object> loadFromRemoteRequestStream = PublishRelay.create();
+    Observable<CachedSubmissionFolder> submissionFolderStream = Observable.combineLatest(
+        subredditChangesStream,
+        sortingChangesStream,
+        CachedSubmissionFolder::create
+    );
+    Relay<NetworkCallState> loadFromRemoteProgressStream = PublishRelay.create();
+    Observable<List<Submission>> databaseStream = submissionFolderStream
+        .switchMap(folder ->
+            submissionRepository.submissions(folder)
+                .subscribeOn(io())
+                .onErrorResumeNext(Observable.never())
+        )
+        .share();
 
     // Infinite scroll.
     submissionFolderStream
@@ -377,11 +390,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .toFlowable(BackpressureStrategy.LATEST)
         .switchMap(folder -> InfiniteScrollListener.create(submissionList, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD)
             .emitWhenLoadNeeded()
-            .mergeWith(loadFromRemoteRequestStream)
             .subscribeOn(mainThread())
             .observeOn(io())
+            // Force load from network if Db is empty for this folder.
+            .mergeWith(databaseStream.take(1).filter(List::isEmpty))
             .toFlowable(BackpressureStrategy.DROP)
-            .flatMap(o -> submissionRepository.loadMoreSubmissions(folder).toFlowable(), 1)
+            .flatMap(o -> submissionRepository.loadMoreSubmissions(folder)
+                    .doOnSubscribe(d -> loadFromRemoteProgressStream.accept(NetworkCallState.IN_FLIGHT))
+                    .doOnSuccess(s -> loadFromRemoteProgressStream.accept(NetworkCallState.IDLE))
+                    .doOnError(e -> loadFromRemoteProgressStream.accept(NetworkCallState.FAILED))
+                    .toFlowable(),
+                1)
             .takeUntil(fetchResult -> !fetchResult.hasMoreItems())
             .doOnError(error -> Timber.e(error, "Infinite scroll fail"))
             .onErrorResumeNext(Flowable.never())
@@ -389,26 +408,72 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .subscribe(doNothing());
 
     // DB subscription.
-    submissionFolderStream
-        .switchMap(folder -> submissionRepository.submissions(folder)
-            .subscribeOn(io())
-            .observeOn(mainThread())
-            .compose(RxUtils.doOnceAfterNext(submissions -> {
-              // Request initial load if we don't have any submissions cached for current folder.
-              if (submissions.isEmpty()) {
-                loadFromRemoteRequestStream.accept(Notification.INSTANCE);
-              }
-            }))
-        )
+    databaseStream
+        .observeOn(mainThread())
+        .doOnNext(s -> Timber.i("Found %s subms", s.size()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(submissionAdapterWithProgress);
+
+    // Thoughts: Combining the DB and infinite-scroll streams does not seem possible.
+
+    Observable.combineLatest(
+        databaseStream.map(submissions -> !submissions.isEmpty()),
+        loadFromRemoteProgressStream.startWith(NetworkCallState.IDLE),
+        SubmissionsDatabaseAndNetworkState::create
+    )
+        .observeOn(mainThread())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(state -> {
+          Predicate<SubmissionsDatabaseAndNetworkState> fullscreenProgressVisibility = o -> {
+            //noinspection CodeBlock2Expr
+            if (state.hasItemsInDatabase())
+              return false;
+            else {
+              if (state.loadFromRemoteState() == NetworkCallState.IN_FLIGHT) {
+                return true;
+              }
+              return false;
+            }
+          };
+          fullscreenProgressView.setVisibility(fullscreenProgressVisibility.test(state) ? View.VISIBLE : View.GONE);
+
+          if (state.hasItemsInDatabase()) {
+            switch (state.loadFromRemoteState()) {
+              case IN_FLIGHT:
+                Timber.i("TODO: show load-more progress");
+                break;
+
+              case IDLE:
+                Timber.i("TODO: hide load-more progress");
+                break;
+
+              case FAILED:
+                Timber.i("TODO: load-more error");
+                break;
+            }
+          } else {
+            switch (state.loadFromRemoteState()) {
+              case IN_FLIGHT:
+                break;
+
+              case IDLE:
+                Timber.i("TODO: show empty state");
+                break;
+
+              case FAILED:
+                Toast.makeText(this, "Load failed", Toast.LENGTH_SHORT).show();
+                Timber.i("TODO: initial load-more error");
+                break;
+            }
+          }
+        });
   }
 
 //  private void startInfiniteScroll(boolean isRetrying) {
 //    InfiniteScrollListener scrollListener = InfiniteScrollListener.create(submissionList, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD);
 //    scrollListener.setEmitInitialEvent(isRetrying);
 //
-//    CachedSubmissionFolder folder = CachedSubmissionFolder.create(subredditChangesRelay.getValue(), sortingChangesRelay.getValue());
+//    CachedSubmissionFolder folder = CachedSubmissionFolder.create(subredditChangesStream.getValue(), sortingChangesStream.getValue());
 //    unsubscribeOnDestroy(scrollListener.emitWhenLoadNeeded()
 //        .doOnNext(o -> scrollListener.setLoadOngoing(true))
 //        .flatMapSingle(o -> Dank.submissions().fetchAndSaveMoreSubmissions(folder)
@@ -431,12 +496,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 //  }
 
   private void onClickRefresh() {
-    CachedSubmissionFolder activeFolder = CachedSubmissionFolder.create(subredditChangesRelay.getValue(), sortingChangesRelay.getValue());
+    CachedSubmissionFolder activeFolder = CachedSubmissionFolder.create(subredditChangesStream.getValue(), sortingChangesStream.getValue());
 
     // This will force loadSubmissions() to get re-called.
     unsubscribeOnDestroy(Dank.submissions().removeAllCachedInFolder(activeFolder)
         .subscribe(() -> {
-          subredditChangesRelay.accept(subredditChangesRelay.getValue());
+          subredditChangesStream.accept(subredditChangesStream.getValue());
         }));
   }
 
@@ -446,8 +511,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   public void onClickSortingMode(Button sortingModeButton) {
     SubmissionsSortingModePopupMenu sortingPopupMenu = new SubmissionsSortingModePopupMenu(this, sortingModeButton);
     sortingPopupMenu.inflate(R.menu.menu_submission_sorting_mode);
-    sortingPopupMenu.highlightActiveSortingAndTImePeriod(sortingChangesRelay.getValue());
-    sortingPopupMenu.setOnSortingModeSelectListener(sortingAndTimePeriod -> sortingChangesRelay.accept(sortingAndTimePeriod));
+    sortingPopupMenu.highlightActiveSortingAndTImePeriod(sortingChangesStream.getValue());
+    sortingPopupMenu.setOnSortingModeSelectListener(sortingAndTimePeriod -> sortingChangesStream.accept(sortingAndTimePeriod));
     sortingPopupMenu.show();
   }
 
@@ -507,8 +572,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       @Override
       public void onSelectSubreddit(String subredditName) {
         toolbarSheet.collapse();
-        if (!subredditName.equalsIgnoreCase(subredditChangesRelay.getValue())) {
-          subredditChangesRelay.accept(subredditName);
+        if (!subredditName.equalsIgnoreCase(subredditChangesStream.getValue())) {
+          subredditChangesStream.accept(subredditName);
         }
       }
 
@@ -520,8 +585,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       @Override
       public void onSubredditsChanged() {
         // Refresh the submissions if the frontpage was active.
-        if (Dank.subscriptions().isFrontpage(subredditChangesRelay.getValue())) {
-          subredditChangesRelay.accept(subredditChangesRelay.getValue());
+        if (Dank.subscriptions().isFrontpage(subredditChangesStream.getValue())) {
+          subredditChangesStream.accept(subredditChangesStream.getValue());
         }
       }
     });
@@ -574,8 +639,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     if (requestCode == REQUEST_CODE_LOGIN && resultCode == RESULT_OK) {
       // Reload submissions if we're on the frontpage because the frontpage
       // submissions will change if the subscriptions change.
-      if (Dank.subscriptions().isFrontpage(subredditChangesRelay.getValue())) {
-        subredditChangesRelay.accept(subredditChangesRelay.getValue());
+      if (Dank.subscriptions().isFrontpage(subredditChangesStream.getValue())) {
+        subredditChangesStream.accept(subredditChangesStream.getValue());
       }
 
       // Show user's profile.

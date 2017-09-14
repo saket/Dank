@@ -94,7 +94,6 @@ public class SubmissionRepository {
   @CheckResult
   public Single<SubmissionFetchResult> loadMoreSubmissions(CachedSubmissionFolder folder) {
     return lastPaginationAnchor(folder)
-
         .doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
         .map(anchor -> {
           List<Submission> cachedSubmission = new ArrayList<>();
@@ -201,7 +200,11 @@ public class SubmissionRepository {
               SQLiteDatabase.CONFLICT_IGNORE
           );
           if (insertedRowId != -1) {
-            database.insert(CachedSubmissionWithoutComments.TABLE_NAME, cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter));
+            database.insert(
+                CachedSubmissionWithoutComments.TABLE_NAME,
+                cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
+                SQLiteDatabase.CONFLICT_REPLACE /* To handle updated submissions received from remote */
+            );
             cachedSubmissions.add(submission);
           }
         }
