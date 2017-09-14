@@ -135,8 +135,7 @@ dependencies {
   implementation 'com.alexvasilkov:gesture-views:2.2.0'
 
   // Videos!
-  implementation 'com.google.android.exoplayer:exoplayer:r2.3.1'
-  implementation 'com.github.Saketme:ExoMedia:3ba6565f07'
+  implementation 'com.devbrackets.android:exomedia:4.0.3'
   implementation 'com.danikula:videocache:2.6.4'
 
   // Caching.

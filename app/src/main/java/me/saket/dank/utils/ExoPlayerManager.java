@@ -61,12 +61,12 @@ public class ExoPlayerManager {
   }
 
   public void setupVideoView() {
-    playerView.setVideoSizeChangeListener((videoWidth, videoHeight) -> {
+    playerView.setOnVideoSizedChangedListener((unscaledWidth, unscaledHeight) -> {
       if (videoSizeChangeListener != null) {
-        float widthFactor = (float) playerView.getWidth() / videoWidth;
-        int videoWidthAfterResize = (int) (videoWidth * widthFactor);
-        int videoHeightAfterResize = (int) (videoHeight * widthFactor);
-        videoSizeChangeListener.onVideoSizeChange(videoWidthAfterResize, videoHeightAfterResize, videoWidth, videoHeight);
+        float widthFactor = (float) playerView.getWidth() / unscaledWidth;
+        int videoWidthAfterResize = (int) (unscaledWidth * widthFactor);
+        int videoHeightAfterResize = (int) (unscaledHeight * widthFactor);
+        videoSizeChangeListener.onVideoSizeChange(videoWidthAfterResize, videoHeightAfterResize, unscaledWidth, unscaledHeight);
       }
     });
   }
