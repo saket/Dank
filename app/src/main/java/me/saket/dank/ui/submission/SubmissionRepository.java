@@ -20,6 +20,7 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Completable;
+import io.reactivex.CompletableSource;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
@@ -219,7 +220,7 @@ public class SubmissionRepository {
     });
   }
 
-  public Completable clearSubmissionList() {
+  public Completable clearCachedSubmissionLists() {
     return Completable.fromAction(() -> {
       try (BriteDatabase.Transaction transaction = database.newTransaction()) {
         database.delete(CachedSubmissionId.TABLE_NAME, null);
@@ -230,7 +231,7 @@ public class SubmissionRepository {
     });
   }
 
-  public Completable clearSubmissionList(String subredditName) {
+  public Completable clearCachedSubmissionLists(String subredditName) {
     return Completable.fromAction(() -> {
       try (BriteDatabase.Transaction transaction = database.newTransaction()) {
         database.delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SUBREDDIT_NAME, subredditName);
@@ -240,6 +241,10 @@ public class SubmissionRepository {
         Timber.i("removed all");
       }
     });
+  }
+
+  public CompletableSource clearCachedSubmissions() {
+    return Completable.fromAction(() -> database.delete(CachedSubmissionWithComments.TABLE_NAME, null));
   }
 
   @AutoValue

@@ -524,7 +524,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         subredditChangesStream
             .take(1)
             .observeOn(io())
-            .flatMapCompletable(subreddit -> submissionRepository.clearSubmissionList(subreddit))
+            .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
             .observeOn(mainThread())
             .subscribe(() -> forceRefreshRequestStream.accept(Notification.INSTANCE));
         return true;
@@ -630,12 +630,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (requestCode == REQUEST_CODE_LOGIN && resultCode == RESULT_OK) {
-      // Reload submissions if we're on the frontpage because the frontpage
-      // submissions will change if the subscriptions change.
-      if (Dank.subscriptions().isFrontpage(subredditChangesStream.getValue())) {
-        subredditChangesStream.accept(subredditChangesStream.getValue());
-      }
-
       // Show user's profile.
       if (!submissionPage.isExpanded()) {
         showUserProfileSheet();
@@ -644,10 +638,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       // Reload subreddit subscriptions. Not implementing onError() is intentional.
       // This code is not supposed to fail :/
       Dank.subscriptions().removeAll()
-          .andThen(Dank.submissions().removeAllCached())
+          .andThen(submissionRepository.clearCachedSubmissionLists())
+          .andThen(submissionRepository.clearCachedSubmissions())
           .andThen(Dank.subscriptions().getAllIncludingHidden().ignoreElements())
           .subscribeOn(io())
           .subscribe();
+
+      // Reload submissions if we're on the frontpage because the frontpage
+      // submissions will change if the subscriptions change.
+      if (Dank.subscriptions().isFrontpage(subredditChangesStream.getValue())) {
+        forceRefreshRequestStream.accept(Notification.INSTANCE);
+      }
 
       // TODO: Expose a callback when the user logs in. Get subreddits, messages and profile.
 

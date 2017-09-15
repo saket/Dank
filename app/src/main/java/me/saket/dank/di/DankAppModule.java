@@ -117,10 +117,8 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  SubmissionManager provideSubmissionManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, VotingManager votingManager,
-      Moshi moshi)
-  {
-    return new SubmissionManager(dankRedditClient, briteDatabase, votingManager, moshi);
+  SubmissionManager provideSubmissionManager(BriteDatabase briteDatabase, Moshi moshi) {
+    return new SubmissionManager(briteDatabase, moshi);
   }
 
   @Provides

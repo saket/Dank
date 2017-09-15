@@ -79,7 +79,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     });
 
     addButton("Clear cached submission list", o -> {
-      submissionRepository.clearSubmissionList().subscribeOn(Schedulers.io()).subscribe();
+      submissionRepository.clearCachedSubmissionLists().subscribeOn(Schedulers.io()).subscribe();
     });
 
     addButton("Clear subreddit subscriptions", o -> {
