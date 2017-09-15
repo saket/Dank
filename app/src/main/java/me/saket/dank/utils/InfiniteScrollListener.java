@@ -56,12 +56,11 @@ public class InfiniteScrollListener {
     // RxRecyclerView doesn't emit an initial value, so do it manually.
     RecyclerViewScrollEvent initialScrollEvent = RecyclerViewScrollEvent.create(recyclerView, 0, 0);
 
-
-
     Observable<RecyclerViewScrollEvent> scrollEventsStream = RxRecyclerView.scrollEvents(recyclerView)
         .filter(event -> event.dy() != 0)  // This ensures the list has enough items to scroll.
         .filter(o -> !isLoadOngoing)
         .filter(event -> shouldLoadMore(event));
+
     if (emitInitialEvent) {
       scrollEventsStream = scrollEventsStream.startWith(initialScrollEvent);
     }

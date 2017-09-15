@@ -108,6 +108,7 @@ public class SubmissionRepository {
             if (!fetchResult.hasMoreItems()) {
               break;
             }
+            Timber.i("not enough");
 
             Submission lastFetchedSubmission = fetchResult.fetchedSubmissions().get(fetchResult.fetchedSubmissions().size() - 1);
             nextAnchor = PaginationAnchor.create(lastFetchedSubmission.getFullName());
@@ -190,6 +191,7 @@ public class SubmissionRepository {
           CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
               submission.getFullName(),
               submission,
+              folder.subredditName(),
               saveTimeMillis
           );
 
@@ -224,6 +226,18 @@ public class SubmissionRepository {
         database.delete(CachedSubmissionWithoutComments.TABLE_NAME, null);
 
         transaction.markSuccessful();
+      }
+    });
+  }
+
+  public Completable clearSubmissionList(String subredditName) {
+    return Completable.fromAction(() -> {
+      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+        database.delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SUBREDDIT_NAME, subredditName);
+        database.delete(CachedSubmissionWithoutComments.TABLE_NAME, CachedSubmissionWithoutComments.WHERE_SUBREDDIT_NAME, subredditName);
+        transaction.markSuccessful();
+
+        Timber.i("removed all");
       }
     });
   }

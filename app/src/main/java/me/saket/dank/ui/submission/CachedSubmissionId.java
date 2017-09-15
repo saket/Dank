@@ -30,6 +30,13 @@ public abstract class CachedSubmissionId {
           + "PRIMARY KEY (" + COLUMN_SUBMISSION_FULL_NAME + ", " + COLUMN_SORTING_AND_TIME_PERIOD_JSON + ")"
           + ")";
 
+  public static final String WHERE_SUBREDDIT_NAME = COLUMN_SUBREDDIT_NAME + " == ?";
+
+  public static String constructWhere(String subredditName, String sortingAndTimePeriodJson) {
+    return COLUMN_SUBREDDIT_NAME + " == '" + subredditName + "'"
+        + " AND " + COLUMN_SORTING_AND_TIME_PERIOD_JSON + " == '" + sortingAndTimePeriodJson + "'";
+  }
+
   public static String constructQueryToGetLastSubmission(String subredditName, String sortingAndTimePeriodJson) {
     return "SELECT * FROM " + TABLE_NAME
         + " WHERE " + COLUMN_SUBREDDIT_NAME + " == '" + subredditName + "'"

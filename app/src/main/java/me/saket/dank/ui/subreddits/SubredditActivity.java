@@ -44,6 +44,7 @@ import butterknife.OnClick;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -102,7 +103,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private InfiniteScrollRecyclerAdapter<Submission, ?> submissionAdapterWithProgress;
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
-  private Relay<Object> refreshRequestStream = PublishRelay.create();
+  private Relay<Object> forceRefreshRequestStream = PublishRelay.create();
 
   protected static void addStartExtrasToIntent(RedditSubredditLink subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
@@ -365,8 +366,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // TODO: Show first load progress
     // TODO: Show load more progress
     // TODO: Handle errors.
-    // TODO: Add refresh stream to this chain.
     // TODO: Refresh submission on start.
+    // TODO: Remove SubmissionManager and CachedSubmissionDeprecated.
 
     Observable<CachedSubmissionFolder> submissionFolderStream = Observable.combineLatest(
         subredditChangesStream,
@@ -375,20 +376,23 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     );
     Relay<NetworkCallState> loadFromRemoteProgressStream = PublishRelay.create();
     Observable<List<Submission>> databaseStream = submissionFolderStream
-        .switchMap(folder -> submissionRepository.submissions(folder)
-            .subscribeOn(io())
-        )
+        .switchMap(folder -> submissionRepository.submissions(folder).subscribeOn(io()))
         .share();
 
     // Infinite scroll.
     submissionFolderStream
         .observeOn(mainThread())
+        .doOnNext(folder -> Timber.i("-------------------------------"))
+        .doOnNext(folder -> Timber.i("%s", folder))
         .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionList)
-            .switchMapSingle(o -> submissionRepository.loadMoreSubmissions(folder)
+            .mergeWith(forceRefreshRequestStream)
+            .observeOn(Schedulers.io())
+            .doOnNext(o -> Timber.i("load request"))
+            .flatMapSingle(o -> submissionRepository.loadMoreSubmissions(folder)
+                .retry(3)
                 .doOnSubscribe(d -> loadFromRemoteProgressStream.accept(NetworkCallState.IN_FLIGHT))
                 .doOnSuccess(s -> loadFromRemoteProgressStream.accept(NetworkCallState.IDLE))
                 .doOnError(e -> loadFromRemoteProgressStream.accept(NetworkCallState.FAILED))
-                .retry(3)
                 .onErrorResumeNext(Single.never()))
             .doOnError(error -> Timber.e(error, "Load more fail"))
         )
@@ -399,6 +403,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .observeOn(mainThread())
         .doOnNext(s -> Timber.i("Found %s subms", s.size()))
         .takeUntil(lifecycle().onDestroy())
+        .doAfterNext(submissions -> {
+          if (submissions.isEmpty()) {
+            // I initially tried making the infinite scroll Rx chain check DB items and force-reload itself,
+            // but that's resulting in ThreadInterruptedExceptions.
+            forceRefreshRequestStream.accept(Notification.INSTANCE);
+          }
+        })
         .subscribe(submissionAdapterWithProgress);
 
     // Thoughts: Combining the DB and infinite-scroll streams does not seem possible.
@@ -482,16 +493,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 //        )));
 //  }
 
-  private void onClickRefresh() {
-    CachedSubmissionFolder activeFolder = CachedSubmissionFolder.create(subredditChangesStream.getValue(), sortingChangesStream.getValue());
-
-    // This will force loadSubmissions() to get re-called.
-    unsubscribeOnDestroy(Dank.submissions().removeAllCachedInFolder(activeFolder)
-        .subscribe(() -> {
-          subredditChangesStream.accept(subredditChangesStream.getValue());
-        }));
-  }
-
 // ======== SORTING MODE ======== //
 
   @OnClick(R.id.subreddit_sorting_mode)
@@ -520,7 +521,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
       case R.id.action_refresh_submissions:
-        refreshRequestStream.accept(Notification.INSTANCE);
+        subredditChangesStream
+            .take(1)
+            .observeOn(io())
+            .flatMapCompletable(subreddit -> submissionRepository.clearSubmissionList(subreddit))
+            .observeOn(mainThread())
+            .subscribe(() -> forceRefreshRequestStream.accept(Notification.INSTANCE));
         return true;
 
       case R.id.action_user_profile:

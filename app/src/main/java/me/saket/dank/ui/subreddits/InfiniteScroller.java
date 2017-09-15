@@ -5,8 +5,6 @@ import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
 import io.reactivex.Observable;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
 
 /**
  * @author https://github.com/matzuk/PaginationSample
@@ -36,9 +34,7 @@ public class InfiniteScroller {
 
   public Observable<Object> streamPagingRequest() {
     return getScrollObservable(recyclerView, emptyListCount)
-        .subscribeOn(AndroidSchedulers.mainThread())
         .distinctUntilChanged()
-        .observeOn(Schedulers.io())
         .cast(Object.class);
   }
 
@@ -47,23 +43,18 @@ public class InfiniteScroller {
       final RecyclerView.OnScrollListener sl = new RecyclerView.OnScrollListener() {
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-          if (!emitter.isDisposed()) {
-            int position = getLastVisibleItemPosition(recyclerView);
-            int updatePosition = (int) ((recyclerView.getAdapter().getItemCount() - 1) * scrollThreshold);
+          int position = getLastVisibleItemPosition(recyclerView);
+          int updatePosition = (int) ((recyclerView.getAdapter().getItemCount() - 1) * scrollThreshold);
 
-            if (position >= updatePosition) {
-              int itemsAvailable = recyclerView.getAdapter().getItemCount() - emptyListCount;
-              emitter.onNext(itemsAvailable);
-            }
+          if (position >= updatePosition) {
+            int itemsAvailable = recyclerView.getAdapter().getItemCount() - emptyListCount;
+            emitter.onNext(itemsAvailable);
           }
         }
       };
+
       recyclerView.addOnScrollListener(sl);
       emitter.setCancellable(() -> recyclerView.removeOnScrollListener(sl));
-      if (recyclerView.getAdapter().getItemCount() == emptyListCount) {
-        int offset = recyclerView.getAdapter().getItemCount() - emptyListCount;
-        emitter.onNext(offset);
-      }
     });
   }
 
