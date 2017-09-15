@@ -7,16 +7,15 @@ import com.squareup.moshi.Moshi;
 
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
-import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.user.UserSession;
-import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.utils.JacksonHelper;
 
 public class Dank {
@@ -74,10 +73,6 @@ public class Dank {
 
   public static MessagesNotificationManager messagesNotifManager() {
     return appComponent.messagesNotificationManager();
-  }
-
-  public static SubmissionManager submissions() {
-    return appComponent.submissionManager();
   }
 
   public static Moshi moshi() {

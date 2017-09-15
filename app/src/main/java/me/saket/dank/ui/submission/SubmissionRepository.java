@@ -15,7 +15,9 @@ import net.dean.jraw.paginators.SubredditPaginator;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -39,6 +41,7 @@ public class SubmissionRepository {
   private final Moshi moshi;
   private final DankRedditClient dankRedditClient;
   private final VotingManager votingManager;
+  private final Set<String> savedSubmissionIds = new HashSet<>();
 
   @Inject
   public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager) {
@@ -269,5 +272,19 @@ public class SubmissionRepository {
     public static FetchResult create(List<Submission> fetchedItems, boolean hasMoreItems) {
       return new AutoValue_SubmissionRepository_FetchResult(fetchedItems, hasMoreItems);
     }
+  }
+
+// ======== SAVE ======== //
+
+  public void markAsSaved(Submission submission) {
+    savedSubmissionIds.add(submission.getId());
+  }
+
+  public void markAsUnsaved(Submission submission) {
+    savedSubmissionIds.remove(submission.getId());
+  }
+
+  public boolean isSaved(Submission submission) {
+    return savedSubmissionIds.contains(submission.getId());
   }
 }

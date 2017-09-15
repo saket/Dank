@@ -324,7 +324,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Swipe gestures.
     OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.startForResult(getActivity(), SubredditActivity.REQUEST_CODE_LOGIN);
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(
-        Dank.submissions(),
+        submissionRepository,
         Dank.voting(),
         Dank.userSession(),
         onLoginRequireListener

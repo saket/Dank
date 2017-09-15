@@ -311,7 +311,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // Swipe gestures.
     OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
     SubmissionSwipeActionsProvider swipeActionsProvider = new SubmissionSwipeActionsProvider(
-        Dank.submissions(),
+        submissionRepository,
         Dank.voting(),
         Dank.userSession(),
         onLoginRequireListener
@@ -367,7 +367,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // TODO: Show load more progress
     // TODO: Handle errors.
     // TODO: Refresh submission on start.
-    // TODO: Remove SubmissionManager and CachedSubmissionDeprecated.
 
     Observable<CachedSubmissionFolder> submissionFolderStream = Observable.combineLatest(
         subredditChangesStream,

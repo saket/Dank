@@ -8,8 +8,8 @@ import net.dean.jraw.models.VoteDirection;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
-import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.widgets.swipe.SwipeAction;
@@ -33,15 +33,15 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
   private final SwipeActions swipeActionsWithUnsave;
   private final SwipeActions swipeActionsWithSave;
-  private final SubmissionManager submissionManager;
+  private final SubmissionRepository submissionRepository;
   private VotingManager votingManager;
   private final UserSession userSession;
   private final OnLoginRequireListener onLoginRequireListener;
 
-  public SubmissionSwipeActionsProvider(SubmissionManager submissionManager, VotingManager votingManager, UserSession userSession,
+  public SubmissionSwipeActionsProvider(SubmissionRepository submissionRepository, VotingManager votingManager, UserSession userSession,
       OnLoginRequireListener onLoginRequireListener)
   {
-    this.submissionManager = submissionManager;
+    this.submissionRepository = submissionRepository;
     this.votingManager = votingManager;
     this.userSession = userSession;
     this.onLoginRequireListener = onLoginRequireListener;
@@ -76,7 +76,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   public SwipeActions getSwipeActions(Submission submission) {
-    boolean isSubmissionSaved = submissionManager.isSaved(submission);
+    boolean isSubmissionSaved = submissionRepository.isSaved(submission);
     return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
   }
 
@@ -138,13 +138,13 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
         break;
 
       case ACTION_NAME_SAVE:
-        submissionManager.markAsSaved(submission);
+        submissionRepository.markAsSaved(submission);
         isUndoAction = false;
         Timber.i("TODO: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_UNSAVE:
-        submissionManager.markAsUnsaved(submission);
+        submissionRepository.markAsUnsaved(submission);
         isUndoAction = true;
         Timber.i("TODO: %s", swipeAction.name());
         break;

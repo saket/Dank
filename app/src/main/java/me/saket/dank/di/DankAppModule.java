@@ -34,9 +34,9 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
-import me.saket.dank.data.SubmissionManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
@@ -44,7 +44,6 @@ import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
-import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.MoshiMessageAdapter;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
@@ -113,12 +112,6 @@ public class DankAppModule {
   @Singleton
   InboxManager provideInboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
     return new InboxManager(dankRedditClient, briteDatabase, moshi);
-  }
-
-  @Provides
-  @Singleton
-  SubmissionManager provideSubmissionManager(BriteDatabase briteDatabase, Moshi moshi) {
-    return new SubmissionManager(briteDatabase, moshi);
   }
 
   @Provides
