@@ -58,7 +58,7 @@ android {
 }
 
 ext.versions = [
-    supportLib    : '26.0.1',
+    supportLib    : '26.0.2',
     glideLib      : '4.0.0',
     autoValue     : '1.4',
     autoValueMoshi: '0.4.3',
@@ -135,7 +135,7 @@ dependencies {
   implementation 'com.alexvasilkov:gesture-views:2.2.0'
 
   // Videos!
-  implementation 'com.devbrackets.android:exomedia:4.0.3'
+  compile 'com.github.saketme:exomedia:45c056fecb'
   implementation 'com.danikula:videocache:2.6.4'
 
   // Caching.

@@ -248,7 +248,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .observeOn(mainThread())
             .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
             .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
-                .takeUntil(lifecycleProvider.onPageCollapse())
+                .takeUntil(lifecycleProvider.onPageAboutToCollapse())
                 .compose(RxUtils.applySchedulers())
                 .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
                 .flatMap(submissionWithComments -> {

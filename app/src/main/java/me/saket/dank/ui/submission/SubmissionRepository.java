@@ -26,7 +26,6 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.PaginationAnchor;
-import me.saket.dank.data.SubmissionFetchResult;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -92,27 +91,29 @@ public class SubmissionRepository {
   }
 
   @CheckResult
-  public Single<SubmissionFetchResult> loadMoreSubmissions(CachedSubmissionFolder folder) {
+  public Single<FetchResult> loadMoreSubmissions(CachedSubmissionFolder folder) {
     return lastPaginationAnchor(folder)
         .doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
         .map(anchor -> {
-          List<Submission> cachedSubmission = new ArrayList<>();
+          List<Submission> distinctNewItems = new ArrayList<>();
+          PaginationAnchor nextAnchor = anchor;
 
-          // saveSubmissions() ignores duplicates. Which means that we might have to do multiple
-          // fetches if we did not receive enough new submissions.
-          while (cachedSubmission.size() < 10) {
-            SubmissionFetchResult fetchResult = fetchSubmissionsRemoteWithAnchor(folder, anchor).blockingGet();
+          while (distinctNewItems.size() < 10) {
+            FetchResult fetchResult = fetchSubmissionsRemoteWithAnchor(folder, nextAnchor).blockingGet();
             Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
 
             SaveResult saveResult = saveSubmissions(fetchResult.fetchedSubmissions(), folder).blockingGet();
-            cachedSubmission.addAll(saveResult.savedItems());
+            distinctNewItems.addAll(saveResult.savedItems());
 
             if (!fetchResult.hasMoreItems()) {
               break;
             }
+
+            Submission lastFetchedSubmission = fetchResult.fetchedSubmissions().get(fetchResult.fetchedSubmissions().size() - 1);
+            nextAnchor = PaginationAnchor.create(lastFetchedSubmission.getFullName());
           }
 
-          return SubmissionFetchResult.create(Collections.unmodifiableList(cachedSubmission), cachedSubmission.size() > 0);
+          return FetchResult.create(Collections.unmodifiableList(distinctNewItems), distinctNewItems.size() > 0);
         });
   }
 
@@ -137,8 +138,8 @@ public class SubmissionRepository {
   }
 
   @CheckResult
-  private Single<SubmissionFetchResult> fetchSubmissionsRemoteWithAnchor(CachedSubmissionFolder folder, PaginationAnchor anchor) {
-    Single<SubmissionFetchResult> fetchResultSingle = dankRedditClient.withAuth(Single.fromCallable(() -> {
+  private Single<FetchResult> fetchSubmissionsRemoteWithAnchor(CachedSubmissionFolder folder, PaginationAnchor anchor) {
+    Single<FetchResult> fetchResultSingle = dankRedditClient.withAuth(Single.fromCallable(() -> {
       SubredditPaginator subredditPaginator = dankRedditClient.subredditPaginator(folder.subredditName());
       if (!anchor.isEmpty()) {
         subredditPaginator.setStartAfterThing(anchor.fullName());
@@ -148,7 +149,7 @@ public class SubmissionRepository {
       subredditPaginator.setTimePeriod(folder.sortingAndTimePeriod().timePeriod());
       Listing<Submission> submissions = subredditPaginator.next(true);
 
-      return SubmissionFetchResult.create(submissions, subredditPaginator.hasNext());
+      return FetchResult.create(submissions, subredditPaginator.hasNext());
     }));
 
     return fetchResultSingle
@@ -216,12 +217,38 @@ public class SubmissionRepository {
     });
   }
 
+  public Completable clearSubmissionList() {
+    return Completable.fromAction(() -> {
+      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+        database.delete(CachedSubmissionId.TABLE_NAME, null);
+        database.delete(CachedSubmissionWithoutComments.TABLE_NAME, null);
+
+        transaction.markSuccessful();
+      }
+    });
+  }
+
   @AutoValue
-  public abstract static class SaveResult {
+  abstract static class SaveResult {
     public abstract List<Submission> savedItems();
 
     public static SaveResult create(List<Submission> savedItems) {
       return new AutoValue_SubmissionRepository_SaveResult(savedItems);
+    }
+  }
+
+  @AutoValue
+  public abstract static class FetchResult {
+
+    public abstract List<Submission> fetchedSubmissions();
+
+    /**
+     * Whether more submissions can be fetched after this.
+     */
+    public abstract boolean hasMoreItems();
+
+    public static FetchResult create(List<Submission> fetchedItems, boolean hasMoreItems) {
+      return new AutoValue_SubmissionRepository_FetchResult(fetchedItems, hasMoreItems);
     }
   }
 }

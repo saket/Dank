@@ -7,11 +7,11 @@ import com.jakewharton.rxrelay2.Relay;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 
 public class SubmissionFragmentLifecycleProvider {
-  private Relay<Object> pageCollapseStream;
+
+  private Relay<Object> pageCollapseStream = PublishRelay.create();
+  private Relay<Object> pageAboutToCollapseStream = PublishRelay.create();
 
   public SubmissionFragmentLifecycleProvider(ExpandablePageLayout pageLayout) {
-    pageCollapseStream = PublishRelay.create();
-
     pageLayout.addStateChangeCallbacks(new ExpandablePageLayout.StateChangeCallbacks() {
       @Override
       public void onPageAboutToExpand(long expandAnimDuration) {
@@ -25,7 +25,7 @@ public class SubmissionFragmentLifecycleProvider {
 
       @Override
       public void onPageAboutToCollapse(long collapseAnimDuration) {
-
+        pageAboutToCollapseStream.accept(Notification.INSTANCE);
       }
 
       @Override
@@ -37,5 +37,9 @@ public class SubmissionFragmentLifecycleProvider {
 
   public Relay<Object> onPageCollapse() {
     return pageCollapseStream;
+  }
+
+  public Relay<Object> onPageAboutToCollapse() {
+    return pageAboutToCollapseStream;
   }
 }

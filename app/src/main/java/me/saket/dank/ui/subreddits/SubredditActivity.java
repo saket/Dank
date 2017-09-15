@@ -4,7 +4,6 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.di.Dank.subscriptions;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
-import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
@@ -42,9 +41,8 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -60,7 +58,6 @@ import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
-import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.DankToolbar;
@@ -369,6 +366,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // TODO: Show load more progress
     // TODO: Handle errors.
     // TODO: Add refresh stream to this chain.
+    // TODO: Refresh submission on start.
 
     Observable<CachedSubmissionFolder> submissionFolderStream = Observable.combineLatest(
         subredditChangesStream,
@@ -377,35 +375,24 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     );
     Relay<NetworkCallState> loadFromRemoteProgressStream = PublishRelay.create();
     Observable<List<Submission>> databaseStream = submissionFolderStream
-        .switchMap(folder ->
-            submissionRepository.submissions(folder)
-                .subscribeOn(io())
-                .onErrorResumeNext(Observable.never())
+        .switchMap(folder -> submissionRepository.submissions(folder)
+            .subscribeOn(io())
         )
         .share();
 
     // Infinite scroll.
     submissionFolderStream
-        .takeUntil(lifecycle().onDestroy())
-        .toFlowable(BackpressureStrategy.LATEST)
-        .switchMap(folder -> InfiniteScrollListener.create(submissionList, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD)
-            .emitWhenLoadNeeded()
-            .subscribeOn(mainThread())
-            .observeOn(io())
-            // Force load from network if Db is empty for this folder.
-            .mergeWith(databaseStream.take(1).filter(List::isEmpty))
-            .toFlowable(BackpressureStrategy.DROP)
-            .flatMap(o -> submissionRepository.loadMoreSubmissions(folder)
-                    .doOnSubscribe(d -> loadFromRemoteProgressStream.accept(NetworkCallState.IN_FLIGHT))
-                    .doOnSuccess(s -> loadFromRemoteProgressStream.accept(NetworkCallState.IDLE))
-                    .doOnError(e -> loadFromRemoteProgressStream.accept(NetworkCallState.FAILED))
-                    .toFlowable(),
-                1)
-            .takeUntil(fetchResult -> !fetchResult.hasMoreItems())
-            .doOnError(error -> Timber.e(error, "Infinite scroll fail"))
-            .onErrorResumeNext(Flowable.never())
+        .observeOn(mainThread())
+        .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionList)
+            .switchMapSingle(o -> submissionRepository.loadMoreSubmissions(folder)
+                .doOnSubscribe(d -> loadFromRemoteProgressStream.accept(NetworkCallState.IN_FLIGHT))
+                .doOnSuccess(s -> loadFromRemoteProgressStream.accept(NetworkCallState.IDLE))
+                .doOnError(e -> loadFromRemoteProgressStream.accept(NetworkCallState.FAILED))
+                .retry(3)
+                .onErrorResumeNext(Single.never()))
+            .doOnError(error -> Timber.e(error, "Load more fail"))
         )
-        .subscribe(doNothing());
+        .subscribe();
 
     // DB subscription.
     databaseStream

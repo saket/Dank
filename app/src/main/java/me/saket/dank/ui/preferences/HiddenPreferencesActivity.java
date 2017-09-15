@@ -23,6 +23,7 @@ import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
@@ -35,6 +36,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.hiddenpreferences_content) ViewGroup contentContainer;
 
   @Inject BriteDatabase briteDatabase;
+  @Inject SubmissionRepository submissionRepository;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
@@ -76,8 +78,8 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           });
     });
 
-    addButton("Clear cached submissions", o -> {
-      Dank.submissions().removeAllCached().subscribeOn(Schedulers.io()).subscribe();
+    addButton("Clear cached submission list", o -> {
+      submissionRepository.clearSubmissionList().subscribeOn(Schedulers.io()).subscribe();
     });
 
     addButton("Clear subreddit subscriptions", o -> {
