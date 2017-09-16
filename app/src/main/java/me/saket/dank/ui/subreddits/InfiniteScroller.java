@@ -17,22 +17,22 @@ public class InfiniteScroller {
   private static final Object DUMMY = Notification.INSTANCE;
 
   // Fetch more items once the list has scrolled past 75% of its items.
-  public static final float DEFAULT_LOAD_THRESHOLD = 0.65f;
+  public static final float DEFAULT_SCROLL_THRESHOLD = 0.65f;
 
   private RecyclerView recyclerView;
   private float scrollThreshold;
 
   public static Observable<Object> streamPagingRequests(RecyclerView recyclerView) {
-    return new Builder(recyclerView).build().streamPagingRequest();
+    return new InfiniteScroller(recyclerView, DEFAULT_SCROLL_THRESHOLD).streamPagingRequest();
   }
 
-  private InfiniteScroller() {
+  private InfiniteScroller(RecyclerView recyclerView, float scrollThreshold) {
+    this.recyclerView = recyclerView;
+    this.scrollThreshold = scrollThreshold;
   }
 
   public Observable<Object> streamPagingRequest() {
-    return getScrollObservable(recyclerView)
-        .distinctUntilChanged()
-        .cast(Object.class);
+    return getScrollObservable(recyclerView).cast(Object.class);
   }
 
   private Observable<Object> getScrollObservable(RecyclerView recyclerView) {
@@ -69,36 +69,6 @@ public class InfiniteScroller {
 
     } else {
       throw new UnsupportedOperationException();
-    }
-  }
-
-  public static class Builder {
-    private RecyclerView recyclerView;
-    private float scrollThreshold = DEFAULT_LOAD_THRESHOLD;
-
-    private Builder(RecyclerView recyclerView) {
-      if (recyclerView == null) {
-        throw new NullPointerException("null recyclerView");
-      }
-      if (recyclerView.getAdapter() == null) {
-        throw new NullPointerException("null recyclerView adapter");
-      }
-      this.recyclerView = recyclerView;
-    }
-
-    public Builder scrollThreshold(float threshold) {
-      if (threshold < 0) {
-        throw new AssertionError();
-      }
-      this.scrollThreshold = threshold;
-      return this;
-    }
-
-    public InfiniteScroller build() {
-      InfiniteScroller infiniteScroller = new InfiniteScroller();
-      infiniteScroller.recyclerView = this.recyclerView;
-      infiniteScroller.scrollThreshold = scrollThreshold;
-      return infiniteScroller;
     }
   }
 }

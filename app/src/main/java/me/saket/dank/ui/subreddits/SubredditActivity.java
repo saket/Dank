@@ -41,8 +41,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -363,8 +363,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
   private void loadSubmissions() {
-    // TODO: Show load more progress
-    // TODO: Handle errors.
+    // TODO: Handle full-screen error
     // TODO: Refresh submission on start.
 
     Observable<CachedSubmissionFolder> submissionFolderStream = Observable.combineLatest(
@@ -376,28 +375,32 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // Infinite scroll.
     submissionFolderStream
-        .doOnNext(folder -> Timber.i("-------------------------------"))
-        .doOnNext(folder -> Timber.i("%s", folder))
+        //.doOnNext(folder -> Timber.i("-------------------------------"))
+        //.doOnNext(folder -> Timber.i("%s", folder))
         .toFlowable(BackpressureStrategy.LATEST)
         .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionList)
             .subscribeOn(mainThread())
             .mergeWith(forceRefreshRequestStream.observeOn(mainThread()))
+            //.doOnNext(o -> Timber.i("requesting load more"))
             .toFlowable(BackpressureStrategy.LATEST)
             // This flatMapSingle()'s "maxConcurrency" is set to 1 to block upstream while more
             // items are fetched, essentially suspending the InfiniteScroller's scroll listener.
-            .flatMapSingle(o -> submissionRepository.loadMoreSubmissions(folder)
-                    .doOnSubscribe(d -> Timber.d("Loading more…"))
+            .flatMap(
+                o -> submissionRepository.loadMoreSubmissions(folder)
+                    //.doOnSubscribe(d -> Timber.d("Loading more…"))
                     .subscribeOn(io())
-                    .retry(3)
                     .doOnSubscribe(d -> loadFromRemoteProgressStream.accept(NetworkCallStatus.createInFlight()))
                     .doOnSuccess(s -> loadFromRemoteProgressStream.accept(NetworkCallStatus.createIdle()))
                     .doOnError(error -> {
                       error.printStackTrace();
                       loadFromRemoteProgressStream.accept(NetworkCallStatus.createFailed(error));
                     })
+                    .toFlowable()
                     .doOnError(error -> Timber.e(error, "Load more fail"))
-                    .onErrorResumeNext(Single.never())
-                , false, 1)
+                    .onErrorResumeNext(Flowable.empty()),
+                false,
+                1
+            )
         )
         .subscribe();
 
@@ -408,7 +411,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             .subscribeOn(io())
             .observeOn(mainThread())
         )
-        .doOnNext(s -> Timber.i("Found %s subms", s.size()))
+        //.doOnNext(s -> Timber.i("Found %s subms", s.size()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(submissionAdapterWithProgress);
 
@@ -416,10 +419,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // I initially tried making the infinite scroll Rx chain check DB items and force-reload itself,
     // but that's resulting in ThreadInterruptedExceptions.
     submissionFolderStream
-        .switchMap(folder -> submissionRepository.submissionCount(folder).subscribeOn(io()).observeOn(mainThread()).take(1)
-            .doOnNext(o -> Timber.i("is empty? %s", o))
+        .switchMap(folder -> submissionRepository.submissionCount(folder)
+            .subscribeOn(io())
+            .observeOn(mainThread())
+            .take(1)
             .filter(count -> count == 0)
-            .doOnNext(o -> Timber.i("Folder empty. Requesting force refresh."))
         )
         .takeUntil(lifecycle().onDestroy())
         .subscribe(forceRefreshRequestStream);
@@ -452,7 +456,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           break;
 
         case IDLE:
-          submissionAdapterWithProgress.setFooterWithoutNotifyingDataSetChanged(HeaderFooterInfo.createHidden());
+          submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createHidden());
           break;
 
         case FAILED:
@@ -460,7 +464,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           state.networkCallStatus().error().printStackTrace();
           submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createError(
               R.string.subreddit_error_failed_to_load_more_submissions,
-              o -> forceRefreshRequestStream.accept(Notification.INSTANCE)
+              o -> {
+                Timber.i("refreshing");
+                forceRefreshRequestStream.accept(Notification.INSTANCE);
+              }
           ));
           break;
       }
@@ -497,7 +504,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
 //  private void startInfiniteScroll(boolean isRetrying) {
-//    InfiniteScrollListener scrollListener = InfiniteScrollListener.create(submissionList, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD);
+//    InfiniteScrollListener scrollListener = InfiniteScrollListener.create(submissionList, InfiniteScrollListener.DEFAULT_SCROLL_THRESHOLD);
 //    scrollListener.setEmitInitialEvent(isRetrying);
 //
 //    CachedSubmissionFolder folder = CachedSubmissionFolder.create(subredditChangesStream.getValue(), sortingChangesStream.getValue());
