@@ -12,9 +12,9 @@ public abstract class SubmissionsDatabaseAndNetworkState {
    */
   public abstract boolean hasItemsInDatabase();
 
-  public abstract NetworkCallState loadFromRemoteState();
+  public abstract NetworkCallStatus networkCallStatus();
 
-  public static SubmissionsDatabaseAndNetworkState create(boolean hasItemsInDatabase, NetworkCallState loadFromRemoteState) {
-    return new AutoValue_SubmissionsDatabaseAndNetworkState(hasItemsInDatabase, loadFromRemoteState);
+  public static SubmissionsDatabaseAndNetworkState create(boolean hasItemsInDatabase, NetworkCallStatus networkCallStatus) {
+    return new AutoValue_SubmissionsDatabaseAndNetworkState(hasItemsInDatabase, networkCallStatus);
   }
 }

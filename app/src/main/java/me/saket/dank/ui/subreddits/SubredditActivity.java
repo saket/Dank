@@ -35,16 +35,15 @@ import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.Sorting;
 
-import java.util.List;
 import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.functions.Predicate;
-import io.reactivex.schedulers.Schedulers;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -60,6 +59,7 @@ import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
+import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderFooterInfo;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.EmptyStateView;
@@ -363,7 +363,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
   private void loadSubmissions() {
-    // TODO: Show first load progress
     // TODO: Show load more progress
     // TODO: Handle errors.
     // TODO: Refresh submission on start.
@@ -373,83 +372,114 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         sortingChangesStream,
         CachedSubmissionFolder::create
     );
-    Relay<NetworkCallState> loadFromRemoteProgressStream = PublishRelay.create();
-    Observable<List<Submission>> databaseStream = submissionFolderStream
-        .switchMap(folder -> submissionRepository.submissions(folder).subscribeOn(io()))
-        .share();
+    Relay<NetworkCallStatus> loadFromRemoteProgressStream = PublishRelay.create();
 
     // Infinite scroll.
     submissionFolderStream
-        .observeOn(mainThread())
         .doOnNext(folder -> Timber.i("-------------------------------"))
         .doOnNext(folder -> Timber.i("%s", folder))
+        .toFlowable(BackpressureStrategy.LATEST)
         .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionList)
-            .mergeWith(forceRefreshRequestStream)
-            .observeOn(Schedulers.io())
-            .doOnNext(o -> Timber.i("load request"))
+            .subscribeOn(mainThread())
+            .mergeWith(forceRefreshRequestStream.observeOn(mainThread()))
+            .toFlowable(BackpressureStrategy.LATEST)
+            // This flatMapSingle()'s "maxConcurrency" is set to 1 to block upstream while more
+            // items are fetched, essentially suspending the InfiniteScroller's scroll listener.
             .flatMapSingle(o -> submissionRepository.loadMoreSubmissions(folder)
-                .retry(3)
-                .doOnSubscribe(d -> loadFromRemoteProgressStream.accept(NetworkCallState.IN_FLIGHT))
-                .doOnSuccess(s -> loadFromRemoteProgressStream.accept(NetworkCallState.IDLE))
-                .doOnError(e -> loadFromRemoteProgressStream.accept(NetworkCallState.FAILED))
-                .onErrorResumeNext(Single.never()))
-            .doOnError(error -> Timber.e(error, "Load more fail"))
+                    .doOnSubscribe(d -> Timber.d("Loading more…"))
+                    .subscribeOn(io())
+                    .retry(3)
+                    .doOnSubscribe(d -> loadFromRemoteProgressStream.accept(NetworkCallStatus.createInFlight()))
+                    .doOnSuccess(s -> loadFromRemoteProgressStream.accept(NetworkCallStatus.createIdle()))
+                    .doOnError(error -> {
+                      error.printStackTrace();
+                      loadFromRemoteProgressStream.accept(NetworkCallStatus.createFailed(error));
+                    })
+                    .doOnError(error -> Timber.e(error, "Load more fail"))
+                    .onErrorResumeNext(Single.never())
+                , false, 1)
         )
         .subscribe();
 
     // DB subscription.
-    databaseStream
-        .observeOn(mainThread())
+    // Thoughts: Combining the DB and infinite-scroll streams does not seem possible.
+    submissionFolderStream
+        .switchMap(folder -> submissionRepository.submissions(folder)
+            .subscribeOn(io())
+            .observeOn(mainThread())
+        )
         .doOnNext(s -> Timber.i("Found %s subms", s.size()))
         .takeUntil(lifecycle().onDestroy())
-        .doAfterNext(submissions -> {
-          if (submissions.isEmpty()) {
-            // I initially tried making the infinite scroll Rx chain check DB items and force-reload itself,
-            // but that's resulting in ThreadInterruptedExceptions.
-            forceRefreshRequestStream.accept(Notification.INSTANCE);
-          }
-        })
         .subscribe(submissionAdapterWithProgress);
 
-    // Thoughts: Combining the DB and infinite-scroll streams does not seem possible.
+    // First refresh if DB is empty.
+    // I initially tried making the infinite scroll Rx chain check DB items and force-reload itself,
+    // but that's resulting in ThreadInterruptedExceptions.
+    submissionFolderStream
+        .switchMap(folder -> submissionRepository.submissionCount(folder).subscribeOn(io()).observeOn(mainThread()).take(1)
+            .doOnNext(o -> Timber.i("is empty? %s", o))
+            .filter(count -> count == 0)
+            .doOnNext(o -> Timber.i("Folder empty. Requesting force refresh."))
+        )
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(forceRefreshRequestStream);
 
-    Observable.combineLatest(
-        databaseStream.map(submissions -> !submissions.isEmpty()),
-        loadFromRemoteProgressStream.startWith(NetworkCallState.IDLE),
+    // Update progress, error and empty states.
+    Consumer<SubmissionsDatabaseAndNetworkState> updateFullscreenProgressVisibility = state -> {
+      boolean visible;
+      if (!state.hasItemsInDatabase()) {
+        if (state.networkCallStatus().state() == NetworkCallStatus.State.IN_FLIGHT) {
+          Timber.i("Fullscreen progress: no items in DB and request in-flight");
+          visible = true;
+        } else {
+          visible = false;
+        }
+      } else {
+        visible = false;
+      }
+      fullscreenProgressView.setVisibility(visible ? View.VISIBLE : View.GONE);
+    };
+
+    Consumer<SubmissionsDatabaseAndNetworkState> updateLoadMoreProgressVisibility = state -> {
+      if (!state.hasItemsInDatabase()) {
+        return;
+      }
+
+      switch (state.networkCallStatus().state()) {
+        case IN_FLIGHT:
+          Timber.i("Load more progress: has items in DB and request in-flight");
+          submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createFooterProgress());
+          break;
+
+        case IDLE:
+          submissionAdapterWithProgress.setFooterWithoutNotifyingDataSetChanged(HeaderFooterInfo.createHidden());
+          break;
+
+        case FAILED:
+          //noinspection ConstantConditions
+          state.networkCallStatus().error().printStackTrace();
+          submissionAdapterWithProgress.setFooter(HeaderFooterInfo.createError(
+              R.string.subreddit_error_failed_to_load_more_submissions,
+              o -> forceRefreshRequestStream.accept(Notification.INSTANCE)
+          ));
+          break;
+      }
+    };
+
+    Observable<SubmissionsDatabaseAndNetworkState> submissionDataState = Observable.combineLatest(
+        submissionFolderStream.switchMap(folder -> submissionRepository.submissionCount(folder)).map(count -> count > 0),
+        loadFromRemoteProgressStream.startWith(NetworkCallStatus.createIdle()),
         SubmissionsDatabaseAndNetworkState::create
-    )
+    );
+    submissionDataState
+        .subscribeOn(io())
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
+        .doOnNext(updateFullscreenProgressVisibility)
+        .doOnNext(updateLoadMoreProgressVisibility)
         .subscribe(state -> {
-          Predicate<SubmissionsDatabaseAndNetworkState> fullscreenProgressVisibility = o -> {
-            //noinspection CodeBlock2Expr
-            if (state.hasItemsInDatabase())
-              return false;
-            else {
-              if (state.loadFromRemoteState() == NetworkCallState.IN_FLIGHT) {
-                return true;
-              }
-              return false;
-            }
-          };
-          fullscreenProgressView.setVisibility(fullscreenProgressVisibility.test(state) ? View.VISIBLE : View.GONE);
-
-          if (state.hasItemsInDatabase()) {
-            switch (state.loadFromRemoteState()) {
-              case IN_FLIGHT:
-                Timber.i("TODO: show load-more progress");
-                break;
-
-              case IDLE:
-                Timber.i("TODO: hide load-more progress");
-                break;
-
-              case FAILED:
-                Timber.i("TODO: load-more error");
-                break;
-            }
-          } else {
-            switch (state.loadFromRemoteState()) {
+          if (!state.hasItemsInDatabase()) {
+            switch (state.networkCallStatus().state()) {
               case IN_FLIGHT:
                 break;
 
@@ -523,6 +553,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         subredditChangesStream
             .take(1)
             .observeOn(io())
+            .doOnNext(o -> Timber.i("---------------------------"))
             .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
             .observeOn(mainThread())
             .subscribe(() -> forceRefreshRequestStream.accept(Notification.INSTANCE));

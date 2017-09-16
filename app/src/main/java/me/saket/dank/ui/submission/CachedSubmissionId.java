@@ -27,15 +27,10 @@ public abstract class CachedSubmissionId {
           + COLUMN_SUBREDDIT_NAME + " TEXT NOT NULL, "
           + COLUMN_SORTING_AND_TIME_PERIOD_JSON + " TEXT NOT NULL, "
           + COLUMN_SAVE_TIME + " INTEGER NOT NULL, "
-          + "PRIMARY KEY (" + COLUMN_SUBMISSION_FULL_NAME + ", " + COLUMN_SORTING_AND_TIME_PERIOD_JSON + ")"
+          + "PRIMARY KEY (" + COLUMN_SUBREDDIT_NAME + ", " + COLUMN_SUBMISSION_FULL_NAME + ", " + COLUMN_SORTING_AND_TIME_PERIOD_JSON + ")"
           + ")";
 
   public static final String WHERE_SUBREDDIT_NAME = COLUMN_SUBREDDIT_NAME + " == ?";
-
-  public static String constructWhere(String subredditName, String sortingAndTimePeriodJson) {
-    return COLUMN_SUBREDDIT_NAME + " == '" + subredditName + "'"
-        + " AND " + COLUMN_SORTING_AND_TIME_PERIOD_JSON + " == '" + sortingAndTimePeriodJson + "'";
-  }
 
   public static String constructQueryToGetLastSubmission(String subredditName, String sortingAndTimePeriodJson) {
     return "SELECT * FROM " + TABLE_NAME
@@ -43,6 +38,12 @@ public abstract class CachedSubmissionId {
         + " AND " + COLUMN_SORTING_AND_TIME_PERIOD_JSON + " == '" + sortingAndTimePeriodJson + "'"
         + " ORDER BY " + COLUMN_SAVE_TIME + " DESC"
         + " LIMIT 1";
+  }
+
+  public static String queryToGetCount(String subredditName, String sortingAndTimeJson) {
+    return "SELECT COUNT(" + COLUMN_SUBREDDIT_NAME + ") FROM " + TABLE_NAME
+        + " WHERE " + COLUMN_SUBREDDIT_NAME + " == '" + subredditName + "'"
+        + " AND " + COLUMN_SORTING_AND_TIME_PERIOD_JSON + " == '" + sortingAndTimeJson + "'";
   }
 
   public abstract String submissionFullName();
@@ -69,15 +70,4 @@ public abstract class CachedSubmissionId {
   }
 
   public static Function<Cursor, String> SUBMISSION_FULLNAME_MAPPER = cursor -> Cursors.string(cursor, COLUMN_SUBMISSION_FULL_NAME);
-
-//  public static Function<Cursor, CachedSubmissionIds> cursorMapper(JsonAdapter<SortingAndTimePeriod> sortingAndTimePeriodJsonAdapter) {
-//    return cursor -> {
-//      String submissionFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SUBMISSION_FULL_NAME));
-//      String subredditName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SUBREDDIT_NAME));
-//      String sortingAndTimePeriodJson = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SORTING_AND_TIME_PERIOD_JSON));
-//      SortingAndTimePeriod sortingAndTimePeriod = sortingAndTimePeriodJsonAdapter.fromJson(sortingAndTimePeriodJson);
-//      long saveTimeMillis = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_SAVE_TIME));
-//      return create(submissionFullName, subredditName, sortingAndTimePeriod, saveTimeMillis);
-//    };
-//  }
 }

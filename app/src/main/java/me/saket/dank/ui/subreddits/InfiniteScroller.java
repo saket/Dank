@@ -1,8 +1,11 @@
 package me.saket.dank.ui.subreddits;
 
 
+import android.os.Looper;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+
+import com.jakewharton.rxbinding2.internal.Notification;
 
 import io.reactivex.Observable;
 
@@ -11,19 +14,13 @@ import io.reactivex.Observable;
  */
 public class InfiniteScroller {
 
-  // For first start of items loading then on RecyclerView there are not items and no scrolling.
-  private static final int EMPTY_LIST_ITEMS_COUNT = 0;
+  private static final Object DUMMY = Notification.INSTANCE;
 
   // Fetch more items once the list has scrolled past 75% of its items.
   public static final float DEFAULT_LOAD_THRESHOLD = 0.65f;
 
   private RecyclerView recyclerView;
-  private int emptyListCount;
   private float scrollThreshold;
-
-  public static Builder buildPagingObservable(RecyclerView recyclerView) {
-    return new Builder(recyclerView);
-  }
 
   public static Observable<Object> streamPagingRequests(RecyclerView recyclerView) {
     return new Builder(recyclerView).build().streamPagingRequest();
@@ -33,22 +30,29 @@ public class InfiniteScroller {
   }
 
   public Observable<Object> streamPagingRequest() {
-    return getScrollObservable(recyclerView, emptyListCount)
+    return getScrollObservable(recyclerView)
         .distinctUntilChanged()
         .cast(Object.class);
   }
 
-  private Observable<Integer> getScrollObservable(RecyclerView recyclerView, int emptyListCount) {
+  private Observable<Object> getScrollObservable(RecyclerView recyclerView) {
     return Observable.create(emitter -> {
+      if (Looper.myLooper() != Looper.getMainLooper()) {
+        throw new IllegalStateException(
+            "Expected to be called on the main thread but was " + Thread.currentThread().getName());
+      }
+
       final RecyclerView.OnScrollListener sl = new RecyclerView.OnScrollListener() {
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
           int position = getLastVisibleItemPosition(recyclerView);
           int updatePosition = (int) ((recyclerView.getAdapter().getItemCount() - 1) * scrollThreshold);
 
-          if (position >= updatePosition) {
-            int itemsAvailable = recyclerView.getAdapter().getItemCount() - emptyListCount;
-            emitter.onNext(itemsAvailable);
+          if (position >= updatePosition && updatePosition != 0) {
+            //Timber.i("------------------");
+            //Timber.i("position: %s", position);
+            //Timber.i("updatePosition: %s", updatePosition);
+            emitter.onNext(DUMMY);
           }
         }
       };
@@ -70,7 +74,6 @@ public class InfiniteScroller {
 
   public static class Builder {
     private RecyclerView recyclerView;
-    private int emptyListCount = EMPTY_LIST_ITEMS_COUNT;
     private float scrollThreshold = DEFAULT_LOAD_THRESHOLD;
 
     private Builder(RecyclerView recyclerView) {
@@ -91,18 +94,9 @@ public class InfiniteScroller {
       return this;
     }
 
-    public Builder setEmptyListCount(int emptyListCount) {
-      if (emptyListCount < 0) {
-        throw new AssertionError();
-      }
-      this.emptyListCount = emptyListCount;
-      return this;
-    }
-
     public InfiniteScroller build() {
       InfiniteScroller infiniteScroller = new InfiniteScroller();
       infiniteScroller.recyclerView = this.recyclerView;
-      infiniteScroller.emptyListCount = emptyListCount;
       infiniteScroller.scrollThreshold = scrollThreshold;
       return infiniteScroller;
     }

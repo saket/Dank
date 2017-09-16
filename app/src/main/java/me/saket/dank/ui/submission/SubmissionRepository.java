@@ -86,8 +86,8 @@ public class SubmissionRepository {
 
   @CheckResult
   public Observable<List<Submission>> submissions(CachedSubmissionFolder folder) {
-    // Ideally we should pass both the tables joined by CachedSubmissionList: CachedSubmissionIds and
-    // CachedSubmissionWithoutComments, but since they both get updated at the same time, we don't need
+    // Ideally we should pass listen to changes in the tables joined by CachedSubmissionList: CachedSubmissionIds and
+    // CachedSubmissionWithoutComments, but since they both get updated at the same time, we don't need to do that.
     String sqlQuery = CachedSubmissionList.constructQueryToGetAll(moshi, folder.subredditName(), folder.sortingAndTimePeriod());
     return database.createQuery(CachedSubmissionId.TABLE_NAME, sqlQuery)
         .mapToList(CachedSubmissionList.cursorMapper(moshi.adapter(Submission.class)))
@@ -95,24 +95,33 @@ public class SubmissionRepository {
   }
 
   @CheckResult
+  public Observable<Integer> submissionCount(CachedSubmissionFolder folder) {
+    String sortingAndTimeJson = moshi.adapter(SortingAndTimePeriod.class).toJson(folder.sortingAndTimePeriod());
+    String countQuery = CachedSubmissionId.queryToGetCount(folder.subredditName(), sortingAndTimeJson);
+    return database.createQuery(CachedSubmissionId.TABLE_NAME, countQuery)
+        .mapToOne(cursor -> cursor.getInt(0));
+  }
+
+  @CheckResult
   public Single<FetchResult> loadMoreSubmissions(CachedSubmissionFolder folder) {
     return lastPaginationAnchor(folder)
-        .doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
+        //.doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
         .map(anchor -> {
           List<Submission> distinctNewItems = new ArrayList<>();
           PaginationAnchor nextAnchor = anchor;
 
-          while (distinctNewItems.size() < 10) {
+          while (true) {
             FetchResult fetchResult = fetchSubmissionsRemoteWithAnchor(folder, nextAnchor).blockingGet();
-            Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
+            //Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
 
             SaveResult saveResult = saveSubmissions(fetchResult.fetchedSubmissions(), folder).blockingGet();
             distinctNewItems.addAll(saveResult.savedItems());
 
-            if (!fetchResult.hasMoreItems()) {
+            if (!fetchResult.hasMoreItems() || distinctNewItems.size() > 10) {
               break;
             }
-            Timber.i("not enough");
+
+            //Timber.i("not enough");
 
             Submission lastFetchedSubmission = fetchResult.fetchedSubmissions().get(fetchResult.fetchedSubmissions().size() - 1);
             nextAnchor = PaginationAnchor.create(lastFetchedSubmission.getFullName());
@@ -176,6 +185,7 @@ public class SubmissionRepository {
       JsonAdapter<SortingAndTimePeriod> andTimePeriodJsonAdapter = moshi.adapter(SortingAndTimePeriod.class);
       JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
 
+      final long startTime = System.currentTimeMillis();
       try (BriteDatabase.Transaction transaction = database.newTransaction()) {
         for (int i = 0; i < submissionsToSave.size(); i++) {
           // Reddit sends submissions according to their sorting order. So they may or may not be
@@ -218,6 +228,7 @@ public class SubmissionRepository {
 
         transaction.markSuccessful();
       }
+      Timber.i("Saved %d items in: %sms", submissionsToSave.size(), (System.currentTimeMillis() - startTime));
 
       return SaveResult.create(Collections.unmodifiableList(cachedSubmissions));
     });
@@ -240,8 +251,6 @@ public class SubmissionRepository {
         database.delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SUBREDDIT_NAME, subredditName);
         database.delete(CachedSubmissionWithoutComments.TABLE_NAME, CachedSubmissionWithoutComments.WHERE_SUBREDDIT_NAME, subredditName);
         transaction.markSuccessful();
-
-        Timber.i("removed all");
       }
     });
   }
