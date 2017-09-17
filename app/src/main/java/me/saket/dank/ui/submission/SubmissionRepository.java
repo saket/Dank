@@ -1,10 +1,15 @@
 package me.saket.dank.ui.submission;
 
+import static io.reactivex.schedulers.Schedulers.io;
+
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxbinding2.internal.Notification;
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
@@ -13,6 +18,7 @@ import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.paginators.SubredditPaginator;
 
+import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
@@ -22,14 +28,17 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Completable;
-import io.reactivex.CompletableSource;
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.ui.subreddits.NetworkCallStatus;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankSubmissionRequest;
 import timber.log.Timber;
@@ -42,13 +51,17 @@ public class SubmissionRepository {
   private final DankRedditClient dankRedditClient;
   private final VotingManager votingManager;
   private final Set<String> savedSubmissionIds = new HashSet<>();
+  private ErrorResolver errorResolver;
 
   @Inject
-  public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager) {
+  public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager,
+      ErrorResolver errorResolver)
+  {
     this.database = briteDatabase;
     this.moshi = moshi;
     this.dankRedditClient = dankRedditClient;
     this.votingManager = votingManager;
+    this.errorResolver = errorResolver;
   }
 
   /**
@@ -64,7 +77,7 @@ public class SubmissionRepository {
           if (cachedSubmissions.isEmpty()) {
             // Starting a new Observable here so that it doesn't get canceled when the DB stream is disposed.
             fetchCommentsFromRemote(submissionRequest)
-                .subscribeOn(Schedulers.io())
+                .subscribeOn(io())
                 .subscribe();
             return Observable.empty();
 
@@ -102,33 +115,60 @@ public class SubmissionRepository {
         .mapToOne(cursor -> cursor.getInt(0));
   }
 
+  /**
+   * @return Operates on the main thread.
+   */
   @CheckResult
-  public Single<FetchResult> loadMoreSubmissions(CachedSubmissionFolder folder) {
-    return lastPaginationAnchor(folder)
-        //.doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
-        .map(anchor -> {
+  public Observable<NetworkCallStatus> loadAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
+    Relay<NetworkCallStatus> networkCallStatusStream = PublishRelay.create();
+
+    lastPaginationAnchor(folder)
+        .doOnSubscribe(o -> networkCallStatusStream.accept(NetworkCallStatus.createInFlight()))
+        .doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
+        .flatMap(anchor -> dankRedditClient.withAuth(Single.create(emitter -> {
           List<Submission> distinctNewItems = new ArrayList<>();
           PaginationAnchor nextAnchor = anchor;
 
           while (true) {
-            FetchResult fetchResult = fetchSubmissionsRemoteWithAnchor(folder, nextAnchor).blockingGet();
+            FetchResult fetchResult = fetchSubmissionsFromRemoteWithAnchor(folder, nextAnchor);
+            votingManager.removePendingVotesForFetchedSubmissions(fetchResult.fetchedSubmissions()).subscribe();
             //Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
 
-            SaveResult saveResult = saveSubmissions(fetchResult.fetchedSubmissions(), folder).blockingGet();
+            SaveResult saveResult = saveSubmissions(folder, fetchResult.fetchedSubmissions());
             distinctNewItems.addAll(saveResult.savedItems());
 
             if (!fetchResult.hasMoreItems() || distinctNewItems.size() > 10) {
               break;
             }
 
-            //Timber.i("not enough");
-
+            //Timber.i("%s distinct items not enough", distinctNewItems.size());
             Submission lastFetchedSubmission = fetchResult.fetchedSubmissions().get(fetchResult.fetchedSubmissions().size() - 1);
             nextAnchor = PaginationAnchor.create(lastFetchedSubmission.getFullName());
           }
 
-          return FetchResult.create(Collections.unmodifiableList(distinctNewItems), distinctNewItems.size() > 0);
-        });
+          emitter.onSuccess(FetchResult.create(Collections.unmodifiableList(distinctNewItems), distinctNewItems.size() > 0));
+        })))
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+        .retryWhen(errors -> errors.flatMap(error -> {
+          Throwable actualError = errorResolver.findActualCause(error);
+
+          if (actualError instanceof InterruptedIOException) {
+            Timber.w("Retrying on thread interruption");
+            return Flowable.just((Object) Notification.INSTANCE);
+          } else {
+            return Flowable.error(error);
+          }
+        }))
+        .subscribe(
+            o -> networkCallStatusStream.accept(NetworkCallStatus.createIdle()),
+            error -> {
+              Timber.e(error, "Failed to load submissions");
+              networkCallStatusStream.accept(NetworkCallStatus.createFailed(error));
+            }
+        );
+
+    return networkCallStatusStream;
   }
 
   /**
@@ -152,25 +192,17 @@ public class SubmissionRepository {
   }
 
   @CheckResult
-  private Single<FetchResult> fetchSubmissionsRemoteWithAnchor(CachedSubmissionFolder folder, PaginationAnchor anchor) {
-    Single<FetchResult> fetchResultSingle = dankRedditClient.withAuth(Single.fromCallable(() -> {
-      SubredditPaginator subredditPaginator = dankRedditClient.subredditPaginator(folder.subredditName());
-      if (!anchor.isEmpty()) {
-        subredditPaginator.setStartAfterThing(anchor.fullName());
-      }
+  private FetchResult fetchSubmissionsFromRemoteWithAnchor(CachedSubmissionFolder folder, PaginationAnchor anchor) {
+    SubredditPaginator subredditPaginator = dankRedditClient.subredditPaginator(folder.subredditName());
+    if (!anchor.isEmpty()) {
+      subredditPaginator.setStartAfterThing(anchor.fullName());
+    }
 
-      subredditPaginator.setSorting(folder.sortingAndTimePeriod().sortOrder());
-      subredditPaginator.setTimePeriod(folder.sortingAndTimePeriod().timePeriod());
-      Listing<Submission> submissions = subredditPaginator.next(true);
+    subredditPaginator.setSorting(folder.sortingAndTimePeriod().sortOrder());
+    subredditPaginator.setTimePeriod(folder.sortingAndTimePeriod().timePeriod());
+    Listing<Submission> submissions = subredditPaginator.next(true);
 
-      return FetchResult.create(submissions, subredditPaginator.hasNext());
-    }));
-
-    return fetchResultSingle
-        .flatMap(fetchResult -> votingManager
-            .removePendingVotesForFetchedSubmissions(fetchResult.fetchedSubmissions())
-            .andThen(Single.just(fetchResult))
-        );
+    return FetchResult.create(submissions, subredditPaginator.hasNext());
   }
 
   /**
@@ -179,59 +211,57 @@ public class SubmissionRepository {
    * @return Saved submissions with duplicates ignored.
    */
   @CheckResult
-  private Single<SaveResult> saveSubmissions(List<Submission> submissionsToSave, CachedSubmissionFolder folder) {
-    return Single.fromCallable(() -> {
-      List<Submission> cachedSubmissions = new ArrayList<>(submissionsToSave.size());
-      JsonAdapter<SortingAndTimePeriod> andTimePeriodJsonAdapter = moshi.adapter(SortingAndTimePeriod.class);
-      JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
+  private SaveResult saveSubmissions(CachedSubmissionFolder folder, List<Submission> submissionsToSave) {
+    List<Submission> cachedSubmissions = new ArrayList<>(submissionsToSave.size());
+    JsonAdapter<SortingAndTimePeriod> andTimePeriodJsonAdapter = moshi.adapter(SortingAndTimePeriod.class);
+    JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
 
-      final long startTime = System.currentTimeMillis();
-      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-        for (int i = 0; i < submissionsToSave.size(); i++) {
-          // Reddit sends submissions according to their sorting order. So they may or may not be
-          // sorted by their creation time. However, we want to store their download time so that
-          // they can be fetched in the same order (because SQLite doesn't guarantee preservation
-          // of insertion order). Adding the index to avoid duplicate times.
-          long saveTimeMillis = System.currentTimeMillis() + i;
-          Submission submission = submissionsToSave.get(i);
+    final long startTime = System.currentTimeMillis();
+    try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+      for (int i = 0; i < submissionsToSave.size(); i++) {
+        // Reddit sends submissions according to their sorting order. So they may or may not be
+        // sorted by their creation time. However, we want to store their download time so that
+        // they can be fetched in the same order (because SQLite doesn't guarantee preservation
+        // of insertion order). Adding the index to avoid duplicate times.
+        long saveTimeMillis = System.currentTimeMillis() + i;
+        Submission submission = submissionsToSave.get(i);
 
-          CachedSubmissionId cachedSubmissionId = CachedSubmissionId.create(
-              submission.getFullName(),
-              folder.subredditName(),
-              folder.sortingAndTimePeriod(),
-              saveTimeMillis
+        CachedSubmissionId cachedSubmissionId = CachedSubmissionId.create(
+            submission.getFullName(),
+            folder.subredditName(),
+            folder.sortingAndTimePeriod(),
+            saveTimeMillis
+        );
+
+        CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
+            submission.getFullName(),
+            submission,
+            folder.subredditName(),
+            saveTimeMillis
+        );
+
+        // Again, since Reddit does not send submissions sorted by time, it's possible to receive
+        // duplicate submissions.Ignore them.
+        long insertedRowId = database.insert(
+            CachedSubmissionId.TABLE_NAME,
+            cachedSubmissionId.toContentValues(andTimePeriodJsonAdapter),
+            SQLiteDatabase.CONFLICT_IGNORE
+        );
+        if (insertedRowId != -1) {
+          database.insert(
+              CachedSubmissionWithoutComments.TABLE_NAME,
+              cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
+              SQLiteDatabase.CONFLICT_REPLACE /* To handle updated submissions received from remote */
           );
-
-          CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
-              submission.getFullName(),
-              submission,
-              folder.subredditName(),
-              saveTimeMillis
-          );
-
-          // Again, since Reddit does not send submissions sorted by time, it's possible to receive
-          // duplicate submissions.Ignore them.
-          long insertedRowId = database.insert(
-              CachedSubmissionId.TABLE_NAME,
-              cachedSubmissionId.toContentValues(andTimePeriodJsonAdapter),
-              SQLiteDatabase.CONFLICT_IGNORE
-          );
-          if (insertedRowId != -1) {
-            database.insert(
-                CachedSubmissionWithoutComments.TABLE_NAME,
-                cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
-                SQLiteDatabase.CONFLICT_REPLACE /* To handle updated submissions received from remote */
-            );
-            cachedSubmissions.add(submission);
-          }
+          cachedSubmissions.add(submission);
         }
-
-        transaction.markSuccessful();
       }
-      Timber.i("Saved %d items in: %sms", submissionsToSave.size(), (System.currentTimeMillis() - startTime));
 
-      return SaveResult.create(Collections.unmodifiableList(cachedSubmissions));
-    });
+      transaction.markSuccessful();
+    }
+    Timber.i("Saved %d items in: %sms", submissionsToSave.size(), (System.currentTimeMillis() - startTime));
+
+    return SaveResult.create(Collections.unmodifiableList(cachedSubmissions));
   }
 
   public Completable clearCachedSubmissionLists() {
@@ -255,9 +285,9 @@ public class SubmissionRepository {
     });
   }
 
-  public CompletableSource clearCachedSubmissions() {
-    return Completable.fromAction(() -> database.delete(CachedSubmissionWithComments.TABLE_NAME, null));
-  }
+//  public CompletableSource clearCachedSubmissions() {
+//    return Completable.fromAction(() -> database.delete(CachedSubmissionWithComments.TABLE_NAME, null));
+//  }
 
   @AutoValue
   abstract static class SaveResult {

@@ -30,12 +30,12 @@ import io.reactivex.SingleTransformer;
 import io.reactivex.disposables.Disposable;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
+import me.saket.dank.data.InfiniteScrollHeaderFooter;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
-import me.saket.dank.utils.InfiniteScrollRecyclerAdapter.HeaderFooterInfo;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
@@ -218,10 +218,10 @@ public class InboxFolderFragment extends DankFragment {
     }
 
     return upstream -> upstream
-        .doOnSubscribe(o -> messagesAdapterWithProgress.setHeader(HeaderFooterInfo.createHeaderProgress(R.string.inbox_refreshing_messages)))
-        .doOnSuccess(o -> messagesAdapterWithProgress.setHeader(HeaderFooterInfo.createHidden()))
+        .doOnSubscribe(o -> messagesAdapterWithProgress.setHeader(InfiniteScrollHeaderFooter.createHeaderProgress(R.string.inbox_refreshing_messages)))
+        .doOnSuccess(o -> messagesAdapterWithProgress.setHeader(InfiniteScrollHeaderFooter.createHidden()))
         .doOnError(error -> {
-          messagesAdapterWithProgress.setHeader(HeaderFooterInfo.createError(
+          messagesAdapterWithProgress.setHeader(InfiniteScrollHeaderFooter.createError(
               R.string.inbox_error_failed_to_refresh_messages,
               o -> refreshMessages(deleteAllMessagesInFolder)
           ));
@@ -252,10 +252,10 @@ public class InboxFolderFragment extends DankFragment {
 
   private <T> SingleTransformer<T, T> handleProgressAndErrorForLoadMore() {
     return upstream -> upstream
-        .doOnSubscribe(o -> messagesAdapterWithProgress.setFooter(HeaderFooterInfo.createFooterProgress()))
-        .doOnSuccess(o -> messagesAdapterWithProgress.setFooter(HeaderFooterInfo.createHidden()))
+        .doOnSubscribe(o -> messagesAdapterWithProgress.setFooter(InfiniteScrollHeaderFooter.createFooterProgress()))
+        .doOnSuccess(o -> messagesAdapterWithProgress.setFooter(InfiniteScrollHeaderFooter.createHidden()))
         .doOnError(error -> {
-          messagesAdapterWithProgress.setFooter(HeaderFooterInfo.createError(
+          messagesAdapterWithProgress.setFooter(InfiniteScrollHeaderFooter.createError(
               R.string.inbox_error_failed_to_load_more_messages,
               o -> startInfiniteScroll(true)
           ));

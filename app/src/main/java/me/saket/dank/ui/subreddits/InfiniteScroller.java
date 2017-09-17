@@ -5,16 +5,12 @@ import android.os.Looper;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 
-import com.jakewharton.rxbinding2.internal.Notification;
-
 import io.reactivex.Observable;
 
 /**
  * @author https://github.com/matzuk/PaginationSample
  */
 public class InfiniteScroller {
-
-  private static final Object DUMMY = Notification.INSTANCE;
 
   // Fetch more items once the list has scrolled past 75% of its items.
   public static final float DEFAULT_SCROLL_THRESHOLD = 0.65f;
@@ -32,10 +28,12 @@ public class InfiniteScroller {
   }
 
   public Observable<Object> streamPagingRequest() {
-    return getScrollObservable(recyclerView).cast(Object.class);
+    return getScrollObservable(recyclerView)
+        .distinctUntilChanged()
+        .cast(Object.class);
   }
 
-  private Observable<Object> getScrollObservable(RecyclerView recyclerView) {
+  private Observable<Integer> getScrollObservable(RecyclerView recyclerView) {
     return Observable.create(emitter -> {
       if (Looper.myLooper() != Looper.getMainLooper()) {
         throw new IllegalStateException(
@@ -46,13 +44,14 @@ public class InfiniteScroller {
         @Override
         public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
           int position = getLastVisibleItemPosition(recyclerView);
-          int updatePosition = (int) ((recyclerView.getAdapter().getItemCount() - 1) * scrollThreshold);
+          int adapterDatasetCount = ((InfinitelyScrollableRecyclerViewAdapter) recyclerView.getAdapter()).getItemCountMinusDecorators();
+          int updatePosition = (int) ((adapterDatasetCount - 1) * scrollThreshold);
 
           if (position >= updatePosition && updatePosition != 0) {
             //Timber.i("------------------");
             //Timber.i("position: %s", position);
             //Timber.i("updatePosition: %s", updatePosition);
-            emitter.onNext(DUMMY);
+            emitter.onNext(adapterDatasetCount);
           }
         }
       };

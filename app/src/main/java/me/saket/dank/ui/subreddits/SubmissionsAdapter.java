@@ -23,21 +23,27 @@ import java.util.List;
 import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.data.InfiniteScrollFooter;
+import me.saket.dank.data.InfiniteScrollHeader;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.utils.Commons;
+import me.saket.dank.utils.InfiniteScrollFooterViewHolder;
+import me.saket.dank.utils.InfiniteScrollHeaderViewHolder;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
+import timber.log.Timber;
 
-public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, SubmissionsAdapter.SubmissionViewHolder>
-    implements Consumer<List<Submission>>
-{
+public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Object, RecyclerView.ViewHolder> implements InfinitelyScrollableRecyclerViewAdapter {
+
+  private static final int VIEW_TYPE_HEADER_REFRESHING_ITEMS = 0;
+  private static final int VIEW_TYPE_FOOTER_LOADING_MORE_ITEMS = 1;
+  private static final int VIEW_TYPE_SUBMISSION = 2;
 
   private VotingManager votingManager;
   private UserPrefsManager userPrefsManager;
@@ -63,51 +69,111 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Submission, Sub
   }
 
   @Override
-  public void accept(List<Submission> submissions) {
-    // TODO: 29/01/17 Use DiffUtils / SortedList instead of invalidating the entire list.
-    updateDataAndNotifyDatasetChanged(submissions);
+  public int getItemCountMinusDecorators() {
+    List<Object> items = getData();
+    int itemCountMinusDecorators = items.size();
+
+    if (itemCountMinusDecorators > 0) {
+      if (items.get(0) instanceof InfiniteScrollHeader) {
+        itemCountMinusDecorators -= 1;
+      }
+      if (items.get(items.size() - 1) instanceof InfiniteScrollFooter) {
+        itemCountMinusDecorators -= 1;
+      }
+    }
+
+    return itemCountMinusDecorators;
   }
 
   @Override
-  protected SubmissionViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-    SubmissionViewHolder holder = SubmissionViewHolder.create(parent);
-    holder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
-    return holder;
+  public int getItemViewType(int position) {
+    Object item = getItem(position);
+    if (item instanceof InfiniteScrollHeader) {
+      return VIEW_TYPE_HEADER_REFRESHING_ITEMS;
+
+    } else if (item instanceof InfiniteScrollFooter) {
+      return VIEW_TYPE_FOOTER_LOADING_MORE_ITEMS;
+
+    } else {
+      return VIEW_TYPE_SUBMISSION;
+    }
   }
 
   @Override
-  public void onBindViewHolder(SubmissionViewHolder holder, int position) {
-    Submission submission = getItem(position);
-    VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
-    int submissionScore = votingManager.getScoreAfterAdjustingPendingVote(submission);
-    holder.bind(submission, submissionScore, pendingOrDefaultVoteDirection, userPrefsManager.canShowSubmissionCommentsCountInByline());
+  protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
+    switch (viewType) {
+      case VIEW_TYPE_HEADER_REFRESHING_ITEMS:
+        return InfiniteScrollHeaderViewHolder.create(LayoutInflater.from(parent.getContext()), parent);
 
-    holder.itemView.setOnClickListener(v -> {
-      clickListener.onItemClick(submission, holder.itemView, getItemId(position));
-    });
+      case VIEW_TYPE_FOOTER_LOADING_MORE_ITEMS:
+        return InfiniteScrollFooterViewHolder.create(LayoutInflater.from(parent.getContext()), parent);
 
-    SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
-    swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions(submission));
-    swipeableLayout.setOnPerformSwipeActionListener(action -> {
-      swipeActionsProvider.performSwipeAction(action, submission, swipeableLayout);
+      case VIEW_TYPE_SUBMISSION:
+        SubmissionViewHolder holder = SubmissionViewHolder.create(parent);
+        holder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
+        return holder;
 
-      // We should ideally only be updating the backing data-set and let onBind() handle the
-      // changes, but RecyclerView's item animator reset's the View's x-translation which we
-      // don't want. So we manually update the Views here.
-      onBindViewHolder(holder, holder.getAdapterPosition());
-    });
+      default:
+        throw new AssertionError();
+    }
+  }
+
+  @Override
+  public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
+    int itemViewType = getItemViewType(position);
+
+    if (itemViewType == VIEW_TYPE_SUBMISSION) {
+      Submission submission = (Submission) getItem(position);
+      VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
+      int submissionScore = votingManager.getScoreAfterAdjustingPendingVote(submission);
+
+      SubmissionViewHolder submissionViewHolder = (SubmissionViewHolder) holder;
+      submissionViewHolder.bind(submission, submissionScore, pendingOrDefaultVoteDirection, userPrefsManager.canShowSubmissionCommentsCountInByline());
+
+      // TODO: Avoid creating a new listener for every item.
+      holder.itemView.setOnClickListener(v -> {
+        clickListener.onItemClick(submission, holder.itemView, getItemId(position));
+      });
+
+      // TODO: Avoid creating a new listener for every item.
+      SwipeableLayout swipeableLayout = submissionViewHolder.getSwipeableLayout();
+      swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions(submission));
+      swipeableLayout.setOnPerformSwipeActionListener(action -> {
+        swipeActionsProvider.performSwipeAction(action, submission, swipeableLayout);
+
+        // We should ideally only be updating the backing data-set and let onBind() handle the
+        // changes, but RecyclerView's item animator reset's the View's x-translation which we
+        // don't want. So we manually update the Views here.
+        onBindViewHolder(holder, holder.getAdapterPosition());
+      });
+
+    } else if (itemViewType == VIEW_TYPE_HEADER_REFRESHING_ITEMS) {
+      InfiniteScrollHeader header = (InfiniteScrollHeader) getItem(position);
+      Timber.i("header: %s", header);
+      ((InfiniteScrollHeaderViewHolder) holder).bind(header);
+
+    } else if (itemViewType == VIEW_TYPE_FOOTER_LOADING_MORE_ITEMS) {
+      InfiniteScrollFooter footer = (InfiniteScrollFooter) getItem(position);
+      ((InfiniteScrollFooterViewHolder) holder).bind(footer);
+    }
   }
 
   @Override
   public long getItemId(int position) {
-    Submission submission = getItem(position);
+    switch (getItemViewType(position)) {
+      case VIEW_TYPE_HEADER_REFRESHING_ITEMS:
+        return VIEW_TYPE_HEADER_REFRESHING_ITEMS;
 
-    if (submission == null) {
-      // Happens when an item is clicked right when the data-set was getting updated.
-      return -1;
+      case VIEW_TYPE_FOOTER_LOADING_MORE_ITEMS:
+        return VIEW_TYPE_FOOTER_LOADING_MORE_ITEMS;
+
+      case VIEW_TYPE_SUBMISSION:
+        Submission submission = (Submission) getItem(position);
+        return submission.hashCode();
+
+      default:
+        throw new AssertionError();
     }
-
-    return submission.hashCode();
   }
 
   public static class SubmissionViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {

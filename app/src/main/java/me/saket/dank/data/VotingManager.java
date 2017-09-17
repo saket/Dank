@@ -2,6 +2,7 @@ package me.saket.dank.data;
 
 import android.app.Application;
 import android.content.SharedPreferences;
+import android.os.Looper;
 import android.support.annotation.CheckResult;
 
 import net.dean.jraw.models.Comment;
@@ -96,6 +97,11 @@ public class VotingManager {
   @CheckResult
   public <T extends Thing & Votable> Completable removePendingVotesForFetchedSubmissions(List<T> thingsFromRemote) {
     return Completable.fromAction(() -> {
+      if (Looper.myLooper() == Looper.getMainLooper()) {
+        throw new IllegalStateException(
+            "Expected to be called on a background thread but was " + Thread.currentThread().getName());
+      }
+
       SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.edit();
       for (T thing : thingsFromRemote) {
         if (isVotePending(thing)) {
