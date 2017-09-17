@@ -60,6 +60,7 @@ public class LoginActivity extends DankActivity {
         }
       }
     });
+
     webView.setWebViewClient(new WebViewClient() {
       @Override
       public void onPageStarted(WebView view, String url, Bitmap favicon) {
@@ -75,6 +76,11 @@ public class LoginActivity extends DankActivity {
         }
       }
     });
+
+    // Bug workaround: WebView crashes when dropdown is shown on
+    // a Nougat emulator. Haven't tested on other devices.
+    webView.clearFormData();
+    webView.getSettings().setSaveFormData(false);
 
     userLoginHelper = Dank.reddit().createUserLoginHelper();
     webView.loadUrl(userLoginHelper.authorizationUrl());
