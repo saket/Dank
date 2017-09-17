@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  tools:background="@color/window_background">
+
+  <TextView
+    style="@style/DankPreferencesGroupTitle"
+    android:layout_marginTop="@dimen/spacing24"
+    android:text="@string/userprefs_group_subreddit" />
+
+  <me.saket.dank.widgets.prefs.UserPreferenceSwitch
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:prefswitch_summary="@string/userprefs_submission_thumbnail_summary_on"
+    app:prefswitch_title="@string/userprefs_submission_thumbnails" />
+
+  <TextView
+    style="@style/DankPreferencesGroupTitle"
+    android:layout_marginTop="@dimen/spacing24"
+    android:text="@string/userprefs_group_gestures" />
+
+  <me.saket.dank.widgets.prefs.UserPreferenceButton
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:prefbutton_summary="Left: options, save. Right: upvote and downvote."
+    app:prefbutton_title="@string/userprefs_customize_submission_gestures" />
+
+  <View style="@style/DankPreferencesSeparator" />
+
+  <me.saket.dank.widgets.prefs.UserPreferenceButton
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:prefbutton_summary="Left: options, reply. Right: upvote and downvote."
+    app:prefbutton_title="@string/userprefs_customize_comment_gestures" />
+</LinearLayout>

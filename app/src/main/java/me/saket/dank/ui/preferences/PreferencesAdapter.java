@@ -48,7 +48,7 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceG
 
     @BindView(R.id.item_preferencegroup_icon) ImageView iconView;
     @BindView(R.id.item_preferencegroup_title) TextView titleView;
-    @BindView(R.id.item_preferencegroup_subtitle) TextView subtitleView;
+    @BindView(R.id.item_preferencegroup_summary) TextView summaryView;
 
     public static PreferenceGroupViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new PreferenceGroupViewHolder(inflater.inflate(R.layout.list_item_preference_group, parent, false));
@@ -63,8 +63,7 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceG
       iconView.setImageResource(preferenceGroup.iconRes);
       iconView.setContentDescription(iconView.getResources().getText(preferenceGroup.titleRes));
       titleView.setText(preferenceGroup.titleRes);
-      subtitleView.setText(preferenceGroup.subtitleRes);
+      summaryView.setText(preferenceGroup.summaryRes);
     }
   }
-
 }

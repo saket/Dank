@@ -10,11 +10,20 @@
   tools:layout_marginTop="25dp">
 
   <TextView
-    style="@style/DankPreferencesSubtitle"
-    android:text="@string/userpreferences_misc_link_handling" />
+    style="@style/DankPreferencesGroupTitle"
+    android:text="@string/userprefes_group_link_handling" />
 
-  <me.saket.dank.widgets.UserPreferenceButton
-    style="@style/DankPreferencesButton"
-    app:subtitle="@string/userprefs_misc_open_links_in_apps_subtitle"
-    app:title="@string/userprefs_misc_open_links_in_apps" />
+  <me.saket.dank.widgets.prefs.UserPreferenceButton
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:prefbutton_summary="@string/userprefs_open_links_in_apps_summary"
+    app:prefbutton_title="@string/userprefs_open_links_in_apps" />
+
+  <View style="@style/DankPreferencesSeparator" />
+
+  <me.saket.dank.widgets.prefs.UserPreferenceSwitch
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:prefswitch_summary="@string/userprefs_use_chrome_custom_tabs_description"
+    app:prefswitch_title="@string/userprefs_use_chrome_custom_tabs" />
 </LinearLayout>

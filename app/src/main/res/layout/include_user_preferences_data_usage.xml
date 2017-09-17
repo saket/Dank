@@ -9,16 +9,17 @@
   tools:background="@color/window_background">
 
   <TextView
-    android:text="@string/userpreferences_datausage_new_messages"
-    style="@style/DankPreferencesSubtitle" />
+    style="@style/DankPreferencesGroupTitle"
+    android:text="@string/userprefs_group_new_messages" />
 
-  <me.saket.dank.widgets.UserPreferenceButton
-    app:subtitle="@string/userprefs_datausage_message_sync_period_and_connection"
-    app:title="@string/userprefs_datausage_check_for_new_messages"
-    style="@style/DankPreferencesButton" />
+  <me.saket.dank.widgets.prefs.UserPreferenceButton
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    app:prefbutton_summary="@string/userprefs_datausage_message_sync_period_and_connection"
+    app:prefbutton_title="@string/userprefs_datausage_check_for_new_messages" />
 
   <!--<View-->
-    <!--style="@style/DankSeparator.VerticalContent"-->
-    <!--android:background="#3c3c3c"-->
-    <!--android:visibility="gone" />-->
+  <!--style="@style/DankSeparator.VerticalContent"-->
+  <!--android:background="#3c3c3c"-->
+  <!--android:visibility="gone" />-->
 </LinearLayout>

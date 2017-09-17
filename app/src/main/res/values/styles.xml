@@ -130,8 +130,7 @@
     <item name="android:popupElevation">@dimen/spacing16</item>
   </style>
 
-  <style name="DankPopupMenuTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Large">
-  </style>
+  <style name="DankPopupMenuTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Large"></style>
 
   <style name="DankPopupMenuHeaderTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Header">
     <item name="android:textAllCaps">true</item>
@@ -359,22 +358,28 @@
   </style>
 
   <!-- User Preferences -->
-  <style name="DankPreferencesSubtitle">
+  <style name="DankPreferencesGroupTitle">
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">wrap_content</item>
-    <item name="android:layout_marginBottom">@dimen/spacing8</item>
+    <item name="android:layout_marginBottom">@dimen/spacing12</item>
     <item name="android:layout_marginEnd">@dimen/spacing16</item>
     <item name="android:layout_marginStart">@dimen/spacing16</item>
     <item name="android:textAllCaps">true</item>
     <item name="android:textSize">@dimen/textsize12</item>
   </style>
 
-  <style name="DankPreferencesButton">
+  <style name="DankPreferenceItemDescription">
+    <item name="android:textColor">@color/gray_500</item>
+    <item name="android:textSize">@dimen/textsize14</item>
+  </style>
+
+  <style name="DankPreferenceItemTitle">
     <item name="android:layout_width">match_parent</item>
-    <item name="android:layout_height">wrap_content</item>
-    <item name="android:paddingBottom">@dimen/spacing16</item>
-    <item name="android:paddingEnd">@dimen/spacing16</item>
-    <item name="android:paddingStart">@dimen/spacing16</item>
-    <item name="android:paddingTop">@dimen/spacing16</item>
+    <item name="android:textColor">@color/gray_200</item>
+    <item name="android:textSize">@dimen/textsize14</item>
+  </style>
+
+  <style name="DankPreferencesSeparator" parent="DankSeparator.VerticalContent">
+    <item name="android:background">@color/gray_850</item>
   </style>
 </resources>

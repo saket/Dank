@@ -32,13 +32,13 @@ public enum UserPreferenceGroup {
       R.string.userpreferences_about,
       R.string.userpreferences_about_description);
 
-  final int iconRes;
-  final int titleRes;
-  final int subtitleRes;
+  @DrawableRes final int iconRes;
+  @StringRes final int titleRes;
+  @StringRes final int summaryRes;
 
-  UserPreferenceGroup(@DrawableRes int iconRes, @StringRes int titleRes, @StringRes int subtitleRes) {
+  UserPreferenceGroup(@DrawableRes int iconRes, @StringRes int titleRes, @StringRes int summaryRes) {
     this.iconRes = iconRes;
     this.titleRes = titleRes;
-    this.subtitleRes = subtitleRes;
+    this.summaryRes = summaryRes;
   }
 }

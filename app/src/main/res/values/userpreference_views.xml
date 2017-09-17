@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <style name="DankUserPreferenceButton">
-        <item name="android:clickable">true</item>
-        <item name="android:foreground">?attr/selectableItemBackground</item>
-        <item name="android:background">@color/gray_850</item>
-        <item name="android:translationZ">1dp</item>
-    </style>
 
-    <declare-styleable name="UserPreferenceButton">
-        <attr name="title" format="string" />
-        <attr name="subtitle" format="string" />
-    </declare-styleable>
+  <style name="DankUserPreferenceButton">
+    <item name="android:clickable">true</item>
+    <item name="android:foreground">?attr/selectableItemBackground</item>
+    <item name="android:background">@color/gray_850</item>
+    <item name="android:translationZ">1dp</item>
+
+    <item name="android:paddingBottom">@dimen/spacing16</item>
+    <item name="android:paddingEnd">@dimen/spacing16</item>
+    <item name="android:paddingStart">@dimen/spacing16</item>
+    <item name="android:paddingTop">@dimen/spacing16</item>
+  </style>
+
+  <declare-styleable name="UserPreferenceButton">
+    <attr name="prefbutton_title" format="string" />
+    <attr name="prefbutton_summary" format="string" />
+  </declare-styleable>
+
+  <declare-styleable name="UserPreferenceSwitch">
+    <attr name="prefswitch_title" format="string" />
+    <attr name="prefswitch_summary" format="string" />
+  </declare-styleable>
 </resources>

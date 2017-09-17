@@ -60,7 +60,7 @@ public class PreferencesFragment extends DankFragment {
     @IdRes int groupLayoutRes;
     switch (preferenceGroup) {
       case LOOK_AND_FEEL:
-        groupLayoutRes = R.id.userpreferences_container_empty;
+        groupLayoutRes = R.id.userpreferences_container_look_and_feel;
         break;
 
       case FILTERS:
