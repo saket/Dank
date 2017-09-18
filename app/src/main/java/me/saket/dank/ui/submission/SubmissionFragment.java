@@ -48,7 +48,6 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
@@ -87,6 +86,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
+import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.Animations;
@@ -96,7 +96,6 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
-import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -248,24 +247,19 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .observeOn(mainThread())
             .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
             .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
+                .flatMap(pair -> {
+                  // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
+                  DankSubmissionRequest updatedRequest = pair.first;
+                  if (updatedRequest != submissionRequest) {
+                    submissionRequestStream.accept(updatedRequest);
+                    return Observable.never();
+                  } else {
+                    return Observable.just(pair.second);
+                  }
+                })
                 .takeUntil(lifecycleProvider.onPageAboutToCollapse())
                 .compose(RxUtils.applySchedulers())
                 .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
-                .flatMap(submissionWithComments -> {
-                  // The aim is to always load comments in the sort mode suggested by a subreddit. In case we
-                  // load with the wrong sort (possibly because the submission's details were unknown), reload
-                  // comments using the suggested sort.
-                  CommentSort suggestedSort = submissionWithComments.getSuggestedSort();
-                  if (suggestedSort != null && suggestedSort != submissionRequest.commentSort()) {
-                    submissionRequestStream.accept(submissionRequest.toBuilder()
-                        .commentSort(suggestedSort)
-                        .build());
-                    return Observable.empty();
-
-                  } else {
-                    return Observable.just(submissionWithComments);
-                  }
-                })
                 .doOnError(error -> {
                   Timber.e(error, error.getMessage());
                 })

@@ -5,6 +5,7 @@ import static io.reactivex.schedulers.Schedulers.io;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
+import android.util.Pair;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxbinding2.internal.Notification;
@@ -14,6 +15,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
+import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.paginators.SubredditPaginator;
@@ -66,9 +68,38 @@ public class SubmissionRepository {
 
   /**
    * Get from DB or from the network if not present in DB.
+   *
+   * @return Pair of an optionally-updated submission request in case remote suggested a
+   * different sort for comments and the submission object with comments.
    */
   @CheckResult
-  public Observable<Submission> submissionWithComments(DankSubmissionRequest submissionRequest) {
+  public Observable<Pair<DankSubmissionRequest, Submission>> submissionWithComments(DankSubmissionRequest submissionRequest) {
+    return getOrFetchSubmissionWithComments(submissionRequest)
+        .take(1)
+        .flatMap(submissionWithComments -> {
+          // The aim is to always load comments in the sort mode suggested by a subreddit. In case we
+          // load with the wrong sort (possibly because the submission's details were unknown), reload
+          // comments using the suggested sort.
+          CommentSort suggestedSort = submissionWithComments.getSuggestedSort();
+          if (suggestedSort != null && suggestedSort != submissionRequest.commentSort()) {
+            DankSubmissionRequest newRequest = submissionRequest.toBuilder()
+                .commentSort(suggestedSort)
+                .build();
+            return getOrFetchSubmissionWithComments(newRequest)
+                .map(submissions -> Pair.create(newRequest, submissions));
+
+          } else {
+            return getOrFetchSubmissionWithComments(submissionRequest)
+                .map(submissions -> Pair.create(submissionRequest, submissions));
+          }
+        });
+  }
+
+  /**
+   * Get from DB or from the network if not present in DB.
+   */
+  @CheckResult
+  private Observable<Submission> getOrFetchSubmissionWithComments(DankSubmissionRequest submissionRequest) {
     String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(submissionRequest);
 
     return database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
@@ -76,10 +107,12 @@ public class SubmissionRepository {
         .flatMap(cachedSubmissions -> {
           if (cachedSubmissions.isEmpty()) {
             // Starting a new Observable here so that it doesn't get canceled when the DB stream is disposed.
-            fetchCommentsFromRemote(submissionRequest)
+            // Also, although we're terminating this flatMap stream here, downloading more items will trigger
+            // another emit in this stream from database.
+            fetchAndSaveCommentsFromRemote(submissionRequest)
                 .subscribeOn(io())
                 .subscribe();
-            return Observable.empty();
+            return Observable.never();
 
           } else {
             return Observable.just(cachedSubmissions.get(0).submission());
@@ -88,7 +121,7 @@ public class SubmissionRepository {
   }
 
   @CheckResult
-  private Completable fetchCommentsFromRemote(DankSubmissionRequest submissionRequest) {
+  private Completable fetchAndSaveCommentsFromRemote(DankSubmissionRequest submissionRequest) {
     return dankRedditClient.submission(submissionRequest)
         .flatMapCompletable(submission -> Completable.fromAction(() -> {
           long saveTimeMillis = System.currentTimeMillis();
