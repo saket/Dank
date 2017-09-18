@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 
 import com.danikula.videocache.HttpProxyCacheServer;
@@ -272,5 +273,10 @@ public class DankAppModule {
   @Named("replyDraftStore")
   SharedPreferences provideSharedPrefsForReplyDraftStore() {
     return appContext.getSharedPreferences("replyDraftStore", Context.MODE_PRIVATE);
+  }
+
+  @Provides
+  ConnectivityManager provideConnectivityManager() {
+    return (ConnectivityManager) appContext.getSystemService(Context.CONNECTIVITY_SERVICE);
   }
 }

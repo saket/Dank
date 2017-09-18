@@ -503,6 +503,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .toFlowable(BackpressureStrategy.LATEST)
             .observeOn(io())
             .scan(initialPair, (pair, next) -> {
+              Timber.d("Applying diff");
+
               CommentsDiffCallback callback = new CommentsDiffCallback(pair.first, next);
               DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
               return Pair.create(next, result);

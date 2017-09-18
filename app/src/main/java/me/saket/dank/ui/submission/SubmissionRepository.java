@@ -126,7 +126,8 @@ public class SubmissionRepository {
         .flatMapCompletable(submission -> Completable.fromAction(() -> {
           long saveTimeMillis = System.currentTimeMillis();
           CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
-          database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi));
+          //Timber.i("Saving submission with comments: %s", cachedSubmission.submission().getTitle());
+          database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
         }));
   }
 

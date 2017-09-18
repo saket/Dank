@@ -100,6 +100,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   @Inject SubmissionRepository submissionRepository;
   @Inject ErrorResolver errorResolver;
+  @Inject CachePreFiller cachePreFiller;
 
   private SubmissionFragment submissionFragment;
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
@@ -465,6 +466,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           // TODO: 17/09/17 Use DiffUtils.
           submissionsAdapter.updateDataAndNotifyDatasetChanged(adapterDataset);
         });
+
+    // Cache pre-fill.
+    cachedSubmissionStream
+        .switchMap(cachedSubmissions -> cachePreFiller.preFillComments(cachedSubmissions).toObservable())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe();
   }
 
 // ======== SORTING MODE ======== //
