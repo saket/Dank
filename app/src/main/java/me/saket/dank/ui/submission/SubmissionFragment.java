@@ -476,6 +476,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
    * {@link CommentTreeConstructor} and {@link CommentsAdapter} subscribes to its updates.
    */
   private void setupCommentTree() {
+    // Update header.
     unsubscribeOnDestroy(
         submissionStream
             .filter(submission -> submission.getComments() != null)
@@ -495,7 +496,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             })
     );
 
-    // Animate changes.
+    // Animate changes to comments.
     Pair<List<SubmissionCommentRow>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
     unsubscribeOnDestroy(
         commentTreeConstructor.streamTreeUpdates()
@@ -510,6 +511,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             })
             .skip(1)  // Initial value is dummy.
             .observeOn(mainThread())
+            .filter(o -> !submissionPageLayout.isCollapsedOrCollapsing())
             .subscribe(dataAndDiff -> {
               List<SubmissionCommentRow> newComments = dataAndDiff.first;
               commentsAdapter.updateData(newComments);
