@@ -50,6 +50,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InfiniteScrollFooter;
 import me.saket.dank.data.InfiniteScrollHeader;
 import me.saket.dank.data.OnLoginRequireListener;
+import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
@@ -101,6 +102,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Inject SubmissionRepository submissionRepository;
   @Inject ErrorResolver errorResolver;
   @Inject CachePreFiller cachePreFiller;
+  @Inject SubredditSubscriptionManager subscriptionManager;
 
   private SubmissionFragment submissionFragment;
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
@@ -195,7 +197,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // Toggle the subscribe button's visibility.
     unsubscribeOnDestroy(
         subredditChangesStream
-            .switchMap(subredditName -> Dank.subscriptions().isSubscribed(subredditName))
+            .switchMap(subredditName -> subscriptionManager.isSubscribed(subredditName))
             .compose(applySchedulers())
             .startWith(Boolean.FALSE)
             .onErrorResumeNext(error -> {
@@ -214,7 +216,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // Intentionally not unsubscribing from this API call on Activity destroy.
     // We'll treat it as a fire-n-forget call and let them run even when this Activity exits.
     Dank.reddit().findSubreddit(subredditName)
-        .flatMapCompletable(subreddit -> Dank.subscriptions().subscribe(subreddit))
+        .flatMapCompletable(subreddit -> subscriptionManager.subscribe(subreddit))
         .subscribeOn(io())
         .subscribe(doNothingCompletable(), logError("Couldn't subscribe to %s", subredditName));
   }
@@ -354,7 +356,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       String requestedSub = ((RedditSubredditLink) getIntent().getParcelableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name();
       subredditChangesStream.accept(requestedSub);
     } else {
-      subredditChangesStream.accept(Dank.subscriptions().defaultSubreddit());
+      subredditChangesStream.accept(subscriptionManager.defaultSubreddit());
     }
 
     if (savedState != null) {
@@ -469,6 +471,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // Cache pre-fill.
     cachedSubmissionStream
+        .withLatestFrom(submissionFolderStream, Pair::create)
+        .flatMap(pair -> subscriptionManager.isSubscribed(pair.second.subredditName())
+            .flatMap(isSubscribed -> isSubscribed ? Observable.just(pair.first) : Observable.never())
+        )
         .switchMap(cachedSubmissions -> cachePreFiller.preFillComments(cachedSubmissions).toObservable())
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
@@ -560,7 +566,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       @Override
       public void onSubredditsChanged() {
         // Refresh the submissions if the frontpage was active.
-        if (Dank.subscriptions().isFrontpage(subredditChangesStream.getValue())) {
+        if (subscriptionManager.isFrontpage(subredditChangesStream.getValue())) {
           subredditChangesStream.accept(subredditChangesStream.getValue());
         }
       }
@@ -618,8 +624,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
       // Reload subreddit subscriptions. Not implementing onError() is intentional.
       // This code is not supposed to fail :/
-      Dank.subscriptions().removeAll()
-          .andThen(Dank.subscriptions().getAllIncludingHidden().ignoreElements())
+      subscriptionManager.removeAll()
+          .andThen(subscriptionManager.getAllIncludingHidden().ignoreElements())
           .subscribeOn(io())
           .subscribe();
 
@@ -627,7 +633,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       // submissions will change if the subscriptions change.
       subredditChangesStream
           .take(1)
-          .filter(subreddit -> Dank.subscriptions().isFrontpage(subreddit))
+          .filter(subreddit -> subscriptionManager.isFrontpage(subreddit))
           .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
           .subscribe(() -> forceRefreshRequestStream.accept(Notification.INSTANCE));
 

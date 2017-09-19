@@ -38,7 +38,6 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
-import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
@@ -69,6 +68,11 @@ public class DankAppModule {
   }
 
   @Provides
+  Application provideAppContext() {
+    return appContext;
+  }
+
+  @Provides
   UserAgent provideRedditUserAgent() {
     try {
       PackageInfo packageInfo = appContext.getPackageManager().getPackageInfo(appContext.getPackageName(), 0);
@@ -93,14 +97,6 @@ public class DankAppModule {
   @Provides
   AuthenticationManager provideRedditAuthManager() {
     return AuthenticationManager.get();
-  }
-
-  @Provides
-  @Singleton
-  SubredditSubscriptionManager provideSubredditSubscriptionManager(BriteDatabase briteDatabase, DankRedditClient dankRedditClient,
-      UserPrefsManager userPrefsManager, UserSession userSession)
-  {
-    return new SubredditSubscriptionManager(appContext, briteDatabase, dankRedditClient, userPrefsManager, userSession);
   }
 
   @Provides

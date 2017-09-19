@@ -3,6 +3,7 @@ package me.saket.dank.data;
 import static me.saket.dank.utils.Commons.toImmutable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
+import android.app.Application;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
@@ -25,6 +26,9 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -44,6 +48,7 @@ import timber.log.Timber;
  * - Un-subscribing.
  * - Hiding subscriptions.
  */
+@Singleton
 public class SubredditSubscriptionManager {
 
   private Context appContext;
@@ -52,10 +57,11 @@ public class SubredditSubscriptionManager {
   private UserPrefsManager userPrefsManager;
   private UserSession userSession;
 
-  public SubredditSubscriptionManager(Context context, BriteDatabase database, DankRedditClient dankRedditClient,
+  @Inject
+  public SubredditSubscriptionManager(Application appContext, BriteDatabase database, DankRedditClient dankRedditClient,
       UserPrefsManager userPrefsManager, UserSession userSession)
   {
-    this.appContext = context;
+    this.appContext = appContext;
     this.database = database;
     this.dankRedditClient = dankRedditClient;
     this.userPrefsManager = userPrefsManager;
@@ -77,8 +83,7 @@ public class SubredditSubscriptionManager {
         ? SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN
         : SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_EXCLUDING_HIDDEN;
 
-    return database
-        .createQuery(SubredditSubscription.TABLE_NAME, getQuery, "%" + filterTerm + "%")
+    return database.createQuery(SubredditSubscription.TABLE_NAME, getQuery, "%" + filterTerm + "%")
         .mapToList(SubredditSubscription.MAPPER)
         .map(toImmutable())
         .flatMap(filteredSubs -> {
