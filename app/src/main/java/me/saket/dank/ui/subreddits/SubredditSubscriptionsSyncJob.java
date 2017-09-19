@@ -12,8 +12,11 @@ import android.text.format.DateUtils;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
+import javax.inject.Inject;
+
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.di.Dank;
 import timber.log.Timber;
 
@@ -29,6 +32,8 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
    */
   private static final BehaviorRelay<Boolean> progressSubject = BehaviorRelay.create();
 
+  @Inject SubredditSubscriptionManager subscriptionManager;
+
   /**
    * Sync subscriptions every ~6 hours when the device is idle, charging and on an unmetered connection.
    */
@@ -42,6 +47,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
         .build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
     jobScheduler.schedule(syncJob);
   }
 
@@ -53,6 +59,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
         .build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
     jobScheduler.schedule(syncJob);
   }
 
@@ -64,11 +71,17 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
   }
 
   @Override
+  public void onCreate() {
+    Dank.dependencyInjector().inject(this);
+    super.onCreate();
+  }
+
+  @Override
   public boolean onStartJob(JobParameters params) {
     // TODO: Run periodic job only if user is logged in.
 
-    unsubscribeOnDestroy(Dank.subscriptions().refreshSubscriptions()
-        .andThen(Dank.subscriptions().executePendingSubscribesAndUnsubscribes())
+    unsubscribeOnDestroy(subscriptionManager.refreshSubscriptions()
+        .andThen(subscriptionManager.executePendingSubscribesAndUnsubscribes())
         .compose(applySchedulersCompletable())
         .compose(doOnCompletableStartAndTerminate(ongoing -> progressSubject.accept(ongoing)))
         .subscribe(

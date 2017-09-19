@@ -89,8 +89,8 @@ public class DankRedditClient {
     return onRedditClientAuthenticatedRelay;
   }
 
-  public SubredditPaginator subredditPaginator(String subredditName) {
-    if (Dank.subscriptions().isFrontpage(subredditName)) {
+  public SubredditPaginator subredditPaginator(String subredditName, boolean isFrontpage) {
+    if (isFrontpage) {
       return new SubredditPaginator(redditClient);
     } else {
       return new SubredditPaginator(redditClient, subredditName);

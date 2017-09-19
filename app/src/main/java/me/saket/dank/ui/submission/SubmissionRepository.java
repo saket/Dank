@@ -39,6 +39,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
+import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddits.NetworkCallStatus;
 import me.saket.dank.utils.Commons;
@@ -53,17 +54,19 @@ public class SubmissionRepository {
   private final DankRedditClient dankRedditClient;
   private final VotingManager votingManager;
   private final Set<String> savedSubmissionIds = new HashSet<>();
-  private ErrorResolver errorResolver;
+  private final ErrorResolver errorResolver;
+  private final SubredditSubscriptionManager subscriptionManager;
 
   @Inject
   public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager,
-      ErrorResolver errorResolver)
+      ErrorResolver errorResolver, SubredditSubscriptionManager subscriptionManager)
   {
     this.database = briteDatabase;
     this.moshi = moshi;
     this.dankRedditClient = dankRedditClient;
     this.votingManager = votingManager;
     this.errorResolver = errorResolver;
+    this.subscriptionManager = subscriptionManager;
   }
 
   /**
@@ -227,7 +230,8 @@ public class SubmissionRepository {
 
   @CheckResult
   private FetchResult fetchSubmissionsFromRemoteWithAnchor(CachedSubmissionFolder folder, PaginationAnchor anchor) {
-    SubredditPaginator subredditPaginator = dankRedditClient.subredditPaginator(folder.subredditName());
+    boolean isFrontpage = subscriptionManager.isFrontpage(folder.subredditName());
+    SubredditPaginator subredditPaginator = dankRedditClient.subredditPaginator(folder.subredditName(), isFrontpage);
     if (!anchor.isEmpty()) {
       subredditPaginator.setStartAfterThing(anchor.fullName());
     }

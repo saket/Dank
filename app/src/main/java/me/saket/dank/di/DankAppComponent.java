@@ -23,6 +23,8 @@ import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.ui.subreddits.SubredditPickerSheetView;
+import me.saket.dank.ui.subreddits.SubredditSubscriptionsSyncJob;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.ui.user.messages.InboxActivity;
@@ -81,4 +83,8 @@ public interface DankAppComponent {
   void inject(HiddenPreferencesActivity activity);
 
   void inject(SubredditActivity activity);
+
+  void inject(SubredditSubscriptionsSyncJob service);
+
+  void inject(SubredditPickerSheetView view);
 }

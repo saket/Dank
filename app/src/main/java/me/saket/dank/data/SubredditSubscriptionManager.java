@@ -242,7 +242,7 @@ public class SubredditSubscriptionManager {
 
   @CheckResult
   public Observable<Boolean> isSubscribed(String subredditName) {
-    return Dank.subscriptions().getAllIncludingHidden()  // This ensures that the DB is never empty.
+    return getAllIncludingHidden()  // This ensures that the DB is never empty.
         .map(subscriptions -> {
           for (SubredditSubscription subscription : subscriptions) {
             if (subscription.name().equalsIgnoreCase(subredditName)) {

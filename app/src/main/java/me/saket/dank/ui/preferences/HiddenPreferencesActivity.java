@@ -20,6 +20,7 @@ import butterknife.ButterKnife;
 import io.reactivex.Completable;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
+import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -37,6 +38,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
   @Inject BriteDatabase briteDatabase;
   @Inject SubmissionRepository submissionRepository;
+  @Inject SubredditSubscriptionManager subscriptionManager;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
@@ -83,7 +85,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     });
 
     addButton("Clear subreddit subscriptions", o -> {
-      Dank.subscriptions().removeAll()
+      subscriptionManager.removeAll()
           .subscribeOn(Schedulers.io())
           .subscribe();
     });

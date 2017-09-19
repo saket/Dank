@@ -43,6 +43,8 @@ import net.dean.jraw.models.Subreddit;
 import java.util.Collections;
 import java.util.List;
 
+import javax.inject.Inject;
+
 import butterknife.BindColor;
 import butterknife.BindDimen;
 import butterknife.BindView;
@@ -56,6 +58,7 @@ import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
+import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RxUtils;
@@ -91,6 +94,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   @BindDimen(R.dimen.subreddit_picker_sheet_height) int collapsedPickerSheetHeight;
   @BindDimen(R.dimen.subreddit_picker_sheet_bottom_margin) int parentSheetBottomMarginForShadows;
   @BindColor(R.color.subredditpicker_subreddit_button_tint_selected) int focusedSubredditButtonTintColor;
+
+  @Inject SubredditSubscriptionManager subscriptionManager;
 
   private ViewGroup activityRootLayout;
   private ToolbarExpandableSheet parentSheet;
@@ -138,6 +143,12 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     itemAnimator = new SlideLeftAlphaAnimator(0);
   }
 
+  @Override
+  protected void onFinishInflate() {
+    super.onFinishInflate();
+    Dank.dependencyInjector().inject(this);
+  }
+
   public boolean shouldInterceptPullToCollapse(float downX, float downY) {
     // FlexboxLayoutManager does not override methods required for View#canScrollVertically.
     // So let's intercept all pull-to-collapses if the touch is made on the list.
@@ -161,7 +172,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     setupSubredditsSearch();
 
     // Track changes in subscriptions and send a callback if needed when this sheet collapses.
-    subscriptions.add(Dank.subscriptions()
+    subscriptions.add(subscriptionManager
         .getAllIncludingHidden()
         .scan((oldSubscriptions, newSubscriptions) -> {
           if (oldSubscriptions.size() != newSubscriptions.size()) {
@@ -228,7 +239,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         })
         .flatMap(o -> showHiddenSubredditsSubject)
         .observeOn(io())
-        .switchMap(showHidden -> Dank.subscriptions().getAll(searchView.getText().toString(), showHidden))
+        .switchMap(showHidden -> subscriptionManager.getAll(searchView.getText().toString(), showHidden))
         .map(filteredSubs -> {
           if (sheetState == SheetState.BROWSE_SUBS) {
             // If search is active, show user's search term in the results unless an exact match was found.
@@ -427,8 +438,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView, Gravity.BOTTOM, 0, R.style.DankPopupMenu_SubredditOptions);
     popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
 
-    popupMenu.getMenu().findItem(R.id.action_set_subreddit_as_default).setVisible(!Dank.subscriptions().isDefault(subscription));
-    popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit).setVisible(!Dank.subscriptions().isFrontpage(subscription.name()));
+    popupMenu.getMenu().findItem(R.id.action_set_subreddit_as_default).setVisible(!subscriptionManager.isDefault(subscription));
+    popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit).setVisible(!subscriptionManager.isFrontpage(subscription.name()));
     popupMenu.getMenu().findItem(R.id.action_hide_subreddit).setVisible(!subscription.isHidden());
     popupMenu.getMenu().findItem(R.id.action_unhide_subreddit).setVisible(subscription.isHidden());
 
@@ -438,33 +449,33 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     popupMenu.setOnMenuItemClickListener(item -> {
       switch (item.getItemId()) {
         case R.id.action_set_subreddit_as_default:
-          Dank.subscriptions().setAsDefault(subscription);
+          subscriptionManager.setAsDefault(subscription);
           return true;
 
         case R.id.action_unsubscribe_subreddit:
-          if (Dank.subscriptions().isDefault(subscription)) {
-            Dank.subscriptions().resetDefaultSubreddit();
+          if (subscriptionManager.isDefault(subscription)) {
+            subscriptionManager.resetDefaultSubreddit();
           }
 
-          Dank.subscriptions()
+          subscriptionManager
               .unsubscribe(subscription)
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), logError("Couldn't unsubscribe: %s", subscription));
           return true;
 
         case R.id.action_hide_subreddit:
-          if (Dank.subscriptions().isDefault(subscription)) {
-            Dank.subscriptions().resetDefaultSubreddit();
+          if (subscriptionManager.isDefault(subscription)) {
+            subscriptionManager.resetDefaultSubreddit();
           }
 
-          Dank.subscriptions()
+          subscriptionManager
               .setHidden(subscription, true)
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), logError("Couldn't hide: %s", subscription));
           return true;
 
         case R.id.action_unhide_subreddit:
-          Dank.subscriptions()
+          subscriptionManager
               .setHidden(subscription, false)
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), logError("Couldn't unhide: %s", subscription));
@@ -512,7 +523,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     // Enable item change animation, until the user starts searching.
     subredditList.setItemAnimator(itemAnimator);
 
-    subscriptions.add(Dank.subscriptions().subscribe(newSubreddit)
+    subscriptions.add(subscriptionManager.subscribe(newSubreddit)
         .andThen(Completable.fromAction(findAndHighlightSubredditAction))
         .compose(applySchedulersCompletable())
         .subscribe(doNothingCompletable(), doNothing())
