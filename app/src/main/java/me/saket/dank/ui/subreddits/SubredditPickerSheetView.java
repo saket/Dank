@@ -42,7 +42,6 @@ import net.dean.jraw.models.Subreddit;
 
 import java.util.Collections;
 import java.util.List;
-
 import javax.inject.Inject;
 
 import butterknife.BindColor;
@@ -135,18 +134,13 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     super(context);
     inflate(context, R.layout.view_subreddit_picker_sheet, this);
     ButterKnife.bind(this, this);
+    Dank.dependencyInjector().inject(this);
 
     saveButton.setVisibility(INVISIBLE);
     sheetState = SheetState.BROWSE_SUBS;
     subscriptions = new CompositeDisposable();
     showHiddenSubredditsSubject = BehaviorRelay.createDefault(false);
     itemAnimator = new SlideLeftAlphaAnimator(0);
-  }
-
-  @Override
-  protected void onFinishInflate() {
-    super.onFinishInflate();
-    Dank.dependencyInjector().inject(this);
   }
 
   public boolean shouldInterceptPullToCollapse(float downX, float downY) {

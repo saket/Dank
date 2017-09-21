@@ -2,6 +2,7 @@ package me.saket.dank.ui.subreddits;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
+import static io.reactivex.schedulers.Schedulers.single;
 import static me.saket.dank.di.Dank.subscriptions;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
@@ -470,12 +471,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         });
 
     // Cache pre-fill.
+    int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
     cachedSubmissionStream
         .withLatestFrom(submissionFolderStream, Pair::create)
+        .observeOn(single())
         .flatMap(pair -> subscriptionManager.isSubscribed(pair.second.subredditName())
             .flatMap(isSubscribed -> isSubscribed ? Observable.just(pair.first) : Observable.never())
         )
-        .switchMap(cachedSubmissions -> cachePreFiller.preFillComments(cachedSubmissions).toObservable())
+        .switchMap(cachedSubmissions -> cachePreFiller.preFill(cachedSubmissions, deviceDisplayWidth).toObservable())
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
   }

@@ -102,7 +102,9 @@ public class SubmissionImageHolder {
     };
   }
 
+  // TODO Do not hold bitmaps. They might get recycled.
   @CheckResult
+  @Deprecated
   public Observable<Bitmap> streamImageBitmaps() {
     return imageStream.map(drawable -> getBitmapFromDrawable(drawable));
   }

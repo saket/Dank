@@ -69,7 +69,6 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
-import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -844,6 +843,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       // Wait till the submission is fetched before loading content.
       unsubscribeOnDestroy(
           submissionStream
+              .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
               .take(1)
               .subscribe(fetchedSubmission -> {
                 unsubscribeOnCollapse(
@@ -871,7 +871,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           }
 
           return mediaHostRepository.resolveActualLinkIfNeeded(((MediaLink) parsedLink))
-              .delay(BuildConfig.DEBUG ? 3 : 0, TimeUnit.SECONDS) // TODO: 10/09/17 remoev!
               .subscribeOn(io())
               .doOnSubscribe(o -> {
                 // Progress bar is later hidden in the subscribe() block.
