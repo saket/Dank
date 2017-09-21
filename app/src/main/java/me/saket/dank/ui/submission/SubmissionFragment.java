@@ -940,7 +940,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                   } else {
                     contentLoadProgressView.hide();
                     //noinspection ConstantConditions
-                    unsubscribeOnCollapse(linkDetailsViewHolder.populate(((RedditLink) resolvedLink)));
+                    unsubscribeOnCollapse(
+                        linkDetailsViewHolder.populate(((RedditLink) resolvedLink))
+                    );
                     linkDetailsView.setOnClickListener(o -> {
                       urlRouter.forLink(resolvedLink)
                           .expandFromBelowToolbar()

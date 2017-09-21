@@ -1,5 +1,7 @@
 package me.saket.dank.data;
 
+import android.support.annotation.CheckResult;
+
 import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.store3.base.impl.Store;
@@ -41,6 +43,7 @@ public class LinkMetadataRepository {
         .open();
   }
 
+  @CheckResult
   public Single<LinkMetadata> unfurl(Link link) {
     return linkMetadataStore.get(link);
   }

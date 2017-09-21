@@ -65,6 +65,7 @@ import timber.log.Timber;
 public class SubmissionLinkViewHolder {
 
   private static final int TINT_TRANSITION_ANIMATION_DURATION = 300;
+  public static final boolean UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS = true;
 
   @BindView(R.id.submission_link_icon_container) ViewGroup iconContainer;
   @BindView(R.id.submission_link_thumbnail) ImageView thumbnailView;
@@ -188,6 +189,10 @@ public class SubmissionLinkViewHolder {
   }
 
   private Disposable populateSubmissionTitle(RedditSubmissionLink submissionLink) {
+    if (!UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS) {
+      throw new UnsupportedOperationException();
+    }
+
     // Downloading the page's HTML to get the title is faster than getting the submission's data from the API.
     //noinspection ConstantConditions
     return linkMetadataRepository.unfurl(submissionLink)

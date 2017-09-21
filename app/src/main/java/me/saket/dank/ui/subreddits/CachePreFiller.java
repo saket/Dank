@@ -12,7 +12,6 @@ import android.util.Pair;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.Target;
 
-import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
@@ -26,12 +25,13 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.functions.BiPredicate;
 import me.saket.dank.R;
+import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.submission.SubmissionLinkViewHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;
-import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.UrlParser;
 import timber.log.Timber;
 
@@ -42,6 +42,7 @@ public class CachePreFiller {
   private final SubmissionRepository submissionRepository;
   private final ConnectivityManager connectivityManager;
   private final MediaHostRepository mediaHostRepository;
+  private final LinkMetadataRepository linkMetadataRepository;
   private final int thumbnailWidthForSubmissionAlbumLink;
 
   private enum PreFillThing {
@@ -59,21 +60,21 @@ public class CachePreFiller {
 
   @Inject
   public CachePreFiller(Application appContext, SubmissionRepository submissionRepository, ConnectivityManager connectivityManager,
-      MediaHostRepository mediaHostRepository)
+      MediaHostRepository mediaHostRepository, LinkMetadataRepository linkMetadataRepository)
   {
     this.appContext = appContext;
     this.submissionRepository = submissionRepository;
     this.connectivityManager = connectivityManager;
     this.mediaHostRepository = mediaHostRepository;
+    this.linkMetadataRepository = linkMetadataRepository;
 
     thumbnailWidthForSubmissionAlbumLink = appContext.getResources().getDimensionPixelSize(R.dimen.submission_link_thumbnail_width_album);
   }
 
   /**
    * TODO: Block multiple in-flight requests.
-   * TODO: Handle PreFillPreference.NEVER.
    * TODO: Skip already cached items.
-   * TODO: Rename Link.Type.REDDIT_PAGE to something else.
+   * TODO: Tests.
    */
   @CheckResult
   public Completable preFill(List<Submission> submissions, int deviceDisplayWidth) {
@@ -83,22 +84,17 @@ public class CachePreFiller {
           return Pair.create(submission, contentLink);
         });
 
-    Observable<PreFillPreference> preferenceStream = Observable.just(PreFillPreference.WIFI_ONLY);
-    Observable<NetworkInfo> networkChangeStream = streamNetworkInfoChanges().doOnNext(o -> Timber.i("Network changed"));
+    Observable<NetworkInfo> networkChangeStream = streamNetworkInfoChanges()
+        .distinctUntilChanged(networkInfoComparator())
+        .doOnNext(o -> Timber.i("Network changed"));
 
     Timber.d("Pre-filling cache for %s submissions", submissions.size());
 
-    Observable<Pair<PreFillPreference, NetworkInfo>> preferenceAndNetworkInfoStream = Observable.combineLatest(
-        preferenceStream,
-        networkChangeStream.distinctUntilChanged(networkInfoComparator()),
-        Pair::create
-    );
-
-    // Images and GIFs.
-    Observable<Object> imagePreFillStream = preferenceAndNetworkInfoStream
+    // Images and GIFs that couldn't be converted to videos.
+    Observable imageCachePreFillStream = Observable.combineLatest(streamPreFillPreference(PreFillThing.IMAGES), networkChangeStream, Pair::create)
+        .filter(pair -> pair.first != PreFillPreference.NEVER)
         .filter(pair -> satisfiesNetworkRequirement(pair.first, pair.second))
-        .switchMap(o -> submissionAndContentStream
-            .filter(pair -> pair.second.isImageOrGif() || pair.second.isMediaAlbum())
+        .switchMap(o -> submissionAndContentStream.filter(pair -> pair.second.isImageOrGif() || pair.second.isMediaAlbum())
             .concatMap(pair -> {
               Submission submission = pair.first;
               MediaLink contentLink = (MediaLink) pair.second;
@@ -109,6 +105,28 @@ public class CachePreFiller {
                   .toObservable();
             })
         );
+
+    // Link metadata.
+    Observable linkCacheFillStream = Observable.combineLatest(streamPreFillPreference(PreFillThing.LINK_METADATA), networkChangeStream, Pair::create)
+        .filter(pair -> pair.first != PreFillPreference.NEVER)
+        .filter(pair -> satisfiesNetworkRequirement(pair.first, pair.second))
+        .switchMap(o -> submissionAndContentStream
+            .filter(pair -> {
+              Link contentLink = pair.second;
+              Submission submission = pair.first;
+              boolean isAnotherRedditPage = contentLink.isRedditPage() && !submission.isSelfPost();
+              //noinspection ConstantConditions
+              return (SubmissionLinkViewHolder.UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS && isAnotherRedditPage) || contentLink.isExternal();
+            })
+            .concatMap(pair -> preFillLinkMetadata(pair.first, pair.second)
+                .doOnSubscribe(d -> Timber.i("Caching link: %s", pair.second.unparsedUrl()))
+                .toObservable()
+                .onErrorResumeNext(Observable.empty())
+            )
+        );
+
+    // Comments.
+    Observable commentCacheFillStream = Observable.empty();
 
 //    return preferenceAndNetworkInfoStream
 //        .switchMap(pair -> {
@@ -131,7 +149,11 @@ public class CachePreFiller {
 //        .take(2)
 //        .ignoreElements();
 
-    return Observable.merge(imagePreFillStream, Observable.empty()).ignoreElements();
+    return Observable.merge(imageCachePreFillStream, linkCacheFillStream, commentCacheFillStream).ignoreElements();
+  }
+
+  private Observable<PreFillPreference> streamPreFillPreference(PreFillThing images) {
+    return Observable.just(PreFillPreference.WIFI_ONLY);
   }
 
   @CheckResult
@@ -215,47 +237,52 @@ public class CachePreFiller {
               throw new AssertionError();
           }
         })
-        .flatMapCompletable(imageUrls -> Completable.fromAction(() -> {
-          for (String imageUrl : imageUrls) {
-            // Glide internally also maintains a queue, but we want to load them sequentially
-            // ourselves so that this Rx chain can be canceled later when the subreddit changes.
-            //final long startTime = System.currentTimeMillis();
-            Glide.with(appContext)
-                .downloadOnly()
-                .load(imageUrl)
-                .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
-                .get();
-            //Timber.i("Image downloaded: %s, time: %sms", imageUrl, System.currentTimeMillis() - startTime);
-          }
-        }));
+        .flatMapCompletable(imageUrls -> downloadImages(imageUrls));
   }
 
-  private Completable preFillComments(Submission submission, PreFillPreference preFillPreference, NetworkInfo networkInfo) {
-    if (satisfiesNetworkRequirement(preFillPreference, networkInfo)) {
-      DankSubmissionRequest request = DankSubmissionRequest.builder(submission.getId())
-          .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : CommentSort.TOP)
-          .build();
-      // TODO: Check in DB before making this expensive call.
-      return submissionRepository.submissionWithComments(request)
-          .take(1)
-          .ignoreElements()
-          .doOnComplete(() -> Timber.i("- comments pre-filled"));
-
-    } else {
-      return Completable.complete();
-    }
+  private Completable downloadImages(List<String> imageUrls) {
+    return Completable.fromAction(() -> {
+      for (String imageUrl : imageUrls) {
+        // Glide internally also maintains a queue, but we want to load them sequentially
+        // ourselves so that this Rx chain can be canceled later when the subreddit changes.
+        //final long startTime = System.currentTimeMillis();
+        Glide.with(appContext)
+            .downloadOnly()
+            .load(imageUrl)
+            .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
+            .get();
+        //Timber.i("Image downloaded: %s, time: %sms", imageUrl, System.currentTimeMillis() - startTime);
+      }
+    });
   }
 
+  private Completable preFillLinkMetadata(Submission submission, Link contentLink) {
+    return linkMetadataRepository.unfurl(contentLink)
+        .flatMapCompletable(linkMetadata -> {
+          String faviconUrl = linkMetadata.faviconUrl();
+          String thumbnailImageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
+              submission.getThumbnails(),
+              thumbnailWidthForSubmissionAlbumLink,
+              linkMetadata.imageUrl()
+          );
+
+          return downloadImages(Arrays.asList(thumbnailImageUrl, faviconUrl));
+        });
+  }
 //
-//  @CheckResult
-//  private Observable<Boolean> streamPreFillWindows(PreFillThing thing) {
-//    // TODO: Get from user preferences for PreFillThing.
-//    Observable<PreFillPreference> preferenceStream = Observable.just(PreFillPreference.WIFI_ONLY);
-//    Observable<NetworkInfo> networkInfoStream = streamNetworkInfoChanges().doOnNext(o -> Timber.i("Network changed"));
+//  private Completable preFillComments(Submission submission, PreFillPreference preFillPreference, NetworkInfo networkInfo) {
+//    if (satisfiesNetworkRequirement(preFillPreference, networkInfo)) {
+//      DankSubmissionRequest request = DankSubmissionRequest.builder(submission.getId())
+//          .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : CommentSort.TOP)
+//          .build();
+//      // TODO: Check in DB before making this expensive call.
+//      return submissionRepository.submissionWithComments(request)
+//          .take(1)
+//          .ignoreElements()
+//          .doOnComplete(() -> Timber.i("- comments pre-filled"));
 //
-//    return Observable.combineLatest(preferenceStream, networkInfoStream, Pair::create)
-//        .filter(pair -> pair.first != PreFillPreference.NEVER)
-//        .map(pair -> satisfiesNetworkRequirement(pair.first, pair.second))
-//        .filter(satisfied -> satisfied);
+//    } else {
+//      return Completable.complete();
+//    }
 //  }
 }
