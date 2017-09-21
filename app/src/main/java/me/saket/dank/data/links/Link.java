@@ -11,7 +11,7 @@ public abstract class Link implements Parcelable {
     /**
      * Submission / user / subreddit.
      */
-    REDDIT_HOSTED,
+    REDDIT_PAGE,
 
     SINGLE_IMAGE_OR_GIF,
 
@@ -41,8 +41,8 @@ public abstract class Link implements Parcelable {
     return type() == Type.EXTERNAL;
   }
 
-  public boolean isRedditHosted() {
-    return type() == Type.REDDIT_HOSTED;
+  public boolean isRedditPage() {
+    return type() == Type.REDDIT_PAGE;
   }
 
   public boolean isMediaAlbum() {

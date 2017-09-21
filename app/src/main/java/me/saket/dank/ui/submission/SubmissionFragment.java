@@ -902,7 +902,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .observeOn(mainThread())
         .doOnSuccess(resolvedLink -> {
           boolean isImgurAlbum = resolvedLink instanceof ImgurAlbumLink;
-          boolean isRedditHostedLink = resolvedLink.isRedditHosted() && !submission.isSelfPost();
+          boolean isRedditHostedLink = resolvedLink.isRedditPage() && !submission.isSelfPost();
           linkDetailsViewHolder.setVisible(!isImgurAlbum && resolvedLink.isExternal() || isRedditHostedLink);
           selfPostTextView.setVisibility(submission.isSelfPost() ? View.VISIBLE : View.GONE);
           contentImageView.setVisibility(resolvedLink.isImageOrGif() ? View.VISIBLE : View.GONE);
@@ -929,7 +929,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                   });
                   break;
 
-                case REDDIT_HOSTED:
+                case REDDIT_PAGE:
                   if (submission.isSelfPost()) {
                     contentLoadProgressView.hide();
                     String selfTextHtml = submission.getDataNode().get("selftext_html").asText(submission.getSelftext() /* defaultValue */);

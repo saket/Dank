@@ -7,6 +7,6 @@ public abstract class RedditLink extends Link {
 
   @Override
   public Link.Type type() {
-    return Link.Type.REDDIT_HOSTED;
+    return Link.Type.REDDIT_PAGE;
   }
 }

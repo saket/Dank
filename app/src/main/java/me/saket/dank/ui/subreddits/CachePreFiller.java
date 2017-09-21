@@ -73,7 +73,7 @@ public class CachePreFiller {
    * TODO: Block multiple in-flight requests.
    * TODO: Handle PreFillPreference.NEVER.
    * TODO: Skip already cached items.
-   * TODO: Rename Link.Type.REDDIT_HOSTED to something else.
+   * TODO: Rename Link.Type.REDDIT_PAGE to something else.
    */
   @CheckResult
   public Completable preFill(List<Submission> submissions, int deviceDisplayWidth) {

@@ -65,7 +65,7 @@ public class LinkMetadataRepository {
 
   private Single<LinkMetadata> unfurlLinkFromRemote(Link link) {
     // Reddit uses different title for sharing to social media, which we don't want.
-    boolean ignoreSocialMetadata = link.isRedditHosted();
+    boolean ignoreSocialMetadata = link.isRedditPage();
     return dankApi.unfurlUrl(link.unparsedUrl(), ignoreSocialMetadata)
         .map(response -> {
           if (response.error() == null) {
