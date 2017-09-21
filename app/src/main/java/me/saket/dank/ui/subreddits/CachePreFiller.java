@@ -7,11 +7,13 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.support.annotation.CheckResult;
+import android.support.annotation.NonNull;
 import android.util.Pair;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.Target;
 
+import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
@@ -24,6 +26,7 @@ import javax.inject.Singleton;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.functions.BiPredicate;
+import io.reactivex.functions.Predicate;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ImgurAlbumLink;
@@ -32,6 +35,7 @@ import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionLinkViewHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;
+import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.UrlParser;
 import timber.log.Timber;
 
@@ -78,78 +82,86 @@ public class CachePreFiller {
    */
   @CheckResult
   public Completable preFill(List<Submission> submissions, int deviceDisplayWidth) {
-    Observable<Pair<Submission, Link>> submissionAndContentStream = Observable.fromIterable(submissions)
+    Observable<Pair<Submission, Link>> submissionAndContentLinkStream = Observable.fromIterable(submissions)
         .map(submission -> {
           Link contentLink = UrlParser.parse(submission.getUrl());
           return Pair.create(submission, contentLink);
         });
 
-    Observable<NetworkInfo> networkChangeStream = streamNetworkInfoChanges()
-        .distinctUntilChanged(networkInfoComparator())
-        .doOnNext(o -> Timber.i("Network changed"));
-
-    Timber.d("Pre-filling cache for %s submissions", submissions.size());
+    Observable<NetworkInfo> networkChangeStream = streamNetworkInfoChanges().distinctUntilChanged(networkInfoComparator());
+    //Timber.d("Pre-filling cache for %s submissions", submissions.size());
 
     // Images and GIFs that couldn't be converted to videos.
     Observable imageCachePreFillStream = Observable.combineLatest(streamPreFillPreference(PreFillThing.IMAGES), networkChangeStream, Pair::create)
-        .filter(pair -> pair.first != PreFillPreference.NEVER)
-        .filter(pair -> satisfiesNetworkRequirement(pair.first, pair.second))
-        .switchMap(o -> submissionAndContentStream.filter(pair -> pair.second.isImageOrGif() || pair.second.isMediaAlbum())
-            .concatMap(pair -> {
-              Submission submission = pair.first;
-              MediaLink contentLink = (MediaLink) pair.second;
-
-              //Timber.i("Caching image link: %s", submission.getTitle());
-              return preFillSingleImageOrAlbum(submission, contentLink, deviceDisplayWidth)
-                  .onErrorComplete()
-                  .toObservable();
-            })
+        .switchMap(preferenceAndNetworkInfo -> Observable.just(preferenceAndNetworkInfo)
+            .filter(isCachingAllowed())
+            .filter(satisfiesNetworkRequirement())
+            .flatMap(o -> submissionAndContentLinkStream
+                .filter(submissionContentAreImages())
+                .concatMap(submissionAndLink -> preFillImageOrAlbum(submissionAndLink.first, (MediaLink) submissionAndLink.second, deviceDisplayWidth)
+                    .onErrorComplete()
+                    .toObservable())
+            )
         );
 
     // Link metadata.
     Observable linkCacheFillStream = Observable.combineLatest(streamPreFillPreference(PreFillThing.LINK_METADATA), networkChangeStream, Pair::create)
-        .filter(pair -> pair.first != PreFillPreference.NEVER)
-        .filter(pair -> satisfiesNetworkRequirement(pair.first, pair.second))
-        .switchMap(o -> submissionAndContentStream
-            .filter(pair -> {
-              Link contentLink = pair.second;
-              Submission submission = pair.first;
-              boolean isAnotherRedditPage = contentLink.isRedditPage() && !submission.isSelfPost();
-              //noinspection ConstantConditions
-              return (SubmissionLinkViewHolder.UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS && isAnotherRedditPage) || contentLink.isExternal();
-            })
-            .concatMap(pair -> preFillLinkMetadata(pair.first, pair.second)
-                .doOnSubscribe(d -> Timber.i("Caching link: %s", pair.second.unparsedUrl()))
-                .toObservable()
-                .onErrorResumeNext(Observable.empty())
+        .switchMap(preferenceAndNetworkInfo -> Observable.just(preferenceAndNetworkInfo)
+            .filter(isCachingAllowed())
+            .filter(satisfiesNetworkRequirement())
+            .flatMap(o -> submissionAndContentLinkStream
+                .filter(submissionContentIsExternalLink())
+                .concatMap(submissionAndLink -> preFillLinkMetadata(submissionAndLink.first, submissionAndLink.second)
+                    .toObservable()
+                    .onErrorResumeNext(Observable.empty())
+                )
             )
         );
 
     // Comments.
-    Observable commentCacheFillStream = Observable.empty();
-
-//    return preferenceAndNetworkInfoStream
-//        .switchMap(pair -> {
-//          PreFillPreference preFillPreference = pair.first;
-//          NetworkInfo networkInfo = pair.second;
-//
-//          return submissionStream.concatMap(submission ->
-//              preFillComments(submission, preFillPreference, networkInfo)
-//                  .doOnSubscribe(o -> Timber.i("%s", submission.getTitle()))
-//                  .andThen(preFillImage(submission, preFillPreference, networkInfo))
-//                  //.doOnNext(preFillImageRequestStream)
-//                  //.doOnNext(preFillCommentsRequestStream)
-//                  //.doOnNext(preFillLinkMetadataRequestStream)
-//                  //.doOnNext(preFillVideoRequestStream)
-//                  .toObservable()
-//          );
-//        })
-//        .doOnNext(o -> Timber.d("All pre-filled!"))
-//        .doOnDispose(() -> Timber.i("Stopping pre-fill"))
-//        .take(2)
-//        .ignoreElements();
+    Observable commentCacheFillStream = Observable.combineLatest(streamPreFillPreference(PreFillThing.COMMENTS), networkChangeStream, Pair::create)
+        .switchMap(pair -> Observable.just(pair)
+            .filter(isCachingAllowed())
+            .filter(satisfiesNetworkRequirement())
+            .flatMap(o -> submissionAndContentLinkStream.concatMap(submissionAndLink -> preFillComment(submissionAndLink.first)
+                //.doOnSubscribe(d -> Timber.i("Caching comments: %s", submissionAndLink.second.unparsedUrl()))
+                .toObservable())
+                .onErrorResumeNext(Observable.empty())
+            )
+        );
 
     return Observable.merge(imageCachePreFillStream, linkCacheFillStream, commentCacheFillStream).ignoreElements();
+  }
+
+  private Predicate<Pair<PreFillPreference, NetworkInfo>> isCachingAllowed() {
+    return pair -> pair.first != PreFillPreference.NEVER;
+  }
+
+  private Predicate<Pair<PreFillPreference, NetworkInfo>> satisfiesNetworkRequirement() {
+    return pair -> {
+      PreFillPreference preFillPreference = pair.first;
+      NetworkInfo networkInfo = pair.second;
+      if (!networkInfo.isConnectedOrConnecting()) {
+        return false;
+      }
+
+      Timber.d("--------------------------------");
+      boolean isConnectedToWifi = networkInfo.getType() == ConnectivityManager.TYPE_WIFI;
+      boolean isConnectedToMobileData = networkInfo.getType() == ConnectivityManager.TYPE_MOBILE;
+      //Timber.i("preference: %s", preference);
+      //Timber.i("isConnectedToWifi: %s", isConnectedToWifi);
+      //Timber.i("isConnectedToMobileData: %s", isConnectedToMobileData);
+
+      if (preFillPreference == PreFillPreference.WIFI_ONLY) {
+        return isConnectedToWifi;
+      }
+
+      if (preFillPreference == PreFillPreference.WIFI_OR_MOBILE_DATA) {
+        return isConnectedToMobileData || isConnectedToWifi;
+      }
+
+      throw new AssertionError("Unknown network type. PreFillPreference: " + preFillPreference + ", network type: " + networkInfo.getType());
+    };
   }
 
   private Observable<PreFillPreference> streamPreFillPreference(PreFillThing images) {
@@ -184,30 +196,12 @@ public class CachePreFiller {
     return (last, current) -> last.isConnectedOrConnecting() == current.isConnectedOrConnecting() && last.getType() == current.getType();
   }
 
-  private boolean satisfiesNetworkRequirement(PreFillPreference preference, NetworkInfo networkInfo) throws AssertionError {
-    if (!networkInfo.isConnectedOrConnecting()) {
-      return false;
-    }
-
-    Timber.d("--------------------------------");
-    boolean isConnectedToWifi = networkInfo.getType() == ConnectivityManager.TYPE_WIFI;
-    boolean isConnectedToMobileData = networkInfo.getType() == ConnectivityManager.TYPE_MOBILE;
-    //Timber.i("preference: %s", preference);
-    //Timber.i("isConnectedToWifi: %s", isConnectedToWifi);
-    //Timber.i("isConnectedToMobileData: %s", isConnectedToMobileData);
-
-    if (preference == PreFillPreference.WIFI_ONLY) {
-      return isConnectedToWifi;
-    }
-
-    if (preference == PreFillPreference.WIFI_OR_MOBILE_DATA) {
-      return isConnectedToMobileData || isConnectedToWifi;
-    }
-
-    throw new AssertionError("Unknown network type. PreFillPreference: " + preference + ", network type: " + networkInfo.getType());
+  @NonNull
+  private Predicate<Pair<Submission, Link>> submissionContentAreImages() {
+    return submissionAndLink -> submissionAndLink.second.isImageOrGif() || submissionAndLink.second.isMediaAlbum();
   }
 
-  private Completable preFillSingleImageOrAlbum(Submission submission, MediaLink mediaLink, int deviceDisplayWidth) {
+  private Completable preFillImageOrAlbum(Submission submission, MediaLink mediaLink, int deviceDisplayWidth) {
     return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .map(resolvedLink -> {
           switch (resolvedLink.type()) {
@@ -256,6 +250,17 @@ public class CachePreFiller {
     });
   }
 
+  @NonNull
+  private Predicate<Pair<Submission, Link>> submissionContentIsExternalLink() {
+    return submissionAndLink -> {
+      Link contentLink = submissionAndLink.second;
+      Submission submission = submissionAndLink.first;
+      boolean isAnotherRedditPage = contentLink.isRedditPage() && !submission.isSelfPost();
+      //noinspection ConstantConditions
+      return (SubmissionLinkViewHolder.UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS && isAnotherRedditPage) || contentLink.isExternal();
+    };
+  }
+
   private Completable preFillLinkMetadata(Submission submission, Link contentLink) {
     return linkMetadataRepository.unfurl(contentLink)
         .flatMapCompletable(linkMetadata -> {
@@ -269,20 +274,15 @@ public class CachePreFiller {
           return downloadImages(Arrays.asList(thumbnailImageUrl, faviconUrl));
         });
   }
-//
-//  private Completable preFillComments(Submission submission, PreFillPreference preFillPreference, NetworkInfo networkInfo) {
-//    if (satisfiesNetworkRequirement(preFillPreference, networkInfo)) {
-//      DankSubmissionRequest request = DankSubmissionRequest.builder(submission.getId())
-//          .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : CommentSort.TOP)
-//          .build();
-//      // TODO: Check in DB before making this expensive call.
-//      return submissionRepository.submissionWithComments(request)
-//          .take(1)
-//          .ignoreElements()
-//          .doOnComplete(() -> Timber.i("- comments pre-filled"));
-//
-//    } else {
-//      return Completable.complete();
-//    }
-//  }
+
+  private Completable preFillComment(Submission submission) {
+    DankSubmissionRequest request = DankSubmissionRequest.builder(submission.getId())
+        .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : CommentSort.TOP)
+        .build();
+
+    return submissionRepository.submissionWithComments(request)
+        .take(1)
+        .ignoreElements();
+        //.doOnComplete(() -> Timber.i("- comments pre-filled"));
+  }
 }
