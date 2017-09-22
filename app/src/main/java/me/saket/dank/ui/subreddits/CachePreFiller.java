@@ -26,7 +26,10 @@ import io.reactivex.Scheduler;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
+import me.saket.dank.data.CachePreFillNetworkPreference;
+import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
@@ -47,29 +50,18 @@ public class CachePreFiller {
   private final MediaHostRepository mediaHostRepository;
   private final LinkMetadataRepository linkMetadataRepository;
   private final int thumbnailWidthForSubmissionAlbumLink;
-
-  private enum PreFillThing {
-    COMMENTS,
-    IMAGES,
-    VIDEOS,
-    LINK_METADATA
-  }
-
-  private enum PreFillPreference {
-    WIFI_ONLY,
-    WIFI_OR_MOBILE_DATA,
-    NEVER,
-  }
+  private final UserPreferences userPreferences;
 
   @Inject
   public CachePreFiller(Application appContext, SubmissionRepository submissionRepository, NetworkStateListener networkStateListener,
-      MediaHostRepository mediaHostRepository, LinkMetadataRepository linkMetadataRepository)
+      MediaHostRepository mediaHostRepository, LinkMetadataRepository linkMetadataRepository, UserPreferences userPreferences)
   {
     this.appContext = appContext;
     this.submissionRepository = submissionRepository;
     this.networkStateListener = networkStateListener;
     this.mediaHostRepository = mediaHostRepository;
     this.linkMetadataRepository = linkMetadataRepository;
+    this.userPreferences = userPreferences;
 
     thumbnailWidthForSubmissionAlbumLink = appContext.getResources().getDimensionPixelSize(R.dimen.submission_link_thumbnail_width_album);
   }
@@ -78,7 +70,6 @@ public class CachePreFiller {
    * TODO: Block multiple in-flight requests.
    * TODO: Skip already cached items.
    * TODO: Tests.
-   * TODO: Get user preference.
    */
   @CheckResult
   public Completable preFillInParallelThreads(List<Submission> submissions, int deviceDisplayWidth) {
@@ -94,7 +85,7 @@ public class CachePreFiller {
     Scheduler scheduler = Schedulers.from(Executors.newCachedThreadPool());
 
     // Images and GIFs that couldn't be converted to videos.
-    Observable imageCachePreFillStream = Observable.combineLatest(streamPreFillPreference(PreFillThing.IMAGES), networkChangeStream, Pair::create)
+    Observable imageCachePreFillStream = Observable.combineLatest(streamPreFillPreference(CachePreFillThing.IMAGES), networkChangeStream, Pair::create)
         .switchMap(preferenceAndNetworkState -> Observable.just(preferenceAndNetworkState)
             .filter(isCachingAllowed())
             .filter(satisfiesNetworkRequirement())
@@ -109,7 +100,7 @@ public class CachePreFiller {
         );
 
     // Link metadata.
-    Observable linkCacheFillStream = Observable.combineLatest(streamPreFillPreference(PreFillThing.LINK_METADATA), networkChangeStream, Pair::create)
+    Observable linkCacheFillStream = Observable.combineLatest(streamPreFillPreference(CachePreFillThing.LINK_METADATA), networkChangeStream, Pair::create)
         .switchMap(preferenceAndNetworkState -> Observable.just(preferenceAndNetworkState)
             .filter(isCachingAllowed())
             .filter(satisfiesNetworkRequirement())
@@ -125,7 +116,7 @@ public class CachePreFiller {
         );
 
     // Comments.
-    Observable commentCacheFillStream = Observable.combineLatest(streamPreFillPreference(PreFillThing.COMMENTS), networkChangeStream, Pair::create)
+    Observable commentCacheFillStream = Observable.combineLatest(streamPreFillPreference(CachePreFillThing.COMMENTS), networkChangeStream, Pair::create)
         .switchMap(pair -> Observable.just(pair)
             .filter(isCachingAllowed())
             .filter(satisfiesNetworkRequirement())
@@ -140,39 +131,39 @@ public class CachePreFiller {
     return Observable.merge(imageCachePreFillStream, linkCacheFillStream, commentCacheFillStream).ignoreElements();
   }
 
-  private Predicate<Pair<PreFillPreference, NetworkState>> isCachingAllowed() {
-    return pair -> pair.first != PreFillPreference.NEVER;
+  private Predicate<Pair<CachePreFillNetworkPreference, NetworkState>> isCachingAllowed() {
+    return pair -> pair.first != CachePreFillNetworkPreference.NEVER;
   }
 
-  private Predicate<Pair<PreFillPreference, NetworkState>> satisfiesNetworkRequirement() {
+  private Predicate<Pair<CachePreFillNetworkPreference, NetworkState>> satisfiesNetworkRequirement() {
     return pair -> {
-      PreFillPreference preFillPreference = pair.first;
-      NetworkState networkInfo = pair.second;
-      if (!networkInfo.isConnectedOrConnectingToInternet()) {
+      CachePreFillNetworkPreference preFillPreference = pair.first;
+      NetworkState networkState = pair.second;
+      if (!networkState.isConnectedOrConnectingToInternet()) {
         return false;
       }
 
       //Timber.d("--------------------------------");
-      boolean isConnectedToWifi = networkInfo.networkType() == ConnectivityManager.TYPE_WIFI;
-      boolean isConnectedToMobileData = networkInfo.networkType() == ConnectivityManager.TYPE_MOBILE;
+      boolean isConnectedToWifi = networkState.networkType() == ConnectivityManager.TYPE_WIFI;
+      boolean isConnectedToMobileData = networkState.networkType() == ConnectivityManager.TYPE_MOBILE;
       //Timber.i("preference: %s", preference);
       //Timber.i("isConnectedToWifi: %s", isConnectedToWifi);
       //Timber.i("isConnectedToMobileData: %s", isConnectedToMobileData);
 
-      if (preFillPreference == PreFillPreference.WIFI_ONLY) {
+      if (preFillPreference == CachePreFillNetworkPreference.WIFI_ONLY) {
         return isConnectedToWifi;
       }
 
-      if (preFillPreference == PreFillPreference.WIFI_OR_MOBILE_DATA) {
+      if (preFillPreference == CachePreFillNetworkPreference.WIFI_OR_MOBILE_DATA) {
         return isConnectedToMobileData || isConnectedToWifi;
       }
 
-      throw new AssertionError("Unknown network type. PreFillPreference: " + preFillPreference + ", network type: " + networkInfo.networkType());
+      throw new AssertionError("Unknown network type. PreFillPreference: " + preFillPreference + ", network state: " + networkState);
     };
   }
 
-  private Observable<PreFillPreference> streamPreFillPreference(PreFillThing images) {
-    return Observable.just(PreFillPreference.WIFI_ONLY);
+  private Observable<CachePreFillNetworkPreference> streamPreFillPreference(CachePreFillThing thing) {
+    return userPreferences.cachePreFillNetworkPreference(thing);
   }
 
   @NonNull

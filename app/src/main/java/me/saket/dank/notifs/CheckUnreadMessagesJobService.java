@@ -47,6 +47,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
         .build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
     jobScheduler.schedule(userSetSyncJob);
 
     long aggressiveTimeIntervalMillis = DateUtils.MINUTE_IN_MILLIS * 15;
@@ -81,6 +82,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
         .build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
     jobScheduler.schedule(syncJob);
   }
 

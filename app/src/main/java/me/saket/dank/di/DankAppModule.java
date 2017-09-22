@@ -9,6 +9,7 @@ import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 
 import com.danikula.videocache.HttpProxyCacheServer;
+import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
@@ -38,7 +39,6 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
-import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.submission.CommentsManager;
@@ -130,9 +130,8 @@ public class DankAppModule {
   }
 
   @Provides
-  @Singleton
-  UserPreferences provideUserPrefsManager(SharedPreferences sharedPrefs) {
-    return new UserPreferences(sharedPrefs);
+  RxSharedPreferences provideRxSharedPrefs(SharedPreferences sharedPrefs) {
+    return RxSharedPreferences.create(sharedPrefs);
   }
 
   @Provides
