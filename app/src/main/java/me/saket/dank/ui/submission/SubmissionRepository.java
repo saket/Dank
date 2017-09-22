@@ -129,7 +129,7 @@ public class SubmissionRepository {
         .flatMapCompletable(submission -> Completable.fromAction(() -> {
           long saveTimeMillis = System.currentTimeMillis();
           CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
-          //Timber.i("Saving submission with comments: %s", cachedSubmission.submission().getTitle());
+          Timber.i("Saving submission with comments: %s", cachedSubmission.submission().getTitle());
           database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
         }));
   }
@@ -250,7 +250,7 @@ public class SubmissionRepository {
    */
   @CheckResult
   private SaveResult saveSubmissions(CachedSubmissionFolder folder, List<Submission> submissionsToSave) {
-    List<Submission> cachedSubmissions = new ArrayList<>(submissionsToSave.size());
+    List<Submission> savedSubmissions = new ArrayList<>(submissionsToSave.size());
     JsonAdapter<SortingAndTimePeriod> andTimePeriodJsonAdapter = moshi.adapter(SortingAndTimePeriod.class);
     JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
 
@@ -291,7 +291,7 @@ public class SubmissionRepository {
               cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
               SQLiteDatabase.CONFLICT_REPLACE /* To handle updated submissions received from remote */
           );
-          cachedSubmissions.add(submission);
+          savedSubmissions.add(submission);
         }
       }
 
@@ -299,7 +299,7 @@ public class SubmissionRepository {
     }
     Timber.i("Saved %d items in: %sms", submissionsToSave.size(), (System.currentTimeMillis() - startTime));
 
-    return SaveResult.create(Collections.unmodifiableList(cachedSubmissions));
+    return SaveResult.create(Collections.unmodifiableList(savedSubmissions));
   }
 
   public Completable clearCachedSubmissionLists() {
