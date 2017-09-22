@@ -41,6 +41,9 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.NetworkStateListener.NetworkState;
 import me.saket.dank.utils.UrlParser;
 
+/**
+ * Pre-fetches submission content and comments.
+ */
 @Singleton
 public class CachePreFiller {
 

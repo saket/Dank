@@ -359,13 +359,15 @@
 
   <!-- User Preferences -->
   <style name="DankPreferencesGroupTitle">
-    <item name="android:layout_width">wrap_content</item>
-    <item name="android:layout_height">wrap_content</item>
     <item name="android:layout_marginBottom">@dimen/spacing12</item>
     <item name="android:layout_marginEnd">@dimen/spacing16</item>
     <item name="android:layout_marginStart">@dimen/spacing16</item>
     <item name="android:textAllCaps">true</item>
     <item name="android:textSize">@dimen/textsize12</item>
+  </style>
+
+  <style name="DankPreferencesGroupTitle.WithTopSpacing">
+    <item name="android:layout_marginTop">@dimen/spacing24</item>
   </style>
 
   <style name="DankPreferenceItemDescription">
@@ -381,5 +383,13 @@
 
   <style name="DankPreferencesSeparator" parent="DankSeparator.VerticalContent">
     <item name="android:background">@color/gray_850</item>
+  </style>
+
+  <style name="DankPreferenceGroupSummary">
+    <item name="android:layout_marginBottom">@dimen/spacing12</item>
+    <item name="android:layout_marginEnd">@dimen/spacing24</item>
+    <item name="android:layout_marginStart">@dimen/spacing16</item>
+    <item name="android:lineSpacingExtra">2dp</item>
+    <item name="android:textColor">@color/white_opacity_50</item>
   </style>
 </resources>

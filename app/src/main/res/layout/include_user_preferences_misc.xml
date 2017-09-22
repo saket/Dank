@@ -11,6 +11,8 @@
 
   <TextView
     style="@style/DankPreferencesGroupTitle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:text="@string/userprefes_group_link_handling" />
 
   <me.saket.dank.widgets.prefs.UserPreferenceButton

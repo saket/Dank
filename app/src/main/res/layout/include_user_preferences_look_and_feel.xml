@@ -9,6 +9,8 @@
 
   <TextView
     style="@style/DankPreferencesGroupTitle"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/spacing24"
     android:text="@string/userprefs_group_subreddit" />
 
@@ -19,8 +21,9 @@
     app:prefswitch_title="@string/userprefs_submission_thumbnails" />
 
   <TextView
-    style="@style/DankPreferencesGroupTitle"
-    android:layout_marginTop="@dimen/spacing24"
+    style="@style/DankPreferencesGroupTitle.WithTopSpacing"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
     android:text="@string/userprefs_group_gestures" />
 
   <me.saket.dank.widgets.prefs.UserPreferenceButton
