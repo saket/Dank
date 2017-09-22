@@ -478,7 +478,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .flatMap(pair -> subscriptionManager.isSubscribed(pair.second.subredditName())
             .flatMap(isSubscribed -> isSubscribed ? Observable.just(pair.first) : Observable.never())
         )
-        .switchMap(cachedSubmissions -> cachePreFiller.preFill(cachedSubmissions, deviceDisplayWidth).toObservable())
+        .switchMap(cachedSubmissions -> cachePreFiller.preFillInParallelThreads(cachedSubmissions, deviceDisplayWidth).toObservable())
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
   }

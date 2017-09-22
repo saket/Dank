@@ -16,12 +16,15 @@ import net.dean.jraw.models.Thumbnails;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.functions.Predicate;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ImgurAlbumLink;
@@ -79,7 +82,7 @@ public class CachePreFiller {
    * TODO: Get user preference.
    */
   @CheckResult
-  public Completable preFill(List<Submission> submissions, int deviceDisplayWidth) {
+  public Completable preFillInParallelThreads(List<Submission> submissions, int deviceDisplayWidth) {
     Observable<Pair<Submission, Link>> submissionAndContentLinkStream = Observable.fromIterable(submissions)
         .map(submission -> {
           Link contentLink = UrlParser.parse(submission.getUrl());
@@ -89,6 +92,8 @@ public class CachePreFiller {
     Observable<NetworkState> networkChangeStream = networkStateListener.streamNetworkStateChanges().distinctUntilChanged();
     Timber.d("Pre-filling cache for %s submissions", submissions.size());
 
+    Scheduler scheduler = Schedulers.from(Executors.newCachedThreadPool());
+
     // Images and GIFs that couldn't be converted to videos.
     Observable imageCachePreFillStream = Observable.combineLatest(streamPreFillPreference(PreFillThing.IMAGES), networkChangeStream, Pair::create)
         .switchMap(preferenceAndNetworkState -> Observable.just(preferenceAndNetworkState)
@@ -97,6 +102,8 @@ public class CachePreFiller {
             .flatMap(o -> submissionAndContentLinkStream
                 .filter(submissionContentAreImages())
                 .concatMap(submissionAndLink -> preFillImageOrAlbum(submissionAndLink.first, (MediaLink) submissionAndLink.second, deviceDisplayWidth)
+                    .subscribeOn(scheduler)
+                    //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first.getTitle()))
                     .onErrorComplete()
                     .toObservable())
             )
@@ -110,6 +117,8 @@ public class CachePreFiller {
             .flatMap(o -> submissionAndContentLinkStream
                 .filter(submissionContentIsExternalLink())
                 .concatMap(submissionAndLink -> preFillLinkMetadata(submissionAndLink.first, submissionAndLink.second)
+                    .subscribeOn(scheduler)
+                    //.doOnSubscribe(d -> Timber.i("Caching link: %s", submissionAndLink.first.getTitle()))
                     .toObservable()
                     .onErrorResumeNext(Observable.empty())
                 )
@@ -122,7 +131,8 @@ public class CachePreFiller {
             .filter(isCachingAllowed())
             .filter(satisfiesNetworkRequirement())
             .flatMap(o -> submissionAndContentLinkStream.concatMap(submissionAndLink -> preFillComment(submissionAndLink.first)
-                //.doOnSubscribe(d -> Timber.i("Caching comments: %s", submissionAndLink.second.unparsedUrl()))
+                .subscribeOn(scheduler)
+                //.doOnSubscribe(d -> Timber.i("Caching comments: %s", submissionAndLink.first.getTitle()))
                 .toObservable())
                 .onErrorResumeNext(Observable.empty())
             )
