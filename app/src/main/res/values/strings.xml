@@ -256,7 +256,7 @@
   <string name="userprefs_customize_submission_gestures">Submission gesture actions</string>
   <string name="userprefs_customize_comment_gestures">Comment gesture actions</string>
 
-  <string name="userprefs_group_new_messages">New Messages</string>
+  <string name="userprefs_group_messaging">Messaging</string>
   <string name="userprefs_datausage_check_for_new_messages">Check for new messages</string>
   <string name="userprefs_datausage_message_sync_period_and_connection">Every 30 minutes and only on WiFi</string>
 
@@ -269,6 +269,7 @@
   <string name="userprefes_group_link_handling">Link handling</string>
   <string name="userprefs_open_links_in_apps">Open links in apps</string>
   <string name="userprefs_open_links_in_apps_summary">Links to always open in external apps, bypassing the browser.</string>
-  <string name="userprefs_use_chrome_custom_tabs">Use chrome custom tabs</string>
+  <string name="userprefs_use_chrome_custom_tabs">Use Chrome custom tabs</string>
   <string name="userprefs_use_chrome_custom_tabs_description">Note: pull-to-collapse is only supported in the internal browser.</string>
+  <string name="userprefs_group_media">Media</string>
 </resources>

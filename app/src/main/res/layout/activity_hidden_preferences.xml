@@ -1,22 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/hiddenpreferences_root"
-    style="@style/DankPullCollapsibleActivityPage"
-    xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
-    tools:ignore="HardcodedText"
-    tools:layout_marginTop="25dp">
+  style="@style/DankPullCollapsibleActivityPage"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  tools:ignore="HardcodedText">
 
-    <me.saket.dank.widgets.DankToolbar
-        android:id="@id/toolbar"
-        style="@style/DankToolbar"
-        app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
+  <me.saket.dank.widgets.DankToolbar
+    android:id="@id/toolbar"
+    style="@style/DankToolbar"
+    app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
-    <LinearLayout
-        android:id="@+id/hiddenpreferences_content"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_below="@id/toolbar"
-        android:orientation="vertical"
-        android:padding="@dimen/spacing16" />
+  <LinearLayout
+    android:id="@+id/hiddenpreferences_content"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_below="@id/toolbar"
+    android:orientation="vertical"
+    android:padding="@dimen/spacing16" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

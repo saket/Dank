@@ -144,6 +144,9 @@ public class MediaHostRepository {
     return imgurImageLinks;
   }
 
+  /**
+   * @return Null is possible only if <var>defaultImageUrl</var> is null.
+   */
   @Nullable
   public String findOptimizedQualityImageForDisplay(@Nullable Thumbnails redditSuppliedImages, int targetWidth,
       @Nullable String defaultImageUrl)

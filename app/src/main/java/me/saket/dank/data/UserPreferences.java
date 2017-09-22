@@ -23,6 +23,7 @@ public class UserPreferences {
   private static final String KEY_UNREAD_MESSAGES_CHECK_INTERVAL_MILLIS = "unreadMessagesCheckInterval";
   private static final String KEY_SHOW_SUBMISSION_COMMENTS_COUNT_IN_BYLINE = "showSubmissionCommentsCountInByline";
   private static final String KEY_CACHE_THING_PRE_FILL_NETWORK_PREFERENCE_ = "cacheThingPreFillNetworkPreference_";
+  private static final String KEY_HIGH_RESOLUTION_MEDIA_NETWORK_STRATEGY = "highResolutionMediaNetworkStrategy";
 
   private static final boolean DEFAULT_VALUE_SHOW_SUBMISSION_COMMENTS_COUNT = false;
 
@@ -55,10 +56,23 @@ public class UserPreferences {
     return sharedPrefs.getBoolean(KEY_SHOW_SUBMISSION_COMMENTS_COUNT_IN_BYLINE, DEFAULT_VALUE_SHOW_SUBMISSION_COMMENTS_COUNT);
   }
 
+  /**
+   * Network strategy for pre-filling <var>thing</var> in cache.
+   */
   @CheckResult
-  public Observable<CachePreFillNetworkPreference> cachePreFillNetworkPreference(CachePreFillThing thing) {
-    return rxPreferences.getString(KEY_CACHE_THING_PRE_FILL_NETWORK_PREFERENCE_ + thing.name(), CachePreFillNetworkPreference.WIFI_ONLY.name())
+  public Observable<NetworkStrategy> streamCachePreFillNetworkStrategy(CachePreFillThing thing) {
+    return rxPreferences.getString(KEY_CACHE_THING_PRE_FILL_NETWORK_PREFERENCE_ + thing.name(), NetworkStrategy.WIFI_ONLY.name())
         .asObservable()
-        .map(preferenceString -> CachePreFillNetworkPreference.valueOf(preferenceString));
+        .map(preferenceString -> NetworkStrategy.valueOf(preferenceString));
+  }
+
+  /**
+   * Network strategy for loading high-resolution images and videos.
+   */
+  @CheckResult
+  public Observable<NetworkStrategy> streamHighResolutionMediaNetworkStrategy() {
+    return rxPreferences.getString(KEY_HIGH_RESOLUTION_MEDIA_NETWORK_STRATEGY, NetworkStrategy.WIFI_ONLY.name())
+        .asObservable()
+        .map(preferenceString -> NetworkStrategy.valueOf(preferenceString));
   }
 }

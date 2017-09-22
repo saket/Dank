@@ -59,6 +59,7 @@ import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
@@ -71,6 +72,7 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
+import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.UrlParser;
@@ -108,6 +110,8 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @Inject JacksonHelper jacksonHelper;
   @Inject UrlRouter urlRouter;
   @Inject ErrorResolver errorResolver;
+  @Inject UserPreferences userPreferences;
+  @Inject NetworkStateListener networkStateListener;
 
   private SystemUiHelper systemUiHelper;
   private Drawable activityBackgroundDrawable;
@@ -118,8 +122,8 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   private MediaLink resolvedMediaLink;
   private DankLinkMovementMethod linkMovementMethod;
   private Set<MediaLink> hdEnabledMediaLinks = new HashSet<>();
-  private Relay<Set<MediaLink>> hdEnabledMediaLinksStream = BehaviorRelay.create();
-  private Relay<MediaAlbumItem> viewpagerPageChangeStream = BehaviorRelay.create();
+  private BehaviorRelay<Set<MediaLink>> hdEnabledMediaLinksStream = BehaviorRelay.create();
+  private BehaviorRelay<MediaAlbumItem> viewpagerPageChangeStream = BehaviorRelay.create();
 
   private enum ScreenState {
     /**
@@ -231,6 +235,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                   activeMediaItem.mediaLink().lowQualityUrl() /* defaultValue */
               );
 
+              //noinspection ConstantConditions
               boolean hasHighDefVersion = !optimizedQualityUrl.equals(highQualityUrl);
               boolean isAlreadyShowingHighDefVersion = hdEnabledMediaLinks.contains(activeMediaItem.mediaLink());
               reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
@@ -260,28 +265,29 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                 return Collections.singletonList(resolvedMediaLink);
               }
             })
+            // Toggle HD for all images with the default value.
+            .flatMap(mediaLinks -> userPreferences.streamHighResolutionMediaNetworkStrategy()
+                .flatMap(strategy -> networkStateListener.streamNetworkCapability(strategy))
+                .firstOrError()
+                .doOnSuccess(canLoadHighResolutionMedia -> {
+                  if (canLoadHighResolutionMedia) {
+                    hdEnabledMediaLinks.addAll(mediaLinks);
+                    hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);
+                  }
+                })
+                .map(o -> mediaLinks)
+            )
             .compose(RxUtils.applySchedulersSingle())
-            .doOnSuccess(mediaLinks -> {
-              // Toggle HD for all images with the default value.
-              boolean loadHighQualityImageByDefault = false; // TODO: Get this from user's mobile-data preferences.
-
-              if (loadHighQualityImageByDefault) {
-                hdEnabledMediaLinks.addAll(mediaLinks);
-                hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);
-              }
-            })
             .flatMapObservable(mediaLinks -> {
               // Enable HD flag if it's turned on.
-              return hdEnabledMediaLinksStream
-                  .map(hdEnabledMediaLinks -> {
-                    List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
-                    for (MediaLink mediaLink : mediaLinks) {
-                      boolean highDefEnabled = hdEnabledMediaLinks.contains(mediaLink);
-
-                      mediaAlbumItems.add(MediaAlbumItem.create(mediaLink, highDefEnabled));
-                    }
-                    return mediaAlbumItems;
-                  });
+              return hdEnabledMediaLinksStream.map(hdEnabledMediaLinks -> {
+                List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
+                for (MediaLink mediaLink : mediaLinks) {
+                  boolean highDefEnabled = hdEnabledMediaLinks.contains(mediaLink);
+                  mediaAlbumItems.add(MediaAlbumItem.create(mediaLink, highDefEnabled));
+                }
+                return mediaAlbumItems;
+              });
             })
             .subscribe(
                 mediaAlbumItems -> {

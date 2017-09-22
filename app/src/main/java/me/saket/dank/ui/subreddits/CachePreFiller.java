@@ -1,7 +1,6 @@
 package me.saket.dank.ui.subreddits;
 
 import android.app.Application;
-import android.net.ConnectivityManager;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.util.Pair;
@@ -26,7 +25,6 @@ import io.reactivex.Scheduler;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
-import me.saket.dank.data.CachePreFillNetworkPreference;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.UserPreferences;
@@ -38,7 +36,6 @@ import me.saket.dank.ui.submission.SubmissionLinkViewHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.NetworkStateListener;
-import me.saket.dank.utils.NetworkStateListener.NetworkState;
 import me.saket.dank.utils.UrlParser;
 
 /**
@@ -72,7 +69,8 @@ public class CachePreFiller {
   /**
    * TODO: Block multiple in-flight requests.
    * TODO: Skip already cached items.
-   * TODO: Tests.
+   * TODO: Test that mobile data is never used if strategy is not mobile.
+   * TODO: Test that pre-filling is not done if strategy is never.
    */
   @CheckResult
   public Completable preFillInParallelThreads(List<Submission> submissions, int deviceDisplayWidth) {
@@ -82,91 +80,64 @@ public class CachePreFiller {
           return Pair.create(submission, contentLink);
         });
 
-    Observable<NetworkState> networkChangeStream = networkStateListener.streamNetworkStateChanges().distinctUntilChanged();
+    Scheduler scheduler = Schedulers.from(Executors.newCachedThreadPool());
     //Timber.d("Pre-filling cache for %s submissions", submissions.size());
 
-    Scheduler scheduler = Schedulers.from(Executors.newCachedThreadPool());
-
     // Images and GIFs that couldn't be converted to videos.
-    Observable imageCachePreFillStream = Observable.combineLatest(streamPreFillPreference(CachePreFillThing.IMAGES), networkChangeStream, Pair::create)
-        .switchMap(preferenceAndNetworkState -> Observable.just(preferenceAndNetworkState)
-            .filter(isCachingAllowed())
-            .filter(satisfiesNetworkRequirement())
-            .flatMap(o -> submissionAndContentLinkStream
-                .filter(submissionContentAreImages())
-                .concatMap(submissionAndLink -> preFillImageOrAlbum(submissionAndLink.first, (MediaLink) submissionAndLink.second, deviceDisplayWidth)
-                    .subscribeOn(scheduler)
-                    //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first.getTitle()))
-                    .onErrorComplete()
-                    .toObservable())
-            )
-        );
+    Observable imageCachePreFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.IMAGES)
+        .flatMap(strategy -> networkStateListener.streamNetworkCapability(strategy))
+        .switchMap(canPreFill -> {
+          if (!canPreFill) {
+            // Cannot use filter() instead here so that switchMap() gets called and cancels the previous call.
+            // Observable.empty() is also important so that the stream completes and network state change
+            // listener is freed.
+            return Observable.empty();
+          }
+
+          return submissionAndContentLinkStream
+              .filter(submissionContentAreImages())
+              .concatMap(submissionAndLink -> preFillImageOrAlbum(submissionAndLink.first, (MediaLink) submissionAndLink.second, deviceDisplayWidth)
+                  .subscribeOn(scheduler)
+                  //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first.getTitle()))
+                  .onErrorComplete()
+                  .toObservable()
+              );
+        });
 
     // Link metadata.
-    Observable linkCacheFillStream = Observable.combineLatest(streamPreFillPreference(CachePreFillThing.LINK_METADATA), networkChangeStream, Pair::create)
-        .switchMap(preferenceAndNetworkState -> Observable.just(preferenceAndNetworkState)
-            .filter(isCachingAllowed())
-            .filter(satisfiesNetworkRequirement())
-            .flatMap(o -> submissionAndContentLinkStream
-                .filter(submissionContentIsExternalLink())
-                .concatMap(submissionAndLink -> preFillLinkMetadata(submissionAndLink.first, submissionAndLink.second)
-                    .subscribeOn(scheduler)
-                    //.doOnSubscribe(d -> Timber.i("Caching link: %s", submissionAndLink.first.getTitle()))
-                    .toObservable()
-                    .onErrorResumeNext(Observable.empty())
-                )
-            )
-        );
+    Observable linkCacheFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.LINK_METADATA)
+        .flatMap(strategy -> networkStateListener.streamNetworkCapability(strategy))
+        .switchMap(canPreFill -> {
+          if (!canPreFill) {
+            return Observable.empty();
+          }
+
+          return submissionAndContentLinkStream
+              .filter(submissionContentIsExternalLink())
+              .concatMap(submissionAndLink -> preFillLinkMetadata(submissionAndLink.first, submissionAndLink.second)
+                  .subscribeOn(scheduler)
+                  //.doOnSubscribe(d -> Timber.i("Caching link: %s", submissionAndLink.first.getTitle()))
+                  .toObservable()
+                  .onErrorResumeNext(Observable.empty())
+              );
+        });
 
     // Comments.
-    Observable commentCacheFillStream = Observable.combineLatest(streamPreFillPreference(CachePreFillThing.COMMENTS), networkChangeStream, Pair::create)
-        .switchMap(pair -> Observable.just(pair)
-            .filter(isCachingAllowed())
-            .filter(satisfiesNetworkRequirement())
-            .flatMap(o -> submissionAndContentLinkStream.concatMap(submissionAndLink -> preFillComment(submissionAndLink.first)
-                .subscribeOn(scheduler)
-                //.doOnSubscribe(d -> Timber.i("Caching comments: %s", submissionAndLink.first.getTitle()))
-                .toObservable())
-                .onErrorResumeNext(Observable.empty())
-            )
-        );
+    Observable commentCacheFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.COMMENTS)
+        .flatMap(strategy -> networkStateListener.streamNetworkCapability(strategy))
+        .switchMap(canPreFill -> {
+          if (!canPreFill) {
+            return Observable.empty();
+          }
+
+          return submissionAndContentLinkStream.concatMap(submissionAndLink -> preFillComment(submissionAndLink.first)
+              .subscribeOn(scheduler)
+              //.doOnSubscribe(d -> Timber.i("Caching comments: %s", submissionAndLink.first.getTitle()))
+              .toObservable())
+              .onErrorResumeNext(Observable.empty());
+        });
 
     return Observable.merge(imageCachePreFillStream, linkCacheFillStream, commentCacheFillStream).ignoreElements();
-  }
-
-  private Predicate<Pair<CachePreFillNetworkPreference, NetworkState>> isCachingAllowed() {
-    return pair -> pair.first != CachePreFillNetworkPreference.NEVER;
-  }
-
-  private Predicate<Pair<CachePreFillNetworkPreference, NetworkState>> satisfiesNetworkRequirement() {
-    return pair -> {
-      CachePreFillNetworkPreference preFillPreference = pair.first;
-      NetworkState networkState = pair.second;
-      if (!networkState.isConnectedOrConnectingToInternet()) {
-        return false;
-      }
-
-      //Timber.d("--------------------------------");
-      boolean isConnectedToWifi = networkState.networkType() == ConnectivityManager.TYPE_WIFI;
-      boolean isConnectedToMobileData = networkState.networkType() == ConnectivityManager.TYPE_MOBILE;
-      //Timber.i("preference: %s", preference);
-      //Timber.i("isConnectedToWifi: %s", isConnectedToWifi);
-      //Timber.i("isConnectedToMobileData: %s", isConnectedToMobileData);
-
-      if (preFillPreference == CachePreFillNetworkPreference.WIFI_ONLY) {
-        return isConnectedToWifi;
-      }
-
-      if (preFillPreference == CachePreFillNetworkPreference.WIFI_OR_MOBILE_DATA) {
-        return isConnectedToMobileData || isConnectedToWifi;
-      }
-
-      throw new AssertionError("Unknown network type. PreFillPreference: " + preFillPreference + ", network state: " + networkState);
-    };
-  }
-
-  private Observable<CachePreFillNetworkPreference> streamPreFillPreference(CachePreFillThing thing) {
-    return userPreferences.cachePreFillNetworkPreference(thing);
   }
 
   @NonNull

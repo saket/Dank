@@ -14,28 +14,34 @@
     android:id="@id/toolbar"
     style="@style/DankToolbar"
     android:fitsSystemWindows="true"
-    app:navigationIcon="@drawable/ic_toolbar_close_24dp"
-    tools:layout_marginTop="25dp" />
+    app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
-  <ViewFlipper
-    android:id="@+id/userpreferences_viewswitcher"
+  <ScrollView
+    android:id="@+id/userpreferences_scrollview"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <include
-      android:id="@+id/userpreferences_container_empty"
-      layout="@layout/include_user_preferences_empty" />
+    <me.saket.dank.widgets.ViewFlipperWithDebugPreview
+      android:id="@+id/userpreferences_viewswitcher"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      app:debug_displayedChild="2">
 
-    <include
-      android:id="@+id/userpreferences_container_look_and_feel"
-      layout="@layout/include_user_preferences_look_and_feel" />
+      <include
+        android:id="@+id/userpreferences_container_empty"
+        layout="@layout/include_user_preferences_empty" />
 
-    <include
-      android:id="@+id/userpreferences_container_data_usage"
-      layout="@layout/include_user_preferences_data_usage" />
+      <include
+        android:id="@+id/userpreferences_container_look_and_feel"
+        layout="@layout/include_user_preferences_look_and_feel" />
 
-    <include
-      android:id="@+id/userpreferences_container_misc"
-      layout="@layout/include_user_preferences_misc" />
-  </ViewFlipper>
+      <include
+        android:id="@+id/userpreferences_container_data_usage"
+        layout="@layout/include_user_preferences_data_usage" />
+
+      <include
+        android:id="@+id/userpreferences_container_misc"
+        layout="@layout/include_user_preferences_misc" />
+    </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
+  </ScrollView>
 </LinearLayout>

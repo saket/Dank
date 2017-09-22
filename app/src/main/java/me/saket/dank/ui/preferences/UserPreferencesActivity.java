@@ -1,7 +1,5 @@
 package me.saket.dank.ui.preferences;
 
-import static me.saket.dank.utils.Views.touchLiesOn;
-
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -19,6 +17,7 @@ import butterknife.OnClick;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
@@ -50,7 +49,8 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     expandFromBelowToolbar();
 
     activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
-      return touchLiesOn(preferenceList, downX, downY) && preferenceList.canScrollVertically(upwardPagePull ? 1 : -1);
+      //noinspection CodeBlock2Expr
+      return Views.touchLiesOn(preferenceList, downX, downY) && preferenceList.canScrollVertically(upwardPagePull ? 1 : -1);
     });
   }
 

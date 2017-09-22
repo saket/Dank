@@ -12,7 +12,8 @@ import com.google.auto.value.AutoValue;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import timber.log.Timber;
+import io.reactivex.ObservableSource;
+import me.saket.dank.data.NetworkStrategy;
 
 public class NetworkStateListener {
 
@@ -39,7 +40,14 @@ public class NetworkStateListener {
   }
 
   @CheckResult
-  public Observable<NetworkState> streamNetworkStateChanges() {
+  public ObservableSource<Boolean> streamNetworkCapability(NetworkStrategy strategy) {
+    return streamNetworkStateChanges()
+        .distinctUntilChanged()
+        .map(networkState -> satisfiesNetworkRequirement(strategy, networkState));
+  }
+
+  @CheckResult
+  private Observable<NetworkState> streamNetworkStateChanges() {
     return Observable.create(emitter -> {
       ConnectivityManager.NetworkCallback networkCallbacks = new ConnectivityManager.NetworkCallback() {
         @Override
@@ -68,5 +76,28 @@ public class NetworkStateListener {
       connectivityManager.registerNetworkCallback(networkRequest, networkCallbacks);
       emitter.setCancellable(() -> connectivityManager.unregisterNetworkCallback(networkCallbacks));
     });
+  }
+
+  private boolean satisfiesNetworkRequirement(NetworkStrategy networkStrategy, NetworkState networkState) {
+    if (networkStrategy == NetworkStrategy.NEVER || !networkState.isConnectedOrConnectingToInternet()) {
+      return false;
+    }
+
+    //Timber.d("--------------------------------");
+    boolean isConnectedToWifi = networkState.networkType() == ConnectivityManager.TYPE_WIFI;
+    boolean isConnectedToMobileData = networkState.networkType() == ConnectivityManager.TYPE_MOBILE;
+    //Timber.i("preference: %s", preference);
+    //Timber.i("isConnectedToWifi: %s", isConnectedToWifi);
+    //Timber.i("isConnectedToMobileData: %s", isConnectedToMobileData);
+
+    if (networkStrategy == NetworkStrategy.WIFI_ONLY) {
+      return isConnectedToWifi;
+    }
+
+    if (networkStrategy == NetworkStrategy.WIFI_OR_MOBILE_DATA) {
+      return isConnectedToMobileData || isConnectedToWifi;
+    }
+
+    throw new AssertionError("Unknown network type. PreFillPreference: " + networkStrategy + ", network state: " + networkState);
   }
 }
