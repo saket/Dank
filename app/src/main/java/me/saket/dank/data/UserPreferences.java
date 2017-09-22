@@ -6,7 +6,7 @@ import android.text.format.DateUtils;
 /**
  * Used for accessing user's preferences.
  */
-public class UserPrefsManager {
+public class UserPreferences {
 
   private static final long DEFAULT_INTERVAL_FOR_MESSAGES_CHECK_MILLIS = DateUtils.MINUTE_IN_MILLIS * 30;
 
@@ -18,7 +18,7 @@ public class UserPrefsManager {
 
   private SharedPreferences sharedPrefs;
 
-  public UserPrefsManager(SharedPreferences sharedPrefs) {
+  public UserPreferences(SharedPreferences sharedPrefs) {
     this.sharedPrefs = sharedPrefs;
   }
 

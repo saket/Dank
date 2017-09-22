@@ -54,17 +54,17 @@ public class SubredditSubscriptionManager {
   private Context appContext;
   private BriteDatabase database;
   private DankRedditClient dankRedditClient;
-  private UserPrefsManager userPrefsManager;
+  private UserPreferences userPreferences;
   private UserSession userSession;
 
   @Inject
   public SubredditSubscriptionManager(Application appContext, BriteDatabase database, DankRedditClient dankRedditClient,
-      UserPrefsManager userPrefsManager, UserSession userSession)
+      UserPreferences userPreferences, UserSession userSession)
   {
     this.appContext = appContext;
     this.database = database;
     this.dankRedditClient = dankRedditClient;
-    this.userPrefsManager = userPrefsManager;
+    this.userPreferences = userPreferences;
     this.userSession = userSession;
   }
 
@@ -256,15 +256,15 @@ public class SubredditSubscriptionManager {
 // ======== DEFAULT SUBREDDIT ======== //
 
   public String defaultSubreddit() {
-    return userPrefsManager.defaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));
+    return userPreferences.defaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));
   }
 
   public void setAsDefault(SubredditSubscription subscription) {
-    userPrefsManager.setDefaultSubreddit(subscription.name());
+    userPreferences.setDefaultSubreddit(subscription.name());
   }
 
   public void resetDefaultSubreddit() {
-    userPrefsManager.setDefaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));
+    userPreferences.setDefaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));
   }
 
   public boolean isDefault(SubredditSubscription subscription) {

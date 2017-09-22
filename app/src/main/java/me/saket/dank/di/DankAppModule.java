@@ -38,7 +38,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
-import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.submission.CommentsManager;
@@ -131,8 +131,8 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  UserPrefsManager provideUserPrefsManager(SharedPreferences sharedPrefs) {
-    return new UserPrefsManager(sharedPrefs);
+  UserPreferences provideUserPrefsManager(SharedPreferences sharedPrefs) {
+    return new UserPreferences(sharedPrefs);
   }
 
   @Provides

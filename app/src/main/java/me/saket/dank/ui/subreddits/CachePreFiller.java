@@ -37,7 +37,6 @@ import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.NetworkStateListener.NetworkState;
 import me.saket.dank.utils.UrlParser;
-import timber.log.Timber;
 
 @Singleton
 public class CachePreFiller {
@@ -90,7 +89,7 @@ public class CachePreFiller {
         });
 
     Observable<NetworkState> networkChangeStream = networkStateListener.streamNetworkStateChanges().distinctUntilChanged();
-    Timber.d("Pre-filling cache for %s submissions", submissions.size());
+    //Timber.d("Pre-filling cache for %s submissions", submissions.size());
 
     Scheduler scheduler = Schedulers.from(Executors.newCachedThreadPool());
 

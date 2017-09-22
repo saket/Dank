@@ -26,7 +26,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.data.InfiniteScrollFooter;
 import me.saket.dank.data.InfiniteScrollHeader;
-import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.InfiniteScrollFooterViewHolder;
@@ -46,7 +46,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Object, Recycle
   private static final int VIEW_TYPE_SUBMISSION = 2;
 
   private VotingManager votingManager;
-  private UserPrefsManager userPrefsManager;
+  private UserPreferences userPreferences;
   private OnItemClickListener clickListener;
   private SubmissionSwipeActionsProvider swipeActionsProvider;
 
@@ -57,9 +57,9 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Object, Recycle
     void onItemClick(Submission submission, View submissionItemView, long submissionId);
   }
 
-  public SubmissionsAdapter(VotingManager votingManager, UserPrefsManager userPrefsManager, SubmissionSwipeActionsProvider swipeActionsProvider) {
+  public SubmissionsAdapter(VotingManager votingManager, UserPreferences userPreferences, SubmissionSwipeActionsProvider swipeActionsProvider) {
     this.votingManager = votingManager;
-    this.userPrefsManager = userPrefsManager;
+    this.userPreferences = userPreferences;
     this.swipeActionsProvider = swipeActionsProvider;
     setHasStableIds(true);
   }
@@ -128,7 +128,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Object, Recycle
       int submissionScore = votingManager.getScoreAfterAdjustingPendingVote(submission);
 
       SubmissionViewHolder submissionViewHolder = (SubmissionViewHolder) holder;
-      submissionViewHolder.bind(submission, submissionScore, pendingOrDefaultVoteDirection, userPrefsManager.canShowSubmissionCommentsCountInByline());
+      submissionViewHolder.bind(submission, submissionScore, pendingOrDefaultVoteDirection, userPreferences.canShowSubmissionCommentsCountInByline());
 
       // TODO: Avoid creating a new listener for every item.
       holder.itemView.setOnClickListener(v -> {

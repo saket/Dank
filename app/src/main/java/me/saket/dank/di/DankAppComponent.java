@@ -12,7 +12,7 @@ import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
-import me.saket.dank.data.UserPrefsManager;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.notifs.MessagesNotificationManager;
@@ -42,7 +42,7 @@ public interface DankAppComponent {
 
   DankApi api();
 
-  UserPrefsManager userPrefs();
+  UserPreferences userPrefs();
 
   ImgurRepository imgur();
 
