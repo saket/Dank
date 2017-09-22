@@ -20,17 +20,17 @@
     app:prefbutton_summary="@string/userprefs_datausage_message_sync_period_and_connection"
     app:prefbutton_title="@string/userprefs_datausage_check_for_new_messages" />
 
-  <TextView
-    style="@style/DankPreferencesGroupTitle.WithTopSpacing"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:text="@string/userprefs_group_media" />
+  <!--<TextView-->
+    <!--style="@style/DankPreferencesGroupTitle.WithTopSpacing"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:text="@string/userprefs_group_media" />-->
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButton
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    app:prefbutton_summary="Only on WiFi"
-    app:prefbutton_title="Load high resolution images and videos" />
+  <!--<me.saket.dank.widgets.prefs.UserPreferenceButton-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--app:prefbutton_summary="Only on WiFi"-->
+    <!--app:prefbutton_title="Load high resolution images and videos" />-->
 
   <TextView
     style="@style/DankPreferencesGroupTitle.WithTopSpacing"
