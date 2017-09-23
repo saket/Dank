@@ -51,10 +51,6 @@ android {
     preDexLibraries true
     maxProcessCount 8
   }
-
-  testOptions {
-    unitTests.returnDefaultValues = true
-  }
 }
 
 ext.versions = [

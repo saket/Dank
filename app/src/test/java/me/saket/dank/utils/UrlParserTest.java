@@ -8,7 +8,7 @@ import static org.mockito.Mockito.when;
 import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.text.Html;
-import android.text.SpannableString;
+import android.text.Spannable;
 import android.text.TextUtils;
 
 import org.junit.Before;
@@ -49,7 +49,11 @@ public class UrlParserTest {
 
     PowerMockito.mockStatic(Html.class);
     //noinspection deprecation
-    PowerMockito.when(Html.fromHtml(any(String.class))).thenAnswer(invocation -> mock(SpannableString.class));
+    PowerMockito.when(Html.fromHtml(any(String.class))).thenAnswer(invocation -> {
+      Spannable spannable = mock(Spannable.class);
+      PowerMockito.when(spannable.toString()).thenReturn(invocation.getArgumentAt(0, String.class));
+      return spannable;
+    });
   }
 
   private static final String[] IMGUR_ALBUM_URLS = {
