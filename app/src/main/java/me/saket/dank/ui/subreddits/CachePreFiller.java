@@ -3,6 +3,7 @@ package me.saket.dank.ui.subreddits;
 import android.app.Application;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
+import android.support.annotation.Px;
 import android.util.Pair;
 
 import com.bumptech.glide.Glide;
@@ -24,7 +25,6 @@ import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
-import me.saket.dank.R;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.UserPreferences;
@@ -32,6 +32,7 @@ import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.submission.SubmissionImageHolder;
 import me.saket.dank.ui.submission.SubmissionLinkViewHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -49,7 +50,6 @@ public class CachePreFiller {
   private final NetworkStateListener networkStateListener;
   private final MediaHostRepository mediaHostRepository;
   private final LinkMetadataRepository linkMetadataRepository;
-  private final int thumbnailWidthForSubmissionAlbumLink;
   private final UserPreferences userPreferences;
 
   @Inject
@@ -62,18 +62,14 @@ public class CachePreFiller {
     this.mediaHostRepository = mediaHostRepository;
     this.linkMetadataRepository = linkMetadataRepository;
     this.userPreferences = userPreferences;
-
-    thumbnailWidthForSubmissionAlbumLink = appContext.getResources().getDimensionPixelSize(R.dimen.submission_link_thumbnail_width_album);
   }
 
   /**
    * TODO: Block multiple in-flight requests.
    * TODO: Skip already cached items.
-   * TODO: Test that mobile data is never used if strategy is not mobile.
-   * TODO: Test that pre-filling is not done if strategy is never.
    */
   @CheckResult
-  public Completable preFillInParallelThreads(List<Submission> submissions, int deviceDisplayWidth) {
+  public Completable preFillInParallelThreads(List<Submission> submissions, @Px int deviceDisplayWidth, @Px int submissionAlbumLinkThumbnailWidth) {
     Observable<Pair<Submission, Link>> submissionAndContentLinkStream = Observable.fromIterable(submissions)
         .map(submission -> {
           Link contentLink = UrlParser.parse(submission.getUrl());
@@ -85,7 +81,7 @@ public class CachePreFiller {
 
     // Images and GIFs that couldn't be converted to videos.
     Observable imageCachePreFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.IMAGES)
-        .flatMap(strategy -> networkStateListener.streamNetworkCapability(strategy))
+        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
         .switchMap(canPreFill -> {
           if (!canPreFill) {
             // Cannot use filter() instead here so that switchMap() gets called and cancels the previous call.
@@ -96,17 +92,20 @@ public class CachePreFiller {
 
           return submissionAndContentLinkStream
               .filter(submissionContentAreImages())
-              .concatMap(submissionAndLink -> preFillImageOrAlbum(submissionAndLink.first, (MediaLink) submissionAndLink.second, deviceDisplayWidth)
-                  .subscribeOn(scheduler)
-                  //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first.getTitle()))
-                  .onErrorComplete()
-                  .toObservable()
-              );
+              .concatMap(submissionAndLink -> {
+                Submission submission = submissionAndLink.first;
+                MediaLink mediaLink = (MediaLink) submissionAndLink.second;
+                return preFillImageOrAlbum(submission, mediaLink, deviceDisplayWidth, submissionAlbumLinkThumbnailWidth)
+                    .subscribeOn(scheduler)
+                    //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first.getTitle()))
+                    .onErrorComplete()
+                    .toObservable();
+              });
         });
 
     // Link metadata.
     Observable linkCacheFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.LINK_METADATA)
-        .flatMap(strategy -> networkStateListener.streamNetworkCapability(strategy))
+        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
         .switchMap(canPreFill -> {
           if (!canPreFill) {
             return Observable.empty();
@@ -114,7 +113,7 @@ public class CachePreFiller {
 
           return submissionAndContentLinkStream
               .filter(submissionContentIsExternalLink())
-              .concatMap(submissionAndLink -> preFillLinkMetadata(submissionAndLink.first, submissionAndLink.second)
+              .concatMap(submissionAndLink -> preFillLinkMetadata(submissionAndLink.first, submissionAndLink.second, submissionAlbumLinkThumbnailWidth)
                   .subscribeOn(scheduler)
                   //.doOnSubscribe(d -> Timber.i("Caching link: %s", submissionAndLink.first.getTitle()))
                   .toObservable()
@@ -124,7 +123,7 @@ public class CachePreFiller {
 
     // Comments.
     Observable commentCacheFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.COMMENTS)
-        .flatMap(strategy -> networkStateListener.streamNetworkCapability(strategy))
+        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
         .switchMap(canPreFill -> {
           if (!canPreFill) {
             return Observable.empty();
@@ -145,7 +144,7 @@ public class CachePreFiller {
     return submissionAndLink -> submissionAndLink.second.isImageOrGif() || submissionAndLink.second.isMediaAlbum();
   }
 
-  private Completable preFillImageOrAlbum(Submission submission, MediaLink mediaLink, int deviceDisplayWidth) {
+  private Completable preFillImageOrAlbum(Submission submission, MediaLink mediaLink, int deviceDisplayWidth, int submissionAlbumLinkThumbnailWidth) {
     return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .map(resolvedLink -> {
           switch (resolvedLink.type()) {
@@ -160,13 +159,13 @@ public class CachePreFiller {
 
             // We cannot cache the entire album, but we can make the first image available right away.
             case MEDIA_ALBUM:
-              if (!(resolvedLink instanceof ImgurAlbumLink)) {
+              if (!(resolvedLink instanceof ImgurAlbumLink) || !SubmissionImageHolder.LOAD_LOW_QUALITY_IMAGES) {
                 throw new UnsupportedOperationException();
               }
               String firstImageUrl = ((ImgurAlbumLink) resolvedLink).images().get(0).lowQualityUrl();
               String albumCoverImageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
                   submission.getThumbnails(),
-                  thumbnailWidthForSubmissionAlbumLink,
+                  submissionAlbumLinkThumbnailWidth,
                   ((ImgurAlbumLink) resolvedLink).coverImageUrl()
               );
               return Arrays.asList(albumCoverImageUrl, firstImageUrl);
@@ -205,13 +204,13 @@ public class CachePreFiller {
     };
   }
 
-  private Completable preFillLinkMetadata(Submission submission, Link contentLink) {
+  private Completable preFillLinkMetadata(Submission submission, Link contentLink, int submissionAlbumLinkThumbnailWidth) {
     return linkMetadataRepository.unfurl(contentLink)
         .flatMapCompletable(linkMetadata -> {
           String faviconUrl = linkMetadata.faviconUrl();
           String thumbnailImageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
               submission.getThumbnails(),
-              thumbnailWidthForSubmissionAlbumLink,
+              submissionAlbumLinkThumbnailWidth,
               linkMetadata.imageUrl()
           );
 

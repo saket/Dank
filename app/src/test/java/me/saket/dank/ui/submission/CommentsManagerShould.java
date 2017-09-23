@@ -39,8 +39,10 @@ public class CommentsManagerShould {
   private static final int RECYCLE_DRAFTS_IN_DAYS = 14;
 
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
+
   @Mock SharedPreferences sharedPrefs;
   @Mock SharedPreferences.Editor sharedPrefsEditor;
+
   @Captor ArgumentCaptor<String> stringArgCaptor;
 
   private CommentsManager commentsManager;

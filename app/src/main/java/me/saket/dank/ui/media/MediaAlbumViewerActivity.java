@@ -267,7 +267,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
             })
             // Toggle HD for all images with the default value.
             .flatMap(mediaLinks -> userPreferences.streamHighResolutionMediaNetworkStrategy()
-                .flatMap(strategy -> networkStateListener.streamNetworkCapability(strategy))
+                .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
                 .firstOrError()
                 .doOnSuccess(canLoadHighResolutionMedia -> {
                   if (canLoadHighResolutionMedia) {

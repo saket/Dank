@@ -471,14 +471,18 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         });
 
     // Cache pre-fill.
-    int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+    int displayWidth = getResources().getDisplayMetrics().widthPixels;
+    int submissionAlbumLinkThumbnailWidth = getResources().getDimensionPixelSize(R.dimen.submission_link_thumbnail_width_album);
+
     cachedSubmissionStream
         .withLatestFrom(submissionFolderStream, Pair::create)
         .observeOn(single())
         .flatMap(pair -> subscriptionManager.isSubscribed(pair.second.subredditName())
             .flatMap(isSubscribed -> isSubscribed ? Observable.just(pair.first) : Observable.never())
         )
-        .switchMap(cachedSubmissions -> cachePreFiller.preFillInParallelThreads(cachedSubmissions, deviceDisplayWidth).toObservable())
+        .switchMap(cachedSubmissions -> cachePreFiller.preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
+            .toObservable()
+        )
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
   }

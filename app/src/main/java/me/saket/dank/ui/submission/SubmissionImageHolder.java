@@ -47,12 +47,15 @@ import timber.log.Timber;
  */
 public class SubmissionImageHolder {
 
-  private final MediaHostRepository mediaHostRepository;
+  // TO ensure that both CachePreFiller and SubmissionImageHolder are in sync.
+  public static final boolean LOAD_LOW_QUALITY_IMAGES = true;
+
   @BindView(R.id.submission_image_scroll_hint) View imageScrollHintView;
   @BindView(R.id.submission_image) ZoomableImageView imageView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
   @BindColor(R.color.submission_media_content_background_padding) int paddingColorForSmallImages;
 
+  private final MediaHostRepository mediaHostRepository;
   private final int deviceDisplayWidth;
   private final ExpandablePageLayout submissionPageLayout;
   private final ProgressBar contentLoadProgressView;
@@ -117,6 +120,10 @@ public class SubmissionImageHolder {
 
   // TODO: Cancel listeners on submission page collapse.
   public void load(MediaLink contentLink, Thumbnails redditSuppliedImages) {
+    if (!LOAD_LOW_QUALITY_IMAGES) {
+      throw new AssertionError();
+    }
+
     contentLoadProgressView.setIndeterminate(true);
     contentLoadProgressView.setVisibility(View.VISIBLE);
 

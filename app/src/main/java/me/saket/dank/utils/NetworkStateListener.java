@@ -6,13 +6,13 @@ import android.net.NetworkCapabilities;
 import android.net.NetworkInfo;
 import android.net.NetworkRequest;
 import android.support.annotation.CheckResult;
+import android.support.annotation.VisibleForTesting;
 
 import com.google.auto.value.AutoValue;
 
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import io.reactivex.ObservableSource;
 import me.saket.dank.data.NetworkStrategy;
 
 public class NetworkStateListener {
@@ -23,6 +23,9 @@ public class NetworkStateListener {
   public abstract static class NetworkState {
     public abstract boolean isConnectedOrConnectingToInternet();
 
+    /**
+     * See {@link NetworkInfo#getType()}.
+     */
     public abstract int networkType();
 
     public static NetworkState createActive(boolean isConnectedOrConnectingToInternet, int networkType) {
@@ -40,14 +43,15 @@ public class NetworkStateListener {
   }
 
   @CheckResult
-  public ObservableSource<Boolean> streamNetworkCapability(NetworkStrategy strategy) {
-    return streamNetworkStateChanges()
+  public Observable<Boolean> streamNetworkInternetCapability(NetworkStrategy strategy) {
+    return streamInternetCapableNetworkStateChanges()
         .distinctUntilChanged()
         .map(networkState -> satisfiesNetworkRequirement(strategy, networkState));
   }
 
   @CheckResult
-  private Observable<NetworkState> streamNetworkStateChanges() {
+  @VisibleForTesting
+  Observable<NetworkState> streamInternetCapableNetworkStateChanges() {
     return Observable.create(emitter -> {
       ConnectivityManager.NetworkCallback networkCallbacks = new ConnectivityManager.NetworkCallback() {
         @Override
@@ -66,16 +70,19 @@ public class NetworkStateListener {
         }
       };
 
-      NetworkRequest networkRequest = new NetworkRequest.Builder()
-          .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
-          .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
-          .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
-          .build();
-
       // Note: ConnectivityManager gives a callback with the default value right away.
-      connectivityManager.registerNetworkCallback(networkRequest, networkCallbacks);
+      connectivityManager.registerNetworkCallback(createInternetCapableNetworkRequest(), networkCallbacks);
       emitter.setCancellable(() -> connectivityManager.unregisterNetworkCallback(networkCallbacks));
     });
+  }
+
+  @VisibleForTesting
+  NetworkRequest createInternetCapableNetworkRequest() {
+    return new NetworkRequest.Builder()
+        .addCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+        .addTransportType(NetworkCapabilities.TRANSPORT_WIFI)
+        .addTransportType(NetworkCapabilities.TRANSPORT_CELLULAR)
+        .build();
   }
 
   private boolean satisfiesNetworkRequirement(NetworkStrategy networkStrategy, NetworkState networkState) {
