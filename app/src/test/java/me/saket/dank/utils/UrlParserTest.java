@@ -354,6 +354,7 @@ public class UrlParserTest {
     assertEquals(parsedLink.type(), Link.Type.SINGLE_VIDEO);
   }
 
+  // TODO: Extract this into an @Rule.
   @NonNull
   private Uri createMockUriFor(String url) {
     Uri mockUri = mock(Uri.class);

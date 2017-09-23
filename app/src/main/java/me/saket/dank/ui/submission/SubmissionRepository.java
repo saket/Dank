@@ -5,7 +5,7 @@ import static io.reactivex.schedulers.Schedulers.io;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
-import android.util.Pair;
+import android.support.v4.util.Pair;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxbinding2.internal.Notification;
@@ -97,6 +97,14 @@ public class SubmissionRepository {
           }
         });
   }
+
+  /**
+   * Note that this method will not ensure that <var>DankSubmissionRequest</var>'s sort matches
+   * with its submission's suggested sort.
+   */
+//  public Observable<Boolean> hasSubmissionWithCommentsInCache(DankSubmissionRequest submissionRequest) {
+//    database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.)
+//  }
 
   /**
    * Get from DB or from the network if not present in DB.

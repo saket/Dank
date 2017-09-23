@@ -4,7 +4,7 @@ import android.app.Application;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Px;
-import android.util.Pair;
+import android.support.v4.util.Pair;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.target.Target;
@@ -15,7 +15,9 @@ import net.dean.jraw.models.Thumbnails;
 
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -52,6 +54,9 @@ public class CachePreFiller {
   private final LinkMetadataRepository linkMetadataRepository;
   private final UserPreferences userPreferences;
 
+  // Key: <submission-fullname>_<CachePreFillThing>.
+  private Set<String> completedPreFills = new HashSet<>(50);
+
   @Inject
   public CachePreFiller(Application appContext, SubmissionRepository submissionRepository, NetworkStateListener networkStateListener,
       MediaHostRepository mediaHostRepository, LinkMetadataRepository linkMetadataRepository, UserPreferences userPreferences)
@@ -66,7 +71,6 @@ public class CachePreFiller {
 
   /**
    * TODO: Block multiple in-flight requests.
-   * TODO: Skip already cached items.
    */
   @CheckResult
   public Completable preFillInParallelThreads(List<Submission> submissions, @Px int deviceDisplayWidth, @Px int submissionAlbumLinkThumbnailWidth) {
@@ -145,6 +149,11 @@ public class CachePreFiller {
   }
 
   private Completable preFillImageOrAlbum(Submission submission, MediaLink mediaLink, int deviceDisplayWidth, int submissionAlbumLinkThumbnailWidth) {
+    if (isThingAlreadyPreFilled(submission, CachePreFillThing.IMAGES)) {
+      //Timber.i("Image skipping: %s", submission.getTitle());
+      return Completable.complete();
+    }
+
     return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .map(resolvedLink -> {
           switch (resolvedLink.type()) {
@@ -174,7 +183,9 @@ public class CachePreFiller {
               throw new AssertionError();
           }
         })
-        .flatMapCompletable(imageUrls -> downloadImages(imageUrls));
+        .flatMapCompletable(imageUrls -> downloadImages(imageUrls))
+        //.doOnComplete(() -> Timber.i("Image done: %s", submission.getTitle()))
+        .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.IMAGES));
   }
 
   private Completable downloadImages(List<String> imageUrls) {
@@ -205,6 +216,11 @@ public class CachePreFiller {
   }
 
   private Completable preFillLinkMetadata(Submission submission, Link contentLink, int submissionAlbumLinkThumbnailWidth) {
+    if (isThingAlreadyPreFilled(submission, CachePreFillThing.LINK_METADATA)) {
+      //Timber.i("Link skipping: %s", submission.getTitle());
+      return Completable.complete();
+    }
+
     return linkMetadataRepository.unfurl(contentLink)
         .flatMapCompletable(linkMetadata -> {
           String faviconUrl = linkMetadata.faviconUrl();
@@ -215,17 +231,33 @@ public class CachePreFiller {
           );
 
           return downloadImages(Arrays.asList(thumbnailImageUrl, faviconUrl));
-        });
+        })
+        //.doOnComplete(() -> Timber.i("Link done: %s", submission.getTitle()))
+        .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.LINK_METADATA));
   }
 
   private Completable preFillComment(Submission submission) {
+    if (isThingAlreadyPreFilled(submission, CachePreFillThing.COMMENTS)) {
+      //Timber.i("Comments skipping: %s", submission.getTitle());
+      return Completable.complete();
+    }
+
     DankSubmissionRequest request = DankSubmissionRequest.builder(submission.getId())
         .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : CommentSort.TOP)
         .build();
 
     return submissionRepository.submissionWithComments(request)
         .take(1)
-        .ignoreElements();
-    //.doOnComplete(() -> Timber.i("- comments pre-filled"));
+        .ignoreElements()
+        //.doOnComplete(() -> Timber.i("Comments done: %s", submission.getTitle()))
+        .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.COMMENTS));
+  }
+
+  private boolean isThingAlreadyPreFilled(Submission submission, CachePreFillThing thing) {
+    return completedPreFills.contains(submission.getFullName() + "_" + thing.name());
+  }
+
+  private void markThingAsPreFilled(Submission submission, CachePreFillThing thing) {
+    completedPreFills.add(submission.getFullName() + "_" + thing.name());
   }
 }
