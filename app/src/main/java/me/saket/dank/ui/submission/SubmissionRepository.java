@@ -1,7 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static io.reactivex.schedulers.Schedulers.io;
-
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
@@ -11,6 +9,9 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
+import com.nytimes.android.external.store3.base.Persister;
+import com.nytimes.android.external.store3.base.impl.Store;
+import com.nytimes.android.external.store3.base.impl.StoreBuilder;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
@@ -27,11 +28,13 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
+import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -57,6 +60,7 @@ public class SubmissionRepository {
   private final Set<String> savedSubmissionIds = new HashSet<>();
   private final ErrorResolver errorResolver;
   private final SubredditSubscriptionManager subscriptionManager;
+  private Store<Submission, DankSubmissionRequest> submissionWithCommentsStore;
 
   @Inject
   public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager,
@@ -69,6 +73,8 @@ public class SubmissionRepository {
     this.errorResolver = errorResolver;
     this.subscriptionManager = subscriptionManager;
   }
+
+// ======== SUBMISSION WITH COMMENTS ======== //
 
   /**
    * Get from DB or from the network if not present in DB.
@@ -112,53 +118,63 @@ public class SubmissionRepository {
    */
   @CheckResult
   private Observable<Submission> getOrFetchSubmissionWithComments(DankSubmissionRequest submissionRequest) {
-    String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(submissionRequest);
+    if (submissionWithCommentsStore == null) {
+      submissionWithCommentsStore = StoreBuilder.<DankSubmissionRequest, Submission>key()
+          .fetcher(request -> dankRedditClient.submission(request))
+          .persister(new Persister<Submission, DankSubmissionRequest>() {
+            @Nonnull
+            @Override
+            public Maybe<Submission> read(@Nonnull DankSubmissionRequest submissionRequest) {
+              String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(submissionRequest);
 
-    return database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
-        .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
-        .flatMap(cachedSubmissions -> {
-          if (cachedSubmissions.isEmpty()) {
-            // Starting a new Observable here so that it doesn't get canceled when the DB stream is disposed.
-            // Also, although we're terminating this flatMap stream here, downloading more items will trigger
-            // another emit in this stream from database.
-            fetchAndSaveCommentsFromRemote(submissionRequest)
-                .subscribeOn(io())
-                .subscribe();
-            return Observable.never();
+              return database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
+                  .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
+                  .firstElement()
+                  .flatMap(cachedSubmissions -> {
+                    if (cachedSubmissions.isEmpty()) {
+                      return Maybe.empty();
+                    } else {
+                      return Maybe.just(cachedSubmissions.get(0).submission());
+                    }
+                  });
+            }
 
-          } else {
-            return Observable.just(cachedSubmissions.get(0).submission());
-          }
-        });
+            @Nonnull
+            @Override
+            public Single<Boolean> write(@Nonnull DankSubmissionRequest submissionRequest, @Nonnull Submission submission) {
+              return Single.fromCallable(() -> {
+                Timber.i("Saving submission with comments: %s", submission.getTitle());
+
+                long saveTimeMillis = System.currentTimeMillis();
+                CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
+
+                Submission submissionWithoutComments = new Submission(submission.getDataNode());
+                CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
+                    submission.getFullName(),
+                    submissionWithoutComments,
+                    submissionWithoutComments.getSubredditName(),
+                    saveTimeMillis
+                );
+                JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
+
+                try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+                  database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
+                  database.insert(CachedSubmissionWithoutComments.TABLE_NAME, cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
+                      SQLiteDatabase.CONFLICT_REPLACE);
+                  transaction.markSuccessful();
+                }
+
+                return true;
+              });
+            }
+          })
+          .open();
+    }
+
+    return submissionWithCommentsStore.getRefreshing(submissionRequest);
   }
 
-  @CheckResult
-  public Completable fetchAndSaveCommentsFromRemote(DankSubmissionRequest submissionRequest) {
-    return dankRedditClient
-        .submission(submissionRequest)
-        .flatMapCompletable(submission -> Completable.fromAction(() -> {
-          Timber.i("Saving submission with comments: %s", submission.getTitle());
-
-          long saveTimeMillis = System.currentTimeMillis();
-          CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
-
-          Submission submissionWithoutComments = new Submission(submission.getDataNode());
-          CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
-              submission.getFullName(),
-              submissionWithoutComments,
-              submissionWithoutComments.getSubredditName(),
-              saveTimeMillis
-          );
-          JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
-
-          try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-            database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
-            database.insert(CachedSubmissionWithoutComments.TABLE_NAME, cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
-                SQLiteDatabase.CONFLICT_REPLACE);
-            transaction.markSuccessful();
-          }
-        }));
-  }
+// ======== SUBMISSION LIST (W/O COMMENTS) ======== //
 
   @CheckResult
   public Observable<List<Submission>> submissions(CachedSubmissionFolder folder) {
@@ -348,10 +364,6 @@ public class SubmissionRepository {
       }
     });
   }
-
-//  public CompletableSource clearCachedSubmissions() {
-//    return Completable.fromAction(() -> database.delete(CachedSubmissionWithComments.TABLE_NAME, null));
-//  }
 
   @AutoValue
   abstract static class SaveResult {

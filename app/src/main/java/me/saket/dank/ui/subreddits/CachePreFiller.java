@@ -69,9 +69,6 @@ public class CachePreFiller {
     this.userPreferences = userPreferences;
   }
 
-  /**
-   * TODO: Block multiple in-flight requests.
-   */
   @CheckResult
   public Completable preFillInParallelThreads(List<Submission> submissions, @Px int deviceDisplayWidth, @Px int submissionAlbumLinkThumbnailWidth) {
     Observable<Pair<Submission, Link>> submissionAndContentLinkStream = Observable.fromIterable(submissions)
