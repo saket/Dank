@@ -6,7 +6,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.ObjectWriter;
 
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Thing;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -28,13 +28,13 @@ public class JacksonHelper {
     this.jsonPrinter = objectMapper.writer().withDefaultPrettyPrinter();
   }
 
-  public <T extends Contribution> String toJson(T objectWithDataNode) {
+  public <T extends Thing> String toJson(T objectWithDataNode) {
     // The toString() method doc suggests to use writeValueAsStringInstead,
     return toJson(objectWithDataNode.getDataNode());
   }
 
   public <T> String toJson(T object) {
-    if (object instanceof Contribution) {
+    if (object instanceof Thing) {
       throw new UnsupportedOperationException("Pass object's dataNode instead");
     }
 

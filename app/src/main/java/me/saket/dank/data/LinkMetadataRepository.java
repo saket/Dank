@@ -25,20 +25,17 @@ import okio.BufferedSource;
 public class LinkMetadataRepository {
 
   private final Store<LinkMetadata, Link> linkMetadataStore;
-  private final DankApi dankApi;
 
   @Inject
   public LinkMetadataRepository(DankApi dankApi, FileSystem cacheFileSystem, Moshi moshi) {
-    this.dankApi = dankApi;
-    StoreFilePersister.JsonParser<Link, LinkMetadata> jsonParser = new LinkMetadataStoreJsonParser(moshi);
-
     PathResolver<Link> pathResolver = key -> {
       String url = key.unparsedUrl();
       return Urls.parseDomainName(url) + "_" + Urls.parseFileNameWithExtension(url) + "_" + url.hashCode();
     };
+    StoreFilePersister.JsonParser<Link, LinkMetadata> jsonParser = new LinkMetadataStoreJsonParser(moshi);
 
     linkMetadataStore = StoreBuilder.<Link, LinkMetadata>key()
-        .fetcher(link -> unfurlLinkFromRemote(link))
+        .fetcher(link -> unfurlLinkFromRemote(dankApi, link))
         .persister(new StoreFilePersister<>(cacheFileSystem, pathResolver, jsonParser))
         .open();
   }
@@ -66,7 +63,7 @@ public class LinkMetadataRepository {
     }
   }
 
-  private Single<LinkMetadata> unfurlLinkFromRemote(Link link) {
+  private Single<LinkMetadata> unfurlLinkFromRemote(DankApi dankApi, Link link) {
     // Reddit uses different title for sharing to social media, which we don't want.
     boolean ignoreSocialMetadata = link.isRedditPage();
     return dankApi.unfurlUrl(link.unparsedUrl(), ignoreSocialMetadata)

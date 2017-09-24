@@ -45,6 +45,7 @@ import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import me.saket.dank.utils.JacksonHelper;
+import me.saket.dank.utils.MoshiAccountAdapter;
 import me.saket.dank.utils.MoshiMessageAdapter;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
@@ -159,6 +160,7 @@ public class DankAppModule {
         .add(AutoValueMoshiAdapterFactory.create())
         .add(new MoshiMessageAdapter(jacksonHelper))
         .add(new MoshiSubmissionAdapter(jacksonHelper))
+        .add(new MoshiAccountAdapter(jacksonHelper))
         .build();
   }
 

@@ -304,9 +304,11 @@ public class DankRedditClient {
 
       JsonNode subredditJsonNode = userAccount.getDataNode().get("subreddit");
       if (subredditJsonNode.isNull()) {
+        // Old Reddit profile.
         return UserProfile.create(userAccount, null);
 
       } else {
+        // New profile with cover image and profile image.
         JsonAdapter<UserSubreddit> userSubredditJsonAdapter = Dank.moshi().adapter(UserSubreddit.class);
         UserSubreddit userSubreddit = userSubredditJsonAdapter.fromJson(Dank.jackson().toJson(subredditJsonNode));
         return UserProfile.create(userAccount, userSubreddit);

@@ -63,6 +63,7 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
   private CompositeDisposable onDismissDisposables = new CompositeDisposable();
 
   @Inject ErrorResolver errorResolver;
+  @Inject UserProfileRepository userProfileRepository;
 
   private enum StatsLoadState {
     IN_FLIGHT,
@@ -92,7 +93,7 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
     showStatsLoadState(StatsLoadState.IN_FLIGHT);
 
     onDismissDisposables.add(
-        Dank.reddit().userProfile(username)
+        userProfileRepository.profile(userLink)
             .compose(RxUtils.applySchedulersSingle())
             .subscribe(
                 userProfile -> {
@@ -211,8 +212,8 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
   }
 
   @OnClick(R.id.userprofilepopup_send_private_message)
-  void onClickSendPrivateMessage() {
-    // TODO.
+  void onClickSendPrivateMessage(Button b) {
+    Toast.makeText(b.getContext(), R.string.work_in_progress, Toast.LENGTH_SHORT).show();
   }
 
   @OnClick(R.id.userprofilepopup_view_full_profile)
