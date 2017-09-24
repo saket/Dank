@@ -106,14 +106,6 @@ public class SubmissionRepository {
   }
 
   /**
-   * Note that this method will not ensure that <var>DankSubmissionRequest</var>'s sort matches
-   * with its submission's suggested sort.
-   */
-//  public Observable<Boolean> hasSubmissionWithCommentsInCache(DankSubmissionRequest submissionRequest) {
-//    database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.)
-//  }
-
-  /**
    * Get from DB or from the network if not present in DB.
    */
   @CheckResult
