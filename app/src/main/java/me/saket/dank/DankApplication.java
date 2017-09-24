@@ -14,7 +14,8 @@ import com.tspoon.traceur.Traceur;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
-import java.util.Arrays;
+import java.util.ArrayList;
+import java.util.List;
 
 import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -52,6 +53,8 @@ public class DankApplication extends Application {
       return;
     }
 
+    List<NotificationChannel> notifChannels = new ArrayList<>(3);
+
     // Unread messages.
     NotificationChannel privateMessagesChannel = new NotificationChannel(
         getString(R.string.notification_channel_unread_messages_id),
@@ -59,6 +62,8 @@ public class DankApplication extends Application {
         NotificationManager.IMPORTANCE_DEFAULT
     );
     privateMessagesChannel.setDescription(getString(R.string.notification_channel_unread_messages_description));
+    privateMessagesChannel.enableLights(true);
+    notifChannels.add(privateMessagesChannel);
 
     // Media downloads.
     NotificationChannel mediaDownloadsChannel = new NotificationChannel(
@@ -68,8 +73,20 @@ public class DankApplication extends Application {
     );
     mediaDownloadsChannel.setDescription(getString(R.string.notification_channel_media_downloads_description));
     mediaDownloadsChannel.enableLights(false);
+    notifChannels.add(mediaDownloadsChannel);
 
-    notificationManager.createNotificationChannels(Arrays.asList(privateMessagesChannel, mediaDownloadsChannel));
+    // Debug notifs.
+    if (BuildConfig.DEBUG) {
+      NotificationChannel debugNotificationChannel = new NotificationChannel(
+          getString(R.string.notification_channel_debug_notifs_id),
+          "Debug notifications",
+          NotificationManager.IMPORTANCE_LOW
+      );
+      debugNotificationChannel.enableLights(false);
+      notifChannels.add(debugNotificationChannel);
+    }
+
+    notificationManager.createNotificationChannels(notifChannels);
   }
 
   @NonNull
