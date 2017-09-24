@@ -649,7 +649,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     }
 
     if (stateChangeCallbacks != null) {
-      for (int i = stateChangeCallbacks.size() - 1; i >= 0; i--) {     // Reverse loop to let listeners remove themselves while in the loop.
+      // Reverse loop to let listeners remove themselves while in the loop.
+      for (int i = stateChangeCallbacks.size() - 1; i >= 0; i--) {
         StateChangeCallbacks callback = stateChangeCallbacks.get(i);
         callback.onPageAboutToCollapse(getAnimationDuration());
       }
@@ -667,7 +668,9 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     }
 
     if (stateChangeCallbacks != null) {
-      for (final StateChangeCallbacks callback : stateChangeCallbacks) {
+      // Reverse loop to let listeners remove themselves while in the loop.
+      for (int i = stateChangeCallbacks.size() - 1; i >= 0; i--) {
+        StateChangeCallbacks callback = stateChangeCallbacks.get(i);
         callback.onPageCollapsed();
       }
     }
