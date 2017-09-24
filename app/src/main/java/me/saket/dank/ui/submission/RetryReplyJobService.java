@@ -23,6 +23,7 @@ public class RetryReplyJobService extends DankJobService {
         .build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
     jobScheduler.schedule(retryJobInfo);
   }
 

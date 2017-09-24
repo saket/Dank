@@ -37,6 +37,8 @@ public abstract class DankJobService extends JobService {
 
   protected static final int ID_RETRY_REPLY = 9;
 
+  protected static final int ID_RECYCLE_OLD_SUBMISSIONS = 10;
+
   private CompositeDisposable onDestroyDisposables;
 
   protected void unsubscribeOnDestroy(Disposable subscription) {
@@ -73,6 +75,7 @@ public abstract class DankJobService extends JobService {
         .setColor(ContextCompat.getColor(getBaseContext(), R.color.color_accent));
 
     NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+    //noinspection ConstantConditions
     notificationManager.notify(notifId, builder.build());
   }
 

@@ -32,6 +32,8 @@ public abstract class CachedSubmissionId {
 
   public static final String WHERE_SUBREDDIT_NAME = COLUMN_SUBREDDIT_NAME + " == ?";
 
+  public static final String WHERE_SAVE_TIME_BEFORE = COLUMN_SAVE_TIME + " < ?";
+
   public static String constructQueryToGetLastSubmission(String subredditName, String sortingAndTimePeriodJson) {
     return "SELECT * FROM " + TABLE_NAME
         + " WHERE " + COLUMN_SUBREDDIT_NAME + " == '" + subredditName + "'"

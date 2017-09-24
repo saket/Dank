@@ -45,6 +45,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Observable;
+import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
@@ -208,6 +209,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             })
             .subscribe(isSubscribed -> subscribeButton.setVisibility(isSubscribed ? View.GONE : View.VISIBLE))
     );
+  }
+
+  @Override
+  public void onDestroy() {
+    super.onDestroy();
+
+    // Recycle cached rows in DB.
+    DatabaseCacheRecyclerJobService.schedule(this);
   }
 
   @OnClick(R.id.subreddit_subscribe)

@@ -6,6 +6,7 @@ import com.squareup.moshi.Moshi;
 import javax.inject.Singleton;
 
 import dagger.Component;
+import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ImgurRepository;
@@ -87,4 +88,6 @@ public interface DankAppComponent {
   void inject(SubredditSubscriptionsSyncJob service);
 
   void inject(SubredditPickerSheetView view);
+
+  void inject(DatabaseCacheRecyclerJobService service);
 }

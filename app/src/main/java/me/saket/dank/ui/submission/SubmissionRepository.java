@@ -21,6 +21,9 @@ import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.paginators.SubredditPaginator;
 
+import org.threeten.bp.LocalDateTime;
+import org.threeten.bp.ZoneId;
+
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -28,6 +31,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -354,6 +358,39 @@ public class SubmissionRepository {
         database.delete(CachedSubmissionWithoutComments.TABLE_NAME, CachedSubmissionWithoutComments.WHERE_SUBREDDIT_NAME, subredditName);
         transaction.markSuccessful();
       }
+    });
+  }
+
+  /**
+   * Recycle all items that were saved X millis before now. If <var>durationBeforeNow</var> is 7 and
+   * timeUnit is DAYS, all items saved before 7 days ago will be removed.
+   */
+  @CheckResult
+  public Single<Integer> recycleAllCachedBefore(int durationBeforeNow, TimeUnit durationTimeUnit) {
+    return Single.fromCallable(() -> {
+      long daysBeforeNow = durationTimeUnit.toDays(durationBeforeNow);
+
+      LocalDateTime dateTimeBeforeNow = LocalDateTime.now(ZoneId.of("UTC")).minusDays(daysBeforeNow);
+      String millisBeforeNowString = String.valueOf(dateTimeBeforeNow.atZone(ZoneId.of("UTC")).toEpochSecond());
+
+      int totalDeletedRows = 0;
+
+      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+        totalDeletedRows += database.delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SAVE_TIME_BEFORE, millisBeforeNowString);
+        totalDeletedRows += database.delete(
+            CachedSubmissionWithoutComments.TABLE_NAME,
+            CachedSubmissionWithoutComments.WHERE_SAVE_TIME_BEFORE,
+            millisBeforeNowString
+        );
+        totalDeletedRows += database.delete(
+            CachedSubmissionWithComments.TABLE_NAME,
+            CachedSubmissionWithComments.WHERE_SAVE_TIME_BEFORE,
+            millisBeforeNowString
+        );
+        transaction.markSuccessful();
+      }
+
+      return totalDeletedRows;
     });
   }
 

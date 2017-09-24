@@ -30,6 +30,8 @@ public abstract class CachedSubmissionWithComments {
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_REQUEST_JSON + " == ?";
 
+  public static final String WHERE_SAVE_TIME_BEFORE = COLUMN_SAVE_TIME + " < ?";
+
   public abstract DankSubmissionRequest request();
 
   public abstract Submission submission();
