@@ -125,7 +125,7 @@ dependencies {
   implementation 'com.jakewharton.threetenabp:threetenabp:1.0.5'
 
   // Reddit API wrapper.
-  implementation 'com.github.Saketme:JRAW:6864908f28'
+  implementation 'com.github.Saketme:JRAW:bd20b3e581'
 
   // ImageViewer that supports pan, zoom gestures + can decode large images.
   implementation 'com.alexvasilkov:gesture-views:2.2.0'

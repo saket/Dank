@@ -1,5 +1,8 @@
 package me.saket.dank.ui.submission;
 
+import net.dean.jraw.models.Comment;
+import net.dean.jraw.models.CommentNode;
+
 import java.util.List;
 
 import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
@@ -37,10 +40,58 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionCom
   @Override
   protected boolean areContentsTheSame(SubmissionCommentRow oldCommentRow, SubmissionCommentRow newCommentRow) {
     try {
-      return oldCommentRow.equals(newCommentRow);
+      if (oldCommentRow instanceof DankCommentNode && newCommentRow instanceof DankCommentNode) {
+        return hackyEquals(((DankCommentNode) oldCommentRow), ((DankCommentNode) newCommentRow));
+
+      } else if (oldCommentRow instanceof LoadMoreCommentItem && newCommentRow instanceof LoadMoreCommentItem) {
+        return hackyEquals(((LoadMoreCommentItem) oldCommentRow), ((LoadMoreCommentItem) newCommentRow));
+
+      } else {
+        return oldCommentRow.equals(newCommentRow);
+      }
     } catch (StackOverflowError e) {
       Timber.e("StackOverflowError while equals. oldCommentRow: %s, newCommentRow: %s", oldCommentRow.fullName(), newCommentRow.fullName());
       return false;
     }
+  }
+
+  /**
+   * Because {@link CommentNode#equals(Object)} results in an infinite loop when compared with an identical object.
+   */
+  private boolean hackyEquals(DankCommentNode oldCommentRow, DankCommentNode newCommentRow) {
+    if (oldCommentRow == newCommentRow) {
+      return true;
+    }
+    if (!oldCommentRow.fullName().equals(newCommentRow.fullName())) {
+      return false;
+    }
+    if (oldCommentRow.isCollapsed() != newCommentRow.isCollapsed()) {
+      return false;
+    }
+
+    // We're only comparing the objects for figuring out changes that will affect their visual
+    // appearance. So it's okay to skip some items that CommentNode#equals() uses for comparison.
+    Comment oldComment = oldCommentRow.commentNode().getComment();
+    Comment newComment = newCommentRow.commentNode().getComment();
+    return oldComment.equals(newComment);
+  }
+
+  /**
+   * Because {@link CommentNode#equals(Object)} results in an infinite loop when compared with an identical object.
+   */
+  private boolean hackyEquals(LoadMoreCommentItem oldCommentRow, LoadMoreCommentItem newCommentRow) {
+    if (oldCommentRow == newCommentRow) {
+      return true;
+    }
+    if (!oldCommentRow.fullName().equals(newCommentRow.fullName())) {
+      return false;
+    }
+    if (oldCommentRow.progressVisible() != newCommentRow.progressVisible()) {
+      return false;
+    }
+
+    Comment oldParentComment = oldCommentRow.parentCommentNode().getComment();
+    Comment newParentComment = newCommentRow.parentCommentNode().getComment();
+    return oldParentComment.equals(newParentComment);
   }
 }
