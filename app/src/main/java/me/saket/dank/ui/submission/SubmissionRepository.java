@@ -22,6 +22,7 @@ import net.dean.jraw.paginators.SubredditPaginator;
 
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
@@ -132,22 +133,39 @@ public class SubmissionRepository {
   }
 
   @CheckResult
-  private Completable fetchAndSaveCommentsFromRemote(DankSubmissionRequest submissionRequest) {
-    return dankRedditClient.submission(submissionRequest)
+  public Completable fetchAndSaveCommentsFromRemote(DankSubmissionRequest submissionRequest) {
+    return dankRedditClient
+        .submission(submissionRequest)
         .flatMapCompletable(submission -> Completable.fromAction(() -> {
+          Timber.i("Saving submission with comments: %s", submission.getTitle());
+
           long saveTimeMillis = System.currentTimeMillis();
           CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
-          Timber.i("Saving submission with comments: %s", cachedSubmission.submission().getTitle());
-          database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
+
+          Submission submissionWithoutComments = new Submission(submission.getDataNode());
+          CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
+              submission.getFullName(),
+              submissionWithoutComments,
+              submissionWithoutComments.getSubredditName(),
+              saveTimeMillis
+          );
+          JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
+
+          try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+            database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
+            database.insert(CachedSubmissionWithoutComments.TABLE_NAME, cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
+                SQLiteDatabase.CONFLICT_REPLACE);
+            transaction.markSuccessful();
+          }
         }));
   }
 
   @CheckResult
   public Observable<List<Submission>> submissions(CachedSubmissionFolder folder) {
-    // Ideally we should pass listen to changes in the tables joined by CachedSubmissionList: CachedSubmissionIds and
-    // CachedSubmissionWithoutComments, but since they both get updated at the same time, we don't need to do that.
+    List<String> tablesToListen = Arrays.asList(CachedSubmissionId.TABLE_NAME, CachedSubmissionWithoutComments.TABLE_NAME);
     String sqlQuery = CachedSubmissionList.constructQueryToGetAll(moshi, folder.subredditName(), folder.sortingAndTimePeriod());
-    return database.createQuery(CachedSubmissionId.TABLE_NAME, sqlQuery)
+
+    return database.createQuery(tablesToListen, sqlQuery)
         .mapToList(CachedSubmissionList.cursorMapper(moshi.adapter(Submission.class)))
         .map(Commons.toImmutable());
   }

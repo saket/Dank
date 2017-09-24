@@ -854,6 +854,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               })
       );
     }
+
+    submissionRepository.fetchAndSaveCommentsFromRemote(submissionRequest)
+        .subscribeOn(io())
+        .subscribe();
   }
 
   private Disposable loadSubmissionContent(Submission submission) {
