@@ -304,7 +304,7 @@ public class SubmissionRepository {
 
         CachedSubmissionId cachedSubmissionId = CachedSubmissionId.create(
             submission.getFullName(),
-            folder.subredditName(),
+            submission.getSubredditName(),
             folder.sortingAndTimePeriod(),
             saveTimeMillis
         );
@@ -312,7 +312,7 @@ public class SubmissionRepository {
         CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
             submission.getFullName(),
             submission,
-            folder.subredditName(),
+            submission.getSubredditName(),
             saveTimeMillis
         );
 
