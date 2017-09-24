@@ -12,7 +12,6 @@ import android.support.v4.content.ContextCompat;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import me.saket.dank.ui.subreddits.SubredditActivity;
-import timber.log.Timber;
 
 /**
  * Base class for {@link JobService JobServices}.
@@ -58,8 +57,7 @@ public abstract class DankJobService extends JobService {
 
   protected void displayDebugNotification(int notifId, String notifBody, Object... args) {
     if (!BuildConfig.DEBUG) {
-      Timber.e(new RuntimeException("Debug notification"), "This shouldn't be here!");
-      return;
+      throw new RuntimeException("Debug notif: this shouldn't be here!");
     }
 
     Intent homeActivityIntent = new Intent(this, SubredditActivity.class);

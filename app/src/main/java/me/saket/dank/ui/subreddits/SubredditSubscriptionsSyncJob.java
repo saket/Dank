@@ -14,6 +14,7 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import javax.inject.Inject;
 
+import me.saket.dank.BuildConfig;
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
@@ -86,7 +87,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
         .compose(doOnCompletableStartAndTerminate(ongoing -> progressSubject.accept(ongoing)))
         .subscribe(
             () -> {
-              if (params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB) {
+              if (params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB && BuildConfig.DEBUG) {
                 displayDebugNotification(0, "Subreddits synced");
               }
               jobFinished(params, false);

@@ -50,11 +50,13 @@ public class DatabaseCacheRecyclerJobService extends DankJobService {
         .subscribeOn(Schedulers.io())
         .subscribe(
             deletedRows -> {
-              displayDebugNotification(
-                  ID_RECYCLE_OLD_SUBMISSIONS,
-                  "Recycled %s database rows older than %s days",
-                  deletedRows, durationTimeUnit.toDays(durationFromNow)
-              );
+              if (BuildConfig.DEBUG) {
+                displayDebugNotification(
+                    ID_RECYCLE_OLD_SUBMISSIONS,
+                    "Recycled %s database rows older than %s days",
+                    deletedRows, durationTimeUnit.toDays(durationFromNow)
+                );
+              }
             },
             RxUtils.logError("Couldn't recycle old submissions")
         );
