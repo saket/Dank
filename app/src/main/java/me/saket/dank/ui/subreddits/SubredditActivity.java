@@ -17,8 +17,8 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v4.util.Pair;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -70,6 +70,7 @@ import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
+import me.saket.dank.widgets.InboxUI.RxExpandablePage;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
@@ -382,7 +383,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // Pagination.
     submissionFolderStream
         .observeOn(mainThread())
-        .doOnNext(folder -> Timber.d("-------------------------------"))
+        //.doOnNext(folder -> Timber.d("-------------------------------"))
         //.doOnNext(folder -> Timber.i("%s", folder))
         .takeUntil(lifecycle().onDestroy())
         .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionList)
@@ -394,11 +395,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .subscribe(paginationStatusStream);
 
     // DB subscription.
-    // Thoughts: Combining the DB and infinite-scroll streams does not seem possible.
-    submissionFolderStream
-        .observeOn(io())
-        .switchMap(folder -> submissionRepository.submissions(folder))
-        //.doOnNext(s -> Timber.i("Found %s subms", s.size()))
+    // We suspend the listener while a submission is active so that this list doesn't get updated in background.
+    RxExpandablePage.streamCollapses(submissionPage)
+        .switchMap(o -> submissionFolderStream
+            .switchMap(folder -> submissionRepository.submissions(folder).subscribeOn(io()))
+            .takeUntil(RxExpandablePage.streamPreExpansions(submissionPage))
+        )
         .takeUntil(lifecycle().onDestroy())
         .subscribe(cachedSubmissionStream);
 
@@ -440,10 +442,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           adapterDataset.addAll(uiModel.submissions());
 
           NetworkCallStatus.State paginationState = uiModel.paginationStatus().state();
-          Timber.i("---------------------");
-          Timber.i("Cached submissions: %s", uiModel.submissions().size());
-          Timber.i("Pagination state: %s", paginationState);
-          Timber.i("Refresh state: %s", uiModel.refreshStatus().state());
+          //Timber.i("---------------------");
+          //Timber.i("Cached submissions: %s", uiModel.submissions().size());
+          //Timber.i("Pagination state: %s", paginationState);
+          //Timber.i("Refresh state: %s", uiModel.refreshStatus().state());
 
           if (uiModel.submissions().isEmpty() && paginationState == NetworkCallStatus.State.IN_FLIGHT) {
             fullscreenProgressView.setVisibility(View.VISIBLE);
