@@ -1,7 +1,8 @@
 package me.saket.dank.ui.user.messages;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.doNothing;
+import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
@@ -12,12 +13,12 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.design.widget.TabLayout;
-import android.support.v4.view.ViewPager;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 
-import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
+import com.jakewharton.rxbinding2.support.design.widget.RxTabLayout;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Types;
 
@@ -52,11 +53,11 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   private static final String KEY_SEEN_UNREAD_MESSAGES = "seenUnreadMessages";
   private static final String KEY_INITIAL_FOLDER = "initialFolder";
-  private static final String KEY_ACTIVE_PAGE_INDEX = "activePageIndex";
+  private static final String KEY_ACTIVE_TAB_POSITION = "activeTabPosition";
 
   @BindView(R.id.inbox_root) IndependentExpandablePageLayout contentPage;
-  @BindView(R.id.inbox_tablayout) TabLayout tabLayout;
-  @BindView(R.id.inbox_viewpager) ViewPager viewPager;
+  @BindView(R.id.inbox_tabs) TabLayout tabLayout;
+  @BindView(R.id.inbox_fragment_container) ViewGroup fragmentContainer;
 
   @Inject UrlRouter urlRouter;
 
@@ -88,10 +89,8 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       //noinspection CodeBlock2Expr
-      return touchLiesOn(viewPager, downX, downY) && inboxPagerAdapter.getActiveFragment().shouldInterceptPullToCollapse(upwardPagePull);
+      return touchLiesOn(fragmentContainer, downX, downY) && inboxPagerAdapter.getActiveFragment().shouldInterceptPullToCollapse(upwardPagePull);
     });
-
-    inboxPagerAdapter = new InboxPagerAdapter(getResources(), getSupportFragmentManager());
 
     // We're only using the initial value to move to the Unread tab if any other page was active in onNewIntent().
     if (getIntent().getSerializableExtra(KEY_INITIAL_FOLDER) != InboxFolder.ALL[0]) {
@@ -103,12 +102,31 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
 
-    viewPager.setAdapter(inboxPagerAdapter);
-    tabLayout.setupWithViewPager(viewPager, true);
+    inboxPagerAdapter = new InboxPagerAdapter(getResources(), getSupportFragmentManager());
+    String[] folderNames = getResources().getStringArray(R.array.inbox_folder_names);
+    for (String folderName : folderNames) {
+      TabLayout.Tab tab = tabLayout.newTab();
+      tab.setText(folderName);
+      tabLayout.addTab(tab);
+    }
 
     if (savedInstanceState != null) {
-      viewPager.setCurrentItem(savedInstanceState.getInt(KEY_ACTIVE_PAGE_INDEX));
+      int retainedTabPosition = savedInstanceState.getInt(KEY_ACTIVE_TAB_POSITION);
+      //noinspection ConstantConditions
+      tabLayout.getTabAt(retainedTabPosition).select();
     }
+
+    RxTabLayout.selections(tabLayout)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(selectedTab -> {
+          InboxFolderFragment currentFragment = (InboxFolderFragment) inboxPagerAdapter.instantiateItem(fragmentContainer, selectedTab.getPosition());
+          inboxPagerAdapter.setPrimaryItem(fragmentContainer, selectedTab.getPosition(), currentFragment);
+
+          getSupportFragmentManager()
+              .beginTransaction()
+              .replace(R.id.inbox_fragment_container, currentFragment)
+              .commit();
+        });
   }
 
   @Override
@@ -116,7 +134,10 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     super.onNewIntent(intent);
 
     InboxFolder folderToShow = (InboxFolder) intent.getSerializableExtra(KEY_INITIAL_FOLDER);
-    viewPager.setCurrentItem(inboxPagerAdapter.getPosition(folderToShow));
+    int fragmentPosition = inboxPagerAdapter.getPosition(folderToShow);
+    TabLayout.Tab tab = tabLayout.getTabAt(fragmentPosition);
+    //noinspection ConstantConditions
+    tab.select();
   }
 
   @Override
@@ -124,14 +145,16 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     super.onStart();
 
     // Dismiss any active message notifications when the unread page is active.
-    unsubscribeOnStop(RxViewPager.pageSelections(viewPager)
-        .map(pageIndex -> inboxPagerAdapter.getFolder(pageIndex) == InboxFolder.UNREAD)
+    RxTabLayout.selections(tabLayout)
+        .takeUntil(lifecycle().onStop())
+        .map(selectedTab -> selectedTab.getPosition())
+        .map(pagePosition -> inboxPagerAdapter.getFolder(pagePosition) == InboxFolder.UNREAD)
         .doOnNext(isUnreadActive -> Dank.sharedPrefs().setUnreadMessagesFolderActive(isUnreadActive))
         .doOnDispose(() -> Dank.sharedPrefs().setUnreadMessagesFolderActive(false))
         .flatMapCompletable(isUnreadActive -> isUnreadActive
             ? Dank.messagesNotifManager().dismissAllNotifications(this)
             : Completable.complete())
-        .subscribe());
+        .subscribe();
   }
 
   @Override
@@ -141,7 +164,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
     // ViewPager is supposed to handle restoring page index on its own, but that
     // is not working for some reason. And I don't have time to investigate why.
-    outState.putInt(KEY_ACTIVE_PAGE_INDEX, viewPager.getCurrentItem());
+    outState.putInt(KEY_ACTIVE_TAB_POSITION, tabLayout.getSelectedTabPosition());
     super.onSaveInstanceState(outState);
   }
 
@@ -164,7 +187,8 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   @Override
   public void finish() {
-    if (!isChangingConfigurations()) {
+    boolean isExiting = !isChangingConfigurations();
+    if (isExiting) {
       markSeenMessagesAsRead();
     }
     super.finish();
@@ -204,7 +228,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   @Override
   public void onClickMessage(Message message, View messageItemView) {
-    // Play the expand entry animation from the bottom of the list item.
+    // Play the expand entry animation from the bottom of the item.
     Rect messageItemViewRect = Views.globalVisibleRect(messageItemView);
     messageItemViewRect.top = messageItemViewRect.bottom;
 
@@ -236,9 +260,11 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     Message[] seenMessagesArray = Arrays.toArray(seenUnreadMessages, Message.class);
     sendBroadcast(MessageNotifActionReceiver.createMarkAsReadIntent(this, Dank.moshi(), seenMessagesArray));
 
+    // Marking messages as read happens on the UI thread so we can immediately refresh messages after that.
+    // Though this is dangerous in case the implementation of MessageNotifActionReceiver is ever changed in the future.
     Dank.inbox().refreshMessages(InboxFolder.UNREAD, false)
-        .compose(applySchedulersSingle())
-        .subscribe(doNothing(), doNothing());
+        .subscribeOn(io())
+        .subscribe(doNothing(), logError("Couldn't refresh messages"));
   }
 
   @Override
@@ -246,6 +272,8 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     sendBroadcast(MessageNotifActionReceiver.createMarkAllAsReadIntent(this, unreadMessages));
     finish();
   }
+
+// ======== TOOLBAR MENU ======== //
 
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {

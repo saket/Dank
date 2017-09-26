@@ -168,8 +168,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
         // Offload work to a service (because Receivers are destroyed immediately) and refresh
         // the notifs so that the summary notif gets canceled if no more notifs are present.
         parseMessageArray(intent.getStringExtra(INTENT_KEY_MESSAGE_ARRAY_JSON))
-            .flatMapCompletable(messages -> Dank.messagesNotifManager()
-                .markMessageNotifAsSeen(messages)
+            .flatMapCompletable(messages -> Dank.messagesNotifManager().markMessageNotifAsSeen(messages)
                 .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.refreshNotifications(context)))
                 .andThen(Completable.fromAction(() -> MessageNotifActionsJobService.markAsRead(context, Dank.moshi(), messages)))
                 .andThen(Dank.messagesNotifManager().dismissNotification(context, messages))

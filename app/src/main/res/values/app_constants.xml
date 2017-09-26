@@ -7,6 +7,14 @@
   <string name="file_provider_authority">me.saket.dank.fileprovider</string>
   <string name="image_download_directory_name">@string/app_name</string>  <!-- /external/Pictures/Dank -->
 
+  <string-array name="inbox_folder_names">
+    <item>Unread</item>
+    <item>Private messages</item>
+    <item>Comment replies</item>
+    <item>Post replies</item>
+    <item>Username mentions</item>
+  </string-array>
+
   <string-array name="default_subreddits">
     <item>Frontpage</item>
     <item>Popular</item>
