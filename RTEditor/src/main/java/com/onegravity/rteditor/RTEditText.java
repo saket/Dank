@@ -281,7 +281,7 @@ public class RTEditText extends EditText implements TextWatcher, SpanWatcher, Li
      * @param content         The new content
      */
     public void setRichTextEditing(boolean useRTFormatting, String content) {
-        assertRegistration();
+        //assertRegistration();
 
         if (useRTFormatting != mUseRTFormatting) {
             mUseRTFormatting = useRTFormatting;
@@ -368,9 +368,9 @@ public class RTEditText extends EditText implements TextWatcher, SpanWatcher, Li
     }
 
     private void assertRegistration() {
-        if (mMediaFactory == null) {
-            throw new IllegalStateException("The RTMediaFactory is null. Please make sure to register the editor at the RTManager before using it.");
-        }
+        //if (mMediaFactory == null) {
+        //    throw new IllegalStateException("The RTMediaFactory is null. Please make sure to register the editor at the RTManager before using it.");
+        //}
     }
 
     // ****************************************** TextWatcher / SpanWatcher *******************************************

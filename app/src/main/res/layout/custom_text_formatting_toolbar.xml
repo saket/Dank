@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<merge android:id="@+id/composereply_bottombar"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  tools:layout_height="wrap_content"
+  tools:layout_width="match_parent"
+  tools:parentTag="android.widget.HorizontalScrollView">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="horizontal">
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_bold"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_bold"
+      android:src="@drawable/ic_format_bold_24dp" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_italic"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_italic"
+      android:src="@drawable/ic_format_italic_24dp" />
+
+    <View style="@style/DankSeparator.HorizontalContent" />
+
+    <Button
+      android:id="@+id/textformattoolbar_insert_text_emoji"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_insert_text_emoji"
+      android:minWidth="0dp"
+      android:text="@string/textformat_text_face"
+      android:textStyle="bold" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_insert_link"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_insert_link"
+      android:src="@drawable/ic_insert_link_24dp" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_insert_image"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_insert_image"
+      android:src="@drawable/ic_image_24dp" />
+
+    <View style="@style/DankSeparator.HorizontalContent" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_strikethrough"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_strikethrough"
+      android:src="@drawable/ic_strikethrough_s_black_24dp" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_quote"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_quote"
+      android:src="@drawable/ic_format_quote_24dp" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_superscript"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_superscript"
+      android:src="@drawable/ic_format_superscript" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_inline_code"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_code"
+      android:src="@drawable/ic_code_24dp" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_header"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_header"
+      android:src="@drawable/ic_format_header_pound" />
+  </LinearLayout>
+</merge>

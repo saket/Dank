@@ -1,8 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/composereply_root"
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
-  android:id="@+id/composereply_root"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   android:animateLayoutChanges="true"
@@ -17,16 +17,17 @@
 
   <!-- Using a ScrollView so that clipToPadding attr can be used. -->
   <ScrollView
+    android:id="@+id/composereply_compose_field_scrollview"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_above="@+id/composereply_bottombar"
     android:layout_below="@id/toolbar"
-    android:paddingTop="@dimen/spacing4"
-    android:paddingBottom="@dimen/spacing16"
-    android:paddingStart="@dimen/spacing16"
-    android:paddingEnd="@dimen/spacing16"
     android:clipToPadding="false"
-    android:fillViewport="true">
+    android:fillViewport="true"
+    android:paddingBottom="@dimen/spacing16"
+    android:paddingEnd="@dimen/spacing16"
+    android:paddingStart="@dimen/spacing16"
+    android:paddingTop="@dimen/spacing4">
 
     <EditText
       android:id="@+id/composereply_compose_field"
@@ -35,48 +36,22 @@
       android:background="@null"
       android:gravity="top"
       android:hint="@string/composereply_compose_field_hint"
-      android:inputType="textMultiLine"
+      android:inputType="textCapSentences|textMultiLine"
       android:textSize="@dimen/textsize16" />
   </ScrollView>
 
   <LinearLayout
-    android:id="@+id/composereply_bottombar"
     android:layout_width="match_parent"
-    android:layout_height="?attr/actionBarSize"
+    android:layout_height="wrap_content"
     android:layout_alignParentBottom="true"
-    android:paddingStart="@dimen/spacing4"
-    android:paddingEnd="@dimen/spacing4"
-    android:background="@color/black_opacity_10"
-    android:gravity="center_vertical|end"
-    android:orientation="horizontal">
+    android:layout_alignParentEnd="true"
+    android:background="@color/gray_900">
 
-    <Button
-      android:id="@+id/composereply_editor_bold"
-      android:layout_width="wrap_content"
+    <me.saket.dank.ui.compose.TextFormatToolbarView
+      android:id="@+id/composereply_format_toolbar"
+      android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:minWidth="0dp"
-      android:text="B" />
-
-    <Button
-      android:id="@+id/composereply_editor_ul"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:minWidth="0dp"
-      android:text="UL" />
-
-    <Button
-      android:id="@+id/composereply_editor_ol"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:minWidth="0dp"
-      android:text="OL" />
-
-    <Button
-      android:id="@+id/composereply_editor_hr"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:minWidth="0dp"
-      android:text="HR" />
+      android:layout_weight="1" />
 
     <Button
       android:id="@+id/composereply_send"

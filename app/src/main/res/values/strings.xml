@@ -184,11 +184,6 @@
   <string name="messagenotification_mark_as_read">Mark as read</string>
   <string name="messagenotification_mark_all_as_read">Mark all as read</string>
 
-  <!-- Compose Reply -->
-  <string name="composereply_compose_field_hint">Write a reply…</string>
-  <string name="composereply_send">Send</string>
-  <string name="composereply_title_reply_to">re: %s</string>
-
   <!-- Media -->
   <string name="cd_videoplayer_toggle_mute">Toggle mute</string>
   <string name="cd_videoplayer_toggle_fullscreen">Toggle fullscreen</string>
@@ -273,4 +268,20 @@
   <string name="userprefs_use_chrome_custom_tabs">Use Chrome custom tabs</string>
   <string name="userprefs_use_chrome_custom_tabs_description">Note: pull-to-collapse is only supported in the internal browser.</string>
   <string name="userprefs_group_media">Media</string>
+
+  <!-- Compose -->
+  <string name="composereply_compose_field_hint">Write a reply…</string>
+  <string name="composereply_send">Send</string>
+  <string name="composereply_title_reply_to">re: %s</string>
+  <string name="cd_textformat_bold">Bold</string>
+  <string name="cd_textformat_italic">Italic</string>
+  <string name="cd_textformat_insert_link">Insert link</string>
+  <string name="cd_textformat_insert_text_emoji">Insert text emoji</string>
+  <string name="cd_textformat_insert_image">Upload image</string>
+  <string name="textformat_text_face" translatable="false">ಠ_ಠ</string>
+  <string name="cd_textformat_strikethrough">Strikethrough</string>
+  <string name="cd_textformat_quote">Quote</string>
+  <string name="cd_textformat_superscript">Superscript</string>
+  <string name="cd_textformat_code">Preformatted code</string>
+  <string name="cd_textformat_header">Header</string>
 </resources>
