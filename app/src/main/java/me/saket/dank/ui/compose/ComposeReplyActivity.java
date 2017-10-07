@@ -5,6 +5,8 @@ import android.content.Intent;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
@@ -121,5 +123,21 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity {
   @OnClick(R.id.composereply_send)
   void onClickSend() {
     progressView.setVisibility(View.VISIBLE);
+  }
+
+// ======== TOOLBAR MENU ======== //
+
+  @Override
+  public boolean onCreateOptionsMenu(Menu menu) {
+    getMenuInflater().inflate(R.menu.menu_compose_reply, menu);
+    return super.onCreateOptionsMenu(menu);
+  }
+
+  @Override
+  public boolean onOptionsItemSelected(MenuItem item) {
+    switch (item.getItemId()) {
+      default:
+        return super.onOptionsItemSelected(item);
+    }
   }
 }

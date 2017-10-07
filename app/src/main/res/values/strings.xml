@@ -284,4 +284,6 @@
   <string name="cd_textformat_superscript">Superscript</string>
   <string name="cd_textformat_code">Preformatted code</string>
   <string name="cd_textformat_header">Header</string>
+  <string name="composereply_redo">Redo</string>
+  <string name="composereply_undo">Undo</string>
 </resources>
