@@ -55,7 +55,7 @@ android {
 
 ext.versions = [
     supportLib    : '26.0.2',
-    glideLib      : '4.0.0',
+    glide         : '4.0.0',
     autoValue     : '1.4',
     autoValueMoshi: '0.4.3',
     stetho        : '1.5.0',
@@ -106,9 +106,9 @@ dependencies {
   implementation "com.squareup.retrofit2:retrofit:$versions.retrofit"
   implementation "com.squareup.retrofit2:adapter-rxjava2:$versions.retrofit"
   implementation "com.squareup.retrofit2:converter-moshi:$versions.retrofit"
-  implementation "com.github.bumptech.glide:glide:$versions.glideLib"
-  annotationProcessor "com.github.bumptech.glide:compiler:$versions.glideLib"
-  implementation "com.github.bumptech.glide:okhttp3-integration:$versions.glideLib"
+  implementation "com.github.bumptech.glide:glide:$versions.glide"
+  annotationProcessor "com.github.bumptech.glide:compiler:$versions.glide"
+  implementation "com.github.bumptech.glide:okhttp3-integration:$versions.glide"
   compile 'com.squareup.sqlbrite2:sqlbrite:2.0.0'
   implementation 'com.google.android:flexbox:0.3.0'
   implementation 'com.github.zagum:Android-ExpandIcon:1.1.1'
@@ -116,7 +116,6 @@ dependencies {
   implementation 'org.sufficientlysecure:html-textview:3.3'
   implementation 'org.jsoup:jsoup:1.10.2'
   implementation 'com.trello.navi2:navi:2.0'
-  implementation 'com.squareup.tape2:tape:2.0.0-SNAPSHOT'
   implementation 'com.github.rahatarmanahmed:circularprogressview:2.5.0'
   implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.4@aar'
   implementation 'it.gilvegliach.android:transparent-text-textview:1.0.3'
