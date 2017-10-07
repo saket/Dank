@@ -64,7 +64,8 @@ ext.versions = [
     retrofit      : '2.2.0',
     rxBindings    : '2.0.0',
     dagger        : '2.10',
-    butterKnife   : '8.5.1'
+    butterKnife   : '8.5.1',
+    commonmark    : '0.10.0',
 ]
 
 dependencies {
@@ -120,6 +121,9 @@ dependencies {
   implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.4@aar'
   implementation 'it.gilvegliach.android:transparent-text-textview:1.0.3'
   implementation 'com.f2prateek.rx.preferences2:rx-preferences:2.0.0-RC3'
+  implementation "com.atlassian.commonmark:commonmark:$versions.commonmark"
+  implementation "com.atlassian.commonmark:commonmark-ext-heading-anchor:$versions.commonmark"
+  implementation "com.atlassian.commonmark:commonmark-ext-gfm-strikethrough:$versions.commonmark"
 
   // TODO: Replace all Date4J usages with ThreeTenAbp.
   implementation 'com.darwinsys:hirondelle-date4j:1.5.1'
