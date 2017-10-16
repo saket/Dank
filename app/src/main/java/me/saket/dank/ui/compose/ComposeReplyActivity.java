@@ -10,7 +10,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
 import android.widget.ScrollView;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -42,7 +41,7 @@ import timber.log.Timber;
  * - Nested list
  * - Table
  */
-public class ComposeReplyActivity extends DankPullCollapsibleActivity {
+public class ComposeReplyActivity extends DankPullCollapsibleActivity implements AddLinkDialog.Callbacks {
 
   private static final String KEY_START_OPTIONS = "startOptions";
 
@@ -85,17 +84,18 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity {
   public void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
 
-    formatToolbarView.setActionClickListener((action, block) -> {
+    formatToolbarView.setActionClickListener((markdownAction, markdownBlock) -> {
       Timber.d("--------------------------");
-      Timber.i("%s: %s", action, block);
+      Timber.i("%s: %s", markdownAction, markdownBlock);
 
-      switch (action) {
+      switch (markdownAction) {
         case INSERT_TEXT_EMOJI:
           Timber.w("TODO: Emojis");
           break;
 
         case INSERT_LINK:
-          Timber.w("TODO: Link dialog");
+          CharSequence preFilledTitle = replyField.getText().subSequence(replyField.getSelectionStart(), replyField.getSelectionEnd());
+          AddLinkDialog.showPreFilled(getSupportFragmentManager(), preFilledTitle.toString());
           break;
 
         case INSERT_IMAGE:
@@ -103,21 +103,32 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity {
           break;
 
         default:
-          if (replyField.getSelectionStart() == replyField.getSelectionEnd()) {
-            //noinspection ConstantConditions
-            replyField.getText().insert(replyField.getSelectionStart(), block.prefix() + block.suffix());
-            replyField.setSelection(replyField.getSelectionStart() - block.suffix().length());
-          } else {
+          if (replyField.getSelectionStart() != replyField.getSelectionEnd()) {
+            // Some text is selected.
             int selectionStart = replyField.getSelectionStart();
             int selectionEnd = replyField.getSelectionEnd();
+
             //noinspection ConstantConditions
-            replyField.getText().insert(selectionStart, block.prefix());
-            replyField.getText().insert(selectionEnd + block.prefix().length(), block.prefix());
-            replyField.setSelection(selectionStart + block.prefix().length(), selectionEnd + block.prefix().length());
+            replyField.getText().insert(selectionStart, markdownBlock.prefix());
+            replyField.getText().insert(selectionEnd + markdownBlock.prefix().length(), markdownBlock.prefix());
+            replyField.setSelection(selectionStart + markdownBlock.prefix().length(), selectionEnd + markdownBlock.prefix().length());
+
+          } else {
+            //noinspection ConstantConditions
+            replyField.getText().insert(replyField.getSelectionStart(), markdownBlock.prefix() + markdownBlock.suffix());
+            replyField.setSelection(replyField.getSelectionStart() - markdownBlock.suffix().length());
           }
           break;
       }
     });
+  }
+
+  @Override
+  public void onLinkInsert(String title, String url) {
+    int selectionStart = replyField.getSelectionStart();
+    int selectionEnd = replyField.getSelectionEnd();
+    String linkMarkdown = String.format("[%s](%s)", title, url);
+    replyField.getText().replace(selectionStart, selectionEnd, linkMarkdown);
   }
 
   @OnClick(R.id.composereply_send)

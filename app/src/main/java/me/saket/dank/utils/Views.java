@@ -10,6 +10,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.TextView;
 
 import timber.log.Timber;
@@ -218,5 +219,10 @@ public class Views {
     }
 
     return top;
+  }
+
+  public static void setTextWithCursor(EditText editText, CharSequence string) {
+    editText.setText(string);
+    editText.setSelection(string.length());
   }
 }

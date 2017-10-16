@@ -1,14 +1,13 @@
 package me.saket.dank.ui;
 
-import com.trello.navi2.component.support.NaviDialogFragment;
-
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerDialogFragment;
 
 /**
  * Base class for fragments.
  */
-public class DankDialogFragment extends NaviDialogFragment {
+public class DankDialogFragment extends LifecycleOwnerDialogFragment {
 
   private CompositeDisposable onStopDisposables;
   private CompositeDisposable onDestroyDisposables;
@@ -44,5 +43,4 @@ public class DankDialogFragment extends NaviDialogFragment {
     }
     onDestroyDisposables.add(subscription);
   }
-
 }

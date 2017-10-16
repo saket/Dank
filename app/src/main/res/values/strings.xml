@@ -286,4 +286,11 @@
   <string name="cd_textformat_header">Header</string>
   <string name="composereply_redo">Redo</string>
   <string name="composereply_undo">Undo</string>
+
+  <string name="composereply_addlink_error_empty_field">This can\'t be empty ಠ_ಠ</string>
+  <string name="composereply_addlink_title">Title</string>
+  <string name="composereply_addlink_url">URL</string>
+  <string name="composereply_addlink_cancel">Cancel</string>
+  <string name="composereply_addlink_insert">Insert</string>
+  <string name="composereply_paste_from_clipboard_hint">Tap to paste URL from clipboard\n%s</string>
 </resources>

@@ -16,9 +16,9 @@ public class TextFormatToolbarView extends HorizontalScrollView {
 
   public interface ActionClickListener {
     /**
-     * @param block Nullable for insert-link, insert-text-emoji and insert-image.
+     * @param markdownBlock Nullable for insert-link, insert-text-emoji and insert-image.
      */
-    void onClickAction(MarkdownAction action, @Nullable MarkdownBlock block);
+    void onClickAction(MarkdownAction markdownAction, @Nullable MarkdownBlock markdownBlock);
   }
 
   public TextFormatToolbarView(Context context, AttributeSet attrs) {
