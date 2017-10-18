@@ -2,28 +2,14 @@
 <HorizontalScrollView android:id="@+id/composereply_bottombar"
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
-  android:layout_height="match_parent"
   android:layout_width="match_parent"
+  android:layout_height="match_parent"
   tools:parentTag="android.widget.HorizontalScrollView">
 
   <LinearLayout
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:orientation="horizontal">
-
-    <ImageButton
-      android:id="@+id/textformattoolbar_bold"
-      style="@style/DankTextFormatToolbarButton"
-      android:contentDescription="@string/cd_textformat_bold"
-      android:src="@drawable/ic_format_bold_24dp" />
-
-    <ImageButton
-      android:id="@+id/textformattoolbar_italic"
-      style="@style/DankTextFormatToolbarButton"
-      android:contentDescription="@string/cd_textformat_italic"
-      android:src="@drawable/ic_format_italic_24dp" />
-
-    <View style="@style/DankSeparator.HorizontalContent" />
 
     <Button
       android:id="@+id/textformattoolbar_insert_text_emoji"
@@ -48,16 +34,22 @@
     <View style="@style/DankSeparator.HorizontalContent" />
 
     <ImageButton
+      android:id="@+id/textformattoolbar_bold"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_bold"
+      android:src="@drawable/ic_format_bold_24dp" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_italic"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_italic"
+      android:src="@drawable/ic_format_italic_24dp" />
+
+    <ImageButton
       android:id="@+id/textformattoolbar_strikethrough"
       style="@style/DankTextFormatToolbarButton"
       android:contentDescription="@string/cd_textformat_strikethrough"
       android:src="@drawable/ic_strikethrough_s_black_24dp" />
-
-    <ImageButton
-      android:id="@+id/textformattoolbar_quote"
-      style="@style/DankTextFormatToolbarButton"
-      android:contentDescription="@string/cd_textformat_quote"
-      android:src="@drawable/ic_format_quote_24dp" />
 
     <ImageButton
       android:id="@+id/textformattoolbar_superscript"
@@ -70,6 +62,14 @@
       style="@style/DankTextFormatToolbarButton"
       android:contentDescription="@string/cd_textformat_code"
       android:src="@drawable/ic_code_24dp" />
+
+    <View style="@style/DankSeparator.HorizontalContent" />
+
+    <ImageButton
+      android:id="@+id/textformattoolbar_quote"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_quote"
+      android:src="@drawable/ic_format_quote_24dp" />
 
     <ImageButton
       android:id="@+id/textformattoolbar_header"
