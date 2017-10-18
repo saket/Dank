@@ -2,18 +2,18 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:paddingTop="@dimen/spacing12"
-  android:orientation="vertical">
+  android:orientation="vertical"
+  android:paddingTop="@dimen/spacing12">
 
   <android.support.design.widget.TextInputLayout
     android:id="@+id/addlinkdialog_title_inputlayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="@dimen/spacing4"
-    android:layout_marginStart="@dimen/spacing16"
     android:layout_marginEnd="@dimen/spacing16"
-    android:paddingStart="@dimen/spacing4"
-    android:paddingEnd="@dimen/spacing4">
+    android:layout_marginStart="@dimen/spacing16"
+    android:layout_marginTop="@dimen/spacing4"
+    android:paddingEnd="@dimen/spacing4"
+    android:paddingStart="@dimen/spacing4">
 
     <EditText
       android:id="@+id/addlinkdialog_title"
@@ -21,6 +21,7 @@
       android:layout_height="wrap_content"
       android:hint="@string/composereply_addlink_title"
       android:imeOptions="actionNext"
+      android:inputType="textCapSentences"
       android:maxLines="1" />
   </android.support.design.widget.TextInputLayout>
 
@@ -28,10 +29,10 @@
     android:id="@+id/addlinkdialog_url_inputlayout"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="@dimen/spacing16"
     android:layout_marginEnd="@dimen/spacing16"
-    android:paddingStart="@dimen/spacing4"
-    android:paddingEnd="@dimen/spacing4">
+    android:layout_marginStart="@dimen/spacing16"
+    android:paddingEnd="@dimen/spacing4"
+    android:paddingStart="@dimen/spacing4">
 
     <EditText
       android:id="@+id/addlinkdialog_url"
@@ -42,29 +43,29 @@
   </android.support.design.widget.TextInputLayout>
 
   <TextView
+    android:id="@+id/addlinkdialog_paste_from_clipboard_hint"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginStart="@dimen/spacing24"
-    android:id="@+id/addlinkdialog_paste_from_clipboard_hint"
     android:layout_marginEnd="@dimen/spacing24"
-    android:paddingTop="@dimen/spacing8"
-    android:paddingBottom="@dimen/spacing12"
-    android:paddingStart="@dimen/spacing12"
-    android:paddingEnd="@dimen/spacing12"
+    android:layout_marginStart="@dimen/spacing24"
     android:background="@drawable/background_addlink_paste_from_clipboard_offer"
-    android:ellipsize="middle"
     android:clickable="true"
+    android:ellipsize="middle"
     android:focusable="true"
     android:maxLines="2"
+    android:paddingBottom="@dimen/spacing12"
+    android:paddingEnd="@dimen/spacing12"
+    android:paddingStart="@dimen/spacing12"
+    android:paddingTop="@dimen/spacing8"
     android:text="@string/composereply_paste_from_clipboard_hint" />
 
   <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="@dimen/spacing8"
     android:layout_marginBottom="@dimen/spacing8"
-    android:layout_marginStart="@dimen/spacing12"
     android:layout_marginEnd="@dimen/spacing12"
+    android:layout_marginStart="@dimen/spacing12"
+    android:layout_marginTop="@dimen/spacing8"
     android:gravity="end">
 
     <Button
