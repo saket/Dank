@@ -65,14 +65,7 @@ public class Markdown {
     }
 
     /**
-     * Newer versions of the Android SDK's {@link Html.TagHandler} handles &lt;ul&gt; and &lt;li&gt;
-     * tags itself which means they never get delegated to this class. We want to handle the tags
-     * ourselves so before passing the string html into Html.fromHtml(), we can use this method to
-     * replace the &lt;ul&gt; and &lt;li&gt; tags with tags of our own.
-     *
-     * @param html String containing HTML, for example: "<b>Hello world!</b>"
-     * @return html with replaced <ul> and <li> tags
-     * @see <a href="https://github.com/android/platform_frameworks_base/commit/8b36c0bbd1503c61c111feac939193c47f812190">Specific Android SDK Commit</a>
+     * See {@link HtmlTagHandler#overrideTags(String)}. This exists because that method is not public.
      */
     String overrideTags(@Nullable String html) {
       //noinspection ConstantConditions
@@ -127,5 +120,4 @@ public class Markdown {
       }
     }
   }
-
 }

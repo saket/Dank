@@ -7,7 +7,7 @@ import android.text.SpannableStringBuilder;
 import java.util.ArrayDeque;
 import java.util.Deque;
 
-/** A {@link SpannableStringBuilder} wrapper whose API doesn't make me want to stab my eyes out. */
+/** By Jake Wharton: A {@link SpannableStringBuilder} wrapper whose API doesn't make me want to stab my eyes out. */
 public class Truss {
 
   private final SpannableStringBuilder builder;

@@ -23,7 +23,7 @@ import timber.log.Timber;
  * For composing comments and message replies. Handles saving drafts.
  * <p>
  * Formatting buttons to support:
- * - Bold, italic, underline
+ * - Bold, italic
  * - Strikethrough
  * - Superscript
  * - Quote
