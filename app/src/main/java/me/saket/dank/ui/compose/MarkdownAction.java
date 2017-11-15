@@ -10,5 +10,5 @@ public enum MarkdownAction {
   QUOTE,
   SUPERSCRIPT,
   INLINE_CODE,
-  HEADER,
+  HEADING,
 }

@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<resources xmlns:tools="http://schemas.android.com/tools">
   <string name="reddit_app_client_id">E-TcdjXmZ4tVXg</string>
   <string name="reddit_app_redirect_url">http://saket.me</string>
 
@@ -67,5 +67,24 @@
     <item>videos</item>
     <item>worldnews</item>
     <item>WritingPrompts</item>
+  </string-array>
+
+  <string-array name="compose_reply_unicode_emojis">
+    <item>ಠ_ಠ</item>
+    <item>ಠ‿ಠ</item>
+    <item>ಥ_ಥ</item>
+    <item>¯\\_(ツ)_/¯</item>
+    <item>( ͡° ͜ʖ ͡°)</item>
+    <item>(╯°□°）╯︵ ┻━┻</item>
+    <item tools:ignore="ByteOrderMark">┬─┬﻿ ノ( ゜-゜ノ)</item>
+    <item>ᕕ( ᐛ )ᕗ</item>
+    <item>ლ(ಠ益ಠლ)</item>
+    <item>щ（ﾟДﾟщ）</item>
+    <item>( •_•)</item>
+    <item>( •_•)>⌐■-■</item>
+    <item>(⌐■_■)</item>
+    <item>ヾ(⌐■_■)ノ♪</item>
+    <item>ԅ(≖‿≖ԅ)</item>
+    <item>(•̀ᴗ•́)و ̑̑</item>
   </string-array>
 </resources>

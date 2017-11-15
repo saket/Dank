@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.HorizontalScrollView;
 
 import butterknife.ButterKnife;
@@ -18,7 +19,7 @@ public class TextFormatToolbarView extends HorizontalScrollView {
     /**
      * @param markdownBlock Nullable for insert-link, insert-text-emoji and insert-image.
      */
-    void onClickAction(MarkdownAction markdownAction, @Nullable MarkdownBlock markdownBlock);
+    void onClickAction(View buttonView, MarkdownAction markdownAction, @Nullable MarkdownBlock markdownBlock);
   }
 
   public TextFormatToolbarView(Context context, AttributeSet attrs) {
@@ -32,52 +33,52 @@ public class TextFormatToolbarView extends HorizontalScrollView {
   }
 
   @OnClick(R.id.textformattoolbar_bold)
-  void onClickBold() {
-    actionClickListener.onClickAction(MarkdownAction.BOLD, MarkdownBlock.create("**", "**"));
+  void onClickBold(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.BOLD, MarkdownBlock.BOLD);
   }
 
   @OnClick(R.id.textformattoolbar_italic)
-  void onClickItalic() {
-    actionClickListener.onClickAction(MarkdownAction.ITALIC, MarkdownBlock.create("*", "*"));
+  void onClickItalic(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.ITALIC, MarkdownBlock.ITALIC);
   }
 
   @OnClick(R.id.textformattoolbar_insert_text_emoji)
-  void onClickInsertTextEmoji() {
-    actionClickListener.onClickAction(MarkdownAction.INSERT_TEXT_EMOJI, null);
+  void onClickInsertTextEmoji(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.INSERT_TEXT_EMOJI, null);
   }
 
   @OnClick(R.id.textformattoolbar_insert_link)
-  void onClickInsertLink() {
-    actionClickListener.onClickAction(MarkdownAction.INSERT_LINK, null);
+  void onClickInsertLink(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.INSERT_LINK, null);
   }
 
   @OnClick(R.id.textformattoolbar_insert_image)
-  void onClickInsertImage() {
-    actionClickListener.onClickAction(MarkdownAction.INSERT_IMAGE, null);
+  void onClickInsertImage(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.INSERT_IMAGE, null);
   }
 
   @OnClick(R.id.textformattoolbar_strikethrough)
-  void onClickStrikeThrough() {
-    actionClickListener.onClickAction(MarkdownAction.STRIKE_THROUGH, MarkdownBlock.create("~~", "~~"));
+  void onClickStrikeThrough(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.STRIKE_THROUGH, MarkdownBlock.STRIKE_THROUGH);
   }
 
   @OnClick(R.id.textformattoolbar_quote)
-  void onClickQuote() {
-    actionClickListener.onClickAction(MarkdownAction.QUOTE, MarkdownBlock.create(">"));
+  void onClickQuote(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.QUOTE, MarkdownBlock.QUOTE);
   }
 
   @OnClick(R.id.textformattoolbar_superscript)
-  void onClickSuperscript() {
-    actionClickListener.onClickAction(MarkdownAction.SUPERSCRIPT, MarkdownBlock.create("^"));
+  void onClickSuperscript(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.SUPERSCRIPT, MarkdownBlock.SUPERSCRIPT);
   }
 
   @OnClick(R.id.textformattoolbar_inline_code)
-  void onClickInlineCode() {
-    actionClickListener.onClickAction(MarkdownAction.INLINE_CODE, MarkdownBlock.create("`", "`"));
+  void onClickInlineCode(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.INLINE_CODE, MarkdownBlock.INLINE_CODE);
   }
 
   @OnClick(R.id.textformattoolbar_header)
-  void onClickHeader() {
-    actionClickListener.onClickAction(MarkdownAction.HEADER, MarkdownBlock.create("#"));
+  void onClickHeader(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.HEADING, MarkdownBlock.HEADING);
   }
 }

@@ -39,7 +39,7 @@
   <!-- Subreddit -->
   <string name="frontpage_subreddit_name">Frontpage</string>
   <string name="popular_subreddit_name">Popular</string>
-  <string name="subreddit_empty_state_title" translatable="false">ლ(ಠ_ಠლ)</string>
+  <string name="subreddit_empty_state_title" translatable="false">ლ(ಠ益ಠლ)</string>
   <string name="subreddit_empty_state_message">This subreddit is empty</string>
   <string name="subreddit_error_failed_to_load_more_submissions">Failed to load more submissions. Tap to retry.</string>
   <string name="subreddit_refreshing_submissions">Refreshing submissions</string>
