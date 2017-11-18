@@ -23,6 +23,7 @@ import android.widget.ViewFlipper;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.jakewharton.rxbinding2.view.RxView;
+import com.squareup.moshi.Moshi;
 
 import java.io.File;
 import java.io.InputStream;
@@ -43,6 +44,7 @@ import me.saket.dank.ui.DankDialogFragment;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.FileSizeUnit;
 import okio.Okio;
+import retrofit2.HttpException;
 import timber.log.Timber;
 
 public class UploadImageDialog extends DankDialogFragment {
@@ -59,6 +61,7 @@ public class UploadImageDialog extends DankDialogFragment {
 
   @Inject MediaHostRepository mediaHostRepository;
   @Inject ErrorResolver errorResolver;
+  @Inject Moshi moshi;
 
   private enum UploadState {
     IN_FLIGHT,
@@ -187,6 +190,7 @@ public class UploadImageDialog extends DankDialogFragment {
     return uploadResponse -> {
       insertButton.setEnabled(true);
       String link = uploadResponse.data().link();
+      //noinspection ConstantConditions
       String linkWithoutScheme = link.substring("https://".length(), link.length());
       urlView.setText(linkWithoutScheme);
 
@@ -204,23 +208,37 @@ public class UploadImageDialog extends DankDialogFragment {
 
   private Function<Throwable, Single<ImgurUploadResponse>> handleImageUploadError() {
     return error -> {
-      ResolvedError resolvedError = errorResolver.resolve(error);
-      if (resolvedError.isUnknown()) {
-        Timber.e(error, "Error while uploading image");
-      }
+      boolean handled = false;
 
-      String emoji = getResources().getString(resolvedError.errorEmojiRes());
-      String errorMessage = getResources().getString(resolvedError.errorMessageRes());
-
-      if (!resolvedError.isImgurRateLimitError()) {
-        String tapToRetryText = getResources().getString(R.string.composereply_uploadimage_tap_to_retry);
-        if (!errorMessage.endsWith(getResources().getString(R.string.composereply_uploadimage_error_message_period))) {
-          errorMessage += getResources().getString(R.string.composereply_uploadimage_error_message_period);
+      if (error instanceof HttpException && ((HttpException) error).code() == 400 /* Bad request */) {
+        InputStream errorBodyStream = ((HttpException) error).response().errorBody().byteStream();
+        ImgurUploadResponse errorRespnse = ImgurUploadResponse.jsonAdapter(moshi).fromJson(Okio.buffer(Okio.source(errorBodyStream)));
+        //noinspection ConstantConditions
+        if (errorRespnse.data().error().contains("File is over the size limit")) {
+          errorView.setText(R.string.composereply_uploadimage_error_file_size_too_large);
+          handled = true;
         }
-        errorMessage += " " + tapToRetryText;
       }
 
-      errorView.setText(String.format("%s\n\n%s", emoji, errorMessage));
+      if (!handled) {
+        ResolvedError resolvedError = errorResolver.resolve(error);
+        if (resolvedError.isUnknown()) {
+          Timber.e(error, "Error while uploading image");
+        }
+
+        String emoji = getResources().getString(resolvedError.errorEmojiRes());
+        String errorMessage = getResources().getString(resolvedError.errorMessageRes());
+
+        if (!resolvedError.isImgurRateLimitError()) {
+          String tapToRetryText = getResources().getString(R.string.composereply_uploadimage_tap_to_retry);
+          if (!errorMessage.endsWith(getResources().getString(R.string.composereply_uploadimage_error_message_period))) {
+            errorMessage += getResources().getString(R.string.composereply_uploadimage_error_message_period);
+          }
+          errorMessage += " " + tapToRetryText;
+        }
+
+        errorView.setText(String.format("%s\n\n%s", emoji, errorMessage));
+      }
 
       // TODO: Handle known HTTP error codes.
       showUiState(UploadState.FAILED);

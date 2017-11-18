@@ -29,6 +29,10 @@
   <string name="common_reddit_is_down_error_emoji" translatable="false">(ಥ_ಥ)</string>
   <string name="common_reddit_is_down_error_message">You broke Reddit! It\'s under heavy load right now.</string>
 
+  <string name="common_imgur_rate_limit_error_emoji">ಥ_ಥ</string>
+  <string name="common_imgur_request_rate_limit_error_message">Dank has reached its monthly limit of downloading images from Imgur.</string>
+  <string name="common_imgur_upload_rate_limit_error_message">Dank has reached its monthly limit of uploading images to Imgur.</string>
+
   <!-- Login -->
   <string name="login">Login</string>
   <string name="login_logout">Logout</string>
@@ -302,8 +306,5 @@
   <string name="composereply_uploadimage_failed_generic">(╯°□°）╯︵ ┻━┻ \n\nFailed to upload image. Tap to retry.</string>
   <string name="composereply_uploadimage_tap_to_retry">Tap to retry.</string>
   <string name="composereply_uploadimage_error_message_period">.</string>  <!-- Full-stop in english. -->
-
-  <string name="common_imgur_rate_limit_error_emoji">ಥ_ಥ</string>
-  <string name="common_imgur_request_rate_limit_error_message">Dank has reached its monthly limit of downloading images from Imgur.</string>
-  <string name="common_imgur_upload_rate_limit_error_message">Dank has reached its monthly limit of uploading images to Imgur.</string>
+  <string name="composereply_uploadimage_error_file_size_too_large">¯\\_(ツ)_/¯ \n\nImgur rejected the image due to its large size. Try using an image of 10mb or lower.</string>
 </resources>

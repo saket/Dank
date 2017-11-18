@@ -1,16 +1,17 @@
 package me.saket.dank.data;
 
+import android.support.annotation.Nullable;
+
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.Json;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import java.io.File;
-
 import me.saket.dank.di.DankApi;
+import okhttp3.MultipartBody;
 
 /**
- * Response body for {@link DankApi#uploadToImgur(File, String)}.
+ * Response body for {@link DankApi#uploadToImgur(MultipartBody.Part, String)}.
  */
 @AutoValue
 public abstract class ImgurUploadResponse {
@@ -21,8 +22,15 @@ public abstract class ImgurUploadResponse {
   @Json(name = "success")
   public abstract boolean success();
 
+  @Json(name = "status")
+  public abstract int status();
+
   @AutoValue
   public abstract static class Data {
+    @Nullable
+    public abstract String error();
+
+    @Nullable
     @Json(name = "link")
     public abstract String link();
 
