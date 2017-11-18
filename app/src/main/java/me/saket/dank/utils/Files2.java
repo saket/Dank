@@ -15,9 +15,9 @@ import me.saket.dank.R;
  */
 public class Files2 {
 
-  private Files2() {
-  }
-
+  /**
+   * Copy to sdcard/Pictures/.
+   */
   public static File copyFileToPicturesDirectory(Resources resources, File fileToCopy, String newFileName) throws IOException {
     File picturesDirectory = new File(
         Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES).getAbsolutePath(),

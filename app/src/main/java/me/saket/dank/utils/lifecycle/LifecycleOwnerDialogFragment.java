@@ -16,18 +16,22 @@ public class LifecycleOwnerDialogFragment extends NaviDialogFragment implements 
     return lifecycleStreams;
   }
 
+  @Override
+  public void onCreate(Bundle savedInstanceState) {
+    super.onCreate(savedInstanceState);
+    lifecycleStreams = new LifecycleStreams();
+  }
+
   @NonNull
   @Override
   @CallSuper
   public Dialog onCreateDialog(Bundle savedInstanceState) {
-    lifecycleStreams = new LifecycleStreams();
     lifecycleStreams.notifyOnCreate();
     return super.onCreateDialog(savedInstanceState);
   }
 
   @Override
   public void onStart() {
-    Timber.i("onStart()");
     super.onStart();
     lifecycleStreams.notifyOnStart();
   }

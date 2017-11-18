@@ -1,6 +1,9 @@
 package me.saket.dank.utils;
 
+import android.content.res.Resources;
 import android.icu.util.TimeUnit;
+
+import me.saket.dank.R;
 
 /**
  * Inspired by {@link TimeUnit}.
@@ -25,7 +28,7 @@ public enum FileSizeUnit {
     }
   },
 
-  KILOBYTES {
+  KB {
     public double toBytes(double kiloBytes) {
       return kiloBytes * 1024;
     }
@@ -43,7 +46,7 @@ public enum FileSizeUnit {
     }
   },
 
-  MEGABYTES {
+  MB {
     public double toBytes(double megaBytes) {
       return toKiloBytes(megaBytes) * 1024;
     }
@@ -61,7 +64,7 @@ public enum FileSizeUnit {
     }
   },
 
-  GIGABYTES {
+  GB {
     public double toBytes(double gigaBytes) {
       return toKiloBytes(gigaBytes) * 1024;
     }
@@ -93,5 +96,25 @@ public enum FileSizeUnit {
 
   public double toGigaBytes(double megaBytes) {
     throw new AbstractMethodError();
+  }
+
+  public static String formatForDisplay(Resources resources, double size, FileSizeUnit sizeUnit) {
+    int stringTemplateInSensibleUnitRes = R.string.filesize_gigabytes;
+    double sizeInSensibleUnit = sizeUnit.toGigaBytes(size);
+
+    if (sizeInSensibleUnit < 1) {
+      stringTemplateInSensibleUnitRes = R.string.filesize_megabytes;
+      sizeInSensibleUnit = sizeUnit.toMegaBytes(size);
+    }
+    if (sizeInSensibleUnit < 1) {
+      stringTemplateInSensibleUnitRes = R.string.filesize_kilobytes;
+      sizeInSensibleUnit = sizeUnit.toKiloBytes(size);
+    }
+    if (sizeInSensibleUnit < 1) {
+      stringTemplateInSensibleUnitRes = R.string.filesize_bytes;
+      sizeInSensibleUnit = sizeUnit.toBytes(size);
+    }
+
+    return resources.getString(stringTemplateInSensibleUnitRes, (int) sizeInSensibleUnit);
   }
 }

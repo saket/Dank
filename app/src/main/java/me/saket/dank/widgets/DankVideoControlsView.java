@@ -103,7 +103,7 @@ public class DankVideoControlsView extends VideoControls {
 
     playPauseButton = ButterKnife.findById(this, R.id.exomedia_controls_play_pause_btn);
     loadingProgressBar.setIndeterminate(true);
-    loadingProgressBar.setProgressBackgroundFillEnabled(false);
+    loadingProgressBar.setProgressBarBackgroundFillEnabled(false);
 
     // Cannot remove these because ExoMedia expects them to be non-null.
     descriptionTextView = currentTimeTextView = endTimeTextView = titleTextView = subTitleTextView = new TextView(getContext());

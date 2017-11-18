@@ -10,18 +10,19 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
-import android.support.v7.app.AlertDialog.Builder;
 import android.util.Patterns;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.WindowManager.LayoutParams;
 import android.widget.EditText;
 import android.widget.TextView;
+
+import com.google.common.base.Optional;
+import com.jakewharton.rxbinding2.widget.RxTextView;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import com.google.common.base.Optional;
-import com.jakewharton.rxbinding2.widget.RxTextView;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankDialogFragment;
 import me.saket.dank.utils.Views;
@@ -38,11 +39,6 @@ public class AddLinkDialog extends DankDialogFragment {
   @BindView(R.id.addlinkdialog_url_inputlayout) TextInputLayout urlInputLayout;
   @BindView(R.id.addlinkdialog_url) EditText urlField;
   @BindView(R.id.addlinkdialog_paste_from_clipboard_hint) TextView pasteUrlFromClipboardHintView;
-
-  public interface Callbacks {
-
-    void onLinkInsert(String title, String url);
-  }
 
   public static void showPreFilled(FragmentManager fragmentManager, @Nullable String preFilledTitle) {
     String tag = AddLinkDialog.class.getSimpleName();
@@ -65,7 +61,7 @@ public class AddLinkDialog extends DankDialogFragment {
   public void onAttach(Context context) {
     super.onAttach(context);
 
-    if (!(getActivity() instanceof Callbacks)) {
+    if (!(getActivity() instanceof OnLinkInsertListener)) {
       throw new AssertionError();
     }
   }
@@ -97,7 +93,7 @@ public class AddLinkDialog extends DankDialogFragment {
 //      }
 //    });
 
-    AlertDialog dialog = new Builder(getContext())
+    AlertDialog dialog = new AlertDialog.Builder(getContext())
         .setView(dialogLayout)
         .create();
     // Show keyboard automatically on start. Doesn't happen on its own.
@@ -165,7 +161,7 @@ public class AddLinkDialog extends DankDialogFragment {
     );
 
     if (!title.isEmpty() && !url.isEmpty()) {
-      ((Callbacks) getActivity()).onLinkInsert(title, url);
+      ((OnLinkInsertListener) getActivity()).onLinkInsert(title, url);
       dismiss();
     }
   }

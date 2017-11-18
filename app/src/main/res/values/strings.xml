@@ -293,4 +293,11 @@
   <string name="composereply_addlink_cancel">Cancel</string>
   <string name="composereply_addlink_insert">Insert</string>
   <string name="composereply_paste_from_clipboard_hint">Tap to paste URL from clipboard\n%s</string>
+
+  <string name="composereply_uploadimage_title">Title (optional)</string>
+  <string name="composereply_uploadimage_cancel">Cancel</string>
+  <string name="composereply_uploadimage_insert">Insert</string>
+  <string name="cd_composereply_uploadimage_image_being_uploaded">Image being uploaded</string>
+  <string name="composereply_uploadimage_uploading">Uploading…</string>
+  <string name="composereply_uploadimage_failed">(╯°□°）╯︵ ┻━┻ \n\nFailed to upload image. Tap to retry.</string>
 </resources>

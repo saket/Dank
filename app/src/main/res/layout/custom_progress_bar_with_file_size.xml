@@ -37,11 +37,5 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_margin="@dimen/spacing12"
-    android:background="@drawable/background_media_progress_bar_file_size"
-    android:fontFamily="sans-serif-medium"
-    android:paddingBottom="@dimen/spacing2"
-    android:paddingEnd="@dimen/spacing8"
-    android:paddingStart="@dimen/spacing8"
-    android:paddingTop="@dimen/spacing2"
-    android:textAllCaps="true" />
+    style="@style/DankProgressBarFileSize" />
 </merge>

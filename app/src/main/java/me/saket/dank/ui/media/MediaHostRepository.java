@@ -13,6 +13,7 @@ import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Thumbnails;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
@@ -156,5 +157,9 @@ public class MediaHostRepository {
     } else {
       return defaultImageUrl;
     }
+  }
+
+  public Single<Object> uploadImage(File image) {
+    return imgurRepository.uploadImage(image);
   }
 }

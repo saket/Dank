@@ -1,5 +1,6 @@
 package me.saket.dank.ui.compose;
 
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -25,28 +26,15 @@ import timber.log.Timber;
 /**
  * For composing comments and message replies. Handles saving drafts.
  * <p>
- * Formatting buttons to support:
- * - Bold, italic
- * - Strikethrough
- * - Superscript
- * - Quote
+ * TODO:
  * - List (ordered, unordered)
- * - Image
- * - Headers
- * - Link
- * - Code
  * - HR
- * <p>
- * Complex stuff:
- * - Nested subscripts and superscripts
- * - Nested quotes
- * - Multiple words in subscript/superscript. E.g., "This sentence^ (has a superscript with multiple words)"
- * - Nested list
- * - Table
+ * - GIFs
  */
-public class ComposeReplyActivity extends DankPullCollapsibleActivity implements AddLinkDialog.Callbacks {
+public class ComposeReplyActivity extends DankPullCollapsibleActivity implements OnLinkInsertListener {
 
   private static final String KEY_START_OPTIONS = "startOptions";
+  private static final int REQUEST_CODE_PICK_IMAGE = 99;
 
   @BindView(R.id.composereply_root) IndependentExpandablePageLayout pageLayout;
   @BindView(R.id.toolbar) Toolbar toolbar;
@@ -112,8 +100,9 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
           break;
 
         case INSERT_IMAGE:
-          // TODO.
-          Timber.w("TODO: Image picker");
+          Intent intent = new Intent(Intent.ACTION_GET_CONTENT);
+          intent.setType("image/*");
+          startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE);
           break;
 
         case QUOTE:
@@ -178,8 +167,28 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   public void onLinkInsert(String title, String url) {
     int selectionStart = replyField.getSelectionStart();
     int selectionEnd = replyField.getSelectionEnd();
-    String linkMarkdown = String.format("[%s](%s)", title, url);
+
+    String linkMarkdown = title.isEmpty()
+        ? url
+        : String.format("[%s](%s)", title, url);
     replyField.getText().replace(selectionStart, selectionEnd, linkMarkdown);
+  }
+
+  @Override
+  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+    if (requestCode == REQUEST_CODE_PICK_IMAGE) {
+      if (resultCode == Activity.RESULT_OK) {
+        lifecycle().onResume()
+            .take(1)
+            .takeUntil(lifecycle().onPause())
+            .subscribe(o -> {
+              UploadImageDialog.show(getSupportFragmentManager(), data.getData());
+            });
+      }
+
+    } else {
+      super.onActivityResult(requestCode, resultCode, data);
+    }
   }
 
   @OnClick(R.id.composereply_send)

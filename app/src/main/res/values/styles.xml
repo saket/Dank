@@ -357,6 +357,16 @@
     <item name="android:paddingTop">@dimen/spacing16</item>
   </style>
 
+  <style name="DankProgressBarFileSize">
+    <item name="android:background">@drawable/background_media_progress_bar_file_size</item>
+    <item name="android:fontFamily">sans-serif-medium</item>
+    <item name="android:paddingBottom">@dimen/spacing2</item>
+    <item name="android:paddingEnd">@dimen/spacing8</item>
+    <item name="android:paddingStart">@dimen/spacing8</item>
+    <item name="android:paddingTop">@dimen/spacing2</item>
+    <item name="android:textAllCaps">true</item>
+  </style>
+
   <!-- User Preferences -->
   <style name="DankPreferencesGroupTitle">
     <item name="android:layout_marginBottom">@dimen/spacing12</item>

@@ -6,7 +6,9 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.NonNull;
 
+import java.io.File;
 import java.util.TimeZone;
+import java.util.concurrent.TimeUnit;
 
 import hirondelle.date4j.DateTime;
 import io.reactivex.Single;
@@ -44,7 +46,6 @@ public class ImgurRepository {
   }
 
   /**
-   * TODO: Cache.
    * <p>
    * TODO: If needed, get the rate limits if they're not cached.
    * Remember to handle {@link ImgurApiRateLimitReachedException}.
@@ -188,5 +189,11 @@ public class ImgurRepository {
       }
     }
     return false;
+  }
+
+  public Single<Object> uploadImage(File image) {
+    // TODO.
+    return Single.timer(2, TimeUnit.SECONDS)
+        .cast(Object.class);
   }
 }

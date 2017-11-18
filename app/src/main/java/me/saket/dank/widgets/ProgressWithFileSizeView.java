@@ -3,9 +3,9 @@ package me.saket.dank.widgets;
 import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.annotation.FloatRange;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.widget.LinearLayout;
@@ -48,25 +48,34 @@ public class ProgressWithFileSizeView extends LinearLayout {
 
     fileSizeView.setVisibility(INVISIBLE); // Set to VISIBLE when setFileSizeBytes() gets called.
     setOrientation(VERTICAL);
+
+    if (isInEditMode()) {
+      setProgress(50f);
+      setFileSize(1.3, FileSizeUnit.MB);
+    }
   }
 
   public void addProgressAnimationListener(CircularProgressViewListener listener) {
     progressView.addListener(listener);
   }
 
-  public CircularProgressView getProgressView() {
-    return progressView;
-  }
+//  public CircularProgressView getProgressView() {
+//    return progressView;
+//  }
 
-  public void setProgress(int progress) {
+  public void setProgress(@FloatRange(from = 0, to = 100) float progress) {
     progressView.setProgress(progress);
   }
 
+  @FloatRange(from = 0, to = 100)
   public float getProgress() {
     return progressView.getProgress();
   }
 
-  public void setProgressBackgroundFillEnabled(boolean enabled) {
+  /**
+   * Toggle background for the progress circle.
+   */
+  public void setProgressBarBackgroundFillEnabled(boolean enabled) {
     progressBackgroundView.setVisibility(enabled ? VISIBLE : GONE);
   }
 
@@ -75,30 +84,15 @@ public class ProgressWithFileSizeView extends LinearLayout {
     progressView.startAnimation();
   }
 
-  public void setFileSizeBytes(double size, FileSizeUnit sizeUnit) {
+  public void setFileSize(double size, FileSizeUnit sizeUnit) {
     if (lastFileSize == size && lastFileSizeUnit == sizeUnit) {
       return;
     }
     lastFileSize = size;
     lastFileSizeUnit = sizeUnit;
 
-    @StringRes int stringTemplateInSensibleUnitRes = R.string.filesize_gigabytes;
-    double sizeInSensibleUnit = sizeUnit.toGigaBytes(size);
-
-    if (sizeInSensibleUnit < 1) {
-      stringTemplateInSensibleUnitRes = R.string.filesize_megabytes;
-      sizeInSensibleUnit = sizeUnit.toMegaBytes(size);
-    }
-    if (sizeInSensibleUnit < 1) {
-      stringTemplateInSensibleUnitRes = R.string.filesize_kilobytes;
-      sizeInSensibleUnit = sizeUnit.toKiloBytes(size);
-    }
-    if (sizeInSensibleUnit < 1) {
-      stringTemplateInSensibleUnitRes = R.string.filesize_bytes;
-      sizeInSensibleUnit = sizeUnit.toBytes(size);
-    }
-
+    String formattedSize = FileSizeUnit.formatForDisplay(fileSizeView.getResources(), size, sizeUnit);
     fileSizeView.setVisibility(VISIBLE);
-    fileSizeView.setText(fileSizeView.getResources().getString(stringTemplateInSensibleUnitRes, (int) sizeInSensibleUnit));
+    fileSizeView.setText(formattedSize);
   }
 }

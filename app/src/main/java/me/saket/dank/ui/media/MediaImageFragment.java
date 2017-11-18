@@ -348,7 +348,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     @Override
     protected void onDownloading(long bytesRead, long expectedBytes) {
       int progress = (int) (100 * (float) bytesRead / expectedBytes);
-      progressWithFileSizeView.setFileSizeBytes(expectedBytes, FileSizeUnit.BYTES);
+      progressWithFileSizeView.setFileSize(expectedBytes, FileSizeUnit.BYTES);
       progressWithFileSizeView.setProgress(progress);
     }
 
