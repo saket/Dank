@@ -32,8 +32,11 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ImgurUploadResponse;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankDialogFragment;
@@ -50,7 +53,8 @@ public class UploadImageDialog extends DankDialogFragment {
   @BindView(R.id.uploadimage_progress) TextView fileSizeView;
   @BindView(R.id.uploadimage_state_viewflipper) ViewFlipper stateViewFlipper;
   @BindView(R.id.uploadimage_title) EditText titleField;
-  @BindView(R.id.uploadimage_state_failed_tap_to_retry) TextView retryButton;
+  @BindView(R.id.uploadimage_url) TextView urlView;
+  @BindView(R.id.uploadimage_state_failed_tap_to_retry) TextView errorView;
   @BindView(R.id.uploadimage_insert) Button insertButton;
 
   @Inject MediaHostRepository mediaHostRepository;
@@ -117,7 +121,13 @@ public class UploadImageDialog extends DankDialogFragment {
   }
 
   private void uploadImage() {
-    Single<File> imageFileStream = copyImageToTempFile(getArguments().getParcelable(KEY_IMAGE_URI))
+    Uri imageContentUri = getArguments().getParcelable(KEY_IMAGE_URI);
+    final long startTime = System.currentTimeMillis();
+    //noinspection ConstantConditions
+    String imageMimeType = getContext().getContentResolver().getType(imageContentUri);
+    Timber.i("Mime-type in: %sms", System.currentTimeMillis() - startTime);
+
+    Single<File> imageFileStream = copyImageToTempFile(imageContentUri)
         .subscribeOn(io())
         .observeOn(mainThread())
         .doOnSuccess(tempFile -> {
@@ -128,33 +138,22 @@ public class UploadImageDialog extends DankDialogFragment {
 
     // Start upload.
     imageFileStream
-        .flatMapObservable(file -> RxView.clicks(retryButton).map(o -> file).startWith(file))
+        .flatMapObservable(file -> RxView.clicks(errorView).map(o -> file).startWith(file))
         .doOnNext(o -> showUiState(UploadState.IN_FLIGHT))
-        .flatMapSingle(fileToUpload -> mediaHostRepository.uploadImage(fileToUpload)
+        .flatMapSingle(fileToUpload -> mediaHostRepository.uploadImage(fileToUpload, imageMimeType)
             .subscribeOn(io())
             .observeOn(mainThread())
-            .onErrorResumeNext(error -> {
-              ResolvedError resolvedError = errorResolver.resolve(error);
-              if (resolvedError.isUnknown()) {
-                Timber.e(error, "Error while uploading image");
+            .map(response -> {
+              if (response.success()) {
+                return response;
+              } else {
+                throw new RuntimeException();
               }
-
-              showUiState(UploadState.FAILED);
-              return Single.never();
             })
+            .onErrorResumeNext(handleImageUploadError())
         )
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> {
-          showUiState(UploadState.UPLOADED);
-          insertButton.setEnabled(true);
-          insertButton.setOnClickListener(v -> {
-            String title = titleField.getText().toString().trim();
-            String url = "http://boop.poop"; // TODO.
-
-            ((OnLinkInsertListener) getActivity()).onLinkInsert(title, url);
-            dismiss();
-          });
-        });
+        .subscribe(handleImageUploadResponse());
 
     // Delete the temporary file on dialog exit.
     lifecycle().onDestroy()
@@ -182,6 +181,51 @@ public class UploadImageDialog extends DankDialogFragment {
       Okio.buffer(Okio.source(inputStream)).readAll(Okio.sink(temporaryFile));
       return temporaryFile;
     });
+  }
+
+  private Consumer<ImgurUploadResponse> handleImageUploadResponse() {
+    return uploadResponse -> {
+      insertButton.setEnabled(true);
+      String link = uploadResponse.data().link();
+      String linkWithoutScheme = link.substring("https://".length(), link.length());
+      urlView.setText(linkWithoutScheme);
+
+      showUiState(UploadState.UPLOADED);
+
+      insertButton.setOnClickListener(v -> {
+        String title = titleField.getText().toString().trim();
+        String url = uploadResponse.data().link();
+
+        ((OnLinkInsertListener) getActivity()).onLinkInsert(title, url);
+        dismiss();
+      });
+    };
+  }
+
+  private Function<Throwable, Single<ImgurUploadResponse>> handleImageUploadError() {
+    return error -> {
+      ResolvedError resolvedError = errorResolver.resolve(error);
+      if (resolvedError.isUnknown()) {
+        Timber.e(error, "Error while uploading image");
+      }
+
+      String emoji = getResources().getString(resolvedError.errorEmojiRes());
+      String errorMessage = getResources().getString(resolvedError.errorMessageRes());
+
+      if (!resolvedError.isImgurRateLimitError()) {
+        String tapToRetryText = getResources().getString(R.string.composereply_uploadimage_tap_to_retry);
+        if (!errorMessage.endsWith(getResources().getString(R.string.composereply_uploadimage_error_message_period))) {
+          errorMessage += getResources().getString(R.string.composereply_uploadimage_error_message_period);
+        }
+        errorMessage += " " + tapToRetryText;
+      }
+
+      errorView.setText(String.format("%s\n\n%s", emoji, errorMessage));
+
+      // TODO: Handle known HTTP error codes.
+      showUiState(UploadState.FAILED);
+      return Single.never();
+    };
   }
 
   private void showUiState(UploadState state) {

@@ -36,7 +36,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.VotingManager;
@@ -144,7 +143,7 @@ public class DankAppModule {
 
     if (BuildConfig.DEBUG) {
       HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> Timber.tag("OkHttp").d(message));
-      logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
+      logging.setLevel(HttpLoggingInterceptor.Level.BODY);
       builder.addInterceptor(logging);
       builder.addNetworkInterceptor(new StethoInterceptor());
     }
@@ -172,6 +171,7 @@ public class DankAppModule {
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .baseUrl("http://saket.me/" /* This isn't used anywhere, but this value is not nullable. */)
         .client(okHttpClient)
+        .validateEagerly(true)
         .build();
   }
 
@@ -194,11 +194,6 @@ public class DankAppModule {
   @Singleton
   HttpProxyCacheServer provideHttpProxyCacheServer() {
     return new HttpProxyCacheServer(appContext);
-  }
-
-  @Provides
-  ImgurRepository provideImgurRepository() {
-    return new ImgurRepository(appContext);
   }
 
   @Provides

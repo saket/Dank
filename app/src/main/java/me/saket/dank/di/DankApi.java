@@ -1,13 +1,20 @@
 package me.saket.dank.di;
 
+import android.support.annotation.CheckResult;
+
 import io.reactivex.Single;
 import me.saket.dank.data.ImgurAlbumResponse;
 import me.saket.dank.data.ImgurImageResponse;
+import me.saket.dank.data.ImgurUploadResponse;
 import me.saket.dank.data.StreamableVideoResponse;
 import me.saket.dank.data.UnfurlLinkResponse;
+import okhttp3.MultipartBody;
 import retrofit2.Response;
 import retrofit2.http.GET;
 import retrofit2.http.Headers;
+import retrofit2.http.Multipart;
+import retrofit2.http.POST;
+import retrofit2.http.Part;
 import retrofit2.http.Path;
 import retrofit2.http.Query;
 
@@ -22,8 +29,9 @@ public interface DankApi {
    * Get images in an Imgur album. This is a paid API so we try to minimize its usage. The response
    * is wrapped in {@link Response} so that the headers can be extracted for checking Imgur rate-limits.
    */
+  @CheckResult
   @GET("https://imgur-apiv3.p.mashape.com/3/album/{albumId}")
-  @Headers({ HEADER_IMGUR_AUTH, HEADER_MASHAPE_KEY, "User-Agent: Paw/3.1.1 (Macintosh; OS X/10.12.5) GCDHTTPRequest" })
+  @Headers({ HEADER_IMGUR_AUTH, HEADER_MASHAPE_KEY})
   Single<Response<ImgurAlbumResponse>> imgurAlbum(
       @Path("albumId") String albumId
   );
@@ -31,20 +39,29 @@ public interface DankApi {
   /**
    * Get an image's details from Imgur. This is also a paid API.
    */
+  @CheckResult
   @GET("https://imgur-apiv3.p.mashape.com/3/image/{imageId}")
   @Headers({ HEADER_IMGUR_AUTH, HEADER_MASHAPE_KEY })
   Single<Response<ImgurImageResponse>> imgurImage(
       @Path("imageId") String imageId
   );
 
+  @CheckResult
+  @Multipart
+  @POST("https://imgur-apiv3.p.mashape.com/3/image")
+  @Headers({ HEADER_IMGUR_AUTH, HEADER_MASHAPE_KEY})
+  Single<Response<ImgurUploadResponse>> uploadToImgur(@Part MultipartBody.Part file, @Query("type") String fileType);
+
   /**
    * Get downloadable video URLs from a streamable.com link.
    */
+  @CheckResult
   @GET("https://api.streamable.com/videos/{videoId}")
   Single<StreamableVideoResponse> streamableVideoDetails(
       @Path("videoId") String videoId
   );
 
+  @CheckResult
   @GET("https://" + WHOLESOME_API_HOST + "/unfurl")
   Single<UnfurlLinkResponse> unfurlUrl(
       @Query("url") String url,

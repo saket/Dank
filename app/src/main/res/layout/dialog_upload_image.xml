@@ -110,7 +110,7 @@
       android:foreground="?attr/selectableItemBackground"
       android:focusable="true"
       android:padding="@dimen/spacing16"
-      android:text="@string/composereply_uploadimage_failed"
+      tools:text="(╯°□°）╯︵ ┻━┻ \n\nFailed to upload image. Tap to retry."
       android:textColor="@color/error_text_color" />
   </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
 

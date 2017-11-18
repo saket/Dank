@@ -9,7 +9,6 @@ import dagger.Component;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
@@ -45,8 +44,6 @@ public interface DankAppComponent {
   DankApi api();
 
   UserPreferences userPrefs();
-
-  ImgurRepository imgur();
 
   SubredditSubscriptionManager subredditSubscriptionManager();
 

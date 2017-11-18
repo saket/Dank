@@ -8,6 +8,8 @@ import java.net.UnknownHostException;
 
 import io.reactivex.exceptions.UndeliverableException;
 import me.saket.dank.R;
+import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
+import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
 import retrofit2.HttpException;
 
 /**
@@ -33,6 +35,20 @@ public class ErrorResolver {
           R.string.common_reddit_is_down_error_message
       );
 
+    } else if (error instanceof ImgurApiRequestRateLimitReachedException) {
+      return ResolvedError.create(
+          ResolvedError.Type.IMGUR_RATE_LIMIT_REACHED,
+          R.string.common_imgur_rate_limit_error_emoji,
+          R.string.common_imgur_request_rate_limit_error_message
+      );
+
+    } else if (error instanceof ImgurApiUploadRateLimitReachedException) {
+      return ResolvedError.create(
+          ResolvedError.Type.IMGUR_RATE_LIMIT_REACHED,
+          R.string.common_imgur_rate_limit_error_emoji,
+          R.string.common_imgur_upload_rate_limit_error_message
+      );
+
     } else {
       return ResolvedError.create(
           ResolvedError.Type.UNKNOWN,
@@ -49,7 +65,7 @@ public class ErrorResolver {
     if (error instanceof UndeliverableException) {
       error = error.getCause();
     }
-    if (error instanceof RuntimeException && error.getCause() != null) {
+    if (error instanceof RuntimeException && error.getCause() != null && error.getCause() instanceof HttpException) {
       // Stupid JRAW wraps all HTTP exceptions with RuntimeException.
       error = error.getCause();
     }

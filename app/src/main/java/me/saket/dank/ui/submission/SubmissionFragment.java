@@ -50,7 +50,7 @@ import com.squareup.moshi.Moshi;
 
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.ComposeStartOptions;
-import net.dean.jraw.models.CommentSort;
+
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
@@ -76,7 +76,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.StatusBarTint;
-import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
+import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
@@ -897,7 +897,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               })
               .onErrorReturn(error -> {
                 // Open this album in browser if Imgur rate limits have reached.
-                if (error instanceof ImgurApiRateLimitReachedException) {
+                if (error instanceof ImgurApiRequestRateLimitReachedException) {
                   return ExternalLink.create(parsedLink.unparsedUrl());
                 } else {
                   Timber.e(error, "Couldn't resolve image url: %s", parsedLink.unparsedUrl());

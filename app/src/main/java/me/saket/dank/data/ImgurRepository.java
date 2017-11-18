@@ -2,23 +2,29 @@ package me.saket.dank.data;
 
 import static java.lang.Integer.parseInt;
 
+import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.support.annotation.NonNull;
+import android.support.annotation.CheckResult;
 
 import java.io.File;
 import java.util.TimeZone;
-import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import hirondelle.date4j.DateTime;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
-import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
+import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
+import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
 import me.saket.dank.data.exceptions.InvalidImgurAlbumException;
 import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
-import me.saket.dank.di.Dank;
+import me.saket.dank.di.DankApi;
 import okhttp3.Headers;
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 import retrofit2.HttpException;
 import retrofit2.Response;
 import timber.log.Timber;
@@ -26,6 +32,7 @@ import timber.log.Timber;
 /**
  * TODO: Tests.
  */
+@Singleton
 public class ImgurRepository {
 
   private static final String KEY_REQUEST_LIMIT = "requestsLimit";
@@ -40,24 +47,27 @@ public class ImgurRepository {
   private static final float LIMIT_THRESHOLD_FACTOR = 0.1f;
 
   private final SharedPreferences sharedPreferences;
+  private final DankApi dankApi;
 
-  public ImgurRepository(Context context) {
-    sharedPreferences = context.getSharedPreferences(context.getPackageName() + "_imgur_ratelimits", Context.MODE_PRIVATE);
+  @Inject
+  public ImgurRepository(Application appContext, DankApi dankApi) {
+    sharedPreferences = appContext.getSharedPreferences(appContext.getPackageName() + "_imgur_ratelimits", Context.MODE_PRIVATE);
+    this.dankApi = dankApi;
   }
 
   /**
    * <p>
    * TODO: If needed, get the rate limits if they're not cached.
-   * Remember to handle {@link ImgurApiRateLimitReachedException}.
+   * Remember to handle {@link ImgurApiRequestRateLimitReachedException}.
    *
    * @throws InvalidImgurAlbumException        If an invalid Imgur link was found.
-   * @throws ImgurApiRateLimitReachedException If Imgur's API limit is reached and no more API requests can be made till the next month.
+   * @throws ImgurApiRequestRateLimitReachedException If Imgur's API limit is reached and no more API requests can be made till the next month.
    */
   public Single<ImgurResponse> gallery(ImgurAlbumUnresolvedLink imgurAlbumUnresolvedLink) {
-    return Dank.api().imgurAlbum(imgurAlbumUnresolvedLink.albumId())
+    return dankApi.imgurAlbum(imgurAlbumUnresolvedLink.albumId())
         .map(throwIfHttpError())
         .doOnSuccess(saveImgurApiRateLimits())
-        .map(extractResponseBody())
+        .map(response -> response.body())
         .onErrorResumeNext(error -> {
           // Api returns a 404 when it was a single image and not an album.
           if (error instanceof HttpException && ((HttpException) error).code() == 404) {
@@ -72,9 +82,9 @@ public class ImgurRepository {
 
           } else {
             // Okay, let's check if it was a single image.
-            return Dank.api().imgurImage(imgurAlbumUnresolvedLink.albumId())
+            return dankApi.imgurImage(imgurAlbumUnresolvedLink.albumId())
                 .doOnSuccess(saveImgurApiRateLimits())
-                .map(extractResponseBody());
+                .map(response -> response.body());
           }
         })
         .doOnSuccess(albumResponse -> {
@@ -86,7 +96,27 @@ public class ImgurRepository {
           resetRateLimitsIfMonthChanged();
 
           if (isApiRequestLimitReached()) {
-            throw new ImgurApiRateLimitReachedException();
+            throw new ImgurApiRequestRateLimitReachedException();
+          } else {
+            Timber.i("Rate limits not reached");
+          }
+        });
+  }
+
+  @CheckResult
+  public Single<ImgurUploadResponse> uploadImage(File image, String mimeType) {
+    RequestBody requestBody = RequestBody.create(MediaType.parse(mimeType), image);
+    MultipartBody.Part multipartBodyPart = MultipartBody.Part.createFormData("image", image.getName(), requestBody);
+
+    return dankApi.uploadToImgur(multipartBodyPart, "file")
+        .map(throwIfHttpError())
+        .doOnSuccess(saveImgurApiRateLimits())
+        .map(response -> response.body())
+        .doOnSubscribe(o -> {
+          resetRateLimitsIfMonthChanged();
+
+          if (isApiUploadLimitReached()) {
+            throw new ImgurApiUploadRateLimitReachedException();
           } else {
             Timber.i("Rate limits not reached");
           }
@@ -101,11 +131,6 @@ public class ImgurRepository {
         throw new HttpException(response);
       }
     };
-  }
-
-  @NonNull
-  private <T extends ImgurResponse> Function<Response<T>, T> extractResponseBody() {
-    return response -> response.body();
   }
 
   private Consumer<Response> saveImgurApiRateLimits() {
@@ -184,16 +209,12 @@ public class ImgurRepository {
       int remainingUploads = sharedPreferences.getInt(KEY_REMAINING_UPLOADS, 0);
       int uploadLimit = sharedPreferences.getInt(KEY_UPLOAD_LIMIT, 0);
 
-      if (remainingUploads > uploadLimit * LIMIT_THRESHOLD_FACTOR) {
+      if (remainingUploads < uploadLimit * LIMIT_THRESHOLD_FACTOR) {
+        Timber.i("remainingUploads: %s", remainingUploads);
+        Timber.i("uploadLimit: %s", uploadLimit);
         return true;
       }
     }
     return false;
-  }
-
-  public Single<Object> uploadImage(File image) {
-    // TODO.
-    return Single.timer(2, TimeUnit.SECONDS)
-        .cast(Object.class);
   }
 }

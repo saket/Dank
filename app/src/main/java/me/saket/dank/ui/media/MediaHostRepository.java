@@ -2,6 +2,7 @@ package me.saket.dank.ui.media;
 
 import static java.util.Collections.unmodifiableList;
 
+import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 
 import com.nytimes.android.external.fs3.PathResolver;
@@ -24,7 +25,8 @@ import io.reactivex.Single;
 import me.saket.dank.data.CachedResolvedLinkInfo;
 import me.saket.dank.data.ImgurImage;
 import me.saket.dank.data.ImgurRepository;
-import me.saket.dank.data.exceptions.ImgurApiRateLimitReachedException;
+import me.saket.dank.data.ImgurUploadResponse;
+import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
 import me.saket.dank.data.links.ImgurLink;
@@ -104,7 +106,7 @@ public class MediaHostRepository {
   }
 
   /**
-   * Remember to handle {@link ImgurApiRateLimitReachedException}.
+   * Remember to handle {@link ImgurApiRequestRateLimitReachedException}.
    */
   public Single<MediaLink> resolveActualLinkIfNeeded(MediaLink unresolvedLink) {
     if (unresolvedLink instanceof UnresolvedMediaLink) {
@@ -159,7 +161,8 @@ public class MediaHostRepository {
     }
   }
 
-  public Single<Object> uploadImage(File image) {
-    return imgurRepository.uploadImage(image);
+  @CheckResult
+  public Single<ImgurUploadResponse> uploadImage(File image, String mimeType) {
+    return imgurRepository.uploadImage(image, mimeType);
   }
 }

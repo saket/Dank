@@ -154,8 +154,8 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
                     Resources resources = errorStateMessageView.getResources();
                     String errorMessage = resources.getString(resolvedError.errorMessageRes());
                     String tapToRetryText = resources.getString(R.string.userprofilepopup_error_message_tap_to_retry);
-                    if (!errorMessage.endsWith(resources.getString(R.string.userprofilepopup_error_message_full_period))) {
-                      errorMessage += resources.getString(R.string.userprofilepopup_error_message_full_period);
+                    if (!errorMessage.endsWith(resources.getString(R.string.userprofilepopup_error_message_period))) {
+                      errorMessage += resources.getString(R.string.userprofilepopup_error_message_period);
                     }
                     errorMessage += " " + tapToRetryText;
                     errorStateMessageView.setText(errorMessage);

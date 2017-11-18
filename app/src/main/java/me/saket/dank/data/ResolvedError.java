@@ -14,6 +14,7 @@ public abstract class ResolvedError {
     UNKNOWN,
     NETWORK_ERROR,
     REDDIT_IS_DOWN,
+    IMGUR_RATE_LIMIT_REACHED
   }
 
   public abstract Type type();
@@ -34,6 +35,10 @@ public abstract class ResolvedError {
 
   public boolean isRedditServerError() {
     return type() == Type.REDDIT_IS_DOWN;
+  }
+
+  public boolean isImgurRateLimitError() {
+    return type() == Type.IMGUR_RATE_LIMIT_REACHED;
   }
 
   public static ResolvedError create(Type type, @StringRes int errorEmoji, @StringRes int errorMessage) {
