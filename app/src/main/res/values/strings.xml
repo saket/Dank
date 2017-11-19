@@ -282,6 +282,7 @@
   <string name="cd_textformat_insert_link">Insert link</string>
   <string name="cd_textformat_insert_text_emoji">Insert text emoji</string>
   <string name="cd_textformat_insert_image">Upload image</string>
+  <string name="cd_textformat_insert_gif">Insert GIF</string>
   <string name="textformat_text_face" translatable="false">ಠ_ಠ</string>
   <string name="cd_textformat_strikethrough">Strikethrough</string>
   <string name="cd_textformat_quote">Quote</string>
@@ -307,4 +308,8 @@
   <string name="composereply_uploadimage_tap_to_retry">Tap to retry.</string>
   <string name="composereply_uploadimage_error_message_period">.</string>  <!-- Full-stop in english. -->
   <string name="composereply_uploadimage_error_file_size_too_large">¯\\_(ツ)_/¯ \n\nImgur rejected the image due to its large size. Try using an image of 10mb or lower.</string>
+
+  <!-- GIPHY picker -->
+  <string name="giphypicker_search_gifs">Search GIFs…</string>
+  <string name="cd_giphypicker_giphy_attribution">Powered by GIPHY</string>
 </resources>

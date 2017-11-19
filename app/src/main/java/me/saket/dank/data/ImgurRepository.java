@@ -103,6 +103,9 @@ public class ImgurRepository {
         });
   }
 
+  /**
+   * Remember to handle {@link ImgurApiUploadRateLimitReachedException}.
+   */
   @CheckResult
   public Single<ImgurUploadResponse> uploadImage(File image, String mimeType) {
     RequestBody requestBody = RequestBody.create(MediaType.parse(mimeType), image);

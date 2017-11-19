@@ -8,6 +8,8 @@ import android.support.v7.widget.RecyclerView;
 import io.reactivex.Observable;
 
 /**
+ * Usage: RV's adpater must implement {@link InfinitelyScrollableRecyclerViewAdapter}.
+ *
  * @author https://github.com/matzuk/PaginationSample
  */
 public class InfiniteScroller {
@@ -23,6 +25,10 @@ public class InfiniteScroller {
   }
 
   private InfiniteScroller(RecyclerView recyclerView, float scrollThreshold) {
+    if (!(recyclerView.getAdapter() instanceof InfinitelyScrollableRecyclerViewAdapter)) {
+      throw new AssertionError("RecyclerView adapter must implement InfinitelyScrollableRecyclerViewAdapter");
+    }
+
     this.recyclerView = recyclerView;
     this.scrollThreshold = scrollThreshold;
   }
@@ -66,8 +72,15 @@ public class InfiniteScroller {
       LinearLayoutManager linearLayoutManager = (LinearLayoutManager) recyclerView.getLayoutManager();
       return linearLayoutManager.findLastVisibleItemPosition();
 
+      // Commented because I haven't been able to figure out how to setup StaggeredGridLayoutManager.
+//    } else if (recyclerView.getLayoutManager() instanceof StaggeredGridLayoutManager) {
+//      StaggeredGridLayoutManager staggeredGridLayoutManager = (StaggeredGridLayoutManager) recyclerView.getLayoutManager();
+//      int[] lastVisibleRowPositions = staggeredGridLayoutManager.findLastVisibleItemPositions(null);
+//      Timber.i("lastVisibleRowPositions: %s", Arrays.toString(lastVisibleRowPositions));
+//      return Arrays2.max(lastVisibleRowPositions);
+
     } else {
-      throw new UnsupportedOperationException();
+      throw new UnsupportedOperationException("Unknown LayoutManager.");
     }
   }
 }

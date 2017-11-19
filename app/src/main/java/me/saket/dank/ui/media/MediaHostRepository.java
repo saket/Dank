@@ -27,6 +27,7 @@ import me.saket.dank.data.ImgurImage;
 import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.ImgurUploadResponse;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
+import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
 import me.saket.dank.data.links.ImgurLink;
@@ -161,6 +162,9 @@ public class MediaHostRepository {
     }
   }
 
+  /**
+   * Remember to handle {@link ImgurApiUploadRateLimitReachedException}.
+   */
   @CheckResult
   public Single<ImgurUploadResponse> uploadImage(File image, String mimeType) {
     return imgurRepository.uploadImage(image, mimeType);

@@ -25,15 +25,17 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+
 import com.github.zagum.expandicon.ExpandIconView;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-import io.reactivex.Observable;
+
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Subreddit;
+import net.dean.jraw.paginators.Sorting;
+
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -73,9 +75,6 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.RxExpandablePage;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Subreddit;
-import net.dean.jraw.paginators.Sorting;
 import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
@@ -392,13 +391,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     Relay<List<Submission>> cachedSubmissionStream = BehaviorRelay.create();
 
     // Pagination.
+    // Note: We're also treating initial load of items as pagination.
     submissionFolderStream
         .observeOn(mainThread())
         //.doOnNext(folder -> Timber.d("-------------------------------"))
         //.doOnNext(folder -> Timber.i("%s", folder))
         .takeUntil(lifecycle().onDestroy())
         .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionList)
-            .mergeWith(submissionRepository.submissionCount(folder).take(1).filter(count -> count == 0))
+            .mergeWith(submissionRepository.submissionCount(folder).take(1).filter(count -> count == 0)  /* Force initial load */)
             .mergeWith(forceRefreshRequestStream)
             //.doOnNext(o -> Timber.d("Loading more…"))
             .flatMap(o -> submissionRepository.loadAndSaveMoreSubmissions(folder))

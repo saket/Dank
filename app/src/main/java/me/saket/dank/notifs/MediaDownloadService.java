@@ -305,7 +305,7 @@ public class MediaDownloadService extends Service {
    */
   private static String ellipsizeNotifTitleIfExceedsMaxLength(String fullTitle) {
     return fullTitle.length() > MAX_LENGTH_FOR_NOTIFICATION_TITLE
-        ? Strings.safeSubstring(fullTitle, MAX_LENGTH_FOR_NOTIFICATION_TITLE) + "…"
+        ? Strings.substringWithBounds(fullTitle, MAX_LENGTH_FOR_NOTIFICATION_TITLE) + "…"
         : fullTitle;
   }
 

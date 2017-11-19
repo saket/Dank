@@ -27,10 +27,10 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.util.Pair;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
-import android.support.v4.util.Pair;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -47,9 +47,6 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
-
-import me.saket.dank.ui.compose.ComposeReplyActivity;
-import me.saket.dank.ui.compose.ComposeStartOptions;
 
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
@@ -88,6 +85,8 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
+import me.saket.dank.ui.compose.ComposeReplyActivity;
+import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
@@ -244,6 +243,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     linkDetailsView.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
     linkDetailsViewHolder.titleSubtitleContainer.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
 
+    // Load comments when submission changes.
     unsubscribeOnDestroy(
         submissionRequestStream
             .observeOn(mainThread())
@@ -262,9 +262,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 .takeUntil(lifecycleProvider.onPageAboutToCollapse())
                 .compose(RxUtils.applySchedulers())
                 .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
-                .doOnError(error -> {
-                  Timber.e(error, error.getMessage());
-                })
+                .doOnError(error -> Timber.e(error, error.getMessage()))
                 .onErrorResumeNext(Observable.never()))
             .subscribe(submissionStream)
     );
@@ -508,20 +506,20 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentTreeConstructor.streamTreeUpdates()
             .toFlowable(BackpressureStrategy.LATEST)
             .observeOn(io())
-            .scan(initialPair, (pair, next) -> {
-              CommentsDiffCallback callback = new CommentsDiffCallback(pair.first, next);
+            .scan(initialPair, (latestPair, nextItems) -> {
+              CommentsDiffCallback callback = new CommentsDiffCallback(latestPair.first, nextItems);
               DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
-              return Pair.create(next, result);
+              return Pair.create(nextItems, result);
             })
             .skip(1)  // Initial value is dummy.
             .observeOn(mainThread())
             .filter(o -> !submissionPageLayout.isCollapsedOrCollapsing())
-            .subscribe(dataAndDiff -> {
-              List<SubmissionCommentRow> newComments = dataAndDiff.first;
+            .subscribe(itemsAndDiff -> {
+              List<SubmissionCommentRow> newComments = itemsAndDiff.first;
               commentsAdapter.updateData(newComments);
               commentsAdapterDatasetUpdatesStream.accept(newComments);
 
-              DiffUtil.DiffResult commentsDiffResult = dataAndDiff.second;
+              DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
               commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
             }, logError("Error while diff-ing comments"))
     );

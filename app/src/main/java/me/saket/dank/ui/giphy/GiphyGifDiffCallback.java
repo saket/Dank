@@ -1,20 +1,13 @@
-package me.saket.dank.ui.subreddits;
-
-import android.support.v7.util.DiffUtil;
+package me.saket.dank.ui.giphy;
 
 import java.util.List;
 
-/**
- * DIffUtils.Callback + generics.
- */
-public abstract class SimpleDiffUtilsCallbacks<T> extends DiffUtil.Callback {
+import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
 
-  private final List<T> oldItems;
-  private final List<T> newItems;
+public class GiphyGifDiffCallback extends SimpleDiffUtilsCallbacks<GiphyGif> {
 
-  public SimpleDiffUtilsCallbacks(List<T> oldItems, List<T> newItems) {
-    this.oldItems = oldItems;
-    this.newItems = newItems;
+  public GiphyGifDiffCallback(List<GiphyGif> oldItems, List<GiphyGif> newItems) {
+    super(oldItems, newItems);
   }
 
   /**
@@ -26,7 +19,10 @@ public abstract class SimpleDiffUtilsCallbacks<T> extends DiffUtil.Callback {
    * @param newItem The item in the new list
    * @return True if the two items represent the same object or false if they are different.
    */
-  public abstract boolean areItemsTheSame(T oldItem, T newItem);
+  @Override
+  public boolean areItemsTheSame(GiphyGif oldItem, GiphyGif newItem) {
+    return oldItem.equals(newItem);
+  }
 
   /**
    * Called by the DiffUtil when it wants to check whether two items have the same data.
@@ -45,29 +41,8 @@ public abstract class SimpleDiffUtilsCallbacks<T> extends DiffUtil.Callback {
    * @param newItem The item in the new list which replaces the oldItem
    * @return True if the contents of the items are the same or false if they are different.
    */
-  protected abstract boolean areContentsTheSame(T oldItem, T newItem);
-
   @Override
-  public final int getOldListSize() {
-    return oldItems.size();
-  }
-
-  @Override
-  public final int getNewListSize() {
-    return newItems.size();
-  }
-
-  @Override
-  public final boolean areItemsTheSame(int oldItemPosition, int newItemPosition) {
-    T oldItem = oldItems.get(oldItemPosition);
-    T newItem = newItems.get(newItemPosition);
-    return areItemsTheSame(oldItem, newItem);
-  }
-
-  @Override
-  public final boolean areContentsTheSame(int oldItemPosition, int newItemPosition) {
-    T oldItem = oldItems.get(oldItemPosition);
-    T newItem = newItems.get(newItemPosition);
-    return areContentsTheSame(oldItem, newItem);
+  protected boolean areContentsTheSame(GiphyGif oldItem, GiphyGif newItem) {
+    return oldItem.id().equals(newItem.id());
   }
 }

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content">
+
+  <!-- ContentDescription set in code. -->
+  <me.saket.dank.widgets.AspectRatioImageView
+    android:id="@+id/item_giphy_gif"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_margin="@dimen/spacing4"
+    android:foreground="?attr/selectableItemBackgroundBorderless"
+    android:scaleType="centerCrop"
+    app:aspectRatio="0.65"
+    app:aspectRatioEnabled="true" />
+
+  <TextView
+    android:id="@+id/item_giphy_position"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="#fff"
+    android:padding="@dimen/spacing8"
+    android:textColor="#000"
+    android:visibility="gone" />
+</FrameLayout>
+

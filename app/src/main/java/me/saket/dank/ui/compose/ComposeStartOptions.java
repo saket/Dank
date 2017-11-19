@@ -18,6 +18,10 @@ public abstract class ComposeStartOptions implements Parcelable {
     return new AutoValue_ComposeStartOptions(secondPartyName, preFilledText);
   }
 
+  public static ComposeStartOptions create(String secondPartyName) {
+    return new AutoValue_ComposeStartOptions(secondPartyName, null);
+  }
+
   public static ComposeStartOptions.Builder builder() {
     return new AutoValue_ComposeStartOptions.Builder();
   }

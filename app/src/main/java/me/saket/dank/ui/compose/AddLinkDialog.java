@@ -40,6 +40,10 @@ public class AddLinkDialog extends DankDialogFragment {
   @BindView(R.id.addlinkdialog_url) EditText urlField;
   @BindView(R.id.addlinkdialog_paste_from_clipboard_hint) TextView pasteUrlFromClipboardHintView;
 
+  public static void show(FragmentManager fragmentManager) {
+    showPreFilled(fragmentManager, null);
+  }
+
   public static void showPreFilled(FragmentManager fragmentManager, @Nullable String preFilledTitle) {
     String tag = AddLinkDialog.class.getSimpleName();
 

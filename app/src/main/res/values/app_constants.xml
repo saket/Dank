@@ -87,4 +87,11 @@
     <item>ԅ(≖‿≖ԅ)</item>
     <item>(•̀ᴗ•́)و ̑̑</item>
   </string-array>
+
+  <integer-array name="giphy_placeholder_colors">
+    <item>@color/yellow_400</item>
+    <item>@color/green_A400</item>
+    <item>@color/red_400</item>
+    <item>@color/deep_purple_400</item>
+  </integer-array>
 </resources>

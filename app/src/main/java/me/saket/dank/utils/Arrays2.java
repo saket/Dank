@@ -8,7 +8,7 @@ import java.util.Collection;
 /**
  * Utility methods for arrays.
  */
-public class Arrays {
+public class Arrays2 {
 
   public static <T> T[] toArray(@Nullable Collection<?> collection, Class<T> tClass) {
     if (collection == null) {
@@ -21,5 +21,4 @@ public class Arrays {
     result = collection.toArray(result);
     return result;
   }
-
 }

@@ -17,8 +17,11 @@ import android.widget.ScrollView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.giphy.GiphyGif;
+import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
@@ -34,7 +37,8 @@ import timber.log.Timber;
 public class ComposeReplyActivity extends DankPullCollapsibleActivity implements OnLinkInsertListener {
 
   private static final String KEY_START_OPTIONS = "startOptions";
-  private static final int REQUEST_CODE_PICK_IMAGE = 99;
+  private static final int REQUEST_CODE_PICK_IMAGE = 98;
+  private static final int REQUEST_CODE_PICK_GIF = 99;
 
   @BindView(R.id.composereply_root) IndependentExpandablePageLayout pageLayout;
   @BindView(R.id.toolbar) Toolbar toolbar;
@@ -58,6 +62,11 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     findAndSetupToolbar();
 
     ComposeStartOptions startOptions = getIntent().getParcelableExtra(KEY_START_OPTIONS);
+
+    // TODO: REMOVEE
+    if (BuildConfig.DEBUG && startOptions == null) {
+      startOptions = ComposeStartOptions.create("Poop");
+    }
 
     setTitle(getString(R.string.composereply_title_reply_to, startOptions.secondPartyName()));
     toolbar.setNavigationOnClickListener(o -> onBackPressed());
@@ -95,7 +104,9 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
         case INSERT_LINK:
           // preFilledTitle will be empty when there's no text selected.
-          CharSequence preFilledTitle = replyField.getText().subSequence(replyField.getSelectionStart(), replyField.getSelectionEnd());
+          int selectionStart = Math.min(replyField.getSelectionStart(), replyField.getSelectionEnd());
+          int selectionEnd = Math.max(replyField.getSelectionStart(), replyField.getSelectionEnd());
+          CharSequence preFilledTitle = replyField.getText().subSequence(selectionStart, selectionEnd);
           AddLinkDialog.showPreFilled(getSupportFragmentManager(), preFilledTitle.toString());
           break;
 
@@ -105,12 +116,19 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
           startActivityForResult(intent, REQUEST_CODE_PICK_IMAGE);
           break;
 
+        case INSERT_GIF:
+          startActivityForResult(GiphyPickerActivity.intent(this), REQUEST_CODE_PICK_GIF);
+          break;
+
         case QUOTE:
         case HEADING:
           insertQuoteOrHeadingMarkdownSyntax(markdownBlock);
           break;
 
         default:
+          if (markdownBlock == null) {
+            throw new AssertionError();
+          }
           insertMarkdownSyntax(markdownBlock);
           break;
       }
@@ -163,10 +181,21 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     }
   }
 
+  private void handleInsertedGiphyGif(GiphyGif giphyGif) {
+    int selectionStart = Math.min(replyField.getSelectionStart(), replyField.getSelectionEnd());
+    int selectionEnd = Math.max(replyField.getSelectionStart(), replyField.getSelectionEnd());
+//    boolean isSomeTextSelected = selectionStart != selectionEnd;
+
+    Timber.i("selectionStart: %s", selectionStart);
+    Timber.i("selectionEnd: %s", selectionEnd);
+    String selectedText = replyField.getText().subSequence(selectionStart, selectionEnd).toString();
+    onLinkInsert(selectedText, giphyGif.url());
+  }
+
   @Override
   public void onLinkInsert(String title, String url) {
-    int selectionStart = replyField.getSelectionStart();
-    int selectionEnd = replyField.getSelectionEnd();
+    int selectionStart = Math.min(replyField.getSelectionStart(), replyField.getSelectionEnd());
+    int selectionEnd = Math.max(replyField.getSelectionStart(), replyField.getSelectionEnd());
 
     String linkMarkdown = title.isEmpty()
         ? url
@@ -181,9 +210,16 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
         lifecycle().onResume()
             .take(1)
             .takeUntil(lifecycle().onPause())
-            .subscribe(o -> {
-              UploadImageDialog.show(getSupportFragmentManager(), data.getData());
-            });
+            .subscribe(o -> UploadImageDialog.show(getSupportFragmentManager(), data.getData()));
+      }
+
+    } else if (requestCode == REQUEST_CODE_PICK_GIF) {
+      if (resultCode == Activity.RESULT_OK) {
+        GiphyGif selectedGif = GiphyPickerActivity.handleActivityResult(data);
+        lifecycle().onResume()
+            .take(1)
+            .takeUntil(lifecycle().onPause())
+            .subscribe(o -> handleInsertedGiphyGif(selectedGif));
       }
 
     } else {

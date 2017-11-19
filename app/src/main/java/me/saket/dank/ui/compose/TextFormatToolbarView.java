@@ -32,16 +32,6 @@ public class TextFormatToolbarView extends HorizontalScrollView {
     actionClickListener = listener;
   }
 
-  @OnClick(R.id.textformattoolbar_bold)
-  void onClickBold(View view) {
-    actionClickListener.onClickAction(view, MarkdownAction.BOLD, MarkdownBlock.BOLD);
-  }
-
-  @OnClick(R.id.textformattoolbar_italic)
-  void onClickItalic(View view) {
-    actionClickListener.onClickAction(view, MarkdownAction.ITALIC, MarkdownBlock.ITALIC);
-  }
-
   @OnClick(R.id.textformattoolbar_insert_text_emoji)
   void onClickInsertTextEmoji(View view) {
     actionClickListener.onClickAction(view, MarkdownAction.INSERT_TEXT_EMOJI, null);
@@ -55,6 +45,21 @@ public class TextFormatToolbarView extends HorizontalScrollView {
   @OnClick(R.id.textformattoolbar_insert_image)
   void onClickInsertImage(View view) {
     actionClickListener.onClickAction(view, MarkdownAction.INSERT_IMAGE, null);
+  }
+
+  @OnClick(R.id.textformattoolbar_insert_gif)
+  void onClickInsertGif(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.INSERT_GIF, null);
+  }
+
+  @OnClick(R.id.textformattoolbar_bold)
+  void onClickBold(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.BOLD, MarkdownBlock.BOLD);
+  }
+
+  @OnClick(R.id.textformattoolbar_italic)
+  void onClickItalic(View view) {
+    actionClickListener.onClickAction(view, MarkdownAction.ITALIC, MarkdownBlock.ITALIC);
   }
 
   @OnClick(R.id.textformattoolbar_strikethrough)

@@ -21,7 +21,7 @@ import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxFolder;
-import me.saket.dank.utils.Arrays;
+import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.PersistableBundleUtils;
 import timber.log.Timber;
 
@@ -128,7 +128,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
                 // When generating bundled notifications, Android does not remove existing bundle when a new bundle is posted.
                 // It instead amends any new notifications with the existing ones. This means that we'll have to manually
                 // cleanup stale notifications.
-                Dank.messagesNotifManager().dismissNotification(getBaseContext(), Arrays.toArray(staleMessages, Message.class))
+                Dank.messagesNotifManager().dismissNotification(getBaseContext(), Arrays2.toArray(staleMessages, Message.class))
             ));
 
     unsubscribeOnDestroy((refreshMessages ? refreshCompletable : Completable.complete())

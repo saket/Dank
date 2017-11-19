@@ -8,6 +8,7 @@ import me.saket.dank.data.ImgurImageResponse;
 import me.saket.dank.data.ImgurUploadResponse;
 import me.saket.dank.data.StreamableVideoResponse;
 import me.saket.dank.data.UnfurlLinkResponse;
+import me.saket.dank.ui.giphy.GiphySearchResponse;
 import okhttp3.MultipartBody;
 import retrofit2.Response;
 import retrofit2.http.GET;
@@ -24,6 +25,9 @@ public interface DankApi {
   String HEADER_MASHAPE_KEY = "X-Mashape-Key: VOjpM0pXeAmshuRGE4Hhe6KY9Ouep1YCLx8jsnaivCFNYALpN5";
   String HEADER_WHOLESOME_API_AUTH = "Authorization";
   String WHOLESOME_API_HOST = "dank-wholesome.herokuapp.com";
+  String GIPHY_API_KEY = "SFGHZ6SYGn3AzZ07b2tNpENCEDdYTzpB";
+
+// ======== IMGUR ======== //
 
   /**
    * Get images in an Imgur album. This is a paid API so we try to minimize its usage. The response
@@ -52,6 +56,8 @@ public interface DankApi {
   @Headers({ HEADER_IMGUR_AUTH, HEADER_MASHAPE_KEY})
   Single<Response<ImgurUploadResponse>> uploadToImgur(@Part MultipartBody.Part file, @Query("type") String fileType);
 
+ // ======== STREAMABLE ======== //
+
   /**
    * Get downloadable video URLs from a streamable.com link.
    */
@@ -61,10 +67,31 @@ public interface DankApi {
       @Path("videoId") String videoId
   );
 
+ // ======== WHOLESOME ======== //
+
   @CheckResult
   @GET("https://" + WHOLESOME_API_HOST + "/unfurl")
   Single<UnfurlLinkResponse> unfurlUrl(
       @Query("url") String url,
       @Query("ignoreSocialMetadata") boolean ignoreSocialMetadata
+  );
+
+ // ======== GIPHY ======== //
+
+  @CheckResult
+  @GET("https://api.giphy.com/v1/gifs/search")
+  Single<GiphySearchResponse> giphySearch(
+      @Query("api_key") String apiKey,
+      @Query("q") String searchQuery,
+      @Query("limit") int itemsPerPage,
+      @Query("offset") int paginationOffset
+  );
+
+  @CheckResult
+  @GET("https://api.giphy.com/v1/gifs/trending")
+  Single<GiphySearchResponse> giphyTrending(
+      @Query("api_key") String apiKey,
+      @Query("limit") int itemsPerPage,
+      @Query("offset") int paginationOffset
   );
 }

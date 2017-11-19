@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-  package="me.saket.dank">
+<manifest package="me.saket.dank"
+  xmlns:android="http://schemas.android.com/apk/res/android">
 
   <uses-permission android:name="android.permission.INTERNET" />
 
@@ -14,16 +14,16 @@
   <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
   <application
+    android:name=".DankApplication"
     android:allowBackup="true"
     android:icon="@mipmap/ic_launcher"
     android:label="@string/app_name"
-    android:name=".DankApplication"
     android:supportsRtl="true"
     android:theme="@style/DankTheme.TransparentBackground">
 
     <activity
-      android:launchMode="singleTop"
       android:name=".ui.subreddits.SubredditActivity"
+      android:launchMode="singleTop"
       android:theme="@style/DankTheme"
       android:windowSoftInputMode="adjustResize">
       <intent-filter>
@@ -35,15 +35,15 @@
     <activity android:name=".ui.subreddits.SubredditActivityWithTransparentWindowBackground" />
 
     <activity
-      android:label="@string/login"
       android:name=".ui.authentication.LoginActivity"
+      android:label="@string/login"
       android:parentActivityName=".ui.subreddits.SubredditActivity"
       android:theme="@style/DankTheme.DialogLikeActivity"
       android:windowSoftInputMode="adjustResize" />
 
     <activity
-      android:label="@string/activity_userpreferences"
       android:name=".ui.preferences.UserPreferencesActivity"
+      android:label="@string/activity_userpreferences"
       android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
     <activity android:name=".ui.webview.WebViewActivity" />
@@ -51,14 +51,14 @@
     <activity android:name=".ui.submission.SubmissionFragmentActivity" />
 
     <activity
+      android:name=".ui.user.messages.InboxActivity"
       android:label="@string/activity_inbox"
       android:launchMode="singleTask"
-      android:name=".ui.user.messages.InboxActivity"
       android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
     <activity
-      android:label="Hidden Preferences"
       android:name=".ui.preferences.HiddenPreferencesActivity"
+      android:label="Hidden Preferences"
       android:parentActivityName=".ui.preferences.UserPreferencesActivity" />
 
     <activity
@@ -68,65 +68,71 @@
 
     <activity
       android:name=".ui.compose.ComposeReplyActivity"
+      android:exported="true"
       android:windowSoftInputMode="adjustResize|stateVisible" />
 
     <activity
-      android:label="Playground"
+      android:name=".ui.giphy.GiphyPickerActivity"
+      android:exported="true"
+      android:windowSoftInputMode="adjustResize|stateVisible" />
+
+    <activity
       android:name=".ui.PlaygroundActivity"
+      android:label="Playground"
       android:parentActivityName=".ui.subreddits.SubredditActivity" />
 
     <activity
-      android:exported="true"
       android:name=".ui.media.MediaAlbumViewerActivity"
+      android:exported="true"
       android:theme="@style/DankTheme.TransparentBackground.Fullscreen" />
 
     <service
-      android:exported="true"
       android:name=".ui.subreddits.SubredditSubscriptionsSyncJob"
+      android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <service
-      android:exported="true"
       android:name=".notifs.CheckUnreadMessagesJobService"
+      android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <service
-      android:exported="true"
       android:name=".notifs.MessageNotifActionsJobService"
+      android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <service
-      android:exported="true"
       android:name=".ui.submission.VoteJobService"
+      android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <service
-      android:exported="true"
       android:name=".ui.submission.RetryReplyJobService"
-      android:permission="android.permission.BIND_JOB_SERVICE" />
-
-    <service
-      android:exported="false"
-      android:name=".notifs.MediaDownloadService" />
-
-    <service
       android:exported="true"
+      android:permission="android.permission.BIND_JOB_SERVICE" />
+
+    <service
+      android:name=".notifs.MediaDownloadService"
+      android:exported="false" />
+
+    <service
       android:name=".DatabaseCacheRecyclerJobService"
+      android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <receiver
-      android:exported="false"
-      android:name=".notifs.MessageNotifActionReceiver" />
+      android:name=".notifs.MessageNotifActionReceiver"
+      android:exported="false" />
 
     <receiver
-      android:exported="false"
-      android:name=".notifs.MediaNotifActionReceiver" />
+      android:name=".notifs.MediaNotifActionReceiver"
+      android:exported="false" />
 
     <provider
+      android:name="android.support.v4.content.FileProvider"
       android:authorities="@string/file_provider_authority"
       android:exported="false"
-      android:grantUriPermissions="true"
-      android:name="android.support.v4.content.FileProvider">
+      android:grantUriPermissions="true">
       <meta-data
         android:name="android.support.FILE_PROVIDER_PATHS"
         android:resource="@xml/file_provider_paths" />

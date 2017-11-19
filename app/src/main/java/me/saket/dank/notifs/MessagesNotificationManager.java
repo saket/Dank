@@ -105,7 +105,7 @@ public class MessagesNotificationManager {
           updatedSeenMessageIds.addAll(oldSeenMessageIds);
           Timber.d("---------------------");
           for (Message message : messages) {
-            Timber.i("Removing seen for: %s", Strings.safeSubstring(message.getBody(), 50));
+            Timber.i("Removing seen for: %s", Strings.substringWithBounds(message.getBody(), 50));
             updatedSeenMessageIds.remove(message.getId());
           }
           return Collections.unmodifiableSet(updatedSeenMessageIds);
@@ -174,7 +174,7 @@ public class MessagesNotificationManager {
 
       Timber.i("Creating notifs for:");
       for (Message sortedMessage : sortedMessages) {
-        Timber.i("%s (%s)", Strings.safeSubstring(sortedMessage.getBody(), 50), sortedMessage.getCreated());
+        Timber.i("%s (%s)", Strings.substringWithBounds(sortedMessage.getBody(), 50), sortedMessage.getCreated());
       }
       createNotifications(context, Collections.unmodifiableList(sortedMessages), loggedInUserName);
     });

@@ -31,6 +31,13 @@
       android:contentDescription="@string/cd_textformat_insert_image"
       android:src="@drawable/ic_image_24dp" />
 
+    <ImageButton
+      android:id="@+id/textformattoolbar_insert_gif"
+      style="@style/DankTextFormatToolbarButton"
+      android:contentDescription="@string/cd_textformat_insert_gif"
+      android:padding="@dimen/spacing8"
+      android:src="@drawable/ic_gif_32dp" />
+
     <View style="@style/DankSeparator.HorizontalContent" />
 
     <ImageButton

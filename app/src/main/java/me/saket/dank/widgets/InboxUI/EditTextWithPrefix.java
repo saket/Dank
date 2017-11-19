@@ -8,13 +8,13 @@ import android.util.AttributeSet;
 import me.saket.dank.R;
 import me.saket.dank.widgets.TextDrawable;
 
-public class EdittextWithPrefix extends AppCompatEditText {
+public class EditTextWithPrefix extends AppCompatEditText {
 
-  public EdittextWithPrefix(Context context, AttributeSet attrs) {
+  public EditTextWithPrefix(Context context, AttributeSet attrs) {
     super(context, attrs);
 
-    TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.EdittextWithPrefix);
-    String prefix = attributes.getString(R.styleable.EdittextWithPrefix_prefix);
+    TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.EditTextWithPrefix);
+    String prefix = attributes.getString(R.styleable.EditTextWithPrefix_prefix);
     attributes.recycle();
 
     if (prefix == null || prefix.isEmpty()) {
@@ -23,5 +23,4 @@ public class EdittextWithPrefix extends AppCompatEditText {
 
     setCompoundDrawablesRelative(new TextDrawable(prefix, this), null, null, null);
   }
-
 }

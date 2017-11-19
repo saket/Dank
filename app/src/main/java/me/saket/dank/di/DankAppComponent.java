@@ -17,6 +17,7 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.compose.UploadImageDialog;
+import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
@@ -90,4 +91,6 @@ public interface DankAppComponent {
   void inject(DatabaseCacheRecyclerJobService service);
 
   void inject(UploadImageDialog dialog);
+
+  void inject(GiphyPickerActivity activity);
 }

@@ -49,4 +49,7 @@
   <dimen name="videocontrols_seekbar_extra_vertical_touch_area">@dimen/spacing16</dimen>
   <dimen name="mediaalbumviewer_image_scroll_hint_bottom_margin">@dimen/spacing24</dimen>
   <dimen name="mediaalbumviewer_image_height_when_empty">240dp</dimen>
+
+  <!-- Compose -->
+  <dimen name="giphypicker_searchfield_top_spacing">@dimen/spacing16</dimen>
 </resources>

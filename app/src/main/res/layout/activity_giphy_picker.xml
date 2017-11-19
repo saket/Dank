@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/giphypicker_root"
+  style="@style/DankPullCollapsibleActivityPage"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto">
+
+  <me.saket.dank.widgets.DankToolbar
+    android:id="@id/toolbar"
+    style="@style/DankToolbar"
+    app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginStart="60dp"
+    android:elevation="@dimen/elevation_toolbar"
+    android:orientation="horizontal"
+    android:paddingBottom="@dimen/giphypicker_searchfield_top_spacing"
+    android:paddingTop="@dimen/giphypicker_searchfield_top_spacing">
+
+    <EditText
+      android:id="@+id/giphypicker_search"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginEnd="@dimen/spacing16"
+      android:layout_weight="1"
+      android:background="@null"
+      android:hint="@string/giphypicker_search_gifs"
+      android:inputType="textCapSentences" />
+
+    <ImageView
+      android:id="@+id/giphypicker_giphy_attribution"
+      android:layout_width="64dp"
+      android:layout_height="match_parent"
+      android:layout_marginEnd="@dimen/spacing16"
+      android:contentDescription="@string/cd_giphypicker_giphy_attribution"
+      android:src="@drawable/giphy_attribution_dark" />
+  </LinearLayout>
+
+  <me.saket.dank.widgets.AnimatedProgressBar
+    android:id="@+id/giphypicker_search_progress"
+    style="@style/DankProgressBar.Horizontal.TopAligned"
+    android:layout_below="@+id/toolbar"
+    android:elevation="@dimen/elevation_toolbar"
+    android:visibility="gone" />
+
+  <android.support.v7.widget.RecyclerView
+    android:id="@+id/giphypicker_recyclerview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_below="@+id/toolbar"
+    android:clipToPadding="false"
+    android:paddingTop="@dimen/spacing4"
+    android:scrollbarStyle="insideOverlay"
+    android:scrollbars="vertical" />
+</me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>
