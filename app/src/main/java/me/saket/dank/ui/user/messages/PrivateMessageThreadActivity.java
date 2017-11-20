@@ -18,8 +18,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.ViewGroup.MarginLayoutParams;
 import android.widget.TextView;
 
-import me.saket.dank.ui.compose.ComposeReplyActivity;
-import me.saket.dank.ui.compose.ComposeStartOptions;
 import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
@@ -38,6 +36,8 @@ import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
+import me.saket.dank.ui.compose.ComposeReplyActivity;
+import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.UrlParser;
@@ -140,7 +140,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     );
 
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
-      touchLiesOn(messageRecyclerView, downX, downY) && messageRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1)
+        touchLiesOn(messageRecyclerView, downX, downY) && messageRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1)
     );
   }
 
@@ -150,6 +150,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     Message latestMessage = messages.get(messages.size() - 1);
     ComposeStartOptions startOptions = ComposeStartOptions.builder()
         .secondPartyName(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME))
+        .parentContributionFullName(latestMessage.getFullName())
         .build();
     ComposeReplyActivity.start(this, startOptions);
   }

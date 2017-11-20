@@ -28,12 +28,8 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
 /**
- * For composing comments and message replies. Handles saving drafts.
- * <p>
- * TODO:
- * - List (ordered, unordered)
- * - HR
- * - GIFs
+ * For composing comments and message replies.
+ * TODO: Handles saving drafts.
  */
 public class ComposeReplyActivity extends DankPullCollapsibleActivity implements OnLinkInsertListener {
 
@@ -66,7 +62,11 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
     // TODO: REMOVEE
     if (BuildConfig.DEBUG && startOptions == null) {
-      startOptions = ComposeStartOptions.create("Poop");
+      startOptions = ComposeStartOptions.builder()
+          .secondPartyName("Poop")
+          .parentContributionFullName("Boop")
+          .preFilledText("Waddup homie")
+          .build();
     }
 
     setTitle(getString(R.string.composereply_title_reply_to, startOptions.secondPartyName()));
@@ -74,11 +74,12 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
     setupContentExpandablePage(pageLayout);
     expandFromBelowToolbar();
-
     pageLayout.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       //noinspection CodeBlock2Expr
       return Views.touchLiesOn(replyScrollView, downX, downY) && replyScrollView.canScrollVertically(upwardPagePull ? 1 : -1);
     });
+
+    Views.setTextWithCursor(replyField, startOptions.preFilledText());
   }
 
   @Override

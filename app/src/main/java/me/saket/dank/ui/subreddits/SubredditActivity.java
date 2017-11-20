@@ -547,7 +547,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
       case R.id.action_preferences:
         //UserPreferencesActivity.start(this);
-        ComposeReplyActivity.start(this, ComposeStartOptions.builder().secondPartyName("Test").build());
+        ComposeReplyActivity.start(this, ComposeStartOptions.builder()
+            .secondPartyName("Test")
+            .parentContributionFullName("Test")
+            .preFilledText("Waddup homie")
+            .build()
+        );
         return true;
 
       default:

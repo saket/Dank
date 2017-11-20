@@ -376,9 +376,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Reply fullscreen clicks.
     unsubscribeOnDestroy(
-        commentsAdapter.streamReplyFullscreenClicks().subscribe(fullscreenClickEvent -> {
+        commentsAdapter.streamReplyFullscreenClicks().subscribe((CommentsAdapter.ReplyFullscreenClickEvent fullscreenClickEvent) -> {
           ComposeStartOptions startOptions = ComposeStartOptions.builder()
               .secondPartyName("secondPartyName")
+              .parentContributionFullName(fullscreenClickEvent.parentContribution().getFullName())
+              .preFilledText(fullscreenClickEvent.replyMessage())
               .build();
           ComposeReplyActivity.start(getActivity(), startOptions);
         })
