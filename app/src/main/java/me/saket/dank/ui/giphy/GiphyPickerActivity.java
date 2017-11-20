@@ -1,7 +1,6 @@
 package me.saket.dank.ui.giphy;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static me.saket.dank.utils.RxUtils.logError;
 
 import android.content.Context;
 import android.content.Intent;
@@ -9,8 +8,11 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.view.View;
 import android.widget.EditText;
+import android.widget.Toast;
 
+import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
 import java.util.Locale;
@@ -20,18 +22,25 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
+import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatedProgressBar;
+import me.saket.dank.widgets.EmptyStateView;
+import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
 /**
- *
+ * Search GIFs using GIPHY.com.
  */
 public class GiphyPickerActivity extends DankPullCollapsibleActivity {
 
@@ -41,8 +50,11 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.giphypicker_recyclerview) RecyclerView gifRecyclerView;
   @BindView(R.id.giphypicker_search) EditText searchField;
   @BindView(R.id.giphypicker_search_progress) AnimatedProgressBar searchProgressBarView;
+  @BindView(R.id.giphypicker_empty_state) EmptyStateView emptyStateView;
+  @BindView(R.id.giphypicker_error_state) ErrorStateView errorStateView;
 
   @Inject GiphyRepository giphyRepository;
+  @Inject ErrorResolver errorResolver;
 
   public static Intent intent(Context context) {
     return new Intent(context, GiphyPickerActivity.class);
@@ -74,8 +86,8 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
   @OnClick(R.id.giphypicker_giphy_attribution)
   void onClickResetGifs() {
     if (BuildConfig.DEBUG) {
-      Timber.i("Clearing all gifs");
       giphyRepository.clear();
+      Toast.makeText(this, "Clearing all cached gifs", Toast.LENGTH_SHORT).show();
     }
   }
 
@@ -84,24 +96,42 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
     super.onPostCreate(savedInstanceState);
 
     GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
-    gifRecyclerView.setLayoutManager(gridLayoutManager);
-
     GiphyAdapter giphyAdapter = new GiphyAdapter(getResources().getIntArray(R.array.giphy_placeholder_colors));
+    gifRecyclerView.setLayoutManager(gridLayoutManager);
     gifRecyclerView.setAdapter(giphyAdapter);
+
+    Observable<Object> retries = errorStateView.retryClicks().share();
 
     RxTextView.textChanges(searchField)
         .map(sequence -> sequence.toString().toLowerCase(Locale.ENGLISH))
         .debounce(200, TimeUnit.MILLISECONDS, mainThread())
+        .flatMap(searchQuery -> retries.map(o -> searchQuery).startWith(searchQuery))
         .switchMapSingle(searchQuery -> giphyRepository.search(searchQuery)
             .retry(3)
             .subscribeOn(Schedulers.io())
             .observeOn(mainThread())
-            .doOnSubscribe(o -> searchProgressBarView.show())
+            .doOnSubscribe(o -> {
+              searchProgressBarView.show();
+              errorStateView.setVisibility(View.GONE);
+            })
             .doFinally(() -> searchProgressBarView.hide())
+            .onErrorResumeNext(error -> {
+              gifRecyclerView.setVisibility(View.INVISIBLE);
+              errorStateView.setVisibility(View.VISIBLE);
+
+              ResolvedError resolvedError = errorResolver.resolve(error);
+              if (resolvedError.isUnknown()) {
+                Timber.e(error, "Error while searching GIFs");
+              }
+              errorStateView.applyFrom(resolvedError);
+              return Single.never();
+            })
         )
         .takeUntil(lifecycle().onDestroy())
         .doOnNext(o -> gifRecyclerView.scrollToPosition(0))
-        .subscribe(giphyAdapter, logError("Failed to search more gifs"));
+        .doOnNext(gifs -> emptyStateView.setVisibility(gifs.isEmpty() ? View.VISIBLE : View.GONE))
+        .doOnNext(o -> gifRecyclerView.setVisibility(View.VISIBLE))
+        .subscribe(giphyAdapter);
 
     giphyAdapter.streamClicks()
         .takeUntil(lifecycle().onDestroy())
@@ -111,5 +141,11 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
           setResult(RESULT_OK, resultData);
           finish();
         });
+
+    // Hide keyboard on scroll.
+    RxRecyclerView.scrollEvents(gifRecyclerView)
+        .filter(scrollEvent -> Math.abs(scrollEvent.dy()) > 0)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(scrollEvent -> Keyboards.hide(this, searchField));
   }
 }

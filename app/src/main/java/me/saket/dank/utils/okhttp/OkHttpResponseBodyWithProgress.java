@@ -29,7 +29,11 @@ public class OkHttpResponseBodyWithProgress extends ResponseBody {
     return new OkHttpResponseBodyWithProgress(request.url(), response.body(), progressListener);
   }
 
-  public OkHttpResponseBodyWithProgress(HttpUrl url, ResponseBody responseBody, OkHttpResponseReadProgressListener progressListener) {
+  public static OkHttpResponseBodyWithProgress wrap(HttpUrl url, ResponseBody responseBody, OkHttpResponseReadProgressListener progressListener) {
+    return new OkHttpResponseBodyWithProgress(url, responseBody, progressListener);
+  }
+
+  private OkHttpResponseBodyWithProgress(HttpUrl url, ResponseBody responseBody, OkHttpResponseReadProgressListener progressListener) {
     this.url = url;
     this.responseBody = responseBody;
     this.progressListener = progressListener;

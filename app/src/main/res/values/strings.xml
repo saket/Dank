@@ -21,7 +21,7 @@
   <string name="common_error_retry">Retry</string>
 
   <string name="common_unknown_error_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
-  <string name="common_unknown_error_message">Whoops! Something went wrong. Can you try again?</string>
+  <string name="common_unknown_error_message">Whoops! Something went wrong.</string>
 
   <string name="common_network_error_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
   <string name="common_network_error_message">Uh oh, Reddit seems to be unreachable.</string>
@@ -312,4 +312,6 @@
   <!-- GIPHY picker -->
   <string name="giphypicker_search_gifs">Search GIFs…</string>
   <string name="cd_giphypicker_giphy_attribution">Powered by GIPHY</string>
+  <string name="giphypicker_empty_state_emoji">( ͡° ͜ʖ ͡°)</string>
+  <string name="giphypicker_empty_state_message">Nothing found.\nYour GIF desires are… unconventional.</string>
 </resources>

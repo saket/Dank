@@ -1,6 +1,7 @@
 package me.saket.dank.widgets;
 
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
@@ -20,12 +21,21 @@ public class EmptyStateView extends FrameLayout {
 
   public EmptyStateView(@NonNull Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
-    init();
+    init(attrs);
   }
 
-  private void init() {
+  private void init(AttributeSet attrs) {
     LayoutInflater.from(getContext()).inflate(R.layout.custom_empty_state, this, true);
     ButterKnife.bind(this, this);
+
+    TypedArray attributes = getContext().obtainStyledAttributes(attrs, R.styleable.EmptyStateView);
+    if (attributes.hasValue(R.styleable.EmptyStateView_emptyState_emoji)) {
+      emojiView.setText(attributes.getText(R.styleable.EmptyStateView_emptyState_emoji));
+    }
+    if (attributes.hasValue(R.styleable.EmptyStateView_emptyState_message)) {
+      messageView.setText(attributes.getText(R.styleable.EmptyStateView_emptyState_message));
+    }
+    attributes.recycle();
   }
 
   public void setEmojiAndMessage(@StringRes int emojiRes, @StringRes int messageRes) {

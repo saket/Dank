@@ -2,6 +2,7 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
+import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
@@ -12,9 +13,11 @@ import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import com.jakewharton.rxbinding2.view.RxView;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import butterknife.OnClick;
+import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
 
@@ -23,8 +26,6 @@ public class ErrorStateView extends LinearLayout {
   @BindView(R.id.errorstate_emoji) TextView emojiView;
   @BindView(R.id.errorstate_message) TextView messageView;
   @BindView(R.id.errorstate_retry) Button retryButton;
-
-  private View.OnClickListener onClickRetryListener;
 
   public ErrorStateView(@NonNull Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
@@ -39,12 +40,15 @@ public class ErrorStateView extends LinearLayout {
     ButterKnife.bind(this, this);
 
     TypedArray attributes = getContext().obtainStyledAttributes(attrs, R.styleable.ErrorStateView);
-
     if (attributes.hasValue(R.styleable.ErrorStateView_emojiVisible)) {
       boolean emojiVisible = attributes.getBoolean(R.styleable.ErrorStateView_emojiVisible, true);
       emojiView.setVisibility(emojiVisible ? VISIBLE : GONE);
     }
     attributes.recycle();
+
+    retryButton.setOnClickListener(v -> {
+      throw new AssertionError("No retry listener present");
+    });
   }
 
   public void applyFrom(ResolvedError error) {
@@ -52,16 +56,13 @@ public class ErrorStateView extends LinearLayout {
     messageView.setText(error.errorMessageRes());
   }
 
-  public void setOnRetryClickListener(View.OnClickListener retryClickListener) {
-    onClickRetryListener = retryClickListener;
+  public void setOnRetryClickListener(View.OnClickListener listener) {
+    retryButton.setOnClickListener(listener);
   }
 
-  @OnClick(R.id.errorstate_retry)
-  void onClickRetry(View button) {
-    if (onClickRetryListener == null) {
-      throw new AssertionError("No retry listener present");
-    }
-    onClickRetryListener.onClick(button);
+  @CheckResult
+  public Observable<Object> retryClicks() {
+    return RxView.clicks(retryButton);
   }
 
   public Button getRetryButton() {

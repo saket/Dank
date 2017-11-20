@@ -39,7 +39,7 @@ public class GlideOkHttpProgressModule extends LibraryGlideModule {
       Request request = chain.request();
       Response response = chain.proceed(request);
       return response.newBuilder()
-          .body(new OkHttpResponseBodyWithProgress(request.url(), response.body(), listener))
+          .body(OkHttpResponseBodyWithProgress.wrap(request, response, listener))
           .build();
     };
   }

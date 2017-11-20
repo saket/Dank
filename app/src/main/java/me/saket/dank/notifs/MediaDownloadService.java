@@ -49,9 +49,9 @@ import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.media.MediaDownloadJob;
+import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.Files2;
 import me.saket.dank.utils.Intents;
-import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Urls;
@@ -513,9 +513,9 @@ public class MediaDownloadService extends Service {
         Call networkCall = okHttpClient.newCall(downloadRequest);
         Response response = networkCall.execute();
         Response responseWithProgressListener = response.newBuilder()
-            .body(new OkHttpResponseBodyWithProgress(
-                downloadRequest.url(),
-                response.body(),
+            .body(OkHttpResponseBodyWithProgress.wrap(
+                downloadRequest,
+                response,
                 (url, bytesRead, expectedContentLength) -> {
                   if (bytesRead < expectedContentLength) {
                     int progress = (int) (100 * (float) bytesRead / expectedContentLength);

@@ -21,6 +21,7 @@ import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
 import me.saket.dank.data.exceptions.InvalidImgurAlbumException;
 import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
 import me.saket.dank.di.DankApi;
+import me.saket.dank.utils.okhttp.OkHttpRequestBodyWithProgress;
 import okhttp3.Headers;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -60,7 +61,7 @@ public class ImgurRepository {
    * TODO: If needed, get the rate limits if they're not cached.
    * Remember to handle {@link ImgurApiRequestRateLimitReachedException}.
    *
-   * @throws InvalidImgurAlbumException        If an invalid Imgur link was found.
+   * @throws InvalidImgurAlbumException               If an invalid Imgur link was found.
    * @throws ImgurApiRequestRateLimitReachedException If Imgur's API limit is reached and no more API requests can be made till the next month.
    */
   public Single<ImgurResponse> gallery(ImgurAlbumUnresolvedLink imgurAlbumUnresolvedLink) {
@@ -107,9 +108,12 @@ public class ImgurRepository {
    * Remember to handle {@link ImgurApiUploadRateLimitReachedException}.
    */
   @CheckResult
-  public Single<ImgurUploadResponse> uploadImage(File image, String mimeType) {
-    RequestBody requestBody = RequestBody.create(MediaType.parse(mimeType), image);
-    MultipartBody.Part multipartBodyPart = MultipartBody.Part.createFormData("image", image.getName(), requestBody);
+  public Single<ImgurUploadResponse> uploadImage(File imageFile, String mimeType) {
+    // Implementation copied from RequestBody.create(MediaType, File).Zz
+    RequestBody requestBody = RequestBody.create(MediaType.parse(mimeType), imageFile);
+    OkHttpRequestBodyWithProgress requestBodyWithProgress = new OkHttpRequestBodyWithProgress(requestBody, null);
+
+    MultipartBody.Part multipartBodyPart = MultipartBody.Part.createFormData("image", imageFile.getName(), requestBodyWithProgress);
 
     return dankApi.uploadToImgur(multipartBodyPart, "file")
         .map(throwIfHttpError())

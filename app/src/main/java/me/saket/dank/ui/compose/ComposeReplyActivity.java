@@ -184,10 +184,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   private void handleInsertedGiphyGif(GiphyGif giphyGif) {
     int selectionStart = Math.min(replyField.getSelectionStart(), replyField.getSelectionEnd());
     int selectionEnd = Math.max(replyField.getSelectionStart(), replyField.getSelectionEnd());
-//    boolean isSomeTextSelected = selectionStart != selectionEnd;
 
-    Timber.i("selectionStart: %s", selectionStart);
-    Timber.i("selectionEnd: %s", selectionEnd);
     String selectedText = replyField.getText().subSequence(selectionStart, selectionEnd).toString();
     onLinkInsert(selectedText, giphyGif.url());
   }
@@ -216,10 +213,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     } else if (requestCode == REQUEST_CODE_PICK_GIF) {
       if (resultCode == Activity.RESULT_OK) {
         GiphyGif selectedGif = GiphyPickerActivity.handleActivityResult(data);
-        lifecycle().onResume()
-            .take(1)
-            .takeUntil(lifecycle().onPause())
-            .subscribe(o -> handleInsertedGiphyGif(selectedGif));
+        handleInsertedGiphyGif(selectedGif);
       }
 
     } else {

@@ -23,6 +23,11 @@
     <attr name="emojiVisible" format="boolean" />
   </declare-styleable>
 
+  <declare-styleable name="EmptyStateView">
+    <attr name="emptyState_emoji" format="string"/>
+    <attr name="emptyState_message" format="string"/>
+  </declare-styleable>
+
   <declare-styleable name="ProgressWithFileSizeView">
     <attr name="progressBarSize" format="dimension" />
   </declare-styleable>

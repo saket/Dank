@@ -54,7 +54,10 @@ public interface DankApi {
   @Multipart
   @POST("https://imgur-apiv3.p.mashape.com/3/image")
   @Headers({ HEADER_IMGUR_AUTH, HEADER_MASHAPE_KEY})
-  Single<Response<ImgurUploadResponse>> uploadToImgur(@Part MultipartBody.Part file, @Query("type") String fileType);
+  Single<Response<ImgurUploadResponse>> uploadToImgur(
+      @Part MultipartBody.Part file,
+      @Query("type") String fileType
+  );
 
  // ======== STREAMABLE ======== //
 

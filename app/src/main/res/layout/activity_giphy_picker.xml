@@ -2,7 +2,8 @@
 <me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/giphypicker_root"
   style="@style/DankPullCollapsibleActivityPage"
   xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:app="http://schemas.android.com/apk/res-auto">
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:animateLayoutChanges="true">
 
   <me.saket.dank.widgets.DankToolbar
     android:id="@id/toolbar"
@@ -42,6 +43,22 @@
     style="@style/DankProgressBar.Horizontal.TopAligned"
     android:layout_below="@+id/toolbar"
     android:elevation="@dimen/elevation_toolbar"
+    android:visibility="gone" />
+
+  <me.saket.dank.widgets.EmptyStateView
+    android:id="@+id/giphypicker_empty_state"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:visibility="gone"
+    app:emptyState_emoji="@string/giphypicker_empty_state_emoji"
+    app:emptyState_message="@string/giphypicker_empty_state_message" />
+
+  <me.saket.dank.widgets.ErrorStateView
+    android:id="@+id/giphypicker_error_state"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
     android:visibility="gone" />
 
   <android.support.v7.widget.RecyclerView
