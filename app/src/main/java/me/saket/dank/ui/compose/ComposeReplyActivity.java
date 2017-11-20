@@ -22,6 +22,7 @@ import me.saket.dank.R;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
+import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
@@ -181,12 +182,16 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     }
   }
 
-  private void handleInsertedGiphyGif(GiphyGif giphyGif) {
+  private void onGifInsert(GiphyGif giphyGif) {
     int selectionStart = Math.min(replyField.getSelectionStart(), replyField.getSelectionEnd());
     int selectionEnd = Math.max(replyField.getSelectionStart(), replyField.getSelectionEnd());
 
     String selectedText = replyField.getText().subSequence(selectionStart, selectionEnd).toString();
     onLinkInsert(selectedText, giphyGif.url());
+
+    // Keyboard might have gotten dismissed while the GIF list was being scrolled.
+    // Works only if called delayed. Posting to reply field's message queue works.
+    replyField.post(() -> Keyboards.show(replyField));
   }
 
   @Override
@@ -213,7 +218,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     } else if (requestCode == REQUEST_CODE_PICK_GIF) {
       if (resultCode == Activity.RESULT_OK) {
         GiphyGif selectedGif = GiphyPickerActivity.handleActivityResult(data);
-        handleInsertedGiphyGif(selectedGif);
+        onGifInsert(selectedGif);
       }
 
     } else {
