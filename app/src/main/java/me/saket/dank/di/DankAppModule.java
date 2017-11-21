@@ -40,7 +40,6 @@ import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
-import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import me.saket.dank.utils.JacksonHelper;
@@ -252,17 +251,14 @@ public class DankAppModule {
   }
 
   @Provides
-  @Singleton
-  CommentsManager provideCommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession,
-      @Named("replyDraftStore") SharedPreferences sharedPrefs, Moshi moshi)
-  {
-    int recycleDraftsOlderThanNumDays = appContext.getResources().getInteger(R.integer.recycle_drafts_older_than_num_days);
-    return new CommentsManager(dankRedditClient, database, userSession, sharedPrefs, moshi, recycleDraftsOlderThanNumDays);
+  @Named("drafts_max_retain_days")
+  int provideCommentDraftsMaxRetainDays() {
+    return appContext.getResources().getInteger(R.integer.recycle_drafts_older_than_num_days);
   }
 
   @Provides
   @Singleton
-  @Named("replyDraftStore")
+  @Named("drafts_sharedpreferences")
   SharedPreferences provideSharedPrefsForReplyDraftStore() {
     return appContext.getSharedPreferences("replyDraftStore", Context.MODE_PRIVATE);
   }

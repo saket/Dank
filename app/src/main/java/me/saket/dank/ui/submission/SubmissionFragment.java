@@ -145,6 +145,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @Inject CommentTreeConstructor commentTreeConstructor;
   @Inject Moshi moshi;
   @Inject LinkMetadataRepository linkMetadataRepository;
+  @Inject CommentsManager commentsManager;
 
   private ExpandablePageLayout submissionPageLayout;
   private CommentsAdapter commentsAdapter;
@@ -346,12 +347,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentList.setItemAnimator(itemAnimator);
 
     // Add submission Views as a header so that it scrolls with the list.
-    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), Dank.userSession(), Dank.comments(), commentSwipeActionsProvider);
+    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), Dank.userSession(), commentsManager, commentSwipeActionsProvider);
     adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(
         commentsAdapter,
         commentsHeaderView,
         Dank.voting(),
-        Dank.comments(),
+        commentsManager,
         submissionSwipeActionsProvider
     );
     commentList.setAdapter(adapterWithSubmissionHeader);
@@ -379,7 +380,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsAdapter.streamReplyFullscreenClicks().subscribe((CommentsAdapter.ReplyFullscreenClickEvent fullscreenClickEvent) -> {
           ComposeStartOptions startOptions = ComposeStartOptions.builder()
               .secondPartyName("secondPartyName")
-              .parentContributionFullName(fullscreenClickEvent.parentContribution().getFullName())
+              .parentContribution(fullscreenClickEvent.parentContribution())
               .preFilledText(fullscreenClickEvent.replyMessage())
               .build();
           ComposeReplyActivity.start(getActivity(), startOptions);
@@ -390,8 +391,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     unsubscribeOnDestroy(
         commentsAdapter.streamReplySendClicks().subscribe(sendClickEvent -> {
           // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
-          Dank.comments().removeDraft(sendClickEvent.parentContribution())
-              .andThen(Dank.reddit().withAuth(Dank.comments().sendReply(
+          commentsManager.removeDraft(sendClickEvent.parentContribution())
+              .andThen(Dank.reddit().withAuth(commentsManager.sendReply(
                   sendClickEvent.parentContribution(),
                   submissionStream.getValue().getFullName(),
                   sendClickEvent.replyMessage()))
@@ -409,7 +410,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     unsubscribeOnDestroy(
         commentsAdapter.streamReplyRetrySendClicks().subscribe(retrySendEvent -> {
           // Re-sending is not a part of the chain so that it does not get unsubscribed on destroy.
-          Dank.reddit().withAuth(Dank.comments().reSendReply(retrySendEvent.failedPendingSyncReply()))
+          Dank.reddit().withAuth(commentsManager.reSendReply(retrySendEvent.failedPendingSyncReply()))
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
         })
@@ -489,8 +490,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .observeOn(io())
             .switchMap(submissionWithComments -> {
               // Add pending-sync replies to the comment tree.
-              return Dank.comments().removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
-                  .andThen(Dank.comments().streamPendingSyncRepliesForSubmission(submissionWithComments))
+              return commentsManager.removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
+                  .andThen(commentsManager.streamPendingSyncRepliesForSubmission(submissionWithComments))
                   .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies));
             })
             .subscribe(pair -> {

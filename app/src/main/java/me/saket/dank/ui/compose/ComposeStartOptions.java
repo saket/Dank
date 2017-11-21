@@ -7,6 +7,7 @@ import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Contribution;
 
+// TODO: NOT PARCELABLE!
 @AutoValue
 public abstract class ComposeStartOptions implements Parcelable {
 
@@ -36,7 +37,11 @@ public abstract class ComposeStartOptions implements Parcelable {
     /**
      * See {@link ComposeStartOptions#parentContributionFullName()}.
      */
-    public abstract Builder parentContributionFullName(String replyingTo);
+    public Builder parentContribution(Contribution replyingTo) {
+      return parentContributionFullName(replyingTo.getFullName());
+    }
+
+    abstract Builder parentContributionFullName(String replyingTo);
 
     public abstract ComposeStartOptions build();
   }

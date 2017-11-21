@@ -6,6 +6,8 @@ import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 
+import javax.inject.Inject;
+
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
@@ -15,6 +17,8 @@ import timber.log.Timber;
  * Retries sending of failed replies.
  */
 public class RetryReplyJobService extends DankJobService {
+
+  @Inject CommentsManager commentsManager;
 
   public static void scheduleRetry(Context context) {
     JobInfo retryJobInfo = new JobInfo.Builder(ID_RETRY_REPLY, new ComponentName(context, RetryReplyJobService.class))
@@ -28,12 +32,18 @@ public class RetryReplyJobService extends DankJobService {
   }
 
   @Override
+  public void onCreate() {
+    super.onCreate();
+    Dank.dependencyInjector().inject(this);
+  }
+
+  @Override
   public boolean onStartJob(JobParameters params) {
     unsubscribeOnDestroy(
-        Dank.comments().streamFailedReplies()
+        commentsManager.streamFailedReplies()
             .take(1)
             .flatMapIterable(failedReplies -> failedReplies)
-            .flatMapCompletable(failedReply -> Dank.comments().reSendReply(failedReply))
+            .flatMapCompletable(failedReply -> commentsManager.reSendReply(failedReply))
             .subscribe(
                 () -> jobFinished(params, false),
                 error -> {

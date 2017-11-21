@@ -11,6 +11,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
+import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 
@@ -18,6 +19,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 import hirondelle.date4j.DateTime;
 import io.reactivex.Completable;
@@ -32,6 +36,7 @@ import timber.log.Timber;
 /**
  * Manages sending replies and saving drafts.
  */
+@Singleton
 public class CommentsManager implements ReplyDraftStore {
 
   private final DankRedditClient dankRedditClient;
@@ -41,8 +46,10 @@ public class CommentsManager implements ReplyDraftStore {
   private final Moshi moshi;
   private final int recycleDraftsOlderThanNumDays;
 
-  public CommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession, SharedPreferences sharedPrefs,
-      Moshi moshi, int recycleDraftsOlderThanNumDays)
+  @Inject
+  public CommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession,
+      @Named("drafts_sharedpreferences") SharedPreferences sharedPrefs, Moshi moshi,
+      @Named("drafts_max_retain_days") int recycleDraftsOlderThanNumDays)
   {
     this.dankRedditClient = dankRedditClient;
     this.database = database;
@@ -152,20 +159,25 @@ public class CommentsManager implements ReplyDraftStore {
 
   @Override
   @CheckResult
-  public Completable saveDraft(PublicContribution parentContribution, String draftBody) {
+  public Completable saveDraft(Contribution contribution, String draftBody) {
+    if (draftBody.isEmpty()) {
+      return removeDraft(contribution);
+    }
+
     return Completable.fromAction(() -> {
       long draftCreatedTimeMillis = System.currentTimeMillis();
       ReplyDraft replyDraft = ReplyDraft.create(draftBody, draftCreatedTimeMillis);
 
       JsonAdapter<ReplyDraft> jsonAdapter = moshi.adapter(ReplyDraft.class);
       String replyDraftJson = jsonAdapter.toJson(replyDraft);
-      sharedPrefs.edit().putString(keyForDraft(parentContribution), replyDraftJson).apply();
+      sharedPrefs.edit().putString(keyForDraft(contribution), replyDraftJson).apply();
 
       // Recycle old drafts.
       Map<String, ?> allDraftJsons = new HashMap<>(sharedPrefs.getAll());
       Map<String, ReplyDraft> allDrafts = new HashMap<>(allDraftJsons.size());
       for (Map.Entry<String, ?> entry : allDraftJsons.entrySet()) {
         String draftEntryJson = (String) entry.getValue();
+        //Timber.i("Existing draft: %s", draftEntryJson);
         ReplyDraft draftEntry = jsonAdapter.fromJson(draftEntryJson);
         allDrafts.put(entry.getKey(), draftEntry);
       }
@@ -194,10 +206,12 @@ public class CommentsManager implements ReplyDraftStore {
 
   @Override
   @CheckResult
-  public Single<String> getDraft(PublicContribution parentContribution) {
+  public Single<String> getDraft(Contribution contribution) {
     return Single.fromCallable(() -> {
-      String replyDraftJson = sharedPrefs.getString(keyForDraft(parentContribution), "");
+      String replyDraftJson = sharedPrefs.getString(keyForDraft(contribution), "");
       if ("".equals(replyDraftJson)) {
+        // Following RxBinding, which always emits the default value, we'll also emit an
+        // empty draft instead of Single.never() so that the UI's default
         return "";
       }
 
@@ -208,14 +222,12 @@ public class CommentsManager implements ReplyDraftStore {
   }
 
   @Override
-  public Completable removeDraft(PublicContribution parentContribution) {
-    return Completable.fromAction(() -> {
-      sharedPrefs.edit().remove(keyForDraft(parentContribution)).apply();
-    });
+  public Completable removeDraft(Contribution contribution) {
+    return Completable.fromAction(() -> sharedPrefs.edit().remove(keyForDraft(contribution)).apply());
   }
 
   @VisibleForTesting
-  static String keyForDraft(PublicContribution parentContribution) {
+  static String keyForDraft(Contribution parentContribution) {
     if (parentContribution.getFullName() == null) {
       throw new NullPointerException("Wut");
     }

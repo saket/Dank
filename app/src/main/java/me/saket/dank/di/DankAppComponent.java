@@ -16,13 +16,14 @@ import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.notifs.MessagesNotificationManager;
+import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.UploadImageDialog;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
-import me.saket.dank.ui.submission.CommentsManager;
+import me.saket.dank.ui.submission.RetryReplyJobService;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.ui.subreddits.SubredditPickerSheetView;
@@ -62,8 +63,6 @@ public interface DankAppComponent {
 
   UserSession userSession();
 
-  CommentsManager commentsManager();
-
   void inject(MediaAlbumViewerActivity activity);
 
   void inject(MediaVideoFragment fragment);
@@ -93,4 +92,8 @@ public interface DankAppComponent {
   void inject(UploadImageDialog dialog);
 
   void inject(GiphyPickerActivity activity);
+
+  void inject(RetryReplyJobService service);
+
+  void inject(ComposeReplyActivity activity);
 }

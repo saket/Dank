@@ -590,19 +590,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       draftDisposable.dispose();
       draftDisposable = replyDraftStore.getDraft(parentContribution)
           .compose(applySchedulersSingle())
-          .subscribe(replyDraft -> {
-            replyMessageField.setText(replyDraft);
-            if (replyDraft != null) {
-              replyMessageField.setSelection(replyDraft.length());
-            }
-          });
+          .subscribe(replyDraft -> Views.setTextWithCursor(replyMessageField, replyDraft));
     }
 
     public void handleOnRecycle(ReplyDraftStore replyDraftStore) {
       if (!isSendingReply) {
         // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
-        replyDraftStore
-            .saveDraft(parentContribution, replyMessageField.getText().toString())
+        replyDraftStore.saveDraft(parentContribution, replyMessageField.getText().toString())
             .subscribeOn(Schedulers.io())
             .subscribe();
       }

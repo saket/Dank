@@ -150,7 +150,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     Message latestMessage = messages.get(messages.size() - 1);
     ComposeStartOptions startOptions = ComposeStartOptions.builder()
         .secondPartyName(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME))
-        .parentContributionFullName(latestMessage.getFullName())
+        .parentContribution(latestMessage)
         .build();
     ComposeReplyActivity.start(this, startOptions);
   }

@@ -1,5 +1,8 @@
 package me.saket.dank.ui.compose;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
+
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
@@ -14,22 +17,28 @@ import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.ScrollView;
 
+import com.google.common.base.Strings;
+
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
+import me.saket.dank.data.ContributionFullNameWrapper;
+import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
+import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
 /**
- * For composing comments and message replies.
- * TODO: Handles saving drafts.
+ * For composing comments and message replies. Handles saving and retaining drafts.
  */
 public class ComposeReplyActivity extends DankPullCollapsibleActivity implements OnLinkInsertListener {
 
@@ -44,6 +53,10 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   @BindView(R.id.composereply_compose_field) EditText replyField;
   @BindView(R.id.composereply_format_toolbar) TextFormatToolbarView formatToolbarView;
 
+  @Inject CommentsManager commentsManager;
+
+  private ComposeStartOptions startOptions;
+
   public static void start(Context context, ComposeStartOptions startOptions) {
     Intent intent = new Intent(context, ComposeReplyActivity.class);
     intent.putExtra(KEY_START_OPTIONS, startOptions);
@@ -52,19 +65,20 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
+    Dank.dependencyInjector().inject(this);
     setPullToCollapseEnabled(true);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.compose_reply);
     ButterKnife.bind(this);
     findAndSetupToolbar();
 
-    ComposeStartOptions startOptions = getIntent().getParcelableExtra(KEY_START_OPTIONS);
+    startOptions = getIntent().getParcelableExtra(KEY_START_OPTIONS);
 
     // TODO: REMOVEE
     if (BuildConfig.DEBUG && startOptions == null) {
       startOptions = ComposeStartOptions.builder()
           .secondPartyName("Poop")
-          .parentContributionFullName("Boop")
+          .parentContribution(ContributionFullNameWrapper.create("Poop"))
           .preFilledText("Waddup homie")
           .build();
     }
@@ -79,7 +93,26 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
       return Views.touchLiesOn(replyScrollView, downX, downY) && replyScrollView.canScrollVertically(upwardPagePull ? 1 : -1);
     });
 
-    Views.setTextWithCursor(replyField, startOptions.preFilledText());
+    String preFilledText = startOptions.preFilledText();
+    if (Strings.isNullOrEmpty(preFilledText)) {
+      // Restore draft.
+      commentsManager.getDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()))
+          .subscribeOn(io())
+          .observeOn(mainThread())
+          .subscribe(draft -> replyField.getText().replace(0, replyField.getText().length(), draft));
+
+    } else {
+      Views.setTextWithCursor(replyField, preFilledText);
+    }
+  }
+
+  @Override
+  public void onStop() {
+    super.onStop();
+
+    commentsManager.saveDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()), replyField.getText().toString())
+        .subscribeOn(io())
+        .subscribe();
   }
 
   @Override

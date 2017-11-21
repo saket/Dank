@@ -47,6 +47,7 @@ import butterknife.OnClick;
 import io.reactivex.Observable;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
+import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InfiniteScrollFooter;
@@ -549,8 +550,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         //UserPreferencesActivity.start(this);
         ComposeReplyActivity.start(this, ComposeStartOptions.builder()
             .secondPartyName("Test")
-            .parentContributionFullName("Test")
-            .preFilledText("Waddup homie")
+            .parentContribution(ContributionFullNameWrapper.create("Poop"))
             .build()
         );
         return true;

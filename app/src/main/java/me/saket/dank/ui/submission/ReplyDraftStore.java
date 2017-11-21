@@ -2,7 +2,7 @@ package me.saket.dank.ui.submission;
 
 import android.support.annotation.CheckResult;
 
-import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Contribution;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
@@ -10,11 +10,11 @@ import io.reactivex.Single;
 public interface ReplyDraftStore {
 
   @CheckResult
-  Completable saveDraft(PublicContribution parentContribution, String draft);
+  Completable saveDraft(Contribution contribution, String draft);
 
   @CheckResult
-  Single<String> getDraft(PublicContribution parentContribution);
+  Single<String> getDraft(Contribution contribution);
 
   @CheckResult
-  Completable removeDraft(PublicContribution parentContribution);
+  Completable removeDraft(Contribution contribution);
 }
