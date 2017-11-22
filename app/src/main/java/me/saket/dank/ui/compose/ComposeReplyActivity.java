@@ -39,7 +39,6 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.submission.CommentsManager;
-import me.saket.dank.utils.ChainOnClickSender;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.SimpleTextWatcher;
 import me.saket.dank.utils.Views;
@@ -143,9 +142,6 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     runDo.setTimerLength(1);
     runDo.setQueueSize(50);
 
-    undoButton.setOnTouchListener(new ChainOnClickSender(this, undoButton));
-    redoButton.setOnTouchListener(new ChainOnClickSender(this, redoButton));
-
     // Show undo only when some text has been entered.
     // Show redo only when undo has been pressed once.
     undoButton.setEnabled(false);
@@ -164,8 +160,8 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     redoButton.setOnClickListener(o -> runDo.redo());
 
     formatToolbarView.setActionClickListener((view, markdownAction, markdownBlock) -> {
-      Timber.d("--------------------------");
-      Timber.i("%s: %s", markdownAction, markdownBlock);
+      //Timber.d("--------------------------");
+      //Timber.i("%s: %s", markdownAction, markdownBlock);
 
       switch (markdownAction) {
         case INSERT_TEXT_EMOJI:
