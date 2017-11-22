@@ -13,6 +13,7 @@ import android.widget.EditText;
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
 import com.vladsch.flexmark.parser.Parser;
+import com.vladsch.flexmark.util.sequence.SubSequence;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -21,8 +22,7 @@ import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
 import timber.log.Timber;
 
 /**
- * TODO: Remove formatting from pasted content.
- * <p>
+ * Usage: EditText#addTextChangedListener(new MarkdownHints(EditText, HighlightOptions, SpanPool));
  */
 public class MarkdownHints extends SimpleTextWatcher {
 
@@ -63,29 +63,26 @@ public class MarkdownHints extends SimpleTextWatcher {
 
   @Override
   public void afterTextChanged(Editable editable) {
-    //Log.d("MH", "---------------------");
-    //Log.i("MH", "text changed: " + editable);
     editText.removeTextChangedListener(this);
 
-    removeStylingSpans(editable);
-    Node markdownRootNode = parser.parse(editable.toString());
+    // Remove all spans inserted in the previous text
+    // change call or else we'll see stale styling.
+    removeHintSpans(editable);
+
+    Node markdownRootNode = parser.parse(SubSequence.of(editable));
     markdownHintsSpanWriter.setText(editable);
     markdownNodeTreeVisitor.visit(markdownRootNode, markdownHintsSpanWriter);
 
     editText.addTextChangedListener(this);
   }
 
-  private void removeStylingSpans(Spannable spannable) {
+  private void removeHintSpans(Spannable spannable) {
     Object[] spans = spannable.getSpans(0, spannable.length(), Object.class);
     for (Object span : spans) {
       if (SUPPORTED_MARKDOWN_SPANS.contains(span.getClass())) {
-        //Log.i("MH", "removing span: " + span);
         spannable.removeSpan(span);
         spanPool.recycle(span);
       }
-      //else {
-      //  Log.i("MH", "ignoring: " + span.getClass().getName());
-      //}
     }
   }
 }
