@@ -105,11 +105,6 @@ dependencies {
   implementation 'it.gilvegliach.android:transparent-text-textview:1.0.3'
   implementation 'com.f2prateek.rx.preferences2:rx-preferences:2.0.0-RC3'
 
-  // Are we using this?!?
-  implementation "com.atlassian.commonmark:commonmark:$versions.commonmark"
-  implementation "com.atlassian.commonmark:commonmark-ext-heading-anchor:$versions.commonmark"
-  implementation "com.atlassian.commonmark:commonmark-ext-gfm-strikethrough:$versions.commonmark"
-
   // TODO: Replace all Date4J usages with ThreeTenAbp.
   implementation 'com.darwinsys:hirondelle-date4j:1.5.1'
   implementation 'com.jakewharton.threetenabp:threetenabp:1.0.5'
