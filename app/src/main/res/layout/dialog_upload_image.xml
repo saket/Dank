@@ -22,11 +22,12 @@
       android:tint="@color/black_opacity_30" />
 
     <it.gilvegliach.android.transparenttexttextview.TransparentTextTextView
-      android:id="@+id/uploadimage_progress"
+      android:id="@+id/uploadimage_file_size"
       style="@style/DankProgressBarFileSize"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:layout_gravity="center"
+      android:layout_gravity="center_horizontal|bottom"
+      android:layout_marginBottom="16dp"
       android:visibility="invisible" />
   </FrameLayout>
 
@@ -59,7 +60,7 @@
         android:textSize="@dimen/textsize18"
         tools:ignore="LabelFor,TextFields" />
 
-      <ProgressBar
+      <me.saket.dank.widgets.AnimatedProgressBar
         android:id="@+id/uploadimage_upload_progress_bar"
         style="@style/DankProgressBar.Horizontal"
         android:layout_width="match_parent"

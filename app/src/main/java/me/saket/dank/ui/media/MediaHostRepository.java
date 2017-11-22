@@ -21,8 +21,10 @@ import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.data.CachedResolvedLinkInfo;
+import me.saket.dank.data.FileUploadProgressEvent;
 import me.saket.dank.data.ImgurImage;
 import me.saket.dank.data.ImgurRepository;
 import me.saket.dank.data.ImgurUploadResponse;
@@ -166,7 +168,7 @@ public class MediaHostRepository {
    * Remember to handle {@link ImgurApiUploadRateLimitReachedException}.
    */
   @CheckResult
-  public Single<ImgurUploadResponse> uploadImage(File image, String mimeType) {
+  public Observable<FileUploadProgressEvent<ImgurUploadResponse>> uploadImage(File image, String mimeType) {
     return imgurRepository.uploadImage(image, mimeType);
   }
 }

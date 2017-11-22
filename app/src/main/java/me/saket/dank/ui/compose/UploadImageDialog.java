@@ -32,17 +32,20 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.FileUploadProgressEvent;
 import me.saket.dank.data.ImgurUploadResponse;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankDialogFragment;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.FileSizeUnit;
+import me.saket.dank.widgets.AnimatedProgressBar;
 import okio.Okio;
 import retrofit2.HttpException;
 import timber.log.Timber;
@@ -52,8 +55,9 @@ public class UploadImageDialog extends DankDialogFragment {
   private static final String KEY_IMAGE_URI = "imageUri";
 
   @BindView(R.id.uploadimage_image) ImageView imageView;
-  @BindView(R.id.uploadimage_progress) TextView fileSizeView;
+  @BindView(R.id.uploadimage_file_size) TextView fileSizeView;
   @BindView(R.id.uploadimage_state_viewflipper) ViewFlipper stateViewFlipper;
+  @BindView(R.id.uploadimage_upload_progress_bar) AnimatedProgressBar progressBar;
   @BindView(R.id.uploadimage_title) EditText titleField;
   @BindView(R.id.uploadimage_url) TextView urlView;
   @BindView(R.id.uploadimage_state_failed_tap_to_retry) TextView errorView;
@@ -143,20 +147,13 @@ public class UploadImageDialog extends DankDialogFragment {
     imageFileStream
         .flatMapObservable(file -> RxView.clicks(errorView).map(o -> file).startWith(file))
         .doOnNext(o -> showUiState(UploadState.IN_FLIGHT))
-        .flatMapSingle(fileToUpload -> mediaHostRepository.uploadImage(fileToUpload, imageMimeType)
+        .flatMap(fileToUpload -> mediaHostRepository.uploadImage(fileToUpload, imageMimeType)
             .subscribeOn(io())
             .observeOn(mainThread())
-            .map(response -> {
-              if (response.success()) {
-                return response;
-              } else {
-                throw new RuntimeException();
-              }
-            })
             .onErrorResumeNext(handleImageUploadError())
         )
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(handleImageUploadResponse());
+        .subscribe(handleImageUploadUpdate());
 
     // Delete the temporary file on dialog exit.
     lifecycle().onDestroy()
@@ -186,35 +183,42 @@ public class UploadImageDialog extends DankDialogFragment {
     });
   }
 
-  private Consumer<ImgurUploadResponse> handleImageUploadResponse() {
-    return uploadResponse -> {
-      insertButton.setEnabled(true);
-      String link = uploadResponse.data().link();
-      //noinspection ConstantConditions
-      String linkWithoutScheme = link.substring("https://".length(), link.length());
-      urlView.setText(linkWithoutScheme);
+  private Consumer<FileUploadProgressEvent<ImgurUploadResponse>> handleImageUploadUpdate() {
+    return uploadEvent -> {
+      if (uploadEvent.isInFlight()) {
+        float progress = uploadEvent.progress();
+        progressBar.setIndeterminate(progress == 0f || progress == 1f);
+        progressBar.setProgressWithAnimation((int) (progress * 100));
 
-      showUiState(UploadState.UPLOADED);
+      } else {
+        ImgurUploadResponse uploadResponse = uploadEvent.uploadResponse();
+        //noinspection ConstantConditions
+        String link = uploadResponse.data().link();
+        //noinspection ConstantConditions
+        String linkWithoutScheme = link.substring("https://".length(), link.length());
+        urlView.setText(linkWithoutScheme);
 
-      insertButton.setOnClickListener(v -> {
-        String title = titleField.getText().toString().trim();
-        String url = uploadResponse.data().link();
-
-        ((OnLinkInsertListener) getActivity()).onLinkInsert(title, url);
-        dismiss();
-      });
+        showUiState(UploadState.UPLOADED);
+        insertButton.setEnabled(true);
+        insertButton.setOnClickListener(v -> {
+          String title = titleField.getText().toString().trim();
+          String url = uploadResponse.data().link();
+          ((OnLinkInsertListener) getActivity()).onLinkInsert(title, url);
+          dismiss();
+        });
+      }
     };
   }
 
-  private Function<Throwable, Single<ImgurUploadResponse>> handleImageUploadError() {
+  private Function<Throwable, Observable<FileUploadProgressEvent<ImgurUploadResponse>>> handleImageUploadError() {
     return error -> {
       boolean handled = false;
 
       if (error instanceof HttpException && ((HttpException) error).code() == 400 /* Bad request */) {
         InputStream errorBodyStream = ((HttpException) error).response().errorBody().byteStream();
-        ImgurUploadResponse errorRespnse = ImgurUploadResponse.jsonAdapter(moshi).fromJson(Okio.buffer(Okio.source(errorBodyStream)));
+        ImgurUploadResponse errorResponse = ImgurUploadResponse.jsonAdapter(moshi).fromJson(Okio.buffer(Okio.source(errorBodyStream)));
         //noinspection ConstantConditions
-        if (errorRespnse.data().error().contains("File is over the size limit")) {
+        if (errorResponse.data().error().contains("File is over the size limit")) {
           errorView.setText(R.string.composereply_uploadimage_error_file_size_too_large);
           handled = true;
         }
@@ -242,7 +246,7 @@ public class UploadImageDialog extends DankDialogFragment {
 
       // TODO: Handle known HTTP error codes.
       showUiState(UploadState.FAILED);
-      return Single.never();
+      return Observable.never();
     };
   }
 

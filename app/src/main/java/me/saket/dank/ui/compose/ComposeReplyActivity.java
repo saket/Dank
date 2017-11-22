@@ -218,9 +218,8 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   public void onStop() {
     super.onStop();
 
-    ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(startOptions.parentContributionFullName());
     String draft = replyField.getText().toString();
-    commentsManager.saveDraft(parentContribution, draft)
+    commentsManager.saveDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()), draft)
         .subscribeOn(io())
         .subscribe();
   }

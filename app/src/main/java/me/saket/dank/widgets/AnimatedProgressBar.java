@@ -17,7 +17,6 @@ public class AnimatedProgressBar extends ProgressBar {
 
   private ObjectAnimator progressAnimator;
   private boolean visibilityAnimationOngoing;
-  private boolean syncScrollEnabled;
 
   public AnimatedProgressBar(Context context, AttributeSet attrs) {
     super(context, attrs);

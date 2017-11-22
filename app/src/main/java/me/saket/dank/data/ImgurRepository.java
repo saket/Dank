@@ -7,12 +7,16 @@ import android.content.Context;
 import android.content.SharedPreferences;
 import android.support.annotation.CheckResult;
 
+import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.jakewharton.rxrelay2.Relay;
+
 import java.io.File;
 import java.util.TimeZone;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import hirondelle.date4j.DateTime;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
@@ -22,6 +26,7 @@ import me.saket.dank.data.exceptions.InvalidImgurAlbumException;
 import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
 import me.saket.dank.di.DankApi;
 import me.saket.dank.utils.okhttp.OkHttpRequestBodyWithProgress;
+import me.saket.dank.utils.okhttp.OkHttpRequestWriteProgressListener;
 import okhttp3.Headers;
 import okhttp3.MediaType;
 import okhttp3.MultipartBody;
@@ -108,14 +113,18 @@ public class ImgurRepository {
    * Remember to handle {@link ImgurApiUploadRateLimitReachedException}.
    */
   @CheckResult
-  public Single<ImgurUploadResponse> uploadImage(File imageFile, String mimeType) {
-    // Implementation copied from RequestBody.create(MediaType, File).Zz
-    RequestBody requestBody = RequestBody.create(MediaType.parse(mimeType), imageFile);
-    OkHttpRequestBodyWithProgress requestBodyWithProgress = new OkHttpRequestBodyWithProgress(requestBody, null);
+  public Observable<FileUploadProgressEvent<ImgurUploadResponse>> uploadImage(File imageFile, String mimeType) {
+    Relay<Float> uploadProgressStream = BehaviorRelay.createDefault(0f);
 
+    RequestBody requestBody = RequestBody.create(MediaType.parse(mimeType), imageFile);
+    OkHttpRequestWriteProgressListener uploadProgressListener = (bytesRead, totalBytes) -> {
+      float progress = (float) bytesRead / totalBytes;
+      uploadProgressStream.accept(progress);
+    };
+    RequestBody requestBodyWithProgress = new OkHttpRequestBodyWithProgress(requestBody, uploadProgressListener);
     MultipartBody.Part multipartBodyPart = MultipartBody.Part.createFormData("image", imageFile.getName(), requestBodyWithProgress);
 
-    return dankApi.uploadToImgur(multipartBodyPart, "file")
+    Observable<FileUploadProgressEvent<ImgurUploadResponse>> uploadStream = dankApi.uploadToImgur(multipartBodyPart, "file")
         .map(throwIfHttpError())
         .doOnSuccess(saveImgurApiRateLimits())
         .map(response -> response.body())
@@ -127,7 +136,13 @@ public class ImgurRepository {
           } else {
             Timber.i("Rate limits not reached");
           }
-        });
+        })
+        .map(response -> FileUploadProgressEvent.createUploaded(response))
+        .toObservable();
+
+    return uploadProgressStream
+        .map(progress -> FileUploadProgressEvent.<ImgurUploadResponse>createInFlight(progress))
+        .mergeWith(uploadStream);
   }
 
   private <T> Function<Response<T>, Response<T>> throwIfHttpError() {

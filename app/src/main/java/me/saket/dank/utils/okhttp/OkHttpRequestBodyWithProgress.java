@@ -13,19 +13,19 @@ import okio.Okio;
 import okio.Sink;
 
 /**
- * A response body that sends progress updates to a TODO {@link OkHttpResponseReadProgressListener}.
+ * A response body that sends progress updates to a {@link OkHttpRequestWriteProgressListener}.
  */
 public class OkHttpRequestBodyWithProgress extends RequestBody {
 
   private final RequestBody requestBody;
-  private final OkHttpResponseReadProgressListener progressListener;
-//
-//  public static OkHttpRequestBodyWithProgress wrap(Request request, Response response, OkHttpResponseReadProgressListener progressListener) {
-//    return new OkHttpRequestBodyWithProgress(request.url(), response.body(), progressListener);
-//  }
+  private final OkHttpRequestWriteProgressListener progressListener;
 
-  public OkHttpRequestBodyWithProgress(RequestBody requestBody, @NonNull OkHttpResponseReadProgressListener progressListener) {
-    this.requestBody = requestBody;
+  public static OkHttpRequestBodyWithProgress wrap(RequestBody delegate, OkHttpRequestWriteProgressListener progressListener) {
+    return new OkHttpRequestBodyWithProgress(delegate, progressListener);
+  }
+
+  public OkHttpRequestBodyWithProgress(RequestBody delegate, OkHttpRequestWriteProgressListener progressListener) {
+    this.requestBody = delegate;
     this.progressListener = progressListener;
   }
 
@@ -41,35 +41,27 @@ public class OkHttpRequestBodyWithProgress extends RequestBody {
 
   @Override
   public void writeTo(BufferedSink sink) throws IOException {
-    requestBody.writeTo(Okio.buffer(sinkWithProgress(sink)));
+    BufferedSink bufferedSink = Okio.buffer(sinkWithProgress(sink));
+    requestBody.writeTo(bufferedSink);
+    bufferedSink.flush();
   }
 
   private Sink sinkWithProgress(BufferedSink sink) {
     return new ForwardingSink(sink) {
+      public long totalBytesRead;
+
       @Override
       public void write(@NonNull Buffer source, long byteCount) throws IOException {
         super.write(source, byteCount);
-        // Listen to write progress.
+
+        long fullLengthBytes = contentLength();
+        if (byteCount == -1) { // this source is exhausted
+          totalBytesRead = fullLengthBytes;
+        } else {
+          totalBytesRead += byteCount;
+        }
+        progressListener.update(totalBytesRead, fullLengthBytes);
       }
     };
   }
-
-//  private Source source(Source source) {
-//    return new ForwardingSource(source) {
-//      long totalBytesRead = 0L;
-//
-//      @Override
-//      public long read(@NonNull Buffer sink, long byteCount) throws IOException {
-//        long bytesRead = super.read(sink, byteCount);
-//        long fullLengthBytes = requestBody.contentLength();
-//        if (bytesRead == -1) { // this source is exhausted
-//          totalBytesRead = fullLengthBytes;
-//        } else {
-//          totalBytesRead += bytesRead;
-//        }
-//        progressListener.update(totalBytesRead, fullLengthBytes);
-//        return bytesRead;
-//      }
-//    };
-//  }
 }
