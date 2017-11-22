@@ -45,16 +45,16 @@ public class MarkdownNodeTreeVisitor {
   private final @Px int textBlockIndentationMargin;
   private MarkdownHintsSpanWriter writer;
 
-  public MarkdownNodeTreeVisitor(SpanPool spanPool, HighlightOptions highlightOptions) {
+  public MarkdownNodeTreeVisitor(SpanPool spanPool, MarkdownHintOptions markdownHintOptions) {
     this.spanPool = spanPool;
-    syntaxColor = highlightOptions.syntaxColor();
-    blockQuoteIndentationRuleColor = highlightOptions.blockQuoteIndentationRuleColor();
-    blockQuoteTextColor = highlightOptions.blockQuoteTextColor();
-    textBlockIndentationMargin = highlightOptions.textBlockIndentationMargin();
-    blockQuoteVerticalRuleStrokeWidth = highlightOptions.blockQuoteVerticalRuleStrokeWidth();
-    linkUrlColor = highlightOptions.linkUrlColor();
-    horizontalRuleColor = highlightOptions.horizontalRuleColor();
-    horizontalRuleStrokeWidth = highlightOptions.horizontalRuleStrokeWidth();
+    syntaxColor = markdownHintOptions.syntaxColor();
+    blockQuoteIndentationRuleColor = markdownHintOptions.blockQuoteIndentationRuleColor();
+    blockQuoteTextColor = markdownHintOptions.blockQuoteTextColor();
+    textBlockIndentationMargin = markdownHintOptions.textBlockIndentationMargin();
+    blockQuoteVerticalRuleStrokeWidth = markdownHintOptions.blockQuoteVerticalRuleStrokeWidth();
+    linkUrlColor = markdownHintOptions.linkUrlColor();
+    horizontalRuleColor = markdownHintOptions.horizontalRuleColor();
+    horizontalRuleStrokeWidth = markdownHintOptions.horizontalRuleStrokeWidth();
   }
 
   public void visit(Node markdownRootNode, MarkdownHintsSpanWriter hintsWriter) {

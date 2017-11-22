@@ -8,7 +8,7 @@ import com.google.auto.value.AutoValue;
  * Colors used for highlighting Markdown syntax and their styling.
  */
 @AutoValue
-public abstract class HighlightOptions {
+public abstract class MarkdownHintOptions {
 
   @ColorInt
   public abstract int syntaxColor();
@@ -41,7 +41,7 @@ public abstract class HighlightOptions {
   public abstract int horizontalRuleStrokeWidth();
 
   public static Builder builder() {
-    return new AutoValue_HighlightOptions.Builder();
+    return new AutoValue_MarkdownHintOptions.Builder();
   }
 
   @AutoValue.Builder
@@ -62,6 +62,6 @@ public abstract class HighlightOptions {
 
     public abstract Builder horizontalRuleStrokeWidth(@Px int width);
 
-    public abstract HighlightOptions build();
+    public abstract MarkdownHintOptions build();
   }
 }

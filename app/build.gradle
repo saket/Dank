@@ -54,6 +54,8 @@ android {
 }
 
 dependencies {
+  compile project(path: ':markdownhints')
+
   testImplementation "junit:junit:$versions.junit"
   testImplementation 'org.powermock:powermock-module-junit4:1.6.6'
   testImplementation 'org.powermock:powermock-api-mockito:1.6.6'

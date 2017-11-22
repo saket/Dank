@@ -50,11 +50,11 @@ public class MarkdownHints extends SimpleTextWatcher {
     Timber.plant(new Timber.DebugTree());
   }
 
-  public MarkdownHints(EditText editText, HighlightOptions highlightOptions, SpanPool spanPool) {
+  public MarkdownHints(EditText editText, MarkdownHintOptions markdownHintOptions, SpanPool spanPool) {
     this.editText = editText;
     this.spanPool = spanPool;
     this.markdownHintsSpanWriter = new MarkdownHintsSpanWriter();
-    this.markdownNodeTreeVisitor = new MarkdownNodeTreeVisitor(spanPool, highlightOptions);
+    this.markdownNodeTreeVisitor = new MarkdownNodeTreeVisitor(spanPool, markdownHintOptions);
 
     parser = Parser.builder()
         .extensions(Collections.singletonList(StrikethroughExtension.create()))

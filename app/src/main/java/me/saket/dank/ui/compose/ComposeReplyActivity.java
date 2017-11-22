@@ -2,10 +2,12 @@ package me.saket.dank.ui.compose;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.Units.dpToPx;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
@@ -16,18 +18,18 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.ScrollView;
-
-import com.google.common.base.Strings;
-
-import javax.inject.Inject;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import com.google.common.base.Strings;
+import javax.inject.Inject;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.di.Dank;
+import me.saket.dank.markdownhints.MarkdownHintOptions;
+import me.saket.dank.markdownhints.MarkdownHints;
+import me.saket.dank.markdownhints.SpanPool;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
@@ -54,6 +56,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   @BindView(R.id.composereply_format_toolbar) TextFormatToolbarView formatToolbarView;
 
   @Inject CommentsManager commentsManager;
+  @Inject SpanPool spanPool;
 
   private ComposeStartOptions startOptions;
 
@@ -93,9 +96,23 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
       return Views.touchLiesOn(replyScrollView, downX, downY) && replyScrollView.canScrollVertically(upwardPagePull ? 1 : -1);
     });
 
+    // Highlight markdown syntax.
+    MarkdownHintOptions markdownHintOptions = MarkdownHintOptions.builder()
+        .syntaxColor(Color.CYAN)
+        .blockQuoteIndentationRuleColor(Color.CYAN)
+        .linkUrlColor(Color.GRAY)
+        .blockQuoteTextColor(Color.LTGRAY)
+        .textBlockIndentationMargin(dpToPx(8, this))
+        .blockQuoteVerticalRuleStrokeWidth(dpToPx(4, this))
+        .linkUrlColor(Color.LTGRAY)
+        .horizontalRuleColor(Color.LTGRAY)
+        .horizontalRuleStrokeWidth(dpToPx(1.5f, this))
+        .build();
+    replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, spanPool));
+
+    // Retain pre-filled text or restore draft.
     String preFilledText = startOptions.preFilledText();
     if (Strings.isNullOrEmpty(preFilledText)) {
-      // Restore draft.
       commentsManager.getDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()))
           .subscribeOn(io())
           .observeOn(mainThread())
@@ -110,7 +127,9 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   public void onStop() {
     super.onStop();
 
-    commentsManager.saveDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()), replyField.getText().toString())
+    ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(startOptions.parentContributionFullName());
+    String draft = replyField.getText().toString();
+    commentsManager.saveDraft(parentContribution, draft)
         .subscribeOn(io())
         .subscribe();
   }
