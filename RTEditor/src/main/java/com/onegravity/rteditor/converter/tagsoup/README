@@ -1,5 +1,0 @@
-The original Tagsoup source code was modified to be able to handle nested list elements differently.
-Also the HTMLWriter was modified to handle 32-bit Unicode characters and to linkify URLs. 
-
-Because of this http://stackoverflow.com/questions/21561137/android-is-using-the-wrong-classes
-the modified classes need to be in a different package than org.ccil.cowan.tagsoup.  
