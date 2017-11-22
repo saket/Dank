@@ -2,6 +2,7 @@ package me.saket.dank.markdownhints;
 
 import android.support.annotation.ColorInt;
 import android.support.annotation.Px;
+
 import com.vladsch.flexmark.ast.BlockQuote;
 import com.vladsch.flexmark.ast.Code;
 import com.vladsch.flexmark.ast.DelimitedNode;
@@ -234,12 +235,12 @@ public class MarkdownNodeTreeVisitor {
   }
 
   public void highlightHeading(Heading heading) {
-    writer.pushSpan(spanPool.relativeSize(HEADING_SIZES[heading.getLevel()]), heading.getStartOffset(), heading.getEndOffset());
+    writer.pushSpan(spanPool.relativeSize(HEADING_SIZES[heading.getLevel() - 1]), heading.getStartOffset(), heading.getEndOffset());
     writer.pushSpan(spanPool.bold(), heading.getStartOffset(), heading.getEndOffset());
     writer.pushSpan(
         spanPool.foregroundColor(syntaxColor),
         heading.getStartOffset(),
-        heading.getStartOffset() + heading.getOpeningMarker().length() + 1
+        heading.getStartOffset() + heading.getOpeningMarker().length()
     );
   }
 
