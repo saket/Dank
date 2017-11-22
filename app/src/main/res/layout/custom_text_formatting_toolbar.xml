@@ -58,11 +58,11 @@
       android:contentDescription="@string/cd_textformat_strikethrough"
       android:src="@drawable/ic_strikethrough_s_black_24dp" />
 
-    <ImageButton
-      android:id="@+id/textformattoolbar_superscript"
-      style="@style/DankTextFormatToolbarButton"
-      android:contentDescription="@string/cd_textformat_superscript"
-      android:src="@drawable/ic_format_superscript" />
+    <!--<ImageButton-->
+      <!--android:id="@+id/textformattoolbar_superscript"-->
+      <!--style="@style/DankTextFormatToolbarButton"-->
+      <!--android:contentDescription="@string/cd_textformat_superscript"-->
+      <!--android:src="@drawable/ic_format_superscript" />-->
 
     <ImageButton
       android:id="@+id/textformattoolbar_inline_code"
