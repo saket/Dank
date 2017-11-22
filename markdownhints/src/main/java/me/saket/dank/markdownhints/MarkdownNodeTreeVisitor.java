@@ -20,6 +20,8 @@ import com.vladsch.flexmark.ast.Text;
 import com.vladsch.flexmark.ast.ThematicBreak;
 import com.vladsch.flexmark.ext.gfm.strikethrough.Strikethrough;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
+import com.vladsch.flexmark.util.sequence.SubSequence;
+
 import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
 import timber.log.Timber;
@@ -33,6 +35,7 @@ public class MarkdownNodeTreeVisitor {
   private static final float[] HEADING_SIZES = {
       1.5f, 1.4f, 1.3f, 1.2f, 1.1f, 1f,
   };
+  private static final BasedSequence FOUR_ASTERISKS_HORIZONTAL_RULE = SubSequence.of("****");
 
   private final SpanPool spanPool;
   private final @ColorInt int syntaxColor;
@@ -250,20 +253,29 @@ public class MarkdownNodeTreeVisitor {
 
   public void highlightThematicBreak(ThematicBreak thematicBreak) {
     BasedSequence thematicBreakChars = thematicBreak.getChars();
-    HorizontalRuleSpan.Mode ruleMode;
-    char firstChar = thematicBreakChars.charAt(0);
-    if (firstChar == '*') {
-      ruleMode = HorizontalRuleSpan.Mode.ASTERISKS;
-    } else if (firstChar == '-') {
-      ruleMode = HorizontalRuleSpan.Mode.HYPHENS;
-    } else if (firstChar == '_') {
-      ruleMode = HorizontalRuleSpan.Mode.UNDERSCORES;
-    } else {
-      throw new UnsupportedOperationException("Unknown thematic break mode: " + thematicBreakChars);
-    }
-    HorizontalRuleSpan horizontalRuleSpan = spanPool.horizontalRule(thematicBreakChars, horizontalRuleColor, horizontalRuleStrokeWidth, ruleMode);
 
-    writer.pushSpan(horizontalRuleSpan, thematicBreak.getStartOffset(), thematicBreak.getEndOffset());
+    // '****' clashes with bold syntax, so avoid drawing a rule for it.
+    boolean canDrawHorizontalRule = !FOUR_ASTERISKS_HORIZONTAL_RULE.equals(thematicBreakChars);
+    if (canDrawHorizontalRule) {
+      HorizontalRuleSpan.Mode ruleMode;
+      char firstChar = thematicBreakChars.charAt(0);
+      if (firstChar == '*') {
+        ruleMode = HorizontalRuleSpan.Mode.ASTERISKS;
+      } else if (firstChar == '-') {
+        ruleMode = HorizontalRuleSpan.Mode.HYPHENS;
+      } else if (firstChar == '_') {
+        ruleMode = HorizontalRuleSpan.Mode.UNDERSCORES;
+      } else {
+        throw new UnsupportedOperationException("Unknown thematic break mode: " + thematicBreakChars);
+      }
+
+      // Caching mutable BasedSequence isn't a good idea.
+      String immutableThematicBreakChars = thematicBreakChars.toString();
+
+      HorizontalRuleSpan hrSpan = spanPool.horizontalRule(immutableThematicBreakChars, horizontalRuleColor, horizontalRuleStrokeWidth, ruleMode);
+      writer.pushSpan(hrSpan, thematicBreak.getStartOffset(), thematicBreak.getEndOffset());
+    }
+
     writer.pushSpan(spanPool.foregroundColor(syntaxColor), thematicBreak.getStartOffset(), thematicBreak.getEndOffset());
   }
 
@@ -280,13 +292,17 @@ public class MarkdownNodeTreeVisitor {
       return;
     }
 
-    HorizontalRuleSpan horizontalRuleSpan = spanPool.horizontalRule(
-        thematicBreakChars,
-        horizontalRuleColor,
-        horizontalRuleStrokeWidth,
-        HorizontalRuleSpan.Mode.HYPHENS
-    );
-    writer.pushSpan(horizontalRuleSpan, ruleStartOffset, node.getEndOffset());
+    // '****' clashes with bold syntax, so avoid drawing a rule for it.
+    boolean canDrawHorizontalRule = !FOUR_ASTERISKS_HORIZONTAL_RULE.equals(thematicBreakChars);
+    if (canDrawHorizontalRule) {
+      HorizontalRuleSpan horizontalRuleSpan = spanPool.horizontalRule(
+          thematicBreakChars,
+          horizontalRuleColor,
+          horizontalRuleStrokeWidth,
+          HorizontalRuleSpan.Mode.HYPHENS
+      );
+      writer.pushSpan(horizontalRuleSpan, ruleStartOffset, node.getEndOffset());
+    }
     writer.pushSpan(spanPool.foregroundColor(syntaxColor), ruleStartOffset, node.getEndOffset());
   }
 

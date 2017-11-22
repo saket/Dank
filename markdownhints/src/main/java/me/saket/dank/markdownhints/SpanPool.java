@@ -39,32 +39,46 @@ public class SpanPool {
   }
 
   public StyleSpan bold() {
-    return boldSpans.empty() ? new StyleSpan(Typeface.BOLD) : boldSpans.pop();
+    return boldSpans.empty()
+        ? new StyleSpan(Typeface.BOLD)
+        : boldSpans.pop();
   }
 
   public ForegroundColorSpan foregroundColor(@ColorInt int color) {
-    return foregroundColorSpans.containsKey(color) ? foregroundColorSpans.remove(color) : new ForegroundColorSpan(color);
+    return foregroundColorSpans.containsKey(color)
+        ? foregroundColorSpans.remove(color)
+        : new ForegroundColorSpan(color);
   }
 
   public StrikethroughSpan strikethrough() {
-    return strikethroughSpans.empty() ? new StrikethroughSpan() : strikethroughSpans.pop();
+    return strikethroughSpans.empty()
+        ? new StrikethroughSpan()
+        : strikethroughSpans.pop();
   }
 
   public TypefaceSpan monospaceTypeface() {
-    return monospaceTypefaceSpans.empty() ? new TypefaceSpan("monospace") : monospaceTypefaceSpans.pop();
+    return monospaceTypefaceSpans.empty()
+        ? new TypefaceSpan("monospace")
+        : monospaceTypefaceSpans.pop();
   }
 
   public RelativeSizeSpan relativeSize(float proportion) {
-    return relativeSizeSpans.containsKey(proportion) ? relativeSizeSpans.remove(proportion) : new RelativeSizeSpan(proportion);
+    return relativeSizeSpans.containsKey(proportion)
+        ? relativeSizeSpans.remove(proportion)
+        : new RelativeSizeSpan(proportion);
   }
 
   public SuperscriptSpan superscript() {
-    return superscriptSpans.empty() ? new SuperscriptSpan() : superscriptSpans.pop();
+    return superscriptSpans.empty()
+        ? new SuperscriptSpan()
+        : superscriptSpans.pop();
   }
 
   public CustomQuoteSpan quote(@ColorInt int verticalRuleColor, @Px int indentationMargin, @Px int verticalRuleStrokeWidth) {
     String key = verticalRuleColor + "_" + indentationMargin + "_" + verticalRuleStrokeWidth;
-    return quoteSpans.containsKey(key) ? quoteSpans.remove(key) : new CustomQuoteSpan(verticalRuleColor, indentationMargin, verticalRuleStrokeWidth);
+    return quoteSpans.containsKey(key)
+        ? quoteSpans.remove(key)
+        : new CustomQuoteSpan(verticalRuleColor, indentationMargin, verticalRuleStrokeWidth);
   }
 
   public LeadingMarginSpan.Standard leadingMargin(int margin) {
@@ -76,7 +90,9 @@ public class SpanPool {
    */
   public HorizontalRuleSpan horizontalRule(CharSequence text, @ColorInt int ruleColor, @Px int ruleStrokeWidth, HorizontalRuleSpan.Mode mode) {
     String key = text + "_" + ruleColor + "_" + ruleStrokeWidth + "_" + mode;
-    return horizontalRuleSpans.containsKey(key) ? horizontalRuleSpans.remove(key) : new HorizontalRuleSpan(text, ruleColor, ruleStrokeWidth, mode);
+    return horizontalRuleSpans.containsKey(key)
+        ? horizontalRuleSpans.remove(key)
+        : new HorizontalRuleSpan(text, ruleColor, ruleStrokeWidth, mode);
   }
 
   public void recycle(Object span) {
