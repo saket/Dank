@@ -7,6 +7,7 @@ import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
+
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
@@ -16,13 +17,20 @@ import com.nytimes.android.external.fs3.filesystem.FileSystemFactory;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 import com.squareup.sqlbrite2.SqlBrite;
-import dagger.Module;
-import dagger.Provides;
-import io.reactivex.schedulers.Schedulers;
+
+import net.dean.jraw.RedditClient;
+import net.dean.jraw.auth.AuthenticationManager;
+import net.dean.jraw.http.LoggingMode;
+import net.dean.jraw.http.UserAgent;
+
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
+
+import dagger.Module;
+import dagger.Provides;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -41,10 +49,6 @@ import me.saket.dank.utils.MoshiMessageAdapter;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
 import me.saket.dank.utils.StreamableRepository;
-import net.dean.jraw.RedditClient;
-import net.dean.jraw.auth.AuthenticationManager;
-import net.dean.jraw.http.LoggingMode;
-import net.dean.jraw.http.UserAgent;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;

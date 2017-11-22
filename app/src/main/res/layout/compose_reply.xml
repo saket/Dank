@@ -12,8 +12,39 @@
   <me.saket.dank.widgets.DankToolbar
     android:id="@id/toolbar"
     style="@style/DankToolbar"
+    android:layout_toStartOf="@+id/composereply_undo_container"
     android:background="@null"
     app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
+
+  <LinearLayout
+    android:id="@+id/composereply_undo_container"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBottom="@id/toolbar"
+    android:layout_alignParentEnd="true"
+    android:layout_alignTop="@id/toolbar"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:elevation="@dimen/elevation_toolbar"
+    android:gravity="center_vertical">
+
+    <me.saket.dank.widgets.ImageButtonWithDisabledTint
+      android:id="@+id/composereply_undo"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:contentDescription="@string/cd_composereply_undo"
+      android:padding="@dimen/spacing8"
+      android:src="@drawable/ic_undo_24dp" />
+
+    <me.saket.dank.widgets.ImageButtonWithDisabledTint
+      android:id="@+id/composereply_redo"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:contentDescription="@string/cd_composereply_redo"
+      android:padding="@dimen/spacing8"
+      android:src="@drawable/ic_redo_24dp" />
+  </LinearLayout>
 
   <!-- Using a ScrollView so that clipToPadding attr can be used. -->
   <ScrollView

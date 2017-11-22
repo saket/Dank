@@ -11,6 +11,7 @@ import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
+import android.text.Editable;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,11 +19,15 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.ScrollView;
+
+import com.google.common.base.Strings;
+import com.werdpressed.partisan.rundo.RunDo;
+
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import com.google.common.base.Strings;
-import javax.inject.Inject;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
@@ -34,15 +39,18 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.submission.CommentsManager;
+import me.saket.dank.utils.ChainOnClickSender;
 import me.saket.dank.utils.Keyboards;
+import me.saket.dank.utils.SimpleTextWatcher;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.ImageButtonWithDisabledTint;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
 /**
  * For composing comments and message replies. Handles saving and retaining drafts.
  */
-public class ComposeReplyActivity extends DankPullCollapsibleActivity implements OnLinkInsertListener {
+public class ComposeReplyActivity extends DankPullCollapsibleActivity implements OnLinkInsertListener, RunDo.TextLink {
 
   private static final String KEY_START_OPTIONS = "startOptions";
   private static final int REQUEST_CODE_PICK_IMAGE = 98;
@@ -54,11 +62,14 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   @BindView(R.id.composereply_compose_field_scrollview) ScrollView replyScrollView;
   @BindView(R.id.composereply_compose_field) EditText replyField;
   @BindView(R.id.composereply_format_toolbar) TextFormatToolbarView formatToolbarView;
+  @BindView(R.id.composereply_undo) ImageButtonWithDisabledTint undoButton;
+  @BindView(R.id.composereply_redo) ImageButtonWithDisabledTint redoButton;
 
   @Inject CommentsManager commentsManager;
   @Inject SpanPool spanPool;
 
   private ComposeStartOptions startOptions;
+  private RunDo runDo;
 
   public static void start(Context context, ComposeStartOptions startOptions) {
     Intent intent = new Intent(context, ComposeReplyActivity.class);
@@ -124,19 +135,33 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   }
 
   @Override
-  public void onStop() {
-    super.onStop();
-
-    ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(startOptions.parentContributionFullName());
-    String draft = replyField.getText().toString();
-    commentsManager.saveDraft(parentContribution, draft)
-        .subscribeOn(io())
-        .subscribe();
-  }
-
-  @Override
   public void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
+
+    // Undo and redo.
+    runDo = RunDo.Factory.getInstance(getSupportFragmentManager());
+    runDo.setTimerLength(1);
+    runDo.setQueueSize(50);
+
+    undoButton.setOnTouchListener(new ChainOnClickSender(this, undoButton));
+    redoButton.setOnTouchListener(new ChainOnClickSender(this, redoButton));
+
+    // Show undo only when some text has been entered.
+    // Show redo only when undo has been pressed once.
+    undoButton.setEnabled(false);
+    undoButton.setOnClickListener(o -> {
+      runDo.undo();
+      redoButton.setEnabled(true);
+    });
+    replyField.addTextChangedListener(new SimpleTextWatcher() {
+      @Override
+      public void afterTextChanged(Editable s) {
+        undoButton.setEnabled(true);
+        replyField.post(() -> replyField.removeTextChangedListener(this));
+      }
+    });
+    redoButton.setEnabled(false);
+    redoButton.setOnClickListener(o -> runDo.redo());
 
     formatToolbarView.setActionClickListener((view, markdownAction, markdownBlock) -> {
       Timber.d("--------------------------");
@@ -187,6 +212,22 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
           break;
       }
     });
+  }
+
+  @Override
+  public void onStop() {
+    super.onStop();
+
+    ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(startOptions.parentContributionFullName());
+    String draft = replyField.getText().toString();
+    commentsManager.saveDraft(parentContribution, draft)
+        .subscribeOn(io())
+        .subscribe();
+  }
+
+  @Override
+  public EditText getEditTextForRunDo() {
+    return replyField;
   }
 
   /**
