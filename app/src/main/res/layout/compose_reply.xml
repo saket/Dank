@@ -27,7 +27,8 @@
     android:paddingBottom="@dimen/spacing16"
     android:paddingEnd="@dimen/spacing16"
     android:paddingStart="@dimen/spacing16"
-    android:paddingTop="@dimen/spacing4">
+    android:paddingTop="@dimen/spacing4"
+    android:scrollbarStyle="outsideOverlay">
 
     <EditText
       android:id="@+id/composereply_compose_field"
