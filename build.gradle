@@ -1,8 +1,32 @@
 buildscript {
+  buildscript {
+    ext.versions = [
+        minSdk        : 21,
+        compileSdk    : 26,
+        androidTools  : '26.0.2',
+        supportLib    : '26.0.2',
+        glide         : '4.0.0',
+        autoValue     : '1.4',
+        autoValueMoshi: '0.4.3',
+        stetho        : '1.5.0',
+        nytStore      : '3.0.0-beta',
+        okHttp        : '3.6.0',
+        retrofit      : '2.2.0',
+        rxBindings    : '2.0.0',
+        dagger        : '2.10',
+        butterKnife   : '8.5.1',
+        commonmark    : '0.10.0',
+        flexmark      : '0.27.0',
+        timber        : '4.6.0',
+        junit         : '4.12',
+    ]
+  }
+
   repositories {
     jcenter()
     google()
   }
+
   dependencies {
     classpath 'com.android.tools.build:gradle:3.0.0'
   }
