@@ -20,7 +20,7 @@
     android:id="@+id/composereply_compose_field_scrollview"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_above="@+id/composereply_bottombar"
+    android:layout_above="@+id/composereply_format_toolbar_container"
     android:layout_below="@id/toolbar"
     android:clipToPadding="false"
     android:fillViewport="true"
@@ -41,6 +41,7 @@
   </ScrollView>
 
   <LinearLayout
+    android:id="@+id/composereply_format_toolbar_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_alignParentBottom="true"
