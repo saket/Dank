@@ -38,7 +38,7 @@ public class MarkdownNodeTreeVisitor {
   };
   private static final BasedSequence FOUR_ASTERISKS_HORIZONTAL_RULE = SubSequence.of("****");
 
-  private final SpanPool spanPool;
+  private final MarkdownSpanPool spanPool;
   private final @ColorInt int syntaxColor;
   private final @ColorInt int blockQuoteIndentationRuleColor;
   private final @ColorInt int blockQuoteTextColor;
@@ -49,7 +49,7 @@ public class MarkdownNodeTreeVisitor {
   private final @Px int textBlockIndentationMargin;
   private MarkdownHintsSpanWriter writer;
 
-  public MarkdownNodeTreeVisitor(SpanPool spanPool, MarkdownHintOptions markdownHintOptions) {
+  public MarkdownNodeTreeVisitor(MarkdownSpanPool spanPool, MarkdownHintOptions markdownHintOptions) {
     this.spanPool = spanPool;
     syntaxColor = markdownHintOptions.syntaxColor();
     blockQuoteIndentationRuleColor = markdownHintOptions.blockQuoteIndentationRuleColor();

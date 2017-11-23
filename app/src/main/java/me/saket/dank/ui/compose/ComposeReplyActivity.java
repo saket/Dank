@@ -2,12 +2,10 @@ package me.saket.dank.ui.compose;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
-import static me.saket.dank.utils.Units.dpToPx;
 
 import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
@@ -34,7 +32,7 @@ import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.di.Dank;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownHints;
-import me.saket.dank.markdownhints.SpanPool;
+import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
@@ -65,7 +63,8 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   @BindView(R.id.composereply_redo) ImageButtonWithDisabledTint redoButton;
 
   @Inject CommentsManager commentsManager;
-  @Inject SpanPool spanPool;
+  @Inject MarkdownSpanPool markdownSpanPool;
+  @Inject MarkdownHintOptions markdownHintOptions;
 
   private ComposeStartOptions startOptions;
   private RunDo runDo;
@@ -107,18 +106,8 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     });
 
     // Highlight markdown syntax.
-    MarkdownHintOptions markdownHintOptions = MarkdownHintOptions.builder()
-        .syntaxColor(Color.CYAN)
-        .blockQuoteIndentationRuleColor(Color.CYAN)
-        .linkUrlColor(Color.GRAY)
-        .blockQuoteTextColor(Color.LTGRAY)
-        .textBlockIndentationMargin(dpToPx(8, this))
-        .blockQuoteVerticalRuleStrokeWidth(dpToPx(4, this))
-        .linkUrlColor(Color.LTGRAY)
-        .horizontalRuleColor(Color.LTGRAY)
-        .horizontalRuleStrokeWidth(dpToPx(1.5f, this))
-        .build();
-    replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, spanPool));
+    // Note: We'll have to remove MarkdownHintOptions from Dagger graph when we introduce a light theme.
+    replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, markdownSpanPool));
 
     // Retain pre-filled text or restore draft.
     String preFilledText = startOptions.preFilledText();

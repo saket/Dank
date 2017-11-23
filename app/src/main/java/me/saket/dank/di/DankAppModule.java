@@ -1,10 +1,13 @@
 package me.saket.dank.di;
 
+import static me.saket.dank.utils.Units.dpToPx;
+
 import android.app.Application;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 
@@ -39,7 +42,8 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.VotingManager;
-import me.saket.dank.markdownhints.SpanPool;
+import me.saket.dank.markdownhints.MarkdownHintOptions;
+import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
@@ -271,7 +275,22 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  SpanPool provideSpanPool() {
-    return new SpanPool();
+  MarkdownSpanPool provideMarkdownSpanPool() {
+    return new MarkdownSpanPool();
+  }
+
+  @Provides
+  MarkdownHintOptions provideMarkdownHintOptions(Application appContext) {
+    return MarkdownHintOptions.builder()
+        .syntaxColor(Color.CYAN)
+        .blockQuoteIndentationRuleColor(Color.CYAN)
+        .linkUrlColor(Color.GRAY)
+        .blockQuoteTextColor(Color.LTGRAY)
+        .textBlockIndentationMargin(dpToPx(8, appContext))
+        .blockQuoteVerticalRuleStrokeWidth(dpToPx(4, appContext))
+        .linkUrlColor(Color.LTGRAY)
+        .horizontalRuleColor(Color.LTGRAY)
+        .horizontalRuleStrokeWidth(dpToPx(1.5f, appContext))
+        .build();
   }
 }

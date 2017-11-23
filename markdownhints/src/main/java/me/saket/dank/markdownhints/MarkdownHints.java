@@ -41,7 +41,7 @@ public class MarkdownHints extends SimpleTextWatcher {
   }
 
   private final EditText editText;
-  private final SpanPool spanPool;
+  private final MarkdownSpanPool spanPool;
   private final Parser parser;
   private final MarkdownNodeTreeVisitor markdownNodeTreeVisitor;
   private final MarkdownHintsSpanWriter markdownHintsSpanWriter;
@@ -50,7 +50,7 @@ public class MarkdownHints extends SimpleTextWatcher {
     Timber.plant(new Timber.DebugTree());
   }
 
-  public MarkdownHints(EditText editText, MarkdownHintOptions markdownHintOptions, SpanPool spanPool) {
+  public MarkdownHints(EditText editText, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool spanPool) {
     this.editText = editText;
     this.spanPool = spanPool;
     this.markdownHintsSpanWriter = new MarkdownHintsSpanWriter();

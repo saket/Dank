@@ -73,6 +73,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.StatusBarTint;
+import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.ImgurAlbumLink;
@@ -82,6 +83,8 @@ import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.di.Dank;
+import me.saket.dank.markdownhints.MarkdownHintOptions;
+import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
@@ -90,6 +93,7 @@ import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -146,6 +150,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @Inject Moshi moshi;
   @Inject LinkMetadataRepository linkMetadataRepository;
   @Inject CommentsManager commentsManager;
+  @Inject MarkdownHintOptions markdownHintOptions;
+  @Inject MarkdownSpanPool markdownSpanPool;
+  @Inject VotingManager votingManager;
+  @Inject UserSession userSession;
 
   private ExpandablePageLayout submissionPageLayout;
   private CommentsAdapter commentsAdapter;
@@ -347,11 +355,19 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentList.setItemAnimator(itemAnimator);
 
     // Add submission Views as a header so that it scrolls with the list.
-    commentsAdapter = new CommentsAdapter(linkMovementMethod, Dank.voting(), Dank.userSession(), commentsManager, commentSwipeActionsProvider);
+    commentsAdapter = new CommentsAdapter(
+        linkMovementMethod,
+        votingManager,
+        userSession,
+        commentsManager,
+        commentSwipeActionsProvider,
+        markdownHintOptions,
+        markdownSpanPool
+    );
     adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(
         commentsAdapter,
         commentsHeaderView,
-        Dank.voting(),
+        votingManager,
         commentsManager,
         submissionSwipeActionsProvider
     );

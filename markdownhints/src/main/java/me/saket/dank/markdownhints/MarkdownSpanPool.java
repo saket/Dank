@@ -21,7 +21,7 @@ import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
  * For avoiding creation of new spans on every text change.
  */
 @SuppressLint("UseSparseArrays")
-public class SpanPool {
+public class MarkdownSpanPool {
 
   private final Stack<StyleSpan> italicsSpans = new Stack<>();
   private final Stack<StyleSpan> boldSpans = new Stack<>();
