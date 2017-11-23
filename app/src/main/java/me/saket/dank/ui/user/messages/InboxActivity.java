@@ -7,7 +7,6 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -33,16 +32,13 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Completable;
-import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.links.Link;
-import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.utils.Arrays2;
-import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -202,28 +198,6 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @Override
   public boolean isFirstRefreshDone(InboxFolder forFolder) {
     return firstRefreshDoneForFolders.contains(forFolder);
-  }
-
-  @Override
-  public BetterLinkMovementMethod getMessageLinkMovementMethod() {
-    DankLinkMovementMethod commentLinkMovementMethod = DankLinkMovementMethod.newInstance();
-    commentLinkMovementMethod.setOnLinkClickListener((textView, url) -> {
-      Point clickedUrlCoordinates = commentLinkMovementMethod.getLastUrlClickCoordinates();
-      Link parsedLink = UrlParser.parse(url);
-
-      if (parsedLink instanceof RedditUserLink) {
-        urlRouter.forLink(((RedditUserLink) parsedLink))
-            .expandFrom(clickedUrlCoordinates)
-            .open(textView);
-
-      } else {
-        urlRouter.forLink(parsedLink)
-            .expandFrom(clickedUrlCoordinates)
-            .open(this);
-      }
-      return true;
-    });
-    return commentLinkMovementMethod;
   }
 
   @Override

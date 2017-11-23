@@ -17,7 +17,6 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -80,11 +79,8 @@ import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditLink;
-import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.di.Dank;
-import me.saket.dank.markdownhints.MarkdownHintOptions;
-import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
@@ -150,13 +146,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @Inject Moshi moshi;
   @Inject LinkMetadataRepository linkMetadataRepository;
   @Inject CommentsManager commentsManager;
-  @Inject MarkdownHintOptions markdownHintOptions;
-  @Inject MarkdownSpanPool markdownSpanPool;
   @Inject VotingManager votingManager;
   @Inject UserSession userSession;
+  @Inject DankLinkMovementMethod linkMovementMethod;
+  @Inject CommentsAdapter commentsAdapter;
 
   private ExpandablePageLayout submissionPageLayout;
-  private CommentsAdapter commentsAdapter;
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
@@ -173,7 +168,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private SubmissionFragmentLifecycleProvider lifecycleProvider;
 
   public interface Callbacks {
-
     void onClickSubmissionToolbarUp();
   }
 
@@ -208,23 +202,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight()));
     toolbarCloseButton.setOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
 
-    DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
-    linkMovementMethod.setOnLinkClickListener((textView, url) -> {
-      Link parsedLink = UrlParser.parse(url);
-      Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
-
-      if (parsedLink instanceof RedditUserLink) {
-        urlRouter.forLink(((RedditUserLink) parsedLink))
-            .expandFrom(clickedUrlCoordinates)
-            .open(textView);
-
-      } else {
-        urlRouter.forLink(parsedLink)
-            .expandFrom(clickedUrlCoordinates)
-            .open(getContext());
-      }
-      return true;
-    });
     selfPostTextView.setMovementMethod(linkMovementMethod);
 
     submissionPageLayout = ((ExpandablePageLayout) fragmentLayout.getParent());
@@ -239,7 +216,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             .subscribe(keyboardVisibilityChangeStream)
     );
 
-    setupCommentRecyclerView(linkMovementMethod);
+    setupCommentRecyclerView();
     setupCommentTree();
     setupContentImageView(fragmentLayout);
     setupContentVideoView();
@@ -271,7 +248,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                 .takeUntil(lifecycleProvider.onPageAboutToCollapse())
                 .compose(RxUtils.applySchedulers())
                 .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
-                .doOnError(error -> Timber.e(error, error.getMessage()))
+                .doOnError(error -> Timber.e(error))
                 .onErrorResumeNext(Observable.never()))
             .subscribe(submissionStream)
     );
@@ -323,18 +300,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
   }
 
-  private void setupCommentRecyclerView(DankLinkMovementMethod linkMovementMethod) {
+  private void setupCommentRecyclerView() {
     // Swipe gestures.
     OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.startForResult(getActivity(), SubredditActivity.REQUEST_CODE_LOGIN);
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(
         submissionRepository,
-        Dank.voting(),
-        Dank.userSession(),
+        votingManager,
+        userSession,
         onLoginRequireListener
     );
     CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(
-        Dank.voting(),
-        Dank.userSession(),
+        votingManager,
+        userSession,
         onLoginRequireListener
     );
     commentSwipeActionsProvider.setOnReplySwipeActionListener(parentComment -> {
@@ -346,8 +323,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       }
     });
     commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
-
     commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
+
     int commentItemViewElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
     SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator(commentItemViewElevation).withInterpolator(Animations.INTERPOLATOR);
     itemAnimator.setRemoveDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
@@ -355,15 +332,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentList.setItemAnimator(itemAnimator);
 
     // Add submission Views as a header so that it scrolls with the list.
-    commentsAdapter = new CommentsAdapter(
-        linkMovementMethod,
-        votingManager,
-        userSession,
-        commentsManager,
-        commentSwipeActionsProvider,
-        markdownHintOptions,
-        markdownSpanPool
-    );
+    commentsAdapter.setSwipeActionsProvider(commentSwipeActionsProvider);
     adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(
         commentsAdapter,
         commentsHeaderView,
@@ -643,9 +612,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     };
 
     // Toggle sheet's collapsed state on image click.
-    contentImageView.setOnClickListener(v -> {
-      commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate());
-    });
+    contentImageView.setOnClickListener(o -> commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate()));
+
     // and on submission title click.
     commentsHeaderView.setOnClickListener(v -> {
       if (submissionContentStream.getValue() instanceof MediaLink && commentListParentSheet.isAtMaxScrollY()) {
@@ -692,9 +660,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
       @Override
       public void onStateReset(State oldState, State newState) {}
     });
-    commentListParentSheet.addOnSheetScrollChangeListener(newScrollY -> {
-      isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
-    });
+    commentListParentSheet.addOnSheetScrollChangeListener(newScrollY ->
+        isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate()
+    );
   }
 
   private void setupReplyFAB() {
@@ -771,9 +739,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             }
 
             heightAnimator = ObjectAnimator.ofInt(changeEvent.contentHeightPrevious(), changeEvent.contentHeightCurrent());
-            heightAnimator.addUpdateListener(animation -> {
-              Views.setHeight(contentViewGroup, (int) animation.getAnimatedValue());
-            });
+            heightAnimator.addUpdateListener(animation -> Views.setHeight(contentViewGroup, (int) animation.getAnimatedValue()));
             heightAnimator.setInterpolator(Animations.INTERPOLATOR);
             heightAnimator.setDuration(ACTIVITY_CONTENT_RESIZE_ANIM_DURATION);
             heightAnimator.start();
@@ -868,11 +834,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           submissionStream
               .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
               .take(1)
-              .subscribe(fetchedSubmission -> {
-                unsubscribeOnCollapse(
-                    loadSubmissionContent(fetchedSubmission)
-                );
-              })
+              .subscribe(fetchedSubmission -> unsubscribeOnCollapse(loadSubmissionContent(fetchedSubmission)))
       );
     }
   }
@@ -945,11 +907,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                   contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages);
 
                   // Open media in full-screen on click.
-                  contentImageView.setOnClickListener(o -> {
-                    urlRouter.forLink(((MediaLink) resolvedLink))
-                        .withRedditSuppliedImages(submission.getThumbnails())
-                        .open(getContext());
-                  });
+                  contentImageView.setOnClickListener(o -> urlRouter.forLink(((MediaLink) resolvedLink))
+                      .withRedditSuppliedImages(submission.getThumbnails())
+                      .open(getContext())
+                  );
                   break;
 
                 case REDDIT_PAGE:
@@ -966,11 +927,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                     unsubscribeOnCollapse(
                         linkDetailsViewHolder.populate(((RedditLink) resolvedLink))
                     );
-                    linkDetailsView.setOnClickListener(o -> {
-                      urlRouter.forLink(resolvedLink)
-                          .expandFromBelowToolbar()
-                          .open(getContext());
-                    });
+                    linkDetailsView.setOnClickListener(o -> urlRouter.forLink(resolvedLink)
+                        .expandFromBelowToolbar()
+                        .open(getContext())
+                    );
                   }
                   break;
 

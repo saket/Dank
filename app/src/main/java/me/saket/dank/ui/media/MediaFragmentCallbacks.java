@@ -2,7 +2,6 @@ package me.saket.dank.ui.media;
 
 import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
-import android.text.method.LinkMovementMethod;
 
 import net.dean.jraw.models.Thumbnails;
 
@@ -22,6 +21,4 @@ public interface MediaFragmentCallbacks {
 
   @CheckResult
   Observable<Boolean> systemUiVisibilityStream();
-
-  LinkMovementMethod getMediaDescriptionLinkMovementMethod();
 }

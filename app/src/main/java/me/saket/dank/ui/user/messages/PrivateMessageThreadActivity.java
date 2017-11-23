@@ -7,7 +7,6 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -31,16 +30,12 @@ import butterknife.OnClick;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import me.saket.dank.R;
-import me.saket.dank.data.links.Link;
-import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
-import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.UrlParser;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
@@ -54,7 +49,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.privatemessagethread_message_list) RecyclerView messageRecyclerView;
   @BindView(R.id.privatemessagethread_reply) FloatingActionButton replyButton;
 
-  @Inject UrlRouter urlRouter;
+  @Inject DankLinkMovementMethod linkMovementMethod;
 
   private ThreadedMessagesAdapter messagesAdapter;
 
@@ -94,24 +89,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .observeOn(AndroidSchedulers.mainThread())
         .subscribe(o -> replyButton.show())
     );
-
-    DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
-    linkMovementMethod.setOnLinkClickListener((textView, url) -> {
-      Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
-      Link parsedLink = UrlParser.parse(url);
-
-      if (parsedLink instanceof RedditUserLink) {
-        urlRouter.forLink(((RedditUserLink) parsedLink))
-            .expandFrom(clickedUrlCoordinates)
-            .open(textView);
-
-      } else {
-        urlRouter.forLink(parsedLink)
-            .expandFrom(clickedUrlCoordinates)
-            .open(this);
-      }
-      return true;
-    });
 
     LinearLayoutManager layoutManager = new LinearLayoutManager(this);
     layoutManager.setStackFromEnd(true);

@@ -8,6 +8,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 
@@ -42,17 +43,24 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.data.links.Link;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.notifs.MessagesNotificationManager;
+import me.saket.dank.ui.UrlRouter;
+import me.saket.dank.ui.submission.CommentsManager;
+import me.saket.dank.ui.submission.ReplyDraftStore;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
+import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.MoshiAccountAdapter;
 import me.saket.dank.utils.MoshiMessageAdapter;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
 import me.saket.dank.utils.StreamableRepository;
+import me.saket.dank.utils.UrlParser;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -292,5 +300,33 @@ public class DankAppModule {
         .horizontalRuleColor(Color.LTGRAY)
         .horizontalRuleStrokeWidth(dpToPx(1.5f, appContext))
         .build();
+  }
+
+  @Provides
+  @Singleton
+  DankLinkMovementMethod provideBetterLinkMovementMethod(UrlRouter urlRouter) {
+    DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
+    linkMovementMethod.setOnLinkClickListener((textView, url) -> {
+      Link parsedLink = UrlParser.parse(url);
+      Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
+
+      if (parsedLink instanceof RedditUserLink) {
+        urlRouter.forLink(((RedditUserLink) parsedLink))
+            .expandFrom(clickedUrlCoordinates)
+            .open(textView);
+
+      } else {
+        urlRouter.forLink(parsedLink)
+            .expandFrom(clickedUrlCoordinates)
+            .open(textView.getContext());
+      }
+      return true;
+    });
+    return linkMovementMethod;
+  }
+
+  @Provides
+  ReplyDraftStore provideReplyDraftStore(CommentsManager commentsManager) {
+    return commentsManager;
   }
 }

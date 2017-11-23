@@ -26,6 +26,8 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.VoteDirection;
 
+import javax.inject.Inject;
+
 import butterknife.BindColor;
 import butterknife.BindString;
 import butterknife.BindView;
@@ -42,6 +44,7 @@ import me.saket.dank.markdownhints.MarkdownHints;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.Commons;
+import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
@@ -61,13 +64,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private static final int VIEW_TYPE_REPLY = 102;
   private static final int VIEW_TYPE_PENDING_SYNC_REPLY = 103;
 
-  private final BetterLinkMovementMethod linkMovementMethod;
+  private final DankLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
   private final UserSession userSession;
   private final ReplyDraftStore replyDraftStore;
-  private final CommentSwipeActionsProvider swipeActionsProvider;
   private final MarkdownHintOptions markdownHintOptions;
   private final MarkdownSpanPool markdownSpanPool;
+  private CommentSwipeActionsProvider swipeActionsProvider;
   private final BehaviorRelay<CommentClickEvent> commentClickStream = BehaviorRelay.create();
   private final BehaviorRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = BehaviorRelay.create();
   private String submissionAuthor;
@@ -160,19 +163,29 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
   }
 
-  // TODO: Add this adapter to Dagger graph.
-  public CommentsAdapter(BetterLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSession userSession,
-      ReplyDraftStore replyDraftStore, CommentSwipeActionsProvider swipeActionsProvider, MarkdownHintOptions markdownHintOptions,
-      MarkdownSpanPool markdownSpanPool)
+  @Inject
+  public CommentsAdapter(DankLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSession userSession,
+      ReplyDraftStore replyDraftStore, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool)
   {
     this.linkMovementMethod = commentsLinkMovementMethod;
     this.votingManager = votingManager;
     this.userSession = userSession;
     this.replyDraftStore = replyDraftStore;
-    this.swipeActionsProvider = swipeActionsProvider;
     this.markdownHintOptions = markdownHintOptions;
     this.markdownSpanPool = markdownSpanPool;
     setHasStableIds(true);
+  }
+
+  /**
+   * OP of a submission, highlighted in comments. This is being set manually instead of {@link Comment#getSubmissionAuthor()},
+   * because that's always null. Not sure where I'm going wrong.
+   */
+  public void setSubmissionAuthor(String author) {
+    submissionAuthor = author;
+  }
+
+  public void setSwipeActionsProvider(CommentSwipeActionsProvider provider) {
+    swipeActionsProvider = provider;
   }
 
   @CheckResult
@@ -203,14 +216,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   @CheckResult
   public Observable<ReplyFullscreenClickEvent> streamReplyFullscreenClicks() {
     return replyFullscreenClickStream;
-  }
-
-  /**
-   * OP of a submission, highlighted in comments. This is being set manually instead of {@link Comment#getSubmissionAuthor()},
-   * because that's always null. Not sure where I'm going wrong.
-   */
-  public void setSubmissionAuthor(String submissionAuthor) {
-    this.submissionAuthor = submissionAuthor;
   }
 
   @CheckResult

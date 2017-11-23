@@ -30,5 +30,4 @@ public class DankLinkMovementMethod extends BetterLinkMovementMethod {
   public Point getLastUrlClickCoordinates() {
     return clickedUrlCoordinates;
   }
-
 }

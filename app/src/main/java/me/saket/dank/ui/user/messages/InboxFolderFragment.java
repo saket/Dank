@@ -6,6 +6,7 @@ import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doOnSingleStartAndTerminate;
 import static me.saket.dank.utils.RxUtils.doOnceAfterNext;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
@@ -22,18 +23,20 @@ import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import net.dean.jraw.models.Message;
 
 import java.util.List;
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.SingleTransformer;
 import io.reactivex.disposables.Disposable;
-import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.InfiniteScrollHeaderFooter;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
+import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
 import me.saket.dank.utils.Views;
@@ -54,21 +57,18 @@ public class InboxFolderFragment extends DankFragment {
   @BindView(R.id.messagefolder_error_state) ErrorStateView firstLoadErrorStateView;
   @BindView(R.id.messagefolder_mark_all_as_read) FloatingActionButton markAllAsReadButton;
 
+  @Inject DankLinkMovementMethod linkMovementMethod;
+  @Inject UserSession userSession;
+
   private InboxFolder folder;
   private MessagesAdapter messagesAdapter;
   private InfiniteScrollRecyclerAdapter<Message, ?> messagesAdapterWithProgress;
-
   private boolean isRefreshOngoing;
 
   interface Callbacks extends MessagesAdapter.OnMessageClickListener {
     void setFirstRefreshDone(InboxFolder forFolder);
 
     boolean isFirstRefreshDone(InboxFolder forFolder);
-
-    /**
-     * For linkifying message bodies.
-     */
-    BetterLinkMovementMethod getMessageLinkMovementMethod();
 
     @Override
     void onClickMessage(Message message, View messageItemView);
@@ -91,6 +91,12 @@ public class InboxFolderFragment extends DankFragment {
   }
 
   @Override
+  public void onAttach(Context context) {
+    Dank.dependencyInjector().inject(this);
+    super.onAttach(context);
+  }
+
+  @Override
   public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
     View layout = inflater.inflate(R.layout.fragment_message_folder, container, false);
@@ -104,11 +110,8 @@ public class InboxFolderFragment extends DankFragment {
 
     folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
 
-    messagesAdapter = new MessagesAdapter(
-        ((Callbacks) getActivity()).getMessageLinkMovementMethod(),
-        folder == InboxFolder.PRIVATE_MESSAGES,
-        Dank.userSession().loggedInUserName()
-    );
+    boolean showMessageThreads = folder == InboxFolder.PRIVATE_MESSAGES;
+    messagesAdapter = new MessagesAdapter(linkMovementMethod, showMessageThreads, userSession.loggedInUserName());
     messagesAdapter.setOnMessageClickListener(((Callbacks) getActivity()));
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
 

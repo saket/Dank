@@ -1,16 +1,20 @@
 package me.saket.dank.ui.media;
 
+import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.text.method.LinkMovementMethod;
 import android.text.util.Linkify;
 import android.view.View;
 import android.view.ViewConfiguration;
 import android.view.ViewGroup;
 
+import javax.inject.Inject;
+
 import me.saket.dank.data.links.ImgurLink;
 import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
+import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
@@ -19,6 +23,8 @@ import me.saket.dank.widgets.binoculars.FlickGestureListener;
  * Includes common logic for showing title & description and dimming the image when the description is scrolled.
  */
 public abstract class BaseMediaViewerFragment extends DankFragment {
+
+  @Inject DankLinkMovementMethod linkMovementMethod;
 
   private MediaAlbumViewerTitleDescriptionView titleDescriptionView;
   private View imageDimmingView;
@@ -40,6 +46,12 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
 
   public void setMediaLink(MediaLink mediaLink) {
     this.mediaLinkToShow = mediaLink;
+  }
+
+  @Override
+  public void onAttach(Context context) {
+    Dank.dependencyInjector().inject(this);
+    super.onAttach(context);
   }
 
   @Override
@@ -77,7 +89,6 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
                 titleDescriptionView.setTitleAndDescription(title, description);
 
                 if (description != null) {
-                  LinkMovementMethod linkMovementMethod = ((MediaFragmentCallbacks) getActivity()).getMediaDescriptionLinkMovementMethod();
                   titleDescriptionView.descriptionView.setMovementMethod(linkMovementMethod);
                   Linkify.addLinks(titleDescriptionView.descriptionView, Linkify.ALL);
                 }
