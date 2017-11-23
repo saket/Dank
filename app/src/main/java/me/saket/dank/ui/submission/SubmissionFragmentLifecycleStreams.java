@@ -7,10 +7,11 @@ import com.jakewharton.rxrelay2.Relay;
 
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
+import me.saket.dank.data.ActivityResult;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 
-public class SubmissionFragmentLifecycleStreams extends LifecycleStreams {
+public class SubmissionFragmentLifecycleStreams implements LifecycleStreams {
 
   private final LifecycleStreams delegate;
   private Relay<Object> pageCollapseStream = PublishRelay.create();
@@ -80,5 +81,10 @@ public class SubmissionFragmentLifecycleStreams extends LifecycleStreams {
   @Override
   public Flowable<Object> onDestroyFlowable() {
     return delegate.onDestroyFlowable();
+  }
+
+  @Override
+  public Observable<ActivityResult> onActivityResults() {
+    return delegate.onActivityResults();
   }
 }

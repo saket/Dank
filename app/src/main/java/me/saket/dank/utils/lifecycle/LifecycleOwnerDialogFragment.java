@@ -1,12 +1,14 @@
 package me.saket.dank.utils.lifecycle;
 
+import android.content.Intent;
 import android.os.Bundle;
 
 import com.trello.navi2.component.support.NaviDialogFragment;
 
 public class LifecycleOwnerDialogFragment extends NaviDialogFragment implements LifecycleOwner {
 
-  private LifecycleStreams lifecycleStreams;
+  // Can do without FragmentLifecycleStreams for now.
+  private ActivityLifecycleStreams lifecycleStreams;
 
   @Override
   public LifecycleStreams lifecycle() {
@@ -16,7 +18,7 @@ public class LifecycleOwnerDialogFragment extends NaviDialogFragment implements 
   @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    lifecycleStreams = new LifecycleStreams();
+    lifecycleStreams = new ActivityLifecycleStreams();
     lifecycleStreams.notifyOnCreate();
   }
 
@@ -48,5 +50,11 @@ public class LifecycleOwnerDialogFragment extends NaviDialogFragment implements 
   public void onDestroy() {
     lifecycleStreams.notifyOnDestroy();
     super.onDestroy();
+  }
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    lifecycleStreams.notifyOnActivityResult(requestCode, resultCode, data);
   }
 }

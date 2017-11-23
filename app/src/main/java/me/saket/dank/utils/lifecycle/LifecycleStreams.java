@@ -2,46 +2,16 @@ package me.saket.dank.utils.lifecycle;
 
 import android.support.annotation.CheckResult;
 
-import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
-import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
+import me.saket.dank.data.ActivityResult;
 
-public class LifecycleStreams {
+/**
+ * This is an interface so that subclasses don't forget to expose all the streams, especially delegating subclasses.
+ */
+public interface LifecycleStreams {
 
-  protected static final Object INSTANCE = new Object();
-
-  private Subject<Object> onCreates = PublishSubject.create();
-  private Subject<Object> onStarts = PublishSubject.create();
-  private Subject<Object> onResumes = PublishSubject.create();
-  private Subject<Object> onPauses = PublishSubject.create();
-  private Subject<Object> onStops = PublishSubject.create();
-  private Subject<Object> onDestroys = PublishSubject.create();
-
-  protected void notifyOnCreate() {
-    onCreates.onNext(INSTANCE);
-  }
-
-  protected void notifyOnStart() {
-    onStarts.onNext(INSTANCE);
-  }
-
-  protected void notifyOnResume() {
-    onResumes.onNext(INSTANCE);
-  }
-
-  protected void notifyOnPause() {
-    onPauses.onNext(INSTANCE);
-  }
-
-  protected void notifyOnStop() {
-    onStops.onNext(INSTANCE);
-  }
-
-  protected void notifyOnDestroy() {
-    onDestroys.onNext(INSTANCE);
-  }
+  Object INSTANCE = new Object();
 
   // Commented out because dialog fragments have two create methods: onCreate() and onCreateDialog().
   /*public Observable<Object> onCreate() {
@@ -49,32 +19,23 @@ public class LifecycleStreams {
   }*/
 
   @CheckResult
-  public Observable<Object> onStart() {
-    return onStarts;
-  }
+  Observable<Object> onStart();
 
   @CheckResult
-  public Observable<Object> onResume() {
-    return onResumes;
-  }
+  Observable<Object> onResume();
 
   @CheckResult
-  public Observable<Object> onPause() {
-    return onPauses;
-  }
+  Observable<Object> onPause();
 
   @CheckResult
-  public Observable<Object> onStop() {
-    return onStops;
-  }
+  Observable<Object> onStop();
 
   @CheckResult
-  public Observable<Object> onDestroy() {
-    return onDestroys;
-  }
+  Observable<Object> onDestroy();
 
   @CheckResult
-  public Flowable<Object> onDestroyFlowable() {
-    return onDestroy().toFlowable(BackpressureStrategy.LATEST);
-  }
+  Flowable<Object> onDestroyFlowable();
+
+  @CheckResult
+  Observable<ActivityResult> onActivityResults();
 }
