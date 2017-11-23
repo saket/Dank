@@ -14,7 +14,9 @@ import android.animation.LayoutTransition;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -86,6 +88,8 @@ import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.ComposeStartOptions;
+import me.saket.dank.ui.giphy.GiphyGif;
+import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
@@ -119,6 +123,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
   private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = 250;
   private static final long ACTIVITY_CONTENT_RESIZE_ANIM_DURATION = 300;
+  private static final int REQUEST_CODE_PICK_GIF = 99;
 
   @BindView(R.id.submission_toolbar) View toolbar;
   @BindView(R.id.submission_toolbar_close) ImageButton toolbarCloseButton;
@@ -132,7 +137,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @BindView(R.id.submission_byline) TextView submissionBylineView;
   @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
   @BindView(R.id.submission_link_container) ViewGroup linkDetailsView;
-  @BindView(R.id.submission_comment_list) RecyclerView commentList;
+  @BindView(R.id.submission_comment_list) RecyclerView commentRecyclerView;
   @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
   @BindView(R.id.submission_reply) FloatingActionButton replyFAB;
 
@@ -193,6 +198,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels;
 
     return fragmentLayout;
+  }
+
+  @Override
+  public void onActivityResult(int requestCode, int resultCode, Intent data) {
+    super.onActivityResult(requestCode, resultCode, data);
+    Timber.i("onActivityResult() -> requestCode: %s", requestCode);
   }
 
   @Override
@@ -317,17 +328,18 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentTreeConstructor.hideReply(parentComment);
       }
     });
-    commentList.addOnItemTouchListener(new RecyclerSwipeListener(commentList));
-    commentList.setLayoutManager(new LinearLayoutManager(getActivity()));
+    commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
+    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
 
     int commentItemViewElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
     SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator(commentItemViewElevation).withInterpolator(Animations.INTERPOLATOR);
     itemAnimator.setRemoveDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
     itemAnimator.setAddDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
-    commentList.setItemAnimator(itemAnimator);
+    commentRecyclerView.setItemAnimator(itemAnimator);
 
     // Add submission Views as a header so that it scrolls with the list.
     commentsAdapter.setSwipeActionsProvider(commentSwipeActionsProvider);
+
     adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(
         commentsAdapter,
         commentsHeaderView,
@@ -335,7 +347,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsManager,
         submissionSwipeActionsProvider
     );
-    commentList.setAdapter(adapterWithSubmissionHeader);
+    commentRecyclerView.setAdapter(adapterWithSubmissionHeader);
 
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
@@ -349,8 +361,34 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentsAdapter.streamReplyDiscardClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(discardEvent -> {
-          Keyboards.hide(getActivity(), commentList);
+          Keyboards.hide(getActivity(), commentRecyclerView);
           commentTreeConstructor.hideReply(discardEvent.parentContribution());
+        });
+
+    // Reply GIF clicks.
+    // WARNING: This breaks on a config change. Additionally, inline reply rows aren't retained across Activity
+    // recreations either (drafts are saved though). Too much effort would be required fixing all this.
+    commentsAdapter.streamReplyGifClicks()
+        .doOnNext(o -> startActivityForResult(GiphyPickerActivity.intent(getContext()), REQUEST_CODE_PICK_GIF))
+        .flatMap(gifClickEvent -> lifecycle().onActivityResults()
+            .filter(result -> result.requestCode() == REQUEST_CODE_PICK_GIF)
+            .take(1)
+            .takeUntil(result -> result.resultCode() != Activity.RESULT_OK)
+            .map(result -> GiphyPickerActivity.extractPickedGif(result.data()))
+            .map(result -> Pair.create(gifClickEvent, result))
+        )
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> {
+          CommentsAdapter.ReplyGifClickEvent clickEvent = pair.first;
+          RecyclerView.ViewHolder holder = commentRecyclerView.findViewHolderForItemId(clickEvent.replyRowItemId());
+
+          if (holder == null) {
+            Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after GIPHY activity result"));
+            return;
+          }
+
+          GiphyGif giphyGif = pair.second;
+          ((CommentsAdapter.InlineReplyViewHolder) holder).handlePickedGiphyGif(giphyGif);
         });
 
     // Reply fullscreen clicks.
@@ -377,7 +415,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
                   sendClickEvent.replyMessage()))
               )
               .doOnSubscribe(o -> {
-                Keyboards.hide(getActivity(), commentList);
+                Keyboards.hide(getActivity(), commentRecyclerView);
                 commentTreeConstructor.hideReply(sendClickEvent.parentContribution());
               })
               .compose(applySchedulersCompletable())
@@ -397,7 +435,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Bottom-spacing for FAB.
     Views.executeOnMeasure(replyFAB, () -> {
       int spaceForFab = replyFAB.getHeight() + ((ViewGroup.MarginLayoutParams) replyFAB.getLayoutParams()).bottomMargin * 2;
-      Views.setPaddingBottom(commentList, spaceForFab);
+      Views.setPaddingBottom(commentRecyclerView, spaceForFab);
     });
   }
 
@@ -408,7 +446,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private Observable<PublicContribution> scrollToNewlyAddedReplyIfHidden(PublicContribution parentContribution) {
     if (submissionStream.getValue() == parentContribution) {
       // Submission reply.
-      return Observable.just(parentContribution).doOnNext(o -> commentList.smoothScrollToPosition(1));
+      return Observable.just(parentContribution).doOnNext(o -> commentRecyclerView.smoothScrollToPosition(1));
     }
 
     return commentsAdapterDatasetUpdatesStream
@@ -428,12 +466,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           return replyPosition;
         })
         .doOnNext(replyPosition -> {
-          RecyclerView.ViewHolder parentContributionItemVH = commentList.findViewHolderForAdapterPosition(replyPosition - 1);
+          RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition - 1);
           int parentContributionBottom = parentContributionItemVH.itemView.getBottom() + commentListParentSheet.getTop();
           boolean willReplyBeHidden = parentContributionBottom >= submissionPageLayout.getBottom();
           if (willReplyBeHidden) {
             int dy = parentContributionItemVH.itemView.getHeight();
-            commentList.smoothScrollBy(0, dy);
+            commentRecyclerView.smoothScrollBy(0, dy);
           }
         })
         .map(o -> parentContribution);
@@ -453,7 +491,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .take(1)
         .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
         .observeOn(mainThread())
-        .doOnNext(replyBindEvent -> commentList.post(() -> Keyboards.show(replyBindEvent.replyField())));
+        .doOnNext(replyBindEvent -> commentRecyclerView.post(() -> Keyboards.show(replyBindEvent.replyField())));
   }
 
   /**
@@ -508,11 +546,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .takeUntil(lifecycle().onDestroy())
         .subscribe(clickEvent -> {
           if (clickEvent.willCollapseOnClick()) {
-            int firstCompletelyVisiblePos = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
+            int firstCompletelyVisiblePos = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
             boolean commentExtendsBeyondWindowTopEdge = firstCompletelyVisiblePos == -1 || clickEvent.commentRowPosition() < firstCompletelyVisiblePos;
             if (commentExtendsBeyondWindowTopEdge) {
               float viewTop = clickEvent.commentItemView().getY();
-              commentList.smoothScrollBy(0, (int) viewTop);
+              commentRecyclerView.smoothScrollBy(0, (int) viewTop);
             }
           }
 
@@ -689,7 +727,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         return;
       }
 
-      int firstVisiblePosition = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstVisibleItemPosition();
+      int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
       boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
 
       if (commentTreeConstructor.isReplyActiveFor(submissionStream.getValue()) && isSubmissionReplyVisible) {
@@ -995,7 +1033,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   @Override
   public void onPageAboutToCollapse(long collapseAnimDuration) {
-    Keyboards.hide(getActivity(), commentList);
+    Keyboards.hide(getActivity(), commentRecyclerView);
   }
 
   @Override

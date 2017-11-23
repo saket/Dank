@@ -2,6 +2,7 @@ package me.saket.dank.ui.submission;
 
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
+import android.os.Parcelable;
 import android.support.annotation.CheckResult;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
@@ -42,11 +43,13 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownHints;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
+import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.SimpleTextWatcher;
@@ -64,21 +67,27 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private static final int VIEW_TYPE_REPLY = 102;
   private static final int VIEW_TYPE_PENDING_SYNC_REPLY = 103;
 
+  // Injected by Dagger.
   private final DankLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
   private final UserSession userSession;
   private final ReplyDraftStore replyDraftStore;
   private final MarkdownHintOptions markdownHintOptions;
   private final MarkdownSpanPool markdownSpanPool;
-  private CommentSwipeActionsProvider swipeActionsProvider;
   private final BehaviorRelay<CommentClickEvent> commentClickStream = BehaviorRelay.create();
   private final BehaviorRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = BehaviorRelay.create();
+
+  // Manually set by SubmissionFragment.
+  private CommentSwipeActionsProvider swipeActionsProvider;
   private String submissionAuthor;
-  private Relay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
-  private Relay<ReplyDiscardClickEvent> replyDiscardClickStream = PublishRelay.create();
-  private Relay<ReplySendClickEvent> replySendClickStream = PublishRelay.create();
-  private Relay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
-  private Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
+
+  // Click event streams.
+  private final Relay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
+  private final Relay<ReplyGifClickEvent> replyGifClickStream = PublishRelay.create();
+  private final Relay<ReplyDiscardClickEvent> replyDiscardClickStream = PublishRelay.create();
+  private final Relay<ReplySendClickEvent> replySendClickStream = PublishRelay.create();
+  private final Relay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
+  private final Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
 
   @AutoValue
   abstract static class CommentClickEvent {
@@ -129,6 +138,18 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
     public static ReplyDiscardClickEvent create(PublicContribution parentContribution) {
       return new AutoValue_CommentsAdapter_ReplyDiscardClickEvent(parentContribution);
+    }
+  }
+
+  @AutoValue
+  abstract static class ReplyGifClickEvent implements Parcelable {
+    /**
+     * Adapter ID of this row.
+     */
+    public abstract long replyRowItemId();
+
+    public static ReplyGifClickEvent create(long replyRowItemId) {
+      return new AutoValue_CommentsAdapter_ReplyGifClickEvent(replyRowItemId);
     }
   }
 
@@ -211,6 +232,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   @CheckResult
   public Observable<ReplyRetrySendClickEvent> streamReplyRetrySendClicks() {
     return replyRetrySendClickStream;
+  }
+
+  @CheckResult
+  public Observable<ReplyGifClickEvent> streamReplyGifClicks() {
+    return replyGifClickStream;
   }
 
   @CheckResult
@@ -353,6 +379,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
             commentInlineReplyItem,
             userSession,
             replyDraftStore,
+            replyGifClickStream,
             replyDiscardClickStream,
             replyFullscreenClickStream,
             replySendClickStream
@@ -561,6 +588,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_comment_reply_indented_container) IndentedLayout indentedLayout;
     @BindView(R.id.item_comment_reply_discard) ImageButton discardButton;
     @BindView(R.id.item_comment_reply_author_hint) TextView authorUsernameHintView;
+    @BindView(R.id.item_comment_reply_insert_gif) ImageButton gifButton;
     @BindView(R.id.item_comment_reply_go_fullscreen) ImageButton goFullscreenButton;
     @BindView(R.id.item_comment_reply_send) ImageButton sendButton;
     @BindView(R.id.item_comment_reply_message) EditText replyField;
@@ -596,9 +624,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       sendButton.setEnabled(false);
     }
 
-    public void bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession,
-        ReplyDraftStore replyDraftStore, Relay<ReplyDiscardClickEvent> replyDiscardEventObserver,
-        Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream, Relay<ReplySendClickEvent> replySendClickStream)
+    public void bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession, ReplyDraftStore replyDraftStore,
+        Relay<ReplyGifClickEvent> replyGifClickRelay, Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
+        Relay<ReplyFullscreenClickEvent> replyFullscreenClickRelay, Relay<ReplySendClickEvent> replySendClickRelay)
     {
       parentContribution = commentInlineReplyItem.parentContribution();
       indentedLayout.setIndentationDepth(commentInlineReplyItem.depth());
@@ -607,16 +635,23 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
           userSession.loggedInUserName()
       ));
 
-      discardButton.setOnClickListener(o -> replyDiscardEventObserver.accept(ReplyDiscardClickEvent.create(parentContribution)));
+      discardButton.setOnClickListener(o ->
+          replyDiscardEventRelay.accept(ReplyDiscardClickEvent.create(parentContribution))
+      );
+
+      gifButton.setOnClickListener(o ->
+          replyGifClickRelay.accept(ReplyGifClickEvent.create(getItemId()))
+      );
+
       goFullscreenButton.setOnClickListener(o -> {
         String replyMessage = replyField.getText().toString().trim();
-        replyFullscreenClickStream.accept(ReplyFullscreenClickEvent.create(parentContribution, replyMessage));
+        replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(parentContribution, replyMessage));
       });
 
       sendButton.setOnClickListener(o -> {
         isSendingReply = true;
         String replyMessage = replyField.getText().toString().trim();
-        replySendClickStream.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
+        replySendClickRelay.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
       });
       isSendingReply = false;
 
@@ -636,6 +671,21 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       draftDisposable.dispose();
       parentContribution = null;
+    }
+
+    public void handlePickedGiphyGif(GiphyGif giphyGif) {
+      int selectionStart = Math.min(replyField.getSelectionStart(), replyField.getSelectionEnd());
+      int selectionEnd = Math.max(replyField.getSelectionStart(), replyField.getSelectionEnd());
+
+      String selectedText = replyField.getText().subSequence(selectionStart, selectionEnd).toString();
+      String linkMarkdown = selectedText.isEmpty()
+          ? giphyGif.url()
+          : String.format("[%s](%s)", selectedText, giphyGif.url());
+      replyField.getText().replace(selectionStart, selectionEnd, linkMarkdown);
+
+      // Keyboard might have gotten dismissed while the GIF list was being scrolled.
+      // Works only if called delayed. Posting to reply field's message queue works.
+      replyField.post(() -> Keyboards.show(replyField));
     }
   }
 

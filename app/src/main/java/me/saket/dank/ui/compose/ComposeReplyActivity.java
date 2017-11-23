@@ -295,7 +295,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
     } else if (requestCode == REQUEST_CODE_PICK_GIF) {
       if (resultCode == Activity.RESULT_OK) {
-        GiphyGif selectedGif = GiphyPickerActivity.handleActivityResult(data);
+        GiphyGif selectedGif = GiphyPickerActivity.extractPickedGif(data);
         onGifInsert(selectedGif);
       }
 

@@ -28,7 +28,7 @@
       <ImageButton
         android:id="@+id/item_comment_reply_discard"
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/cd_submission_comment_reply_discard"
         android:padding="@dimen/spacing12"
@@ -45,7 +45,18 @@
         android:paddingEnd="@dimen/spacing16"
         android:paddingStart="@dimen/spacing16"
         android:text="@string/submission_comment_reply_author_hint"
-        android:textColor="@color/submission_comment_byline_author_op" />
+        android:textColor="@color/submission_comment_byline_author_op"
+        android:textSize="@dimen/textsize16" />
+
+      <ImageButton
+        android:id="@+id/item_comment_reply_insert_gif"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/cd_submission_comment_reply_insert_gif"
+        android:padding="@dimen/spacing8"
+        android:src="@drawable/ic_gif_32dp"
+        android:tint="@color/gray_400" />
 
       <ImageButton
         android:id="@+id/item_comment_reply_go_fullscreen"
@@ -86,7 +97,7 @@
       android:paddingStart="@dimen/spacing12"
       android:paddingTop="@dimen/spacing8"
       android:textColor="@color/submission_comment_body_expanded"
-      android:textSize="@dimen/textsize14" />
+      android:textSize="@dimen/textsize16" />
   </LinearLayout>
 
   <View

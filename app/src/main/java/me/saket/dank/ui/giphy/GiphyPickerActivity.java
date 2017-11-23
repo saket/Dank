@@ -5,6 +5,7 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -45,6 +46,7 @@ import timber.log.Timber;
 public class GiphyPickerActivity extends DankPullCollapsibleActivity {
 
   private static final String KEY_PICKED_GIPHY = "pickedGiphy";
+  private static final String KEY_EXTRA_PAYLOAD = "extraPayload";
 
   @BindView(R.id.giphypicker_root) IndependentExpandablePageLayout activityContentPage;
   @BindView(R.id.giphypicker_recyclerview) RecyclerView gifRecyclerView;
@@ -60,8 +62,22 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
     return new Intent(context, GiphyPickerActivity.class);
   }
 
-  public static GiphyGif handleActivityResult(Intent data) {
+  /**
+   * @param extraPayload Returned in {@link #extractExtraPayload(Intent)}.
+   */
+  public static Intent intentWithPayload(Context context, Parcelable extraPayload) {
+    Intent intent = new Intent(context, GiphyPickerActivity.class);
+    intent.putExtra(KEY_EXTRA_PAYLOAD, extraPayload);
+    return intent;
+  }
+
+  public static GiphyGif extractPickedGif(Intent data) {
     return data.getParcelableExtra(KEY_PICKED_GIPHY);
+  }
+
+  public static <T> T extractExtraPayload(Intent data) {
+    //noinspection unchecked
+    return data.getParcelableExtra(KEY_EXTRA_PAYLOAD);
   }
 
   @Override
@@ -138,6 +154,7 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
         .subscribe(clickedGiphyGif -> {
           Intent resultData = new Intent();
           resultData.putExtra(KEY_PICKED_GIPHY, clickedGiphyGif);
+          resultData.putExtra(KEY_EXTRA_PAYLOAD, (Parcelable) getIntent().getParcelableExtra(KEY_EXTRA_PAYLOAD));
           setResult(RESULT_OK, resultData);
           finish();
         });
