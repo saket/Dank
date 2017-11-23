@@ -113,13 +113,12 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).onClickMediaItem());
 
     // Show title and description above the Activity option buttons.
-    unsubscribeOnDestroy(
-        ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
-            .subscribe(optionButtonsHeight -> {
-              int defaultBottomMargin = getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_scroll_hint_bottom_margin);
-              Views.setMarginBottom(longImageScrollHint, optionButtonsHeight + defaultBottomMargin);
-            })
-    );
+    ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
+        .takeUntil(lifecycle().onDestroy().ignoreElements())
+        .subscribe(optionButtonsHeight -> {
+          int defaultBottomMargin = getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_scroll_hint_bottom_margin);
+          Views.setMarginBottom(longImageScrollHint, optionButtonsHeight + defaultBottomMargin);
+        });
   }
 
   /**

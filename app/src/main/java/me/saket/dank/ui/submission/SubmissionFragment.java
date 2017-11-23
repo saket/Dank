@@ -165,7 +165,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
   private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
-  private SubmissionFragmentLifecycleProvider lifecycleProvider;
+  private SubmissionFragmentLifecycleStreams lifecycleStreams;
 
   public interface Callbacks {
     void onClickSubmissionToolbarUp();
@@ -208,13 +208,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     submissionPageLayout.addStateChangeCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
-    lifecycleProvider = new SubmissionFragmentLifecycleProvider(submissionPageLayout);
-
-    unsubscribeOnDestroy(
-        Keyboards
-            .streamKeyboardVisibilityChanges(getActivity(), Views.statusBarHeight(getResources()))
-            .subscribe(keyboardVisibilityChangeStream)
-    );
+    Keyboards.streamKeyboardVisibilityChanges(getActivity(), Views.statusBarHeight(getResources()))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(keyboardVisibilityChangeStream);
 
     setupCommentRecyclerView();
     setupCommentTree();
@@ -230,37 +226,36 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     linkDetailsViewHolder.titleSubtitleContainer.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
 
     // Load comments when submission changes.
-    unsubscribeOnDestroy(
-        submissionRequestStream
-            .observeOn(mainThread())
-            .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
-            .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
-                .flatMap(pair -> {
-                  // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
-                  DankSubmissionRequest updatedRequest = pair.first;
-                  if (updatedRequest != submissionRequest) {
-                    submissionRequestStream.accept(updatedRequest);
-                    return Observable.never();
-                  } else {
-                    return Observable.just(pair.second);
-                  }
-                })
-                .takeUntil(lifecycleProvider.onPageAboutToCollapse())
-                .compose(RxUtils.applySchedulers())
-                .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
-                .doOnError(error -> Timber.e(error))
-                .onErrorResumeNext(Observable.never()))
-            .subscribe(submissionStream)
-    );
-
-    unsubscribeOnDestroy(
-        submissionStream
-            .observeOn(mainThread())
-            .subscribe(submission -> {
-              adapterWithSubmissionHeader.updateSubmission(submission);
-              commentsAdapter.setSubmissionAuthor(submission.getAuthor());
+    submissionRequestStream
+        .observeOn(mainThread())
+        .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
+        .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
+            .flatMap(pair -> {
+              // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
+              // In that case, trigger another request with the correct sort.
+              DankSubmissionRequest updatedRequest = pair.first;
+              if (updatedRequest != submissionRequest) {
+                submissionRequestStream.accept(updatedRequest);
+                return Observable.never();
+              } else {
+                return Observable.just(pair.second);
+              }
             })
-    );
+            .takeUntil(lifecycle().onPageAboutToCollapse())
+            .compose(RxUtils.applySchedulers())
+            .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
+            .doOnError(error -> Timber.e(error))
+            .onErrorResumeNext(Observable.never()))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(submissionStream);
+
+    submissionStream
+        .observeOn(mainThread())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(submission -> {
+          adapterWithSubmissionHeader.updateSubmission(submission);
+          commentsAdapter.setSubmissionAuthor(submission.getAuthor());
+        });
 
     // Restore submission if the Activity was recreated.
     if (savedInstanceState != null) {
@@ -344,37 +339,36 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
-    unsubscribeOnDestroy(
-        inlineReplyStream
-            .switchMap(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution))
-            .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
-            .subscribe()
-    );
+    inlineReplyStream
+        .switchMap(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution))
+        .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe();
 
     // Reply discards.
-    unsubscribeOnDestroy(
-        commentsAdapter.streamReplyDiscardClicks()
-            .subscribe(discardEvent -> {
-              Keyboards.hide(getActivity(), commentList);
-              commentTreeConstructor.hideReply(discardEvent.parentContribution());
-            })
-    );
+    commentsAdapter.streamReplyDiscardClicks()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(discardEvent -> {
+          Keyboards.hide(getActivity(), commentList);
+          commentTreeConstructor.hideReply(discardEvent.parentContribution());
+        });
 
     // Reply fullscreen clicks.
-    unsubscribeOnDestroy(
-        commentsAdapter.streamReplyFullscreenClicks().subscribe((CommentsAdapter.ReplyFullscreenClickEvent fullscreenClickEvent) -> {
+    commentsAdapter.streamReplyFullscreenClicks()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe((CommentsAdapter.ReplyFullscreenClickEvent fullscreenClickEvent) -> {
           ComposeStartOptions startOptions = ComposeStartOptions.builder()
               .secondPartyName("secondPartyName")
               .parentContribution(fullscreenClickEvent.parentContribution())
               .preFilledText(fullscreenClickEvent.replyMessage())
               .build();
           ComposeReplyActivity.start(getActivity(), startOptions);
-        })
-    );
+        });
 
     // Reply sends.
-    unsubscribeOnDestroy(
-        commentsAdapter.streamReplySendClicks().subscribe(sendClickEvent -> {
+    commentsAdapter.streamReplySendClicks()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(sendClickEvent -> {
           // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
           commentsManager.removeDraft(sendClickEvent.parentContribution())
               .andThen(Dank.reddit().withAuth(commentsManager.sendReply(
@@ -388,18 +382,17 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               })
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
-        })
-    );
+        });
 
     // Reply retry-sends.
-    unsubscribeOnDestroy(
-        commentsAdapter.streamReplyRetrySendClicks().subscribe(retrySendEvent -> {
+    commentsAdapter.streamReplyRetrySendClicks()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(retrySendEvent -> {
           // Re-sending is not a part of the chain so that it does not get unsubscribed on destroy.
           Dank.reddit().withAuth(commentsManager.reSendReply(retrySendEvent.failedPendingSyncReply()))
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
-        })
-    );
+        });
 
     // Bottom-spacing for FAB.
     Views.executeOnMeasure(replyFAB, () -> {
@@ -469,52 +462,51 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
    */
   private void setupCommentTree() {
     // Update header.
-    unsubscribeOnDestroy(
-        submissionStream
-            .filter(submission -> submission.getComments() != null)
-            .observeOn(io())
-            .switchMap(submissionWithComments -> {
-              // Add pending-sync replies to the comment tree.
-              return commentsManager.removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
-                  .andThen(commentsManager.streamPendingSyncRepliesForSubmission(submissionWithComments))
-                  .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies));
-            })
-            .subscribe(pair -> {
-              Submission submission = pair.first;
-              List<PendingSyncReply> pendingSyncReplies = pair.second;
+    submissionStream
+        .filter(submission -> submission.getComments() != null)
+        .observeOn(io())
+        .switchMap(submissionWithComments -> {
+          // Add pending-sync replies to the comment tree.
+          return commentsManager.removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
+              .andThen(commentsManager.streamPendingSyncRepliesForSubmission(submissionWithComments))
+              .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies));
+        })
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> {
+          Submission submission = pair.first;
+          List<PendingSyncReply> pendingSyncReplies = pair.second;
 
-              commentTreeConstructor.setSubmission(submission);
-              commentTreeConstructor.setComments(submission.getComments(), pendingSyncReplies);
-            })
-    );
+          commentTreeConstructor.setSubmission(submission);
+          commentTreeConstructor.setComments(submission.getComments(), pendingSyncReplies);
+        });
 
     // Animate changes to comments.
     Pair<List<SubmissionCommentRow>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
-    unsubscribeOnDestroy(
-        commentTreeConstructor.streamTreeUpdates()
-            .toFlowable(BackpressureStrategy.LATEST)
-            .observeOn(io())
-            .scan(initialPair, (latestPair, nextItems) -> {
-              CommentsDiffCallback callback = new CommentsDiffCallback(latestPair.first, nextItems);
-              DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
-              return Pair.create(nextItems, result);
-            })
-            .skip(1)  // Initial value is dummy.
-            .observeOn(mainThread())
-            .filter(o -> !submissionPageLayout.isCollapsedOrCollapsing())
-            .subscribe(itemsAndDiff -> {
-              List<SubmissionCommentRow> newComments = itemsAndDiff.first;
-              commentsAdapter.updateData(newComments);
-              commentsAdapterDatasetUpdatesStream.accept(newComments);
+    commentTreeConstructor.streamTreeUpdates()
+        .toFlowable(BackpressureStrategy.LATEST)
+        .observeOn(io())
+        .scan(initialPair, (latestPair, nextItems) -> {
+          CommentsDiffCallback callback = new CommentsDiffCallback(latestPair.first, nextItems);
+          DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
+          return Pair.create(nextItems, result);
+        })
+        .skip(1)  // Initial value is dummy.
+        .observeOn(mainThread())
+        .filter(o -> !submissionPageLayout.isCollapsedOrCollapsing())
+        .takeUntil(lifecycle().onDestroyFlowable())
+        .subscribe(itemsAndDiff -> {
+          List<SubmissionCommentRow> newComments = itemsAndDiff.first;
+          commentsAdapter.updateData(newComments);
+          commentsAdapterDatasetUpdatesStream.accept(newComments);
 
-              DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
-              commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
-            }, logError("Error while diff-ing comments"))
-    );
+          DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
+          commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
+        }, logError("Error while diff-ing comments"));
 
     // Toggle collapse on comment clicks.
-    unsubscribeOnDestroy(
-        commentsAdapter.streamCommentCollapseExpandEvents().subscribe(clickEvent -> {
+    commentsAdapter.streamCommentCollapseExpandEvents()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(clickEvent -> {
           if (clickEvent.willCollapseOnClick()) {
             int firstCompletelyVisiblePos = ((LinearLayoutManager) commentList.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
             boolean commentExtendsBeyondWindowTopEdge = firstCompletelyVisiblePos == -1 || clickEvent.commentRowPosition() < firstCompletelyVisiblePos;
@@ -525,44 +517,42 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           }
 
           commentTreeConstructor.toggleCollapse(clickEvent.commentRow());
-        })
-    );
+        });
 
     // Load-more-comment clicks.
-    unsubscribeOnDestroy(
-        // Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
-        commentsAdapter
-            .streamLoadMoreCommentsClicks()
-            .flatMap(loadMoreClickEvent -> {
-              if (loadMoreClickEvent.parentCommentNode().isThreadContinuation()) {
-                return submissionRequestStream
-                    .take(1)
-                    .doOnNext(activeRequest -> {
-                      DankSubmissionRequest continueThreadRequest = submissionRequestStream.getValue().toBuilder()
-                          .focusComment(loadMoreClickEvent.parentCommentNode().getComment().getId())
-                          .build();
+    // Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
+    commentsAdapter
+        .streamLoadMoreCommentsClicks()
+        .flatMap(loadMoreClickEvent -> {
+          if (loadMoreClickEvent.parentCommentNode().isThreadContinuation()) {
+            return submissionRequestStream
+                .take(1)
+                .doOnNext(activeRequest -> {
+                  DankSubmissionRequest continueThreadRequest = submissionRequestStream.getValue().toBuilder()
+                      .focusComment(loadMoreClickEvent.parentCommentNode().getComment().getId())
+                      .build();
 
-                      Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
-                      expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
-                      SubmissionFragmentActivity.start(getContext(), continueThreadRequest, expandFromShape);
-                    })
-                    .flatMap(o -> Observable.empty());
+                  Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
+                  expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
+                  SubmissionFragmentActivity.start(getContext(), continueThreadRequest, expandFromShape);
+                })
+                .flatMap(o -> Observable.empty());
 
-              } else {
-                return Observable.just(loadMoreClickEvent.parentCommentNode())
-                    .observeOn(io())
-                    .doOnNext(commentTreeConstructor.setMoreCommentsLoading(true))
-                    .map(Dank.reddit().loadMoreComments())
-                    .doOnNext(commentTreeConstructor.setMoreCommentsLoading(false));
-              }
-            })
-            .subscribe(doNothing(), error -> {
-              Timber.e(error, "Failed to load more comments");
-              if (isAdded()) {
-                Toast.makeText(getActivity(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
-              }
-            })
-    );
+          } else {
+            return Observable.just(loadMoreClickEvent.parentCommentNode())
+                .observeOn(io())
+                .doOnNext(commentTreeConstructor.setMoreCommentsLoading(true))
+                .map(Dank.reddit().loadMoreComments())
+                .doOnNext(commentTreeConstructor.setMoreCommentsLoading(false));
+          }
+        })
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(doNothing(), error -> {
+          Timber.e(error, "Failed to load more comments");
+          if (isAdded()) {
+            Toast.makeText(getActivity(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
+          }
+        });
   }
 
   private void setupContentImageView(View fragmentLayout) {
@@ -678,21 +668,20 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     );
 
     // Show the FAB while the keyboard is hidden and there's space available.
-    unsubscribeOnDestroy(
-        submissionStream
-            .observeOn(mainThread())
-            .doOnNext(o -> replyFAB.show())
-            .switchMap(o -> Observable.combineLatest(keyboardVisibilityChangeStream, spaceAvailabilityChanges,
-                (keyboardVisibilityChangeEvent, spaceAvailable) -> !keyboardVisibilityChangeEvent.visible() && spaceAvailable)
-            )
-            .subscribe(canShowReplyFAB -> {
-              if (canShowReplyFAB) {
-                replyFAB.show();
-              } else {
-                replyFAB.hide();
-              }
-            })
-    );
+    submissionStream
+        .observeOn(mainThread())
+        .doOnNext(o -> replyFAB.show())
+        .switchMap(o -> Observable.combineLatest(keyboardVisibilityChangeStream, spaceAvailabilityChanges,
+            (keyboardVisibilityChangeEvent, spaceAvailable) -> !keyboardVisibilityChangeEvent.visible() && spaceAvailable)
+        )
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(canShowReplyFAB -> {
+          if (canShowReplyFAB) {
+            replyFAB.show();
+          } else {
+            replyFAB.hide();
+          }
+        });
 
     replyFAB.setOnClickListener(o -> {
       if (!Dank.userSession().isUserLoggedIn()) {
@@ -714,9 +703,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     });
   }
 
+  /**
+   * Smoothly resize content when keyboard is shown or dismissed.
+   */
   private void setupSoftInputModeChangesAnimation() {
-    unsubscribeOnDestroy(
-        keyboardVisibilityChangeStream.subscribe(new Consumer<KeyboardVisibilityChangeEvent>() {
+    keyboardVisibilityChangeStream
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(new Consumer<KeyboardVisibilityChangeEvent>() {
           private ValueAnimator heightAnimator;
           private ViewGroup contentViewGroup;
 
@@ -744,8 +737,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             heightAnimator.setDuration(ACTIVITY_CONTENT_RESIZE_ANIM_DURATION);
             heightAnimator.start();
           }
-        })
-    );
+        });
   }
 
   private void setupStatusBarTint() {
@@ -763,49 +755,47 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     );
 
     // Reset the toolbar icons' tint until the content is loaded.
-    unsubscribeOnDestroy(
-        submissionContentStream
-            .subscribe(o -> toolbarCloseButton.setColorFilter(Color.WHITE))
-    );
+    submissionContentStream
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> toolbarCloseButton.setColorFilter(Color.WHITE));
 
     // For images and videos.
-    unsubscribeOnDestroy(
-        statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout, commentListParentSheet)
-            // Using switchMap() instead of delay() here so that any pending delay gets canceled in case a new tint is received.
-            .switchMap(statusBarTint -> Observable.just(statusBarTint).delay(statusBarTint.delayedTransition() ? 100 : 0, TimeUnit.MILLISECONDS))
-            .observeOn(mainThread())
-            .subscribe(new Consumer<StatusBarTint>() {
-              public ValueAnimator tintChangeAnimator;
+    statusBarTintProvider.streamStatusBarTintColor(contentBitmapStream, submissionPageLayout, commentListParentSheet)
+        // Using switchMap() instead of delay() here so that any pending delay gets canceled in case a new tint is received.
+        .switchMap(statusBarTint -> Observable.just(statusBarTint).delay(statusBarTint.delayedTransition() ? 100 : 0, TimeUnit.MILLISECONDS))
+        .observeOn(mainThread())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(new Consumer<StatusBarTint>() {
+          public ValueAnimator tintChangeAnimator;
 
-              @Override
-              public void accept(StatusBarTint statusBarTint) throws Exception {
-                if (tintChangeAnimator != null) {
-                  tintChangeAnimator.cancel();
-                }
-                tintChangeAnimator = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
-                tintChangeAnimator.addUpdateListener(animation -> getActivity().getWindow().setStatusBarColor((int) animation.getAnimatedValue()));
-                tintChangeAnimator.setDuration(150L);
-                tintChangeAnimator.setInterpolator(Animations.INTERPOLATOR);
-                tintChangeAnimator.start();
+          @Override
+          public void accept(StatusBarTint statusBarTint) throws Exception {
+            if (tintChangeAnimator != null) {
+              tintChangeAnimator.cancel();
+            }
+            tintChangeAnimator = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
+            tintChangeAnimator.addUpdateListener(animation -> getActivity().getWindow().setStatusBarColor((int) animation.getAnimatedValue()));
+            tintChangeAnimator.setDuration(150L);
+            tintChangeAnimator.setInterpolator(Animations.INTERPOLATOR);
+            tintChangeAnimator.start();
 
-                // Set a light status bar on M+.
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-                  int flags = submissionPageLayout.getSystemUiVisibility();
-                  if (!statusBarTint.isDarkColor()) {
-                    flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                  } else {
-                    flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-                  }
-                  submissionPageLayout.setSystemUiVisibility(flags);
-                }
-
-                // Use darker colors on light images.
-                if (submissionPageLayout.getTranslationY() == 0f) {
-                  toolbarCloseButton.setColorFilter(statusBarTint.isDarkColor() ? Color.WHITE : Color.DKGRAY);
-                }
+            // Set a light status bar on M+.
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+              int flags = submissionPageLayout.getSystemUiVisibility();
+              if (!statusBarTint.isDarkColor()) {
+                flags |= View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+              } else {
+                flags &= ~View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
               }
-            }, logError("Wut?"))
-    );
+              submissionPageLayout.setSystemUiVisibility(flags);
+            }
+
+            // Use darker colors on light images.
+            if (submissionPageLayout.getTranslationY() == 0f) {
+              toolbarCloseButton.setColorFilter(statusBarTint.isDarkColor() ? Color.WHITE : Color.DKGRAY);
+            }
+          }
+        }, logError("Wut?"));
   }
 
   /**
@@ -824,18 +814,15 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     submissionRequestStream.accept(submissionRequest);
 
     if (submission != null) {
-      unsubscribeOnCollapse(
-          loadSubmissionContent(submission)
-      );
+      loadSubmissionContent(submission);
 
     } else {
       // Wait till the submission is fetched before loading content.
-      unsubscribeOnDestroy(
-          submissionStream
-              .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
-              .take(1)
-              .subscribe(fetchedSubmission -> unsubscribeOnCollapse(loadSubmissionContent(fetchedSubmission)))
-      );
+      submissionStream
+          .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
+          .take(1)
+          .takeUntil(lifecycle().onDestroy())
+          .subscribe(fetchedSubmission -> loadSubmissionContent(fetchedSubmission));
     }
   }
 
@@ -897,6 +884,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           boolean transparentToolbar = resolvedLink.isImageOrGif() || resolvedLink.isVideo();
           toolbarBackground.setSyncScrollEnabled(transparentToolbar);
         })
+        .takeUntil(lifecycle().onPageCollapseOrDestroy().ignoreElements())
         .subscribe(
             resolvedLink -> {
               submissionContentStream.accept(resolvedLink);
@@ -1021,8 +1009,17 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
   }
 
+  @Deprecated
   private void unsubscribeOnCollapse(Disposable subscription) {
     onCollapseSubscriptions.add(subscription);
     unsubscribeOnDestroy(subscription);
+  }
+
+  @Override
+  public SubmissionFragmentLifecycleStreams lifecycle() {
+    if (lifecycleStreams == null) {
+      lifecycleStreams = SubmissionFragmentLifecycleStreams.wrap(super.lifecycle(), submissionPageLayout);
+    }
+    return lifecycleStreams;
   }
 }

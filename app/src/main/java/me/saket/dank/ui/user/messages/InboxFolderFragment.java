@@ -29,8 +29,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.SingleTransformer;
-import io.reactivex.disposables.Disposable;
 import me.saket.dank.R;
+import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.InfiniteScrollHeaderFooter;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
@@ -59,6 +59,7 @@ public class InboxFolderFragment extends DankFragment {
 
   @Inject DankLinkMovementMethod linkMovementMethod;
   @Inject UserSession userSession;
+  @Inject InboxManager inboxManager;
 
   private InboxFolder folder;
   private MessagesAdapter messagesAdapter;
@@ -128,7 +129,7 @@ public class InboxFolderFragment extends DankFragment {
     super.onStart();
     Callbacks callbacks = (Callbacks) getActivity();
 
-    unsubscribeOnStop(Dank.inbox().messages(folder)
+    inboxManager.messages(folder)
         .compose(applySchedulers())
         .compose(doOnceAfterNext(o -> {
           startInfiniteScroll(false);
@@ -158,7 +159,8 @@ public class InboxFolderFragment extends DankFragment {
             Views.setPaddingBottom(messageList, 0);
           }
         })
-        .subscribe(messagesAdapter));
+        .takeUntil(lifecycle().onStop())
+        .subscribe(messagesAdapter);
   }
 
   public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
@@ -175,20 +177,19 @@ public class InboxFolderFragment extends DankFragment {
   }
 
   protected void refreshMessages(boolean replaceAllExistingMessages) {
-    Disposable refreshDisposable = Dank.inbox().refreshMessages(folder, replaceAllExistingMessages)
+    inboxManager.refreshMessages(folder, replaceAllExistingMessages)
         .compose(applySchedulersSingle())
         .compose(handleProgressAndErrorForFirstRefresh(replaceAllExistingMessages))
         .compose(handleProgressAndErrorForSubsequentRefresh(replaceAllExistingMessages))
         .compose(doOnSingleStartAndTerminate(ongoing -> isRefreshOngoing = ongoing))
         .doOnSubscribe(o -> emptyStateView.setVisibility(View.GONE))
+        .takeUntil(lifecycle().onDestroy().ignoreElements())
         .subscribe(fetchedMessages -> {
           if (isAdded()) {
             ((Callbacks) getActivity()).setFirstRefreshDone(folder);
           }
           emptyStateView.setVisibility(fetchedMessages.isEmpty() ? View.VISIBLE : View.GONE);
         }, doNothing());
-
-    unsubscribeOnDestroy(refreshDisposable);
   }
 
   private <T> SingleTransformer<T, T> handleProgressAndErrorForFirstRefresh(boolean deleteAllMessagesInFolder) {
@@ -243,14 +244,15 @@ public class InboxFolderFragment extends DankFragment {
     InfiniteScrollListener scrollListener = InfiniteScrollListener.create(messageList, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD);
     scrollListener.setEmitInitialEvent(isRetrying);
 
-    unsubscribeOnDestroy(scrollListener.emitWhenLoadNeeded()
-        .flatMapSingle(o -> Dank.inbox().fetchMoreMessages(folder)
+    scrollListener.emitWhenLoadNeeded()
+        .flatMapSingle(o -> inboxManager.fetchMoreMessages(folder)
             .compose(applySchedulersSingle())
             .compose(handleProgressAndErrorForLoadMore())
             .compose(doOnSingleStartAndTerminate(ongoing -> scrollListener.setLoadOngoing(ongoing)))
         )
         .takeUntil(fetchedMessages -> (boolean) fetchedMessages.isEmpty())
-        .subscribe(doNothing(), doNothing()));
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(doNothing(), doNothing());
   }
 
   private <T> SingleTransformer<T, T> handleProgressAndErrorForLoadMore() {
@@ -295,7 +297,7 @@ public class InboxFolderFragment extends DankFragment {
       return;
     }
 
-    unsubscribeOnDestroy(RxRecyclerView.scrollEvents(messageList)
+    RxRecyclerView.scrollEvents(messageList)
         .map(scrollEvent -> {
           int firstVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
           int lastVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findLastCompletelyVisibleItemPosition();
@@ -317,7 +319,8 @@ public class InboxFolderFragment extends DankFragment {
 
           return scrollEvent;
         })
-        .subscribe(doNothing(), error -> Timber.e(error, "Couldn't track seen unread messages")));
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(doNothing(), error -> Timber.e(error, "Couldn't track seen unread messages"));
   }
 
   @OnClick(R.id.messagefolder_mark_all_as_read)

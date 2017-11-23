@@ -99,18 +99,17 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     setupFlickGestures(flickDismissViewGroup);
 
     // Keep the video below the status bar and above the control buttons.
-    unsubscribeOnDestroy(
-        ((MediaFragmentCallbacks) getActivity())
-            .optionButtonsHeight()
-            .subscribe(optionButtonsHeight -> {
-              int statusBarHeight = Views.statusBarHeight(getResources());
-              Views.setPaddingVertical(
-                  contentViewFlipper,
-                  contentViewFlipper.getPaddingTop() + statusBarHeight,
-                  contentViewFlipper.getPaddingBottom() + optionButtonsHeight
-              );
-            })
-    );
+    ((MediaFragmentCallbacks) getActivity())
+        .optionButtonsHeight()
+        .takeUntil(lifecycle().onDestroy().ignoreElements())
+        .subscribe(optionButtonsHeight -> {
+          int statusBarHeight = Views.statusBarHeight(getResources());
+          Views.setPaddingVertical(
+              contentViewFlipper,
+              contentViewFlipper.getPaddingTop() + statusBarHeight,
+              contentViewFlipper.getPaddingBottom() + optionButtonsHeight
+          );
+        });
 
     exoPlayerManager = ExoPlayerManager.newInstance(this, videoView);
     DankVideoControlsView videoControlsView = new DankVideoControlsView(getActivity());
@@ -128,21 +127,21 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
       videoControlsView.showVideoState(DankVideoControlsView.VideoState.PREPARED);
 
       // Auto-play when this Fragment becomes visible.
-      unsubscribeOnDestroy(
-          fragmentVisibleToUserStream
-              .subscribe(visibleToUser -> {
-                if (!visibleToUser) {
-                  exoPlayerManager.pauseVideoPlayback();
-                } else {
-                  exoPlayerManager.startVideoPlayback();
-                }
-              }));
+      fragmentVisibleToUserStream
+          .takeUntil(lifecycle().onDestroy())
+          .subscribe(visibleToUser -> {
+            if (!visibleToUser) {
+              exoPlayerManager.pauseVideoPlayback();
+            } else {
+              exoPlayerManager.startVideoPlayback();
+            }
+          });
     });
 
     // VideoView internally sets its height to match-parent. Forcefully resize it to match the video height.
-    exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
-      Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar());
-    });
+    exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) ->
+      Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar())
+    );
 
     loadVideo(mediaAlbumItem);
   }

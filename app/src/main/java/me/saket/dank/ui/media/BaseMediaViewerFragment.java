@@ -60,41 +60,38 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
 
     // Toggle description's background dimming when the description is scrolled or Activity goes immersive.
     ((ViewGroup) view).getLayoutTransition().setDuration(200);
-    unsubscribeOnDestroy(
-        titleDescriptionView.streamDimmingRequiredForTitleAndDescription()
-            .distinctUntilChanged()
-            .mergeWith(((MediaFragmentCallbacks) getActivity()).systemUiVisibilityStream()
-                .map(systemUiVisible -> systemUiVisible && titleDescriptionView.streamDimmingRequiredForTitleAndDescription().getValue())
-            )
-            .subscribe(dimmingRequired -> imageDimmingView.setVisibility(dimmingRequired ? View.VISIBLE : View.GONE))
-    );
+    titleDescriptionView.streamDimmingRequiredForTitleAndDescription()
+        .distinctUntilChanged()
+        .mergeWith(((MediaFragmentCallbacks) getActivity()).systemUiVisibilityStream()
+            .map(systemUiVisible -> systemUiVisible && titleDescriptionView.streamDimmingRequiredForTitleAndDescription().getValue())
+        )
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(dimmingRequired -> imageDimmingView.setVisibility(dimmingRequired ? View.VISIBLE : View.GONE));
 
     // Hide title & description when Activity goes immersive.
-    unsubscribeOnDestroy(
-        ((MediaFragmentCallbacks) getActivity()).systemUiVisibilityStream()
-            .subscribe(systemUiVisible -> {
-              titleDescriptionView.setVisibility(systemUiVisible ? View.VISIBLE : View.INVISIBLE);
-            })
-    );
+    ((MediaFragmentCallbacks) getActivity()).systemUiVisibilityStream()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(systemUiVisible -> {
+          titleDescriptionView.setVisibility(systemUiVisible ? View.VISIBLE : View.INVISIBLE);
+        });
 
     // Show title and description.
-    unsubscribeOnDestroy(
-        ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
-            .subscribe(optionsHeight -> {
-              Views.setPaddingBottom(titleDescriptionView, titleDescriptionView.getPaddingBottom() + optionsHeight);
+    ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
+        .takeUntil(lifecycle().onDestroy().ignoreElements())
+        .subscribe(optionsHeight -> {
+          Views.setPaddingBottom(titleDescriptionView, titleDescriptionView.getPaddingBottom() + optionsHeight);
 
-              if (mediaLinkToShow instanceof ImgurLink) {
-                String title = ((ImgurLink) mediaLinkToShow).title();
-                String description = ((ImgurLink) mediaLinkToShow).description();
-                titleDescriptionView.setTitleAndDescription(title, description);
+          if (mediaLinkToShow instanceof ImgurLink) {
+            String title = ((ImgurLink) mediaLinkToShow).title();
+            String description = ((ImgurLink) mediaLinkToShow).description();
+            titleDescriptionView.setTitleAndDescription(title, description);
 
-                if (description != null) {
-                  titleDescriptionView.descriptionView.setMovementMethod(linkMovementMethod);
-                  Linkify.addLinks(titleDescriptionView.descriptionView, Linkify.ALL);
-                }
-              }
-            })
-    );
+            if (description != null) {
+              titleDescriptionView.descriptionView.setMovementMethod(linkMovementMethod);
+              Linkify.addLinks(titleDescriptionView.descriptionView, Linkify.ALL);
+            }
+          }
+        });
   }
 
   public FlickGestureListener createFlickGestureListener(FlickGestureListener.GestureCallbacks wrappedGestureCallbacks) {

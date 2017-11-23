@@ -15,10 +15,9 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
-import com.trello.navi2.Event;
-import com.trello.navi2.NaviComponent;
 
 import me.saket.dank.R;
+import me.saket.dank.utils.lifecycle.LifecycleOwner;
 
 public class ExoPlayerManager {
 
@@ -32,13 +31,13 @@ public class ExoPlayerManager {
     void onVideoSizeChange(int resizedVideoWidth, int resizedVideoHeight, int actualVideoWidth, int actualVideoHeight);
   }
 
-  public static ExoPlayerManager newInstance(NaviComponent naviComponent, VideoView playerView) {
+  public static ExoPlayerManager newInstance(LifecycleOwner lifecycleOwner, VideoView playerView) {
     ExoPlayerManager exoPlayerManager = new ExoPlayerManager(playerView);
     exoPlayerManager.setupVideoView();
 
-    naviComponent.addListener(Event.DESTROY, o -> exoPlayerManager.releasePlayer());
-    naviComponent.addListener(Event.PAUSE, o -> exoPlayerManager.pauseVideoPlayback());
-    naviComponent.addListener(Event.RESUME, o -> {
+    lifecycleOwner.lifecycle().onDestroy().subscribe(o -> exoPlayerManager.releasePlayer());
+    lifecycleOwner.lifecycle().onPause().subscribe(o -> exoPlayerManager.pauseVideoPlayback());
+    lifecycleOwner.lifecycle().onResume().subscribe(o -> {
       if (exoPlayerManager.wasPlayingUponPause) {
         exoPlayerManager.startVideoPlayback();
       }

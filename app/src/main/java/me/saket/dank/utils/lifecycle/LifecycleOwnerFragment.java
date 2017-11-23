@@ -1,10 +1,9 @@
 package me.saket.dank.utils.lifecycle;
 
 import android.os.Bundle;
+import android.support.v4.app.Fragment;
 
-import com.trello.navi2.component.support.NaviDialogFragment;
-
-public class LifecycleOwnerDialogFragment extends NaviDialogFragment implements LifecycleOwner {
+public class LifecycleOwnerFragment extends Fragment implements LifecycleOwner {
 
   private LifecycleStreams lifecycleStreams;
 
