@@ -60,7 +60,7 @@ import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentRow, RecyclerView.ViewHolder> {
 
   private static final int VIEW_TYPE_USER_COMMENT = 100;
-  private static final int VIEW_TYPE_LOAD_MORE = 101;
+  private static final int VIEW_TYPE_LOAD_MORE_COMMENTS = 101;
   private static final int VIEW_TYPE_REPLY = 102;
   private static final int VIEW_TYPE_PENDING_SYNC_REPLY = 103;
 
@@ -231,7 +231,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         return VIEW_TYPE_USER_COMMENT;
 
       case LOAD_MORE_COMMENTS:
-        return VIEW_TYPE_LOAD_MORE;
+        return VIEW_TYPE_LOAD_MORE_COMMENTS;
 
       case INLINE_REPLY:
         return VIEW_TYPE_REPLY;
@@ -244,16 +244,51 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
   }
 
+  public SubmissionCommentRow getItemWithHeaderOffset(int position) {
+    return getItem(position - SubmissionAdapterWithHeader.HEADER_COUNT);
+  }
+
   @Override
   protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
     switch (viewType) {
       case VIEW_TYPE_USER_COMMENT:
         UserCommentViewHolder commentHolder = UserCommentViewHolder.create(inflater, parent, linkMovementMethod);
         commentHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider.getSwipeActionIconProvider());
+
+        // Collapse on click.
+        commentHolder.itemView.setOnClickListener(v -> {
+          DankCommentNode dankCommentNode = (DankCommentNode) getItemWithHeaderOffset(commentHolder.getAdapterPosition());
+          boolean willCollapse = !dankCommentNode.isCollapsed();
+          commentClickStream.accept(CommentClickEvent.create(
+              dankCommentNode,
+              commentHolder.getAdapterPosition() - SubmissionAdapterWithHeader.HEADER_COUNT,
+              commentHolder.itemView,
+              willCollapse
+          ));
+        });
+
+        // Gestures.
+        SwipeableLayout swipeableLayout = commentHolder.getSwipeableLayout();
+        swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions());
+        swipeableLayout.setOnPerformSwipeActionListener(action -> {
+          DankCommentNode dankCommentNode = (DankCommentNode) getItemWithHeaderOffset(commentHolder.getAdapterPosition());
+          CommentNode commentNode = dankCommentNode.commentNode();
+          swipeActionsProvider.performSwipeAction(action, commentNode, swipeableLayout);
+
+          // We should ideally only be updating the backing data-set and let onBind() handle the
+          // changes, but RecyclerView's item animator reset's the View's x-translation which we
+          // don't want. So we manually update the Views here.
+          onBindViewHolder(commentHolder, commentHolder.getAdapterPosition() - SubmissionAdapterWithHeader.HEADER_COUNT);
+        });
         return commentHolder;
 
-      case VIEW_TYPE_LOAD_MORE:
-        return LoadMoreCommentViewHolder.create(inflater, parent);
+      case VIEW_TYPE_LOAD_MORE_COMMENTS:
+        LoadMoreCommentViewHolder loadMoreViewHolder = LoadMoreCommentViewHolder.create(inflater, parent);
+        loadMoreViewHolder.itemView.setOnClickListener(o -> {
+          LoadMoreCommentItem loadMoreCommentItem = (LoadMoreCommentItem) getItemWithHeaderOffset(loadMoreViewHolder.getAdapterPosition());
+          loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreCommentItem.parentCommentNode(), loadMoreViewHolder.itemView));
+        });
+        return loadMoreViewHolder;
 
       case VIEW_TYPE_REPLY:
         return InlineReplyViewHolder.create(inflater, parent, markdownHintOptions, markdownSpanPool);
@@ -262,6 +297,26 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         PendingSyncReplyViewHolder pendingReplyHolder = PendingSyncReplyViewHolder.create(inflater, parent, linkMovementMethod);
         pendingReplyHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider.getSwipeActionIconProvider());
         pendingReplyHolder.getSwipeableLayout().setSwipeEnabled(false);
+
+        pendingReplyHolder.itemView.setOnClickListener(v -> {
+          CommentPendingSyncReplyItem pendingSyncReplyItem = (CommentPendingSyncReplyItem) getItemWithHeaderOffset(pendingReplyHolder.getAdapterPosition());
+          PendingSyncReply pendingSyncReply = pendingSyncReplyItem.pendingSyncReply();
+          if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
+            // "Tap to retry".
+            replyRetrySendClickStream.accept(ReplyRetrySendClickEvent.create(pendingSyncReply));
+
+          } else {
+            // Collapse on click.
+            boolean willCollapse = !pendingSyncReplyItem.isCollapsed();
+            commentClickStream.accept(CommentClickEvent.create(
+                getItemWithHeaderOffset(pendingReplyHolder.getAdapterPosition()),
+                pendingReplyHolder.getAdapterPosition() - SubmissionAdapterWithHeader.HEADER_COUNT,
+                pendingReplyHolder.itemView,
+                willCollapse
+            ));
+          }
+        });
+
         return pendingReplyHolder;
 
       default:
@@ -285,38 +340,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
         UserCommentViewHolder commentViewHolder = (UserCommentViewHolder) holder;
         commentViewHolder.bind(dankCommentNode, pendingOrDefaultVoteDirection, commentScore, isAuthorOP);
-
-        // Collapse on click.
-        commentViewHolder.itemView.setOnClickListener(v -> {
-          boolean willCollapse = !dankCommentNode.isCollapsed();
-          commentClickStream.accept(CommentClickEvent.create(
-              commentItem,
-              commentViewHolder.getAdapterPosition(),
-              commentViewHolder.itemView,
-              willCollapse
-          ));
-        });
-
-        // Gestures.
-        SwipeableLayout swipeableLayout = commentViewHolder.getSwipeableLayout();
-        swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions());
-        swipeableLayout.setOnPerformSwipeActionListener(action -> {
-          swipeActionsProvider.performSwipeAction(action, commentNode, swipeableLayout);
-
-          // We should ideally only be updating the backing data-set and let onBind() handle the
-          // changes, but RecyclerView's item animator reset's the View's x-translation which we
-          // don't want. So we manually update the Views here.
-          onBindViewHolder(holder, holder.getAdapterPosition() - 1 /* -1 for parent adapter's offset for header item. */);
-        });
         break;
 
       case LOAD_MORE_COMMENTS:
         LoadMoreCommentItem loadMoreItem = ((LoadMoreCommentItem) commentItem);
         ((LoadMoreCommentViewHolder) holder).bind(loadMoreItem);
-
-        holder.itemView.setOnClickListener(o -> {
-          loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreItem.parentCommentNode(), holder.itemView));
-        });
         break;
 
       case INLINE_REPLY:
@@ -335,25 +363,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       case PENDING_SYNC_REPLY:
         CommentPendingSyncReplyItem commentPendingSyncReplyItem = (CommentPendingSyncReplyItem) commentItem;
         PendingSyncReplyViewHolder pendingSyncReplyViewHolder = (PendingSyncReplyViewHolder) holder;
-
         pendingSyncReplyViewHolder.bind(commentPendingSyncReplyItem);
-        pendingSyncReplyViewHolder.itemView.setOnClickListener(v -> {
-          PendingSyncReply pendingSyncReply = commentPendingSyncReplyItem.pendingSyncReply();
-          if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
-            // "Tap to retry".
-            replyRetrySendClickStream.accept(ReplyRetrySendClickEvent.create(pendingSyncReply));
-
-          } else {
-            // Collapse on click.
-            boolean willCollapse = !commentPendingSyncReplyItem.isCollapsed();
-            commentClickStream.accept(CommentClickEvent.create(
-                commentItem,
-                pendingSyncReplyViewHolder.getAdapterPosition(),
-                pendingSyncReplyViewHolder.itemView,
-                willCollapse
-            ));
-          }
-        });
         break;
 
       default:

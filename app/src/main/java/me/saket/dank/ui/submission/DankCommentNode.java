@@ -6,6 +6,7 @@ import net.dean.jraw.models.CommentNode;
 
 /**
  * Represents a comment received from remote.
+ * Bad name. Should rename it to something better.
  */
 @AutoValue
 public abstract class DankCommentNode implements SubmissionCommentRow {

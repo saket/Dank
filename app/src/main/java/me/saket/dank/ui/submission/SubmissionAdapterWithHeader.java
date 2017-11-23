@@ -35,6 +35,8 @@ import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
  */
 public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<SubmissionAdapterWithHeader.SubmissionHeaderViewHolder, ViewHolder> {
 
+  public static final int HEADER_COUNT = 1;
+
   private final VotingManager votingManager;
   private final CommentsManager commentsManager;
   private final SubmissionSwipeActionsProvider swipeActionsProvider;
