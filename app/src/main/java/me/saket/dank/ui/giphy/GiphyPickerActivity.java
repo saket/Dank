@@ -4,6 +4,7 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 
 import android.content.Context;
 import android.content.Intent;
+import android.content.res.Configuration;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
@@ -111,7 +112,10 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
 
-    GridLayoutManager gridLayoutManager = new GridLayoutManager(this, 2);
+    boolean isInPortraitOrientation = getResources().getConfiguration().orientation == Configuration.ORIENTATION_PORTRAIT;
+    int columnCount = isInPortraitOrientation ? 2 : 3;
+
+    GridLayoutManager gridLayoutManager = new GridLayoutManager(this, columnCount);
     GiphyAdapter giphyAdapter = new GiphyAdapter(getResources().getIntArray(R.array.giphy_placeholder_colors));
     gifRecyclerView.setLayoutManager(gridLayoutManager);
     gifRecyclerView.setAdapter(giphyAdapter);

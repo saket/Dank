@@ -20,7 +20,7 @@ import timber.log.Timber;
 @Singleton
 public class GiphyRepository {
 
-  private static final int GIFS_TO_LOAD_PER_NETWORK_CALL = 26;
+  private static final int GIFS_TO_LOAD_PER_NETWORK_CALL = 30;
 
   private final DankApi dankApi;
   private Map<String, List<GiphyGif>> cache = new HashMap<>();
