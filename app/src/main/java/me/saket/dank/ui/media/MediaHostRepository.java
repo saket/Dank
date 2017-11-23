@@ -23,6 +23,7 @@ import javax.inject.Singleton;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.data.CachedResolvedLinkInfo;
 import me.saket.dank.data.FileUploadProgressEvent;
 import me.saket.dank.data.ImgurImage;
@@ -37,6 +38,8 @@ import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.StreamableLink;
 import me.saket.dank.data.links.StreamableUnresolvedLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
+import me.saket.dank.ui.giphy.GiphyGif;
+import me.saket.dank.ui.giphy.GiphyRepository;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.StoreFilePersister;
 import me.saket.dank.utils.StreamableRepository;
@@ -44,17 +47,24 @@ import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Urls;
 import okio.BufferedSource;
 
+/**
+ * Entry point for accessing all media services.
+ */
 @Singleton
 public class MediaHostRepository {
 
   private final StreamableRepository streamableRepository;
   private final ImgurRepository imgurRepository;
+  private final GiphyRepository giphyRepository;
   private final Store<MediaLink, MediaLink> cacheStore;
 
   @Inject
-  public MediaHostRepository(StreamableRepository streamableRepository, ImgurRepository imgurRepository, FileSystem cacheFileSystem, Moshi moshi) {
+  public MediaHostRepository(StreamableRepository streamableRepository, ImgurRepository imgurRepository, FileSystem cacheFileSystem, Moshi moshi,
+      GiphyRepository giphyRepository)
+  {
     this.streamableRepository = streamableRepository;
     this.imgurRepository = imgurRepository;
+    this.giphyRepository = giphyRepository;
 
     StoreFilePersister.JsonParser<MediaLink, MediaLink> jsonParser = new MediaLinkStoreJsonParser(moshi);
     PathResolver<MediaLink> pathResolver = key -> key.getClass().getSimpleName() + "_" + Urls.parseFileNameWithExtension(key.unparsedUrl());
@@ -170,5 +180,17 @@ public class MediaHostRepository {
   @CheckResult
   public Observable<FileUploadProgressEvent<ImgurUploadResponse>> uploadImage(File image, String mimeType) {
     return imgurRepository.uploadImage(image, mimeType);
+  }
+
+  @CheckResult
+  public Single<List<GiphyGif>> searchGifs(String searchQuery) {
+    return giphyRepository.search(searchQuery);
+  }
+
+  public void clearCachedGifs() {
+    if (!BuildConfig.DEBUG) {
+      throw new AssertionError();
+    }
+    giphyRepository.clear();
   }
 }

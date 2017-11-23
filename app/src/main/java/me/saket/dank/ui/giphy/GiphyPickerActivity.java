@@ -12,7 +12,6 @@ import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.view.View;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
@@ -33,6 +32,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.AnimatedProgressBar;
@@ -56,7 +56,7 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.giphypicker_empty_state) EmptyStateView emptyStateView;
   @BindView(R.id.giphypicker_error_state) ErrorStateView errorStateView;
 
-  @Inject GiphyRepository giphyRepository;
+  @Inject MediaHostRepository mediaHostRepository;
   @Inject ErrorResolver errorResolver;
 
   public static Intent intent(Context context) {
@@ -103,8 +103,7 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
   @OnClick(R.id.giphypicker_giphy_attribution)
   void onClickResetGifs() {
     if (BuildConfig.DEBUG) {
-      giphyRepository.clear();
-      Toast.makeText(this, "Clearing all cached gifs", Toast.LENGTH_SHORT).show();
+      mediaHostRepository.clearCachedGifs();
     }
   }
 
@@ -126,7 +125,7 @@ public class GiphyPickerActivity extends DankPullCollapsibleActivity {
         .map(sequence -> sequence.toString().toLowerCase(Locale.ENGLISH))
         .debounce(200, TimeUnit.MILLISECONDS, mainThread())
         .flatMap(searchQuery -> retries.map(o -> searchQuery).startWith(searchQuery))
-        .switchMapSingle(searchQuery -> giphyRepository.search(searchQuery)
+        .switchMapSingle(searchQuery -> mediaHostRepository.searchGifs(searchQuery)
             .retry(3)
             .subscribeOn(Schedulers.io())
             .observeOn(mainThread())
