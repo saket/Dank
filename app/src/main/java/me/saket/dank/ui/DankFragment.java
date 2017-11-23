@@ -18,7 +18,6 @@ public class DankFragment extends NaviFragment {
     if (onStopDisposables != null) {
       onStopDisposables.clear();
     }
-
     super.onStop();
   }
 
@@ -27,10 +26,10 @@ public class DankFragment extends NaviFragment {
     if (onDestroyDisposables != null) {
       onDestroyDisposables.clear();
     }
-
     super.onDestroy();
   }
 
+  @Deprecated
   protected void unsubscribeOnStop(Disposable subscription) {
     if (onStopDisposables == null) {
       onStopDisposables = new CompositeDisposable();
@@ -38,6 +37,7 @@ public class DankFragment extends NaviFragment {
     onStopDisposables.add(subscription);
   }
 
+  @Deprecated
   protected void unsubscribeOnDestroy(Disposable subscription) {
     if (onDestroyDisposables == null) {
       onDestroyDisposables = new CompositeDisposable();

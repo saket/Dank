@@ -17,7 +17,6 @@ import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
  */
 public abstract class DankActivity extends LifecycleOwnerActivity {
 
-  private CompositeDisposable onStopDisposables;
   private CompositeDisposable onDestroyDisposables;
 
   @Override
@@ -31,15 +30,6 @@ public abstract class DankActivity extends LifecycleOwnerActivity {
   }
 
   @Override
-  public void onStop() {
-    if (onStopDisposables != null) {
-      onStopDisposables.clear();
-    }
-
-    super.onStop();
-  }
-
-  @Override
   public void onDestroy() {
     if (onDestroyDisposables != null) {
       onDestroyDisposables.clear();
@@ -47,22 +37,16 @@ public abstract class DankActivity extends LifecycleOwnerActivity {
     super.onDestroy();
   }
 
-  protected void unsubscribeOnStop(Disposable subscription) {
-    if (onStopDisposables == null) {
-      onStopDisposables = new CompositeDisposable();
-    }
-    onStopDisposables.add(subscription);
+  protected void findAndSetupToolbar() {
+    setSupportActionBar(ButterKnife.findById(this, R.id.toolbar));
   }
 
+  @Deprecated
   protected void unsubscribeOnDestroy(Disposable disposable) {
     if (onDestroyDisposables == null) {
       onDestroyDisposables = new CompositeDisposable();
     }
     onDestroyDisposables.add(disposable);
-  }
-
-  protected void findAndSetupToolbar() {
-    setSupportActionBar(ButterKnife.findById(this, R.id.toolbar));
   }
 
   /**
