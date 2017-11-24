@@ -83,7 +83,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   // Click event streams.
   private final Relay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
-  private final Relay<ReplyGifClickEvent> replyGifClickStream = PublishRelay.create();
+  private final Relay<ReplyInsertGifClickEvent> replyGifClickStream = PublishRelay.create();
   private final Relay<ReplyDiscardClickEvent> replyDiscardClickStream = PublishRelay.create();
   private final Relay<ReplySendClickEvent> replySendClickStream = PublishRelay.create();
   private final Relay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
@@ -142,14 +142,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   }
 
   @AutoValue
-  abstract static class ReplyGifClickEvent implements Parcelable {
+  abstract static class ReplyInsertGifClickEvent implements Parcelable {
     /**
      * Adapter ID of this row.
      */
     public abstract long replyRowItemId();
 
-    public static ReplyGifClickEvent create(long replyRowItemId) {
-      return new AutoValue_CommentsAdapter_ReplyGifClickEvent(replyRowItemId);
+    public static ReplyInsertGifClickEvent create(long replyRowItemId) {
+      return new AutoValue_CommentsAdapter_ReplyInsertGifClickEvent(replyRowItemId);
     }
   }
 
@@ -235,7 +235,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   }
 
   @CheckResult
-  public Observable<ReplyGifClickEvent> streamReplyGifClicks() {
+  public Observable<ReplyInsertGifClickEvent> streamReplyGifClicks() {
     return replyGifClickStream;
   }
 
@@ -625,7 +625,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     }
 
     public void bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession, ReplyDraftStore replyDraftStore,
-        Relay<ReplyGifClickEvent> replyGifClickRelay, Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
+        Relay<ReplyInsertGifClickEvent> replyGifClickRelay, Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
         Relay<ReplyFullscreenClickEvent> replyFullscreenClickRelay, Relay<ReplySendClickEvent> replySendClickRelay)
     {
       PublicContribution parentContribution = commentInlineReplyItem.parentContribution();
@@ -640,7 +640,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       );
 
       gifButton.setOnClickListener(o ->
-          replyGifClickRelay.accept(ReplyGifClickEvent.create(getItemId()))
+          replyGifClickRelay.accept(ReplyInsertGifClickEvent.create(getItemId()))
       );
 
       goFullscreenButton.setOnClickListener(o -> {

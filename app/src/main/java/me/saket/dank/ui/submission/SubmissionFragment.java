@@ -71,6 +71,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.data.ActivityResult;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.StatusBarTint;
@@ -198,12 +199,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels;
 
     return fragmentLayout;
-  }
-
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-    Timber.i("onActivityResult() -> requestCode: %s", requestCode);
   }
 
   @Override
@@ -374,27 +369,25 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         });
 
     // Reply GIF clicks.
-    // WARNING: This breaks on a config change. Additionally, inline reply rows aren't retained across Activity
-    // recreations either (drafts are saved though). Too much effort would be required fixing all this.
     commentsAdapter.streamReplyGifClicks()
-        .doOnNext(o -> startActivityForResult(GiphyPickerActivity.intent(getContext()), REQUEST_CODE_PICK_GIF))
-        .flatMap(gifClickEvent -> lifecycle().onActivityResults()
-            .filter(result -> result.requestCode() == REQUEST_CODE_PICK_GIF)
-            .take(1)
-            .takeUntil(result -> result.resultCode() != Activity.RESULT_OK)
-            .map(result -> GiphyPickerActivity.extractPickedGif(result.data()))
-            .map(result -> Pair.create(gifClickEvent, result))
-        )
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(pair -> {
-          CommentsAdapter.ReplyGifClickEvent clickEvent = pair.first;
-          RecyclerView.ViewHolder holder = commentRecyclerView.findViewHolderForItemId(clickEvent.replyRowItemId());
+        .subscribe(clickEvent -> startActivityForResult(GiphyPickerActivity.intentWithPayload(getContext(), clickEvent), REQUEST_CODE_PICK_GIF));
+
+    // So it appears that SubredditActivity always gets recreated even when GiphyActivity is in foreground.
+    // So when the activity result arrives, this Rx chain should be ready and listening.
+    lifecycle().onActivityResults()
+        .filter(result -> result.requestCode() == REQUEST_CODE_PICK_GIF && result.resultCode() == Activity.RESULT_OK)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(result -> {
+          CommentsAdapter.ReplyInsertGifClickEvent gifInsertClickEvent = GiphyPickerActivity.extractExtraPayload(result.data());
+          RecyclerView.ViewHolder holder = commentRecyclerView.findViewHolderForItemId(gifInsertClickEvent.replyRowItemId());
           if (holder == null) {
             Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after GIPHY activity result"));
             return;
           }
-          GiphyGif giphyGif = pair.second;
-          ((CommentsAdapter.InlineReplyViewHolder) holder).handlePickedGiphyGif(giphyGif);
+
+          GiphyGif pickedGiphyGif = GiphyPickerActivity.extractPickedGif(result.data());
+          ((CommentsAdapter.InlineReplyViewHolder) holder).handlePickedGiphyGif(pickedGiphyGif);
         });
 
     // Reply fullscreen clicks.
