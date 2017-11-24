@@ -318,7 +318,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         return loadMoreViewHolder;
 
       case VIEW_TYPE_REPLY:
-        return InlineReplyViewHolder.create(inflater, parent, markdownHintOptions, markdownSpanPool);
+        return InlineReplyViewHolder.create(inflater, parent, this, markdownHintOptions, markdownSpanPool, replyDraftStore);
 
       case VIEW_TYPE_PENDING_SYNC_REPLY:
         PendingSyncReplyViewHolder pendingReplyHolder = PendingSyncReplyViewHolder.create(inflater, parent, linkMovementMethod);
@@ -407,7 +407,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   @Override
   public void onViewRecycled(RecyclerView.ViewHolder holder) {
     if (holder instanceof InlineReplyViewHolder) {
-      ((InlineReplyViewHolder) holder).handleOnRecycle(replyDraftStore);
+      ((InlineReplyViewHolder) holder).handleOnRecycle();
     }
     super.onViewRecycled(holder);
   }
@@ -595,26 +595,22 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_comment_reply_message) EditText replyField;
 
     private Disposable draftDisposable = Disposables.disposed();
-    private PublicContribution parentContribution;
     private boolean isSendingReply;
 
-    public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent, MarkdownHintOptions markdownHintOptions,
-        MarkdownSpanPool markdownSpanPool)
+    public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent, CommentsAdapter adapter,
+        MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool, ReplyDraftStore replyDraftStore)
     {
       View itemView = inflater.inflate(R.layout.list_item_inline_comment_reply, parent, false);
-      InlineReplyViewHolder holder = new InlineReplyViewHolder(itemView);
-
-      // Highlight markdown syntax.
-      // Note: We'll have to remove MarkdownHintOptions from Dagger graph when we introduce a light theme.
-      holder.replyField.addTextChangedListener(new MarkdownHints(holder.replyField, markdownHintOptions, markdownSpanPool));
-
-      return holder;
+      return new InlineReplyViewHolder(itemView, adapter, markdownHintOptions, markdownSpanPool, replyDraftStore);
     }
 
-    public InlineReplyViewHolder(View itemView) {
+    public InlineReplyViewHolder(View itemView, CommentsAdapter adapter, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool,
+        ReplyDraftStore replyDraftStore)
+    {
       super(itemView);
       ButterKnife.bind(this, itemView);
 
+      sendButton.setEnabled(false);
       replyField.addTextChangedListener(new SimpleTextWatcher() {
         @Override
         public void afterTextChanged(Editable text) {
@@ -622,14 +618,17 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
           sendButton.setEnabled(hasValidReply);
         }
       });
-      sendButton.setEnabled(false);
+
+      // Highlight markdown syntax.
+      // Note: We'll have to remove MarkdownHintOptions from Dagger graph when we introduce a light theme.
+      replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, markdownSpanPool));
     }
 
     public void bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession, ReplyDraftStore replyDraftStore,
         Relay<ReplyGifClickEvent> replyGifClickRelay, Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
         Relay<ReplyFullscreenClickEvent> replyFullscreenClickRelay, Relay<ReplySendClickEvent> replySendClickRelay)
     {
-      parentContribution = commentInlineReplyItem.parentContribution();
+      PublicContribution parentContribution = commentInlineReplyItem.parentContribution();
       indentedLayout.setIndentationDepth(commentInlineReplyItem.depth());
       authorUsernameHintView.setText(authorUsernameHintView.getResources().getString(
           R.string.submission_comment_reply_author_hint,
@@ -649,29 +648,31 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(parentContribution, replyMessage));
       });
 
+      isSendingReply = false;
       sendButton.setOnClickListener(o -> {
         isSendingReply = true;
         String replyMessage = replyField.getText().toString().trim();
         replySendClickRelay.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
       });
-      isSendingReply = false;
 
+      // TODO Consider getting draft from data source.
       draftDisposable.dispose();
       draftDisposable = replyDraftStore.getDraft(parentContribution)
           .compose(applySchedulersSingle())
           .subscribe(replyDraft -> Views.setTextWithCursor(replyField, replyDraft));
+
+      replyField.setOnFocusChangeListener((v, hasFocus) -> {
+        if (!hasFocus && !isSendingReply) {
+          // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
+          replyDraftStore.saveDraft(parentContribution, replyField.getText().toString())
+              .subscribeOn(Schedulers.io())
+              .subscribe();
+        }
+      });
     }
 
-    public void handleOnRecycle(ReplyDraftStore replyDraftStore) {
-      if (!isSendingReply) {
-        // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
-        replyDraftStore.saveDraft(parentContribution, replyField.getText().toString())
-            .subscribeOn(Schedulers.io())
-            .subscribe();
-      }
-
+    public void handleOnRecycle() {
       draftDisposable.dispose();
-      parentContribution = null;
     }
 
     public void handlePickedGiphyGif(GiphyGif giphyGif) {

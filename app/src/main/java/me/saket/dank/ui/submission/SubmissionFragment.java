@@ -544,8 +544,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               commentsAdapter.updateData(newComments);
               DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
               commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
-
-              Timber.i("Updating data-set.");
               commentsAdapterDatasetUpdatesStream.accept(newComments);
             },
             logError("Error while diff-ing comments")
