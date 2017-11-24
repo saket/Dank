@@ -77,9 +77,9 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
 
   @Override
   protected SubmissionHeaderViewHolder onCreateHeaderViewHolder(View headerView) {
-    if (headerViewHolder != null) {
-      throw new AssertionError("Header is already present!");
-    }
+    //if (headerViewHolder != null) {
+    //  throw new AssertionError("Header is already present!");
+    //}
     headerViewHolder = new SubmissionHeaderViewHolder(headerView);
     headerViewHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
     return headerViewHolder;
