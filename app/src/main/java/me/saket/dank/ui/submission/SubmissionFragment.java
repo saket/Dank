@@ -287,6 +287,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     super.onSaveInstanceState(outState);
   }
 
+  /** Called at the end of onViewCreated(). */
   private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
     if (savedInstanceState.containsKey(KEY_SUBMISSION_REQUEST)) {
       Submission retainedSubmission = null;
@@ -347,7 +348,14 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsManager,
         submissionSwipeActionsProvider
     );
-    commentRecyclerView.setAdapter(adapterWithSubmissionHeader);
+
+    // RecyclerView automatically handles saving and restoring scroll position if the
+    // adapter contents are the same once the adapter is set. So we're setting the
+    // adapter only once we've the data.
+    commentsAdapterDatasetUpdatesStream
+        .take(1)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> commentRecyclerView.setAdapter(adapterWithSubmissionHeader));
 
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
@@ -536,6 +544,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               commentsAdapter.updateData(newComments);
               DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
               commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
+
+              Timber.i("Updating data-set.");
               commentsAdapterDatasetUpdatesStream.accept(newComments);
             },
             logError("Error while diff-ing comments")
