@@ -321,6 +321,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentTreeConstructor.showReplyAndExpandComments(parentComment);
         inlineReplyStream.accept(parentComment);
       } else {
+        Keyboards.hide(getActivity(), commentRecyclerView);
         commentTreeConstructor.hideReply(parentComment);
       }
     });
