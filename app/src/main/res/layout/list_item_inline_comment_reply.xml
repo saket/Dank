@@ -90,6 +90,7 @@
       android:background="@null"
       android:gravity="top"
       android:hint="@string/submission_comment_reply_hint"
+      android:imeOptions="actionDone"
       android:inputType="textCapSentences|textMultiLine"
       android:minLines="3"
       android:paddingBottom="@dimen/spacing16"

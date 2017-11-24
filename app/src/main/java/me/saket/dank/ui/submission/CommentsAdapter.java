@@ -601,7 +601,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent, MarkdownHintOptions markdownHintOptions,
         MarkdownSpanPool markdownSpanPool)
     {
-      View itemView = inflater.inflate(R.layout.list_item_comment_reply, parent, false);
+      View itemView = inflater.inflate(R.layout.list_item_inline_comment_reply, parent, false);
       InlineReplyViewHolder holder = new InlineReplyViewHolder(itemView);
 
       // Highlight markdown syntax.
