@@ -285,12 +285,13 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         commentHolder.itemView.setOnClickListener(v -> {
           DankCommentNode dankCommentNode = (DankCommentNode) getItemWithHeaderOffset(commentHolder.getAdapterPosition());
           boolean willCollapse = !dankCommentNode.isCollapsed();
-          commentClickStream.accept(CommentClickEvent.create(
+          CommentClickEvent event = CommentClickEvent.create(
               dankCommentNode,
               commentHolder.getAdapterPosition() - SubmissionAdapterWithHeader.HEADER_COUNT,
               commentHolder.itemView,
               willCollapse
-          ));
+          );
+          commentClickStream.accept(event);
         });
 
         // Gestures.

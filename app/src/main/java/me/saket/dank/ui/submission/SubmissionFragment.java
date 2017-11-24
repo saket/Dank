@@ -381,12 +381,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .subscribe(pair -> {
           CommentsAdapter.ReplyGifClickEvent clickEvent = pair.first;
           RecyclerView.ViewHolder holder = commentRecyclerView.findViewHolderForItemId(clickEvent.replyRowItemId());
-
           if (holder == null) {
             Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after GIPHY activity result"));
             return;
           }
-
           GiphyGif giphyGif = pair.second;
           ((CommentsAdapter.InlineReplyViewHolder) holder).handlePickedGiphyGif(giphyGif);
         });
@@ -518,7 +516,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           commentTreeConstructor.setComments(submission.getComments(), pendingSyncReplies);
         });
 
-    // Animate changes to comments.
+    // Adapter data-set.
     Pair<List<SubmissionCommentRow>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
     commentTreeConstructor.streamTreeUpdates()
         .toFlowable(BackpressureStrategy.LATEST)
@@ -532,14 +530,16 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .observeOn(mainThread())
         .filter(o -> !submissionPageLayout.isCollapsedOrCollapsing())
         .takeUntil(lifecycle().onDestroyFlowable())
-        .subscribe(itemsAndDiff -> {
-          List<SubmissionCommentRow> newComments = itemsAndDiff.first;
-          commentsAdapter.updateData(newComments);
-          commentsAdapterDatasetUpdatesStream.accept(newComments);
-
-          DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
-          commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
-        }, logError("Error while diff-ing comments"));
+        .subscribe(
+            itemsAndDiff -> {
+              List<SubmissionCommentRow> newComments = itemsAndDiff.first;
+              commentsAdapter.updateData(newComments);
+              DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
+              commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
+              commentsAdapterDatasetUpdatesStream.accept(newComments);
+            },
+            logError("Error while diff-ing comments")
+        );
 
     // Toggle collapse on comment clicks.
     commentsAdapter.streamCommentCollapseExpandEvents()
@@ -547,7 +547,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .subscribe(clickEvent -> {
           if (clickEvent.willCollapseOnClick()) {
             int firstCompletelyVisiblePos = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
-            boolean commentExtendsBeyondWindowTopEdge = firstCompletelyVisiblePos == -1 || clickEvent.commentRowPosition() < firstCompletelyVisiblePos;
+            int commentRowPosition = clickEvent.commentRowPosition() + SubmissionAdapterWithHeader.HEADER_COUNT;
+            boolean commentExtendsBeyondWindowTopEdge = firstCompletelyVisiblePos == -1 || commentRowPosition < firstCompletelyVisiblePos;
             if (commentExtendsBeyondWindowTopEdge) {
               float viewTop = clickEvent.commentItemView().getY();
               commentRecyclerView.smoothScrollBy(0, (int) viewTop);
@@ -557,6 +558,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           commentTreeConstructor.toggleCollapse(clickEvent.commentRow());
         });
 
+    // TODO Save more comments to DB.
     // Load-more-comment clicks.
     // Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
     commentsAdapter
