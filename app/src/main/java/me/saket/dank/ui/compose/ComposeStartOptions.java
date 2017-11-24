@@ -11,6 +11,7 @@ import net.dean.jraw.models.Contribution;
 @AutoValue
 public abstract class ComposeStartOptions implements Parcelable {
 
+  @Nullable
   public abstract String secondPartyName();
 
   @Nullable
@@ -30,7 +31,10 @@ public abstract class ComposeStartOptions implements Parcelable {
   @AutoValue.Builder
   public abstract static class Builder {
 
-    public abstract Builder secondPartyName(String secondPartyName);
+    /**
+     * When null, {@link ComposeReplyActivity} just uses "Reply".
+     */
+    public abstract Builder secondPartyName(@Nullable String secondPartyName);
 
     public abstract Builder preFilledText(String preFilledText);
 

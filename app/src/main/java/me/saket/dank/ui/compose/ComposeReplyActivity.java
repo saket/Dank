@@ -95,7 +95,11 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
           .build();
     }
 
-    setTitle(getString(R.string.composereply_title_reply_to, startOptions.secondPartyName()));
+    if (startOptions.secondPartyName() != null) {
+      setTitle(getString(R.string.composereply_title_reply_to, startOptions.secondPartyName()));
+    } else {
+      setTitle(R.string.composereply_empty_title_placeholder);
+    }
     toolbar.setNavigationOnClickListener(o -> onBackPressed());
 
     setupContentExpandablePage(pageLayout);

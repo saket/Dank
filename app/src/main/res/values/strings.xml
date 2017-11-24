@@ -294,6 +294,7 @@
   <string name="composereply_undo">Undo</string>
   <string name="cd_composereply_undo">Undo last change</string>
   <string name="cd_composereply_redo">Redo last change</string>
+  <string name="composereply_empty_title_placeholder">Reply</string>
 
   <string name="composereply_addlink_error_empty_field">This can\'t be empty ಠ_ಠ</string>
   <string name="composereply_addlink_title">Title</string>

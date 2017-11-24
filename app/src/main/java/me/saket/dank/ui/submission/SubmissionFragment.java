@@ -16,7 +16,6 @@ import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.Context;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -49,6 +48,7 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
@@ -71,7 +71,6 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.data.ActivityResult;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.StatusBarTint;
@@ -395,8 +394,13 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     commentsAdapter.streamReplyFullscreenClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe((CommentsAdapter.ReplyFullscreenClickEvent fullscreenClickEvent) -> {
+          PublicContribution parentContribution = fullscreenClickEvent.parentContribution();
+          String secondPartyName = parentContribution instanceof Comment
+              ? ((Comment) parentContribution).getAuthor()
+              : null;
+
           ComposeStartOptions startOptions = ComposeStartOptions.builder()
-              .secondPartyName("secondPartyName")
+              .secondPartyName(secondPartyName)
               .parentContribution(fullscreenClickEvent.parentContribution())
               .preFilledText(fullscreenClickEvent.replyMessage())
               .build();
