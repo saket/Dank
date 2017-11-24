@@ -19,16 +19,19 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-
 import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 /**
- * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more" & "continue thread ->" items.
+ * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more"
+ * & "continue thread ->" items. This is stored as a Singleton so that collapsed nodes, inline replies, etc. can
+ * be retained across Activity recreations.
  */
+@Singleton
 public class CommentTreeConstructor {
 
   private Set<String> collapsedCommentNodeFullNames = new HashSet<>();        // Comments that are collapsed.
