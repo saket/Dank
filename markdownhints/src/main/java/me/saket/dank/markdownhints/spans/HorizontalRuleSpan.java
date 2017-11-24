@@ -67,7 +67,7 @@ public class HorizontalRuleSpan implements LineBackgroundSpan {
       leftOffset = paint.measureText(text.toString());
     }
 
-    int lineCenter = (int) ((top + bottom) / 2 + (paint.getTextSize()) * mode.getTopOffsetFactor());
+    int lineCenter = (int) ((top + bottom) / 2 + (paint.getTextSize() * mode.getTopOffsetFactor()));
     canvas.drawLine(left + leftOffset, lineCenter, right, lineCenter, paint);
 
     paint.setColor(originalPaintColor);
