@@ -200,41 +200,43 @@ public class SubmissionRepository {
     lastPaginationAnchor(folder)
         .doOnSubscribe(o -> networkCallStatusStream.accept(NetworkCallStatus.createInFlight()))
         .doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
-        .flatMap(anchor -> dankRedditClient.withAuth(Single.create(emitter -> {
-          List<Submission> distinctNewItems = new ArrayList<>();
-          PaginationAnchor nextAnchor = anchor;
+        .flatMap(anchor -> dankRedditClient
+            .withAuth(Single.create(emitter -> {
+              List<Submission> distinctNewItems = new ArrayList<>();
+              PaginationAnchor nextAnchor = anchor;
 
-          while (true) {
-            FetchResult fetchResult = fetchSubmissionsFromRemoteWithAnchor(folder, nextAnchor);
-            votingManager.removePendingVotesForFetchedSubmissions(fetchResult.fetchedSubmissions()).subscribe();
-            //Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
+              while (true) {
+                FetchResult fetchResult = fetchSubmissionsFromRemoteWithAnchor(folder, nextAnchor);
+                votingManager.removePendingVotesForFetchedSubmissions(fetchResult.fetchedSubmissions()).subscribe();
+                //Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
 
-            SaveResult saveResult = saveSubmissions(folder, fetchResult.fetchedSubmissions());
-            distinctNewItems.addAll(saveResult.savedItems());
+                SaveResult saveResult = saveSubmissions(folder, fetchResult.fetchedSubmissions());
+                distinctNewItems.addAll(saveResult.savedItems());
 
-            if (!fetchResult.hasMoreItems() || distinctNewItems.size() > 10) {
-              break;
-            }
+                if (!fetchResult.hasMoreItems() || distinctNewItems.size() > 10) {
+                  break;
+                }
 
-            //Timber.i("%s distinct items not enough", distinctNewItems.size());
-            Submission lastFetchedSubmission = fetchResult.fetchedSubmissions().get(fetchResult.fetchedSubmissions().size() - 1);
-            nextAnchor = PaginationAnchor.create(lastFetchedSubmission.getFullName());
-          }
+                //Timber.i("%s distinct items not enough", distinctNewItems.size());
+                Submission lastFetchedSubmission = fetchResult.fetchedSubmissions().get(fetchResult.fetchedSubmissions().size() - 1);
+                nextAnchor = PaginationAnchor.create(lastFetchedSubmission.getFullName());
+              }
 
-          emitter.onSuccess(FetchResult.create(Collections.unmodifiableList(distinctNewItems), distinctNewItems.size() > 0));
-        })))
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .retryWhen(errors -> errors.flatMap(error -> {
-          Throwable actualError = errorResolver.findActualCause(error);
+              emitter.onSuccess(FetchResult.create(Collections.unmodifiableList(distinctNewItems), distinctNewItems.size() > 0));
+            }))
+            .retryWhen(errors -> errors.flatMap(error -> {
+              Throwable actualError = errorResolver.findActualCause(error);
 
-          if (actualError instanceof InterruptedIOException) {
-            Timber.w("Retrying on thread interruption");
-            return Flowable.just((Object) Notification.INSTANCE);
-          } else {
-            return Flowable.error(error);
-          }
-        }))
+              if (actualError instanceof InterruptedIOException) {
+                Timber.w("Retrying on thread interruption");
+                return Flowable.just((Object) Notification.INSTANCE);
+              } else {
+                return Flowable.error(error);
+              }
+            }))
+            .subscribeOn(Schedulers.io())
+            .observeOn(AndroidSchedulers.mainThread())
+        )
         .subscribe(
             o -> networkCallStatusStream.accept(NetworkCallStatus.createIdle()),
             error -> {
