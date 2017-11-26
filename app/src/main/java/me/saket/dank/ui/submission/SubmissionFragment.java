@@ -47,6 +47,7 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
@@ -612,32 +613,40 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           commentTreeConstructor.toggleCollapse(clickEvent.commentRow());
         });
 
-    // TODO Save more comments to DB.
     // Load-more-comment clicks.
-    // Using an Rx chain ensures that multiple load-more-clicks are executed sequentially.
     commentsAdapter
         .streamLoadMoreCommentsClicks()
-        .flatMap(loadMoreClickEvent -> {
+        // This distinct() is important. Stupid JRAW inserts new comments directly into
+        // the comment tree so if multiple API calls are made, it'll insert duplicate
+        // items and result in a crash because RecyclerView expects stable IDs.
+        .distinct()
+        .concatMapEager(loadMoreClickEvent -> {
           if (loadMoreClickEvent.parentCommentNode().isThreadContinuation()) {
             return submissionRequestStream
                 .take(1)
-                .doOnNext(activeRequest -> {
-                  DankSubmissionRequest continueThreadRequest = submissionRequestStream.getValue().toBuilder()
+                .flatMap(submissionRequest -> {
+                  DankSubmissionRequest continueThreadRequest = submissionRequest.toBuilder()
                       .focusComment(loadMoreClickEvent.parentCommentNode().getComment().getId())
                       .build();
-
                   Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
                   expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
                   SubmissionFragmentActivity.start(getContext(), continueThreadRequest, expandFromShape);
-                })
-                .flatMap(o -> Observable.empty());
+                  return Observable.empty();
+                });
 
           } else {
-            return Observable.just(loadMoreClickEvent.parentCommentNode())
+            CommentNode parentCommentNode = loadMoreClickEvent.parentCommentNode();
+            return submissionRequestStream.zipWith(submissionStream, Pair::create)
+                .take(1)
                 .observeOn(io())
-                .doOnNext(commentTreeConstructor.setMoreCommentsLoading(true))
-                .map(Dank.reddit().loadMoreComments())
-                .doOnNext(commentTreeConstructor.setMoreCommentsLoading(false));
+                .doOnNext(o -> commentTreeConstructor.setMoreCommentsLoading(parentCommentNode, true))
+                .flatMapCompletable(pair -> {
+                  DankSubmissionRequest submissionRequest = pair.first;
+                  Submission submission = pair.second;
+                  return submissionRepository.loadMoreComments(submission, submissionRequest, parentCommentNode);
+                })
+                .doOnTerminate(() -> commentTreeConstructor.setMoreCommentsLoading(parentCommentNode, false))
+                .toObservable();
           }
         })
         .takeUntil(lifecycle().onDestroy())

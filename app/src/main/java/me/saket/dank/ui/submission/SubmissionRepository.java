@@ -16,6 +16,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
+import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Submission;
@@ -138,36 +139,53 @@ public class SubmissionRepository {
             @Nonnull
             @Override
             public Single<Boolean> write(@Nonnull DankSubmissionRequest submissionRequest, @Nonnull Submission submission) {
-              return Single.fromCallable(() -> {
-                Timber.i("Saving submission with comments: %s", submission.getTitle());
-
-                long saveTimeMillis = System.currentTimeMillis();
-                CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
-
-                Submission submissionWithoutComments = new Submission(submission.getDataNode());
-                CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
-                    submission.getFullName(),
-                    submissionWithoutComments,
-                    submissionWithoutComments.getSubredditName(),
-                    saveTimeMillis
-                );
-                JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
-
-                try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-                  database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
-                  database.insert(CachedSubmissionWithoutComments.TABLE_NAME, cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
-                      SQLiteDatabase.CONFLICT_REPLACE);
-                  transaction.markSuccessful();
-                }
-
-                return true;
-              });
+              return saveSubmissionWithComments(submissionRequest, submission).toSingleDefault(true);
             }
           })
           .open();
     }
 
     return submissionWithCommentsStore.getRefreshing(submissionRequest);
+  }
+
+  @CheckResult
+  private Completable saveSubmissionWithComments(@Nonnull DankSubmissionRequest submissionRequest, @Nonnull Submission submission) {
+    return Completable.fromAction(() -> {
+      Timber.i("Saving submission with comments: %s", submission.getTitle());
+
+      long saveTimeMillis = System.currentTimeMillis();
+      CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
+
+      Submission submissionWithoutComments = new Submission(submission.getDataNode());
+      CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
+          submission.getFullName(),
+          submissionWithoutComments,
+          submissionWithoutComments.getSubredditName(),
+          saveTimeMillis
+      );
+      JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
+
+      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+        database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
+        database.insert(CachedSubmissionWithoutComments.TABLE_NAME, cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
+            SQLiteDatabase.CONFLICT_REPLACE);
+        transaction.markSuccessful();
+      }
+    });
+  }
+
+  @CheckResult
+  public Completable loadMoreComments(Submission submission, DankSubmissionRequest submissionRequest, CommentNode commentNode) {
+    if (!commentNode.getSubmissionName().equals(submission.getFullName())) {
+      throw new AssertionError("CommentNode does not belong to the supplied submission");
+    }
+
+    // JRAW inserts the new comments directly inside submission's comment tree, which we
+    // do not want because we treat persistence as the single source of truth. So we'll
+    // instead re-save the submission to DB and let the UI update itself.
+    return dankRedditClient.loadMoreComments(commentNode)
+        .toCompletable()
+        .andThen(saveSubmissionWithComments(submissionRequest, submission));
   }
 
 // ======== SUBMISSION LIST (W/O COMMENTS) ======== //

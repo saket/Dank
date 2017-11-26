@@ -237,6 +237,10 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       case VIEW_TYPE_LOAD_MORE_COMMENTS:
         LoadMoreCommentViewHolder loadMoreViewHolder = LoadMoreCommentViewHolder.create(inflater, parent);
         loadMoreViewHolder.itemView.setOnClickListener(o -> {
+          if (loadMoreViewHolder.getAdapterPosition() == -1) {
+            // Is being removed.
+            return;
+          }
           LoadMoreCommentItem loadMoreCommentItem = (LoadMoreCommentItem) getItemWithHeaderOffset(loadMoreViewHolder.getAdapterPosition());
           loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreCommentItem.parentCommentNode(), loadMoreViewHolder.itemView));
         });
@@ -656,6 +660,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       if (loadMoreCommentsItem.progressVisible()) {
         loadMoreView.setText(R.string.submission_loading_more_comments);
+        loadMoreView.setEnabled(false);
+
       } else {
         if (parentCommentNode.isThreadContinuation()) {
           loadMoreView.setText(R.string.submission_continue_this_thread);
@@ -665,6 +671,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
               parentCommentNode.getMoreChildren().getCount()
           ));
         }
+        loadMoreView.setEnabled(true);
       }
       Views.setCompoundDrawableEnd(loadMoreView, parentCommentNode.isThreadContinuation() ? R.drawable.ic_arrow_forward_12dp : 0);
     }

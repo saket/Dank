@@ -111,12 +111,12 @@ public class DankRedditClient {
 
   /**
    * Load more replies of a comment node.
+   *
+   * @return List of new comments.
    */
-  public Function<CommentNode, CommentNode> loadMoreComments() {
-    return commentNode -> {
-      commentNode.loadMoreComments(redditClient);
-      return commentNode;
-    };
+  @CheckResult
+  public Single<List<CommentNode>> loadMoreComments(CommentNode commentNode) {
+    return Single.fromCallable(() -> commentNode.loadMoreComments(redditClient));
   }
 
 // ======== AUTHENTICATION ======== //

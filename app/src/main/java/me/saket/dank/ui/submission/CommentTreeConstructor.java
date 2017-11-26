@@ -23,7 +23,6 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Observable;
-import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 
 /**
@@ -119,16 +118,16 @@ public class CommentTreeConstructor {
 
   /**
    * Enable "loading more…" progress indicator.
+   *
+   * @param parentCommentNode CommentNode for which more child nodes are being fetched.
    */
-  public Consumer<CommentNode> setMoreCommentsLoading(boolean loading) {
-    return commentNode -> {
-      if (loading) {
-        loadingMoreCommentNodeFullNames.add(commentNode.getComment().getFullName());
-      } else {
-        loadingMoreCommentNodeFullNames.remove(commentNode.getComment().getFullName());
-      }
-      changesRequiredStream.accept(Notification.INSTANCE);
-    };
+  public void setMoreCommentsLoading(CommentNode parentCommentNode, boolean loading) {
+    if (loading) {
+      loadingMoreCommentNodeFullNames.add(parentCommentNode.getComment().getFullName());
+    } else {
+      loadingMoreCommentNodeFullNames.remove(parentCommentNode.getComment().getFullName());
+    }
+    changesRequiredStream.accept(Notification.INSTANCE);
   }
 
   public boolean areMoreCommentsLoadingFor(CommentNode commentNode) {
