@@ -1,5 +1,6 @@
 package me.saket.dank.utils.lifecycle;
 
+import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
@@ -15,9 +16,16 @@ public class LifecycleOwnerFragment extends Fragment implements LifecycleOwner {
   }
 
   @Override
+  public void onAttach(Context context) {
+    super.onAttach(context);
+    if (lifecycleStreams == null) {
+      lifecycleStreams = new ActivityLifecycleStreams();
+    }
+  }
+
+  @Override
   public void onCreate(Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    lifecycleStreams = new ActivityLifecycleStreams();
     lifecycleStreams.notifyOnCreate();
   }
 

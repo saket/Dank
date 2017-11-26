@@ -189,6 +189,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   public void onAttach(Context context) {
     Dank.dependencyInjector().inject(this);
     super.onAttach(context);
+    Timber.i("onAttach()");
+    if (lifecycleStreams == null) {
+      lifecycleStreams = SubmissionFragmentLifecycleStreams.wrap(super.lifecycle());
+    }
   }
 
   @Nullable
@@ -217,6 +221,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     submissionPageLayout = ((ExpandablePageLayout) fragmentLayout.getParent());
     submissionPageLayout.addStateChangeCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
+
+    lifecycleStreams.trackPageLifecycles(submissionPageLayout);
 
     Keyboards.streamKeyboardVisibilityChanges(getActivity(), Views.statusBarHeight(getResources()))
         .takeUntil(lifecycle().onDestroy())
@@ -1120,9 +1126,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   @Override
   public SubmissionFragmentLifecycleStreams lifecycle() {
-    if (lifecycleStreams == null) {
-      lifecycleStreams = SubmissionFragmentLifecycleStreams.wrap(super.lifecycle(), submissionPageLayout);
-    }
     return lifecycleStreams;
   }
 }

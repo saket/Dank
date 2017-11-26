@@ -17,13 +17,15 @@ public class SubmissionFragmentLifecycleStreams implements LifecycleStreams {
   private Relay<Object> pageCollapseStream = PublishRelay.create();
   private Relay<Object> pageAboutToCollapseStream = PublishRelay.create();
 
-  public static SubmissionFragmentLifecycleStreams wrap(LifecycleStreams delegate, ExpandablePageLayout layout) {
-    return new SubmissionFragmentLifecycleStreams(delegate, layout);
+  public static SubmissionFragmentLifecycleStreams wrap(LifecycleStreams delegate) {
+    return new SubmissionFragmentLifecycleStreams(delegate);
   }
 
-  public SubmissionFragmentLifecycleStreams(LifecycleStreams delegate, ExpandablePageLayout pageLayout) {
+  public SubmissionFragmentLifecycleStreams(LifecycleStreams delegate) {
     this.delegate = delegate;
+  }
 
+  public void trackPageLifecycles(ExpandablePageLayout pageLayout) {
     pageLayout.addStateChangeCallbacks(new ExpandablePageLayout.StateChangeCallbacks() {
       @Override
       public void onPageAboutToExpand(long expandAnimDuration) {}
