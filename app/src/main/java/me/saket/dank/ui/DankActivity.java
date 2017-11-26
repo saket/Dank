@@ -7,8 +7,6 @@ import android.support.v7.app.ActionBar;
 import android.view.View;
 
 import butterknife.ButterKnife;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import me.saket.dank.R;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 
@@ -16,8 +14,6 @@ import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
  * Base class for all activities.
  */
 public abstract class DankActivity extends LifecycleOwnerActivity {
-
-  private CompositeDisposable onDestroyDisposables;
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
@@ -29,24 +25,8 @@ public abstract class DankActivity extends LifecycleOwnerActivity {
     getWindow().getDecorView().setSystemUiVisibility(flag);
   }
 
-  @Override
-  public void onDestroy() {
-    if (onDestroyDisposables != null) {
-      onDestroyDisposables.clear();
-    }
-    super.onDestroy();
-  }
-
   protected void findAndSetupToolbar() {
     setSupportActionBar(ButterKnife.findById(this, R.id.toolbar));
-  }
-
-  @Deprecated
-  protected void unsubscribeOnDestroy(Disposable disposable) {
-    if (onDestroyDisposables == null) {
-      onDestroyDisposables = new CompositeDisposable();
-    }
-    onDestroyDisposables.add(disposable);
   }
 
   /**

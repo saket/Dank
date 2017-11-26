@@ -64,7 +64,6 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.NetworkStateListener;
@@ -113,7 +112,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   private RxPermissions rxPermissions;
   private Relay<Boolean> systemUiVisibilityStream = BehaviorRelay.create();
   private MediaLink resolvedMediaLink;
-  private DankLinkMovementMethod linkMovementMethod;
   private Set<MediaLink> hdEnabledMediaLinks = new HashSet<>();
   private BehaviorRelay<Set<MediaLink>> hdEnabledMediaLinksStream = BehaviorRelay.create();
   private BehaviorRelay<MediaAlbumItem> viewpagerPageChangeStream = BehaviorRelay.create();
@@ -207,33 +205,31 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     resolveMediaLinkAndDisplayContent(mediaLinkToDisplay);
 
     // Hide all content when Activity goes immersive.
-    unsubscribeOnDestroy(
-        systemUiVisibilityStream
-            .subscribe(systemUiVisible -> {
-              TimeInterpolator interpolator = systemUiVisible ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(2f);
-              long animationDuration = 300;
-              animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
-            })
-    );
+    systemUiVisibilityStream
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(systemUiVisible -> {
+          TimeInterpolator interpolator = systemUiVisible ? new DecelerateInterpolator(2f) : new AccelerateInterpolator(2f);
+          long animationDuration = 300;
+          animateMediaOptionsVisibility(systemUiVisible, interpolator, animationDuration, false);
+        });
 
     // Toggle HD button's visibility if a higher-res version can be shown and is not already visible.
-    unsubscribeOnDestroy(
-        viewpagerPageChangeStream
-            .concatMap(activeMediaItem -> hdEnabledMediaLinksStream.map(o -> activeMediaItem))
-            .subscribe(activeMediaItem -> {
-              String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
-              String optimizedQualityUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
-                  getRedditSuppliedImages(),
-                  getResources().getDisplayMetrics().widthPixels,
-                  activeMediaItem.mediaLink().lowQualityUrl() /* defaultValue */
-              );
+    viewpagerPageChangeStream
+        .concatMap(activeMediaItem -> hdEnabledMediaLinksStream.map(o -> activeMediaItem))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(activeMediaItem -> {
+          String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
+          String optimizedQualityUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
+              getRedditSuppliedImages(),
+              getResources().getDisplayMetrics().widthPixels,
+              activeMediaItem.mediaLink().lowQualityUrl() /* defaultValue */
+          );
 
-              //noinspection ConstantConditions
-              boolean hasHighDefVersion = !optimizedQualityUrl.equals(highQualityUrl);
-              boolean isAlreadyShowingHighDefVersion = hdEnabledMediaLinks.contains(activeMediaItem.mediaLink());
-              reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
-            })
-    );
+          //noinspection ConstantConditions
+          boolean hasHighDefVersion = !optimizedQualityUrl.equals(highQualityUrl);
+          boolean isAlreadyShowingHighDefVersion = hdEnabledMediaLinks.contains(activeMediaItem.mediaLink());
+          reloadInHighDefButton.setEnabled(hasHighDefVersion && !isAlreadyShowingHighDefVersion);
+        });
 
     mediaAlbumPager.setOnInterceptScrollListener((view, deltaX, touchX, touchY) -> {
       if (view instanceof ZoomableImageView) {
@@ -246,34 +242,34 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   }
 
   private void resolveMediaLinkAndDisplayContent(MediaLink mediaLinkToDisplay) {
-    unsubscribeOnDestroy(
-        mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
-            // TODO: Handle Imgur rate limit reached.
-            .doOnSuccess(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
-            .map(resolvedMediaLink -> {
-              // Find all child images under an album.
-              if (resolvedMediaLink.isMediaAlbum()) {
-                return ((ImgurAlbumLink) resolvedMediaLink).images();
-              } else {
-                return Collections.singletonList(resolvedMediaLink);
+    mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
+        // TODO: Handle Imgur rate limit reached.
+        .doOnSuccess(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
+        .map(resolvedMediaLink -> {
+          // Find all child images under an album.
+          if (resolvedMediaLink.isMediaAlbum()) {
+            return ((ImgurAlbumLink) resolvedMediaLink).images();
+          } else {
+            return Collections.singletonList(resolvedMediaLink);
+          }
+        })
+        // Toggle HD for all images with the default value.
+        .flatMap(mediaLinks -> userPreferences.streamHighResolutionMediaNetworkStrategy()
+            .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
+            .firstOrError()
+            .doOnSuccess(canLoadHighResolutionMedia -> {
+              if (canLoadHighResolutionMedia) {
+                hdEnabledMediaLinks.addAll(mediaLinks);
+                hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);
               }
             })
-            // Toggle HD for all images with the default value.
-            .flatMap(mediaLinks -> userPreferences.streamHighResolutionMediaNetworkStrategy()
-                .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
-                .firstOrError()
-                .doOnSuccess(canLoadHighResolutionMedia -> {
-                  if (canLoadHighResolutionMedia) {
-                    hdEnabledMediaLinks.addAll(mediaLinks);
-                    hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);
-                  }
-                })
-                .map(o -> mediaLinks)
-            )
-            .compose(RxUtils.applySchedulersSingle())
-            .flatMapObservable(mediaLinks -> {
-              // Enable HD flag if it's turned on.
-              return hdEnabledMediaLinksStream.map(hdEnabledMediaLinks -> {
+            .map(o -> mediaLinks)
+        )
+        .compose(RxUtils.applySchedulersSingle())
+        .flatMapObservable(mediaLinks -> {
+          // Enable HD flag if it's turned on.
+          return hdEnabledMediaLinksStream
+              .map(hdEnabledMediaLinks -> {
                 List<MediaAlbumItem> mediaAlbumItems = new ArrayList<>(mediaLinks.size());
                 for (MediaLink mediaLink : mediaLinks) {
                   boolean highDefEnabled = hdEnabledMediaLinks.contains(mediaLink);
@@ -281,41 +277,41 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                 }
                 return mediaAlbumItems;
               });
-            })
-            .subscribe(
-                mediaAlbumItems -> {
-                  boolean isFirstDataChange = mediaAlbumAdapter.getCount() == 0;
-                  mediaAlbumAdapter.setAlbumItems(mediaAlbumItems);
-                  moveToScreenState(ScreenState.LINK_RESOLVED);
+        })
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(
+            mediaAlbumItems -> {
+              boolean isFirstDataChange = mediaAlbumAdapter.getCount() == 0;
+              mediaAlbumAdapter.setAlbumItems(mediaAlbumItems);
+              moveToScreenState(ScreenState.LINK_RESOLVED);
 
-                  if (isFirstDataChange) {
-                    startListeningToViewPagerPageChanges();
+              if (isFirstDataChange) {
+                startListeningToViewPagerPageChanges();
 
-                    // Show media options now that we have adapter data.
-                    optionButtonsContainerView.setVisibility(View.VISIBLE);
-                    Views.executeOnMeasure(optionButtonsContainerView, () -> {
-                      animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
-                    });
+                // Show media options now that we have adapter data.
+                optionButtonsContainerView.setVisibility(View.VISIBLE);
+                Views.executeOnMeasure(optionButtonsContainerView, () -> {
+                  animateMediaOptionsVisibility(true, Animations.INTERPOLATOR, 200, true);
+                });
 
-                  } else {
-                    // Note: FragmentStatePagerAdapter does not refresh any active Fragments so doing it manually.
-                    MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
-                    mediaAlbumAdapter.getActiveFragment().handleMediaItemUpdate(activeMediaItem);
-                  }
-                },
-                error -> {
-                  moveToScreenState(ScreenState.FAILED);
+              } else {
+                // Note: FragmentStatePagerAdapter does not refresh any active Fragments so doing it manually.
+                MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
+                mediaAlbumAdapter.getActiveFragment().handleMediaItemUpdate(activeMediaItem);
+              }
+            },
+            error -> {
+              moveToScreenState(ScreenState.FAILED);
 
-                  ResolvedError resolvedError = errorResolver.resolve(error);
-                  resolveErrorView.applyFrom(resolvedError);
-                  resolveErrorView.setOnRetryClickListener(o -> resolveMediaLinkAndDisplayContent(mediaLinkToDisplay));
+              ResolvedError resolvedError = errorResolver.resolve(error);
+              resolveErrorView.applyFrom(resolvedError);
+              resolveErrorView.setOnRetryClickListener(o -> resolveMediaLinkAndDisplayContent(mediaLinkToDisplay));
 
-                  if (resolvedError.isUnknown()) {
-                    Timber.e(error, "Error while loading image: %s", mediaLinkToDisplay.unparsedUrl());
-                  }
-                }
-            )
-    );
+              if (resolvedError.isUnknown()) {
+                Timber.e(error, "Error while loading image: %s", mediaLinkToDisplay.unparsedUrl());
+              }
+            }
+        );
   }
 
   private void moveToScreenState(ScreenState screenState) {
@@ -325,14 +321,13 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   }
 
   private void startListeningToViewPagerPageChanges() {
-    unsubscribeOnDestroy(
-        RxViewPager.pageSelections(mediaAlbumPager)
-            .map(currentItem -> mediaAlbumAdapter.getDataSet().get(currentItem))
-            .doOnNext(activeMediaItem -> updateContentDescriptionOfOptionButtonsAccordingTo(activeMediaItem))
-            .doOnNext(activeMediaItem -> updateShareMenuFor(activeMediaItem))
-            .doOnNext(activeMediaItem -> updateMediaDisplayPosition())
-            .subscribe(viewpagerPageChangeStream)
-    );
+    RxViewPager.pageSelections(mediaAlbumPager)
+        .map(currentItem -> mediaAlbumAdapter.getDataSet().get(currentItem))
+        .doOnNext(activeMediaItem -> updateContentDescriptionOfOptionButtonsAccordingTo(activeMediaItem))
+        .doOnNext(activeMediaItem -> updateShareMenuFor(activeMediaItem))
+        .doOnNext(activeMediaItem -> updateMediaDisplayPosition())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(viewpagerPageChangeStream);
   }
 
   private void updateMediaDisplayPosition() {
@@ -421,11 +416,10 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
   @Override
   public void onFlickDismissEnd(long flickAnimationDuration) {
-    unsubscribeOnDestroy(
-        Observable.timer(flickAnimationDuration, TimeUnit.MILLISECONDS)
-            .doOnSubscribe(o -> animateMediaOptionsVisibility(false, Animations.INTERPOLATOR, 200, false))
-            .subscribe(o -> finish())
-    );
+    Observable.timer(flickAnimationDuration, TimeUnit.MILLISECONDS)
+        .doOnSubscribe(o -> animateMediaOptionsVisibility(false, Animations.INTERPOLATOR, 200, false))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> finish());
   }
 
   @Override
@@ -517,67 +511,65 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
       switch (item.getItemId()) {
         case R.id.action_share_image:
-          unsubscribeOnDestroy(
-              findHighestResImageFileFromCache(activeMediaItem)
-                  .map(imageFile -> {
-                    // Glide uses random file names, without any extensions. Certain apps like Messaging
-                    // fail to parse images if there's no file format, so we'll have to create a copy.
-                    String imageNameWithExtension = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().highQualityUrl());
-                    File imageFileWithExtension = new File(imageFile.getParent(), imageNameWithExtension);
-                    Files.copy(imageFile, imageFileWithExtension);
-                    return imageFileWithExtension;
-                  })
-                  .compose(RxUtils.applySchedulersSingle())
-                  .subscribe(
-                      imageFile -> {
-                        Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), imageFile);
-                        Intent intent = Intents.createForSharingMedia(this, contentUri);
-                        startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
-                      },
-                      error -> {
-                        if (error instanceof NoSuchElementException) {
-                          Toast.makeText(this, R.string.mediaalbumviewer_share_image_not_loaded_yet, Toast.LENGTH_SHORT).show();
-                        } else {
-                          ResolvedError resolvedError = Dank.errors().resolve(error);
-                          Toast.makeText(this, resolvedError.errorMessageRes(), Toast.LENGTH_LONG).show();
-                        }
-                      }
-                  )
-          );
+          findHighestResImageFileFromCache(activeMediaItem)
+              .map(imageFile -> {
+                // Glide uses random file names, without any extensions. Certain apps like Messaging
+                // fail to parse images if there's no file format, so we'll have to create a copy.
+                String imageNameWithExtension = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().highQualityUrl());
+                File imageFileWithExtension = new File(imageFile.getParent(), imageNameWithExtension);
+                Files.copy(imageFile, imageFileWithExtension);
+                return imageFileWithExtension;
+              })
+              .compose(RxUtils.applySchedulersSingle())
+              .takeUntil(lifecycle().onDestroyFlowable())
+              .subscribe(
+                  imageFile -> {
+                    Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), imageFile);
+                    Intent intent = Intents.createForSharingMedia(this, contentUri);
+                    startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
+                  },
+                  error -> {
+                    if (error instanceof NoSuchElementException) {
+                      Toast.makeText(this, R.string.mediaalbumviewer_share_image_not_loaded_yet, Toast.LENGTH_SHORT).show();
+                    } else {
+                      ResolvedError resolvedError = Dank.errors().resolve(error);
+                      Toast.makeText(this, resolvedError.errorMessageRes(), Toast.LENGTH_LONG).show();
+                    }
+                  }
+              );
           break;
 
         case R.id.action_share_video:
-          unsubscribeOnDestroy(
-              Single.just(activeMediaItem.mediaLink())
-                  .map(mediaLink -> {
-                    if (videoCacheServer.isCached(mediaLink.highQualityUrl())) {
-                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.highQualityUrl());
-                      return new File(Uri.parse(cachedVideoFileUrl).getPath());
+          Single.just(activeMediaItem.mediaLink())
+              .map(mediaLink -> {
+                if (videoCacheServer.isCached(mediaLink.highQualityUrl())) {
+                  String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.highQualityUrl());
+                  return new File(Uri.parse(cachedVideoFileUrl).getPath());
 
-                    } else if (videoCacheServer.isCached(mediaLink.lowQualityUrl())) {
-                      String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.lowQualityUrl());
-                      return new File(Uri.parse(cachedVideoFileUrl).getPath());
+                } else if (videoCacheServer.isCached(mediaLink.lowQualityUrl())) {
+                  String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.lowQualityUrl());
+                  return new File(Uri.parse(cachedVideoFileUrl).getPath());
 
+                } else {
+                  throw new NoSuchElementException();
+                }
+              })
+              .takeUntil(lifecycle().onDestroyFlowable())
+              .subscribe(
+                  videoFile -> {
+                    Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), videoFile);
+                    Intent intent = Intents.createForSharingMedia(this, contentUri);
+                    startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
+                  },
+                  error -> {
+                    if (error instanceof NoSuchElementException) {
+                      Toast.makeText(this, R.string.mediaalbumviewer_share_video_not_loaded_yet, Toast.LENGTH_SHORT).show();
                     } else {
-                      throw new NoSuchElementException();
+                      ResolvedError resolvedError = Dank.errors().resolve(error);
+                      Toast.makeText(this, resolvedError.errorMessageRes(), Toast.LENGTH_LONG).show();
                     }
-                  })
-                  .subscribe(
-                      videoFile -> {
-                        Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), videoFile);
-                        Intent intent = Intents.createForSharingMedia(this, contentUri);
-                        startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
-                      },
-                      error -> {
-                        if (error instanceof NoSuchElementException) {
-                          Toast.makeText(this, R.string.mediaalbumviewer_share_video_not_loaded_yet, Toast.LENGTH_SHORT).show();
-                        } else {
-                          ResolvedError resolvedError = Dank.errors().resolve(error);
-                          Toast.makeText(this, resolvedError.errorMessageRes(), Toast.LENGTH_LONG).show();
-                        }
-                      }
-                  )
-          );
+                  }
+              );
           break;
 
         case R.id.action_share_album_url:

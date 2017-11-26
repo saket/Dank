@@ -182,8 +182,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     } else {
       sortingChangesStream.accept(SortingAndTimePeriod.create(Sorting.HOT));
     }
-    unsubscribeOnDestroy(
-        sortingChangesStream.subscribe(sortingAndTimePeriod -> {
+    sortingChangesStream
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(sortingAndTimePeriod -> {
           if (sortingAndTimePeriod.sortOrder().requiresTimePeriod()) {
             sortingModeButton.setText(getString(
                 R.string.subreddit_sorting_mode_with_time_period,
@@ -193,24 +194,22 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           } else {
             sortingModeButton.setText(getString(R.string.subreddit_sorting_mode, getString(sortingAndTimePeriod.getSortingDisplayTextRes())));
           }
-        })
-    );
+        });
 
     emptyStateView.setEmoji(R.string.subreddit_empty_state_title);
     emptyStateView.setMessage(R.string.subreddit_empty_state_message);
 
     // Toggle the subscribe button's visibility.
-    unsubscribeOnDestroy(
-        subredditChangesStream
-            .switchMap(subredditName -> subscriptionManager.isSubscribed(subredditName))
-            .compose(applySchedulers())
-            .startWith(Boolean.FALSE)
-            .onErrorResumeNext(error -> {
-              logError("Couldn't get subscribed status for %s", subredditChangesStream.getValue()).accept(error);
-              return Observable.just(false);
-            })
-            .subscribe(isSubscribed -> subscribeButton.setVisibility(isSubscribed ? View.GONE : View.VISIBLE))
-    );
+    subredditChangesStream
+        .switchMap(subredditName -> subscriptionManager.isSubscribed(subredditName))
+        .compose(applySchedulers())
+        .startWith(Boolean.FALSE)
+        .onErrorResumeNext(error -> {
+          logError("Couldn't get subscribed status for %s", subredditChangesStream.getValue()).accept(error);
+          return Observable.just(false);
+        })
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(isSubscribed -> subscribeButton.setVisibility(isSubscribed ? View.GONE : View.VISIBLE));
   }
 
   @Override

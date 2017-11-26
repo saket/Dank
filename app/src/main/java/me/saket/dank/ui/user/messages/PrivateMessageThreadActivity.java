@@ -85,10 +85,10 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
       setPaddingBottom(messageRecyclerView, spaceForFab);
     });
 
-    unsubscribeOnDestroy(Single.timer(200, TimeUnit.MILLISECONDS)
+    Single.timer(200, TimeUnit.MILLISECONDS)
         .observeOn(AndroidSchedulers.mainThread())
-        .subscribe(o -> replyButton.show())
-    );
+        .takeUntil(lifecycle().onDestroyFlowable())
+        .subscribe(o -> replyButton.show());
 
     LinearLayoutManager layoutManager = new LinearLayoutManager(this);
     layoutManager.setStackFromEnd(true);
@@ -98,7 +98,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     messagesAdapter = new ThreadedMessagesAdapter(linkMovementMethod);
     messageRecyclerView.setAdapter(messagesAdapter);
 
-    unsubscribeOnDestroy(Dank.inbox().message(getIntent().getStringExtra(KEY_MESSAGE_ID), InboxFolder.PRIVATE_MESSAGES)
+    Dank.inbox().message(getIntent().getStringExtra(KEY_MESSAGE_ID), InboxFolder.PRIVATE_MESSAGES)
         .compose(applySchedulers())
         .doOnNext(message -> threadSubjectView.setText(message.getSubject()))
         .map(parentMessage -> {
@@ -113,8 +113,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
           // Seems to be a bug with RV when its height is set to wrap_content.
           messageRecyclerView.post(() -> messageRecyclerView.smoothScrollToPosition(messagesAdapter.getItemCount()));
         })
-        .subscribe(messagesAdapter)
-    );
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(messagesAdapter);
 
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
         touchLiesOn(messageRecyclerView, downX, downY) && messageRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1)
