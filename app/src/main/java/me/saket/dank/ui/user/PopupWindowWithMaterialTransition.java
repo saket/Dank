@@ -16,7 +16,10 @@ import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.WindowManager;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
+
 import me.saket.dank.R;
+import me.saket.dank.utils.Views;
+import timber.log.Timber;
 
 /**
  * Mimics {@link PopupMenu}'s API 23+ entry animation and enables dismiss-on-outside-touch.
@@ -49,8 +52,10 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     setOutsideTouchable(true);
 
     boolean isTopGravity = (gravity | Gravity.TOP) == gravity;
-    Point positionToShow = calculatePositionWithAnchorWithoutGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
+    Point positionToShow = adjustPositionWithAnchorWithoutGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
     showAtLocation(anchorView, Gravity.TOP | Gravity.START, positionToShow.x, positionToShow.y);
+
+    Timber.i("positionToShow: %s", positionToShow);
 
     addBackgroundDimming();
     playPopupEnterTransition(showLocation);
@@ -104,7 +109,7 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     });
   }
 
-  public Point calculatePositionWithAnchorWithoutGoingOutsideWindow(Point showLocation, View contentView, boolean isTopGravity) {
+  public Point adjustPositionWithAnchorWithoutGoingOutsideWindow(Point showLocation, View contentView, boolean isTopGravity) {
     contentView.measure(LayoutParams.WRAP_CONTENT, LayoutParams.WRAP_CONTENT);
     int contentWidth = contentView.getMeasuredWidth();
     int contentHeight = contentView.getMeasuredHeight();
@@ -114,12 +119,21 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     int screenWidth = displaySize.x;
     int screenHeight = displaySize.y;
 
+    int statusBarHeight = Views.statusBarHeight(contentView.getResources());
+    int heightAvailableAboveShowPosition = showLocation.y - statusBarHeight;
+
     int xPos = showLocation.x;
     int yPos = showLocation.y;
 
-    // Display above the anchor view.
-    if (isTopGravity || yPos + contentHeight > screenHeight) {
-      yPos = showLocation.y - contentHeight;
+    // Show the popup below the content if there's not enough room available above.
+    if (contentHeight > heightAvailableAboveShowPosition) {
+      yPos = showLocation.y;
+
+    } else {
+      // Display above the anchor view.
+      if (isTopGravity || yPos + contentHeight > screenHeight) {
+        yPos = showLocation.y - contentHeight;
+      }
     }
 
     // Keep the right edge of the popup on the screen.
