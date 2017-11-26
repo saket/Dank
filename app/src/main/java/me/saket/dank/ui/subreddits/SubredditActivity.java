@@ -47,7 +47,6 @@ import butterknife.OnClick;
 import io.reactivex.Observable;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
-import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InfiniteScrollFooter;
@@ -59,8 +58,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
-import me.saket.dank.ui.compose.ComposeReplyActivity;
-import me.saket.dank.ui.compose.ComposeStartOptions;
+import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionFragment;
@@ -546,12 +544,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         return true;
 
       case R.id.action_preferences:
-        //UserPreferencesActivity.start(this);
-        ComposeReplyActivity.start(this, ComposeStartOptions.builder()
-            .secondPartyName("Test")
-            .parentContribution(ContributionFullNameWrapper.create("Poop"))
-            .build()
-        );
+        UserPreferencesActivity.start(this);
+        //ComposeReplyActivity.start(this, ComposeStartOptions.builder()
+        //    .secondPartyName("Test")
+        //    .parentContribution(ContributionFullNameWrapper.create("Poop"))
+        //    .build()
+        //);
         return true;
 
       default:

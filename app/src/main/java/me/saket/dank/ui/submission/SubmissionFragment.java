@@ -189,7 +189,6 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   public void onAttach(Context context) {
     Dank.dependencyInjector().inject(this);
     super.onAttach(context);
-    Timber.i("onAttach()");
     if (lifecycleStreams == null) {
       lifecycleStreams = SubmissionFragmentLifecycleStreams.wrap(super.lifecycle());
     }

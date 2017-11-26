@@ -16,7 +16,6 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
-import timber.log.Timber;
 
 /**
  * An Activity that can only show a submission, unlike {@link SubredditActivity} which can shows
@@ -64,10 +63,8 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
     setupContentExpandablePage(contentPage);
     expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
 
-    Timber.i("Setting up submission fragment");
     setupSubmissionFragment();
 
-    Timber.i("Populating");
     if (savedInstanceState == null) {
       if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
         loadSubmission(getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
