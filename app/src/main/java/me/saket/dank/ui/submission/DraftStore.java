@@ -7,7 +7,7 @@ import net.dean.jraw.models.Contribution;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 
-public interface ReplyDraftStore {
+public interface DraftStore {
 
   @CheckResult
   Completable saveDraft(Contribution contribution, String draft);

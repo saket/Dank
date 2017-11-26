@@ -79,7 +79,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private final DankLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
   private final UserSession userSession;
-  private final ReplyDraftStore replyDraftStore;
+  private final DraftStore draftStore;
   private final MarkdownHintOptions markdownHintOptions;
   private final MarkdownSpanPool markdownSpanPool;
   private final BehaviorRelay<CommentClickEvent> commentClickStream = BehaviorRelay.create();
@@ -101,12 +101,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   @Inject
   public CommentsAdapter(DankLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSession userSession,
-      ReplyDraftStore replyDraftStore, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool)
+      DraftStore draftStore, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool)
   {
     this.linkMovementMethod = commentsLinkMovementMethod;
     this.votingManager = votingManager;
     this.userSession = userSession;
-    this.replyDraftStore = replyDraftStore;
+    this.draftStore = draftStore;
     this.markdownHintOptions = markdownHintOptions;
     this.markdownSpanPool = markdownSpanPool;
     setHasStableIds(true);
@@ -308,7 +308,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         Disposable draftsDisposable = ((InlineReplyViewHolder) holder).bind(
             commentInlineReplyItem,
             userSession,
-            replyDraftStore,
+            draftStore,
             replyGifClickStream,
             replyDiscardClickStream,
             replyFullscreenClickStream,
@@ -556,7 +556,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
      * @return For disposing drafts subscriber.
      */
     @CheckResult
-    public Disposable bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession, ReplyDraftStore replyDraftStore,
+    public Disposable bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession, DraftStore draftStore,
         Relay<ReplyInsertGifClickEvent> replyGifClickRelay, Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
         Relay<ReplyFullscreenClickEvent> replyFullscreenClickRelay, Relay<ReplySendClickEvent> replySendClickRelay)
     {
@@ -591,14 +591,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       replyField.setOnFocusChangeListener((v, hasFocus) -> {
         if (!hasFocus && savingDraftsAllowed) {
           // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
-          replyDraftStore.saveDraft(parentContribution, replyField.getText().toString())
+          draftStore.saveDraft(parentContribution, replyField.getText().toString())
               .subscribeOn(Schedulers.io())
               .subscribe();
         }
       });
 
       draftDisposable.dispose();
-      draftDisposable = replyDraftStore.streamDrafts(parentContribution)
+      draftDisposable = draftStore.streamDrafts(parentContribution)
           .subscribeOn(io())
           .observeOn(mainThread())
           .subscribe(replyDraft -> {

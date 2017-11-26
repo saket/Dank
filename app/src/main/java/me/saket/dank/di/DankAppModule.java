@@ -50,7 +50,7 @@ import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.submission.ReplyRepository;
-import me.saket.dank.ui.submission.ReplyDraftStore;
+import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import me.saket.dank.utils.DankLinkMovementMethod;
@@ -326,7 +326,7 @@ public class DankAppModule {
   }
 
   @Provides
-  ReplyDraftStore provideReplyDraftStore(ReplyRepository replyRepository) {
+  DraftStore provideReplyDraftStore(ReplyRepository replyRepository) {
     return replyRepository;
   }
 }

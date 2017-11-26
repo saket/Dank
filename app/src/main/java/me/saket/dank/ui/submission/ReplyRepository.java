@@ -37,7 +37,7 @@ import timber.log.Timber;
  * Manages sending replies and saving drafts.
  */
 @Singleton
-public class ReplyRepository implements ReplyDraftStore {
+public class ReplyRepository implements DraftStore {
 
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase database;
