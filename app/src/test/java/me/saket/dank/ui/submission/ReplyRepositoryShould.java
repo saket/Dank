@@ -34,7 +34,7 @@ import java.util.TimeZone;
 import hirondelle.date4j.DateTime;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 
-public class CommentsManagerShould {
+public class ReplyRepositoryShould {
 
   private static final int RECYCLE_DRAFTS_IN_DAYS = 14;
 
@@ -45,14 +45,14 @@ public class CommentsManagerShould {
 
   @Captor ArgumentCaptor<String> stringArgCaptor;
 
-  private CommentsManager commentsManager;
+  private ReplyRepository replyRepository;
   private JsonAdapter<ReplyDraft> replyDraftJsonAdapter;
 
   @Before
   @SuppressLint("CommitPrefEdits")
   public void setUp() throws Exception {
     Moshi moshi = new Moshi.Builder().add(AutoValueMoshiAdapterFactory.create()).build();
-    commentsManager = spy(new CommentsManager(null, null, null, sharedPrefs, moshi, RECYCLE_DRAFTS_IN_DAYS));
+    replyRepository = spy(new ReplyRepository(null, null, null, sharedPrefs, moshi, RECYCLE_DRAFTS_IN_DAYS));
     replyDraftJsonAdapter = moshi.adapter(ReplyDraft.class);
 
     when(sharedPrefs.edit()).thenReturn(sharedPrefsEditor);
@@ -67,15 +67,15 @@ public class CommentsManagerShould {
     when(parentComment.getFullName()).thenReturn("fullName");
     when(sharedPrefs.getAll()).thenReturn(Collections.emptyMap());
 
-    commentsManager.saveDraft(parentComment, "draft").subscribe();
+    replyRepository.saveDraft(parentComment, "draft").subscribe();
 
     // Verify that the draft was saved.
     verify(sharedPrefsEditor).putString(stringArgCaptor.capture(), stringArgCaptor.capture());
-    assertEquals(stringArgCaptor.getAllValues().get(0), CommentsManager.keyForDraft(parentComment));
+    assertEquals(stringArgCaptor.getAllValues().get(0), ReplyRepository.keyForDraft(parentComment));
     ReplyDraft savedReplyDraft = replyDraftJsonAdapter.fromJson(stringArgCaptor.getAllValues().get(1));
     assertEquals(savedReplyDraft.body(), "draft");
 
-    verify(commentsManager).recycleOldDrafts(any());
+    verify(replyRepository).recycleOldDrafts(any());
   }
 
   @Test
@@ -86,7 +86,7 @@ public class CommentsManagerShould {
     savedDrafts.put("oldKey", ReplyDraft.create("oldDraft", twoWeeksOldTimeMillis));
     savedDrafts.put("newKey", ReplyDraft.create("newDraft", System.currentTimeMillis()));
 
-    commentsManager.recycleOldDrafts(savedDrafts);
+    replyRepository.recycleOldDrafts(savedDrafts);
 
     verify(sharedPrefsEditor).remove("oldKey");
     verify(sharedPrefsEditor, never()).remove("newKey");

@@ -18,7 +18,7 @@ import timber.log.Timber;
  */
 public class RetryReplyJobService extends DankJobService {
 
-  @Inject CommentsManager commentsManager;
+  @Inject ReplyRepository replyRepository;
 
   public static void scheduleRetry(Context context) {
     JobInfo retryJobInfo = new JobInfo.Builder(ID_RETRY_REPLY, new ComponentName(context, RetryReplyJobService.class))
@@ -40,10 +40,10 @@ public class RetryReplyJobService extends DankJobService {
   @Override
   public boolean onStartJob(JobParameters params) {
     unsubscribeOnDestroy(
-        commentsManager.streamFailedReplies()
+        replyRepository.streamFailedReplies()
             .take(1)
             .flatMapIterable(failedReplies -> failedReplies)
-            .flatMapCompletable(failedReply -> commentsManager.reSendReply(failedReply))
+            .flatMapCompletable(failedReply -> replyRepository.reSendReply(failedReply))
             .subscribe(
                 () -> jobFinished(params, false),
                 error -> {

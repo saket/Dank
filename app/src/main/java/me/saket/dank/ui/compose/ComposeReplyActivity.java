@@ -37,7 +37,7 @@ import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
-import me.saket.dank.ui.submission.CommentsManager;
+import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.SimpleTextWatcher;
 import me.saket.dank.utils.Views;
@@ -64,7 +64,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   @BindView(R.id.composereply_undo) ImageButtonWithDisabledTint undoButton;
   @BindView(R.id.composereply_redo) ImageButtonWithDisabledTint redoButton;
 
-  @Inject CommentsManager commentsManager;
+  @Inject ReplyRepository replyRepository;
   @Inject MarkdownSpanPool markdownSpanPool;
   @Inject MarkdownHintOptions markdownHintOptions;
 
@@ -127,7 +127,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     // Retain pre-filled text or restore draft.
     String preFilledText = startOptions.preFilledText();
     if (Strings.isNullOrEmpty(preFilledText)) {
-      commentsManager.streamDrafts(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()))
+      replyRepository.streamDrafts(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()))
           .firstElement()
           .subscribeOn(io())
           .observeOn(mainThread())
@@ -143,7 +143,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
         .takeUntil(successfulSendStream)
         .subscribe(o -> {
           String draft = replyField.getText().toString();
-          commentsManager.saveDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()), draft)
+          replyRepository.saveDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()), draft)
               .subscribeOn(io())
               .subscribe();
         });

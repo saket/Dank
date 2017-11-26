@@ -11,7 +11,7 @@ import net.dean.jraw.models.Contribution;
 import io.reactivex.functions.Function;
 
 /**
- * See {@link CommentsManager}.
+ * See {@link ReplyRepository}.
  */
 @AutoValue
 public abstract class PendingSyncReply {

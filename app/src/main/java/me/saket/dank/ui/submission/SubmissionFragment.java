@@ -155,7 +155,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   @Inject CommentTreeConstructor commentTreeConstructor;
   @Inject Moshi moshi;
   @Inject LinkMetadataRepository linkMetadataRepository;
-  @Inject CommentsManager commentsManager;
+  @Inject ReplyRepository replyRepository;
   @Inject VotingManager votingManager;
   @Inject UserSession userSession;
   @Inject DankLinkMovementMethod linkMovementMethod;
@@ -345,7 +345,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsAdapter,
         commentsHeaderView,
         votingManager,
-        commentsManager,
+        replyRepository,
         submissionSwipeActionsProvider
     );
     // Note: adapter is set on RecyclerView when its data-set is ready.
@@ -462,9 +462,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               //.doOnSubscribe(o -> Timber.i("Waiting for submission data"))
               //.doOnDispose(() -> Timber.i("Not waiting anymore"))
               .take(1)
-              .flatMapCompletable(submission -> commentsManager.removeDraft(sendClickEvent.parentContribution())
+              .flatMapCompletable(submission -> replyRepository.removeDraft(sendClickEvent.parentContribution())
                   //.doOnComplete(() -> Timber.i("Sending reply: %s", sendClickEvent.replyMessage()))
-                  .andThen(Dank.reddit().withAuth(commentsManager.sendReply(
+                  .andThen(Dank.reddit().withAuth(replyRepository.sendReply(
                       sendClickEvent.parentContribution(),
                       submission.getFullName(),
                       sendClickEvent.replyMessage())
@@ -480,7 +480,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .takeUntil(lifecycle().onDestroy())
         .subscribe(retrySendEvent -> {
           // Re-sending is not a part of the chain so that it does not get unsubscribed on destroy.
-          Dank.reddit().withAuth(commentsManager.reSendReply(retrySendEvent.failedPendingSyncReply()))
+          Dank.reddit().withAuth(replyRepository.reSendReply(retrySendEvent.failedPendingSyncReply()))
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
         });
@@ -558,8 +558,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .observeOn(io())
         .switchMap(submissionWithComments -> {
           // Add pending-sync replies to the comment tree.
-          return commentsManager.removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
-              .andThen(commentsManager.streamPendingSyncRepliesForSubmission(submissionWithComments))
+          return replyRepository.removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
+              .andThen(replyRepository.streamPendingSyncRepliesForSubmission(submissionWithComments))
               .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies));
         })
         .takeUntil(lifecycle().onDestroy())

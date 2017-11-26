@@ -49,7 +49,7 @@ import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.UrlRouter;
-import me.saket.dank.ui.submission.CommentsManager;
+import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.ReplyDraftStore;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
@@ -326,7 +326,7 @@ public class DankAppModule {
   }
 
   @Provides
-  ReplyDraftStore provideReplyDraftStore(CommentsManager commentsManager) {
-    return commentsManager;
+  ReplyDraftStore provideReplyDraftStore(ReplyRepository replyRepository) {
+    return replyRepository;
   }
 }

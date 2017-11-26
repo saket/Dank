@@ -37,7 +37,7 @@ import timber.log.Timber;
  * Manages sending replies and saving drafts.
  */
 @Singleton
-public class CommentsManager implements ReplyDraftStore {
+public class ReplyRepository implements ReplyDraftStore {
 
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase database;
@@ -48,7 +48,7 @@ public class CommentsManager implements ReplyDraftStore {
   private final RxSharedPreferences rxSharedPrefs;
 
   @Inject
-  public CommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession,
+  public ReplyRepository(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession,
       @Named("drafts_sharedpreferences") SharedPreferences sharedPrefs, Moshi moshi,
       @Named("drafts_max_retain_days") int recycleDraftsOlderThanNumDays)
   {

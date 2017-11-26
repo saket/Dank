@@ -38,26 +38,26 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
   public static final int HEADER_COUNT = 1;
 
   private final VotingManager votingManager;
-  private final CommentsManager commentsManager;
+  private final ReplyRepository replyRepository;
   private final SubmissionSwipeActionsProvider swipeActionsProvider;
   private Submission submission;
   private SubmissionHeaderViewHolder headerViewHolder;
 
   public static SubmissionAdapterWithHeader wrap(RecyclerViewArrayAdapter<?, ViewHolder> commentsAdapter, View headerView,
-      VotingManager votingManager, CommentsManager commentsManager, SubmissionSwipeActionsProvider swipeActionsProvider)
+      VotingManager votingManager, ReplyRepository replyRepository, SubmissionSwipeActionsProvider swipeActionsProvider)
   {
     if (headerView.getParent() != null) {
       ((ViewGroup) headerView.getParent()).removeView(headerView);
     }
-    return new SubmissionAdapterWithHeader(commentsAdapter, headerView, votingManager, commentsManager, swipeActionsProvider);
+    return new SubmissionAdapterWithHeader(commentsAdapter, headerView, votingManager, replyRepository, swipeActionsProvider);
   }
 
   private SubmissionAdapterWithHeader(RecyclerViewArrayAdapter<?, ViewHolder> adapterToWrap, View headerView,
-      VotingManager votingManager, CommentsManager commentsManager, SubmissionSwipeActionsProvider swipeActionsProvider)
+      VotingManager votingManager, ReplyRepository replyRepository, SubmissionSwipeActionsProvider swipeActionsProvider)
   {
     super(adapterToWrap, headerView);
     this.votingManager = votingManager;
-    this.commentsManager = commentsManager;
+    this.replyRepository = replyRepository;
     this.swipeActionsProvider = swipeActionsProvider;
   }
 
@@ -66,7 +66,7 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
 
     // RecyclerView does not support moving Views inflated manually into the list. We'll have to fix this in the future.
     if (headerViewHolder != null) {
-      headerViewHolder.bind(votingManager, submission, commentsManager);
+      headerViewHolder.bind(votingManager, submission, replyRepository);
     }
   }
 
@@ -87,7 +87,7 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
 
   @Override
   protected void onBindHeaderViewHolder(SubmissionHeaderViewHolder holder, int position) {
-    holder.bind(votingManager, getHeaderItem(), commentsManager);
+    holder.bind(votingManager, getHeaderItem(), replyRepository);
 
     SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
     swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions(submission));
@@ -117,7 +117,7 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
       ButterKnife.bind(this, itemView);
     }
 
-    public void bind(VotingManager votingManager, Submission submission, CommentsManager commentsManager) {
+    public void bind(VotingManager votingManager, Submission submission, ReplyRepository replyRepository) {
       VoteDirection pendingOrDefaultVote = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
       int voteDirectionColor = Commons.voteColor(pendingOrDefaultVote);
 
@@ -131,7 +131,7 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
       titleView.setText(titleBuilder.build());
 
       pendingSyncReplyCountDisposable.dispose();
-      pendingSyncReplyCountDisposable = commentsManager.streamPendingSyncRepliesForSubmission(submission)
+      pendingSyncReplyCountDisposable = replyRepository.streamPendingSyncRepliesForSubmission(submission)
           .map(pendingSyncReplies -> pendingSyncReplies.size())
           .startWith(0)
           .compose(applySchedulers())

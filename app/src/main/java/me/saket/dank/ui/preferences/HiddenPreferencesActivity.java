@@ -24,7 +24,7 @@ import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
-import me.saket.dank.ui.submission.CommentsManager;
+import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.utils.RxUtils;
@@ -40,7 +40,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @Inject BriteDatabase briteDatabase;
   @Inject SubmissionRepository submissionRepository;
   @Inject SubredditSubscriptionManager subscriptionManager;
-  @Inject CommentsManager commentsManager;
+  @Inject ReplyRepository replyRepository;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
@@ -99,7 +99,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     });
 
     addButton("Clear pending sync replies", o -> {
-      commentsManager.removeAllPendingSyncReplies()
+      replyRepository.removeAllPendingSyncReplies()
           .subscribeOn(Schedulers.io())
           .subscribe();
     });
