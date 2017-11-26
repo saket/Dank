@@ -407,7 +407,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
           ComposeStartOptions startOptions = ComposeStartOptions.builder()
               .secondPartyName(fullscreenClickEvent.authorNameIfComment())
-              .parentContribution(ContributionFullNameWrapper.create(fullscreenClickEvent.parentContributionFullName()))
+              .parentContribution(fullscreenClickEvent.parentContribution())
               .preFilledText(fullscreenClickEvent.replyMessage())
               .extras(extraPayload)
               .build();
