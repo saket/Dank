@@ -1,4 +1,4 @@
-package me.saket.dank.ui.submission;
+package me.saket.dank.ui.submission.events;
 
 import android.support.annotation.Nullable;
 

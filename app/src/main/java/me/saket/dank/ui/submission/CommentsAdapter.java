@@ -3,7 +3,6 @@ package me.saket.dank.ui.submission;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 
-import android.os.Parcelable;
 import android.support.annotation.CheckResult;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
@@ -18,7 +17,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
@@ -46,6 +44,14 @@ import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownHints;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.giphy.GiphyGif;
+import me.saket.dank.ui.submission.events.CommentClickEvent;
+import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
+import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
+import me.saket.dank.ui.submission.events.ReplyFullscreenClickEvent;
+import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
+import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
+import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
+import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankLinkMovementMethod;
@@ -92,79 +98,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private final Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
 
   private CompositeDisposable inlineReplyDraftsDisposables = new CompositeDisposable();
-
-  @AutoValue
-  abstract static class CommentClickEvent {
-    public abstract SubmissionCommentRow commentRow();
-
-    public abstract int commentRowPosition();
-
-    public abstract View commentItemView();
-
-    public abstract boolean willCollapseOnClick();
-
-    public static CommentClickEvent create(SubmissionCommentRow commentRow, int commentRowPosition, View commentItemView, boolean willCollapseOnClick) {
-      return new AutoValue_CommentsAdapter_CommentClickEvent(commentRow, commentRowPosition, commentItemView, willCollapseOnClick);
-    }
-  }
-
-  @AutoValue
-  abstract static class LoadMoreCommentsClickEvent {
-    /**
-     * Node whose more comments have to be fetched.
-     */
-    abstract CommentNode parentCommentNode();
-
-    /**
-     * Clicked itemView.
-     */
-    abstract View loadMoreItemView();
-
-    public static LoadMoreCommentsClickEvent create(CommentNode parentNode, View loadMoreItemView) {
-      return new AutoValue_CommentsAdapter_LoadMoreCommentsClickEvent(parentNode, loadMoreItemView);
-    }
-  }
-
-  @AutoValue
-  abstract static class ReplyItemViewBindEvent {
-    abstract CommentInlineReplyItem replyItem();
-
-    abstract EditText replyField();
-
-    public static ReplyItemViewBindEvent create(CommentInlineReplyItem replyItem, EditText replyField) {
-      return new AutoValue_CommentsAdapter_ReplyItemViewBindEvent(replyItem, replyField);
-    }
-  }
-
-  @AutoValue
-  abstract static class ReplyDiscardClickEvent {
-    public abstract PublicContribution parentContribution();
-
-    public static ReplyDiscardClickEvent create(PublicContribution parentContribution) {
-      return new AutoValue_CommentsAdapter_ReplyDiscardClickEvent(parentContribution);
-    }
-  }
-
-  @AutoValue
-  abstract static class ReplyInsertGifClickEvent implements Parcelable {
-    /**
-     * Adapter ID of this row.
-     */
-    public abstract long replyRowItemId();
-
-    public static ReplyInsertGifClickEvent create(long replyRowItemId) {
-      return new AutoValue_CommentsAdapter_ReplyInsertGifClickEvent(replyRowItemId);
-    }
-  }
-
-  @AutoValue
-  abstract static class ReplyRetrySendClickEvent {
-    public abstract PendingSyncReply failedPendingSyncReply();
-
-    public static ReplyRetrySendClickEvent create(PendingSyncReply failedPendingSyncReply) {
-      return new AutoValue_CommentsAdapter_ReplyRetrySendClickEvent(failedPendingSyncReply);
-    }
-  }
 
   @Inject
   public CommentsAdapter(DankLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSession userSession,

@@ -90,6 +90,9 @@ import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
+import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
+import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.ui.user.UserSession;
@@ -387,7 +390,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .filter(result -> result.requestCode() == REQUEST_CODE_PICK_GIF && result.isResultOk())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(result -> {
-          CommentsAdapter.ReplyInsertGifClickEvent gifInsertClickEvent = GiphyPickerActivity.extractExtraPayload(result.data());
+          ReplyInsertGifClickEvent gifInsertClickEvent = GiphyPickerActivity.extractExtraPayload(result.data());
           RecyclerView.ViewHolder holder = commentRecyclerView.findViewHolderForItemId(gifInsertClickEvent.replyRowItemId());
           if (holder == null) {
             Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after GIPHY activity result"));
@@ -530,7 +533,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
    * Wait for <var>parentContribution</var>'s reply View to bind and show keyboard once it's visible.
    */
   @CheckResult
-  private Observable<CommentsAdapter.ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(PublicContribution parentContribution) {
+  private Observable<ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(PublicContribution parentContribution) {
     return commentsAdapter.streamReplyItemViewBinds()
         .filter(replyBindEvent -> {
           // This filter exists so that the keyboard is shown only for the target reply item
