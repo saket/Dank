@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 
 import android.os.Parcelable;
 import android.support.annotation.CheckResult;
@@ -34,6 +35,7 @@ import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import io.reactivex.schedulers.Schedulers;
@@ -88,6 +90,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private final Relay<ReplySendClickEvent> replySendClickStream = PublishRelay.create();
   private final Relay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
   private final Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
+
+  private CompositeDisposable inlineReplyDraftsDisposables = new CompositeDisposable();
 
   @AutoValue
   abstract static class CommentClickEvent {
@@ -154,28 +158,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   }
 
   @AutoValue
-  abstract static class ReplyFullscreenClickEvent {
-    public abstract PublicContribution parentContribution();
-
-    public abstract String replyMessage();
-
-    public static ReplyFullscreenClickEvent create(PublicContribution parentContribution, String replyMessage) {
-      return new AutoValue_CommentsAdapter_ReplyFullscreenClickEvent(parentContribution, replyMessage);
-    }
-  }
-
-  @AutoValue
-  abstract static class ReplySendClickEvent {
-    public abstract PublicContribution parentContribution();
-
-    public abstract String replyMessage();
-
-    public static ReplySendClickEvent create(PublicContribution parentContribution, String replyMessage) {
-      return new AutoValue_CommentsAdapter_ReplySendClickEvent(parentContribution, replyMessage);
-    }
-  }
-
-  @AutoValue
   abstract static class ReplyRetrySendClickEvent {
     public abstract PendingSyncReply failedPendingSyncReply();
 
@@ -198,8 +180,8 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   }
 
   /**
-   * OP of a submission, highlighted in comments. This is being set manually instead of {@link Comment#getSubmissionAuthor()},
-   * because that's always null. Not sure where I'm going wrong.
+   * OP of a submission, highlighted in comments. This is being set manually instead of
+   * {@link Comment#getSubmissionAuthor()}, because that's always null. Not sure where I'm going wrong.
    */
   public void setSubmissionAuthor(String author) {
     submissionAuthor = author;
@@ -207,6 +189,16 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   public void setSwipeActionsProvider(CommentSwipeActionsProvider provider) {
     swipeActionsProvider = provider;
+  }
+
+  /**
+   * We try to automatically dispose drafts subscribers in {@link InlineReplyViewHolder} when the
+   * ViewHolder is getting recycled (in {@link #onViewRecycled(RecyclerView.ViewHolder)} or re-bound
+   * to data. But onViewRecycled() doesn't get called on Activity destroy so this has to be manually
+   * called.
+   */
+  public void forceDisposeDraftSubscribers() {
+    inlineReplyDraftsDisposables.clear();
   }
 
   @CheckResult
@@ -318,7 +310,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         return loadMoreViewHolder;
 
       case VIEW_TYPE_REPLY:
-        return InlineReplyViewHolder.create(inflater, parent, this, markdownHintOptions, markdownSpanPool, replyDraftStore);
+        return InlineReplyViewHolder.create(inflater, parent, markdownHintOptions, markdownSpanPool);
 
       case VIEW_TYPE_PENDING_SYNC_REPLY:
         PendingSyncReplyViewHolder pendingReplyHolder = PendingSyncReplyViewHolder.create(inflater, parent, linkMovementMethod);
@@ -376,7 +368,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       case INLINE_REPLY:
         CommentInlineReplyItem commentInlineReplyItem = (CommentInlineReplyItem) commentItem;
-        ((InlineReplyViewHolder) holder).bind(
+        Disposable draftsDisposable = ((InlineReplyViewHolder) holder).bind(
             commentInlineReplyItem,
             userSession,
             replyDraftStore,
@@ -385,6 +377,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
             replyFullscreenClickStream,
             replySendClickStream
         );
+        inlineReplyDraftsDisposables.add(draftsDisposable);
         replyViewBindStream.accept(ReplyItemViewBindEvent.create(commentInlineReplyItem, ((InlineReplyViewHolder) holder).replyField));
         break;
 
@@ -450,6 +443,28 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       });
     }
 
+    public void bind(DankCommentNode dankCommentNode, VoteDirection voteDirection, int commentScore, boolean isAuthorOP) {
+      Comment comment = dankCommentNode.commentNode().getComment();
+      String authorFlairText = comment.getAuthorFlair() != null ? comment.getAuthorFlair().getText() : null;
+      long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
+      String commentBodyHtml = comment.getDataNode().get("body_html").asText();
+
+      // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
+      int childCommentsCount = dankCommentNode.commentNode().getTotalSize();
+
+      CharSequence byline = constructCommentByline(
+          comment.getAuthor(),
+          authorFlairText,
+          isAuthorOP,
+          createdTimeMillis,
+          voteDirection,
+          commentScore,
+          childCommentsCount,
+          dankCommentNode.isCollapsed()
+      );
+      bind(byline, commentBodyHtml, dankCommentNode.commentNode().getDepth(), dankCommentNode.isCollapsed());
+    }
+
     protected void bind(CharSequence byline, String bodyHtml, int commentNodeDepth, boolean isCollapsed) {
       indentedContainer.setIndentationDepth(commentNodeDepth - 1);    // TODO: Why are we subtracting 1 here?
       this.isCollapsed = isCollapsed;
@@ -498,28 +513,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         bylineBuilder.append(Dates.createTimestamp(itemView.getResources(), createdTimeMillis));
       }
       return bylineBuilder.build();
-    }
-
-    public void bind(DankCommentNode dankCommentNode, VoteDirection voteDirection, int commentScore, boolean isAuthorOP) {
-      Comment comment = dankCommentNode.commentNode().getComment();
-      String authorFlairText = comment.getAuthorFlair() != null ? comment.getAuthorFlair().getText() : null;
-      long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
-      String commentBodyHtml = comment.getDataNode().get("body_html").asText();
-
-      // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
-      int childCommentsCount = dankCommentNode.commentNode().getTotalSize();
-
-      CharSequence byline = constructCommentByline(
-          comment.getAuthor(),
-          authorFlairText,
-          isAuthorOP,
-          createdTimeMillis,
-          voteDirection,
-          commentScore,
-          childCommentsCount,
-          dankCommentNode.isCollapsed()
-      );
-      bind(byline, commentBodyHtml, dankCommentNode.commentNode().getDepth(), dankCommentNode.isCollapsed());
     }
 
     @Override
@@ -595,18 +588,16 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_comment_reply_message) EditText replyField;
 
     private Disposable draftDisposable = Disposables.disposed();
-    private boolean isSendingReply;
+    private boolean savingDraftsAllowed;
 
-    public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent, CommentsAdapter adapter,
-        MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool, ReplyDraftStore replyDraftStore)
+    public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent, MarkdownHintOptions markdownHintOptions,
+        MarkdownSpanPool markdownSpanPool)
     {
       View itemView = inflater.inflate(R.layout.list_item_inline_comment_reply, parent, false);
-      return new InlineReplyViewHolder(itemView, adapter, markdownHintOptions, markdownSpanPool, replyDraftStore);
+      return new InlineReplyViewHolder(itemView, markdownHintOptions, markdownSpanPool);
     }
 
-    public InlineReplyViewHolder(View itemView, CommentsAdapter adapter, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool,
-        ReplyDraftStore replyDraftStore)
-    {
+    public InlineReplyViewHolder(View itemView, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool) {
       super(itemView);
       ButterKnife.bind(this, itemView);
 
@@ -624,7 +615,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, markdownSpanPool));
     }
 
-    public void bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession, ReplyDraftStore replyDraftStore,
+    /**
+     * @return For disposing drafts subscriber.
+     */
+    @CheckResult
+    public Disposable bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession, ReplyDraftStore replyDraftStore,
         Relay<ReplyInsertGifClickEvent> replyGifClickRelay, Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
         Relay<ReplyFullscreenClickEvent> replyFullscreenClickRelay, Relay<ReplySendClickEvent> replySendClickRelay)
     {
@@ -645,30 +640,47 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       goFullscreenButton.setOnClickListener(o -> {
         String replyMessage = replyField.getText().toString().trim();
-        replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(parentContribution, replyMessage));
+        String authorNameIfComment = parentContribution instanceof Comment ? ((Comment) parentContribution).getAuthor() : null;
+        replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, replyMessage, authorNameIfComment));
       });
 
-      isSendingReply = false;
+      savingDraftsAllowed = true;
       sendButton.setOnClickListener(o -> {
-        isSendingReply = true;
+        savingDraftsAllowed = false;
         String replyMessage = replyField.getText().toString().trim();
         replySendClickRelay.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
       });
 
-      // TODO Consider getting draft from data source.
-      draftDisposable.dispose();
-      draftDisposable = replyDraftStore.getDraft(parentContribution)
-          .compose(applySchedulersSingle())
-          .subscribe(replyDraft -> Views.setTextWithCursor(replyField, replyDraft));
-
       replyField.setOnFocusChangeListener((v, hasFocus) -> {
-        if (!hasFocus && !isSendingReply) {
+        if (!hasFocus && savingDraftsAllowed) {
           // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
           replyDraftStore.saveDraft(parentContribution, replyField.getText().toString())
               .subscribeOn(Schedulers.io())
               .subscribe();
         }
       });
+
+      draftDisposable.dispose();
+      draftDisposable = replyDraftStore.streamDrafts(parentContribution)
+          .subscribeOn(io())
+          .observeOn(mainThread())
+          .subscribe(replyDraft -> {
+            boolean isReplyCurrentlyEmpty = replyField.getText().length() == 0;
+
+            // Using replace() instead of setText() to preserve cursor position.
+            replyField.getText().replace(0, replyField.getText().length(), replyDraft);
+
+            // Avoid moving the cursor around unless the text was empty.
+            if (isReplyCurrentlyEmpty) {
+              replyField.setSelection(replyDraft.length());
+            }
+          });
+
+      return draftDisposable;
+    }
+
+    public void disableSavingOfDraft() {
+      savingDraftsAllowed = false;
     }
 
     public void handleOnRecycle() {

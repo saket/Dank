@@ -14,7 +14,6 @@ import android.animation.LayoutTransition;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
-import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -48,7 +47,6 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
@@ -71,6 +69,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.StatusBarTint;
@@ -121,9 +120,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
+  private static final String KEY_INLINE_REPLY_ROW_ID = "inlineReplyRowId";
   private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = 250;
   private static final long ACTIVITY_CONTENT_RESIZE_ANIM_DURATION = 300;
-  private static final int REQUEST_CODE_PICK_GIF = 99;
+  private static final int REQUEST_CODE_PICK_GIF = 98;
+  private static final int REQUEST_CODE_FULLSCREEN_REPLY = 99;
 
   @BindView(R.id.submission_toolbar) View toolbar;
   @BindView(R.id.submission_toolbar_close) ImageButton toolbarCloseButton;
@@ -343,6 +344,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         commentsManager,
         submissionSwipeActionsProvider
     );
+    // Note: adapter is set on RecyclerView when its data-set is ready.
 
     // RecyclerView automatically handles saving and restoring scroll position if the
     // adapter contents are the same once the adapter is set. So we're setting the
@@ -360,6 +362,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
 
+    // Manually dispose reply draft subscribers, because Adapter#onViewHolderRecycled()
+    // doesn't get called if the Activity is getting recreated.
+    lifecycle().onDestroy()
+        .take(1)
+        .subscribe(o -> commentsAdapter.forceDisposeDraftSubscribers());
+
     // Reply discards.
     commentsAdapter.streamReplyDiscardClicks()
         .takeUntil(lifecycle().onDestroy())
@@ -376,7 +384,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // So it appears that SubredditActivity always gets recreated even when GiphyActivity is in foreground.
     // So when the activity result arrives, this Rx chain should be ready and listening.
     lifecycle().onActivityResults()
-        .filter(result -> result.requestCode() == REQUEST_CODE_PICK_GIF && result.resultCode() == Activity.RESULT_OK)
+        .filter(result -> result.requestCode() == REQUEST_CODE_PICK_GIF && result.isResultOk())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(result -> {
           CommentsAdapter.ReplyInsertGifClickEvent gifInsertClickEvent = GiphyPickerActivity.extractExtraPayload(result.data());
@@ -393,36 +401,73 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // Reply fullscreen clicks.
     commentsAdapter.streamReplyFullscreenClicks()
         .takeUntil(lifecycle().onDestroy())
-        .subscribe((CommentsAdapter.ReplyFullscreenClickEvent fullscreenClickEvent) -> {
-          PublicContribution parentContribution = fullscreenClickEvent.parentContribution();
-          String secondPartyName = parentContribution instanceof Comment
-              ? ((Comment) parentContribution).getAuthor()
-              : null;
+        .subscribe(fullscreenClickEvent -> {
+          Bundle extraPayload = new Bundle();
+          extraPayload.putLong(KEY_INLINE_REPLY_ROW_ID, fullscreenClickEvent.replyRowItemId());
 
           ComposeStartOptions startOptions = ComposeStartOptions.builder()
-              .secondPartyName(secondPartyName)
-              .parentContribution(fullscreenClickEvent.parentContribution())
+              .secondPartyName(fullscreenClickEvent.authorNameIfComment())
+              .parentContribution(ContributionFullNameWrapper.create(fullscreenClickEvent.parentContributionFullName()))
               .preFilledText(fullscreenClickEvent.replyMessage())
+              .extras(extraPayload)
               .build();
-          ComposeReplyActivity.start(getActivity(), startOptions);
+          startActivityForResult(ComposeReplyActivity.intent(getActivity(), startOptions), REQUEST_CODE_FULLSCREEN_REPLY);
         });
+
+    // Fullscreen reply results.
+    Relay<ReplySendClickEvent> fullscreenReplySendStream = BehaviorRelay.create();
+    lifecycle().onActivityResults()
+        .filter(activityResult -> activityResult.requestCode() == REQUEST_CODE_FULLSCREEN_REPLY && activityResult.isResultOk())
+        .map(activityResult -> ComposeReplyActivity.extractActivityResult(activityResult.data()))
+        .doOnNext(composeResult -> {
+          //noinspection ConstantConditions
+          long inlineReplyRowId = composeResult.extras().getLong(KEY_INLINE_REPLY_ROW_ID);
+          RecyclerView.ViewHolder holder = commentRecyclerView.findViewHolderForItemId(inlineReplyRowId);
+          if (holder != null) {
+            // Inline replies try saving message body to drafts when they're getting dismissed,
+            // and because the dismissal happens asynchronously by RecyclerView, it often happens
+            // after the draft has already been removed and sent, resulting in the message getting
+            // re-saved as a draft. We'll manually disable saving of drafts here to solve that.
+            //Timber.i("Disabling draft saving");
+            ((CommentsAdapter.InlineReplyViewHolder) holder).disableSavingOfDraft();
+
+          } else {
+            Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after fullscreen reply result"));
+          }
+        })
+        .map(composeResult ->
+            ReplySendClickEvent.create(ContributionFullNameWrapper.create(composeResult.parentContributionFullName()), composeResult.reply())
+        )
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(fullscreenReplySendStream);
 
     // Reply sends.
     commentsAdapter.streamReplySendClicks()
+        .mergeWith(fullscreenReplySendStream)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(sendClickEvent -> {
+          // Posting to RecyclerView's message queue, because onActivityResult() gets called before
+          // ComposeReplyActivity is able to exit and so keyboard doesn't get shown otherwise.
+          commentRecyclerView.post(() -> Keyboards.hide(getActivity(), commentRecyclerView));
+          commentTreeConstructor.hideReply(sendClickEvent.parentContribution());
+
           // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
-          commentsManager.removeDraft(sendClickEvent.parentContribution())
-              .andThen(Dank.reddit().withAuth(commentsManager.sendReply(
-                  sendClickEvent.parentContribution(),
-                  submissionStream.getValue().getFullName(),
-                  sendClickEvent.replyMessage()))
+          // We're also removing the draft before sending it because even if the reply fails, it'll still
+          // be present in the DB for the user to retry. Nothing will be lost.
+          submissionStream
+              //.doOnSubscribe(o -> Timber.i("Waiting for submission data"))
+              //.doOnDispose(() -> Timber.i("Not waiting anymore"))
+              .take(1)
+              .flatMapCompletable(submission -> commentsManager.removeDraft(sendClickEvent.parentContribution())
+                  //.doOnComplete(() -> Timber.i("Sending reply: %s", sendClickEvent.replyMessage()))
+                  .andThen(Dank.reddit().withAuth(commentsManager.sendReply(
+                      sendClickEvent.parentContribution(),
+                      submission.getFullName(),
+                      sendClickEvent.replyMessage())
+                  ))
               )
-              .doOnSubscribe(o -> {
-                Keyboards.hide(getActivity(), commentRecyclerView);
-                commentTreeConstructor.hideReply(sendClickEvent.parentContribution());
-              })
               .compose(applySchedulersCompletable())
+              .doOnError(e -> Timber.e(e))
               .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
         });
 
@@ -450,7 +495,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   private Observable<PublicContribution> scrollToNewlyAddedReplyIfHidden(PublicContribution parentContribution) {
     if (submissionStream.getValue() == parentContribution) {
       // Submission reply.
-      return Observable.just(parentContribution).doOnNext(o -> commentRecyclerView.smoothScrollToPosition(1));
+      return Observable.just(parentContribution).doOnNext(o -> commentRecyclerView.smoothScrollToPosition(SubmissionAdapterWithHeader.HEADER_COUNT));
     }
 
     return commentsAdapterDatasetUpdatesStream

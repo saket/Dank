@@ -5,7 +5,7 @@ import android.support.annotation.CheckResult;
 import net.dean.jraw.models.Contribution;
 
 import io.reactivex.Completable;
-import io.reactivex.Single;
+import io.reactivex.Observable;
 
 public interface ReplyDraftStore {
 
@@ -13,7 +13,7 @@ public interface ReplyDraftStore {
   Completable saveDraft(Contribution contribution, String draft);
 
   @CheckResult
-  Single<String> getDraft(Contribution contribution);
+  Observable<String> streamDrafts(Contribution contribution);
 
   @CheckResult
   Completable removeDraft(Contribution contribution);

@@ -1,5 +1,6 @@
 package me.saket.dank.ui.compose;
 
+import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
@@ -7,7 +8,6 @@ import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Contribution;
 
-// TODO: NOT PARCELABLE!
 @AutoValue
 public abstract class ComposeStartOptions implements Parcelable {
 
@@ -17,12 +17,10 @@ public abstract class ComposeStartOptions implements Parcelable {
   @Nullable
   public abstract String preFilledText();
 
-  /**
-   * The {@link Contribution} to which this reply is being made. Used as an ID for saving drafts.
-   */
   public abstract String parentContributionFullName();
 
-  public abstract ComposeStartOptions.Builder toBuilder();
+  @Nullable
+  public abstract Bundle extras();
 
   public static ComposeStartOptions.Builder builder() {
     return new AutoValue_ComposeStartOptions.Builder();
@@ -39,13 +37,18 @@ public abstract class ComposeStartOptions implements Parcelable {
     public abstract Builder preFilledText(String preFilledText);
 
     /**
-     * See {@link ComposeStartOptions#parentContributionFullName()}.
+     * The {@link Contribution} to which this reply is being made. Used as an ID for saving drafts.
      */
     public Builder parentContribution(Contribution replyingTo) {
       return parentContributionFullName(replyingTo.getFullName());
     }
 
     abstract Builder parentContributionFullName(String replyingTo);
+
+    /**
+     * Delivered back with {@link ComposeResult}.
+     */
+    public abstract Builder extras(Bundle extras);
 
     public abstract ComposeStartOptions build();
   }

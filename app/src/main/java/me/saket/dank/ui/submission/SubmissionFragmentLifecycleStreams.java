@@ -33,12 +33,12 @@ public class SubmissionFragmentLifecycleStreams implements LifecycleStreams {
 
       @Override
       public void onPageAboutToCollapse(long collapseAnimDuration) {
-        pageAboutToCollapseStream.accept(LifecycleStreams.INSTANCE);
+        pageAboutToCollapseStream.accept(LifecycleStreams.NOTHING);
       }
 
       @Override
       public void onPageCollapsed() {
-        pageCollapseStream.accept(LifecycleStreams.INSTANCE);
+        pageCollapseStream.accept(LifecycleStreams.NOTHING);
       }
     });
   }

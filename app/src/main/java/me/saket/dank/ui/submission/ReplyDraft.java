@@ -9,7 +9,10 @@ public abstract class ReplyDraft {
 
   public abstract String body();
 
-  public abstract long createdTimeMillis();
+  /**
+   * Only used for recycling old drafts.
+   */
+  abstract long createdTimeMillis();
 
   public static ReplyDraft create(String body, long createdTimeMillis) {
     return new AutoValue_ReplyDraft(body, createdTimeMillis);

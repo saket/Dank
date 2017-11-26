@@ -7,12 +7,12 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 import android.support.annotation.VisibleForTesting;
 
+import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
 import net.dean.jraw.models.Contribution;
-import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 
 import java.util.HashMap;
@@ -42,9 +42,10 @@ public class CommentsManager implements ReplyDraftStore {
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase database;
   private final UserSession userSession;
-  private final SharedPreferences sharedPrefs;
   private final Moshi moshi;
   private final int recycleDraftsOlderThanNumDays;
+  private final SharedPreferences sharedPrefs;
+  private final RxSharedPreferences rxSharedPrefs;
 
   @Inject
   public CommentsManager(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession,
@@ -55,6 +56,7 @@ public class CommentsManager implements ReplyDraftStore {
     this.database = database;
     this.userSession = userSession;
     this.sharedPrefs = sharedPrefs;
+    this.rxSharedPrefs = RxSharedPreferences.create(sharedPrefs);
     this.moshi = moshi;
     this.recycleDraftsOlderThanNumDays = recycleDraftsOlderThanNumDays;
   }
@@ -74,7 +76,7 @@ public class CommentsManager implements ReplyDraftStore {
   }
 
   @CheckResult
-  public Completable sendReply(PublicContribution parentContribution, String parentSubmissionFullName, String replyBody) {
+  public Completable sendReply(Contribution parentContribution, String parentSubmissionFullName, String replyBody) {
     String parentContributionFullName = parentContribution.getFullName();
     long replyCreatedTimeMillis = System.currentTimeMillis();
     return sendReply(parentSubmissionFullName, parentContributionFullName, replyBody, replyCreatedTimeMillis);
@@ -167,10 +169,10 @@ public class CommentsManager implements ReplyDraftStore {
     return Completable.fromAction(() -> {
       long draftCreatedTimeMillis = System.currentTimeMillis();
       ReplyDraft replyDraft = ReplyDraft.create(draftBody, draftCreatedTimeMillis);
-
       JsonAdapter<ReplyDraft> jsonAdapter = moshi.adapter(ReplyDraft.class);
       String replyDraftJson = jsonAdapter.toJson(replyDraft);
-      sharedPrefs.edit().putString(keyForDraft(contribution), replyDraftJson).apply();
+      rxSharedPrefs.getString(keyForDraft(contribution)).set(replyDraftJson);
+      //Timber.i("Draft saved: %s", draftBody);
 
       // Recycle old drafts.
       Map<String, ?> allDraftJsons = new HashMap<>(sharedPrefs.getAll());
@@ -206,23 +208,41 @@ public class CommentsManager implements ReplyDraftStore {
 
   @Override
   @CheckResult
-  public Single<String> getDraft(Contribution contribution) {
-    return Single.fromCallable(() -> {
-      String replyDraftJson = sharedPrefs.getString(keyForDraft(contribution), "");
-      if ("".equals(replyDraftJson)) {
-        // Following RxBinding, which always emits the default value, we'll also emit an
-        // empty draft instead of Single.never() so that the UI's default
-        return "";
-      }
+  public Observable<String> streamDrafts(Contribution contribution) {
+    return rxSharedPrefs.getString(keyForDraft(contribution), "")
+        .asObservable()
+        .map(replyDraftJson -> {
+          if ("".equals(replyDraftJson)) {
+            // Following RxBinding, which always emits the default value, we'll also emit an
+            // empty draft instead of Single.never() so that the UI's initial setup is done.
+            return "";
 
-      ReplyDraft replyDraft = moshi.adapter(ReplyDraft.class).fromJson(replyDraftJson);
-      //noinspection ConstantConditions
-      return replyDraft.body();
-    });
+          } else {
+            ReplyDraft replyDraft = moshi.adapter(ReplyDraft.class).fromJson(replyDraftJson);
+            //noinspection ConstantConditions
+            return replyDraft.body();
+          }
+        })
+        .distinctUntilChanged()
+        //.doOnNext(draft -> Timber.i("Sending draft: %s", draft))
+        ;
   }
 
   @Override
   public Completable removeDraft(Contribution contribution) {
+    //String parent;
+    //if (contribution instanceof Comment) {
+    //  parent = ((Comment) contribution).getBody();
+    //} else if (contribution instanceof Message) {
+    //  parent = ((Message) contribution).getBody();
+    //} else if (contribution instanceof Submission) {
+    //  parent = ((Submission) contribution).getTitle();
+    //} else if (contribution instanceof ContributionFullNameWrapper) {
+    //  parent = contribution.getFullName();
+    //} else {
+    //  throw new UnsupportedOperationException();
+    //}
+    //Timber.i("Removing draft for %s", parent);
     return Completable.fromAction(() -> sharedPrefs.edit().remove(keyForDraft(contribution)).apply());
   }
 

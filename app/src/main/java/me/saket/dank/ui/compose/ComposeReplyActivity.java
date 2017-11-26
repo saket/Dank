@@ -13,12 +13,13 @@ import android.text.Editable;
 import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
 import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.ScrollView;
 
 import com.google.common.base.Strings;
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 import com.werdpressed.partisan.rundo.RunDo;
 
 import javax.inject.Inject;
@@ -40,22 +41,23 @@ import me.saket.dank.ui.submission.CommentsManager;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.SimpleTextWatcher;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
 /**
- * For composing comments and message replies. Handles saving and retaining drafts.
+ * For composing comments and message replies. Handles saving and retaining drafts. Sends the composed message back to the caller.
  */
 public class ComposeReplyActivity extends DankPullCollapsibleActivity implements OnLinkInsertListener, RunDo.TextLink {
 
   private static final String KEY_START_OPTIONS = "startOptions";
+  private static final String KEY_COMPOSE_RESULT = "composeResult";
   private static final int REQUEST_CODE_PICK_IMAGE = 98;
   private static final int REQUEST_CODE_PICK_GIF = 99;
 
   @BindView(R.id.composereply_root) IndependentExpandablePageLayout pageLayout;
   @BindView(R.id.toolbar) Toolbar toolbar;
-  @BindView(R.id.composereply_progress) View progressView;
   @BindView(R.id.composereply_compose_field_scrollview) ScrollView replyScrollView;
   @BindView(R.id.composereply_compose_field) EditText replyField;
   @BindView(R.id.composereply_format_toolbar) TextFormatToolbarView formatToolbarView;
@@ -68,11 +70,20 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
   private ComposeStartOptions startOptions;
   private RunDo runDo;
+  private Relay<Object> successfulSendStream = PublishRelay.create();
 
   public static void start(Context context, ComposeStartOptions startOptions) {
+    context.startActivity(intent(context, startOptions));
+  }
+
+  public static Intent intent(Context context, ComposeStartOptions startOptions) {
     Intent intent = new Intent(context, ComposeReplyActivity.class);
     intent.putExtra(KEY_START_OPTIONS, startOptions);
-    context.startActivity(intent);
+    return intent;
+  }
+
+  public static ComposeResult extractActivityResult(Intent data) {
+    return data.getParcelableExtra(KEY_COMPOSE_RESULT);
   }
 
   @Override
@@ -116,7 +127,8 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     // Retain pre-filled text or restore draft.
     String preFilledText = startOptions.preFilledText();
     if (Strings.isNullOrEmpty(preFilledText)) {
-      commentsManager.getDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()))
+      commentsManager.streamDrafts(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()))
+          .firstElement()
           .subscribeOn(io())
           .observeOn(mainThread())
           .subscribe(draft -> replyField.getText().replace(0, replyField.getText().length(), draft));
@@ -124,6 +136,17 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     } else {
       Views.setTextWithCursor(replyField, preFilledText);
     }
+
+    // Save draft before exiting, unless the message is being launched… into the space!
+    lifecycle().onStop()
+        .takeUntil(lifecycle().onDestroy())
+        .takeUntil(successfulSendStream)
+        .subscribe(o -> {
+          String draft = replyField.getText().toString();
+          commentsManager.saveDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()), draft)
+              .subscribeOn(io())
+              .subscribe();
+        });
   }
 
   @Override
@@ -201,16 +224,6 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
           break;
       }
     });
-  }
-
-  @Override
-  public void onStop() {
-    super.onStop();
-
-    String draft = replyField.getText().toString();
-    commentsManager.saveDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()), draft)
-        .subscribeOn(io())
-        .subscribe();
   }
 
   @Override
@@ -310,7 +323,31 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
   @OnClick(R.id.composereply_send)
   void onClickSend() {
-    progressView.setVisibility(View.VISIBLE);
+    if (!isReplyValid()) {
+      return;
+    }
+
+    String reply = replyField.getText().toString();
+    ComposeResult composeResult = ComposeResult.create(startOptions.parentContributionFullName(), reply, startOptions.extras());
+
+    Intent resultData = new Intent();
+    resultData.putExtra(KEY_COMPOSE_RESULT, composeResult);
+    setResult(RESULT_OK, resultData);
+    finish();
+
+    successfulSendStream.accept(LifecycleStreams.NOTHING);
+  }
+
+  private boolean isReplyValid() {
+    String reply = replyField.getText().toString();
+    if (reply.isEmpty()) {
+      replyField.setError(getString(R.string.composereply_error_empty_field));
+      return false;
+
+    } else {
+      replyField.setError(null);
+      return true;
+    }
   }
 
 // ======== TOOLBAR MENU ======== //

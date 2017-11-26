@@ -10,7 +10,7 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
@@ -34,11 +34,11 @@ import io.reactivex.schedulers.Schedulers;
 @Singleton
 public class CommentTreeConstructor {
 
-  private Set<String> collapsedCommentNodeFullNames = new HashSet<>();        // Comments that are collapsed.
-  private Set<String> loadingMoreCommentNodeFullNames = new HashSet<>();      // Comments for which more replies are being fetched.
-  private Set<String> replyActiveForCommentNodeFullNames = new HashSet<>();   // Comments for which reply fields are active.
-  private Relay<Object> changesRequiredStream = PublishRelay.create();
-  private Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();  // Key: comment full-name.
+  private final Set<String> collapsedCommentNodeFullNames = new HashSet<>(50); // Comments that are collapsed.
+  private final Set<String> loadingMoreCommentNodeFullNames = new HashSet<>();                // Comments for which more replies are being fetched.
+  private final Set<String> replyActiveForCommentNodeFullNames = new HashSet<>();             // Comments for which reply fields are active.
+  private final Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();        // Key: comment full-name.
+  private final Relay<Object> changesRequiredStream = PublishRelay.create();
   private CommentNode rootCommentNode;
   private Submission submission;
 
@@ -77,8 +77,6 @@ public class CommentTreeConstructor {
       changesRequiredStream.accept(Notification.INSTANCE);
     }
     rootCommentNode = null;
-    collapsedCommentNodeFullNames.clear();
-    replyActiveForCommentNodeFullNames.clear();
   }
 
   @CheckResult
@@ -115,7 +113,7 @@ public class CommentTreeConstructor {
     return isCollapsed(commentRow.fullName());
   }
 
-  public boolean isCollapsed(PublicContribution parentContribution) {
+  public boolean isCollapsed(Contribution parentContribution) {
     return isCollapsed(parentContribution.getFullName());
   }
 
@@ -140,7 +138,7 @@ public class CommentTreeConstructor {
   /**
    * Show reply field for a comment and also expand any hidden comments.
    */
-  public void showReplyAndExpandComments(PublicContribution parentContribution) {
+  public void showReplyAndExpandComments(Contribution parentContribution) {
     replyActiveForCommentNodeFullNames.add(parentContribution.getFullName());
     collapsedCommentNodeFullNames.remove(parentContribution.getFullName());
     changesRequiredStream.accept(Notification.INSTANCE);
@@ -149,7 +147,7 @@ public class CommentTreeConstructor {
   /**
    * Show reply field for the submission or a comment.
    */
-  public void showReply(PublicContribution parentContribution) {
+  public void showReply(Contribution parentContribution) {
     replyActiveForCommentNodeFullNames.add(parentContribution.getFullName());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
@@ -157,12 +155,12 @@ public class CommentTreeConstructor {
   /**
    * Hide reply field for a comment.
    */
-  public void hideReply(PublicContribution parentContribution) {
+  public void hideReply(Contribution parentContribution) {
     replyActiveForCommentNodeFullNames.remove(parentContribution.getFullName());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
-  public boolean isReplyActiveFor(PublicContribution parentContribution) {
+  public boolean isReplyActiveFor(Contribution parentContribution) {
     return replyActiveForCommentNodeFullNames.contains(parentContribution.getFullName());
   }
 

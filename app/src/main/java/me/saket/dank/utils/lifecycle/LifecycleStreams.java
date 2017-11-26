@@ -11,7 +11,7 @@ import me.saket.dank.data.ActivityResult;
  */
 public interface LifecycleStreams {
 
-  Object INSTANCE = new Object();
+  Object NOTHING = new Object();
 
   // Commented out because dialog fragments have two create methods: onCreate() and onCreateDialog().
   /*public Observable<Object> onCreate() {
