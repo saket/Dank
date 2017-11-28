@@ -172,9 +172,8 @@
   <string name="inbox_empty_state_message_for_comment_replies">You don\'t have any comment replies. \nNobody replies to you on Reddit.</string>
   <string name="inbox_empty_state_message_for_post_replies">You don\'t have any post replies. \nGuess who\'s really unpopular on Reddit?</string>
   <string name="inbox_empty_state_message_for_username_mentions">You don\'t have any username mentions.</string>
-  <string name="inbox_refreshing_messages">Refreshing messages…</string>
-  <string name="inbox_menu_refresh_messages">Refresh messages</string>
-  <string name="inbox_error_failed_to_refresh_messages">Failed to refresh messages. Tap to retry.</string>
+  <string name="cd_inbox_menu_refresh_messages">Refresh messages</string>
+  <string name="cd_inbox_menu_failed_to_refresh_messages">Failed to refresh messages. Tap to retry.</string>
   <string name="inbox_error_failed_to_load_more_messages">Failed to load more messages. Tap to retry.</string>
   <string name="inbox_snippet_sent_by_logged_in_user">You: %s</string>
   <string name="cd_inbox_mark_all_unread_messages_as_read">Mark all unread messages as read</string>

@@ -29,6 +29,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.SingleTransformer;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.InfiniteScrollHeaderFooter;
@@ -51,7 +52,7 @@ public class InboxFolderFragment extends DankFragment {
 
   private static final String KEY_FOLDER = "folder";
 
-  @BindView(R.id.messagefolder_message_list) RecyclerView messageList;
+  @BindView(R.id.messagefolder_message_list) RecyclerView messageRecyclerView;
   @BindView(R.id.messagefolder_first_load_progress) View firstLoadProgressView;
   @BindView(R.id.messagefolder_empty_state) EmptyStateView emptyStateView;
   @BindView(R.id.messagefolder_error_state) ErrorStateView firstLoadErrorStateView;
@@ -81,6 +82,8 @@ public class InboxFolderFragment extends DankFragment {
     void markUnreadMessageAsSeen(Message unreadMessage);
 
     void markAllUnreadMessagesAsReadAndExit(List<Message> unreadMessages);
+
+    Consumer<MessagesRefreshState> messagesRefreshStateConsumer();
   }
 
   public static InboxFolderFragment create(InboxFolder folder) {
@@ -116,9 +119,9 @@ public class InboxFolderFragment extends DankFragment {
     messagesAdapter.setOnMessageClickListener(((Callbacks) getActivity()));
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
 
-    messageList.setAdapter(messagesAdapterWithProgress);
-    messageList.setLayoutManager(new LinearLayoutManager(getActivity()));
-    messageList.setItemAnimator(new DefaultItemAnimator());
+    messageRecyclerView.setAdapter(messagesAdapterWithProgress);
+    messageRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+    messageRecyclerView.setItemAnimator(new DefaultItemAnimator());
 
     populateEmptyStateView();
     trackSeenUnreadMessages();
@@ -151,12 +154,12 @@ public class InboxFolderFragment extends DankFragment {
             Views.executeOnMeasure(markAllAsReadButton, () -> {
               MarginLayoutParams fabMarginLayoutParams = (MarginLayoutParams) markAllAsReadButton.getLayoutParams();
               int spaceForFab = markAllAsReadButton.getHeight() + fabMarginLayoutParams.topMargin + fabMarginLayoutParams.bottomMargin;
-              Views.setPaddingBottom(messageList, spaceForFab);
+              Views.setPaddingBottom(messageRecyclerView, spaceForFab);
             });
 
           } else {
             markAllAsReadButton.hide();
-            Views.setPaddingBottom(messageList, 0);
+            Views.setPaddingBottom(messageRecyclerView, 0);
           }
         })
         .takeUntil(lifecycle().onStop())
@@ -164,7 +167,7 @@ public class InboxFolderFragment extends DankFragment {
   }
 
   public boolean shouldInterceptPullToCollapse(boolean upwardPagePull) {
-    return messageList.canScrollVertically(upwardPagePull ? +1 : -1);
+    return messageRecyclerView.canScrollVertically(upwardPagePull ? +1 : -1);
   }
 
   /**
@@ -180,7 +183,7 @@ public class InboxFolderFragment extends DankFragment {
     inboxManager.refreshMessages(folder, replaceAllExistingMessages)
         .compose(applySchedulersSingle())
         .compose(handleProgressAndErrorForFirstRefresh(replaceAllExistingMessages))
-        .compose(handleProgressAndErrorForSubsequentRefresh(replaceAllExistingMessages))
+        .compose(handleProgressAndErrorForSubsequentRefresh())
         .compose(doOnSingleStartAndTerminate(ongoing -> isRefreshOngoing = ongoing))
         .doOnSubscribe(o -> emptyStateView.setVisibility(View.GONE))
         .takeUntil(lifecycle().onDestroy().ignoreElements())
@@ -216,19 +219,18 @@ public class InboxFolderFragment extends DankFragment {
         });
   }
 
-  private <T> SingleTransformer<T, T> handleProgressAndErrorForSubsequentRefresh(boolean deleteAllMessagesInFolder) {
+  private <T> SingleTransformer<T, T> handleProgressAndErrorForSubsequentRefresh() {
+    Consumer<MessagesRefreshState> messagesRefreshStateConsumer = ((Callbacks) getActivity()).messagesRefreshStateConsumer();
+
     if (messagesAdapter.getItemCount() == 0) {
-      return upstream -> upstream;
+      return upstream -> upstream.doOnSubscribe(o -> messagesRefreshStateConsumer.accept(MessagesRefreshState.IDLE));
     }
 
     return upstream -> upstream
-        .doOnSubscribe(o -> messagesAdapterWithProgress.setHeader(InfiniteScrollHeaderFooter.createHeaderProgress(R.string.inbox_refreshing_messages)))
-        .doOnSuccess(o -> messagesAdapterWithProgress.setHeader(InfiniteScrollHeaderFooter.createHidden()))
+        .doOnSubscribe(o -> messagesRefreshStateConsumer.accept(MessagesRefreshState.IN_FLIGHT))
+        .doOnSuccess(o -> messagesRefreshStateConsumer.accept(MessagesRefreshState.IDLE))
         .doOnError(error -> {
-          messagesAdapterWithProgress.setHeader(InfiniteScrollHeaderFooter.createError(
-              R.string.inbox_error_failed_to_refresh_messages,
-              o -> refreshMessages(deleteAllMessagesInFolder)
-          ));
+          messagesRefreshStateConsumer.accept(MessagesRefreshState.ERROR);
 
           ResolvedError resolvedError = Dank.errors().resolve(error);
           if (resolvedError.isUnknown()) {
@@ -241,7 +243,7 @@ public class InboxFolderFragment extends DankFragment {
    * @param isRetrying When true, more items are fetched right away. Otherwise, we wait for {@link InfiniteScrollListener} to emit.
    */
   private void startInfiniteScroll(boolean isRetrying) {
-    InfiniteScrollListener scrollListener = InfiniteScrollListener.create(messageList, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD);
+    InfiniteScrollListener scrollListener = InfiniteScrollListener.create(messageRecyclerView, InfiniteScrollListener.DEFAULT_LOAD_THRESHOLD);
     scrollListener.setEmitInitialEvent(isRetrying);
 
     scrollListener.emitWhenLoadNeeded()
@@ -297,15 +299,15 @@ public class InboxFolderFragment extends DankFragment {
       return;
     }
 
-    RxRecyclerView.scrollEvents(messageList)
+    RxRecyclerView.scrollEvents(messageRecyclerView)
         .map(scrollEvent -> {
-          int firstVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
-          int lastVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findLastCompletelyVisibleItemPosition();
+          int firstVisiblePosition = ((LinearLayoutManager) messageRecyclerView.getLayoutManager()).findFirstCompletelyVisibleItemPosition();
+          int lastVisiblePosition = ((LinearLayoutManager) messageRecyclerView.getLayoutManager()).findLastCompletelyVisibleItemPosition();
 
           if (firstVisiblePosition == -1 && lastVisiblePosition == -1) {
             // Currently displayed item is longer than the window, so there is no completely visible item.
-            firstVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findFirstVisibleItemPosition();
-            lastVisiblePosition = ((LinearLayoutManager) messageList.getLayoutManager()).findLastVisibleItemPosition();
+            firstVisiblePosition = ((LinearLayoutManager) messageRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+            lastVisiblePosition = ((LinearLayoutManager) messageRecyclerView.getLayoutManager()).findLastVisibleItemPosition();
           }
 
           if (firstVisiblePosition != -1) {

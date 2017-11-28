@@ -55,8 +55,6 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     Point positionToShow = adjustPositionWithAnchorWithoutGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
     showAtLocation(anchorView, Gravity.TOP | Gravity.START, positionToShow.x, positionToShow.y);
 
-    Timber.i("positionToShow: %s", positionToShow);
-
     addBackgroundDimming();
     playPopupEnterTransition(showLocation);
   }

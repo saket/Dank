@@ -13,13 +13,54 @@
     android:fitsSystemWindows="true"
     app:navigationIcon="@drawable/ic_toolbar_close_24dp">
 
-    <Spinner
-      android:id="@+id/inbox_folder_spinner"
-      android:layout_width="wrap_content"
-      android:layout_height="?attr/actionBarSize"
-      android:layout_below="@id/toolbar"
-      android:background="?attr/selectableItemBackgroundBorderless"
-      tools:ignore="RtlSymmetry" />
+    <LinearLayout
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content">
+
+      <Spinner
+        android:id="@+id/inbox_folder_spinner"
+        android:layout_width="0dp"
+        android:layout_height="?attr/actionBarSize"
+        android:layout_weight="1"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        tools:ignore="RtlSymmetry" />
+
+      <me.saket.dank.widgets.ViewFlipperWithDebugPreview
+        android:id="@+id/inbox_message_refresh_status_viewflipper"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginEnd="@dimen/spacing8"
+        android:inAnimation="@anim/fade_in"
+        android:outAnimation="@anim/fade_out"
+        app:debug_displayedChild="0">
+
+        <ImageButton
+          android:id="@+id/inbox_refresh_status_idle"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:background="?attr/selectableItemBackgroundBorderless"
+          android:contentDescription="@string/cd_inbox_menu_refresh_messages"
+          android:padding="@dimen/spacing4"
+          android:src="@drawable/ic_refresh_24dp" />
+
+        <ProgressBar
+          android:id="@+id/inbox_refresh_status_in_flight"
+          android:layout_width="32dp"
+          android:layout_height="32dp"
+          android:padding="@dimen/spacing4" />
+
+        <ImageButton
+          android:id="@+id/inbox_refresh_status_error"
+          android:layout_width="wrap_content"
+          android:layout_height="wrap_content"
+          android:background="?attr/selectableItemBackgroundBorderless"
+          android:contentDescription="@string/cd_inbox_menu_failed_to_refresh_messages"
+          android:padding="@dimen/spacing4"
+          android:src="@drawable/ic_error_24dp"
+          android:tint="@color/error_text_color" />
+      </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
+    </LinearLayout>
   </me.saket.dank.widgets.DankToolbar>
 
   <FrameLayout

@@ -11,15 +11,17 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.Spinner;
+import android.widget.ViewFlipper;
 
 import com.jakewharton.rxbinding2.widget.RxAdapterView;
+import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
@@ -34,6 +36,8 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.data.links.Link;
@@ -58,6 +62,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   @BindView(R.id.inbox_root) IndependentExpandablePageLayout contentPage;
   @BindView(R.id.inbox_folder_spinner) Spinner folderNamesSpinner;
+  @BindView(R.id.inbox_message_refresh_status_viewflipper) ViewFlipper refreshStatusViewFlipper;
   @BindView(R.id.inbox_fragment_container) ViewGroup fragmentContainer;
 
   @Inject UrlRouter urlRouter;
@@ -69,6 +74,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.ALL.length);
   private InboxPagerAdapter inboxPagerAdapter;
   private Set<Message> seenUnreadMessages = new HashSet<>();
+  private Relay<MessagesRefreshState> messagesRefreshStateStream = BehaviorRelay.create();
 
   public static void start(Context context) {
     context.startActivity(createStartIntent(context, InboxFolder.UNREAD));
@@ -139,6 +145,27 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
               .beginTransaction()
               .replace(R.id.inbox_fragment_container, currentFragment)
               .commit();
+        });
+
+    messagesRefreshStateStream
+        .distinctUntilChanged()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(state -> {
+          @IdRes int targetChildId;
+          switch (state) {
+            case IN_FLIGHT:
+              targetChildId = R.id.inbox_refresh_status_in_flight;
+              break;
+            case IDLE:
+              targetChildId = R.id.inbox_refresh_status_idle;
+              break;
+            case ERROR:
+              targetChildId = R.id.inbox_refresh_status_error;
+              break;
+            default:
+              throw new UnsupportedOperationException();
+          }
+          refreshStatusViewFlipper.setDisplayedChild(refreshStatusViewFlipper.indexOfChild(refreshStatusViewFlipper.findViewById(targetChildId)));
         });
   }
 
@@ -215,6 +242,11 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     return firstRefreshDoneForFolders.contains(forFolder);
   }
 
+  @OnClick({ R.id.inbox_refresh_status_idle, R.id.inbox_refresh_status_error })
+  void onClickRefreshMessages() {
+    inboxPagerAdapter.getActiveFragment().handleOnClickRefreshMenuItem();
+  }
+
   @Override
   public void onClickMessage(Message message, View messageItemView) {
     // Play the expand entry animation from the bottom of the item.
@@ -262,22 +294,8 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     finish();
   }
 
-// ======== TOOLBAR MENU ======== //
-
   @Override
-  public boolean onCreateOptionsMenu(Menu menu) {
-    getMenuInflater().inflate(R.menu.menu_inbox, menu);
-    return super.onCreateOptionsMenu(menu);
-  }
-
-  @Override
-  public boolean onOptionsItemSelected(MenuItem item) {
-    if (item.getItemId() == R.id.action_refresh_messages) {
-      inboxPagerAdapter.getActiveFragment().handleOnClickRefreshMenuItem();
-      return true;
-
-    } else {
-      return super.onOptionsItemSelected(item);
-    }
+  public Consumer<MessagesRefreshState> messagesRefreshStateConsumer() {
+    return messagesRefreshStateStream;
   }
 }
