@@ -65,11 +65,12 @@ public class SubmissionRepository {
   private final Set<String> savedSubmissionIds = new HashSet<>();
   private final ErrorResolver errorResolver;
   private final SubredditSubscriptionManager subscriptionManager;
+  private final ReplyRepository replyRepository;
   private Store<Submission, DankSubmissionRequest> submissionWithCommentsStore;
 
   @Inject
   public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager,
-      ErrorResolver errorResolver, SubredditSubscriptionManager subscriptionManager)
+      ErrorResolver errorResolver, SubredditSubscriptionManager subscriptionManager, ReplyRepository replyRepository)
   {
     this.database = briteDatabase;
     this.moshi = moshi;
@@ -77,6 +78,7 @@ public class SubmissionRepository {
     this.votingManager = votingManager;
     this.errorResolver = errorResolver;
     this.subscriptionManager = subscriptionManager;
+    this.replyRepository = replyRepository;
   }
 
 // ======== SUBMISSION WITH COMMENTS ======== //
@@ -117,7 +119,12 @@ public class SubmissionRepository {
   private Observable<Submission> getOrFetchSubmissionWithComments(DankSubmissionRequest submissionRequest) {
     if (submissionWithCommentsStore == null) {
       submissionWithCommentsStore = StoreBuilder.<DankSubmissionRequest, Submission>key()
-          .fetcher(request -> dankRedditClient.submission(request))
+          .fetcher(request -> dankRedditClient.submission(request)
+              .flatMap(submissionWithComments -> replyRepository
+                  .removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
+                  .andThen(Single.just(submissionWithComments))
+              )
+          )
           .persister(new Persister<Submission, DankSubmissionRequest>() {
             @Nonnull
             @Override

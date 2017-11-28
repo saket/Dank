@@ -563,8 +563,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .observeOn(io())
         .switchMap(submissionWithComments -> {
           // Add pending-sync replies to the comment tree.
-          return replyRepository.removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
-              .andThen(replyRepository.streamPendingSyncRepliesForSubmission(submissionWithComments))
+          return replyRepository.streamPendingSyncRepliesForSubmission(submissionWithComments)
               .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies));
         })
         .takeUntil(lifecycle().onDestroy())
