@@ -53,9 +53,6 @@
   <style name="DankToolbarTitleAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
     <item name="android:fontFamily">@string/dank_default_font_family</item>
     <item name="android:textSize">20sp</item>
-  </style>
-
-  <style name="DankToolbarTitleAppearance.Toolbar">
     <item name="android:textColor">@color/color_accent</item>
   </style>
 
@@ -109,7 +106,7 @@
   </style>
 
   <style name="DankToolbar">
-    <item name="titleTextAppearance">@style/DankToolbarTitleAppearance.Toolbar</item>
+    <item name="titleTextAppearance">@style/DankToolbarTitleAppearance</item>
     <item name="android:layout_width">match_parent</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:background">@color/toolbar</item>
@@ -130,7 +127,7 @@
     <item name="android:popupElevation">@dimen/spacing16</item>
   </style>
 
-  <style name="DankPopupMenuTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Large"></style>
+  <style name="DankPopupMenuTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Large" />
 
   <style name="DankPopupMenuHeaderTextAppearance" parent="@style/TextAppearance.AppCompat.Widget.PopupMenu.Header">
     <item name="android:textAllCaps">true</item>

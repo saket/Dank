@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:background="@color/toolbar"
+  android:foreground="?attr/selectableItemBackgroundBorderless"
+  android:orientation="vertical">
+
+  <TextView
+    android:id="@android:id/text1"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:paddingBottom="@dimen/spacing16"
+    android:paddingEnd="@dimen/spacing16"
+    android:paddingStart="@dimen/spacing16"
+    android:paddingTop="@dimen/spacing16"
+    android:textAllCaps="true"
+    tools:height="?attr/actionBarSize"
+    tools:text="Messages" />
+
+  <View style="@style/DankSeparator.VerticalContent" />
+</LinearLayout>
+

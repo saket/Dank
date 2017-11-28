@@ -153,19 +153,19 @@ public class SwipeableLayout extends FrameLayout {
     if (swipeEnabled) {
       swipeActionTriggerDrawable.setBounds((int) translationX, 0, (int) (getWidth() + translationX), getHeight());
 
+      // Move the icon along with the View being swiped.
+      if (swipingFromEndToStart) {
+        actionIconView.setTranslationX(swipeableChild.getRight() + translationX);
+      } else {
+        actionIconView.setTranslationX(translationX - actionIconView.getWidth());
+      }
+
       if (translationX == 0f) {
         backgroundDrawable.animateColorTransition(Color.TRANSPARENT);
         setSwipeDistanceThresholdCrossed(false);
         activeSwipeAction = null;
 
       } else {
-        // Move the icon along with the View being swiped.
-        if (swipingFromEndToStart) {
-          actionIconView.setTranslationX(swipeableChild.getRight() + translationX);
-        } else {
-          actionIconView.setTranslationX(translationX - actionIconView.getWidth());
-        }
-
         if (!isSettlingBackToPosition()) {
           SwipeAction swipeAction = swipingFromEndToStart
               ? swipeActions.endActions().findActionAtSwipeDistance(getWidth(), Math.abs(translationX), SwipeDirection.END_TO_START)

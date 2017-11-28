@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="horizontal"
+  tools:background="@color/toolbar">
+
+  <TextView
+    android:id="@android:id/text1"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:gravity="center_vertical"
+    android:textAppearance="@style/DankToolbarTitleAppearance"
+    tools:text="Messages" />
+
+  <com.github.zagum.expandicon.ExpandIconView
+    android:id="@+id/subreddit_toolbar_title_arrow"
+    android:layout_width="24dp"
+    android:layout_height="match_parent"
+    android:layout_marginStart="4dp"
+    app:eiv_color="@color/color_accent" />
+</LinearLayout>

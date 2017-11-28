@@ -52,7 +52,6 @@
 
     <activity
       android:name=".ui.user.messages.InboxActivity"
-      android:label="@string/activity_inbox"
       android:launchMode="singleTask"
       android:parentActivityName=".ui.subreddits.SubredditActivity" />
 

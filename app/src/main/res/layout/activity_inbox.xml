@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/inbox_root"
+  style="@style/DankPullCollapsibleActivityPage"
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
-  android:id="@+id/inbox_root"
-  style="@style/DankPullCollapsibleActivityPage"
   android:layout_width="match_parent"
   android:layout_height="match_parent">
 
@@ -11,24 +11,20 @@
     android:id="@+id/toolbar"
     style="@style/DankToolbar"
     android:fitsSystemWindows="true"
-    app:navigationIcon="@drawable/ic_toolbar_close_24dp"
-    app:title="@string/activity_inbox" />
+    app:navigationIcon="@drawable/ic_toolbar_close_24dp">
 
-  <me.saket.dank.widgets.TabLayoutWithCustomFont
-    android:id="@+id/inbox_tabs"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_below="@id/toolbar"
-    android:paddingStart="@dimen/viewpager_tablayout_start_spacing_with_toolbar_title"
-    android:background="@color/toolbar"
-    android:clipToPadding="false"
-    android:elevation="@dimen/elevation_toolbar"
-    app:tabMode="scrollable"
-    tools:ignore="RtlSymmetry" />
+    <Spinner
+      android:id="@+id/inbox_folder_spinner"
+      android:layout_width="wrap_content"
+      android:layout_height="?attr/actionBarSize"
+      android:layout_below="@id/toolbar"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      tools:ignore="RtlSymmetry" />
+  </me.saket.dank.widgets.DankToolbar>
 
   <FrameLayout
     android:id="@+id/inbox_fragment_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_below="@+id/inbox_tabs" />
+    android:layout_below="@+id/toolbar" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

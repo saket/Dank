@@ -51,8 +51,8 @@ public class JrawUtils {
     return message.getDataNode().get("body_html").asText();
   }
 
-  @Nullable
   // TODO: Submit this to JRAW.
+  @Nullable
   public static String secondPartyName(Resources resources, Message message, String loggedInUserName) {
     String secondPartyName;
     String destination = message.getDataNode().get("dest").asText();
