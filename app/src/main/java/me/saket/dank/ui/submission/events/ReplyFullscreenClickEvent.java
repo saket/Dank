@@ -14,12 +14,12 @@ public abstract class ReplyFullscreenClickEvent {
 
   public abstract Contribution parentContribution();
 
-  public abstract String replyMessage();
+  public abstract CharSequence replyMessage();
 
   @Nullable
   public abstract String authorNameIfComment();
 
-  public static ReplyFullscreenClickEvent create(long replyRowItemId, PublicContribution parentContribution, String replyMessage,
+  public static ReplyFullscreenClickEvent create(long replyRowItemId, PublicContribution parentContribution, CharSequence replyMessage,
       String authorNameIfComment)
   {
     return new AutoValue_ReplyFullscreenClickEvent(replyRowItemId, parentContribution, replyMessage, authorNameIfComment);

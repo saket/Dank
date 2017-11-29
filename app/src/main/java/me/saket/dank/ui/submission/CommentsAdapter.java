@@ -576,7 +576,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       );
 
       goFullscreenButton.setOnClickListener(o -> {
-        String replyMessage = replyField.getText().toString().trim();
+        CharSequence replyMessage = replyField.getText();
         String authorNameIfComment = parentContribution instanceof Comment ? ((Comment) parentContribution).getAuthor() : null;
         replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, replyMessage, authorNameIfComment));
       });

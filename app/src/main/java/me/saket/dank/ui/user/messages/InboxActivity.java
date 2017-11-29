@@ -251,6 +251,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   public void onClickMessage(Message message, View messageItemView) {
     // Play the expand entry animation from the bottom of the item.
     Rect messageItemViewRect = Views.globalVisibleRect(messageItemView);
+    messageItemViewRect.offset(0, -Views.statusBarHeight(getResources()));
     messageItemViewRect.top = messageItemViewRect.bottom;
 
     if (message.isComment()) {
@@ -262,7 +263,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
     } else {
       String secondPartyName = JrawUtils.secondPartyName(getResources(), message, userSession.loggedInUserName());
-      PrivateMessageThreadActivity.start(this, message.getId(), secondPartyName, messageItemViewRect);
+      PrivateMessageThreadActivity.start(this, message, secondPartyName, messageItemViewRect);
     }
   }
 

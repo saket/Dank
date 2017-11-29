@@ -11,7 +11,7 @@ public abstract class ComposeResult implements Parcelable {
 
   public abstract String parentContributionFullName();
 
-  public abstract String reply();
+  public abstract CharSequence reply();
 
   /**
    * Payload that was originally sent with {@link ComposeStartOptions}.
@@ -19,7 +19,7 @@ public abstract class ComposeResult implements Parcelable {
   @Nullable
   public abstract Bundle extras();
 
-  public static ComposeResult create(String parentContributionFullName, String reply, @Nullable Bundle extras) {
+  public static ComposeResult create(String parentContributionFullName, CharSequence reply, @Nullable Bundle extras) {
     return new AutoValue_ComposeResult(parentContributionFullName, reply, extras);
   }
 }

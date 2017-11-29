@@ -54,14 +54,16 @@ public class InboxManager {
   }
 
   /**
-   * Both ID and folder are required because {@link CachedMessage} uses a composite key of the ID and the
-   * folder. This is because it's possible for the same message to be present in Unread as well as Private
-   * Message folder.
+   * Message thread.
+   *
+   * Both fullname and folder are required because {@link CachedMessage} uses a composite key of the fullname
+   * and the folder. This is because it's possible for the same message to be present in Unread as well as
+   * Private Message folder.
    */
   @CheckResult
-  public Observable<Message> message(String messageId, InboxFolder folder) {
+  public Observable<Message> message(String fullname, InboxFolder folder) {
     return briteDatabase
-        .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_SINGLE, messageId, folder.name())
+        .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_SINGLE, fullname, folder.name())
         .mapToOne(CachedMessage.mapMessageFromCursor(moshi));
   }
 
@@ -187,7 +189,7 @@ public class InboxManager {
             Message latestMessage = messageReplies.isEmpty() ? fetchedMessage : messageReplies.get(messageReplies.size() - 1);
             latestMessageTimestamp = JrawUtils.createdTimeUtc(latestMessage);
           }
-          CachedMessage messageToStore = CachedMessage.create(fetchedMessage.getId(), fetchedMessage, latestMessageTimestamp, folder);
+          CachedMessage messageToStore = CachedMessage.create(fetchedMessage.getFullName(), fetchedMessage, latestMessageTimestamp, folder);
           briteDatabase.insert(CachedMessage.TABLE_NAME, messageToStore.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
         }
         transaction.markSuccessful();
@@ -200,7 +202,7 @@ public class InboxManager {
     return Completable.fromAction(() -> {
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
         for (Message message : messages) {
-          briteDatabase.delete(CachedMessage.TABLE_NAME, CachedMessage.WHERE_FOLDER_AND_ID, folder.name(), message.getId());
+          briteDatabase.delete(CachedMessage.TABLE_NAME, CachedMessage.WHERE_FOLDER_AND_FULLNAME, folder.name(), message.getFullName());
         }
         transaction.markSuccessful();
       }
@@ -230,5 +232,4 @@ public class InboxManager {
     return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setAllRead())
         .andThen(removeAllMessages(InboxFolder.UNREAD));
   }
-
 }

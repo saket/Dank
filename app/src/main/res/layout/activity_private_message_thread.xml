@@ -5,8 +5,7 @@
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="match_parent"
-  tools:layout_marginTop="25dp">
+  android:layout_height="match_parent">
 
   <me.saket.dank.widgets.DankToolbar
     android:id="@id/toolbar"
@@ -27,14 +26,57 @@
     android:id="@+id/privatemessagethread_message_list"
     style="@style/DankRecyclerView"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="match_parent"
+    android:layout_above="@+id/privatemessagethread_reply_container"
     android:layout_below="@id/privatemessagethread_subject"
     android:clipToPadding="false" />
 
-  <android.support.design.widget.FloatingActionButton
-    android:id="@+id/privatemessagethread_reply"
-    style="@style/DankFAB"
-    android:layout_margin="@dimen/spacing16"
-    android:src="@drawable/ic_reply_24dp"
-    android:visibility="invisible" />
+  <View
+    style="@style/DankSeparator.VerticalContent"
+    android:layout_alignTop="@+id/privatemessagethread_reply_container"
+    android:layout_marginTop="-1dp"
+    android:background="@color/white_opacity_0_25" />
+
+  <LinearLayout
+    android:id="@+id/privatemessagethread_reply_container"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_alignParentBottom="true"
+    android:background="@color/white_opacity_0_25"
+    android:orientation="horizontal">
+
+    <EditText
+      android:id="@+id/privatemessagethread_reply"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/spacing16"
+      android:layout_marginTop="@dimen/spacing16"
+      android:layout_weight="1"
+      android:background="@null"
+      android:hint="@string/privatemessagethread_comment_reply_hint"
+      android:paddingEnd="@dimen/spacing16"
+      android:paddingStart="@dimen/spacing16" />
+
+    <ImageButton
+      android:id="@+id/privatemessagethread_fullscreen"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="bottom"
+      android:layout_marginBottom="3dp"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:contentDescription="@string/cd_privatemessagethread_fullscreen"
+      android:padding="@dimen/spacing12"
+      android:src="@drawable/ic_fullscreen_24dp" />
+
+    <me.saket.dank.widgets.ImageButtonWithDisabledTint
+      android:id="@+id/privatemessagethread_send"
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:layout_gravity="bottom"
+      android:layout_marginBottom="2dp"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:contentDescription="@string/cd_privatemessagethread_send_message"
+      android:padding="@dimen/spacing16"
+      android:src="@drawable/ic_send_20dp" />
+  </LinearLayout>
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

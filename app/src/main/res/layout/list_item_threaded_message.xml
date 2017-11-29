@@ -3,10 +3,9 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:background="?attr/selectableItemBackground"
+  android:foreground="?attr/selectableItemBackground"
   android:orientation="vertical"
-  tools:background="@color/window_background"
-  tools:layout_marginTop="25dp">
+  android:paddingBottom="@dimen/spacing16">
 
   <TextView
     android:id="@+id/threadedmessage_item_author"
@@ -18,28 +17,30 @@
     android:ellipsize="end"
     android:maxLines="1"
     android:textColor="@color/gray_100"
+    android:visibility="gone"
     tools:text="ljdawson" />
+
+  <TextView
+    android:id="@+id/threadedmessage_item_body"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:layout_marginStart="@dimen/spacing16"
+    android:layout_marginTop="@dimen/spacing8"
+    android:background="@drawable/background_message_content"
+    android:padding="@dimen/spacing12"
+    android:textColor="@color/gray_400"
+    tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..." />
 
   <TextView
     android:id="@+id/threadedmessage_item_timestamp"
     style="@style/DankMessageTimestampStyle"
     android:layout_marginEnd="@dimen/spacing16"
     android:layout_marginStart="@dimen/spacing16"
+    android:layout_marginTop="@dimen/spacing8"
     android:ellipsize="end"
     android:maxLines="1"
+    android:paddingEnd="@dimen/spacing12"
+    android:paddingStart="@dimen/spacing12"
     tools:text="May 1" />
-
-  <TextView
-    android:id="@+id/threadedmessage_item_body"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_marginEnd="@dimen/spacing16"
-    android:layout_marginStart="@dimen/spacing16"
-    android:layout_marginTop="@dimen/spacing8"
-    android:textColor="@color/gray_400"
-    tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..." />
-
-  <View
-    style="@style/DankSeparator.VerticalContent"
-    android:layout_marginTop="@dimen/spacing16" />
 </LinearLayout>

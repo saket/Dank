@@ -65,4 +65,8 @@ public class Strings {
   public static String substringWithBounds(String string, int endIndex) {
     return string.substring(0, Math.min(string.length(), endIndex));
   }
+
+  public static boolean isNullOrEmpty(CharSequence string) {
+    return string == null || string.length() == 0;
+  }
 }

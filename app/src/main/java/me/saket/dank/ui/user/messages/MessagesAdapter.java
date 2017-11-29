@@ -99,7 +99,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
     @BindView(R.id.messagethread_timestamp) TextView timestampView;
 
     public static MessageThreadViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-      return new MessageThreadViewHolder(inflater.inflate(R.layout.list_item_message_thread, parent, false));
+      return new MessageThreadViewHolder(inflater.inflate(R.layout.list_item_inbox_message_thread, parent, false));
     }
 
     public MessageThreadViewHolder(View itemView) {
@@ -150,7 +150,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
     private final BetterLinkMovementMethod linkMovementMethod;
 
     public static IndividualMessageViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
-      return new IndividualMessageViewHolder(inflater.inflate(R.layout.list_item_individual_message, parent, false), linkMovementMethod);
+      return new IndividualMessageViewHolder(inflater.inflate(R.layout.list_item_inbox_individual_message, parent, false), linkMovementMethod);
     }
 
     public IndividualMessageViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {

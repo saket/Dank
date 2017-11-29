@@ -22,18 +22,18 @@ import io.reactivex.functions.Function;
 public abstract class CachedMessage {
 
   public static final String TABLE_NAME = "CachedMessage";
-  static final String COLUMN_ID = "id";
+  static final String COLUMN_FULLNAME = "fullname";
   static final String COLUMN_MESSAGE = "message";
   static final String COLUMN_LATEST_MESSAGE_TIME = "latest_message_time";
   static final String COLUMN_FOLDER = "folder";
 
   public static final String QUERY_CREATE_TABLE =
       "CREATE TABLE " + TABLE_NAME + " ("
-          + COLUMN_ID + " TEXT NOT NULL, "
+          + COLUMN_FULLNAME + " TEXT NOT NULL, "
           + COLUMN_MESSAGE + " TEXT NOT NULL, "
           + COLUMN_LATEST_MESSAGE_TIME + " INTEGER NOT NULL, "
           + COLUMN_FOLDER + " TEXT NOT NULL, "
-          + "PRIMARY KEY (" + COLUMN_ID + ", " + COLUMN_FOLDER + ")"
+          + "PRIMARY KEY (" + COLUMN_FULLNAME + ", " + COLUMN_FOLDER + ")"
           + ")";
 
   public static final String QUERY_GET_ALL_IN_FOLDER =
@@ -49,17 +49,16 @@ public abstract class CachedMessage {
 
   public static final String QUERY_GET_SINGLE =
       "SELECT * FROM " + TABLE_NAME
-          + " WHERE " + COLUMN_ID + " == ? "
+          + " WHERE " + COLUMN_FULLNAME + " == ? "
           + " AND " + COLUMN_FOLDER + " == ?";
 
   public static final String WHERE_FOLDER =
       COLUMN_FOLDER + " == ?";
 
-  public static final String WHERE_FOLDER_AND_ID =
-      COLUMN_FOLDER + " == ? AND " + COLUMN_ID + " == ?";
+  public static final String WHERE_FOLDER_AND_FULLNAME =
+      COLUMN_FOLDER + " == ? AND " + COLUMN_FULLNAME + " == ?";
 
-  // TODO: Use fullName instead.
-  public abstract String id();
+  public abstract String fullname();
 
   public abstract Message message();
 
@@ -73,7 +72,7 @@ public abstract class CachedMessage {
 
   public ContentValues toContentValues(Moshi moshi) {
     ContentValues values = new ContentValues(4);
-    values.put(COLUMN_ID, id());
+    values.put(COLUMN_FULLNAME, fullname());
     values.put(COLUMN_MESSAGE, moshi.adapter(Message.class).toJson(message()));
     values.put(COLUMN_LATEST_MESSAGE_TIME, latestMessageTimestamp());
     values.put(COLUMN_FOLDER, folder().name());
@@ -85,7 +84,7 @@ public abstract class CachedMessage {
       Message message = mapMessageFromCursor(moshi).apply(cursor);
       long latestMessageTimestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_LATEST_MESSAGE_TIME));
       InboxFolder folder = InboxFolder.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER)));
-      return create(message.getId(), message, latestMessageTimestamp, folder);
+      return create(message.getFullName(), message, latestMessageTimestamp, folder);
     };
   }
 
@@ -100,7 +99,7 @@ public abstract class CachedMessage {
     };
   }
 
-  public static CachedMessage create(String id, Message message, long latestMessageTimestamp, InboxFolder folder) {
-    return new AutoValue_CachedMessage(id, message, latestMessageTimestamp, folder);
+  public static CachedMessage create(String fullname, Message message, long latestMessageTimestamp, InboxFolder folder) {
+    return new AutoValue_CachedMessage(fullname, message, latestMessageTimestamp, folder);
   }
 }

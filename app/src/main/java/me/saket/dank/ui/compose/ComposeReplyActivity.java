@@ -7,6 +7,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
@@ -17,7 +18,6 @@ import android.widget.EditText;
 import android.widget.PopupMenu;
 import android.widget.ScrollView;
 
-import com.google.common.base.Strings;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.werdpressed.partisan.rundo.RunDo;
@@ -40,6 +40,7 @@ import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.SimpleTextWatcher;
+import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
@@ -72,10 +73,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   private RunDo runDo;
   private Relay<Object> successfulSendStream = PublishRelay.create();
 
-  public static void start(Context context, ComposeStartOptions startOptions) {
-    context.startActivity(intent(context, startOptions));
-  }
-
+  @CheckResult
   public static Intent intent(Context context, ComposeStartOptions startOptions) {
     Intent intent = new Intent(context, ComposeReplyActivity.class);
     intent.putExtra(KEY_START_OPTIONS, startOptions);
@@ -125,7 +123,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, markdownSpanPool));
 
     // Retain pre-filled text or restore draft.
-    String preFilledText = startOptions.preFilledText();
+    CharSequence preFilledText = startOptions.preFilledText();
     if (Strings.isNullOrEmpty(preFilledText)) {
       replyRepository.streamDrafts(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()))
           .firstElement()
@@ -327,7 +325,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
       return;
     }
 
-    String reply = replyField.getText().toString();
+    CharSequence reply = replyField.getText();
     ComposeResult composeResult = ComposeResult.create(startOptions.parentContributionFullName(), reply, startOptions.extras());
 
     Intent resultData = new Intent();

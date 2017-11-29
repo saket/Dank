@@ -15,7 +15,7 @@ public abstract class ComposeStartOptions implements Parcelable {
   public abstract String secondPartyName();
 
   @Nullable
-  public abstract String preFilledText();
+  public abstract CharSequence preFilledText();
 
   public abstract String parentContributionFullName();
 
@@ -34,15 +34,20 @@ public abstract class ComposeStartOptions implements Parcelable {
      */
     public abstract Builder secondPartyName(@Nullable String secondPartyName);
 
-    public abstract Builder preFilledText(String preFilledText);
+    public abstract Builder preFilledText(CharSequence preFilledText);
 
     /**
-     * The {@link Contribution} to which this reply is being made. Used as an ID for saving drafts.
+     * The {@link Contribution} to which this reply is being made.
+     * Used as an ID for saving and retaining drafts.
      */
     public Builder parentContribution(Contribution replyingTo) {
       return parentContributionFullName(replyingTo.getFullName());
     }
 
+    /**
+     * The {@link Contribution}'s fullname to which this reply is being made.
+     * Used as an ID for saving and retaining drafts.
+     */
     abstract Builder parentContributionFullName(String replyingTo);
 
     /**

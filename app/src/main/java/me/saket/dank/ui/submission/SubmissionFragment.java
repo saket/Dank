@@ -444,9 +444,10 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after fullscreen reply result"));
           }
         })
-        .map(composeResult ->
-            ReplySendClickEvent.create(ContributionFullNameWrapper.create(composeResult.parentContributionFullName()), composeResult.reply())
-        )
+        .map(composeResult -> ReplySendClickEvent.create(ContributionFullNameWrapper.create(
+            composeResult.parentContributionFullName()),
+            composeResult.reply().toString()
+        ))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(fullscreenReplySendStream);
 

@@ -139,7 +139,7 @@
   <string name="submission_comment_byline_item_score">%s points</string>
   <string name="submission_comment_reply_hint">Type a reply…</string>
   <string name="cd_submission_comment_reply_send">Send reply</string>
-  <string name="cd_submission_comment_reply_go_fullscreen">Compose reply in fullscreen</string>
+  <string name="cd_submission_comment_reply_go_fullscreen">Compose reply in the fullscreen editor</string>
   <string name="cd_submission_comment_reply_insert_gif">Insert GIF</string>
   <string name="cd_submission_comment_reply_discard">Discard reply</string>
   <string name="submission_comment_reply_author_hint">%s</string> <!-- {username} -->
@@ -177,6 +177,9 @@
   <string name="inbox_error_failed_to_load_more_messages">Failed to load more messages. Tap to retry.</string>
   <string name="inbox_snippet_sent_by_logged_in_user">You: %s</string>
   <string name="cd_inbox_mark_all_unread_messages_as_read">Mark all unread messages as read</string>
+  <string name="cd_privatemessagethread_fullscreen">Compose reply in the fullscreen editor</string>
+  <string name="cd_privatemessagethread_send_message">Send message</string>
+  <string name="privatemessagethread_comment_reply_hint">@string/submission_comment_reply_hint</string>
 
   <!-- Notifications -->
   <string name="messagenotification_below_nougat_multiple_messages_title">%d new messages</string>
