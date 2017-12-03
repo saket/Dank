@@ -169,11 +169,12 @@ public class UrlRouter {
    */
   @Nullable
   public static String findAllowedPackageNameForDeepLink(String url) {
-    String urlHost = Uri.parse(url).getHost();
+    Uri URI = Uri.parse(url);
+    String urlHost = URI.getHost();
     if (urlHost.endsWith("youtube.com")) {
       return "com.google.android.youtube";
 
-    } else if (urlHost.endsWith("play.google.com")) {
+    } else if (urlHost.endsWith("play.google.com") && URI.getPath().startsWith("/store")) {
       return "com.android.vending";
 
     } else {

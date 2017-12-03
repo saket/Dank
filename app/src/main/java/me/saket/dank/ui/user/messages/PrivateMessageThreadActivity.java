@@ -109,6 +109,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   // TODO: Remove pending sync replies once we refresh.
   // TODO: Tap to retry sending message.
   // TODO: Refresh all messages on start and on exit if any replies were made (to remove pending-sync replies).
+  // TODO: DiffUtils.
   @Override
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
@@ -137,7 +138,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
           }
         });
 
-    // TODO: DiffUtils.
     Observable.combineLatest(messageStream, pendingSyncRepliesStream, Pair::create)
         .subscribeOn(io())
         .map(pair -> {
