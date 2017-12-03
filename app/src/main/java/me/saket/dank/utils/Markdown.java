@@ -11,18 +11,39 @@ import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.style.LineBackgroundSpan;
 
+import net.dean.jraw.models.Message;
+
 import org.sufficientlysecure.htmltextview.HtmlTagHandler;
 import org.xml.sax.XMLReader;
+
+import javax.inject.Inject;
+
+import me.saket.dank.ui.submission.PendingSyncReply;
 
 /**
  * Handles converting Reddit's markdown into Spans that can be rendered by TextView.
  * <p>
- * TODO: Get color for quote blocks and HRs from colors.xml.
+ * TODO: Proivide using Dagger.
+ * TODO: Use MarkdownHints through this class.
  */
 @SuppressWarnings({ "StatementWithEmptyBody", "deprecation" })
 public class Markdown {
 
   private static final TextPaint EMPTY_TEXTPAINT = new TextPaint();
+
+  @Inject
+  public Markdown() {
+  }
+
+  // TODO.
+  public CharSequence parse(Message message) {
+    return message.getBody();
+  }
+
+  // TODO.
+  public CharSequence parse(PendingSyncReply reply) {
+    return reply.body();
+  }
 
   public static CharSequence parseRedditMarkdownHtml(String markdown, TextPaint textPaint) {
     RedditMarkdownHtmlHandler htmlTagHandler = new RedditMarkdownHtmlHandler(textPaint);

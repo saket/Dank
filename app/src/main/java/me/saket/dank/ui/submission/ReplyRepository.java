@@ -13,7 +13,6 @@ import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
 import net.dean.jraw.models.Contribution;
-import net.dean.jraw.models.Submission;
 
 import java.util.HashMap;
 import java.util.List;
@@ -61,44 +60,69 @@ public class ReplyRepository implements DraftStore {
     this.recycleDraftsOlderThanNumDays = recycleDraftsOlderThanNumDays;
   }
 
-// ======== INLINE_REPLY ======== //
+// ======== REPLY ======== //
 
   /**
    * This exists to ensure a duplicate reply does not get stored when re-sending the same reply.
    */
   @CheckResult
   public Completable reSendReply(PendingSyncReply pendingSyncReply) {
-    String parentSubmissionFullName = pendingSyncReply.parentSubmissionFullName();
-    String parentContributionFullName = pendingSyncReply.parentContributionFullName();
+    String parentThreadFullName = pendingSyncReply.parentThreadFullName();
+    ParentThread parentThread;
+    if (parentThreadFullName.startsWith("t3_")) {
+      parentThread = ParentThread.createSubmission(parentThreadFullName);
+    } else if (parentThreadFullName.startsWith("t4_")) {
+      parentThread = ParentThread.createPrivateMessage(parentThreadFullName);
+    } else {
+      throw new UnsupportedOperationException("Unknown thread name: " + parentThreadFullName);
+    }
+
+    Contribution parentContribution = ContributionFullNameWrapper.create(pendingSyncReply.parentContributionFullName());
     String replyBody = pendingSyncReply.body();
     long replyCreatedTimeMillis = pendingSyncReply.createdTimeMillis();
-    return sendReply(parentSubmissionFullName, parentContributionFullName, replyBody, replyCreatedTimeMillis);
+    return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
   }
 
+  /**
+   * @param parentContribution Parent comment/message.
+   * @param parentThread       Root submission/message-thread.
+   */
   @CheckResult
-  public Completable sendReply(Contribution parentContribution, String parentSubmissionFullName, String replyBody) {
-    String parentContributionFullName = parentContribution.getFullName();
+  public Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody) {
     long replyCreatedTimeMillis = System.currentTimeMillis();
-    return sendReply(parentSubmissionFullName, parentContributionFullName, replyBody, replyCreatedTimeMillis);
+    return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
   }
 
   @CheckResult
-  private Completable sendReply(String parentSubmissionFullName, String parentContributionFullName, String replyBody, long replyCreatedTimeMillis) {
+  private Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody, long replyCreatedTimeMillis) {
     PendingSyncReply pendingSyncReply = PendingSyncReply.create(
         replyBody,
         PendingSyncReply.State.POSTING,
-        parentSubmissionFullName,
-        parentContributionFullName,
+        parentThread.fullName(),
+        parentContribution.getFullName(),
         userSession.loggedInUserName(),
         replyCreatedTimeMillis
     );
 
-    ContributionFullNameWrapper fakeParentContribution = ContributionFullNameWrapper.create(parentContributionFullName);
-
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
         .andThen(Single.fromCallable(() -> {
-          String postedReplyId = dankRedditClient.userAccountManager().reply(fakeParentContribution, replyBody);
-          return "t1_" + postedReplyId;   // full-name.
+          String postedReplyId = dankRedditClient.userAccountManager().reply(parentContribution, replyBody);
+          String postedFullName;
+          switch (parentThread.type()) {
+            case SUBMISSION:
+              // Submission comment.
+              postedFullName = "t4_" + postedReplyId;
+              break;
+
+            case PRIVATE_MESSAGE:
+              postedFullName = "t1_" + postedReplyId;
+              break;
+
+            default:
+              throw new UnsupportedOperationException("Unknown thread type: " + parentThread.type());
+          }
+          Timber.i("Posted full-name: %s", postedFullName);
+          return postedFullName;   // full-name.
         }))
         .flatMapCompletable(postedReplyFullName -> Completable.fromAction(() -> {
           PendingSyncReply updatedPendingSyncReply = pendingSyncReply
@@ -124,8 +148,8 @@ public class ReplyRepository implements DraftStore {
    * haven't been refreshed for <var>submission</var> yet.
    */
   @CheckResult
-  public Observable<List<PendingSyncReply>> streamPendingSyncRepliesForSubmission(Submission submission) {
-    return database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FOR_SUBMISSION, submission.getFullName())
+  public Observable<List<PendingSyncReply>> streamPendingSyncReplies(ParentThread parentThread) {
+    return database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FOR_THREAD, parentThread.fullName())
         .mapToList(PendingSyncReply.MAPPER)
         .map(toImmutable());
   }
@@ -138,14 +162,14 @@ public class ReplyRepository implements DraftStore {
   }
 
   /**
-   * Removes "pending-sync" replies for a submission once they're found in the submission's comments.
+   * Removes POSTED "pending-sync" replies for a submission/message-thread once its comments are refreshed.
    */
   @CheckResult
-  public Completable removeSyncPendingPostedRepliesForSubmission(Submission submission) {
+  public Completable removeSyncPendingPostedReplies(ParentThread parentThread) {
     return Completable.fromAction(() -> database.delete(
         PendingSyncReply.TABLE_NAME,
-        PendingSyncReply.WHERE_STATE_AND_SUBMISSION_FULL_NAME,
-        PendingSyncReply.State.POSTED.name(), submission.getFullName()
+        PendingSyncReply.WHERE_STATE_AND_THREAD_FULL_NAME,
+        PendingSyncReply.State.POSTED.name(), parentThread.fullName()
     ));
   }
 

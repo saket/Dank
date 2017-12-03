@@ -5,6 +5,7 @@ import android.support.annotation.Nullable;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
+import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentMessage;
 import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Listing;
@@ -49,6 +50,11 @@ public class JrawUtils {
   // TODO: Submit this to JRAW.
   public static String messageBodyHtml(Message message) {
     return message.getDataNode().get("body_html").asText();
+  }
+
+  // TODO: Submit this to JRAW.
+  public static String messageBodyHtml(Comment comment) {
+    return comment.getDataNode().get("body_html").asText();
   }
 
   // TODO: Submit this to JRAW.

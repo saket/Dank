@@ -121,7 +121,7 @@ public class SubmissionRepository {
       submissionWithCommentsStore = StoreBuilder.<DankSubmissionRequest, Submission>key()
           .fetcher(request -> dankRedditClient.submission(request)
               .flatMap(submissionWithComments -> replyRepository
-                  .removeSyncPendingPostedRepliesForSubmission(submissionWithComments)
+                  .removeSyncPendingPostedReplies(ParentThread.of(submissionWithComments))
                   .andThen(Single.just(submissionWithComments))
               )
           )

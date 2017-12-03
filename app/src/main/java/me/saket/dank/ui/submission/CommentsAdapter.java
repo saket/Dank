@@ -384,7 +384,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       Comment comment = dankCommentNode.commentNode().getComment();
       String authorFlairText = comment.getAuthorFlair() != null ? comment.getAuthorFlair().getText() : null;
       long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
-      String commentBodyHtml = comment.getDataNode().get("body_html").asText();
+      String commentBodyHtml = JrawUtils.messageBodyHtml(comment);
 
       // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
       int childCommentsCount = dankCommentNode.commentNode().getTotalSize();
@@ -591,6 +591,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       replyField.setOnFocusChangeListener((v, hasFocus) -> {
         if (!hasFocus && savingDraftsAllowed) {
           // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
+          // WARNING: DON'T REFERENCE VH FIELDS IN THIS CHAIN TO AVOID LEAKING MEMORY.
           draftStore.saveDraft(parentContribution, replyField.getText().toString())
               .subscribeOn(Schedulers.io())
               .subscribe();

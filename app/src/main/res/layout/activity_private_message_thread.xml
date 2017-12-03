@@ -54,6 +54,7 @@
       android:layout_weight="1"
       android:background="@null"
       android:hint="@string/privatemessagethread_comment_reply_hint"
+      android:inputType="textCapSentences|textMultiLine"
       android:paddingEnd="@dimen/spacing16"
       android:paddingStart="@dimen/spacing16" />
 

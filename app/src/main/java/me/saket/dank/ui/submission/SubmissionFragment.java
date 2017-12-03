@@ -465,14 +465,12 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           // We're also removing the draft before sending it because even if the reply fails, it'll still
           // be present in the DB for the user to retry. Nothing will be lost.
           submissionStream
-              //.doOnSubscribe(o -> Timber.i("Waiting for submission data"))
-              //.doOnDispose(() -> Timber.i("Not waiting anymore"))
               .take(1)
               .flatMapCompletable(submission -> replyRepository.removeDraft(sendClickEvent.parentContribution())
                   //.doOnComplete(() -> Timber.i("Sending reply: %s", sendClickEvent.replyMessage()))
                   .andThen(Dank.reddit().withAuth(replyRepository.sendReply(
                       sendClickEvent.parentContribution(),
-                      submission.getFullName(),
+                      ParentThread.of(submission),
                       sendClickEvent.replyMessage())
                   ))
               )
@@ -564,7 +562,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .observeOn(io())
         .switchMap(submissionWithComments -> {
           // Add pending-sync replies to the comment tree.
-          return replyRepository.streamPendingSyncRepliesForSubmission(submissionWithComments)
+          return replyRepository.streamPendingSyncReplies(ParentThread.of(submissionWithComments))
               .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies));
         })
         .takeUntil(lifecycle().onDestroy())

@@ -181,6 +181,9 @@
   <string name="cd_privatemessagethread_send_message">Send message</string>
   <string name="privatemessagethread_comment_reply_hint">@string/submission_comment_reply_hint</string>
 
+  <string name="privatemessagethread_reply_byline_failed_status">@string/submission_comment_reply_byline_failed_status</string>
+  <string name="privatemessagethread_reply_byline_posting_status">@string/submission_comment_reply_byline_posting_status</string>
+
   <!-- Notifications -->
   <string name="messagenotification_below_nougat_multiple_messages_title">%d new messages</string>
   <string name="messagenotification_below_nougat_multiple_messages_title_indeterminate">%d+ new messages</string>
