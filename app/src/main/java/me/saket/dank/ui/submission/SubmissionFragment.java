@@ -469,11 +469,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               .take(1)
               .flatMapCompletable(submission -> replyRepository.removeDraft(sendClickEvent.parentContribution())
                   //.doOnComplete(() -> Timber.i("Sending reply: %s", sendClickEvent.replyMessage()))
-                  .andThen(Dank.reddit().withAuth(replyRepository.sendReply(
-                      sendClickEvent.parentContribution(),
-                      ParentThread.of(submission),
-                      sendClickEvent.replyMessage())
-                  ))
+                  .andThen(replyRepository.sendReply(sendClickEvent.parentContribution(), ParentThread.of(submission), sendClickEvent.replyMessage()))
               )
               .compose(applySchedulersCompletable())
               .doOnError(e -> Timber.e(e))
@@ -485,7 +481,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
         .takeUntil(lifecycle().onDestroy())
         .subscribe(retrySendEvent -> {
           // Re-sending is not a part of the chain so that it does not get unsubscribed on destroy.
-          Dank.reddit().withAuth(replyRepository.reSendReply(retrySendEvent.failedPendingSyncReply()))
+          replyRepository.reSendReply(retrySendEvent.failedPendingSyncReply())
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
         });

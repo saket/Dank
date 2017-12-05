@@ -40,7 +40,9 @@ import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxManager;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
@@ -77,6 +79,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   @Inject DraftStore draftStore;
   @Inject ReplyRepository replyRepository;
   @Inject Markdown markdown;
+  @Inject ErrorResolver errorResolver;
 
   private ThreadedMessagesAdapter messagesAdapter;
   private Relay<Message> latestMessageStream = BehaviorRelay.create();
@@ -155,6 +158,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         })
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
+        .doAfterNext(o -> messageRecyclerView.post(() -> messageRecyclerView.smoothScrollToPosition(messagesAdapter.getItemCount() - 1)))
         .subscribe(messagesAdapter);
 
     Observable<CharSequence> fullscreenReplyStream = lifecycle().onActivityResults()
@@ -171,15 +175,28 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .withLatestFrom(latestMessageStream, Pair::create)
         .doOnNext(o -> replyField.setText(null))
         .observeOn(Schedulers.io())
-        .concatMap(pair -> {
-          CharSequence reply = pair.first;
-          Message latestMessage = pair.second;
-          return replyRepository
-              .sendReply(latestMessage, privateMessageThread, reply.toString()).toObservable()
-              .doOnComplete(() -> messageRecyclerView.post(() -> messageRecyclerView.smoothScrollToPosition(messagesAdapter.getItemCount() - 1)));
-        })
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(doNothing(), logError("Failed to send message"));
+        .subscribe(
+            pair -> {
+              CharSequence reply = pair.first;
+              Message latestMessage = pair.second;
+
+              // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
+              replyRepository.removeDraft(ContributionFullNameWrapper.create(privateMessageThreadFullName))
+                  .andThen(replyRepository.sendReply(latestMessage, privateMessageThread, reply.toString()).toObservable())
+                  .subscribe(
+                      doNothing(),
+                      error -> {
+                        ResolvedError resolvedError = errorResolver.resolve(error);
+                        if (resolvedError.isUnknown()) {
+                          Timber.e(error);
+                        }
+                        // Error is stored in the DB, so we don't need to show anything else to the user.
+                      }
+                  );
+            },
+            logError("Failed to send message")
+        );
 
     // Enable send button only if there's some text.
     RxTextView.textChanges(replyField)
@@ -204,6 +221,18 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
             replyField.setSelection(draft.length());
           }
         });
+
+    // Retry failed messages.
+    messagesAdapter.streamMessageClicks()
+        .map(uiModel -> uiModel.parentModel())
+        .ofType(PendingSyncReply.class)
+        .filter(pendingSyncReply -> pendingSyncReply.state() == PendingSyncReply.State.FAILED)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(failedPendingSyncReply ->
+            Dank.reddit().withAuth(replyRepository.reSendReply(failedPendingSyncReply))
+                .subscribeOn(Schedulers.io())
+                .subscribe()
+        );
   }
 
   @Override
@@ -245,7 +274,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     long parentCreatedTimeMillis = JrawUtils.createdTimeUtc(parentMessage);
     CharSequence parentByline = Dates.createTimestamp(getResources(), parentCreatedTimeMillis);
     long parentAdapterId = parentMessage.getFullName().hashCode();
-    uiModels.add(PrivateMessageUiModel.create(parentSender, parentBody, parentByline, parentCreatedTimeMillis, parentAdapterId));
+    uiModels.add(PrivateMessageUiModel.create(parentSender, parentBody, parentByline, parentCreatedTimeMillis, parentAdapterId, parentMessage));
 
     // 2. Replies.
     for (Message threadedReply : threadedReplies) {
@@ -257,11 +286,13 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
       CharSequence byline = Dates.createTimestamp(getResources(), createdTimeMillis);
       long adapterId = threadedReply.getFullName().hashCode();
 
-      uiModels.add(PrivateMessageUiModel.create(senderName, body, byline, createdTimeMillis, adapterId));
+      uiModels.add(PrivateMessageUiModel.create(senderName, body, byline, createdTimeMillis, adapterId, threadedReply));
     }
 
     // 3. Pending-sync replies.
     for (PendingSyncReply pendingSyncReply : pendingSyncReplies) {
+      long createdTimeMillis = pendingSyncReply.createdTimeMillis();
+
       Truss bylineBuilder = new Truss();
       if (pendingSyncReply.state() == PendingSyncReply.State.POSTING) {
         bylineBuilder.append(getString(R.string.submission_comment_reply_byline_posting_status));
@@ -270,13 +301,14 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         bylineBuilder.append(getString(R.string.submission_comment_reply_byline_failed_status));
         bylineBuilder.popSpan();
       } else {
-        bylineBuilder.append(Dates.createTimestamp(getResources(), pendingSyncReply.createdTimeMillis()));
+        bylineBuilder.append(Dates.createTimestamp(getResources(), createdTimeMillis));
       }
 
       CharSequence byline = bylineBuilder.build();
       CharSequence body = markdown.parse(pendingSyncReply);
-      long adapterId = (pendingSyncReply.parentContributionFullName() + "_reply_ " + pendingSyncReply.createdTimeMillis()).hashCode();
-      uiModels.add(PrivateMessageUiModel.create(pendingSyncReply.author(), body, byline, pendingSyncReply.createdTimeMillis(), adapterId));
+      long adapterId = (pendingSyncReply.parentContributionFullName() + "_reply_ " + createdTimeMillis).hashCode();
+
+      uiModels.add(PrivateMessageUiModel.create(pendingSyncReply.author(), body, byline, createdTimeMillis, adapterId, pendingSyncReply));
     }
 
     // Finally, sort the messages so that pending-sync replies are at the correct positions.

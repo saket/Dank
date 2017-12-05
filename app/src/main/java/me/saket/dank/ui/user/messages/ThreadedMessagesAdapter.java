@@ -1,5 +1,6 @@
 package me.saket.dank.ui.user.messages;
 
+import android.support.annotation.CheckResult;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.view.LayoutInflater;
@@ -7,10 +8,14 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
+
 import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observable;
 import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
@@ -25,10 +30,16 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMes
 {
 
   private BetterLinkMovementMethod linkMovementMethod;
+  private Relay<PrivateMessageUiModel> messageClickStream = PublishRelay.create();
 
   public ThreadedMessagesAdapter(BetterLinkMovementMethod linkMovementMethod) {
     this.linkMovementMethod = linkMovementMethod;
     setHasStableIds(true);
+  }
+
+  @CheckResult
+  public Observable<PrivateMessageUiModel> streamMessageClicks() {
+    return messageClickStream;
   }
 
   @Override
@@ -43,7 +54,8 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMes
 
   @Override
   protected MessageViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-    return MessageViewHolder.create(inflater, parent, linkMovementMethod);
+    View itemView = inflater.inflate(R.layout.list_item_threaded_message, parent, false);
+    return new MessageViewHolder(itemView, linkMovementMethod, this, messageClickStream);
   }
 
   @Override
@@ -56,19 +68,22 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMes
     @BindView(R.id.threadedmessage_item_byline) TextView bylineView;
     @BindView(R.id.threadedmessage_item_body) TextView messageBodyView;
 
-    public static MessageViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
-      return new MessageViewHolder(inflater.inflate(R.layout.list_item_threaded_message, parent, false), linkMovementMethod);
-    }
-
-    public MessageViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
+    public MessageViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod, ThreadedMessagesAdapter adapter,
+        Relay<PrivateMessageUiModel> messageClickStream)
+    {
       super(itemView);
       ButterKnife.bind(this, itemView);
+
+      itemView.setOnClickListener(v -> messageClickStream.accept(adapter.getItem(getAdapterPosition())));
 
       // Bug workaround: TextView with clickable spans consume all touch events. Manually
       // transfer them to the parent so that the background touch indicator shows up +
       // click listener works.
       messageBodyView.setOnTouchListener((__, event) -> {
-        boolean handledByMovementMethod = linkMovementMethod.onTouchEvent(messageBodyView, ((Spannable) messageBodyView.getText()), event);
+        boolean handledByMovementMethod = messageBodyView.getMovementMethod().onTouchEvent(
+            messageBodyView, ((Spannable) messageBodyView.getText()),
+            event
+        );
         return handledByMovementMethod || itemView.onTouchEvent(event);
       });
       messageBodyView.setMovementMethod(linkMovementMethod);

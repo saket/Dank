@@ -15,9 +15,17 @@ public abstract class PrivateMessageUiModel {
 
   public abstract long adapterId();
 
-  public static PrivateMessageUiModel create(String senderName, CharSequence messageBody, CharSequence byline, long createdTimeMillis,
-      long adapterId)
+  /** The original model from which this Ui model was created. */
+  public abstract Object parentModel();
+
+  public static PrivateMessageUiModel create(
+      String senderName,
+      CharSequence messageBody,
+      CharSequence byline,
+      long createdTimeMillis,
+      long adapterId,
+      Object parentModel)
   {
-    return new AutoValue_PrivateMessageUiModel(senderName, messageBody, byline, createdTimeMillis, adapterId);
+    return new AutoValue_PrivateMessageUiModel(senderName, messageBody, byline, createdTimeMillis, adapterId, parentModel);
   }
 }

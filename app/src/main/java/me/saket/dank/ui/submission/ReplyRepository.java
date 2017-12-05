@@ -105,7 +105,7 @@ public class ReplyRepository implements DraftStore {
     );
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
-        .andThen(Single.fromCallable(() -> {
+        .andThen(dankRedditClient.withAuth(Single.fromCallable(() -> {
           String postedReplyId = dankRedditClient.userAccountManager().reply(parentContribution, replyBody);
           String postedFullName;
           switch (parentThread.type()) {
@@ -123,7 +123,7 @@ public class ReplyRepository implements DraftStore {
           }
           Timber.i("Posted full-name: %s", postedFullName);
           return postedFullName;   // full-name.
-        }))
+        })))
         .flatMapCompletable(postedReplyFullName -> Completable.fromAction(() -> {
           PendingSyncReply updatedPendingSyncReply = pendingSyncReply
               .toBuilder()
