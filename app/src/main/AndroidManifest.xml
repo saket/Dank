@@ -63,7 +63,7 @@
     <activity
       android:name=".ui.user.messages.PrivateMessageThreadActivity"
       android:parentActivityName=".ui.user.messages.InboxActivity"
-      android:windowSoftInputMode="adjustResize" />
+      android:windowSoftInputMode="adjustResize|stateHidden" />
 
     <activity
       android:name=".ui.compose.ComposeReplyActivity"

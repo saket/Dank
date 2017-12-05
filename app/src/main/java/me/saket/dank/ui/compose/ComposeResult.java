@@ -9,6 +9,7 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class ComposeResult implements Parcelable {
 
+  @Nullable
   public abstract String parentContributionFullName();
 
   public abstract CharSequence reply();
@@ -19,7 +20,7 @@ public abstract class ComposeResult implements Parcelable {
   @Nullable
   public abstract Bundle extras();
 
-  public static ComposeResult create(String parentContributionFullName, CharSequence reply, @Nullable Bundle extras) {
+  public static ComposeResult create(@Nullable String parentContributionFullName, CharSequence reply, @Nullable Bundle extras) {
     return new AutoValue_ComposeResult(parentContributionFullName, reply, extras);
   }
 }

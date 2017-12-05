@@ -54,7 +54,7 @@ public class InboxManager {
   }
 
   /**
-   * Message thread.
+   * Get a message and its child replies.
    *
    * Both fullname and folder are required because {@link CachedMessage} uses a composite key of the fullname
    * and the folder. This is because it's possible for the same message to be present in Unread as well as

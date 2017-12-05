@@ -24,6 +24,7 @@ import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
@@ -38,6 +39,7 @@ import butterknife.OnClick;
 import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
+import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.InboxManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -54,6 +56,7 @@ import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
+import timber.log.Timber;
 
 public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
@@ -102,12 +105,15 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
         touchLiesOn(messageRecyclerView, downX, downY) && messageRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1)
     );
+
+    // windowSoftInputMode is set to hidden in manifest so that the keyboard
+    // doesn't show up on start, but we do want the reply field to be focused
+    // so that if full-screen reply is closed, the keyboard continues to show.
+    replyField.requestFocus();
   }
 
-  // TODO: we use the last message as the parent for new replies. test what happens when all replies get deleted.
-  // TODO: show context menu on long-press for copying text.
-  // TODO: Remove pending sync replies once we refresh.
   // TODO: Tap to retry sending message.
+  // TODO: Remove pending sync replies once we refresh.
   // TODO: Refresh all messages on start and on exit if any replies were made (to remove pending-sync replies).
   // TODO: DiffUtils.
   @Override
@@ -122,8 +128,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     messageRecyclerView.setAdapter(messagesAdapter);
 
     String privateMessageThreadFullName = getIntent().getStringExtra(KEY_MESSAGE_FULLNAME);
-
     ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageThreadFullName);
+
     Observable<List<PendingSyncReply>> pendingSyncRepliesStream = replyRepository.streamPendingSyncReplies(privateMessageThread);
 
     Observable<Message> messageStream = inboxManager.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES)
@@ -138,6 +144,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
           }
         });
 
+    // Adapter data-set.
     Observable.combineLatest(messageStream, pendingSyncRepliesStream, Pair::create)
         .subscribeOn(io())
         .map(pair -> {
@@ -159,6 +166,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .map(o -> (CharSequence) replyField.getText())
         .filter(inlineReply -> inlineReply.length() > 0);
 
+    // Replies.
     inlineReplyStream.mergeWith(fullscreenReplyStream)
         .withLatestFrom(latestMessageStream, Pair::create)
         .doOnNext(o -> replyField.setText(null))
@@ -179,32 +187,47 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .takeUntil(lifecycle().onDestroy())
         .subscribe(RxView.enabled(sendButton));
 
-    // TODO: Apply draft only if it's new.
+    // Drafts.
+    draftStore.streamDrafts(ContributionFullNameWrapper.create(privateMessageThreadFullName))
+        .subscribeOn(io())
+        .observeOn(mainThread())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(draft -> {
+          Timber.i("Draft received: %s", draft);
+          boolean isReplyCurrentlyEmpty = replyField.getText().length() == 0;
+
+          // Using replace() instead of setText() to preserve cursor position.
+          replyField.getText().replace(0, replyField.getText().length(), draft);
+
+          // Avoid moving the cursor around unless the text was empty.
+          if (isReplyCurrentlyEmpty) {
+            replyField.setSelection(draft.length());
+          }
+        });
   }
 
   @Override
   protected void onStop() {
     super.onStop();
 
-    // TODO.
     // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
-//    draftStore.saveDraft(parentContribution, replyField.getText().toString())
-//        .subscribeOn(Schedulers.io())
-//        .subscribe();
+    String privateMessageFullName = getIntent().getStringExtra(KEY_MESSAGE_FULLNAME);
+    Contribution fakePrivateMessage = ContributionFullNameWrapper.create(privateMessageFullName);
+    draftStore.saveDraft(fakePrivateMessage, replyField.getText().toString())
+        .subscribeOn(Schedulers.io())
+        .subscribe();
   }
 
   @OnClick(R.id.privatemessagethread_fullscreen)
   void onClickFullscreen() {
-    latestMessageStream
-        .take(1)
-        .subscribe(latestMessage -> {
-          ComposeStartOptions composeStartOptions = ComposeStartOptions.builder()
-              .preFilledText(replyField.getText())
-              .secondPartyName(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME))
-              .parentContribution(latestMessage)
-              .build();
-          startActivityForResult(ComposeReplyActivity.intent(this, composeStartOptions), REQUEST_CODE_FULLSCREEN_REPLY);
-        });
+    String privateMessageFullName = getIntent().getStringExtra(KEY_MESSAGE_FULLNAME);
+    Contribution fakePrivateMessage = ContributionFullNameWrapper.create(privateMessageFullName);
+    ComposeStartOptions composeStartOptions = ComposeStartOptions.builder()
+        .preFilledText(replyField.getText())
+        .secondPartyName(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME))
+        .draftKey(fakePrivateMessage)
+        .build();
+    startActivityForResult(ComposeReplyActivity.intent(this, composeStartOptions), REQUEST_CODE_FULLSCREEN_REPLY);
   }
 
   private List<PrivateMessageUiModel> constructUiModels(

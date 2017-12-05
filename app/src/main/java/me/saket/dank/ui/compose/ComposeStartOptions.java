@@ -17,7 +17,10 @@ public abstract class ComposeStartOptions implements Parcelable {
   @Nullable
   public abstract CharSequence preFilledText();
 
+  @Nullable
   public abstract String parentContributionFullName();
+
+  public abstract String draftKey();
 
   @Nullable
   public abstract Bundle extras();
@@ -38,17 +41,31 @@ public abstract class ComposeStartOptions implements Parcelable {
 
     /**
      * The {@link Contribution} to which this reply is being made.
-     * Used as an ID for saving and retaining drafts.
+     * Sent back to calling Activity through {@link ComposeResult}.
+     * Not used for anything else.
      */
     public Builder parentContribution(Contribution replyingTo) {
       return parentContributionFullName(replyingTo.getFullName());
     }
 
     /**
-     * The {@link Contribution}'s fullname to which this reply is being made.
-     * Used as an ID for saving and retaining drafts.
+     * The {@link Contribution} to which this reply is being made.
+     * Sent back to calling Activity through {@link ComposeResult}.
+     * Not used for anything else.
      */
     abstract Builder parentContributionFullName(String replyingTo);
+
+    /**
+     * The ID to use for saving and retaining drafts.
+     */
+    public Builder draftKey(Contribution contribution) {
+      return draftKey(contribution.getFullName());
+    }
+
+    /**
+     * The ID to use for saving and retaining drafts.
+     */
+    abstract Builder draftKey(String key);
 
     /**
      * Delivered back with {@link ComposeResult}.

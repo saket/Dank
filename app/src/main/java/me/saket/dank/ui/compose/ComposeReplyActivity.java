@@ -99,7 +99,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     if (BuildConfig.DEBUG && startOptions == null) {
       startOptions = ComposeStartOptions.builder()
           .secondPartyName("Poop")
-          .parentContribution(ContributionFullNameWrapper.create("Poop"))
+          .draftKey(ContributionFullNameWrapper.create("Poop"))
           .preFilledText("Waddup homie")
           .build();
     }
@@ -125,7 +125,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     // Retain pre-filled text or restore draft.
     CharSequence preFilledText = startOptions.preFilledText();
     if (Strings.isNullOrEmpty(preFilledText)) {
-      replyRepository.streamDrafts(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()))
+      replyRepository.streamDrafts(ContributionFullNameWrapper.create(startOptions.draftKey()))
           .firstElement()
           .subscribeOn(io())
           .observeOn(mainThread())
@@ -137,11 +137,12 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
     // Save draft before exiting, unless the message is being launched… into the space!
     lifecycle().onStop()
-        .takeUntil(lifecycle().onDestroy())
         .takeUntil(successfulSendStream)
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> {
           String draft = replyField.getText().toString();
-          replyRepository.saveDraft(ContributionFullNameWrapper.create(startOptions.parentContributionFullName()), draft)
+          Timber.i("Saving draft: %s", draft);
+          replyRepository.saveDraft(ContributionFullNameWrapper.create(startOptions.draftKey()), draft)
               .subscribeOn(io())
               .subscribe();
         });

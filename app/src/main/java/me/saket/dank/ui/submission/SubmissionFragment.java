@@ -417,6 +417,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           ComposeStartOptions startOptions = ComposeStartOptions.builder()
               .secondPartyName(fullscreenClickEvent.authorNameIfComment())
               .parentContribution(fullscreenClickEvent.parentContribution())
+              .draftKey(fullscreenClickEvent.parentContribution())
               .preFilledText(fullscreenClickEvent.replyMessage())
               .extras(extraPayload)
               .build();
@@ -444,8 +445,8 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after fullscreen reply result"));
           }
         })
-        .map(composeResult -> ReplySendClickEvent.create(ContributionFullNameWrapper.create(
-            composeResult.parentContributionFullName()),
+        .map(composeResult -> ReplySendClickEvent.create(
+            ContributionFullNameWrapper.create(composeResult.parentContributionFullName()),
             composeResult.reply().toString()
         ))
         .takeUntil(lifecycle().onDestroy())
