@@ -9,7 +9,7 @@ import dagger.Component;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.InboxManager;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
@@ -55,7 +55,7 @@ public interface DankAppComponent {
 
   ErrorResolver errorManager();
 
-  InboxManager inboxManager();
+  InboxRepository inboxManager();
 
   MessagesNotificationManager messagesNotificationManager();
 

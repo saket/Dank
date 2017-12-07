@@ -39,7 +39,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.data.InboxManager;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
@@ -70,7 +70,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @Inject Moshi moshi;
   @Inject MessagesNotificationManager messagesNotifManager;
   @Inject UserSession userSession;
-  @Inject InboxManager inboxManager;
+  @Inject InboxRepository inboxRepository;
 
   private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.ALL.length);
   private InboxPagerAdapter inboxPagerAdapter;
@@ -296,7 +296,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
     // Marking messages as read happens on the UI thread so we can immediately refresh messages after that.
     // Though this is dangerous in case the implementation of MessageNotifActionReceiver is ever changed in the future.
-    inboxManager.refreshMessages(InboxFolder.UNREAD, false)
+    inboxRepository.refreshMessages(InboxFolder.UNREAD, false)
         .subscribeOn(io())
         .subscribe(doNothing(), logError("Couldn't refresh messages"));
   }

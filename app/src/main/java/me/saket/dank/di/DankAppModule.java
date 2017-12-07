@@ -40,7 +40,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.InboxManager;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
@@ -119,8 +119,8 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  InboxManager provideInboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
-    return new InboxManager(dankRedditClient, briteDatabase, moshi);
+  InboxRepository provideInboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
+    return new InboxRepository(dankRedditClient, briteDatabase, moshi);
   }
 
   @Provides

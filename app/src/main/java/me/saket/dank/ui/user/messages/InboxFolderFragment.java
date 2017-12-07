@@ -31,7 +31,7 @@ import butterknife.OnClick;
 import io.reactivex.SingleTransformer;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.data.InboxManager;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.InfiniteScrollHeaderFooter;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
@@ -60,7 +60,7 @@ public class InboxFolderFragment extends DankFragment {
 
   @Inject DankLinkMovementMethod linkMovementMethod;
   @Inject UserSession userSession;
-  @Inject InboxManager inboxManager;
+  @Inject InboxRepository inboxRepository;
 
   private InboxFolder folder;
   private MessagesAdapter messagesAdapter;
@@ -132,7 +132,7 @@ public class InboxFolderFragment extends DankFragment {
     super.onStart();
     Callbacks callbacks = (Callbacks) getActivity();
 
-    inboxManager.messages(folder)
+    inboxRepository.messages(folder)
         .compose(applySchedulers())
         .compose(doOnceAfterNext(o -> {
           startInfiniteScroll(false);
@@ -180,7 +180,7 @@ public class InboxFolderFragment extends DankFragment {
   }
 
   protected void refreshMessages(boolean replaceAllExistingMessages) {
-    inboxManager.refreshMessages(folder, replaceAllExistingMessages)
+    inboxRepository.refreshMessages(folder, replaceAllExistingMessages)
         .compose(applySchedulersSingle())
         .compose(handleProgressAndErrorForFirstRefresh(replaceAllExistingMessages))
         .compose(handleProgressAndErrorForSubsequentRefresh())
@@ -247,7 +247,7 @@ public class InboxFolderFragment extends DankFragment {
     scrollListener.setEmitInitialEvent(isRetrying);
 
     scrollListener.emitWhenLoadNeeded()
-        .flatMapSingle(o -> inboxManager.fetchMoreMessages(folder)
+        .flatMapSingle(o -> inboxRepository.fetchMoreMessages(folder)
             .compose(applySchedulersSingle())
             .compose(handleProgressAndErrorForLoadMore())
             .compose(doOnSingleStartAndTerminate(ongoing -> scrollListener.setLoadOngoing(ongoing)))

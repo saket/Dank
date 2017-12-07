@@ -42,7 +42,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.InboxManager;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -75,7 +75,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.privatemessagethread_send) ImageButtonWithDisabledTint sendButton;
   @BindColor(R.color.submission_comment_byline_failed_to_post) int messageBylineForFailedReply;
 
-  @Inject InboxManager inboxManager;
+  @Inject InboxRepository inboxRepository;
   @Inject DankLinkMovementMethod linkMovementMethod;
   @Inject DraftStore draftStore;
   @Inject ReplyRepository replyRepository;
@@ -118,7 +118,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   }
 
   // TODO: Remove pending sync replies once we refresh.
-  // TODO: Refresh all messages on start and on exit if any replies were made (to remove pending-sync replies).
   // TODO: DiffUtils.
   @Override
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
@@ -136,7 +135,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     Observable<List<PendingSyncReply>> pendingSyncRepliesStream = replyRepository.streamPendingSyncReplies(privateMessageThread);
 
-    Observable<Message> messageStream = inboxManager.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES)
+    Observable<Message> messageStream = inboxRepository.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES)
         .doOnNext(message -> threadSubjectView.setText(message.getSubject()))
         .doOnNext(message -> {
           List<Message> messageReplies = JrawUtils.messageReplies(message);

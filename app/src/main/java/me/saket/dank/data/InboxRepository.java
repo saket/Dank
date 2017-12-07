@@ -25,7 +25,7 @@ import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.JrawUtils;
 
-public class InboxManager {
+public class InboxRepository {
 
   /**
    * The maximum count of items that will be fetched on every pagination iteration.
@@ -36,7 +36,7 @@ public class InboxManager {
   private final BriteDatabase briteDatabase;
   private Moshi moshi;
 
-  public InboxManager(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
+  public InboxRepository(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
     this.dankRedditClient = dankRedditClient;
     this.briteDatabase = briteDatabase;
     this.moshi = moshi;
