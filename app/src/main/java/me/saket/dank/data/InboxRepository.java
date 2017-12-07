@@ -16,6 +16,8 @@ import net.dean.jraw.paginators.Paginator;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -25,6 +27,7 @@ import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.JrawUtils;
 
+@Singleton
 public class InboxRepository {
 
   /**
@@ -36,6 +39,7 @@ public class InboxRepository {
   private final BriteDatabase briteDatabase;
   private Moshi moshi;
 
+  @Inject
   public InboxRepository(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
     this.dankRedditClient = dankRedditClient;
     this.briteDatabase = briteDatabase;
@@ -55,7 +59,7 @@ public class InboxRepository {
 
   /**
    * Get a message and its child replies.
-   *
+   * <p>
    * Both fullname and folder are required because {@link CachedMessage} uses a composite key of the fullname
    * and the folder. This is because it's possible for the same message to be present in Unread as well as
    * Private Message folder.

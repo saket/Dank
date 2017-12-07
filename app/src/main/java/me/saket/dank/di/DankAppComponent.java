@@ -14,7 +14,9 @@ import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.notifs.MediaDownloadService;
+import me.saket.dank.notifs.MessageNotifActionsJobService;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.UploadImageDialog;
@@ -102,4 +104,8 @@ public interface DankAppComponent {
   void inject(InboxFolderFragment fragment);
 
   void inject(BaseMediaViewerFragment fragment);
+
+  void inject(CheckUnreadMessagesJobService service);
+
+  void inject(MessageNotifActionsJobService service);
 }

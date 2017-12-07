@@ -7,7 +7,6 @@ import com.squareup.moshi.Moshi;
 
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
@@ -59,10 +58,6 @@ public class Dank {
 
   public static ErrorResolver errors() {
     return appComponent.errorManager();
-  }
-
-  public static InboxRepository inbox() {
-    return appComponent.inboxManager();
   }
 
   public static MessagesNotificationManager messagesNotifManager() {

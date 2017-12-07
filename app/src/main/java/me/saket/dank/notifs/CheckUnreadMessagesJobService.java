@@ -15,10 +15,14 @@ import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
 import io.reactivex.Completable;
 import me.saket.dank.DankJobService;
+import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Arrays2;
@@ -31,6 +35,11 @@ import timber.log.Timber;
 public class CheckUnreadMessagesJobService extends DankJobService {
 
   private static final String KEY_REFRESH_MESSAGES = "refreshMessages";
+
+  @Inject InboxRepository inboxRepository;
+  @Inject ErrorResolver errorResolver;
+  @Inject MessagesNotificationManager messagesNotifManager;
+  @Inject SharedPrefsManager sharedPrefs;
 
   /**
    * Schedules two recurring sync jobs:
@@ -102,14 +111,20 @@ public class CheckUnreadMessagesJobService extends DankJobService {
   }
 
   @Override
+  public void onCreate() {
+    Dank.dependencyInjector().inject(this);
+    super.onCreate();
+  }
+
+  @Override
   public boolean onStartJob(JobParameters params) {
     //Timber.i("Fetching unread messages. JobID: %s", params.getJobId());
     boolean refreshMessages = PersistableBundleUtils.getBoolean(params.getExtras(), KEY_REFRESH_MESSAGES);
 
-    Completable refreshCompletable = Dank.inbox()
+    Completable refreshCompletable = inboxRepository
         .messages(InboxFolder.UNREAD)
         .firstOrError()
-        .flatMapCompletable(existingUnreads -> Dank.inbox().refreshMessages(InboxFolder.UNREAD, false)
+        .flatMapCompletable(existingUnreads -> inboxRepository.refreshMessages(InboxFolder.UNREAD, false)
             .map(receivedUnreads -> {
               List<Message> staleMessages = new ArrayList<>(existingUnreads.size());
               staleMessages.addAll(existingUnreads);
@@ -128,18 +143,18 @@ public class CheckUnreadMessagesJobService extends DankJobService {
                 // When generating bundled notifications, Android does not remove existing bundle when a new bundle is posted.
                 // It instead amends any new notifications with the existing ones. This means that we'll have to manually
                 // cleanup stale notifications.
-                Dank.messagesNotifManager().dismissNotification(getBaseContext(), Arrays2.toArray(staleMessages, Message.class))
+                messagesNotifManager.dismissNotification(getBaseContext(), Arrays2.toArray(staleMessages, Message.class))
             ));
 
     unsubscribeOnDestroy((refreshMessages ? refreshCompletable : Completable.complete())
-        .andThen(Dank.inbox().messages(InboxFolder.UNREAD).firstOrError())
+        .andThen(inboxRepository.messages(InboxFolder.UNREAD).firstOrError())
         .flatMapCompletable(unreads -> notifyUnreadMessages(unreads))
         .compose(applySchedulersCompletable())
         .subscribe(() -> {
           jobFinished(params, false /* needsReschedule */);
 
         }, error -> {
-          ResolvedError resolvedError = Dank.errors().resolve(error);
+          ResolvedError resolvedError = errorResolver.resolve(error);
           if (resolvedError.isUnknown()) {
             Timber.e(error, "Unknown error while fetching unread messages.");
           }
@@ -159,20 +174,17 @@ public class CheckUnreadMessagesJobService extends DankJobService {
   }
 
   private Completable notifyUnreadMessages(List<Message> unreadMessages) {
-    MessagesNotificationManager notifManager = Dank.messagesNotifManager();
-
-    return notifManager.filterUnseenMessages(unreadMessages)
+    return messagesNotifManager.filterUnseenMessages(unreadMessages)
         .flatMapCompletable(unseenMessages -> {
           if (unseenMessages.isEmpty()) {
-            return notifManager.dismissAllNotifications(getBaseContext());
+            return messagesNotifManager.dismissAllNotifications(getBaseContext());
 
-          } else if (!Dank.sharedPrefs().isUnreadMessagesFolderActive(false)) {
-            return notifManager.displayNotification(getBaseContext(), unseenMessages);
+          } else if (!sharedPrefs.isUnreadMessagesFolderActive(false)) {
+            return messagesNotifManager.displayNotification(getBaseContext(), unseenMessages);
 
           } else {
             return Completable.complete();
           }
         });
   }
-
 }

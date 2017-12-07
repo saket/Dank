@@ -15,11 +15,15 @@ import com.squareup.moshi.Moshi;
 import net.dean.jraw.models.Message;
 
 import java.util.Arrays;
+import javax.inject.Inject;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.DankJobService;
+import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import timber.log.Timber;
@@ -38,6 +42,12 @@ public class MessageNotifActionsJobService extends DankJobService {
   private static final String ACTION_SEND_DIRECT_REPLY = "sendDirectReply";
   private static final String ACTION_MARK_MESSAGE_AS_READ = "markMessageAsRead";
   private static final String ACTION_MARK_ALL_MESSAGES_AS_READ = "markAllMessagesAsRead";
+
+  @Inject InboxRepository inboxRepository;
+  @Inject ErrorResolver errorResolver;
+  @Inject Moshi moshi;
+  @Inject MessagesNotificationManager messagesNotifManager;
+  @Inject DankRedditClient dankRedditClient;
 
   public static void sendDirectReply(Context context, Message replyToMessage, Moshi moshi, String replyText) {
     PersistableBundle extras = new PersistableBundle(3);
@@ -58,6 +68,7 @@ public class MessageNotifActionsJobService extends DankJobService {
     // it ourselves.
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
     jobScheduler.schedule(markAsReadJob);
   }
 
@@ -76,6 +87,7 @@ public class MessageNotifActionsJobService extends DankJobService {
         .build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
     jobScheduler.schedule(markAsReadJob);
   }
 
@@ -93,7 +105,14 @@ public class MessageNotifActionsJobService extends DankJobService {
     // it ourselves.
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
     jobScheduler.schedule(markAsReadJob);
+  }
+
+  @Override
+  public void onCreate() {
+    Dank.dependencyInjector().inject(this);
+    super.onCreate();
   }
 
   @Override
@@ -125,9 +144,9 @@ public class MessageNotifActionsJobService extends DankJobService {
   private void sendDirectMessageReply(JobParameters params, String replyText) {
     unsubscribeOnDestroy(
         parseMessage(params.getExtras().getString(KEY_MESSAGE_JSON))
-            .flatMapCompletable(replyToMessage -> Dank.reddit()
-                .withAuth(Completable.fromAction(() -> Dank.reddit().userAccountManager().reply(replyToMessage, replyText)))
-                .andThen(Dank.messagesNotifManager().removeMessageNotifSeenStatus(replyToMessage))
+            .flatMapCompletable(replyToMessage -> dankRedditClient
+                .withAuth(Completable.fromAction(() -> dankRedditClient.userAccountManager().reply(replyToMessage, replyText)))
+                .andThen(messagesNotifManager.removeMessageNotifSeenStatus(replyToMessage))
             )
             .compose(applySchedulersCompletable())
             .subscribe(
@@ -140,9 +159,9 @@ public class MessageNotifActionsJobService extends DankJobService {
   private void markMessageAsRead(JobParameters params) {
     unsubscribeOnDestroy(
         parseMessageArray(params.getExtras().getString(KEY_MESSAGE_ARRAY_JSON))
-            .flatMapCompletable(messages -> Dank.reddit()
-                .withAuth(Dank.inbox().setRead(messages, true))
-                .andThen(Dank.messagesNotifManager().removeMessageNotifSeenStatus(messages))
+            .flatMapCompletable(messages -> dankRedditClient
+                .withAuth(inboxRepository.setRead(messages, true))
+                .andThen(messagesNotifManager.removeMessageNotifSeenStatus(messages))
             )
             .compose(applySchedulersCompletable())
             .subscribe(
@@ -153,8 +172,8 @@ public class MessageNotifActionsJobService extends DankJobService {
 
   private void markAllMessagesAsRead(JobParameters params) {
     unsubscribeOnDestroy(
-        Dank.reddit().withAuth(Dank.inbox().setAllRead())
-            .andThen(Dank.messagesNotifManager().removeAllMessageNotifSeenStatuses())
+        dankRedditClient.withAuth(inboxRepository.setAllRead())
+            .andThen(messagesNotifManager.removeAllMessageNotifSeenStatuses())
             .compose(applySchedulersCompletable())
             .subscribe(
                 () -> jobFinished(params, false),
@@ -165,7 +184,7 @@ public class MessageNotifActionsJobService extends DankJobService {
 
   private Consumer<Throwable> rescheduleJobIfNetworkOrRedditError(JobParameters params) {
     return error -> {
-      ResolvedError resolvedError = Dank.errors().resolve(error);
+      ResolvedError resolvedError = errorResolver.resolve(error);
       if (resolvedError.isUnknown()) {
         Timber.e(error, "Unknown error. Job action: %s", params.getExtras().get(KEY_ACTION));
       }
@@ -184,12 +203,12 @@ public class MessageNotifActionsJobService extends DankJobService {
 
   @CheckResult
   private Single<Message> parseMessage(String messageJson) {
-    return Single.fromCallable(() -> Dank.moshi().adapter(Message.class).fromJson(messageJson));
+    return Single.fromCallable(() -> moshi.adapter(Message.class).fromJson(messageJson));
   }
 
   @CheckResult
   private Single<Message[]> parseMessageArray(String messageArrayJson) {
-    return Single.fromCallable(() -> Dank.moshi().adapter(Message[].class).fromJson(messageArrayJson));
+    return Single.fromCallable(() -> moshi.adapter(Message[].class).fromJson(messageArrayJson));
   }
 
 }

@@ -3,7 +3,6 @@ package me.saket.dank.ui.subreddits;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static io.reactivex.schedulers.Schedulers.single;
-import static me.saket.dank.di.Dank.subscriptions;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
@@ -247,7 +246,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   @Override
   public void setTitle(CharSequence subredditName) {
-    boolean isFrontpage = subscriptions().isFrontpage(subredditName.toString());
+    boolean isFrontpage = subscriptionManager.isFrontpage(subredditName.toString());
     toolbarTitleView.setText(isFrontpage ? getString(R.string.app_name) : subredditName);
   }
 
