@@ -59,7 +59,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   private static final String KEY_SEEN_UNREAD_MESSAGES = "seenUnreadMessages";
   private static final String KEY_INITIAL_FOLDER = "initialFolder";
   private static final String KEY_ACTIVE_FOLDER_INDEX = "activeTabPosition";
-  private static final int REQUESTCODE_PRIVATE_MESSAGES = 99;
+  private static final int REQUESTCODE_REFRESH_MESSAGES_THREAD_ON_EXIT = 99;
 
   @BindView(R.id.inbox_root) IndependentExpandablePageLayout contentPage;
   @BindView(R.id.inbox_folder_spinner) Spinner folderNamesSpinner;
@@ -266,14 +266,14 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       String secondPartyName = JrawUtils.secondPartyName(getResources(), message, userSession.loggedInUserName());
       startActivityForResult(
           PrivateMessageThreadActivity.intent(this, message, secondPartyName, messageItemViewRect),
-          REQUESTCODE_PRIVATE_MESSAGES
+          REQUESTCODE_REFRESH_MESSAGES_THREAD_ON_EXIT
       );
     }
   }
 
   @Override
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == REQUESTCODE_PRIVATE_MESSAGES) {
+    if (requestCode == REQUESTCODE_REFRESH_MESSAGES_THREAD_ON_EXIT) {
       onClickRefreshMessages();
     }
     super.onActivityResult(requestCode, resultCode, data);

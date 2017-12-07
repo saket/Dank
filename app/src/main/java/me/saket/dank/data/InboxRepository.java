@@ -23,6 +23,8 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
+import me.saket.dank.ui.submission.ParentThread;
+import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.JrawUtils;
@@ -38,12 +40,14 @@ public class InboxRepository {
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase briteDatabase;
   private Moshi moshi;
+  private final ReplyRepository replyRepository;
 
   @Inject
-  public InboxRepository(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi) {
+  public InboxRepository(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi, ReplyRepository replyRepository) {
     this.dankRedditClient = dankRedditClient;
     this.briteDatabase = briteDatabase;
     this.moshi = moshi;
+    this.replyRepository = replyRepository;
   }
 
   /**
@@ -87,9 +91,20 @@ public class InboxRepository {
    * this does not use the oldest message as the anchor.
    */
   @CheckResult
-  public Single<List<Message>> refreshMessages(InboxFolder folder, boolean replaceAllMessages) {
+  public Single<List<Message>> refreshMessages(InboxFolder folder, boolean removeExistingMessages) {
     return fetchMessagesFromAnchor(folder, PaginationAnchor.createEmpty())
-        .doOnSuccess(saveMessages(folder, replaceAllMessages))
+        .doOnSuccess(saveMessages(folder, removeExistingMessages))
+        .flatMap(messages -> {
+          if (folder == InboxFolder.PRIVATE_MESSAGES) {
+            return Observable.fromIterable(messages)
+                .map(message -> ParentThread.of(message))
+                .concatMapEager(parentThread -> replyRepository.removeSyncPendingPostedReplies(parentThread).toObservable())
+                .ignoreElements()
+                .toSingleDefault(messages);
+          } else {
+            return Single.just(messages);
+          }
+        })
         .map(fetchedMessages -> unmodifiableList(fetchedMessages));
   }
 

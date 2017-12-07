@@ -38,7 +38,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Observable;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
@@ -117,7 +116,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     replyField.requestFocus();
   }
 
-  // TODO: Remove pending sync replies once we refresh.
   // TODO: DiffUtils.
   @Override
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
@@ -134,10 +132,15 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageThreadFullName);
 
     Observable<List<PendingSyncReply>> pendingSyncRepliesStream = replyRepository.streamPendingSyncReplies(privateMessageThread);
+    Observable<Message> messageStream = inboxRepository.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES).share();
 
-    Observable<Message> messageStream = inboxRepository.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES)
-        .doOnNext(message -> threadSubjectView.setText(message.getSubject()))
-        .doOnNext(message -> {
+    messageStream
+        .subscribeOn(io())
+        .observeOn(mainThread())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(message -> {
+          threadSubjectView.setText(message.getSubject());
+
           List<Message> messageReplies = JrawUtils.messageReplies(message);
           if (messageReplies.isEmpty()) {
             latestMessageStream.accept(message);
@@ -174,7 +177,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     inlineReplyStream.mergeWith(fullscreenReplyStream)
         .withLatestFrom(latestMessageStream, Pair::create)
         .doOnNext(o -> replyField.setText(null))
-        .observeOn(Schedulers.io())
+        .observeOn(io())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(
             pair -> {
@@ -230,7 +233,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .takeUntil(lifecycle().onDestroy())
         .subscribe(failedPendingSyncReply ->
             Dank.reddit().withAuth(replyRepository.reSendReply(failedPendingSyncReply))
-                .subscribeOn(Schedulers.io())
+                .subscribeOn(io())
                 .subscribe()
         );
   }
@@ -243,7 +246,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     String privateMessageFullName = getIntent().getStringExtra(KEY_MESSAGE_FULLNAME);
     Contribution fakePrivateMessage = ContributionFullNameWrapper.create(privateMessageFullName);
     draftStore.saveDraft(fakePrivateMessage, replyField.getText().toString())
-        .subscribeOn(Schedulers.io())
+        .subscribeOn(io())
         .subscribe();
   }
 
