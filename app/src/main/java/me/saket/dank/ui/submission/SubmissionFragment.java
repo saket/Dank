@@ -589,6 +589,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
             itemsAndDiff -> {
               List<SubmissionCommentRow> newComments = itemsAndDiff.first;
               commentsAdapter.updateData(newComments);
+
               DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
               commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
               commentsAdapterDatasetUpdatesStream.accept(newComments);

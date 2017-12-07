@@ -11,13 +11,9 @@ import android.widget.TextView;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
-import java.util.List;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
-import io.reactivex.annotations.NonNull;
-import io.reactivex.functions.Consumer;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
@@ -25,9 +21,7 @@ import me.saket.dank.utils.RecyclerViewArrayAdapter;
 /**
  * Provides messages in a {@link InboxFolder#PRIVATE_MESSAGES} thread.
  */
-public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMessageUiModel, ThreadedMessagesAdapter.MessageViewHolder>
-    implements Consumer<List<PrivateMessageUiModel>>
-{
+public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMessageUiModel, ThreadedMessagesAdapter.MessageViewHolder> {
 
   private BetterLinkMovementMethod linkMovementMethod;
   private Relay<PrivateMessageUiModel> messageClickStream = PublishRelay.create();
@@ -40,11 +34,6 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMes
   @CheckResult
   public Observable<PrivateMessageUiModel> streamMessageClicks() {
     return messageClickStream;
-  }
-
-  @Override
-  public void accept(@NonNull List<PrivateMessageUiModel> messages) {
-    updateDataAndNotifyDatasetChanged(messages);
   }
 
   @Override

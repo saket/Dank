@@ -13,6 +13,7 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
@@ -116,7 +117,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     replyField.requestFocus();
   }
 
-  // TODO: DiffUtils.
   @Override
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
@@ -151,6 +151,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         });
 
     // Adapter data-set.
+    Pair<List<PrivateMessageUiModel>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
+
     Observable.combineLatest(messageStream, pendingSyncRepliesStream, Pair::create)
         .subscribeOn(io())
         .map(pair -> {
@@ -159,10 +161,24 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
           List<PendingSyncReply> pendingSyncReplies = pair.second;
           return constructUiModels(parentMessage, messageReplies, pendingSyncReplies);
         })
+        .scan(initialPair, (latestPair, nextItems) -> {
+          PrivateMessagesDiffCallback callback = new PrivateMessagesDiffCallback(latestPair.first, nextItems);
+          DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
+          return Pair.create(nextItems, result);
+        })
+        .skip(1)  // Initial value is dummy.
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
-        .doAfterNext(o -> messageRecyclerView.post(() -> messageRecyclerView.smoothScrollToPosition(messagesAdapter.getItemCount() - 1)))
-        .subscribe(messagesAdapter);
+        .subscribe(
+            itemsAndDiff -> {
+              List<PrivateMessageUiModel> newComments = itemsAndDiff.first;
+              messagesAdapter.updateData(newComments);
+
+              DiffUtil.DiffResult diffResult = itemsAndDiff.second;
+              diffResult.dispatchUpdatesTo(messagesAdapter);
+            },
+            logError("Error while diff-ing messages")
+        );
 
     Observable<CharSequence> fullscreenReplyStream = lifecycle().onActivityResults()
         .filter(activityResult -> activityResult.requestCode() == REQUEST_CODE_FULLSCREEN_REPLY && activityResult.isResultOk())
