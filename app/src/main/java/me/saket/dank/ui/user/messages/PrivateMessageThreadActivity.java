@@ -115,7 +115,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     replyField.requestFocus();
   }
 
-  // TODO: Tap to retry sending message.
   // TODO: Remove pending sync replies once we refresh.
   // TODO: Refresh all messages on start and on exit if any replies were made (to remove pending-sync replies).
   // TODO: DiffUtils.

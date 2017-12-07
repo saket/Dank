@@ -21,6 +21,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
+import timber.log.Timber;
 
 public class LoginActivity extends DankActivity {
 
@@ -99,6 +100,7 @@ public class LoginActivity extends DankActivity {
           finish();
 
         }, error -> {
+          Timber.e(error);
           setProgressVisible(false);
           Toast.makeText(LoginActivity.this, R.string.login_error_oauth_failed, Toast.LENGTH_LONG).show();
         });

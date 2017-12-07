@@ -23,6 +23,7 @@ public abstract class PendingSyncReply {
   private static final String COLUMN_PARENT_THREAD_FULL_NAME = "parent_thread_full_name";
   private static final String COLUMN_AUTHOR = "author";
   private static final String COLUMN_CREATED_TIME_MILLIS = "created_time_millis";
+  private static final String COLUMN_SENT_TIME_MILLIS = "sent_time_millis";
   private static final String COLUMN_POSTED_FULLNAME = "posted_fullname";
 
   public static final String QUERY_CREATE_TABLE =
@@ -33,6 +34,7 @@ public abstract class PendingSyncReply {
           + COLUMN_PARENT_THREAD_FULL_NAME + " TEXT NOT NULL, "
           + COLUMN_AUTHOR + " TEXT NOT NULL, "
           + COLUMN_CREATED_TIME_MILLIS + " INTEGER NOT NULL, "
+          + COLUMN_SENT_TIME_MILLIS + " INTEGER NOT NULL, "
           + COLUMN_POSTED_FULLNAME + " TEXT, "
           + "PRIMARY KEY (" + COLUMN_BODY + ", " + COLUMN_CREATED_TIME_MILLIS + ")"
           + ")";
@@ -40,7 +42,7 @@ public abstract class PendingSyncReply {
   public static final String QUERY_GET_ALL_FOR_THREAD =
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_PARENT_THREAD_FULL_NAME + " == ?"
-          + " ORDER BY " + COLUMN_CREATED_TIME_MILLIS + " DESC";
+          + " ORDER BY " + COLUMN_SENT_TIME_MILLIS + " DESC";
 
   //public static final String QUERY_GET_ALL_POSTED_FOR_THREAD =
   //    "SELECT * FROM " + TABLE_NAME
@@ -73,6 +75,8 @@ public abstract class PendingSyncReply {
 
   public abstract long createdTimeMillis();
 
+  public abstract long sentTimeMillis();
+
   /**
    * Full-name of this comment on remote if it has been posted.
    */
@@ -89,13 +93,13 @@ public abstract class PendingSyncReply {
    * @param parentThreadFullName thread == submission / private message.
    */
   public static PendingSyncReply create(String body, State state, String parentThreadFullName, String parentContributionFullName, String author,
-      long createdTime)
+      long createdTimeMillis, long sentTimeMillis)
   {
-    return create(body, state, parentThreadFullName, parentContributionFullName, author, createdTime, null);
+    return create(body, state, parentThreadFullName, parentContributionFullName, author, createdTimeMillis, sentTimeMillis, null);
   }
 
   private static PendingSyncReply create(String body, State state, String parentThreadFullName, String parentContributionFullName, String author,
-      long createdTime, @Nullable String postedFullName)
+      long createdTimeMillis, long sentTimeMillis, @Nullable String postedFullName)
   {
     return new AutoValue_PendingSyncReply.Builder()
         .body(body)
@@ -103,7 +107,8 @@ public abstract class PendingSyncReply {
         .parentThreadFullName(parentThreadFullName)
         .parentContributionFullName(parentContributionFullName)
         .author(author)
-        .createdTimeMillis(createdTime)
+        .createdTimeMillis(createdTimeMillis)
+        .sentTimeMillis(sentTimeMillis)
         .postedFullName(postedFullName)
         .build();
   }
@@ -118,6 +123,7 @@ public abstract class PendingSyncReply {
     contentValues.put(COLUMN_PARENT_THREAD_FULL_NAME, parentThreadFullName());
     contentValues.put(COLUMN_AUTHOR, author());
     contentValues.put(COLUMN_CREATED_TIME_MILLIS, createdTimeMillis());
+    contentValues.put(COLUMN_SENT_TIME_MILLIS, sentTimeMillis());
     contentValues.put(COLUMN_POSTED_FULLNAME, postedFullName());
     return contentValues;
   }
@@ -129,8 +135,9 @@ public abstract class PendingSyncReply {
     String parentThreadFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PARENT_THREAD_FULL_NAME));
     String author = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_AUTHOR));
     long createdTime = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_CREATED_TIME_MILLIS));
+    long sentTime = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_SENT_TIME_MILLIS));
     String postedFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_POSTED_FULLNAME));
-    return create(body, state, parentThreadFullName, parentContributionFullName, author, createdTime, postedFullName);
+    return create(body, state, parentThreadFullName, parentContributionFullName, author, createdTime, sentTime, postedFullName);
   };
 
   @AutoValue.Builder
@@ -146,6 +153,8 @@ public abstract class PendingSyncReply {
     public abstract Builder author(String author);
 
     public abstract Builder createdTimeMillis(long createdTimeMillis);
+
+    public abstract Builder sentTimeMillis(long sentTimeMillis);
 
     public abstract Builder postedFullName(String postedFullName);
 

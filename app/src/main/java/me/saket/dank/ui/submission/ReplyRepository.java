@@ -95,13 +95,16 @@ public class ReplyRepository implements DraftStore {
 
   @CheckResult
   private Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody, long replyCreatedTimeMillis) {
+    long sentTimeMillis = System.currentTimeMillis();
+
     PendingSyncReply pendingSyncReply = PendingSyncReply.create(
         replyBody,
         PendingSyncReply.State.POSTING,
         parentThread.fullName(),
         parentContribution.getFullName(),
         userSession.loggedInUserName(),
-        replyCreatedTimeMillis
+        replyCreatedTimeMillis,
+        sentTimeMillis
     );
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
