@@ -11,21 +11,35 @@ public abstract class PrivateMessageUiModel {
 
   public abstract CharSequence byline();
 
-  public abstract long createdTimeMillis();
+  public abstract long sentTimeMillis();
 
   public abstract long adapterId();
 
   /** The original model from which this Ui model was created. */
-  public abstract Object parentModel();
+  public abstract Object originalModel();
 
-  public static PrivateMessageUiModel create(
-      String senderName,
-      CharSequence messageBody,
-      CharSequence byline,
-      long createdTimeMillis,
-      long adapterId,
-      Object parentModel)
-  {
-    return new AutoValue_PrivateMessageUiModel(senderName, messageBody, byline, createdTimeMillis, adapterId, parentModel);
+  public abstract boolean isClickable();
+
+  public static PrivateMessageUiModel.Builder builder() {
+    return new AutoValue_PrivateMessageUiModel.Builder();
+  }
+
+  @AutoValue.Builder
+  public abstract static class Builder {
+    public abstract Builder senderName(String name);
+
+    public abstract Builder messageBody(CharSequence body);
+
+    public abstract Builder byline(CharSequence byline);
+
+    public abstract Builder sentTimeMillis(long sentTimeMillis);
+
+    public abstract Builder adapterId(long adapterId);
+
+    public abstract Builder originalModel(Object originalModel);
+
+    public abstract Builder isClickable(boolean isClickable);
+
+    public abstract PrivateMessageUiModel build();
   }
 }

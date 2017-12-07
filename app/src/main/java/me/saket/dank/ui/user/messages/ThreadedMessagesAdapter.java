@@ -93,6 +93,7 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMes
       authorNameView.setText(messageUiModel.senderName());
       bylineView.setText(messageUiModel.byline());
       messageBodyView.setText(messageUiModel.messageBody());
+      itemView.setClickable(messageUiModel.isClickable());
     }
   }
 }

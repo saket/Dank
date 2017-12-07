@@ -39,6 +39,9 @@ public abstract class PendingSyncReply {
           + "PRIMARY KEY (" + COLUMN_BODY + ", " + COLUMN_CREATED_TIME_MILLIS + ")"
           + ")";
 
+  // NOTE: In case you're ever wondering why messages are not appearing in the correct
+  // order in PrivateMessagesThreadActivity -- that activity manually does sorting
+  // instead of doing a table join :/.
   public static final String QUERY_GET_ALL_FOR_THREAD =
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_PARENT_THREAD_FULL_NAME + " == ?"
@@ -56,6 +59,12 @@ public abstract class PendingSyncReply {
 
   public static final String WHERE_STATE_AND_THREAD_FULL_NAME =
       COLUMN_STATE + " = ? AND " + COLUMN_PARENT_THREAD_FULL_NAME + " = ?";
+
+  public enum State {
+    POSTING,
+    POSTED,
+    FAILED,
+  }
 
   public abstract String body();
 
@@ -82,12 +91,6 @@ public abstract class PendingSyncReply {
    */
   @Nullable
   public abstract String postedFullName();
-
-  public enum State {
-    POSTING,
-    POSTED,
-    FAILED,
-  }
 
   /**
    * @param parentThreadFullName thread == submission / private message.

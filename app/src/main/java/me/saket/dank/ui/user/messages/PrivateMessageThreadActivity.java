@@ -227,7 +227,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     // Retry failed messages.
     messagesAdapter.streamMessageClicks()
-        .map(uiModel -> uiModel.parentModel())
+        .map(uiModel -> uiModel.originalModel())
         .ofType(PendingSyncReply.class)
         .filter(pendingSyncReply -> pendingSyncReply.state() == PendingSyncReply.State.FAILED)
         .takeUntil(lifecycle().onDestroy())
@@ -270,31 +270,43 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     List<PrivateMessageUiModel> uiModels = new ArrayList<>(1 + threadedReplies.size() + pendingSyncReplies.size());
 
     // 1. Parent message.
-    CharSequence parentBody = markdown.parse(parentMessage);
-    String parentSender = parentMessage.getAuthor() == null
-        ? getString(R.string.subreddit_name_r_prefix, parentMessage.getSubreddit())
-        : parentMessage.getAuthor();
     long parentCreatedTimeMillis = JrawUtils.createdTimeUtc(parentMessage);
-    CharSequence parentByline = Dates.createTimestamp(getResources(), parentCreatedTimeMillis);
-    long parentAdapterId = parentMessage.getFullName().hashCode();
-    uiModels.add(PrivateMessageUiModel.create(parentSender, parentBody, parentByline, parentCreatedTimeMillis, parentAdapterId, parentMessage));
+    uiModels.add(
+        PrivateMessageUiModel.builder()
+            .senderName(parentMessage.getAuthor() == null
+                ? getString(R.string.subreddit_name_r_prefix, parentMessage.getSubreddit())
+                : parentMessage.getAuthor())
+            .messageBody(markdown.parse(parentMessage))
+            .byline(Dates.createTimestamp(getResources(), parentCreatedTimeMillis))
+            .sentTimeMillis(parentCreatedTimeMillis)
+            .adapterId((long) parentMessage.getFullName().hashCode())
+            .originalModel(parentMessage)
+            .isClickable(false)
+            .build()
+    );
 
     // 2. Replies.
     for (Message threadedReply : threadedReplies) {
-      String senderName = threadedReply.getAuthor() == null
-          ? getString(R.string.subreddit_name_r_prefix, threadedReply.getSubreddit())
-          : threadedReply.getAuthor();
-      CharSequence body = markdown.parse(threadedReply);
       long createdTimeMillis = JrawUtils.createdTimeUtc(threadedReply);
-      CharSequence byline = Dates.createTimestamp(getResources(), createdTimeMillis);
-      long adapterId = threadedReply.getFullName().hashCode();
-
-      uiModels.add(PrivateMessageUiModel.create(senderName, body, byline, createdTimeMillis, adapterId, threadedReply));
+      uiModels.add(
+          PrivateMessageUiModel.builder()
+              .senderName(threadedReply.getAuthor() == null
+                  ? getString(R.string.subreddit_name_r_prefix, threadedReply.getSubreddit())
+                  : threadedReply.getAuthor())
+              .messageBody(markdown.parse(threadedReply))
+              .byline(Dates.createTimestamp(getResources(), createdTimeMillis))
+              .sentTimeMillis(createdTimeMillis)
+              .adapterId((long) threadedReply.getFullName().hashCode())
+              .originalModel(threadedReply)
+              .isClickable(false)
+              .build()
+      );
     }
 
     // 3. Pending-sync replies.
     for (PendingSyncReply pendingSyncReply : pendingSyncReplies) {
-      long createdTimeMillis = pendingSyncReply.createdTimeMillis();
+      long sentTimeMillis = pendingSyncReply.sentTimeMillis();
+      long adapterId = (pendingSyncReply.parentContributionFullName() + "_reply_ " + sentTimeMillis).hashCode();
 
       Truss bylineBuilder = new Truss();
       if (pendingSyncReply.state() == PendingSyncReply.State.POSTING) {
@@ -304,21 +316,27 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         bylineBuilder.append(getString(R.string.submission_comment_reply_byline_failed_status));
         bylineBuilder.popSpan();
       } else {
-        bylineBuilder.append(Dates.createTimestamp(getResources(), createdTimeMillis));
+        bylineBuilder.append(Dates.createTimestamp(getResources(), sentTimeMillis));
       }
 
-      CharSequence byline = bylineBuilder.build();
-      CharSequence body = markdown.parse(pendingSyncReply);
-      long adapterId = (pendingSyncReply.parentContributionFullName() + "_reply_ " + createdTimeMillis).hashCode();
-
-      uiModels.add(PrivateMessageUiModel.create(pendingSyncReply.author(), body, byline, createdTimeMillis, adapterId, pendingSyncReply));
+      uiModels.add(
+          PrivateMessageUiModel.builder()
+              .senderName(pendingSyncReply.author())
+              .messageBody(markdown.parse(pendingSyncReply))
+              .byline(bylineBuilder.build())
+              .sentTimeMillis(sentTimeMillis)
+              .adapterId(adapterId)
+              .originalModel(pendingSyncReply)
+              .isClickable(pendingSyncReply.state() == PendingSyncReply.State.FAILED)
+              .build()
+      );
     }
 
     // Finally, sort the messages so that pending-sync replies are at the correct positions.
     Collections.sort(uiModels, (first, second) -> {
-      if (first.createdTimeMillis() < second.createdTimeMillis()) {
+      if (first.sentTimeMillis() < second.sentTimeMillis()) {
         return -1;
-      } else if (first.createdTimeMillis() > second.createdTimeMillis()) {
+      } else if (first.sentTimeMillis() > second.sentTimeMillis()) {
         return +1;
       } else {
         return 0;
