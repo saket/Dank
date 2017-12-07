@@ -10,6 +10,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.util.Pair;
 import android.support.v7.widget.LinearLayoutManager;
@@ -84,12 +85,13 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   private ThreadedMessagesAdapter messagesAdapter;
   private Relay<Message> latestMessageStream = BehaviorRelay.create();
 
-  public static void start(Context context, Message message, String threadSecondPartyName, @Nullable Rect expandFromShape) {
+  @NonNull
+  public static Intent intent(Context context, Message message, String threadSecondPartyName, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, PrivateMessageThreadActivity.class);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
     intent.putExtra(KEY_MESSAGE_FULLNAME, message.getFullName());
     intent.putExtra(KEY_THREAD_SECOND_PARTY_NAME, threadSecondPartyName);
-    context.startActivity(intent);
+    return intent;
   }
 
   @Override
