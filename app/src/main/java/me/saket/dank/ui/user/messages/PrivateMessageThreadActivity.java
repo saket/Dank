@@ -173,8 +173,10 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
             itemsAndDiff -> {
               List<PrivateMessageUiModel> newComments = itemsAndDiff.first;
               messagesAdapter.updateData(newComments);
+              messageRecyclerView.post(() -> messageRecyclerView.scrollToPosition(messagesAdapter.getItemCount() - 1));
 
               DiffUtil.DiffResult diffResult = itemsAndDiff.second;
+              //noinspection ConstantConditions
               diffResult.dispatchUpdatesTo(messagesAdapter);
             },
             logError("Error while diff-ing messages")
@@ -201,6 +203,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
               Message latestMessage = pair.second;
 
               // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
+              //noinspection ConstantConditions
               replyRepository.removeDraft(ContributionFullNameWrapper.create(privateMessageThreadFullName))
                   .andThen(replyRepository.sendReply(latestMessage, privateMessageThread, reply.toString()).toObservable())
                   .subscribe(
@@ -229,7 +232,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(draft -> {
-          Timber.i("Draft received: %s", draft);
           boolean isReplyCurrentlyEmpty = replyField.getText().length() == 0;
 
           // Using replace() instead of setText() to preserve cursor position.
