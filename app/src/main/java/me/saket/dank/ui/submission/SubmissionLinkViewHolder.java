@@ -19,6 +19,7 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.support.transition.TransitionManager;
 import android.support.v7.graphics.Palette;
 import android.text.Html;
 import android.view.View;
@@ -40,6 +41,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.LinkMetadata;
@@ -93,13 +95,19 @@ public class SubmissionLinkViewHolder {
 
   private final LinkMetadataRepository linkMetadataRepository;
   private final ViewGroup linkDetailsContainer;
+  private final ExpandablePageLayout submissionPageLayout;
   private ValueAnimator holderHeightAnimator;
+
+  private interface OnTintColorGenerateListener {
+    void onTintColorGenerate(int tintColor);
+  }
 
   public SubmissionLinkViewHolder(LinkMetadataRepository linkMetadataRepository, ViewGroup linkDetailsView,
       ExpandablePageLayout submissionPageLayout)
   {
     this.linkMetadataRepository = linkMetadataRepository;
     this.linkDetailsContainer = linkDetailsView;
+    this.submissionPageLayout = submissionPageLayout;
 
     ButterKnife.bind(this, linkDetailsView);
     linkDetailsView.setClipToOutline(true);
@@ -257,7 +265,7 @@ public class SubmissionLinkViewHolder {
       holderHeightAnimator.addListener(new AnimatorListenerAdapter() {
         @Override
         public void onAnimationStart(Animator animation) {
-          linkDetailsContainer.post(() -> linkDetailsContainer.setVisibility(View.VISIBLE));
+          linkDetailsContainer.post(() -> setVisible(true));
         }
       });
       holderHeightAnimator.setInterpolator(Animations.INTERPOLATOR);
@@ -319,10 +327,27 @@ public class SubmissionLinkViewHolder {
 
         }, error -> {
           if (!(error instanceof IllegalArgumentException) || !error.getMessage().contains("String must not be empty")) {
-            Timber.e(error, "Couldn't get link's meta-data: " + externalLink.unparsedUrl());
+            Timber.e(error, "Couldn't get link's meta-data: %s", externalLink.unparsedUrl());
           }
           // Else, Link wasn't a webpage. Probably an image or a video.
         });
+  }
+
+  public void populateMediaLoadError(ResolvedError resolvedError) {
+    TransitionManager.beginDelayedTransition(submissionPageLayout, Animations.transitionSet());
+
+    setVisible(true);
+    setWidth(iconContainer, thumbnailWidthForRedditLink);
+    setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForLink);
+
+    Resources resources = titleView.getResources();
+    iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
+
+    iconView.setContentDescription(resources.getString(R.string.submission_link_error_loading_media));
+    iconView.setImageResource(R.drawable.ic_error_24dp);
+    titleView.setText(resolvedError.errorMessageRes());
+    subtitleView.setText(R.string.submission_link_error_loading_media_tap_to_retry);
+    progressView.setVisibility(View.GONE);
   }
 
   /**
@@ -425,10 +450,6 @@ public class SubmissionLinkViewHolder {
             cb.onSizeReady(faviconMaxSizePx, faviconMaxSizePx);
           }
         });
-  }
-
-  private interface OnTintColorGenerateListener {
-    void onTintColorGenerate(int tintColor);
   }
 
   private void generateTintColorFromImage(boolean isGooglePlayLink, Bitmap bitmap, OnTintColorGenerateListener listener) {

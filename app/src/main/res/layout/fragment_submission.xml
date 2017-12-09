@@ -62,6 +62,7 @@
       android:orientation="vertical"
       android:paddingTop="@dimen/spacing16">
 
+      <!-- TODO: Merge these three TextViews and use spans instead -->
       <TextView
         android:id="@+id/submission_title"
         android:layout_width="match_parent"
@@ -71,6 +72,7 @@
         android:layout_marginStart="@dimen/spacing16"
         android:textColor="@color/gray_100"
         android:textSize="@dimen/textsize16"
+        tools:ignore="SelectableText"
         tools:text="I did a thing in Photoshop, and am fairly proud of it." />
 
       <TextView
@@ -83,6 +85,7 @@
         android:textAllCaps="true"
         android:textColor="@color/gray_600"
         android:textSize="@dimen/textsize12"
+        tools:ignore="SelectableText"
         tools:text="/r/pics" />
 
       <TextView
@@ -115,6 +118,7 @@
           android:layout_alignTop="@+id/submission_link_title_container"
           android:background="@color/white_opacity_05">
 
+          <!-- TODO: Merge these two ImageViews. -->
           <!-- ContentDescription is set in SubmissionLinkedRedditLinkViewHolder -->
           <ImageView
             android:id="@+id/submission_link_thumbnail"
@@ -129,7 +133,6 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:layout_gravity="center"
-            android:padding="1dp"
             android:scaleType="fitCenter"
             android:src="@drawable/ic_link_black_24dp"
             tools:ignore="ContentDescription"
@@ -149,6 +152,7 @@
           android:paddingStart="@dimen/spacing16"
           android:paddingTop="@dimen/submission_link_title_container_vert_padding_link">
 
+          <!-- TODO: Merge these two TextViews and use spans instead. -->
           <TextView
             android:id="@+id/submission_link_title"
             android:layout_width="match_parent"
@@ -156,6 +160,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="@color/submission_link_title"
+            tools:ignore="SelectableText"
             tools:text="/r/MaliciousCompliance" />
 
           <TextView
@@ -165,6 +170,7 @@
             android:ellipsize="end"
             android:maxLines="1"
             android:textColor="@color/submission_link_subtitle"
+            tools:ignore="SelectableText"
             tools:text="https://np.reddit.com/r/MaliciousCompliance/cadasd" />
         </LinearLayout>
 
@@ -175,6 +181,7 @@
           android:indeterminateTint="@color/black_opacity_50" />
       </RelativeLayout>
 
+      <!-- TODO: Remove this container. -->
       <LinearLayout
         android:id="@+id/submission_comments_progress"
         android:layout_width="match_parent"
@@ -239,6 +246,7 @@
     android:translationZ="5dp"
     tools:layout_marginTop="25dp" />
 
+  <!-- TODO: this can be merged with AnimatedToolbarBackground -->
   <!-- Note: the elevation to this toolbar is set on
        AnimatableToolbarBackground instead. -->
   <FrameLayout
@@ -264,7 +272,6 @@
     android:id="@+id/submission_reply"
     style="@style/DankFAB"
     android:layout_margin="@dimen/spacing16"
-    android:clickable="true"
     android:src="@drawable/ic_reply_24dp"
     android:tint="@color/gray_200"
     app:backgroundTint="@color/gray_800"

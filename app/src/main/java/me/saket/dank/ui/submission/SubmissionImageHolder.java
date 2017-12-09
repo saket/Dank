@@ -10,7 +10,6 @@ import android.util.Size;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ProgressBar;
-import android.widget.Toast;
 
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
@@ -27,11 +26,10 @@ import net.dean.jraw.models.Thumbnails;
 import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.disposables.Disposables;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
@@ -44,7 +42,6 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
-import timber.log.Timber;
 
 /**
  * Manages showing of content image in {@link SubmissionFragment}. Only supports showing a single image right now.
@@ -66,7 +63,6 @@ public class SubmissionImageHolder {
   private final Relay<Drawable> imageStream = PublishRelay.create();
   private final GlidePaddingTransformation glidePaddingTransformation;
   private GestureController.OnStateChangeListener imageScrollListener;
-  private Disposable imageLoadDisposable = Disposables.disposed();
 
   /**
    * God knows why (if he/she exists), ButterKnife is failing to bind <var>contentLoadProgressView</var>,
@@ -115,19 +111,24 @@ public class SubmissionImageHolder {
       if (imageScrollListener != null) {
         imageView.getController().removeOnStateChangeListener(imageScrollListener);
       }
-      imageLoadDisposable.dispose();
       imageScrollHintView.setVisibility(View.GONE);
     };
   }
 
   /** Note: image loading is canceled in {@link #resetViews()}. */
-  public void load(MediaLink contentLink, Thumbnails redditSuppliedImages) {
+  @CheckResult
+  public Completable load(MediaLink contentLink, Thumbnails redditSuppliedImages) {
     if (!LOAD_LOW_QUALITY_IMAGES) {
       throw new AssertionError();
     }
 
-    contentLoadProgressView.setIndeterminate(true);
     contentLoadProgressView.setVisibility(View.VISIBLE);
+
+//    if (true) {
+//      return Single.timer(1, TimeUnit.SECONDS, AndroidSchedulers.mainThread())
+//          .flatMapCompletable(o -> Completable.error(new SocketTimeoutException()))
+//          .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE));
+//    }
 
     FutureTarget<Drawable> futureTarget = Glide.with(imageView)
         .load(mediaHostRepository.findOptimizedQualityImageForDisplay(redditSuppliedImages, deviceDisplayWidth, contentLink.lowQualityUrl()))
@@ -137,11 +138,12 @@ public class SubmissionImageHolder {
         )
         .submit();
 
-    imageLoadDisposable = Single.fromFuture(futureTarget)
+    return Single.fromFuture(futureTarget)
         .subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .doOnSuccess(drawable -> imageView.setImageDrawable(drawable))
         .doOnSuccess(drawable -> contentLoadProgressView.setVisibility(View.GONE))
+        .doOnSuccess(imageStream)
         .flatMap(drawable -> Views.rxWaitTillMeasured(imageView).toSingleDefault(drawable))
         .doOnSuccess(drawable -> {
           float widthResizeFactor = deviceDisplayWidth / (float) drawable.getMinimumWidth();
@@ -161,16 +163,8 @@ public class SubmissionImageHolder {
             }
           });
         })
-        .subscribe(
-            imageStream,
-            error -> {
-              Timber.e("Couldn't load image");
-              contentLoadProgressView.setVisibility(View.GONE);
-
-              // TODO: 04/04/17 Show a proper error.
-              Toast.makeText(imageView.getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
-            }
-        );
+        .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE))
+        .toCompletable();
   }
 
   /**

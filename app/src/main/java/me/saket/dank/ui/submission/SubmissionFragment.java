@@ -9,6 +9,7 @@ import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
+import static me.saket.dank.utils.lifecycle.LifecycleStreams.NOTHING;
 
 import android.animation.LayoutTransition;
 import android.animation.ObjectAnimator;
@@ -25,6 +26,10 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.transition.ChangeBounds;
+import android.support.transition.Transition;
+import android.support.transition.TransitionManager;
+import android.support.transition.TransitionSet;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.Pair;
 import android.support.v7.util.DiffUtil;
@@ -71,8 +76,10 @@ import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
@@ -160,6 +167,7 @@ public class SubmissionFragment extends DankFragment
   @Inject UserSession userSession;
   @Inject DankLinkMovementMethod linkMovementMethod;
   @Inject CommentsAdapter commentsAdapter;
+  @Inject ErrorResolver errorResolver;
 
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
@@ -665,7 +673,7 @@ public class SubmissionFragment extends DankFragment
   }
 
   private void setupContentImageView(View fragmentLayout) {
-    // TODO: remove margin and set height manually.
+    // TODO: remove margin and set height manually. Update: but why?
     Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
     contentImageViewHolder = new SubmissionImageHolder(
         lifecycle(),
@@ -942,17 +950,30 @@ public class SubmissionFragment extends DankFragment
 
   @CheckResult
   private Disposable loadSubmissionContent(Submission submission) {
-    // Hide everything.
-    linkDetailsViewHolder.setVisible(false);
-    selfPostTextView.setVisibility(View.GONE);
-    contentImageView.setVisibility(View.GONE);
-    contentVideoViewContainer.setVisibility(View.GONE);
-    toolbarBackground.setSyncScrollEnabled(false);
+    Relay<Object> retryLoadRequests = PublishRelay.create();
 
     return Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
         .subscribeOn(io())
         .observeOn(mainThread())
-        .flatMap(parsedLink -> {
+        .flatMapObservable(link -> retryLoadRequests.map(o -> link).startWith(link))
+        .doOnNext(o -> {
+          // Collapse media-load-error link details View, if it's visible.
+          Transition transitions = new TransitionSet()
+              .addTransition(new ChangeBounds())
+              .setInterpolator(Animations.INTERPOLATOR)
+              .setOrdering(TransitionSet.ORDERING_TOGETHER)
+              .setDuration(200);
+          TransitionManager.endTransitions(submissionPageLayout);
+          TransitionManager.beginDelayedTransition(submissionPageLayout, transitions);
+
+          // Hide everything.
+          linkDetailsViewHolder.setVisible(false);
+          selfPostTextView.setVisibility(View.GONE);
+          contentImageView.setVisibility(View.GONE);
+          contentVideoViewContainer.setVisibility(View.GONE);
+          toolbarBackground.setSyncScrollEnabled(false);
+        })
+        .flatMapSingle(parsedLink -> {
           if (!(parsedLink instanceof UnresolvedMediaLink)) {
             return Single.just(parsedLink);
           }
@@ -961,7 +982,6 @@ public class SubmissionFragment extends DankFragment
               .subscribeOn(io())
               .doOnSubscribe(o -> {
                 // Progress bar is later hidden in the subscribe() block.
-                contentLoadProgressView.setIndeterminate(true);
                 contentLoadProgressView.show();
               })
               .map((Link resolvedLink) -> {
@@ -987,7 +1007,7 @@ public class SubmissionFragment extends DankFragment
               });
         })
         .observeOn(mainThread())
-        .doOnSuccess(resolvedLink -> {
+        .doOnNext(resolvedLink -> {
           boolean isImgurAlbum = resolvedLink instanceof ImgurAlbumLink;
           boolean isRedditHostedLink = resolvedLink.isRedditPage() && !submission.isSelfPost();
           linkDetailsViewHolder.setVisible(!isImgurAlbum && resolvedLink.isExternal() || isRedditHostedLink);
@@ -999,7 +1019,7 @@ public class SubmissionFragment extends DankFragment
           boolean transparentToolbar = resolvedLink.isImageOrGif() || resolvedLink.isVideo();
           toolbarBackground.setSyncScrollEnabled(transparentToolbar);
         })
-        .takeUntil(lifecycle().onPageCollapseOrDestroy().ignoreElements())
+        .takeUntil(lifecycle().onPageCollapseOrDestroy())
         .subscribe(
             resolvedLink -> {
               submissionContentStream.accept(resolvedLink);
@@ -1007,7 +1027,18 @@ public class SubmissionFragment extends DankFragment
               switch (resolvedLink.type()) {
                 case SINGLE_IMAGE_OR_GIF:
                   Thumbnails redditSuppliedImages = submission.getThumbnails();
-                  contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages);
+
+                  contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages)
+                      .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
+                      .subscribe(
+                          doNothingCompletable(),
+                          error -> {
+                            ResolvedError resolvedError = errorResolver.resolve(error);
+                            resolvedError.ifUnknown(() -> Timber.e(error));
+                            linkDetailsViewHolder.populateMediaLoadError(resolvedError);
+                            linkDetailsView.setOnClickListener(o -> retryLoadRequests.accept(NOTHING));
+                          }
+                      );
 
                   // Open media in full-screen on click.
                   contentImageView.setOnClickListener(o -> urlRouter.forLink(((MediaLink) resolvedLink))

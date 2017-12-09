@@ -29,6 +29,12 @@ public abstract class ResolvedError {
     return type() == Type.UNKNOWN;
   }
 
+  public void ifUnknown(Runnable runnable) {
+    if (isUnknown()) {
+      runnable.run();
+    }
+  }
+
   public boolean isNetworkError() {
     return type() == Type.NETWORK_ERROR;
   }
