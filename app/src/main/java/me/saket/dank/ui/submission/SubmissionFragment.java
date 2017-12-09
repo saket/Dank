@@ -196,7 +196,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
 
   @Nullable
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+  public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
     View fragmentLayout = inflater.inflate(R.layout.fragment_submission, container, false);
     ButterKnife.bind(this, fragmentLayout);
@@ -209,10 +209,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   @Override
-  public void onViewCreated(View fragmentLayout, @Nullable Bundle savedInstanceState) {
+  public void onViewCreated(@NonNull View fragmentLayout, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(fragmentLayout, savedInstanceState);
 
     executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight()));
+    //noinspection ConstantConditions
     toolbarCloseButton.setOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
 
     selfPostTextView.setMovementMethod(linkMovementMethod);
@@ -250,9 +251,11 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               // In that case, trigger another request with the correct sort.
               DankSubmissionRequest updatedRequest = pair.first;
               if (updatedRequest != submissionRequest) {
+                //noinspection ConstantConditions
                 submissionRequestStream.accept(updatedRequest);
                 return Observable.never();
               } else {
+                //noinspection ConstantConditions
                 return Observable.just(pair.second);
               }
             })
@@ -279,7 +282,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   @Override
-  public void onSaveInstanceState(Bundle outState) {
+  public void onSaveInstanceState(@NonNull Bundle outState) {
     if (submissionRequestStream.getValue() != null) {
       if (submissionStream.getValue() != null && submissionStream.getValue().getComments() == null) {
         // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
@@ -568,6 +571,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           List<PendingSyncReply> pendingSyncReplies = pair.second;
 
           commentTreeConstructor.setSubmission(submission);
+          //noinspection ConstantConditions
           commentTreeConstructor.setComments(submission.getComments(), pendingSyncReplies);
         });
 
@@ -591,6 +595,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
               commentsAdapter.updateData(newComments);
 
               DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
+              //noinspection ConstantConditions
               commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
               commentsAdapterDatasetUpdatesStream.accept(newComments);
             },
@@ -820,6 +825,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
           @Override
           public void accept(@NonNull KeyboardVisibilityChangeEvent changeEvent) throws Exception {
             if (contentViewGroup == null) {
+              //noinspection ConstantConditions
               contentViewGroup = getActivity().findViewById(Window.ID_ANDROID_CONTENT);
             }
 
@@ -845,6 +851,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
   }
 
   private void setupStatusBarTint() {
+    //noinspection ConstantConditions
     int defaultStatusBarColor = ContextCompat.getColor(getActivity(), R.color.color_primary_dark);
     int statusBarHeight = Views.statusBarHeight(getResources());
     Observable<Bitmap> contentBitmapStream = Observable.merge(

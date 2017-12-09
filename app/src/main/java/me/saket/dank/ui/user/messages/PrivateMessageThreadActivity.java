@@ -52,11 +52,13 @@ import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.ReplyRepository;
+import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
@@ -127,6 +129,11 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     messagesAdapter = new ThreadedMessagesAdapter(linkMovementMethod);
     messageRecyclerView.setAdapter(messagesAdapter);
+
+    SlideUpAlphaAnimator itemAnimator = new SlideUpAlphaAnimator().withInterpolator(Animations.INTERPOLATOR);
+    itemAnimator.setRemoveDuration(250);
+    itemAnimator.setAddDuration(250);
+    messageRecyclerView.setItemAnimator(itemAnimator);
 
     String privateMessageThreadFullName = getIntent().getStringExtra(KEY_MESSAGE_FULLNAME);
     ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageThreadFullName);
