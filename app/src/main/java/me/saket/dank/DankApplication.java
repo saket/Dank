@@ -17,6 +17,7 @@ import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.exceptions.OnErrorNotImplementedException;
 import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
 import me.saket.dank.di.Dank;
@@ -94,6 +95,9 @@ public class DankApplication extends Application {
     return e -> {
       e = Dank.errors().findActualCause(e);
 
+      if ((e instanceof OnErrorNotImplementedException)) {
+        Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
+      }
       if (e instanceof IOException) {
         // Fine, file/network problem or API that throws on cancellation.
         Timber.w("IOException");
@@ -107,13 +111,13 @@ public class DankApplication extends Application {
       }
       if ((e instanceof NullPointerException) || (e instanceof IllegalArgumentException)) {
         // That's likely a bug in the application.
-        Timber.e(e, e.getMessage());
+        Timber.e(e);
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
         return;
       }
       if (e instanceof IllegalStateException) {
         // That's a bug in RxJava or in a custom operator.
-        Timber.e(e, e.getMessage());
+        Timber.e(e);
         Thread.currentThread().getUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), e);
         return;
       }
