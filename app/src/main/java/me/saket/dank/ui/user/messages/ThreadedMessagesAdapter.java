@@ -1,6 +1,7 @@
 package me.saket.dank.ui.user.messages;
 
 import android.support.annotation.CheckResult;
+import android.support.annotation.LayoutRes;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.view.LayoutInflater;
@@ -26,6 +27,9 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMes
   private BetterLinkMovementMethod linkMovementMethod;
   private Relay<PrivateMessageUiModel> messageClickStream = PublishRelay.create();
 
+  private static final int VIEW_TYPE_RECEIVED = 1;
+  private static final int VIEW_TYPE_SENT = 2;
+
   public ThreadedMessagesAdapter(BetterLinkMovementMethod linkMovementMethod) {
     this.linkMovementMethod = linkMovementMethod;
     setHasStableIds(true);
@@ -42,9 +46,27 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMes
   }
 
   @Override
+  public int getItemViewType(int position) {
+    PrivateMessageUiModel item = getItem(position);
+    return item.senderType() == PrivateMessageUiModel.Direction.RECEIVED ? VIEW_TYPE_RECEIVED : VIEW_TYPE_SENT;
+  }
+
+  @Override
   protected MessageViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-    View itemView = inflater.inflate(R.layout.list_item_threaded_message, parent, false);
-    return new MessageViewHolder(itemView, linkMovementMethod, this, messageClickStream);
+    @LayoutRes int layoutRes;
+    switch (viewType) {
+      case VIEW_TYPE_RECEIVED:
+        layoutRes = R.layout.list_item_threaded_message_start_aligned;
+        break;
+
+      case VIEW_TYPE_SENT:
+        layoutRes = R.layout.list_item_threaded_message_end_aligned;
+        break;
+
+      default:
+        throw new AssertionError();
+    }
+    return new MessageViewHolder(inflater.inflate(layoutRes, parent, false), linkMovementMethod, this, messageClickStream);
   }
 
   @Override
@@ -53,7 +75,6 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMes
   }
 
   static class MessageViewHolder extends RecyclerView.ViewHolder {
-    @BindView(R.id.threadedmessage_item_author) TextView authorNameView;
     @BindView(R.id.threadedmessage_item_byline) TextView bylineView;
     @BindView(R.id.threadedmessage_item_body) TextView messageBodyView;
 
@@ -79,7 +100,7 @@ public class ThreadedMessagesAdapter extends RecyclerViewArrayAdapter<PrivateMes
     }
 
     public void bind(PrivateMessageUiModel messageUiModel) {
-      authorNameView.setText(messageUiModel.senderName());
+      //authorNameView.setText(messageUiModel.senderName());
       bylineView.setText(messageUiModel.byline());
       messageBodyView.setText(messageUiModel.messageBody());
       itemView.setClickable(messageUiModel.isClickable());

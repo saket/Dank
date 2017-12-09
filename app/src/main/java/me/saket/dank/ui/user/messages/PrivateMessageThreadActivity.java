@@ -52,6 +52,7 @@ import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.ReplyRepository;
+import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
@@ -83,6 +84,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   @Inject ReplyRepository replyRepository;
   @Inject Markdown markdown;
   @Inject ErrorResolver errorResolver;
+  @Inject UserSession userSession;
 
   private ThreadedMessagesAdapter messagesAdapter;
   private Relay<Message> latestMessageStream = BehaviorRelay.create();
@@ -139,9 +141,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageThreadFullName);
 
     Observable<List<PendingSyncReply>> pendingSyncRepliesStream = replyRepository.streamPendingSyncReplies(privateMessageThread);
-    Observable<Message> messageStream = inboxRepository.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES).share();
 
-    messageStream
+    inboxRepository.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES)
         .subscribeOn(io())
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
@@ -159,14 +160,14 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     // Adapter data-set.
     Pair<List<PrivateMessageUiModel>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
-
-    Observable.combineLatest(messageStream, pendingSyncRepliesStream, Pair::create)
+    Observable.combineLatest(inboxRepository.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES), pendingSyncRepliesStream, Pair::create)
         .subscribeOn(io())
         .map(pair -> {
           Message parentMessage = pair.first;
           List<Message> messageReplies = JrawUtils.messageReplies(parentMessage);
           List<PendingSyncReply> pendingSyncReplies = pair.second;
-          return constructUiModels(parentMessage, messageReplies, pendingSyncReplies);
+          String loggedInUserName = userSession.loggedInUserName();
+          return constructUiModels(parentMessage, messageReplies, pendingSyncReplies, loggedInUserName);
         })
         .scan(initialPair, (latestPair, nextItems) -> {
           PrivateMessagesDiffCallback callback = new PrivateMessagesDiffCallback(latestPair.first, nextItems);
@@ -287,15 +288,17 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     startActivityForResult(ComposeReplyActivity.intent(this, composeStartOptions), REQUEST_CODE_FULLSCREEN_REPLY);
   }
 
-  private List<PrivateMessageUiModel> constructUiModels(
-      Message parentMessage,
-      List<Message> threadedReplies,
-      List<PendingSyncReply> pendingSyncReplies)
+  private List<PrivateMessageUiModel> constructUiModels(Message parentMessage, List<Message> threadedReplies,
+      List<PendingSyncReply> pendingSyncReplies, String loggedInUserName)
   {
     List<PrivateMessageUiModel> uiModels = new ArrayList<>(1 + threadedReplies.size() + pendingSyncReplies.size());
 
     // 1. Parent message.
     long parentCreatedTimeMillis = JrawUtils.createdTimeUtc(parentMessage);
+    PrivateMessageUiModel.Direction parentDirection = loggedInUserName.equals(parentMessage.getAuthor())
+        ? PrivateMessageUiModel.Direction.SENT
+        : PrivateMessageUiModel.Direction.RECEIVED;
+
     uiModels.add(
         PrivateMessageUiModel.builder()
             .senderName(parentMessage.getAuthor() == null
@@ -307,12 +310,17 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
             .adapterId((long) parentMessage.getFullName().hashCode())
             .originalModel(parentMessage)
             .isClickable(false)
+            .senderType(parentDirection)
             .build()
     );
 
     // 2. Replies.
     for (Message threadedReply : threadedReplies) {
       long createdTimeMillis = JrawUtils.createdTimeUtc(threadedReply);
+      PrivateMessageUiModel.Direction direction = loggedInUserName.equals(threadedReply.getAuthor())
+          ? PrivateMessageUiModel.Direction.SENT
+          : PrivateMessageUiModel.Direction.RECEIVED;
+
       uiModels.add(
           PrivateMessageUiModel.builder()
               .senderName(threadedReply.getAuthor() == null
@@ -324,6 +332,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
               .adapterId((long) threadedReply.getFullName().hashCode())
               .originalModel(threadedReply)
               .isClickable(false)
+              .senderType(direction)
               .build()
       );
     }
@@ -353,6 +362,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
               .adapterId(adapterId)
               .originalModel(pendingSyncReply)
               .isClickable(pendingSyncReply.state() == PendingSyncReply.State.FAILED)
+              .senderType(PrivateMessageUiModel.Direction.SENT)
               .build()
       );
     }

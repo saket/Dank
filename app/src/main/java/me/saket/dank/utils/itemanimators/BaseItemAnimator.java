@@ -112,6 +112,7 @@ public abstract class BaseItemAnimator<T> extends SimpleItemAnimator {
    */
   public T withInterpolator(Interpolator interpolator) {
     this.mInterpolator = interpolator;
+    //noinspection unchecked
     return (T) this;
   }
 

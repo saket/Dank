@@ -5,6 +5,11 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class PrivateMessageUiModel {
 
+  public enum Direction {
+    RECEIVED,
+    SENT
+  }
+
   public abstract String senderName();
 
   public abstract CharSequence messageBody();
@@ -19,6 +24,8 @@ public abstract class PrivateMessageUiModel {
   public abstract Object originalModel();
 
   public abstract boolean isClickable();
+
+  public abstract Direction senderType();
 
   public static PrivateMessageUiModel.Builder builder() {
     return new AutoValue_PrivateMessageUiModel.Builder();
@@ -39,6 +46,8 @@ public abstract class PrivateMessageUiModel {
     public abstract Builder originalModel(Object originalModel);
 
     public abstract Builder isClickable(boolean isClickable);
+
+    public abstract Builder senderType(Direction type);
 
     public abstract PrivateMessageUiModel build();
   }

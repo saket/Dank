@@ -250,16 +250,42 @@
   </style>
 
   <!-- Inbox -->
-  <style name="DankMessageTimestampStyle">
+  <style name="DankMessageByline">
     <item name="android:layout_width">wrap_content</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:textColor">@color/gray_500</item>
   </style>
 
-  <style name="DankMessageBodyStyle">
+  <style name="DankMessageBody">
     <item name="android:layout_width">match_parent</item>
     <item name="android:layout_height">wrap_content</item>
     <item name="android:textColor">@color/gray_300</item>
+  </style>
+
+  <style name="DankMessageBody.Threaded">
+    <item name="android:layout_width">wrap_content</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:layout_marginTop">@dimen/spacing8</item>
+    <item name="android:background">@drawable/background_message_content</item>
+    <item name="android:padding">@dimen/spacing12</item>
+    <item name="android:textColor">@color/gray_400</item>
+  </style>
+
+  <style name="DankMessageByline.Threaded">
+    <item name="android:layout_marginTop">@dimen/spacing4</item>
+    <item name="android:ellipsize">end</item>
+    <item name="android:maxLines">1</item>
+    <item name="android:paddingEnd">@dimen/spacing12</item>
+    <item name="android:paddingStart">@dimen/spacing12</item>
+  </style>
+
+  <style name="DankThreadedMessageContainer">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">@color/window_background</item>
+    <item name="android:foreground">?attr/selectableItemBackground</item>
+    <item name="android:orientation">vertical</item>
+    <item name="android:paddingBottom">@dimen/spacing16</item>
   </style>
 
   <style name="DankFAB">

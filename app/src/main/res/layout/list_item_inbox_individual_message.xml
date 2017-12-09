@@ -25,7 +25,7 @@
     android:layout_marginEnd="@dimen/spacing16"
     android:layout_marginStart="@dimen/spacing16"
     tools:text="2 days ago"
-    style="@style/DankMessageTimestampStyle" />
+    style="@style/DankMessageByline" />
 
   <LinearLayout
     android:layout_width="match_parent"
@@ -78,7 +78,7 @@
     <TextView
       android:id="@+id/individualmessage_reply_body"
       tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..."
-      style="@style/DankMessageBodyStyle" />
+      style="@style/DankMessageBody" />
   </LinearLayout>
 
   <View
