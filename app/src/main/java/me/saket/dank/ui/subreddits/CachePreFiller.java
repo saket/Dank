@@ -7,6 +7,8 @@ import android.support.annotation.Px;
 import android.support.v4.util.Pair;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
 
 import net.dean.jraw.models.CommentSort;
@@ -194,6 +196,7 @@ public class CachePreFiller {
         Glide.with(appContext)
             .downloadOnly()
             .load(imageUrl)
+            .apply(RequestOptions.priorityOf(Priority.LOW))
             .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
             .get();
         //Timber.i("Image downloaded: %s, time: %sms", imageUrl, System.currentTimeMillis() - startTime);
@@ -206,6 +209,7 @@ public class CachePreFiller {
     return submissionAndLink -> {
       Link contentLink = submissionAndLink.second;
       Submission submission = submissionAndLink.first;
+      //noinspection ConstantConditions
       boolean isAnotherRedditPage = contentLink.isRedditPage() && !submission.isSelfPost();
       //noinspection ConstantConditions
       return (SubmissionLinkViewHolder.UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS && isAnotherRedditPage) || contentLink.isExternal();

@@ -118,8 +118,8 @@ import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class SubmissionFragment extends DankFragment implements ExpandablePageLayout.StateChangeCallbacks,
-    ExpandablePageLayout.OnPullToCollapseIntercepter
+public class SubmissionFragment extends DankFragment
+    implements ExpandablePageLayout.StateChangeCallbacks, ExpandablePageLayout.OnPullToCollapseIntercepter
 {
 
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
@@ -668,6 +668,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     // TODO: remove margin and set height manually.
     Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
     contentImageViewHolder = new SubmissionImageHolder(
+        lifecycle(),
         fragmentLayout,
         contentLoadProgressView,
         submissionPageLayout,
@@ -925,7 +926,9 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     submissionRequestStream.accept(submissionRequest);
 
     if (submission != null) {
-      loadSubmissionContent(submission);
+      unsubscribeOnCollapse(
+          loadSubmissionContent(submission)
+      );
 
     } else {
       // Wait till the submission is fetched before loading content.
@@ -937,6 +940,7 @@ public class SubmissionFragment extends DankFragment implements ExpandablePageLa
     }
   }
 
+  @CheckResult
   private Disposable loadSubmissionContent(Submission submission) {
     // Hide everything.
     linkDetailsViewHolder.setVisible(false);

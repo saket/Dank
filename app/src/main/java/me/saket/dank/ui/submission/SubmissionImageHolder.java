@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
-import android.support.annotation.Nullable;
 import android.util.Size;
 import android.view.Gravity;
 import android.view.View;
@@ -18,8 +17,8 @@ import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
+import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.ImageViewTarget;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
@@ -29,13 +28,18 @@ import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.disposables.Disposable;
+import io.reactivex.disposables.Disposables;
+import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
-import me.saket.dank.utils.Animations;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
-import me.saket.dank.utils.glide.GlideUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -62,13 +66,14 @@ public class SubmissionImageHolder {
   private final Relay<Drawable> imageStream = PublishRelay.create();
   private final GlidePaddingTransformation glidePaddingTransformation;
   private GestureController.OnStateChangeListener imageScrollListener;
+  private Disposable imageLoadDisposable = Disposables.disposed();
 
   /**
    * God knows why (if he/she exists), ButterKnife is failing to bind <var>contentLoadProgressView</var>,
    * so we're supplying it manually from the fragment.
    */
-  public SubmissionImageHolder(View submissionLayout, ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout,
-      MediaHostRepository mediaHostRepository, int deviceDisplayWidth)
+  public SubmissionImageHolder(SubmissionFragmentLifecycleStreams lifecycleStreams, View submissionLayout, ProgressBar contentLoadProgressView,
+      ExpandablePageLayout submissionPageLayout, MediaHostRepository mediaHostRepository, int deviceDisplayWidth)
   {
     ButterKnife.bind(this, submissionLayout);
     this.mediaHostRepository = mediaHostRepository;
@@ -79,12 +84,8 @@ public class SubmissionImageHolder {
     imageView.setGravity(Gravity.TOP);
 
     // Reset everything when the page is collapsed.
-    submissionPageLayout.addStateChangeCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
-      @Override
-      public void onPageCollapsed() {
-        resetViews();
-      }
-    });
+    lifecycleStreams.onPageCollapseOrDestroy()
+        .subscribe(resetViews());
 
     // This transformation adds padding to images that are way too small (presently < 2 x toolbar height).
     glidePaddingTransformation = new GlidePaddingTransformation(imageView.getContext(), paddingColorForSmallImages) {
@@ -97,7 +98,6 @@ public class SubmissionImageHolder {
           // Image is too small to be displayed.
           int minImageHeightBeforeResizing = (int) (minDesiredImageHeight / widthResizeFactor);
           return new Size(0, (minImageHeightBeforeResizing - imageHeight) / 2);
-
         } else {
           return new Size(0, 0);
         }
@@ -110,15 +110,17 @@ public class SubmissionImageHolder {
     return imageStream.map(drawable -> getBitmapFromDrawable(drawable));
   }
 
-  private void resetViews() {
-    if (imageScrollListener != null) {
-      imageView.getController().removeOnStateChangeListener(imageScrollListener);
-    }
-    Glide.with(imageView).clear(imageView);
-    imageScrollHintView.setVisibility(View.GONE);
+  private Consumer<Object> resetViews() {
+    return o -> {
+      if (imageScrollListener != null) {
+        imageView.getController().removeOnStateChangeListener(imageScrollListener);
+      }
+      imageLoadDisposable.dispose();
+      imageScrollHintView.setVisibility(View.GONE);
+    };
   }
 
-  // TODO: Cancel listeners on submission page collapse.
+  /** Note: image loading is canceled in {@link #resetViews()}. */
   public void load(MediaLink contentLink, Thumbnails redditSuppliedImages) {
     if (!LOAD_LOW_QUALITY_IMAGES) {
       throw new AssertionError();
@@ -127,53 +129,48 @@ public class SubmissionImageHolder {
     contentLoadProgressView.setIndeterminate(true);
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    Glide.with(imageView)
+    FutureTarget<Drawable> futureTarget = Glide.with(imageView)
         .load(mediaHostRepository.findOptimizedQualityImageForDisplay(redditSuppliedImages, deviceDisplayWidth, contentLink.lowQualityUrl()))
         .apply(new RequestOptions()
             .priority(Priority.IMMEDIATE)
             .transform(glidePaddingTransformation)
         )
-        .listener(new GlideUtils.SimpleRequestListener<Drawable>() {
-          @Override
-          public void onResourceReady(Drawable drawable) {
-            Views.executeOnMeasure(imageView, () -> {
-              float widthResizeFactor = deviceDisplayWidth / (float) drawable.getMinimumWidth();
-              float imageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
-              float visibleImageHeight = Math.min(imageHeight, imageView.getHeight());
+        .submit();
 
-              // Reveal the image smoothly if the page is already expanded or right away if it's not.
-              Views.executeOnNextLayout(commentListParentSheet, () -> {
-                int imageHeightMinusToolbar = (int) (visibleImageHeight - commentListParentSheet.getTop());
-                commentListParentSheet.setScrollingEnabled(true);
-                commentListParentSheet.setMaxScrollY(imageHeightMinusToolbar);
-                commentListParentSheet.scrollTo(imageHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);
+    imageLoadDisposable = Single.fromFuture(futureTarget)
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
+        .doOnSuccess(drawable -> imageView.setImageDrawable(drawable))
+        .doOnSuccess(drawable -> contentLoadProgressView.setVisibility(View.GONE))
+        .flatMap(drawable -> Views.rxWaitTillMeasured(imageView).toSingleDefault(drawable))
+        .doOnSuccess(drawable -> {
+          float widthResizeFactor = deviceDisplayWidth / (float) drawable.getMinimumWidth();
+          float imageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
+          float visibleImageHeight = Math.min(imageHeight, imageView.getHeight());
 
-                if (imageHeight > visibleImageHeight) {
-                  // Image is scrollable. Let the user know about this.
-                  showImageScrollHint(imageHeight, visibleImageHeight);
-                }
-              });
-            });
+          // Reveal the image smoothly if the page is already expanded or right away if it's not.
+          commentListParentSheet.post(() -> {
+            int imageHeightMinusToolbar = (int) (visibleImageHeight - commentListParentSheet.getTop());
+            commentListParentSheet.setScrollingEnabled(true);
+            commentListParentSheet.setMaxScrollY(imageHeightMinusToolbar);
+            commentListParentSheet.scrollTo(imageHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);
 
-            imageStream.accept(drawable);
-            contentLoadProgressView.setVisibility(View.GONE);
-          }
-
-          @Override
-          public void onLoadFailed(Exception e) {
-            Timber.e("Couldn't load image");
-            contentLoadProgressView.setVisibility(View.GONE);
-
-            // TODO: 04/04/17 Show a proper error.
-            Toast.makeText(imageView.getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
-          }
+            if (imageHeight > visibleImageHeight) {
+              // Image is scrollable. Let the user know about this.
+              showImageScrollHint(imageHeight, visibleImageHeight);
+            }
+          });
         })
-        .into(new ImageViewTarget<Drawable>(imageView) {
-          @Override
-          protected void setResource(@Nullable Drawable resource) {
-            imageView.setImageDrawable(resource);
-          }
-        });
+        .subscribe(
+            imageStream,
+            error -> {
+              Timber.e("Couldn't load image");
+              contentLoadProgressView.setVisibility(View.GONE);
+
+              // TODO: 04/04/17 Show a proper error.
+              Toast.makeText(imageView.getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
+            }
+        );
   }
 
   /**

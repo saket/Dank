@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.support.annotation.CheckResult;
 import android.support.annotation.DrawableRes;
 import android.view.Display;
 import android.view.View;
@@ -13,6 +14,7 @@ import android.view.WindowManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
+import io.reactivex.Completable;
 import timber.log.Timber;
 
 /**
@@ -80,6 +82,58 @@ public class Views {
 
         return true;
       }
+    });
+  }
+
+  /**
+   * Wait until a <var>view</var>'s dimensions get measured and is laid out on the screen.
+   */
+  @CheckResult
+  public static Completable rxWaitTillMeasured(View view) {
+    return rxWaitTillMeasured(view, false);
+  }
+
+  /**
+   * Wait until a <var>view</var>'s dimensions get measured and is laid out on the screen.
+   *
+   * @param consumeOnPreDraw When true, the pre-draw event will be consumed so that it never reaches the
+   *                         View. This way, the View will not be notified of its size until the next
+   *                         draw pass.
+   */
+  @CheckResult
+  public static Completable rxWaitTillMeasured(View view, boolean consumeOnPreDraw) {
+    return Completable.create(emitter -> {
+      if (view.isInEditMode() || view.isLaidOut()) {
+        emitter.onComplete();
+        return;
+      }
+
+      ViewTreeObserver.OnPreDrawListener listener = new ViewTreeObserver.OnPreDrawListener() {
+        @Override
+        public boolean onPreDraw() {
+          if (view.isLaidOut()) {
+            //noinspection deprecation
+            view.getViewTreeObserver().removeOnPreDrawListener(this);
+
+            emitter.onComplete();
+
+            if (consumeOnPreDraw) {
+              return false;
+            }
+
+          } else if (view.getVisibility() == View.GONE) {
+            Timber.w("View's visibility is set to Gone. It'll never be measured: %s", view);
+            view.getViewTreeObserver().removeOnPreDrawListener(this);
+          }
+
+          return true;
+        }
+      };
+
+      view.getViewTreeObserver().addOnPreDrawListener(listener);
+      emitter.setCancellable(() -> {
+        view.getViewTreeObserver().removeOnPreDrawListener(listener);
+      });
     });
   }
 
