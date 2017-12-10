@@ -174,12 +174,16 @@ public class UrlRouter {
     if (urlHost.endsWith("youtube.com")) {
       return "com.google.android.youtube";
 
-    } else if (urlHost.endsWith("play.google.com") && URI.getPath().startsWith("/store")) {
+    } else if (isGooglePlayUrl(urlHost, URI.getPath())) {
       return "com.android.vending";
 
     } else {
       return null;
     }
+  }
+
+  public static boolean isGooglePlayUrl(String urlHost, String uriPath) {
+    return urlHost.endsWith("play.google.com") && uriPath.startsWith("/store");
   }
 
   public static boolean isPackageNameInstalled(Context context, String packageName) {

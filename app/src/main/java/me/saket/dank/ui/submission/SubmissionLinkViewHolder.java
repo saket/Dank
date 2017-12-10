@@ -46,6 +46,7 @@ import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.Urls;
@@ -443,6 +444,7 @@ public class SubmissionLinkViewHolder {
           }
 
           if (tint != -1) {
+            Timber.i("Tint: %s", Colors.colorIntToHex(tint));
             listener.onTintColorGenerate(tint);
           }
         });
@@ -471,6 +473,7 @@ public class SubmissionLinkViewHolder {
   }
 
   public static boolean isGooglePlayLink(String url) {
-    return Uri.parse(url).getHost().contains("play.google");
+    Uri URI = Uri.parse(url);
+    return UrlRouter.isGooglePlayUrl(URI.getHost(), URI.getPath());
   }
 }
