@@ -66,7 +66,8 @@ public class ImgurRepository {
    * TODO: If needed, get the rate limits if they're not cached.
    * Remember to handle {@link ImgurApiRequestRateLimitReachedException}.
    *
-   * @throws InvalidImgurAlbumException               If an invalid Imgur link was found.
+   * @throws InvalidImgurAlbumException               If an invalid Imgur link was found. Right now this happens only when no images are
+   *                                                  returned by Imgur.
    * @throws ImgurApiRequestRateLimitReachedException If Imgur's API limit is reached and no more API requests can be made till the next month.
    */
   public Single<ImgurResponse> gallery(ImgurAlbumUnresolvedLink imgurAlbumUnresolvedLink) {

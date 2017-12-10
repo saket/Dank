@@ -71,7 +71,6 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
@@ -995,13 +994,14 @@ public class SubmissionFragment extends DankFragment
                 }
                 return resolvedLink;
               })
-              .onErrorReturn(error -> {
+              .onErrorResumeNext(error -> {
                 // Open this album in browser if Imgur rate limits have reached.
                 if (error instanceof ImgurApiRequestRateLimitReachedException) {
-                  return ExternalLink.create(parsedLink.unparsedUrl());
+                  return Single.just(ExternalLink.create(parsedLink.unparsedUrl()));
                 } else {
-                  Timber.e(error, "Couldn't resolve image url: %s", parsedLink.unparsedUrl());
-                  throw Exceptions.propagate(error);
+                  handleMediaLoadError(error, retryLoadRequests);
+                  contentLoadProgressView.hide();
+                  return Single.never();
                 }
               });
         })
@@ -1029,15 +1029,7 @@ public class SubmissionFragment extends DankFragment
 
                   contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages)
                       .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
-                      .subscribe(
-                          doNothingCompletable(),
-                          error -> {
-                            ResolvedError resolvedError = errorResolver.resolve(error);
-                            resolvedError.ifUnknown(() -> Timber.e(error));
-                            linkDetailsViewHolder.populateMediaLoadError(resolvedError);
-                            linkDetailsView.setOnClickListener(o -> retryLoadRequests.accept(NOTHING));
-                          }
-                      );
+                      .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error, retryLoadRequests));
 
                   // Open media in full-screen on click.
                   contentImageView.setOnClickListener(o -> urlRouter.forLink(((MediaLink) resolvedLink))
@@ -1106,12 +1098,16 @@ public class SubmissionFragment extends DankFragment
                 default:
                   throw new UnsupportedOperationException("Unknown content: " + resolvedLink);
               }
-            }, error -> {
-              // TODO: 05/04/17 Handle errors properly (including InvalidImgurAlbumException).
-              Toast.makeText(getContext(), "Couldn't load image", Toast.LENGTH_SHORT).show();
-              contentLoadProgressView.hide();
-            }
+
+            }, error -> Timber.e(error)
         );
+  }
+
+  private void handleMediaLoadError(Throwable error, Relay<Object> retryLoadRequests) {
+    ResolvedError resolvedError = errorResolver.resolve(error);
+    resolvedError.ifUnknown(() -> Timber.e(error));
+    linkDetailsViewHolder.populateMediaLoadError(resolvedError);
+    linkDetailsView.setOnClickListener(o -> retryLoadRequests.accept(NOTHING));
   }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //
