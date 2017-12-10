@@ -6,8 +6,11 @@ import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 
+import net.dean.jraw.ApiException;
+
 import javax.inject.Inject;
 
+import io.reactivex.Completable;
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
@@ -43,7 +46,18 @@ public class RetryReplyJobService extends DankJobService {
         replyRepository.streamFailedReplies()
             .take(1)
             .flatMapIterable(failedReplies -> failedReplies)
-            .flatMapCompletable(failedReply -> replyRepository.reSendReply(failedReply))
+            .flatMapCompletable(failedReply ->
+                replyRepository.reSendReply(failedReply)
+                    .onErrorResumeNext(error -> {
+                      // A comment was made on an old submission. This shouldn't happen.
+                      // Maybe our blocking of comments for old submission didn't work.
+                      if (error instanceof ApiException && ((ApiException) error).getReason().contains("TOO_OLD")) {
+                        return Completable.complete();
+                      } else {
+                        return Completable.error(error);
+                      }
+                    })
+            )
             .subscribe(
                 () -> jobFinished(params, false),
                 error -> {
