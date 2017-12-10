@@ -217,7 +217,8 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
 
     // Collapse the page and restore the item positions of this list
     if (getPage() != null) {
-      getPage().collapse(getExpandInfo());
+      ExpandInfo expandInfo = getExpandInfo();
+      getPage().collapse(expandInfo);
     }
     animateItemsBackToPosition(false);
   }
@@ -288,8 +289,6 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
 
   /**
    * Reverses animateItemsOutOfTheWindow() by moving all items back to their actual positions.
-   *
-   * @return Collapse animation duration
    */
   protected void animateItemsBackToPosition(boolean immediate) {
     int childCount = getChildCount();

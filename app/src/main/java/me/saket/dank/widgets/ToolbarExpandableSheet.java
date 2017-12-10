@@ -46,7 +46,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
     setOutlineProvider(new ViewOutlineProvider() {
       @Override
       public void getOutline(View view, Outline outline) {
-        outline.setRect(0, (int) (getClippedRect().height() / 2), ((int) getClippedRect().width()), (int) getClippedRect().height());
+        outline.setRect(0, getClippedRect().height() / 2, getClippedRect().width(), getClippedRect().height());
       }
     });
   }
@@ -127,9 +127,8 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
 
   @Override
   public boolean dispatchTouchEvent(MotionEvent ev) {
-    boolean touchLiesInsideVisibleSheet = getClippedRect().contains(ev.getX(), ev.getY());
+    boolean touchLiesInsideVisibleSheet = getClippedRect().contains((int) ev.getX(), (int) ev.getY());
     boolean handledBySuper = super.dispatchTouchEvent(ev);
     return touchLiesInsideVisibleSheet || handledBySuper;
   }
-
 }

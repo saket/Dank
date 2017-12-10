@@ -443,7 +443,6 @@ public class SubmissionLinkViewHolder {
           }
 
           if (tint != -1) {
-            Timber.i("Tint: %s", Colors.colorIntToHex(tint));
             listener.onTintColorGenerate(tint);
           }
         });

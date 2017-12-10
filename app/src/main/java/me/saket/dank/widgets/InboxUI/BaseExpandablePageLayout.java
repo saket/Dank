@@ -5,10 +5,8 @@ import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
 import android.annotation.TargetApi;
 import android.content.Context;
-import android.graphics.Canvas;
 import android.graphics.Outline;
-import android.graphics.Path;
-import android.graphics.RectF;
+import android.graphics.Rect;
 import android.os.Build;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
@@ -25,11 +23,10 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
   private static final long DEFAULT_ANIM_DURATION = 250;
   private static TimeInterpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
 
-  private Path path;
-  private RectF clippedDimensionRect;
+  private final Rect clippedDimensionRect = new Rect();
   private ValueAnimator dimensionAnimator;
   private boolean isFullyVisible;
-  private long animationDuration;
+  private long animationDuration = DEFAULT_ANIM_DURATION;
 
   public BaseExpandablePageLayout(Context context) {
     super(context);
@@ -53,14 +50,10 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
   }
 
   private void init() {
-    clippedDimensionRect = new RectF();
-    path = new Path();
-    animationDuration = DEFAULT_ANIM_DURATION;
-
     setOutlineProvider(new ViewOutlineProvider() {
       @Override
       public void getOutline(View view, Outline outline) {
-        outline.setRect(0, 0, ((int) clippedDimensionRect.width()), (int) clippedDimensionRect.height());
+        outline.setRect(0, 0, clippedDimensionRect.width(), clippedDimensionRect.height());
       }
     });
   }
@@ -74,12 +67,6 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     }
   }
 
-  @Override
-  public void draw(Canvas canvas) {
-    canvas.clipPath(path);
-    super.draw(canvas);
-  }
-
   public void animateDimensions(Integer toWidth, Integer toHeight) {
     cancelOngoingClipAnimation();
 
@@ -89,8 +76,8 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     dimensionAnimator = ObjectAnimator.ofFloat(0f, 1f);
     dimensionAnimator.addUpdateListener(animation -> {
       final Float scale = (Float) animation.getAnimatedValue();
-      final Float newWidth = ((toWidth - fromWidth) * scale + fromWidth);
-      final Float newHeight = ((toHeight - fromHeight) * scale + fromHeight);
+      final int newWidth = (int) ((toWidth - fromWidth) * scale + fromWidth);
+      final int newHeight = (int) ((toHeight - fromHeight) * scale + fromHeight);
       setClippedDimensions(newWidth, newHeight);
     });
 
@@ -102,30 +89,26 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
 
 // ======== GETTERS & SETTERS ======== //
 
+//  public void setClippedDimensions(float newClippedWidth, float newClippedHeight) {
+//    setClippedDimensions((Float) newClippedWidth, (Float) newClippedHeight);
+//  }
+
   // This method exists so that animateDimensions() can animate dimensions without
   // thrashing Float objects (due to auto-boxing) on every frame.
-  public void setClippedDimensions(float newClippedWidth, float newClippedHeight) {
-    setClippedDimensions((Float) newClippedWidth, (Float) newClippedHeight);
-  }
-
-  public void setClippedDimensions(Float newClippedWidth, Float newClippedHeight) {
+  public void setClippedDimensions(int newClippedWidth, int newClippedHeight) {
     isFullyVisible = newClippedWidth > 0 && newClippedHeight > 0 && newClippedWidth == getWidth() && newClippedHeight == getHeight();
 
     clippedDimensionRect.right = newClippedWidth;
     clippedDimensionRect.bottom = newClippedHeight;
 
-    path.reset();
-    path.addRect(clippedDimensionRect, Path.Direction.CW);
-
-    postInvalidate();
-    invalidateOutline();
+    setClipBounds(new Rect(clippedDimensionRect.left, clippedDimensionRect.top, clippedDimensionRect.right, clippedDimensionRect.bottom));
   }
 
   /**
    * Immediately resets the clipping so that the whole layout becomes visible
    */
   public void resetClipping() {
-    setClippedDimensions((float) getWidth(), (float) getHeight());
+    setClippedDimensions(getWidth(), getHeight());
   }
 
   protected float getClippedWidth() {
@@ -136,7 +119,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     return clippedDimensionRect.height();
   }
 
-  public RectF getClippedRect() {
+  public Rect getClippedRect() {
     return clippedDimensionRect;
   }
 
@@ -157,5 +140,4 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
       dimensionAnimator.cancel();
     }
   }
-
 }

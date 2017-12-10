@@ -16,7 +16,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 import me.saket.dank.utils.Views;
-import timber.log.Timber;
 
 /**
  * An expandable / collapsible ViewGroup to be used with a {@link InboxRecyclerView}.
@@ -286,7 +285,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     alignPageWithExpandingItem(expandInfo);
 
     // Animate!
-    animatePageExpandCollapse(true /* expand */, getWidth(), getHeight(), expandInfo);
+    animatePageExpandCollapse(true, getWidth(), getHeight(), expandInfo);
 
     // Callbacks, just before the animation starts.
     dispatchOnAboutToExpandCallback();
@@ -301,25 +300,16 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   public void expandImmediately() {
     // Ignore if already expanded.
     if (currentState == State.EXPANDING || currentState == State.EXPANDED) {
-      Timber.w("ignore");
       return;
     }
 
     setVisibility(VISIBLE);
     setAlpha(expandedAlpha);
 
-    // Hide the toolbar as soon as we have its height (as expandImmediately() could have been
-    // called before the Views were drawn).
-    Exception exception = new Exception();
+    // Hide the toolbar as soon as we have its height (as expandImmediately()
+    // could have been called before the Views were drawn).
     if (activityToolbar != null) {
-      Views.executeOnMeasure(activityToolbar, () -> {
-        try {
-          updateToolbarTranslationY(false, 0);
-        } catch (Exception e) {
-          Timber.e("Crash caller:");
-          exception.printStackTrace();
-        }
-      });
+      Views.executeOnMeasure(activityToolbar, () -> updateToolbarTranslationY(false, 0));
     }
 
     Views.executeOnMeasure(this, () -> {
@@ -346,10 +336,10 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     int targetWidth = expandInfo.expandedItemLocationRect.width();
     int targetHeight = expandInfo.expandedItemLocationRect.height();
     if (targetWidth == 0) {
-      // Page must expanded immediately after a state restoration.
+      // Page must have expanded immediately after a state restoration.
       targetWidth = getWidth();
     }
-    animatePageExpandCollapse(false /* Collapse */, targetWidth, targetHeight, expandInfo);
+    animatePageExpandCollapse(false, targetWidth, targetHeight, expandInfo);
 
     // Send state callbacks that the city is going to collapse.
     dispatchOnPageAboutToCollapseCallback();
@@ -683,7 +673,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
    */
   @SuppressWarnings("SimplifiableIfStatement")
   boolean handleOnPullToCollapseIntercept(MotionEvent event, float downX, float downY, boolean deltaUpwardSwipe) {
-    if (nestedPage != null && nestedPage.isExpandedOrExpanding() && nestedPage.getClippedRect().contains(downX, downY)) {
+    if (nestedPage != null && nestedPage.isExpandedOrExpanding() && nestedPage.getClippedRect().contains((int) downX, (int) downY)) {
       // Block this pull if it's being made inside a nested page. Let the nested page's pull-listener consume this event.
       // We should use nested scrolling in the future to make this smarter.
       // TODO: 20/03/17 Do we even need to call the nested page's listener?
@@ -704,11 +694,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
    * Calls for the associated InboxRecyclerView.
    */
   void setInternalStateCallbacksForList(InternalPageCallbacks listCallbacks) {
-    internalStateChangeCallbacksForNestedPage = listCallbacks;
+    internalStateChangeCallbacksForInboxRecyclerView = listCallbacks;
   }
 
   void setInternalStateCallbacksForNestedPage(InternalPageCallbacks nestedPageCallbacks) {
-    internalStateChangeCallbacksForInboxRecyclerView = nestedPageCallbacks;
+    internalStateChangeCallbacksForNestedPage = nestedPageCallbacks;
   }
 
   public boolean isExpanded() {
