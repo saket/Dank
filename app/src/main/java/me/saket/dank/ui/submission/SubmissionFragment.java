@@ -244,7 +244,7 @@ public class SubmissionFragment extends DankFragment
     setupReplyFAB();
     setupSoftInputModeChangesAnimation();
 
-    linkDetailsViewHolder = new SubmissionLinkViewHolder(linkMetadataRepository, linkDetailsView, submissionPageLayout);
+    linkDetailsViewHolder = new SubmissionLinkViewHolder(lifecycle(), linkMetadataRepository, linkDetailsView, submissionPageLayout);
 
     // Load comments when submission changes.
     submissionRequestStream
@@ -1009,7 +1009,7 @@ public class SubmissionFragment extends DankFragment
         .doOnNext(resolvedLink -> {
           boolean isImgurAlbum = resolvedLink instanceof ImgurAlbumLink;
           boolean isRedditHostedLink = resolvedLink.isRedditPage() && !submission.isSelfPost();
-          linkDetailsViewHolder.setVisible(!isImgurAlbum && resolvedLink.isExternal() || isRedditHostedLink);
+          linkDetailsViewHolder.setVisible(isImgurAlbum || resolvedLink.isExternal() || isRedditHostedLink);
           selfPostTextView.setVisibility(submission.isSelfPost() ? View.VISIBLE : View.GONE);
           contentImageView.setVisibility(resolvedLink.isImageOrGif() ? View.VISIBLE : View.GONE);
           contentVideoViewContainer.setVisibility(resolvedLink.isVideo() ? View.VISIBLE : View.GONE);

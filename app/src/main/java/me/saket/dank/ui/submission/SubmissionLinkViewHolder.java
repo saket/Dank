@@ -9,9 +9,6 @@ import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.setPaddingVertical;
 import static me.saket.dank.utils.Views.setWidth;
 
-import android.animation.Animator;
-import android.animation.AnimatorListenerAdapter;
-import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.res.ColorStateList;
 import android.content.res.Resources;
@@ -52,11 +49,9 @@ import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.Urls;
-import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
 import me.saket.dank.utils.glide.GlideUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
-import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import timber.log.Timber;
 
@@ -102,8 +97,8 @@ public class SubmissionLinkViewHolder {
     void onTintColorGenerate(int tintColor);
   }
 
-  public SubmissionLinkViewHolder(LinkMetadataRepository linkMetadataRepository, ViewGroup linkDetailsView,
-      ExpandablePageLayout submissionPageLayout)
+  public SubmissionLinkViewHolder(SubmissionFragmentLifecycleStreams lifecycleStreams, LinkMetadataRepository linkMetadataRepository,
+      ViewGroup linkDetailsView, ExpandablePageLayout submissionPageLayout)
   {
     this.linkMetadataRepository = linkMetadataRepository;
     this.linkDetailsContainer = linkDetailsView;
@@ -112,15 +107,11 @@ public class SubmissionLinkViewHolder {
     ButterKnife.bind(this, linkDetailsView);
     linkDetailsView.setClipToOutline(true);
 
-    submissionPageLayout.addStateChangeCallbacks(new SimpleExpandablePageStateChangeCallbacks() {
-      @Override
-      public void onPageCollapsed() {
-        resetViews();
-      }
-    });
+    lifecycleStreams.onPageCollapse().subscribe(o -> resetViews());
   }
 
   public void setVisible(boolean visible) {
+    //Timber.d("setVisible() -> %s", visible);
     linkDetailsContainer.setVisibility(visible ? View.VISIBLE : View.GONE);
   }
 
@@ -139,9 +130,11 @@ public class SubmissionLinkViewHolder {
 
     linkDetailsContainer.setBackgroundTintList(null);
     thumbnailView.setImageDrawable(null);
+    thumbnailView.setContentDescription(null);
     thumbnailView.setAlpha(0f);
     iconView.setImageDrawable(null);
     iconView.setBackground(null);
+    iconView.setContentDescription(null);
     setDimensions(iconView, ViewGroup.LayoutParams.WRAP_CONTENT, ViewGroup.LayoutParams.WRAP_CONTENT);
 
     titleView.setMaxLines(1);
@@ -166,6 +159,7 @@ public class SubmissionLinkViewHolder {
 
     Resources resources = titleView.getResources();
     iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
+    thumbnailView.setImageDrawable(null);
 
     if (redditLink instanceof RedditSubredditLink) {
       iconView.setContentDescription(resources.getString(R.string.submission_link_linked_subreddit));
@@ -226,7 +220,8 @@ public class SubmissionLinkViewHolder {
   }
 
   public void populate(ImgurAlbumLink imgurAlbumLink, @Nullable String redditSuppliedThumbnail) {
-    linkDetailsContainer.setVisibility(View.INVISIBLE);
+    TransitionManager.beginDelayedTransition(submissionPageLayout, Animations.transitions());
+
     setWidth(iconContainer, thumbnailWidthForAlbum);
     setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForAlbum);
     progressView.setVisibility(View.VISIBLE);
@@ -248,40 +243,17 @@ public class SubmissionLinkViewHolder {
 
     String thumbnailUrl = isEmpty(redditSuppliedThumbnail) ? imgurAlbumLink.coverImageUrl() : redditSuppliedThumbnail;
     loadLinkThumbnail(false, thumbnailUrl, null, true);
-
-    // Animate the holder's entry. This block of code is really fragile and the animation only
-    // works if these lines are called in their current order. Animating the dimensions of a
-    // View is sadly difficult to do the right way.
-    titleSubtitleContainer.measure(
-        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED),
-        View.MeasureSpec.makeMeasureSpec(0, View.MeasureSpec.UNSPECIFIED)
-    );
-    int measuredHeight = titleSubtitleContainer.getMeasuredHeight();
-
-    Views.executeOnNextLayout(titleSubtitleContainer, () -> {
-      holderHeightAnimator = ObjectAnimator.ofInt(0, measuredHeight);
-      holderHeightAnimator.addUpdateListener(animation -> setHeight(linkDetailsContainer, (int) animation.getAnimatedValue()));
-      holderHeightAnimator.setDuration(300);
-      holderHeightAnimator.addListener(new AnimatorListenerAdapter() {
-        @Override
-        public void onAnimationStart(Animator animation) {
-          linkDetailsContainer.post(() -> setVisible(true));
-        }
-      });
-      holderHeightAnimator.setInterpolator(Animations.INTERPOLATOR);
-      holderHeightAnimator.start();
-    });
   }
 
   /**
    * Show information of an external link. Extracts meta-data from the URL to get the favicon and the title.
    */
   public Disposable populate(ExternalLink externalLink, @Nullable String redditSuppliedThumbnail) {
+    TransitionManager.beginDelayedTransition(submissionPageLayout, Animations.transitions());
     setWidth(iconContainer, thumbnailWidthForExternalLink);
     setPaddingVertical(titleSubtitleContainer, titleContainerVertPaddingForLink);
 
     Resources resources = titleView.getResources();
-    thumbnailView.setContentDescription(null);
     iconView.setContentDescription(resources.getString(R.string.submission_link_linked_url));
     iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
     titleView.setText(externalLink.unparsedUrl());
@@ -304,6 +276,7 @@ public class SubmissionLinkViewHolder {
         .compose(applySchedulersSingle())
         .doOnError(o -> progressView.setVisibility(View.GONE))
         .subscribe(linkMetadata -> {
+          TransitionManager.beginDelayedTransition(submissionPageLayout, Animations.transitions());
           if (isEmpty(linkMetadata.title())) {
             titleView.setText(linkMetadata.url());
           } else {
@@ -311,7 +284,6 @@ public class SubmissionLinkViewHolder {
             titleView.setText(Html.fromHtml(linkMetadata.title()));
             titleView.setMaxLines(Integer.MAX_VALUE);
           }
-          thumbnailView.setContentDescription(titleView.getText());
 
           // Use link's image if Reddit did not supply with anything.
           if (redditSuppliedThumbnail == null && linkMetadata.hasImage()) {
@@ -319,6 +291,7 @@ public class SubmissionLinkViewHolder {
           } else {
             progressView.setVisibility(View.GONE);
           }
+          thumbnailView.setContentDescription(titleView.getText());
 
           if (linkMetadata.hasFavicon()) {
             boolean hasLinkThumbnail = linkMetadata.hasImage() || redditSuppliedThumbnail != null;
@@ -334,7 +307,7 @@ public class SubmissionLinkViewHolder {
   }
 
   public void populateMediaLoadError(ResolvedError resolvedError) {
-    TransitionManager.beginDelayedTransition(submissionPageLayout, Animations.transitionSet());
+    TransitionManager.beginDelayedTransition(submissionPageLayout, Animations.transitions());
 
     setVisible(true);
     setWidth(iconContainer, thumbnailWidthForRedditLink);
@@ -342,7 +315,6 @@ public class SubmissionLinkViewHolder {
 
     Resources resources = titleView.getResources();
     iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
-
     iconView.setContentDescription(resources.getString(R.string.submission_link_error_loading_media));
     iconView.setImageResource(R.drawable.ic_error_24dp);
     titleView.setText(resolvedError.errorMessageRes());

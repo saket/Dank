@@ -124,11 +124,11 @@ public class SubmissionImageHolder {
 
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-//    if (true) {
-//      return Single.timer(1, TimeUnit.SECONDS, AndroidSchedulers.mainThread())
-//          .flatMapCompletable(o -> Completable.error(new SocketTimeoutException()))
-//          .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE));
-//    }
+    //if (true) {
+    //  return Single.timer(1, TimeUnit.SECONDS, AndroidSchedulers.mainThread())
+    //      .flatMapCompletable(o -> Completable.error(new SocketTimeoutException()))
+    //      .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE));
+    //}
 
     FutureTarget<Drawable> futureTarget = Glide.with(imageView)
         .load(mediaHostRepository.findOptimizedQualityImageForDisplay(redditSuppliedImages, deviceDisplayWidth, contentLink.lowQualityUrl()))

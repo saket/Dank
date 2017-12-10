@@ -51,6 +51,11 @@ public class SubmissionFragmentLifecycleStreams implements LifecycleStreams {
   }
 
   @CheckResult
+  public Observable<Object> onPageCollapse() {
+    return pageCollapseStream;
+  }
+
+  @CheckResult
   public Observable<Object> onPageAboutToCollapse() {
     return pageAboutToCollapseStream;
   }

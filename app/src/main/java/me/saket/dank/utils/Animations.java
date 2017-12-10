@@ -13,7 +13,7 @@ public class Animations {
 
   public static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
 
-  public static TransitionSet transitionSet() {
+  public static TransitionSet transitions() {
     return new TransitionSet()
         .addTransition(new ChangeBounds())
         .addTransition(new Fade(Fade.IN))
