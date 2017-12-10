@@ -11,7 +11,6 @@ import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
 import static me.saket.dank.utils.lifecycle.LifecycleStreams.NOTHING;
 
-import android.animation.LayoutTransition;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
@@ -246,8 +245,6 @@ public class SubmissionFragment extends DankFragment
     setupSoftInputModeChangesAnimation();
 
     linkDetailsViewHolder = new SubmissionLinkViewHolder(linkMetadataRepository, linkDetailsView, submissionPageLayout);
-    linkDetailsView.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
-    linkDetailsViewHolder.titleSubtitleContainer.getLayoutTransition().enableTransitionType(LayoutTransition.CHANGING);
 
     // Load comments when submission changes.
     submissionRequestStream
@@ -952,20 +949,22 @@ public class SubmissionFragment extends DankFragment
   private Disposable loadSubmissionContent(Submission submission) {
     Relay<Object> retryLoadRequests = PublishRelay.create();
 
+    // Collapse media-load-error link details View, if it's visible.
+    retryLoadRequests.subscribe(o -> {
+      Transition transitions = new TransitionSet()
+          .addTransition(new ChangeBounds())
+          .setInterpolator(Animations.INTERPOLATOR)
+          .setOrdering(TransitionSet.ORDERING_TOGETHER)
+          .setDuration(200);
+      TransitionManager.endTransitions(submissionPageLayout);
+      TransitionManager.beginDelayedTransition(submissionPageLayout, transitions);
+    });
+
     return Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
         .subscribeOn(io())
         .observeOn(mainThread())
         .flatMapObservable(link -> retryLoadRequests.map(o -> link).startWith(link))
         .doOnNext(o -> {
-          // Collapse media-load-error link details View, if it's visible.
-          Transition transitions = new TransitionSet()
-              .addTransition(new ChangeBounds())
-              .setInterpolator(Animations.INTERPOLATOR)
-              .setOrdering(TransitionSet.ORDERING_TOGETHER)
-              .setDuration(200);
-          TransitionManager.endTransitions(submissionPageLayout);
-          TransitionManager.beginDelayedTransition(submissionPageLayout, transitions);
-
           // Hide everything.
           linkDetailsViewHolder.setVisible(false);
           selfPostTextView.setVisibility(View.GONE);
