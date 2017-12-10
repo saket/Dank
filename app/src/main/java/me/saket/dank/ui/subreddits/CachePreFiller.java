@@ -15,6 +15,7 @@ import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
@@ -88,7 +89,7 @@ public class CachePreFiller {
         .switchMap(canPreFill -> {
           if (!canPreFill) {
             // Cannot use filter() instead here so that switchMap() gets called and cancels the previous call.
-            // Observable.empty() is also important so that the stream completes and network state change
+            // Observable.empty() is also important so that the stream completes and the network state change
             // listener is freed.
             return Observable.empty();
           }
@@ -231,7 +232,14 @@ public class CachePreFiller {
               linkMetadata.imageUrl()
           );
 
-          return downloadImages(Arrays.asList(thumbnailImageUrl, faviconUrl));
+          List<String> imagesToDownload = new ArrayList<>(2);
+          if (faviconUrl != null) {
+            imagesToDownload.add(faviconUrl);
+          }
+          if (thumbnailImageUrl != null) {
+            imagesToDownload.add(thumbnailImageUrl);
+          }
+          return downloadImages(imagesToDownload);
         })
         //.doOnComplete(() -> Timber.i("Link done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.LINK_METADATA));
