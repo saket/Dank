@@ -261,7 +261,7 @@ public class SubmissionLinkViewHolder {
     subtitleView.setText(Urls.parseDomainName(externalLink.unparsedUrl()));
     progressView.setVisibility(View.VISIBLE);
 
-    boolean isGooglePlayLink = isGooglePlayLink(externalLink.unparsedUrl());
+    boolean isGooglePlayThumbnail = redditSuppliedThumbnail == null && isGooglePlayLink(externalLink.unparsedUrl());
 
     // Attempt to load image provided by Reddit. By doing this, we'll be able to load the image and
     // the URL meta-data in parallel. Additionally, reddit's supplied image will also be optimized
@@ -269,7 +269,7 @@ public class SubmissionLinkViewHolder {
     if (redditSuppliedThumbnail == null) {
       iconView.setImageResource(R.drawable.ic_link_black_24dp);
     } else {
-      loadLinkThumbnail(isGooglePlayLink, redditSuppliedThumbnail, null, false);
+      loadLinkThumbnail(false, redditSuppliedThumbnail, null, false);
     }
 
     //noinspection ConstantConditions
@@ -288,7 +288,7 @@ public class SubmissionLinkViewHolder {
 
           // Use link's image if Reddit did not supply with anything.
           if (redditSuppliedThumbnail == null && linkMetadata.hasImage()) {
-            loadLinkThumbnail(isGooglePlayLink, linkMetadata.imageUrl(), linkMetadata, true);
+            loadLinkThumbnail(isGooglePlayThumbnail, linkMetadata.imageUrl(), linkMetadata, true);
           } else {
             progressView.setVisibility(View.GONE);
           }
@@ -296,7 +296,7 @@ public class SubmissionLinkViewHolder {
 
           if (linkMetadata.hasFavicon()) {
             boolean hasLinkThumbnail = linkMetadata.hasImage() || redditSuppliedThumbnail != null;
-            loadLinkFavicon(linkMetadata, hasLinkThumbnail, isGooglePlayLink);
+            loadLinkFavicon(linkMetadata, hasLinkThumbnail, isGooglePlayThumbnail);
           }
 
         }, error -> {
@@ -326,7 +326,7 @@ public class SubmissionLinkViewHolder {
   /**
    * @param linkMetadata For loading the favicon. Can be null to ignore favicon.
    */
-  private void loadLinkThumbnail(boolean isGooglePlayLink, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnLoad) {
+  private void loadLinkThumbnail(boolean isGooglePlayThumbnail, String thumbnailUrl, @Nullable LinkMetadata linkMetadata, boolean hideProgressBarOnLoad) {
     Glide.with(thumbnailView)
         .asBitmap()
         .load(thumbnailUrl)
@@ -334,10 +334,10 @@ public class SubmissionLinkViewHolder {
           @Override
           public void onResourceReady(Bitmap resource) {
             generateTintColorFromImage(
-                isGooglePlayLink,
+                isGooglePlayThumbnail,
                 resource,
                 tintColor -> {
-                  if (!isGooglePlayLink) {
+                  if (!isGooglePlayThumbnail) {
                     thumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
                   }
                   tintViews(tintColor);
@@ -352,7 +352,7 @@ public class SubmissionLinkViewHolder {
           @Override
           public void onLoadFailed(Exception e) {
             if (linkMetadata != null && linkMetadata.hasFavicon()) {
-              loadLinkFavicon(linkMetadata, false, isGooglePlayLink);
+              loadLinkFavicon(linkMetadata, false, isGooglePlayThumbnail);
             }
           }
         })
@@ -364,7 +364,7 @@ public class SubmissionLinkViewHolder {
    *                         will be shown while the favicon is fetched. This is used when the thumbnail couldn't
    *                         be loaded.
    */
-  private void loadLinkFavicon(LinkMetadata linkMetadata, boolean hasLinkThumbnail, boolean isGooglePlayLink) {
+  private void loadLinkFavicon(LinkMetadata linkMetadata, boolean hasLinkThumbnail, boolean isGooglePlayThumbnail) {
     iconView.setImageTintList(null);
 
     if (!hasLinkThumbnail) {
@@ -379,7 +379,7 @@ public class SubmissionLinkViewHolder {
           public void onResourceReady(Bitmap resource) {
             if (!hasLinkThumbnail) {
               // Tint with favicon in case the thumbnail couldn't be fetched.
-              generateTintColorFromImage(isGooglePlayLink, resource, tintColor -> tintViews(tintColor));
+              generateTintColorFromImage(isGooglePlayThumbnail, resource, tintColor -> tintViews(tintColor));
               progressView.setVisibility(View.GONE);
             }
 
@@ -425,13 +425,12 @@ public class SubmissionLinkViewHolder {
         });
   }
 
-  private void generateTintColorFromImage(boolean isGooglePlayLink, Bitmap bitmap, OnTintColorGenerateListener listener) {
+  private void generateTintColorFromImage(boolean isGooglePlayThumbnail, Bitmap bitmap, OnTintColorGenerateListener listener) {
     Palette.from(bitmap)
         .maximumColorCount(Integer.MAX_VALUE)    // Don't understand why, but this changes the darkness of the colors.
         .generate(palette -> {
           int tint = -1;
-          if (isGooglePlayLink) {
-            // The color taken from Play Store's
+          if (isGooglePlayThumbnail) {
             tint = palette.getLightVibrantColor(-1);
           }
           if (tint == -1) {
