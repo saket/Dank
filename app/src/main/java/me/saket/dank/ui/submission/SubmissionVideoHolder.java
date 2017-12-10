@@ -1,7 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.RxUtils.logError;
-
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.CheckResult;
@@ -16,17 +14,17 @@ import com.jakewharton.rxrelay2.Relay;
 
 import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.annotations.NonNull;
-import io.reactivex.disposables.Disposable;
-import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.di.Dank;
-import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.ui.media.MediaHostRepository;
-import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -74,14 +72,16 @@ public class SubmissionVideoHolder {
     contentVideoView.setOnPreparedListener(() -> videoPreparedStream.accept(Notification.INSTANCE));
   }
 
-  public Disposable load(MediaLink mediaLink, boolean loadHighQualityVideo) {
+  @CheckResult
+  public Completable load(MediaLink mediaLink, boolean loadHighQualityVideo) {
+    // Later hidden inside loadVideo(), when the video's height becomes available.
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
     return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
-        .compose(RxUtils.applySchedulersSingle())
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
         .map(link -> loadHighQualityVideo ? link.highQualityUrl() : link.lowQualityUrl())
-        .subscribe(loadVideo(), logError("Couldn't load video"));
-    // TODO: 01/04/17 Handle error.
+        .flatMapCompletable(videoUrl -> loadVideo(videoUrl));
   }
 
   /**
@@ -109,8 +109,8 @@ public class SubmissionVideoHolder {
         .map(videoWidth -> exoPlayerManager.getBitmapOfCurrentVideoFrame(videoWidth, statusBarHeight, Bitmap.Config.RGB_565));
   }
 
-  private Consumer<String> loadVideo() {
-    return videoUrl -> {
+  private Completable loadVideo(String videoUrl) {
+    return Completable.fromAction(() -> {
       exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
         int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - Views.statusBarHeight(contentVideoView.getResources());
         Views.setHeight(contentVideoView, Math.min(contentHeightWithoutKeyboard, resizedVideoHeight));
@@ -131,7 +131,7 @@ public class SubmissionVideoHolder {
 
       String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
       exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
-    };
+    });
   }
 
   public void pausePlayback() {

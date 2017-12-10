@@ -79,6 +79,7 @@ import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.StatusBarTint;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.links.ExternalLink;
@@ -109,6 +110,7 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -166,6 +168,8 @@ public class SubmissionFragment extends DankFragment
   @Inject DankLinkMovementMethod linkMovementMethod;
   @Inject CommentsAdapter commentsAdapter;
   @Inject ErrorResolver errorResolver;
+  @Inject UserPreferences userPreferences;
+  @Inject NetworkStateListener networkStateListener;
 
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
@@ -1027,6 +1031,7 @@ public class SubmissionFragment extends DankFragment
                 case SINGLE_IMAGE_OR_GIF:
                   Thumbnails redditSuppliedImages = submission.getThumbnails();
 
+                  // Threading is handled internally by SubmissionImageHolder#load().
                   contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages)
                       .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
                       .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error, retryLoadRequests));
@@ -1088,11 +1093,12 @@ public class SubmissionFragment extends DankFragment
                   break;
 
                 case SINGLE_VIDEO:
-                  boolean loadHighQualityVideo = false; // TODO: Get this from user's data preferences.
-                  //noinspection ConstantConditions
-                  unsubscribeOnCollapse(
-                      contentVideoViewHolder.load((MediaLink) resolvedLink, loadHighQualityVideo)
-                  );
+                  userPreferences.streamHighResolutionMediaNetworkStrategy()
+                      .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
+                      .firstOrError()
+                      .flatMapCompletable(canLoadHighQualityVideo -> contentVideoViewHolder.load((MediaLink) resolvedLink, canLoadHighQualityVideo))
+                      .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
+                      .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error, retryLoadRequests));
                   break;
 
                 default:
