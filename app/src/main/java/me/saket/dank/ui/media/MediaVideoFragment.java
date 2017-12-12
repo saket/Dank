@@ -4,6 +4,7 @@ import android.animation.LayoutTransition;
 import android.content.Context;
 import android.net.Uri;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -11,6 +12,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ViewFlipper;
 
+import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
@@ -44,6 +46,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
   @Inject MediaHostRepository mediaHostRepository;
   @Inject ErrorResolver errorResolver;
+  @Inject HttpProxyCacheServer httpProxyCacheServer;
 
   private enum ScreenState {
     LOADING_VIDEO_OR_READY,
@@ -75,11 +78,12 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
   @Nullable
   @Override
-  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
+  public View onCreateView(@NonNull LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
     View layout = inflater.inflate(R.layout.fragment_album_viewer_page_video, container, false);
     ButterKnife.bind(this, layout);
 
+    //noinspection ConstantConditions
     mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
     //noinspection ConstantConditions
     super.setMediaLink(mediaAlbumItem.mediaLink());
@@ -99,8 +103,8 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     setupFlickGestures(flickDismissViewGroup);
 
     // Keep the video below the status bar and above the control buttons.
-    ((MediaFragmentCallbacks) getActivity())
-        .optionButtonsHeight()
+    //noinspection ConstantConditions
+    ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
         .takeUntil(lifecycle().onDestroy().ignoreElements())
         .subscribe(optionButtonsHeight -> {
           int statusBarHeight = Views.statusBarHeight(getResources());
@@ -179,7 +183,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
       return true;    // True to indicate it was handled.
     });
 
-    String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
+    String cachedVideoUrl = httpProxyCacheServer.getProxyUrl(videoUrl);
     exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
   }
 

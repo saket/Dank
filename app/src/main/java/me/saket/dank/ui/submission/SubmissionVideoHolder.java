@@ -6,6 +6,7 @@ import android.support.annotation.CheckResult;
 import android.view.View;
 import android.widget.ProgressBar;
 
+import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -22,7 +23,6 @@ import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.links.MediaLink;
-import me.saket.dank.di.Dank;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Views;
@@ -46,6 +46,7 @@ public class SubmissionVideoHolder {
   private final ProgressBar contentLoadProgressView;
   private final Relay<Integer> videoWidthChangeStream = PublishRelay.create();
   private final Relay<Object> videoPreparedStream = BehaviorRelay.create();
+  private final HttpProxyCacheServer httpProxyCacheServer;
 
   /**
    * <var>displayWidth</var> and <var>statusBarHeight</var> are used for capturing the video's bitmap,
@@ -56,7 +57,7 @@ public class SubmissionVideoHolder {
    */
   public SubmissionVideoHolder(VideoView contentVideoView, ScrollingRecyclerViewSheet commentListParentSheet,
       ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout, ExoPlayerManager exoPlayerManager,
-      MediaHostRepository mediaHostRepository, int deviceDisplayHeight, int minimumGapWithBottom)
+      MediaHostRepository mediaHostRepository, HttpProxyCacheServer httpProxyCacheServer, int deviceDisplayHeight, int minimumGapWithBottom)
   {
     this.contentVideoView = contentVideoView;
     this.commentListParentSheet = commentListParentSheet;
@@ -64,6 +65,7 @@ public class SubmissionVideoHolder {
     this.contentLoadProgressView = contentLoadProgressView;
     this.exoPlayerManager = exoPlayerManager;
     this.mediaHostRepository = mediaHostRepository;
+    this.httpProxyCacheServer = httpProxyCacheServer;
     this.deviceDisplayHeight = deviceDisplayHeight;
     this.minimumGapWithBottom = minimumGapWithBottom;
 
@@ -129,7 +131,7 @@ public class SubmissionVideoHolder {
         });
       });
 
-      String cachedVideoUrl = Dank.httpProxyCacheServer().getProxyUrl(videoUrl);
+      String cachedVideoUrl = httpProxyCacheServer.getProxyUrl(videoUrl);
       exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
     });
   }

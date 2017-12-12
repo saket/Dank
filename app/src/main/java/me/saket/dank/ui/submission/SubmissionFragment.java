@@ -45,6 +45,7 @@ import android.widget.Toast;
 
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
+import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -170,6 +171,7 @@ public class SubmissionFragment extends DankFragment
   @Inject ErrorResolver errorResolver;
   @Inject UserPreferences userPreferences;
   @Inject NetworkStateListener networkStateListener;
+  @Inject HttpProxyCacheServer httpProxyCacheServer;
 
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
@@ -695,6 +697,7 @@ public class SubmissionFragment extends DankFragment
         submissionPageLayout,
         exoPlayerManager,
         mediaHostRepository,
+        httpProxyCacheServer,
         deviceDisplayHeight,
         commentsSheetMinimumVisibleHeight
     );

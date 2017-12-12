@@ -1,6 +1,5 @@
 package me.saket.dank.di;
 
-import com.danikula.videocache.HttpProxyCacheServer;
 import com.squareup.moshi.Moshi;
 
 import javax.inject.Singleton;
@@ -9,7 +8,6 @@ import dagger.Component;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
@@ -39,9 +37,8 @@ import me.saket.dank.utils.JacksonHelper;
 @Component(modules = DankAppModule.class)
 @Singleton
 public interface DankAppComponent {
-  DankRedditClient dankRedditClient();
 
-  HttpProxyCacheServer httpProxyCacheServer();
+  DankRedditClient dankRedditClient();
 
   DankApi api();
 
@@ -50,8 +47,6 @@ public interface DankAppComponent {
   JacksonHelper jacksonHelper();
 
   ErrorResolver errorManager();
-
-  InboxRepository inboxManager();
 
   MessagesNotificationManager messagesNotificationManager();
 

@@ -2,7 +2,6 @@ package me.saket.dank.di;
 
 import android.app.Application;
 
-import com.danikula.videocache.HttpProxyCacheServer;
 import com.squareup.moshi.Moshi;
 
 import me.saket.dank.data.DankRedditClient;
@@ -28,10 +27,6 @@ public class Dank {
 
   public static DankRedditClient reddit() {
     return appComponent.dankRedditClient();
-  }
-
-  public static HttpProxyCacheServer httpProxyCacheServer() {
-    return appComponent.httpProxyCacheServer();
   }
 
   public static DankApi api() {
