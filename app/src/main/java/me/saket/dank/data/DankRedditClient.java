@@ -32,6 +32,7 @@ import net.dean.jraw.paginators.UserSubredditsPaginator;
 import org.reactivestreams.Publisher;
 
 import java.util.List;
+import java.util.UUID;
 
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
@@ -67,7 +68,9 @@ public class DankRedditClient {
   private boolean authManagerInitialized;
   private BehaviorRelay<Boolean> onRedditClientAuthenticatedRelay;
 
-  public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager, UserSession userSession) {
+  public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager, UserSession userSession,
+      UUID deviceUuid)
+  {
     this.redditClient = redditClient;
     this.redditAuthManager = redditAuthManager;
     this.userSession = userSession;
@@ -76,7 +79,7 @@ public class DankRedditClient {
 
     String redditAppClientId = context.getString(R.string.reddit_app_client_id);
     loggedInUserCredentials = Credentials.installedApp(redditAppClientId, context.getString(R.string.reddit_app_redirect_url));
-    userlessAppCredentials = Credentials.userlessApp(redditAppClientId, Dank.sharedPrefs().getDeviceUuid());
+    userlessAppCredentials = Credentials.userlessApp(redditAppClientId, deviceUuid);
     tokenHandler = new RefreshTokenHandler(new AndroidTokenStore(context), redditClient);
     onRedditClientAuthenticatedRelay = BehaviorRelay.create();
   }

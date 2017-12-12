@@ -22,7 +22,7 @@ import me.saket.dank.DankJobService;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.data.SharedPrefsManager;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Arrays2;
@@ -39,7 +39,6 @@ public class CheckUnreadMessagesJobService extends DankJobService {
   @Inject InboxRepository inboxRepository;
   @Inject ErrorResolver errorResolver;
   @Inject MessagesNotificationManager messagesNotifManager;
-  @Inject SharedPrefsManager sharedPrefs;
 
   /**
    * Schedules two recurring sync jobs:
@@ -47,8 +46,8 @@ public class CheckUnreadMessagesJobService extends DankJobService {
    * 1. One that is infrequent and uses user set time period. This runs on battery and metered connections.
    * 2. Another one that is more frequent, but runs only when the device is on a metered connection and charging.
    */
-  public static void schedule(Context context) {
-    long userSelectedTimeIntervalMillis = Dank.userPrefs().unreadMessagesCheckIntervalMillis();
+  public static void schedule(Context context, UserPreferences userPrefs) {
+    long userSelectedTimeIntervalMillis = userPrefs.unreadMessagesCheckIntervalMillis();
     JobInfo userSetSyncJob = new JobInfo.Builder(ID_MESSAGES_FREQUENCY_USER_SET, new ComponentName(context, CheckUnreadMessagesJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)

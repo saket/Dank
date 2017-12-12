@@ -7,9 +7,7 @@ import com.squareup.moshi.Moshi;
 
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
-import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.user.UserSession;
@@ -30,14 +28,6 @@ public class Dank {
 
   public static DankRedditClient reddit() {
     return appComponent.dankRedditClient();
-  }
-
-  public static SharedPrefsManager sharedPrefs() {
-    return appComponent.sharedPrefs();
-  }
-
-  public static UserPreferences userPrefs() {
-    return appComponent.userPrefs();
   }
 
   public static HttpProxyCacheServer httpProxyCacheServer() {

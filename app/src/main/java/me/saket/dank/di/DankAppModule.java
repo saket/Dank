@@ -28,6 +28,7 @@ import net.dean.jraw.http.LoggingMode;
 import net.dean.jraw.http.UserAgent;
 
 import java.io.IOException;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -40,7 +41,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.RedditUserLink;
@@ -111,9 +111,23 @@ public class DankAppModule {
   }
 
   @Provides
+  @Named("deviceUuid")
+  public UUID provideDeviceUuid(SharedPreferences sharedPrefs) {
+    String key = "deviceUuid";
+    if (!sharedPrefs.contains(key)) {
+      sharedPrefs.edit()
+          .putString(key, UUID.randomUUID().toString())
+          .apply();
+    }
+    return UUID.fromString(sharedPrefs.getString(key, null));
+  }
+
+  @Provides
   @Singleton
-  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager, UserSession userSession) {
-    return new DankRedditClient(appContext, redditClient, authManager, userSession);
+  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager, UserSession userSession,
+      @Named("deviceUuid") UUID deviceUuid)
+  {
+    return new DankRedditClient(appContext, redditClient, authManager, userSession, deviceUuid);
   }
 
   @Provides
@@ -126,12 +140,6 @@ public class DankAppModule {
   @Singleton
   SharedPreferences provideSharedPrefs() {
     return PreferenceManager.getDefaultSharedPreferences(appContext);
-  }
-
-  @Provides
-  @Singleton
-  SharedPrefsManager provideSharedPrefsManager(SharedPreferences sharedPrefs) {
-    return new SharedPrefsManager(sharedPrefs);
   }
 
   @Provides

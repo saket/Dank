@@ -10,9 +10,7 @@ import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
-import me.saket.dank.data.SharedPrefsManager;
 import me.saket.dank.data.SubredditSubscriptionManager;
-import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.notifs.MediaDownloadService;
@@ -43,13 +41,9 @@ import me.saket.dank.utils.JacksonHelper;
 public interface DankAppComponent {
   DankRedditClient dankRedditClient();
 
-  SharedPrefsManager sharedPrefs();
-
   HttpProxyCacheServer httpProxyCacheServer();
 
   DankApi api();
-
-  UserPreferences userPrefs();
 
   SubredditSubscriptionManager subredditSubscriptionManager();
 

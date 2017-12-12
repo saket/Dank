@@ -52,6 +52,7 @@ import me.saket.dank.data.InfiniteScrollFooter;
 import me.saket.dank.data.InfiniteScrollHeader;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.SubredditSubscriptionManager;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
@@ -105,6 +106,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Inject ErrorResolver errorResolver;
   @Inject CachePreFiller cachePreFiller;
   @Inject SubredditSubscriptionManager subscriptionManager;
+  @Inject UserPreferences userPrefs;
 
   private SubmissionFragment submissionFragment;
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
@@ -157,7 +159,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       SubredditSubscriptionsSyncJob.syncImmediately(this);
       SubredditSubscriptionsSyncJob.schedule(this);
       CheckUnreadMessagesJobService.syncImmediately(this);
-      CheckUnreadMessagesJobService.schedule(this);
+      CheckUnreadMessagesJobService.schedule(this, userPrefs);
     }
 
     // Restore state of subreddit picker sheet / user profile sheet.
@@ -332,7 +334,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     );
     submissionList.addOnItemTouchListener(new RecyclerSwipeListener(submissionList));
 
-    submissionsAdapter = new SubmissionsAdapter(Dank.voting(), Dank.userPrefs(), swipeActionsProvider);
+    submissionsAdapter = new SubmissionsAdapter(Dank.voting(), userPrefs, swipeActionsProvider);
     submissionsAdapter.setOnItemClickListener((submission, submissionItemView, submissionId) -> {
       DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
           .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : DankRedditClient.DEFAULT_COMMENT_SORT)
