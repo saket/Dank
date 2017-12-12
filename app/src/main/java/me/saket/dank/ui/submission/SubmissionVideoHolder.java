@@ -50,7 +50,7 @@ public class SubmissionVideoHolder {
   /**
    * <var>displayWidth</var> and <var>statusBarHeight</var> are used for capturing the video's bitmap,
    * which is in turn used for generating status bar tint. To minimize bitmap creation time, a Bitmap
-   * of height statusBarHeight is created instead of the entire video height.
+   * of height equal to the status bar is created instead of the entire video height.
    *
    * @param minimumGapWithBottom The difference between video's bottom and the window's bottom will
    */

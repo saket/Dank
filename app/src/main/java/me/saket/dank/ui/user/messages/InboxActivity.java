@@ -180,23 +180,6 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   }
 
   @Override
-  protected void onStart() {
-    super.onStart();
-
-    // TODO: Remove this.
-    // Dismiss any active message notifications when the unread page is active.
-    //RxAdapterView.itemSelections(folderNamesSpinner)
-    //    .takeUntil(lifecycle().onStop())
-    //    .map(folderPosition -> inboxPagerAdapter.getFolder(folderPosition) == InboxFolder.UNREAD)
-    //    .doOnNext(isUnreadActive -> Dank.sharedPrefs().setUnreadMessagesFolderActive(isUnreadActive))
-    //    .doOnDispose(() -> Dank.sharedPrefs().setUnreadMessagesFolderActive(false))
-    //    .flatMapCompletable(isUnreadActive -> isUnreadActive
-    //        ? messagesNotifManager.dismissAllNotifications(this)
-    //        : Completable.complete())
-    //    .subscribe();
-  }
-
-  @Override
   public void onSaveInstanceState(Bundle outState) {
     JsonAdapter<Set<Message>> jsonAdapter = moshi.adapter(Types.newParameterizedType(Set.class, Message.class));
     outState.putString(KEY_SEEN_UNREAD_MESSAGES, jsonAdapter.toJson(seenUnreadMessages));

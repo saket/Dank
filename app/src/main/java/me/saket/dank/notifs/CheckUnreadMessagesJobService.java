@@ -178,12 +178,8 @@ public class CheckUnreadMessagesJobService extends DankJobService {
         .flatMapCompletable(unseenMessages -> {
           if (unseenMessages.isEmpty()) {
             return messagesNotifManager.dismissAllNotifications(getBaseContext());
-
-          } else if (!sharedPrefs.isUnreadMessagesFolderActive(false)) {
-            return messagesNotifManager.displayNotification(getBaseContext(), unseenMessages);
-
           } else {
-            return Completable.complete();
+            return messagesNotifManager.displayNotification(getBaseContext(), unseenMessages);
           }
         });
   }
