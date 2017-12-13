@@ -46,11 +46,10 @@ import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
-import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ReplyRepository;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.JacksonHelper;
@@ -124,10 +123,10 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager, UserSession userSession,
+  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager, UserSessionRepository userSessionRepository,
       @Named("deviceUuid") UUID deviceUuid)
   {
-    return new DankRedditClient(appContext, redditClient, authManager, userSession, deviceUuid);
+    return new DankRedditClient(appContext, redditClient, authManager, userSessionRepository, deviceUuid);
   }
 
   @Provides
@@ -247,21 +246,8 @@ public class DankAppModule {
   }
 
   @Provides
-  @Singleton
   ErrorResolver provideErrorManager() {
     return new ErrorResolver();
-  }
-
-  @Provides
-  @Singleton
-  MessagesNotificationManager provideMessagesNotifManager(SharedPreferences sharedPreferences) {
-    return new MessagesNotificationManager(new MessagesNotificationManager.SeenUnreadMessageIdStore(sharedPreferences));
-  }
-
-  @Provides
-  @Singleton
-  UserSession provideUserSessionManager(SharedPreferences sharedPrefs) {
-    return new UserSession(sharedPrefs);
   }
 
   @Provides

@@ -9,7 +9,6 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
-import me.saket.dank.ui.user.UserSession;
 import me.saket.dank.utils.JacksonHelper;
 
 public class Dank {
@@ -55,9 +54,5 @@ public class Dank {
 
   public static VotingManager voting() {
     return appComponent.votingManager();
-  }
-
-  public static UserSession userSession() {
-    return appComponent.userSession();
   }
 }

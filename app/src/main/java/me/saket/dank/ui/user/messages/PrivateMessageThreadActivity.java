@@ -52,7 +52,7 @@ import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.ReplyRepository;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
@@ -84,7 +84,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   @Inject ReplyRepository replyRepository;
   @Inject Markdown markdown;
   @Inject ErrorResolver errorResolver;
-  @Inject UserSession userSession;
+  @Inject UserSessionRepository userSessionRepository;
 
   private ThreadedMessagesAdapter messagesAdapter;
   private Relay<Message> latestMessageStream = BehaviorRelay.create();
@@ -166,7 +166,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
           Message parentMessage = pair.first;
           List<Message> messageReplies = JrawUtils.messageReplies(parentMessage);
           List<PendingSyncReply> pendingSyncReplies = pair.second;
-          String loggedInUserName = userSession.loggedInUserName();
+          String loggedInUserName = userSessionRepository.loggedInUserName();
           return constructUiModels(parentMessage, messageReplies, pendingSyncReplies, loggedInUserName);
         })
         .scan(initialPair, (latestPair, nextItems) -> {

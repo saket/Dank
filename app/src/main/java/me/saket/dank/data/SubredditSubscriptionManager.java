@@ -37,7 +37,7 @@ import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription.PendingState;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import timber.log.Timber;
 
 /**
@@ -55,17 +55,17 @@ public class SubredditSubscriptionManager {
   private BriteDatabase database;
   private DankRedditClient dankRedditClient;
   private UserPreferences userPreferences;
-  private UserSession userSession;
+  private UserSessionRepository userSessionRepository;
 
   @Inject
   public SubredditSubscriptionManager(Application appContext, BriteDatabase database, DankRedditClient dankRedditClient,
-      UserPreferences userPreferences, UserSession userSession)
+      UserPreferences userPreferences, UserSessionRepository userSessionRepository)
   {
     this.appContext = appContext;
     this.database = database;
     this.dankRedditClient = dankRedditClient;
     this.userPreferences = userPreferences;
-    this.userSession = userSession;
+    this.userSessionRepository = userSessionRepository;
   }
 
   public boolean isFrontpage(String subredditName) {
@@ -220,6 +220,7 @@ public class SubredditSubscriptionManager {
   /**
    * Execute pending-subscribe and pending-unsubscribe actions that failed earlier because of some error.
    */
+  @CheckResult
   public Completable executePendingSubscribesAndUnsubscribes() {
     return database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL_PENDING)
         .mapToList(SubredditSubscription.MAPPER)
@@ -275,7 +276,7 @@ public class SubredditSubscriptionManager {
 
   @CheckResult
   private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
-    Single<List<String>> subredditsStream = userSession.isUserLoggedIn() ? loggedInUserSubreddits() : Single.just(loggedOutSubreddits());
+    Single<List<String>> subredditsStream = userSessionRepository.isUserLoggedIn() ? loggedInUserSubreddits() : Single.just(loggedOutSubreddits());
     return subredditsStream
         .compose(applySchedulersSingle())
         .map(mergeRemoteSubscriptionsWithLocal(localSubs));

@@ -39,12 +39,11 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.functions.Action;
 import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserProfile;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.UserSubreddit;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.AndroidTokenStore;
@@ -60,7 +59,7 @@ public class DankRedditClient {
 
   private final RedditClient redditClient;
   private final AuthenticationManager redditAuthManager;
-  private UserSession userSession;
+  private UserSessionRepository userSessionRepository;
   private final Credentials loggedInUserCredentials;
   private final Credentials userlessAppCredentials;
   private final RefreshTokenHandler tokenHandler;
@@ -68,12 +67,12 @@ public class DankRedditClient {
   private boolean authManagerInitialized;
   private BehaviorRelay<Boolean> onRedditClientAuthenticatedRelay;
 
-  public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager, UserSession userSession,
+  public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager, UserSessionRepository userSessionRepository,
       UUID deviceUuid)
   {
     this.redditClient = redditClient;
     this.redditAuthManager = redditAuthManager;
-    this.userSession = userSession;
+    this.userSessionRepository = userSessionRepository;
 
     redditClient.setLoggingMode(LoggingMode.ON_FAIL);
 
@@ -205,7 +204,7 @@ public class DankRedditClient {
         Timber.w("Attempting to refresh token");
 
         return Flowable.fromCallable(() -> {
-          redditAuthManager.refreshAccessToken(userSession.isUserLoggedIn() ? loggedInUserCredentials : userlessAppCredentials);
+          redditAuthManager.refreshAccessToken(userSessionRepository.isUserLoggedIn() ? loggedInUserCredentials : userlessAppCredentials);
           return true;
         });
 
@@ -222,15 +221,10 @@ public class DankRedditClient {
 
   // TODO: Move to UserSession.java
   public Completable logout() {
-    Action revokeAccessTokenAction = () -> {
-      // Bug workaround: revokeAccessToken() method crashes if logging is enabled.
+    return Completable.fromAction(() -> {
       redditClient.getOAuthHelper().revokeAccessToken(loggedInUserCredentials);
-      userSession.setLoggedInUsername(null);
-    };
-
-    return Completable
-        .fromAction(revokeAccessTokenAction)
-        .andThen(Dank.subscriptions().removeAll());   // TODO: Use a broadcast instead.
+      userSessionRepository.removeLoggedInUsername();
+    });
   }
 
   // TODO: Move to UserSession.java
@@ -269,7 +263,7 @@ public class DankRedditClient {
         redditClient.authenticate(oAuthData);
 
         String username = redditClient.getAuthenticatedUser();
-        userSession.setLoggedInUsername(username);
+        userSessionRepository.setLoggedInUsername(username);
       });
     }
   }

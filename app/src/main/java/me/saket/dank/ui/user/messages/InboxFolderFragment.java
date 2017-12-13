@@ -36,7 +36,7 @@ import me.saket.dank.data.InfiniteScrollHeaderFooter;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
@@ -59,7 +59,7 @@ public class InboxFolderFragment extends DankFragment {
   @BindView(R.id.messagefolder_mark_all_as_read) FloatingActionButton markAllAsReadButton;
 
   @Inject DankLinkMovementMethod linkMovementMethod;
-  @Inject UserSession userSession;
+  @Inject UserSessionRepository userSessionRepository;
   @Inject InboxRepository inboxRepository;
 
   private InboxFolder folder;
@@ -115,7 +115,7 @@ public class InboxFolderFragment extends DankFragment {
     folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
 
     boolean showMessageThreads = folder == InboxFolder.PRIVATE_MESSAGES;
-    messagesAdapter = new MessagesAdapter(linkMovementMethod, showMessageThreads, userSession.loggedInUserName());
+    messagesAdapter = new MessagesAdapter(linkMovementMethod, showMessageThreads, userSessionRepository.loggedInUserName());
     messagesAdapter.setOnMessageClickListener(((Callbacks) getActivity()));
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
 

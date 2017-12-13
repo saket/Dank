@@ -16,7 +16,7 @@ import java.util.Set;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
-import me.saket.dank.notifs.MessagesNotificationManager.SeenUnreadMessageIdStore;
+import me.saket.dank.notifs.MessagesNotificationManager.SeenUnreadMessagesIdStore;
 
 public class MessagesNotificationManagerTest {
 
@@ -24,7 +24,7 @@ public class MessagesNotificationManagerTest {
 
   @Before
   public void setUp() throws Exception {
-    SeenUnreadMessageIdStore seenUnreadMessageIdStore = new SeenUnreadMessageIdStore(null) {
+    SeenUnreadMessagesIdStore seenUnreadMessagesIdStore = new SeenUnreadMessagesIdStore(null) {
       private Set<String> seenMessageIds = Collections.emptySet();
 
       @Override
@@ -38,7 +38,7 @@ public class MessagesNotificationManagerTest {
       }
     };
 
-    notificationManager = new MessagesNotificationManager(seenUnreadMessageIdStore);
+    notificationManager = new MessagesNotificationManager(seenUnreadMessagesIdStore, null);
   }
 
   @Test
@@ -48,6 +48,7 @@ public class MessagesNotificationManagerTest {
     for (int i = 0; i < 3; i++) {
       Message mockedMessage = mock(Message.class);
       when(mockedMessage.getId()).thenReturn(String.valueOf(i));
+      when(mockedMessage.getBody()).thenReturn(String.valueOf(i));
       unreadMessages.add(mockedMessage);
     }
 
@@ -118,5 +119,4 @@ public class MessagesNotificationManagerTest {
         .blockingGet();
     assertEquals(filteredUnseenMessages.size(), 0);
   }
-
 }

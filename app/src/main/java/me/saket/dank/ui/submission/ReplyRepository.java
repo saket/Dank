@@ -29,7 +29,7 @@ import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import timber.log.Timber;
 
 /**
@@ -40,20 +40,20 @@ public class ReplyRepository implements DraftStore {
 
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase database;
-  private final UserSession userSession;
+  private final UserSessionRepository userSessionRepository;
   private final Moshi moshi;
   private final int recycleDraftsOlderThanNumDays;
   private final SharedPreferences sharedPrefs;
   private final RxSharedPreferences rxSharedPrefs;
 
   @Inject
-  public ReplyRepository(DankRedditClient dankRedditClient, BriteDatabase database, UserSession userSession,
+  public ReplyRepository(DankRedditClient dankRedditClient, BriteDatabase database, UserSessionRepository userSessionRepository,
       @Named("drafts_sharedpreferences") SharedPreferences sharedPrefs, Moshi moshi,
       @Named("drafts_max_retain_days") int recycleDraftsOlderThanNumDays)
   {
     this.dankRedditClient = dankRedditClient;
     this.database = database;
-    this.userSession = userSession;
+    this.userSessionRepository = userSessionRepository;
     this.sharedPrefs = sharedPrefs;
     this.rxSharedPrefs = RxSharedPreferences.create(sharedPrefs);
     this.moshi = moshi;
@@ -102,7 +102,7 @@ public class ReplyRepository implements DraftStore {
         PendingSyncReply.State.POSTING,
         parentThread.fullName(),
         parentContribution.getFullName(),
-        userSession.loggedInUserName(),
+        userSessionRepository.loggedInUserName(),
         replyCreatedTimeMillis,
         sentTimeMillis
     );

@@ -61,8 +61,7 @@ public class UserProfileSheetView extends FrameLayout {
     super.onAttachedToWindow();
 
     // TODO: 02/03/17 Cache user account.
-    // TODO: Get unread messages count from /messages/unread because that
-    // TODO: might be cached already when fetching new messages in background.
+    // TODO: Get unread messages count from /messages/unread because that might be cached already when fetching new messages in background.
 
     karmaView.setText(R.string.userprofile_loading_karma);
 
@@ -140,9 +139,7 @@ public class UserProfileSheetView extends FrameLayout {
       logoutButton.setText(R.string.userprofile_confirm_logout);
       confirmLogoutTimer = Observable.timer(5, TimeUnit.SECONDS)
           .compose(applySchedulers())
-          .subscribe(__ -> {
-            logoutButton.setText(R.string.login_logout);
-          });
+          .subscribe(o -> logoutButton.setText(R.string.login_logout));
 
     } else {
       // Confirm logout was visible when this button was clicked. Logout the user for real.
@@ -153,14 +150,13 @@ public class UserProfileSheetView extends FrameLayout {
       logoutDisposable = Dank.reddit()
           .logout()
           .compose(applySchedulersCompletable())
-          .subscribe(() -> {
-            parentSheet.collapse();
-
-          }, error -> {
-            logoutButton.setText(R.string.login_logout);
-            Timber.e(error, "Logout failure");
-          });
+          .subscribe(
+              () -> parentSheet.collapse(),
+              error -> {
+                logoutButton.setText(R.string.login_logout);
+                Timber.e(error, "Logout failure");
+              }
+          );
     }
   }
-
 }

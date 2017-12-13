@@ -14,6 +14,7 @@ import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.notifs.MessageNotifActionsJobService;
 import me.saket.dank.notifs.MessagesNotificationManager;
+import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.UploadImageDialog;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
@@ -27,8 +28,9 @@ import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.ui.subreddits.SubredditPickerSheetView;
 import me.saket.dank.ui.subreddits.SubredditSubscriptionsSyncJob;
+import me.saket.dank.ui.user.UserAuthListener;
 import me.saket.dank.ui.user.UserProfilePopup;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.InboxFolderFragment;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
@@ -54,47 +56,51 @@ public interface DankAppComponent {
 
   VotingManager votingManager();
 
-  UserSession userSession();
+  UserSessionRepository userSession();
 
-  void inject(MediaAlbumViewerActivity activity);
+  UserAuthListener userAuthListener();
 
-  void inject(MediaVideoFragment fragment);
+  void inject(MediaAlbumViewerActivity target);
 
-  void inject(SubmissionFragment fragment);
+  void inject(MediaVideoFragment target);
 
-  void inject(MediaDownloadService service);
+  void inject(SubmissionFragment target);
 
-  void inject(MediaImageFragment fragment);
+  void inject(MediaDownloadService target);
 
-  void inject(InboxActivity activity);
+  void inject(MediaImageFragment target);
 
-  void inject(PrivateMessageThreadActivity activity);
+  void inject(InboxActivity target);
 
-  void inject(UserProfilePopup popup);
+  void inject(PrivateMessageThreadActivity target);
 
-  void inject(HiddenPreferencesActivity activity);
+  void inject(UserProfilePopup target);
 
-  void inject(SubredditActivity activity);
+  void inject(HiddenPreferencesActivity target);
 
-  void inject(SubredditSubscriptionsSyncJob service);
+  void inject(SubredditActivity target);
 
-  void inject(SubredditPickerSheetView view);
+  void inject(SubredditSubscriptionsSyncJob target);
 
-  void inject(DatabaseCacheRecyclerJobService service);
+  void inject(SubredditPickerSheetView target);
 
-  void inject(UploadImageDialog dialog);
+  void inject(DatabaseCacheRecyclerJobService target);
 
-  void inject(GiphyPickerActivity activity);
+  void inject(UploadImageDialog target);
 
-  void inject(RetryReplyJobService service);
+  void inject(GiphyPickerActivity target);
 
-  void inject(ComposeReplyActivity activity);
+  void inject(RetryReplyJobService target);
 
-  void inject(InboxFolderFragment fragment);
+  void inject(ComposeReplyActivity target);
 
-  void inject(BaseMediaViewerFragment fragment);
+  void inject(InboxFolderFragment target);
 
-  void inject(CheckUnreadMessagesJobService service);
+  void inject(BaseMediaViewerFragment target);
 
-  void inject(MessageNotifActionsJobService service);
+  void inject(CheckUnreadMessagesJobService target);
+
+  void inject(MessageNotifActionsJobService target);
+
+  void inject(LoginActivity target);
 }

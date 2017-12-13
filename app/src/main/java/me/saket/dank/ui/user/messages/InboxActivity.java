@@ -46,7 +46,7 @@ import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.UrlParser;
@@ -69,7 +69,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @Inject UrlRouter urlRouter;
   @Inject Moshi moshi;
   @Inject MessagesNotificationManager messagesNotifManager;
-  @Inject UserSession userSession;
+  @Inject UserSessionRepository userSessionRepository;
   @Inject InboxRepository inboxRepository;
 
   private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.ALL.length);
@@ -246,7 +246,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
           .open(this);
 
     } else {
-      String secondPartyName = JrawUtils.secondPartyName(getResources(), message, userSession.loggedInUserName());
+      String secondPartyName = JrawUtils.secondPartyName(getResources(), message, userSessionRepository.loggedInUserName());
       startActivityForResult(
           PrivateMessageThreadActivity.intent(this, message, secondPartyName, messageItemViewRect),
           REQUESTCODE_REFRESH_MESSAGES_THREAD_ON_EXIT

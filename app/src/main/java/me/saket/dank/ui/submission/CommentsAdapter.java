@@ -52,7 +52,7 @@ import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
@@ -78,7 +78,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   // Injected by Dagger.
   private final DankLinkMovementMethod linkMovementMethod;
   private final VotingManager votingManager;
-  private final UserSession userSession;
+  private final UserSessionRepository userSessionRepository;
   private final DraftStore draftStore;
   private final MarkdownHintOptions markdownHintOptions;
   private final MarkdownSpanPool markdownSpanPool;
@@ -100,12 +100,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private CompositeDisposable inlineReplyDraftsDisposables = new CompositeDisposable();
 
   @Inject
-  public CommentsAdapter(DankLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSession userSession,
+  public CommentsAdapter(DankLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSessionRepository userSessionRepository,
       DraftStore draftStore, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool)
   {
     this.linkMovementMethod = commentsLinkMovementMethod;
     this.votingManager = votingManager;
-    this.userSession = userSession;
+    this.userSessionRepository = userSessionRepository;
     this.draftStore = draftStore;
     this.markdownHintOptions = markdownHintOptions;
     this.markdownSpanPool = markdownSpanPool;
@@ -307,7 +307,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         CommentInlineReplyItem commentInlineReplyItem = (CommentInlineReplyItem) commentItem;
         Disposable draftsDisposable = ((InlineReplyViewHolder) holder).bind(
             commentInlineReplyItem,
-            userSession,
+            userSessionRepository,
             draftStore,
             replyGifClickStream,
             replyDiscardClickStream,
@@ -556,7 +556,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
      * @return For disposing drafts subscriber.
      */
     @CheckResult
-    public Disposable bind(CommentInlineReplyItem commentInlineReplyItem, UserSession userSession, DraftStore draftStore,
+    public Disposable bind(CommentInlineReplyItem commentInlineReplyItem, UserSessionRepository userSessionRepository, DraftStore draftStore,
         Relay<ReplyInsertGifClickEvent> replyGifClickRelay, Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
         Relay<ReplyFullscreenClickEvent> replyFullscreenClickRelay, Relay<ReplySendClickEvent> replySendClickRelay)
     {
@@ -564,7 +564,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       indentedLayout.setIndentationDepth(commentInlineReplyItem.depth());
       authorUsernameHintView.setText(authorUsernameHintView.getResources().getString(
           R.string.submission_comment_reply_author_hint,
-          userSession.loggedInUserName()
+          userSessionRepository.loggedInUserName()
       ));
 
       discardButton.setOnClickListener(o ->

@@ -15,12 +15,15 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
 
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.ui.user.UserSessionRepository;
 import timber.log.Timber;
 
 public class LoginActivity extends DankActivity {
@@ -28,6 +31,8 @@ public class LoginActivity extends DankActivity {
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.login_webview) WebView webView;
   @BindView(R.id.login_progress) View progressView;
+
+  @Inject UserSessionRepository userSessionRepository;
 
   private DankRedditClient.UserLoginHelper userLoginHelper;
   private boolean loggedIn;
@@ -42,6 +47,7 @@ public class LoginActivity extends DankActivity {
 
   @Override
   protected void onCreate(Bundle savedInstanceState) {
+    Dank.dependencyInjector().inject(this);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_login);
     ButterKnife.bind(this);
@@ -94,7 +100,7 @@ public class LoginActivity extends DankActivity {
     userLoginHelper.parseOAuthSuccessUrl(successUrl)
         .compose(applySchedulersCompletable())
         .subscribe(() -> {
-          String loggedInUserName = Dank.userSession().loggedInUserName();
+          String loggedInUserName = userSessionRepository.loggedInUserName();
           Toast.makeText(LoginActivity.this, getString(R.string.login_welcome_user, loggedInUserName), Toast.LENGTH_SHORT).show();
           setResult(RESULT_OK);
           finish();

@@ -8,7 +8,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.VotingManager;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
@@ -30,7 +30,7 @@ public class CommentSwipeActionsProvider {
   private static final String ACTION_NAME_DOWNVOTE = "CommentDownvote";
 
   private final VotingManager votingManager;
-  private final UserSession userSession;
+  private final UserSessionRepository userSessionRepository;
   private final OnLoginRequireListener onLoginRequireListener;
   private final SwipeActions commentSwipeActions;
   private final SwipeActionIconProvider swipeActionIconProvider;
@@ -40,9 +40,11 @@ public class CommentSwipeActionsProvider {
     void onReplySwipeAction(Comment parentComment);
   }
 
-  public CommentSwipeActionsProvider(VotingManager votingManager, UserSession userSession, OnLoginRequireListener onLoginRequireListener) {
+  public CommentSwipeActionsProvider(VotingManager votingManager, UserSessionRepository userSessionRepository,
+      OnLoginRequireListener onLoginRequireListener)
+  {
     this.votingManager = votingManager;
-    this.userSession = userSession;
+    this.userSessionRepository = userSessionRepository;
     this.onLoginRequireListener = onLoginRequireListener;
 
     commentSwipeActions = SwipeActions.builder()
@@ -116,7 +118,7 @@ public class CommentSwipeActionsProvider {
   }
 
   public void performSwipeAction(SwipeAction swipeAction, CommentNode commentNode, SwipeableLayout swipeableLayout) {
-    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSession.isUserLoggedIn()) {
+    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.isUserLoggedIn()) {
       onLoginRequireListener.onLoginRequired();
       return;
     }

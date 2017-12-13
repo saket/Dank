@@ -26,12 +26,14 @@ import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
+import javax.inject.Inject;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Strings;
@@ -46,10 +48,13 @@ public class MessagesNotificationManager {
   private static final int P_INTENT_REQ_ID_DIRECT_REPLY = 204;
   private static final int P_INTENT_REQ_ID_OPEN_INBOX = 205;
 
-  private final SeenUnreadMessageIdStore seenMessageIdsStore;
+  private final SeenUnreadMessagesIdStore seenMessageIdsStore;
+  private final UserSessionRepository userSessionRepository;
 
-  public MessagesNotificationManager(SeenUnreadMessageIdStore seenMessageIdsStore) {
+  @Inject
+  public MessagesNotificationManager(SeenUnreadMessagesIdStore seenMessageIdsStore, UserSessionRepository userSessionRepository) {
     this.seenMessageIdsStore = seenMessageIdsStore;
+    this.userSessionRepository = userSessionRepository;
   }
 
   /**
@@ -121,12 +126,13 @@ public class MessagesNotificationManager {
     return seenMessageIdsStore.save(Collections.emptySet());
   }
 
-  public static class SeenUnreadMessageIdStore {
+  public static class SeenUnreadMessagesIdStore {
     private final SharedPreferences sharedPreferences;
 
     private static final String KEY_SEEN_UNREAD_MESSAGES = "seenUnreadMessages";
 
-    public SeenUnreadMessageIdStore(SharedPreferences sharedPreferences) {
+    @Inject
+    public SeenUnreadMessagesIdStore(SharedPreferences sharedPreferences) {
       this.sharedPreferences = sharedPreferences;
     }
 
@@ -150,11 +156,9 @@ public class MessagesNotificationManager {
     }
   }
 
-// ======== NOTIFICATION ======== //
-
   public Completable displayNotification(Context context, List<Message> unreadMessages) {
     return Completable.fromAction(() -> {
-      String loggedInUserName = Dank.userSession().loggedInUserName();
+      String loggedInUserName = userSessionRepository.loggedInUserName();
 
       Comparator<Message> oldestMessageFirstComparator = (first, second) -> {
         Date firstDate = first.getCreated();

@@ -103,7 +103,7 @@ import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -165,7 +165,7 @@ public class SubmissionFragment extends DankFragment
   @Inject LinkMetadataRepository linkMetadataRepository;
   @Inject ReplyRepository replyRepository;
   @Inject VotingManager votingManager;
-  @Inject UserSession userSession;
+  @Inject UserSessionRepository userSessionRepository;
   @Inject DankLinkMovementMethod linkMovementMethod;
   @Inject CommentsAdapter commentsAdapter;
   @Inject ErrorResolver errorResolver;
@@ -330,12 +330,12 @@ public class SubmissionFragment extends DankFragment
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(
         submissionRepository,
         votingManager,
-        userSession,
+        userSessionRepository,
         onLoginRequireListener
     );
     CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(
         votingManager,
-        userSession,
+        userSessionRepository,
         onLoginRequireListener
     );
     commentSwipeActionsProvider.setOnReplySwipeActionListener(parentComment -> {
@@ -805,7 +805,7 @@ public class SubmissionFragment extends DankFragment
         });
 
     replyFAB.setOnClickListener(o -> {
-      if (!Dank.userSession().isUserLoggedIn()) {
+      if (!userSessionRepository.isUserLoggedIn()) {
         LoginActivity.startForResult(getActivity(), SubredditActivity.REQUEST_CODE_LOGIN);
         return;
       }

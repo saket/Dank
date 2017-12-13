@@ -44,6 +44,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Observable;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -55,7 +56,6 @@ import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.di.Dank;
-import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
@@ -63,6 +63,7 @@ import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionFragment;
 import me.saket.dank.ui.submission.SubmissionRepository;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.DankToolbar;
@@ -107,6 +108,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Inject CachePreFiller cachePreFiller;
   @Inject SubredditSubscriptionManager subscriptionManager;
   @Inject UserPreferences userPrefs;
+  @Inject UserSessionRepository userSessionRepository;
 
   private SubmissionFragment submissionFragment;
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
@@ -153,15 +155,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     setupSubmissionFragment();
     setupToolbarSheet();
 
-    // Schedule subreddit syncs + do an immediate sync.
-    // TODO: Also subscribe to on-logged-in-event and run these jobs:
-    if (isTaskRoot() && Dank.userSession().isUserLoggedIn()) {
-      SubredditSubscriptionsSyncJob.syncImmediately(this);
-      SubredditSubscriptionsSyncJob.schedule(this);
-      CheckUnreadMessagesJobService.syncImmediately(this);
-      CheckUnreadMessagesJobService.schedule(this, userPrefs);
-    }
-
     // Restore state of subreddit picker sheet / user profile sheet.
     if (savedState != null) {
       if (savedState.getBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE)) {
@@ -171,7 +164,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       }
     }
 
-    // Setup sorting button.
+    // Animate changes in sorting button's width on text change.
     LayoutTransition layoutTransition = sortingModeContainer.getLayoutTransition();
     layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
 
@@ -209,6 +202,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         })
         .takeUntil(lifecycle().onDestroy())
         .subscribe(isSubscribed -> subscribeButton.setVisibility(isSubscribed ? View.GONE : View.VISIBLE));
+
+    userSessionRepository.streamFutureLogInEvents()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(session -> handleOnUserLogIn());
   }
 
   @Override
@@ -289,7 +286,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             invalidateOptionsMenu();
 
           } else if (isUserProfileSheetVisible()) {
-            setTitle(getString(R.string.user_name_u_prefix, Dank.userSession().loggedInUserName()));
+            setTitle(getString(R.string.user_name_u_prefix, userSessionRepository.loggedInUserName()));
           }
 
           toolbarTitleArrowView.setState(ExpandIconView.LESS, true);
@@ -329,7 +326,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     SubmissionSwipeActionsProvider swipeActionsProvider = new SubmissionSwipeActionsProvider(
         submissionRepository,
         Dank.voting(),
-        Dank.userSession(),
+        userSessionRepository,
         onLoginRequireListener
     );
     submissionList.addOnItemTouchListener(new RecyclerSwipeListener(submissionList));
@@ -537,7 +534,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         return true;
 
       case R.id.action_user_profile:
-        if (Dank.userSession().isUserLoggedIn()) {
+        if (userSessionRepository.isUserLoggedIn()) {
           showUserProfileSheet();
         } else {
           LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
@@ -639,32 +636,18 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     }
   }
 
-  @Override
-  protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-    if (requestCode == REQUEST_CODE_LOGIN && resultCode == RESULT_OK) {
-      if (!submissionPage.isExpanded()) {
-        showUserProfileSheet();
-      }
+  private void handleOnUserLogIn() {
+    // Reload submissions if we're on the frontpage because the frontpage
+    // submissions will change if the subscriptions change.
+    subredditChangesStream
+        .take(1)
+        .filter(subreddit -> subscriptionManager.isFrontpage(subreddit))
+        .observeOn(Schedulers.io())
+        .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
+        .subscribe(() -> forceRefreshRequestStream.accept(Notification.INSTANCE));
 
-      // Reload subreddit subscriptions. Not implementing onError() is intentional.
-      // This code is not supposed to fail :/
-      subscriptionManager.removeAll()
-          .andThen(subscriptionManager.getAllIncludingHidden().ignoreElements())
-          .subscribeOn(io())
-          .subscribe();
-
-      // Reload submissions if we're on the frontpage because the frontpage
-      // submissions will change if the subscriptions change.
-      subredditChangesStream
-          .take(1)
-          .filter(subreddit -> subscriptionManager.isFrontpage(subreddit))
-          .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
-          .subscribe(() -> forceRefreshRequestStream.accept(Notification.INSTANCE));
-
-      // TODO: Expose a callback when the user logs in. Get subreddits, messages and profile.
-
-    } else {
-      super.onActivityResult(requestCode, resultCode, data);
+    if (!submissionPage.isExpanded()) {
+      showUserProfileSheet();
     }
   }
 }

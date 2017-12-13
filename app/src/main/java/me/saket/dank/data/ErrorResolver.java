@@ -6,6 +6,7 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
+import io.reactivex.exceptions.CompositeException;
 import io.reactivex.exceptions.UndeliverableException;
 import me.saket.dank.R;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
@@ -59,7 +60,7 @@ public class ErrorResolver {
   }
 
   public Throwable findActualCause(@Nullable Throwable error) {
-    if (error instanceof io.reactivex.exceptions.CompositeException) {
+    if (error instanceof CompositeException) {
       error = error.getCause();
     }
     if (error instanceof UndeliverableException) {

@@ -10,7 +10,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.SubmissionRepository;
-import me.saket.dank.ui.user.UserSession;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
@@ -35,15 +35,15 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   private final SwipeActions swipeActionsWithSave;
   private final SubmissionRepository submissionRepository;
   private VotingManager votingManager;
-  private final UserSession userSession;
+  private final UserSessionRepository userSessionRepository;
   private final OnLoginRequireListener onLoginRequireListener;
 
-  public SubmissionSwipeActionsProvider(SubmissionRepository submissionRepository, VotingManager votingManager, UserSession userSession,
+  public SubmissionSwipeActionsProvider(SubmissionRepository submissionRepository, VotingManager votingManager, UserSessionRepository userSessionRepository,
       OnLoginRequireListener onLoginRequireListener)
   {
     this.submissionRepository = submissionRepository;
     this.votingManager = votingManager;
-    this.userSession = userSession;
+    this.userSessionRepository = userSessionRepository;
     this.onLoginRequireListener = onLoginRequireListener;
 
     SwipeAction saveSwipeAction = SwipeAction.create(ACTION_NAME_SAVE, R.color.list_item_swipe_save, 1f);
@@ -124,7 +124,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
-    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSession.isUserLoggedIn()) {
+    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.isUserLoggedIn()) {
       onLoginRequireListener.onLoginRequired();
       return;
     }
