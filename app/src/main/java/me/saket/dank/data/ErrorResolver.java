@@ -22,7 +22,7 @@ public class ErrorResolver {
   public ResolvedError resolve(@Nullable Throwable error) {
     error = findActualCause(error);
 
-    if (error instanceof SocketException || error instanceof SocketTimeoutException || error instanceof UnknownHostException) {
+    if (isNetworkTimeoutError(error)) {
       return ResolvedError.create(
           ResolvedError.Type.NETWORK_ERROR,
           R.string.common_network_error_emoji,
@@ -66,7 +66,7 @@ public class ErrorResolver {
     if (error instanceof UndeliverableException) {
       error = error.getCause();
     }
-    if (error instanceof RuntimeException && error.getCause() != null && error.getCause() instanceof HttpException) {
+    if (error instanceof RuntimeException && error.getCause() != null && isNetworkTimeoutError(error.getCause())) {
       // Stupid JRAW wraps all HTTP exceptions with RuntimeException.
       error = error.getCause();
     }
@@ -74,5 +74,9 @@ public class ErrorResolver {
       error = error.getCause();
     }
     return error;
+  }
+
+  private boolean isNetworkTimeoutError(@Nullable Throwable error) {
+    return error instanceof SocketException || error instanceof SocketTimeoutException || error instanceof UnknownHostException;
   }
 }
