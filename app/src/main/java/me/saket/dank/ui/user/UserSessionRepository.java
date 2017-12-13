@@ -2,11 +2,14 @@ package me.saket.dank.ui.user;
 
 import android.content.SharedPreferences;
 
+import javax.inject.Inject;
+
 public class UserSession {
 
   private static final String KEY_LOGGED_IN_USERNAME = "loggedInUsername";
   private SharedPreferences sharedPrefs;
 
+  @Inject
   public UserSession(SharedPreferences sharedPrefs) {
     this.sharedPrefs = sharedPrefs;
   }
