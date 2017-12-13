@@ -20,7 +20,7 @@
     app:errorTextAppearance="@style/DankTextInputLayoutErrorTextAppearance"
     app:hintEnabled="false">
 
-    <me.saket.dank.widgets.InboxUI.EditTextWithPrefix
+    <me.saket.dank.widgets.EditTextWithPrefix
       android:id="@+id/newsubredditdialog_subreddit"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"

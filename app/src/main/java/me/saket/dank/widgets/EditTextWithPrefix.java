@@ -1,4 +1,4 @@
-package me.saket.dank.widgets.InboxUI;
+package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
@@ -6,7 +6,6 @@ import android.support.v7.widget.AppCompatEditText;
 import android.util.AttributeSet;
 
 import me.saket.dank.R;
-import me.saket.dank.widgets.TextDrawable;
 
 public class EditTextWithPrefix extends AppCompatEditText {
 
