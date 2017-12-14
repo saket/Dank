@@ -171,7 +171,7 @@ public class UrlRouter {
   public static String findAllowedPackageNameForDeepLink(String url) {
     Uri URI = Uri.parse(url);
     String urlHost = URI.getHost();
-    if (urlHost.endsWith("youtube.com")) {
+    if (urlHost.endsWith("youtube.com") || urlHost.endsWith("youtu.be")) {
       return "com.google.android.youtube";
 
     } else if (isGooglePlayUrl(urlHost, URI.getPath())) {
