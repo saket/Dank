@@ -270,7 +270,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
             .setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
 
         if (anchorPosition == i) {
-          view.animate().alpha(0f);
+          view.animate().alpha(0f).withLayer();
         }
 
       } else {

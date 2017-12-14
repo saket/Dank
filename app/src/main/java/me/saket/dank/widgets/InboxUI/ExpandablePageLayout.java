@@ -164,6 +164,12 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   }
 
   @Override
+  public boolean hasOverlappingRendering() {
+    // According to Google developer videos, returning false improves performance when animating alpha.
+    return false;
+  }
+
+  @Override
   public boolean dispatchTouchEvent(MotionEvent ev) {
     // Ignore touch events until the page is fully expanded for avoiding accidental taps.
     if (isExpanded()) {
@@ -231,6 +237,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       // 2. Expand page again.
       if (getTranslationY() != 0f) {
         animate()
+            .withLayer()
             .translationY(0f)
             .alpha(expandedAlpha)
             .setDuration(getAnimationDuration())
@@ -378,10 +385,10 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       setVisibility(View.VISIBLE);
     }
 
-    // Alpha and translation.
     setAlpha(expand ? collapsedAlpha : expandedAlpha);
     stopAnyOngoingPageAnimation();
     animate()
+        .withLayer()
         .alpha(expand ? expandedAlpha : collapsedAlpha)
         .translationY(targetPageTranslationY)
         .translationX(targetPageTranslationX)
