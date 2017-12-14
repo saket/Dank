@@ -101,6 +101,7 @@ import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
+import me.saket.dank.ui.subreddits.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -116,6 +117,7 @@ import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
+import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.KeyboardVisibilityDetector.KeyboardVisibilityChangeEvent;
@@ -188,8 +190,11 @@ public class SubmissionFragment extends DankFragment
   private boolean isCommentSheetBeneathImage;
   private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
   private SubmissionFragmentLifecycleStreams lifecycleStreams;
+  private Relay<Object> commentsAdapterWithSubmissionHeaderDatasetUpdatesStream = PublishRelay.create();
 
   public interface Callbacks {
+    SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer();
+
     void onClickSubmissionToolbarUp();
   }
 
@@ -282,6 +287,8 @@ public class SubmissionFragment extends DankFragment
         .takeUntil(lifecycle().onDestroy())
         .subscribe(submission -> {
           adapterWithSubmissionHeader.updateSubmission(submission);
+          commentsAdapterWithSubmissionHeaderDatasetUpdatesStream.accept(LifecycleStreams.NOTHING);
+
           commentsAdapter.setSubmissionAuthor(submission.getAuthor());
         });
 
@@ -568,7 +575,7 @@ public class SubmissionFragment extends DankFragment
   private void setupCommentTree() {
     // Update header.
     submissionStream
-        .filter(submission -> submission.getComments() != null)
+        //.filter(submission -> submission.getComments() != null)
         .observeOn(io())
         .switchMap(submissionWithComments -> {
           // Add pending-sync replies to the comment tree.
@@ -597,7 +604,6 @@ public class SubmissionFragment extends DankFragment
         })
         .skip(1)  // Initial value is dummy.
         .observeOn(mainThread())
-        .filter(o -> !submissionPageLayout.isCollapsedOrCollapsing())
         .takeUntil(lifecycle().onDestroyFlowable())
         .subscribe(
             itemsAndDiff -> {
@@ -940,14 +946,15 @@ public class SubmissionFragment extends DankFragment
       unsubscribeOnCollapse(
           loadSubmissionContent(submission)
       );
-
     } else {
       // Wait till the submission is fetched before loading content.
       submissionStream
           .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
           .take(1)
           .takeUntil(lifecycle().onDestroy())
-          .subscribe(fetchedSubmission -> loadSubmissionContent(fetchedSubmission));
+          .subscribe(fetchedSubmission -> unsubscribeOnCollapse(
+              loadSubmissionContent(fetchedSubmission)
+          ));
     }
   }
 
@@ -956,15 +963,16 @@ public class SubmissionFragment extends DankFragment
     Relay<Object> retryLoadRequests = PublishRelay.create();
 
     // Collapse media-load-error link details View, if it's visible.
-    retryLoadRequests.subscribe(o -> {
-      Transition transitions = new TransitionSet()
-          .addTransition(new ChangeBounds())
-          .setInterpolator(Animations.INTERPOLATOR)
-          .setOrdering(TransitionSet.ORDERING_TOGETHER)
-          .setDuration(200);
-      TransitionManager.endTransitions(submissionPageLayout);
-      TransitionManager.beginDelayedTransition(submissionPageLayout, transitions);
-    });
+    retryLoadRequests
+        .subscribe(o -> {
+          Transition transitions = new TransitionSet()
+              .addTransition(new ChangeBounds())
+              .setInterpolator(Animations.INTERPOLATOR)
+              .setOrdering(TransitionSet.ORDERING_TOGETHER)
+              .setDuration(200);
+          TransitionManager.endTransitions(submissionPageLayout);
+          TransitionManager.beginDelayedTransition(submissionPageLayout, transitions);
+        });
 
     return Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
         .subscribeOn(io())
@@ -1044,6 +1052,11 @@ public class SubmissionFragment extends DankFragment
                       .withRedditSuppliedImages(submission.getThumbnails())
                       .open(getContext())
                   );
+
+                  contentImageView.setContentDescription(getString(
+                      R.string.cd_submission_image,
+                      submission.getTitle()
+                  ));
                   break;
 
                 case REDDIT_PAGE:
@@ -1156,6 +1169,24 @@ public class SubmissionFragment extends DankFragment
 
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
+
+    //noinspection ConstantConditions
+    if (((Callbacks) getActivity()).submissionPageAnimationOptimizer().isOptimizationPending()) {
+      linkDetailsViewHolder.setVisible(false);
+      selfPostTextView.setVisibility(View.GONE);
+      contentImageView.setVisibility(View.GONE);
+      contentVideoViewContainer.setVisibility(View.GONE);
+      toolbarBackground.setSyncScrollEnabled(false);
+
+      adapterWithSubmissionHeader.updateSubmission(null);
+      adapterWithSubmissionHeader.notifyDataSetChanged();
+      commentsAdapterWithSubmissionHeaderDatasetUpdatesStream
+          .take(1)
+          .observeOn(mainThread())
+          .takeUntil(lifecycle().onDestroy())
+          .subscribe(submission -> adapterWithSubmissionHeader.notifyDataSetChanged());
+    }
+
     commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
   }
 

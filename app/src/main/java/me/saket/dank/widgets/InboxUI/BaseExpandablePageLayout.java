@@ -38,17 +38,6 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     init();
   }
 
-  public BaseExpandablePageLayout(Context context, AttributeSet attrs, int defStyleAttr) {
-    super(context, attrs, defStyleAttr);
-    init();
-  }
-
-  @TargetApi(Build.VERSION_CODES.LOLLIPOP)
-  public BaseExpandablePageLayout(Context context, AttributeSet attrs, int defStyleAttr, int defStyleRes) {
-    super(context, attrs, defStyleAttr, defStyleRes);
-    init();
-  }
-
   private void init() {
     setOutlineProvider(new ViewOutlineProvider() {
       @Override
@@ -81,20 +70,14 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
       setClippedDimensions(newWidth, newHeight);
     });
 
-    dimensionAnimator.setDuration(getAnimationDuration());
+    dimensionAnimator.setDuration(getAnimationDurationMillis());
     dimensionAnimator.setInterpolator(getAnimationInterpolator());
-    dimensionAnimator.setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
+    dimensionAnimator.setStartDelay(InboxRecyclerView.getAnimationStartDelay());
     dimensionAnimator.start();
   }
 
 // ======== GETTERS & SETTERS ======== //
 
-//  public void setClippedDimensions(float newClippedWidth, float newClippedHeight) {
-//    setClippedDimensions((Float) newClippedWidth, (Float) newClippedHeight);
-//  }
-
-  // This method exists so that animateDimensions() can animate dimensions without
-  // thrashing Float objects (due to auto-boxing) on every frame.
   public void setClippedDimensions(int newClippedWidth, int newClippedHeight) {
     isFullyVisible = newClippedWidth > 0 && newClippedHeight > 0 && newClippedWidth == getWidth() && newClippedHeight == getHeight();
 
@@ -131,7 +114,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     animationDuration = duration;
   }
 
-  protected long getAnimationDuration() {
+  public long getAnimationDurationMillis() {
     return animationDuration;
   }
 

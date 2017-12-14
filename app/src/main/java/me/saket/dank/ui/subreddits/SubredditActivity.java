@@ -38,12 +38,15 @@ import net.dean.jraw.paginators.Sorting;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
@@ -115,6 +118,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
   private Relay<Object> forceRefreshRequestStream = PublishRelay.create();
   private SubmissionsAdapter submissionsAdapter;
+  private SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer = new SubmissionPageAnimationOptimizer();
 
   protected static void addStartExtrasToIntent(RedditSubredditLink subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
@@ -336,15 +340,23 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
           .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : DankRedditClient.DEFAULT_COMMENT_SORT)
           .build();
-      submissionFragment.populateUi(submission, submissionRequest);
 
-      submissionPage.post(() -> {
-        // Posing the expand() call to the page's message queue seems to result in a smoother
-        // expand animation. I assume this is because the expand() call only executes once the
-        // page is done updating its views for this new submission. This might be a placebo too
-        // and without enough testing I cannot be sure about this.
-        submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId);
-      });
+      long delay = submissionPageAnimationOptimizer.shouldDelayLoad(submission)
+          ? submissionPage.getAnimationDurationMillis()
+          : 0;
+
+      Single.timer(delay, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+          .takeUntil(lifecycle().onDestroy().ignoreElements())
+          .subscribe(o -> {
+            submissionFragment.populateUi(submission, submissionRequest);
+            submissionPageAnimationOptimizer.trackSubmissionOpened(submission);
+          });
+
+      submissionPage.post(() ->
+          Observable.timer(100 + delay / 2, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+              .takeUntil(lifecycle().onDestroy())
+              .subscribe(o -> submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId))
+      );
     });
     submissionList.setAdapter(submissionsAdapter);
 
@@ -494,6 +506,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         )
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
+  }
+
+  @Override
+  public SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer() {
+    return submissionPageAnimationOptimizer;
   }
 
 // ======== SORTING MODE ======== //

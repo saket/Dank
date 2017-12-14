@@ -15,10 +15,9 @@ public class Animations {
 
   public static TransitionSet transitions() {
     return new TransitionSet()
-        .addTransition(new ChangeBounds())
-        .addTransition(new Fade(Fade.IN))
-        .addTransition(new Fade(Fade.OUT))
-        .setInterpolator(Animations.INTERPOLATOR)
+        .addTransition(new ChangeBounds().setInterpolator(Animations.INTERPOLATOR))
+        .addTransition(new Fade(Fade.IN).setInterpolator(Animations.INTERPOLATOR))
+        .addTransition(new Fade(Fade.OUT).setInterpolator(Animations.INTERPOLATOR))
         .setOrdering(TransitionSet.ORDERING_TOGETHER)
         .setDuration(200);
   }

@@ -27,7 +27,6 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
   private static final String KEY_IS_EXPANDED = "isExpanded";
   private static final float MAX_DIM_FACTOR = 0.2f;                    // [0..1]
   private static final int MAX_DIM = (int) (255 * MAX_DIM_FACTOR);     // [0..255]
-  public static final long ANIM_START_DELAY = 0;
 
   private ExpandablePageLayout page;
   private ExpandInfo expandInfo;             // Details about the currently expanded Item
@@ -140,9 +139,9 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
 // ======== EXPAND / COLLAPSE ======== //
 
   /**
-   * @param viewPositionToExpand Item's position in the RecyclerView. This is not the same as adapter position.
+   * @param itemViewPosition Item's position in the RecyclerView. This is not the same as adapter position.
    */
-  public void expandItem(int viewPositionToExpand, long expandedItemId) {
+  public void expandItem(int itemViewPosition, long itemId) {
     if (page == null) {
       throw new IllegalAccessError("You must call InboxRecyclerView.setup(ExpandablePage, Toolbar)");
     }
@@ -153,7 +152,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     }
 
     // Store these details so that they can be used later for restoring the original state.
-    View child = getChildAt(viewPositionToExpand);
+    View child = getChildAt(itemViewPosition);
     final Rect itemRect = new Rect(
         getLeft() + child.getLeft(),
         getTop() + child.getTop(),
@@ -166,7 +165,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
       itemRect.left = getLeft();
       itemRect.right = getRight();
     }
-    expandInfo = new ExpandInfo(viewPositionToExpand, expandedItemId, itemRect);
+    expandInfo = new ExpandInfo(itemViewPosition, itemId, itemRect);
 
     // Animate all items out of the window and expand the page.
     animateItemsOutOfTheWindow();
@@ -265,9 +264,9 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
       if (!immediate) {
         view.animate()
             .translationY(moveY)
-            .setDuration(page.getAnimationDuration())
+            .setDuration(page.getAnimationDurationMillis())
             .setInterpolator(page.getAnimationInterpolator())
-            .setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
+            .setStartDelay(getAnimationStartDelay());
 
         if (anchorPosition == i) {
           view.animate().alpha(0f).withLayer();
@@ -308,9 +307,9 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
         view.animate()
             .alpha(1f)
             .translationY(0f)
-            .setDuration(page.getAnimationDuration())
+            .setDuration(page.getAnimationDurationMillis())
             .setInterpolator(page.getAnimationInterpolator())
-            .setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
+            .setStartDelay(getAnimationStartDelay());
 
       } else {
         view.setTranslationY(0f);
@@ -468,6 +467,10 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     activityWindowOrigBackground = activityWindow.getDecorView().getBackground();
   }
 
+  public static int getAnimationStartDelay() {
+    return 0;
+  }
+
   /**
    * Contains details of the currently expanded item.
    */
@@ -532,7 +535,5 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
         return new ExpandInfo[size];
       }
     };
-
   }
-
 }

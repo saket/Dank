@@ -65,7 +65,7 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
     this.submission = submission;
 
     // RecyclerView does not support moving Views inflated manually into the list. We'll have to fix this in the future.
-    if (headerViewHolder != null) {
+    if (submission != null && headerViewHolder != null) {
       headerViewHolder.bind(votingManager, submission, replyRepository);
     }
   }

@@ -13,6 +13,7 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.links.RedditCommentLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.subreddits.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
@@ -102,6 +103,17 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
     }
 
     submissionFragment.populateUi(null, submissionReqBuilder.build());
+  }
+
+  @Override
+  public SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer() {
+    // Should never get used.
+    return new SubmissionPageAnimationOptimizer() {
+      @Override
+      public boolean isOptimizationPending() {
+        throw new AssertionError();
+      }
+    };
   }
 
   @Override

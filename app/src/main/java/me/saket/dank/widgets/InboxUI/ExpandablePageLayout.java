@@ -11,10 +11,14 @@ import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.utils.Views;
 
 /**
@@ -24,6 +28,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
   @Nullable private View activityToolbar;  // Toolbar inside the parent page, not in this page.
   @Nullable ExpandablePageLayout nestedPage;
+
+  private static Method suppressLayoutMethod;
 
   private PullToCollapseListener pullToCollapseListener;
   private OnPullToCollapseIntercepter onPullToCollapseIntercepter;
@@ -140,7 +146,19 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     pullToCollapseListener.addOnPullListener(this);
   }
 
-  public void setup(View parentActivityToolbar) {
+  @Override
+  protected void onAttachedToWindow() {
+    super.onAttachedToWindow();
+
+    // Cache before-hand.
+    new Thread(() -> {
+      if (suppressLayoutMethod == null) {
+        setSuppressLayoutMethodUsingReflection(this, false);
+      }
+    }).start();
+  }
+
+  protected void setup(View parentActivityToolbar) {
     activityToolbar = parentActivityToolbar;
 
     Views.executeOnMeasure(activityToolbar, () -> {
@@ -240,7 +258,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
             .withLayer()
             .translationY(0f)
             .alpha(expandedAlpha)
-            .setDuration(getAnimationDuration())
+            .setDuration(getAnimationDurationMillis())
             .setInterpolator(getAnimationInterpolator())
             .setListener(new AnimatorListenerAdapter() {
               boolean mCanceled;
@@ -381,6 +399,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       targetPageTranslationY = Math.max(targetPageTranslationY, toolbarBottom);
     }
 
+    setSuppressLayoutMethodUsingReflection(ExpandablePageLayout.this, true);
+
     if (expand) {
       setVisibility(View.VISIBLE);
     }
@@ -392,38 +412,36 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         .alpha(expand ? expandedAlpha : collapsedAlpha)
         .translationY(targetPageTranslationY)
         .translationX(targetPageTranslationX)
-        .setDuration(getAnimationDuration())
+        .setDuration(getAnimationDurationMillis())
         .setInterpolator(getAnimationInterpolator())
         .setListener(new AnimatorListenerAdapter() {
-          private boolean mCanceled;
+          private boolean canceled;
 
           @Override
           public void onAnimationStart(Animator animation) {
-            super.onAnimationStart(animation);
-            mCanceled = false;
+            canceled = false;
           }
 
           @Override
           public void onAnimationCancel(Animator animation) {
-            super.onAnimationCancel(animation);
-            mCanceled = true;
+            canceled = true;
           }
 
           @Override
           public void onAnimationEnd(Animator animation) {
-            super.onAnimationEnd(animation);
-            if (mCanceled) {
-              return;
-            }
-            if (!expand) {
-              setVisibility(View.INVISIBLE);
-              dispatchOnPageCollapsedCallback();
-            } else {
-              dispatchOnFullyExpandedCallback();
+            setSuppressLayoutMethodUsingReflection(ExpandablePageLayout.this, false);
+
+            if (!canceled) {
+              if (!expand) {
+                setVisibility(View.INVISIBLE);
+                dispatchOnPageCollapsedCallback();
+              } else {
+                dispatchOnFullyExpandedCallback();
+              }
             }
           }
         })
-        .setStartDelay(!expand ? 0 : InboxRecyclerView.ANIM_START_DELAY)
+        .setStartDelay(InboxRecyclerView.getAnimationStartDelay())
         .start();
 
     // Show the toolbar fully even if the page is going to collapse behind it
@@ -435,7 +453,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     if (activityToolbar != null) {
       // Hide / show the toolbar by pushing it up during expand and pulling it down during collapse.
       animateToolbar(
-          !expand,    // When expand = false -> !expand = Show toolbar
+          !expand,    // When expand is false, !expand shows the toolbar.
           targetPageTranslationYForToolbar
       );
     }
@@ -464,9 +482,9 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     // If the page lies behind the toolbar, use toolbar's current bottom position instead
     toolbarAnimator = ObjectAnimator.ofFloat(fromTy, targetPageTranslationY);
     toolbarAnimator.addUpdateListener(animation -> updateToolbarTranslationY(show, (float) animation.getAnimatedValue()));
-    toolbarAnimator.setDuration(getAnimationDuration() * speedFactor);
+    toolbarAnimator.setDuration(getAnimationDurationMillis() * speedFactor);
     toolbarAnimator.setInterpolator(getAnimationInterpolator());
-    toolbarAnimator.setStartDelay(InboxRecyclerView.ANIM_START_DELAY);
+    toolbarAnimator.setStartDelay(InboxRecyclerView.getAnimationStartDelay());
     toolbarAnimator.start();
   }
 
@@ -508,7 +526,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 // ======== OPTIMIZATIONS ======== //
 
   /**
-   * To be used when another ExpandablePageLayout is shown inside this page.
+   * To be used when another ExpandablePageLayout is shown inside this page.Z
    * This page will avoid all draw calls while the nested page is open to
    * minimize overdraw.
    */
@@ -603,7 +621,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     if (stateChangeCallbacks != null) {
       // Reverse loop to let listeners remove themselves while in the loop.
       for (int i = stateChangeCallbacks.size() - 1; i >= 0; i--) {
-        stateChangeCallbacks.get(i).onPageAboutToExpand(getAnimationDuration());
+        stateChangeCallbacks.get(i).onPageAboutToExpand(getAnimationDurationMillis());
       }
     }
   }
@@ -650,7 +668,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       // Reverse loop to let listeners remove themselves while in the loop.
       for (int i = stateChangeCallbacks.size() - 1; i >= 0; i--) {
         StateChangeCallbacks callback = stateChangeCallbacks.get(i);
-        callback.onPageAboutToCollapse(getAnimationDuration());
+        callback.onPageAboutToCollapse(getAnimationDurationMillis());
       }
     }
   }
@@ -771,5 +789,19 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
    */
   public void setCollapsedAlpha(float collapsedAlpha) {
     this.collapsedAlpha = collapsedAlpha;
+  }
+
+// ======== REFLECTION ======== //
+
+  private static void setSuppressLayoutMethodUsingReflection(ExpandablePageLayout layout, boolean suppress) {
+    try {
+      if (suppressLayoutMethod == null) {
+        suppressLayoutMethod = ViewGroup.class.getMethod("suppressLayout", boolean.class);
+      }
+      suppressLayoutMethod.invoke(layout, suppress);
+
+    } catch (NoSuchMethodException | IllegalAccessException | InvocationTargetException e) {
+      throw Exceptions.propagate(e);
+    }
   }
 }

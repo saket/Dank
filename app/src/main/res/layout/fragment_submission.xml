@@ -14,7 +14,6 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/window_background"
-    android:visibility="gone"
     tools:ignore="ContentDescription" />
 
   <!-- Visible for images longer than the display window,
@@ -35,8 +34,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/submission_media_content_background_padding"
-    android:orientation="vertical"
-    android:visibility="gone">
+    android:orientation="vertical">
 
     <!-- Height is set by SubmissionVideoHolder.java -->
     <com.devbrackets.android.exomedia.ui.widget.VideoView
@@ -93,8 +91,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/spacing16"
-        android:layout_marginStart="@dimen/spacing16"
-        android:visibility="gone" />
+        android:layout_marginStart="@dimen/spacing16" />
 
       <RelativeLayout
         android:id="@+id/submission_link_container"
@@ -106,7 +103,7 @@
         android:background="@drawable/background_submission_link"
         android:foreground="?attr/selectableItemBackground"
         android:orientation="horizontal"
-        android:visibility="gone"
+
         tools:visibility="visible">
 
         <FrameLayout
@@ -232,8 +229,7 @@
     android:id="@+id/submission_content_progress_bar"
     style="@style/DankProgressBar.Horizontal.TopAligned"
     android:layout_below="@+id/submission_toolbar"
-    android:elevation="@dimen/elevation_toolbar"
-    android:visibility="gone" />
+    android:elevation="@dimen/elevation_toolbar" />
 
   <!-- Acts as the toolbar's background. -->
   <me.saket.dank.widgets.AnimatedToolbarBackground
