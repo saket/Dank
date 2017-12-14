@@ -7,7 +7,6 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.utils.UrlParser;
-import timber.log.Timber;
 
 /**
  * Animating {@link SubmissionPageLayout}'s entry while loading data at the same time is expensive.
@@ -21,13 +20,7 @@ public class SubmissionPageAnimationOptimizer {
   private boolean contentVideoViewLaidOut;
 
   public void trackSubmissionOpened(Submission submission) {
-    Single.fromCallable(() -> {
-      final long startTime = System.currentTimeMillis();
-      Link link = UrlParser.parse(submission.getUrl());
-      long l = System.currentTimeMillis() - startTime;
-      Timber.i("Parsed url in: %sms", l);
-      return link;
-    })
+    Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
         .subscribeOn(Schedulers.io())
         .subscribe(submissionContentLink -> trackSubmissionOpened(submissionContentLink));
   }

@@ -4,6 +4,7 @@ import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.text.Html;
 import android.text.TextUtils;
+import android.util.LruCache;
 
 import net.dean.jraw.models.Submission;
 
@@ -94,6 +95,8 @@ public class UrlParser {
    */
   private static final Pattern IMGUR_ALBUM_PATTERN = Pattern.compile("/(?:gallery)?(?:a)?(?:t/\\w*)?/(\\w*).*");
 
+  private static LruCache<String, Link> cache = new LruCache<>(100);
+
   /**
    * Determine type of the url.
    *
@@ -104,56 +107,69 @@ public class UrlParser {
     // TODO: Support "np" subdomain?
     // TODO: Support wiki pages.
 
+    Link cachedLink = cache.get(url);
+    if (cachedLink != null) {
+      return cachedLink;
+    }
+
+    Link parsedLink;
+
     Uri linkUri = Uri.parse(url);
     String urlDomain = linkUri.getHost() != null ? linkUri.getHost() : "";
     String urlPath = linkUri.getPath() != null ? linkUri.getPath() : "";
 
     Matcher subredditMatcher = SUBREDDIT_PATTERN.matcher(urlPath);
     if (subredditMatcher.matches()) {
-      return RedditSubredditLink.create(url, subredditMatcher.group(1));
-    }
+      parsedLink = RedditSubredditLink.create(url, subredditMatcher.group(1));
 
-    Matcher userMatcher = USER_PATTERN.matcher(urlPath);
-    if (userMatcher.matches()) {
-      return RedditUserLink.create(url, userMatcher.group(1));
-    }
+    } else {
+      Matcher userMatcher = USER_PATTERN.matcher(urlPath);
+      if (userMatcher.matches()) {
+        parsedLink = RedditUserLink.create(url, userMatcher.group(1));
 
-    if (urlDomain.endsWith("reddit.com")) {
-      Matcher submissionOrCommentMatcher = SUBMISSION_OR_COMMENT_PATTERN.matcher(urlPath);
-      if (submissionOrCommentMatcher.matches()) {
-        String subredditName = submissionOrCommentMatcher.group(2);
-        String submissionId = submissionOrCommentMatcher.group(3);
-        String commentId = submissionOrCommentMatcher.group(5);
+      } else if (urlDomain.endsWith("reddit.com")) {
+        Matcher submissionOrCommentMatcher = SUBMISSION_OR_COMMENT_PATTERN.matcher(urlPath);
+        if (submissionOrCommentMatcher.matches()) {
+          String subredditName = submissionOrCommentMatcher.group(2);
+          String submissionId = submissionOrCommentMatcher.group(3);
+          String commentId = submissionOrCommentMatcher.group(5);
 
-        if (TextUtils.isEmpty(commentId)) {
-          return RedditSubmissionLink.create(url, submissionId, subredditName);
+          if (TextUtils.isEmpty(commentId)) {
+            parsedLink = RedditSubmissionLink.create(url, submissionId, subredditName);
+
+          } else {
+            String contextParamValue = linkUri.getQueryParameter("context");
+            int contextCount = TextUtils.isEmpty(contextParamValue) ? 0 : Integer.parseInt(contextParamValue);
+            RedditCommentLink initialComment = RedditCommentLink.create(url, commentId, contextCount);
+            parsedLink = RedditSubmissionLink.createWithComment(url, submissionId, subredditName, initialComment);
+          }
 
         } else {
-          String contextParamValue = linkUri.getQueryParameter("context");
-          int contextCount = TextUtils.isEmpty(contextParamValue) ? 0 : Integer.parseInt(contextParamValue);
-          RedditCommentLink initialComment = RedditCommentLink.create(url, commentId, contextCount);
-          return RedditSubmissionLink.createWithComment(url, submissionId, subredditName, initialComment);
+          //Matcher liveThreadMatcher = LIVE_THREAD_PATTERN.matcher(urlPath);
+          //if (liveThreadMatcher.matches()) {
+          //  parsedLink = ExternalLink.create(url);
+          //}
+          parsedLink = ExternalLink.create(url);
         }
+
+      } else if (urlDomain.endsWith("redd.it") && !isImageOrGifUrlPath(urlPath) && !isVideoPath(urlPath)) {
+        // Short redd.it url. Format: redd.it/post_id. Eg., https://redd.it/5524cd
+        String submissionId = urlPath.substring(1);  // Remove the leading slash.
+        parsedLink = RedditSubmissionLink.create(url, submissionId, null);
+
+      } else if (urlDomain.contains("google") && urlPath.startsWith("/amp/s/amp.reddit.com")) {
+        // Google AMP url.
+        // https://www.google.com/amp/s/amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/
+        String nonAmpUrl = "https://" + url.substring(url.indexOf("/amp/s/") + "/amp/s/".length());
+        parsedLink = parse(nonAmpUrl);
+
+      } else {
+        parsedLink = parseNonRedditUrl(url);
       }
-
-      Matcher liveThreadMatcher = LIVE_THREAD_PATTERN.matcher(urlPath);
-      if (liveThreadMatcher.matches()) {
-        return ExternalLink.create(url);
-      }
-
-    } else if (urlDomain.endsWith("redd.it") && !isImageOrGifUrlPath(urlPath) && !isVideoPath(urlPath)) {
-      // Short redd.it url. Format: redd.it/post_id. Eg., https://redd.it/5524cd
-      String submissionId = urlPath.substring(1);  // Remove the leading slash.
-      return RedditSubmissionLink.create(url, submissionId, null);
-
-    } else if (urlDomain.contains("google") && urlPath.startsWith("/amp/s/amp.reddit.com")) {
-      // Google AMP url.
-      // https://www.google.com/amp/s/amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/
-      String nonAmpUrl = "https://" + url.substring(url.indexOf("/amp/s/") + "/amp/s/".length());
-      return parse(nonAmpUrl);
     }
 
-    return parseNonRedditUrl(url);
+    cache.put(url, parsedLink);
+    return parsedLink;
   }
 
   @NonNull
