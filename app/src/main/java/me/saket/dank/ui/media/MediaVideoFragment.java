@@ -115,7 +115,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
           );
         });
 
-    exoPlayerManager = ExoPlayerManager.newInstance(this, videoView);
+    exoPlayerManager = ExoPlayerManager.newInstance(lifecycle(), videoView);
     DankVideoControlsView videoControlsView = new DankVideoControlsView(getActivity());
     videoView.setControls(videoControlsView);
     videoControlsView.showVideoState(DankVideoControlsView.VideoState.PREPARING);

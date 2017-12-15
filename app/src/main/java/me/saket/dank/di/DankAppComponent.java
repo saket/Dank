@@ -24,7 +24,7 @@ import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.submission.RetryReplyJobService;
-import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.ui.subreddits.SubredditPickerSheetView;
 import me.saket.dank.ui.subreddits.SubredditSubscriptionsSyncJob;
@@ -64,7 +64,7 @@ public interface DankAppComponent {
 
   void inject(MediaVideoFragment target);
 
-  void inject(SubmissionFragment target);
+  void inject(SubmissionPageLayout target);
 
   void inject(MediaDownloadService target);
 

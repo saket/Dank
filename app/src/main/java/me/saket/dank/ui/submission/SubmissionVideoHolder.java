@@ -31,7 +31,7 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 
 /**
- * Manages loading of video in {@link SubmissionFragment}.
+ * Manages loading of video in {@link SubmissionPageLayout}.
  */
 public class SubmissionVideoHolder {
 

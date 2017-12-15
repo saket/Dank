@@ -18,6 +18,7 @@ import android.view.View;
 import android.view.Window;
 
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.InboxUI.ExpandablePageLayout.PageState;
 
 /**
  * Mimics the expandable layout in the Inbox app by Google. #AcheDin.
@@ -127,10 +128,10 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
       }
 
       // Fix expandable page (or else it gets stuck in the middle since it doesn't know of the size change).
-      if (getPage().getCurrentState() == ExpandablePageLayout.State.EXPANDING) {
+      if (getPage().getCurrentState() == PageState.EXPANDING) {
         getPage().animatePageExpandCollapse(true, getWidth(), getHeight(), getExpandInfo());
 
-      } else if (getPage().getCurrentState() == ExpandablePageLayout.State.EXPANDED) {
+      } else if (getPage().getCurrentState() == PageState.EXPANDED) {
         getPage().alignPageToCoverScreen();
       }
     });

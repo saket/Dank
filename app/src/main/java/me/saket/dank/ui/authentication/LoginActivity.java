@@ -2,11 +2,11 @@ package me.saket.dank.ui.authentication;
 
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 
-import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
+import android.support.annotation.CheckResult;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.webkit.CookieManager;
@@ -14,11 +14,9 @@ import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
-
-import javax.inject.Inject;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
@@ -41,8 +39,9 @@ public class LoginActivity extends DankActivity {
     context.startActivity(new Intent(context, LoginActivity.class));
   }
 
-  public static void startForResult(Activity activity, int requestCode) {
-    activity.startActivityForResult(new Intent(activity, LoginActivity.class), requestCode);
+  @CheckResult
+  public static Intent intent(Context context) {
+    return new Intent(context, LoginActivity.class);
   }
 
   @Override

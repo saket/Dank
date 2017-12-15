@@ -14,6 +14,7 @@ import static me.saket.dank.utils.lifecycle.LifecycleStreams.NOTHING;
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
@@ -34,6 +35,7 @@ import android.support.v4.util.Pair;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -42,7 +44,10 @@ import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import butterknife.BindDimen;
+import butterknife.BindDrawable;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.danikula.videocache.HttpProxyCacheServer;
@@ -51,28 +56,17 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
-
-import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.PublicContribution;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
-
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
-
-import butterknife.BindDimen;
-import butterknife.BindDrawable;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
@@ -90,7 +84,6 @@ import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.DankFragment;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
@@ -117,6 +110,9 @@ import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerViews.ViewLifecycleStreams;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -125,10 +121,14 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
+import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Thumbnails;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class SubmissionFragment extends DankFragment
+public class SubmissionPageLayout extends ExpandablePageLayout
     implements ExpandablePageLayout.StateChangeCallbacks, ExpandablePageLayout.OnPullToCollapseIntercepter
 {
 
@@ -189,65 +189,57 @@ public class SubmissionFragment extends DankFragment
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
   private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
-  private SubmissionFragmentLifecycleStreams lifecycleStreams;
+  private SubmissionPageLifecycleStreams lifecycleStreams;
   private Relay<Object> commentsAdapterWithSubmissionHeaderDatasetUpdatesStream = PublishRelay.create();
 
   public interface Callbacks {
+
     SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer();
 
     void onClickSubmissionToolbarUp();
   }
 
-  public static SubmissionFragment create() {
-    return new SubmissionFragment();
-  }
-
-  @Override
-  public void onAttach(Context context) {
+  public SubmissionPageLayout(Context context, AttributeSet attrs) {
+    super(context, attrs);
     Dank.dependencyInjector().inject(this);
-    super.onAttach(context);
-    if (lifecycleStreams == null) {
-      lifecycleStreams = SubmissionFragmentLifecycleStreams.wrap(super.lifecycle());
-    }
-  }
+    LayoutInflater.from(context).inflate(R.layout.fragment_submission, this, true);
+    ButterKnife.bind(this, this);
 
-  @Nullable
-  @Override
-  public View onCreateView(@NonNull LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
-    super.onCreateView(inflater, container, savedInstanceState);
-    View fragmentLayout = inflater.inflate(R.layout.fragment_submission, container, false);
-    ButterKnife.bind(this, fragmentLayout);
+    LifecycleOwnerActivity parentLifecycleOwner = (LifecycleOwnerActivity) getContext();
+    ViewLifecycleStreams viewLifecycleStreams = LifecycleOwnerViews.create(this, parentLifecycleOwner);
+    lifecycleStreams = SubmissionPageLifecycleStreams.wrap(this, viewLifecycleStreams);
 
     // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
     deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
     deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels;
 
-    return fragmentLayout;
+    lifecycle().viewAttaches()
+        .take(1)
+        .takeUntil(lifecycle().viewDetaches())
+        .subscribe(o -> onViewFirstAttach());
+
+    lifecycle().onDestroy()
+        .subscribe(o -> onCollapseSubscriptions.clear());
   }
 
-  @Override
-  public void onViewCreated(@NonNull View fragmentLayout, @Nullable Bundle savedInstanceState) {
-    super.onViewCreated(fragmentLayout, savedInstanceState);
-
+  public void onViewFirstAttach() {
     executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight()));
     //noinspection ConstantConditions
-    toolbarCloseButton.setOnClickListener(v -> ((Callbacks) getActivity()).onClickSubmissionToolbarUp());
+    toolbarCloseButton.setOnClickListener(v -> ((Callbacks) getContext()).onClickSubmissionToolbarUp());
 
     selfPostTextView.setMovementMethod(linkMovementMethod);
 
-    submissionPageLayout = ((ExpandablePageLayout) fragmentLayout.getParent());
+    submissionPageLayout = this;
     submissionPageLayout.addStateChangeCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
-    lifecycleStreams.trackPageLifecycles(submissionPageLayout);
-
-    Keyboards.streamKeyboardVisibilityChanges(getActivity(), Views.statusBarHeight(getResources()))
+    Keyboards.streamKeyboardVisibilityChanges(((Activity) getContext()), Views.statusBarHeight(getResources()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(keyboardVisibilityChangeStream);
 
     setupCommentRecyclerView();
     setupCommentTree();
-    setupContentImageView(fragmentLayout);
+    setupContentImageView(this);
     setupContentVideoView();
     setupCommentsSheet();
     setupStatusBarTint();
@@ -292,26 +284,29 @@ public class SubmissionFragment extends DankFragment
           commentsAdapter.setSubmissionAuthor(submission.getAuthor());
         });
 
+    // TODO.
     // Restore submission if the Activity was recreated.
-    if (savedInstanceState != null) {
-      onRestoreSavedInstanceState(savedInstanceState);
-    }
+    //if (savedInstanceState != null) {
+    //  onRestoreSavedInstanceState(savedInstanceState);
+    //}
   }
 
-  @Override
-  public void onSaveInstanceState(@NonNull Bundle outState) {
-    if (submissionRequestStream.getValue() != null) {
-      if (submissionStream.getValue() != null && submissionStream.getValue().getComments() == null) {
-        // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
-        // show UI on orientation change, we unfortunately will have to manually retain this submission.
-        outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(submissionStream.getValue()));
-      }
-      outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
-    }
-    super.onSaveInstanceState(outState);
-  }
+  // TODO.
+  //public void onSaveInstanceState(@NonNull Bundle outState) {
+  //  if (submissionRequestStream.getValue() != null) {
+  //    if (submissionStream.getValue() != null && submissionStream.getValue().getComments() == null) {
+  //      // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
+  //      // show UI on orientation change, we unfortunately will have to manually retain this submission.
+  //      outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(submissionStream.getValue()));
+  //    }
+  //    outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
+  //  }
+  //  super.onSaveInstanceState(outState);
+  //}
 
-  /** Called at the end of onViewCreated(). */
+  /**
+   * Called at the end of onViewCreated().
+   */
   private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
     if (savedInstanceState.containsKey(KEY_SUBMISSION_REQUEST)) {
       Submission retainedSubmission = null;
@@ -333,7 +328,7 @@ public class SubmissionFragment extends DankFragment
 
   private void setupCommentRecyclerView() {
     // Swipe gestures.
-    OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.startForResult(getActivity(), SubredditActivity.REQUEST_CODE_LOGIN);
+    OnLoginRequireListener onLoginRequireListener = () -> getContext().startActivity(LoginActivity.intent(getContext()));
     SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(
         submissionRepository,
         votingManager,
@@ -350,12 +345,12 @@ public class SubmissionFragment extends DankFragment
         commentTreeConstructor.showReplyAndExpandComments(parentComment);
         inlineReplyStream.accept(parentComment);
       } else {
-        Keyboards.hide(getActivity(), commentRecyclerView);
+        Keyboards.hide(getContext(), commentRecyclerView);
         commentTreeConstructor.hideReply(parentComment);
       }
     });
     commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
-    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
+    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
     int commentItemViewElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
     SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator(commentItemViewElevation).withInterpolator(Animations.INTERPOLATOR);
@@ -401,14 +396,17 @@ public class SubmissionFragment extends DankFragment
     commentsAdapter.streamReplyDiscardClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(discardEvent -> {
-          Keyboards.hide(getActivity(), commentRecyclerView);
+          Keyboards.hide(getContext(), commentRecyclerView);
           commentTreeConstructor.hideReply(discardEvent.parentContribution());
         });
 
     // Reply GIF clicks.
     commentsAdapter.streamReplyGifClicks()
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(clickEvent -> startActivityForResult(GiphyPickerActivity.intentWithPayload(getContext(), clickEvent), REQUEST_CODE_PICK_GIF));
+        .subscribe(clickEvent -> {
+          Activity activity = (Activity) getContext();
+          activity.startActivityForResult(GiphyPickerActivity.intentWithPayload(getContext(), clickEvent), REQUEST_CODE_PICK_GIF);
+        });
 
     // So it appears that SubredditActivity always gets recreated even when GiphyActivity is in foreground.
     // So when the activity result arrives, this Rx chain should be ready and listening.
@@ -441,7 +439,8 @@ public class SubmissionFragment extends DankFragment
               .preFilledText(fullscreenClickEvent.replyMessage())
               .extras(extraPayload)
               .build();
-          startActivityForResult(ComposeReplyActivity.intent(getActivity(), startOptions), REQUEST_CODE_FULLSCREEN_REPLY);
+          Activity activity = (Activity) getContext();
+          activity.startActivityForResult(ComposeReplyActivity.intent(getContext(), startOptions), REQUEST_CODE_FULLSCREEN_REPLY);
         });
 
     // Fullscreen reply results.
@@ -479,7 +478,7 @@ public class SubmissionFragment extends DankFragment
         .subscribe(sendClickEvent -> {
           // Posting to RecyclerView's message queue, because onActivityResult() gets called before
           // ComposeReplyActivity is able to exit and so keyboard doesn't get shown otherwise.
-          commentRecyclerView.post(() -> Keyboards.hide(getActivity(), commentRecyclerView));
+          commentRecyclerView.post(() -> Keyboards.hide(getContext(), commentRecyclerView));
           commentTreeConstructor.hideReply(sendClickEvent.parentContribution());
 
           // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
@@ -493,7 +492,7 @@ public class SubmissionFragment extends DankFragment
               )
               .compose(applySchedulersCompletable())
               .doOnError(e -> Timber.e(e))
-              .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
+              .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getContext()));
         });
 
     // Reply retry-sends.
@@ -503,7 +502,7 @@ public class SubmissionFragment extends DankFragment
           // Re-sending is not a part of the chain so that it does not get unsubscribed on destroy.
           replyRepository.reSendReply(retrySendEvent.failedPendingSyncReply())
               .compose(applySchedulersCompletable())
-              .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getActivity()));
+              .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getContext()));
         });
 
     // Bottom-spacing for FAB.
@@ -674,9 +673,7 @@ public class SubmissionFragment extends DankFragment
         .takeUntil(lifecycle().onDestroy())
         .subscribe(doNothing(), error -> {
           Timber.e(error, "Failed to load more comments");
-          if (isAdded()) {
-            Toast.makeText(getActivity(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
-          }
+          Toast.makeText(getContext(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
         });
   }
 
@@ -694,7 +691,7 @@ public class SubmissionFragment extends DankFragment
   }
 
   private void setupContentVideoView() {
-    ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(this, contentVideoView);
+    ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(lifecycle(), contentVideoView);
 
     contentVideoViewHolder = new SubmissionVideoHolder(
         contentVideoView,
@@ -767,15 +764,15 @@ public class SubmissionFragment extends DankFragment
         if (isCommentSheetBeneathImage
             // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
             // it becomes difficult to lock the comments sheet beneath the image.
-            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
-        {
+            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
           commentListParentSheet.scrollTo(boundedVisibleImageHeightMinusToolbar);
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
       }
 
       @Override
-      public void onStateReset(State oldState, State newState) {}
+      public void onStateReset(State oldState, State newState) {
+      }
     });
     commentListParentSheet.addOnSheetScrollChangeListener(newScrollY ->
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate()
@@ -812,7 +809,7 @@ public class SubmissionFragment extends DankFragment
 
     replyFAB.setOnClickListener(o -> {
       if (!userSessionRepository.isUserLoggedIn()) {
-        LoginActivity.startForResult(getActivity(), SubredditActivity.REQUEST_CODE_LOGIN);
+        getContext().startActivity(LoginActivity.intent(getContext()));
         return;
       }
 
@@ -844,7 +841,7 @@ public class SubmissionFragment extends DankFragment
           public void accept(@NonNull KeyboardVisibilityChangeEvent changeEvent) throws Exception {
             if (contentViewGroup == null) {
               //noinspection ConstantConditions
-              contentViewGroup = getActivity().findViewById(Window.ID_ANDROID_CONTENT);
+              contentViewGroup = ((Activity) getContext()).findViewById(Window.ID_ANDROID_CONTENT);
             }
 
             if (heightAnimator != null) {
@@ -870,7 +867,7 @@ public class SubmissionFragment extends DankFragment
 
   private void setupStatusBarTint() {
     //noinspection ConstantConditions
-    int defaultStatusBarColor = ContextCompat.getColor(getActivity(), R.color.color_primary_dark);
+    int defaultStatusBarColor = ContextCompat.getColor(getContext(), R.color.color_primary_dark);
     int statusBarHeight = Views.statusBarHeight(getResources());
     Observable<Bitmap> contentBitmapStream = Observable.merge(
         contentImageViewHolder.streamImageBitmaps(),
@@ -902,8 +899,10 @@ public class SubmissionFragment extends DankFragment
             if (tintChangeAnimator != null) {
               tintChangeAnimator.cancel();
             }
-            tintChangeAnimator = ValueAnimator.ofArgb(getActivity().getWindow().getStatusBarColor(), statusBarTint.color());
-            tintChangeAnimator.addUpdateListener(animation -> getActivity().getWindow().setStatusBarColor((int) animation.getAnimatedValue()));
+
+            Window window = ((Activity) getContext()).getWindow();
+            tintChangeAnimator = ValueAnimator.ofArgb(window.getStatusBarColor(), statusBarTint.color());
+            tintChangeAnimator.addUpdateListener(animation -> window.setStatusBarColor((int) animation.getAnimatedValue()));
             tintChangeAnimator.setDuration(150L);
             tintChangeAnimator.setInterpolator(Animations.INTERPOLATOR);
             tintChangeAnimator.start();
@@ -1053,7 +1052,7 @@ public class SubmissionFragment extends DankFragment
                       .open(getContext())
                   );
 
-                  contentImageView.setContentDescription(getString(
+                  contentImageView.setContentDescription(getResources().getString(
                       R.string.cd_submission_image,
                       submission.getTitle()
                   ));
@@ -1154,11 +1153,12 @@ public class SubmissionFragment extends DankFragment
   }
 
   @Override
-  public void onPageExpanded() {}
+  public void onPageExpanded() {
+  }
 
   @Override
   public void onPageAboutToCollapse(long collapseAnimDuration) {
-    Keyboards.hide(getActivity(), commentRecyclerView);
+    Keyboards.hide(getContext(), commentRecyclerView);
   }
 
   @Override
@@ -1171,7 +1171,7 @@ public class SubmissionFragment extends DankFragment
     commentListParentSheet.setScrollingEnabled(false);
 
     //noinspection ConstantConditions
-    if (((Callbacks) getActivity()).submissionPageAnimationOptimizer().isOptimizationPending()) {
+    if (((Callbacks) getContext()).submissionPageAnimationOptimizer().isOptimizationPending()) {
       linkDetailsViewHolder.setVisible(false);
       selfPostTextView.setVisibility(View.GONE);
       contentImageView.setVisibility(View.GONE);
@@ -1193,11 +1193,9 @@ public class SubmissionFragment extends DankFragment
   @Deprecated
   private void unsubscribeOnCollapse(Disposable subscription) {
     onCollapseSubscriptions.add(subscription);
-    unsubscribeOnDestroy(subscription);
   }
 
-  @Override
-  public SubmissionFragmentLifecycleStreams lifecycle() {
+  public SubmissionPageLifecycleStreams lifecycle() {
     return lifecycleStreams;
   }
 }

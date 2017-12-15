@@ -37,14 +37,14 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   private InternalPageCallbacks internalStateChangeCallbacksForNestedPage;
   private InternalPageCallbacks internalStateChangeCallbacksForInboxRecyclerView;
 
-  private State currentState;
+  private PageState currentPageState;
   private ValueAnimator toolbarAnimator;
   private float expandedAlpha;
   private float collapsedAlpha;
   private boolean isFullyCoveredByNestedPage;
   private boolean pullToCollapseEnabled;
 
-  public enum State {
+  public enum PageState {
     COLLAPSING,
     COLLAPSED,
     EXPANDING,
@@ -138,7 +138,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     // Hidden on start
     setAlpha(expandedAlpha);
     setVisibility(View.INVISIBLE);
-    changeState(State.COLLAPSED);
+    changeState(PageState.COLLAPSED);
 
     // Handles pull-to-collapse-this-page gestures
     setPullToCollapseEnabled(true);
@@ -177,8 +177,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     pullToCollapseEnabled = enabled;
   }
 
-  protected void changeState(State newState) {
-    currentState = newState;
+  protected void changeState(PageState newPageState) {
+    currentPageState = newPageState;
   }
 
   @Override
@@ -243,7 +243,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         return;
       }
 
-      changeState(State.EXPANDED);
+      changeState(PageState.EXPANDED);
       stopAnyOngoingPageAnimation();
 
       // Restore everything to their expanded position.
@@ -324,7 +324,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
    */
   public void expandImmediately() {
     // Ignore if already expanded.
-    if (currentState == State.EXPANDING || currentState == State.EXPANDED) {
+    if (currentPageState == PageState.EXPANDING || currentPageState == PageState.EXPANDED) {
       return;
     }
 
@@ -353,7 +353,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
    */
   void collapse(InboxRecyclerView.ExpandInfo expandInfo) {
     // Ignore if already collapsed.
-    if (currentState == State.COLLAPSED || currentState == State.COLLAPSING) {
+    if (currentPageState == PageState.COLLAPSED || currentPageState == PageState.COLLAPSING) {
       return;
     }
 
@@ -577,7 +577,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   @Override
   public void draw(Canvas canvas) {
     // Or if the page is collapsed.
-    if (currentState == State.COLLAPSED) {
+    if (currentPageState == PageState.COLLAPSED) {
       return;
     }
     super.draw(canvas);
@@ -616,7 +616,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   private void dispatchOnAboutToExpandCallback() {
     // The state change must happen after the subscribers have been
     // notified that the page is going to expand
-    changeState(State.EXPANDING);
+    changeState(PageState.EXPANDING);
 
     if (stateChangeCallbacks != null) {
       // Reverse loop to let listeners remove themselves while in the loop.
@@ -628,7 +628,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
   @SuppressWarnings("Convert2streamapi")
   private void dispatchOnFullyExpandedCallback() {
-    changeState(State.EXPANDED);
+    changeState(PageState.EXPANDED);
     dispatchOnPageFullyCoveredCallback();
 
     if (stateChangeCallbacks != null) {
@@ -655,7 +655,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
 
   private void dispatchOnPageAboutToCollapseCallback() {
     // The state change must happen after the subscribers have been notified that the page is going to collapse.
-    changeState(State.COLLAPSING);
+    changeState(PageState.COLLAPSING);
 
     if (internalStateChangeCallbacksForNestedPage != null) {
       internalStateChangeCallbacksForNestedPage.onPageAboutToCollapse();
@@ -674,7 +674,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   }
 
   private void dispatchOnPageCollapsedCallback() {
-    changeState(State.COLLAPSED);
+    changeState(PageState.COLLAPSED);
 
     if (internalStateChangeCallbacksForNestedPage != null) {
       internalStateChangeCallbacksForNestedPage.onPageFullyCollapsed();
@@ -727,35 +727,35 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   }
 
   public boolean isExpanded() {
-    return currentState == State.EXPANDED;
+    return currentPageState == PageState.EXPANDED;
   }
 
   public boolean isExpandingOrCollapsing() {
-    return currentState == State.EXPANDING || currentState == State.COLLAPSING;
+    return currentPageState == PageState.EXPANDING || currentPageState == PageState.COLLAPSING;
   }
 
   public boolean isCollapsing() {
-    return currentState == State.COLLAPSING;
+    return currentPageState == PageState.COLLAPSING;
   }
 
   public boolean isCollapsed() {
-    return currentState == State.COLLAPSED;
+    return currentPageState == PageState.COLLAPSED;
   }
 
-  public State getCurrentState() {
-    return currentState;
+  public PageState getCurrentState() {
+    return currentPageState;
   }
 
   public boolean isExpanding() {
-    return currentState == State.EXPANDING;
+    return currentPageState == PageState.EXPANDING;
   }
 
   public boolean isExpandedOrExpanding() {
-    return currentState == State.EXPANDED || currentState == State.EXPANDING;
+    return currentPageState == PageState.EXPANDED || currentPageState == PageState.EXPANDING;
   }
 
   public boolean isCollapsedOrCollapsing() {
-    return currentState == State.COLLAPSING || currentState == State.COLLAPSED;
+    return currentPageState == PageState.COLLAPSING || currentPageState == PageState.COLLAPSED;
   }
 
   public void addStateChangeCallbacks(StateChangeCallbacks callbacks) {

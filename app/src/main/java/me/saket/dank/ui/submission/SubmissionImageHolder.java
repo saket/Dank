@@ -44,7 +44,7 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
 
 /**
- * Manages showing of content image in {@link SubmissionFragment}. Only supports showing a single image right now.
+ * Manages showing of content image in {@link SubmissionPageLayout}. Only supports showing a single image right now.
  */
 public class SubmissionImageHolder {
 
@@ -68,7 +68,7 @@ public class SubmissionImageHolder {
    * God knows why (if he/she exists), ButterKnife is failing to bind <var>contentLoadProgressView</var>,
    * so we're supplying it manually from the fragment.
    */
-  public SubmissionImageHolder(SubmissionFragmentLifecycleStreams lifecycleStreams, View submissionLayout, ProgressBar contentLoadProgressView,
+  public SubmissionImageHolder(SubmissionPageLifecycleStreams lifecycleStreams, View submissionLayout, ProgressBar contentLoadProgressView,
       ExpandablePageLayout submissionPageLayout, MediaHostRepository mediaHostRepository, int deviceDisplayWidth)
   {
     ButterKnife.bind(this, submissionLayout);

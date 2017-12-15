@@ -98,7 +98,7 @@ public class SubmissionLinkViewHolder {
     void onTintColorGenerate(int tintColor);
   }
 
-  public SubmissionLinkViewHolder(SubmissionFragmentLifecycleStreams lifecycleStreams, LinkMetadataRepository linkMetadataRepository,
+  public SubmissionLinkViewHolder(SubmissionPageLifecycleStreams lifecycleStreams, LinkMetadataRepository linkMetadataRepository,
       ViewGroup linkDetailsView, ExpandablePageLayout submissionPageLayout)
   {
     this.linkMetadataRepository = linkMetadataRepository;

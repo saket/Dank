@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
 import android.view.View;
-
 import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
@@ -15,9 +14,8 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
-
 import me.saket.dank.R;
-import me.saket.dank.utils.lifecycle.LifecycleOwner;
+import me.saket.dank.utils.lifecycle.LifecycleStreams;
 
 public class ExoPlayerManager {
 
@@ -31,13 +29,13 @@ public class ExoPlayerManager {
     void onVideoSizeChange(int resizedVideoWidth, int resizedVideoHeight, int actualVideoWidth, int actualVideoHeight);
   }
 
-  public static ExoPlayerManager newInstance(LifecycleOwner lifecycleOwner, VideoView playerView) {
+  public static ExoPlayerManager newInstance(LifecycleStreams lifecycleStreams, VideoView playerView) {
     ExoPlayerManager exoPlayerManager = new ExoPlayerManager(playerView);
     exoPlayerManager.setupVideoView();
 
-    lifecycleOwner.lifecycle().onDestroy().subscribe(o -> exoPlayerManager.releasePlayer());
-    lifecycleOwner.lifecycle().onPause().subscribe(o -> exoPlayerManager.pauseVideoPlayback());
-    lifecycleOwner.lifecycle().onResume().subscribe(o -> {
+    lifecycleStreams.onDestroy().subscribe(o -> exoPlayerManager.releasePlayer());
+    lifecycleStreams.onPause().subscribe(o -> exoPlayerManager.pauseVideoPlayback());
+    lifecycleStreams.onResume().subscribe(o -> {
       if (exoPlayerManager.wasPlayingUponPause) {
         exoPlayerManager.startVideoPlayback();
       }

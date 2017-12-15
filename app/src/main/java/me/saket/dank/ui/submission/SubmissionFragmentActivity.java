@@ -5,7 +5,6 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
@@ -26,14 +25,13 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
  * where pull-to-collapse will take the user back to the previous screen. This is unlike
  * {@link SubredditActivity}, which takes user back to the submission's subreddit.
  */
-public class SubmissionFragmentActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks {
+public class SubmissionFragmentActivity extends DankPullCollapsibleActivity implements SubmissionPageLayout.Callbacks {
 
   private static final String KEY_SUBMISSION_LINK = "submissionLink";
   private static final String KEY_SUBMISSION_REQUEST = "submission";
 
   @BindView(R.id.independentsubmission_root) IndependentExpandablePageLayout contentPage;
-
-  private SubmissionFragment submissionFragment;
+  @BindView(R.id.independentsubmission_submission_page) SubmissionPageLayout submissionPageLayout;
 
   /**
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
@@ -64,28 +62,14 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
     setupContentExpandablePage(contentPage);
     expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
 
-    setupSubmissionFragment();
-
     if (savedInstanceState == null) {
       if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
         loadSubmission(getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
       } else {
-        submissionFragment.populateUi(null, getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
+        submissionPageLayout.populateUi(null, getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
       }
     }
     // Else, SubmissionFragment will handle retaining its data.
-  }
-
-  private void setupSubmissionFragment() {
-    submissionFragment = (SubmissionFragment) getSupportFragmentManager().findFragmentById(contentPage.getId());
-    if (submissionFragment == null) {
-      submissionFragment = SubmissionFragment.create();
-    }
-
-    getSupportFragmentManager()
-        .beginTransaction()
-        .replace(contentPage.getId(), submissionFragment)
-        .commitNow();
   }
 
   private void loadSubmission(RedditSubmissionLink submissionLink) {
@@ -102,7 +86,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
           .contextCount(initialComment.contextCount());
     }
 
-    submissionFragment.populateUi(null, submissionReqBuilder.build());
+    submissionPageLayout.populateUi(null, submissionReqBuilder.build());
   }
 
   @Override

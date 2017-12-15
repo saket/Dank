@@ -24,30 +24,23 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import com.github.zagum.expandicon.ExpandIconView;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Subreddit;
-import net.dean.jraw.paginators.Sorting;
-
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -64,7 +57,7 @@ import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
-import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -72,17 +65,20 @@ import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
-import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.RxExpandablePage;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Subreddit;
+import net.dean.jraw.paginators.Sorting;
 import timber.log.Timber;
 
-public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionFragment.Callbacks, NewSubredditSubscriptionDialog.Callback {
+public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionPageLayout.Callbacks,
+    NewSubredditSubscriptionDialog.Callback
+{
 
-  public static final int REQUEST_CODE_LOGIN = 100;
   protected static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
   private static final String KEY_ACTIVE_SUBREDDIT = "activeSubreddit";
   private static final String KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE = "isSubredditPickerVisible";
@@ -90,6 +86,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private static final String KEY_SORTING_AND_TIME_PERIOD = "sortingAndTimePeriod";
 
   @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
+  @BindView(R.id.subreddit_submission_page) SubmissionPageLayout submissionPageLayout;
   @BindView(R.id.toolbar) DankToolbar toolbar;
   @BindView(R.id.subreddit_toolbar_close) View toolbarCloseButton;
   @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
@@ -100,7 +97,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @BindView(R.id.subreddit_sorting_mode) Button sortingModeButton;
   @BindView(R.id.subreddit_subscribe) Button subscribeButton;
   @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
-  @BindView(R.id.subreddit_submission_page) ExpandablePageLayout submissionPage;
   @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
   @BindView(R.id.subreddit_progress) View fullscreenProgressView;
   @BindView(R.id.subreddit_submission_emptyState) EmptyStateView emptyStateView;
@@ -113,7 +109,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Inject UserPreferences userPrefs;
   @Inject UserSessionRepository userSessionRepository;
 
-  private SubmissionFragment submissionFragment;
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
   private Relay<Object> forceRefreshRequestStream = PublishRelay.create();
@@ -148,7 +143,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       toolbarCloseButton.setVisibility(View.VISIBLE);
       toolbarCloseButton.setOnClickListener(o -> finish());
     }
-    contentPage.setNestedExpandablePage(submissionPage);
+    contentPage.setNestedExpandablePage(submissionPageLayout);
   }
 
   @Override
@@ -156,7 +151,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     super.onPostCreate(savedState);
 
     setupSubmissionList(savedState);
-    setupSubmissionFragment();
+    setupSubmissionPage();
     setupToolbarSheet();
 
     // Restore state of subreddit picker sheet / user profile sheet.
@@ -253,15 +248,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     toolbarTitleView.setText(isFrontpage ? getString(R.string.app_name) : subredditName);
   }
 
-  private void setupSubmissionFragment() {
-    submissionFragment = (SubmissionFragment) getSupportFragmentManager().findFragmentById(submissionPage.getId());
-    if (submissionFragment == null) {
-      submissionFragment = SubmissionFragment.create();
-    }
-    getSupportFragmentManager()
-        .beginTransaction()
-        .replace(submissionPage.getId(), submissionFragment)
-        .commit();
+  private void setupSubmissionPage() {
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       if (touchLiesOn(toolbarContainer, downX, downY)) {
         if (touchLiesOn(toolbarSheet, downX, downY) && isSubredditPickerVisible()) {
@@ -323,10 +310,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private void setupSubmissionList(Bundle savedState) {
     submissionList.setLayoutManager(submissionList.createLayoutManager());
     submissionList.setItemAnimator(new DefaultItemAnimator());
-    submissionList.setExpandablePage(submissionPage, toolbarContainer);
+    submissionList.setExpandablePage(submissionPageLayout, toolbarContainer);
 
     // Swipe gestures.
-    OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
+    OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.intent(this);
     SubmissionSwipeActionsProvider swipeActionsProvider = new SubmissionSwipeActionsProvider(
         submissionRepository,
         Dank.voting(),
@@ -342,17 +329,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           .build();
 
       long delay = submissionPageAnimationOptimizer.shouldDelayLoad(submission)
-          ? submissionPage.getAnimationDurationMillis()
+          ? submissionPageLayout.getAnimationDurationMillis()
           : 0;
 
       Single.timer(delay, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
           .takeUntil(lifecycle().onDestroy().ignoreElements())
           .subscribe(o -> {
-            submissionFragment.populateUi(submission, submissionRequest);
+            submissionPageLayout.populateUi(submission, submissionRequest);
             submissionPageAnimationOptimizer.trackSubmissionOpened(submission);
           });
 
-      submissionPage.post(() ->
+      submissionPageLayout.post(() ->
           Observable.timer(100 + delay / 2, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
               .takeUntil(lifecycle().onDestroy())
               .subscribe(o -> submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId))
@@ -415,10 +402,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // DB subscription.
     // We suspend the listener while a submission is active so that this list doesn't get updated in background.
-    RxExpandablePage.streamCollapses(submissionPage)
+    RxExpandablePage.streamCollapses(submissionPageLayout)
         .switchMap(o -> submissionFolderStream
             .switchMap(folder -> submissionRepository.submissions(folder).subscribeOn(io()))
-            .takeUntil(RxExpandablePage.streamPreExpansions(submissionPage))
+            .takeUntil(RxExpandablePage.streamPreExpansions(submissionPageLayout))
         )
         .takeUntil(lifecycle().onDestroy())
         .subscribe(cachedSubmissionStream);
@@ -554,7 +541,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         if (userSessionRepository.isUserLoggedIn()) {
           showUserProfileSheet();
         } else {
-          LoginActivity.startForResult(this, REQUEST_CODE_LOGIN);
+          startActivity(LoginActivity.intent(this));
         }
         return true;
 
@@ -642,7 +629,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   @Override
   public void onBackPressed() {
-    if (submissionPage.isExpandedOrExpanding()) {
+    if (submissionPageLayout.isExpandedOrExpanding()) {
       submissionList.collapse();
 
     } else if (!toolbarSheet.isCollapsed()) {
@@ -663,7 +650,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
         .subscribe(() -> forceRefreshRequestStream.accept(Notification.INSTANCE));
 
-    if (!submissionPage.isExpanded()) {
+    if (!submissionPageLayout.isExpanded()) {
       showUserProfileSheet();
     }
   }

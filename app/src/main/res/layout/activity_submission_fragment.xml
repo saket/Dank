@@ -1,6 +1,13 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/independentsubmission_root"
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/independentsubmission_root"
   style="@style/DankPullCollapsibleActivityPage"
-  xmlns:android="http://schemas.android.com/apk/res/android"
   android:layout_width="match_parent"
-  android:layout_height="match_parent" />
+  android:layout_height="match_parent"
+  android:elevation="@dimen/elevation_nested_expandable_sheet">
+
+  <me.saket.dank.ui.submission.SubmissionPageLayout
+    android:id="@+id/independentsubmission_submission_page"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+</me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

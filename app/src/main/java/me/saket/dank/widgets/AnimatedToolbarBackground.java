@@ -7,11 +7,11 @@ import android.support.annotation.FloatRange;
 import android.util.AttributeSet;
 import android.view.View;
 
-import me.saket.dank.ui.submission.SubmissionFragment;
+import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.utils.Animations;
 
 /**
- * Acts as the background of the Toolbar present in {@link SubmissionFragment} and covers the
+ * Acts as the background of the Toolbar present in {@link SubmissionPageLayout} and covers the
  * toolbar's background when the comment list reaches the bottom of the toolbar. Note that right
  * now this View assumes that it'll be located at the top of its parent and the
  * {@link ScrollingRecyclerViewSheet} will be present below the toolbar.
