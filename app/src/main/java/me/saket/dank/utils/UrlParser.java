@@ -2,9 +2,9 @@ package me.saket.dank.utils;
 
 import android.net.Uri;
 import android.support.annotation.NonNull;
+import android.support.v4.util.LruCache;
 import android.text.Html;
 import android.text.TextUtils;
-import android.util.LruCache;
 
 import net.dean.jraw.models.Submission;
 
@@ -114,9 +114,9 @@ public class UrlParser {
 
     Link parsedLink;
 
-    Uri linkUri = Uri.parse(url);
-    String urlDomain = linkUri.getHost() != null ? linkUri.getHost() : "";
-    String urlPath = linkUri.getPath() != null ? linkUri.getPath() : "";
+    Uri linkURI = Uri.parse(url);
+    String urlDomain = linkURI.getHost() != null ? linkURI.getHost() : "";
+    String urlPath = linkURI.getPath() != null ? linkURI.getPath() : "";  // Path is the part of the URL without the domain. E.g.,: /something/image.jpg.
 
     Matcher subredditMatcher = SUBREDDIT_PATTERN.matcher(urlPath);
     if (subredditMatcher.matches()) {
@@ -138,7 +138,7 @@ public class UrlParser {
             parsedLink = RedditSubmissionLink.create(url, submissionId, subredditName);
 
           } else {
-            String contextParamValue = linkUri.getQueryParameter("context");
+            String contextParamValue = linkURI.getQueryParameter("context");
             int contextCount = TextUtils.isEmpty(contextParamValue) ? 0 : Integer.parseInt(contextParamValue);
             RedditCommentLink initialComment = RedditCommentLink.create(url, commentId, contextCount);
             parsedLink = RedditSubmissionLink.createWithComment(url, submissionId, subredditName, initialComment);
@@ -174,9 +174,10 @@ public class UrlParser {
 
   @NonNull
   private static Link parseNonRedditUrl(String url) {
-    Uri contentURI = Uri.parse(url);
-    String urlDomain = contentURI.getHost();
-    String urlPath = contentURI.getPath();    // Path is the part of the URL without the domain. E.g.,: /something/image.jpg.
+    Uri linkURI = Uri.parse(url);
+
+    String urlDomain = linkURI.getHost() != null ? linkURI.getHost() : "";
+    String urlPath = linkURI.getPath() != null ? linkURI.getPath() : "";
 
     if ((urlDomain.contains("imgur.com") || urlDomain.contains("bildgur.de"))) {
       if (isUnsupportedImgurLink(urlPath)) {
@@ -191,13 +192,13 @@ public class UrlParser {
       }
 
     } else if (urlDomain.contains("gfycat.com")) {
-      return createGfycatLink(contentURI);
+      return createGfycatLink(linkURI);
 
     } else if (urlDomain.contains("giphy.com")) {
-      return createGiphyLink(contentURI);
+      return createGiphyLink(linkURI);
 
     } else if (urlDomain.contains("streamable.com")) {
-      return createUnresolvedStreamableLink(contentURI);
+      return createUnresolvedStreamableLink(linkURI);
 
     } else if ((urlDomain.contains("reddituploads.com"))) {
       // Reddit sends HTML-escaped URLs for reddituploads.com. Decode them again.

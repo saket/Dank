@@ -10,6 +10,7 @@ import android.support.annotation.NonNull;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.TextUtils;
+import android.util.Patterns;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -20,6 +21,7 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.regex.Pattern;
 
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.GfycatLink;
@@ -36,6 +38,13 @@ import me.saket.dank.data.links.StreamableUnresolvedLink;
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Uri.class, TextUtils.class, Html.class })
 public class UrlParserTest {
+
+  private static final String[] IMGUR_ALBUM_URLS = {
+      "https://imgur.com/a/lBQGv",
+      "http://imgur.com/a/RBpAe",
+      "http://imgur.com/gallery/9Uq7u",
+      "http://imgur.com/t/a_day_in_the_life/85Egn",
+  };
 
   @Before
   public void setUp() {
@@ -56,12 +65,29 @@ public class UrlParserTest {
     });
   }
 
-  private static final String[] IMGUR_ALBUM_URLS = {
-      "https://imgur.com/a/lBQGv",
-      "http://imgur.com/a/RBpAe",
-      "http://imgur.com/gallery/9Uq7u",
-      "http://imgur.com/t/a_day_in_the_life/85Egn",
-  };
+  @Test
+  public void parseEmail() {
+    String url = "saket@saket.me";
+    PowerMockito.when(Uri.parse(url)).thenReturn(createMockUriFor(url));
+
+    Link parsedLink = UrlParser.parse(url);
+
+    assertEquals(parsedLink instanceof ExternalLink, true);
+    assertEquals(parsedLink.type(), Link.Type.EXTERNAL);
+    assertEquals(parsedLink.unparsedUrl(), url);
+  }
+
+  @Test
+  public void whenGivenGibberish_shouldParseAsAnExternalLink() {
+    String url = "iturnedmyselfintoapickle";
+    PowerMockito.when(Uri.parse(url)).thenReturn(createMockUriFor(url));
+
+    Link parsedLink = UrlParser.parse(url);
+
+    assertEquals(parsedLink instanceof ExternalLink, true);
+    assertEquals(parsedLink.type(), Link.Type.EXTERNAL);
+    assertEquals(parsedLink.unparsedUrl(), url);
+  }
 
 // ======== REDDIT ======== //
 
@@ -69,8 +95,7 @@ public class UrlParserTest {
   @SuppressWarnings("ConstantConditions")
   public void parseRedditSubmission_whenUrlOnlyHasSubmissionId() {
     String url = "https://www.reddit.com/comments/656e5z";
-    Uri mockUri = createMockUriFor(url);
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
+    PowerMockito.when(Uri.parse(url)).thenReturn(createMockUriFor(url));
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -359,20 +384,87 @@ public class UrlParserTest {
   private Uri createMockUriFor(String url) {
     Uri mockUri = mock(Uri.class);
 
-    // Really hacky way, but couldn't think of a better way.
-    String domainTld;
-    if (url.contains(".com/")) {
-      domainTld = ".com";
-    } else if (url.contains(".it/")) {
-      domainTld = ".it";
-    } else {
-      throw new UnsupportedOperationException("Unknown tld");
-    }
+    if (PatternsCopy.WEB_URL.matcher("url").matches()) {
+      // Really hacky way, but couldn't think of a better way.
+      String domainTld;
+      if (url.contains(".com/")) {
+        domainTld = ".com";
+      } else if (url.contains(".it/")) {
+        domainTld = ".it";
+      } else {
+        throw new UnsupportedOperationException("Unknown tld");
+      }
 
-    when(mockUri.getPath()).thenReturn(url.substring(url.indexOf(domainTld) + domainTld.length()));
-    when(mockUri.getHost()).thenReturn(url.substring(url.indexOf("://") + "://".length(), url.indexOf(domainTld) + domainTld.length()));
-    when(mockUri.getScheme()).thenReturn(url.substring(0, url.indexOf("://")));
-    when(mockUri.toString()).thenReturn(url);
+      when(mockUri.getPath()).thenReturn(url.substring(url.indexOf(domainTld) + domainTld.length()));
+      when(mockUri.getHost()).thenReturn(url.substring(url.indexOf("://") + "://".length(), url.indexOf(domainTld) + domainTld.length()));
+      when(mockUri.getScheme()).thenReturn(url.substring(0, url.indexOf("://")));
+      when(mockUri.toString()).thenReturn(url);
+    }
     return mockUri;
+  }
+
+  /**
+   * Copied from {@link Patterns} for test.
+   */
+  private static class PatternsCopy {
+    /**
+     * Valid UCS characters defined in RFC 3987. Excludes space characters.
+     */
+    private static final String UCS_CHAR = "[" +
+        "\u00A0-\uD7FF" +
+        "\uF900-\uFDCF" +
+        "\uFDF0-\uFFEF" +
+        "\uD800\uDC00-\uD83F\uDFFD" +
+        "\uD840\uDC00-\uD87F\uDFFD" +
+        "\uD880\uDC00-\uD8BF\uDFFD" +
+        "\uD8C0\uDC00-\uD8FF\uDFFD" +
+        "\uD900\uDC00-\uD93F\uDFFD" +
+        "\uD940\uDC00-\uD97F\uDFFD" +
+        "\uD980\uDC00-\uD9BF\uDFFD" +
+        "\uD9C0\uDC00-\uD9FF\uDFFD" +
+        "\uDA00\uDC00-\uDA3F\uDFFD" +
+        "\uDA40\uDC00-\uDA7F\uDFFD" +
+        "\uDA80\uDC00-\uDABF\uDFFD" +
+        "\uDAC0\uDC00-\uDAFF\uDFFD" +
+        "\uDB00\uDC00-\uDB3F\uDFFD" +
+        "\uDB44\uDC00-\uDB7F\uDFFD" +
+        "&&[^\u00A0[\u2000-\u200A]\u2028\u2029\u202F\u3000]]";
+    private static final String LABEL_CHAR = "a-zA-Z0-9" + UCS_CHAR;
+    private static final String IRI_LABEL =
+        "[" + LABEL_CHAR + "](?:[" + LABEL_CHAR + "_\\-]{0,61}[" + LABEL_CHAR + "]){0,1}";
+    private static final String PUNYCODE_TLD = "xn\\-\\-[\\w\\-]{0,58}\\w";
+    private static final String TLD_CHAR = "a-zA-Z" + UCS_CHAR;
+    private static final String TLD = "(" + PUNYCODE_TLD + "|" + "[" + TLD_CHAR + "]{2,63}" + ")";
+    private static final String HOST_NAME = "(" + IRI_LABEL + "\\.)+" + TLD;
+    private static final String IP_ADDRESS_STRING =
+        "((25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9])\\.(25[0-5]|2[0-4]"
+            + "[0-9]|[0-1][0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1]"
+            + "[0-9]{2}|[1-9][0-9]|[1-9]|0)\\.(25[0-5]|2[0-4][0-9]|[0-1][0-9]{2}"
+            + "|[1-9][0-9]|[0-9]))";
+    private static final String PROTOCOL = "(?i:http|https|rtsp)://";
+    private static final String USER_INFO = "(?:[a-zA-Z0-9\\$\\-\\_\\.\\+\\!\\*\\'\\(\\)"
+        + "\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,64}(?:\\:(?:[a-zA-Z0-9\\$\\-\\_"
+        + "\\.\\+\\!\\*\\'\\(\\)\\,\\;\\?\\&\\=]|(?:\\%[a-fA-F0-9]{2})){1,25})?\\@";
+    private static final String DOMAIN_NAME_STR = "(" + HOST_NAME + "|" + IP_ADDRESS_STRING + ")";
+    private static final String PATH_AND_QUERY = "[/\\?](?:(?:[" + LABEL_CHAR
+        + ";/\\?:@&=#~"  // plus optional query params
+        + "\\-\\.\\+!\\*'\\(\\),_\\$])|(?:%[a-fA-F0-9]{2}))*";
+    /* A word boundary or end of input.  This is to stop foo.sure from matching as foo.su */
+    private static final String WORD_BOUNDARY = "(?:\\b|$|^)";
+    private static final String PORT_NUMBER = "\\:\\d{1,5}";
+
+    /**
+     * Regular expression pattern to match most part of RFC 3987
+     * Internationalized URLs, aka IRIs.
+     */
+    public static final Pattern WEB_URL = Pattern.compile("("
+        + "("
+        + "(?:" + PROTOCOL + "(?:" + USER_INFO + ")?" + ")?"
+        + "(?:" + DOMAIN_NAME_STR + ")"
+        + "(?:" + PORT_NUMBER + ")?"
+        + ")"
+        + "(" + PATH_AND_QUERY + ")?"
+        + WORD_BOUNDARY
+        + ")");
   }
 }
