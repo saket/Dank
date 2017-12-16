@@ -44,10 +44,7 @@ import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import butterknife.BindDimen;
-import butterknife.BindDrawable;
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.danikula.videocache.HttpProxyCacheServer;
@@ -56,17 +53,28 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
+
+import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Thumbnails;
+
+import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
+
+import butterknife.BindDimen;
+import butterknife.BindDrawable;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
-import java.io.IOException;
-import java.util.Collections;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
@@ -121,10 +129,6 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
-import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.PublicContribution;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -219,6 +223,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(o -> onViewFirstAttach());
 
     lifecycle().onDestroy()
+        .take(1)
         .subscribe(o -> onCollapseSubscriptions.clear());
   }
 
@@ -651,7 +656,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                       .build();
                   Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
                   expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
-                  SubmissionFragmentActivity.start(getContext(), continueThreadRequest, expandFromShape);
+                  SubmissionPageLayoutActivity.start(getContext(), continueThreadRequest, expandFromShape);
                   return Observable.empty();
                 });
 

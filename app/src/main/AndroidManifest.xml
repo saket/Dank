@@ -48,7 +48,7 @@
 
     <activity android:name=".ui.webview.WebViewActivity" />
 
-    <activity android:name=".ui.submission.SubmissionFragmentActivity" />
+    <activity android:name=".ui.submission.SubmissionPageLayoutActivity" />
 
     <activity
       android:name=".ui.user.messages.InboxActivity"

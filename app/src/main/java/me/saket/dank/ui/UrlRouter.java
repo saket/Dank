@@ -19,7 +19,7 @@ import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
-import me.saket.dank.ui.submission.SubmissionFragmentActivity;
+import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.webview.WebViewActivity;
@@ -90,7 +90,7 @@ public class UrlRouter {
         SubredditActivityWithTransparentWindowBackground.start(context, (RedditSubredditLink) link, expandFromRect);
 
       } else if (link instanceof RedditSubmissionLink) {
-        SubmissionFragmentActivity.start(context, (RedditSubmissionLink) link, expandFromRect);
+        SubmissionPageLayoutActivity.start(context, (RedditSubmissionLink) link, expandFromRect);
 
       } else if (link instanceof RedditUserLink) {
         throw new IllegalStateException("Use UserProfilePopup instead");

@@ -25,7 +25,7 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
  * where pull-to-collapse will take the user back to the previous screen. This is unlike
  * {@link SubredditActivity}, which takes user back to the submission's subreddit.
  */
-public class SubmissionFragmentActivity extends DankPullCollapsibleActivity implements SubmissionPageLayout.Callbacks {
+public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity implements SubmissionPageLayout.Callbacks {
 
   private static final String KEY_SUBMISSION_LINK = "submissionLink";
   private static final String KEY_SUBMISSION_REQUEST = "submission";
@@ -37,7 +37,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
    */
   public static void start(Context context, RedditSubmissionLink submissionLink, @Nullable Rect expandFromShape) {
-    Intent intent = new Intent(context, SubmissionFragmentActivity.class);
+    Intent intent = new Intent(context, SubmissionPageLayoutActivity.class);
     intent.putExtra(KEY_SUBMISSION_LINK, submissionLink);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
     context.startActivity(intent);
@@ -47,7 +47,7 @@ public class SubmissionFragmentActivity extends DankPullCollapsibleActivity impl
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
    */
   public static void start(Context context, DankSubmissionRequest submissionRequest, @Nullable Rect expandFromShape) {
-    Intent intent = new Intent(context, SubmissionFragmentActivity.class);
+    Intent intent = new Intent(context, SubmissionPageLayoutActivity.class);
     intent.putExtra(KEY_SUBMISSION_REQUEST, submissionRequest);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
     context.startActivity(intent);
