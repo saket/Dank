@@ -4,6 +4,8 @@ import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.VoteDirection;
 
+import javax.inject.Inject;
+
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -40,12 +42,13 @@ public class CommentSwipeActionsProvider {
     void onReplySwipeAction(Comment parentComment);
   }
 
+  @Inject
   public CommentSwipeActionsProvider(VotingManager votingManager, UserSessionRepository userSessionRepository,
-      OnLoginRequireListener onLoginRequireListener)
+      OnLoginRequireListener loginRequireListener)
   {
     this.votingManager = votingManager;
     this.userSessionRepository = userSessionRepository;
-    this.onLoginRequireListener = onLoginRequireListener;
+    this.onLoginRequireListener = loginRequireListener;
 
     commentSwipeActions = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()

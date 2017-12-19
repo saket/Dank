@@ -1,0 +1,26 @@
+package me.saket.dank.utils;
+
+import android.support.v7.util.DiffUtil;
+
+import java.util.Collections;
+import java.util.List;
+
+import io.reactivex.FlowableTransformer;
+import io.reactivex.functions.BiFunction;
+import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
+
+public class RxDiffUtils {
+
+  public static <T> FlowableTransformer<List<T>, Pair<List<T>, DiffUtil.DiffResult>> calculateDiff(
+      BiFunction<List<T>, List<T>, SimpleDiffUtilsCallbacks<T>> diffCallbacks)
+  {
+    Pair<List<T>, DiffUtil.DiffResult> initialPair = Pair.createNullable(Collections.emptyList(), null);
+    return upstream -> upstream
+        .scan(initialPair, (latestPair, nextItems) -> {
+          DiffUtil.Callback callback = diffCallbacks.apply(latestPair.first(), nextItems);
+          DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
+          return Pair.create(nextItems, result);
+        })
+        .skip(1);  // Initial value is dummy.
+  }
+}

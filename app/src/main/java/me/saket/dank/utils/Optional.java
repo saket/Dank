@@ -46,10 +46,7 @@ import io.reactivex.functions.Consumer;
 @AutoValue
 public abstract class Optional<T> {
 
-  /**
-   * Common instance for {@code empty()}.
-   */
-  private static final Optional<?> EMPTY = Optional.ofNullable(null);
+  private static Optional<?> EMPTY;
 
   /**
    * If non-null, the value; if null, indicates no value is present
@@ -70,6 +67,9 @@ public abstract class Optional<T> {
    */
   @SuppressWarnings("unchecked")
   public static <T> Optional<T> empty() {
+    if (EMPTY == null) {
+      EMPTY = new AutoValue_Optional<>(null);
+    }
     return (Optional<T>) EMPTY;
   }
 

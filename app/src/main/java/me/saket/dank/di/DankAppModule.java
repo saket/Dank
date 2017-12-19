@@ -4,6 +4,7 @@ import static me.saket.dank.utils.Units.dpToPx;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
@@ -41,12 +42,14 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.UrlRouter;
+import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -315,5 +318,14 @@ public class DankAppModule {
   @Provides
   DraftStore provideReplyDraftStore(ReplyRepository replyRepository) {
     return replyRepository;
+  }
+
+  @Provides
+  OnLoginRequireListener provideOnLoginRequireListener(Application appContext) {
+    return () -> {
+      Intent loginIntent = LoginActivity.intent(appContext);
+      loginIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+      appContext.startActivity(loginIntent);
+    };
   }
 }

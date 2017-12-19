@@ -5,7 +5,6 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:background="@color/window_background"
   android:elevation="@dimen/submission_comment_elevation"
   android:outlineProvider="none"
   tools:layout_marginTop="25dp">

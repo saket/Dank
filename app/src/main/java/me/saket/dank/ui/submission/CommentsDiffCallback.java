@@ -1,16 +1,17 @@
 package me.saket.dank.ui.submission;
 
-import net.dean.jraw.models.Comment;
-import net.dean.jraw.models.CommentNode;
-
 import java.util.List;
 
+import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
-import timber.log.Timber;
 
-public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionCommentRow> {
+public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScreenUiModel> {
 
-  public CommentsDiffCallback(List<SubmissionCommentRow> oldComments, List<SubmissionCommentRow> newComments) {
+  public static CommentsDiffCallback create(List<SubmissionScreenUiModel> oldComments, List<SubmissionScreenUiModel> newComments) {
+    return new CommentsDiffCallback(oldComments, newComments);
+  }
+
+  private CommentsDiffCallback(List<SubmissionScreenUiModel> oldComments, List<SubmissionScreenUiModel> newComments) {
     super(oldComments, newComments);
   }
 
@@ -20,8 +21,8 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionCom
    * For example, if your items have unique ids, this method should check their id equality.
    */
   @Override
-  public boolean areItemsTheSame(SubmissionCommentRow oldCommentRow, SubmissionCommentRow newCommentRow) {
-    return oldCommentRow.fullName().equals(newCommentRow.fullName());
+  public boolean areItemsTheSame(SubmissionScreenUiModel oldCommentRow, SubmissionScreenUiModel newCommentRow) {
+    return oldCommentRow.adapterId() == newCommentRow.adapterId();
   }
 
   /**
@@ -38,60 +39,7 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionCom
    * {@code true} for these items.
    */
   @Override
-  protected boolean areContentsTheSame(SubmissionCommentRow oldCommentRow, SubmissionCommentRow newCommentRow) {
-    try {
-      if (oldCommentRow instanceof DankCommentNode && newCommentRow instanceof DankCommentNode) {
-        return hackyEquals(((DankCommentNode) oldCommentRow), ((DankCommentNode) newCommentRow));
-
-      } else if (oldCommentRow instanceof LoadMoreCommentItem && newCommentRow instanceof LoadMoreCommentItem) {
-        return hackyEquals(((LoadMoreCommentItem) oldCommentRow), ((LoadMoreCommentItem) newCommentRow));
-
-      } else {
-        return oldCommentRow.equals(newCommentRow);
-      }
-    } catch (StackOverflowError e) {
-      Timber.e("StackOverflowError while equals. oldCommentRow: %s, newCommentRow: %s", oldCommentRow.fullName(), newCommentRow.fullName());
-      return false;
-    }
-  }
-
-  /**
-   * Because {@link CommentNode#equals(Object)} results in an infinite loop when compared with an identical object.
-   */
-  private boolean hackyEquals(DankCommentNode oldCommentRow, DankCommentNode newCommentRow) {
-    if (oldCommentRow == newCommentRow) {
-      return true;
-    }
-    if (!oldCommentRow.fullName().equals(newCommentRow.fullName())) {
-      return false;
-    }
-    if (oldCommentRow.isCollapsed() != newCommentRow.isCollapsed()) {
-      return false;
-    }
-
-    // We're only comparing the objects for figuring out changes that will affect their visual
-    // appearance. So it's okay to skip some items that CommentNode#equals() uses for comparison.
-    Comment oldComment = oldCommentRow.commentNode().getComment();
-    Comment newComment = newCommentRow.commentNode().getComment();
-    return oldComment.equals(newComment);
-  }
-
-  /**
-   * Because {@link CommentNode#equals(Object)} results in an infinite loop when compared with an identical object.
-   */
-  private boolean hackyEquals(LoadMoreCommentItem oldCommentRow, LoadMoreCommentItem newCommentRow) {
-    if (oldCommentRow == newCommentRow) {
-      return true;
-    }
-    if (!oldCommentRow.fullName().equals(newCommentRow.fullName())) {
-      return false;
-    }
-    if (oldCommentRow.progressVisible() != newCommentRow.progressVisible()) {
-      return false;
-    }
-
-    Comment oldParentComment = oldCommentRow.parentCommentNode().getComment();
-    Comment newParentComment = newCommentRow.parentCommentNode().getComment();
-    return oldParentComment.equals(newParentComment);
+  protected boolean areContentsTheSame(SubmissionScreenUiModel oldCommentRow, SubmissionScreenUiModel newCommentRow) {
+    return oldCommentRow.equals(newCommentRow);
   }
 }

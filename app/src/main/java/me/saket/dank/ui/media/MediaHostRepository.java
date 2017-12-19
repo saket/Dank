@@ -4,6 +4,7 @@ import static java.util.Collections.unmodifiableList;
 
 import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
+import android.text.Html;
 
 import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
@@ -40,7 +41,6 @@ import me.saket.dank.data.links.StreamableUnresolvedLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyRepository;
-import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.StoreFilePersister;
 import me.saket.dank.utils.StreamableRepository;
 import me.saket.dank.utils.UrlParser;
@@ -161,14 +161,34 @@ public class MediaHostRepository {
   }
 
   /**
-   * @return Null is possible only if <var>defaultImageUrl</var> is null.
+   * Find a thumbnail provided by Reddit that is the closest to <var>optimizeForWidth</var>.
+   * Gives preference to higher-res thumbnails if needed.
+   *
+   * @return Null only if <var>defaultImageUrl</var> is null.
    */
   @Nullable
-  public String findOptimizedQualityImageForDisplay(@Nullable Thumbnails redditSuppliedImages, int targetWidth,
-      @Nullable String defaultImageUrl)
-  {
+  public String findOptimizedQualityImageForDisplay(@Nullable Thumbnails redditSuppliedImages, int targetWidth, @Nullable String defaultImageUrl) {
+    // TODO: Why are we even checking if default url is null or an image path?!?
     if (redditSuppliedImages != null && (defaultImageUrl == null || UrlParser.isImagePath(defaultImageUrl))) {
-      return Commons.findOptimizedImage(redditSuppliedImages, targetWidth);
+      Thumbnails.Image closestImage = redditSuppliedImages.getSource();
+      int closestDifference = targetWidth - redditSuppliedImages.getSource().getWidth();
+
+      for (Thumbnails.Image redditCopy : redditSuppliedImages.getVariations()) {
+        int differenceAbs = Math.abs(targetWidth - redditCopy.getWidth());
+
+        if (differenceAbs < Math.abs(closestDifference)
+            // If another image is found with the same difference, choose the higher-res image.
+            || differenceAbs == closestDifference && redditCopy.getWidth() > closestImage.getWidth())
+        {
+          closestDifference = targetWidth - redditCopy.getWidth();
+          closestImage = redditCopy;
+        }
+      }
+
+      // Reddit sends HTML-escaped URLs.
+      //noinspection deprecation
+      return Html.fromHtml(closestImage.getUrl()).toString();
+
     } else {
       return defaultImageUrl;
     }

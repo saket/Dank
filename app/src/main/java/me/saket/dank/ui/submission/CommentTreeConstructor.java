@@ -19,42 +19,32 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import javax.inject.Inject;
-import javax.inject.Singleton;
 
 import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more"
- * & "continue thread ->" items. This is stored as a Singleton so that collapsed nodes, inline replies, etc. can
- * be retained across Activity recreations.
+ * & "continue thread ->" items.
  */
-@Singleton
 public class CommentTreeConstructor {
 
-  private final Set<String> collapsedCommentNodeFullNames = new HashSet<>(50); // Comments that are collapsed.
-  private final Set<String> loadingMoreCommentNodeFullNames = new HashSet<>();                // Comments for which more replies are being fetched.
-  private final Set<String> replyActiveForCommentNodeFullNames = new HashSet<>();             // Comments for which reply fields are active.
-  private final Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();        // Key: comment full-name.
+  private static final Set<String> collapsedCommentNodeFullNames = new HashSet<>(50); // Comments that are collapsed.
+  private static final Set<String> loadingMoreCommentNodeFullNames = new HashSet<>();                // Comments for which more replies are being fetched.
+  private static final Set<String> replyActiveForCommentNodeFullNames = new HashSet<>();             // Comments for which reply fields are active.
+  private final Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();               // Key: comment full-name.
   private final Relay<Object> changesRequiredStream = PublishRelay.create();
   private CommentNode rootCommentNode;
   private Submission submission;
 
-  @Inject
-  public CommentTreeConstructor() {}
-
-  public void setSubmission(Submission submission) {
-    this.submission = submission;
+  public CommentTreeConstructor() {
   }
 
-  /**
-   * Set the root comment of a submission.
-   */
-  public void setComments(CommentNode rootCommentNode, List<PendingSyncReply> pendingReplies) {
+  public void update(Submission submission, CommentNode rootCommentNode, List<PendingSyncReply> pendingReplies) {
+    this.submission = submission;
     this.rootCommentNode = rootCommentNode;
 
-    // Build a map of pending reply list so that they can later be accessed at o(1).
+    // Build a map of pending replies so that they can later be accessed at o(1).
     pendingReplyMap.clear();
     for (PendingSyncReply pendingSyncReply : pendingReplies) {
       String parentCommentFullName = pendingSyncReply.parentContributionFullName();

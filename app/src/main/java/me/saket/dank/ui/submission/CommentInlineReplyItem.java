@@ -7,6 +7,7 @@ import net.dean.jraw.models.PublicContribution;
 /**
  * Represents an inline field for composing a comment reply.
  */
+@Deprecated
 @AutoValue
 public abstract class CommentInlineReplyItem implements SubmissionCommentRow {
 

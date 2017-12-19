@@ -69,7 +69,7 @@ public class SubmissionLinkViewHolder {
   @BindView(R.id.submission_link_thumbnail) ImageView thumbnailView;
   @BindView(R.id.submission_link_icon) ImageView iconView;
   @BindView(R.id.submission_link_title) TextView titleView;
-  @BindView(R.id.submission_link_subtitle) TextView subtitleView;
+TextView subtitleView;
   @BindView(R.id.submission_link_title_container) ViewGroup titleSubtitleContainer;
   @BindView(R.id.submission_link_progress) SubmissionAnimatedProgressBar progressView;
 
@@ -92,7 +92,6 @@ public class SubmissionLinkViewHolder {
   private final LinkMetadataRepository linkMetadataRepository;
   private final ViewGroup linkDetailsContainer;
   private final ExpandablePageLayout submissionPageLayout;
-  private ValueAnimator holderHeightAnimator;
 
   private interface OnTintColorGenerateListener {
     void onTintColorGenerate(int tintColor);
@@ -145,9 +144,6 @@ public class SubmissionLinkViewHolder {
 
     linkDetailsContainer.setBackgroundResource(R.drawable.background_submission_link);
 
-    if (holderHeightAnimator != null && holderHeightAnimator.isStarted()) {
-      holderHeightAnimator.cancel();
-    }
     setHeight(linkDetailsContainer, ViewGroup.LayoutParams.WRAP_CONTENT);
   }
 

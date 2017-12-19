@@ -3,11 +3,9 @@ package me.saket.dank.widgets.InboxUI;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
 import android.animation.ValueAnimator;
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.graphics.Outline;
 import android.graphics.Rect;
-import android.os.Build;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.util.AttributeSet;
 import android.view.View;
@@ -20,7 +18,7 @@ import android.widget.RelativeLayout;
  */
 public abstract class BaseExpandablePageLayout extends RelativeLayout {
 
-  private static final long DEFAULT_ANIM_DURATION = 250;
+  public static final long DEFAULT_ANIM_DURATION = 250;
   private static TimeInterpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
 
   private final Rect clippedDimensionRect = new Rect();

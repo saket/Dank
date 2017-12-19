@@ -11,7 +11,9 @@ import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.style.LineBackgroundSpan;
 
+import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.Message;
+import net.dean.jraw.models.Submission;
 
 import org.sufficientlysecure.htmltextview.HtmlTagHandler;
 import org.xml.sax.XMLReader;
@@ -35,14 +37,25 @@ public class Markdown {
   public Markdown() {
   }
 
-  // TODO.
+  // TODO: Use Flexmark for markdown.
   public CharSequence parse(Message message) {
     return message.getBody();
   }
 
   // TODO.
+  public CharSequence parse(Comment comment) {
+    return comment.getBody();
+  }
+
+  // TODO.
   public CharSequence parse(PendingSyncReply reply) {
     return reply.body();
+  }
+
+  // TODO.
+  public String parseSelfText(Submission submission) {
+    //String selfTextHtml = submission.getDataNode().get("selftext_html").asText(submission.getSelftext() /* defaultValue */)
+    return submission.getSelftext();
   }
 
   public static CharSequence parseRedditMarkdownHtml(String markdown, TextPaint textPaint) {

@@ -5,6 +5,8 @@ import android.support.annotation.Nullable;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
 
+import javax.inject.Inject;
+
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -38,8 +40,9 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   private final UserSessionRepository userSessionRepository;
   private final OnLoginRequireListener onLoginRequireListener;
 
-  public SubmissionSwipeActionsProvider(SubmissionRepository submissionRepository, VotingManager votingManager, UserSessionRepository userSessionRepository,
-      OnLoginRequireListener onLoginRequireListener)
+  @Inject
+  public SubmissionSwipeActionsProvider(SubmissionRepository submissionRepository, VotingManager votingManager,
+      UserSessionRepository userSessionRepository, OnLoginRequireListener onLoginRequireListener)
   {
     this.submissionRepository = submissionRepository;
     this.votingManager = votingManager;

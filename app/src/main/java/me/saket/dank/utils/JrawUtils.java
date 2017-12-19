@@ -53,7 +53,7 @@ public class JrawUtils {
   }
 
   // TODO: Submit this to JRAW.
-  public static String messageBodyHtml(Comment comment) {
+  public static String commentBodyHtml(Comment comment) {
     return comment.getDataNode().get("body_html").asText();
   }
 

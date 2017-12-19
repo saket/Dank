@@ -9,7 +9,6 @@ import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 import static me.saket.dank.utils.Views.setHeight;
 import static me.saket.dank.utils.Views.touchLiesOn;
-import static me.saket.dank.utils.lifecycle.LifecycleStreams.NOTHING;
 
 import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
@@ -31,7 +30,6 @@ import android.support.transition.Transition;
 import android.support.transition.TransitionManager;
 import android.support.transition.TransitionSet;
 import android.support.v4.content.ContextCompat;
-import android.support.v4.util.Pair;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -42,13 +40,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageButton;
-import android.widget.TextView;
 import android.widget.Toast;
 
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
+import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerViewAdapter;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
@@ -60,7 +58,6 @@ import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
 import java.io.IOException;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -70,6 +67,7 @@ import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
@@ -79,7 +77,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.LinkMetadataRepository;
-import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.UserPreferences;
@@ -89,7 +86,6 @@ import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
-import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.UrlRouter;
@@ -99,21 +95,26 @@ import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
+import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
+import me.saket.dank.ui.submission.adapter.SubmissionInlineReply;
+import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
+import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModelConstructor;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.subreddits.SubmissionPageAnimationOptimizer;
-import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
-import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.NetworkStateListener;
+import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Pair;
+import me.saket.dank.utils.RxDiffUtils;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -139,7 +140,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
   private static final String KEY_INLINE_REPLY_ROW_ID = "inlineReplyRowId";
-  private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = 250;
+  private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = ExpandablePageLayout.DEFAULT_ANIM_DURATION;
   private static final long ACTIVITY_CONTENT_RESIZE_ANIM_DURATION = 300;
   private static final int REQUEST_CODE_PICK_GIF = 98;
   private static final int REQUEST_CODE_FULLSCREEN_REPLY = 99;
@@ -152,49 +153,44 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @BindView(R.id.submission_video_container) ViewGroup contentVideoViewContainer;
   @BindView(R.id.submission_video) VideoView contentVideoView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
-  @BindView(R.id.submission_comments_header) ViewGroup commentsHeaderView;
-  @BindView(R.id.submission_byline) TextView submissionBylineView;
-  @BindView(R.id.submission_selfpost_text) TextView selfPostTextView;
-  @BindView(R.id.submission_link_container) ViewGroup linkDetailsView;
   @BindView(R.id.submission_comment_list) RecyclerView commentRecyclerView;
-  @BindView(R.id.submission_comments_progress) View commentsLoadProgressView;
   @BindView(R.id.submission_reply) FloatingActionButton replyFAB;
 
   @BindDrawable(R.drawable.ic_toolbar_close_24dp) Drawable closeIconDrawable;
   @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
 
+  // TODO: Convert all to lazy injections.
   @Inject SubmissionRepository submissionRepository;
   @Inject MediaHostRepository mediaHostRepository;
   @Inject UrlRouter urlRouter;
-  @Inject CommentTreeConstructor commentTreeConstructor;
   @Inject Moshi moshi;
   @Inject LinkMetadataRepository linkMetadataRepository;
   @Inject ReplyRepository replyRepository;
   @Inject VotingManager votingManager;
   @Inject UserSessionRepository userSessionRepository;
-  @Inject DankLinkMovementMethod linkMovementMethod;
-  @Inject CommentsAdapter commentsAdapter;
   @Inject ErrorResolver errorResolver;
   @Inject UserPreferences userPreferences;
   @Inject NetworkStateListener networkStateListener;
   @Inject HttpProxyCacheServer httpProxyCacheServer;
+  @Inject SubmissionScreenUiModelConstructor submissionScreenUiModelConstructor;
+  @Inject SubmissionCommentsAdapter submissionCommentsAdapter;
 
-  private ExpandablePageLayout submissionPageLayout;
-  private SubmissionAdapterWithHeader adapterWithSubmissionHeader;
-  private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Submission> submissionStream = BehaviorRelay.create();
   private BehaviorRelay<Link> submissionContentStream = BehaviorRelay.create();
   private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
   private Relay<PublicContribution> inlineReplyStream = PublishRelay.create();
+  private Relay<Optional<Link>> contentLinkStream = BehaviorRelay.create();
+  private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
+
+  private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
+  private CommentTreeConstructor commentTreeConstructor;
+  private ExpandablePageLayout submissionPageLayout;
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
-  private SubmissionLinkViewHolder linkDetailsViewHolder;
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
-  private Relay<List<SubmissionCommentRow>> commentsAdapterDatasetUpdatesStream = PublishRelay.create();
   private SubmissionPageLifecycleStreams lifecycleStreams;
-  private Relay<Object> commentsAdapterWithSubmissionHeaderDatasetUpdatesStream = PublishRelay.create();
 
   public interface Callbacks {
 
@@ -232,8 +228,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     //noinspection ConstantConditions
     toolbarCloseButton.setOnClickListener(v -> ((Callbacks) getContext()).onClickSubmissionToolbarUp());
 
-    selfPostTextView.setMovementMethod(linkMovementMethod);
-
     submissionPageLayout = this;
     submissionPageLayout.addStateChangeCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
@@ -243,7 +237,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(keyboardVisibilityChangeStream);
 
     setupCommentRecyclerView();
-    setupCommentTree();
     setupContentImageView(this);
     setupContentVideoView();
     setupCommentsSheet();
@@ -251,12 +244,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     setupReplyFAB();
     setupSoftInputModeChangesAnimation();
 
-    linkDetailsViewHolder = new SubmissionLinkViewHolder(lifecycle(), linkMetadataRepository, linkDetailsView, submissionPageLayout);
+    //linkDetailsViewHolder = new SubmissionLinkViewHolder(lifecycle(), linkMetadataRepository, linkDetailsView, submissionPageLayout);
 
     // Load comments when submission changes.
     submissionRequestStream
         .observeOn(mainThread())
-        .doOnNext(o -> commentsLoadProgressView.setVisibility(View.VISIBLE))
+        .doOnNext(o -> commentsLoadProgressVisibleStream.accept(true))
         .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
             .flatMap(pair -> {
               // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
@@ -273,21 +266,21 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             })
             .takeUntil(lifecycle().onPageAboutToCollapse())
             .compose(RxUtils.applySchedulers())
-            .doOnNext(o -> commentsLoadProgressView.setVisibility(View.GONE))
+            .doOnNext(o -> commentsLoadProgressVisibleStream.accept(false))
             .doOnError(error -> Timber.e(error))
             .onErrorResumeNext(Observable.never()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(submissionStream);
 
-    submissionStream
-        .observeOn(mainThread())
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(submission -> {
-          adapterWithSubmissionHeader.updateSubmission(submission);
-          commentsAdapterWithSubmissionHeaderDatasetUpdatesStream.accept(LifecycleStreams.NOTHING);
-
-          commentsAdapter.setSubmissionAuthor(submission.getAuthor());
-        });
+    //submissionStream
+    //    .observeOn(mainThread())
+    //    .takeUntil(lifecycle().onDestroy())
+    //    .subscribe(submission -> {
+    //      adapterWithSubmissionHeader.updateSubmission(submission);
+    //      commentsAdapterWithSubmissionHeaderDatasetUpdatesStream.accept(LifecycleStreams.NOTHING);
+//
+    //      commentsAdapter.setSubmissionAuthor(submission.getAuthor());
+    //    });
 
     // TODO.
     // Restore submission if the Activity was recreated.
@@ -331,21 +324,57 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     }
   }
 
+  /**
+   * Data from persistence flows to this screen in a unidirectional manner. Any modifications are
+   * made on {@link CommentTreeConstructor} or {@link SubmissionScreenUiModelConstructor} and
+   * {@link CommentsAdapter} subscribes to its updates.
+   */
   private void setupCommentRecyclerView() {
+    // Add pending-sync replies to the comment tree.
+    submissionStream
+        .observeOn(io())
+        .switchMap(submissionWithComments -> replyRepository.streamPendingSyncReplies(ParentThread.of(submissionWithComments))
+            .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies)))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> {
+          Submission submission = pair.first();
+          List<PendingSyncReply> pendingSyncReplies = pair.second();
+          commentTreeConstructor.update(submission, submission.getComments(), pendingSyncReplies);
+        });
+
+    commentTreeConstructor = new CommentTreeConstructor();
+    submissionScreenUiModelConstructor.setup(commentTreeConstructor, submissionStream, contentLinkStream);
+
+    // Adapter data-set.
+    submissionScreenUiModelConstructor.stream(getContext())
+        .toFlowable(BackpressureStrategy.LATEST)
+        .observeOn(io())
+        .compose(RxDiffUtils.calculateDiff(CommentsDiffCallback::create))
+        .observeOn(mainThread())
+        .takeUntil(lifecycle().onDestroyFlowable())
+        .subscribe(
+            itemsAndDiff -> {
+              List<SubmissionScreenUiModel> newComments = itemsAndDiff.first();
+              submissionCommentsAdapter.updateData(newComments);
+
+              DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second();
+              commentsDiffResult.dispatchUpdatesTo(submissionCommentsAdapter);
+            },
+            logError("Error while diff-ing comments")
+        );
+
+    lifecycle().onPageCollapse()
+        .startWith(LifecycleStreams.NOTHING)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> {
+          contentLinkStream.accept(Optional.empty());
+          contentImageView.setVisibility(View.GONE);
+          contentVideoViewContainer.setVisibility(View.GONE);
+          toolbarBackground.setSyncScrollEnabled(false);
+        });
+
     // Swipe gestures.
-    OnLoginRequireListener onLoginRequireListener = () -> getContext().startActivity(LoginActivity.intent(getContext()));
-    SubmissionSwipeActionsProvider submissionSwipeActionsProvider = new SubmissionSwipeActionsProvider(
-        submissionRepository,
-        votingManager,
-        userSessionRepository,
-        onLoginRequireListener
-    );
-    CommentSwipeActionsProvider commentSwipeActionsProvider = new CommentSwipeActionsProvider(
-        votingManager,
-        userSessionRepository,
-        onLoginRequireListener
-    );
-    commentSwipeActionsProvider.setOnReplySwipeActionListener(parentComment -> {
+    submissionCommentsAdapter.commentSwipeActionsProvider().setOnReplySwipeActionListener(parentComment -> {
       if (commentTreeConstructor.isCollapsed(parentComment) || !commentTreeConstructor.isReplyActiveFor(parentComment)) {
         commentTreeConstructor.showReplyAndExpandComments(parentComment);
         inlineReplyStream.accept(parentComment);
@@ -357,48 +386,39 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
     commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 
+    // TODO: Set window background to items only while animating.
     int commentItemViewElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
     SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator(commentItemViewElevation).withInterpolator(Animations.INTERPOLATOR);
     itemAnimator.setRemoveDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
     itemAnimator.setAddDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
     commentRecyclerView.setItemAnimator(itemAnimator);
 
-    // Add submission Views as a header so that it scrolls with the list.
-    commentsAdapter.setSwipeActionsProvider(commentSwipeActionsProvider);
-
-    adapterWithSubmissionHeader = SubmissionAdapterWithHeader.wrap(
-        commentsAdapter,
-        commentsHeaderView,
-        votingManager,
-        replyRepository,
-        submissionSwipeActionsProvider
-    );
-    // Note: adapter is set on RecyclerView when its data-set is ready.
-
     // RecyclerView automatically handles saving and restoring scroll position if the
     // adapter contents are the same once the adapter is set. So we're setting the
     // adapter only once we've the data.
-    commentsAdapterDatasetUpdatesStream
+    RxRecyclerViewAdapter.dataChanges(submissionCommentsAdapter)
+        .skipInitialValue()
         .take(1)
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> commentRecyclerView.setAdapter(adapterWithSubmissionHeader));
+        .subscribe(o -> commentRecyclerView.setAdapter(submissionCommentsAdapter));
 
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
     inlineReplyStream
-        .switchMap(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution))
+        .switchMapSingle(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution).toSingleDefault(parentContribution))
         .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
 
     // Manually dispose reply draft subscribers, because Adapter#onViewHolderRecycled()
     // doesn't get called if the Activity is getting recreated.
-    lifecycle().onDestroy()
-        .take(1)
-        .subscribe(o -> commentsAdapter.forceDisposeDraftSubscribers());
+    // TODO.
+    //lifecycle().onDestroy()
+    //    .take(1)
+    //    .subscribe(o -> submissionCommentsAdapter.forceDisposeDraftSubscribers());
 
     // Reply discards.
-    commentsAdapter.streamReplyDiscardClicks()
+    submissionCommentsAdapter.streamReplyDiscardClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(discardEvent -> {
           Keyboards.hide(getContext(), commentRecyclerView);
@@ -406,7 +426,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         });
 
     // Reply GIF clicks.
-    commentsAdapter.streamReplyGifClicks()
+    submissionCommentsAdapter.streamReplyGifClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(clickEvent -> {
           Activity activity = (Activity) getContext();
@@ -431,7 +451,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         });
 
     // Reply fullscreen clicks.
-    commentsAdapter.streamReplyFullscreenClicks()
+    submissionCommentsAdapter.streamReplyFullscreenClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(fullscreenClickEvent -> {
           Bundle extraPayload = new Bundle();
@@ -477,7 +497,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(fullscreenReplySendStream);
 
     // Reply sends.
-    commentsAdapter.streamReplySendClicks()
+    submissionCommentsAdapter.streamReplySendClicks()
         .mergeWith(fullscreenReplySendStream)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(sendClickEvent -> {
@@ -501,7 +521,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         });
 
     // Reply retry-sends.
-    commentsAdapter.streamReplyRetrySendClicks()
+    submissionCommentsAdapter.streamReplyRetrySendClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(retrySendEvent -> {
           // Re-sending is not a part of the chain so that it does not get unsubscribed on destroy.
@@ -510,120 +530,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getContext()));
         });
 
-    // Bottom-spacing for FAB.
-    Views.executeOnMeasure(replyFAB, () -> {
-      int spaceForFab = replyFAB.getHeight() + ((ViewGroup.MarginLayoutParams) replyFAB.getLayoutParams()).bottomMargin * 2;
-      Views.setPaddingBottom(commentRecyclerView, spaceForFab);
-    });
-  }
-
-  /**
-   * Scroll to <var>parentContribution</var>'s reply if it's not going to be visible because it's located beyond the visible window.
-   */
-  @CheckResult
-  private Observable<PublicContribution> scrollToNewlyAddedReplyIfHidden(PublicContribution parentContribution) {
-    if (submissionStream.getValue() == parentContribution) {
-      // Submission reply.
-      return Observable.just(parentContribution).doOnNext(o -> commentRecyclerView.smoothScrollToPosition(SubmissionAdapterWithHeader.HEADER_COUNT));
-    }
-
-    return commentsAdapterDatasetUpdatesStream
-        .take(1)
-        .map(newItems -> {
-          int replyPosition = -1;
-          for (int i = 0; i < newItems.size(); i++) {
-            // Find the reply item's position.
-            SubmissionCommentRow commentRow = newItems.get(i);
-            if (commentRow instanceof CommentInlineReplyItem) {
-              if (((CommentInlineReplyItem) commentRow).parentContribution() == parentContribution) {
-                replyPosition = i + adapterWithSubmissionHeader.getVisibleHeaderItemCount();
-                break;
-              }
-            }
-          }
-          return replyPosition;
-        })
-        .doOnNext(replyPosition -> {
-          RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition - 1);
-          int parentContributionBottom = parentContributionItemVH.itemView.getBottom() + commentListParentSheet.getTop();
-          boolean willReplyBeHidden = parentContributionBottom >= submissionPageLayout.getBottom();
-          if (willReplyBeHidden) {
-            int dy = parentContributionItemVH.itemView.getHeight();
-            commentRecyclerView.smoothScrollBy(0, dy);
-          }
-        })
-        .map(o -> parentContribution);
-  }
-
-  /**
-   * Wait for <var>parentContribution</var>'s reply View to bind and show keyboard once it's visible.
-   */
-  @CheckResult
-  private Observable<ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(PublicContribution parentContribution) {
-    return commentsAdapter.streamReplyItemViewBinds()
-        .filter(replyBindEvent -> {
-          // This filter exists so that the keyboard is shown only for the target reply item
-          // instead of another reply item that was found while scrolling to the target reply item.
-          return replyBindEvent.replyItem().parentContribution().getFullName().equals(parentContribution.getFullName());
-        })
-        .take(1)
-        .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
-        .observeOn(mainThread())
-        .doOnNext(replyBindEvent -> commentRecyclerView.post(() -> Keyboards.show(replyBindEvent.replyField())));
-  }
-
-  /**
-   * The direction of modifications/updates to comments is unidirectional. All mods are made on
-   * {@link CommentTreeConstructor} and {@link CommentsAdapter} subscribes to its updates.
-   */
-  private void setupCommentTree() {
-    // Update header.
-    submissionStream
-        //.filter(submission -> submission.getComments() != null)
-        .observeOn(io())
-        .switchMap(submissionWithComments -> {
-          // Add pending-sync replies to the comment tree.
-          return replyRepository.streamPendingSyncReplies(ParentThread.of(submissionWithComments))
-              .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies));
-        })
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(pair -> {
-          Submission submission = pair.first;
-          List<PendingSyncReply> pendingSyncReplies = pair.second;
-
-          commentTreeConstructor.setSubmission(submission);
-          //noinspection ConstantConditions
-          commentTreeConstructor.setComments(submission.getComments(), pendingSyncReplies);
-        });
-
-    // Adapter data-set.
-    Pair<List<SubmissionCommentRow>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
-    commentTreeConstructor.streamTreeUpdates()
-        .toFlowable(BackpressureStrategy.LATEST)
-        .observeOn(io())
-        .scan(initialPair, (latestPair, nextItems) -> {
-          CommentsDiffCallback callback = new CommentsDiffCallback(latestPair.first, nextItems);
-          DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
-          return Pair.create(nextItems, result);
-        })
-        .skip(1)  // Initial value is dummy.
-        .observeOn(mainThread())
-        .takeUntil(lifecycle().onDestroyFlowable())
-        .subscribe(
-            itemsAndDiff -> {
-              List<SubmissionCommentRow> newComments = itemsAndDiff.first;
-              commentsAdapter.updateData(newComments);
-
-              DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second;
-              //noinspection ConstantConditions
-              commentsDiffResult.dispatchUpdatesTo(commentsAdapter);
-              commentsAdapterDatasetUpdatesStream.accept(newComments);
-            },
-            logError("Error while diff-ing comments")
-        );
-
     // Toggle collapse on comment clicks.
-    commentsAdapter.streamCommentCollapseExpandEvents()
+    submissionCommentsAdapter.streamCommentCollapseExpandEvents()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(clickEvent -> {
           if (clickEvent.willCollapseOnClick()) {
@@ -640,7 +548,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         });
 
     // Load-more-comment clicks.
-    commentsAdapter
+    submissionCommentsAdapter
         .streamLoadMoreCommentsClicks()
         // This distinct() is important. Stupid JRAW inserts new comments directly into
         // the comment tree so if multiple API calls are made, it'll insert duplicate
@@ -667,8 +575,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                 .observeOn(io())
                 .doOnNext(o -> commentTreeConstructor.setMoreCommentsLoading(parentCommentNode, true))
                 .flatMapCompletable(pair -> {
-                  DankSubmissionRequest submissionRequest = pair.first;
-                  Submission submission = pair.second;
+                  DankSubmissionRequest submissionRequest = pair.first();
+                  Submission submission = pair.second();
                   return submissionRepository.loadMoreComments(submission, submissionRequest, parentCommentNode);
                 })
                 .doOnTerminate(() -> commentTreeConstructor.setMoreCommentsLoading(parentCommentNode, false))
@@ -680,10 +588,71 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           Timber.e(error, "Failed to load more comments");
           Toast.makeText(getContext(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
         });
+
+    // Bottom-spacing for FAB.
+    Views.executeOnMeasure(replyFAB, () -> {
+      int spaceForFab = replyFAB.getHeight() + ((ViewGroup.MarginLayoutParams) replyFAB.getLayoutParams()).bottomMargin * 2;
+      Views.setPaddingBottom(commentRecyclerView, spaceForFab);
+    });
+  }
+
+  /**
+   * Scroll to <var>parentContribution</var>'s reply if it's not going to be visible because it's located beyond the visible window.
+   */
+  @CheckResult
+  private Completable scrollToNewlyAddedReplyIfHidden(PublicContribution parentContribution) {
+    if (submissionStream.getValue() == parentContribution) {
+      // Submission reply.
+      return Completable.fromAction(() -> commentRecyclerView.smoothScrollToPosition(SubmissionAdapterWithHeader.HEADER_COUNT));
+    }
+
+    return RxRecyclerViewAdapter.dataChanges(submissionCommentsAdapter)
+        .skipInitialValue()
+        .take(1)
+        .map(adapter -> adapter.getData())
+        .map(newItems -> {
+          int replyPosition = -1;
+          for (int i = 0; i < newItems.size(); i++) {
+            // Find the reply item's position.
+            SubmissionScreenUiModel commentRow = newItems.get(i);
+            if (commentRow instanceof SubmissionInlineReply.UiModel
+                && ((SubmissionInlineReply.UiModel) commentRow).parentContributionFullName().equals(parentContribution.getFullName()))
+            {
+              replyPosition = i;
+              break;
+            }
+          }
+          return replyPosition;
+        })
+        .flatMapCompletable(replyPosition -> Completable.fromAction(() -> {
+          RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition - 1);
+          int parentContributionBottom = parentContributionItemVH.itemView.getBottom() + commentListParentSheet.getTop();
+          boolean isReplyHidden = parentContributionBottom >= submissionPageLayout.getBottom();
+          if (isReplyHidden) {
+            int dy = parentContributionItemVH.itemView.getHeight();
+            commentRecyclerView.smoothScrollBy(0, dy);
+          }
+        }));
+  }
+
+  /**
+   * Wait for <var>parentContribution</var>'s reply View to bind and show keyboard once it's visible.
+   */
+  @CheckResult
+  private Observable<ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(PublicContribution parentContribution) {
+    return submissionCommentsAdapter.streamReplyItemViewBinds()
+        .filter(replyBindEvent -> {
+          // This filter exists so that the keyboard is shown only for the target reply item
+          // instead of another reply item that was found while scrolling to the target reply item.
+          return replyBindEvent.replyItem().parentContribution().getFullName().equals(parentContribution.getFullName());
+        })
+        .take(1)
+        .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
+        .observeOn(mainThread())
+        .doOnNext(replyBindEvent -> commentRecyclerView.post(() -> Keyboards.show(replyBindEvent.replyField())));
   }
 
   private void setupContentImageView(View fragmentLayout) {
-    // TODO: remove margin and set height manually. Update: but why?
     Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
     contentImageViewHolder = new SubmissionImageHolder(
         lifecycle(),
@@ -696,14 +665,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   private void setupContentVideoView() {
-    ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(lifecycle(), contentVideoView);
-
     contentVideoViewHolder = new SubmissionVideoHolder(
         contentVideoView,
         commentListParentSheet,
         contentLoadProgressView,
         submissionPageLayout,
-        exoPlayerManager,
+        ExoPlayerManager.newInstance(lifecycle(), contentVideoView),
         mediaHostRepository,
         httpProxyCacheServer,
         deviceDisplayHeight,
@@ -734,11 +701,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     contentImageView.setOnClickListener(o -> commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate()));
 
     // and on submission title click.
-    commentsHeaderView.setOnClickListener(v -> {
-      if (submissionContentStream.getValue() instanceof MediaLink && commentListParentSheet.isAtMaxScrollY()) {
-        commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate());
-      }
-    });
+    submissionContentStream
+        .ofType(MediaLink.class)
+        .filter(o -> commentListParentSheet.isAtMaxScrollY())
+        .switchMap(o -> submissionCommentsAdapter.streamHeaderClicks())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(v -> commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate()));
 
     // Calculates if the top of the comment sheet is directly below the image.
     Function0<Boolean> isCommentSheetBeneathImageFunc = () -> {
@@ -759,7 +727,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         lastZoom = state.getZoom();
 
         // Scroll the comment sheet along with the image if it's zoomed in. This ensures that the sheet always sticks to the bottom of the image.
-        int minimumGapWithBottom = 0; // TODO.
+        int minimumGapWithBottom = 0;
         int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - Views.statusBarHeight(contentVideoView.getResources());
 
         int boundedVisibleImageHeight = (int) Math.min(contentHeightWithoutKeyboard, contentImageView.getVisibleZoomedImageHeight());
@@ -769,7 +737,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         if (isCommentSheetBeneathImage
             // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
             // it becomes difficult to lock the comments sheet beneath the image.
-            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
+            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
+        {
           commentListParentSheet.scrollTo(boundedVisibleImageHeightMinusToolbar);
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
@@ -787,9 +756,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private void setupReplyFAB() {
     Relay<Boolean> spaceAvailabilityChanges = BehaviorRelay.create();
     ScrollingRecyclerViewSheet.SheetScrollChangeListener sheetScrollChangeListener = sheetScrollY -> {
-      float bylineBottom = submissionBylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
-      boolean fabHasSpaceAvailable = bylineBottom < replyFAB.getTop();
-      spaceAvailabilityChanges.accept(fabHasSpaceAvailable);
+      // TODO.
+      //float bylineBottom = submissionBylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
+      //boolean fabHasSpaceAvailable = bylineBottom < replyFAB.getTop();
+      //spaceAvailabilityChanges.accept(fabHasSpaceAvailable);
     };
     commentListParentSheet.addOnSheetScrollChangeListener(sheetScrollChangeListener);
     commentListParentSheet.post(() ->
@@ -982,14 +952,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribeOn(io())
         .observeOn(mainThread())
         .flatMapObservable(link -> retryLoadRequests.map(o -> link).startWith(link))
-        .doOnNext(o -> {
-          // Hide everything.
-          linkDetailsViewHolder.setVisible(false);
-          selfPostTextView.setVisibility(View.GONE);
-          contentImageView.setVisibility(View.GONE);
-          contentVideoViewContainer.setVisibility(View.GONE);
-          toolbarBackground.setSyncScrollEnabled(false);
-        })
         .flatMapSingle(parsedLink -> {
           if (!(parsedLink instanceof UnresolvedMediaLink)) {
             return Single.just(parsedLink);
@@ -1006,7 +968,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                 if (resolvedLink instanceof ImgurAlbumLink) {
                   String albumCoverImageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
                       submission.getThumbnails(),
-                      linkDetailsViewHolder.getThumbnailWidthForAlbum(),
+                      SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(getContext()),
                       ((ImgurAlbumLink) resolvedLink).coverImageUrl()
                   );
                   return ((ImgurAlbumLink) resolvedLink).withCoverImageUrl(albumCoverImageUrl);
@@ -1026,14 +988,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         })
         .observeOn(mainThread())
         .doOnNext(resolvedLink -> {
-          boolean isImgurAlbum = resolvedLink instanceof ImgurAlbumLink;
-          boolean isRedditHostedLink = resolvedLink.isRedditPage() && !submission.isSelfPost();
-          linkDetailsViewHolder.setVisible(isImgurAlbum || resolvedLink.isExternal() || isRedditHostedLink);
-          selfPostTextView.setVisibility(submission.isSelfPost() ? View.VISIBLE : View.GONE);
           contentImageView.setVisibility(resolvedLink.isImageOrGif() ? View.VISIBLE : View.GONE);
           contentVideoViewContainer.setVisibility(resolvedLink.isVideo() ? View.VISIBLE : View.GONE);
 
-          // Show shadows behind the toolbar because image/video submissions have a transparent toolbar.
+          // Show a shadow behind the toolbar because image/video submissions have a transparent toolbar.
           boolean transparentToolbar = resolvedLink.isImageOrGif() || resolvedLink.isVideo();
           toolbarBackground.setSyncScrollEnabled(transparentToolbar);
         })
@@ -1064,52 +1022,52 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                   break;
 
                 case REDDIT_PAGE:
-                  if (submission.isSelfPost()) {
-                    contentLoadProgressView.hide();
-                    String selfTextHtml = submission.getDataNode().get("selftext_html").asText(submission.getSelftext() /* defaultValue */);
-                    CharSequence markdownHtml = Markdown.parseRedditMarkdownHtml(selfTextHtml, selfPostTextView.getPaint());
-                    selfPostTextView.setVisibility(markdownHtml.length() > 0 ? View.VISIBLE : View.GONE);
-                    selfPostTextView.setText(markdownHtml);
+                  contentLoadProgressView.hide();
 
+                  // TODO.
+                  if (submission.isSelfPost()) {
                   } else {
-                    contentLoadProgressView.hide();
+                    contentLinkStream.accept(Optional.of(resolvedLink));
                     //noinspection ConstantConditions
-                    unsubscribeOnCollapse(
-                        linkDetailsViewHolder.populate(((RedditLink) resolvedLink))
-                    );
-                    linkDetailsView.setOnClickListener(o -> urlRouter.forLink(resolvedLink)
-                        .expandFromBelowToolbar()
-                        .open(getContext())
-                    );
+                    //unsubscribeOnCollapse(
+                    //    linkDetailsViewHolder.populate(((RedditLink) resolvedLink))
+                    //);
+                    //linkDetailsView.setOnClickListener(o -> urlRouter.forLink(resolvedLink)
+                    //    .expandFromBelowToolbar()
+                    //    .open(getContext())
+                    //);
                   }
                   break;
 
                 case MEDIA_ALBUM:
                 case EXTERNAL:
                   contentLoadProgressView.hide();
-                  linkDetailsView.setOnClickListener(o -> urlRouter.forLink(resolvedLink)
-                      .expandFromBelowToolbar()
-                      .open(getContext())
-                  );
+                  contentLinkStream.accept(Optional.of(resolvedLink));
 
-                  if (resolvedLink instanceof ImgurAlbumLink) {
-                    String redditSuppliedThumbnail = mediaHostRepository.findOptimizedQualityImageForDisplay(
-                        submission.getThumbnails(),
-                        linkDetailsViewHolder.getThumbnailWidthForExternalLink(),
-                        ((ImgurAlbumLink) resolvedLink).coverImageUrl()
-                    );
-                    linkDetailsViewHolder.populate(((ImgurAlbumLink) resolvedLink), redditSuppliedThumbnail);
+                  // TODO.
+                  //linkDetailsView.setOnClickListener(o -> urlRouter.forLink(resolvedLink)
+                  //    .expandFromBelowToolbar()
+                  //    .open(getContext())
+                  //);
 
-                  } else {
-                    String redditSuppliedThumbnail = mediaHostRepository.findOptimizedQualityImageForDisplay(
-                        submission.getThumbnails(),
-                        linkDetailsViewHolder.getThumbnailWidthForExternalLink(),
-                        null
-                    );
-                    unsubscribeOnCollapse(
-                        linkDetailsViewHolder.populate(((ExternalLink) resolvedLink), redditSuppliedThumbnail)
-                    );
-                  }
+                  //if (resolvedLink instanceof ImgurAlbumLink) {
+                  //  String redditSuppliedThumbnail = mediaHostRepository.findOptimizedQualityImageForDisplay(
+                  //      submission.getThumbnails(),
+                  //      linkDetailsViewHolder.getThumbnailWidthForExternalLink(),
+                  //      ((ImgurAlbumLink) resolvedLink).coverImageUrl()
+                  //  );
+                  //  linkDetailsViewHolder.populate(((ImgurAlbumLink) resolvedLink), redditSuppliedThumbnail);
+//
+                  //} else {
+                  //  String redditSuppliedThumbnail = mediaHostRepository.findOptimizedQualityImageForDisplay(
+                  //      submission.getThumbnails(),
+                  //      linkDetailsViewHolder.getThumbnailWidthForExternalLink(),
+                  //      null
+                  //  );
+                  //  unsubscribeOnCollapse(
+                  //      linkDetailsViewHolder.populate(((ExternalLink) resolvedLink), redditSuppliedThumbnail)
+                  //  );
+                  //}
                   break;
 
                 case SINGLE_VIDEO:
@@ -1132,8 +1090,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private void handleMediaLoadError(Throwable error, Relay<Object> retryLoadRequests) {
     ResolvedError resolvedError = errorResolver.resolve(error);
     resolvedError.ifUnknown(() -> Timber.e(error));
-    linkDetailsViewHolder.populateMediaLoadError(resolvedError);
-    linkDetailsView.setOnClickListener(o -> retryLoadRequests.accept(NOTHING));
+
+    // TODO.
+    //linkDetailsViewHolder.populateMediaLoadError(resolvedError);
+    //linkDetailsView.setOnClickListener(o -> retryLoadRequests.accept(NOTHING));
   }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //
@@ -1175,24 +1135,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
 
+    contentLinkStream.accept(Optional.empty());
+    submissionCommentsAdapter.updateDataAndNotifyDatasetChanged(null);
+
     //noinspection ConstantConditions
     if (((Callbacks) getContext()).submissionPageAnimationOptimizer().isOptimizationPending()) {
-      linkDetailsViewHolder.setVisible(false);
-      selfPostTextView.setVisibility(View.GONE);
       contentImageView.setVisibility(View.GONE);
       contentVideoViewContainer.setVisibility(View.GONE);
       toolbarBackground.setSyncScrollEnabled(false);
-
-      adapterWithSubmissionHeader.updateSubmission(null);
-      adapterWithSubmissionHeader.notifyDataSetChanged();
-      commentsAdapterWithSubmissionHeaderDatasetUpdatesStream
-          .take(1)
-          .observeOn(mainThread())
-          .takeUntil(lifecycle().onDestroy())
-          .subscribe(submission -> adapterWithSubmissionHeader.notifyDataSetChanged());
     }
-
-    commentsAdapter.updateDataAndNotifyDatasetChanged(null);  // Comment adapter crashes without this.
   }
 
   @Deprecated

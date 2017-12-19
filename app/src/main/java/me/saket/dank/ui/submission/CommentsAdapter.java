@@ -17,7 +17,6 @@ import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
 
-import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
@@ -32,7 +31,6 @@ import butterknife.BindColor;
 import butterknife.BindString;
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
@@ -82,14 +80,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
   private final DraftStore draftStore;
   private final MarkdownHintOptions markdownHintOptions;
   private final MarkdownSpanPool markdownSpanPool;
-  private final BehaviorRelay<CommentClickEvent> commentClickStream = BehaviorRelay.create();
-  private final BehaviorRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = BehaviorRelay.create();
 
   // Manually set by SubmissionFragment.
   private CommentSwipeActionsProvider swipeActionsProvider;
   private String submissionAuthor;
 
   // Click event streams.
+  private final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
+  private final PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = PublishRelay.create();
   private final Relay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
   private final Relay<ReplyInsertGifClickEvent> replyGifClickStream = PublishRelay.create();
   private final Relay<ReplyDiscardClickEvent> replyDiscardClickStream = PublishRelay.create();
@@ -132,46 +130,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
    */
   public void forceDisposeDraftSubscribers() {
     inlineReplyDraftsDisposables.clear();
-  }
-
-  @CheckResult
-  public Observable<CommentClickEvent> streamCommentCollapseExpandEvents() {
-    return commentClickStream;
-  }
-
-  @CheckResult
-  public Observable<LoadMoreCommentsClickEvent> streamLoadMoreCommentsClicks() {
-    return loadMoreCommentsClickStream;
-  }
-
-  @CheckResult
-  public Observable<ReplyDiscardClickEvent> streamReplyDiscardClicks() {
-    return replyDiscardClickStream;
-  }
-
-  @CheckResult
-  public Observable<ReplySendClickEvent> streamReplySendClicks() {
-    return replySendClickStream;
-  }
-
-  @CheckResult
-  public Observable<ReplyRetrySendClickEvent> streamReplyRetrySendClicks() {
-    return replyRetrySendClickStream;
-  }
-
-  @CheckResult
-  public Observable<ReplyInsertGifClickEvent> streamReplyGifClicks() {
-    return replyGifClickStream;
-  }
-
-  @CheckResult
-  public Observable<ReplyFullscreenClickEvent> streamReplyFullscreenClicks() {
-    return replyFullscreenClickStream;
-  }
-
-  @CheckResult
-  public Relay<ReplyItemViewBindEvent> streamReplyItemViewBinds() {
-    return replyViewBindStream;
   }
 
   @Override
@@ -360,7 +318,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     private boolean isCollapsed;
 
     public static UserCommentViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
-      return new UserCommentViewHolder(inflater.inflate(R.layout.list_item_comment, parent, false), linkMovementMethod);
+      return new UserCommentViewHolder(inflater.inflate(R.layout.list_item_submission_comment, parent, false), linkMovementMethod);
     }
 
     public UserCommentViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
@@ -384,7 +342,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       Comment comment = dankCommentNode.commentNode().getComment();
       String authorFlairText = comment.getAuthorFlair() != null ? comment.getAuthorFlair().getText() : null;
       long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
-      String commentBodyHtml = JrawUtils.messageBodyHtml(comment);
+      String commentBodyHtml = JrawUtils.commentBodyHtml(comment);
 
       // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
       int childCommentsCount = dankCommentNode.commentNode().getTotalSize();
@@ -462,7 +420,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindColor(R.color.submission_comment_byline_failed_to_post) int bylineCommentPostErrorColor;
 
     public static PendingSyncReplyViewHolder create(LayoutInflater inflater, ViewGroup parent, BetterLinkMovementMethod linkMovementMethod) {
-      return new PendingSyncReplyViewHolder(inflater.inflate(R.layout.list_item_comment, parent, false), linkMovementMethod);
+      return new PendingSyncReplyViewHolder(inflater.inflate(R.layout.list_item_submission_comment, parent, false), linkMovementMethod);
     }
 
     public PendingSyncReplyViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
@@ -477,12 +435,12 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       if (pendingSyncReply.state() == PendingSyncReply.State.POSTED) {
         byline = constructCommentByline(
             pendingSyncReply.author(),
-            null /* authorFlairText */,
-            true /* isAuthorOP */,
+            null,
+            true,
             pendingSyncReply.createdTimeMillis(),
-            VoteDirection.UPVOTE /* voteDirection */,
-            1 /* commentScore */,
-            0 /* childCommentsCount */,
+            VoteDirection.UPVOTE,
+            1,
+            0,
             commentPendingSyncReplyItem.isCollapsed()
         );
 
@@ -530,7 +488,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     public static InlineReplyViewHolder create(LayoutInflater inflater, ViewGroup parent, MarkdownHintOptions markdownHintOptions,
         MarkdownSpanPool markdownSpanPool)
     {
-      View itemView = inflater.inflate(R.layout.list_item_inline_comment_reply, parent, false);
+      View itemView = inflater.inflate(R.layout.list_item_submission_comments_inline_reply, parent, false);
       return new InlineReplyViewHolder(itemView, markdownHintOptions, markdownSpanPool);
     }
 
@@ -646,7 +604,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_loadmorecomments_indented_container) IndentedLayout indentedContainer;
 
     public static LoadMoreCommentViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-      return new LoadMoreCommentViewHolder(inflater.inflate(R.layout.list_item_comment_load_more, parent, false));
+      return new LoadMoreCommentViewHolder(inflater.inflate(R.layout.list_item_comments_load_more, parent, false));
     }
 
     public LoadMoreCommentViewHolder(View itemView) {

@@ -60,7 +60,7 @@ public class ReplyRepository implements DraftStore {
     this.recycleDraftsOlderThanNumDays = recycleDraftsOlderThanNumDays;
   }
 
-// ======== REPLY ======== //
+// ======== INLINE_REPLY ======== //
 
   /**
    * This exists to ensure a duplicate reply does not get stored when re-sending the same reply.
