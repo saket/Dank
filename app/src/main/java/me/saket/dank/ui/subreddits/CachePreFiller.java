@@ -5,16 +5,15 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Px;
 import android.support.v4.util.Pair;
-
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
-
-import net.dean.jraw.models.CommentSort;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
-
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.functions.Predicate;
+import io.reactivex.schedulers.Schedulers;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -24,12 +23,6 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import io.reactivex.Completable;
-import io.reactivex.Observable;
-import io.reactivex.Scheduler;
-import io.reactivex.functions.Predicate;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.UserPreferences;
@@ -40,9 +33,12 @@ import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionImageHolder;
 import me.saket.dank.ui.submission.SubmissionLinkViewHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;
+import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.UrlParser;
+import net.dean.jraw.models.CommentSort;
+import net.dean.jraw.models.Submission;
 
 /**
  * Pre-fetches submission content and comments.
@@ -117,11 +113,12 @@ public class CachePreFiller {
 
           return submissionAndContentLinkStream
               .filter(submissionContentIsExternalLink())
-              .concatMap(submissionAndLink -> preFillLinkMetadata(submissionAndLink.first, submissionAndLink.second, submissionAlbumLinkThumbnailWidth)
-                  .subscribeOn(scheduler)
-                  //.doOnSubscribe(d -> Timber.i("Caching link: %s", submissionAndLink.first.getTitle()))
-                  .toObservable()
-                  .onErrorResumeNext(Observable.empty())
+              .concatMap(
+                  submissionAndLink -> preFillLinkMetadata(submissionAndLink.first, submissionAndLink.second, submissionAlbumLinkThumbnailWidth)
+                      .subscribeOn(scheduler)
+                      //.doOnSubscribe(d -> Timber.i("Caching link: %s", submissionAndLink.first.getTitle()))
+                      .toObservable()
+                      .onErrorResumeNext(Observable.empty())
               );
         });
 
@@ -156,14 +153,10 @@ public class CachePreFiller {
 
     return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .map(resolvedLink -> {
+          ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
           switch (resolvedLink.type()) {
             case SINGLE_IMAGE_OR_GIF:
-              Thumbnails redditSuppliedImages = submission.getThumbnails();
-              String imageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
-                  redditSuppliedImages,
-                  deviceDisplayWidth,
-                  resolvedLink.lowQualityUrl()
-              );
+              String imageUrl = redditSuppliedImages.findNearestFor(deviceDisplayWidth, resolvedLink.lowQualityUrl());
               return Collections.singletonList(imageUrl);
 
             // We cannot cache the entire album, but we can make the first image available right away.
@@ -172,8 +165,7 @@ public class CachePreFiller {
                 throw new UnsupportedOperationException();
               }
               String firstImageUrl = ((ImgurAlbumLink) resolvedLink).images().get(0).lowQualityUrl();
-              String albumCoverImageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
-                  submission.getThumbnails(),
+              String albumCoverImageUrl = redditSuppliedImages.findNearestFor(
                   submissionAlbumLinkThumbnailWidth,
                   ((ImgurAlbumLink) resolvedLink).coverImageUrl()
               );
@@ -226,11 +218,8 @@ public class CachePreFiller {
     return linkMetadataRepository.unfurl(contentLink)
         .flatMapCompletable(linkMetadata -> {
           String faviconUrl = linkMetadata.faviconUrl();
-          String thumbnailImageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
-              submission.getThumbnails(),
-              submissionAlbumLinkThumbnailWidth,
-              linkMetadata.imageUrl()
-          );
+          ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
+          String thumbnailImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, linkMetadata.imageUrl());
 
           List<String> imagesToDownload = new ArrayList<>(2);
           if (faviconUrl != null) {

@@ -7,17 +7,10 @@ import android.support.annotation.ColorRes;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
-
-import net.dean.jraw.models.Comment;
-import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.VoteDirection;
-
+import io.reactivex.Observable;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
-
-import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
@@ -41,6 +34,10 @@ import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.Urls;
+import net.dean.jraw.models.Comment;
+import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.VoteDirection;
 import timber.log.Timber;
 
 // TODO: Build a subcomponent for SubredditActivity?
@@ -75,10 +72,14 @@ public class SubmissionScreenUiModelConstructor {
       Observable<List<SubmissionCommentRow>> commentRows)
   {
     Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = contentLinks
-        .switchMap(optional -> {
-          if (optional.isPresent()) {
+        .withLatestFrom(submissions, Pair::create)
+        .switchMap(pair -> {
+          Optional<Link> optionalLink = pair.first();
+          if (optionalLink.isPresent()) {
+            ImageWithMultipleVariants redditSuppliedThumbnails = ImageWithMultipleVariants.of(pair.second().getThumbnails());
+            Link link = optionalLink.get();
             return contentLinkUiModelConstructor
-                .streamLoad(context, optional.get())
+                .streamLoad(context, link, redditSuppliedThumbnails)
                 .doOnError(e -> Timber.e(e))
                 .as(Optional.of());
           } else {
@@ -135,7 +136,9 @@ public class SubmissionScreenUiModelConstructor {
     return Observable.combineLatest(submissionHeaderUiModels, commentRowUiModels, Arrays2::concatenate);
   }
 
-  /** Header contains submission details, content link and self-text post. */
+  /**
+   * Header contains submission details, content link and self-text post.
+   */
   private SubmissionCommentsHeader.UiModel headerUiModel(
       Context context,
       Submission submission,
@@ -153,7 +156,7 @@ public class SubmissionScreenUiModelConstructor {
         : Optional.empty();
 
     Truss titleBuilder = new Truss();
-    titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(context, voteDirectionColor)));
+    titleBuilder.pushSpan(new ForegroundColorSpan(color(context, voteDirectionColor)));
     titleBuilder.append(Strings.abbreviateScore(votingManager.getScoreAfterAdjustingPendingVote(submission)));
     titleBuilder.popSpan();
     titleBuilder.append("  ");
@@ -216,7 +219,9 @@ public class SubmissionScreenUiModelConstructor {
         .build();
   }
 
-  /** Reply posted by the logged in user that hasn't synced yet or whose actual comment hasn't been fetched yet. */
+  /**
+   * Reply posted by the logged in user that hasn't synced yet or whose actual comment hasn't been fetched yet.
+   */
   private SubmissionComment.UiModel pendingSyncCommentUiModel(Context context, CommentPendingSyncReplyItem pendingSyncReplyRow) {
     PendingSyncReply pendingSyncReply = pendingSyncReplyRow.pendingSyncReply();
     CharSequence byline;
@@ -268,7 +273,9 @@ public class SubmissionScreenUiModelConstructor {
         .build();
   }
 
-  /** Builds common properties for both comments and pending-sync-replies. */
+  /**
+   * Builds common properties for both comments and pending-sync-replies.
+   */
   private SubmissionComment.UiModel.Builder commentUiModelBuilder(
       Context context,
       String fullName,
@@ -322,7 +329,7 @@ public class SubmissionScreenUiModelConstructor {
         bylineBuilder.append(authorFlairText);
       }
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
-      bylineBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(context, Commons.voteColor(voteDirection))));
+      bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, Commons.voteColor(voteDirection))));
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_score, Strings.abbreviateScore(commentScore)));
       bylineBuilder.popSpan();
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
@@ -338,7 +345,9 @@ public class SubmissionScreenUiModelConstructor {
     return SubmissionInlineReply.UiModel.create(adapterId, authorHint, parentContributionFullName, inlineReplyItem.depth());
   }
 
-  /** For loading more replies of a comment. */
+  /**
+   * For loading more replies of a comment.
+   */
   private SubmissionCommentsLoadMore.UiModel loadMoreUiModel(Context context, LoadMoreCommentItem row) {
     CommentNode parentCommentNode = row.parentCommentNode();
     boolean clickEnabled;

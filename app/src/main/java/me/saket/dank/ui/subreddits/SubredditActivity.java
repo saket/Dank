@@ -58,6 +58,7 @@ import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
+import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
@@ -480,9 +481,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // Cache pre-fill.
     int displayWidth = getResources().getDisplayMetrics().widthPixels;
-    int submissionAlbumLinkThumbnailWidth = getResources().getDimensionPixelSize(R.dimen.submission_link_thumbnail_width_album);
-
-    // TODO.
+    int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
     cachedSubmissionStream
         .withLatestFrom(submissionFolderStream, Pair::create)
         .observeOn(single())

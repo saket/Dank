@@ -12,22 +12,20 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
-
 import javax.inject.Inject;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.FileSizeUnit;
 import me.saket.dank.utils.Views;
@@ -40,6 +38,7 @@ import me.saket.dank.widgets.ProgressWithFileSizeView;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import net.dean.jraw.models.Thumbnails;
 import timber.log.Timber;
 
 public class MediaImageFragment extends BaseMediaViewerFragment {
@@ -158,11 +157,11 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
       imageUrl = mediaAlbumItemToShow.mediaLink().highQualityUrl();
 
     } else {
-      imageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
-          ((MediaFragmentCallbacks) getActivity()).getRedditSuppliedImages(),
-          ((MediaFragmentCallbacks) getActivity()).getDeviceDisplayWidth(),
-          mediaAlbumItemToShow.mediaLink().lowQualityUrl()
-      );
+      //noinspection ConstantConditions
+      Thumbnails redditSuppliedImages = ((MediaFragmentCallbacks) getActivity()).getRedditSuppliedImages();
+      int deviceDisplayWidth = ((MediaFragmentCallbacks) getActivity()).getDeviceDisplayWidth();
+      ImageWithMultipleVariants imageWithMultipleVariants = ImageWithMultipleVariants.of(redditSuppliedImages);
+      imageUrl = imageWithMultipleVariants.findNearestFor(deviceDisplayWidth, mediaAlbumItemToShow.mediaLink().lowQualityUrl());
     }
 
     ImageLoadProgressTarget<Drawable> targetWithProgress = new ImageLoadProgressTarget<>(new DrawableImageViewTarget(imageView), progressView);
@@ -321,12 +320,14 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
       }
 
       @Override
-      public void onStateReset(State oldState, State newState) {}
+      public void onStateReset(State oldState, State newState) {
+      }
     };
     imageView.getController().addOnStateChangeListener(imageScrollListener);
   }
 
   private static class ImageLoadProgressTarget<Z> extends GlideProgressTarget<String, Z> {
+
     private final ProgressWithFileSizeView progressWithFileSizeView;
 
     public ImageLoadProgressTarget(Target<Z> target, ProgressWithFileSizeView progressWithFileSizeView) {

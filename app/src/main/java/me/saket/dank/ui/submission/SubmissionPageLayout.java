@@ -41,7 +41,10 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.Toast;
-
+import butterknife.BindDimen;
+import butterknife.BindDrawable;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.danikula.videocache.HttpProxyCacheServer;
@@ -50,21 +53,6 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
-
-import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.PublicContribution;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
-
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
-
-import butterknife.BindDimen;
-import butterknife.BindDrawable;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -73,6 +61,10 @@ import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
@@ -95,6 +87,7 @@ import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.adapter.SubmissionInlineReply;
@@ -130,6 +123,10 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
+import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Thumbnails;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -623,8 +620,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             // Find the reply item's position.
             SubmissionScreenUiModel commentRow = newItems.get(i);
             if (commentRow instanceof SubmissionInlineReply.UiModel
-                && ((SubmissionInlineReply.UiModel) commentRow).parentContributionFullName().equals(parentContribution.getFullName()))
-            {
+                && ((SubmissionInlineReply.UiModel) commentRow).parentContributionFullName().equals(parentContribution.getFullName())) {
               replyPosition = i;
               break;
             }
@@ -744,8 +740,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         if (isCommentSheetBeneathImage
             // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
             // it becomes difficult to lock the comments sheet beneath the image.
-            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
-        {
+            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
           commentListParentSheet.scrollTo(boundedVisibleImageHeightMinusToolbar);
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
@@ -973,9 +968,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               .map((Link resolvedLink) -> {
                 // Replace Imgur's cover image URL with reddit supplied URL, which will already be cached by Glide.
                 if (resolvedLink instanceof ImgurAlbumLink) {
-                  String albumCoverImageUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
-                      submission.getThumbnails(),
-                      SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(getContext()),
+                  ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
+                  int albumContentLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(getContext());
+                  String albumCoverImageUrl = redditSuppliedImages.findNearestFor(
+                      albumContentLinkThumbnailWidth,
                       ((ImgurAlbumLink) resolvedLink).coverImageUrl()
                   );
                   return ((ImgurAlbumLink) resolvedLink).withCoverImageUrl(albumCoverImageUrl);

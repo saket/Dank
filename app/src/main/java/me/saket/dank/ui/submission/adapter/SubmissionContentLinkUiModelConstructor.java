@@ -9,9 +9,7 @@ import android.support.annotation.ColorRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.graphics.Palette;
 import com.bumptech.glide.Glide;
-import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.FutureTarget;
-import com.bumptech.glide.request.RequestOptions;
 import com.google.auto.value.AutoValue;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -53,11 +51,11 @@ public class SubmissionContentLinkUiModelConstructor {
    * - When thumbnail is loaded.
    * - When tint is generated.
    */
-  public Observable<SubmissionContentLinkUiModel> streamLoad(Context context, Link link) {
+  public Observable<SubmissionContentLinkUiModel> streamLoad(Context context, Link link, ImageWithMultipleVariants redditSuppliedThumbnails) {
     int windowBackgroundColor = ContextCompat.getColor(context, R.color.window_background);
 
     if (link.isExternal()) {
-      return externalLink(context, (ExternalLink) link, windowBackgroundColor)
+      return externalLink(context, (ExternalLink) link, windowBackgroundColor, redditSuppliedThumbnails)
           //.doOnNext(model -> Timber.i("LinkUiModel: [title=%s, icon=%s, thumbnail=%s]", model.title(), model.icon(), model.thumbnail()))
           ;
 
@@ -79,19 +77,22 @@ public class SubmissionContentLinkUiModelConstructor {
   }
 
   // TODO: Use Reddit supplied thumbnail.
-  public Observable<SubmissionContentLinkUiModel> externalLink(Context context, ExternalLink link, int windowBackgroundColor) {
-    // 1. Load title.
-    // 2. Load icon.
-    // 3. Load thumbnail.
-
+  public Observable<SubmissionContentLinkUiModel> externalLink(
+      Context context,
+      ExternalLink link,
+      int windowBackgroundColor,
+      ImageWithMultipleVariants redditSuppliedThumbnails)
+  {
     Single<LinkMetadata> linkMetadataSingle = linkMetadataRepository.unfurl(link).delay(2, TimeUnit.SECONDS);
 
+    // Title.
     Observable<String> sharedTitleStream = linkMetadataSingle
         .toObservable()
         .map(metadata -> metadata.title())
         .startWith(link.unparsedUrl())
         .share();
 
+    // Favicon.
     //noinspection ConstantConditions
     Observable<Optional<Bitmap>> sharedFaviconStream = linkMetadataSingle
         .flatMapObservable(metadata -> metadata.hasFavicon() ? Observable.just(metadata.faviconUrl()) : Observable.empty())
@@ -100,14 +101,25 @@ public class SubmissionContentLinkUiModelConstructor {
         .startWith(Optional.empty())
         .share();
 
-    //noinspection ConstantConditions
-    Observable<Optional<Bitmap>> sharedThumbnailStream = linkMetadataSingle
-        .flatMapObservable(metadata -> metadata.hasImage() ? Observable.just(metadata.imageUrl()) : Observable.empty())
+    // Thumbnail.
+    Observable<Optional<Bitmap>> sharedThumbnailStream = Observable.just(redditSuppliedThumbnails.isNonEmpty())
+        .flatMap(hasRedditSuppliedImages -> {
+          if (hasRedditSuppliedImages) {
+            int thumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(context);
+            return Observable.just(redditSuppliedThumbnails.findNearestFor(thumbnailWidth));
+          } else {
+            //noinspection ConstantConditions
+            return linkMetadataSingle.flatMapObservable(metadata -> metadata.hasImage()
+                ? Observable.just(metadata.imageUrl())
+                : Observable.empty());
+          }
+        })
         .flatMap(imageUrl -> loadImage(context, imageUrl))
         .map(image -> Optional.of(image))
         .startWith(Optional.empty())
         .share();
 
+    // Progress.
     Observable<Boolean> progressVisibleStream = Completable
         .mergeDelayError(asList(sharedTitleStream.ignoreElements(), sharedFaviconStream.ignoreElements(), sharedThumbnailStream.ignoreElements()))
         .andThen(Observable.just(PROGRESS_HIDDEN))
@@ -125,15 +137,15 @@ public class SubmissionContentLinkUiModelConstructor {
         .startWith(defaultTintDetails);
 
     return Observable.combineLatest(sharedTitleStream, sharedFaviconStream, sharedThumbnailStream, tintDetailsStream, progressVisibleStream,
-        (title, faviconOptional, thumbnailOptional, tintDetails, progressVisible) ->
+        (title, optionalFavicon, optionalThumbnail, tintDetails, progressVisible) ->
             SubmissionContentLinkUiModel.builder()
                 .title(title)
                 .titleMaxLines(2)
                 .titleTextColorRes(tintDetails.titleTextColorRes())
                 .byline(Urls.parseDomainName(link.unparsedUrl()))
                 .bylineTextColorRes(tintDetails.bylineTextColorRes())
-                .icon(faviconOptional)
-                .thumbnail(thumbnailOptional)
+                .icon(optionalFavicon)
+                .thumbnail(optionalThumbnail)
                 .progressVisible(progressVisible)
                 .backgroundTintColor(tintDetails.backgroundTint())
                 .build());

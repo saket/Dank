@@ -10,7 +10,9 @@ import android.util.Size;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ProgressBar;
-
+import butterknife.BindColor;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
@@ -20,12 +22,6 @@ import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
-
-import net.dean.jraw.models.Thumbnails;
-
-import butterknife.BindColor;
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -35,6 +31,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
@@ -42,6 +39,7 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
+import net.dean.jraw.models.Thumbnails;
 
 /**
  * Manages showing of content image in {@link SubmissionPageLayout}. Only supports showing a single image right now.
@@ -115,9 +113,11 @@ public class SubmissionImageHolder {
     };
   }
 
-  /** Note: image loading is canceled in {@link #resetViews()}. */
+  /**
+   * Note: image loading is canceled in {@link #resetViews()}.
+   */
   @CheckResult
-  public Completable load(MediaLink contentLink, Thumbnails redditSuppliedImages) {
+  public Completable load(MediaLink contentLink, Thumbnails redditSuppliedThumbnails) {
     if (!LOAD_LOW_QUALITY_IMAGES) {
       throw new AssertionError();
     }
@@ -132,7 +132,7 @@ public class SubmissionImageHolder {
 
     Single<Drawable> imageSingle = Single.create(emitter -> {
       FutureTarget<Drawable> futureTarget = Glide.with(imageView)
-          .load(mediaHostRepository.findOptimizedQualityImageForDisplay(redditSuppliedImages, deviceDisplayWidth, contentLink.lowQualityUrl()))
+          .load(ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplayWidth, contentLink.lowQualityUrl()))
           .apply(new RequestOptions()
               .priority(Priority.IMMEDIATE)
               .transform(glidePaddingTransformation)

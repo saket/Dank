@@ -3,27 +3,20 @@ package me.saket.dank.ui.media;
 import static java.util.Collections.unmodifiableList;
 
 import android.support.annotation.CheckResult;
-import android.support.annotation.Nullable;
-import android.text.Html;
-
 import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
 import com.squareup.moshi.JsonDataException;
 import com.squareup.moshi.Moshi;
-
-import net.dean.jraw.models.Thumbnails;
-
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
-
-import io.reactivex.Observable;
-import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.CachedResolvedLinkInfo;
 import me.saket.dank.data.FileUploadProgressEvent;
@@ -76,6 +69,7 @@ public class MediaHostRepository {
   }
 
   public static class MediaLinkStoreJsonParser implements StoreFilePersister.JsonParser<MediaLink, MediaLink> {
+
     private Moshi moshi;
 
     public MediaLinkStoreJsonParser(Moshi moshi) {
@@ -158,40 +152,6 @@ public class MediaHostRepository {
       imgurImageLinks.add(UrlParser.createImgurLink(imgurImage.url(), imgurImage.title(), imgurImage.description()));
     }
     return imgurImageLinks;
-  }
-
-  /**
-   * Find a thumbnail provided by Reddit that is the closest to <var>optimizeForWidth</var>.
-   * Gives preference to higher-res thumbnails if needed.
-   *
-   * @return Null only if <var>defaultImageUrl</var> is null.
-   */
-  @Nullable
-  public String findOptimizedQualityImageForDisplay(@Nullable Thumbnails redditSuppliedImages, int targetWidth, @Nullable String defaultImageUrl) {
-    // TODO: Why are we even checking if default url is null or an image path?!?
-    if (redditSuppliedImages != null && (defaultImageUrl == null || UrlParser.isImagePath(defaultImageUrl))) {
-      Thumbnails.Image closestImage = redditSuppliedImages.getSource();
-      int closestDifference = targetWidth - redditSuppliedImages.getSource().getWidth();
-
-      for (Thumbnails.Image redditCopy : redditSuppliedImages.getVariations()) {
-        int differenceAbs = Math.abs(targetWidth - redditCopy.getWidth());
-
-        if (differenceAbs < Math.abs(closestDifference)
-            // If another image is found with the same difference, choose the higher-res image.
-            || differenceAbs == closestDifference && redditCopy.getWidth() > closestImage.getWidth())
-        {
-          closestDifference = targetWidth - redditCopy.getWidth();
-          closestImage = redditCopy;
-        }
-      }
-
-      // Reddit sends HTML-escaped URLs.
-      //noinspection deprecation
-      return Html.fromHtml(closestImage.getUrl()).toString();
-
-    } else {
-      return defaultImageUrl;
-    }
   }
 
   /**

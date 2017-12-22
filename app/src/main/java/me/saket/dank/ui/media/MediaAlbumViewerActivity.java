@@ -26,7 +26,9 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
@@ -36,9 +38,8 @@ import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.tbruyelle.rxpermissions2.RxPermissions;
-
-import net.dean.jraw.models.Thumbnails;
-
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -48,12 +49,6 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
-
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
-import io.reactivex.Observable;
-import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
@@ -63,6 +58,7 @@ import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
@@ -76,6 +72,7 @@ import me.saket.dank.widgets.ScrollInterceptibleViewPager;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import net.dean.jraw.models.Thumbnails;
 import timber.log.Timber;
 
 public class MediaAlbumViewerActivity extends DankActivity implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks {
@@ -219,8 +216,8 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         .takeUntil(lifecycle().onDestroy())
         .subscribe(activeMediaItem -> {
           String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
-          String optimizedQualityUrl = mediaHostRepository.findOptimizedQualityImageForDisplay(
-              getRedditSuppliedImages(),
+          ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(getRedditSuppliedImages());
+          String optimizedQualityUrl = imageVariants.findNearestFor(
               getResources().getDisplayMetrics().widthPixels,
               activeMediaItem.mediaLink().lowQualityUrl() /* defaultValue */
           );
@@ -471,18 +468,17 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
       } else {
         emitter.onComplete();
       }
+      emitter.setCancellable(() -> Glide.with(this).clear(highResolutionImageTarget));
     });
 
     Observable<File> optimizedResImageFileStream = Observable.create(emitter -> {
-      String optimizedQualityImageForDevice = mediaHostRepository.findOptimizedQualityImageForDisplay(
-          getRedditSuppliedImages(), getDeviceDisplayWidth(), albumItem.mediaLink().lowQualityUrl()
-      );
+      ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(getRedditSuppliedImages());
+      String optimizedQualityImageForDevice = imageVariants.findNearestFor(getDeviceDisplayWidth(), albumItem.mediaLink().lowQualityUrl());
 
       FutureTarget<File> optimizedResolutionImageTarget = Glide.with(this)
           .download(optimizedQualityImageForDevice)
           .apply(new RequestOptions().onlyRetrieveFromCache(true))
           .submit();
-
       File optimizedResImageFile = optimizedResolutionImageTarget.get();
 
       if (optimizedResImageFile != null) {
@@ -490,6 +486,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
       } else {
         emitter.onComplete();
       }
+      emitter.setCancellable(() -> Glide.with(this).clear(optimizedResolutionImageTarget));
     });
 
     return highResImageFileStream
