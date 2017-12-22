@@ -330,4 +330,12 @@ public class UrlParser {
   private static boolean isVideoPath(String urlPath) {
     return urlPath.endsWith(".mp4") || urlPath.endsWith(".webm");
   }
+
+  public static boolean isGooglePlayUrl(Uri URI) {
+    return URI.getHost().endsWith("play.google.com") && URI.getPath().startsWith("/store");
+  }
+
+  public static boolean isGooglePlayUrl(String urlHost, String uriPath) {
+    return urlHost.endsWith("play.google.com") && uriPath.startsWith("/store");
+  }
 }

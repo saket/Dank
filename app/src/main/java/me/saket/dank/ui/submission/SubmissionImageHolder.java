@@ -130,15 +130,19 @@ public class SubmissionImageHolder {
     //      .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE));
     //}
 
-    FutureTarget<Drawable> futureTarget = Glide.with(imageView)
-        .load(mediaHostRepository.findOptimizedQualityImageForDisplay(redditSuppliedImages, deviceDisplayWidth, contentLink.lowQualityUrl()))
-        .apply(new RequestOptions()
-            .priority(Priority.IMMEDIATE)
-            .transform(glidePaddingTransformation)
-        )
-        .submit();
+    Single<Drawable> imageSingle = Single.create(emitter -> {
+      FutureTarget<Drawable> futureTarget = Glide.with(imageView)
+          .load(mediaHostRepository.findOptimizedQualityImageForDisplay(redditSuppliedImages, deviceDisplayWidth, contentLink.lowQualityUrl()))
+          .apply(new RequestOptions()
+              .priority(Priority.IMMEDIATE)
+              .transform(glidePaddingTransformation)
+          )
+          .submit();
+      emitter.onSuccess(futureTarget.get());
+      emitter.setCancellable(() -> Glide.with(imageView).clear(futureTarget));
+    });
 
-    return Single.fromFuture(futureTarget)
+    return imageSingle
         .subscribeOn(Schedulers.io())
         .observeOn(AndroidSchedulers.mainThread())
         .doOnSuccess(drawable -> imageView.setImageDrawable(drawable))

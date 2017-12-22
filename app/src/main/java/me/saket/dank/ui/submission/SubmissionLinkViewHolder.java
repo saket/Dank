@@ -46,9 +46,9 @@ import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
-import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
+import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
 import me.saket.dank.utils.glide.GlideUtils;
@@ -69,7 +69,7 @@ public class SubmissionLinkViewHolder {
   @BindView(R.id.submission_link_thumbnail) ImageView thumbnailView;
   @BindView(R.id.submission_link_icon) ImageView iconView;
   @BindView(R.id.submission_link_title) TextView titleView;
-TextView subtitleView;
+  TextView subtitleView;
   @BindView(R.id.submission_link_title_container) ViewGroup titleSubtitleContainer;
   @BindView(R.id.submission_link_progress) SubmissionAnimatedProgressBar progressView;
 
@@ -85,9 +85,9 @@ TextView subtitleView;
   @BindColor(R.color.submission_link_background_color) int linkDetailsContainerBackgroundColor;
   @BindColor(R.color.gray_400) int redditLinkIconTintColor;
   @BindColor(R.color.submission_link_title) int titleTextColor;
-  @BindColor(R.color.submission_link_subtitle) int subtitleTextColor;
-  @BindColor(R.color.submission_link_title_dark) int titleTextColorForDarkBackground;
-  @BindColor(R.color.submission_link_subtitle_dark) int subtitleTextColorForDarkBackground;
+  @BindColor(R.color.submission_link_byline) int subtitleTextColor;
+  @BindColor(R.color.submission_link_title_light_background) int titleTextColorForDarkBackground;
+  @BindColor(R.color.submission_link_byline_light_background) int subtitleTextColorForDarkBackground;
 
   private final LinkMetadataRepository linkMetadataRepository;
   private final ViewGroup linkDetailsContainer;
@@ -468,6 +468,6 @@ TextView subtitleView;
 
   public static boolean isGooglePlayLink(String url) {
     Uri URI = Uri.parse(url);
-    return UrlRouter.isGooglePlayUrl(URI.getHost(), URI.getPath());
+    return UrlParser.isGooglePlayUrl(URI.getHost(), URI.getPath());
   }
 }

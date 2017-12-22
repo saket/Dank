@@ -42,10 +42,12 @@ import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.Urls;
+import timber.log.Timber;
 
 // TODO: Build a subcomponent for SubredditActivity?
 public class SubmissionScreenUiModelConstructor {
 
+  private final SubmissionContentLinkUiModelConstructor contentLinkUiModelConstructor;
   private final ReplyRepository replyRepository;
   private final VotingManager votingManager;
   private final Markdown markdown;
@@ -56,11 +58,13 @@ public class SubmissionScreenUiModelConstructor {
 
   @Inject
   public SubmissionScreenUiModelConstructor(
+      SubmissionContentLinkUiModelConstructor contentLinkUiModelConstructor,
       ReplyRepository replyRepository,
       VotingManager votingManager,
       Markdown markdown,
       UserSessionRepository userSessionRepository)
   {
+    this.contentLinkUiModelConstructor = contentLinkUiModelConstructor;
     this.replyRepository = replyRepository;
     this.votingManager = votingManager;
     this.markdown = markdown;
@@ -80,11 +84,17 @@ public class SubmissionScreenUiModelConstructor {
 
   @CheckResult
   public Observable<List<SubmissionScreenUiModel>> stream(Context context) {
-    Observable<Optional<SubmissionCommentsHeader.ContentLinkUiModel>> contentLinkUiModels = contentLinks.map(optional ->
-        optional.isPresent()
-            ? Optional.of(contentLinkUiModel(optional.get()))
-            : Optional.empty()
-    );
+    Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = contentLinks
+        .switchMap(optional -> {
+          if (optional.isPresent()) {
+            return contentLinkUiModelConstructor
+                .streamLoad(context, optional.get())
+                .doOnNext(model -> Timber.i("LinkUiModel: [title=%s, icon=%s, thumbnail=%s]", model.title(), model.icon(), model.thumbnail()))
+                .as(Optional.of());
+          } else {
+            return Observable.just(Optional.empty());
+          }
+        });
 
     Observable<Integer> submissionPendingSyncReplyCounts = submissions
         .switchMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
@@ -95,7 +105,7 @@ public class SubmissionScreenUiModelConstructor {
         .map(trio -> {
           Submission submission = trio.first();
           Integer pendingSyncReplyCount = trio.second();
-          Optional<SubmissionCommentsHeader.ContentLinkUiModel> contentLinkUiModel = trio.third();
+          Optional<SubmissionContentLinkUiModel> contentLinkUiModel = trio.third();
           return headerUiModel(context, submission, pendingSyncReplyCount, contentLinkUiModel);
         });
 
@@ -140,7 +150,7 @@ public class SubmissionScreenUiModelConstructor {
       Context context,
       Submission submission,
       int pendingSyncReplyCount,
-      Optional<SubmissionCommentsHeader.ContentLinkUiModel> contentLinkUiModel)
+      Optional<SubmissionContentLinkUiModel> contentLinkUiModel)
   {
     VoteDirection pendingOrDefaultVote = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
     int voteDirectionColor = Commons.voteColor(pendingOrDefaultVote);
@@ -172,8 +182,8 @@ public class SubmissionScreenUiModelConstructor {
   }
 
   // TODO.
-  private SubmissionCommentsHeader.ContentLinkUiModel contentLinkUiModel(Link link) {
-    return SubmissionCommentsHeader.ContentLinkUiModel.builder()
+  private SubmissionContentLinkUiModel contentLinkUiModel(Link link) {
+    return SubmissionContentLinkUiModel.builder()
         .title(link.unparsedUrl())
         .byline(Urls.parseDomainName(link.unparsedUrl()))
         .icon(null)

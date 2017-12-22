@@ -25,6 +25,7 @@ import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.webview.WebViewActivity;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
+import me.saket.dank.utils.UrlParser;
 
 @Singleton
 public class UrlRouter {
@@ -174,16 +175,12 @@ public class UrlRouter {
     if (urlHost.endsWith("youtube.com") || urlHost.endsWith("youtu.be")) {
       return "com.google.android.youtube";
 
-    } else if (isGooglePlayUrl(urlHost, URI.getPath())) {
+    } else if (UrlParser.isGooglePlayUrl(urlHost, URI.getPath())) {
       return "com.android.vending";
 
     } else {
       return null;
     }
-  }
-
-  public static boolean isGooglePlayUrl(String urlHost, String uriPath) {
-    return urlHost.endsWith("play.google.com") && uriPath.startsWith("/store");
   }
 
   public static boolean isPackageNameInstalled(Context context, String packageName) {

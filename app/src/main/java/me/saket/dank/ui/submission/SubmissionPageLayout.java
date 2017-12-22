@@ -360,7 +360,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second();
               commentsDiffResult.dispatchUpdatesTo(submissionCommentsAdapter);
             },
-            logError("Error while diff-ing comments")
+            logError("Error while streaming comments")
         );
 
     lifecycle().onPageCollapse()

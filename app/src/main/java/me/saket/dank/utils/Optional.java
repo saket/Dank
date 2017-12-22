@@ -33,6 +33,8 @@ import com.google.auto.value.AutoValue;
 import java.util.NoSuchElementException;
 import java.util.Objects;
 
+import io.reactivex.Observable;
+import io.reactivex.ObservableConverter;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
 
@@ -83,6 +85,14 @@ public abstract class Optional<T> {
    */
   public static <T> Optional<T> of(T value) {
     return new AutoValue_Optional<>(Objects.requireNonNull(value));
+  }
+
+  /**
+   * Use with {@link Observable#as(ObservableConverter)}.
+   * Convenience for Observable#map(item -> Optional.of(item)).
+   */
+  public static <T> ObservableConverter<T, Observable<Optional<T>>> of() {
+    return upstream -> upstream.map(item -> Optional.of(item));
   }
 
   /**

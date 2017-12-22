@@ -64,7 +64,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
     switch (VIEW_TYPES[viewType]) {
       case SUBMISSION_HEADER:
-        return SubmissionCommentsHeader.ViewHolder.create(inflater, parent);
+        return SubmissionCommentsHeader.ViewHolder.create(inflater, parent, headerClickStream);
 
       case COMMENTS_LOADING_PROGRESS:
         return SubmissionCommentsLoadingProgress.ViewHolder.create(inflater, parent);
@@ -89,7 +89,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
       case SUBMISSION_HEADER:
         SubmissionCommentsHeader.ViewHolder headerVH = (SubmissionCommentsHeader.ViewHolder) holder;
         SubmissionCommentsHeader.UiModel headerUiModel = (SubmissionCommentsHeader.UiModel) getItem(position);
-        headerVH.bind(headerUiModel, linkMovementMethod, headerClickStream);
+        headerVH.bind(headerUiModel, linkMovementMethod);
         break;
 
       case COMMENTS_LOADING_PROGRESS:

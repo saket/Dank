@@ -60,9 +60,9 @@
 
   <!-- Submission -->
   <color name="submission_link_title">@color/white_opacity_90</color>
-  <color name="submission_link_subtitle">@color/white_opacity_50</color>
-  <color name="submission_link_title_dark">@color/black_opacity_90</color>
-  <color name="submission_link_subtitle_dark">@color/black_opacity_50</color>
+  <color name="submission_link_byline">@color/white_opacity_50</color>
+  <color name="submission_link_title_light_background">@color/black_opacity_90</color>
+  <color name="submission_link_byline_light_background">@color/black_opacity_50</color>
   <color name="submission_link_background_color">#3A3A3A</color>
   <color name="submission_comment_byline_author">@color/blue_gray_300</color>
   <color name="submission_comment_byline_author_op">@color/color_accent</color>

@@ -1,8 +1,6 @@
 package me.saket.dank.ui.submission.adapter;
 
 import android.content.Context;
-import android.graphics.Bitmap;
-import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -17,6 +15,7 @@ import com.jakewharton.rxrelay2.Relay;
 import me.saket.dank.R;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
@@ -37,7 +36,7 @@ public interface SubmissionCommentsHeader {
 
     public abstract Optional<CharSequence> selfText();
 
-    public abstract Optional<ContentLinkUiModel> contentLink();
+    public abstract Optional<SubmissionContentLinkUiModel> contentLink();
 
     @Override
     public SubmissionCommentRowType type() {
@@ -49,47 +48,9 @@ public interface SubmissionCommentsHeader {
         CharSequence title,
         CharSequence byline,
         Optional<CharSequence> selfText,
-        Optional<ContentLinkUiModel> contentLink)
+        Optional<SubmissionContentLinkUiModel> contentLink)
     {
       return new AutoValue_SubmissionCommentsHeader_UiModel(adapterId, title, byline, selfText, contentLink);
-    }
-  }
-
-  @AutoValue
-  abstract class ContentLinkUiModel {
-    public abstract CharSequence title();
-
-    public abstract CharSequence byline();
-
-    @Nullable
-    public abstract Bitmap icon();
-
-    @Nullable
-    public abstract Bitmap thumbnail();
-
-    public abstract int titleMaxLines();
-
-    public abstract boolean progressVisible();
-
-    public static ContentLinkUiModel.Builder builder() {
-      return new AutoValue_SubmissionCommentsHeader_ContentLinkUiModel.Builder();
-    }
-
-    @AutoValue.Builder
-    public abstract static class Builder {
-      public abstract Builder title(CharSequence title);
-
-      public abstract Builder byline(CharSequence byline);
-
-      public abstract Builder icon(Bitmap icon);
-
-      public abstract Builder thumbnail(Bitmap thumbnail);
-
-      public abstract Builder titleMaxLines(int maxLines);
-
-      public abstract Builder progressVisible(boolean visible);
-
-      public abstract ContentLinkUiModel build();
     }
   }
 
@@ -104,8 +65,10 @@ public interface SubmissionCommentsHeader {
     private final TextView contentLinkBylineView;
     private final ProgressBar contentLinkProgressView;
 
-    public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-      return new ViewHolder(inflater.inflate(R.layout.list_item_submission_comments_header, parent, false));
+    public static ViewHolder create(LayoutInflater inflater, ViewGroup parent, Relay<Object> headerClickStream) {
+      ViewHolder holder = new ViewHolder(inflater.inflate(R.layout.list_item_submission_comments_header, parent, false));
+      holder.itemView.setOnClickListener(v -> headerClickStream.accept(LifecycleStreams.NOTHING));
+      return holder;
     }
 
     public ViewHolder(View itemView) {
@@ -121,7 +84,7 @@ public interface SubmissionCommentsHeader {
       contentLinkProgressView = itemView.findViewById(R.id.submission_link_progress);
     }
 
-    public void bind(UiModel uiModel, DankLinkMovementMethod movementMethod, Relay<Object> headerClickStream) {
+    public void bind(UiModel uiModel, DankLinkMovementMethod movementMethod) {
       titleView.setText(uiModel.title());
       bylineView.setText(uiModel.byline());
 
@@ -130,17 +93,17 @@ public interface SubmissionCommentsHeader {
       selfTextView.setMovementMethod(movementMethod);
 
       if (uiModel.contentLink().isPresent()) {
-        ContentLinkUiModel contentLinkUiModel = uiModel.contentLink().get();
+        SubmissionContentLinkUiModel contentLinkUiModel = uiModel.contentLink().get();
         contentLinkView.setVisibility(View.VISIBLE);
 
         contentLinkTitleView.setText(contentLinkUiModel.title());
         contentLinkBylineView.setText(contentLinkUiModel.byline());
         contentLinkProgressView.setVisibility(contentLinkUiModel.progressVisible() ? View.VISIBLE : View.GONE);
-        if (contentLinkUiModel.icon() != null) {
-          contentLinkIconView.setImageBitmap(contentLinkUiModel.icon());
+        if (contentLinkUiModel.icon().isPresent()) {
+          contentLinkIconView.setImageBitmap(contentLinkUiModel.icon().get());
         }
-        if (contentLinkUiModel.thumbnail() != null) {
-          contentLinkThumbnailView.setImageBitmap(contentLinkUiModel.thumbnail());
+        if (contentLinkUiModel.thumbnail().isPresent()) {
+          contentLinkThumbnailView.setImageBitmap(contentLinkUiModel.thumbnail().get());
         }
 
       } else {
