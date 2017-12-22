@@ -16,7 +16,6 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.util.Pair;
 import android.support.v7.widget.DefaultItemAnimator;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -62,6 +61,7 @@ import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
+import me.saket.dank.utils.Pair;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
@@ -427,7 +427,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             refreshStatusStream.startWith(NetworkCallStatus.createIdle()),
             (pagination, refresh) -> Pair.create(pagination, refresh)
         ),
-        (submissions, pair) -> SubmissionListUiModel.create(submissions, pair.first, pair.second)
+        (submissions, pair) -> SubmissionListUiModel.create(submissions, pair.first(), pair.second())
     );
 
     submissionListUiModelStream
@@ -482,11 +482,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     int displayWidth = getResources().getDisplayMetrics().widthPixels;
     int submissionAlbumLinkThumbnailWidth = getResources().getDimensionPixelSize(R.dimen.submission_link_thumbnail_width_album);
 
+    // TODO.
     cachedSubmissionStream
         .withLatestFrom(submissionFolderStream, Pair::create)
         .observeOn(single())
-        .flatMap(pair -> subscriptionManager.isSubscribed(pair.second.subredditName())
-            .flatMap(isSubscribed -> isSubscribed ? Observable.just(pair.first) : Observable.never())
+        .flatMap(pair -> subscriptionManager.isSubscribed(pair.second().subredditName())
+            .flatMap(isSubscribed -> isSubscribed ? Observable.just(pair.first()) : Observable.never())
         )
         .switchMap(cachedSubmissions -> cachePreFiller.preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
             .toObservable()

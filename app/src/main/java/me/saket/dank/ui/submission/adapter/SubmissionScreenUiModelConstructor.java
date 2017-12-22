@@ -23,7 +23,6 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.submission.CommentInlineReplyItem;
 import me.saket.dank.ui.submission.CommentPendingSyncReplyItem;
-import me.saket.dank.ui.submission.CommentTreeConstructor;
 import me.saket.dank.ui.submission.DankCommentNode;
 import me.saket.dank.ui.submission.LoadMoreCommentItem;
 import me.saket.dank.ui.submission.ParentThread;
@@ -52,9 +51,6 @@ public class SubmissionScreenUiModelConstructor {
   private final VotingManager votingManager;
   private final Markdown markdown;
   private final UserSessionRepository userSessionRepository;
-  private CommentTreeConstructor commentTreeConstructor;
-  private Observable<Submission> submissions;
-  private Observable<Optional<Link>> contentLinks;
 
   @Inject
   public SubmissionScreenUiModelConstructor(
@@ -71,25 +67,19 @@ public class SubmissionScreenUiModelConstructor {
     this.userSessionRepository = userSessionRepository;
   }
 
-  // Should ideally be doing this through Dagger.
-  public void setup(
-      CommentTreeConstructor commentTreeConstructor,
-      Observable<Submission> submissions,
-      Observable<Optional<Link>> contentLinks)
-  {
-    this.commentTreeConstructor = commentTreeConstructor;
-    this.submissions = submissions;
-    this.contentLinks = contentLinks;
-  }
-
   @CheckResult
-  public Observable<List<SubmissionScreenUiModel>> stream(Context context) {
+  public Observable<List<SubmissionScreenUiModel>> stream(
+      Context context,
+      Observable<Submission> submissions,
+      Observable<Optional<Link>> contentLinks,
+      Observable<List<SubmissionCommentRow>> commentRows)
+  {
     Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = contentLinks
         .switchMap(optional -> {
           if (optional.isPresent()) {
             return contentLinkUiModelConstructor
                 .streamLoad(context, optional.get())
-                .doOnNext(model -> Timber.i("LinkUiModel: [title=%s, icon=%s, thumbnail=%s]", model.title(), model.icon(), model.thumbnail()))
+                .doOnError(e -> Timber.e(e))
                 .as(Optional.of());
           } else {
             return Observable.just(Optional.empty());
@@ -109,7 +99,7 @@ public class SubmissionScreenUiModelConstructor {
           return headerUiModel(context, submission, pendingSyncReplyCount, contentLinkUiModel);
         });
 
-    Observable<List<SubmissionScreenUiModel>> commentRowUiModels = commentTreeConstructor.streamTreeUpdates()
+    Observable<List<SubmissionScreenUiModel>> commentRowUiModels = commentRows
         .withLatestFrom(submissions.map(submission -> submission.getAuthor()), Pair::create)
         .map(pair -> {
           List<SubmissionCommentRow> rows = pair.first();

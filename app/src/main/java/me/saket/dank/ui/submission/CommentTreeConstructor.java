@@ -19,9 +19,9 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import io.reactivex.schedulers.Schedulers;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more"
@@ -37,6 +37,7 @@ public class CommentTreeConstructor {
   private CommentNode rootCommentNode;
   private Submission submission;
 
+  @Inject
   public CommentTreeConstructor() {
   }
 
@@ -77,7 +78,6 @@ public class CommentTreeConstructor {
           }
           return o;
         })
-        .observeOn(Schedulers.io())
         .map(o -> constructComments())
         .map(toImmutable());
   }

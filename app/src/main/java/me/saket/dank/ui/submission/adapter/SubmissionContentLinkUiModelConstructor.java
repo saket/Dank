@@ -8,16 +8,16 @@ import android.net.Uri;
 import android.support.annotation.ColorRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.graphics.Palette;
-
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.DiskCacheStrategy;
 import com.bumptech.glide.request.FutureTarget;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.auto.value.AutoValue;
-
-import javax.inject.Inject;
-
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ExternalLink;
@@ -36,6 +36,8 @@ import timber.log.Timber;
  */
 public class SubmissionContentLinkUiModelConstructor {
 
+  private static final boolean PROGRESS_VISIBLE = true;
+  private static final boolean PROGRESS_HIDDEN = false;
   private final LinkMetadataRepository linkMetadataRepository;
 
   @Inject
@@ -55,7 +57,9 @@ public class SubmissionContentLinkUiModelConstructor {
     int windowBackgroundColor = ContextCompat.getColor(context, R.color.window_background);
 
     if (link.isExternal()) {
-      return externalLink(context, (ExternalLink) link, windowBackgroundColor);
+      return externalLink(context, (ExternalLink) link, windowBackgroundColor)
+          //.doOnNext(model -> Timber.i("LinkUiModel: [title=%s, icon=%s, thumbnail=%s]", model.title(), model.icon(), model.thumbnail()))
+          ;
 
     } else {
       Timber.i("link: %s ", link.unparsedUrl());
@@ -80,7 +84,7 @@ public class SubmissionContentLinkUiModelConstructor {
     // 2. Load icon.
     // 3. Load thumbnail.
 
-    Single<LinkMetadata> linkMetadataSingle = linkMetadataRepository.unfurl(link);
+    Single<LinkMetadata> linkMetadataSingle = linkMetadataRepository.unfurl(link).delay(2, TimeUnit.SECONDS);
 
     Observable<String> sharedTitleStream = linkMetadataSingle
         .toObservable()
@@ -88,29 +92,17 @@ public class SubmissionContentLinkUiModelConstructor {
         .startWith(link.unparsedUrl())
         .share();
 
+    //noinspection ConstantConditions
     Observable<Optional<Bitmap>> sharedFaviconStream = linkMetadataSingle
-        .flatMapObservable(metadata -> {
-          if (metadata.hasFavicon()) {
-            //noinspection ConstantConditions
-            return Observable.just(metadata.faviconUrl());
-          } else {
-            return Observable.empty();
-          }
-        })
+        .flatMapObservable(metadata -> metadata.hasFavicon() ? Observable.just(metadata.faviconUrl()) : Observable.empty())
         .flatMap(faviconUrl -> loadImage(context, faviconUrl))
         .map(favicon -> Optional.of(favicon))
         .startWith(Optional.empty())
         .share();
 
+    //noinspection ConstantConditions
     Observable<Optional<Bitmap>> sharedThumbnailStream = linkMetadataSingle
-        .flatMapObservable(metadata -> {
-          if (metadata.hasImage()) {
-            //noinspection ConstantConditions
-            return Observable.just(metadata.imageUrl());
-          } else {
-            return Observable.empty();
-          }
-        })
+        .flatMapObservable(metadata -> metadata.hasImage() ? Observable.just(metadata.imageUrl()) : Observable.empty())
         .flatMap(imageUrl -> loadImage(context, imageUrl))
         .map(image -> Optional.of(image))
         .startWith(Optional.empty())
@@ -118,9 +110,9 @@ public class SubmissionContentLinkUiModelConstructor {
 
     Observable<Boolean> progressVisibleStream = Completable
         .mergeDelayError(asList(sharedTitleStream.ignoreElements(), sharedFaviconStream.ignoreElements(), sharedThumbnailStream.ignoreElements()))
-        .andThen(Observable.just(false))
-        .onErrorReturnItem(false)
-        .startWith(false);
+        .andThen(Observable.just(PROGRESS_HIDDEN))
+        .onErrorReturnItem(PROGRESS_HIDDEN)
+        .startWith(PROGRESS_VISIBLE);
 
     TintDetails defaultTintDetails = TintDetails.create(Optional.empty(), R.color.submission_link_title, R.color.submission_link_byline);
     boolean isGooglePlayThumbnail = UrlParser.isGooglePlayUrl(Uri.parse(link.unparsedUrl()));
@@ -148,15 +140,20 @@ public class SubmissionContentLinkUiModelConstructor {
   }
 
   private Observable<Bitmap> loadImage(Context context, String faviconUrl) {
-    return Observable.create(emitter -> {
-      FutureTarget<Bitmap> futureTarget = Glide.with(context)
-          .asBitmap()
-          .load(faviconUrl)
-          .submit();
-      emitter.onNext(futureTarget.get());
-      emitter.onComplete();
-      emitter.setCancellable(() -> Glide.with(context).clear(futureTarget));
-    });
+    return Observable
+        .<Bitmap>create(emitter -> {
+          FutureTarget<Bitmap> futureTarget = Glide.with(context)
+              .asBitmap()
+              .load(faviconUrl)
+              .submit();
+          emitter.onNext(futureTarget.get());
+          emitter.onComplete();
+          emitter.setCancellable(() -> Glide.with(context).clear(futureTarget));
+        })
+        .onErrorResumeNext(error -> {
+          Timber.e(error.getMessage());
+          return Observable.empty();
+        });
   }
 
   private Single<TintDetails> generateTint(Bitmap bitmap, boolean isGooglePlayThumbnail, int windowBackgroundColor) {
@@ -195,6 +192,7 @@ public class SubmissionContentLinkUiModelConstructor {
 
   @AutoValue
   abstract static class TintDetails {
+
     public abstract Optional<Integer> backgroundTint();
 
     @ColorRes

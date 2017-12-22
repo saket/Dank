@@ -1,6 +1,8 @@
 package me.saket.dank.ui.submission.adapter;
 
 import android.content.Context;
+import android.graphics.Bitmap;
+import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -55,8 +57,8 @@ public interface SubmissionCommentsHeader {
   }
 
   class ViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
-    private TextView titleView;
-    private TextView bylineView;
+    private final TextView titleView;
+    private final TextView bylineView;
     private final TextView selfTextView;
     private final ViewGroup contentLinkView;
     private final ImageView contentLinkIconView;
@@ -95,16 +97,26 @@ public interface SubmissionCommentsHeader {
       if (uiModel.contentLink().isPresent()) {
         SubmissionContentLinkUiModel contentLinkUiModel = uiModel.contentLink().get();
         contentLinkView.setVisibility(View.VISIBLE);
+        contentLinkProgressView.setVisibility(contentLinkUiModel.progressVisible() ? View.VISIBLE : View.GONE);
 
         contentLinkTitleView.setText(contentLinkUiModel.title());
         contentLinkBylineView.setText(contentLinkUiModel.byline());
-        contentLinkProgressView.setVisibility(contentLinkUiModel.progressVisible() ? View.VISIBLE : View.GONE);
-        if (contentLinkUiModel.icon().isPresent()) {
-          contentLinkIconView.setImageBitmap(contentLinkUiModel.icon().get());
+
+        Context context = itemView.getContext();
+        contentLinkTitleView.setTextColor(ContextCompat.getColor(context, contentLinkUiModel.titleTextColorRes()));
+        contentLinkBylineView.setTextColor(ContextCompat.getColor(context, contentLinkUiModel.bylineTextColorRes()));
+
+        if (contentLinkUiModel.backgroundTintColor().isPresent()) {
+          contentLinkView.getBackground().mutate().setTint(contentLinkUiModel.backgroundTintColor().get());
+        } else {
+          contentLinkView.getBackground().mutate().setTintList(null);
         }
-        if (contentLinkUiModel.thumbnail().isPresent()) {
-          contentLinkThumbnailView.setImageBitmap(contentLinkUiModel.thumbnail().get());
-        }
+
+        Bitmap favicon = contentLinkUiModel.icon().isPresent() ? contentLinkUiModel.icon().get() : null;
+        contentLinkIconView.setImageBitmap(favicon);
+
+        Bitmap thumbnail = contentLinkUiModel.thumbnail().isPresent() ? contentLinkUiModel.thumbnail().get() : null;
+        contentLinkThumbnailView.setImageBitmap(thumbnail);
 
       } else {
         contentLinkView.setVisibility(View.GONE);

@@ -46,7 +46,6 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
-import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerViewAdapter;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
@@ -68,6 +67,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
@@ -174,6 +174,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject HttpProxyCacheServer httpProxyCacheServer;
   @Inject SubmissionScreenUiModelConstructor submissionScreenUiModelConstructor;
   @Inject SubmissionCommentsAdapter submissionCommentsAdapter;
+  @Inject CommentTreeConstructor commentTreeConstructor;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Submission> submissionStream = BehaviorRelay.create();
@@ -184,7 +185,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
 
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
-  private CommentTreeConstructor commentTreeConstructor;
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
@@ -330,6 +330,21 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    * {@link CommentsAdapter} subscribes to its updates.
    */
   private void setupCommentRecyclerView() {
+    // TODO: Set window background to items only while animating.
+    int commentItemViewElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
+    SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator(commentItemViewElevation).withInterpolator(Animations.INTERPOLATOR);
+    itemAnimator.setRemoveDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
+    itemAnimator.setAddDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
+    //commentRecyclerView.setItemAnimator(itemAnimator);
+
+    // RecyclerView automatically handles saving and restoring scroll position if the
+    // adapter contents are the same once the adapter is set. So we're setting the
+    // adapter only once we've the data.
+    submissionCommentsAdapter.dataChanges()
+        .take(1)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> commentRecyclerView.setAdapter(submissionCommentsAdapter));
+
     // Add pending-sync replies to the comment tree.
     submissionStream
         .observeOn(io())
@@ -342,16 +357,24 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           commentTreeConstructor.update(submission, submission.getComments(), pendingSyncReplies);
         });
 
-    commentTreeConstructor = new CommentTreeConstructor();
-    submissionScreenUiModelConstructor.setup(commentTreeConstructor, submissionStream, contentLinkStream);
-
     // Adapter data-set.
-    submissionScreenUiModelConstructor.stream(getContext())
+    submissionScreenUiModelConstructor
+        .stream(
+            getContext(),
+            submissionStream.observeOn(io()),
+            contentLinkStream.observeOn(io()),
+            commentTreeConstructor.streamTreeUpdates().observeOn(io())
+        )
         .toFlowable(BackpressureStrategy.LATEST)
-        .observeOn(io())
         .compose(RxDiffUtils.calculateDiff(CommentsDiffCallback::create))
+        .subscribeOn(io())
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroyFlowable())
+        .onErrorResumeNext(error -> {
+          // TODO: Handle load error.
+          Timber.e(error);
+          return Flowable.never();
+        })
         .subscribe(
             itemsAndDiff -> {
               List<SubmissionScreenUiModel> newComments = itemsAndDiff.first();
@@ -367,6 +390,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .startWith(LifecycleStreams.NOTHING)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> {
+          Timber.d("Page collapse");
           contentLinkStream.accept(Optional.empty());
           contentImageView.setVisibility(View.GONE);
           contentVideoViewContainer.setVisibility(View.GONE);
@@ -385,22 +409,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     });
     commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
     commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
-
-    // TODO: Set window background to items only while animating.
-    int commentItemViewElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
-    SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator(commentItemViewElevation).withInterpolator(Animations.INTERPOLATOR);
-    itemAnimator.setRemoveDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
-    itemAnimator.setAddDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
-    commentRecyclerView.setItemAnimator(itemAnimator);
-
-    // RecyclerView automatically handles saving and restoring scroll position if the
-    // adapter contents are the same once the adapter is set. So we're setting the
-    // adapter only once we've the data.
-    RxRecyclerViewAdapter.dataChanges(submissionCommentsAdapter)
-        .skipInitialValue()
-        .take(1)
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> commentRecyclerView.setAdapter(submissionCommentsAdapter));
 
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
@@ -606,8 +614,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       return Completable.fromAction(() -> commentRecyclerView.smoothScrollToPosition(SubmissionAdapterWithHeader.HEADER_COUNT));
     }
 
-    return RxRecyclerViewAdapter.dataChanges(submissionCommentsAdapter)
-        .skipInitialValue()
+    return submissionCommentsAdapter.dataChanges()
         .take(1)
         .map(adapter -> adapter.getData())
         .map(newItems -> {
@@ -1135,7 +1142,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
 
-    contentLinkStream.accept(Optional.empty());
     submissionCommentsAdapter.updateDataAndNotifyDatasetChanged(null);
 
     //noinspection ConstantConditions
