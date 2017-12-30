@@ -7,10 +7,17 @@ import android.support.annotation.ColorRes;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
-import io.reactivex.Observable;
+
+import net.dean.jraw.models.Comment;
+import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.VoteDirection;
+
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
+
+import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
@@ -33,11 +40,6 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.Truss;
-import me.saket.dank.utils.Urls;
-import net.dean.jraw.models.Comment;
-import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.VoteDirection;
 import timber.log.Timber;
 
 // TODO: Build a subcomponent for SubredditActivity?
@@ -172,18 +174,6 @@ public class SubmissionScreenUiModelConstructor {
     );
 
     return SubmissionCommentsHeader.UiModel.create(adapterId, title, byline, selfTextOptional, contentLinkUiModel);
-  }
-
-  // TODO.
-  private SubmissionContentLinkUiModel contentLinkUiModel(Link link) {
-    return SubmissionContentLinkUiModel.builder()
-        .title(link.unparsedUrl())
-        .byline(Urls.parseDomainName(link.unparsedUrl()))
-        .icon(null)
-        .thumbnail(null)
-        .progressVisible(false)
-        .titleMaxLines(2)
-        .build();
   }
 
   private SubmissionComment.UiModel commentUiModel(Context context, DankCommentNode dankCommentNode, String submissionAuthor) {

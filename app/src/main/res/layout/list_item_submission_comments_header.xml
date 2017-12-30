@@ -57,7 +57,6 @@
       android:background="@drawable/background_submission_link"
       android:foreground="?attr/selectableItemBackground"
       android:orientation="horizontal"
-
       tools:visibility="visible">
 
       <FrameLayout
@@ -80,10 +79,9 @@
         <!-- ContentDescription is set in SubmissionLinkedRedditLinkViewHolder -->
         <ImageView
           android:id="@+id/submission_link_icon"
-          android:layout_width="wrap_content"
-          android:layout_height="wrap_content"
+          android:layout_width="24dp"
+          android:layout_height="24dp"
           android:layout_gravity="center"
-          android:scaleType="fitCenter"
           android:src="@drawable/ic_link_black_24dp"
           tools:ignore="ContentDescription"
           tools:tint="@color/gray_400" />

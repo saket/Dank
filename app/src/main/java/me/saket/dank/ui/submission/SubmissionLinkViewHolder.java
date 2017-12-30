@@ -46,6 +46,7 @@ import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.ui.submission.adapter.SubmissionContentLinkUiModelConstructor;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.UrlParser;
@@ -63,7 +64,6 @@ import timber.log.Timber;
 public class SubmissionLinkViewHolder {
 
   private static final int TINT_TRANSITION_ANIMATION_DURATION = 300;
-  public static final boolean UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS = true;
 
   @BindView(R.id.submission_link_icon_container) ViewGroup iconContainer;
   @BindView(R.id.submission_link_thumbnail) ImageView thumbnailView;
@@ -188,7 +188,7 @@ public class SubmissionLinkViewHolder {
   }
 
   private Disposable populateSubmissionTitle(RedditSubmissionLink submissionLink) {
-    if (!UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS) {
+    if (!SubmissionContentLinkUiModelConstructor.UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS) {
       throw new UnsupportedOperationException();
     }
 
@@ -230,7 +230,7 @@ public class SubmissionLinkViewHolder {
     iconView.setImageResource(R.drawable.ic_photo_library_24dp);
 
     if (isEmpty(imgurAlbumLink.albumTitle())) {
-      titleView.setText(R.string.submission_image_album);
+      titleView.setText(R.string.submission_image_album_title);
       subtitleView.setText(resources.getString(R.string.submission_image_album_image_count, imgurAlbumLink.images().size()));
     } else {
       titleView.setText(imgurAlbumLink.albumTitle());

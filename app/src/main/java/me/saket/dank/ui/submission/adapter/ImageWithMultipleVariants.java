@@ -2,9 +2,12 @@ package me.saket.dank.ui.submission.adapter;
 
 import android.support.annotation.Nullable;
 import android.text.Html;
-import java.util.NoSuchElementException;
-import me.saket.dank.utils.Optional;
+
 import net.dean.jraw.models.Thumbnails;
+
+import java.util.NoSuchElementException;
+
+import me.saket.dank.utils.Optional;
 
 public class ImageWithMultipleVariants {
 
@@ -15,7 +18,7 @@ public class ImageWithMultipleVariants {
   }
 
   private ImageWithMultipleVariants(@Nullable Thumbnails redditSuppliedImages) {
-    this.optionalRedditSuppliedImages = Optional.of(redditSuppliedImages);
+    this.optionalRedditSuppliedImages = Optional.ofNullable(redditSuppliedImages);
   }
 
   public boolean isNonEmpty() {
@@ -39,7 +42,8 @@ public class ImageWithMultipleVariants {
       int differenceAbs = Math.abs(preferredWidth - redditCopy.getWidth());
       if (differenceAbs < Math.abs(closestDifference)
           // If another image is found with the same difference, choose the higher-res image.
-          || differenceAbs == closestDifference && redditCopy.getWidth() > closestImage.getWidth()) {
+          || differenceAbs == closestDifference && redditCopy.getWidth() > closestImage.getWidth())
+      {
         closestDifference = preferredWidth - redditCopy.getWidth();
         closestImage = redditCopy;
       }

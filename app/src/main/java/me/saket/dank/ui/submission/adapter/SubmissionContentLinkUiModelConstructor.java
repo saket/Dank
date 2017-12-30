@@ -4,18 +4,26 @@ import static java.util.Arrays.asList;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.support.annotation.ColorRes;
+import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.graphics.Palette;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.FutureTarget;
+import com.bumptech.glide.request.RequestOptions;
 import com.google.auto.value.AutoValue;
+
+import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
+
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ExternalLink;
@@ -23,10 +31,14 @@ import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.data.links.RedditLink;
+import me.saket.dank.data.links.RedditSubmissionLink;
+import me.saket.dank.data.links.RedditSubredditLink;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Urls;
+import me.saket.dank.utils.glide.GlideCircularTransformation;
 import timber.log.Timber;
 
 /**
@@ -34,6 +46,8 @@ import timber.log.Timber;
  */
 public class SubmissionContentLinkUiModelConstructor {
 
+  private static final TintDetails DEFAULT_TINT_DETAILS = TintDetails.create(Optional.empty(), R.color.submission_link_title, R.color.submission_link_byline);
+  public static final boolean UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS = true;
   private static final boolean PROGRESS_VISIBLE = true;
   private static final boolean PROGRESS_HIDDEN = false;
   private final LinkMetadataRepository linkMetadataRepository;
@@ -44,6 +58,8 @@ public class SubmissionContentLinkUiModelConstructor {
   }
 
   /**
+   * TODO: Content description.
+   * <p>
    * Emits multiple times:
    * - Initially, with unparsed values.
    * - When title is loaded.
@@ -55,88 +71,46 @@ public class SubmissionContentLinkUiModelConstructor {
     int windowBackgroundColor = ContextCompat.getColor(context, R.color.window_background);
 
     if (link.isExternal()) {
-      return externalLink(context, (ExternalLink) link, windowBackgroundColor, redditSuppliedThumbnails)
+      return streamLoadExternalLink(context, (ExternalLink) link, windowBackgroundColor, redditSuppliedThumbnails)
           //.doOnNext(model -> Timber.i("LinkUiModel: [title=%s, icon=%s, thumbnail=%s]", model.title(), model.icon(), model.thumbnail()))
           ;
 
+    } else if (link.isRedditPage()) {
+      return streamLoadRedditLink(context, ((RedditLink) link));
+
+    } else if (link.isMediaAlbum() && link instanceof ImgurAlbumLink) {
+      return streamLoadImgurAlbum(context, ((ImgurAlbumLink) link), windowBackgroundColor, redditSuppliedThumbnails);
+
     } else {
-      Timber.i("link: %s ", link.unparsedUrl());
-      // TODO.
-      return Observable.just(SubmissionContentLinkUiModel.builder()
-          .title(link.unparsedUrl())
-          .titleMaxLines(2)
-          .titleTextColorRes(R.color.submission_link_title)
-          .byline(Urls.parseDomainName(link.unparsedUrl()))
-          .bylineTextColorRes(R.color.submission_link_byline)
-          .icon(Optional.empty())
-          .thumbnail(Optional.empty())
-          .progressVisible(false)
-          .backgroundTintColor(Optional.empty())
-          .build());
+      throw new AssertionError("Unknown link: " + link);
     }
   }
 
-  // TODO: Use Reddit supplied thumbnail.
-  public Observable<SubmissionContentLinkUiModel> externalLink(
+  private Observable<SubmissionContentLinkUiModel> streamLoadExternalLink(
       Context context,
       ExternalLink link,
       int windowBackgroundColor,
       ImageWithMultipleVariants redditSuppliedThumbnails)
   {
-    Single<LinkMetadata> linkMetadataSingle = linkMetadataRepository.unfurl(link).delay(2, TimeUnit.SECONDS);
-
-    // Title.
-    Observable<String> sharedTitleStream = linkMetadataSingle
+    // TODO: Remove artificial delay.
+    Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(link)
+        .delay(BuildConfig.DEBUG ? 2 : 0, TimeUnit.SECONDS)
         .toObservable()
-        .map(metadata -> metadata.title())
-        .startWith(link.unparsedUrl())
         .share();
 
-    // Favicon.
-    //noinspection ConstantConditions
-    Observable<Optional<Bitmap>> sharedFaviconStream = linkMetadataSingle
-        .flatMapObservable(metadata -> metadata.hasFavicon() ? Observable.just(metadata.faviconUrl()) : Observable.empty())
-        .flatMap(faviconUrl -> loadImage(context, faviconUrl))
-        .map(favicon -> Optional.of(favicon))
-        .startWith(Optional.empty())
-        .share();
+    Observable<String> sharedTitleStream = fetchTitle(link, sharedLinkMetadataStream);
+    Observable<Optional<Bitmap>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream).share();
+    Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.of(linkMetadata.imageUrl()));
+    Observable<Optional<Bitmap>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, thumbnailUrlStream).share();
+    Observable<TintDetails> tintDetailsStream = streamTintDetails(link, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
+    Observable<Boolean> progressVisibleStream = streamProgressVisibility(sharedTitleStream, sharedFaviconStream, sharedThumbnailStream);
 
-    // Thumbnail.
-    Observable<Optional<Bitmap>> sharedThumbnailStream = Observable.just(redditSuppliedThumbnails.isNonEmpty())
-        .flatMap(hasRedditSuppliedImages -> {
-          if (hasRedditSuppliedImages) {
-            int thumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(context);
-            return Observable.just(redditSuppliedThumbnails.findNearestFor(thumbnailWidth));
-          } else {
-            //noinspection ConstantConditions
-            return linkMetadataSingle.flatMapObservable(metadata -> metadata.hasImage()
-                ? Observable.just(metadata.imageUrl())
-                : Observable.empty());
-          }
-        })
-        .flatMap(imageUrl -> loadImage(context, imageUrl))
-        .map(image -> Optional.of(image))
-        .startWith(Optional.empty())
-        .share();
-
-    // Progress.
-    Observable<Boolean> progressVisibleStream = Completable
-        .mergeDelayError(asList(sharedTitleStream.ignoreElements(), sharedFaviconStream.ignoreElements(), sharedThumbnailStream.ignoreElements()))
-        .andThen(Observable.just(PROGRESS_HIDDEN))
-        .onErrorReturnItem(PROGRESS_HIDDEN)
-        .startWith(PROGRESS_VISIBLE);
-
-    TintDetails defaultTintDetails = TintDetails.create(Optional.empty(), R.color.submission_link_title, R.color.submission_link_byline);
-    boolean isGooglePlayThumbnail = UrlParser.isGooglePlayUrl(Uri.parse(link.unparsedUrl()));
-
-    Observable<TintDetails> tintDetailsStream = Observable.concat(sharedThumbnailStream, sharedFaviconStream)
-        .filter(imageOptional -> imageOptional.isPresent())
-        .take(1)
-        .map(imageOptional -> imageOptional.get())
-        .flatMapSingle(image -> generateTint(image, isGooglePlayThumbnail, windowBackgroundColor))
-        .startWith(defaultTintDetails);
-
-    return Observable.combineLatest(sharedTitleStream, sharedFaviconStream, sharedThumbnailStream, tintDetailsStream, progressVisibleStream,
+    return Observable.combineLatest(
+        sharedTitleStream,
+        sharedFaviconStream,
+        sharedThumbnailStream,
+        tintDetailsStream,
+        progressVisibleStream,
         (title, optionalFavicon, optionalThumbnail, tintDetails, progressVisible) ->
             SubmissionContentLinkUiModel.builder()
                 .title(title)
@@ -151,13 +125,243 @@ public class SubmissionContentLinkUiModelConstructor {
                 .build());
   }
 
-  private Observable<Bitmap> loadImage(Context context, String faviconUrl) {
-    return Observable
-        .<Bitmap>create(emitter -> {
-          FutureTarget<Bitmap> futureTarget = Glide.with(context)
+  private Observable<SubmissionContentLinkUiModel> streamLoadRedditLink(Context context, RedditLink redditLink) {
+    Observable<String> titleStream;
+    Observable<String> bylineStream;
+    Observable<Optional<Bitmap>> thumbnailStream;
+    Observable<Bitmap> faviconStream;
+    Observable<Boolean> progressVisibleStream;
+    Observable<String> iconContentDescriptionStream;
+
+    if (redditLink instanceof RedditSubredditLink) {
+      titleStream = Observable.just(context.getString(R.string.subreddit_name_r_prefix, ((RedditSubredditLink) redditLink).name()));
+      bylineStream = Observable.just(context.getString(R.string.submission_link_tap_to_open_subreddit));
+      progressVisibleStream = Observable.just(false);
+      thumbnailStream = Observable.just(Optional.empty());
+      faviconStream = loadBitmapFromResource(context, R.drawable.ic_subreddits_24dp);
+      iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_linked_subreddit));
+
+    } else if (redditLink instanceof RedditUserLink) {
+      titleStream = Observable.just(context.getString(R.string.user_name_u_prefix, ((RedditUserLink) redditLink).name()));
+      bylineStream = Observable.just(context.getString(R.string.submission_link_tap_to_open_profile));
+      progressVisibleStream = Observable.just(false);
+      thumbnailStream = Observable.just(Optional.empty());
+      faviconStream = loadBitmapFromResource(context, R.drawable.ic_user_profile_24dp);
+      iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_linked_profile));
+
+    } else if (redditLink instanceof RedditSubmissionLink) {
+      if (!UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS) {
+        throw new UnsupportedOperationException();
+      }
+      RedditSubmissionLink submissionLink = (RedditSubmissionLink) redditLink;
+      bylineStream = Observable.just(context.getString(R.string.submission_link_tap_to_open_submission));
+      thumbnailStream = Observable.just(Optional.empty());
+      faviconStream = loadBitmapFromResource(context, R.drawable.ic_submission_24dp);
+      iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_linked_submission));
+
+      Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(submissionLink)
+          .toObservable()
+          .share();
+
+      progressVisibleStream = sharedLinkMetadataStream
+          .map(o -> false)
+          .startWith(true);
+
+      titleStream = sharedLinkMetadataStream
+          .map(linkMetadata -> {
+            String submissionPageTitle = linkMetadata.title();
+            if (submissionPageTitle != null) {
+              // Reddit prefixes page titles with the linked commentator's name (if any). We don't want that.
+              int userNameSeparatorIndex = submissionPageTitle.indexOf("comments on");
+              if (userNameSeparatorIndex > -1) {
+                submissionPageTitle = submissionPageTitle.substring(userNameSeparatorIndex + "comments on".length());
+              }
+            }
+            return submissionPageTitle;
+          });
+
+    } else {
+      throw new UnsupportedOperationException("Unknown reddit link: " + redditLink);
+    }
+
+    return Observable.combineLatest(
+        titleStream,
+        bylineStream,
+        faviconStream,
+        thumbnailStream,
+        Observable.just(DEFAULT_TINT_DETAILS),
+        progressVisibleStream,
+        (title, byline, favicon, optionalThumbnail, tintDetails, progressVisible) ->
+            SubmissionContentLinkUiModel.builder()
+                .title(title)
+                .titleMaxLines(2)
+                .titleTextColorRes(tintDetails.titleTextColorRes())
+                .byline(byline)
+                .bylineTextColorRes(tintDetails.bylineTextColorRes())
+                .icon(Optional.of(favicon))
+                .thumbnail(optionalThumbnail)
+                .progressVisible(progressVisible)
+                .backgroundTintColor(tintDetails.backgroundTint())
+                .build()
+    );
+  }
+
+  private Observable<Bitmap> loadBitmapFromResource(Context context, @DrawableRes int drawableRes) {
+    return Observable.fromCallable(() -> {
+      Drawable drawable = context.getDrawable(drawableRes);
+      //noinspection ConstantConditions
+      if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+        throw new AssertionError();
+      }
+      Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+      Canvas canvas = new Canvas(bitmap);
+      drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+      drawable.draw(canvas);
+      return bitmap;
+    });
+  }
+
+  public Observable<SubmissionContentLinkUiModel> streamLoadImgurAlbum(
+      Context context,
+      ImgurAlbumLink albumLink,
+      int windowBackgroundColor,
+      ImageWithMultipleVariants redditSuppliedThumbnails)
+  {
+    Observable<String> iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_imgur_gallery));
+
+    //noinspection ConstantConditions
+    Observable<String> titleStream = Observable.just(
+        albumLink.hasAlbumTitle()
+            ? albumLink.albumTitle()
+            : context.getString(R.string.submission_image_album_title));
+
+    Observable<String> bylineStream = Observable.just(
+        albumLink.hasAlbumTitle()
+            ? context.getString(R.string.submission_image_album_label_with_image_count, albumLink.images().size())
+            : context.getString(R.string.submission_image_album_image_count, albumLink.images().size()));
+
+    Observable<Optional<String>> albumThumbnailStream = Observable.just(Optional.of(albumLink.coverImageUrl()));
+    Observable<Optional<Bitmap>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, albumThumbnailStream).share();
+    Observable<Optional<Bitmap>> sharedFaviconStream = loadBitmapFromResource(context, R.drawable.ic_photo_library_24dp)
+        .as(Optional.of())
+        .share();
+
+    Observable<TintDetails> tintDetailsStream = streamTintDetails(albumLink, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
+    Observable<Boolean> progressVisibleStream = sharedThumbnailStream
+        .map(o -> false)
+        .startWith(true);
+
+    return Observable.combineLatest(
+        titleStream,
+        bylineStream,
+        sharedFaviconStream,
+        sharedThumbnailStream,
+        tintDetailsStream,
+        progressVisibleStream,
+        (title, byline, optionalFavicon, optionalThumbnail, tintDetails, progressVisible) ->
+            SubmissionContentLinkUiModel.builder()
+                .title(title)
+                .titleMaxLines(2)
+                .titleTextColorRes(tintDetails.titleTextColorRes())
+                .byline(byline)
+                .bylineTextColorRes(tintDetails.bylineTextColorRes())
+                .icon(optionalFavicon)
+                .thumbnail(optionalThumbnail)
+                .progressVisible(progressVisible)
+                .backgroundTintColor(tintDetails.backgroundTint())
+                .build()
+    );
+  }
+
+  private Observable<TintDetails> streamTintDetails(
+      Link link,
+      int windowBackgroundColor,
+      Observable<Optional<Bitmap>> sharedFaviconStream,
+      Observable<Optional<Bitmap>> sharedThumbnailStream)
+  {
+    boolean isGooglePlayThumbnail = UrlParser.isGooglePlayUrl(Uri.parse(link.unparsedUrl()));
+
+    return Observable.concat(sharedThumbnailStream, sharedFaviconStream)
+        .filter(imageOptional -> imageOptional.isPresent())
+        .take(1)
+        .map(imageOptional -> imageOptional.get())
+        .flatMapSingle(image -> generateTint(image, isGooglePlayThumbnail, windowBackgroundColor))
+        .startWith(DEFAULT_TINT_DETAILS);
+  }
+
+  private Observable<String> fetchTitle(ExternalLink link, Observable<LinkMetadata> linkMetadataSingle) {
+    return linkMetadataSingle
+        .map(metadata -> metadata.title())
+        .startWith(link.unparsedUrl())
+        .share();
+  }
+
+  /**
+   * @param redditSuppliedThumbnails   Default source for images.
+   * @param fallbackThumbnailUrlStream Fallback in case reddit didn't supply any images.
+   */
+  private Observable<Optional<Bitmap>> fetchThumbnail(
+      Context context,
+      ImageWithMultipleVariants redditSuppliedThumbnails,
+      Observable<Optional<String>> fallbackThumbnailUrlStream)
+  {
+    return Observable.just(redditSuppliedThumbnails.isNonEmpty())
+        .flatMap(hasRedditSuppliedImages -> {
+          if (hasRedditSuppliedImages) {
+            int thumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(context);
+            return Observable.just(redditSuppliedThumbnails.findNearestFor(thumbnailWidth));
+          } else {
+            return fallbackThumbnailUrlStream.flatMap(optionalUrl ->
+                optionalUrl.isPresent()
+                    ? Observable.just(optionalUrl.get())
+                    : Observable.empty()
+            );
+          }
+        })
+        .flatMap(imageUrl -> {
+          FutureTarget<Bitmap> imageTarget = Glide.with(context)
+              .asBitmap()
+              .load(imageUrl)
+              .submit();
+          return loadImage(context, imageTarget);
+        })
+        .map(image -> Optional.of(image))
+        .startWith(Optional.empty())
+        .share();
+  }
+
+  private Observable<Optional<Bitmap>> fetchFavicon(Context context, Observable<LinkMetadata> linkMetadataSingle) {
+    //noinspection ConstantConditions
+    return linkMetadataSingle
+        .flatMap(metadata -> metadata.hasFavicon() ? Observable.just(metadata.faviconUrl()) : Observable.empty())
+        .flatMap(faviconUrl -> {
+          // Keep this context in sync with the one used in loadImage() for clearing this load on dispose.
+          FutureTarget<Bitmap> iconTarget = Glide.with(context)
               .asBitmap()
               .load(faviconUrl)
+              .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
               .submit();
+          return loadImage(context, iconTarget);
+        })
+        .map(favicon -> Optional.of(favicon))
+        .startWith(Optional.empty())
+        .share();
+  }
+
+  private Observable<Boolean> streamProgressVisibility(
+      Observable<String> titleStream,
+      Observable<Optional<Bitmap>> faviconStream,
+      Observable<Optional<Bitmap>> thumbnailStream)
+  {
+    return Completable.mergeDelayError(asList(titleStream.ignoreElements(), faviconStream.ignoreElements(), thumbnailStream.ignoreElements()))
+        .andThen(Observable.just(PROGRESS_HIDDEN))
+        .onErrorReturnItem(PROGRESS_HIDDEN)
+        .startWith(PROGRESS_VISIBLE);
+  }
+
+  private Observable<Bitmap> loadImage(Context context, FutureTarget<Bitmap> futureTarget) {
+    return Observable
+        .<Bitmap>create(emitter -> {
           emitter.onNext(futureTarget.get());
           emitter.onComplete();
           emitter.setCancellable(() -> Glide.with(context).clear(futureTarget));
@@ -216,13 +420,6 @@ public class SubmissionContentLinkUiModelConstructor {
     public static TintDetails create(Optional<Integer> backgroundTint, @ColorRes int titleTextColorRes, @ColorRes int bylineTextColorRes) {
       return new AutoValue_SubmissionContentLinkUiModelConstructor_TintDetails(backgroundTint, titleTextColorRes, bylineTextColorRes);
     }
-  }
-
-  public void loadReddit(RedditLink link) {
-
-  }
-
-  public void imgurAlbum(ImgurAlbumLink link) {
 
   }
 }

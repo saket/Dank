@@ -15,6 +15,7 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.Relay;
 
 import me.saket.dank.R;
+import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
@@ -84,6 +85,8 @@ public interface SubmissionCommentsHeader {
       contentLinkTitleView = itemView.findViewById(R.id.submission_link_title);
       contentLinkBylineView = itemView.findViewById(R.id.submission_link_byline);
       contentLinkProgressView = itemView.findViewById(R.id.submission_link_progress);
+
+      contentLinkView.setClipToOutline(true);
     }
 
     public void bind(UiModel uiModel, DankLinkMovementMethod movementMethod) {
@@ -107,13 +110,16 @@ public interface SubmissionCommentsHeader {
         contentLinkBylineView.setTextColor(ContextCompat.getColor(context, contentLinkUiModel.bylineTextColorRes()));
 
         if (contentLinkUiModel.backgroundTintColor().isPresent()) {
-          contentLinkView.getBackground().mutate().setTint(contentLinkUiModel.backgroundTintColor().get());
+          Integer tintColor = contentLinkUiModel.backgroundTintColor().get();
+          contentLinkThumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
+          contentLinkView.getBackground().mutate().setTint(tintColor);
         } else {
           contentLinkView.getBackground().mutate().setTintList(null);
         }
 
         Bitmap favicon = contentLinkUiModel.icon().isPresent() ? contentLinkUiModel.icon().get() : null;
         contentLinkIconView.setImageBitmap(favicon);
+        contentLinkIconView.setVisibility(contentLinkUiModel.icon().isPresent() ? View.VISIBLE : View.INVISIBLE);
 
         Bitmap thumbnail = contentLinkUiModel.thumbnail().isPresent() ? contentLinkUiModel.thumbnail().get() : null;
         contentLinkThumbnailView.setImageBitmap(thumbnail);

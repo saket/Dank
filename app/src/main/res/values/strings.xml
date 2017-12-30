@@ -130,7 +130,7 @@
   <string name="submission_link_error_loading_media_tap_to_retry">Tap to retry</string>
   <string name="submission_link_imgur_gallery">Linked Imgur gallery</string>
   <string name="submission_image_scroll_down_hint">Scroll down to see more</string>
-  <string name="submission_image_album">Album</string>
+  <string name="submission_image_album_title">Album</string>
   <string name="submission_image_album_label_with_image_count">Album (%d images)</string>
   <string name="submission_image_album_image_count">%d images</string>
   <string name="submission_cd_play_video">Play video</string>
