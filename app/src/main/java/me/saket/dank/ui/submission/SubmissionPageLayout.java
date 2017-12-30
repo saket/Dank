@@ -21,6 +21,7 @@ import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
@@ -41,10 +42,7 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.Toast;
-import butterknife.BindDimen;
-import butterknife.BindDrawable;
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.danikula.videocache.HttpProxyCacheServer;
@@ -53,6 +51,21 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
+
+import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Thumbnails;
+
+import java.io.IOException;
+import java.util.List;
+import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
+
+import butterknife.BindDimen;
+import butterknife.BindDrawable;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -61,10 +74,6 @@ import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
-import java.io.IOException;
-import java.util.List;
-import java.util.concurrent.TimeUnit;
-import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
@@ -123,10 +132,6 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
-import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.PublicContribution;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -241,7 +246,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     setupReplyFAB();
     setupSoftInputModeChangesAnimation();
 
-    //linkDetailsViewHolder = new SubmissionLinkViewHolder(lifecycle(), linkMetadataRepository, linkDetailsView, submissionPageLayout);
+    //linkDetailsViewHolder
+    // = new SubmissionLinkViewHolder(lifecycle(), linkMetadataRepository, linkDetailsView, submissionPageLayout);
 
     // Load comments when submission changes.
     submissionRequestStream
@@ -268,57 +274,48 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             .onErrorResumeNext(Observable.never()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(submissionStream);
-
-    //submissionStream
-    //    .observeOn(mainThread())
-    //    .takeUntil(lifecycle().onDestroy())
-    //    .subscribe(submission -> {
-    //      adapterWithSubmissionHeader.updateSubmission(submission);
-    //      commentsAdapterWithSubmissionHeaderDatasetUpdatesStream.accept(LifecycleStreams.NOTHING);
-//
-    //      commentsAdapter.setSubmissionAuthor(submission.getAuthor());
-    //    });
-
-    // TODO.
-    // Restore submission if the Activity was recreated.
-    //if (savedInstanceState != null) {
-    //  onRestoreSavedInstanceState(savedInstanceState);
-    //}
   }
 
-  // TODO.
-  //public void onSaveInstanceState(@NonNull Bundle outState) {
-  //  if (submissionRequestStream.getValue() != null) {
-  //    if (submissionStream.getValue() != null && submissionStream.getValue().getComments() == null) {
-  //      // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
-  //      // show UI on orientation change, we unfortunately will have to manually retain this submission.
-  //      outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(submissionStream.getValue()));
-  //    }
-  //    outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
-  //  }
-  //  super.onSaveInstanceState(outState);
-  //}
+  @Nullable
+  @Override
+  protected Parcelable onSaveInstanceState() {
+    Bundle outState = new Bundle();
+    if (submissionRequestStream.getValue() != null) {
+      outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
 
-  /**
-   * Called at the end of onViewCreated().
-   */
-  private void onRestoreSavedInstanceState(Bundle savedInstanceState) {
-    if (savedInstanceState.containsKey(KEY_SUBMISSION_REQUEST)) {
+      if (submissionStream.getValue() != null && submissionStream.getValue().getComments() == null) {
+        // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
+        // show UI on orientation change, we unfortunately will have to manually retain this submission.
+        outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(submissionStream.getValue()));
+      }
+    }
+
+    outState.putParcelable("superState", super.onSaveInstanceState());
+    return outState;
+  }
+
+  @Override
+  protected void onRestoreInstanceState(Parcelable state) {
+    Bundle savedState = (Bundle) state;
+    if (savedState.containsKey(KEY_SUBMISSION_REQUEST)) {
       Submission retainedSubmission = null;
-      DankSubmissionRequest retainedRequest = savedInstanceState.getParcelable(KEY_SUBMISSION_REQUEST);
+      DankSubmissionRequest retainedRequest = savedState.getParcelable(KEY_SUBMISSION_REQUEST);
 
-      if (savedInstanceState.containsKey(KEY_SUBMISSION_JSON)) {
-        String retainedSubmissionJson = savedInstanceState.getString(KEY_SUBMISSION_JSON);
+      if (savedState.containsKey(KEY_SUBMISSION_JSON)) {
+        String retainedSubmissionJson = savedState.getString(KEY_SUBMISSION_JSON);
         try {
           //noinspection ConstantConditions
           retainedSubmission = moshi.adapter(Submission.class).fromJson(retainedSubmissionJson);
         } catch (IOException e) {
-          Timber.e(e, "Couldn't deserialize submission");
+          Timber.e(e, "Couldn't deserialize submission: %s", retainedSubmissionJson);
         }
       }
 
       populateUi(retainedSubmission, retainedRequest);
     }
+
+    Parcelable superState = savedState.getParcelable("superState");
+    super.onRestoreInstanceState(superState);
   }
 
   /**
@@ -620,7 +617,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             // Find the reply item's position.
             SubmissionScreenUiModel commentRow = newItems.get(i);
             if (commentRow instanceof SubmissionInlineReply.UiModel
-                && ((SubmissionInlineReply.UiModel) commentRow).parentContributionFullName().equals(parentContribution.getFullName())) {
+                && ((SubmissionInlineReply.UiModel) commentRow).parentContributionFullName().equals(parentContribution.getFullName()))
+            {
               replyPosition = i;
               break;
             }
@@ -740,7 +738,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         if (isCommentSheetBeneathImage
             // This is a hacky workaround: when zooming out, the received callbacks are very discrete and
             // it becomes difficult to lock the comments sheet beneath the image.
-            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY())) {
+            || (isZoomingOut && contentImageView.getVisibleZoomedImageHeight() <= commentListParentSheet.getY()))
+        {
           commentListParentSheet.scrollTo(boundedVisibleImageHeightMinusToolbar);
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
