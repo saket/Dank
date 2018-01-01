@@ -8,6 +8,7 @@ import net.dean.jraw.models.CommentNode;
  * Represents an item that can load more comments for its parent.
  */
 @AutoValue
+@Deprecated
 public abstract class LoadMoreCommentItem implements SubmissionCommentRow {
 
   @Override

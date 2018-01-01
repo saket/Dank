@@ -15,6 +15,8 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.Relay;
 
 import me.saket.dank.R;
+import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
@@ -46,14 +48,20 @@ public interface SubmissionCommentsHeader {
       return SubmissionCommentRowType.SUBMISSION_HEADER;
     }
 
+    /**
+     * The original data model from which this Ui model was created.
+     */
+    public abstract PostedOrInFlightContribution originalSubmission();
+
     public static UiModel create(
         long adapterId,
         CharSequence title,
         CharSequence byline,
         Optional<CharSequence> selfText,
-        Optional<SubmissionContentLinkUiModel> contentLink)
+        Optional<SubmissionContentLinkUiModel> contentLink,
+        PostedOrInFlightContribution originalSubmission)
     {
-      return new AutoValue_SubmissionCommentsHeader_UiModel(adapterId, title, byline, selfText, contentLink);
+      return new AutoValue_SubmissionCommentsHeader_UiModel(adapterId, title, byline, selfText, contentLink, originalSubmission);
     }
   }
 
@@ -67,14 +75,32 @@ public interface SubmissionCommentsHeader {
     private final TextView contentLinkTitleView;
     private final TextView contentLinkBylineView;
     private final ProgressBar contentLinkProgressView;
+    private final DankLinkMovementMethod movementMethod;
 
-    public static ViewHolder create(LayoutInflater inflater, ViewGroup parent, Relay<Object> headerClickStream) {
-      ViewHolder holder = new ViewHolder(inflater.inflate(R.layout.list_item_submission_comments_header, parent, false));
+    public static ViewHolder create(
+        LayoutInflater inflater,
+        ViewGroup parent,
+        Relay<Object> headerClickStream,
+        DankLinkMovementMethod movementMethod)
+    {
+      View itemView = inflater.inflate(R.layout.list_item_submission_comments_header, parent, false);
+      ViewHolder holder = new ViewHolder(itemView, movementMethod);
       holder.itemView.setOnClickListener(v -> headerClickStream.accept(LifecycleStreams.NOTHING));
       return holder;
     }
 
-    public ViewHolder(View itemView) {
+    public void setupGestures(SubmissionCommentsAdapter adapter, SubmissionSwipeActionsProvider swipeActionsProvider) {
+      getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
+      getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
+        UiModel headerUiModel = (UiModel) adapter.getItem(getAdapterPosition());
+        swipeActionsProvider.performSwipeAction(action, headerUiModel.originalSubmission(), getSwipeableLayout());
+
+        // TODO.
+        //onBindViewHolder(holder, holder.getAdapterPosition());
+      });
+    }
+
+    public ViewHolder(View itemView, DankLinkMovementMethod movementMethod) {
       super(itemView);
       titleView = itemView.findViewById(R.id.submission_title);
       bylineView = itemView.findViewById(R.id.submission_byline);
@@ -85,11 +111,12 @@ public interface SubmissionCommentsHeader {
       contentLinkTitleView = itemView.findViewById(R.id.submission_link_title);
       contentLinkBylineView = itemView.findViewById(R.id.submission_link_byline);
       contentLinkProgressView = itemView.findViewById(R.id.submission_link_progress);
+      this.movementMethod = movementMethod;
 
       contentLinkView.setClipToOutline(true);
     }
 
-    public void bind(UiModel uiModel, DankLinkMovementMethod movementMethod) {
+    public void bind(UiModel uiModel, SubmissionSwipeActionsProvider swipeActionsProvider) {
       titleView.setText(uiModel.title());
       bylineView.setText(uiModel.byline());
 
@@ -127,6 +154,9 @@ public interface SubmissionCommentsHeader {
       } else {
         contentLinkView.setVisibility(View.GONE);
       }
+
+      // Gestures.
+      getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.originalSubmission()));
     }
 
     @Override

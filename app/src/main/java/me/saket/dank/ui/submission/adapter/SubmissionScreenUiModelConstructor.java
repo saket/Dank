@@ -19,6 +19,8 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.R;
+import me.saket.dank.data.CommentNodeEqualsBandAid;
+import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.submission.CommentInlineReplyItem;
@@ -78,10 +80,8 @@ public class SubmissionScreenUiModelConstructor {
         .switchMap(pair -> {
           Optional<Link> optionalLink = pair.first();
           if (optionalLink.isPresent()) {
-            ImageWithMultipleVariants redditSuppliedThumbnails = ImageWithMultipleVariants.of(pair.second().getThumbnails());
-            Link link = optionalLink.get();
-            return contentLinkUiModelConstructor
-                .streamLoad(context, link, redditSuppliedThumbnails)
+            return contentLinkUiModelConstructor.streamLoad(context, optionalLink.get(), ImageWithMultipleVariants.of(pair.second().getThumbnails()))
+                .doOnNext(linkUiModel -> Timber.i(linkUiModel.toString()))
                 .doOnError(e -> Timber.e(e))
                 .as(Optional.of());
           } else {
@@ -173,7 +173,8 @@ public class SubmissionScreenUiModelConstructor {
         Strings.abbreviateScore(submission.getCommentCount() + pendingSyncReplyCount)
     );
 
-    return SubmissionCommentsHeader.UiModel.create(adapterId, title, byline, selfTextOptional, contentLinkUiModel);
+    PostedOrInFlightContribution originalSubmission = PostedOrInFlightContribution.from(submission);
+    return SubmissionCommentsHeader.UiModel.create(adapterId, title, byline, selfTextOptional, contentLinkUiModel, originalSubmission);
   }
 
   private SubmissionComment.UiModel commentUiModel(Context context, DankCommentNode dankCommentNode, String submissionAuthor) {
@@ -204,6 +205,8 @@ public class SubmissionScreenUiModelConstructor {
         : markdown.parse(comment);
 
     return commentUiModelBuilder(context, dankCommentNode.fullName(), dankCommentNode.isCollapsed(), dankCommentNode.commentNode().getDepth())
+        .originalComment(PostedOrInFlightContribution.from(comment))
+        .optionalPendingSyncReply(Optional.empty())
         .byline(byline)
         .body(commentBody)
         .build();
@@ -257,7 +260,16 @@ public class SubmissionScreenUiModelConstructor {
         ? Markdown.stripMarkdown(pendingSyncReply.body())
         : markdown.parse(pendingSyncReply);
 
+    PostedOrInFlightContribution pendingSyncComment = PostedOrInFlightContribution.create(
+        pendingSyncReply.postedFullName(),
+        1,
+        VoteDirection.UPVOTE,
+        PostedOrInFlightContribution.State.IN_FLIGHT
+    );
+
     return commentUiModelBuilder(context, pendingSyncReplyRow.fullName(), pendingSyncReplyRow.isCollapsed(), pendingSyncReplyRow.depth())
+        .originalComment(pendingSyncComment)
+        .optionalPendingSyncReply(Optional.of(pendingSyncReply))
         .byline(byline)
         .body(commentBody)
         .build();
@@ -284,7 +296,8 @@ public class SubmissionScreenUiModelConstructor {
             : R.color.submission_comment_body_expanded
         ))
         .indentationDepth(depth - 1)  // TODO: Why are we subtracting 1 here?
-        .bodyMaxLines(isCollapsed ? 1 : Integer.MAX_VALUE);
+        .bodyMaxLines(isCollapsed ? 1 : Integer.MAX_VALUE)
+        .isCollapsed(isCollapsed);
   }
 
   private CharSequence constructCommentByline(
@@ -328,11 +341,11 @@ public class SubmissionScreenUiModelConstructor {
     return bylineBuilder.build();
   }
 
-  private SubmissionInlineReply.UiModel inlineReplyUiModel(Context context, CommentInlineReplyItem inlineReplyItem, String loggedInUserName) {
+  private SubmissionCommentInlineReply.UiModel inlineReplyUiModel(Context context, CommentInlineReplyItem inlineReplyItem, String loggedInUserName) {
     long adapterId = inlineReplyItem.fullName().hashCode();
     String parentContributionFullName = inlineReplyItem.parentContribution().getFullName();
     CharSequence authorHint = context.getResources().getString(R.string.submission_comment_reply_author_hint, loggedInUserName);
-    return SubmissionInlineReply.UiModel.create(adapterId, authorHint, parentContributionFullName, inlineReplyItem.depth());
+    return SubmissionCommentInlineReply.UiModel.create(adapterId, authorHint, parentContributionFullName, inlineReplyItem.depth());
   }
 
   /**
@@ -358,6 +371,7 @@ public class SubmissionScreenUiModelConstructor {
         .label(label)
         .iconRes(parentCommentNode.isThreadContinuation() ? R.drawable.ic_arrow_forward_12dp : 0)
         .indentationDepth(parentCommentNode.getDepth())
+        .parentCommentNode(CommentNodeEqualsBandAid.create(parentCommentNode))
         .clickEnabled(clickEnabled)
         .build();
   }

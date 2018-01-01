@@ -43,7 +43,6 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.OnLoginRequireListener;
-import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
@@ -134,12 +133,6 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  VotingManager provideVotingManager(DankRedditClient dankRedditClient, SharedPreferences sharedPreferences) {
-    return new VotingManager(appContext, dankRedditClient, sharedPreferences);
-  }
-
-  @Provides
-  @Singleton
   SharedPreferences provideSharedPrefs() {
     return PreferenceManager.getDefaultSharedPreferences(appContext);
   }
@@ -158,7 +151,7 @@ public class DankAppModule {
 
     if (BuildConfig.DEBUG) {
       HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> Timber.tag("OkHttp").d(message));
-      logging.setLevel(HttpLoggingInterceptor.Level.BODY);
+      logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
       builder.addInterceptor(logging);
       builder.addNetworkInterceptor(new StethoInterceptor());
     }

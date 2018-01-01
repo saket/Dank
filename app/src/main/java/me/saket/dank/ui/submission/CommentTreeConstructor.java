@@ -22,6 +22,7 @@ import java.util.Set;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import me.saket.dank.data.PostedOrInFlightContribution;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more"
@@ -85,7 +86,7 @@ public class CommentTreeConstructor {
   /**
    * Collapse/expand a comment.
    */
-  public void toggleCollapse(SubmissionCommentRow commentRow) {
+  public void toggleCollapse(PostedOrInFlightContribution commentRow) {
     if (isCollapsed(commentRow)) {
       collapsedCommentNodeFullNames.remove(commentRow.fullName());
     } else {
@@ -98,7 +99,7 @@ public class CommentTreeConstructor {
     return collapsedCommentNodeFullNames.contains(commentRowFullName);
   }
 
-  public boolean isCollapsed(SubmissionCommentRow commentRow) {
+  public boolean isCollapsed(PostedOrInFlightContribution commentRow) {
     return isCollapsed(commentRow.fullName());
   }
 
@@ -109,7 +110,7 @@ public class CommentTreeConstructor {
   /**
    * Enable "loading more…" progress indicator.
    *
-   * @param parentCommentNode CommentNode for which more child nodes are being fetched.
+   * @param parentCommentNode for which more child nodes are being fetched.
    */
   public void setMoreCommentsLoading(CommentNode parentCommentNode, boolean loading) {
     if (loading) {

@@ -23,6 +23,7 @@ import javax.inject.Inject;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
@@ -96,21 +97,22 @@ public class SubmissionContentLinkUiModelConstructor {
     Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(link)
         .delay(BuildConfig.DEBUG ? 2 : 0, TimeUnit.SECONDS)
         .toObservable()
+        .onErrorResumeNext(Observable.empty())
         .share();
 
     Observable<String> sharedTitleStream = fetchTitle(link, sharedLinkMetadataStream);
     Observable<Optional<Bitmap>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream).share();
-    Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.of(linkMetadata.imageUrl()));
+    Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.ofNullable(linkMetadata.imageUrl()));
     Observable<Optional<Bitmap>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, thumbnailUrlStream).share();
     Observable<TintDetails> tintDetailsStream = streamTintDetails(link, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
     Observable<Boolean> progressVisibleStream = streamProgressVisibility(sharedTitleStream, sharedFaviconStream, sharedThumbnailStream);
 
     return Observable.combineLatest(
-        sharedTitleStream,
-        sharedFaviconStream,
-        sharedThumbnailStream,
-        tintDetailsStream,
-        progressVisibleStream,
+        sharedTitleStream.subscribeOn(Schedulers.io()).doOnNext(title -> Timber.i("Title: %s", title)),
+        sharedFaviconStream.subscribeOn(Schedulers.io()).doOnNext(optional -> Timber.i("Favicon: %s", optional)),
+        sharedThumbnailStream.subscribeOn(Schedulers.io()).doOnNext(optional -> Timber.i("Thumb: %s", optional)),
+        tintDetailsStream.subscribeOn(Schedulers.io()).doOnNext(td -> Timber.i("Tint: %s", td)),
+        progressVisibleStream.subscribeOn(Schedulers.io()).doOnNext(b -> Timber.i("Progress: %s", b)),
         (title, optionalFavicon, optionalThumbnail, tintDetails, progressVisible) ->
             SubmissionContentLinkUiModel.builder()
                 .title(title)

@@ -5,7 +5,6 @@ import android.support.annotation.Nullable;
 import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Contribution;
-import net.dean.jraw.models.PublicContribution;
 
 @AutoValue
 public abstract class ReplyFullscreenClickEvent {
@@ -19,7 +18,10 @@ public abstract class ReplyFullscreenClickEvent {
   @Nullable
   public abstract String authorNameIfComment();
 
-  public static ReplyFullscreenClickEvent create(long replyRowItemId, PublicContribution parentContribution, CharSequence replyMessage,
+  public static ReplyFullscreenClickEvent create(
+      long replyRowItemId,
+      Contribution parentContribution,
+      CharSequence replyMessage,
       String authorNameIfComment)
   {
     return new AutoValue_ReplyFullscreenClickEvent(replyRowItemId, parentContribution, replyMessage, authorNameIfComment);

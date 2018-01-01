@@ -8,8 +8,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.Relay;
 
 import me.saket.dank.R;
+import me.saket.dank.data.CommentNodeEqualsBandAid;
+import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.IndentedLayout;
 
@@ -29,6 +32,8 @@ public interface SubmissionCommentsLoadMore {
     public abstract boolean clickEnabled();
 
     public abstract int indentationDepth();
+
+    public abstract CommentNodeEqualsBandAid parentCommentNode();
 
     @Override
     public SubmissionCommentRowType type() {
@@ -51,6 +56,8 @@ public interface SubmissionCommentsLoadMore {
 
       public abstract Builder indentationDepth(int depth);
 
+      public abstract Builder parentCommentNode(CommentNodeEqualsBandAid parentCommentNode);
+
       public abstract UiModel build();
     }
   }
@@ -67,6 +74,17 @@ public interface SubmissionCommentsLoadMore {
       super(itemView);
       loadMoreButton = itemView.findViewById(R.id.item_loadmorecomments_load_more);
       indentedContainer = itemView.findViewById(R.id.item_loadmorecomments_indented_container);
+    }
+
+    public void setupClickStream(SubmissionCommentsAdapter adapter, Relay<LoadMoreCommentsClickEvent> clickStream) {
+      itemView.setOnClickListener(o -> {
+        if (getAdapterPosition() == -1) {
+          // Is being removed.
+          return;
+        }
+        UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
+        clickStream.accept(LoadMoreCommentsClickEvent.create(uiModel.parentCommentNode().get(), itemView));
+      });
     }
 
     public void bind(UiModel uiModel) {

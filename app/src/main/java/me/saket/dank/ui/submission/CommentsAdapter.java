@@ -25,12 +25,9 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.VoteDirection;
 
-import javax.inject.Inject;
-
 import butterknife.BindColor;
 import butterknife.BindString;
 import butterknife.BindView;
-import butterknife.ButterKnife;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
@@ -41,7 +38,6 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownHints;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
-import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
@@ -55,7 +51,6 @@ import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.SimpleTextWatcher;
@@ -66,6 +61,7 @@ import me.saket.dank.widgets.IndentedLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
+@Deprecated
 public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentRow, RecyclerView.ViewHolder> {
 
   private static final int VIEW_TYPE_USER_COMMENT = 100;
@@ -97,7 +93,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
   private CompositeDisposable inlineReplyDraftsDisposables = new CompositeDisposable();
 
-  @Inject
   public CommentsAdapter(DankLinkMovementMethod commentsLinkMovementMethod, VotingManager votingManager, UserSessionRepository userSessionRepository,
       DraftStore draftStore, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool)
   {
@@ -162,14 +157,14 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     switch (viewType) {
       case VIEW_TYPE_USER_COMMENT:
         UserCommentViewHolder commentHolder = UserCommentViewHolder.create(inflater, parent, linkMovementMethod);
-        commentHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider.getSwipeActionIconProvider());
+        commentHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider.iconProvider());
 
         // Collapse on click.
         commentHolder.itemView.setOnClickListener(v -> {
           DankCommentNode dankCommentNode = (DankCommentNode) getItemWithHeaderOffset(commentHolder.getAdapterPosition());
           boolean willCollapse = !dankCommentNode.isCollapsed();
           CommentClickEvent event = CommentClickEvent.create(
-              dankCommentNode,
+              null,
               commentHolder.getAdapterPosition() - SubmissionAdapterWithHeader.HEADER_COUNT,
               commentHolder.itemView,
               willCollapse
@@ -179,11 +174,11 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
         // Gestures.
         SwipeableLayout swipeableLayout = commentHolder.getSwipeableLayout();
-        swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions());
+        swipeableLayout.setSwipeActions(swipeActionsProvider.actions());
         swipeableLayout.setOnPerformSwipeActionListener(action -> {
           DankCommentNode dankCommentNode = (DankCommentNode) getItemWithHeaderOffset(commentHolder.getAdapterPosition());
           CommentNode commentNode = dankCommentNode.commentNode();
-          swipeActionsProvider.performSwipeAction(action, commentNode, swipeableLayout);
+          //swipeActionsProvider.performSwipeAction(action, commentNode.getComment(), swipeableLayout);
 
           // We should ideally only be updating the backing data-set and let onBind() handle the
           // changes, but RecyclerView's item animator reset's the View's x-translation which we
@@ -209,7 +204,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
       case VIEW_TYPE_PENDING_SYNC_REPLY:
         PendingSyncReplyViewHolder pendingReplyHolder = PendingSyncReplyViewHolder.create(inflater, parent, linkMovementMethod);
-        pendingReplyHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider.getSwipeActionIconProvider());
+        pendingReplyHolder.getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider.iconProvider());
         pendingReplyHolder.getSwipeableLayout().setSwipeEnabled(false);
 
         pendingReplyHolder.itemView.setOnClickListener(v -> {
@@ -223,7 +218,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
             // Collapse on click.
             boolean willCollapse = !pendingSyncReplyItem.isCollapsed();
             commentClickStream.accept(CommentClickEvent.create(
-                getItemWithHeaderOffset(pendingReplyHolder.getAdapterPosition()),
+                null,
                 pendingReplyHolder.getAdapterPosition() - SubmissionAdapterWithHeader.HEADER_COUNT,
                 pendingReplyHolder.itemView,
                 willCollapse
@@ -323,7 +318,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
     public UserCommentViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
       super(itemView);
-      ButterKnife.bind(this, itemView);
       this.linkMovementMethod = linkMovementMethod;
 
       // Bug workaround: TextView with clickable spans consume all touch events. Manually
@@ -425,7 +419,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
     public PendingSyncReplyViewHolder(View itemView, BetterLinkMovementMethod linkMovementMethod) {
       super(itemView, linkMovementMethod);
-      ButterKnife.bind(this, itemView);
     }
 
     public void bind(CommentPendingSyncReplyItem commentPendingSyncReplyItem) {
@@ -494,7 +487,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
     public InlineReplyViewHolder(View itemView, MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool) {
       super(itemView);
-      ButterKnife.bind(this, itemView);
 
       sendButton.setEnabled(false);
       replyField.addTextChangedListener(new SimpleTextWatcher() {
@@ -539,9 +531,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
         replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, replyMessage, authorNameIfComment));
       });
 
-      savingDraftsAllowed = true;
+      setSavingDraftsAllowed(true);
       sendButton.setOnClickListener(o -> {
-        savingDraftsAllowed = false;
+        setSavingDraftsAllowed(false);
         String replyMessage = replyField.getText().toString().trim();
         replySendClickRelay.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
       });
@@ -575,27 +567,16 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       return draftDisposable;
     }
 
+    public void setSavingDraftsAllowed(boolean allowed) {
+      savingDraftsAllowed = allowed;
+    }
+
     public void disableSavingOfDraft() {
-      savingDraftsAllowed = false;
+      setSavingDraftsAllowed(false);
     }
 
     public void handleOnRecycle() {
       draftDisposable.dispose();
-    }
-
-    public void handlePickedGiphyGif(GiphyGif giphyGif) {
-      int selectionStart = Math.min(replyField.getSelectionStart(), replyField.getSelectionEnd());
-      int selectionEnd = Math.max(replyField.getSelectionStart(), replyField.getSelectionEnd());
-
-      String selectedText = replyField.getText().subSequence(selectionStart, selectionEnd).toString();
-      String linkMarkdown = selectedText.isEmpty()
-          ? giphyGif.url()
-          : String.format("[%s](%s)", selectedText, giphyGif.url());
-      replyField.getText().replace(selectionStart, selectionEnd, linkMarkdown);
-
-      // Keyboard might have gotten dismissed while the GIF list was being scrolled.
-      // Works only if called delayed. Posting to reply field's message queue works.
-      replyField.post(() -> Keyboards.show(replyField));
     }
   }
 
@@ -609,7 +590,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
 
     public LoadMoreCommentViewHolder(View itemView) {
       super(itemView);
-      ButterKnife.bind(this, itemView);
     }
 
     public void bind(LoadMoreCommentItem loadMoreCommentsItem) {

@@ -3,15 +3,19 @@ package me.saket.dank;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
-import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
+
+import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.utils.lifecycle.LifecycleStreams;
 
 /**
  * Base class for {@link JobService JobServices}.
@@ -39,7 +43,9 @@ public abstract class DankJobService extends JobService {
   protected static final int ID_RECYCLE_OLD_SUBMISSIONS = 10;
 
   private CompositeDisposable onDestroyDisposables;
+  private Relay<Object> onDestroyStream = PublishRelay.create();
 
+  @Deprecated
   protected void unsubscribeOnDestroy(Disposable subscription) {
     if (onDestroyDisposables == null) {
       onDestroyDisposables = new CompositeDisposable();
@@ -52,6 +58,7 @@ public abstract class DankJobService extends JobService {
     if (onDestroyDisposables != null) {
       onDestroyDisposables.clear();
     }
+    onDestroyStream.accept(LifecycleStreams.NOTHING);
     super.onDestroy();
   }
 
@@ -77,8 +84,7 @@ public abstract class DankJobService extends JobService {
     notificationManager.notify(notifId, builder.build());
   }
 
-  @Override
-  public boolean onStopJob(JobParameters params) {
-    return false;
+  public Observable<Object> lifecycleOnDestroy() {
+    return onDestroyStream;
   }
 }

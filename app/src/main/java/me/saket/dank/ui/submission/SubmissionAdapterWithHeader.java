@@ -35,6 +35,7 @@ import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
  */
 public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<SubmissionAdapterWithHeader.SubmissionHeaderViewHolder, ViewHolder> {
 
+  @Deprecated
   public static final int HEADER_COUNT = 1;
 
   private final VotingManager votingManager;
@@ -61,15 +62,6 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
     this.swipeActionsProvider = swipeActionsProvider;
   }
 
-  public void updateSubmission(Submission submission) {
-    this.submission = submission;
-
-    // RecyclerView does not support moving Views inflated manually into the list. We'll have to fix this in the future.
-    if (submission != null && headerViewHolder != null) {
-      headerViewHolder.bind(votingManager, submission, replyRepository);
-    }
-  }
-
   @Override
   protected boolean isHeaderVisible() {
     return submission != null;
@@ -90,7 +82,7 @@ public class SubmissionAdapterWithHeader extends RecyclerAdapterWithHeader<Submi
     holder.bind(votingManager, getHeaderItem(), replyRepository);
 
     SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
-    swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions(submission));
+    swipeableLayout.setSwipeActions(swipeActionsProvider.actionsFor(submission));
     swipeableLayout.setOnPerformSwipeActionListener(action -> {
       swipeActionsProvider.performSwipeAction(action, submission, swipeableLayout);
       onBindViewHolder(holder, position);

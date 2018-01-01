@@ -1,7 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
@@ -9,12 +7,21 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.os.PersistableBundle;
 
-import net.dean.jraw.models.Thing;
-import net.dean.jraw.models.VoteDirection;
-import net.dean.jraw.models.attr.Votable;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.models.VoteDirection;
+
+import javax.inject.Inject;
+
+import io.reactivex.Completable;
+import io.reactivex.Single;
+import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.DankJobService;
+import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.VotingManager;
 import me.saket.dank.di.Dank;
 import timber.log.Timber;
 
@@ -23,40 +30,59 @@ import timber.log.Timber;
  */
 public class VoteJobService extends DankJobService {
 
-  private static final String KEY_VOTABLE_THING_NAME = "votableThingName";
+  private static final String KEY_VOTABLE_CONTRIBUTION_JSON = "votableThingName";
   private static final String KEY_VOTE_DIRECTION = "voteDirection";
+
+  @Inject Moshi moshi;
+  @Inject VotingManager votingManager;
 
   /**
    * Schedule a voting attempt whenever JobScheduler deems it fit.
    */
-  public static <T extends Thing & Votable> void scheduleRetry(Context context, T thing, VoteDirection voteDirection) {
+  public static void scheduleRetry(Context context, PostedOrInFlightContribution votableContribution, VoteDirection voteDirection, Moshi moshi) {
     PersistableBundle extras = new PersistableBundle(2);
     extras.putString(KEY_VOTE_DIRECTION, voteDirection.name());
-    extras.putString(KEY_VOTABLE_THING_NAME, thing.getFullName());
+    extras.putString(KEY_VOTABLE_CONTRIBUTION_JSON, moshi.adapter(PostedOrInFlightContribution.class).toJson(votableContribution));
 
-    JobInfo retryJobInfo = new JobInfo.Builder(ID_VOTE + thing.getId().hashCode(), new ComponentName(context, VoteJobService.class))
+    JobInfo retryJobInfo = new JobInfo.Builder(ID_VOTE + votableContribution.hashCode(), new ComponentName(context, VoteJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)
         .setExtras(extras)
         .build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
     jobScheduler.schedule(retryJobInfo);
+  }
+
+  @Override
+  public void onCreate() {
+    super.onCreate();
+    Dank.dependencyInjector().inject(this);
   }
 
   @Override
   public boolean onStartJob(JobParameters params) {
     VoteDirection voteDirection = VoteDirection.valueOf(params.getExtras().getString(KEY_VOTE_DIRECTION));
-    String fullNameOfThingToVote = params.getExtras().getString(KEY_VOTABLE_THING_NAME);
 
-    if (!Dank.voting().isVotePending(fullNameOfThingToVote)) {
-      // Looks like the pending vote was cleared upon refreshing data from remote.
-      Timber.w("Job is stale because %s no longer has a pending vote.", fullNameOfThingToVote);
-      jobFinished(params, false);
-    }
+    JsonAdapter<PostedOrInFlightContribution> adapter = moshi.adapter(PostedOrInFlightContribution.class);
+    String votableContributionJson = params.getExtras().getString(KEY_VOTABLE_CONTRIBUTION_JSON);
 
-    unsubscribeOnDestroy(Dank.voting().vote(fullNameOfThingToVote, voteDirection)
-        .compose(applySchedulersCompletable())
+    //noinspection ConstantConditions
+    Single.fromCallable(() -> adapter.fromJson(votableContributionJson))
+        .flatMapCompletable(votableContribution -> {
+          if (!votingManager.isVotePending(votableContribution)) {
+            // Looks like the pending vote was cleared upon refreshing data from remote.
+            Timber.w("Job is stale because contribution no longer has a pending vote: %s", votableContribution);
+            return Completable.complete();
+
+          } else {
+            return votingManager.vote(votableContribution, voteDirection);
+          }
+        })
+        .ambWith(lifecycleOnDestroy().ignoreElements())
+        .subscribeOn(Schedulers.io())
+        .observeOn(AndroidSchedulers.mainThread())
         .subscribe(
             () -> {
               Timber.i("Finis");
@@ -70,7 +96,7 @@ public class VoteJobService extends DankJobService {
               Timber.i("needsReschedule: %s", needsReschedule);
               jobFinished(params, needsReschedule);
             }
-        ));
+        );
 
     // Return true to indicate that the job is still being processed (in a background thread).
     return true;

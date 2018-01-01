@@ -64,4 +64,10 @@ public class DatabaseCacheRecyclerJobService extends DankJobService {
     // Return true to indicate that the job is still being processed (in a background thread).
     return false;
   }
+
+  @Override
+  public boolean onStopJob(JobParameters params) {
+    // False to drop this job.
+    return false;
+  }
 }

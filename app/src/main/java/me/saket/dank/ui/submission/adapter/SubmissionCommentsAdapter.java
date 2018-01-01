@@ -11,7 +11,10 @@ import com.jakewharton.rxrelay2.Relay;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.disposables.Disposable;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
+import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
@@ -31,6 +34,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   private final DankLinkMovementMethod linkMovementMethod;
   private final SubmissionSwipeActionsProvider submissionSwipeActionsProvider;
   private final CommentSwipeActionsProvider commentSwipeActionsProvider;
+  private final DraftStore draftStore;
+  private final CompositeDisposable inlineReplyDraftsDisposables = new CompositeDisposable();
 
   // Click event streams.
   private final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
@@ -47,12 +52,24 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   public SubmissionCommentsAdapter(
       DankLinkMovementMethod linkMovementMethod,
       SubmissionSwipeActionsProvider submissionSwipeActionsProvider,
-      CommentSwipeActionsProvider commentSwipeActionsProvider)
+      CommentSwipeActionsProvider commentSwipeActionsProvider,
+      DraftStore draftStore)
   {
     this.linkMovementMethod = linkMovementMethod;
     this.submissionSwipeActionsProvider = submissionSwipeActionsProvider;
     this.commentSwipeActionsProvider = commentSwipeActionsProvider;
+    this.draftStore = draftStore;
     setHasStableIds(true);
+  }
+
+  /**
+   * We try to automatically dispose drafts subscribers in {@link SubmissionCommentInlineReply} when the
+   * ViewHolder is getting recycled (in {@link #onViewRecycled(RecyclerView.ViewHolder)} or re-bound
+   * to data. But onViewRecycled() doesn't get called on Activity destroy so this has to be manually
+   * called.
+   */
+  public void forceDisposeDraftSubscribers() {
+    inlineReplyDraftsDisposables.clear();
   }
 
   @Override
@@ -64,19 +81,42 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
     switch (VIEW_TYPES[viewType]) {
       case SUBMISSION_HEADER:
-        return SubmissionCommentsHeader.ViewHolder.create(inflater, parent, headerClickStream);
+        SubmissionCommentsHeader.ViewHolder headerHolder = SubmissionCommentsHeader.ViewHolder.create(
+            inflater,
+            parent,
+            headerClickStream,
+            linkMovementMethod
+        );
+        headerHolder.setupGestures(this, submissionSwipeActionsProvider);
+        return headerHolder;
 
       case COMMENTS_LOADING_PROGRESS:
         return SubmissionCommentsLoadingProgress.ViewHolder.create(inflater, parent);
 
       case USER_COMMENT:
-        return SubmissionComment.ViewHolder.create(inflater, parent);
+        SubmissionComment.ViewHolder commentHolder = SubmissionComment.ViewHolder.create(inflater, parent);
+        commentHolder.setupGestures(this, commentSwipeActionsProvider);
+        commentHolder.setupCollapseOnClick(this, commentClickStream);
+        commentHolder.setupTapToRetrySending(this, replyRetrySendClickStream);
+        commentHolder.forwardTouchEventsToBackground(this, linkMovementMethod);
+        return commentHolder;
 
       case INLINE_REPLY:
-        return SubmissionInlineReply.ViewModel.create(inflater, parent);
+        SubmissionCommentInlineReply.ViewHolder inlineReplyHolder = SubmissionCommentInlineReply.ViewHolder.create(inflater, parent);
+        inlineReplyHolder.setupClickStreams(
+            this,
+            draftStore,
+            replyGifClickStream,
+            replyDiscardClickStream,
+            replyFullscreenClickStream,
+            replySendClickStream
+        );
+        return inlineReplyHolder;
 
       case LOAD_MORE_COMMENTS:
-        return SubmissionCommentsLoadMore.ViewHolder.create(inflater, parent);
+        SubmissionCommentsLoadMore.ViewHolder loadMoreViewHolder = SubmissionCommentsLoadMore.ViewHolder.create(inflater, parent);
+        loadMoreViewHolder.setupClickStream(this, loadMoreCommentsClickStream);
+        return loadMoreViewHolder;
 
       default:
         throw new UnsupportedOperationException("Unknown view type: " + VIEW_TYPES[viewType]);
@@ -87,9 +127,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
     switch (VIEW_TYPES[getItemViewType(position)]) {
       case SUBMISSION_HEADER:
-        SubmissionCommentsHeader.ViewHolder headerVH = (SubmissionCommentsHeader.ViewHolder) holder;
-        SubmissionCommentsHeader.UiModel headerUiModel = (SubmissionCommentsHeader.UiModel) getItem(position);
-        headerVH.bind(headerUiModel, linkMovementMethod);
+        ((SubmissionCommentsHeader.ViewHolder) holder).bind((SubmissionCommentsHeader.UiModel) getItem(position), submissionSwipeActionsProvider);
         break;
 
       case COMMENTS_LOADING_PROGRESS:
@@ -101,7 +139,9 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         break;
 
       case INLINE_REPLY:
-        ((SubmissionInlineReply.ViewModel) holder).bind((SubmissionInlineReply.UiModel) getItem(position));
+        SubmissionCommentInlineReply.UiModel uiModel = (SubmissionCommentInlineReply.UiModel) getItem(position);
+        Disposable draftsDisposable = ((SubmissionCommentInlineReply.ViewHolder) holder).bind(uiModel, draftStore);
+        inlineReplyDraftsDisposables.add(draftsDisposable);
         break;
 
       case LOAD_MORE_COMMENTS:
@@ -116,6 +156,14 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @Override
   public long getItemId(int position) {
     return getItem(position).adapterId();
+  }
+
+  @Override
+  public void onViewRecycled(RecyclerView.ViewHolder holder) {
+    if (holder instanceof SubmissionCommentInlineReply.ViewHolder) {
+      ((SubmissionCommentInlineReply.ViewHolder) holder).handleOnRecycle();
+    }
+    super.onViewRecycled(holder);
   }
 
   @CheckResult

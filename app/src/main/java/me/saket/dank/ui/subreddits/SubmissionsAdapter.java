@@ -137,7 +137,7 @@ public class SubmissionsAdapter extends RecyclerViewArrayAdapter<Object, Recycle
 
       // TODO: Avoid creating a new listener for every item.
       SwipeableLayout swipeableLayout = submissionViewHolder.getSwipeableLayout();
-      swipeableLayout.setSwipeActions(swipeActionsProvider.getSwipeActions(submission));
+      swipeableLayout.setSwipeActions(swipeActionsProvider.actionsFor(submission));
       swipeableLayout.setOnPerformSwipeActionListener(action -> {
         swipeActionsProvider.performSwipeAction(action, submission, swipeableLayout);
 

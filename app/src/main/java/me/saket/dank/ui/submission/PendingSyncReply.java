@@ -11,7 +11,7 @@ import net.dean.jraw.models.Contribution;
 import io.reactivex.functions.Function;
 
 /**
- * See {@link ReplyRepository}.
+ * A reply made locally that acts as a placeholder until its actual model is fetched from remote.
  */
 @AutoValue
 public abstract class PendingSyncReply {
@@ -46,12 +46,6 @@ public abstract class PendingSyncReply {
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_PARENT_THREAD_FULL_NAME + " == ?"
           + " ORDER BY " + COLUMN_SENT_TIME_MILLIS + " DESC";
-
-  //public static final String QUERY_GET_ALL_POSTED_FOR_THREAD =
-  //    "SELECT * FROM " + TABLE_NAME
-  //        + " WHERE " + COLUMN_PARENT_THREAD_FULL_NAME + " == ?"
-  //        + " AND " + COLUMN_STATE + " == '" + State.POSTED + "'"
-  //        + " ORDER BY " + COLUMN_CREATED_TIME_MILLIS + " DESC";
 
   public static final String QUERY_GET_ALL_FAILED =
       "SELECT * FROM " + TABLE_NAME

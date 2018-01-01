@@ -25,6 +25,7 @@ import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.submission.RetryReplyJobService;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
+import me.saket.dank.ui.submission.VoteJobService;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.ui.subreddits.SubredditPickerSheetView;
 import me.saket.dank.ui.subreddits.SubredditSubscriptionsSyncJob;
@@ -103,4 +104,6 @@ public interface DankAppComponent {
   void inject(MessageNotifActionsJobService target);
 
   void inject(LoginActivity target);
+
+  void inject(VoteJobService target);
 }

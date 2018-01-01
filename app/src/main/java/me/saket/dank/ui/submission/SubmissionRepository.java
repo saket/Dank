@@ -48,6 +48,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
+import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddits.NetworkCallStatus;
@@ -158,7 +159,7 @@ public class SubmissionRepository {
   @CheckResult
   private Completable saveSubmissionWithComments(@Nonnull DankSubmissionRequest submissionRequest, @Nonnull Submission submission) {
     return Completable.fromAction(() -> {
-      Timber.i("Saving submission with comments: %s", submission.getTitle());
+      //Timber.i("Saving submission with comments: %s", submission.getTitle());
 
       long saveTimeMillis = System.currentTimeMillis();
       CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
@@ -362,7 +363,7 @@ public class SubmissionRepository {
 
       transaction.markSuccessful();
     }
-    Timber.i("Saved %d items in: %sms", submissionsToSave.size(), (System.currentTimeMillis() - startTime));
+    //Timber.i("Saved %d items in: %sms", submissionsToSave.size(), (System.currentTimeMillis() - startTime));
 
     return SaveResult.create(Collections.unmodifiableList(savedSubmissions));
   }
@@ -447,15 +448,15 @@ public class SubmissionRepository {
 
 // ======== SAVE ======== //
 
-  public void markAsSaved(Submission submission) {
-    savedSubmissionIds.add(submission.getId());
+  public void markAsSaved(PostedOrInFlightContribution submission) {
+    savedSubmissionIds.add(submission.fullName());
   }
 
-  public void markAsUnsaved(Submission submission) {
-    savedSubmissionIds.remove(submission.getId());
+  public void markAsUnsaved(PostedOrInFlightContribution submission) {
+    savedSubmissionIds.remove(submission.fullName());
   }
 
-  public boolean isSaved(Submission submission) {
-    return savedSubmissionIds.contains(submission.getId());
+  public boolean isSaved(PostedOrInFlightContribution submission) {
+    return savedSubmissionIds.contains(submission.fullName());
   }
 }
