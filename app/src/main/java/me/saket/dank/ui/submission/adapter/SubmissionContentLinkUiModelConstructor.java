@@ -17,14 +17,12 @@ import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.auto.value.AutoValue;
 
-import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
-import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ExternalLink;
@@ -72,9 +70,7 @@ public class SubmissionContentLinkUiModelConstructor {
     int windowBackgroundColor = ContextCompat.getColor(context, R.color.window_background);
 
     if (link.isExternal()) {
-      return streamLoadExternalLink(context, (ExternalLink) link, windowBackgroundColor, redditSuppliedThumbnails)
-          //.doOnNext(model -> Timber.i("LinkUiModel: [title=%s, icon=%s, thumbnail=%s]", model.title(), model.icon(), model.thumbnail()))
-          ;
+      return streamLoadExternalLink(context, (ExternalLink) link, windowBackgroundColor, redditSuppliedThumbnails);
 
     } else if (link.isRedditPage()) {
       return streamLoadRedditLink(context, ((RedditLink) link));
@@ -93,9 +89,8 @@ public class SubmissionContentLinkUiModelConstructor {
       int windowBackgroundColor,
       ImageWithMultipleVariants redditSuppliedThumbnails)
   {
-    // TODO: Remove artificial delay.
     Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(link)
-        .delay(BuildConfig.DEBUG ? 2 : 0, TimeUnit.SECONDS)
+        .subscribeOn(Schedulers.io())
         .toObservable()
         .onErrorResumeNext(Observable.empty())
         .share();
@@ -108,11 +103,11 @@ public class SubmissionContentLinkUiModelConstructor {
     Observable<Boolean> progressVisibleStream = streamProgressVisibility(sharedTitleStream, sharedFaviconStream, sharedThumbnailStream);
 
     return Observable.combineLatest(
-        sharedTitleStream.subscribeOn(Schedulers.io()).doOnNext(title -> Timber.i("Title: %s", title)),
-        sharedFaviconStream.subscribeOn(Schedulers.io()).doOnNext(optional -> Timber.i("Favicon: %s", optional)),
-        sharedThumbnailStream.subscribeOn(Schedulers.io()).doOnNext(optional -> Timber.i("Thumb: %s", optional)),
-        tintDetailsStream.subscribeOn(Schedulers.io()).doOnNext(td -> Timber.i("Tint: %s", td)),
-        progressVisibleStream.subscribeOn(Schedulers.io()).doOnNext(b -> Timber.i("Progress: %s", b)),
+        sharedTitleStream,
+        sharedFaviconStream,
+        sharedThumbnailStream,
+        tintDetailsStream,
+        progressVisibleStream,
         (title, optionalFavicon, optionalThumbnail, tintDetails, progressVisible) ->
             SubmissionContentLinkUiModel.builder()
                 .title(title)
@@ -162,6 +157,7 @@ public class SubmissionContentLinkUiModelConstructor {
       iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_linked_submission));
 
       Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(submissionLink)
+          .subscribeOn(Schedulers.io())
           .toObservable()
           .share();
 
@@ -170,6 +166,7 @@ public class SubmissionContentLinkUiModelConstructor {
           .startWith(true);
 
       titleStream = sharedLinkMetadataStream
+          .observeOn(Schedulers.io())
           .map(linkMetadata -> {
             String submissionPageTitle = linkMetadata.title();
             if (submissionPageTitle != null) {
@@ -180,7 +177,8 @@ public class SubmissionContentLinkUiModelConstructor {
               }
             }
             return submissionPageTitle;
-          });
+          })
+          .startWith(redditLink.unparsedUrl());
 
     } else {
       throw new UnsupportedOperationException("Unknown reddit link: " + redditLink);
@@ -206,21 +204,6 @@ public class SubmissionContentLinkUiModelConstructor {
                 .backgroundTintColor(tintDetails.backgroundTint())
                 .build()
     );
-  }
-
-  private Observable<Bitmap> loadBitmapFromResource(Context context, @DrawableRes int drawableRes) {
-    return Observable.fromCallable(() -> {
-      Drawable drawable = context.getDrawable(drawableRes);
-      //noinspection ConstantConditions
-      if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
-        throw new AssertionError();
-      }
-      Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-      Canvas canvas = new Canvas(bitmap);
-      drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-      drawable.draw(canvas);
-      return bitmap;
-    });
   }
 
   public Observable<SubmissionContentLinkUiModel> streamLoadImgurAlbum(
@@ -275,6 +258,21 @@ public class SubmissionContentLinkUiModelConstructor {
     );
   }
 
+  private Observable<Bitmap> loadBitmapFromResource(Context context, @DrawableRes int drawableRes) {
+    return Observable.fromCallable(() -> {
+      Drawable drawable = context.getDrawable(drawableRes);
+      //noinspection ConstantConditions
+      if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+        throw new AssertionError();
+      }
+      Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+      Canvas canvas = new Canvas(bitmap);
+      drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+      drawable.draw(canvas);
+      return bitmap;
+    });
+  }
+
   private Observable<TintDetails> streamTintDetails(
       Link link,
       int windowBackgroundColor,
@@ -293,6 +291,7 @@ public class SubmissionContentLinkUiModelConstructor {
 
   private Observable<String> fetchTitle(ExternalLink link, Observable<LinkMetadata> linkMetadataSingle) {
     return linkMetadataSingle
+        .observeOn(Schedulers.io())
         .map(metadata -> metadata.title())
         .startWith(link.unparsedUrl())
         .share();
@@ -313,11 +312,13 @@ public class SubmissionContentLinkUiModelConstructor {
             int thumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(context);
             return Observable.just(redditSuppliedThumbnails.findNearestFor(thumbnailWidth));
           } else {
-            return fallbackThumbnailUrlStream.flatMap(optionalUrl ->
-                optionalUrl.isPresent()
-                    ? Observable.just(optionalUrl.get())
-                    : Observable.empty()
-            );
+            return fallbackThumbnailUrlStream
+                .observeOn(Schedulers.io())
+                .flatMap(optionalUrl ->
+                    optionalUrl.isPresent()
+                        ? Observable.just(optionalUrl.get())
+                        : Observable.empty()
+                );
           }
         })
         .flatMap(imageUrl -> {
@@ -335,6 +336,7 @@ public class SubmissionContentLinkUiModelConstructor {
   private Observable<Optional<Bitmap>> fetchFavicon(Context context, Observable<LinkMetadata> linkMetadataSingle) {
     //noinspection ConstantConditions
     return linkMetadataSingle
+        .observeOn(Schedulers.io())
         .flatMap(metadata -> metadata.hasFavicon() ? Observable.just(metadata.faviconUrl()) : Observable.empty())
         .flatMap(faviconUrl -> {
           // Keep this context in sync with the one used in loadImage() for clearing this load on dispose.
