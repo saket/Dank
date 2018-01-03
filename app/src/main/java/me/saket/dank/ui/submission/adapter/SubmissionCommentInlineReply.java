@@ -25,6 +25,7 @@ import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
 import me.saket.dank.ui.submission.events.ReplyFullscreenClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
+import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.IndentedLayout;
@@ -66,6 +67,7 @@ public interface SubmissionCommentInlineReply {
 
     private Disposable draftDisposable = Disposables.disposed();
     private boolean savingDraftsAllowed;
+    private String parentContributionFullName;
 
     public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new ViewHolder(inflater.inflate(R.layout.list_item_submission_comments_inline_reply, parent, false));
@@ -84,25 +86,11 @@ public interface SubmissionCommentInlineReply {
 
     public void setupClickStreams(
         SubmissionCommentsAdapter adapter,
-        DraftStore draftStore,
         Relay<ReplyInsertGifClickEvent> replyGifClickRelay,
         Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
         Relay<ReplyFullscreenClickEvent> replyFullscreenClickRelay,
         Relay<ReplySendClickEvent> replySendClickRelay)
     {
-      replyField.setOnFocusChangeListener((v, hasFocus) -> {
-        if (!hasFocus && savingDraftsAllowed) {
-          UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
-          ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(uiModel.parentContributionFullName());
-
-          // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
-          // WARNING: DON'T REFERENCE VH FIELDS IN THIS CHAIN TO AVOID LEAKING MEMORY.
-          draftStore.saveDraft(parentContribution, replyField.getText().toString())
-              .subscribeOn(Schedulers.io())
-              .subscribe();
-        }
-      });
-
       discardButton.setOnClickListener(o -> {
         UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
         ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(uiModel.parentContributionFullName());
@@ -130,8 +118,26 @@ public interface SubmissionCommentInlineReply {
       });
     }
 
+    public void setupSavingOfDraftOnFocusLost(DraftStore draftStore) {
+      replyField.setOnFocusChangeListener((v, hasFocus) -> {
+        if (!hasFocus && savingDraftsAllowed) {
+          ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(parentContributionFullName);
+
+          // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
+          // WARNING: DON'T REFERENCE VH FIELDS IN THIS CHAIN TO AVOID LEAKING MEMORY.
+          draftStore.saveDraft(parentContribution, replyField.getText().toString())
+              .subscribeOn(Schedulers.io())
+              .subscribe();
+        }
+      });
+    }
+
     @CheckResult
     public Disposable bind(UiModel uiModel, DraftStore draftStore) {
+      // Saving this field instead of getting it from adapter later because this holder's position
+      // becomes -1 when a focus-lost callback is received when this holder is being removed.
+      this.parentContributionFullName = uiModel.parentContributionFullName();
+
       indentedLayout.setIndentationDepth(uiModel.indentationDepth());
       authorHintView.setText(uiModel.authorHint());
 
@@ -154,6 +160,10 @@ public interface SubmissionCommentInlineReply {
           });
 
       return draftDisposable;
+    }
+
+    public void emitBindEvent(UiModel uiModel, Relay<ReplyItemViewBindEvent> stream) {
+      stream.accept(ReplyItemViewBindEvent.create(uiModel, replyField));
     }
 
     public void setSavingDraftsAllowed(boolean allowed) {
