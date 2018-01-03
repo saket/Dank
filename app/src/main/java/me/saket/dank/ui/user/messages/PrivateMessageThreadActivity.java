@@ -9,9 +9,12 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
+import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.support.v4.util.Pair;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
@@ -132,10 +135,11 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     messagesAdapter = new ThreadedMessagesAdapter(linkMovementMethod);
     messageRecyclerView.setAdapter(messagesAdapter);
 
-    SlideUpAlphaAnimator itemAnimator = new SlideUpAlphaAnimator().withInterpolator(Animations.INTERPOLATOR);
-    itemAnimator.setRemoveDuration(250);
-    itemAnimator.setAddDuration(250);
-    messageRecyclerView.setItemAnimator(itemAnimator);
+    Drawable itemBackgroundDuringAnimation = new ColorDrawable(ContextCompat.getColor(this, R.color.window_background));
+    messageRecyclerView.setItemAnimator(new SlideUpAlphaAnimator(itemBackgroundDuringAnimation)
+        .withInterpolator(Animations.INTERPOLATOR)
+        .withRemoveDuration(250)
+        .withAddDuration(250));
 
     String privateMessageThreadFullName = getIntent().getStringExtra(KEY_MESSAGE_FULLNAME);
     ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageThreadFullName);

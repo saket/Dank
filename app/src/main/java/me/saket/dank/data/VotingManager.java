@@ -36,9 +36,9 @@ public class VotingManager {
 
   private static final String KEY_PENDING_VOTE_ = "pendingVote_";
 
-  private Application appContext;
-  private DankRedditClient dankRedditClient;
-  private SharedPreferences sharedPrefs;
+  private final Application appContext;
+  private final DankRedditClient dankRedditClient;
+  private final SharedPreferences sharedPrefs;
   private final Moshi moshi;
 
   /**

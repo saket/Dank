@@ -18,6 +18,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
+import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -120,7 +121,7 @@ import me.saket.dank.utils.RxDiffUtils;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
-import me.saket.dank.utils.itemanimators.SlideDownAlphaAnimator;
+import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerViews.ViewLifecycleStreams;
@@ -326,11 +327,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    * {@link SubmissionCommentsAdapter} subscribes to its updates.
    */
   private void setupCommentRecyclerView() {
-    // TODO: Set window background to items only while animating.
-    int commentItemViewElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
-    SlideDownAlphaAnimator itemAnimator = new SlideDownAlphaAnimator(commentItemViewElevation).withInterpolator(Animations.INTERPOLATOR);
-    itemAnimator.setRemoveDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
-    itemAnimator.setAddDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
+    int itemElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
+    Drawable itemBackgroundDuringAnimation = new ColorDrawable(ContextCompat.getColor(getContext(), R.color.window_background));
+    SubmissionCommentsItemAnimator itemAnimator = new SubmissionCommentsItemAnimator(itemElevation, itemBackgroundDuringAnimation)
+        .withInterpolator(Animations.INTERPOLATOR)
+        .withRemoveDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION)
+        .withAddDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
     //commentRecyclerView.setItemAnimator(itemAnimator);
 
     // RecyclerView automatically handles saving and restoring scroll position if the
@@ -374,9 +376,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(
             itemsAndDiff -> {
               List<SubmissionScreenUiModel> newComments = itemsAndDiff.first();
-              submissionCommentsAdapter.updateData(newComments);
-
               DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second();
+              submissionCommentsAdapter.updateData(newComments);
               commentsDiffResult.dispatchUpdatesTo(submissionCommentsAdapter);
             },
             logError("Error while streaming comments")
@@ -410,7 +411,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     // Wait till the reply's View is added to the list and show keyboard.
     inlineReplyStream
         .doOnNext(o -> Timber.i("-----------------------------"))
-        .doOnNext(parentC -> Timber.i("Showing inline reply"))
         .switchMapSingle(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution).toSingleDefault(parentContribution))
         .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
         .takeUntil(lifecycle().onDestroy())
@@ -548,7 +548,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             }
           }
 
-          commentTreeConstructor.toggleCollapse(clickEvent.commentRow());
+          commentTreeConstructor.toggleCollapse(clickEvent.commentInfo());
         });
 
     // Load-more-comment clicks.

@@ -9,7 +9,7 @@ import me.saket.dank.data.PostedOrInFlightContribution;
 @AutoValue
 public abstract class CommentClickEvent {
 
-  public abstract PostedOrInFlightContribution commentRow();
+  public abstract PostedOrInFlightContribution commentInfo();
 
   public abstract int commentRowPosition();
 
@@ -18,11 +18,11 @@ public abstract class CommentClickEvent {
   public abstract boolean willCollapseOnClick();
 
   public static CommentClickEvent create(
-      PostedOrInFlightContribution comment,
+      PostedOrInFlightContribution commentInfo,
       int commentPosition,
       View commentItemView,
       boolean willCollapseOnClick)
   {
-    return new AutoValue_CommentClickEvent(comment, commentPosition, commentItemView, willCollapseOnClick);
+    return new AutoValue_CommentClickEvent(commentInfo, commentPosition, commentItemView, willCollapseOnClick);
   }
 }
