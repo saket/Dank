@@ -95,10 +95,11 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
       case USER_COMMENT:
         SubmissionComment.ViewHolder commentHolder = SubmissionComment.ViewHolder.create(inflater, parent);
+        commentHolder.setBodyLinkMovementMethod(linkMovementMethod);
         commentHolder.setupGestures(this, commentSwipeActionsProvider);
         commentHolder.setupCollapseOnClick(this, commentClickStream);
         commentHolder.setupTapToRetrySending(this, replyRetrySendClickStream);
-        commentHolder.forwardTouchEventsToBackground(this, linkMovementMethod);
+        commentHolder.forwardTouchEventsToBackground(linkMovementMethod);
         return commentHolder;
 
       case INLINE_REPLY:

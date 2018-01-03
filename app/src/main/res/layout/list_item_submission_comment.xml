@@ -38,7 +38,7 @@
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
       android:textColor="@color/submission_comment_body_expanded"
-      android:textIsSelectable="true"
+      android:textIsSelectable="false"
       android:textSize="@dimen/submission_comment_body_expanded"
       tools:text="That boss was my favourite. I bought Dark Souls after hearing how crushingly difficult it was from a friend of mine. He kept warning me about that boss and told me to prepare for a really difficult time." />
 

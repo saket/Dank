@@ -18,6 +18,7 @@ import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
+import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.widgets.IndentedLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
@@ -107,6 +108,10 @@ public interface SubmissionComment {
       indentedLayout = itemView.findViewById(R.id.item_comment_indented_container);
     }
 
+    public void setBodyLinkMovementMethod(DankLinkMovementMethod movementMethod) {
+      bodyView.setMovementMethod(movementMethod);
+    }
+
     public void setupGestures(SubmissionCommentsAdapter adapter, CommentSwipeActionsProvider commentSwipeActionsProvider) {
       getSwipeableLayout().setSwipeActionIconProvider(commentSwipeActionsProvider.iconProvider());
       getSwipeableLayout().setSwipeActions(commentSwipeActionsProvider.actions());
@@ -144,15 +149,11 @@ public interface SubmissionComment {
       };
     }
 
-    public void forwardTouchEventsToBackground(SubmissionCommentsAdapter adapter, BetterLinkMovementMethod linkMovementMethod) {
+    public void forwardTouchEventsToBackground(BetterLinkMovementMethod linkMovementMethod) {
       // Bug workaround: TextView with clickable spans consume all touch events. Manually
       // transfer them to the parent so that the background touch indicator shows up +
       // click listener works.
       bodyView.setOnTouchListener((o, event) -> {
-        UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        if (uiModel.isCollapsed()) {
-          return false;
-        }
         boolean handledByMovementMethod = linkMovementMethod.onTouchEvent(bodyView, (Spannable) bodyView.getText(), event);
         return handledByMovementMethod || itemView.onTouchEvent(event);
       });

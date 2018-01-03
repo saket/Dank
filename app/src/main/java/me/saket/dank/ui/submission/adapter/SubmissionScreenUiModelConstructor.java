@@ -81,7 +81,6 @@ public class SubmissionScreenUiModelConstructor {
           Optional<Link> optionalLink = pair.first();
           if (optionalLink.isPresent()) {
             return contentLinkUiModelConstructor.streamLoad(context, optionalLink.get(), ImageWithMultipleVariants.of(pair.second().getThumbnails()))
-                .doOnNext(linkUiModel -> Timber.i(linkUiModel.toString()))
                 .doOnError(e -> Timber.e(e))
                 .as(Optional.of());
           } else {
