@@ -73,6 +73,7 @@ import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
@@ -310,6 +311,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       populateUi(retainedSubmission, retainedRequest);
     }
 
+    if (!isExpandedOrExpanding()) {
+      Timber.w("Ignoring state restoration.");
+    }
+
     Parcelable superState = savedState.getParcelable("superState");
     super.onRestoreInstanceState(superState);
   }
@@ -403,6 +408,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
     inlineReplyStream
+        .doOnNext(parentC -> Timber.i("Showing inline reply for %s", parentC))
         .switchMapSingle(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution).toSingleDefault(parentContribution))
         .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
         .takeUntil(lifecycle().onDestroy())
@@ -566,12 +572,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           } else {
             return submissionRequestStream.zipWith(submissionStream, Pair::create)
                 .take(1)
-                .observeOn(io())
                 .doOnNext(o -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentCommentNode(), true))
                 .flatMapCompletable(pair -> {
                   DankSubmissionRequest submissionRequest = pair.first();
                   Submission submission = pair.second();
-                  return submissionRepository.loadMoreComments(submission, submissionRequest, loadMoreClickEvent.parentCommentNode());
+                  return submissionRepository.loadMoreComments(submission, submissionRequest, loadMoreClickEvent.parentCommentNode())
+                      .subscribeOn(Schedulers.io())
+                      .onErrorComplete();
                 })
                 .doOnTerminate(() -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentCommentNode(), false))
                 .toObservable();

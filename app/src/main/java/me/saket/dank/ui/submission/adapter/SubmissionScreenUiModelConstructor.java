@@ -370,7 +370,7 @@ public class SubmissionScreenUiModelConstructor {
         .label(label)
         .iconRes(parentCommentNode.isThreadContinuation() ? R.drawable.ic_arrow_forward_12dp : 0)
         .indentationDepth(parentCommentNode.getDepth())
-        .parentCommentNode(CommentNodeEqualsBandAid.create(parentCommentNode))
+        .parentCommentNode(parentCommentNode)
         .clickEnabled(clickEnabled)
         .build();
   }

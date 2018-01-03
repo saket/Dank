@@ -10,6 +10,8 @@ import android.widget.TextView;
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.Relay;
 
+import net.dean.jraw.models.CommentNode;
+
 import me.saket.dank.R;
 import me.saket.dank.data.CommentNodeEqualsBandAid;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
@@ -33,7 +35,11 @@ public interface SubmissionCommentsLoadMore {
 
     public abstract int indentationDepth();
 
-    public abstract CommentNodeEqualsBandAid parentCommentNode();
+    public abstract CommentNodeEqualsBandAid parentCommentNodeEqualsBandAid();
+
+    public CommentNode parentCommentNode() {
+      return parentCommentNodeEqualsBandAid().get();
+    }
 
     @Override
     public SubmissionCommentRowType type() {
@@ -56,7 +62,11 @@ public interface SubmissionCommentsLoadMore {
 
       public abstract Builder indentationDepth(int depth);
 
-      public abstract Builder parentCommentNode(CommentNodeEqualsBandAid parentCommentNode);
+      public abstract Builder parentCommentNodeEqualsBandAid(CommentNodeEqualsBandAid parentCommentNode);
+
+      public Builder parentCommentNode(CommentNode parentCommentNode) {
+        return parentCommentNodeEqualsBandAid(CommentNodeEqualsBandAid.create(parentCommentNode));
+      }
 
       public abstract UiModel build();
     }
@@ -77,19 +87,22 @@ public interface SubmissionCommentsLoadMore {
     }
 
     public void setupClickStream(SubmissionCommentsAdapter adapter, Relay<LoadMoreCommentsClickEvent> clickStream) {
-      itemView.setOnClickListener(o -> {
+      itemView.setOnClickListener(o -> loadMoreButton.performClick());
+      itemView.setOnTouchListener((o, event) -> loadMoreButton.onTouchEvent(event));
+
+      loadMoreButton.setOnClickListener(o -> {
         if (getAdapterPosition() == -1) {
           // Is being removed.
           return;
         }
         UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        clickStream.accept(LoadMoreCommentsClickEvent.create(uiModel.parentCommentNode().get(), itemView));
+        clickStream.accept(LoadMoreCommentsClickEvent.create(uiModel.parentCommentNode(), itemView));
       });
     }
 
     public void bind(UiModel uiModel) {
       indentedContainer.setIndentationDepth(uiModel.indentationDepth());
-      itemView.setEnabled(uiModel.clickEnabled());
+      loadMoreButton.setEnabled(uiModel.clickEnabled());
       loadMoreButton.setText(uiModel.label());
       Views.setCompoundDrawableEnd(loadMoreButton, uiModel.iconRes());
     }
