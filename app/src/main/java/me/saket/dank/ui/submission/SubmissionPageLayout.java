@@ -293,7 +293,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Override
   protected void onRestoreInstanceState(Parcelable state) {
     Bundle savedState = (Bundle) state;
-    if (savedState.containsKey(KEY_SUBMISSION_REQUEST)) {
+    if (isExpandedOrExpanding() && savedState.containsKey(KEY_SUBMISSION_REQUEST)) {
       Submission retainedSubmission = null;
       DankSubmissionRequest retainedRequest = savedState.getParcelable(KEY_SUBMISSION_REQUEST);
 
@@ -903,8 +903,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   public void populateUi(@Nullable Submission submission, DankSubmissionRequest submissionRequest) {
     // This will setup the title, byline and content immediately.
     if (submission != null) {
-      Timber.i("-----------------------------");
-      Timber.i(submission.getTitle());
       submissionStream.accept(submission);
     }
 
