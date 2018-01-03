@@ -75,6 +75,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     }
   }
 
+  /** Letting Activities handle restoration manually so that the setup can happen before onRestore gets called. */
   public void handleOnRestoreInstanceState(Bundle savedInstance) {
     boolean wasExpanded = savedInstance.getBoolean(KEY_IS_EXPANDED);
     if (wasExpanded) {

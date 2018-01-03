@@ -139,6 +139,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     implements ExpandablePageLayout.StateChangeCallbacks, ExpandablePageLayout.OnPullToCollapseIntercepter
 {
 
+  private static final String KEY_SUPER_CLASS_STATE = "superClassState";
+  private static final String KEY_WAS_PAGE_EXPANDED_OR_EXPANDING = "pageState";
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
   private static final String KEY_INLINE_REPLY_ROW_ID = "inlineReplyRowId";
@@ -287,14 +289,17 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       }
     }
 
-    outState.putParcelable("superState", super.onSaveInstanceState());
+    outState.putBoolean(KEY_WAS_PAGE_EXPANDED_OR_EXPANDING, isExpandedOrExpanding());
+    outState.putParcelable(KEY_SUPER_CLASS_STATE, super.onSaveInstanceState());
     return outState;
   }
 
   @Override
   protected void onRestoreInstanceState(Parcelable state) {
     Bundle savedState = (Bundle) state;
-    if (isExpandedOrExpanding() && savedState.containsKey(KEY_SUBMISSION_REQUEST)) {
+
+    boolean willPageExpandAgain = savedState.getBoolean(KEY_WAS_PAGE_EXPANDED_OR_EXPANDING, false);
+    if (willPageExpandAgain && savedState.containsKey(KEY_SUBMISSION_REQUEST)) {
       Submission retainedSubmission = null;
       DankSubmissionRequest retainedRequest = savedState.getParcelable(KEY_SUBMISSION_REQUEST);
 
@@ -311,11 +316,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       populateUi(retainedSubmission, retainedRequest);
     }
 
-    if (!isExpandedOrExpanding()) {
-      Timber.w("Ignoring state restoration.");
-    }
-
-    Parcelable superState = savedState.getParcelable("superState");
+    Parcelable superState = savedState.getParcelable(KEY_SUPER_CLASS_STATE);
     super.onRestoreInstanceState(superState);
   }
 
@@ -333,8 +334,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     //commentRecyclerView.setItemAnimator(itemAnimator);
 
     // RecyclerView automatically handles saving and restoring scroll position if the
-    // adapter contents are the same once the adapter is set. So we're setting the
-    // adapter only once we've the data.
+    // adapter contents are the same once the adapter is set. So we set the adapter
+    // only once its dataset is available.
     submissionCommentsAdapter.dataChanges()
         .take(1)
         .takeUntil(lifecycle().onDestroy())
