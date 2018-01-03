@@ -268,7 +268,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
             replySendClickStream
         );
         inlineReplyDraftsDisposables.add(draftsDisposable);
-        replyViewBindStream.accept(ReplyItemViewBindEvent.create(commentInlineReplyItem, ((InlineReplyViewHolder) holder).replyField));
+        replyViewBindStream.accept(ReplyItemViewBindEvent.create(null, ((InlineReplyViewHolder) holder).replyField));
         break;
 
       case PENDING_SYNC_REPLY:

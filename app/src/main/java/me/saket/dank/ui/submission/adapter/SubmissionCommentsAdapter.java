@@ -12,7 +12,6 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
@@ -106,12 +105,12 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         SubmissionCommentInlineReply.ViewHolder inlineReplyHolder = SubmissionCommentInlineReply.ViewHolder.create(inflater, parent);
         inlineReplyHolder.setupClickStreams(
             this,
-            draftStore,
             replyGifClickStream,
             replyDiscardClickStream,
             replyFullscreenClickStream,
             replySendClickStream
         );
+        inlineReplyHolder.setupSavingOfDraftOnFocusLost(draftStore);
         return inlineReplyHolder;
 
       case LOAD_MORE_COMMENTS:
@@ -140,9 +139,12 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         break;
 
       case INLINE_REPLY:
-        SubmissionCommentInlineReply.UiModel uiModel = (SubmissionCommentInlineReply.UiModel) getItem(position);
-        Disposable draftsDisposable = ((SubmissionCommentInlineReply.ViewHolder) holder).bind(uiModel, draftStore);
-        inlineReplyDraftsDisposables.add(draftsDisposable);
+        SubmissionCommentInlineReply.UiModel replyUiModel = (SubmissionCommentInlineReply.UiModel) getItem(position);
+        SubmissionCommentInlineReply.ViewHolder replyViewHolder = (SubmissionCommentInlineReply.ViewHolder) holder;
+        inlineReplyDraftsDisposables.add(
+            replyViewHolder.bind(replyUiModel, draftStore)
+        );
+        replyViewHolder.emitBindEvent(replyUiModel, replyViewBindStream);
         break;
 
       case LOAD_MORE_COMMENTS:

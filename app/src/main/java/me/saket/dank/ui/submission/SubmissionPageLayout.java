@@ -408,7 +408,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
     inlineReplyStream
-        .doOnNext(parentC -> Timber.i("Showing inline reply for %s", parentC))
+        .doOnNext(o -> Timber.i("-----------------------------"))
+        .doOnNext(parentC -> Timber.i("Showing inline reply"))
         .switchMapSingle(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution).toSingleDefault(parentContribution))
         .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
         .takeUntil(lifecycle().onDestroy())
@@ -611,7 +612,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .take(1)
         .map(adapter -> adapter.getData())
         .map(newItems -> {
-          int replyPosition = -1;
+          int replyPosition = RecyclerView.NO_POSITION;
           for (int i = 0; i < newItems.size(); i++) {
             // Find the reply item's position.
             SubmissionScreenUiModel commentRow = newItems.get(i);
@@ -628,6 +629,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition - 1);
           int parentContributionBottom = parentContributionItemVH.itemView.getBottom() + commentListParentSheet.getTop();
           boolean isReplyHidden = parentContributionBottom >= submissionPageLayout.getBottom();
+
+          // So this will not make the reply fully visible, but it'll be enough for the reply field
+          // to receive focus which will in turn trigger the keyboard and push the field above in
+          // the visible window.
           if (isReplyHidden) {
             int dy = parentContributionItemVH.itemView.getHeight();
             commentRecyclerView.smoothScrollBy(0, dy);
@@ -644,7 +649,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .filter(replyBindEvent -> {
           // This filter exists so that the keyboard is shown only for the target reply item
           // instead of another reply item that was found while scrolling to the target reply item.
-          return replyBindEvent.replyItem().parentContribution().getFullName().equals(parentContribution.getFullName());
+          return replyBindEvent.uiModel().parentContributionFullName().equals(parentContribution.getFullName());
         })
         .take(1)
         .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
@@ -1028,7 +1033,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                   // TODO.
                   if (submission.isSelfPost()) {
                   } else {
-                    Timber.i("Accepting content link: %s", resolvedLink);
                     contentLinkStream.accept(Optional.of(resolvedLink));
                     //noinspection ConstantConditions
                     //unsubscribeOnCollapse(
@@ -1043,7 +1047,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
                 case MEDIA_ALBUM:
                 case EXTERNAL:
-                  Timber.i("Accepting content link: %s", resolvedLink);
                   contentLoadProgressView.hide();
                   contentLinkStream.accept(Optional.of(resolvedLink));
 
