@@ -95,12 +95,22 @@ public class SubmissionContentLinkUiModelConstructor {
         .onErrorResumeNext(Observable.empty())
         .share();
 
+    Timber.i("------------------------");
     Observable<String> sharedTitleStream = fetchTitle(link, sharedLinkMetadataStream);
     Observable<Optional<Bitmap>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream).share();
     Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.ofNullable(linkMetadata.imageUrl()));
     Observable<Optional<Bitmap>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, thumbnailUrlStream).share();
     Observable<TintDetails> tintDetailsStream = streamTintDetails(link, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
-    Observable<Boolean> progressVisibleStream = streamProgressVisibility(sharedTitleStream, sharedFaviconStream, sharedThumbnailStream);
+
+    Observable<Boolean> progressVisibleStream = Completable
+        .mergeDelayError(asList(
+            sharedTitleStream.ignoreElements().doOnComplete(() -> Timber.i("Title complete")),
+            sharedFaviconStream.ignoreElements().doOnComplete(() -> Timber.i("Favicon complete")),
+            sharedThumbnailStream.ignoreElements().doOnComplete(() -> Timber.i("Thumbnail complete"))
+        ))
+        .andThen(Observable.just(PROGRESS_HIDDEN))
+        .onErrorReturnItem(PROGRESS_HIDDEN)
+        .startWith(PROGRESS_VISIBLE);
 
     return Observable.combineLatest(
         sharedTitleStream,
@@ -333,9 +343,9 @@ public class SubmissionContentLinkUiModelConstructor {
         .share();
   }
 
-  private Observable<Optional<Bitmap>> fetchFavicon(Context context, Observable<LinkMetadata> linkMetadataSingle) {
+  private Observable<Optional<Bitmap>> fetchFavicon(Context context, Observable<LinkMetadata> linkMetadataStream) {
     //noinspection ConstantConditions
-    return linkMetadataSingle
+    return linkMetadataStream
         .observeOn(Schedulers.io())
         .flatMap(metadata -> metadata.hasFavicon() ? Observable.just(metadata.faviconUrl()) : Observable.empty())
         .flatMap(faviconUrl -> {
@@ -345,22 +355,14 @@ public class SubmissionContentLinkUiModelConstructor {
               .load(faviconUrl)
               .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
               .submit();
+          Timber.i("Loading favicon");
           return loadImage(context, iconTarget);
         })
         .map(favicon -> Optional.of(favicon))
+        .doOnNext(o -> Timber.i("Favicon fetched"))
+        .take(1)  // Not sure why, but sometimes this stream never completes. This is sort of a hack to force complete.
         .startWith(Optional.empty())
         .share();
-  }
-
-  private Observable<Boolean> streamProgressVisibility(
-      Observable<String> titleStream,
-      Observable<Optional<Bitmap>> faviconStream,
-      Observable<Optional<Bitmap>> thumbnailStream)
-  {
-    return Completable.mergeDelayError(asList(titleStream.ignoreElements(), faviconStream.ignoreElements(), thumbnailStream.ignoreElements()))
-        .andThen(Observable.just(PROGRESS_HIDDEN))
-        .onErrorReturnItem(PROGRESS_HIDDEN)
-        .startWith(PROGRESS_VISIBLE);
   }
 
   private Observable<Bitmap> loadImage(Context context, FutureTarget<Bitmap> futureTarget) {

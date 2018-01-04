@@ -14,6 +14,7 @@ import com.jakewharton.rxrelay2.Relay;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.SpannableWithValueEquality;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
@@ -31,9 +32,9 @@ public interface SubmissionComment {
     @Override
     public abstract long adapterId();
 
-    public abstract CharSequence byline();
+    public abstract SpannableWithValueEquality byline();
 
-    public abstract CharSequence body();
+    public abstract SpannableWithValueEquality body();
 
     @ColorInt
     public abstract int bylineTextColor();
@@ -65,9 +66,17 @@ public interface SubmissionComment {
     public abstract static class Builder {
       public abstract Builder adapterId(long id);
 
-      public abstract Builder byline(CharSequence byline);
+      public Builder byline(CharSequence byline) {
+        return byline(SpannableWithValueEquality.wrap(byline));
+      }
 
-      public abstract Builder body(CharSequence body);
+      abstract Builder byline(SpannableWithValueEquality byline);
+
+      public Builder body(CharSequence body) {
+        return body(SpannableWithValueEquality.wrap(body));
+      }
+
+      abstract Builder body(SpannableWithValueEquality body);
 
       public abstract Builder bylineTextColor(@ColorInt int color);
 

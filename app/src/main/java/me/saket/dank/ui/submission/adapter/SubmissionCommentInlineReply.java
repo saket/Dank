@@ -20,6 +20,7 @@ import io.reactivex.disposables.Disposables;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
+import me.saket.dank.data.SpannableWithValueEquality;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
@@ -40,7 +41,7 @@ public interface SubmissionCommentInlineReply {
     @Override
     public abstract long adapterId();
 
-    public abstract CharSequence authorHint();
+    public abstract SpannableWithValueEquality authorHint();
 
     public abstract String parentContributionFullName();
 
@@ -52,7 +53,12 @@ public interface SubmissionCommentInlineReply {
     }
 
     public static UiModel create(long adapterId, CharSequence authorHint, String parentContributionFullName, int indentationDepth) {
-      return new AutoValue_SubmissionCommentInlineReply_UiModel(adapterId, authorHint, parentContributionFullName, indentationDepth);
+      return new AutoValue_SubmissionCommentInlineReply_UiModel(
+          adapterId,
+          SpannableWithValueEquality.wrap(authorHint),
+          parentContributionFullName,
+          indentationDepth
+      );
     }
   }
 

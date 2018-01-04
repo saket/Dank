@@ -16,6 +16,7 @@ import com.jakewharton.rxrelay2.Relay;
 
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.SpannableWithValueEquality;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.DankLinkMovementMethod;
@@ -35,11 +36,11 @@ public interface SubmissionCommentsHeader {
     @Override
     public abstract long adapterId();
 
-    public abstract CharSequence title();
+    public abstract SpannableWithValueEquality title();
 
-    public abstract CharSequence byline();
+    public abstract SpannableWithValueEquality byline();
 
-    public abstract Optional<CharSequence> selfText();
+    public abstract Optional<SpannableWithValueEquality> selfText();
 
     public abstract Optional<SubmissionContentLinkUiModel> contentLink();
 
@@ -57,11 +58,20 @@ public interface SubmissionCommentsHeader {
         long adapterId,
         CharSequence title,
         CharSequence byline,
-        Optional<CharSequence> selfText,
+        Optional<CharSequence> optionalSelfText,
         Optional<SubmissionContentLinkUiModel> contentLink,
         PostedOrInFlightContribution originalSubmission)
     {
-      return new AutoValue_SubmissionCommentsHeader_UiModel(adapterId, title, byline, selfText, contentLink, originalSubmission);
+      return new AutoValue_SubmissionCommentsHeader_UiModel(
+          adapterId,
+          SpannableWithValueEquality.wrap(title),
+          SpannableWithValueEquality.wrap(byline),
+          optionalSelfText.isPresent()
+              ? Optional.of(SpannableWithValueEquality.wrap(optionalSelfText.get()))
+              : Optional.empty(),
+          contentLink,
+          originalSubmission
+      );
     }
   }
 

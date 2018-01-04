@@ -23,6 +23,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.data.PostedOrInFlightContribution;
+import timber.log.Timber;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more"
@@ -87,6 +88,11 @@ public class CommentTreeConstructor {
    * Collapse/expand a comment.
    */
   public void toggleCollapse(PostedOrInFlightContribution commentRow) {
+    if (commentRow.fullName() == null) {
+      Timber.w("Couldn't collapse");
+    }
+    Timber.i("Toggling: %s", commentRow.fullName());
+
     if (isCollapsed(commentRow)) {
       collapsedCommentNodeFullNames.remove(commentRow.fullName());
     } else {

@@ -14,6 +14,7 @@ import net.dean.jraw.models.CommentNode;
 
 import me.saket.dank.R;
 import me.saket.dank.data.CommentNodeEqualsBandAid;
+import me.saket.dank.data.SpannableWithValueEquality;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.IndentedLayout;
@@ -26,7 +27,7 @@ public interface SubmissionCommentsLoadMore {
     @Override
     public abstract long adapterId();
 
-    public abstract CharSequence label();
+    public abstract SpannableWithValueEquality label();
 
     @DrawableRes
     public abstract int iconRes();
@@ -54,7 +55,11 @@ public interface SubmissionCommentsLoadMore {
     abstract static class Builder {
       public abstract Builder adapterId(long id);
 
-      public abstract Builder label(CharSequence label);
+      public Builder label(CharSequence label) {
+        return label(SpannableWithValueEquality.wrap(label));
+      }
+
+      abstract Builder label(SpannableWithValueEquality label);
 
       public abstract Builder iconRes(@DrawableRes int iconRes);
 
