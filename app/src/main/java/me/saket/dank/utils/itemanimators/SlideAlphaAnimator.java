@@ -1,7 +1,6 @@
 package me.saket.dank.utils.itemanimators;
 
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.support.annotation.Px;
 import android.support.v4.view.ViewCompat;
 import android.support.v4.view.ViewPropertyAnimatorCompat;
@@ -9,24 +8,15 @@ import android.support.v7.widget.RecyclerView;
 import android.util.TypedValue;
 import android.view.View;
 
-import me.saket.dank.utils.Optional;
-
 /**
  * Copied from https://github.com/mikepenz/ItemAnimators. Modified for our use.
  */
 public abstract class SlideAlphaAnimator<T> extends DefaultAnimator<T> {
 
   private final int itemViewElevation;
-  private final Optional<Drawable> itemViewBackgroundDuringAnimation;
 
-  /**
-   * @param itemViewBackgroundDuringAnimation Applied to items so that they don't leak through each other when
-   *                                          overlapped during item change animations. We apply the background
-   *                                          selectively to minimize overdraws.
-   */
-  protected SlideAlphaAnimator(int itemViewElevation, Optional<Drawable> itemViewBackgroundDuringAnimation) {
+  protected SlideAlphaAnimator(int itemViewElevation) {
     this.itemViewElevation = itemViewElevation;
-    this.itemViewBackgroundDuringAnimation = itemViewBackgroundDuringAnimation;
   }
 
   private float getMinAlpha() {
@@ -60,9 +50,9 @@ public abstract class SlideAlphaAnimator<T> extends DefaultAnimator<T> {
     ViewCompat.setTranslationY(holder.itemView, getAnimationTranslationY(holder.itemView));
     ViewCompat.setAlpha(holder.itemView, getMinAlpha());
     holder.itemView.setElevation(0);
-    if (itemViewBackgroundDuringAnimation.isPresent()) {
-      holder.itemView.setBackground(itemViewBackgroundDuringAnimation.get());
-    }
+//    if (itemViewBackgroundDuringAnimation.isPresent()) {
+//      holder.itemView.setBackground(itemViewBackgroundDuringAnimation.get());
+//    }
   }
 
   @Override
@@ -81,9 +71,9 @@ public abstract class SlideAlphaAnimator<T> extends DefaultAnimator<T> {
     ViewCompat.setTranslationY(holder.itemView, 0);
     ViewCompat.setAlpha(holder.itemView, 1);
     holder.itemView.setElevation(itemViewElevation);
-    if (itemViewBackgroundDuringAnimation.isPresent()) {
-      holder.itemView.setBackground(null);
-    }
+//    if (itemViewBackgroundDuringAnimation.isPresent()) {
+//      holder.itemView.setBackground(null);
+//    }
   }
 
   @Override
@@ -99,9 +89,9 @@ public abstract class SlideAlphaAnimator<T> extends DefaultAnimator<T> {
   @Override
   public void removeAnimationPrepare(RecyclerView.ViewHolder holder) {
     holder.itemView.setElevation(0);
-    if (itemViewBackgroundDuringAnimation.isPresent()) {
-      holder.itemView.setBackground(itemViewBackgroundDuringAnimation.get());
-    }
+//    if (itemViewBackgroundDuringAnimation.isPresent()) {
+//      holder.itemView.setBackground(itemViewBackgroundDuringAnimation.get());
+//    }
   }
 
   @Override
@@ -121,8 +111,22 @@ public abstract class SlideAlphaAnimator<T> extends DefaultAnimator<T> {
     ViewCompat.setTranslationY(holder.itemView, 0);
     ViewCompat.setAlpha(holder.itemView, 1);
     holder.itemView.setElevation(itemViewElevation);
-    if (itemViewBackgroundDuringAnimation.isPresent()) {
-      holder.itemView.setBackground(null);
-    }
+//    if (itemViewBackgroundDuringAnimation.isPresent()) {
+//      holder.itemView.setBackground(null);
+//    }
+  }
+
+  @Override
+  public void onMoveStarting(RecyclerView.ViewHolder holder) {
+//    if (itemViewBackgroundDuringAnimation.isPresent()) {
+//      holder.itemView.setBackground(itemViewBackgroundDuringAnimation.get());
+//    }
+  }
+
+  @Override
+  public void onMoveFinished(RecyclerView.ViewHolder holder) {
+//    if (itemViewBackgroundDuringAnimation.isPresent()) {
+//      holder.itemView.setBackground(null);
+//    }
   }
 }

@@ -1,17 +1,11 @@
 package me.saket.dank.utils.itemanimators;
 
-import android.graphics.drawable.Drawable;
 import android.view.View;
-
-import me.saket.dank.utils.Optional;
 
 public class SubmissionCommentsItemAnimator extends SlideAlphaAnimator<SubmissionCommentsItemAnimator> {
 
-  /**
-   * @param itemViewBackgroundDuringAnimation See {@link SlideAlphaAnimator}.
-   */
-  public SubmissionCommentsItemAnimator(int itemViewElevation, Drawable itemViewBackgroundDuringAnimation) {
-    super(itemViewElevation, Optional.of(itemViewBackgroundDuringAnimation));
+  public SubmissionCommentsItemAnimator(int itemViewElevation) {
+    super(itemViewElevation);
   }
 
   @Override

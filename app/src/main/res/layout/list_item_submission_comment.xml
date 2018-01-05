@@ -3,9 +3,9 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
+  android:background="@color/window_background"
   android:elevation="@dimen/submission_comment_elevation"
   android:outlineProvider="none"
-  tools:layout_marginTop="25dp"
   tools:outlineProvider="background">
 
   <me.saket.dank.widgets.swipe.SwipeActionIconView style="@style/DankSwipeableLayoutIcon" />
@@ -42,8 +42,6 @@
       android:textSize="@dimen/submission_comment_body_expanded"
       tools:text="That boss was my favourite. I bought Dark Souls after hearing how crushingly difficult it was from a friend of mine. He kept warning me about that boss and told me to prepare for a really difficult time." />
 
-    <View
-      android:id="@+id/item_comment_separator"
-      style="@style/DankSeparator.VerticalContent" />
+    <View style="@style/DankSeparator.VerticalContent" />
   </me.saket.dank.widgets.IndentedLayout>
 </me.saket.dank.widgets.swipe.SwipeableLayout>

@@ -3,12 +3,10 @@ package me.saket.dank.utils.itemanimators;
 import android.graphics.drawable.Drawable;
 import android.view.View;
 
-import me.saket.dank.utils.Optional;
-
 public class SlideUpAlphaAnimator extends SlideAlphaAnimator<SlideUpAlphaAnimator> {
 
   public SlideUpAlphaAnimator(Drawable itemBackgroundDuringAnimation) {
-    super(0, Optional.of(itemBackgroundDuringAnimation));
+    super(0);
   }
 
   @Override
