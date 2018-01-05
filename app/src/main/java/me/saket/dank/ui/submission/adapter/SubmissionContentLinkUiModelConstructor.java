@@ -95,7 +95,6 @@ public class SubmissionContentLinkUiModelConstructor {
         .onErrorResumeNext(Observable.empty())
         .share();
 
-    Timber.i("------------------------");
     Observable<String> sharedTitleStream = fetchTitle(link, sharedLinkMetadataStream);
     Observable<Optional<Bitmap>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream).share();
     Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.ofNullable(linkMetadata.imageUrl()));
@@ -104,9 +103,10 @@ public class SubmissionContentLinkUiModelConstructor {
 
     Observable<Boolean> progressVisibleStream = Completable
         .mergeDelayError(asList(
-            sharedTitleStream.ignoreElements().doOnComplete(() -> Timber.i("Title complete")),
-            sharedFaviconStream.ignoreElements().doOnComplete(() -> Timber.i("Favicon complete")),
-            sharedThumbnailStream.ignoreElements().doOnComplete(() -> Timber.i("Thumbnail complete"))
+            sharedTitleStream.ignoreElements(),
+            // take(2): Not sure why, but sometimes this stream never completes. This is sort of a hack to force complete.
+            sharedFaviconStream.take(2).ignoreElements(),
+            sharedThumbnailStream.ignoreElements()
         ))
         .andThen(Observable.just(PROGRESS_HIDDEN))
         .onErrorReturnItem(PROGRESS_HIDDEN)
@@ -181,9 +181,10 @@ public class SubmissionContentLinkUiModelConstructor {
             String submissionPageTitle = linkMetadata.title();
             if (submissionPageTitle != null) {
               // Reddit prefixes page titles with the linked commentator's name (if any). We don't want that.
-              int userNameSeparatorIndex = submissionPageTitle.indexOf("comments on");
+              String prefix = "comments on ";
+              int userNameSeparatorIndex = submissionPageTitle.indexOf(prefix);
               if (userNameSeparatorIndex > -1) {
-                submissionPageTitle = submissionPageTitle.substring(userNameSeparatorIndex + "comments on".length());
+                submissionPageTitle = submissionPageTitle.substring(userNameSeparatorIndex + prefix.length());
               }
             }
             return submissionPageTitle;
@@ -339,8 +340,7 @@ public class SubmissionContentLinkUiModelConstructor {
           return loadImage(context, imageTarget);
         })
         .map(image -> Optional.of(image))
-        .startWith(Optional.empty())
-        .share();
+        .startWith(Optional.empty());
   }
 
   private Observable<Optional<Bitmap>> fetchFavicon(Context context, Observable<LinkMetadata> linkMetadataStream) {
@@ -355,14 +355,10 @@ public class SubmissionContentLinkUiModelConstructor {
               .load(faviconUrl)
               .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
               .submit();
-          Timber.i("Loading favicon");
           return loadImage(context, iconTarget);
         })
         .map(favicon -> Optional.of(favicon))
-        .doOnNext(o -> Timber.i("Favicon fetched"))
-        .take(1)  // Not sure why, but sometimes this stream never completes. This is sort of a hack to force complete.
-        .startWith(Optional.empty())
-        .share();
+        .startWith(Optional.empty());
   }
 
   private Observable<Bitmap> loadImage(Context context, FutureTarget<Bitmap> futureTarget) {
