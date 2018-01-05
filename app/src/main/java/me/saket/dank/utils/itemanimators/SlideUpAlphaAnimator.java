@@ -1,11 +1,10 @@
 package me.saket.dank.utils.itemanimators;
 
-import android.graphics.drawable.Drawable;
 import android.view.View;
 
 public class SlideUpAlphaAnimator extends SlideAlphaAnimator<SlideUpAlphaAnimator> {
 
-  public SlideUpAlphaAnimator(Drawable itemBackgroundDuringAnimation) {
+  public SlideUpAlphaAnimator() {
     super(0);
   }
 

@@ -137,7 +137,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     messageRecyclerView.setAdapter(messagesAdapter);
 
     Drawable itemBackgroundDuringAnimation = new ColorDrawable(ContextCompat.getColor(this, R.color.window_background));
-    messageRecyclerView.setItemAnimator(new SlideUpAlphaAnimator(itemBackgroundDuringAnimation)
+    messageRecyclerView.setItemAnimator(new SlideUpAlphaAnimator()
         .withInterpolator(Animations.INTERPOLATOR)
         .withRemoveDuration(250)
         .withAddDuration(250));
