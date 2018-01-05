@@ -27,9 +27,7 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
-import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
-import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.di.Dank;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownHints;
@@ -95,14 +93,13 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
     startOptions = getIntent().getParcelableExtra(KEY_START_OPTIONS);
 
-    // TODO: REMOVEE
-    if (BuildConfig.DEBUG && startOptions == null) {
-      startOptions = ComposeStartOptions.builder()
-          .secondPartyName("Poop")
-          .draftKey(ContributionFullNameWrapper.create("Poop"))
-          .preFilledText("Waddup homie")
-          .build();
-    }
+//    if (BuildConfig.DEBUG && startOptions == null) {
+//      startOptions = ComposeStartOptions.builder()
+//          .secondPartyName("Poop")
+//          .draftKey(Pos)
+//          .preFilledText("Waddup homie")
+//          .build();
+//    }
 
     if (startOptions.secondPartyName() != null) {
       setTitle(getString(R.string.composereply_title_reply_to, startOptions.secondPartyName()));
@@ -125,7 +122,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     // Retain pre-filled text or restore draft.
     CharSequence preFilledText = startOptions.preFilledText();
     if (Strings.isNullOrEmpty(preFilledText)) {
-      replyRepository.streamDrafts(ContributionFullNameWrapper.create(startOptions.draftKey()))
+      replyRepository.streamDrafts(startOptions.draftKey())
           .firstElement()
           .subscribeOn(io())
           .observeOn(mainThread())
@@ -142,7 +139,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
         .subscribe(o -> {
           String draft = replyField.getText().toString();
           Timber.i("Saving draft: %s", draft);
-          replyRepository.saveDraft(ContributionFullNameWrapper.create(startOptions.draftKey()), draft)
+          replyRepository.saveDraft(startOptions.draftKey(), draft)
               .subscribeOn(io())
               .subscribe();
         });
@@ -327,7 +324,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     }
 
     CharSequence reply = replyField.getText();
-    ComposeResult composeResult = ComposeResult.create(startOptions.parentContributionFullName(), reply, startOptions.extras());
+    ComposeResult composeResult = ComposeResult.create(startOptions.optionalParentContribution(), reply, startOptions.extras());
 
     Intent resultData = new Intent();
     resultData.putExtra(KEY_COMPOSE_RESULT, composeResult);

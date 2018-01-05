@@ -9,6 +9,7 @@ import net.dean.jraw.models.CommentNode;
  * Bad name. Should rename it to something better.
  */
 @AutoValue
+@Deprecated
 public abstract class DankCommentNode implements SubmissionCommentRow {
 
   @Override

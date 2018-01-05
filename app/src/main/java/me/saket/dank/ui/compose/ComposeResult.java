@@ -6,11 +6,19 @@ import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 
+import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.utils.Optional;
+
 @AutoValue
 public abstract class ComposeResult implements Parcelable {
 
+  /** Empty if {@link ComposeStartOptions#optionalParentContribution()} was also empty. */
+  public Optional<PostedOrInFlightContribution> optionalParentContribution() {
+    return Optional.ofNullable(parentContribution());
+  }
+
   @Nullable
-  public abstract String parentContributionFullName();
+  abstract PostedOrInFlightContribution parentContribution();
 
   public abstract CharSequence reply();
 
@@ -20,7 +28,8 @@ public abstract class ComposeResult implements Parcelable {
   @Nullable
   public abstract Bundle extras();
 
-  public static ComposeResult create(@Nullable String parentContributionFullName, CharSequence reply, @Nullable Bundle extras) {
-    return new AutoValue_ComposeResult(parentContributionFullName, reply, extras);
+  public static ComposeResult create(Optional<PostedOrInFlightContribution> optionalParentContribution, CharSequence reply, @Nullable Bundle extras) {
+    PostedOrInFlightContribution parentContribution = optionalParentContribution.isPresent() ? optionalParentContribution.get() : null;
+    return new AutoValue_ComposeResult(parentContribution, reply, extras);
   }
 }

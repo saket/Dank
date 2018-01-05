@@ -1,8 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
-
 import android.support.annotation.CheckResult;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
@@ -31,7 +28,6 @@ import butterknife.BindView;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.VotingManager;
@@ -195,7 +191,7 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
             return;
           }
           LoadMoreCommentItem loadMoreCommentItem = (LoadMoreCommentItem) getItemWithHeaderOffset(loadMoreViewHolder.getAdapterPosition());
-          loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreCommentItem.parentCommentNode(), loadMoreViewHolder.itemView));
+//          loadMoreCommentsClickStream.accept(LoadMoreCommentsClickEvent.create(loadMoreViewHolder.itemView, loadMoreCommentItem.parentCommentNode()));
         });
         return loadMoreViewHolder;
 
@@ -517,9 +513,9 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
           userSessionRepository.loggedInUserName()
       ));
 
-      discardButton.setOnClickListener(o ->
-          replyDiscardEventRelay.accept(ReplyDiscardClickEvent.create(parentContribution))
-      );
+//      discardButton.setOnClickListener(o ->
+//          replyDiscardEventRelay.accept(ReplyDiscardClickEvent.create(parentContribution))
+//      );
 
       gifButton.setOnClickListener(o ->
           replyGifClickRelay.accept(ReplyInsertGifClickEvent.create(getItemId()))
@@ -528,41 +524,41 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
       goFullscreenButton.setOnClickListener(o -> {
         CharSequence replyMessage = replyField.getText();
         String authorNameIfComment = parentContribution instanceof Comment ? ((Comment) parentContribution).getAuthor() : null;
-        replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, replyMessage, authorNameIfComment));
+//        replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, replyMessage, authorNameIfComment));
       });
 
       setSavingDraftsAllowed(true);
       sendButton.setOnClickListener(o -> {
         setSavingDraftsAllowed(false);
         String replyMessage = replyField.getText().toString().trim();
-        replySendClickRelay.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
+//        replySendClickRelay.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
       });
 
       replyField.setOnFocusChangeListener((v, hasFocus) -> {
         if (!hasFocus && savingDraftsAllowed) {
           // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
           // WARNING: DON'T REFERENCE VH FIELDS IN THIS CHAIN TO AVOID LEAKING MEMORY.
-          draftStore.saveDraft(parentContribution, replyField.getText().toString())
-              .subscribeOn(Schedulers.io())
-              .subscribe();
+//          draftStore.saveDraft(parentContribution, replyField.getText().toString())
+//              .subscribeOn(Schedulers.io())
+//              .subscribe();
         }
       });
 
       draftDisposable.dispose();
-      draftDisposable = draftStore.streamDrafts(parentContribution)
-          .subscribeOn(io())
-          .observeOn(mainThread())
-          .subscribe(replyDraft -> {
-            boolean isReplyCurrentlyEmpty = replyField.getText().length() == 0;
-
-            // Using replace() instead of setText() to preserve cursor position.
-            replyField.getText().replace(0, replyField.getText().length(), replyDraft);
-
-            // Avoid moving the cursor around unless the text was empty.
-            if (isReplyCurrentlyEmpty) {
-              replyField.setSelection(replyDraft.length());
-            }
-          });
+//      draftDisposable = draftStore.streamDrafts(parentContribution)
+//          .subscribeOn(io())
+//          .observeOn(mainThread())
+//          .subscribe(replyDraft -> {
+//            boolean isReplyCurrentlyEmpty = replyField.getText().length() == 0;
+//
+//            // Using replace() instead of setText() to preserve cursor position.
+//            replyField.getText().replace(0, replyField.getText().length(), replyDraft);
+//
+//            // Avoid moving the cursor around unless the text was empty.
+//            if (isReplyCurrentlyEmpty) {
+//              replyField.setSelection(replyDraft.length());
+//            }
+//          });
 
       return draftDisposable;
     }

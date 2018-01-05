@@ -19,7 +19,7 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
-import me.saket.dank.data.ContributionFullNameWrapper;
+import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithValueEquality;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.submission.DraftStore;
@@ -43,7 +43,7 @@ public interface SubmissionCommentInlineReply {
 
     public abstract SpannableWithValueEquality authorHint();
 
-    public abstract String parentContributionFullName();
+    public abstract PostedOrInFlightContribution parentContribution();
 
     public abstract int indentationDepth();
 
@@ -52,11 +52,11 @@ public interface SubmissionCommentInlineReply {
       return SubmissionCommentRowType.INLINE_REPLY;
     }
 
-    public static UiModel create(long adapterId, CharSequence authorHint, String parentContributionFullName, int indentationDepth) {
+    public static UiModel create(long adapterId, CharSequence authorHint, PostedOrInFlightContribution parentContribution, int indentationDepth) {
       return new AutoValue_SubmissionCommentInlineReply_UiModel(
           adapterId,
           SpannableWithValueEquality.wrap(authorHint),
-          parentContributionFullName,
+          parentContribution,
           indentationDepth
       );
     }
@@ -73,7 +73,7 @@ public interface SubmissionCommentInlineReply {
 
     private Disposable draftDisposable = Disposables.disposed();
     private boolean savingDraftsAllowed;
-    private String parentContributionFullName;
+    private PostedOrInFlightContribution parentContribution;
 
     public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new ViewHolder(inflater.inflate(R.layout.list_item_submission_comments_inline_reply, parent, false));
@@ -99,8 +99,7 @@ public interface SubmissionCommentInlineReply {
     {
       discardButton.setOnClickListener(o -> {
         UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(uiModel.parentContributionFullName());
-        replyDiscardEventRelay.accept(ReplyDiscardClickEvent.create(parentContribution));
+        replyDiscardEventRelay.accept(ReplyDiscardClickEvent.create(uiModel.parentContribution()));
       });
 
       insertGifButton.setOnClickListener(o ->
@@ -111,7 +110,7 @@ public interface SubmissionCommentInlineReply {
         CharSequence replyMessage = replyField.getText();
         UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
         String authorNameIfComment = uiModel.authorHint().toString();
-        ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(uiModel.parentContributionFullName());
+        PostedOrInFlightContribution parentContribution = uiModel.parentContribution();
         replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, replyMessage, authorNameIfComment));
       });
 
@@ -119,7 +118,7 @@ public interface SubmissionCommentInlineReply {
         setSavingDraftsAllowed(false);
         String replyMessage = replyField.getText().toString().trim();
         UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(uiModel.parentContributionFullName());
+        PostedOrInFlightContribution parentContribution = uiModel.parentContribution();
         replySendClickRelay.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
       });
     }
@@ -127,8 +126,6 @@ public interface SubmissionCommentInlineReply {
     public void setupSavingOfDraftOnFocusLost(DraftStore draftStore) {
       replyField.setOnFocusChangeListener((v, hasFocus) -> {
         if (!hasFocus && savingDraftsAllowed) {
-          ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(parentContributionFullName);
-
           // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
           // WARNING: DON'T REFERENCE VH FIELDS IN THIS CHAIN TO AVOID LEAKING MEMORY.
           draftStore.saveDraft(parentContribution, replyField.getText().toString())
@@ -142,7 +139,7 @@ public interface SubmissionCommentInlineReply {
     public Disposable bind(UiModel uiModel, DraftStore draftStore) {
       // Saving this field instead of getting it from adapter later because this holder's position
       // becomes -1 when a focus-lost callback is received when this holder is being removed.
-      this.parentContributionFullName = uiModel.parentContributionFullName();
+      this.parentContribution = uiModel.parentContribution();
 
       indentedLayout.setIndentationDepth(uiModel.indentationDepth());
       authorHintView.setText(uiModel.authorHint());
@@ -150,7 +147,7 @@ public interface SubmissionCommentInlineReply {
       setSavingDraftsAllowed(true);
       draftDisposable.dispose();
 
-      draftDisposable = draftStore.streamDrafts(ContributionFullNameWrapper.create(uiModel.parentContributionFullName()))
+      draftDisposable = draftStore.streamDrafts(uiModel.parentContribution())
           .subscribeOn(io())
           .observeOn(mainThread())
           .subscribe(replyDraft -> {

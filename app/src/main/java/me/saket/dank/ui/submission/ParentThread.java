@@ -5,15 +5,32 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
 
+import me.saket.dank.data.PostedOrInFlightContribution;
+
 /**
- * Parent thread == submission or a private message thread.
+ * TODO: This class can possibly be merged with {@link PostedOrInFlightContribution}.
+ * Thread == submission comment thread or private message thread.
  */
 @AutoValue
 public abstract class ParentThread {
 
   public enum Type {
-    SUBMISSION,
-    PRIVATE_MESSAGE
+    SUBMISSION {
+      @Override
+      public String fullNamePrefix() {
+        return "t4_";
+      }
+    },
+    PRIVATE_MESSAGE {
+      @Override
+      public String fullNamePrefix() {
+        return "t1_";
+      }
+    };
+
+    public String fullNamePrefix() {
+      throw new AbstractMethodError();
+    }
   }
 
   public abstract Type type();

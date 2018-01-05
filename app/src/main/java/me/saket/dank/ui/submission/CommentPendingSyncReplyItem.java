@@ -2,12 +2,12 @@ package me.saket.dank.ui.submission;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.PublicContribution;
 
 /**
  * Represents a reply posted by the user that hasn't been synced with the server yet.
  */
+@Deprecated
 @AutoValue
 public abstract class CommentPendingSyncReplyItem implements SubmissionCommentRow {
 

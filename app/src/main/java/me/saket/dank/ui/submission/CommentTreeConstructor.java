@@ -23,7 +23,6 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.data.PostedOrInFlightContribution;
-import timber.log.Timber;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more"
@@ -31,9 +30,9 @@ import timber.log.Timber;
  */
 public class CommentTreeConstructor {
 
-  private static final Set<String> collapsedCommentNodeFullNames = new HashSet<>(50); // Comments that are collapsed.
-  private static final Set<String> loadingMoreCommentNodeFullNames = new HashSet<>();                // Comments for which more replies are being fetched.
-  private static final Set<String> replyActiveForCommentNodeFullNames = new HashSet<>();             // Comments for which reply fields are active.
+  private static final Set<String> collapsedContributionIds = new HashSet<>(50); // Comments that are collapsed.
+  private static final Set<String> loadingMoreContributionIds = new HashSet<>();                // Comments for which more replies are being fetched.
+  private static final Set<String> replyActiveForContributionIds = new HashSet<>();             // Comments for which reply fields are active.
   private final Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();               // Key: comment full-name.
   private final Relay<Object> changesRequiredStream = PublishRelay.create();
   private CommentNode rootCommentNode;
@@ -87,77 +86,98 @@ public class CommentTreeConstructor {
   /**
    * Collapse/expand a comment.
    */
-  public void toggleCollapse(PostedOrInFlightContribution commentRow) {
-    if (commentRow.fullName() == null) {
-      Timber.w("Couldn't collapse");
+  public void toggleCollapse(PostedOrInFlightContribution contribution) {
+    if (contribution.idForTogglingCollapse() == null) {
+      throw new NullPointerException();
     }
-    Timber.i("Toggling: %s", commentRow.fullName());
 
-    if (isCollapsed(commentRow)) {
-      collapsedCommentNodeFullNames.remove(commentRow.fullName());
+    if (isCollapsed(contribution)) {
+      collapsedContributionIds.remove(contribution.idForTogglingCollapse());
     } else {
-      collapsedCommentNodeFullNames.add(commentRow.fullName());
+      collapsedContributionIds.add(contribution.idForTogglingCollapse());
     }
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
   private boolean isCollapsed(String commentRowFullName) {
-    return collapsedCommentNodeFullNames.contains(commentRowFullName);
+    return collapsedContributionIds.contains(commentRowFullName);
   }
 
-  public boolean isCollapsed(PostedOrInFlightContribution commentRow) {
-    return isCollapsed(commentRow.fullName());
+  public boolean isCollapsed(PostedOrInFlightContribution contribution) {
+    return isCollapsed(contribution.idForTogglingCollapse());
   }
 
-  public boolean isCollapsed(Contribution parentContribution) {
-    return isCollapsed(parentContribution.getFullName());
+  boolean isCollapsed(Contribution contribution) {
+    return isCollapsed(idForTogglingCollapse(contribution));
   }
 
   /**
    * Enable "loading more…" progress indicator.
    *
-   * @param parentCommentNode for which more child nodes are being fetched.
+   * @param parentContribution for which more child nodes are being fetched.
    */
-  public void setMoreCommentsLoading(CommentNode parentCommentNode, boolean loading) {
+  public void setMoreCommentsLoading(PostedOrInFlightContribution parentContribution, boolean loading) {
+    if (parentContribution.idForTogglingCollapse() == null) {
+      throw new AssertionError();
+    }
+
     if (loading) {
-      loadingMoreCommentNodeFullNames.add(parentCommentNode.getComment().getFullName());
+      loadingMoreContributionIds.add(parentContribution.idForTogglingCollapse());
     } else {
-      loadingMoreCommentNodeFullNames.remove(parentCommentNode.getComment().getFullName());
+      loadingMoreContributionIds.remove(parentContribution.idForTogglingCollapse());
     }
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
   public boolean areMoreCommentsLoadingFor(CommentNode commentNode) {
-    return loadingMoreCommentNodeFullNames.contains(commentNode.getComment().getFullName());
+    return loadingMoreContributionIds.contains(idForTogglingCollapse(commentNode));
+  }
+
+  /**
+   * See {@link PostedOrInFlightContribution.ContributionFetchedFromRemote#idForTogglingCollapse()}
+   */
+  private String idForTogglingCollapse(CommentNode commentNode) {
+    return commentNode.getComment().getFullName();
+  }
+
+  /**
+   * See {@link PostedOrInFlightContribution.ContributionFetchedFromRemote#idForTogglingCollapse()}
+   */
+  private String idForTogglingCollapse(Contribution contribution) {
+    return contribution.getFullName();
   }
 
   /**
    * Show reply field for a comment and also expand any hidden comments.
    */
-  public void showReplyAndExpandComments(Contribution parentContribution) {
-    replyActiveForCommentNodeFullNames.add(parentContribution.getFullName());
-    collapsedCommentNodeFullNames.remove(parentContribution.getFullName());
+  public void showReplyAndExpandComments(PostedOrInFlightContribution parentContribution) {
+    replyActiveForContributionIds.add(parentContribution.idForTogglingCollapse());
+    collapsedContributionIds.remove(parentContribution.idForTogglingCollapse());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
   /**
    * Show reply field for the submission or a comment.
    */
-  public void showReply(Contribution parentContribution) {
-    replyActiveForCommentNodeFullNames.add(parentContribution.getFullName());
+  public void showReply(PostedOrInFlightContribution parentContribution) {
+    replyActiveForContributionIds.add(parentContribution.idForTogglingCollapse());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
   /**
    * Hide reply field for a comment.
    */
-  public void hideReply(Contribution parentContribution) {
-    replyActiveForCommentNodeFullNames.remove(parentContribution.getFullName());
+  public void hideReply(PostedOrInFlightContribution parentContribution) {
+    replyActiveForContributionIds.remove(parentContribution.idForTogglingCollapse());
     changesRequiredStream.accept(Notification.INSTANCE);
   }
 
-  public boolean isReplyActiveFor(Contribution parentContribution) {
-    return replyActiveForCommentNodeFullNames.contains(parentContribution.getFullName());
+  boolean isReplyActiveFor(Contribution parentContribution) {
+    return replyActiveForContributionIds.contains(idForTogglingCollapse(parentContribution));
+  }
+
+  public boolean isReplyActiveFor(PostedOrInFlightContribution contribution) {
+    return replyActiveForContributionIds.contains(contribution.idForTogglingCollapse());
   }
 
   /**

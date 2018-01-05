@@ -101,7 +101,7 @@ public interface SubmissionCommentsLoadMore {
           return;
         }
         UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        clickStream.accept(LoadMoreCommentsClickEvent.create(uiModel.parentCommentNode(), itemView));
+        clickStream.accept(LoadMoreCommentsClickEvent.create(itemView, uiModel.parentCommentNode()));
       });
     }
 

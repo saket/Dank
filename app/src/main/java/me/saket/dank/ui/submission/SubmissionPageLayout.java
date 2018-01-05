@@ -48,12 +48,12 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
+import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
@@ -76,9 +76,9 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
-import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.LinkMetadataRepository;
+import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.UserPreferences;
@@ -185,7 +185,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private BehaviorRelay<Submission> submissionStream = BehaviorRelay.create();
   private BehaviorRelay<Link> submissionContentStream = BehaviorRelay.create();
   private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
-  private Relay<Contribution> inlineReplyStream = PublishRelay.create();
+  private Relay<PostedOrInFlightContribution> inlineReplyStream = PublishRelay.create();
   private Relay<Optional<Link>> contentLinkStream = BehaviorRelay.create();
   private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
 
@@ -395,13 +395,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
     // Swipe gestures.
     submissionCommentsAdapter.commentSwipeActionsProvider().setOnReplySwipeActionListener(parentCommentInfo -> {
-      ContributionFullNameWrapper fakeCommentModel = ContributionFullNameWrapper.create(parentCommentInfo.fullName());
-      if (commentTreeConstructor.isCollapsed(fakeCommentModel) || !commentTreeConstructor.isReplyActiveFor(fakeCommentModel)) {
-        commentTreeConstructor.showReplyAndExpandComments(fakeCommentModel);
-        inlineReplyStream.accept(fakeCommentModel);
+      if (commentTreeConstructor.isCollapsed(parentCommentInfo) || !commentTreeConstructor.isReplyActiveFor(parentCommentInfo)) {
+        commentTreeConstructor.showReplyAndExpandComments(parentCommentInfo);
+        inlineReplyStream.accept(parentCommentInfo);
       } else {
         Keyboards.hide(getContext(), commentRecyclerView);
-        commentTreeConstructor.hideReply(fakeCommentModel);
+        commentTreeConstructor.hideReply(parentCommentInfo);
       }
     });
     commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
@@ -494,10 +493,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after fullscreen reply result"));
           }
         })
-        .map(composeResult -> ReplySendClickEvent.create(
-            ContributionFullNameWrapper.create(composeResult.parentContributionFullName()),
-            composeResult.reply().toString()
-        ))
+        .map(composeResult -> ReplySendClickEvent.create(composeResult.optionalParentContribution().get(), composeResult.reply().toString()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(fullscreenReplySendStream);
 
@@ -574,7 +570,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           } else {
             return submissionRequestStream.zipWith(submissionStream, Pair::create)
                 .take(1)
-                .doOnNext(o -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentCommentNode(), true))
+                .doOnNext(o -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentContribution(), true))
                 .flatMapCompletable(pair -> {
                   DankSubmissionRequest submissionRequest = pair.first();
                   Submission submission = pair.second();
@@ -582,7 +578,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                       .subscribeOn(Schedulers.io())
                       .onErrorComplete();
                 })
-                .doOnTerminate(() -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentCommentNode(), false))
+                .doOnTerminate(() -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentContribution(), false))
                 .toObservable();
           }
         })
@@ -603,8 +599,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    * Scroll to <var>parentContribution</var>'s reply if it's not going to be visible because it's located beyond the visible window.
    */
   @CheckResult
-  private Completable scrollToNewlyAddedReplyIfHidden(Contribution parentContribution) {
-    if (submissionStream.getValue() == parentContribution) {
+  private Completable scrollToNewlyAddedReplyIfHidden(PostedOrInFlightContribution parentContribution) {
+    if (submissionStream.getValue().getFullName().equals(parentContribution.fullName())) {
       // Submission reply.
       return Completable.fromAction(() -> commentRecyclerView.smoothScrollToPosition(0));
     }
@@ -617,8 +613,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           for (int i = 0; i < newItems.size(); i++) {
             // Find the reply item's position.
             SubmissionScreenUiModel commentRow = newItems.get(i);
+            //noinspection ConstantConditions Parent contribution's fullname cannot be null. Replies can only be made if they're non-null.
             if (commentRow instanceof SubmissionCommentInlineReply.UiModel
-                && ((SubmissionCommentInlineReply.UiModel) commentRow).parentContributionFullName().equals(parentContribution.getFullName()))
+                && ((SubmissionCommentInlineReply.UiModel) commentRow).parentContribution().fullName().equals(parentContribution.fullName()))
             {
               replyPosition = i;
               break;
@@ -645,12 +642,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    * Wait for <var>parentContribution</var>'s reply View to bind and show keyboard once it's visible.
    */
   @CheckResult
-  private Observable<ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(Contribution parentContribution) {
+  private Observable<ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(PostedOrInFlightContribution parentContribution) {
     return submissionCommentsAdapter.streamReplyItemViewBinds()
         .filter(replyBindEvent -> {
           // This filter exists so that the keyboard is shown only for the target reply item
           // instead of another reply item that was found while scrolling to the target reply item.
-          return replyBindEvent.uiModel().parentContributionFullName().equals(parentContribution.getFullName());
+          //noinspection ConstantConditions
+          return replyBindEvent.uiModel().parentContribution().fullName().equals(parentContribution.fullName());
         })
         .take(1)
         .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
@@ -788,24 +786,28 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           }
         });
 
-    replyFAB.setOnClickListener(o -> {
-      if (!userSessionRepository.isUserLoggedIn()) {
-        getContext().startActivity(LoginActivity.intent(getContext()));
-        return;
-      }
+    RxView.clicks(replyFAB)
+        .takeUntil(lifecycle().onDestroy())
+        .withLatestFrom(submissionStream, (o, submission) -> submission)
+        .map(submission -> PostedOrInFlightContribution.from(submission))
+        .subscribe(submissionInfo -> {
+          if (!userSessionRepository.isUserLoggedIn()) {
+            getContext().startActivity(LoginActivity.intent(getContext()));
+            return;
+          }
 
-      int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-      boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
+          int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+          boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
 
-      if (commentTreeConstructor.isReplyActiveFor(submissionStream.getValue()) && isSubmissionReplyVisible) {
-        // Hide reply only if it's visible. Otherwise the user won't understand why the
-        // reply FAB did not do anything.
-        commentTreeConstructor.hideReply(submissionStream.getValue());
-      } else {
-        commentTreeConstructor.showReply(submissionStream.getValue());
-        inlineReplyStream.accept(submissionStream.getValue());
-      }
-    });
+          if (commentTreeConstructor.isReplyActiveFor(submissionInfo) && isSubmissionReplyVisible) {
+            // Hide reply only if it's visible. Otherwise the user
+            // won't understand why the reply FAB did not do anything.
+            commentTreeConstructor.hideReply(submissionInfo);
+          } else {
+            commentTreeConstructor.showReply(submissionInfo);
+            inlineReplyStream.accept(submissionInfo);
+          }
+        });
   }
 
   /**

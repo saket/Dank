@@ -7,11 +7,19 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.CommentNode;
 
 import me.saket.dank.data.CommentNodeEqualsBandAid;
+import me.saket.dank.data.PostedOrInFlightContribution;
 
 @AutoValue
 public abstract class LoadMoreCommentsClickEvent {
 
+  /**
+   * Clicked item's View.
+   */
+  public abstract View loadMoreItemView();
+
   abstract CommentNodeEqualsBandAid parentCommentNodeEqualsBandAid();
+
+  public abstract PostedOrInFlightContribution parentContribution();
 
   /**
    * Node whose more comments have to be fetched.
@@ -20,12 +28,8 @@ public abstract class LoadMoreCommentsClickEvent {
     return parentCommentNodeEqualsBandAid().get();
   }
 
-  /**
-   * Clicked item's View.
-   */
-  public abstract View loadMoreItemView();
-
-  public static LoadMoreCommentsClickEvent create(CommentNode parentNode, View loadMoreItemView) {
-    return new AutoValue_LoadMoreCommentsClickEvent(CommentNodeEqualsBandAid.create(parentNode), loadMoreItemView);
+  public static LoadMoreCommentsClickEvent create(View loadMoreItemView, CommentNode parentNode) {
+    PostedOrInFlightContribution parentContribution = PostedOrInFlightContribution.from(parentNode.getComment());
+    return new AutoValue_LoadMoreCommentsClickEvent(loadMoreItemView, CommentNodeEqualsBandAid.create(parentNode), parentContribution);
   }
 }

@@ -4,14 +4,14 @@ import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.Contribution;
+import me.saket.dank.data.PostedOrInFlightContribution;
 
 @AutoValue
 public abstract class ReplyFullscreenClickEvent {
 
   public abstract long replyRowItemId();
 
-  public abstract Contribution parentContribution();
+  public abstract PostedOrInFlightContribution parentContribution();
 
   public abstract CharSequence replyMessage();
 
@@ -20,7 +20,7 @@ public abstract class ReplyFullscreenClickEvent {
 
   public static ReplyFullscreenClickEvent create(
       long replyRowItemId,
-      Contribution parentContribution,
+      PostedOrInFlightContribution parentContribution,
       CharSequence replyMessage,
       String authorNameIfComment)
   {

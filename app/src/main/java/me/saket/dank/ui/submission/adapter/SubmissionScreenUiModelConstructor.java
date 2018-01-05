@@ -19,7 +19,6 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.data.CommentNodeEqualsBandAid;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
@@ -259,15 +258,8 @@ public class SubmissionScreenUiModelConstructor {
         ? Markdown.stripMarkdown(pendingSyncReply.body())
         : markdown.parse(pendingSyncReply);
 
-    PostedOrInFlightContribution pendingSyncComment = PostedOrInFlightContribution.create(
-        pendingSyncReply.postedFullName(),
-        1,
-        VoteDirection.UPVOTE,
-        PostedOrInFlightContribution.State.IN_FLIGHT
-    );
-
     return commentUiModelBuilder(context, pendingSyncReplyRow.fullName(), pendingSyncReplyRow.isCollapsed(), pendingSyncReplyRow.depth())
-        .originalComment(pendingSyncComment)
+        .originalComment(PostedOrInFlightContribution.createLocal(pendingSyncReply))
         .optionalPendingSyncReply(Optional.of(pendingSyncReply))
         .byline(byline)
         .body(commentBody)
@@ -342,9 +334,9 @@ public class SubmissionScreenUiModelConstructor {
 
   private SubmissionCommentInlineReply.UiModel inlineReplyUiModel(Context context, CommentInlineReplyItem inlineReplyItem, String loggedInUserName) {
     long adapterId = inlineReplyItem.fullName().hashCode();
-    String parentContributionFullName = inlineReplyItem.parentContribution().getFullName();
+    PostedOrInFlightContribution parentContribution = PostedOrInFlightContribution.from(inlineReplyItem.parentContribution());
     CharSequence authorHint = context.getResources().getString(R.string.submission_comment_reply_author_hint, loggedInUserName);
-    return SubmissionCommentInlineReply.UiModel.create(adapterId, authorHint, parentContributionFullName, inlineReplyItem.depth());
+    return SubmissionCommentInlineReply.UiModel.create(adapterId, authorHint, parentContribution, inlineReplyItem.depth());
   }
 
   /**

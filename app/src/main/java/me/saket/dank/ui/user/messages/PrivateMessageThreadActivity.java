@@ -29,7 +29,6 @@ import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
 
-import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
@@ -43,9 +42,9 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
+import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -61,6 +60,7 @@ import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
@@ -69,7 +69,7 @@ import timber.log.Timber;
 
 public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
-  private static final String KEY_MESSAGE_FULLNAME = "messageId";
+  private static final String KEY_MESSAGE_INFO = "parentMessageInfo";
   private static final String KEY_THREAD_SECOND_PARTY_NAME = "threadSecondPartyName";
   private static final int REQUEST_CODE_FULLSCREEN_REPLY = 99;
 
@@ -91,12 +91,13 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
   private ThreadedMessagesAdapter messagesAdapter;
   private Relay<Message> latestMessageStream = BehaviorRelay.create();
+  private PostedOrInFlightContribution privateMessageInfo;
 
   @NonNull
   public static Intent intent(Context context, Message message, String threadSecondPartyName, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, PrivateMessageThreadActivity.class);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
-    intent.putExtra(KEY_MESSAGE_FULLNAME, message.getFullName());
+    intent.putExtra(KEY_MESSAGE_INFO, PostedOrInFlightContribution.from(message));
     intent.putExtra(KEY_THREAD_SECOND_PARTY_NAME, threadSecondPartyName);
     return intent;
   }
@@ -110,10 +111,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     findAndSetupToolbar();
 
     setTitle(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME));
-
     setupContentExpandablePage(contentPage);
     expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
-
     contentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) ->
         touchLiesOn(messageRecyclerView, downX, downY) && messageRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1)
     );
@@ -122,6 +121,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     // doesn't show up on start, but we do want the reply field to be focused
     // so that if full-screen reply is closed, the keyboard continues to show.
     replyField.requestFocus();
+
+    privateMessageInfo = getIntent().getParcelableExtra(KEY_MESSAGE_INFO);
   }
 
   @Override
@@ -141,12 +142,13 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .withRemoveDuration(250)
         .withAddDuration(250));
 
-    String privateMessageThreadFullName = getIntent().getStringExtra(KEY_MESSAGE_FULLNAME);
-    ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageThreadFullName);
+    ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageInfo.fullName());
 
     Observable<List<PendingSyncReply>> pendingSyncRepliesStream = replyRepository.streamPendingSyncReplies(privateMessageThread);
 
-    inboxRepository.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES)
+    // TODO: Share this message stream.
+
+    inboxRepository.message(privateMessageInfo.fullName(), InboxFolder.PRIVATE_MESSAGES)
         .subscribeOn(io())
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
@@ -164,7 +166,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     // Adapter data-set.
     Pair<List<PrivateMessageUiModel>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
-    Observable.combineLatest(inboxRepository.message(privateMessageThreadFullName, InboxFolder.PRIVATE_MESSAGES), pendingSyncRepliesStream, Pair::create)
+    Observable.combineLatest(inboxRepository.message(privateMessageInfo.fullName(), InboxFolder.PRIVATE_MESSAGES), pendingSyncRepliesStream, Pair::create)
         .subscribeOn(io())
         .map(pair -> {
           Message parentMessage = pair.first;
@@ -216,7 +218,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
               // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
               //noinspection ConstantConditions
-              replyRepository.removeDraft(ContributionFullNameWrapper.create(privateMessageThreadFullName))
+              replyRepository.removeDraft(privateMessageInfo)
                   .andThen(replyRepository.sendReply(latestMessage, privateMessageThread, reply.toString()).toObservable())
                   .subscribe(
                       doNothing(),
@@ -239,7 +241,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .subscribe(RxView.enabled(sendButton));
 
     // Drafts.
-    draftStore.streamDrafts(ContributionFullNameWrapper.create(privateMessageThreadFullName))
+    draftStore.streamDrafts(privateMessageInfo)
         .subscribeOn(io())
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
@@ -273,21 +275,18 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     super.onStop();
 
     // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
-    String privateMessageFullName = getIntent().getStringExtra(KEY_MESSAGE_FULLNAME);
-    Contribution fakePrivateMessage = ContributionFullNameWrapper.create(privateMessageFullName);
-    draftStore.saveDraft(fakePrivateMessage, replyField.getText().toString())
+    draftStore.saveDraft(privateMessageInfo, replyField.getText().toString())
         .subscribeOn(io())
         .subscribe();
   }
 
   @OnClick(R.id.privatemessagethread_fullscreen)
   void onClickFullscreen() {
-    String privateMessageFullName = getIntent().getStringExtra(KEY_MESSAGE_FULLNAME);
-    Contribution fakePrivateMessage = ContributionFullNameWrapper.create(privateMessageFullName);
     ComposeStartOptions composeStartOptions = ComposeStartOptions.builder()
         .preFilledText(replyField.getText())
         .secondPartyName(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME))
-        .draftKey(fakePrivateMessage)
+        .parentContribution(Optional.empty())
+        .draftKey(privateMessageInfo)
         .build();
     startActivityForResult(ComposeReplyActivity.intent(this, composeStartOptions), REQUEST_CODE_FULLSCREEN_REPLY);
   }

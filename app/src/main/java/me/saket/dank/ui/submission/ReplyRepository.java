@@ -12,7 +12,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Message;
 
 import java.util.HashMap;
 import java.util.List;
@@ -29,6 +29,7 @@ import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.ui.user.UserSessionRepository;
 import timber.log.Timber;
 
@@ -77,10 +78,18 @@ public class ReplyRepository implements DraftStore {
       throw new UnsupportedOperationException("Unknown thread name: " + parentThreadFullName);
     }
 
-    Contribution parentContribution = ContributionFullNameWrapper.create(pendingSyncReply.parentContributionFullName());
+    PostedOrInFlightContribution parentContribution = PostedOrInFlightContribution.createLocal(pendingSyncReply);
     String replyBody = pendingSyncReply.body();
     long replyCreatedTimeMillis = pendingSyncReply.createdTimeMillis();
     return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
+  }
+
+  /**
+   * @param parentThread Root submission/message-thread.
+   */
+  @CheckResult
+  public Completable sendReply(Message parentMessage, ParentThread parentThread, String replyBody) {
+    return sendReply(PostedOrInFlightContribution.from(parentMessage), parentThread, replyBody);
   }
 
   /**
@@ -88,20 +97,25 @@ public class ReplyRepository implements DraftStore {
    * @param parentThread       Root submission/message-thread.
    */
   @CheckResult
-  public Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody) {
+  public Completable sendReply(PostedOrInFlightContribution parentContribution, ParentThread parentThread, String replyBody) {
     long replyCreatedTimeMillis = System.currentTimeMillis();
     return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
   }
 
   @CheckResult
-  private Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody, long replyCreatedTimeMillis) {
+  private Completable sendReply(
+      PostedOrInFlightContribution parentContribution,
+      ParentThread parentThread,
+      String replyBody,
+      long replyCreatedTimeMillis)
+  {
     long sentTimeMillis = System.currentTimeMillis();
 
     PendingSyncReply pendingSyncReply = PendingSyncReply.create(
         replyBody,
         PendingSyncReply.State.POSTING,
         parentThread.fullName(),
-        parentContribution.getFullName(),
+        parentContribution.fullName(),
         userSessionRepository.loggedInUserName(),
         replyCreatedTimeMillis,
         sentTimeMillis
@@ -109,21 +123,9 @@ public class ReplyRepository implements DraftStore {
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
         .andThen(dankRedditClient.withAuth(Single.fromCallable(() -> {
-          String postedReplyId = dankRedditClient.userAccountManager().reply(parentContribution, replyBody);
-          String postedFullName;
-          switch (parentThread.type()) {
-            case SUBMISSION:
-              // Submission comment.
-              postedFullName = "t4_" + postedReplyId;
-              break;
-
-            case PRIVATE_MESSAGE:
-              postedFullName = "t1_" + postedReplyId;
-              break;
-
-            default:
-              throw new UnsupportedOperationException("Unknown thread type: " + parentThread.type());
-          }
+          ContributionFullNameWrapper fauxContribution = ContributionFullNameWrapper.create(parentContribution.fullName());
+          String postedReplyId = dankRedditClient.userAccountManager().reply(fauxContribution, replyBody);
+          String postedFullName = parentThread.type().fullNamePrefix() + postedReplyId;
           Timber.i("Posted full-name: %s", postedFullName);
           return postedFullName;   // full-name.
         })))
@@ -188,7 +190,7 @@ public class ReplyRepository implements DraftStore {
 
   @Override
   @CheckResult
-  public Completable saveDraft(Contribution contribution, String draftBody) {
+  public Completable saveDraft(PostedOrInFlightContribution contribution, String draftBody) {
     if (draftBody.isEmpty()) {
       return removeDraft(contribution);
     }
@@ -235,7 +237,7 @@ public class ReplyRepository implements DraftStore {
 
   @Override
   @CheckResult
-  public Observable<String> streamDrafts(Contribution contribution) {
+  public Observable<String> streamDrafts(PostedOrInFlightContribution contribution) {
     return rxSharedPrefs.getString(keyForDraft(contribution), "")
         .asObservable()
         .map(replyDraftJson -> {
@@ -256,7 +258,7 @@ public class ReplyRepository implements DraftStore {
   }
 
   @Override
-  public Completable removeDraft(Contribution contribution) {
+  public Completable removeDraft(PostedOrInFlightContribution contribution) {
     //String parent;
     //if (contribution instanceof Comment) {
     //  parent = ((Comment) contribution).getBody();
@@ -274,10 +276,10 @@ public class ReplyRepository implements DraftStore {
   }
 
   @VisibleForTesting
-  static String keyForDraft(Contribution parentContribution) {
-    if (parentContribution.getFullName() == null) {
+  static String keyForDraft(PostedOrInFlightContribution parentContribution) {
+    if (parentContribution.fullName() == null) {
       throw new NullPointerException("Wut");
     }
-    return "replyDraftFor_" + parentContribution.getFullName();
+    return "replyDraftFor_" + parentContribution.fullName();
   }
 }
