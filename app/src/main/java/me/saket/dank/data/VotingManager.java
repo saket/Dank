@@ -5,6 +5,7 @@ import android.content.SharedPreferences;
 import android.os.Looper;
 import android.support.annotation.CheckResult;
 
+import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Comment;
@@ -13,16 +14,16 @@ import net.dean.jraw.models.Thing;
 import net.dean.jraw.models.VoteDirection;
 import net.dean.jraw.models.attr.Votable;
 
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import io.reactivex.Completable;
+import io.reactivex.Observable;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.submission.VoteJobService;
+import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import timber.log.Timber;
 
 /**
@@ -34,36 +35,36 @@ import timber.log.Timber;
  */
 public class VotingManager {
 
+  public static final String SHARED_PREFS_NAME = "sharedpreferences_votingManager";
+  private static final Object NOTHING = LifecycleStreams.NOTHING;
   private static final String KEY_PENDING_VOTE_ = "pendingVote_";
 
   private final Application appContext;
   private final DankRedditClient dankRedditClient;
   private final SharedPreferences sharedPrefs;
   private final Moshi moshi;
+  private final RxSharedPreferences rxSharedPrefs;
 
   /**
    * @param appContext Used for scheduling {@link VoteJobService}.
    */
   @Inject
-  public VotingManager(Application appContext, DankRedditClient dankRedditClient, SharedPreferences sharedPrefs, Moshi moshi) {
+  public VotingManager(
+      Application appContext,
+      DankRedditClient dankRedditClient,
+      @Named(SHARED_PREFS_NAME) SharedPreferences sharedPrefs,
+      Moshi moshi)
+  {
     this.appContext = appContext;
     this.dankRedditClient = dankRedditClient;
     this.sharedPrefs = sharedPrefs;
     this.moshi = moshi;
-  }
-
-  private String keyFor(String contributionFullName) {
-    return KEY_PENDING_VOTE_ + contributionFullName;
-  }
-
-  private String keyFor(PostedOrInFlightContribution contribution) {
-    return keyFor(contribution.fullName());
+    this.rxSharedPrefs = RxSharedPreferences.create(sharedPrefs);
   }
 
   @CheckResult
   public Completable vote(PostedOrInFlightContribution contributionToVote, VoteDirection voteDirection) {
-    // Mark the vote as pending in onSubscribe() instead of onError(),
-    // so that getPendingVote() can be used immediately after calling vote().
+    // Mark the vote as pending immediately so that getPendingVote() can be used immediately after calling vote().
     markVoteAsPending(contributionToVote, voteDirection);
 
     VotableThingFullNameWrapper votableThing = VotableThingFullNameWrapper.create(contributionToVote.fullName());
@@ -143,22 +144,10 @@ public class VotingManager {
       throw new IllegalStateException();
     }
 
-    return Completable.fromAction(() -> {
-      Set<String> keysToRemove = new HashSet<>();
-
-      Map<String, ?> allValues = sharedPrefs.getAll();
-      for (Map.Entry<String, ?> entry : allValues.entrySet()) {
-        if (entry.getKey().startsWith(KEY_PENDING_VOTE_)) {
-          keysToRemove.add(entry.getKey());
-        }
-      }
-
-      SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.edit();
-      for (String keyToRemove : keysToRemove) {
-        sharedPrefsEditor.remove(keyToRemove);
-      }
-      sharedPrefsEditor.apply();
-    });
+    return Completable.fromAction(() ->
+        // VotingManager uses a dedicated shared prefs file so we can safely clear everything.
+        sharedPrefs.edit().clear().apply()
+    );
   }
 
   /**
@@ -212,5 +201,13 @@ public class VotingManager {
     }
 
     return resultingScore;
+  }
+
+  private String keyFor(String contributionFullName) {
+    return KEY_PENDING_VOTE_ + contributionFullName;
+  }
+
+  private String keyFor(PostedOrInFlightContribution contribution) {
+    return keyFor(contribution.fullName());
   }
 }

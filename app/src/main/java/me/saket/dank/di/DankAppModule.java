@@ -43,6 +43,7 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.OnLoginRequireListener;
+import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
@@ -253,10 +254,15 @@ public class DankAppModule {
   }
 
   @Provides
-  @Singleton
-  @Named("drafts_sharedpreferences")
+  @Named(ReplyRepository.SHARED_PREFS_NAME)
   SharedPreferences provideSharedPrefsForReplyDraftStore() {
-    return appContext.getSharedPreferences("replyDraftStore", Context.MODE_PRIVATE);
+    return appContext.getSharedPreferences(ReplyRepository.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
+  }
+
+  @Provides
+  @Named(VotingManager.SHARED_PREFS_NAME)
+  SharedPreferences provideSharedPrefsForVotingManager() {
+    return appContext.getSharedPreferences(VotingManager.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
   }
 
   @Provides

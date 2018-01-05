@@ -295,7 +295,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     @BindView(R.id.item_comment_indented_container) IndentedLayout indentedContainer;
     @BindView(R.id.item_comment_byline) TextView bylineView;
     @BindView(R.id.item_comment_body) TextView commentBodyView;
-    @BindView(R.id.item_comment_separator) View separatorView;
 
     @BindColor(R.color.submission_comment_byline_author) int bylineAuthorNameColor;
     @BindColor(R.color.submission_comment_byline_author_op) int bylineAuthorNameColorForOP;

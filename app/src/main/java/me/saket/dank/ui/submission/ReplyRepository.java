@@ -39,6 +39,8 @@ import timber.log.Timber;
 @Singleton
 public class ReplyRepository implements DraftStore {
 
+  public static final String SHARED_PREFS_NAME = "sharedpreferences_drafts";
+
   private final DankRedditClient dankRedditClient;
   private final BriteDatabase database;
   private final UserSessionRepository userSessionRepository;
@@ -49,7 +51,7 @@ public class ReplyRepository implements DraftStore {
 
   @Inject
   public ReplyRepository(DankRedditClient dankRedditClient, BriteDatabase database, UserSessionRepository userSessionRepository,
-      @Named("drafts_sharedpreferences") SharedPreferences sharedPrefs, Moshi moshi,
+      @Named(SHARED_PREFS_NAME) SharedPreferences sharedPrefs, Moshi moshi,
       @Named("drafts_max_retain_days") int recycleDraftsOlderThanNumDays)
   {
     this.dankRedditClient = dankRedditClient;
