@@ -98,7 +98,7 @@ public abstract class PendingSyncReply {
   private static PendingSyncReply create(String body, State state, String parentThreadFullName, String parentContributionFullName, String author,
       long createdTimeMillis, long sentTimeMillis, @Nullable String postedFullName)
   {
-    return new AutoValue_PendingSyncReply.Builder()
+    return builder()
         .body(body)
         .state(state)
         .parentThreadFullName(parentThreadFullName)
@@ -108,6 +108,10 @@ public abstract class PendingSyncReply {
         .sentTimeMillis(sentTimeMillis)
         .postedFullName(postedFullName)
         .build();
+  }
+
+  public static PendingSyncReply.Builder builder() {
+    return new AutoValue_PendingSyncReply.Builder();
   }
 
   public abstract PendingSyncReply.Builder toBuilder();
@@ -153,7 +157,7 @@ public abstract class PendingSyncReply {
 
     public abstract Builder sentTimeMillis(long sentTimeMillis);
 
-    public abstract Builder postedFullName(String postedFullName);
+    public abstract Builder postedFullName(@Nullable String postedFullName);
 
     public abstract PendingSyncReply build();
   }

@@ -74,6 +74,11 @@ public class VotingManager {
     // Mark the vote as pending immediately so that getPendingVote() can be used immediately after calling vote().
     markVoteAsPending(contributionToVote, voteDirection);
 
+    if (!contributionToVote.isPosted()) {
+      throw new AssertionError();
+    }
+
+    //noinspection ConstantConditions
     VotableThingFullNameWrapper votableThing = VotableThingFullNameWrapper.create(contributionToVote.fullName());
     return dankRedditClient.withAuth(Completable.fromAction(() -> dankRedditClient.userAccountManager().vote(votableThing, voteDirection)))
 //        .doOnSubscribe(o -> Timber.i("Voting for %s…", contributionToVote.fullName()()))

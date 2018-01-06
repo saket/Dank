@@ -4,6 +4,8 @@ import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Thing;
@@ -77,6 +79,10 @@ public interface PostedOrInFlightContribution extends Parcelable {
     public static ContributionFetchedFromRemote create(String fullName, Integer score, VoteDirection voteDirection) {
       return new AutoValue_PostedOrInFlightContribution_ContributionFetchedFromRemote(fullName, score, voteDirection);
     }
+
+    public static JsonAdapter<ContributionFetchedFromRemote> jsonAdapter(Moshi moshi) {
+      return new AutoValue_PostedOrInFlightContribution_ContributionFetchedFromRemote.MoshiJsonAdapter(moshi);
+    }
   }
 
   @AutoValue
@@ -104,6 +110,10 @@ public interface PostedOrInFlightContribution extends Parcelable {
           state,
           idForTogglingCollapse
       );
+    }
+
+    public static JsonAdapter<LocallyPostedContribution> jsonAdapter(Moshi moshi) {
+      return new AutoValue_PostedOrInFlightContribution_LocallyPostedContribution.MoshiJsonAdapter(moshi);
     }
   }
 
