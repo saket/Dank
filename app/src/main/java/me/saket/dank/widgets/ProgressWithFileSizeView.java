@@ -4,7 +4,6 @@ import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.res.TypedArray;
 import android.support.annotation.FloatRange;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -29,7 +28,7 @@ public class ProgressWithFileSizeView extends LinearLayout {
   private double lastFileSize;
   private FileSizeUnit lastFileSizeUnit;
 
-  public ProgressWithFileSizeView(@NonNull Context context, @Nullable AttributeSet attrs) {
+  public ProgressWithFileSizeView(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
     LayoutInflater.from(context).inflate(R.layout.custom_progress_bar_with_file_size, this, true);
     ButterKnife.bind(this, this);

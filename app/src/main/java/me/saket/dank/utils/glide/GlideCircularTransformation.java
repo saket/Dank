@@ -5,7 +5,6 @@ import android.graphics.BitmapShader;
 import android.graphics.Canvas;
 import android.graphics.Matrix;
 import android.graphics.Paint;
-import android.support.annotation.NonNull;
 
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
@@ -19,7 +18,7 @@ public class GlideCircularTransformation extends BitmapTransformation {
   public static final GlideCircularTransformation INSTANCE = new GlideCircularTransformation();
 
   @Override
-  protected Bitmap transform(@NonNull BitmapPool bitmapPool, @NonNull Bitmap toTransform, int outWidth, int outHeight) {
+  protected Bitmap transform(BitmapPool bitmapPool, Bitmap toTransform, int outWidth, int outHeight) {
     int size = Math.min(toTransform.getWidth(), toTransform.getHeight());
 
     int width = (toTransform.getWidth() - size) / 2;

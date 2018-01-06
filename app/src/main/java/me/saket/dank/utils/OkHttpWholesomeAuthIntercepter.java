@@ -1,7 +1,5 @@
 package me.saket.dank.utils;
 
-import android.support.annotation.NonNull;
-
 import java.io.IOException;
 
 import me.saket.dank.di.DankApi;
@@ -14,7 +12,7 @@ import okhttp3.Response;
 public class OkHttpWholesomeAuthIntercepter implements Interceptor {
 
   @Override
-  public Response intercept(@NonNull Chain chain) throws IOException {
+  public Response intercept(Chain chain) throws IOException {
     Request originalRequest = chain.request();
 
     if (originalRequest.url().host().contains(DankApi.WHOLESOME_API_HOST)) {

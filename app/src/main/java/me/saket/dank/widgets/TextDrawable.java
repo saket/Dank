@@ -3,8 +3,9 @@ package me.saket.dank.widgets;
 import android.graphics.Canvas;
 import android.graphics.ColorFilter;
 import android.graphics.Paint;
+import android.graphics.PixelFormat;
 import android.graphics.drawable.Drawable;
-import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.widget.TextView;
 
 public class TextDrawable extends Drawable {
@@ -22,7 +23,7 @@ public class TextDrawable extends Drawable {
   }
 
   @Override
-  public void draw(@NonNull Canvas canvas) {
+  public void draw(Canvas canvas) {
     Paint paint = textView.getPaint();
     paint.setColor(textView.getTextColors().getColorForState(textView.getDrawableState(), 0));
     int lineBaseline = textView.getLineBounds(0, null);
@@ -33,11 +34,10 @@ public class TextDrawable extends Drawable {
   public void setAlpha(int alpha) {/* Not supported */}
 
   @Override
-  public void setColorFilter(ColorFilter colorFilter) {/* Not supported */}
+  public void setColorFilter(@Nullable ColorFilter colorFilter) {/* Not supported */}
 
   @Override
   public int getOpacity() {
-    return 1;
+    return PixelFormat.OPAQUE;
   }
-
 }

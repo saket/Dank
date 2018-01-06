@@ -11,7 +11,6 @@ import android.graphics.drawable.LayerDrawable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.FloatRange;
 import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.AttributeSet;
@@ -304,7 +303,7 @@ public class SwipeableLayout extends FrameLayout {
   }
 
   @Override
-  public void invalidateDrawable(@NonNull Drawable drawable) {
+  public void invalidateDrawable(Drawable drawable) {
     if (isOurDrawable(drawable)) {
       invalidate();
     } else {
@@ -313,11 +312,11 @@ public class SwipeableLayout extends FrameLayout {
   }
 
   @Override
-  protected boolean verifyDrawable(@NonNull Drawable who) {
+  protected boolean verifyDrawable(Drawable who) {
     return isOurDrawable(who) || super.verifyDrawable(who);
   }
 
-  private boolean isOurDrawable(@NonNull Drawable drawable) {
+  private boolean isOurDrawable(Drawable drawable) {
     return drawable == swipeActionTriggerDrawable || drawable == backgroundDrawable;
   }
 }

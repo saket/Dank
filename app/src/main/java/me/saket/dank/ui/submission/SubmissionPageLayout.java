@@ -23,7 +23,6 @@ import android.os.Build;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.transition.ChangeBounds;
@@ -821,7 +820,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           private ViewGroup contentViewGroup;
 
           @Override
-          public void accept(@NonNull KeyboardVisibilityChangeEvent changeEvent) throws Exception {
+          public void accept(KeyboardVisibilityChangeEvent changeEvent) throws Exception {
             if (contentViewGroup == null) {
               //noinspection ConstantConditions
               contentViewGroup = ((Activity) getContext()).findViewById(Window.ID_ANDROID_CONTENT);

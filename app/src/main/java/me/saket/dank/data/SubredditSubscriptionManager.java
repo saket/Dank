@@ -286,7 +286,6 @@ public class SubredditSubscriptionManager {
    * Kind of similar to how git merge works. The local subscription are considered as the source of truth for
    * pending subscribe and unsubscribe subscription.
    */
-  @NonNull
   @VisibleForTesting()
   Function<List<String>, List<SubredditSubscription>> mergeRemoteSubscriptionsWithLocal(List<SubredditSubscription> localSubs) {
     return remoteSubNames -> {
@@ -344,7 +343,6 @@ public class SubredditSubscriptionManager {
     };
   }
 
-  @NonNull
   private Single<List<String>> loggedInUserSubreddits() {
     return dankRedditClient.userSubreddits()
         .map(remoteSubs -> {
@@ -374,7 +372,6 @@ public class SubredditSubscriptionManager {
   /**
    * Replace all items in the database with a new list of subscriptions.
    */
-  @NonNull
   private Consumer<List<SubredditSubscription>> saveSubscriptionsToDatabase() {
     return newSubscriptions -> {
       try (BriteDatabase.Transaction transaction = database.newTransaction()) {

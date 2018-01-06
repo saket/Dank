@@ -211,7 +211,7 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   }
 
   @Override
-  public boolean onTouchEvent(@NonNull MotionEvent event) {
+  public boolean onTouchEvent(MotionEvent event) {
     return (pullToCollapseEnabled && pullToCollapseListener.onTouch(this, event)) || super.onTouchEvent(event);
   }
 

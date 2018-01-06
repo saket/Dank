@@ -8,6 +8,7 @@ import com.nytimes.android.external.store3.base.RecordState;
 import java.util.concurrent.TimeUnit;
 import javax.annotation.Nonnull;
 
+// TODO.
 public class StoreStaleAwareFilePersister<Key, Value> extends StoreFilePersister<Key, Value> implements RecordProvider<Key> {
 
   private final FileSystem fileSystem;
@@ -27,7 +28,7 @@ public class StoreStaleAwareFilePersister<Key, Value> extends StoreFilePersister
 
   @Nonnull
   @Override
-  public RecordState getRecordState(@Nonnull Key key) {
+  public RecordState getRecordState(Key key) {
     return fileSystem.getRecordState(expirationUnit, expirationDuration, pathResolver.resolve(key));
   }
 }

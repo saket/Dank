@@ -1,7 +1,5 @@
 package me.saket.dank.utils.okhttp;
 
-import android.support.annotation.NonNull;
-
 import java.io.IOException;
 
 import okhttp3.MediaType;
@@ -51,7 +49,7 @@ public class OkHttpRequestBodyWithProgress extends RequestBody {
       public long totalBytesRead;
 
       @Override
-      public void write(@NonNull Buffer source, long byteCount) throws IOException {
+      public void write(Buffer source, long byteCount) throws IOException {
         super.write(source, byteCount);
 
         long fullLengthBytes = contentLength();

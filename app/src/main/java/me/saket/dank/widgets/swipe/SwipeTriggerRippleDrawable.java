@@ -10,7 +10,6 @@ import android.graphics.PointF;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
 import android.support.annotation.IntRange;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import me.saket.dank.utils.Animations;
@@ -47,7 +46,7 @@ public class SwipeTriggerRippleDrawable extends Drawable {
   }
 
   @Override
-  public void draw(@NonNull Canvas canvas) {
+  public void draw(Canvas canvas) {
     canvas.drawCircle(circleCenter.x, circleCenter.y, circleRadius, paint);
   }
 

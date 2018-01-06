@@ -25,7 +25,6 @@
 
 package me.saket.dank.utils;
 
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
@@ -104,7 +103,7 @@ public abstract class Optional<T> {
    * @return an {@code Optional} with a present value if the specified value
    * is non-null, otherwise an empty {@code Optional}
    */
-  public static <T> Optional<T> ofNullable(T value) {
+  public static <T> Optional<T> ofNullable(@Nullable T value) {
     return value == null ? empty() : of(value);
   }
 
@@ -116,7 +115,6 @@ public abstract class Optional<T> {
    * @throws NoSuchElementException if there is no value present
    * @see Optional#isPresent()
    */
-  @NonNull
   public T get() {
     if (isPresent()) {
       //noinspection ConstantConditions

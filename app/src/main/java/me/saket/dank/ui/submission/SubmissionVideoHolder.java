@@ -19,7 +19,6 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.links.MediaLink;
@@ -97,7 +96,7 @@ public class SubmissionVideoHolder {
           private boolean firstDelayDone;
 
           @Override
-          public ObservableSource<Integer> apply(@NonNull Integer videoWidth) throws Exception {
+          public ObservableSource<Integer> apply(Integer videoWidth) throws Exception {
             // onPrepared() gets called way too early when loading a video for the first time.
             // We'll manually add a delay.
             if (firstDelayDone) {

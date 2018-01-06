@@ -1,7 +1,6 @@
 package me.saket.dank.ui.submission;
 
 import android.database.Cursor;
-import android.support.annotation.NonNull;
 
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
@@ -34,7 +33,6 @@ public abstract class CachedSubmissionList {
     return queryToGetAll(moshi, subredditName, sortingAndTimePeriod, "DESC") + " LIMIT 1";
   }
 
-  @NonNull
   private static String queryToGetAll(Moshi moshi, String subredditName, SortingAndTimePeriod sortingAndTimePeriod, String sortOrder) {
     String sortingAndTimePeriodJson = moshi.adapter(SortingAndTimePeriod.class).toJson(sortingAndTimePeriod);
 

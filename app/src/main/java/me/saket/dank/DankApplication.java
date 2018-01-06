@@ -6,7 +6,6 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
-import android.support.annotation.NonNull;
 
 import com.facebook.stetho.Stetho;
 import com.jakewharton.threetenabp.AndroidThreeTen;
@@ -111,7 +110,6 @@ public class DankApplication extends Application {
     notificationManager.createNotificationChannels(notifChannels);
   }
 
-  @NonNull
   private Consumer<Throwable> createUndeliveredExceptionsHandler() {
     return e -> {
       e = Dank.errors().findActualCause(e);

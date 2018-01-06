@@ -1,7 +1,6 @@
 package me.saket.dank.utils;
 
 import android.net.Uri;
-import android.support.annotation.NonNull;
 import android.support.v4.util.LruCache;
 import android.text.Html;
 import android.text.TextUtils;
@@ -102,7 +101,6 @@ public class UrlParser {
    *
    * @return null if the url couldn't be identified. A class implementing {@link Link} otherwise.
    */
-  @NonNull
   public static Link parse(String url) {
     // TODO: Support "np" subdomain?
     // TODO: Support wiki pages.
@@ -172,7 +170,6 @@ public class UrlParser {
     return parsedLink;
   }
 
-  @NonNull
   private static Link parseNonRedditUrl(String url) {
     Uri linkURI = Uri.parse(url);
 

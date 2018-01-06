@@ -380,7 +380,6 @@ public class UrlParserTest {
   }
 
   // TODO: Extract this into an @Rule.
-  @NonNull
   private Uri createMockUriFor(String url) {
     Uri mockUri = mock(Uri.class);
 

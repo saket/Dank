@@ -14,14 +14,13 @@ import java.util.List;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Consumer;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
+import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
-import me.saket.dank.utils.Dates;
 import timber.log.Timber;
 
 public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerView.ViewHolder> implements Consumer<List<Message>> {
@@ -54,7 +53,7 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
   }
 
   @Override
-  public void accept(@NonNull List<Message> messages) {
+  public void accept(List<Message> messages) {
     updateDataAndNotifyDatasetChanged(messages);
   }
 

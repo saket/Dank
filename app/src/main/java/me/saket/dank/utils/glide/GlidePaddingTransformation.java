@@ -4,7 +4,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Paint;
-import android.support.annotation.NonNull;
 import android.util.Size;
 
 import com.bumptech.glide.Glide;
@@ -36,7 +35,7 @@ public abstract class GlidePaddingTransformation extends BitmapTransformation {
   public abstract Size getPadding(int imageWidth, int imageHeight);
 
   @Override
-  protected Bitmap transform(@NonNull BitmapPool pool, @NonNull Bitmap toTransform, int outWidth, int outHeight) {
+  protected Bitmap transform(BitmapPool pool, Bitmap toTransform, int outWidth, int outHeight) {
     Size padding = getPadding(toTransform.getWidth(), toTransform.getHeight());
     int verticalPadding = padding.getHeight();
     int horizontalPadding = padding.getWidth();

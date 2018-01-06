@@ -12,7 +12,6 @@ import android.graphics.Rect;
 import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v4.util.Pair;
@@ -93,7 +92,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   private Relay<Message> latestMessageStream = BehaviorRelay.create();
   private PostedOrInFlightContribution privateMessageInfo;
 
-  @NonNull
   public static Intent intent(Context context, Message message, String threadSecondPartyName, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, PrivateMessageThreadActivity.class);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);

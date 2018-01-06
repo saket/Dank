@@ -27,9 +27,6 @@ import me.saket.dank.R;
 import me.saket.dank.ui.DankDialogFragment;
 import me.saket.dank.utils.Views;
 
-/**
- * TODO: Offer to paste URL from clipboard.
- */
 public class AddLinkDialog extends DankDialogFragment {
 
   private static final String KEY_PRE_FILLED_TITLE = "preFilledTitle";
@@ -79,24 +76,14 @@ public class AddLinkDialog extends DankDialogFragment {
     View dialogLayout = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_link, null);
     ButterKnife.bind(this, dialogLayout);
 
+    //noinspection ConstantConditions
     if (savedInstanceState == null && getArguments().containsKey(KEY_PRE_FILLED_TITLE)) {
       String preFilledTitle = getArguments().getString(KEY_PRE_FILLED_TITLE);
+      //noinspection ConstantConditions
       Views.setTextWithCursor(titleField, preFilledTitle);
     }
 
-//    pasteUrlFromClipboardHintView.addOnLayoutChangeListener(new OnLayoutChangeListener() {
-//      @Override
-//      public void onLayoutChange(View v, int left, int top, int right, int bottom, int oldLeft, int oldTop, int oldRight, int oldBottom) {
-//        pasteUrlFromClipboardHintView.removeOnLayoutChangeListener(this);
-//
-//        if (urlField.getLineCount() > 2) {
-//          int lineEndIndex = urlField.getLayout().getLineEnd(1);
-//          String text = urlField.getText().subSequence(0, lineEndIndex - 2) + "...";
-//          urlField.setText(text);
-//        }
-//      }
-//    });
-
+    //noinspection ConstantConditions
     AlertDialog dialog = new AlertDialog.Builder(getContext())
         .setView(dialogLayout)
         .create();
@@ -136,6 +123,7 @@ public class AddLinkDialog extends DankDialogFragment {
   }
 
   private Optional<String> getUrlInClipboard() {
+    //noinspection ConstantConditions
     ClipboardManager clipboardManager = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
     //noinspection ConstantConditions
     String textInClipboard = clipboardManager.getPrimaryClip().getItemAt(0).coerceToText(getContext()).toString();
@@ -165,6 +153,7 @@ public class AddLinkDialog extends DankDialogFragment {
     );
 
     if (!title.isEmpty() && !url.isEmpty()) {
+      //noinspection ConstantConditions
       ((OnLinkInsertListener) getActivity()).onLinkInsert(title, url);
       dismiss();
     }

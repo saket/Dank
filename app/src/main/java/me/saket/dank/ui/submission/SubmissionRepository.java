@@ -129,7 +129,7 @@ public class SubmissionRepository {
           .persister(new Persister<Submission, DankSubmissionRequest>() {
             @Nonnull
             @Override
-            public Maybe<Submission> read(@Nonnull DankSubmissionRequest submissionRequest) {
+            public Maybe<Submission> read(DankSubmissionRequest submissionRequest) {
               String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(submissionRequest);
 
               return database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
@@ -146,7 +146,7 @@ public class SubmissionRepository {
 
             @Nonnull
             @Override
-            public Single<Boolean> write(@Nonnull DankSubmissionRequest submissionRequest, @Nonnull Submission submission) {
+            public Single<Boolean> write(DankSubmissionRequest submissionRequest, Submission submission) {
               return saveSubmissionWithComments(submissionRequest, submission).toSingleDefault(true);
             }
           })
@@ -157,7 +157,7 @@ public class SubmissionRepository {
   }
 
   @CheckResult
-  private Completable saveSubmissionWithComments(@Nonnull DankSubmissionRequest submissionRequest, @Nonnull Submission submission) {
+  private Completable saveSubmissionWithComments(DankSubmissionRequest submissionRequest, Submission submission) {
     return Completable.fromAction(() -> {
       //Timber.i("Saving submission with comments: %s", submission.getTitle());
 

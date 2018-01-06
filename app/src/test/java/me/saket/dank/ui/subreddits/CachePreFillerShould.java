@@ -97,7 +97,6 @@ public class CachePreFillerShould {
   }
 
   // TODO: Extract this into an @Rule.
-  @NonNull
   private Uri createMockUriFor(String url) {
     Uri mockUri = mock(Uri.class);
 

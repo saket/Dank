@@ -6,7 +6,6 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
-import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
@@ -68,13 +67,14 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
     }
   }
 
-  @NonNull
+
   @Override
   @SuppressLint("InflateParams")
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     View dialogLayout = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_subscribe_to_new_subreddit, null);
     ButterKnife.bind(this, dialogLayout);
 
+    //noinspection ConstantConditions
     AlertDialog dialog = new AlertDialog.Builder(getActivity())
         .setView(dialogLayout)
         .setTitle(R.string.newsubredditdialog_title)

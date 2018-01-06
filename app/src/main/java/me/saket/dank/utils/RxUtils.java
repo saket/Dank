@@ -4,7 +4,6 @@ import io.reactivex.CompletableTransformer;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.SingleTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.annotations.NonNull;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
@@ -88,7 +87,7 @@ public class RxUtils {
       boolean isFirstDoOnNext = true;
 
       @Override
-      public void accept(@NonNull T t) throws Exception {
+      public void accept(T t) throws Exception {
         if (isFirstDoOnNext) {
           oneShotConsumer.accept(t);
         }

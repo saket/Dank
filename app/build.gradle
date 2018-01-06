@@ -11,6 +11,7 @@ repositories {
   maven { url "http://dl.bintray.com/novoda/maven" }
   maven { url "http://www.idescout.com/maven/repo/" }
   maven { url "https://oss.sonatype.org/content/repositories/snapshots/" }
+  maven { url "http://maven.onehippo.com/maven2/" }
 }
 
 android {
@@ -65,6 +66,7 @@ dependencies {
   implementation "com.android.support:customtabs:$versions.supportLib"
   implementation "com.android.support:palette-v7:$versions.supportLib"
 
+  // TODO: Do we still need this?
   // Included to resolve dependency conflict between butterknife-compiler:8.0.1 and auto-value-moshi:0.3.2.
   annotationProcessor 'com.squareup:javapoet:1.8.0'
 
@@ -128,4 +130,6 @@ dependencies {
   implementation "com.nytimes.android:filesystem3:$versions.nytStore"
   implementation "com.facebook.stetho:stetho:$versions.stetho"
   implementation "com.facebook.stetho:stetho-okhttp3:$versions.stetho"
+
+  implementation "javax.annotation:jsr305:1.0"
 }

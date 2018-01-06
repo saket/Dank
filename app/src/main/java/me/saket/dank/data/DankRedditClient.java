@@ -2,7 +2,6 @@ package me.saket.dank.data;
 
 import android.content.Context;
 import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -195,7 +194,6 @@ public class DankRedditClient {
    * token got revoked somehow and the server is returning a 401. In both cases, this method attempts to
    * re-authenticate.
    */
-  @NonNull
   // TODO: Move to UserSession.java
   private Function<Flowable<Throwable>, Publisher<Boolean>> refreshApiTokenIfExpiredAndRetry() {
     return errors -> errors.flatMap(error -> {

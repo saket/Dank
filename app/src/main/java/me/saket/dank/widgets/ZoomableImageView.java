@@ -3,7 +3,6 @@ package me.saket.dank.widgets;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.RectF;
-import android.support.annotation.NonNull;
 import android.util.AttributeSet;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -36,13 +35,13 @@ public class ZoomableImageView extends GestureImageView {
 
     getController().setOnGesturesListener(new GestureController.SimpleOnGestureListener() {
       @Override
-      public boolean onSingleTapConfirmed(@NonNull MotionEvent event) {
+      public boolean onSingleTapConfirmed(MotionEvent event) {
         performClick();
         return true;
       }
 
       @Override
-      public void onUpOrCancel(@NonNull MotionEvent event) {
+      public void onUpOrCancel(MotionEvent event) {
         // Bug workaround: Image zoom stops working after first overzoom. Resetting it when the
         // finger is lifted seems to solve the problem.
         getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
@@ -154,7 +153,7 @@ public class ZoomableImageView extends GestureImageView {
 
   @Override
   @SuppressLint("ClickableViewAccessibility")
-  public boolean onTouchEvent(@NonNull MotionEvent event) {
+  public boolean onTouchEvent(MotionEvent event) {
     gestureDetector.onTouchEvent(event);
 
     if (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() == 2) {

@@ -4,7 +4,6 @@ import android.graphics.Bitmap;
 import android.support.annotation.CheckResult;
 import android.support.annotation.ColorInt;
 import android.support.annotation.FloatRange;
-import android.support.annotation.NonNull;
 import android.support.annotation.WorkerThread;
 import android.support.v7.graphics.Palette;
 
@@ -93,10 +92,11 @@ public class StatusBarTintProvider {
      * with a large image!! If palette fails then check the color of the specified pixel
      */
     @WorkerThread
-    public static boolean isDark(@NonNull Bitmap bitmap, int backupPixelX, int backupPixelY) {
+    public static boolean isDark(Bitmap bitmap, int backupPixelX, int backupPixelY) {
       // First try palette with a small color quant size.
       Palette palette = Palette.from(bitmap).maximumColorCount(3).generate();
       if (palette.getSwatches().size() > 0) {
+        //noinspection ConstantConditions
         return isDark(palette.getDominantSwatch()) == Lightness.IS_DARK;
       } else {
         // If palette failed, then check the color of the specified pixel.

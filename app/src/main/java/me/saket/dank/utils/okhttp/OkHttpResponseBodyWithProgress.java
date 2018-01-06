@@ -1,7 +1,5 @@
 package me.saket.dank.utils.okhttp;
 
-import android.support.annotation.NonNull;
-
 import java.io.IOException;
 
 import okhttp3.HttpUrl;
@@ -62,7 +60,7 @@ public class OkHttpResponseBodyWithProgress extends ResponseBody {
       long totalBytesRead = 0L;
 
       @Override
-      public long read(@NonNull Buffer sink, long byteCount) throws IOException {
+      public long read(Buffer sink, long byteCount) throws IOException {
         long bytesRead = super.read(sink, byteCount);
         long fullLengthBytes = contentLength();
         if (bytesRead == -1) { // this source is exhausted

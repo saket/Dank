@@ -3,7 +3,6 @@ package me.saket.dank.widgets;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Handler;
-import android.support.annotation.NonNull;
 import android.support.annotation.Px;
 import android.support.v4.view.NestedScrollingParent;
 import android.support.v7.widget.RecyclerView;
@@ -245,21 +244,21 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
   }
 
   @Override
-  public boolean onStartNestedScroll(@NonNull View child, @NonNull View target, int nestedScrollAxes) {
+  public boolean onStartNestedScroll(View child, View target, int nestedScrollAxes) {
     // Always accept nested scroll events from the child. The decision of whether
     // or not to actually scroll is calculated inside onNestedPreScroll().
     return scrollingEnabled;
   }
 
   @Override
-  public void onNestedPreScroll(@NonNull View target, int dx, int dy, @NonNull int[] consumed) {
+  public void onNestedPreScroll(View target, int dx, int dy, int[] consumed) {
     flingScroller.forceFinished(true);
     float consumedY = attemptToConsumeScrollY(dy);
     consumed[1] = (int) consumedY;
   }
 
   @Override
-  public boolean onNestedPreFling(@NonNull View target, float velocityX, float velocityY) {
+  public boolean onNestedPreFling(View target, float velocityX, float velocityY) {
     flingScroller.forceFinished(true);
 
     float velocityYAbs = Math.abs(velocityY);

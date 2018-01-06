@@ -15,7 +15,6 @@ import android.media.session.MediaSession;
 import android.net.Uri;
 import android.os.Build;
 import android.os.IBinder;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.app.NotificationManagerCompat;
@@ -549,7 +548,6 @@ public class MediaDownloadService extends Service {
     });
   }
 
-  @NonNull
   private Function<MediaDownloadJob, MediaDownloadJob> moveFileToUserSpaceOnDownload() {
     return downloadJobUpdate -> {
       if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
@@ -561,6 +559,7 @@ public class MediaDownloadService extends Service {
       if (downloadJobUpdate.progressState() == DOWNLOADED) {
         MediaLink downloadedMediaLink = downloadJobUpdate.mediaLink();
         String mediaFileName = Urls.parseFileNameWithExtension(downloadedMediaLink.highQualityUrl());
+        //noinspection LambdaParameterTypeCanBeSpecified
         File userAccessibleFile = Files2.copyFileToPicturesDirectory(getResources(), downloadJobUpdate.downloadedFile(), mediaFileName);
         return MediaDownloadJob.createDownloaded(downloadedMediaLink, userAccessibleFile, downloadJobUpdate.timestamp());
 
