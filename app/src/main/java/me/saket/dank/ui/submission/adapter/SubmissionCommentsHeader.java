@@ -16,6 +16,8 @@ import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.VoteDirection;
 
+import java.util.List;
+
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithValueEquality;
@@ -30,6 +32,17 @@ import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
 public interface SubmissionCommentsHeader {
 
+  enum PartialChange {
+    SUBMISSION_VOTE,
+    SUBMISSION_COMMENT_COUNT,
+    CONTENT_LINK,
+    CONTENT_LINK_THUMBNAIL,
+    CONTENT_LINK_FAVICON,
+    CONTENT_LINK_TITLE_AND_BYLINE,
+    CONTENT_LINK_PROGRESS_VISIBILITY,
+    CONTENT_LINK_TINT,
+  }
+
   static int getWidthForAlbumContentLinkThumbnail(Context context) {
     return context.getResources().getDimensionPixelSize(R.dimen.submission_link_thumbnail_width_album);
   }
@@ -39,68 +52,68 @@ public interface SubmissionCommentsHeader {
     @Override
     public abstract long adapterId();
 
-    public abstract SpannableWithValueEquality title();
+    abstract SpannableWithValueEquality title();
 
-    public abstract SpannableWithValueEquality byline();
+    abstract SpannableWithValueEquality byline();
 
-    public abstract Optional<SpannableWithValueEquality> selfText();
+    abstract Optional<SpannableWithValueEquality> optionalSelfText();
 
-    public abstract Optional<SubmissionContentLinkUiModel> contentLink();
+    abstract Optional<SubmissionContentLinkUiModel> optionalContentLink();
 
     /**
      * The original data model from which this Ui model was created.
      */
-    public abstract PostedOrInFlightContribution originalSubmission();
+    abstract PostedOrInFlightContribution originalSubmission();
 
-    public abstract ExtraInfoForEquality extraInfoForEquality();
+    abstract ExtraInfoForEquality extraInfoForEquality();
 
     @Override
     public SubmissionCommentRowType type() {
       return SubmissionCommentRowType.SUBMISSION_HEADER;
     }
 
-    public static UiModel.Builder builder() {
+    static UiModel.Builder builder() {
       return new AutoValue_SubmissionCommentsHeader_UiModel.Builder();
     }
 
     @AutoValue.Builder
-    public abstract static class Builder {
-      public abstract Builder adapterId(long id);
+    abstract static class Builder {
+      abstract Builder adapterId(long id);
 
       abstract Builder title(SpannableWithValueEquality title);
 
       abstract Builder byline(SpannableWithValueEquality byline);
 
-      public Builder title(CharSequence title) {
+      Builder title(CharSequence title) {
         return title(SpannableWithValueEquality.wrap(title));
       }
 
-      public Builder byline(CharSequence byline) {
+      Builder byline(CharSequence byline) {
         return byline(SpannableWithValueEquality.wrap(byline));
       }
 
-      abstract Builder selfText(Optional<SpannableWithValueEquality> text);
+      abstract Builder optionalSelfText(Optional<SpannableWithValueEquality> text);
 
-      public Builder optionalSelfText(Optional<CharSequence> optionalText) {
-        return selfText(optionalText.isPresent()
+      Builder selfText(Optional<CharSequence> optionalText) {
+        return optionalSelfText(optionalText.isPresent()
             ? Optional.of(SpannableWithValueEquality.wrap(optionalText.get()))
             : Optional.empty());
       }
 
-      public abstract Builder contentLink(Optional<SubmissionContentLinkUiModel> link);
+      abstract Builder optionalContentLink(Optional<SubmissionContentLinkUiModel> link);
 
-      public abstract Builder originalSubmission(PostedOrInFlightContribution submission);
+      abstract Builder originalSubmission(PostedOrInFlightContribution submission);
 
-      public abstract Builder extraInfoForEquality(ExtraInfoForEquality info);
+      abstract Builder extraInfoForEquality(ExtraInfoForEquality info);
 
-      public abstract UiModel build();
+      abstract UiModel build();
     }
 
     /**
      * Triggers a change because {@link SpannableWithValueEquality} otherwise won't as it only compares text and not spans.
      */
     @AutoValue
-    public abstract static class ExtraInfoForEquality {
+    abstract static class ExtraInfoForEquality {
       public abstract Pair<Integer, VoteDirection> votes();
 
       public abstract Integer commentsCount();
@@ -163,46 +176,114 @@ public interface SubmissionCommentsHeader {
     }
 
     public void bind(UiModel uiModel, SubmissionSwipeActionsProvider swipeActionsProvider) {
-      titleView.setText(uiModel.title());
-      bylineView.setText(uiModel.byline());
+      setSubmissionTitle(uiModel);
+      setSubmissionByline(uiModel);
+      setContentLink(uiModel);
 
       // TODO.
       selfTextView.setVisibility(View.GONE);
       selfTextView.setMovementMethod(movementMethod);
 
-      if (uiModel.contentLink().isPresent()) {
-        SubmissionContentLinkUiModel contentLinkUiModel = uiModel.contentLink().get();
-        contentLinkView.setVisibility(View.VISIBLE);
-        contentLinkProgressView.setVisibility(contentLinkUiModel.progressVisible() ? View.VISIBLE : View.GONE);
-
-        contentLinkTitleView.setText(contentLinkUiModel.title());
-        contentLinkBylineView.setText(contentLinkUiModel.byline());
-
-        Context context = itemView.getContext();
-        contentLinkTitleView.setTextColor(ContextCompat.getColor(context, contentLinkUiModel.titleTextColorRes()));
-        contentLinkBylineView.setTextColor(ContextCompat.getColor(context, contentLinkUiModel.bylineTextColorRes()));
-
-        if (contentLinkUiModel.backgroundTintColor().isPresent()) {
-          Integer tintColor = contentLinkUiModel.backgroundTintColor().get();
-          contentLinkThumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
-          contentLinkView.getBackground().mutate().setTint(tintColor);
-        } else {
-          contentLinkView.getBackground().mutate().setTintList(null);
-        }
-
-        Bitmap favicon = contentLinkUiModel.icon().isPresent() ? contentLinkUiModel.icon().get() : null;
-        contentLinkIconView.setImageBitmap(favicon);
-        contentLinkIconView.setVisibility(contentLinkUiModel.icon().isPresent() ? View.VISIBLE : View.INVISIBLE);
-
-        Bitmap thumbnail = contentLinkUiModel.thumbnail().isPresent() ? contentLinkUiModel.thumbnail().get() : null;
-        contentLinkThumbnailView.setImageBitmap(thumbnail);
-
-      } else {
-        contentLinkView.setVisibility(View.GONE);
-      }
-
       // Gestures.
       getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.originalSubmission()));
+    }
+
+    private void setSubmissionByline(UiModel uiModel) {
+      bylineView.setText(uiModel.byline());
+    }
+
+    private void setSubmissionTitle(UiModel uiModel) {
+      titleView.setText(uiModel.title());
+    }
+
+    public void handlePartialChanges(List<Object> payloads, UiModel uiModel) {
+      //Timber.i("Handling partial changes");
+      for (Object payload : payloads) {
+        //noinspection unchecked
+        for (PartialChange partialChange : (List<PartialChange>) payload) {
+          switch (partialChange) {
+            case SUBMISSION_VOTE:
+              setSubmissionTitle(uiModel);
+              break;
+
+            case SUBMISSION_COMMENT_COUNT:
+              setSubmissionByline(uiModel);
+              break;
+
+            case CONTENT_LINK:
+              setContentLink(uiModel);
+              break;
+
+            case CONTENT_LINK_THUMBNAIL:
+              //Timber.i("for thumbnail");
+              setContentLinkThumbnail(uiModel.optionalContentLink().get());
+              break;
+
+            case CONTENT_LINK_FAVICON:
+              setContentLinkIcon(uiModel.optionalContentLink().get());
+              break;
+
+            case CONTENT_LINK_TITLE_AND_BYLINE:
+              setContentLinkTitleAndByline(uiModel.optionalContentLink().get());
+              break;
+
+            case CONTENT_LINK_PROGRESS_VISIBILITY:
+              setContentLinkProgressVisibility(uiModel.optionalContentLink().get());
+              break;
+
+            case CONTENT_LINK_TINT:
+              setContentLinkTint(uiModel.optionalContentLink().get());
+              break;
+          }
+        }
+      }
+    }
+
+    private void setContentLink(UiModel uiModel) {
+      contentLinkView.setVisibility(uiModel.optionalContentLink().isPresent() ? View.VISIBLE : View.GONE);
+
+      uiModel.optionalContentLink().ifPresent(contentLinkUiModel -> {
+        setContentLinkIcon(contentLinkUiModel);
+        setContentLinkThumbnail(contentLinkUiModel);
+        setContentLinkTitleAndByline(contentLinkUiModel);
+        setContentLinkProgressVisibility(contentLinkUiModel);
+        setContentLinkTint(contentLinkUiModel);
+      });
+    }
+
+    private void setContentLinkTitleAndByline(SubmissionContentLinkUiModel contentLinkUiModel) {
+      contentLinkTitleView.setText(contentLinkUiModel.title());
+      contentLinkTitleView.setTextColor(ContextCompat.getColor(itemView.getContext(), contentLinkUiModel.titleTextColorRes()));
+      contentLinkBylineView.setMaxLines(contentLinkUiModel.titleMaxLines());
+
+      contentLinkBylineView.setText(contentLinkUiModel.byline());
+      contentLinkBylineView.setTextColor(ContextCompat.getColor(itemView.getContext(), contentLinkUiModel.bylineTextColorRes()));
+      // Else, the entire content Link container is hidden.
+    }
+
+    private void setContentLinkThumbnail(SubmissionContentLinkUiModel contentLinkUiModel) {
+      Bitmap thumbnail = contentLinkUiModel.thumbnail().isPresent() ? contentLinkUiModel.thumbnail().get() : null;
+      contentLinkThumbnailView.setImageBitmap(thumbnail);
+    }
+
+    private void setContentLinkIcon(SubmissionContentLinkUiModel contentLinkUiModel) {
+      Bitmap favicon = contentLinkUiModel.icon().isPresent() ? contentLinkUiModel.icon().get() : null;
+      contentLinkIconView.setImageBitmap(favicon);
+      contentLinkIconView.setVisibility(contentLinkUiModel.icon().isPresent() ? View.VISIBLE : View.INVISIBLE);
+    }
+
+    private void setContentLinkTint(SubmissionContentLinkUiModel contentLinkUiModel) {
+      if (contentLinkUiModel.backgroundTintColor().isPresent()) {
+        Integer tintColor = contentLinkUiModel.backgroundTintColor().get();
+        contentLinkThumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
+        contentLinkView.getBackground().mutate().setTint(tintColor);
+      } else {
+        contentLinkView.getBackground().mutate().setTintList(null);
+      }
+    }
+
+    private void setContentLinkProgressVisibility(SubmissionContentLinkUiModel contentLinkUiModel) {
+      contentLinkProgressView.setVisibility(contentLinkUiModel.progressVisible() ? View.VISIBLE : View.GONE);
     }
 
     @Override

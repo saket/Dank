@@ -47,6 +47,7 @@
       android:layout_marginStart="@dimen/spacing16"
       android:textIsSelectable="true" />
 
+    <!-- clipToOutline=true is set in code. -->
     <RelativeLayout
       android:id="@+id/submission_link_container"
       android:layout_width="match_parent"

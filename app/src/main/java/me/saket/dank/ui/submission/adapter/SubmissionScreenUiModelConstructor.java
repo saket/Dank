@@ -178,8 +178,8 @@ public class SubmissionScreenUiModelConstructor {
         .adapterId(adapterId)
         .title(title)
         .byline(byline)
-        .optionalSelfText(selfTextOptional)
-        .contentLink(contentLinkUiModel)
+        .selfText(selfTextOptional)
+        .optionalContentLink(contentLinkUiModel)
         .originalSubmission(PostedOrInFlightContribution.from(submission))
         .extraInfoForEquality(ExtraInfoForEquality.create(Pair.create(vote, pendingOrDefaultVote), postedAndPendingCommentCount))
         .build();

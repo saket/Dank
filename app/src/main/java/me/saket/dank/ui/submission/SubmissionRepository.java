@@ -191,7 +191,7 @@ public class SubmissionRepository {
     // JRAW inserts the new comments directly inside submission's comment tree, which we
     // do not want because we treat persistence as the single source of truth. So we'll
     // instead re-save the submission to DB and let the UI update itself.
-    return dankRedditClient.loadMoreComments(commentNode)
+    return dankRedditClient.withAuth(dankRedditClient.loadMoreComments(commentNode))
         .toCompletable()
         .andThen(saveSubmissionWithComments(submissionRequest, submission));
   }

@@ -97,6 +97,7 @@ import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.submission.adapter.CommentsDiffCallback;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;

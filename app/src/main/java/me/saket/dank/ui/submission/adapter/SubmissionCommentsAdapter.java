@@ -126,7 +126,28 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
-    onBindViewHolder(holder, position);
+    if (!payloads.isEmpty()) {
+      switch (VIEW_TYPES[getItemViewType(position)]) {
+        case SUBMISSION_HEADER:
+          SubmissionCommentsHeader.UiModel uiModel = (SubmissionCommentsHeader.UiModel) getItem(position);
+          SubmissionCommentsHeader.ViewHolder headerHolder = (SubmissionCommentsHeader.ViewHolder) holder;
+          headerHolder.handlePartialChanges(payloads, uiModel);
+          break;
+
+        case COMMENTS_LOADING_PROGRESS:
+        case USER_COMMENT:
+        case INLINE_REPLY:
+        case LOAD_MORE_COMMENTS:
+          throw new UnsupportedOperationException("Partial change not supported yet for " + VIEW_TYPES[getItemViewType(position)]
+              + ", payload: " + payloads);
+
+        default:
+          throw new UnsupportedOperationException("Unknown view type: " + VIEW_TYPES[getItemViewType(position)]);
+      }
+
+    } else {
+      super.onBindViewHolder(holder, position, payloads);
+    }
   }
 
   @Override
