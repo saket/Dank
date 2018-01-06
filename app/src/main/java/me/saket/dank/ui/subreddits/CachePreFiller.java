@@ -2,18 +2,17 @@ package me.saket.dank.ui.subreddits;
 
 import android.app.Application;
 import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
 import android.support.annotation.Px;
 import android.support.v4.util.Pair;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
-import io.reactivex.Completable;
-import io.reactivex.Observable;
-import io.reactivex.Scheduler;
-import io.reactivex.functions.Predicate;
-import io.reactivex.schedulers.Schedulers;
+
+import net.dean.jraw.models.CommentSort;
+import net.dean.jraw.models.Submission;
+
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -23,6 +22,12 @@ import java.util.Set;
 import java.util.concurrent.Executors;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.Scheduler;
+import io.reactivex.functions.Predicate;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.UserPreferences;
@@ -37,8 +42,6 @@ import me.saket.dank.ui.submission.adapter.SubmissionContentLinkUiModelConstruct
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.UrlParser;
-import net.dean.jraw.models.CommentSort;
-import net.dean.jraw.models.Submission;
 
 /**
  * Pre-fetches submission content and comments.
@@ -140,8 +143,8 @@ public class CachePreFiller {
     return Observable.merge(imageCachePreFillStream, linkCacheFillStream, commentCacheFillStream).ignoreElements();
   }
 
-  @NonNull
   private Predicate<Pair<Submission, Link>> submissionContentAreImages() {
+    //noinspection ConstantConditions
     return submissionAndLink -> submissionAndLink.second.isImageOrGif() || submissionAndLink.second.isMediaAlbum();
   }
 
@@ -197,7 +200,6 @@ public class CachePreFiller {
     });
   }
 
-  @NonNull
   private Predicate<Pair<Submission, Link>> submissionContentIsExternalLink() {
     return submissionAndLink -> {
       Link contentLink = submissionAndLink.second;
