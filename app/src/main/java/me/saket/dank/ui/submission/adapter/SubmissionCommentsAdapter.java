@@ -8,6 +8,7 @@ import android.view.ViewGroup;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import java.util.List;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
@@ -121,6 +122,11 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
       default:
         throw new UnsupportedOperationException("Unknown view type: " + VIEW_TYPES[viewType]);
     }
+  }
+
+  @Override
+  public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+    onBindViewHolder(holder, position);
   }
 
   @Override

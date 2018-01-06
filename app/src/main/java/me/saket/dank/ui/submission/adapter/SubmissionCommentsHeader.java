@@ -14,6 +14,8 @@ import android.widget.TextView;
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.Relay;
 
+import net.dean.jraw.models.VoteDirection;
+
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithValueEquality;
@@ -21,6 +23,7 @@ import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
@@ -44,34 +47,67 @@ public interface SubmissionCommentsHeader {
 
     public abstract Optional<SubmissionContentLinkUiModel> contentLink();
 
-    @Override
-    public SubmissionCommentRowType type() {
-      return SubmissionCommentRowType.SUBMISSION_HEADER;
-    }
-
     /**
      * The original data model from which this Ui model was created.
      */
     public abstract PostedOrInFlightContribution originalSubmission();
 
-    public static UiModel create(
-        long adapterId,
-        CharSequence title,
-        CharSequence byline,
-        Optional<CharSequence> optionalSelfText,
-        Optional<SubmissionContentLinkUiModel> contentLink,
-        PostedOrInFlightContribution originalSubmission)
-    {
-      return new AutoValue_SubmissionCommentsHeader_UiModel(
-          adapterId,
-          SpannableWithValueEquality.wrap(title),
-          SpannableWithValueEquality.wrap(byline),
-          optionalSelfText.isPresent()
-              ? Optional.of(SpannableWithValueEquality.wrap(optionalSelfText.get()))
-              : Optional.empty(),
-          contentLink,
-          originalSubmission
-      );
+    public abstract ExtraInfoForEquality extraInfoForEquality();
+
+    @Override
+    public SubmissionCommentRowType type() {
+      return SubmissionCommentRowType.SUBMISSION_HEADER;
+    }
+
+    public static UiModel.Builder builder() {
+      return new AutoValue_SubmissionCommentsHeader_UiModel.Builder();
+    }
+
+    @AutoValue.Builder
+    public abstract static class Builder {
+      public abstract Builder adapterId(long id);
+
+      abstract Builder title(SpannableWithValueEquality title);
+
+      abstract Builder byline(SpannableWithValueEquality byline);
+
+      public Builder title(CharSequence title) {
+        return title(SpannableWithValueEquality.wrap(title));
+      }
+
+      public Builder byline(CharSequence byline) {
+        return byline(SpannableWithValueEquality.wrap(byline));
+      }
+
+      abstract Builder selfText(Optional<SpannableWithValueEquality> text);
+
+      public Builder optionalSelfText(Optional<CharSequence> optionalText) {
+        return selfText(optionalText.isPresent()
+            ? Optional.of(SpannableWithValueEquality.wrap(optionalText.get()))
+            : Optional.empty());
+      }
+
+      public abstract Builder contentLink(Optional<SubmissionContentLinkUiModel> link);
+
+      public abstract Builder originalSubmission(PostedOrInFlightContribution submission);
+
+      public abstract Builder extraInfoForEquality(ExtraInfoForEquality info);
+
+      public abstract UiModel build();
+    }
+
+    /**
+     * Triggers a change because {@link SpannableWithValueEquality} otherwise won't as it only compares text and not spans.
+     */
+    @AutoValue
+    public abstract static class ExtraInfoForEquality {
+      public abstract Pair<Integer, VoteDirection> votes();
+
+      public abstract Integer commentsCount();
+
+      public static ExtraInfoForEquality create(Pair<Integer, VoteDirection> votes, Integer commentsCount) {
+        return new AutoValue_SubmissionCommentsHeader_UiModel_ExtraInfoForEquality(votes, commentsCount);
+      }
     }
   }
 

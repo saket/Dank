@@ -18,7 +18,6 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Rect;
-import android.graphics.drawable.ColorDrawable;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -35,6 +34,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.SimpleItemAnimator;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -328,12 +328,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    */
   private void setupCommentRecyclerView() {
     int itemElevation = getResources().getDimensionPixelSize(R.dimen.submission_comment_elevation);
-    Drawable itemBackgroundDuringAnimation = new ColorDrawable(ContextCompat.getColor(getContext(), R.color.window_background));
-    SubmissionCommentsItemAnimator itemAnimator = new SubmissionCommentsItemAnimator(itemElevation, itemBackgroundDuringAnimation)
+    SimpleItemAnimator itemAnimator = new SubmissionCommentsItemAnimator(itemElevation)
         .withInterpolator(Animations.INTERPOLATOR)
         .withRemoveDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION)
         .withAddDuration(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION);
-    //commentRecyclerView.setItemAnimator(itemAnimator);
+    commentRecyclerView.setItemAnimator(itemAnimator);
 
     // RecyclerView automatically handles saving and restoring scroll position if the
     // adapter contents are the same once the adapter is set. So we set the adapter

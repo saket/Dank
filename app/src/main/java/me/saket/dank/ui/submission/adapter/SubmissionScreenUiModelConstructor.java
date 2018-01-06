@@ -30,6 +30,7 @@ import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionCommentRow;
+import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader.UiModel.ExtraInfoForEquality;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.Commons;
@@ -39,7 +40,6 @@ import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
-import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.Truss;
 import timber.log.Timber;
 
@@ -91,14 +91,14 @@ public class SubmissionScreenUiModelConstructor {
         .switchMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
         .map(pendingSyncReplies -> pendingSyncReplies.size());
 
-    Observable<SubmissionCommentsHeader.UiModel> submissionHeaderUiModels = Observable
-        .combineLatest(submissions, submissionPendingSyncReplyCounts, contentLinkUiModels, Trio::create)
-        .map(trio -> {
-          Submission submission = trio.first();
-          Integer pendingSyncReplyCount = trio.second();
-          Optional<SubmissionContentLinkUiModel> contentLinkUiModel = trio.third();
-          return headerUiModel(context, submission, pendingSyncReplyCount, contentLinkUiModel);
-        });
+    Observable<SubmissionCommentsHeader.UiModel> submissionHeaderUiModels = Observable.combineLatest(
+        submissions,
+        submissionPendingSyncReplyCounts,
+        contentLinkUiModels,
+        votingManager.changes(),
+        (submission, pendingSyncReplyCount, contentLinkUiModel, ignore) ->
+            headerUiModel(context, submission, pendingSyncReplyCount, contentLinkUiModel)
+    );
 
     Observable<List<SubmissionScreenUiModel>> commentRowUiModels = commentRows
         .withLatestFrom(submissions.map(submission -> submission.getAuthor()), Pair::create)
@@ -155,9 +155,12 @@ public class SubmissionScreenUiModelConstructor {
         ? Optional.of(markdown.parseSelfText(submission))
         : Optional.empty();
 
+    int vote = votingManager.getScoreAfterAdjustingPendingVote(submission);
+    int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
+
     Truss titleBuilder = new Truss();
     titleBuilder.pushSpan(new ForegroundColorSpan(color(context, voteDirectionColor)));
-    titleBuilder.append(Strings.abbreviateScore(votingManager.getScoreAfterAdjustingPendingVote(submission)));
+    titleBuilder.append(Strings.abbreviateScore(vote));
     titleBuilder.popSpan();
     titleBuilder.append("  ");
     //noinspection deprecation
@@ -168,11 +171,18 @@ public class SubmissionScreenUiModelConstructor {
         submission.getSubredditName(),
         submission.getAuthor(),
         Dates.createTimestamp(context.getResources(), JrawUtils.createdTimeUtc(submission)),
-        Strings.abbreviateScore(submission.getCommentCount() + pendingSyncReplyCount)
+        Strings.abbreviateScore(postedAndPendingCommentCount)
     );
 
-    PostedOrInFlightContribution originalSubmission = PostedOrInFlightContribution.from(submission);
-    return SubmissionCommentsHeader.UiModel.create(adapterId, title, byline, selfTextOptional, contentLinkUiModel, originalSubmission);
+    return SubmissionCommentsHeader.UiModel.builder()
+        .adapterId(adapterId)
+        .title(title)
+        .byline(byline)
+        .optionalSelfText(selfTextOptional)
+        .contentLink(contentLinkUiModel)
+        .originalSubmission(PostedOrInFlightContribution.from(submission))
+        .extraInfoForEquality(ExtraInfoForEquality.create(Pair.create(vote, pendingOrDefaultVote), postedAndPendingCommentCount))
+        .build();
   }
 
   private SubmissionComment.UiModel commentUiModel(Context context, DankCommentNode dankCommentNode, String submissionAuthor) {

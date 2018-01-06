@@ -1,6 +1,8 @@
 package me.saket.dank.ui.subreddits;
 
+import android.support.annotation.Nullable;
 import android.support.v7.util.DiffUtil;
+import android.support.v7.widget.RecyclerView;
 
 import java.util.List;
 
@@ -47,6 +49,28 @@ public abstract class SimpleDiffUtilsCallbacks<T> extends DiffUtil.Callback {
    */
   protected abstract boolean areContentsTheSame(T oldItem, T newItem);
 
+  /**
+   * When {@link #areItemsTheSame(int, int)} returns {@code true} for two items and
+   * {@link #areContentsTheSame(int, int)} returns false for them, DiffUtil
+   * calls this method to get a payload about the change.
+   * <p>
+   * For example, if you are using DiffUtil with {@link RecyclerView}, you can return the
+   * particular field that changed in the item and your
+   * {@link android.support.v7.widget.RecyclerView.ItemAnimator ItemAnimator} can use that
+   * information to run the correct animation.
+   * <p>
+   * Default implementation returns {@code null}.
+   *
+   * @param oldItem The item in the old list
+   * @param newItem The item in the new list
+   * @return A payload object that represents the change between the two items.
+   */
+  @Nullable
+  @SuppressWarnings("unused")
+  public Object getChangePayload(T oldItem, T newItem) {
+    return null;
+  }
+
   @Override
   public final int getOldListSize() {
     return oldItems.size();
@@ -69,5 +93,13 @@ public abstract class SimpleDiffUtilsCallbacks<T> extends DiffUtil.Callback {
     T oldItem = oldItems.get(oldItemPosition);
     T newItem = newItems.get(newItemPosition);
     return areContentsTheSame(oldItem, newItem);
+  }
+
+  @Nullable
+  @Override
+  public final Object getChangePayload(int oldItemPosition, int newItemPosition) {
+    T oldItem = oldItems.get(oldItemPosition);
+    T newItem = newItems.get(newItemPosition);
+    return getChangePayload(oldItem, newItem);
   }
 }

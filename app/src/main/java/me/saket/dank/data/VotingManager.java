@@ -5,7 +5,6 @@ import android.content.SharedPreferences;
 import android.os.Looper;
 import android.support.annotation.CheckResult;
 
-import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Comment;
@@ -43,7 +42,6 @@ public class VotingManager {
   private final DankRedditClient dankRedditClient;
   private final SharedPreferences sharedPrefs;
   private final Moshi moshi;
-  private final RxSharedPreferences rxSharedPrefs;
 
   /**
    * @param appContext Used for scheduling {@link VoteJobService}.
@@ -59,7 +57,16 @@ public class VotingManager {
     this.dankRedditClient = dankRedditClient;
     this.sharedPrefs = sharedPrefs;
     this.moshi = moshi;
-    this.rxSharedPrefs = RxSharedPreferences.create(sharedPrefs);
+  }
+
+  @CheckResult
+  public Observable<Object> changes() {
+    return Observable.create(emitter -> {
+      SharedPreferences.OnSharedPreferenceChangeListener changeListener = (sharedPreferences, key) -> emitter.onNext(NOTHING);
+      sharedPrefs.registerOnSharedPreferenceChangeListener(changeListener);
+      emitter.setCancellable(() -> sharedPrefs.unregisterOnSharedPreferenceChangeListener(changeListener));
+      changeListener.onSharedPreferenceChanged(sharedPrefs, "");    // Initial value.
+    });
   }
 
   @CheckResult
