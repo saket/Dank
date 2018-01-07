@@ -1,7 +1,7 @@
 package me.saket.dank.ui.submission.adapter;
 
 import android.content.Context;
-import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -258,13 +258,13 @@ public interface SubmissionCommentsHeader {
     }
 
     private void setContentLinkThumbnail(SubmissionContentLinkUiModel contentLinkUiModel) {
-      Bitmap thumbnail = contentLinkUiModel.thumbnail().isPresent() ? contentLinkUiModel.thumbnail().get() : null;
-      contentLinkThumbnailView.setImageBitmap(thumbnail);
+      Drawable thumbnail = contentLinkUiModel.thumbnail().isPresent() ? contentLinkUiModel.thumbnail().get() : null;
+      contentLinkThumbnailView.setImageDrawable(thumbnail);
     }
 
     private void setContentLinkIcon(SubmissionContentLinkUiModel contentLinkUiModel) {
-      Bitmap favicon = contentLinkUiModel.icon().isPresent() ? contentLinkUiModel.icon().get() : null;
-      contentLinkIconView.setImageBitmap(favicon);
+      Drawable favicon = contentLinkUiModel.icon().isPresent() ? contentLinkUiModel.icon().get() : null;
+      contentLinkIconView.setImageDrawable(favicon);
       contentLinkIconView.setVisibility(contentLinkUiModel.icon().isPresent() ? View.VISIBLE : View.INVISIBLE);
     }
 

@@ -8,11 +8,11 @@ import android.graphics.Canvas;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.support.annotation.ColorRes;
-import android.support.annotation.DrawableRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.graphics.Palette;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.auto.value.AutoValue;
@@ -52,10 +52,12 @@ public class SubmissionContentLinkUiModelConstructor {
   private static final boolean PROGRESS_VISIBLE = true;
   private static final boolean PROGRESS_HIDDEN = false;
   private final LinkMetadataRepository linkMetadataRepository;
+  private final BitmapPool bitmapPool;
 
   @Inject
-  public SubmissionContentLinkUiModelConstructor(LinkMetadataRepository linkMetadataRepository) {
+  public SubmissionContentLinkUiModelConstructor(LinkMetadataRepository linkMetadataRepository, BitmapPool bitmapPool) {
     this.linkMetadataRepository = linkMetadataRepository;
+    this.bitmapPool = bitmapPool;
   }
 
   /**
@@ -98,9 +100,9 @@ public class SubmissionContentLinkUiModelConstructor {
         .share();
 
     Observable<String> sharedTitleStream = fetchTitle(link, sharedLinkMetadataStream);
-    Observable<Optional<Bitmap>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream).share();
+    Observable<Optional<Drawable>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream).share();
     Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.ofNullable(linkMetadata.imageUrl()));
-    Observable<Optional<Bitmap>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, thumbnailUrlStream).share();
+    Observable<Optional<Drawable>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, thumbnailUrlStream).share();
     Observable<TintDetails> tintDetailsStream = streamTintDetails(link, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
 
     Observable<Boolean> progressVisibleStream = Completable
@@ -137,8 +139,8 @@ public class SubmissionContentLinkUiModelConstructor {
   private Observable<SubmissionContentLinkUiModel> streamLoadRedditLink(Context context, RedditLink redditLink) {
     Observable<String> titleStream;
     Observable<String> bylineStream;
-    Observable<Optional<Bitmap>> thumbnailStream;
-    Observable<Bitmap> faviconStream;
+    Observable<Optional<Drawable>> thumbnailStream;
+    Observable<Drawable> faviconStream;
     Observable<Boolean> progressVisibleStream;
     Observable<String> iconContentDescriptionStream;
 
@@ -147,7 +149,7 @@ public class SubmissionContentLinkUiModelConstructor {
       bylineStream = Observable.just(context.getString(R.string.submission_link_tap_to_open_subreddit));
       progressVisibleStream = Observable.just(false);
       thumbnailStream = Observable.just(Optional.empty());
-      faviconStream = loadBitmapFromResource(context, R.drawable.ic_subreddits_24dp);
+      faviconStream = Observable.fromCallable(() -> context.getDrawable(R.drawable.ic_subreddits_24dp));
       iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_linked_subreddit));
 
     } else if (redditLink instanceof RedditUserLink) {
@@ -155,7 +157,7 @@ public class SubmissionContentLinkUiModelConstructor {
       bylineStream = Observable.just(context.getString(R.string.submission_link_tap_to_open_profile));
       progressVisibleStream = Observable.just(false);
       thumbnailStream = Observable.just(Optional.empty());
-      faviconStream = loadBitmapFromResource(context, R.drawable.ic_user_profile_24dp);
+      faviconStream = Observable.fromCallable(() -> context.getDrawable(R.drawable.ic_user_profile_24dp));
       iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_linked_profile));
 
     } else if (redditLink instanceof RedditSubmissionLink) {
@@ -165,7 +167,7 @@ public class SubmissionContentLinkUiModelConstructor {
       RedditSubmissionLink submissionLink = (RedditSubmissionLink) redditLink;
       bylineStream = Observable.just(context.getString(R.string.submission_link_tap_to_open_submission));
       thumbnailStream = Observable.just(Optional.empty());
-      faviconStream = loadBitmapFromResource(context, R.drawable.ic_submission_24dp);
+      faviconStream = Observable.fromCallable(() -> context.getDrawable(R.drawable.ic_submission_24dp));
       iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_linked_submission));
 
       Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(submissionLink)
@@ -239,8 +241,8 @@ public class SubmissionContentLinkUiModelConstructor {
             : context.getString(R.string.submission_image_album_image_count, albumLink.images().size()));
 
     Observable<Optional<String>> albumThumbnailStream = Observable.just(Optional.of(albumLink.coverImageUrl()));
-    Observable<Optional<Bitmap>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, albumThumbnailStream).share();
-    Observable<Optional<Bitmap>> sharedFaviconStream = loadBitmapFromResource(context, R.drawable.ic_photo_library_24dp)
+    Observable<Optional<Drawable>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, albumThumbnailStream).share();
+    Observable<Optional<Drawable>> sharedFaviconStream = Observable.fromCallable(() -> context.getDrawable(R.drawable.ic_photo_library_24dp))
         .as(Optional.of())
         .share();
 
@@ -271,21 +273,6 @@ public class SubmissionContentLinkUiModelConstructor {
     );
   }
 
-  private Observable<Bitmap> loadBitmapFromResource(Context context, @DrawableRes int drawableRes) {
-    return Observable.fromCallable(() -> {
-      Drawable drawable = context.getDrawable(drawableRes);
-      //noinspection ConstantConditions
-      if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
-        throw new AssertionError();
-      }
-      Bitmap bitmap = Bitmap.createBitmap(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
-      Canvas canvas = new Canvas(bitmap);
-      drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
-      drawable.draw(canvas);
-      return bitmap;
-    });
-  }
-
   private Observable<String> fetchTitle(ExternalLink link, Observable<LinkMetadata> linkMetadataSingle) {
     return linkMetadataSingle
         .observeOn(Schedulers.io())
@@ -298,7 +285,7 @@ public class SubmissionContentLinkUiModelConstructor {
    * @param redditSuppliedThumbnails   Default source for images.
    * @param fallbackThumbnailUrlStream Fallback in case reddit didn't supply any images.
    */
-  private Observable<Optional<Bitmap>> fetchThumbnail(
+  private Observable<Optional<Drawable>> fetchThumbnail(
       Context context,
       ImageWithMultipleVariants redditSuppliedThumbnails,
       Observable<Optional<String>> fallbackThumbnailUrlStream)
@@ -319,8 +306,7 @@ public class SubmissionContentLinkUiModelConstructor {
           }
         })
         .flatMap(imageUrl -> {
-          FutureTarget<Bitmap> imageTarget = Glide.with(context)
-              .asBitmap()
+          FutureTarget<Drawable> imageTarget = Glide.with(context)
               .load(imageUrl)
               .submit();
           return loadImage(context, imageTarget);
@@ -330,15 +316,14 @@ public class SubmissionContentLinkUiModelConstructor {
         .startWith(Optional.empty());
   }
 
-  private Observable<Optional<Bitmap>> fetchFavicon(Context context, Observable<LinkMetadata> linkMetadataStream) {
+  private Observable<Optional<Drawable>> fetchFavicon(Context context, Observable<LinkMetadata> linkMetadataStream) {
     //noinspection ConstantConditions
     return linkMetadataStream
         .observeOn(Schedulers.io())
         .flatMap(metadata -> metadata.hasFavicon() ? Observable.just(metadata.faviconUrl()) : Observable.empty())
         .flatMap(faviconUrl -> {
           // Keep this context in sync with the one used in loadImage() for clearing this load on dispose.
-          FutureTarget<Bitmap> iconTarget = Glide.with(context)
-              .asBitmap()
+          FutureTarget<Drawable> iconTarget = Glide.with(context)
               .load(faviconUrl)
               .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
               .submit();
@@ -348,9 +333,9 @@ public class SubmissionContentLinkUiModelConstructor {
         .startWith(Optional.empty());
   }
 
-  private Observable<Bitmap> loadImage(Context context, FutureTarget<Bitmap> futureTarget) {
+  private Observable<Drawable> loadImage(Context context, FutureTarget<Drawable> futureTarget) {
     return Observable
-        .<Bitmap>create(emitter -> {
+        .<Drawable>create(emitter -> {
           emitter.onNext(futureTarget.get());
           emitter.onComplete();
           emitter.setCancellable(() -> Glide.with(context).clear(futureTarget));
@@ -364,8 +349,8 @@ public class SubmissionContentLinkUiModelConstructor {
   private Observable<TintDetails> streamTintDetails(
       Link link,
       int windowBackgroundColor,
-      Observable<Optional<Bitmap>> sharedFaviconStream,
-      Observable<Optional<Bitmap>> sharedThumbnailStream)
+      Observable<Optional<Drawable>> sharedFaviconStream,
+      Observable<Optional<Drawable>> sharedThumbnailStream)
   {
     boolean isGooglePlayThumbnail = UrlParser.isGooglePlayUrl(Uri.parse(link.unparsedUrl()));
 
@@ -377,10 +362,12 @@ public class SubmissionContentLinkUiModelConstructor {
         .startWith(DEFAULT_TINT_DETAILS);
   }
 
-  private Single<TintDetails> generateTint(Bitmap bitmap, boolean isGooglePlayThumbnail, int windowBackgroundColor) {
-    return Single.fromCallable(() -> Palette.from(bitmap)
-        .maximumColorCount(Integer.MAX_VALUE)    // Don't understand why, but this changes the darkness of the colors.
-        .generate())
+  private Single<TintDetails> generateTint(Drawable drawable, boolean isGooglePlayThumbnail, int windowBackgroundColor) {
+    return bitmapFromDrawable(drawable)
+        .flatMap(bitmap -> Single.fromCallable(() -> Palette.from(bitmap)
+            .maximumColorCount(Integer.MAX_VALUE)    // Don't understand why, but this changes the darkness of the colors.
+            .generate()
+        ))
         .map(palette -> {
           int tint = -1;
           if (isGooglePlayThumbnail) {
@@ -411,6 +398,25 @@ public class SubmissionContentLinkUiModelConstructor {
         });
   }
 
+  private Single<Bitmap> bitmapFromDrawable(Drawable drawable) {
+    return Single.create(emitter -> {
+      if (drawable.getIntrinsicWidth() <= 0 || drawable.getIntrinsicHeight() <= 0) {
+        throw new AssertionError();
+      }
+
+      Bitmap bitmap = bitmapPool.get(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+      Canvas canvas = new Canvas(bitmap);
+      drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
+      drawable.draw(canvas);
+
+      emitter.onSuccess(bitmap);
+      emitter.setCancellable(() -> {
+        Timber.i("Recycling bitmap on dispose");
+        bitmapPool.put(bitmap);
+      });
+    });
+  }
+
   @AutoValue
   abstract static class TintDetails {
 
@@ -425,6 +431,5 @@ public class SubmissionContentLinkUiModelConstructor {
     public static TintDetails create(Optional<Integer> backgroundTint, @ColorRes int titleTextColorRes, @ColorRes int bylineTextColorRes) {
       return new AutoValue_SubmissionContentLinkUiModelConstructor_TintDetails(backgroundTint, titleTextColorRes, bylineTextColorRes);
     }
-
   }
 }

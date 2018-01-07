@@ -13,6 +13,8 @@ import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 
+import com.bumptech.glide.Glide;
+import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
@@ -328,5 +330,12 @@ public class DankAppModule {
       loginIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
       appContext.startActivity(loginIntent);
     };
+  }
+
+  @Provides
+  BitmapPool provideBitmapPool() {
+    // Not adding Glide to the dagger graph intentionally. Glide objects
+    // should be created in Activity, Fragment and View contexts instead.
+    return Glide.get(appContext).getBitmapPool();
   }
 }

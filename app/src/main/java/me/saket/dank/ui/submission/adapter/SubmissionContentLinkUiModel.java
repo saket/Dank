@@ -1,6 +1,6 @@
 package me.saket.dank.ui.submission.adapter;
 
-import android.graphics.Bitmap;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorRes;
 
 import com.google.auto.value.AutoValue;
@@ -21,9 +21,9 @@ public abstract class SubmissionContentLinkUiModel {
   @ColorRes
   public abstract int bylineTextColorRes();
 
-  public abstract Optional<Bitmap> icon();
+  public abstract Optional<Drawable> icon();
 
-  public abstract Optional<Bitmap> thumbnail();
+  public abstract Optional<Drawable> thumbnail();
 
   public abstract int titleMaxLines();
 
@@ -53,9 +53,9 @@ public abstract class SubmissionContentLinkUiModel {
 
     public abstract Builder bylineTextColorRes(@ColorRes int colorRes);
 
-    public abstract Builder icon(Optional<Bitmap> icon);
+    public abstract Builder icon(Optional<Drawable> icon);
 
-    public abstract Builder thumbnail(Optional<Bitmap> thumbnail);
+    public abstract Builder thumbnail(Optional<Drawable> thumbnail);
 
     public abstract Builder titleMaxLines(int maxLines);
 
