@@ -47,6 +47,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -484,19 +485,23 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         });
 
     // Cache pre-fill.
-    int displayWidth = getResources().getDisplayMetrics().widthPixels;
-    int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
-    cachedSubmissionStream
-        .withLatestFrom(submissionFolderStream, Pair::create)
-        .observeOn(single())
-        .flatMap(pair -> subscriptionManager.isSubscribed(pair.second().subredditName())
-            .flatMap(isSubscribed -> isSubscribed ? Observable.just(pair.first()) : Observable.never())
-        )
-        .switchMap(cachedSubmissions -> cachePreFiller.preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
-            .toObservable()
-        )
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe();
+    if (!BuildConfig.DEBUG) {
+      int displayWidth = getResources().getDisplayMetrics().widthPixels;
+      int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
+      cachedSubmissionStream
+          .withLatestFrom(submissionFolderStream, Pair::create)
+          .observeOn(single())
+          .flatMap(pair -> subscriptionManager.isSubscribed(pair.second().subredditName())
+              .flatMap(isSubscribed -> isSubscribed ? Observable.just(pair.first()) : Observable.never())
+          )
+          .switchMap(cachedSubmissions -> cachePreFiller.preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
+              .toObservable()
+          )
+          .takeUntil(lifecycle().onDestroy())
+          .subscribe();
+    } else {
+      Timber.w("Skipping cache prefilling");
+    }
   }
 
   @Override

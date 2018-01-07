@@ -153,9 +153,6 @@ public interface SubmissionCommentsHeader {
       getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
         UiModel headerUiModel = (UiModel) adapter.getItem(getAdapterPosition());
         swipeActionsProvider.performSwipeAction(action, headerUiModel.originalSubmission(), getSwipeableLayout());
-
-        // TODO.
-        //onBindViewHolder(holder, holder.getAdapterPosition());
       });
     }
 
@@ -196,10 +193,9 @@ public interface SubmissionCommentsHeader {
       titleView.setText(uiModel.title());
     }
 
+    @SuppressWarnings("unchecked")
     public void handlePartialChanges(List<Object> payloads, UiModel uiModel) {
-      //Timber.i("Handling partial changes");
       for (Object payload : payloads) {
-        //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
           switch (partialChange) {
             case SUBMISSION_VOTE:

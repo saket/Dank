@@ -10,10 +10,12 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import java.io.IOException;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Single;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.di.DankApi;
@@ -42,7 +44,9 @@ public class LinkMetadataRepository {
 
   @CheckResult
   public Single<LinkMetadata> unfurl(Link link) {
-    return linkMetadataStore.get(link);
+    return linkMetadataStore.get(link)
+        // TODO: REMOVEEEEEE!
+        .delay(BuildConfig.DEBUG ? 2 : 0, TimeUnit.SECONDS);
   }
 
   private static class LinkMetadataStoreJsonParser implements StoreFilePersister.JsonParser<Link, LinkMetadata> {

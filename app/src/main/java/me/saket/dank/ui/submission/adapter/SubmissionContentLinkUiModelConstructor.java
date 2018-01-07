@@ -17,12 +17,14 @@ import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.auto.value.AutoValue;
 
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ExternalLink;
@@ -284,22 +286,6 @@ public class SubmissionContentLinkUiModelConstructor {
     });
   }
 
-  private Observable<TintDetails> streamTintDetails(
-      Link link,
-      int windowBackgroundColor,
-      Observable<Optional<Bitmap>> sharedFaviconStream,
-      Observable<Optional<Bitmap>> sharedThumbnailStream)
-  {
-    boolean isGooglePlayThumbnail = UrlParser.isGooglePlayUrl(Uri.parse(link.unparsedUrl()));
-
-    return Observable.concat(sharedThumbnailStream, sharedFaviconStream)
-        .filter(imageOptional -> imageOptional.isPresent())
-        .take(1)
-        .map(imageOptional -> imageOptional.get())
-        .flatMapSingle(image -> generateTint(image, isGooglePlayThumbnail, windowBackgroundColor))
-        .startWith(DEFAULT_TINT_DETAILS);
-  }
-
   private Observable<String> fetchTitle(ExternalLink link, Observable<LinkMetadata> linkMetadataSingle) {
     return linkMetadataSingle
         .observeOn(Schedulers.io())
@@ -339,6 +325,7 @@ public class SubmissionContentLinkUiModelConstructor {
               .submit();
           return loadImage(context, imageTarget);
         })
+        .delay(BuildConfig.DEBUG ? 2 : 0, TimeUnit.SECONDS)   // TODO: REMOVEEEE!!
         .map(image -> Optional.of(image))
         .startWith(Optional.empty());
   }
@@ -372,6 +359,22 @@ public class SubmissionContentLinkUiModelConstructor {
           Timber.e(error.getMessage());
           return Observable.empty();
         });
+  }
+
+  private Observable<TintDetails> streamTintDetails(
+      Link link,
+      int windowBackgroundColor,
+      Observable<Optional<Bitmap>> sharedFaviconStream,
+      Observable<Optional<Bitmap>> sharedThumbnailStream)
+  {
+    boolean isGooglePlayThumbnail = UrlParser.isGooglePlayUrl(Uri.parse(link.unparsedUrl()));
+
+    return Observable.concat(sharedThumbnailStream, sharedFaviconStream)
+        .filter(imageOptional -> imageOptional.isPresent())
+        .take(1)
+        .map(imageOptional -> imageOptional.get())
+        .flatMapSingle(image -> generateTint(image, isGooglePlayThumbnail, windowBackgroundColor))
+        .startWith(DEFAULT_TINT_DETAILS);
   }
 
   private Single<TintDetails> generateTint(Bitmap bitmap, boolean isGooglePlayThumbnail, int windowBackgroundColor) {

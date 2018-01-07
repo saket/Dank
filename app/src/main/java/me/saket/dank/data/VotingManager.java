@@ -71,12 +71,12 @@ public class VotingManager {
 
   @CheckResult
   public Completable vote(PostedOrInFlightContribution contributionToVote, VoteDirection voteDirection) {
-    // Mark the vote as pending immediately so that getPendingVote() can be used immediately after calling vote().
-    markVoteAsPending(contributionToVote, voteDirection);
-
     if (!contributionToVote.isPosted()) {
       throw new AssertionError();
     }
+
+    // Mark the vote as pending immediately so that getPendingVote() can be used immediately after calling vote().
+    markVoteAsPending(contributionToVote, voteDirection);
 
     //noinspection ConstantConditions
     VotableThingFullNameWrapper votableThing = VotableThingFullNameWrapper.create(contributionToVote.fullName());
