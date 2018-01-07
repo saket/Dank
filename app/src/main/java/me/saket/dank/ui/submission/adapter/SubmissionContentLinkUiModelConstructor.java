@@ -17,14 +17,12 @@ import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.auto.value.AutoValue;
 
-import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
-import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ExternalLink;
@@ -311,7 +309,6 @@ public class SubmissionContentLinkUiModelConstructor {
               .submit();
           return loadImage(context, imageTarget);
         })
-        .delay(BuildConfig.DEBUG ? 2 : 0, TimeUnit.SECONDS)   // TODO: REMOVEEEE!!
         .map(image -> Optional.of(image))
         .startWith(Optional.empty());
   }

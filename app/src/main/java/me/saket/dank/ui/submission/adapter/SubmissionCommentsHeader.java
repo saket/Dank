@@ -199,9 +199,10 @@ public interface SubmissionCommentsHeader {
       titleView.setText(uiModel.title());
     }
 
-    @SuppressWarnings("unchecked")
     public void handlePartialChanges(List<Object> payloads, UiModel uiModel) {
+      //Timber.i("Handling partial changes");
       for (Object payload : payloads) {
+        //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
           switch (partialChange) {
             case SUBMISSION_VOTE:

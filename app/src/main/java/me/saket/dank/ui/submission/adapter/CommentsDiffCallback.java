@@ -51,7 +51,7 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
         if (oldContentLink.isPresent() != newContentLink.isPresent()) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK);
 
-        } else {
+        } else if (oldContentLink.isPresent() && newContentLink.isPresent()) {
           if (!oldContentLink.get().thumbnail().isPresent() && newContentLink.get().thumbnail().isPresent()) {
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_THUMBNAIL);
           }
