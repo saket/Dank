@@ -25,6 +25,7 @@ import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithValueEquality;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -304,12 +305,17 @@ public interface SubmissionCommentsHeader {
         Integer tintColor = contentLinkUiModel.backgroundTintColor().get();
 
         ValueAnimator colorAnimator = ValueAnimator.ofArgb(contentLinkBackgroundColor, tintColor);
-        colorAnimator.addUpdateListener(animation -> background.setTint((int) animation.getAnimatedValue()));
+        colorAnimator.addUpdateListener(animation -> {
+          int animatedColor = (int) animation.getAnimatedValue();
+          contentLinkThumbnailView.setColorFilter(Colors.applyAlpha(animatedColor, 0.4f));
+          background.setTint(animatedColor);
+        });
         colorAnimator.setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION);
         colorAnimator.setInterpolator(Animations.INTERPOLATOR);
         colorAnimator.start();
 
       } else {
+        contentLinkThumbnailView.setColorFilter(null);
         contentLinkView.getBackground().mutate().setTintList(null);
       }
     }
