@@ -95,7 +95,7 @@ public class SubmissionScreenUiModelConstructor {
         submissions,
         submissionPendingSyncReplyCounts,
         contentLinkUiModels,
-        votingManager.changes(),
+        votingManager.streamChanges(),
         (submission, pendingSyncReplyCount, contentLinkUiModel, ignore) ->
             headerUiModel(context, submission, pendingSyncReplyCount, contentLinkUiModel)
     );

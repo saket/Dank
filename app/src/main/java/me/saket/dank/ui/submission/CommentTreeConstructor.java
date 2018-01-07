@@ -24,6 +24,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.VotingManager;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more"
@@ -34,13 +35,16 @@ public class CommentTreeConstructor {
   private static final Set<String> collapsedContributionIds = new HashSet<>(50); // Comments that are collapsed.
   private static final Set<String> loadingMoreContributionIds = new HashSet<>();                // Comments for which more replies are being fetched.
   private static final Set<String> replyActiveForContributionIds = new HashSet<>();             // Comments for which reply fields are active.
-  private final Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();               // Key: comment full-name.
+
+  private final Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();          // Key: comment full-name.
   private final Relay<Object> changesRequiredStream = PublishRelay.create();
+  private final VotingManager votingManager;
   private CommentNode rootCommentNode;
   private Submission submission;
 
   @Inject
-  public CommentTreeConstructor() {
+  public CommentTreeConstructor(VotingManager votingManager) {
+    this.votingManager = votingManager;
   }
 
   public void update(Submission submission, CommentNode rootCommentNode, List<PendingSyncReply> pendingReplies) {
@@ -73,7 +77,7 @@ public class CommentTreeConstructor {
 
   @CheckResult
   public Observable<List<SubmissionCommentRow>> streamTreeUpdates() {
-    return changesRequiredStream
+    return changesRequiredStream.mergeWith(votingManager.streamChanges().filter(o -> submission != null))
         .map(o -> {
           if (submission == null) {
             throw new AssertionError("How did we even reach here??");

@@ -60,7 +60,7 @@ public class VotingManager {
   }
 
   @CheckResult
-  public Observable<Object> changes() {
+  public Observable<Object> streamChanges() {
     return Observable.create(emitter -> {
       SharedPreferences.OnSharedPreferenceChangeListener changeListener = (sharedPreferences, key) -> emitter.onNext(NOTHING);
       sharedPrefs.registerOnSharedPreferenceChangeListener(changeListener);
