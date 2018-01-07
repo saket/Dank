@@ -140,13 +140,18 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     if (!payloads.isEmpty()) {
       switch (VIEW_TYPES[getItemViewType(position)]) {
         case SUBMISSION_HEADER:
-          SubmissionCommentsHeader.UiModel uiModel = (SubmissionCommentsHeader.UiModel) getItem(position);
+          SubmissionCommentsHeader.UiModel headerModel = (SubmissionCommentsHeader.UiModel) getItem(position);
           SubmissionCommentsHeader.ViewHolder headerHolder = (SubmissionCommentsHeader.ViewHolder) holder;
-          headerHolder.handlePartialChanges(payloads, uiModel);
+          headerHolder.handlePartialChanges(payloads, headerModel);
+          break;
+
+        case USER_COMMENT:
+          SubmissionComment.UiModel commentModel = (SubmissionComment.UiModel) getItem(position);
+          SubmissionComment.ViewHolder commentHolder = (SubmissionComment.ViewHolder) holder;
+          commentHolder.handlePartialChanges(payloads, commentModel);
           break;
 
         case COMMENTS_LOADING_PROGRESS:
-        case USER_COMMENT:
         case INLINE_REPLY:
         case LOAD_MORE_COMMENTS:
           throw new UnsupportedOperationException("Partial change not supported yet for " + VIEW_TYPES[getItemViewType(position)]

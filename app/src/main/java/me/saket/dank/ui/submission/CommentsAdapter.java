@@ -283,14 +283,6 @@ public class CommentsAdapter extends RecyclerViewArrayAdapter<SubmissionCommentR
     return getItem(position).fullName().hashCode();
   }
 
-  @Override
-  public void onViewRecycled(RecyclerView.ViewHolder holder) {
-    if (holder instanceof InlineReplyViewHolder) {
-      ((InlineReplyViewHolder) holder).handleOnRecycle();
-    }
-    super.onViewRecycled(holder);
-  }
-
   public static class UserCommentViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
     @BindView(R.id.item_comment_indented_container) IndentedLayout indentedContainer;
     @BindView(R.id.item_comment_byline) TextView bylineView;

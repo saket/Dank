@@ -11,6 +11,8 @@ import android.widget.TextView;
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.Relay;
 
+import java.util.List;
+
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
@@ -26,6 +28,10 @@ import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
 public interface SubmissionComment {
+
+  enum PartialChange {
+    BYLINE, // Also includes vote count changes.
+  }
 
   @AutoValue
   abstract class UiModel implements SubmissionScreenUiModel {
@@ -48,7 +54,7 @@ public interface SubmissionComment {
 
     public abstract PostedOrInFlightContribution originalComment();
 
-    /** Present only for locally posted replies. */
+    /** Present only for locally posted replies. Required because {@link ReplyRetrySendClickEvent} needs it. */
     public abstract Optional<PendingSyncReply> optionalPendingSyncReply();
 
     @Override
@@ -127,12 +133,6 @@ public interface SubmissionComment {
       getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
         UiModel commentUiModel = (UiModel) adapter.getItem(getAdapterPosition());
         commentSwipeActionsProvider.performSwipeAction(action, commentUiModel.originalComment(), getSwipeableLayout());
-
-        // TODO.
-        // We should ideally only be updating the backing data-set and let onBind() handle the
-        // changes, but RecyclerView's item animator reset's the View's x-translation which we
-        // don't want. So we manually update the Views here.
-        //onBindViewHolder(holder, holder.getAdapterPosition());
       });
     }
 
@@ -178,7 +178,8 @@ public interface SubmissionComment {
 
       // Enable gestures only if it's a posted comment.
       // TODO: Add support for locally posted replies too.
-      getSwipeableLayout().setSwipeEnabled(uiModel.originalComment() instanceof PostedOrInFlightContribution.ContributionFetchedFromRemote);
+      boolean isPresentOnRemote = uiModel.originalComment() instanceof PostedOrInFlightContribution.ContributionFetchedFromRemote;
+      getSwipeableLayout().setSwipeEnabled(isPresentOnRemote);
 
       Optional<PendingSyncReply> optionalReply = uiModel.optionalPendingSyncReply();
       boolean isFailedReply = optionalReply.isPresent() && optionalReply.get().state() == PendingSyncReply.State.FAILED;
@@ -186,6 +187,22 @@ public interface SubmissionComment {
         itemView.setOnClickListener(tapToRetryClickListener);
       } else {
         itemView.setOnClickListener(collapseOnClickListener);
+      }
+    }
+
+    public void handlePartialChanges(List<Object> payloads, UiModel uiModel) {
+      for (Object payload : payloads) {
+        //noinspection unchecked
+        for (PartialChange partialChange : (List<PartialChange>) payload) {
+          switch (partialChange) {
+            case BYLINE:
+              bylineView.setText(uiModel.byline());
+              break;
+
+            default:
+              throw new AssertionError();
+          }
+        }
       }
     }
 

@@ -7,6 +7,7 @@ import java.util.List;
 
 import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
 import me.saket.dank.utils.Optional;
+import timber.log.Timber;
 
 public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScreenUiModel> {
 
@@ -36,8 +37,8 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
     }
 
     switch (oldItem.type()) {
-      case SUBMISSION_HEADER:
-        List<SubmissionCommentsHeader.PartialChange> partialChanges = new ArrayList<>(8);
+      case SUBMISSION_HEADER: {
+        List<SubmissionCommentsHeader.PartialChange> partialChanges = new ArrayList<>(4);
         SubmissionCommentsHeader.UiModel oldHeader = (SubmissionCommentsHeader.UiModel) oldItem;
         SubmissionCommentsHeader.UiModel newHeader = (SubmissionCommentsHeader.UiModel) newItem;
 
@@ -55,15 +56,12 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
           if (!oldContentLink.get().thumbnail().isPresent() && newContentLink.get().thumbnail().isPresent()) {
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_THUMBNAIL);
           }
-
           if (!oldContentLink.get().icon().isPresent() && newContentLink.get().icon().isPresent()) {
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_FAVICON);
           }
-
           if (oldContentLink.get().progressVisible() != newContentLink.get().progressVisible()) {
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_PROGRESS_VISIBILITY);
           }
-
           if (!oldContentLink.get().title().equals(newContentLink.get().title())
               || !oldContentLink.get().byline().equals(newContentLink.get().byline())
               || oldContentLink.get().titleMaxLines() != newContentLink.get().titleMaxLines()
@@ -72,7 +70,6 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
           {
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_TITLE_AND_BYLINE);
           }
-
           if (!oldContentLink.get().backgroundTintColor().equals(newContentLink.get().backgroundTintColor())) {
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_TINT);
           }
@@ -81,20 +78,28 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
         if (oldHeader.extraInfoForEquality().votes() != newHeader.extraInfoForEquality().votes()) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_VOTE);
         }
-
-        if (oldHeader.extraInfoForEquality().commentsCount() != newHeader.extraInfoForEquality().commentsCount()) {
+        if (oldHeader.extraInfoForEquality().commentsCount().equals(newHeader.extraInfoForEquality().commentsCount())) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_COMMENT_COUNT);
         }
 
-        // TODO: bundle for:
-        // 4. Comment count.
-        // 5. Vote count.
+        Timber.i("partialChanges.size: %s", partialChanges.size());
         return partialChanges;
+      }
 
-      case USER_COMMENT:
-        // TODO:
-        // 1. Vote count.
-        return null;
+      case USER_COMMENT: {
+        List<SubmissionComment.PartialChange> partialChanges = new ArrayList<>(2);
+        SubmissionComment.UiModel oldComment = (SubmissionComment.UiModel) oldItem;
+        SubmissionComment.UiModel newComment = (SubmissionComment.UiModel) newItem;
+
+        if (oldComment.isCollapsed() == newComment.isCollapsed() && !oldComment.byline().equals(newComment.byline())) {
+          partialChanges.add(SubmissionComment.PartialChange.BYLINE);
+          return partialChanges;
+        } else {
+          // In case of comment collapse, a full re-bind is required AND the
+          // change animation also needs to be played to show change in body size.
+          return null;
+        }
+      }
 
       default:
         return super.getChangePayload(oldItem, newItem);

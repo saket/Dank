@@ -202,7 +202,6 @@ public interface SubmissionCommentsHeader {
     }
 
     public void handlePartialChanges(List<Object> payloads, UiModel uiModel) {
-      //Timber.i("Handling partial changes");
       for (Object payload : payloads) {
         //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
@@ -220,7 +219,6 @@ public interface SubmissionCommentsHeader {
               break;
 
             case CONTENT_LINK_THUMBNAIL:
-              //Timber.i("for thumbnail");
               setContentLinkThumbnail(uiModel.optionalContentLink().get());
               break;
 
@@ -239,6 +237,9 @@ public interface SubmissionCommentsHeader {
             case CONTENT_LINK_TINT:
               setContentLinkTint(uiModel.optionalContentLink().get());
               break;
+
+            default:
+              throw new AssertionError();
           }
         }
       }

@@ -187,7 +187,7 @@ public class SubmissionScreenUiModelConstructor {
 
   private SubmissionComment.UiModel commentUiModel(Context context, DankCommentNode dankCommentNode, String submissionAuthor) {
     Comment comment = dankCommentNode.commentNode().getComment();
-    String authorFlairText = comment.getAuthorFlair() != null ? comment.getAuthorFlair().getText() : null;
+    Optional<String> authorFlairText = comment.getAuthorFlair() != null ? Optional.of(comment.getAuthorFlair().getText()) : Optional.empty();
     long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
     VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.getVote());
     int commentScore = votingManager.getScoreAfterAdjustingPendingVote(comment);
@@ -228,10 +228,11 @@ public class SubmissionScreenUiModelConstructor {
     CharSequence byline;
 
     if (pendingSyncReply.state() == PendingSyncReply.State.POSTED) {
+      Optional<String> authorFlairText = Optional.empty();
       byline = constructCommentByline(
           context,
           pendingSyncReply.author(),
-          null,
+          authorFlairText,
           true,
           pendingSyncReply.createdTimeMillis(),
           VoteDirection.UPVOTE,
@@ -304,7 +305,7 @@ public class SubmissionScreenUiModelConstructor {
   private CharSequence constructCommentByline(
       Context context,
       String author,
-      String authorFlairText,
+      Optional<String> optionalAuthorFlairText,
       boolean isAuthorOP,
       long createdTimeMillis,
       VoteDirection voteDirection,
@@ -328,10 +329,10 @@ public class SubmissionScreenUiModelConstructor {
       ));
       bylineBuilder.append(author);
       bylineBuilder.popSpan();
-      if (authorFlairText != null) {
+      optionalAuthorFlairText.ifPresent(flair -> {
         bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
-        bylineBuilder.append(authorFlairText);
-      }
+        bylineBuilder.append(flair);
+      });
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
       bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, Commons.voteColor(voteDirection))));
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_score, Strings.abbreviateScore(commentScore)));
