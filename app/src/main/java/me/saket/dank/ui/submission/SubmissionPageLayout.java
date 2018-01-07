@@ -624,7 +624,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           return replyPosition;
         })
         .flatMapCompletable(replyPosition -> Completable.fromAction(() -> {
-          RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition - 1);
+          RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition);
           int parentContributionBottom = parentContributionItemVH.itemView.getBottom() + commentListParentSheet.getTop();
           boolean isReplyHidden = parentContributionBottom >= submissionPageLayout.getBottom();
 

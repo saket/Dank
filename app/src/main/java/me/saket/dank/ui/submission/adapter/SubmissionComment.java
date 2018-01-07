@@ -177,7 +177,8 @@ public interface SubmissionComment {
       bodyView.setMaxLines(uiModel.bodyMaxLines());
 
       // Enable gestures only if it's a posted comment.
-      getSwipeableLayout().setSwipeEnabled(uiModel.originalComment().isPosted());
+      // TODO: Add support for locally posted replies too.
+      getSwipeableLayout().setSwipeEnabled(uiModel.originalComment() instanceof PostedOrInFlightContribution.ContributionFetchedFromRemote);
 
       Optional<PendingSyncReply> optionalReply = uiModel.optionalPendingSyncReply();
       boolean isFailedReply = optionalReply.isPresent() && optionalReply.get().state() == PendingSyncReply.State.FAILED;
