@@ -13,6 +13,7 @@ import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
 import net.dean.jraw.models.Message;
+import net.dean.jraw.models.VoteDirection;
 
 import java.util.HashMap;
 import java.util.List;
@@ -80,9 +81,13 @@ public class ReplyRepository implements DraftStore {
       throw new UnsupportedOperationException("Unknown thread name: " + parentThreadFullName);
     }
 
-    PostedOrInFlightContribution parentContribution = PostedOrInFlightContribution.createLocal(pendingSyncReply);
     String replyBody = pendingSyncReply.body();
     long replyCreatedTimeMillis = pendingSyncReply.createdTimeMillis();
+    PostedOrInFlightContribution parentContribution = PostedOrInFlightContribution.createRemote(
+        parentThreadFullName,
+        1,
+        VoteDirection.NO_VOTE
+    );
     return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
   }
 
@@ -113,6 +118,7 @@ public class ReplyRepository implements DraftStore {
   {
     long sentTimeMillis = System.currentTimeMillis();
 
+    //noinspection ConstantConditions
     PendingSyncReply pendingSyncReply = PendingSyncReply.create(
         replyBody,
         PendingSyncReply.State.POSTING,
@@ -125,6 +131,7 @@ public class ReplyRepository implements DraftStore {
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
         .andThen(dankRedditClient.withAuth(Single.fromCallable(() -> {
+          //noinspection ConstantConditions
           ContributionFullNameWrapper fauxContribution = ContributionFullNameWrapper.create(parentContribution.fullName());
           String postedReplyId = dankRedditClient.userAccountManager().reply(fauxContribution, replyBody);
           String postedFullName = parentThread.type().fullNamePrefix() + postedReplyId;

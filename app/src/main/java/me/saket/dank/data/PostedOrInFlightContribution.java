@@ -1,6 +1,7 @@
 package me.saket.dank.data;
 
 import android.os.Parcelable;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
@@ -56,16 +57,31 @@ public interface PostedOrInFlightContribution extends Parcelable {
     return ContributionFetchedFromRemote.create(votableThing.getFullName(), votableThing.getScore(), votableThing.getVote());
   }
 
+  static PostedOrInFlightContribution createRemote(String fullName, Integer score, VoteDirection vote) {
+    return ContributionFetchedFromRemote.create(fullName, score, vote);
+  }
+
   static PostedOrInFlightContribution from(Message message) {
     return MessageFetchedFromRemote.create(message.getFullName());
   }
 
   static PostedOrInFlightContribution createLocal(PendingSyncReply pendingSyncReply) {
-    return LocallyPostedContribution.create(pendingSyncReply, 1, VoteDirection.UPVOTE);
+    State state = pendingSyncReply.state() == PendingSyncReply.State.POSTED
+        ? State.POSTED
+        : State.IN_FLIGHT;
+
+    String idForTogglingCollapse = pendingSyncReply.parentContributionFullName() + "_reply_" + pendingSyncReply.createdTimeMillis();
+    String fullName = pendingSyncReply.postedFullName();
+    return LocallyPostedContribution.create(fullName, 1, VoteDirection.UPVOTE, state, idForTogglingCollapse);
   }
 
   @AutoValue
   abstract class ContributionFetchedFromRemote implements PostedOrInFlightContribution {
+    // Overriding just to make this non-null.
+    @NonNull
+    @Override
+    public abstract String fullName();
+
     @Override
     public boolean isPosted() {
       return true;
@@ -77,7 +93,7 @@ public interface PostedOrInFlightContribution extends Parcelable {
     }
 
     public static ContributionFetchedFromRemote create(String fullName, Integer score, VoteDirection voteDirection) {
-      return new AutoValue_PostedOrInFlightContribution_ContributionFetchedFromRemote(fullName, score, voteDirection);
+      return new AutoValue_PostedOrInFlightContribution_ContributionFetchedFromRemote(score, voteDirection, fullName);
     }
 
     public static JsonAdapter<ContributionFetchedFromRemote> jsonAdapter(Moshi moshi) {
@@ -96,15 +112,15 @@ public interface PostedOrInFlightContribution extends Parcelable {
       return state() == State.POSTED;
     }
 
-    public static LocallyPostedContribution create(PendingSyncReply pendingSyncReply, Integer score, VoteDirection voteDirection) {
-      State state = pendingSyncReply.state() == PendingSyncReply.State.POSTED
-          ? State.POSTED
-          : State.IN_FLIGHT;
-
-      String idForTogglingCollapse = pendingSyncReply.parentContributionFullName() + "_reply_" + pendingSyncReply.createdTimeMillis();
-
+    public static LocallyPostedContribution create(
+        @Nullable String fullName,
+        Integer score,
+        VoteDirection voteDirection,
+        State state,
+        String idForTogglingCollapse)
+    {
       return new AutoValue_PostedOrInFlightContribution_LocallyPostedContribution(
-          pendingSyncReply.postedFullName(),
+          fullName,
           score,
           voteDirection,
           state,
