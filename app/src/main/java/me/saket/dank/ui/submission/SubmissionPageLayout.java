@@ -704,15 +704,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     contentLoadProgressView.setSyncScrollEnabled(true);
 
     Function0<Integer> mediaRevealDistanceFunc = () -> {
-      // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 70%
+      // If the sheet cannot scroll up because the top-margin > sheet's peek distance, scroll it to 60%
       // of its height so that the user doesn't get confused upon not seeing the sheet scroll up.
-      float mediaVisibleHeight = submissionContentStream.getValue().isImageOrGif()
+      float visibleMediaHeight = submissionContentStream.getValue().isImageOrGif()
           ? contentImageView.getVisibleZoomedImageHeight()
           : contentVideoViewContainer.getHeight();
 
       return (int) Math.min(
-          commentListParentSheet.getHeight() * 8 / 10,
-          mediaVisibleHeight - commentListParentSheet.getTop()
+          commentListParentSheet.getHeight() * 6 / 10,
+          visibleMediaHeight - commentListParentSheet.getTop()
       );
     };
 
