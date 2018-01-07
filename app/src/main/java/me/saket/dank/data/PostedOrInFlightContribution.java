@@ -19,6 +19,12 @@ import me.saket.dank.ui.submission.PendingSyncReply;
 /**
  * A contribution that is either present on remote or is still being posted.
  * Could be a submission, a comment or a message.
+ * <p>
+ * I have been thinking that the subclasses are wrongly split. Instead of "Remote"
+ * and "Local" maybe we should have "Posted" and "PendingSync". But then
+ * {@link CommentTreeConstructor} also requires that a locally posted comment
+ * should have the same {@link #idForTogglingCollapse()} whether it's posted or
+ * in sync so "Remote" and "Local" might not work.
  */
 public interface PostedOrInFlightContribution extends Parcelable {
 
@@ -70,9 +76,15 @@ public interface PostedOrInFlightContribution extends Parcelable {
         ? State.POSTED
         : State.IN_FLIGHT;
 
-    String idForTogglingCollapse = pendingSyncReply.parentContributionFullName() + "_reply_" + pendingSyncReply.createdTimeMillis();
+    String idForTogglingCollapse = idForTogglingCollapseForLocallyPostedReply(
+        pendingSyncReply.parentContributionFullName(),
+        pendingSyncReply.createdTimeMillis());
     String fullName = pendingSyncReply.postedFullName();
     return LocallyPostedContribution.create(fullName, 1, VoteDirection.UPVOTE, state, idForTogglingCollapse);
+  }
+
+  static String idForTogglingCollapseForLocallyPostedReply(String parentContributionFullName, long replyCreatedTimeMillis) {
+    return parentContributionFullName + "_reply_" + replyCreatedTimeMillis;
   }
 
   @AutoValue
@@ -119,6 +131,7 @@ public interface PostedOrInFlightContribution extends Parcelable {
         State state,
         String idForTogglingCollapse)
     {
+      //noinspection ConstantConditions
       return new AutoValue_PostedOrInFlightContribution_LocallyPostedContribution(
           fullName,
           score,
