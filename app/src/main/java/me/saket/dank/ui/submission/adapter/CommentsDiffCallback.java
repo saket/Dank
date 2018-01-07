@@ -78,10 +78,15 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
           }
         }
 
+        if (oldHeader.extraInfoForEquality().votes() != newHeader.extraInfoForEquality().votes()) {
+          partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_VOTE);
+        }
+
+        if (oldHeader.extraInfoForEquality().commentsCount() != newHeader.extraInfoForEquality().commentsCount()) {
+          partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_COMMENT_COUNT);
+        }
+
         // TODO: bundle for:
-        // 1. Thumbnail and icon in content link.
-        // 2. Tint color.
-        // 3. Content link details.
         // 4. Comment count.
         // 5. Vote count.
         return partialChanges;
