@@ -499,6 +499,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     // Reply sends.
     submissionCommentsAdapter.streamReplySendClicks()
         .mergeWith(fullscreenReplySendStream)
+        .filter(sendClickEvent -> !sendClickEvent.replyMessage().isEmpty())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(sendClickEvent -> {
           // Posting to RecyclerView's message queue, because onActivityResult() gets called before

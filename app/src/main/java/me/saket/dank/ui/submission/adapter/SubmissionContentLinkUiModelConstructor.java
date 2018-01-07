@@ -407,10 +407,7 @@ public class SubmissionContentLinkUiModelConstructor {
       drawable.draw(canvas);
 
       emitter.onSuccess(bitmap);
-      emitter.setCancellable(() -> {
-        Timber.i("Recycling bitmap on dispose");
-        bitmapPool.put(bitmap);
-      });
+      emitter.setCancellable(() -> bitmapPool.put(bitmap));
     });
   }
 

@@ -13,6 +13,8 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
+import me.saket.dank.markdownhints.MarkdownHintOptions;
+import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
@@ -31,11 +33,14 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
   private static final SubmissionCommentRowType[] VIEW_TYPES = SubmissionCommentRowType.values();
 
+  // Injected by Dagger.
   private final DankLinkMovementMethod linkMovementMethod;
   private final SubmissionSwipeActionsProvider submissionSwipeActionsProvider;
   private final CommentSwipeActionsProvider commentSwipeActionsProvider;
   private final DraftStore draftStore;
   private final CompositeDisposable inlineReplyDraftsDisposables = new CompositeDisposable();
+  private final MarkdownHintOptions markdownHintOptions;
+  private final MarkdownSpanPool markdownSpanPool;
 
   // Click event streams.
   private final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
@@ -53,12 +58,16 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
       DankLinkMovementMethod linkMovementMethod,
       SubmissionSwipeActionsProvider submissionSwipeActionsProvider,
       CommentSwipeActionsProvider commentSwipeActionsProvider,
-      DraftStore draftStore)
+      DraftStore draftStore,
+      MarkdownHintOptions markdownHintOptions,
+      MarkdownSpanPool markdownSpanPool)
   {
     this.linkMovementMethod = linkMovementMethod;
     this.submissionSwipeActionsProvider = submissionSwipeActionsProvider;
     this.commentSwipeActionsProvider = commentSwipeActionsProvider;
     this.draftStore = draftStore;
+    this.markdownHintOptions = markdownHintOptions;
+    this.markdownSpanPool = markdownSpanPool;
     setHasStableIds(true);
   }
 
@@ -111,6 +120,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
             replyFullscreenClickStream,
             replySendClickStream
         );
+        // Note: We'll have to remove MarkdownHintOptions from Dagger graph when we introduce a light theme.
+        inlineReplyHolder.setupMarkdownHints(markdownHintOptions, markdownSpanPool);
         inlineReplyHolder.setupSavingOfDraftOnFocusLost(draftStore);
         return inlineReplyHolder;
 

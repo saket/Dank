@@ -5,6 +5,7 @@ import static io.reactivex.schedulers.Schedulers.io;
 
 import android.support.annotation.CheckResult;
 import android.support.v7.widget.RecyclerView;
+import android.text.Editable;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -21,6 +22,9 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithValueEquality;
+import me.saket.dank.markdownhints.MarkdownHintOptions;
+import me.saket.dank.markdownhints.MarkdownHints;
+import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
@@ -29,6 +33,7 @@ import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.utils.Keyboards;
+import me.saket.dank.utils.SimpleTextWatcher;
 import me.saket.dank.widgets.IndentedLayout;
 
 /**
@@ -88,6 +93,15 @@ public interface SubmissionCommentInlineReply {
       sendButton = itemView.findViewById(R.id.item_comment_reply_send);
       authorHintView = itemView.findViewById(R.id.item_comment_reply_author_hint);
       replyField = itemView.findViewById(R.id.item_comment_reply_message);
+
+      sendButton.setEnabled(false);
+      replyField.addTextChangedListener(new SimpleTextWatcher() {
+        @Override
+        public void afterTextChanged(Editable text) {
+          boolean hasValidReply = text.toString().trim().length() > 0;
+          sendButton.setEnabled(hasValidReply);
+        }
+      });
     }
 
     public void setupClickStreams(
@@ -133,6 +147,10 @@ public interface SubmissionCommentInlineReply {
               .subscribe();
         }
       });
+    }
+
+    public void setupMarkdownHints(MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool) {
+      replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, markdownSpanPool));
     }
 
     @CheckResult
