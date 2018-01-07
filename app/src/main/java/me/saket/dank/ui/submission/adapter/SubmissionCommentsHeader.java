@@ -1,7 +1,9 @@
 package me.saket.dank.ui.submission.adapter;
 
+import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.ColorInt;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -22,7 +24,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithValueEquality;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
-import me.saket.dank.utils.Colors;
+import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -31,6 +33,8 @@ import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
 public interface SubmissionCommentsHeader {
+
+  int CONTENT_LINK_TRANSITION_ANIM_DURATION = 300;
 
   enum PartialChange {
     SUBMISSION_VOTE,
@@ -135,6 +139,7 @@ public interface SubmissionCommentsHeader {
     private final TextView contentLinkBylineView;
     private final ProgressBar contentLinkProgressView;
     private final DankLinkMovementMethod movementMethod;
+    private final @ColorInt int contentLinkBackgroundColor;
 
     public static ViewHolder create(
         LayoutInflater inflater,
@@ -170,6 +175,7 @@ public interface SubmissionCommentsHeader {
       this.movementMethod = movementMethod;
 
       contentLinkView.setClipToOutline(true);
+      contentLinkBackgroundColor = ContextCompat.getColor(itemView.getContext(), R.color.submission_link_background_color);
     }
 
     public void bind(UiModel uiModel, SubmissionSwipeActionsProvider swipeActionsProvider) {
@@ -260,19 +266,48 @@ public interface SubmissionCommentsHeader {
     private void setContentLinkThumbnail(SubmissionContentLinkUiModel contentLinkUiModel) {
       Drawable thumbnail = contentLinkUiModel.thumbnail().isPresent() ? contentLinkUiModel.thumbnail().get() : null;
       contentLinkThumbnailView.setImageDrawable(thumbnail);
+
+      if (contentLinkUiModel.thumbnail().isPresent()) {
+        contentLinkThumbnailView.setAlpha(0f);
+        contentLinkThumbnailView.animate()
+            .alpha(1f)
+            .setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION)
+            .setInterpolator(Animations.INTERPOLATOR)
+            .start();
+      } else {
+        contentLinkThumbnailView.animate().cancel();
+      }
     }
 
     private void setContentLinkIcon(SubmissionContentLinkUiModel contentLinkUiModel) {
       Drawable favicon = contentLinkUiModel.icon().isPresent() ? contentLinkUiModel.icon().get() : null;
       contentLinkIconView.setImageDrawable(favicon);
-      contentLinkIconView.setVisibility(contentLinkUiModel.icon().isPresent() ? View.VISIBLE : View.INVISIBLE);
+
+      if (contentLinkUiModel.icon().isPresent()) {
+        contentLinkIconView.setVisibility(View.VISIBLE);
+        contentLinkIconView.setAlpha(0f);
+        contentLinkIconView.animate()
+            .alpha(1f)
+            .setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION)
+            .setInterpolator(Animations.INTERPOLATOR)
+            .start();
+      } else {
+        contentLinkIconView.setVisibility(View.INVISIBLE);
+        contentLinkIconView.animate().cancel();
+      }
     }
 
     private void setContentLinkTint(SubmissionContentLinkUiModel contentLinkUiModel) {
       if (contentLinkUiModel.backgroundTintColor().isPresent()) {
+        Drawable background = contentLinkView.getBackground().mutate();
         Integer tintColor = contentLinkUiModel.backgroundTintColor().get();
-        contentLinkThumbnailView.setColorFilter(Colors.applyAlpha(tintColor, 0.4f));
-        contentLinkView.getBackground().mutate().setTint(tintColor);
+
+        ValueAnimator colorAnimator = ValueAnimator.ofArgb(contentLinkBackgroundColor, tintColor);
+        colorAnimator.addUpdateListener(animation -> background.setTint((int) animation.getAnimatedValue()));
+        colorAnimator.setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION);
+        colorAnimator.setInterpolator(Animations.INTERPOLATOR);
+        colorAnimator.start();
+
       } else {
         contentLinkView.getBackground().mutate().setTintList(null);
       }
