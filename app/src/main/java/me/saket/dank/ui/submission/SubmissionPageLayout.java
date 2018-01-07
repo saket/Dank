@@ -700,9 +700,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       );
     };
 
-    // Toggle sheet's collapsed state on image click.
-    contentImageView.setOnClickListener(o -> commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate()));
-
     // and on submission title click.
     submissionContentStream
         .ofType(MediaLink.class)
@@ -1099,7 +1096,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     ResolvedError resolvedError = errorResolver.resolve(error);
     resolvedError.ifUnknown(() -> Timber.e(error));
 
-    // TODO.
+    // TODO: See SubmissionCommentsHeader.Poop#populateMediaLoadError().
     //linkDetailsViewHolder.populateMediaLoadError(resolvedError);
     //linkDetailsView.setOnClickListener(o -> retryLoadRequests.accept(NOTHING));
   }

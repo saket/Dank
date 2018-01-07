@@ -22,6 +22,7 @@ import java.util.List;
 
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SpannableWithValueEquality;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
@@ -49,7 +50,7 @@ public interface SubmissionCommentsHeader {
   }
 
   static int getWidthForAlbumContentLinkThumbnail(Context context) {
-    return context.getResources().getDimensionPixelSize(R.dimen.submission_link_thumbnail_width_album);
+    return context.getResources().getDimensionPixelSize(R.dimen.submission_link_thumbnail_width_external_link);
   }
 
   @AutoValue
@@ -327,6 +328,19 @@ public interface SubmissionCommentsHeader {
     @Override
     public SwipeableLayout getSwipeableLayout() {
       return (SwipeableLayout) itemView;
+    }
+  }
+
+  // TODO.
+  class Poop {
+    void populateMediaLoadError(ResolvedError resolvedError) {
+    /*Resources resources = titleView.getResources();
+      iconView.setImageTintList(ColorStateList.valueOf(redditLinkIconTintColor));
+      iconView.setContentDescription(resources.getString(R.string.submission_link_error_loading_media));
+      iconView.setImageResource(R.drawable.ic_error_24dp);
+      titleView.setText(resolvedError.errorMessageRes());
+      subtitleView.setText(R.string.submission_link_error_loading_media_tap_to_retry);
+      progressView.setVisibility(View.GONE); */
     }
   }
 }
