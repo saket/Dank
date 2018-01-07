@@ -8,6 +8,7 @@ import android.content.Context;
 
 import net.dean.jraw.ApiException;
 
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import io.reactivex.Completable;
@@ -23,8 +24,9 @@ public class RetryReplyJobService extends DankJobService {
 
   @Inject ReplyRepository replyRepository;
 
-  public static void scheduleRetry(Context context) {
+  public static void scheduleRetry(Context context, long initialDelay, TimeUnit delayUnit) {
     JobInfo retryJobInfo = new JobInfo.Builder(ID_RETRY_REPLY, new ComponentName(context, RetryReplyJobService.class))
+        .setMinimumLatency(delayUnit.toMillis(initialDelay))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)
         .build();

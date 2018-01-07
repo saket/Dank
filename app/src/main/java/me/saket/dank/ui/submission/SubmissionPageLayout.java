@@ -73,6 +73,7 @@ import io.reactivex.Single;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
@@ -496,6 +497,18 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .takeUntil(lifecycle().onDestroy())
         .subscribe(fullscreenReplySendStream);
 
+    Predicate<Throwable> scheduleAutoRetry = error -> {
+      // For non-network errors, it's important to have an initial delay because the only criteria
+      // for auto-retry is to have network. For non-network errors, the user will see an immediate
+      // retry which will probably also fail.
+      ResolvedError resolvedError = errorResolver.resolve(error);
+      boolean shouldDelayAutoRetry = !resolvedError.isNetworkError() && !resolvedError.isRedditServerError();
+      long initialDelay = shouldDelayAutoRetry ? 5 : 0;
+
+      RetryReplyJobService.scheduleRetry(getContext(), initialDelay, TimeUnit.SECONDS);
+      return true;
+    };
+
     // Reply sends.
     submissionCommentsAdapter.streamReplySendClicks()
         .mergeWith(fullscreenReplySendStream)
@@ -518,7 +531,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               )
               .compose(applySchedulersCompletable())
               .doOnError(e -> Timber.e(e))
-              .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getContext()));
+              .onErrorComplete(scheduleAutoRetry)
+              .subscribe();
         });
 
     // Reply retry-sends.
@@ -528,7 +542,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           // Re-sending is not a part of the chain so that it does not get unsubscribed on destroy.
           replyRepository.reSendReply(retrySendEvent.failedPendingSyncReply())
               .compose(applySchedulersCompletable())
-              .subscribe(doNothingCompletable(), error -> RetryReplyJobService.scheduleRetry(getContext()));
+              .onErrorComplete(scheduleAutoRetry)
+              .subscribe();
         });
 
     // Toggle collapse on comment clicks.
