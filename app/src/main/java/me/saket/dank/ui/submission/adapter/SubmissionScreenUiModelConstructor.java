@@ -187,7 +187,7 @@ public class SubmissionScreenUiModelConstructor {
 
   private SubmissionComment.UiModel commentUiModel(Context context, DankCommentNode dankCommentNode, String submissionAuthor) {
     Comment comment = dankCommentNode.commentNode().getComment();
-    Optional<String> authorFlairText = comment.getAuthorFlair() != null ? Optional.of(comment.getAuthorFlair().getText()) : Optional.empty();
+    Optional<String> authorFlairText = comment.getAuthorFlair() != null ? Optional.ofNullable(comment.getAuthorFlair().getText()) : Optional.empty();
     long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
     VoteDirection pendingOrDefaultVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.getVote());
     int commentScore = votingManager.getScoreAfterAdjustingPendingVote(comment);
