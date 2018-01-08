@@ -13,6 +13,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
+import me.saket.dank.data.links.Link;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
@@ -52,6 +53,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   private final Relay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
   private final Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
   private final Relay<Object> headerClickStream = PublishRelay.create();
+  private final Relay<Link> contentLinkClickStream = PublishRelay.create();
 
   @Inject
   public SubmissionCommentsAdapter(
@@ -97,6 +99,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
             linkMovementMethod
         );
         headerHolder.setupGestures(this, submissionSwipeActionsProvider);
+        headerHolder.setupContentLinkClickStream(this, contentLinkClickStream);
         return headerHolder;
 
       case COMMENTS_LOADING_PROGRESS:
@@ -252,11 +255,17 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     return replyViewBindStream;
   }
 
-  public CommentSwipeActionsProvider commentSwipeActionsProvider() {
-    return commentSwipeActionsProvider;
-  }
-
+  @CheckResult
   public Observable<Object> streamHeaderClicks() {
     return headerClickStream;
+  }
+
+  @CheckResult
+  public Observable<Link> streamContentLinkClicks() {
+    return contentLinkClickStream;
+  }
+
+  public CommentSwipeActionsProvider commentSwipeActionsProvider() {
+    return commentSwipeActionsProvider;
   }
 }

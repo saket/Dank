@@ -24,6 +24,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SpannableWithValueEquality;
+import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
@@ -64,7 +65,7 @@ public interface SubmissionCommentsHeader {
 
     abstract Optional<SpannableWithValueEquality> optionalSelfText();
 
-    abstract Optional<SubmissionContentLinkUiModel> optionalContentLink();
+    abstract Optional<SubmissionContentLinkUiModel> optionalContentLinkModel();
 
     /**
      * The original data model from which this Ui model was created.
@@ -106,7 +107,7 @@ public interface SubmissionCommentsHeader {
             : Optional.empty());
       }
 
-      abstract Builder optionalContentLink(Optional<SubmissionContentLinkUiModel> link);
+      abstract Builder optionalContentLinkModel(Optional<SubmissionContentLinkUiModel> link);
 
       abstract Builder originalSubmission(PostedOrInFlightContribution submission);
 
@@ -155,14 +156,6 @@ public interface SubmissionCommentsHeader {
       return holder;
     }
 
-    public void setupGestures(SubmissionCommentsAdapter adapter, SubmissionSwipeActionsProvider swipeActionsProvider) {
-      getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
-      getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
-        UiModel headerUiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        swipeActionsProvider.performSwipeAction(action, headerUiModel.originalSubmission(), getSwipeableLayout());
-      });
-    }
-
     public ViewHolder(View itemView, DankLinkMovementMethod movementMethod) {
       super(itemView);
       titleView = itemView.findViewById(R.id.submission_title);
@@ -178,6 +171,21 @@ public interface SubmissionCommentsHeader {
 
       contentLinkView.setClipToOutline(true);
       contentLinkBackgroundColor = ContextCompat.getColor(itemView.getContext(), R.color.submission_link_background_color);
+    }
+
+    public void setupGestures(SubmissionCommentsAdapter adapter, SubmissionSwipeActionsProvider swipeActionsProvider) {
+      getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
+      getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
+        UiModel headerUiModel = (UiModel) adapter.getItem(getAdapterPosition());
+        swipeActionsProvider.performSwipeAction(action, headerUiModel.originalSubmission(), getSwipeableLayout());
+      });
+    }
+
+    public void setupContentLinkClickStream(SubmissionCommentsAdapter adapter, Relay<Link> clickStream) {
+      contentLinkView.setOnClickListener(o -> {
+        UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
+        clickStream.accept(uiModel.optionalContentLinkModel().get().link());
+      });
     }
 
     public void bind(UiModel uiModel, SubmissionSwipeActionsProvider swipeActionsProvider) {
@@ -219,23 +227,23 @@ public interface SubmissionCommentsHeader {
               break;
 
             case CONTENT_LINK_THUMBNAIL:
-              setContentLinkThumbnail(uiModel.optionalContentLink().get());
+              setContentLinkThumbnail(uiModel.optionalContentLinkModel().get());
               break;
 
             case CONTENT_LINK_FAVICON:
-              setContentLinkIcon(uiModel.optionalContentLink().get());
+              setContentLinkIcon(uiModel.optionalContentLinkModel().get());
               break;
 
             case CONTENT_LINK_TITLE_AND_BYLINE:
-              setContentLinkTitleAndByline(uiModel.optionalContentLink().get());
+              setContentLinkTitleAndByline(uiModel.optionalContentLinkModel().get());
               break;
 
             case CONTENT_LINK_PROGRESS_VISIBILITY:
-              setContentLinkProgressVisibility(uiModel.optionalContentLink().get());
+              setContentLinkProgressVisibility(uiModel.optionalContentLinkModel().get());
               break;
 
             case CONTENT_LINK_TINT:
-              setContentLinkTint(uiModel.optionalContentLink().get());
+              setContentLinkTint(uiModel.optionalContentLinkModel().get());
               break;
 
             default:
@@ -246,9 +254,9 @@ public interface SubmissionCommentsHeader {
     }
 
     private void setContentLink(UiModel uiModel) {
-      contentLinkView.setVisibility(uiModel.optionalContentLink().isPresent() ? View.VISIBLE : View.GONE);
+      contentLinkView.setVisibility(uiModel.optionalContentLinkModel().isPresent() ? View.VISIBLE : View.GONE);
 
-      uiModel.optionalContentLink().ifPresent(contentLinkUiModel -> {
+      uiModel.optionalContentLinkModel().ifPresent(contentLinkUiModel -> {
         setContentLinkIcon(contentLinkUiModel);
         setContentLinkThumbnail(contentLinkUiModel);
         setContentLinkTitleAndByline(contentLinkUiModel);

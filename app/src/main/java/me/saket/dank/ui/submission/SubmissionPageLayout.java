@@ -409,7 +409,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
     inlineReplyStream
-        .doOnNext(o -> Timber.i("-----------------------------"))
         .switchMapSingle(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution).toSingleDefault(parentContribution))
         .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
         .takeUntil(lifecycle().onDestroy())
@@ -603,7 +602,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           Toast.makeText(getContext(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
         });
 
-    // Bottom-spacing for FAB.
+    // Content link clicks.
+    submissionCommentsAdapter.streamContentLinkClicks()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(link -> urlRouter.forLink(link)
+            .expandFromBelowToolbar()
+            .open(getContext())
+        );
+
+    // Extra bottom padding in list to make space for FAB.
     Views.executeOnMeasure(replyFAB, () -> {
       int spaceForFab = replyFAB.getHeight() + ((ViewGroup.MarginLayoutParams) replyFAB.getLayoutParams()).bottomMargin * 2;
       Views.setPaddingBottom(commentRecyclerView, spaceForFab);
@@ -1045,18 +1052,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                 case REDDIT_PAGE:
                   contentLoadProgressView.hide();
 
-                  // TODO.
                   if (submission.isSelfPost()) {
+                    // TODO.
                   } else {
                     contentLinkStream.accept(Optional.of(resolvedLink));
-                    //noinspection ConstantConditions
-                    //unsubscribeOnCollapse(
-                    //    linkDetailsViewHolder.populate(((RedditLink) resolvedLink))
-                    //);
-                    //linkDetailsView.setOnClickListener(o -> urlRouter.forLink(resolvedLink)
-                    //    .expandFromBelowToolbar()
-                    //    .open(getContext())
-                    //);
                   }
                   break;
 
@@ -1064,31 +1063,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                 case EXTERNAL:
                   contentLoadProgressView.hide();
                   contentLinkStream.accept(Optional.of(resolvedLink));
-
-                  // TODO.
-                  //linkDetailsView.setOnClickListener(o -> urlRouter.forLink(resolvedLink)
-                  //    .expandFromBelowToolbar()
-                  //    .open(getContext())
-                  //);
-
-                  //if (resolvedLink instanceof ImgurAlbumLink) {
-                  //  String redditSuppliedThumbnail = mediaHostRepository.findOptimizedQualityImageForDisplay(
-                  //      submission.getThumbnails(),
-                  //      linkDetailsViewHolder.getThumbnailWidthForExternalLink(),
-                  //      ((ImgurAlbumLink) resolvedLink).coverImageUrl()
-                  //  );
-                  //  linkDetailsViewHolder.populate(((ImgurAlbumLink) resolvedLink), redditSuppliedThumbnail);
-//
-                  //} else {
-                  //  String redditSuppliedThumbnail = mediaHostRepository.findOptimizedQualityImageForDisplay(
-                  //      submission.getThumbnails(),
-                  //      linkDetailsViewHolder.getThumbnailWidthForExternalLink(),
-                  //      null
-                  //  );
-                  //  unsubscribeOnCollapse(
-                  //      linkDetailsViewHolder.populate(((ExternalLink) resolvedLink), redditSuppliedThumbnail)
-                  //  );
-                  //}
                   break;
 
                 case SINGLE_VIDEO:

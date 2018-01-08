@@ -7,7 +7,6 @@ import java.util.List;
 
 import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
 import me.saket.dank.utils.Optional;
-import timber.log.Timber;
 
 public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScreenUiModel> {
 
@@ -42,8 +41,8 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
         SubmissionCommentsHeader.UiModel oldHeader = (SubmissionCommentsHeader.UiModel) oldItem;
         SubmissionCommentsHeader.UiModel newHeader = (SubmissionCommentsHeader.UiModel) newItem;
 
-        Optional<SubmissionContentLinkUiModel> oldContentLink = oldHeader.optionalContentLink();
-        Optional<SubmissionContentLinkUiModel> newContentLink = newHeader.optionalContentLink();
+        Optional<SubmissionContentLinkUiModel> oldContentLink = oldHeader.optionalContentLinkModel();
+        Optional<SubmissionContentLinkUiModel> newContentLink = newHeader.optionalContentLinkModel();
 
         //Timber.i("--------------------------");
         //Timber.i("oldContentLink: %s", oldContentLink);
@@ -81,8 +80,6 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
         if (oldHeader.extraInfoForEquality().commentsCount().equals(newHeader.extraInfoForEquality().commentsCount())) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_COMMENT_COUNT);
         }
-
-        Timber.i("partialChanges.size: %s", partialChanges.size());
         return partialChanges;
       }
 

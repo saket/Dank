@@ -179,7 +179,7 @@ public class SubmissionScreenUiModelConstructor {
         .title(title)
         .byline(byline)
         .selfText(selfTextOptional)
-        .optionalContentLink(contentLinkUiModel)
+        .optionalContentLinkModel(contentLinkUiModel)
         .originalSubmission(PostedOrInFlightContribution.from(submission))
         .extraInfoForEquality(ExtraInfoForEquality.create(Pair.create(vote, pendingOrDefaultVote), postedAndPendingCommentCount))
         .build();

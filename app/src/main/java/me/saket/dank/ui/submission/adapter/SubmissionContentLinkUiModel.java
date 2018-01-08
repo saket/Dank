@@ -6,6 +6,7 @@ import android.support.annotation.ColorRes;
 import com.google.auto.value.AutoValue;
 
 import me.saket.dank.data.SpannableWithValueEquality;
+import me.saket.dank.data.links.Link;
 import me.saket.dank.utils.Optional;
 
 @AutoValue
@@ -30,6 +31,8 @@ public abstract class SubmissionContentLinkUiModel {
   public abstract Optional<Integer> backgroundTintColor();
 
   public abstract boolean progressVisible();
+
+  public abstract Link link();
 
   public static Builder builder() {
     return new AutoValue_SubmissionContentLinkUiModel.Builder();
@@ -62,6 +65,8 @@ public abstract class SubmissionContentLinkUiModel {
     public abstract Builder backgroundTintColor(Optional<Integer> color);
 
     public abstract Builder progressVisible(boolean visible);
+
+    public abstract Builder link(Link link);
 
     public abstract SubmissionContentLinkUiModel build();
   }

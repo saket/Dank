@@ -131,6 +131,7 @@ public class SubmissionContentLinkUiModelConstructor {
                 .thumbnail(optionalThumbnail)
                 .progressVisible(progressVisible)
                 .backgroundTintColor(tintDetails.backgroundTint())
+                .link(link)
                 .build());
   }
 
@@ -215,6 +216,7 @@ public class SubmissionContentLinkUiModelConstructor {
                 .thumbnail(optionalThumbnail)
                 .progressVisible(progressVisible)
                 .backgroundTintColor(tintDetails.backgroundTint())
+                .link(redditLink)
                 .build()
     );
   }
@@ -267,6 +269,7 @@ public class SubmissionContentLinkUiModelConstructor {
                 .thumbnail(optionalThumbnail)
                 .progressVisible(progressVisible)
                 .backgroundTintColor(tintDetails.backgroundTint())
+                .link(albumLink)
                 .build()
     );
   }
