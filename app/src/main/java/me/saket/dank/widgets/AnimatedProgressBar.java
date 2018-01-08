@@ -51,6 +51,10 @@ public class AnimatedProgressBar extends ProgressBar {
     setVisible(visibility == VISIBLE);
   }
 
+  public void setVisibilityWithoutAnimation(int visibility) {
+    super.setVisibility(visibility);
+  }
+
   public void show() {
     setVisible(true);
   }

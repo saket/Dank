@@ -10,7 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
-import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
@@ -32,11 +31,13 @@ import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
+import me.saket.dank.widgets.AnimatedProgressBar;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
 public interface SubmissionCommentsHeader {
 
+  float THUMBNAIL_COLOR_TINT_OPACITY = 0.4f;
   int CONTENT_LINK_TRANSITION_ANIM_DURATION = 300;
 
   enum PartialChange {
@@ -140,7 +141,7 @@ public interface SubmissionCommentsHeader {
     private final ImageView contentLinkThumbnailView;
     private final TextView contentLinkTitleView;
     private final TextView contentLinkBylineView;
-    private final ProgressBar contentLinkProgressView;
+    private final AnimatedProgressBar contentLinkProgressView;
     private final DankLinkMovementMethod movementMethod;
     private final @ColorInt int contentLinkBackgroundColor;
 
@@ -191,7 +192,7 @@ public interface SubmissionCommentsHeader {
     public void bind(UiModel uiModel, SubmissionSwipeActionsProvider swipeActionsProvider) {
       setSubmissionTitle(uiModel);
       setSubmissionByline(uiModel);
-      setContentLink(uiModel);
+      setContentLink(uiModel, false);
 
       // TODO.
       selfTextView.setVisibility(View.GONE);
@@ -223,15 +224,15 @@ public interface SubmissionCommentsHeader {
               break;
 
             case CONTENT_LINK:
-              setContentLink(uiModel);
+              setContentLink(uiModel, true);
               break;
 
             case CONTENT_LINK_THUMBNAIL:
-              setContentLinkThumbnail(uiModel.optionalContentLinkModel().get());
+              setContentLinkThumbnail(uiModel.optionalContentLinkModel().get(), true);
               break;
 
             case CONTENT_LINK_FAVICON:
-              setContentLinkIcon(uiModel.optionalContentLinkModel().get());
+              setContentLinkIcon(uiModel.optionalContentLinkModel().get(), true);
               break;
 
             case CONTENT_LINK_TITLE_AND_BYLINE:
@@ -239,11 +240,11 @@ public interface SubmissionCommentsHeader {
               break;
 
             case CONTENT_LINK_PROGRESS_VISIBILITY:
-              setContentLinkProgressVisibility(uiModel.optionalContentLinkModel().get());
+              setContentLinkProgressVisibility(uiModel.optionalContentLinkModel().get(), true);
               break;
 
             case CONTENT_LINK_TINT:
-              setContentLinkTint(uiModel.optionalContentLinkModel().get());
+              setContentLinkTint(uiModel.optionalContentLinkModel().get(), true);
               break;
 
             default:
@@ -253,15 +254,19 @@ public interface SubmissionCommentsHeader {
       }
     }
 
-    private void setContentLink(UiModel uiModel) {
+    /**
+     * @param animate True only when handling partial updates. Running animations during full binds is not recommended.
+     *                They'll leave the VH in a transient state and RecyclerView will not be able to recycle the VH.
+     */
+    private void setContentLink(UiModel uiModel, boolean animate) {
       contentLinkView.setVisibility(uiModel.optionalContentLinkModel().isPresent() ? View.VISIBLE : View.GONE);
 
       uiModel.optionalContentLinkModel().ifPresent(contentLinkUiModel -> {
-        setContentLinkIcon(contentLinkUiModel);
-        setContentLinkThumbnail(contentLinkUiModel);
+        setContentLinkIcon(contentLinkUiModel, animate);
+        setContentLinkThumbnail(contentLinkUiModel, animate);
         setContentLinkTitleAndByline(contentLinkUiModel);
-        setContentLinkProgressVisibility(contentLinkUiModel);
-        setContentLinkTint(contentLinkUiModel);
+        setContentLinkTint(contentLinkUiModel, animate);
+        setContentLinkProgressVisibility(contentLinkUiModel, animate);
       });
     }
 
@@ -275,54 +280,66 @@ public interface SubmissionCommentsHeader {
       // Else, the entire content Link container is hidden.
     }
 
-    private void setContentLinkThumbnail(SubmissionContentLinkUiModel contentLinkUiModel) {
-      Drawable thumbnail = contentLinkUiModel.thumbnail().isPresent() ? contentLinkUiModel.thumbnail().get() : null;
-      contentLinkThumbnailView.setImageDrawable(thumbnail);
-
-      if (contentLinkUiModel.thumbnail().isPresent()) {
-        contentLinkThumbnailView.setAlpha(0f);
-        contentLinkThumbnailView.animate()
-            .alpha(1f)
-            .setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION)
-            .setInterpolator(Animations.INTERPOLATOR)
-            .start();
-      } else {
-        contentLinkThumbnailView.animate().cancel();
-      }
-    }
-
-    private void setContentLinkIcon(SubmissionContentLinkUiModel contentLinkUiModel) {
+    private void setContentLinkIcon(SubmissionContentLinkUiModel contentLinkUiModel, boolean animate) {
       Drawable favicon = contentLinkUiModel.icon().isPresent() ? contentLinkUiModel.icon().get() : null;
       contentLinkIconView.setImageDrawable(favicon);
 
       if (contentLinkUiModel.icon().isPresent()) {
         contentLinkIconView.setVisibility(View.VISIBLE);
-        contentLinkIconView.setAlpha(0f);
-        contentLinkIconView.animate()
-            .alpha(1f)
-            .setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION)
-            .setInterpolator(Animations.INTERPOLATOR)
-            .start();
+        if (animate) {
+          contentLinkIconView.setAlpha(0f);
+          contentLinkIconView.animate()
+              .alpha(1f)
+              .setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION)
+              .setInterpolator(Animations.INTERPOLATOR)
+              .start();
+        }
       } else {
         contentLinkIconView.setVisibility(View.INVISIBLE);
+        contentLinkIconView.setAlpha(1f);
         contentLinkIconView.animate().cancel();
       }
     }
 
-    private void setContentLinkTint(SubmissionContentLinkUiModel contentLinkUiModel) {
+    private void setContentLinkThumbnail(SubmissionContentLinkUiModel contentLinkUiModel, boolean animate) {
+      Drawable thumbnail = contentLinkUiModel.thumbnail().isPresent() ? contentLinkUiModel.thumbnail().get() : null;
+      contentLinkThumbnailView.setImageDrawable(thumbnail);
+
+      if (contentLinkUiModel.thumbnail().isPresent()) {
+        if (animate) {
+          contentLinkThumbnailView.setAlpha(0f);
+          contentLinkThumbnailView.animate()
+              .alpha(1f)
+              .setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION)
+              .setInterpolator(Animations.INTERPOLATOR)
+              .start();
+        }
+      } else {
+        contentLinkThumbnailView.animate().cancel();
+        contentLinkThumbnailView.setAlpha(1f);
+      }
+    }
+
+    private void setContentLinkTint(SubmissionContentLinkUiModel contentLinkUiModel, boolean animate) {
       if (contentLinkUiModel.backgroundTintColor().isPresent()) {
         Drawable background = contentLinkView.getBackground().mutate();
         Integer tintColor = contentLinkUiModel.backgroundTintColor().get();
 
-        ValueAnimator colorAnimator = ValueAnimator.ofArgb(contentLinkBackgroundColor, tintColor);
-        colorAnimator.addUpdateListener(animation -> {
-          int animatedColor = (int) animation.getAnimatedValue();
-          contentLinkThumbnailView.setColorFilter(Colors.applyAlpha(animatedColor, 0.4f));
-          background.setTint(animatedColor);
-        });
-        colorAnimator.setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION);
-        colorAnimator.setInterpolator(Animations.INTERPOLATOR);
-        colorAnimator.start();
+        if (animate) {
+          ValueAnimator colorAnimator = ValueAnimator.ofArgb(contentLinkBackgroundColor, tintColor);
+          colorAnimator.addUpdateListener(animation -> {
+            int animatedColor = (int) animation.getAnimatedValue();
+            contentLinkThumbnailView.setColorFilter(Colors.applyAlpha(animatedColor, THUMBNAIL_COLOR_TINT_OPACITY));
+            background.setTint(animatedColor);
+          });
+          colorAnimator.setDuration(CONTENT_LINK_TRANSITION_ANIM_DURATION);
+          colorAnimator.setInterpolator(Animations.INTERPOLATOR);
+          colorAnimator.start();
+
+        } else {
+          contentLinkThumbnailView.setColorFilter(Colors.applyAlpha(tintColor, THUMBNAIL_COLOR_TINT_OPACITY));
+          background.setTint(tintColor);
+        }
 
       } else {
         contentLinkThumbnailView.setColorFilter(null);
@@ -330,8 +347,12 @@ public interface SubmissionCommentsHeader {
       }
     }
 
-    private void setContentLinkProgressVisibility(SubmissionContentLinkUiModel contentLinkUiModel) {
-      contentLinkProgressView.setVisibility(contentLinkUiModel.progressVisible() ? View.VISIBLE : View.GONE);
+    private void setContentLinkProgressVisibility(SubmissionContentLinkUiModel contentLinkUiModel, boolean animate) {
+      if (animate) {
+        contentLinkProgressView.setVisibility(contentLinkUiModel.progressVisible() ? View.VISIBLE : View.GONE);
+      } else {
+        contentLinkProgressView.setVisibilityWithoutAnimation(contentLinkUiModel.progressVisible() ? View.VISIBLE : View.GONE);
+      }
     }
 
     @Override
