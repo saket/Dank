@@ -126,7 +126,6 @@
   <string name="submission_link_linked_subreddit">Linked subreddit</string>
   <string name="submission_link_linked_submission">Linked submission</string>
   <string name="submission_link_linked_url">Linked URL</string>
-  <string name="submission_link_error_loading_media">Failed to load media</string>
   <string name="submission_link_error_loading_media_tap_to_retry">Tap to retry</string>
   <string name="submission_link_imgur_gallery">Linked Imgur gallery</string>
   <string name="submission_image_scroll_down_hint">Scroll down to see more</string>

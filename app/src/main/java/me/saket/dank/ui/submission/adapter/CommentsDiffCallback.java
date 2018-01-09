@@ -99,7 +99,7 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
       }
 
       default:
-        return super.getChangePayload(oldItem, newItem);
+        return null;
     }
   }
 }

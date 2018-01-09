@@ -6,4 +6,5 @@ public enum SubmissionCommentRowType {
   USER_COMMENT,
   INLINE_REPLY,
   LOAD_MORE_COMMENTS,
+  MEDIA_CONTENT_LOAD_ERROR,
 }

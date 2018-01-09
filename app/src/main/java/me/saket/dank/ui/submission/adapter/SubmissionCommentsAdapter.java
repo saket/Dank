@@ -56,6 +56,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   private final Relay<Link> contentLinkClickStream = PublishRelay.create();
   private final Relay<SubmissionCommentsHeader.ViewHolder> headerBindStream = PublishRelay.create();
   private final Relay<SubmissionCommentsHeader.ViewHolder> headerUnbindStream = PublishRelay.create();
+  private final Relay<Object> mediaContentLoadRetryClickStream = PublishRelay.create();
 
   @Inject
   public SubmissionCommentsAdapter(
@@ -103,6 +104,11 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         headerHolder.setupGestures(this, submissionSwipeActionsProvider);
         headerHolder.setupContentLinkClickStream(this, contentLinkClickStream);
         return headerHolder;
+
+      case MEDIA_CONTENT_LOAD_ERROR:
+        SubmissionMediaContentLoadError.ViewHolder mediaLoadErrorHolder = SubmissionMediaContentLoadError.ViewHolder.create(inflater, parent);
+        mediaLoadErrorHolder.setupClickStream(mediaContentLoadRetryClickStream);
+        return mediaLoadErrorHolder;
 
       case COMMENTS_LOADING_PROGRESS:
         return SubmissionCommentsLoadingProgress.ViewHolder.create(inflater, parent);
@@ -178,6 +184,10 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         SubmissionCommentsHeader.ViewHolder headerVH = (SubmissionCommentsHeader.ViewHolder) holder;
         headerVH.bind((SubmissionCommentsHeader.UiModel) getItem(position), submissionSwipeActionsProvider);
         headerBindStream.accept(headerVH);
+        break;
+
+      case MEDIA_CONTENT_LOAD_ERROR:
+        ((SubmissionMediaContentLoadError.ViewHolder) holder).bind((SubmissionMediaContentLoadError.UiModel) getItem(position));
         break;
 
       case COMMENTS_LOADING_PROGRESS:
@@ -280,6 +290,11 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @CheckResult
   public Observable<Link> streamContentLinkClicks() {
     return contentLinkClickStream;
+  }
+
+  @CheckResult
+  public Observable<Object> streamMediaContentLoadRetryClicks() {
+    return mediaContentLoadRetryClickStream;
   }
 
   public CommentSwipeActionsProvider commentSwipeActionsProvider() {

@@ -25,10 +25,6 @@ import android.os.Parcelable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.transition.ChangeBounds;
-import android.support.transition.Transition;
-import android.support.transition.TransitionManager;
-import android.support.transition.TransitionSet;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
@@ -57,6 +53,7 @@ import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
 import java.io.IOException;
+import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -189,6 +186,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private Relay<PostedOrInFlightContribution> inlineReplyStream = PublishRelay.create();
   private Relay<Optional<Link>> contentLinkStream = BehaviorRelay.create();
   private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
+  private Relay<Optional<ResolvedError>> mediaContentLoadErrors = BehaviorRelay.create();
 
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
   private ExpandablePageLayout submissionPageLayout;
@@ -362,7 +360,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             getContext(),
             submissionStream.observeOn(io()),
             contentLinkStream.observeOn(io()),
-            commentTreeConstructor.streamTreeUpdates().observeOn(io())
+            commentTreeConstructor.streamTreeUpdates().observeOn(io()),
+            mediaContentLoadErrors
         )
         .toFlowable(BackpressureStrategy.LATEST)
         .compose(RxDiffUtils.calculateDiff(CommentsDiffCallback::create))
@@ -371,7 +370,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .takeUntil(lifecycle().onDestroyFlowable())
         .onErrorResumeNext(error -> {
           // TODO: Handle load error.
-          Timber.e(error);
+          Timber.e(error, "Data-set load error");
           return Flowable.never();
         })
         .subscribe(
@@ -533,7 +532,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                   .andThen(replyRepository.sendReply(sendClickEvent.parentContribution(), ParentThread.of(submission), sendClickEvent.replyMessage()))
               )
               .compose(applySchedulersCompletable())
-              .doOnError(e -> Timber.e(e))
+              .doOnError(e -> Timber.e(e, "Reply send error"))
               .onErrorComplete(scheduleAutoRetry)
               .subscribe();
         });
@@ -613,6 +612,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             .expandFromBelowToolbar()
             .open(getContext())
         );
+
+    // Media load error clicks.
+    submissionCommentsAdapter.streamMediaContentLoadRetryClicks()
+        .mergeWith(lifecycle().onPageCollapse())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> mediaContentLoadErrors.accept(Optional.empty()));
 
     // Extra bottom padding in list to make space for FAB.
     Views.executeOnMeasure(replyFAB, () -> {
@@ -964,24 +969,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
   @CheckResult
   private Disposable loadSubmissionContent(Submission submission) {
-    Relay<Object> retryLoadRequests = PublishRelay.create();
-
-    // Collapse media-load-error link details View, if it's visible.
-    retryLoadRequests
-        .subscribe(o -> {
-          Transition transitions = new TransitionSet()
-              .addTransition(new ChangeBounds())
-              .setInterpolator(Animations.INTERPOLATOR)
-              .setOrdering(TransitionSet.ORDERING_TOGETHER)
-              .setDuration(200);
-          TransitionManager.endTransitions(submissionPageLayout);
-          TransitionManager.beginDelayedTransition(submissionPageLayout, transitions);
-        });
-
     return Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
         .subscribeOn(io())
         .observeOn(mainThread())
-        .flatMapObservable(link -> retryLoadRequests.map(o -> link).startWith(link))
+        // Warning: This will be a problem if the retry-click stream is ever changed to not a Subject because it's not shared.
+        .flatMapObservable(link -> submissionCommentsAdapter.streamMediaContentLoadRetryClicks()
+            .map(o -> link)
+            .startWith(link))
         .flatMapSingle(parsedLink -> {
           if (!(parsedLink instanceof UnresolvedMediaLink)) {
             return Single.just(parsedLink);
@@ -1006,12 +1000,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                 }
                 return resolvedLink;
               })
+              .observeOn(mainThread())
               .onErrorResumeNext(error -> {
                 // Open this album in browser if Imgur rate limits have reached.
                 if (error instanceof ImgurApiRequestRateLimitReachedException) {
                   return Single.just(ExternalLink.create(parsedLink.unparsedUrl()));
                 } else {
-                  handleMediaLoadError(error, retryLoadRequests);
+                  handleMediaLoadError(error);
                   contentLoadProgressView.hide();
                   return Single.never();
                 }
@@ -1038,7 +1033,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                   // Threading is handled internally by SubmissionImageHolder#load().
                   contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages)
                       .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
-                      .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error, retryLoadRequests));
+                      .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
 
                   // Open media in full-screen on click.
                   contentImageView.setOnClickListener(o -> urlRouter.forLink(((MediaLink) resolvedLink))
@@ -1074,24 +1069,24 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                       .firstOrError()
                       .flatMapCompletable(canLoadHighQualityVideo -> contentVideoViewHolder.load((MediaLink) resolvedLink, canLoadHighQualityVideo))
                       .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
-                      .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error, retryLoadRequests));
+                      .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
                   break;
 
                 default:
                   throw new UnsupportedOperationException("Unknown content: " + resolvedLink);
               }
 
-            }, error -> Timber.e(error)
+            }, error -> {
+              ResolvedError resolvedError = errorResolver.resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Error while loading content"));
+            }
         );
   }
 
-  private void handleMediaLoadError(Throwable error, Relay<Object> retryLoadRequests) {
+  private void handleMediaLoadError(Throwable error) {
     ResolvedError resolvedError = errorResolver.resolve(error);
-    resolvedError.ifUnknown(() -> Timber.e(error));
-
-    // TODO: See SubmissionCommentsHeader.Poop#populateMediaLoadError().
-    //linkDetailsViewHolder.populateMediaLoadError(resolvedError);
-    //linkDetailsView.setOnClickListener(o -> retryLoadRequests.accept(NOTHING));
+    resolvedError.ifUnknown(() -> Timber.e(error, "Media content load error"));
+    mediaContentLoadErrors.accept(Optional.of(resolvedError));
   }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //

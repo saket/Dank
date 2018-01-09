@@ -4,6 +4,7 @@ import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
+import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
@@ -19,7 +20,9 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.R;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.submission.CommentInlineReplyItem;
@@ -32,7 +35,6 @@ import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionCommentRow;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader.UiModel.ExtraInfoForEquality;
 import me.saket.dank.ui.user.UserSessionRepository;
-import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
@@ -51,6 +53,7 @@ public class SubmissionScreenUiModelConstructor {
   private final VotingManager votingManager;
   private final Markdown markdown;
   private final UserSessionRepository userSessionRepository;
+  private final ErrorResolver errorResolver;
 
   @Inject
   public SubmissionScreenUiModelConstructor(
@@ -58,13 +61,15 @@ public class SubmissionScreenUiModelConstructor {
       ReplyRepository replyRepository,
       VotingManager votingManager,
       Markdown markdown,
-      UserSessionRepository userSessionRepository)
+      UserSessionRepository userSessionRepository,
+      ErrorResolver errorResolver)
   {
     this.contentLinkUiModelConstructor = contentLinkUiModelConstructor;
     this.replyRepository = replyRepository;
     this.votingManager = votingManager;
     this.markdown = markdown;
     this.userSessionRepository = userSessionRepository;
+    this.errorResolver = errorResolver;
   }
 
   @CheckResult
@@ -72,7 +77,8 @@ public class SubmissionScreenUiModelConstructor {
       Context context,
       Observable<Submission> submissions,
       Observable<Optional<Link>> contentLinks,
-      Observable<List<SubmissionCommentRow>> commentRows)
+      Observable<List<SubmissionCommentRow>> commentRows,
+      Observable<Optional<ResolvedError>> mediaContentLoadErrors)
   {
     Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = contentLinks
         .withLatestFrom(submissions, Pair::create)
@@ -99,6 +105,12 @@ public class SubmissionScreenUiModelConstructor {
         (submission, pendingSyncReplyCount, contentLinkUiModel, ignore) ->
             headerUiModel(context, submission, pendingSyncReplyCount, contentLinkUiModel)
     );
+
+    Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModel = mediaContentLoadErrors
+        .map(optionalError -> optionalError.isPresent()
+            ? Optional.of(mediaContentLoadErrorUiModel(context, optionalError))
+            : Optional.empty()
+        );
 
     Observable<List<SubmissionScreenUiModel>> commentRowUiModels = commentRows
         .withLatestFrom(submissions.map(submission -> submission.getAuthor()), Pair::create)
@@ -133,7 +145,25 @@ public class SubmissionScreenUiModelConstructor {
           return uiModels;
         });
 
-    return Observable.combineLatest(submissionHeaderUiModels, commentRowUiModels, Arrays2::concatenate);
+    return Observable.combineLatest(submissionHeaderUiModels, contentLoadErrorUiModel, commentRowUiModels,
+        (header, optionalError, more) -> {
+          ArrayList<SubmissionScreenUiModel> concatenatedItems = new ArrayList<>(2 + more.size());
+          concatenatedItems.add(header);
+          optionalError.ifPresent(error -> {
+            concatenatedItems.add(error);
+          });
+          concatenatedItems.addAll(more);
+          return concatenatedItems;
+        });
+  }
+
+  @NonNull
+  private SubmissionMediaContentLoadError.UiModel mediaContentLoadErrorUiModel(Context context, Optional<ResolvedError> optionalThrowable) {
+    // FIXME: The error message says "Reddit" even for imgur, and other services.
+    String title = context.getString(optionalThrowable.get().errorMessageRes());
+    String byline = context.getString(R.string.submission_link_error_loading_media_tap_to_retry);
+    int iconRes = R.drawable.ic_error_24dp;
+    return SubmissionMediaContentLoadError.UiModel.create(title, byline, iconRes);
   }
 
   /**
