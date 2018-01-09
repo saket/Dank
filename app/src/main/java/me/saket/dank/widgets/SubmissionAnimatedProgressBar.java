@@ -14,8 +14,6 @@ public class SubmissionAnimatedProgressBar extends AnimatedProgressBar {
 
   public SubmissionAnimatedProgressBar(Context context, AttributeSet attrs) {
     super(context, attrs);
-
-    setVisible(getVisibility() == VISIBLE);
     super.setVisibility(VISIBLE);
   }
 

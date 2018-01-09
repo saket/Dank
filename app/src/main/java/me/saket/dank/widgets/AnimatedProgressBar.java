@@ -21,7 +21,7 @@ public class AnimatedProgressBar extends ProgressBar {
   public AnimatedProgressBar(Context context, AttributeSet attrs) {
     super(context, attrs);
 
-    setVisible(getVisibility() == VISIBLE);
+    setVisible(getVisibility() == VISIBLE, false);
     super.setVisibility(VISIBLE);
   }
 
@@ -48,23 +48,23 @@ public class AnimatedProgressBar extends ProgressBar {
 
   @Override
   public void setVisibility(int visibility) {
-    setVisible(visibility == VISIBLE);
+    setVisible(visibility == VISIBLE, true);
   }
 
   public void setVisibilityWithoutAnimation(int visibility) {
-    super.setVisibility(visibility);
+    setVisible(visibility == VISIBLE, false);
   }
 
   public void show() {
-    setVisible(true);
+    setVisible(true, true);
   }
 
   public void hide() {
-    setVisible(false);
+    setVisible(false, true);
   }
 
-  protected void setVisible(boolean visible) {
-    if (getHeight() > 0) {
+  protected void setVisible(boolean visible, boolean animate) {
+    if (getHeight() > 0 && animate) {
       ViewGroup.MarginLayoutParams marginLayoutParams = (ViewGroup.MarginLayoutParams) getLayoutParams();
       boolean isTopAligned = marginLayoutParams.topMargin < 0;
 
