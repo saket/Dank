@@ -315,6 +315,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         }
       }
 
+      //noinspection ConstantConditions
       populateUi(retainedSubmission, retainedRequest);
     }
 
@@ -442,6 +443,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .filter(result -> result.requestCode() == REQUEST_CODE_PICK_GIF && result.isResultOk())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(result -> {
+          //noinspection ConstantConditions
           ReplyInsertGifClickEvent gifInsertClickEvent = GiphyPickerActivity.extractExtraPayload(result.data());
           RecyclerView.ViewHolder holder = commentRecyclerView.findViewHolderForItemId(gifInsertClickEvent.replyRowItemId());
           if (holder == null) {
@@ -449,6 +451,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             return;
           }
 
+          //noinspection ConstantConditions
           GiphyGif pickedGiphyGif = GiphyPickerActivity.extractPickedGif(result.data());
           ((SubmissionCommentInlineReply.ViewHolder) holder).handlePickedGiphyGif(pickedGiphyGif);
         });
@@ -473,6 +476,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
     // Fullscreen reply results.
     Relay<ReplySendClickEvent> fullscreenReplySendStream = BehaviorRelay.create();
+    //noinspection ConstantConditions
     lifecycle().onActivityResults()
         .filter(activityResult -> activityResult.requestCode() == REQUEST_CODE_FULLSCREEN_REPLY && activityResult.isResultOk())
         .map(activityResult -> ComposeReplyActivity.extractActivityResult(activityResult.data()))
@@ -777,17 +781,16 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   private void setupReplyFAB() {
-    Relay<Boolean> fabSpaceAvailabilityChanges = BehaviorRelay.create();
-    ScrollingRecyclerViewSheet.SheetScrollChangeListener sheetScrollChangeListener = sheetScrollY -> {
-      // TODO.
-      //float bylineBottom = submissionBylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
-      //boolean fabHasSpaceAvailable = bylineBottom < replyFAB.getTop();
-      //fabSpaceAvailabilityChanges.accept(fabHasSpaceAvailable);
-    };
-    commentListParentSheet.addOnSheetScrollChangeListener(sheetScrollChangeListener);
-    commentListParentSheet.post(() ->
-        sheetScrollChangeListener.onScrollChange(commentListParentSheet.currentScrollY())  // Initial value.
-    );
+    // TODO.
+    Observable<Boolean> fabSpaceAvailabilityChanges = Observable.just(true);
+    //Observable<Boolean> fabSpaceAvailabilityChanges = Observable.combineLatest(submissionCommentsAdapter.streamHeaderBinds(), commentListParentSheet.streamSheetScrollChanges(), Pair::create)
+    //    .takeUntil(submissionCommentsAdapter.streamHeaderUnbinds())
+    //    .map(pair -> {
+    //      SubmissionCommentsHeader.ViewHolder headerVH = pair.first();
+    //      Float sheetScrollY = pair.second();
+    //      float bylineBottom = headerVH.bylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
+    //      return bylineBottom < replyFAB.getTop();
+    //    });
 
     // Show the FAB while the keyboard is hidden and there's space available.
     submissionStream

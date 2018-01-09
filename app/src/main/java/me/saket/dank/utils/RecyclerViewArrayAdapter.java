@@ -60,7 +60,7 @@ public abstract class RecyclerViewArrayAdapter<T, VH extends RecyclerView.ViewHo
   /**
    * Updates this adapter's data set and refreshes the RecyclerView.
    */
-  public void updateDataAndNotifyDatasetChanged(List<T> items) {
+  public void updateDataAndNotifyDatasetChanged(@Nullable List<T> items) {
     this.items = items;
     notifyDataSetChanged();
     notifyChangesToDataStream();

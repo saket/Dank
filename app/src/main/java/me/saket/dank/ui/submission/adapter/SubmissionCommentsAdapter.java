@@ -43,7 +43,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   private final MarkdownHintOptions markdownHintOptions;
   private final MarkdownSpanPool markdownSpanPool;
 
-  // Click event streams.
+  // Event streams.
   private final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
   private final PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = PublishRelay.create();
   private final Relay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
@@ -54,6 +54,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   private final Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
   private final Relay<Object> headerClickStream = PublishRelay.create();
   private final Relay<Link> contentLinkClickStream = PublishRelay.create();
+  private final Relay<SubmissionCommentsHeader.ViewHolder> headerBindStream = PublishRelay.create();
+  private final Relay<SubmissionCommentsHeader.ViewHolder> headerUnbindStream = PublishRelay.create();
 
   @Inject
   public SubmissionCommentsAdapter(
@@ -173,7 +175,9 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
     switch (VIEW_TYPES[getItemViewType(position)]) {
       case SUBMISSION_HEADER:
-        ((SubmissionCommentsHeader.ViewHolder) holder).bind((SubmissionCommentsHeader.UiModel) getItem(position), submissionSwipeActionsProvider);
+        SubmissionCommentsHeader.ViewHolder headerVH = (SubmissionCommentsHeader.ViewHolder) holder;
+        headerVH.bind((SubmissionCommentsHeader.UiModel) getItem(position), submissionSwipeActionsProvider);
+        headerBindStream.accept(headerVH);
         break;
 
       case COMMENTS_LOADING_PROGRESS:
@@ -211,6 +215,9 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   public void onViewRecycled(RecyclerView.ViewHolder holder) {
     if (holder instanceof SubmissionCommentInlineReply.ViewHolder) {
       ((SubmissionCommentInlineReply.ViewHolder) holder).handleOnRecycle();
+    }
+    if (holder instanceof SubmissionCommentsHeader.ViewHolder) {
+      headerUnbindStream.accept(((SubmissionCommentsHeader.ViewHolder) holder));
     }
     super.onViewRecycled(holder);
   }
@@ -253,6 +260,16 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @CheckResult
   public Relay<ReplyItemViewBindEvent> streamReplyItemViewBinds() {
     return replyViewBindStream;
+  }
+
+  @CheckResult
+  public Relay<SubmissionCommentsHeader.ViewHolder> streamHeaderBinds() {
+    return headerBindStream;
+  }
+
+  @CheckResult
+  public Relay<SubmissionCommentsHeader.ViewHolder> streamHeaderUnbinds() {
+    return headerUnbindStream;
   }
 
   @CheckResult

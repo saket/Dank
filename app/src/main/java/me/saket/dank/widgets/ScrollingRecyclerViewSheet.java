@@ -3,6 +3,7 @@ package me.saket.dank.widgets;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.os.Handler;
+import android.support.annotation.CheckResult;
 import android.support.annotation.Px;
 import android.support.v4.view.NestedScrollingParent;
 import android.support.v7.widget.RecyclerView;
@@ -16,6 +17,7 @@ import android.widget.Scroller;
 import java.util.ArrayList;
 import java.util.List;
 
+import io.reactivex.Observable;
 import me.saket.dank.utils.Animations;
 
 /**
@@ -80,6 +82,18 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
    */
   public void addOnSheetScrollChangeListener(SheetScrollChangeListener listener) {
     scrollChangeListeners.add(listener);
+  }
+
+  @CheckResult
+  public Observable<Float> streamSheetScrollChanges() {
+    return Observable.create(emitter -> {
+      SheetScrollChangeListener listener = newScrollY -> {
+        emitter.onNext(newScrollY);
+      };
+      addOnSheetScrollChangeListener(listener);
+      emitter.setCancellable(() -> removeOnSheetScrollChangeListener(listener));
+      post(() -> listener.onScrollChange(currentScrollY()));    // Initial value.
+    });
   }
 
   public void removeOnSheetScrollChangeListener(SheetScrollChangeListener listener) {

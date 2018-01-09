@@ -134,7 +134,7 @@ public interface SubmissionCommentsHeader {
 
   class ViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
     private final TextView titleView;
-    private final TextView bylineView;
+    public final TextView bylineView;
     private final TextView selfTextView;
     private final ViewGroup contentLinkView;
     private final ImageView contentLinkIconView;
