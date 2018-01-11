@@ -88,7 +88,9 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
         SubmissionComment.UiModel oldComment = (SubmissionComment.UiModel) oldItem;
         SubmissionComment.UiModel newComment = (SubmissionComment.UiModel) newItem;
 
-        if (oldComment.isCollapsed() == newComment.isCollapsed() && !oldComment.byline().equals(newComment.byline())) {
+        if (oldComment.isCollapsed() == newComment.isCollapsed() && (!oldComment.byline().equals(newComment.byline())
+            || oldComment.extraInfoForEquality().voteScore() != newComment.extraInfoForEquality().voteScore()))
+        {
           partialChanges.add(SubmissionComment.PartialChange.BYLINE);
           return partialChanges;
         } else {

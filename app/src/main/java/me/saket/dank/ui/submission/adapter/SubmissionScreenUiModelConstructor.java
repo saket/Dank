@@ -33,7 +33,6 @@ import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionCommentRow;
-import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader.UiModel.ExtraInfoForEquality;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.Dates;
@@ -211,7 +210,9 @@ public class SubmissionScreenUiModelConstructor {
         .selfText(selfTextOptional)
         .optionalContentLinkModel(contentLinkUiModel)
         .originalSubmission(PostedOrInFlightContribution.from(submission))
-        .extraInfoForEquality(ExtraInfoForEquality.create(Pair.create(vote, pendingOrDefaultVote), postedAndPendingCommentCount))
+        .extraInfoForEquality(SubmissionCommentsHeader.UiModel.ExtraInfoForEquality.create(
+            Pair.create(vote, pendingOrDefaultVote),
+            postedAndPendingCommentCount))
         .build();
   }
 
@@ -245,6 +246,7 @@ public class SubmissionScreenUiModelConstructor {
     return commentUiModelBuilder(context, dankCommentNode.fullName(), dankCommentNode.isCollapsed(), dankCommentNode.commentNode().getDepth())
         .originalComment(PostedOrInFlightContribution.from(comment))
         .optionalPendingSyncReply(Optional.empty())
+        .extraInfoForEquality(SubmissionComment.UiModel.ExtraInfoForEquality.create(commentScore))
         .byline(byline)
         .body(commentBody)
         .build();
@@ -256,6 +258,7 @@ public class SubmissionScreenUiModelConstructor {
   private SubmissionComment.UiModel pendingSyncCommentUiModel(Context context, CommentPendingSyncReplyItem pendingSyncReplyRow) {
     PendingSyncReply pendingSyncReply = pendingSyncReplyRow.pendingSyncReply();
     CharSequence byline;
+    int commentScore = 1;
 
     if (pendingSyncReply.state() == PendingSyncReply.State.POSTED) {
       Optional<String> authorFlairText = Optional.empty();
@@ -266,7 +269,7 @@ public class SubmissionScreenUiModelConstructor {
           true,
           pendingSyncReply.createdTimeMillis(),
           VoteDirection.UPVOTE,
-          1,
+          commentScore,
           0,
           pendingSyncReplyRow.isCollapsed()
       );
@@ -302,6 +305,7 @@ public class SubmissionScreenUiModelConstructor {
     return commentUiModelBuilder(context, pendingSyncReplyRow.fullName(), pendingSyncReplyRow.isCollapsed(), pendingSyncReplyRow.depth())
         .originalComment(PostedOrInFlightContribution.createLocal(pendingSyncReply))
         .optionalPendingSyncReply(Optional.of(pendingSyncReply))
+        .extraInfoForEquality(SubmissionComment.UiModel.ExtraInfoForEquality.create(commentScore))
         .byline(byline)
         .body(commentBody)
         .build();

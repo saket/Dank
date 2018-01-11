@@ -64,6 +64,8 @@ public interface SubmissionComment {
 
     public abstract boolean isCollapsed();
 
+    public abstract ExtraInfoForEquality extraInfoForEquality();
+
     public static UiModel.Builder builder() {
       return new AutoValue_SubmissionComment_UiModel.Builder();
     }
@@ -101,7 +103,21 @@ public interface SubmissionComment {
 
       public abstract Builder optionalPendingSyncReply(Optional<PendingSyncReply> optionalReply);
 
+      public abstract Builder extraInfoForEquality(ExtraInfoForEquality extraInfo);
+
       public abstract UiModel build();
+    }
+
+    /**
+     * Triggers a change because {@link SpannableWithValueEquality} otherwise won't as it only compares text and not spans.
+     */
+    @AutoValue
+    public abstract static class ExtraInfoForEquality {
+      public abstract int voteScore();
+
+      public static ExtraInfoForEquality create(int voteScore) {
+        return new AutoValue_SubmissionComment_UiModel_ExtraInfoForEquality(voteScore);
+      }
     }
   }
 
