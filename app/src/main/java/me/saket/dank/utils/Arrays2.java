@@ -1,18 +1,22 @@
 package me.saket.dank.utils;
 
-import android.support.annotation.Nullable;
-
 import java.lang.reflect.Array;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
+
+import io.reactivex.Observable;
+import io.reactivex.ObservableConverter;
 
 /**
  * Utility methods for arrays.
  */
 public class Arrays2 {
 
-  public static <T> T[] toArray(@Nullable Collection<?> collection, Class<T> tClass) {
+  public static <T> T[] toArray(Collection<?> collection, Class<T> tClass) {
+    //noinspection ConstantConditions
     if (collection == null) {
-      return null;
+      throw new NullPointerException();
     }
 
     //noinspection unchecked
@@ -20,5 +24,9 @@ public class Arrays2 {
     //noinspection SuspiciousToArrayCall
     result = collection.toArray(result);
     return result;
+  }
+
+  public static <T> ObservableConverter<List<T>, Observable<List<T>>> immutable() {
+    return upstream -> upstream.map(items -> Collections.unmodifiableList(items));
   }
 }

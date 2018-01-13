@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission.adapter;
 
+import android.annotation.SuppressLint;
 import android.support.annotation.CheckResult;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -29,9 +30,12 @@ import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
+import timber.log.Timber;
 
 public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<SubmissionScreenUiModel, RecyclerView.ViewHolder> {
 
+  public static final long ID_MEDIA_CONTENT_LOAD_ERROR = -98;
+  public static final long ID_COMMENTS_LOAD_INDIDACTOR = -99;
   private static final SubmissionCommentRowType[] VIEW_TYPES = SubmissionCommentRowType.values();
 
   // Injected by Dagger.
@@ -110,8 +114,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         mediaLoadErrorHolder.setupClickStream(mediaContentLoadRetryClickStream);
         return mediaLoadErrorHolder;
 
-      case COMMENTS_LOADING_PROGRESS:
-        return SubmissionCommentsLoadingProgress.ViewHolder.create(inflater, parent);
+      case COMMENTS_LOAD_INDICATOR:
+        return SubmissionCommentsLoadIndicator.ViewHolder.create(inflater, parent);
 
       case USER_COMMENT:
         SubmissionComment.ViewHolder commentHolder = SubmissionComment.ViewHolder.create(inflater, parent);
@@ -146,10 +150,11 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     }
   }
 
+  @SuppressLint("NewApi")
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
     if (!payloads.isEmpty()) {
-      switch (VIEW_TYPES[getItemViewType(position)]) {
+      switch (getItem(position).type()) {
         case SUBMISSION_HEADER:
           SubmissionCommentsHeader.UiModel headerModel = (SubmissionCommentsHeader.UiModel) getItem(position);
           SubmissionCommentsHeader.ViewHolder headerHolder = (SubmissionCommentsHeader.ViewHolder) holder;
@@ -157,19 +162,30 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
           break;
 
         case USER_COMMENT:
-          SubmissionComment.UiModel commentModel = (SubmissionComment.UiModel) getItem(position);
-          SubmissionComment.ViewHolder commentHolder = (SubmissionComment.ViewHolder) holder;
-          commentHolder.handlePartialChanges(payloads, commentModel);
+          if (((List) payloads.get(0)).get(0) instanceof SubmissionCommentsHeader.PartialChange) {
+            Timber.w("Item: %s", getItem(position));
+            Timber.w("Item type: %s", getItem(position).type());
+            Timber.i("Payloads:");
+            payloads.forEach(payload -> {
+              Timber.i("payload: %s", payload);
+            });
+
+            Timber.w("WRRROONNGG PAYLOADS!");
+
+          } else {
+            SubmissionComment.UiModel commentModel = (SubmissionComment.UiModel) getItem(position);
+            SubmissionComment.ViewHolder commentHolder = (SubmissionComment.ViewHolder) holder;
+            commentHolder.handlePartialChanges(payloads, commentModel);
+          }
           break;
 
-        case COMMENTS_LOADING_PROGRESS:
+        case COMMENTS_LOAD_INDICATOR:
         case INLINE_REPLY:
         case LOAD_MORE_COMMENTS:
-          throw new UnsupportedOperationException("Partial change not supported yet for " + VIEW_TYPES[getItemViewType(position)]
-              + ", payload: " + payloads);
+          throw new UnsupportedOperationException("Partial change not supported yet for " + getItem(position).type() + ", payload: " + payloads);
 
         default:
-          throw new UnsupportedOperationException("Unknown view type: " + VIEW_TYPES[getItemViewType(position)]);
+          throw new UnsupportedOperationException("Unknown view type: " + getItem(position).type());
       }
 
     } else {
@@ -179,7 +195,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-    switch (VIEW_TYPES[getItemViewType(position)]) {
+    switch (getItem(position).type()) {
       case SUBMISSION_HEADER:
         SubmissionCommentsHeader.ViewHolder headerVH = (SubmissionCommentsHeader.ViewHolder) holder;
         headerVH.bind((SubmissionCommentsHeader.UiModel) getItem(position), submissionSwipeActionsProvider);
@@ -190,8 +206,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         ((SubmissionMediaContentLoadError.ViewHolder) holder).bind((SubmissionMediaContentLoadError.UiModel) getItem(position));
         break;
 
-      case COMMENTS_LOADING_PROGRESS:
-        ((SubmissionCommentsLoadingProgress.ViewHolder) holder).bind((SubmissionCommentsLoadingProgress.UiModel) getItem(position));
+      case COMMENTS_LOAD_INDICATOR:
+        ((SubmissionCommentsLoadIndicator.ViewHolder) holder).bind((SubmissionCommentsLoadIndicator.UiModel) getItem(position));
         break;
 
       case USER_COMMENT:

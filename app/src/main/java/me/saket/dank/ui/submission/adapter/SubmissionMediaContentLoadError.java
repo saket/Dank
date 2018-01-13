@@ -18,7 +18,6 @@ import me.saket.dank.widgets.AnimatedProgressBar;
 public interface SubmissionMediaContentLoadError {
 
   Object NOTHING = LifecycleStreams.NOTHING;
-  long ADAPTER_ID = -99L;
 
   @AutoValue
   abstract class UiModel implements SubmissionScreenUiModel {
@@ -30,12 +29,17 @@ public interface SubmissionMediaContentLoadError {
     public abstract int errorIconRes();
 
     @Override
+    public long adapterId() {
+      return SubmissionCommentsAdapter.ID_MEDIA_CONTENT_LOAD_ERROR;
+    }
+
+    @Override
     public SubmissionCommentRowType type() {
       return SubmissionCommentRowType.MEDIA_CONTENT_LOAD_ERROR;
     }
 
     public static UiModel create(String title, String byline, int errorIconRes) {
-      return new AutoValue_SubmissionMediaContentLoadError_UiModel(ADAPTER_ID, title, byline, errorIconRes);
+      return new AutoValue_SubmissionMediaContentLoadError_UiModel(title, byline, errorIconRes);
     }
   }
 

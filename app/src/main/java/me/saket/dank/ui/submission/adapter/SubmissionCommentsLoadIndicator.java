@@ -9,23 +9,22 @@ import com.google.auto.value.AutoValue;
 
 import me.saket.dank.R;
 
-/**
- * Progress indicator for a submission's comments, shown right below the header.
- */
-public interface SubmissionCommentsLoadingProgress {
+public interface SubmissionCommentsLoadIndicator {
 
   @AutoValue
   abstract class UiModel implements SubmissionScreenUiModel {
     @Override
-    public abstract long adapterId();
+    public long adapterId() {
+      return SubmissionCommentsAdapter.ID_COMMENTS_LOAD_INDIDACTOR;
+    }
 
     @Override
     public SubmissionCommentRowType type() {
-      return SubmissionCommentRowType.COMMENTS_LOADING_PROGRESS;
+      return SubmissionCommentRowType.COMMENTS_LOAD_INDICATOR;
     }
 
-    public static UiModel create(long adapterId) {
-      return new AutoValue_SubmissionCommentsLoadingProgress_UiModel(adapterId);
+    public static UiModel create() {
+      return new AutoValue_SubmissionCommentsLoadIndicator_UiModel();
     }
   }
 
@@ -38,6 +37,8 @@ public interface SubmissionCommentsLoadingProgress {
       super(itemView);
     }
 
-    public void bind(UiModel uiModel) {}
+    public void bind(UiModel model) {
+      // Nothing to do here.
+    }
   }
 }

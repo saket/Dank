@@ -148,4 +148,55 @@ public abstract class Optional<T> {
         throw Exceptions.propagate(e);
       }
   }
+
+  /**
+   * Return the value if present, otherwise return {@code other}.
+   *
+   * @param other the value to be returned if there is no value present, may be null
+   * @return the value, if present, otherwise {@code other}
+   */
+  public T orElse(T other) {
+    return value() != null ? value() : other;
+  }
+
+  /**
+   * If a value is present, apply the provided mapping function to it,
+   * and if the result is non-null, return an {@code Optional} describing the
+   * result.  Otherwise return an empty {@code Optional}.
+   *
+   * @param <U>    The type of the result of the mapping function.
+   * @param mapper a mapping function to apply to the value, if present.
+   * @return an {@code Optional} describing the result of applying a mapping
+   * function to the value of this {@code Optional}, if a value is present,
+   * otherwise an empty {@code Optional}.
+   * @throws NullPointerException if the mapping function is null.
+   * @apiNote This method supports post-processing on optional changeEvents, without
+   * the need to explicitly check for a return status.  For example, the
+   * following code traverses a stream of file names, selects one that has
+   * not yet been processed, and then opens that file, returning an
+   * {@code Optional<FileInputStream>}:
+   * <p>
+   * <pre>{@code
+   *     Optional<FileInputStream> fis =
+   *         names.stream().filter(name -> !isProcessedYet(name))
+   *                       .findFirst()
+   *                       .map(name -> new FileInputStream(name));
+   * }</pre>
+   * <p>
+   * Here, {@code findFirst} returns an {@code Optional<String>}, and then
+   * {@code map} returns an {@code Optional<FileInputStream>} for the desired
+   * file if one exists.
+   */
+  public <U> Optional<U> map(io.reactivex.functions.Function<? super T, ? extends U> mapper) {
+    Objects.requireNonNull(mapper);
+    if (!isPresent())
+      return Optional.empty();
+    else {
+      try {
+        return Optional.ofNullable(mapper.apply(value()));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
 }

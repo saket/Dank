@@ -3,6 +3,7 @@ package me.saket.dank.ui.submission.adapter;
 import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
@@ -80,19 +81,20 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
         if (oldHeader.extraInfoForEquality().commentsCount().equals(newHeader.extraInfoForEquality().commentsCount())) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_COMMENT_COUNT);
         }
+
+        //Timber.i("--------------------");
+        //Timber.i(partialChanges.toString());
         return partialChanges;
       }
 
       case USER_COMMENT: {
-        List<SubmissionComment.PartialChange> partialChanges = new ArrayList<>(2);
         SubmissionComment.UiModel oldComment = (SubmissionComment.UiModel) oldItem;
         SubmissionComment.UiModel newComment = (SubmissionComment.UiModel) newItem;
 
         if (oldComment.isCollapsed() == newComment.isCollapsed() && (!oldComment.byline().equals(newComment.byline())
             || oldComment.extraInfoForEquality().voteScore() != newComment.extraInfoForEquality().voteScore()))
         {
-          partialChanges.add(SubmissionComment.PartialChange.BYLINE);
-          return partialChanges;
+          return Collections.singletonList(SubmissionComment.PartialChange.BYLINE);
         } else {
           // In case of comment collapse, a full re-bind is required AND the
           // change animation also needs to be played to show change in body size.

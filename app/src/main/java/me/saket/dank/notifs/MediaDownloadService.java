@@ -327,7 +327,7 @@ public class MediaDownloadService extends Service {
         .setOngoing(false)
         .setLocalOnly(true)   // Hide from wearables.
         .setGroup(NotificationConstants.MEDIA_DOWNLOAD_GROUP)
-        .setWhen(failedDownloadJob.timestamp()) // TODO: set this.
+        .setWhen(failedDownloadJob.timestamp())
         .setColor(ContextCompat.getColor(this, R.color.notification_icon_color))
         .setContentIntent(retryPendingIntent)
         .setAutoCancel(false)

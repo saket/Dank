@@ -407,10 +407,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // DB subscription.
     // We suspend the listener while a submission is active so that this list doesn't get updated in background.
-    RxExpandablePage.streamCollapses(submissionPageLayout)
+    RxExpandablePage.collapses(submissionPageLayout)
         .switchMap(o -> submissionFolderStream
             .switchMap(folder -> submissionRepository.submissions(folder).subscribeOn(io()))
-            .takeUntil(RxExpandablePage.streamPreExpansions(submissionPageLayout))
+            .takeUntil(RxExpandablePage.preExpansions(submissionPageLayout))
         )
         .takeUntil(lifecycle().onDestroy())
         .subscribe(cachedSubmissionStream);

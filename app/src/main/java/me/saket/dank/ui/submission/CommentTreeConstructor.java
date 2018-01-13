@@ -2,116 +2,209 @@ package me.saket.dank.ui.submission;
 
 
 import static junit.framework.Assert.assertNotNull;
-import static me.saket.dank.utils.Commons.toImmutable;
+import static me.saket.dank.utils.Arrays2.immutable;
 
 import android.support.annotation.CheckResult;
 
-import com.jakewharton.rxbinding2.internal.Notification;
-import com.jakewharton.rxrelay2.PublishRelay;
-import com.jakewharton.rxrelay2.Relay;
-
+import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.ObservableTransformer;
 import me.saket.dank.data.PostedOrInFlightContribution;
-import me.saket.dank.data.VotingManager;
+import me.saket.dank.utils.RxHashSet;
+import timber.log.Timber;
 
 /**
  * Constructs comments to show in a submission. Ignores collapsed comments + adds reply fields + adds "load more"
  * & "continue thread ->" items.
  */
+@SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class CommentTreeConstructor {
 
-  private static final Set<String> collapsedContributionIds = new HashSet<>(50); // Comments that are collapsed.
-  private static final Set<String> loadingMoreContributionIds = new HashSet<>();                // Comments for which more replies are being fetched.
-  private static final Set<String> replyActiveForContributionIds = new HashSet<>();             // Comments for which reply fields are active.
+  private static final ActiveReplyIds ACTIVE_REPLY_IDS = new ActiveReplyIds();
+  private static final CollapsedCommentIds COLLAPSED_COMMENT_IDS = new CollapsedCommentIds(50);
+  private static final InFlightLoadMoreIds IN_FLIGHT_LOAD_MORE_IDS = new InFlightLoadMoreIds();
 
-  private final Map<String, List<PendingSyncReply>> pendingReplyMap = new HashMap<>();          // Key: comment full-name.
-  private final Relay<Object> changesRequiredStream = PublishRelay.create();
-  private final VotingManager votingManager;
-  private CommentNode rootCommentNode;
-  private Submission submission;
+  private final ReplyRepository replyRepository;
 
-  @Inject
-  public CommentTreeConstructor(VotingManager votingManager) {
-    this.votingManager = votingManager;
+  /** Contribution IDs for which inline replies are active. */
+  static class ActiveReplyIds extends RxHashSet<String> {
+    boolean isActive(Contribution parentContribution) {
+      return contains(idForTogglingCollapse(parentContribution));
+    }
+
+    public boolean isActive(PostedOrInFlightContribution contribution) {
+      return contains(contribution.idForTogglingCollapse());
+    }
+
+    public void showFor(PostedOrInFlightContribution parentContribution) {
+      add(parentContribution.idForTogglingCollapse());
+    }
+
+    public void hideFor(PostedOrInFlightContribution parentContribution) {
+      remove(parentContribution.idForTogglingCollapse());
+    }
   }
 
-  public void update(Submission submission, CommentNode rootCommentNode, List<PendingSyncReply> pendingReplies) {
-    this.submission = submission;
-    this.rootCommentNode = rootCommentNode;
+  /** Comment IDs that are collapsed. */
+  static class CollapsedCommentIds extends RxHashSet<String> {
+    private boolean changeEventsEnabled = true;
 
-    // Build a map of pending replies so that they can later be accessed at o(1).
-    pendingReplyMap.clear();
+    public CollapsedCommentIds(int initialCapacity) {
+      super(initialCapacity);
+    }
+
+    @Override
+    public Observable<Integer> changes() {
+      return super
+          .changes()
+          .filter(o -> {
+            if (!changeEventsEnabled) {
+              Timber.w("Filtering collapse change event");
+            }
+            return changeEventsEnabled;
+          });
+    }
+
+    public boolean isCollapsed(String commentFullName) {
+      return contains(commentFullName);
+    }
+
+    public boolean isCollapsed(Comment comment) {
+      return isCollapsed(idForTogglingCollapse(comment));
+    }
+
+    public boolean isCollapsed(PostedOrInFlightContribution contribution) {
+      return isCollapsed(contribution.idForTogglingCollapse());
+    }
+
+    public void expand(PostedOrInFlightContribution contribution) {
+      boolean removed = remove(contribution.idForTogglingCollapse());
+      if (!removed) {
+        throw new AssertionError("This contribution isn't collapsed: " + contribution);
+      }
+    }
+
+    public void collapse(PostedOrInFlightContribution contribution) {
+      add(contribution.idForTogglingCollapse());
+    }
+
+    public void pauseChangeEvents() {
+      changeEventsEnabled = false;
+    }
+
+    public void resumeChangeEvents() {
+      changeEventsEnabled = true;
+    }
+  }
+
+  /** Comment IDs for which more child comments are being fetched. */
+  static class InFlightLoadMoreIds extends RxHashSet<String> {
+    public boolean isInFlightFor(CommentNode commentNode) {
+      return contains(idForTogglingCollapse(commentNode.getComment()));
+    }
+
+    public void showLoadMoreFor(PostedOrInFlightContribution parentContribution) {
+      add(parentContribution.idForTogglingCollapse());
+    }
+
+    public void hideLoadMoreFor(PostedOrInFlightContribution parentContribution) {
+      boolean removed = remove(parentContribution.idForTogglingCollapse());
+      if (!removed) {
+        throw new AssertionError("More comments weren't in flight for: " + parentContribution);
+      }
+    }
+  }
+
+  class PendingSyncRepliesMap extends HashMap<String, List<PendingSyncReply>> {
+    @Override
+    public List<PendingSyncReply> put(String key, List<PendingSyncReply> value) {
+      return super.put(key, value);
+    }
+
+    @Override
+    public boolean remove(Object key, Object value) {
+      return super.remove(key, value);
+    }
+
+    public boolean hasForParent(Comment parentComment) {
+      return containsKey(parentComment.getFullName());
+    }
+
+    public List<PendingSyncReply> getForParent(Comment parentComment) {
+      return get(parentComment.getFullName());
+    }
+  }
+
+  @Inject
+  public CommentTreeConstructor(ReplyRepository replyRepository) {
+    this.replyRepository = replyRepository;
+  }
+
+  @CheckResult
+  public ObservableTransformer<Submission, List<SubmissionCommentRow>> stream() {
+    return submissions -> {
+      Observable<PendingSyncRepliesMap> pendingSyncRepliesMaps = submissions
+          .distinctUntilChanged()
+          .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
+          .map(replyList -> createPendingSyncReplyMap(replyList));
+
+      Observable<?> rowVisibilityChanges = Observable.merge(
+          ACTIVE_REPLY_IDS.changes(),
+          COLLAPSED_COMMENT_IDS.changes(),
+          IN_FLIGHT_LOAD_MORE_IDS.changes()
+      );
+
+      return Observable
+          .combineLatest(
+              submissions,
+              pendingSyncRepliesMaps,
+              rowVisibilityChanges,
+              (submission, pendingSyncRepliesMap, o) -> constructComments(submission, pendingSyncRepliesMap))
+          .as(immutable());
+    };
+  }
+
+  // Key: comment full-name.
+  private PendingSyncRepliesMap createPendingSyncReplyMap(List<PendingSyncReply> pendingReplies) {
+    PendingSyncRepliesMap pendingReplyMap = new PendingSyncRepliesMap();
+
     for (PendingSyncReply pendingSyncReply : pendingReplies) {
       String parentCommentFullName = pendingSyncReply.parentContributionFullName();
 
       if (!pendingReplyMap.containsKey(parentCommentFullName)) {
-        pendingReplyMap.put(parentCommentFullName, new ArrayList<>());
+        pendingReplyMap.put(parentCommentFullName, new ArrayList<>(4));
       }
-
       List<PendingSyncReply> existingReplies = pendingReplyMap.get(parentCommentFullName);
       existingReplies.add(pendingSyncReply);
       pendingReplyMap.put(parentCommentFullName, existingReplies);
     }
-
-    changesRequiredStream.accept(Notification.INSTANCE);
-  }
-
-  public void reset() {
-    if (rootCommentNode != null) {
-      changesRequiredStream.accept(Notification.INSTANCE);
-    }
-    rootCommentNode = null;
-  }
-
-  @CheckResult
-  public Observable<List<SubmissionCommentRow>> streamTreeUpdates() {
-    return changesRequiredStream.mergeWith(votingManager.streamChanges().filter(o -> submission != null))
-        .map(o -> {
-          if (submission == null) {
-            throw new AssertionError("How did we even reach here??");
-          }
-          return o;
-        })
-        .map(o -> constructComments())
-        .map(toImmutable());
+    return pendingReplyMap;
   }
 
   /**
    * Collapse/expand a comment.
    */
-  public void toggleCollapse(PostedOrInFlightContribution contribution) {
+  void toggleCollapse(PostedOrInFlightContribution contribution) {
     assertNotNull(contribution.idForTogglingCollapse());
 
-    if (isCollapsed(contribution)) {
-      collapsedContributionIds.remove(contribution.idForTogglingCollapse());
+    if (COLLAPSED_COMMENT_IDS.isCollapsed(contribution)) {
+      COLLAPSED_COMMENT_IDS.expand(contribution);
     } else {
-      collapsedContributionIds.add(contribution.idForTogglingCollapse());
+      COLLAPSED_COMMENT_IDS.collapse(contribution);
     }
-    changesRequiredStream.accept(Notification.INSTANCE);
   }
 
-  private boolean isCollapsed(String commentRowFullName) {
-    return collapsedContributionIds.contains(commentRowFullName);
-  }
-
-  public boolean isCollapsed(PostedOrInFlightContribution contribution) {
-    return isCollapsed(contribution.idForTogglingCollapse());
-  }
-
-  boolean isCollapsed(Contribution contribution) {
-    return isCollapsed(idForTogglingCollapse(contribution));
+  boolean isCollapsed(PostedOrInFlightContribution contribution) {
+    return COLLAPSED_COMMENT_IDS.isCollapsed(contribution);
   }
 
   /**
@@ -119,99 +212,91 @@ public class CommentTreeConstructor {
    *
    * @param parentContribution for which more child nodes are being fetched.
    */
-  public void setMoreCommentsLoading(PostedOrInFlightContribution parentContribution, boolean loading) {
+  void setMoreCommentsLoading(PostedOrInFlightContribution parentContribution, boolean loading) {
     if (parentContribution.idForTogglingCollapse() == null) {
       throw new AssertionError();
     }
 
     if (loading) {
-      loadingMoreContributionIds.add(parentContribution.idForTogglingCollapse());
+      IN_FLIGHT_LOAD_MORE_IDS.showLoadMoreFor(parentContribution);
     } else {
-      loadingMoreContributionIds.remove(parentContribution.idForTogglingCollapse());
+      IN_FLIGHT_LOAD_MORE_IDS.hideLoadMoreFor(parentContribution);
     }
-    changesRequiredStream.accept(Notification.INSTANCE);
-  }
-
-  public boolean areMoreCommentsLoadingFor(CommentNode commentNode) {
-    return loadingMoreContributionIds.contains(idForTogglingCollapse(commentNode));
   }
 
   /**
    * See {@link PostedOrInFlightContribution.ContributionFetchedFromRemote#idForTogglingCollapse()}
    */
-  private String idForTogglingCollapse(CommentNode commentNode) {
-    return commentNode.getComment().getFullName();
-  }
-
-  /**
-   * See {@link PostedOrInFlightContribution.ContributionFetchedFromRemote#idForTogglingCollapse()}
-   */
-  private String idForTogglingCollapse(Contribution contribution) {
+  private static String idForTogglingCollapse(Contribution contribution) {
     return contribution.getFullName();
   }
 
   /**
    * Show reply field for a comment and also expand any hidden comments.
    */
-  public void showReplyAndExpandComments(PostedOrInFlightContribution parentContribution) {
-    replyActiveForContributionIds.add(parentContribution.idForTogglingCollapse());
-    collapsedContributionIds.remove(parentContribution.idForTogglingCollapse());
-    changesRequiredStream.accept(Notification.INSTANCE);
+  void showReplyAndExpandComments(PostedOrInFlightContribution parentContribution) {
+    if (COLLAPSED_COMMENT_IDS.isCollapsed(parentContribution)) {
+      COLLAPSED_COMMENT_IDS.pauseChangeEvents();
+      COLLAPSED_COMMENT_IDS.expand(parentContribution);
+      COLLAPSED_COMMENT_IDS.resumeChangeEvents();
+    }
+
+    ACTIVE_REPLY_IDS.showFor(parentContribution);
   }
 
   /**
    * Show reply field for the submission or a comment.
    */
-  public void showReply(PostedOrInFlightContribution parentContribution) {
-    replyActiveForContributionIds.add(parentContribution.idForTogglingCollapse());
-    changesRequiredStream.accept(Notification.INSTANCE);
+  void showReply(PostedOrInFlightContribution parentContribution) {
+    ACTIVE_REPLY_IDS.showFor(parentContribution);
   }
 
   /**
    * Hide reply field for a comment.
    */
-  public void hideReply(PostedOrInFlightContribution parentContribution) {
-    replyActiveForContributionIds.remove(parentContribution.idForTogglingCollapse());
-    changesRequiredStream.accept(Notification.INSTANCE);
+  void hideReply(PostedOrInFlightContribution parentContribution) {
+    ACTIVE_REPLY_IDS.hideFor(parentContribution);
   }
 
-  boolean isReplyActiveFor(Contribution parentContribution) {
-    return replyActiveForContributionIds.contains(idForTogglingCollapse(parentContribution));
-  }
-
-  public boolean isReplyActiveFor(PostedOrInFlightContribution contribution) {
-    return replyActiveForContributionIds.contains(contribution.idForTogglingCollapse());
+  boolean isReplyActiveFor(PostedOrInFlightContribution contribution) {
+    return ACTIVE_REPLY_IDS.isActive(contribution);
   }
 
   /**
    * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
    */
-  private List<SubmissionCommentRow> constructComments() {
-    //Timber.d("-----------------------------------------------");
+  private List<SubmissionCommentRow> constructComments(Submission submission, PendingSyncRepliesMap pendingSyncRepliesMap) {
     int totalRowsSize = 0;
-    if (isReplyActiveFor(submission)) {
+    if (ACTIVE_REPLY_IDS.isActive(submission)) {
       totalRowsSize += 1;
     }
+
+    CommentNode rootCommentNode = submission.getComments();
     if (rootCommentNode != null) {
       totalRowsSize += rootCommentNode.getTotalSize();
     }
 
     ArrayList<SubmissionCommentRow> flattenComments = new ArrayList<>(totalRowsSize);
-    if (isReplyActiveFor(submission)) {
+    if (ACTIVE_REPLY_IDS.isActive(submission)) {
       flattenComments.add(CommentInlineReplyItem.create(submission, 0));
     }
 
     if (rootCommentNode == null) {
       return flattenComments;
     } else {
-      return constructComments(flattenComments, rootCommentNode);
+      return constructComments(flattenComments, rootCommentNode, submission, pendingSyncRepliesMap);
     }
   }
 
   /**
    * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
    */
-  private List<SubmissionCommentRow> constructComments(List<SubmissionCommentRow> flattenComments, CommentNode nextNode) {
+  private List<SubmissionCommentRow> constructComments(
+      List<SubmissionCommentRow> flattenComments,
+      CommentNode nextNode,
+      Submission submission,
+      PendingSyncRepliesMap pendingSyncRepliesMap)
+  {
     //String indentation = "";
     //if (nextNode.getDepth() != 0) {
     //  for (int step = 0; step < nextNode.getDepth(); step++) {
@@ -219,8 +304,8 @@ public class CommentTreeConstructor {
     //  }
     //}
 
-    boolean isCommentNodeCollapsed = isCollapsed(nextNode.getComment());
-    boolean isReplyActive = isReplyActiveFor(nextNode.getComment());
+    boolean isCommentNodeCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(nextNode.getComment());
+    boolean isReplyActive = ACTIVE_REPLY_IDS.isActive(nextNode.getComment());
 
     if (nextNode.getDepth() != 0) {
       //Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getFullName(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
@@ -235,16 +320,15 @@ public class CommentTreeConstructor {
     }
 
     // Pending-sync replies.
-    String commentFullName = nextNode.getComment().getFullName();
-    if (!isCommentNodeCollapsed && pendingReplyMap.containsKey(commentFullName)) {
-      List<PendingSyncReply> pendingSyncReplies = pendingReplyMap.get(commentFullName);
+    if (!isCommentNodeCollapsed && pendingSyncRepliesMap.hasForParent(nextNode.getComment())) {
+      List<PendingSyncReply> pendingSyncReplies = pendingSyncRepliesMap.getForParent(nextNode.getComment());
       for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
         PendingSyncReply pendingSyncReply = pendingSyncReplies.get(i);
         String replyFullName = PostedOrInFlightContribution.idForTogglingCollapseForLocallyPostedReply(
             nextNode.getComment().getFullName(),
             pendingSyncReply.createdTimeMillis()
         );
-        boolean isReplyCollapsed = isCollapsed(replyFullName);
+        boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(replyFullName);
         int depth = nextNode.getDepth() + 1;
         flattenComments.add(CommentPendingSyncReplyItem.create(nextNode.getComment(), replyFullName, pendingSyncReply, isReplyCollapsed, depth));
       }
@@ -260,7 +344,7 @@ public class CommentTreeConstructor {
         List<CommentNode> childCommentsTree = nextNode.getChildren();
         for (int i = 0; i < childCommentsTree.size(); i++) {  // Intentionally avoiding thrashing Iterator objects.
           CommentNode node = childCommentsTree.get(i);
-          constructComments(flattenComments, node);
+          constructComments(flattenComments, node, submission, pendingSyncRepliesMap);
         }
 
         if (nextNode.hasMoreComments()) {
@@ -269,7 +353,7 @@ public class CommentTreeConstructor {
           //);
           //Timber.d("%s %s", indentation, nextNode.getMoreChildren().getChildrenIds());
           String nextNodeFullname = nextNode.getComment().getFullName();
-          flattenComments.add(LoadMoreCommentItem.create(nextNodeFullname, nextNode, areMoreCommentsLoadingFor(nextNode)));
+          flattenComments.add(LoadMoreCommentItem.create(nextNodeFullname, nextNode, IN_FLIGHT_LOAD_MORE_IDS.isInFlightFor(nextNode)));
         }
       }
       return flattenComments;

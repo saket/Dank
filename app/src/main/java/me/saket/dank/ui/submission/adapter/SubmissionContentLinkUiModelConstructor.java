@@ -59,6 +59,8 @@ public class SubmissionContentLinkUiModelConstructor {
   }
 
   /**
+   * Warning: this method manages its own threading.
+   *
    * TODO: Content description.
    * <p>
    * Emits multiple times:

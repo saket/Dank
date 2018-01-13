@@ -16,6 +16,20 @@ public class RxDiffUtils {
   {
     Pair<List<T>, DiffUtil.DiffResult> initialPair = Pair.createNullable(Collections.emptyList(), null);
     return upstream -> upstream
+        //.doOnNext(o -> {
+        //  boolean isImmutable = false;
+        //  try {
+        //    if (!o.isEmpty()) {
+        //      o.remove(0);
+        //    }
+        //  } catch (UnsupportedOperationException expected) {
+        //    isImmutable = true;
+        //  }
+        //
+        //  if (!isImmutable) {
+        //    throw new AssertionError("Non immutable list");
+        //  }
+        //})
         .scan(initialPair, (latestPair, nextItems) -> {
           DiffUtil.Callback callback = diffCallbacks.apply(latestPair.first(), nextItems);
           DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);

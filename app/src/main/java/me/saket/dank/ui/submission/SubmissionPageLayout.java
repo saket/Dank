@@ -49,11 +49,11 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
 import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -180,13 +180,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject CommentTreeConstructor commentTreeConstructor;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
-  private BehaviorRelay<Submission> submissionStream = BehaviorRelay.create();
+  private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Link> submissionContentStream = BehaviorRelay.create();
   private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
   private Relay<PostedOrInFlightContribution> inlineReplyStream = PublishRelay.create();
-  private Relay<Optional<Link>> contentLinkStream = BehaviorRelay.create();
+  private Relay<Optional<Link>> contentLinkStream = BehaviorRelay.createDefault(Optional.empty());
   private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
-  private Relay<Optional<ResolvedError>> mediaContentLoadErrors = BehaviorRelay.create();
+  private Relay<Optional<ResolvedError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
 
   private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
   private ExpandablePageLayout submissionPageLayout;
@@ -247,32 +247,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     setupStatusBarTint();
     setupReplyFAB();
     setupSoftInputModeChangesAnimation();
-
-    // Load comments when submission changes.
-    submissionRequestStream
-        .observeOn(mainThread())
-        .doOnNext(o -> commentsLoadProgressVisibleStream.accept(true))
-        .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
-            .flatMap(pair -> {
-              // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
-              // In that case, trigger another request with the correct sort.
-              DankSubmissionRequest updatedRequest = pair.first;
-              if (updatedRequest != submissionRequest) {
-                //noinspection ConstantConditions
-                submissionRequestStream.accept(updatedRequest);
-                return Observable.never();
-              } else {
-                //noinspection ConstantConditions
-                return Observable.just(pair.second);
-              }
-            })
-            .takeUntil(lifecycle().onPageAboutToCollapse())
-            .compose(RxUtils.applySchedulers())
-            .doOnNext(o -> commentsLoadProgressVisibleStream.accept(false))
-            .doOnError(error -> Timber.e(error))
-            .onErrorResumeNext(Observable.never()))
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(submissionStream);
   }
 
   @Nullable
@@ -282,10 +256,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     if (submissionRequestStream.getValue() != null) {
       outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
 
-      if (submissionStream.getValue() != null && submissionStream.getValue().getComments() == null) {
+      Optional<Submission> optionalSubmission = submissionStream.getValue();
+      Optional<CommentNode> optionalComments = optionalSubmission.map(Submission::getComments);
+      if (optionalSubmission.isPresent() && !optionalComments.isPresent()) {
         // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
         // show UI on orientation change, we unfortunately will have to manually retain this submission.
-        outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(submissionStream.getValue()));
+        outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(optionalSubmission.get()));
       }
     }
 
@@ -342,30 +318,44 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> commentRecyclerView.setAdapter(submissionCommentsAdapter));
 
-    // Add pending-sync replies to the comment tree.
-    submissionStream
-        .observeOn(io())
-        .switchMap(submissionWithComments -> replyRepository.streamPendingSyncReplies(ParentThread.of(submissionWithComments))
-            .map(pendingSyncReplies -> Pair.create(submissionWithComments, pendingSyncReplies)))
+    // Load comments when submission changes.
+    submissionRequestStream
+        .observeOn(mainThread())
+        .doOnNext(o -> commentsLoadProgressVisibleStream.accept(true))
+        .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
+            .flatMap(pair -> {
+              // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
+              // In that case, trigger another request with the correct sort.
+              DankSubmissionRequest updatedRequest = pair.first;
+              if (updatedRequest != submissionRequest) {
+                //noinspection ConstantConditions
+                submissionRequestStream.accept(updatedRequest);
+                return Observable.never();
+              } else {
+                //noinspection ConstantConditions
+                return Observable.just(pair.second);
+              }
+            })
+            .takeUntil(lifecycle().onPageAboutToCollapse())
+            .compose(RxUtils.applySchedulers())
+            .doOnNext(o -> commentsLoadProgressVisibleStream.accept(false))
+            .doOnError(error -> Timber.e(error))
+            .onErrorResumeNext(Observable.never()))
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(pair -> {
-          Submission submission = pair.first();
-          List<PendingSyncReply> pendingSyncReplies = pair.second();
-          commentTreeConstructor.update(submission, submission.getComments(), pendingSyncReplies);
-        });
+        .as(Optional.of())
+        .subscribe(submissionStream);
 
     // Adapter data-set.
     submissionScreenUiModelConstructor
         .stream(
             getContext(),
-            submissionStream.observeOn(io()),
-            contentLinkStream.observeOn(io()),
-            commentTreeConstructor.streamTreeUpdates().observeOn(io()),
+            commentTreeConstructor,
+            submissionStream,
+            contentLinkStream,
             mediaContentLoadErrors
         )
         .toFlowable(BackpressureStrategy.LATEST)
         .compose(RxDiffUtils.calculateDiff(CommentsDiffCallback::create))
-        .subscribeOn(io())
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroyFlowable())
         .onErrorResumeNext(error -> {
@@ -387,7 +377,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .startWith(LifecycleStreams.NOTHING)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> {
-          contentLinkStream.accept(Optional.empty());
           contentImageView.setVisibility(View.GONE);
           contentVideoViewContainer.setVisibility(View.GONE);
           toolbarBackground.setSyncScrollEnabled(false);
@@ -526,6 +515,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           // We're also removing the draft before sending it because even if the reply fails, it'll still
           // be present in the DB for the user to retry. Nothing will be lost.
           submissionStream
+              .map(Optional::get)
               .take(1)
               .flatMapCompletable(submission -> replyRepository.removeDraft(sendClickEvent.parentContribution())
                   //.doOnComplete(() -> Timber.i("Sending reply: %s", sendClickEvent.replyMessage()))
@@ -585,7 +575,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                 });
 
           } else {
-            return submissionRequestStream.zipWith(submissionStream, Pair::create)
+            return submissionRequestStream.zipWith(submissionStream.map(Optional::get), Pair::create)
                 .take(1)
                 .doOnNext(o -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentContribution(), true))
                 .flatMapCompletable(pair -> {
@@ -631,7 +621,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    */
   @CheckResult
   private Completable scrollToNewlyAddedReplyIfHidden(PostedOrInFlightContribution parentContribution) {
-    if (submissionStream.getValue().getFullName().equals(parentContribution.fullName())) {
+    if (submissionStream.getValue().get().getFullName().equals(parentContribution.fullName())) {
       // Submission reply.
       return Completable.fromAction(() -> commentRecyclerView.smoothScrollToPosition(0));
     }
@@ -815,7 +805,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
     RxView.clicks(replyFAB)
         .takeUntil(lifecycle().onDestroy())
-        .withLatestFrom(submissionStream, (o, submission) -> submission)
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), (o, submission) -> submission)
         .map(submission -> PostedOrInFlightContribution.from(submission))
         .subscribe(submissionInfo -> {
           if (!userSessionRepository.isUserLoggedIn()) {
@@ -834,7 +824,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             commentTreeConstructor.showReply(submissionInfo);
             inlineReplyStream.accept(submissionInfo);
           }
-        });
+        }, logError("reply FAB crash"));
   }
 
   /**
@@ -945,7 +935,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   public void populateUi(@Nullable Submission submission, DankSubmissionRequest submissionRequest) {
     // This will setup the title, byline and content immediately.
     if (submission != null) {
-      submissionStream.accept(submission);
+      submissionStream.accept(Optional.of(submission));
     }
 
     // This will load comments and then again update the title, byline and content.
@@ -958,6 +948,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     } else {
       // Wait till the submission is fetched before loading content.
       submissionStream
+          .filter(Optional::isPresent)
+          .map(Optional::get)
           .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
           .take(1)
           .takeUntil(lifecycle().onDestroy())
@@ -1123,19 +1115,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   public void onPageCollapsed() {
     contentVideoViewHolder.pausePlayback();
     onCollapseSubscriptions.clear();
-    commentTreeConstructor.reset();
 
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
 
-    submissionCommentsAdapter.updateDataAndNotifyDatasetChanged(null);
-
-    //noinspection ConstantConditions
-    if (((Callbacks) getContext()).submissionPageAnimationOptimizer().isOptimizationPending()) {
-      contentImageView.setVisibility(View.GONE);
-      contentVideoViewContainer.setVisibility(View.GONE);
-      toolbarBackground.setSyncScrollEnabled(false);
-    }
+    submissionStream.accept(Optional.empty());
+    contentLinkStream.accept(Optional.empty());
+    mediaContentLoadErrors.accept(Optional.empty());
   }
 
   @Deprecated

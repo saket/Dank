@@ -1,10 +1,12 @@
 package me.saket.dank.ui.submission.adapter;
 
+import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.Arrays2.immutable;
+
 import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
-import android.support.annotation.NonNull;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
@@ -15,18 +17,19 @@ import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.submission.CommentInlineReplyItem;
 import me.saket.dank.ui.submission.CommentPendingSyncReplyItem;
+import me.saket.dank.ui.submission.CommentTreeConstructor;
 import me.saket.dank.ui.submission.DankCommentNode;
 import me.saket.dank.ui.submission.LoadMoreCommentItem;
 import me.saket.dank.ui.submission.ParentThread;
@@ -52,7 +55,6 @@ public class SubmissionScreenUiModelConstructor {
   private final VotingManager votingManager;
   private final Markdown markdown;
   private final UserSessionRepository userSessionRepository;
-  private final ErrorResolver errorResolver;
 
   @Inject
   public SubmissionScreenUiModelConstructor(
@@ -60,103 +62,133 @@ public class SubmissionScreenUiModelConstructor {
       ReplyRepository replyRepository,
       VotingManager votingManager,
       Markdown markdown,
-      UserSessionRepository userSessionRepository,
-      ErrorResolver errorResolver)
+      UserSessionRepository userSessionRepository)
   {
     this.contentLinkUiModelConstructor = contentLinkUiModelConstructor;
     this.replyRepository = replyRepository;
     this.votingManager = votingManager;
     this.markdown = markdown;
     this.userSessionRepository = userSessionRepository;
-    this.errorResolver = errorResolver;
   }
 
+  /**
+   * @param optionalSubmissions Can emit twice. Once w/o comments and once with comments.
+   */
   @CheckResult
   public Observable<List<SubmissionScreenUiModel>> stream(
       Context context,
-      Observable<Submission> submissions,
+      CommentTreeConstructor commentTreeConstructor,
+      Observable<Optional<Submission>> optionalSubmissions,
       Observable<Optional<Link>> contentLinks,
-      Observable<List<SubmissionCommentRow>> commentRows,
       Observable<Optional<ResolvedError>> mediaContentLoadErrors)
   {
-    Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = contentLinks
-        .withLatestFrom(submissions, Pair::create)
-        .switchMap(pair -> {
-          Optional<Link> optionalLink = pair.first();
-          if (optionalLink.isPresent()) {
-            return contentLinkUiModelConstructor.streamLoad(context, optionalLink.get(), ImageWithMultipleVariants.of(pair.second().getThumbnails()))
-                .doOnError(e -> Timber.e(e))
-                .as(Optional.of());
-          } else {
-            return Observable.just(Optional.empty());
+    return optionalSubmissions
+        .distinctUntilChanged()
+        .switchMap(optional -> {
+          if (!optional.isPresent()) {
+            Timber.d("---------------------------------------");
+            return Observable.just(Collections.emptyList());
           }
-        });
+          Timber.d(optional.get().getTitle());
 
-    Observable<Integer> submissionPendingSyncReplyCounts = submissions
-        .switchMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
-        .map(pendingSyncReplies -> pendingSyncReplies.size());
+          Observable<Submission> submissions = optionalSubmissions
+              // Not sure why, but the parent switchMap() on submission change gets triggered
+              // after this chain receives an empty submission, so adding this extra takeWhile().
+              .takeWhile(optionalSub -> optionalSub.isPresent())
+              .map(submissionOptional -> submissionOptional.get());
 
-    Observable<SubmissionCommentsHeader.UiModel> submissionHeaderUiModels = Observable.combineLatest(
-        submissions,
-        submissionPendingSyncReplyCounts,
-        contentLinkUiModels,
-        votingManager.streamChanges(),
-        (submission, pendingSyncReplyCount, contentLinkUiModel, ignore) ->
-            headerUiModel(context, submission, pendingSyncReplyCount, contentLinkUiModel)
-    );
+          Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = contentLinks
+              .observeOn(io())
+              .withLatestFrom(submissions, Pair::create)
+              .switchMap(pair -> {
+                Optional<Link> contentLink = pair.first();
+                if (!contentLink.isPresent()) {
+                  return Observable.just(Optional.empty());
+                }
+                Submission submission = pair.second();
+                return contentLinkUiModelConstructor
+                    .streamLoad(context, contentLink.get(), ImageWithMultipleVariants.of(submission.getThumbnails()))
+                    .doOnError(e -> Timber.e(e, "Error while creating content link ui model"))
+                    .map(Optional::of);
+              });
 
-    Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModel = mediaContentLoadErrors
-        .map(optionalError -> optionalError.isPresent()
-            ? Optional.of(mediaContentLoadErrorUiModel(context, optionalError))
-            : Optional.empty()
-        );
+          Observable<Integer> submissionPendingSyncReplyCounts = submissions
+              .take(1)  // switch flatMap -> switchMap if we expect more than 1 emissions.
+              .observeOn(io())
+              .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
+              .map(pendingSyncReplies -> pendingSyncReplies.size());
 
-    Observable<List<SubmissionScreenUiModel>> commentRowUiModels = commentRows
-        .withLatestFrom(submissions.map(submission -> submission.getAuthor()), Pair::create)
-        .map(pair -> {
-          List<SubmissionCommentRow> rows = pair.first();
-          String submissionAuthor = pair.second();
+          Observable<SubmissionCommentsHeader.UiModel> headerUiModels = Observable.combineLatest(
+              votingManager.streamChanges().subscribeOn(io()).map(o -> context),
+              submissions.subscribeOn(io()),
+              submissionPendingSyncReplyCounts,
+              contentLinkUiModels,
+              this::headerUiModel
+          );
 
-          List<SubmissionScreenUiModel> uiModels = new ArrayList<>(rows.size());
-          for (SubmissionCommentRow row : rows) {
-            switch (row.type()) {
-              case USER_COMMENT:
-                uiModels.add(commentUiModel(context, ((DankCommentNode) row), submissionAuthor));
-                break;
+          Observable<List<SubmissionScreenUiModel>> commentRowUiModels = submissions
+              .observeOn(io())
+              .compose(commentTreeConstructor.stream())
+              .withLatestFrom(submissions.map(submission -> submission.getAuthor()), Pair::create)
+              .map(pair -> commentRowUiModels(context, pair.first(), pair.second()));
 
-              case PENDING_SYNC_REPLY:
-                uiModels.add(pendingSyncCommentUiModel(context, ((CommentPendingSyncReplyItem) row)));
-                break;
+          Observable<Optional<SubmissionCommentsLoadIndicator.UiModel>> commentsLoadIndicatorUiModels = submissions
+              .map(submission -> submission.getComments() == null
+                  ? Optional.of(SubmissionCommentsLoadIndicator.UiModel.create())
+                  : Optional.empty());
 
-              case INLINE_REPLY:
-                String loggedInUserName = userSessionRepository.loggedInUserName();
-                uiModels.add(inlineReplyUiModel(context, ((CommentInlineReplyItem) row), loggedInUserName));
-                break;
+          Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModels = mediaContentLoadErrors
+              .map(optionalError -> optionalError.isPresent()
+                  ? Optional.of(mediaContentLoadErrorUiModel(context, optionalError))
+                  : Optional.empty()
+              );
 
-              case LOAD_MORE_COMMENTS:
-                uiModels.add(loadMoreUiModel(context, ((LoadMoreCommentItem) row)));
-                break;
-
-              default:
-                throw new AssertionError("Unknown type: " + row.type());
-            }
-          }
-          return uiModels;
-        });
-
-    return Observable.combineLatest(submissionHeaderUiModels, contentLoadErrorUiModel, commentRowUiModels,
-        (header, optionalError, more) -> {
-          ArrayList<SubmissionScreenUiModel> concatenatedItems = new ArrayList<>(2 + more.size());
-          concatenatedItems.add(header);
-          optionalError.ifPresent(error -> {
-            concatenatedItems.add(error);
-          });
-          concatenatedItems.addAll(more);
-          return concatenatedItems;
+          return Observable.combineLatest(
+              headerUiModels,
+              contentLoadErrorUiModels,
+              commentsLoadIndicatorUiModels,
+              commentRowUiModels,
+              (header, optionalError, optionalCommentsLoadIndicator, commentRowModels) -> {
+                List<SubmissionScreenUiModel> allItems = new ArrayList<>(3 + commentRowModels.size());
+                allItems.add(header);
+                optionalError.ifPresent(error -> allItems.add(error));
+                optionalCommentsLoadIndicator.ifPresent(commentsLoadIndicator -> allItems.add(commentsLoadIndicator));
+                allItems.addAll(commentRowModels);
+                return allItems;
+              })
+              .subscribeOn(io())
+              .as(immutable());
         });
   }
 
-  @NonNull
+  private List<SubmissionScreenUiModel> commentRowUiModels(Context context, List<SubmissionCommentRow> rows, String submissionAuthor) {
+    List<SubmissionScreenUiModel> uiModels = new ArrayList<>(rows.size());
+    for (SubmissionCommentRow row : rows) {
+      switch (row.type()) {
+        case USER_COMMENT:
+          uiModels.add(commentUiModel(context, ((DankCommentNode) row), submissionAuthor));
+          break;
+
+        case PENDING_SYNC_REPLY:
+          uiModels.add(pendingSyncCommentUiModel(context, ((CommentPendingSyncReplyItem) row)));
+          break;
+
+        case INLINE_REPLY:
+          String loggedInUserName = userSessionRepository.loggedInUserName();
+          uiModels.add(inlineReplyUiModel(context, ((CommentInlineReplyItem) row), loggedInUserName));
+          break;
+
+        case LOAD_MORE_COMMENTS:
+          uiModels.add(loadMoreUiModel(context, ((LoadMoreCommentItem) row)));
+          break;
+
+        default:
+          throw new AssertionError("Unknown type: " + row.type());
+      }
+    }
+    return uiModels;
+  }
+
   private SubmissionMediaContentLoadError.UiModel mediaContentLoadErrorUiModel(Context context, Optional<ResolvedError> optionalThrowable) {
     // FIXME: The error message says "Reddit" even for imgur, and other services.
     String title = context.getString(optionalThrowable.get().errorMessageRes());
