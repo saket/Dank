@@ -948,6 +948,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       loadSubmissionContent(submission);
 
     } else {
+      contentLoadProgressView.show();
+
       // Wait till the submission is fetched before loading content.
       submissionStream
           .filter(Optional::isPresent)
