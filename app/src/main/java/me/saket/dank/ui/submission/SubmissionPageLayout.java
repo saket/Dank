@@ -786,11 +786,17 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     submissionStream
         .observeOn(mainThread())
         .doOnNext(o -> replyFAB.show())
-        .switchMap(o -> Observable.combineLatest(
-            keyboardVisibilityChangeStream.map(event -> event.visible()),
-            fabSpaceAvailabilityChanges,
-            (keyboardVisible, spaceAvailable) -> !keyboardVisible && spaceAvailable
-        ))
+        .switchMap(submission -> {
+          if (submission.isPresent()) {
+            return Observable.combineLatest(
+                keyboardVisibilityChangeStream.map(event -> event.visible()),
+                fabSpaceAvailabilityChanges,
+                (keyboardVisible, spaceAvailable) -> !keyboardVisible && spaceAvailable
+            );
+          } else {
+            return Observable.just(false);
+          }
+        })
         .takeUntil(lifecycle().onDestroy())
         .subscribe(canShowReplyFAB -> {
           if (canShowReplyFAB) {
