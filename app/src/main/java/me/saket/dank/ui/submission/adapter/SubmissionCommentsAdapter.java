@@ -29,6 +29,7 @@ import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.DankLinkMovementMethod;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import timber.log.Timber;
 
@@ -58,8 +59,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   private final Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
   private final Relay<Object> headerClickStream = PublishRelay.create();
   private final Relay<Link> contentLinkClickStream = PublishRelay.create();
-  private final Relay<SubmissionCommentsHeader.ViewHolder> headerBindStream = PublishRelay.create();
-  private final Relay<SubmissionCommentsHeader.ViewHolder> headerUnbindStream = PublishRelay.create();
+  private final Relay<Optional<SubmissionCommentsHeader.ViewHolder>> headerBindStream = PublishRelay.create();
   private final Relay<Object> mediaContentLoadRetryClickStream = PublishRelay.create();
 
   @Inject
@@ -199,7 +199,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
       case SUBMISSION_HEADER:
         SubmissionCommentsHeader.ViewHolder headerVH = (SubmissionCommentsHeader.ViewHolder) holder;
         headerVH.bind((SubmissionCommentsHeader.UiModel) getItem(position), submissionSwipeActionsProvider);
-        headerBindStream.accept(headerVH);
+        headerBindStream.accept(Optional.of(headerVH));
         break;
 
       case MEDIA_CONTENT_LOAD_ERROR:
@@ -243,7 +243,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
       ((SubmissionCommentInlineReply.ViewHolder) holder).handleOnRecycle();
     }
     if (holder instanceof SubmissionCommentsHeader.ViewHolder) {
-      headerUnbindStream.accept(((SubmissionCommentsHeader.ViewHolder) holder));
+      headerBindStream.accept(Optional.empty());
     }
     super.onViewRecycled(holder);
   }
@@ -289,13 +289,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
-  public Relay<SubmissionCommentsHeader.ViewHolder> streamHeaderBinds() {
+  public Relay<Optional<SubmissionCommentsHeader.ViewHolder>> streamHeaderBinds() {
     return headerBindStream;
-  }
-
-  @CheckResult
-  public Relay<SubmissionCommentsHeader.ViewHolder> streamHeaderUnbinds() {
-    return headerUnbindStream;
   }
 
   @CheckResult

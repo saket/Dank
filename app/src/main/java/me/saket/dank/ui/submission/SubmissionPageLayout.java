@@ -776,24 +776,28 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   private void setupReplyFAB() {
-    // TODO.
-    Observable<Boolean> fabSpaceAvailabilityChanges = Observable.just(true);
-    //Observable<Boolean> fabSpaceAvailabilityChanges = Observable.combineLatest(submissionCommentsAdapter.streamHeaderBinds(), commentListParentSheet.streamSheetScrollChanges(), Pair::create)
-    //    .takeUntil(submissionCommentsAdapter.streamHeaderUnbinds())
-    //    .map(pair -> {
-    //      SubmissionCommentsHeader.ViewHolder headerVH = pair.first();
-    //      Float sheetScrollY = pair.second();
-    //      float bylineBottom = headerVH.bylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop();
-    //      return bylineBottom < replyFAB.getTop();
-    //    });
+    Observable<Boolean> fabSpaceAvailabilityChanges = submissionCommentsAdapter.streamHeaderBinds()
+        .switchMap(optional -> {
+          if (!optional.isPresent()) {
+            return Observable.just(true);
 
-    // Show the FAB while the keyboard is hidden and there's space available.
+          } else {
+            SubmissionCommentsHeader.ViewHolder headerVH = optional.get();
+            return commentListParentSheet.streamSheetScrollChanges()
+                .map(sheetScrollY -> headerVH.bylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop())
+                .map(bylineBottom -> bylineBottom < replyFAB.getTop());
+          }
+        });
+
+    // Show the FAB only while the keyboard is hidden and submission title + byline are positioned above it.
     submissionStream
         .observeOn(mainThread())
         .doOnNext(o -> replyFAB.show())
-        .switchMap(o -> Observable.combineLatest(keyboardVisibilityChangeStream, fabSpaceAvailabilityChanges,
-            (keyboardVisibilityChangeEvent, spaceAvailable) -> !keyboardVisibilityChangeEvent.visible() && spaceAvailable)
-        )
+        .switchMap(o -> Observable.combineLatest(
+            keyboardVisibilityChangeStream.map(event -> event.visible()),
+            fabSpaceAvailabilityChanges,
+            (keyboardVisible, spaceAvailable) -> !keyboardVisible && spaceAvailable
+        ))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(canShowReplyFAB -> {
           if (canShowReplyFAB) {
