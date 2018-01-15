@@ -48,7 +48,7 @@ import me.saket.dank.utils.Truss;
 import timber.log.Timber;
 
 // TODO: Build a subcomponent for SubredditActivity?
-public class SubmissionScreenUiModelConstructor {
+public class SubmissionUiModelConstructor {
 
   private final SubmissionContentLinkUiModelConstructor contentLinkUiModelConstructor;
   private final ReplyRepository replyRepository;
@@ -57,7 +57,7 @@ public class SubmissionScreenUiModelConstructor {
   private final UserSessionRepository userSessionRepository;
 
   @Inject
-  public SubmissionScreenUiModelConstructor(
+  public SubmissionUiModelConstructor(
       SubmissionContentLinkUiModelConstructor contentLinkUiModelConstructor,
       ReplyRepository replyRepository,
       VotingManager votingManager,
