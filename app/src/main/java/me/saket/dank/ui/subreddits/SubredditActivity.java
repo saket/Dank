@@ -127,7 +127,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(@Nullable Bundle savedInstanceState) {
     Dank.dependencyInjector().inject(this);
     boolean isPullCollapsible = !isTaskRoot();
     setPullToCollapseEnabled(isPullCollapsible);
@@ -313,7 +313,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
 // ======== SUBMISSION LIST ======== //
 
-  private void setupSubmissionList(Bundle savedState) {
+  private void setupSubmissionList(@Nullable Bundle savedState) {
     submissionList.setLayoutManager(submissionList.createLayoutManager());
     submissionList.setItemAnimator(new DefaultItemAnimator());
     submissionList.setExpandablePage(submissionPageLayout, toolbarContainer);

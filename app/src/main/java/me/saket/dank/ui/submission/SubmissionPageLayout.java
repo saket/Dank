@@ -53,7 +53,6 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -70,6 +69,7 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.LinkMetadataRepository;
@@ -266,28 +266,27 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Override
   protected void onRestoreInstanceState(Parcelable state) {
     Bundle savedState = (Bundle) state;
+    Parcelable superState = savedState.getParcelable(KEY_SUPER_CLASS_STATE);
+    super.onRestoreInstanceState(superState);
 
     boolean willPageExpandAgain = savedState.getBoolean(KEY_WAS_PAGE_EXPANDED_OR_EXPANDING, false);
     if (willPageExpandAgain && savedState.containsKey(KEY_SUBMISSION_REQUEST)) {
-      Submission retainedSubmission = null;
       DankSubmissionRequest retainedRequest = savedState.getParcelable(KEY_SUBMISSION_REQUEST);
-
-      if (savedState.containsKey(KEY_SUBMISSION_JSON)) {
-        String retainedSubmissionJson = savedState.getString(KEY_SUBMISSION_JSON);
-        try {
-          //noinspection ConstantConditions
-          retainedSubmission = moshi.adapter(Submission.class).fromJson(retainedSubmissionJson);
-        } catch (IOException e) {
-          Timber.e(e, "Couldn't deserialize submission: %s", retainedSubmissionJson);
-        }
-      }
-
-      //noinspection ConstantConditions
-      populateUi(Optional.of(retainedSubmission), retainedRequest);
+      Single
+          .fromCallable(() -> {
+            boolean manualRestorationNeeded = savedState.containsKey(KEY_SUBMISSION_JSON);
+            //noinspection ConstantConditions
+            return manualRestorationNeeded
+                ? Optional.of(moshi.adapter(Submission.class).fromJson(savedState.getString(KEY_SUBMISSION_JSON)))
+                : Optional.<Submission>empty();
+          })
+          .subscribeOn(io())
+          .observeOn(mainThread())
+          .subscribe(retainedSubmission -> {
+            //noinspection ConstantConditions
+            populateUi(retainedSubmission, retainedRequest);
+          });
     }
-
-    Parcelable superState = savedState.getParcelable(KEY_SUPER_CLASS_STATE);
-    super.onRestoreInstanceState(superState);
   }
 
   /**
@@ -329,6 +328,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                 return Observable.just(pair.second);
               }
             })
+            .delay(BuildConfig.DEBUG ? 2 : 0, TimeUnit.SECONDS)   // TODO: 15/01/18 remove!
             .takeUntil(lifecycle().onPageAboutToCollapse())
             .compose(RxUtils.applySchedulers())
             .doOnNext(o -> commentsLoadProgressVisibleStream.accept(false))
@@ -930,9 +930,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   /**
-   * Update the submission to be shown. Since this Fragment is retained by {@link SubredditActivity},
+   * Update the submission to be shown. Since this page is retained by {@link SubredditActivity},
    * we only update the UI everytime a new submission is to be shown.
    *
+   * @param submission        when empty, the UI gets populated when comments are loaded along with the submission details.
    * @param submissionRequest used for loading the comments of this submission.
    */
   public void populateUi(Optional<Submission> submission, DankSubmissionRequest submissionRequest) {
