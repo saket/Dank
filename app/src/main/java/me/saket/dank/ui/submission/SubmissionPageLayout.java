@@ -67,8 +67,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.disposables.CompositeDisposable;
-import io.reactivex.disposables.Disposable;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
@@ -188,7 +186,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
   private Relay<Optional<ResolvedError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
 
-  private CompositeDisposable onCollapseSubscriptions = new CompositeDisposable();
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
@@ -221,10 +218,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .take(1)
         .takeUntil(lifecycle().viewDetaches())
         .subscribe(o -> onViewFirstAttach());
-
-    lifecycle().onDestroy()
-        .take(1)
-        .subscribe(o -> onCollapseSubscriptions.clear());
   }
 
   public void onViewFirstAttach() {
@@ -946,9 +939,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     submissionRequestStream.accept(submissionRequest);
 
     if (submission != null) {
-      unsubscribeOnCollapse(
-          loadSubmissionContent(submission)
-      );
+      loadSubmissionContent(submission);
+
     } else {
       // Wait till the submission is fetched before loading content.
       submissionStream
@@ -957,15 +949,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
           .take(1)
           .takeUntil(lifecycle().onDestroy())
-          .subscribe(fetchedSubmission -> unsubscribeOnCollapse(
-              loadSubmissionContent(fetchedSubmission)
-          ));
+          .subscribe(this::loadSubmissionContent);
     }
   }
 
-  @CheckResult
-  private Disposable loadSubmissionContent(Submission submission) {
-    return Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
+  private void loadSubmissionContent(Submission submission) {
+    Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
         .subscribeOn(io())
         .observeOn(mainThread())
         // Warning: This will be a problem if the retry-click stream is ever changed to not a Subject because it's not shared.
@@ -1118,7 +1107,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Override
   public void onPageCollapsed() {
     contentVideoViewHolder.pausePlayback();
-    onCollapseSubscriptions.clear();
 
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
@@ -1126,11 +1114,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     submissionStream.accept(Optional.empty());
     contentLinkStream.accept(Optional.empty());
     mediaContentLoadErrors.accept(Optional.empty());
-  }
-
-  @Deprecated
-  private void unsubscribeOnCollapse(Disposable subscription) {
-    onCollapseSubscriptions.add(subscription);
   }
 
   public SubmissionPageLifecycleStreams lifecycle() {
