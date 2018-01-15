@@ -15,6 +15,7 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.subreddits.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddits.SubredditActivity;
 import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 /**
@@ -66,7 +67,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
       if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
         loadSubmission(getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
       } else {
-        submissionPageLayout.populateUi(null, getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
+        submissionPageLayout.populateUi(Optional.empty(), getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
       }
     }
     // Else, SubmissionFragment will handle retaining its data.
@@ -86,7 +87,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
           .contextCount(initialComment.contextCount());
     }
 
-    submissionPageLayout.populateUi(null, submissionReqBuilder.build());
+    submissionPageLayout.populateUi(Optional.empty(), submissionReqBuilder.build());
   }
 
   @Override

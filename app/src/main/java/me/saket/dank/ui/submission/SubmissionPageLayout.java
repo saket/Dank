@@ -283,7 +283,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       }
 
       //noinspection ConstantConditions
-      populateUi(retainedSubmission, retainedRequest);
+      populateUi(Optional.of(retainedSubmission), retainedRequest);
     }
 
     Parcelable superState = savedState.getParcelable(KEY_SUPER_CLASS_STATE);
@@ -935,17 +935,17 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    *
    * @param submissionRequest used for loading the comments of this submission.
    */
-  public void populateUi(@Nullable Submission submission, DankSubmissionRequest submissionRequest) {
+  public void populateUi(Optional<Submission> submission, DankSubmissionRequest submissionRequest) {
     // This will setup the title, byline and content immediately.
-    if (submission != null) {
-      submissionStream.accept(Optional.of(submission));
+    if (submission.isPresent()) {
+      submissionStream.accept(submission);
     }
 
     // This will load comments and then again update the title, byline and content.
     submissionRequestStream.accept(submissionRequest);
 
-    if (submission != null) {
-      loadSubmissionContent(submission);
+    if (submission.isPresent()) {
+      loadSubmissionContent(submission.get());
 
     } else {
       contentLoadProgressView.show();

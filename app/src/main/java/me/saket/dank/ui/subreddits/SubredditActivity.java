@@ -69,6 +69,7 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.EmptyStateView;
@@ -340,7 +341,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       Single.timer(delay, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
           .takeUntil(lifecycle().onDestroy().ignoreElements())
           .subscribe(o -> {
-            submissionPageLayout.populateUi(submission, submissionRequest);
+            submissionPageLayout.populateUi(Optional.of(submission), submissionRequest);
             submissionPageAnimationOptimizer.trackSubmissionOpened(submission);
           });
 
