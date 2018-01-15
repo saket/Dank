@@ -86,10 +86,10 @@ public class SubmissionUiModelConstructor {
         .distinctUntilChanged()
         .switchMap(optional -> {
           if (!optional.isPresent()) {
-            //Timber.d("---------------------------------------");
+            Timber.d("---------------------------------------");
             return Observable.just(Collections.emptyList());
           }
-          //Timber.d(optional.get().getTitle());
+          Timber.d(optional.get().getTitle());
 
           Observable<Submission> submissions = optionalSubmissions
               // Not sure why, but the parent switchMap() on submission change gets triggered

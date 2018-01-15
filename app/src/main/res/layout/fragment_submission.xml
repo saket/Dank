@@ -4,7 +4,8 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  tools:background="@color/window_background">
+  tools:background="@color/window_background"
+  tools:parentTag="android.widget.RelativeLayout">
 
   <!-- For image/gif. This has a background to avoid leaking the
        background when image is zoomed out. -->
@@ -60,10 +61,10 @@
       android:scrollbarStyle="insideOverlay"
       android:scrollbars="vertical"
       tools:paddingStart="@dimen/spacing16"
-      tools:paddingTop="@dimen/spacing16" />
+      tools:paddingTop="60dp" />
   </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
 
-  <!-- This scrolls with the comments sheet, until the toolbar is reached. -->
+  <!-- This scrolls with the comments sheet, until the toolbar reaches the top. -->
   <me.saket.dank.widgets.SubmissionAnimatedProgressBar
     android:id="@+id/submission_content_progress_bar"
     style="@style/DankProgressBar.Horizontal.TopAligned"
@@ -76,8 +77,17 @@
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
     android:background="@color/toolbar"
-    android:translationZ="5dp"
-    tools:layout_marginTop="25dp" />
+    android:translationZ="5dp" />
+
+  <me.saket.dank.widgets.ErrorStateView
+    android:id="@+id/submission_errorstate"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:layout_gravity="center"
+    android:layout_marginTop="-60dp"
+    android:elevation="@dimen/elevation_toolbar"
+    android:visibility="gone" />
 
   <!-- TODO: this can be merged with AnimatedToolbarBackground -->
   <!-- Note: the elevation to this toolbar is set on
@@ -87,8 +97,7 @@
     style="@style/DankToolbar"
     android:layout_height="?attr/actionBarSize"
     android:background="@color/transparent"
-    android:translationZ="5dp"
-    tools:layout_marginTop="25dp">
+    android:translationZ="5dp">
 
     <ImageButton
       android:id="@+id/submission_toolbar_close"

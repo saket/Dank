@@ -25,6 +25,7 @@ import android.os.Parcelable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
+import android.support.transition.TransitionManager;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
@@ -123,6 +124,7 @@ import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerViews.ViewLifecycleStreams;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
+import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.KeyboardVisibilityDetector.KeyboardVisibilityChangeEvent;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -156,6 +158,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
   @BindView(R.id.submission_comment_list) RecyclerView commentRecyclerView;
   @BindView(R.id.submission_reply) FloatingActionButton replyFAB;
+  @BindView(R.id.submission_errorstate) ErrorStateView errorStateView;
 
   @BindDrawable(R.drawable.ic_toolbar_close_24dp) Drawable closeIconDrawable;
   @BindDimen(R.dimen.submission_commentssheet_minimum_visible_height) int commentsSheetMinimumVisibleHeight;
@@ -185,6 +188,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private Relay<Optional<Link>> contentLinkStream = BehaviorRelay.createDefault(Optional.empty());
   private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
   private Relay<Optional<ResolvedError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
+  private Relay<Optional<Throwable>> submissionLoadErrors = BehaviorRelay.createDefault(Optional.empty());
 
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionVideoHolder contentVideoViewHolder;
@@ -194,7 +198,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private SubmissionPageLifecycleStreams lifecycleStreams;
 
   public interface Callbacks {
-
     SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer();
 
     void onClickSubmissionToolbarUp();
@@ -240,6 +243,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     setupStatusBarTint();
     setupReplyFAB();
     setupSoftInputModeChangesAnimation();
+    setupSubmissionLoadErrorView();
   }
 
   @Nullable
@@ -282,6 +286,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           })
           .subscribeOn(io())
           .observeOn(mainThread())
+          .takeUntil(lifecycle().onDestroyFlowable())
           .subscribe(retainedSubmission -> {
             //noinspection ConstantConditions
             populateUi(retainedSubmission, retainedRequest);
@@ -328,12 +333,32 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                 return Observable.just(pair.second);
               }
             })
-            .delay(BuildConfig.DEBUG ? 2 : 0, TimeUnit.SECONDS)   // TODO: 15/01/18 remove!
+
+            // TODO: 15/01/18 remove!
+            //.delay(BuildConfig.DEBUG ? 2 : 0, TimeUnit.SECONDS)
+            //.map(o -> {
+            //  if (true)
+            //    throw new SocketTimeoutException();
+            //  return o;
+            //})
+
             .takeUntil(lifecycle().onPageAboutToCollapse())
             .compose(RxUtils.applySchedulers())
             .doOnNext(o -> commentsLoadProgressVisibleStream.accept(false))
-            .doOnError(error -> Timber.e(error))
-            .onErrorResumeNext(Observable.never()))
+            .onErrorResumeNext(error -> {
+              return submissionStream
+                  .take(1)
+                  .doOnNext(optionalSubmission -> {
+                    if (optionalSubmission.isPresent()) {
+                      // TODO: comments load error.
+                      Timber.w("TODO: Comment load error");
+                    } else {
+                      submissionLoadErrors.accept(Optional.of(error));
+                    }
+                  })
+                  .flatMap(o -> Observable.never());
+            })
+        )
         .takeUntil(lifecycle().onDestroy())
         .as(Optional.of())
         .subscribe(submissionStream);
@@ -927,6 +952,35 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             }
           }
         }, logError("Wut?"));
+  }
+
+  /** Manage showing of error when loading the entire submission fails. */
+  private void setupSubmissionLoadErrorView() {
+    Observable<Object> sharedRetryClicks = errorStateView.retryClicks().share();
+
+    sharedRetryClicks.mergeWith(lifecycle().onPageCollapse())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> submissionLoadErrors.accept(Optional.empty()));
+
+    sharedRetryClicks
+        .withLatestFrom(submissionRequestStream, (o, req) -> req)
+        .takeUntil(lifecycle().onDestroy())
+        .doOnNext(o -> contentLoadProgressView.show())
+        .subscribe(submissionRequestStream);
+
+    submissionLoadErrors
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(optionalError -> {
+          if (optionalError.isPresent()) {
+            contentLoadProgressView.hide();
+            ResolvedError resolvedError = errorResolver.resolve(optionalError.get());
+            resolvedError.ifUnknown(() -> Timber.e(optionalError.get(), "Error while fetching submission w/ comments"));
+            errorStateView.applyFrom(resolvedError);
+          }
+
+          TransitionManager.beginDelayedTransition(this, Animations.transitions().addTarget(errorStateView));
+          errorStateView.setVisibility(optionalError.isPresent() ? VISIBLE : GONE);
+        });
   }
 
   /**
