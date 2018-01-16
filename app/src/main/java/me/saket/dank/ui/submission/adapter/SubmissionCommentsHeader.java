@@ -193,8 +193,8 @@ public interface SubmissionCommentsHeader {
       setSubmissionByline(uiModel);
       setContentLink(uiModel, false);
 
-      // TODO.
-      selfTextView.setVisibility(View.GONE);
+      uiModel.optionalSelfText().ifPresent(selfText -> selfTextView.setText(selfText));
+      selfTextView.setVisibility(uiModel.optionalSelfText().isPresent() ? View.VISIBLE : View.GONE);
       selfTextView.setMovementMethod(movementMethod);
 
       // Gestures.

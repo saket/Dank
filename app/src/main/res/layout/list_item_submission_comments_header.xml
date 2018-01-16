@@ -45,6 +45,7 @@
       android:layout_height="wrap_content"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
+      android:layout_marginBottom="@dimen/spacing16"
       android:textIsSelectable="true" />
 
     <include layout="@layout/list_item_submission_comments_header_link" />

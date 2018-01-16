@@ -184,7 +184,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private Relay<Optional<Link>> contentLinkStream = BehaviorRelay.createDefault(Optional.empty());
   private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
   private Relay<Optional<ResolvedError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
-  //  private Relay<Optional<Throwable>> submissionLoadErrors = BehaviorRelay.createDefault(Optional.empty());
   private Relay<Optional<ResolvedError>> submissionCommentsLoadErrors = BehaviorRelay.createDefault(Optional.empty());
 
   private ExpandablePageLayout submissionPageLayout;

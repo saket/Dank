@@ -11,8 +11,6 @@ import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
 
-import com.jakewharton.rxrelay2.Relay;
-
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
@@ -83,7 +81,7 @@ public class SubmissionUiModelConstructor {
       Observable<Optional<Submission>> optionalSubmissions,
       Observable<Optional<Link>> contentLinks,
       Observable<Optional<ResolvedError>> mediaContentLoadErrors,
-      Relay<Optional<ResolvedError>> commentsLoadErrors)
+      Observable<Optional<ResolvedError>> commentsLoadErrors)
   {
     return optionalSubmissions
         .distinctUntilChanged()
