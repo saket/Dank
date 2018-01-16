@@ -35,8 +35,9 @@ import timber.log.Timber;
 
 public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<SubmissionScreenUiModel, RecyclerView.ViewHolder> {
 
-  public static final long ID_MEDIA_CONTENT_LOAD_ERROR = -98;
-  public static final long ID_COMMENTS_LOAD_INDIDACTOR = -99;
+  public static final long ID_MEDIA_CONTENT_LOAD_ERROR = -97;
+  public static final long ID_COMMENTS_LOAD_PROGRESS = -98;
+  public static final long ID_COMMENTS_LOAD_ERROR = -99;
   private static final SubmissionCommentRowType[] VIEW_TYPES = SubmissionCommentRowType.values();
 
   // Injected by Dagger.
@@ -61,6 +62,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   private final Relay<Link> contentLinkClickStream = PublishRelay.create();
   private final Relay<Optional<SubmissionCommentsHeader.ViewHolder>> headerBindStream = PublishRelay.create();
   private final Relay<Object> mediaContentLoadRetryClickStream = PublishRelay.create();
+  private final Relay<Object> commentsLoadRetryClickStream = PublishRelay.create();
 
   @Inject
   public SubmissionCommentsAdapter(
@@ -114,8 +116,13 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         mediaLoadErrorHolder.setupClickStream(mediaContentLoadRetryClickStream);
         return mediaLoadErrorHolder;
 
-      case COMMENTS_LOAD_INDICATOR:
-        return SubmissionCommentsLoadIndicator.ViewHolder.create(inflater, parent);
+      case COMMENTS_LOAD_PROGRESS:
+        return SubmissionCommentsLoadProgress.ViewHolder.create(inflater, parent);
+
+      case COMMENTS_LOAD_ERROR:
+        SubmissionCommentsLoadError.ViewHolder commentsErrorHolder = SubmissionCommentsLoadError.ViewHolder.create(inflater, parent);
+        commentsErrorHolder.setupRetryClicks(commentsLoadRetryClickStream);
+        return commentsErrorHolder;
 
       case USER_COMMENT:
         SubmissionComment.ViewHolder commentHolder = SubmissionComment.ViewHolder.create(inflater, parent);
@@ -179,7 +186,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
           }
           break;
 
-        case COMMENTS_LOAD_INDICATOR:
+        case COMMENTS_LOAD_PROGRESS:
         case INLINE_REPLY:
         case LOAD_MORE_COMMENTS:
           throw new UnsupportedOperationException("Partial change not supported yet for " + getItem(position).type() + ", payload: " + payloads);
@@ -206,8 +213,12 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         ((SubmissionMediaContentLoadError.ViewHolder) holder).bind((SubmissionMediaContentLoadError.UiModel) getItem(position));
         break;
 
-      case COMMENTS_LOAD_INDICATOR:
-        ((SubmissionCommentsLoadIndicator.ViewHolder) holder).bind((SubmissionCommentsLoadIndicator.UiModel) getItem(position));
+      case COMMENTS_LOAD_PROGRESS:
+        ((SubmissionCommentsLoadProgress.ViewHolder) holder).bind((SubmissionCommentsLoadProgress.UiModel) getItem(position));
+        break;
+
+      case COMMENTS_LOAD_ERROR:
+        ((SubmissionCommentsLoadError.ViewHolder) holder).bind((SubmissionCommentsLoadError.UiModel) getItem(position));
         break;
 
       case USER_COMMENT:
@@ -306,6 +317,11 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @CheckResult
   public Observable<Object> streamMediaContentLoadRetryClicks() {
     return mediaContentLoadRetryClickStream;
+  }
+
+  @CheckResult
+  public Observable<Object> streamCommentsLoadRetryClicks() {
+    return commentsLoadRetryClickStream;
   }
 
   public CommentSwipeActionsProvider commentSwipeActionsProvider() {

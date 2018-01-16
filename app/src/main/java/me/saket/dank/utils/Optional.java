@@ -132,6 +132,10 @@ public abstract class Optional<T> {
     return value() != null;
   }
 
+  public boolean isEmpty() {
+    return value() == null;
+  }
+
   /**
    * If a value is present, invoke the specified consumer with the value,
    * otherwise do nothing.

@@ -9,22 +9,22 @@ import com.google.auto.value.AutoValue;
 
 import me.saket.dank.R;
 
-public interface SubmissionCommentsLoadIndicator {
+public interface SubmissionCommentsLoadProgress {
 
   @AutoValue
   abstract class UiModel implements SubmissionScreenUiModel {
     @Override
     public long adapterId() {
-      return SubmissionCommentsAdapter.ID_COMMENTS_LOAD_INDIDACTOR;
+      return SubmissionCommentsAdapter.ID_COMMENTS_LOAD_PROGRESS;
     }
 
     @Override
     public SubmissionCommentRowType type() {
-      return SubmissionCommentRowType.COMMENTS_LOAD_INDICATOR;
+      return SubmissionCommentRowType.COMMENTS_LOAD_PROGRESS;
     }
 
     public static UiModel create() {
-      return new AutoValue_SubmissionCommentsLoadIndicator_UiModel();
+      return new AutoValue_SubmissionCommentsLoadProgress_UiModel();
     }
   }
 
@@ -37,7 +37,7 @@ public interface SubmissionCommentsLoadIndicator {
       super(itemView);
     }
 
-    public void bind(UiModel model) {
+    public void bind(@SuppressWarnings("unused") UiModel model) {
       // Nothing to do here.
     }
   }

@@ -11,6 +11,8 @@ import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
 
+import com.jakewharton.rxrelay2.Relay;
+
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
@@ -80,16 +82,19 @@ public class SubmissionUiModelConstructor {
       CommentTreeConstructor commentTreeConstructor,
       Observable<Optional<Submission>> optionalSubmissions,
       Observable<Optional<Link>> contentLinks,
-      Observable<Optional<ResolvedError>> mediaContentLoadErrors)
+      Observable<Optional<ResolvedError>> mediaContentLoadErrors,
+      Relay<Optional<ResolvedError>> commentsLoadErrors)
   {
     return optionalSubmissions
         .distinctUntilChanged()
         .switchMap(optional -> {
           if (!optional.isPresent()) {
-            Timber.d("---------------------------------------");
-            return Observable.just(Collections.emptyList());
+            return commentsLoadErrors.map(optionalError -> optionalError.isPresent()
+                ? Collections.singletonList(SubmissionCommentsLoadError.UiModel.create(optionalError.get()))
+                : Collections.emptyList());
           }
-          Timber.d(optional.get().getTitle());
+
+          //Timber.d(optional.get().getTitle());
 
           Observable<Submission> submissions = optionalSubmissions
               // Not sure why, but the parent switchMap() on submission change gets triggered
@@ -132,28 +137,39 @@ public class SubmissionUiModelConstructor {
               .withLatestFrom(submissions.map(submission -> submission.getAuthor()), Pair::create)
               .map(pair -> commentRowUiModels(context, pair.first(), pair.second()));
 
-          Observable<Optional<SubmissionCommentsLoadIndicator.UiModel>> commentsLoadIndicatorUiModels = submissions
-              .map(submission -> submission.getComments() == null
-                  ? Optional.of(SubmissionCommentsLoadIndicator.UiModel.create())
-                  : Optional.empty());
+          Observable<Optional<SubmissionCommentsLoadProgress.UiModel>> commentsLoadProgressUiModels = Observable
+              .combineLatest(submissions, commentsLoadErrors, Pair::create)
+              .map(pair -> {
+                CommentNode comments = pair.first().getComments();
+                boolean commentsLoadingFailed = pair.second().isPresent();
+                return comments == null && !commentsLoadingFailed
+                    ? Optional.of(SubmissionCommentsLoadProgress.UiModel.create())
+                    : Optional.empty();
+              });
 
+          Observable<Optional<SubmissionCommentsLoadError.UiModel>> commentsLoadErrorUiModels = commentsLoadErrors
+              .map(optionalError -> optionalError.map(error -> SubmissionCommentsLoadError.UiModel.create(error)));
+
+          // FIXME: The error message says "Reddit" even for imgur, and other services.
           Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModels = mediaContentLoadErrors
-              .map(optionalError -> optionalError.isPresent()
-                  ? Optional.of(mediaContentLoadErrorUiModel(context, optionalError))
-                  : Optional.empty()
-              );
+              .map(optionalError -> optionalError.map(error -> mediaContentLoadErrorUiModel(context, error)));
 
           return Observable.combineLatest(
               headerUiModels,
               contentLoadErrorUiModels,
-              commentsLoadIndicatorUiModels,
+              commentsLoadProgressUiModels,
+              commentsLoadErrorUiModels,
               commentRowUiModels,
-              (header, optionalError, optionalCommentsLoadIndicator, commentRowModels) -> {
-                List<SubmissionScreenUiModel> allItems = new ArrayList<>(3 + commentRowModels.size());
+              (header, optionalContentError, optionalCommentsLoadProgress, optionalCommentsLoadError, commentRowModels) -> {
+                List<SubmissionScreenUiModel> allItems = new ArrayList<>(4 + commentRowModels.size());
                 allItems.add(header);
-                optionalError.ifPresent(error -> allItems.add(error));
-                optionalCommentsLoadIndicator.ifPresent(commentsLoadIndicator -> allItems.add(commentsLoadIndicator));
+                optionalContentError.ifPresent(allItems::add);
                 allItems.addAll(commentRowModels);
+
+                // Comments progress and error go after comment rows
+                // so that inline reply for submission appears above them.
+                optionalCommentsLoadProgress.ifPresent(allItems::add);
+                optionalCommentsLoadError.ifPresent(allItems::add);
                 return allItems;
               })
               .subscribeOn(io())
@@ -189,9 +205,8 @@ public class SubmissionUiModelConstructor {
     return uiModels;
   }
 
-  private SubmissionMediaContentLoadError.UiModel mediaContentLoadErrorUiModel(Context context, Optional<ResolvedError> optionalThrowable) {
-    // FIXME: The error message says "Reddit" even for imgur, and other services.
-    String title = context.getString(optionalThrowable.get().errorMessageRes());
+  private SubmissionMediaContentLoadError.UiModel mediaContentLoadErrorUiModel(Context context, ResolvedError resolvedError) {
+    String title = context.getString(resolvedError.errorMessageRes());
     String byline = context.getString(R.string.submission_link_error_loading_media_tap_to_retry);
     int iconRes = R.drawable.ic_error_24dp;
     return SubmissionMediaContentLoadError.UiModel.create(title, byline, iconRes);
