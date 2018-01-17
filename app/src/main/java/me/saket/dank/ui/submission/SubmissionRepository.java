@@ -225,7 +225,7 @@ public class SubmissionRepository {
 
     lastPaginationAnchor(folder)
         .doOnSubscribe(o -> networkCallStatusStream.accept(NetworkCallStatus.createInFlight()))
-        .doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
+        //.doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
         .flatMap(anchor -> dankRedditClient
             .withAuth(Single.create(emitter -> {
               List<Submission> distinctNewItems = new ArrayList<>();
@@ -248,6 +248,7 @@ public class SubmissionRepository {
                 nextAnchor = PaginationAnchor.create(lastFetchedSubmission.getFullName());
               }
 
+              //Timber.i("Fetched %s submissions", distinctNewItems.size());
               emitter.onSuccess(FetchResult.create(Collections.unmodifiableList(distinctNewItems), distinctNewItems.size() > 0));
             }))
             .retryWhen(errors -> errors.flatMap(error -> {
@@ -320,7 +321,6 @@ public class SubmissionRepository {
     JsonAdapter<SortingAndTimePeriod> andTimePeriodJsonAdapter = moshi.adapter(SortingAndTimePeriod.class);
     JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
 
-    final long startTime = System.currentTimeMillis();
     try (BriteDatabase.Transaction transaction = database.newTransaction()) {
       for (int i = 0; i < submissionsToSave.size(); i++) {
         // Reddit sends submissions according to their sorting order. So they may or may not be
@@ -330,9 +330,13 @@ public class SubmissionRepository {
         long saveTimeMillis = System.currentTimeMillis() + i;
         Submission submission = submissionsToSave.get(i);
 
+        // Warning: get the subreddit name from the folder and not the submissions or else
+        // "Frontpage", "Popular", etc. will never get anything.
+        String subredditName = folder.subredditName();
+
         CachedSubmissionId cachedSubmissionId = CachedSubmissionId.create(
             submission.getFullName(),
-            submission.getSubredditName(),
+            subredditName,
             folder.sortingAndTimePeriod(),
             saveTimeMillis
         );

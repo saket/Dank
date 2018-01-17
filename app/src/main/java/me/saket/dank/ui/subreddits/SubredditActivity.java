@@ -92,7 +92,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private static final String KEY_SORTING_AND_TIME_PERIOD = "sortingAndTimePeriod";
 
   @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
-  @BindView(R.id.subreddit_submission_page) SubmissionPageLayout submissionPageLayout;
+  @BindView(R.id.subreddit_submission_page) SubmissionPageLayout submissionPage;
   @BindView(R.id.toolbar) DankToolbar toolbar;
   @BindView(R.id.subreddit_toolbar_close) View toolbarCloseButton;
   @BindView(R.id.subreddit_toolbar_title) TextView toolbarTitleView;
@@ -149,7 +149,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
       toolbarCloseButton.setVisibility(View.VISIBLE);
       toolbarCloseButton.setOnClickListener(o -> finish());
     }
-    contentPage.setNestedExpandablePage(submissionPageLayout);
+    contentPage.setNestedExpandablePage(submissionPage);
   }
 
   @Override
@@ -316,7 +316,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   private void setupSubmissionList(@Nullable Bundle savedState) {
     submissionList.setLayoutManager(submissionList.createLayoutManager());
     submissionList.setItemAnimator(new DefaultItemAnimator());
-    submissionList.setExpandablePage(submissionPageLayout, toolbarContainer);
+    submissionList.setExpandablePage(submissionPage, toolbarContainer);
 
     // Swipe gestures.
     OnLoginRequireListener onLoginRequireListener = () -> LoginActivity.intent(this);
@@ -335,17 +335,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           .build();
 
       long delay = submissionPageAnimationOptimizer.shouldDelayLoad(submission)
-          ? submissionPageLayout.getAnimationDurationMillis()
+          ? submissionPage.getAnimationDurationMillis()
           : 0;
 
       Single.timer(delay, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
           .takeUntil(lifecycle().onDestroy().ignoreElements())
           .subscribe(o -> {
-            submissionPageLayout.populateUi(Optional.of(submission), submissionRequest);
+            submissionPage.populateUi(Optional.of(submission), submissionRequest);
             submissionPageAnimationOptimizer.trackSubmissionOpened(submission);
           });
 
-      submissionPageLayout.post(() ->
+      submissionPage.post(() ->
           Observable.timer(100 + delay / 2, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
               .takeUntil(lifecycle().onDestroy())
               .subscribe(o -> submissionList.expandItem(submissionList.indexOfChild(submissionItemView), submissionId))
@@ -403,16 +403,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             .mergeWith(forceRefreshRequestStream)
             //.doOnNext(o -> Timber.d("Loading more…"))
             .flatMap(o -> submissionRepository.loadAndSaveMoreSubmissions(folder))
+            //.doOnNext(o -> Timber.d("Submissions loaded"))
         )
         .subscribe(paginationStatusStream);
 
     // DB subscription.
     // We suspend the listener while a submission is active so that this list doesn't get updated in background.
-    RxExpandablePage.collapses(submissionPageLayout)
-        .switchMap(o -> submissionFolderStream
-            .switchMap(folder -> submissionRepository.submissions(folder).subscribeOn(io()))
-            .takeUntil(RxExpandablePage.preExpansions(submissionPageLayout))
-        )
+    RxExpandablePage.pageStateChanges(submissionPage)
+        .switchMap(o -> submissionPage.isCollapsed()
+            ? submissionFolderStream.switchMap(folder -> submissionRepository.submissions(folder).subscribeOn(io()))
+            : Observable.never())
+        //.doOnNext(cachedSubs -> Timber.i("[DB] Cached subs: %s", cachedSubs.size()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(cachedSubmissionStream);
 
@@ -428,12 +429,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // Adapter data-set.
     Observable<SubmissionListUiModel> submissionListUiModelStream = Observable.combineLatest(
         cachedSubmissionStream.startWith(Collections.<Submission>emptyList()),
-        Observable.combineLatest(
-            paginationStatusStream.startWith(NetworkCallStatus.createIdle()),
-            refreshStatusStream.startWith(NetworkCallStatus.createIdle()),
-            (pagination, refresh) -> Pair.create(pagination, refresh)
-        ),
-        (submissions, pair) -> SubmissionListUiModel.create(submissions, pair.first(), pair.second())
+        paginationStatusStream.startWith(NetworkCallStatus.createIdle()),
+        refreshStatusStream.startWith(NetworkCallStatus.createIdle()),
+        SubmissionListUiModel::create
     );
 
     submissionListUiModelStream
@@ -634,7 +632,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   @Override
   public void onBackPressed() {
-    if (submissionPageLayout.isExpandedOrExpanding()) {
+    if (submissionPage.isExpandedOrExpanding()) {
       submissionList.collapse();
 
     } else if (!toolbarSheet.isCollapsed()) {
@@ -655,7 +653,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
         .subscribe(() -> forceRefreshRequestStream.accept(Notification.INSTANCE));
 
-    if (!submissionPageLayout.isExpanded()) {
+    if (!submissionPage.isExpanded()) {
       showUserProfileSheet();
     }
   }

@@ -25,5 +25,4 @@ public abstract class SimpleExpandablePageStateChangeCallbacks implements Expand
   public void onPageCollapsed() {
 
   }
-
 }
