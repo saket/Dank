@@ -23,8 +23,8 @@
 
       <ImageView
         android:id="@+id/submission_item_icon"
-        android:layout_width="52dp"
-        android:layout_height="52dp"
+        android:layout_width="@dimen/subreddit_submission_thumbnail"
+        android:layout_height="@dimen/subreddit_submission_thumbnail"
         android:layout_marginBottom="@dimen/spacing16"
         android:layout_marginStart="@dimen/spacing16"
         android:layout_marginTop="6dp"

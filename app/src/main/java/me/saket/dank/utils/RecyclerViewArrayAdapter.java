@@ -14,6 +14,7 @@ import com.jakewharton.rxrelay2.Relay;
 import java.util.List;
 
 /**
+ * <p>
  * Base class for a RecyclerView adapter that is backed by an list of objects. The name of this class uses "array" to
  * keep it consistent with {@link ArrayAdapter} (which doesn't work for a RecyclerView).
  *
@@ -36,15 +37,21 @@ public abstract class RecyclerViewArrayAdapter<T, VH extends RecyclerView.ViewHo
     this(null);
   }
 
+  protected abstract VH onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType);
+
   @Override
   public final VH onCreateViewHolder(ViewGroup parent, int viewType) {
+    if (!hasStableIds()) {
+      throw new AssertionError("Ugh.");
+    }
     return onCreateViewHolder(LayoutInflater.from(parent.getContext()), parent, viewType);
   }
 
-  protected abstract VH onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType);
-
   public T getItem(int position) {
-    return items != null ? items.get(position) : null;
+    if (items == null) {
+      throw new NullPointerException();
+    }
+    return items.get(position);
   }
 
   @Override

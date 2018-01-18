@@ -9,15 +9,14 @@ import com.jakewharton.rxbinding2.support.v7.widget.RecyclerViewScrollEvent;
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 
 import io.reactivex.Observable;
+import me.saket.dank.ui.subreddits.InfiniteScroller;
 
 /**
- * Listens for scroll events and dispatches
+ * Prefer {@link InfiniteScroller} instead.
  */
+@Deprecated
 public class InfiniteScrollListener {
 
-  /**
-   * Fetch more items once the list has scrolled past 75% of its items.
-   */
   public static final float DEFAULT_LOAD_THRESHOLD = 0.75f;
 
   private final float loadThresholdFactor;

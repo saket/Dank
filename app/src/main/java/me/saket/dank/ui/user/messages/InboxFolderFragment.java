@@ -101,7 +101,7 @@ public class InboxFolderFragment extends DankFragment {
   }
 
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
     View layout = inflater.inflate(R.layout.fragment_message_folder, container, false);
     ButterKnife.bind(this, layout);
@@ -112,10 +112,12 @@ public class InboxFolderFragment extends DankFragment {
   public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
+    //noinspection ConstantConditions
     folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
 
     boolean showMessageThreads = folder == InboxFolder.PRIVATE_MESSAGES;
     messagesAdapter = new MessagesAdapter(linkMovementMethod, showMessageThreads, userSessionRepository.loggedInUserName());
+    //noinspection ConstantConditions
     messagesAdapter.setOnMessageClickListener(((Callbacks) getActivity()));
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter);
 
@@ -131,6 +133,7 @@ public class InboxFolderFragment extends DankFragment {
   public void onStart() {
     super.onStart();
     Callbacks callbacks = (Callbacks) getActivity();
+    assert callbacks != null;
 
     inboxRepository.messages(folder)
         .compose(applySchedulers())
@@ -189,6 +192,7 @@ public class InboxFolderFragment extends DankFragment {
         .takeUntil(lifecycle().onDestroy().ignoreElements())
         .subscribe(fetchedMessages -> {
           if (isAdded()) {
+            //noinspection ConstantConditions
             ((Callbacks) getActivity()).setFirstRefreshDone(folder);
           }
           emptyStateView.setVisibility(fetchedMessages.isEmpty() ? View.VISIBLE : View.GONE);
@@ -220,6 +224,7 @@ public class InboxFolderFragment extends DankFragment {
   }
 
   private <T> SingleTransformer<T, T> handleProgressAndErrorForSubsequentRefresh() {
+    //noinspection ConstantConditions
     Consumer<MessagesRefreshState> messagesRefreshStateConsumer = ((Callbacks) getActivity()).messagesRefreshStateConsumer();
 
     if (messagesAdapter.getItemCount() == 0) {
@@ -314,6 +319,7 @@ public class InboxFolderFragment extends DankFragment {
             for (int i = firstVisiblePosition; i <= lastVisiblePosition; i++) {
               if (messagesAdapterWithProgress.isWrappedAdapterItem(i)) {
                 Message message = messagesAdapterWithProgress.getItemInWrappedAdapter(i);
+                //noinspection ConstantConditions
                 ((Callbacks) getActivity()).markUnreadMessageAsSeen(message);
               }
             }
@@ -327,7 +333,7 @@ public class InboxFolderFragment extends DankFragment {
 
   @OnClick(R.id.messagefolder_mark_all_as_read)
   void onClickMarkAllAsRead() {
+    //noinspection ConstantConditions
     ((Callbacks) getActivity()).markAllUnreadMessagesAsReadAndExit(messagesAdapter.getData());
   }
-
 }

@@ -4,6 +4,7 @@ import android.content.SharedPreferences;
 import android.support.annotation.CheckResult;
 import android.text.format.DateUtils;
 
+import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 
 import javax.inject.Inject;
@@ -52,8 +53,8 @@ public class UserPreferences {
     sharedPrefs.edit().putBoolean(KEY_SHOW_SUBMISSION_COMMENTS_COUNT_IN_BYLINE, showCommentsCount).apply();
   }
 
-  public boolean canShowSubmissionCommentsCountInByline() {
-    return sharedPrefs.getBoolean(KEY_SHOW_SUBMISSION_COMMENTS_COUNT_IN_BYLINE, DEFAULT_VALUE_SHOW_SUBMISSION_COMMENTS_COUNT);
+  public Preference<Boolean> canShowSubmissionCommentCountInByline() {
+    return rxPreferences.getBoolean(KEY_SHOW_SUBMISSION_COMMENTS_COUNT_IN_BYLINE, DEFAULT_VALUE_SHOW_SUBMISSION_COMMENTS_COUNT);
   }
 
   /**

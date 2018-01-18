@@ -42,8 +42,11 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   private final OnLoginRequireListener onLoginRequireListener;
 
   @Inject
-  public SubmissionSwipeActionsProvider(SubmissionRepository submissionRepository, VotingManager votingManager,
-      UserSessionRepository userSessionRepository, OnLoginRequireListener onLoginRequireListener)
+  public SubmissionSwipeActionsProvider(
+      SubmissionRepository submissionRepository,
+      VotingManager votingManager,
+      UserSessionRepository userSessionRepository,
+      OnLoginRequireListener onLoginRequireListener)
   {
     this.submissionRepository = submissionRepository;
     this.votingManager = votingManager;

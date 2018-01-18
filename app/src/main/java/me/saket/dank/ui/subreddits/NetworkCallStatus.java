@@ -12,11 +12,18 @@ public abstract class NetworkCallStatus {
     IDLE,
     FAILED
   }
-
   public abstract State state();
 
   @Nullable
   public abstract Throwable error();
+
+  public boolean isIdle() {
+    return state() == State.IDLE;
+  }
+
+  public boolean isInFlight() {
+    return state() == State.IN_FLIGHT;
+  }
 
   public static NetworkCallStatus createInFlight() {
     return new AutoValue_NetworkCallStatus(State.IN_FLIGHT, null);

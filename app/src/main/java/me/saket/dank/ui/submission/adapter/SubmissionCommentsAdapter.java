@@ -2,6 +2,7 @@ package me.saket.dank.ui.submission.adapter;
 
 import android.annotation.SuppressLint;
 import android.support.annotation.CheckResult;
+import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
@@ -14,6 +15,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
@@ -30,10 +32,13 @@ import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import timber.log.Timber;
 
-public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<SubmissionScreenUiModel, RecyclerView.ViewHolder> {
+public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<SubmissionScreenUiModel, RecyclerView.ViewHolder>
+    implements Consumer<Pair<List<SubmissionScreenUiModel>, DiffUtil.DiffResult>>
+{
 
   public static final long ID_MEDIA_CONTENT_LOAD_ERROR = -97;
   public static final long ID_COMMENTS_LOAD_PROGRESS = -98;
@@ -90,6 +95,12 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
    */
   public void forceDisposeDraftSubscribers() {
     inlineReplyDraftsDisposables.clear();
+  }
+
+  @Override
+  public void accept(Pair<List<SubmissionScreenUiModel>, DiffUtil.DiffResult> pair) throws Exception {
+    updateData(pair.first());
+    pair.second().dispatchUpdatesTo(this);
   }
 
   @Override

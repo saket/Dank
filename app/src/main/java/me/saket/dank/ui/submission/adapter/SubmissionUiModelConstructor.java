@@ -223,8 +223,6 @@ public class SubmissionUiModelConstructor {
     int voteDirectionColor = Commons.voteColor(pendingOrDefaultVote);
     long adapterId = submission.getFullName().hashCode();
 
-    // TODO.
-//    selfPostTextView.setVisibility(markdownHtml.length() > 0 ? View.VISIBLE : View.GONE);
     Optional<CharSequence> selfTextOptional = submission.isSelfPost()
         ? Optional.of(markdown.parseSelfText(submission))
         : Optional.empty();

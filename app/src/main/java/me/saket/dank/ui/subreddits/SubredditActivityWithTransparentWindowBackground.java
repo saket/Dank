@@ -30,7 +30,7 @@ public class SubredditActivityWithTransparentWindowBackground extends SubredditA
   }
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     contentPage.setBackgroundResource(R.color.window_background);
   }

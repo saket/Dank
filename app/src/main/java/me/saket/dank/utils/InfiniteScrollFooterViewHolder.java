@@ -18,7 +18,7 @@ public class InfiniteScrollFooterViewHolder extends RecyclerView.ViewHolder {
   @BindView(R.id.infinitescroll_footer_error) TextView errorTextView;
 
   public static InfiniteScrollFooterViewHolder create(LayoutInflater inflater, ViewGroup container) {
-    View progressItemView = inflater.inflate(R.layout.list_item_infinitescroll_footer, container, false);
+    View progressItemView = inflater.inflate(R.layout.list_item_subreddit_pagination_footer, container, false);
     return new InfiniteScrollFooterViewHolder(progressItemView);
   }
 

@@ -26,7 +26,6 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
-import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
@@ -53,7 +52,6 @@ import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
-import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
@@ -63,7 +61,6 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
-import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
@@ -353,24 +350,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             mediaContentLoadErrors,
             submissionCommentsLoadErrors
         )
+        .doOnNext(RxUtils.checkNotMainThread())
         .toFlowable(BackpressureStrategy.LATEST)
         .compose(RxDiffUtils.calculateDiff(CommentsDiffCallback::create))
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroyFlowable())
-        .onErrorResumeNext(error -> {
-          // TODO: Handle load error.
-          Timber.e(error, "Data-set load error");
-          return Flowable.never();
-        })
-        .subscribe(
-            itemsAndDiff -> {
-              List<SubmissionScreenUiModel> newComments = itemsAndDiff.first();
-              DiffUtil.DiffResult commentsDiffResult = itemsAndDiff.second();
-              submissionCommentsAdapter.updateData(newComments);
-              commentsDiffResult.dispatchUpdatesTo(submissionCommentsAdapter);
-            },
-            logError("Error while streaming comments")
-        );
+        .subscribe(submissionCommentsAdapter);
 
     lifecycle().onPageCollapse()
         .startWith(LifecycleStreams.NOTHING)

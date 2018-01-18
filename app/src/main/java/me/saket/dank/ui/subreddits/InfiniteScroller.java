@@ -14,7 +14,6 @@ import io.reactivex.Observable;
  */
 public class InfiniteScroller {
 
-  // Fetch more items once the list has scrolled past 75% of its items.
   public static final float DEFAULT_SCROLL_THRESHOLD = 0.65f;
 
   private RecyclerView recyclerView;
@@ -34,23 +33,18 @@ public class InfiniteScroller {
   }
 
   public Observable<Object> streamPagingRequest() {
-    return getScrollObservable(recyclerView)
-        .distinctUntilChanged()
-        .cast(Object.class);
-  }
-
-  private Observable<Integer> getScrollObservable(RecyclerView recyclerView) {
-    return Observable.create(emitter -> {
+    Observable<Integer> scrollObservable = Observable.<Integer>create(emitter -> {
       if (Looper.myLooper() != Looper.getMainLooper()) {
-        throw new IllegalStateException(
-            "Expected to be called on the main thread but was " + Thread.currentThread().getName());
+        throw new IllegalStateException("Expected to be called on the main thread but was " + Thread.currentThread().getName());
       }
 
       final RecyclerView.OnScrollListener sl = new RecyclerView.OnScrollListener() {
         @Override
-        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-          int position = getLastVisibleItemPosition(recyclerView);
-          int adapterDatasetCount = ((InfinitelyScrollableRecyclerViewAdapter) recyclerView.getAdapter()).getItemCountMinusDecorators();
+        public void onScrolled(RecyclerView recyclerView11, int dx, int dy) {
+          int position = getLastVisibleItemPosition(recyclerView11);
+          // This stream has a distinctUntilChanged() applied to it. The item count has to be stable
+          // even when more items are being fetched or else another request will get triggered.
+          int adapterDatasetCount = ((InfinitelyScrollableRecyclerViewAdapter) recyclerView11.getAdapter()).getItemCountMinusDecorators();
           int updatePosition = (int) ((adapterDatasetCount - 1) * scrollThreshold);
 
           if (position >= updatePosition && updatePosition != 0) {
@@ -65,6 +59,10 @@ public class InfiniteScroller {
       recyclerView.addOnScrollListener(sl);
       emitter.setCancellable(() -> recyclerView.removeOnScrollListener(sl));
     });
+
+    return scrollObservable
+        .distinctUntilChanged()
+        .cast(Object.class);
   }
 
   private int getLastVisibleItemPosition(RecyclerView recyclerView) {
