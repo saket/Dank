@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
+import android.os.StrictMode;
 
 import com.facebook.stetho.Stetho;
 import com.jakewharton.threetenabp.AndroidThreeTen;
@@ -37,6 +38,16 @@ public class DankApplication extends Application {
       Timber.plant(new Timber.DebugTree());
       Stetho.initializeWithDefaults(this);
       Traceur.enableLogging();  // Throws an exception in every operator, so better enable only on debug builds
+
+      StrictMode.setThreadPolicy(new StrictMode.ThreadPolicy.Builder()
+          .detectAll()
+          .build());
+      StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
+          .detectLeakedSqlLiteObjects()
+          .detectLeakedClosableObjects()
+          .penaltyLog()
+          .penaltyDeath()
+          .build());
     }
 
     AndroidThreeTen.init(this);
