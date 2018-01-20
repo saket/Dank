@@ -92,8 +92,6 @@ public class SubmissionUiModelConstructor {
                 : Collections.emptyList());
           }
 
-          //Timber.d(optional.get().getTitle());
-
           Observable<Submission> submissions = optionalSubmissions
               // Not sure why, but the parent switchMap() on submission change gets triggered
               // after this chain receives an empty submission, so adding this extra takeWhile().
@@ -101,7 +99,6 @@ public class SubmissionUiModelConstructor {
               .map(submissionOptional -> submissionOptional.get());
 
           Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = contentLinks
-              .observeOn(io())
               .withLatestFrom(submissions, Pair::create)
               .switchMap(pair -> {
                 Optional<Link> contentLink = pair.first();
@@ -117,21 +114,19 @@ public class SubmissionUiModelConstructor {
 
           Observable<Integer> submissionPendingSyncReplyCounts = submissions
               .take(1)  // switch flatMap -> switchMap if we expect more than 1 emissions.
-              .observeOn(io())
               .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
               .map(pendingSyncReplies -> pendingSyncReplies.size());
 
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = Observable.combineLatest(
-              votingManager.streamChanges().subscribeOn(io()).map(o -> context),
-              submissions.subscribeOn(io()),
+              votingManager.streamChanges().map(o -> context),
+              submissions,
               submissionPendingSyncReplyCounts,
               contentLinkUiModels,
               this::headerUiModel
           );
 
           Observable<List<SubmissionScreenUiModel>> commentRowUiModels = submissions
-              .observeOn(io())
-              .compose(commentTreeConstructor.stream())
+              .compose(commentTreeConstructor.stream(io()))
               .withLatestFrom(submissions.map(submission -> submission.getAuthor()), Pair::create)
               .map(pair -> commentRowUiModels(context, pair.first(), pair.second()));
 
@@ -170,7 +165,6 @@ public class SubmissionUiModelConstructor {
                 optionalCommentsLoadError.ifPresent(allItems::add);
                 return allItems;
               })
-              .subscribeOn(io())
               .as(immutable());
         });
   }

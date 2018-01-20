@@ -345,12 +345,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .stream(
             getContext(),
             commentTreeConstructor,
-            submissionStream,
-            contentLinkStream,
-            mediaContentLoadErrors,
-            submissionCommentsLoadErrors
+            submissionStream.observeOn(io()),
+            contentLinkStream.observeOn(io()),
+            mediaContentLoadErrors.observeOn(io()),
+            submissionCommentsLoadErrors.observeOn(io())
         )
-        .doOnNext(RxUtils.checkNotMainThread())
+        .subscribeOn(io())
         .toFlowable(BackpressureStrategy.LATEST)
         .compose(RxDiffUtils.calculateDiff(CommentsDiffCallback::create))
         .observeOn(mainThread())

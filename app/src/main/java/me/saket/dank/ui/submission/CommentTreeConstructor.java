@@ -18,6 +18,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
+import io.reactivex.Scheduler;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.utils.RxHashSet;
 import timber.log.Timber;
@@ -150,7 +151,7 @@ public class CommentTreeConstructor {
   }
 
   @CheckResult
-  public ObservableTransformer<Submission, List<SubmissionCommentRow>> stream() {
+  public ObservableTransformer<Submission, List<SubmissionCommentRow>> stream(Scheduler scheduler) {
     return submissions -> {
       Observable<PendingSyncRepliesMap> pendingSyncRepliesMaps = submissions
           .distinctUntilChanged()
@@ -167,7 +168,7 @@ public class CommentTreeConstructor {
           .combineLatest(
               submissions,
               pendingSyncRepliesMaps,
-              rowVisibilityChanges,
+              rowVisibilityChanges.observeOn(scheduler),
               (submission, pendingSyncRepliesMap, o) -> constructComments(submission, pendingSyncRepliesMap))
           .as(immutable());
     };
