@@ -1,9 +1,6 @@
 package me.saket.dank.utils.itemanimators;
 
-import android.support.v7.widget.RecyclerView;
 import android.view.View;
-
-import java.util.List;
 
 public class SubmissionCommentsItemAnimator extends SlideAlphaAnimator<SubmissionCommentsItemAnimator> {
 
@@ -18,11 +15,5 @@ public class SubmissionCommentsItemAnimator extends SlideAlphaAnimator<Submissio
 
   protected float getAnimationTranslationY(View itemView) {
     return -dpToPx(32, itemView.getContext());
-  }
-
-  @Override
-  public boolean canReuseUpdatedViewHolder(RecyclerView.ViewHolder viewHolder, List<Object> payloads) {
-    boolean hasPayloads = !payloads.isEmpty();
-    return hasPayloads || super.canReuseUpdatedViewHolder(viewHolder, payloads);
   }
 }

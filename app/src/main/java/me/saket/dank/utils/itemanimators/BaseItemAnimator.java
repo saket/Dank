@@ -762,6 +762,12 @@ public abstract class BaseItemAnimator<T> extends SimpleItemAnimator {
     }
   }
 
+  @Override
+  public boolean canReuseUpdatedViewHolder(RecyclerView.ViewHolder viewHolder, List<Object> payloads) {
+    boolean hasPayloads = !payloads.isEmpty();
+    return hasPayloads || super.canReuseUpdatedViewHolder(viewHolder, payloads);
+  }
+
   private static class VpaListenerAdapter implements ViewPropertyAnimatorListener {
     @Override
     public void onAnimationStart(View view) {
