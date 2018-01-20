@@ -26,7 +26,7 @@ public class InfiniteScrollFooterViewHolder extends RecyclerView.ViewHolder {
     super(itemView);
     ButterKnife.bind(this, itemView);
   }
-  
+
   @Deprecated
   public void bind(InfiniteScrollHeaderFooter footer) {
     progressView.setVisibility(footer.type() == InfiniteScrollHeaderFooter.Type.PROGRESS ? View.VISIBLE : View.GONE);

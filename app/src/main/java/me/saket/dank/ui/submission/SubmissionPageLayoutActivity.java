@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
@@ -63,17 +64,24 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
     setupContentExpandablePage(contentPage);
     expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
 
+    contentPage.setNestedExpandablePage(submissionPageLayout);
+    submissionPageLayout.expandImmediately();
+
+    // SubmissionPageLayout will handle retaining its data on its own when savedInstance != null.
     if (savedInstanceState == null) {
-      if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
-        loadSubmission(getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
+      DankSubmissionRequest submissionRequest;
+      if (getIntent().hasExtra(KEY_SUBMISSION_REQUEST)) {
+        submissionRequest = getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST);
+      } else if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
+        submissionRequest = defaultRequest(getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
       } else {
-        submissionPageLayout.populateUi(Optional.empty(), getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST));
+        throw new AssertionError();
       }
+      submissionPageLayout.populateUi(Optional.empty(), submissionRequest);
     }
-    // Else, SubmissionFragment will handle retaining its data.
   }
 
-  private void loadSubmission(RedditSubmissionLink submissionLink) {
+  private DankSubmissionRequest defaultRequest(RedditSubmissionLink submissionLink) {
     // We don't know the suggested sort yet. Attempt with the default sort and if it's found
     // to be different, then do another load.
     DankSubmissionRequest.Builder submissionReqBuilder = DankSubmissionRequest
@@ -87,7 +95,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
           .contextCount(initialComment.contextCount());
     }
 
-    submissionPageLayout.populateUi(Optional.empty(), submissionReqBuilder.build());
+    return submissionReqBuilder.build();
   }
 
   @Override
