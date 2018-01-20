@@ -40,19 +40,11 @@ public abstract class InfiniteScrollHeaderFooter {
     return new AutoValue_InfiniteScrollHeaderFooter(Type.HIDDEN, 0, 0, 0, null);
   }
 
-  public static InfiniteScrollHeaderFooter createHeaderProgress(@StringRes int progressTitleRes) {
-    return new AutoValue_InfiniteScrollHeaderFooter(Type.PROGRESS, progressTitleRes, 0, 0, null);
-  }
-
   public static InfiniteScrollHeaderFooter createFooterProgress() {
     return new AutoValue_InfiniteScrollHeaderFooter(Type.PROGRESS, 0, 0, 0, null);
   }
 
   public static InfiniteScrollHeaderFooter createError(@StringRes int errorTitleRes, View.OnClickListener onRetryClickListener) {
     return new AutoValue_InfiniteScrollHeaderFooter(Type.ERROR, errorTitleRes, 0, 0, onRetryClickListener);
-  }
-
-  public static InfiniteScrollHeaderFooter createCustom(@StringRes int titleRes, View.OnClickListener onClickListener) {
-    return new AutoValue_InfiniteScrollHeaderFooter(Type.CUSTOM, titleRes, 0, 0, onClickListener);
   }
 }

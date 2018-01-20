@@ -9,9 +9,9 @@ import android.widget.TextView;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
-import me.saket.dank.data.InfiniteScrollFooter;
 import me.saket.dank.data.InfiniteScrollHeaderFooter;
 
+@Deprecated
 public class InfiniteScrollFooterViewHolder extends RecyclerView.ViewHolder {
 
   @BindView(R.id.infinitescroll_footer_progress) View progressView;
@@ -26,16 +26,7 @@ public class InfiniteScrollFooterViewHolder extends RecyclerView.ViewHolder {
     super(itemView);
     ButterKnife.bind(this, itemView);
   }
-
-  public void bind(InfiniteScrollFooter footer) {
-    progressView.setVisibility(footer.type() == InfiniteScrollFooter.Type.PROGRESS ? View.VISIBLE : View.GONE);
-
-    errorTextView.setVisibility(footer.type() == InfiniteScrollFooter.Type.ERROR ? View.VISIBLE : View.GONE);
-    if (footer.type() == InfiniteScrollFooter.Type.ERROR) {
-      errorTextView.setText(footer.titleRes());
-    }
-  }
-
+  
   @Deprecated
   public void bind(InfiniteScrollHeaderFooter footer) {
     progressView.setVisibility(footer.type() == InfiniteScrollHeaderFooter.Type.PROGRESS ? View.VISIBLE : View.GONE);

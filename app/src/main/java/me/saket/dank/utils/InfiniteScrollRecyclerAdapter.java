@@ -19,11 +19,9 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
     implements Consumer<List<T>>
 {
 
-  private static final int VIEW_TYPE_HEADER = 20;
   private static final int VIEW_TYPE_FOOTER = 21;
 
   private RecyclerViewArrayAdapter<T, VH> wrappedAdapter;
-  private InfiniteScrollHeaderFooter activeHeaderInfo = InfiniteScrollHeaderFooter.createHidden();
   private InfiniteScrollHeaderFooter activeFooterInfo = InfiniteScrollHeaderFooter.createHidden();
   private RecyclerView recyclerView;
 
@@ -43,28 +41,28 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
 
       @Override
       public void onItemRangeChanged(int positionStart, int itemCount) {
-        notifyItemRangeChanged(positionStart + getVisibleHeaderItemCount(), itemCount);
+        notifyItemRangeChanged(positionStart, itemCount);
       }
 
       @Override
       public void onItemRangeChanged(int positionStart, int itemCount, Object payload) {
-        notifyItemRangeChanged(positionStart + getVisibleHeaderItemCount(), itemCount, payload);
+        notifyItemRangeChanged(positionStart, itemCount, payload);
       }
 
       @Override
       public void onItemRangeInserted(int positionStart, int itemCount) {
-        notifyItemRangeInserted(positionStart + getVisibleHeaderItemCount(), itemCount);
+        notifyItemRangeInserted(positionStart, itemCount);
       }
 
       @Override
       public void onItemRangeRemoved(int positionStart, int itemCount) {
-        notifyItemRangeRemoved(positionStart + getVisibleHeaderItemCount(), itemCount);
+        notifyItemRangeRemoved(positionStart, itemCount);
       }
 
       @Override
       public void onItemRangeMoved(int fromPosition, int toPosition, int itemCount) {
         // No notifyItemRangeMoved()? :/
-        notifyItemRangeChanged(fromPosition + getVisibleHeaderItemCount(), toPosition + getVisibleHeaderItemCount() + itemCount);
+        notifyItemRangeChanged(fromPosition, toPosition + itemCount);
       }
     });
   }
@@ -72,16 +70,6 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
   @Override
   public void accept(List<T> items) {
     wrappedAdapter.updateDataAndNotifyDatasetChanged(items);
-  }
-
-  public void setHeader(InfiniteScrollHeaderFooter headerInfo) {
-    if (activeHeaderInfo == headerInfo) {
-      return;
-    }
-    recyclerView.post(() -> {
-      activeHeaderInfo = headerInfo;
-      notifyDataSetChanged();
-    });
   }
 
   public void setFooter(InfiniteScrollHeaderFooter footerInfo) {
@@ -94,19 +82,12 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
     });
   }
 
-  public void setFooterWithoutNotifyingDataSetChanged(InfiniteScrollHeaderFooter footerInfo) {
-    if (activeFooterInfo == footerInfo) {
-      return;
-    }
-    recyclerView.post(() -> activeFooterInfo = footerInfo);
-  }
-
   public boolean isWrappedAdapterItem(int position) {
-    return !(isHeaderItem(position) || isFooterItem(position));
+    return !isFooterItem(position);
   }
 
   public T getItemInWrappedAdapter(int position) {
-    return wrappedAdapter.getItem(position - getVisibleHeaderItemCount());
+    return wrappedAdapter.getItem(position);
   }
 
   @Override
@@ -117,15 +98,12 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
 
   @Override
   public int getItemViewType(int position) {
-    if (isHeaderItem(position)) {
-      return VIEW_TYPE_HEADER;
-
-    } else if (isFooterItem(position)) {
+    if (isFooterItem(position)) {
       return VIEW_TYPE_FOOTER;
 
     } else {
-      int wrappedItemType = wrappedAdapter.getItemViewType(position - getVisibleHeaderItemCount());
-      if (wrappedItemType == VIEW_TYPE_HEADER || wrappedItemType == VIEW_TYPE_FOOTER) {
+      int wrappedItemType = wrappedAdapter.getItemViewType(position);
+      if (wrappedItemType == VIEW_TYPE_FOOTER) {
         throw new IllegalStateException("Use another viewType value");
       }
       return wrappedItemType;
@@ -134,23 +112,17 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
 
   @Override
   public long getItemId(int position) {
-    if (isHeaderItem(position)) {
-      return -VIEW_TYPE_HEADER;
-
-    } else if (isFooterItem(position)) {
+    if (isFooterItem(position)) {
       return -VIEW_TYPE_FOOTER;
 
     } else {
-      return wrappedAdapter.getItemId(position - getVisibleHeaderItemCount());
+      return wrappedAdapter.getItemId(position);
     }
   }
 
   @Override
   public RecyclerView.ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
-    if (viewType == VIEW_TYPE_HEADER) {
-      return InfiniteScrollHeaderViewHolder.create(LayoutInflater.from(parent.getContext()), parent);
-
-    } else if (viewType == VIEW_TYPE_FOOTER) {
+    if (viewType == VIEW_TYPE_FOOTER) {
       return InfiniteScrollFooterViewHolder.create(LayoutInflater.from(parent.getContext()), parent);
 
     } else {
@@ -161,43 +133,27 @@ public class InfiniteScrollRecyclerAdapter<T, VH extends RecyclerView.ViewHolder
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
     switch (getItemViewType(position)) {
-      case VIEW_TYPE_HEADER:
-        ((InfiniteScrollHeaderViewHolder) holder).bind(activeHeaderInfo);
-        break;
-
       case VIEW_TYPE_FOOTER:
         ((InfiniteScrollFooterViewHolder) holder).bind(activeFooterInfo);
         break;
 
       default:
         //noinspection unchecked
-        wrappedAdapter.onBindViewHolder((VH) holder, position - getVisibleHeaderItemCount());
+        wrappedAdapter.onBindViewHolder((VH) holder, position);
     }
   }
 
   @Override
   public int getItemCount() {
-    return wrappedAdapter.getItemCount() + getVisibleHeaderItemCount() + getVisibleFooterItemCount();
-  }
-
-  private boolean isHeaderItem(int position) {
-    return isHeaderVisible() && position == 0;
+    return wrappedAdapter.getItemCount() + getVisibleFooterItemCount();
   }
 
   private boolean isFooterItem(int position) {
     return isFooterVisible() && position == getItemCount() - 1;
   }
 
-  private int getVisibleHeaderItemCount() {
-    return isHeaderVisible() ? 1 : 0;
-  }
-
   private int getVisibleFooterItemCount() {
     return isFooterVisible() ? 1 : 0;
-  }
-
-  private boolean isHeaderVisible() {
-    return activeHeaderInfo.type() != InfiniteScrollHeaderFooter.Type.HIDDEN;
   }
 
   private boolean isFooterVisible() {
