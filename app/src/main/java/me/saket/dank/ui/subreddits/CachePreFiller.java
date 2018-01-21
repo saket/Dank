@@ -49,6 +49,8 @@ import me.saket.dank.utils.UrlParser;
 @Singleton
 public class CachePreFiller {
 
+  private static final int SUBMISSION_LIMIT_PER_SUBREDDIT = 30;
+
   private final Application appContext;
   private final SubmissionRepository submissionRepository;
   private final NetworkStateListener networkStateListener;
@@ -74,6 +76,7 @@ public class CachePreFiller {
   @CheckResult
   public Completable preFillInParallelThreads(List<Submission> submissions, @Px int deviceDisplayWidth, @Px int submissionAlbumLinkThumbnailWidth) {
     Observable<Pair<Submission, Link>> submissionAndContentLinkStream = Observable.fromIterable(submissions)
+        .take(SUBMISSION_LIMIT_PER_SUBREDDIT)
         .map(submission -> {
           Link contentLink = UrlParser.parse(submission.getUrl());
           return Pair.create(submission, contentLink);
