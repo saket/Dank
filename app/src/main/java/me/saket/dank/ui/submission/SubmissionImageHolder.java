@@ -10,9 +10,7 @@ import android.util.Size;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.ProgressBar;
-import butterknife.BindColor;
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
@@ -22,6 +20,12 @@ import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
+
+import net.dean.jraw.models.Thumbnails;
+
+import butterknife.BindColor;
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -39,7 +43,7 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
-import net.dean.jraw.models.Thumbnails;
+import timber.log.Timber;
 
 /**
  * Manages showing of content image in {@link SubmissionPageLayout}. Only supports showing a single image right now.
@@ -85,13 +89,15 @@ public class SubmissionImageHolder {
     glidePaddingTransformation = new GlidePaddingTransformation(imageView.getContext(), paddingColorForSmallImages) {
       @Override
       public Size getPadding(int imageWidth, int imageHeight) {
-        int minDesiredImageHeight = commentListParentSheet.getTop() * 2;
-        float widthResizeFactor = deviceDisplayWidth / (float) imageWidth;  // Because ZoomableImageView will resize the image to fill space.
+        float minDesiredImageHeight = commentListParentSheet.getTop() * 2;
 
-        if (imageHeight < minDesiredImageHeight) {
+        // Because ZoomableImageView will resize the image to fill space.
+        float widthResizeFactor = deviceDisplayWidth / (float) imageWidth;
+        float resizedHeight = imageHeight * widthResizeFactor;
+
+        if (resizedHeight < minDesiredImageHeight) {
           // Image is too small to be displayed.
-          int minImageHeightBeforeResizing = (int) (minDesiredImageHeight / widthResizeFactor);
-          return new Size(0, (minImageHeightBeforeResizing - imageHeight) / 2);
+          return new Size(0, (int) ((minDesiredImageHeight - resizedHeight) / 2));
         } else {
           return new Size(0, 0);
         }
@@ -150,7 +156,7 @@ public class SubmissionImageHolder {
         .doOnSuccess(imageStream)
         .flatMap(drawable -> Views.rxWaitTillMeasured(imageView).toSingleDefault(drawable))
         .doOnSuccess(drawable -> {
-          float widthResizeFactor = deviceDisplayWidth / (float) drawable.getMinimumWidth();
+          float widthResizeFactor = deviceDisplayWidth / (float) drawable.getIntrinsicWidth();
           float imageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
           float visibleImageHeight = Math.min(imageHeight, imageView.getHeight());
 
