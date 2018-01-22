@@ -157,6 +157,9 @@ public class CachePreFiller {
       return Completable.complete();
     }
 
+    //if (mediaLink instanceof ImgurAlbumLink) {
+    //  Timber.i("Pre-filling image/album %s", submission.getTitle());
+    //}
     return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .map(resolvedLink -> {
           ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());

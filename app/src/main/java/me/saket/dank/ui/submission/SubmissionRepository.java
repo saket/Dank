@@ -7,8 +7,6 @@ import android.support.v4.util.Pair;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxbinding2.internal.Notification;
-import com.jakewharton.rxrelay2.PublishRelay;
-import com.jakewharton.rxrelay2.Relay;
 import com.nytimes.android.external.store3.base.Persister;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
@@ -42,9 +40,7 @@ import io.reactivex.Flowable;
 import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Function;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
@@ -54,7 +50,6 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddits.NetworkCallStatus;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankSubmissionRequest;
-import timber.log.Timber;
 
 @Singleton
 public class SubmissionRepository {
@@ -221,10 +216,7 @@ public class SubmissionRepository {
    */
   @CheckResult
   public Observable<NetworkCallStatus> loadAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
-    Relay<NetworkCallStatus> networkCallStatusStream = PublishRelay.create();
-
-    lastPaginationAnchor(folder)
-        .doOnSubscribe(o -> networkCallStatusStream.accept(NetworkCallStatus.createInFlight()))
+    return lastPaginationAnchor(folder)
         //.doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
         .flatMap(anchor -> dankRedditClient
             .withAuth(Single.create(emitter -> {
@@ -240,6 +232,7 @@ public class SubmissionRepository {
                 distinctNewItems.addAll(saveResult.savedItems());
 
                 if (!fetchResult.hasMoreItems() || distinctNewItems.size() > 10) {
+                  //Timber.i("Breaking early");
                   break;
                 }
 
@@ -255,24 +248,18 @@ public class SubmissionRepository {
               Throwable actualError = errorResolver.findActualCause(error);
 
               if (actualError instanceof InterruptedIOException) {
-                Timber.w("Retrying on thread interruption");
+                // I don't know why, but this chain gets occasionally gets interrupted randomly.
+                //Timber.w("Retrying on thread interruption");
                 return Flowable.just((Object) Notification.INSTANCE);
               } else {
                 return Flowable.error(error);
               }
             }))
-            .subscribeOn(Schedulers.io())
-            .observeOn(AndroidSchedulers.mainThread())
         )
-        .subscribe(
-            o -> networkCallStatusStream.accept(NetworkCallStatus.createIdle()),
-            error -> {
-              Timber.e(error, "Failed to load submissions");
-              networkCallStatusStream.accept(NetworkCallStatus.createFailed(error));
-            }
-        );
-
-    return networkCallStatusStream;
+        .map(o -> NetworkCallStatus.createIdle())
+        .toObservable()
+        .onErrorReturn(error -> NetworkCallStatus.createFailed(error))
+        .startWith(NetworkCallStatus.createInFlight());
   }
 
   /**

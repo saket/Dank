@@ -19,7 +19,6 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.BiFunction;
-import io.reactivex.functions.Function3;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.UserPreferences;
@@ -35,7 +34,7 @@ import me.saket.dank.utils.Truss;
 
 public class SubredditUiConstructor {
 
-  private static final Function3<Boolean, Boolean, Boolean, Boolean> AND_FUNCTION3 = (b1, b2, b3) -> b1 && b2 && b3;
+  private static final BiFunction<Boolean, Boolean, Boolean> AND_BI_FUNCTION = (b1, b2) -> b1 && b2;
   private static final BiFunction<Boolean, Boolean, Boolean> OR_FUNCTION = (b1, b2) -> b1 || b2;
 
   private final VotingManager votingManager;
@@ -53,24 +52,18 @@ public class SubredditUiConstructor {
   public Observable<SubredditScreenUiModel> stream(
       Context context,
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
-      Observable<NetworkCallStatus> paginationResults,
-      Observable<NetworkCallStatus> refreshResults)
+      Observable<NetworkCallStatus> paginationResults)
   {
     Observable<Object> userPrefChanges = showCommentCountInBylinePref.asObservable().cast(Object.class);
-    Observable<Boolean> sharedFullscreenProgressVisibilities = fullscreenProgressVisibilities(
-        cachedSubmissionLists,
-        paginationResults,
-        refreshResults)
-        .share();
-
+    Observable<Boolean> sharedFullscreenProgressVisibilities = fullscreenProgressVisibilities(cachedSubmissionLists, paginationResults).share();
     return Observable.combineLatest(
         sharedFullscreenProgressVisibilities,
-        toolbarRefreshUiModels(refreshResults, sharedFullscreenProgressVisibilities),
+        toolbarRefreshVisibilities(sharedFullscreenProgressVisibilities),
         paginationProgressUiModels(cachedSubmissionLists, paginationResults),
         cachedSubmissionLists,
         userPrefChanges,
         votingManager.streamChanges(),
-        (fullscreenProgressVisible, toolbarRefresh, optionalPagination, optionalCachedSubs, o, oo) ->
+        (fullscreenProgressVisible, toolbarRefreshVisible, optionalPagination, optionalCachedSubs, o, oo) ->
         {
           int rowCount = optionalPagination.map(p -> 1).orElse(0) + optionalCachedSubs.map(subs -> subs.size()).orElse(0);
           List<SubredditScreenUiModel.SubmissionRowUiModel> rowUiModels = new ArrayList<>(rowCount);
@@ -85,7 +78,7 @@ public class SubredditUiConstructor {
 
           return SubredditScreenUiModel.builder()
               .fullscreenProgressVisible(fullscreenProgressVisible)
-              .toolbarRefresh(toolbarRefresh)
+              .toolbarRefreshVisible(toolbarRefreshVisible)
               .rowUiModels(rowUiModels)
               .build();
         });
@@ -93,54 +86,29 @@ public class SubredditUiConstructor {
 
   private Observable<Boolean> fullscreenProgressVisibilities(
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
-      Observable<NetworkCallStatus> paginationResults,
-      Observable<NetworkCallStatus> refreshResults)
+      Observable<NetworkCallStatus> paginationResults)
   {
     Observable<Boolean> fullscreenProgressForAppLaunch = Observable.combineLatest(
         cachedSubmissionLists.map(Optional::isEmpty),
         paginationResults.map(NetworkCallStatus::isIdle),
-        refreshResults.map(NetworkCallStatus::isIdle),
-        AND_FUNCTION3
+        AND_BI_FUNCTION
     );
 
-    Observable<Boolean> fullscreenProgressForFirstFolderLoad = Observable.combineLatest(
-        cachedSubmissionLists.map(optionalSubs -> optionalSubs.isPresent() && optionalSubs.get().isEmpty()),
+    Observable<Boolean> fullscreenProgressForFolderChange = Observable.combineLatest(
+        cachedSubmissionLists.map(Optional::isEmpty),
         paginationResults.map(NetworkCallStatus::isInFlight),
-        refreshResults.map(NetworkCallStatus::isIdle),
-        AND_FUNCTION3
+        AND_BI_FUNCTION
     );
 
     return Observable.combineLatest(
         fullscreenProgressForAppLaunch,
-        fullscreenProgressForFirstFolderLoad,
+        fullscreenProgressForFolderChange,
         OR_FUNCTION
     );
   }
 
-  private Observable<SubredditScreenUiModel.ToolbarRefreshUiModel> toolbarRefreshUiModels(
-      Observable<NetworkCallStatus> refreshResults,
-      Observable<Boolean> fullscreenProgressVisibilities)
-  {
-    return Observable.combineLatest(
-        refreshResults,
-        fullscreenProgressVisibilities,
-        (refreshResult, fullscreenProgressVisible) -> {
-          if (fullscreenProgressVisible) {
-            return SubredditScreenUiModel.ToolbarRefreshUiModel.create(SubredditScreenUiModel.ToolbarRefreshUiModel.State.HIDDEN);
-          } else {
-            switch (refreshResult.state()) {
-              case IN_FLIGHT:
-                return SubredditScreenUiModel.ToolbarRefreshUiModel.create(SubredditScreenUiModel.ToolbarRefreshUiModel.State.IN_FLIGHT);
-              case IDLE:
-                return SubredditScreenUiModel.ToolbarRefreshUiModel.create(SubredditScreenUiModel.ToolbarRefreshUiModel.State.IDLE);
-              case FAILED:
-                return SubredditScreenUiModel.ToolbarRefreshUiModel.create(SubredditScreenUiModel.ToolbarRefreshUiModel.State.FAILED);
-              default:
-                throw new AssertionError("Unknown refresh state: " + refreshResult);
-            }
-          }
-        }
-    );
+  private Observable<Boolean> toolbarRefreshVisibilities(Observable<Boolean> fullscreenProgressVisibilities) {
+    return fullscreenProgressVisibilities.map(fullscreenProgressVisible -> !fullscreenProgressVisible);
   }
 
   private Observable<Optional<SubredditSubmissionPagination.UiModel>> paginationProgressUiModels(
@@ -220,8 +188,9 @@ public class SubredditUiConstructor {
         break;
 
       case DEFAULT:
+      case URL:
         if (submission.getThumbnails() == null) {
-          // Reddit couldn't create a thumbnail. Has to be a URL submission.
+          // Reddit couldn't create a thumbnail.
           thumbnail = Optional.of(
               thumbnailForStaticImage(c)
                   .staticRes(Optional.of(R.drawable.ic_link_black_24dp))
@@ -230,10 +199,6 @@ public class SubredditUiConstructor {
         } else {
           thumbnail = Optional.of(thumbnailForRemoteImage(c, submission.getThumbnails()));
         }
-        break;
-
-      case URL:
-        thumbnail = Optional.of(thumbnailForRemoteImage(c, submission.getThumbnails()));
         break;
 
       case NONE:

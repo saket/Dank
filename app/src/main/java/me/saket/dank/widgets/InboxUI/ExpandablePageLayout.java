@@ -6,7 +6,6 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.Canvas;
-import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.AttributeSet;
 import android.view.MotionEvent;
@@ -48,7 +47,11 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
     COLLAPSING,
     COLLAPSED,
     EXPANDING,
-    EXPANDED
+    EXPANDED;
+
+    public boolean isCollapsed() {
+      return this == COLLAPSED;
+    }
   }
 
   public interface OnPullToCollapseIntercepter {

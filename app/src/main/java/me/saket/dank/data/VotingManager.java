@@ -93,7 +93,7 @@ public class VotingManager {
    */
   @CheckResult
   public Completable voteWithAutoRetry(PostedOrInFlightContribution contributionToVote, VoteDirection voteDirection) {
-    Timber.i("Voting for %s with %s", contributionToVote.fullName(), voteDirection);
+    //Timber.i("Voting for %s with %s", contributionToVote.fullName(), voteDirection);
 
     return vote(contributionToVote, voteDirection)
         .onErrorComplete(error -> {

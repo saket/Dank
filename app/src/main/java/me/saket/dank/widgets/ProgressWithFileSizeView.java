@@ -58,10 +58,6 @@ public class ProgressWithFileSizeView extends LinearLayout {
     progressView.addListener(listener);
   }
 
-//  public CircularProgressView getProgressView() {
-//    return progressView;
-//  }
-
   public void setProgress(@FloatRange(from = 0, to = 100) float progress) {
     progressView.setProgress(progress);
   }

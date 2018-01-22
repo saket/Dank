@@ -44,7 +44,6 @@ public class DankApplication extends Application {
           .build());
       StrictMode.setVmPolicy(new StrictMode.VmPolicy.Builder()
           .detectLeakedSqlLiteObjects()
-          .detectLeakedClosableObjects()
           .penaltyLog()
           .penaltyDeath()
           .build());

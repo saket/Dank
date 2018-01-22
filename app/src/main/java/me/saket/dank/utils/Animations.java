@@ -11,6 +11,7 @@ import android.view.animation.Interpolator;
  */
 public class Animations {
 
+  public static final int TRANSITION_ANIM_DURATION = 200;
   public static final Interpolator INTERPOLATOR = new FastOutSlowInInterpolator();
 
   public static TransitionSet transitions() {
@@ -19,6 +20,6 @@ public class Animations {
         .addTransition(new Fade(Fade.IN).setInterpolator(Animations.INTERPOLATOR))
         .addTransition(new Fade(Fade.OUT).setInterpolator(Animations.INTERPOLATOR))
         .setOrdering(TransitionSet.ORDERING_TOGETHER)
-        .setDuration(200);
+        .setDuration(TRANSITION_ANIM_DURATION);
   }
 }

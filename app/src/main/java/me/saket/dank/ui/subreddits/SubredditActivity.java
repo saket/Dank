@@ -2,7 +2,6 @@ package me.saket.dank.ui.subreddits;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
-import static io.reactivex.schedulers.Schedulers.single;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
@@ -60,7 +59,6 @@ import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
-import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.subreddits.models.SubmissionDiffCallbacks;
 import me.saket.dank.ui.subreddits.models.SubredditScreenUiModel;
 import me.saket.dank.ui.subreddits.models.SubredditUiConstructor;
@@ -69,12 +67,13 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Optional;
-import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtils;
+import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
+import me.saket.dank.widgets.InboxUI.ExpandablePageLayout.PageState;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.RxExpandablePage;
@@ -383,47 +382,41 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     );
 
     Relay<NetworkCallStatus> paginationResults = BehaviorRelay.createDefault(NetworkCallStatus.createIdle());
-    Relay<NetworkCallStatus> refreshResults = BehaviorRelay.createDefault(NetworkCallStatus.createIdle());
     Relay<Optional<List<Submission>>> cachedSubmissionStream = BehaviorRelay.createDefault(Optional.empty());
 
     // Pagination.
-    // Note: We're also treating initial load of items as pagination.
     submissionFolderStream
         .observeOn(mainThread())
-        //.doOnNext(folder -> Timber.d("-------------------------------"))
-        //.doOnNext(folder -> Timber.i("%s", folder))
         .takeUntil(lifecycle().onDestroy())
         .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionList)
-                .mergeWith(submissionRepository.submissionCount(folder)
-                    .subscribeOn(io())
-                    .take(1)
-                    .filter(count -> count == 0)  /* Force initial load */)
-                .mergeWith(forceResetSubmissionsRequestStream)
-                //.doOnNext(o -> Timber.d("Loading more…"))
-                .flatMap(o -> submissionRepository.loadAndSaveMoreSubmissions(folder))
-            //.doOnNext(o -> Timber.d("Submissions loaded"))
+            .observeOn(io())
+            .flatMap(o -> submissionRepository.loadAndSaveMoreSubmissions(folder))
         )
         .subscribe(paginationResults);
 
-    // DB subscription.
-    // We suspend the listener while a submission is active so that the list doesn't get updated in background.
-    RxExpandablePage.pageStateChanges(submissionPage)
-        .switchMap(o -> submissionPage.isCollapsed()
-            ? submissionFolderStream.switchMap(folder -> submissionRepository.submissions(folder).subscribeOn(io()))
-            : Observable.never())
-        //.doOnNext(cachedSubs -> Timber.i("[DB] Cached subs: %s", cachedSubs.size()))
+    // Folder change.
+    submissionFolderStream
+        .compose(RxUtils.replayLastItemWhen(forceResetSubmissionsRequestStream))
+        .switchMap(folder -> submissionRepository
+            .clearCachedSubmissionLists(folder.subredditName())
+            .andThen(submissionRepository.loadAndSaveMoreSubmissions(folder).doOnNext(paginationResults).ignoreElements())
+            .subscribeOn(io())
+            .observeOn(mainThread())
+            .andThen(RxExpandablePage.pageStateChanges(submissionPage)
+                .map(PageState::isCollapsed)
+                .distinctUntilChanged()
+                .observeOn(io())
+                .switchMap(pageCollapsed -> pageCollapsed
+                    ? submissionRepository.submissions(folder)
+                    : Observable.never()))
+            .map(Optional::of)
+            .startWith(Optional.empty())
+        )
         .takeUntil(lifecycle().onDestroy())
-        .map(Optional::of)
         .subscribe(cachedSubmissionStream);
 
-    // Refresh stale submissions.
-    submissionFolderStream
-        .switchMap(folder -> submissionRepository.loadAndSaveMoreSubmissions(folder).subscribeOn(io()))
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(refreshResults);
-
     Observable<SubredditScreenUiModel> sharedUiModels = uiConstructor
-        .stream(this, cachedSubmissionStream.observeOn(io()), paginationResults.observeOn(io()), refreshResults.observeOn(io()))
+        .stream(this, cachedSubmissionStream.observeOn(io()), paginationResults.observeOn(io()))
         .subscribeOn(io())
         .share();
 
@@ -444,31 +437,37 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // TODO.
     // Toolbar refresh.
-    sharedUiModels.map(SubredditScreenUiModel::toolbarRefresh)
+    sharedUiModels.map(SubredditScreenUiModel::toolbarRefreshVisible)
+        .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(state -> {
-          //Timber.i("Toolbar refresh state: %s", state);
+        .subscribe(visible -> {
+          MenuItem refreshMenuItem = toolbar.getMenu().findItem(R.id.action_refresh_submissions);
+          if (refreshMenuItem != null) {
+            refreshMenuItem.setVisible(visible);
+          }
+          //Timber.i("Toolbar refresh visible: %s", visible);
         });
 
+    // TODO.
     // Cache pre-fill.
-    int displayWidth = getResources().getDisplayMetrics().widthPixels;
-    int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
-    cachedSubmissionStream
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        .withLatestFrom(submissionFolderStream, Pair::create)
-        .observeOn(single())
-        .flatMap(pair -> subscriptionManager.isSubscribed(pair.second().subredditName())
-            .flatMap(isSubscribed -> isSubscribed
-                ? Observable.just(pair.first())
-                : Observable.never())
-        )
-        .switchMap(cachedSubmissions -> cachePreFiller
-            .preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
-            .toObservable()
-        )
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe();
+//    int displayWidth = getResources().getDisplayMetrics().widthPixels;
+//    int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
+//    cachedSubmissionStream
+//        .filter(Optional::isPresent)
+//        .map(Optional::get)
+//        .withLatestFrom(submissionFolderStream, Pair::create)
+//        .observeOn(single())
+//        .flatMap(pair -> subscriptionManager.isSubscribed(pair.second().subredditName())
+//            .flatMap(isSubscribed -> isSubscribed
+//                ? Observable.just(pair.first())
+//                : Observable.never())
+//        )
+//        .switchMap(cachedSubmissions -> cachePreFiller
+//            .preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
+//            .toObservable()
+//        )
+//        .takeUntil(lifecycle().onDestroy())
+//        .subscribe();
   }
 
   @Override

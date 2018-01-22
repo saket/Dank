@@ -10,8 +10,9 @@
   <FrameLayout
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_gravity="center"><!-- Acts as the background for the following indeterminate progress bar. -->
+    android:layout_gravity="center">
 
+    <!-- Acts as the background for the following indeterminate progress bar. -->
     <com.github.rahatarmanahmed.cpv.CircularProgressView
       android:id="@+id/progressbarwithfilesize_progress_fill"
       android:layout_width="48dp"

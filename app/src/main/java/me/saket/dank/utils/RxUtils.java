@@ -5,6 +5,7 @@ import android.os.Build;
 import android.os.Looper;
 
 import io.reactivex.CompletableTransformer;
+import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.SingleTransformer;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -112,5 +113,12 @@ public class RxUtils {
         throw new AssertionError("Is on main thread!");
       }
     };
+  }
+
+  /**
+   * Replay last item in upstream when <var>stream</var> emits.
+   */
+  public static <T> ObservableTransformer<T, T> replayLastItemWhen(Observable<Object> stream) {
+    return upstream -> upstream.flatMap(item -> stream.map(o -> item).startWith(item));
   }
 }

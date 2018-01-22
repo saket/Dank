@@ -205,9 +205,11 @@ public interface SubredditSubmission {
     @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
       ViewHolder holder = ViewHolder.create(inflater, parent);
-      holder.itemView.setOnClickListener(o ->
-          submissionClicks.accept(SubredditSubmissionClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.getItemId()))
-      );
+      holder.itemView.setOnClickListener(o -> {
+        if (holder.getAdapterPosition() != RecyclerView.NO_POSITION) {
+          submissionClicks.accept(SubredditSubmissionClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.getItemId()));
+        }
+      });
 
       SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
       swipeableLayout.setSwipeActionIconProvider(swipeActionsProvider);

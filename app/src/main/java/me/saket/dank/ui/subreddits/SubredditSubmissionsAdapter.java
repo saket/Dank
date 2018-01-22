@@ -54,7 +54,7 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   @Override
   public int getItemCountMinusDecorators() {
     int itemCount = getItemCount();
-    if (getItem(itemCount - 1).type() == SubmissionRowUiModel.Type.PAGINATION_FOOTER) {
+    if (itemCount > 1 && getItem(itemCount - 1).type() == SubmissionRowUiModel.Type.PAGINATION_FOOTER) {
       itemCount = itemCount - 1;
     }
     return itemCount;

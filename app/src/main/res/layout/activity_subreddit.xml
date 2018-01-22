@@ -1,21 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/subreddit_root"
+  style="@style/DankPullCollapsibleActivityPage"
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
-  android:id="@+id/subreddit_root"
-  style="@style/DankPullCollapsibleActivityPage"
   android:background="@null"
   android:elevation="0dp"
   tools:context="me.saket.dank.ui.subreddits.SubredditActivity">
 
   <me.saket.dank.widgets.InboxUI.InboxRecyclerView
     android:id="@+id/subreddit_submission_list"
-    android:scrollbarStyle="insideOverlay"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_marginTop="2dp"
-    android:paddingTop="?android:attr/actionBarSize"
     android:clipToPadding="false"
+    android:paddingTop="?android:attr/actionBarSize"
+    android:scrollbarStyle="insideOverlay"
     android:scrollbars="vertical"
     tools:visibility="gone" />
 
@@ -23,16 +23,16 @@
     android:id="@+id/subreddit_submission_emptyState"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginTop="-60dp"
     android:layout_centerInParent="true"
+    android:layout_marginTop="-60dp"
     android:visibility="gone" />
 
   <me.saket.dank.widgets.ErrorStateView
     android:id="@+id/subreddit_submission_errorState"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_marginTop="-60dp"
     android:layout_centerInParent="true"
+    android:layout_marginTop="-60dp"
     android:visibility="gone" />
 
   <ProgressBar
@@ -47,12 +47,12 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="-2dp"
-    android:paddingTop="@dimen/spacing8"
-    android:paddingBottom="@dimen/spacing8"
-    android:paddingStart="@dimen/spacing12"
-    android:paddingEnd="@dimen/spacing12"
     android:animateLayoutChanges="true"
     android:background="@color/window_background"
+    android:paddingBottom="@dimen/spacing8"
+    android:paddingEnd="@dimen/spacing12"
+    android:paddingStart="@dimen/spacing12"
+    android:paddingTop="@dimen/spacing8"
     tools:layout_below="@+id/subreddit_toolbar_container">
 
     <Button
@@ -74,13 +74,13 @@
       style="@style/DankButton"
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:paddingTop="@dimen/spacing12"
-      android:paddingBottom="@dimen/spacing12"
-      android:paddingStart="@dimen/spacing12"
-      android:paddingEnd="@dimen/spacing12"
       android:backgroundTint="@color/gray_800"
       android:minHeight="0dp"
       android:minWidth="0dp"
+      android:paddingBottom="@dimen/spacing12"
+      android:paddingEnd="@dimen/spacing12"
+      android:paddingStart="@dimen/spacing12"
+      android:paddingTop="@dimen/spacing12"
       android:text="@string/subreddit_subscribe"
       android:textColor="@color/subreddit_subscribe" />
   </LinearLayout>
@@ -116,11 +116,11 @@
       android:layout_width="wrap_content"
       android:layout_height="?attr/actionBarSize"
       android:layout_marginEnd="84dp"
-      android:paddingStart="4dp"
-      android:paddingEnd="@dimen/spacing16"
       android:background="@color/toolbar"
       android:elevation="@dimen/subreddit_toolbar_sheet_elevation"
       android:outlineProvider="none"
+      android:paddingEnd="@dimen/spacing16"
+      android:paddingStart="4dp"
       tools:ignore="RtlSymmetry"
       tools:outlineProvider="background">
 
@@ -129,9 +129,9 @@
       <ImageButton
         android:id="@+id/subreddit_toolbar_close"
         style="@style/DankToolbarIcon"
-        android:layout_marginStart="6dp"
-        android:layout_marginEnd="22dp"
         android:layout_centerVertical="true"
+        android:layout_marginEnd="22dp"
+        android:layout_marginStart="6dp"
         android:contentDescription="@string/cd_close_subreddit"
         android:src="@drawable/ic_toolbar_close_24dp"
         android:visibility="gone" />
@@ -143,11 +143,11 @@
         android:layout_height="wrap_content"
         android:layout_centerVertical="true"
         android:layout_toEndOf="@+id/subreddit_toolbar_close"
-        android:paddingStart="12dp"
-        android:paddingEnd="32dp"
         android:background="?attr/selectableItemBackgroundBorderless"
         android:ellipsize="end"
         android:maxLines="1"
+        android:paddingEnd="32dp"
+        android:paddingStart="12dp"
         android:text="@string/app_name"
         android:textAppearance="@style/DankToolbarTitleAppearance"
         tools:text="/r/androiddev" />
@@ -156,8 +156,8 @@
         android:id="@+id/subreddit_toolbar_title_arrow"
         android:layout_width="24dp"
         android:layout_height="24dp"
-        android:layout_marginStart="-28dp"
         android:layout_centerVertical="true"
+        android:layout_marginStart="-28dp"
         android:layout_toEndOf="@+id/subreddit_toolbar_title"
         app:eiv_color="@color/color_accent" />
     </RelativeLayout>

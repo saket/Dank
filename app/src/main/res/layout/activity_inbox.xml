@@ -31,6 +31,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="center"
         android:layout_marginEnd="@dimen/spacing8"
+        android:layout_marginStart="@dimen/spacing24"
         android:inAnimation="@anim/fade_in"
         android:outAnimation="@anim/fade_out"
         app:debug_displayedChild="0">

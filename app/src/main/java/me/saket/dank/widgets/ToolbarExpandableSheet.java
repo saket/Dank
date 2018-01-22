@@ -24,7 +24,7 @@ public class ToolbarExpandableSheet extends BaseExpandablePageLayout {
     COLLAPSING,
     COLLAPSED,
     EXPANDING,
-    EXPANDED;
+    EXPANDED
   }
 
   public interface StateChangeListener {
