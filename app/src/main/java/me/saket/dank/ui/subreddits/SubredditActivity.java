@@ -429,11 +429,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .filter(pair -> pair.second().isCollapsed())
         .map(pair -> pair.first())
         .distinctUntilChanged((pair1, pair2) -> pair1.first().equals(pair2.first()))
-        .doOnNext(pair -> {
-          Timber.i("---------------------");
-          Timber.i("Data: %s", pair.first().size());
-          Timber.i("Diff: %s", pair.second());
-        })
         .subscribe(submissionsAdapter);
 
     // Full-screen progress.

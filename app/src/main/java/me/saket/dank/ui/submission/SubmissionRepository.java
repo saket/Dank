@@ -203,14 +203,6 @@ public class SubmissionRepository {
         .map(Commons.toImmutable());
   }
 
-  @CheckResult
-  public Observable<Integer> submissionCount(CachedSubmissionFolder folder) {
-    String sortingAndTimeJson = moshi.adapter(SortingAndTimePeriod.class).toJson(folder.sortingAndTimePeriod());
-    String countQuery = CachedSubmissionId.queryToGetCount(folder.subredditName(), sortingAndTimeJson);
-    return database.createQuery(CachedSubmissionId.TABLE_NAME, countQuery)
-        .mapToOne(cursor -> cursor.getInt(0));
-  }
-
   /**
    * @return Operates on the main thread.
    */

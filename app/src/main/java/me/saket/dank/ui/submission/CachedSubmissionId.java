@@ -42,12 +42,6 @@ public abstract class CachedSubmissionId {
         + " LIMIT 1";
   }
 
-  public static String queryToGetCount(String subredditName, String sortingAndTimeJson) {
-    return "SELECT COUNT(" + COLUMN_SUBREDDIT_NAME + ") FROM " + TABLE_NAME
-        + " WHERE " + COLUMN_SUBREDDIT_NAME + " == '" + subredditName + "'"
-        + " AND " + COLUMN_SORTING_AND_TIME_PERIOD_JSON + " == '" + sortingAndTimeJson + "'";
-  }
-
   public abstract String submissionFullName();
 
   public abstract String subredditName();
