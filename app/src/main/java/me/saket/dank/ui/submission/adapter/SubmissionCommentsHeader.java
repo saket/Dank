@@ -21,7 +21,7 @@ import java.util.List;
 
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
-import me.saket.dank.data.SpannableWithValueEquality;
+import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
@@ -40,8 +40,8 @@ public interface SubmissionCommentsHeader {
   int CONTENT_LINK_TRANSITION_ANIM_DURATION = 300;
 
   enum PartialChange {
-    SUBMISSION_VOTE,
-    SUBMISSION_COMMENT_COUNT,
+    SUBMISSION_TITLE,
+    SUBMISSION_BYLINE,
     CONTENT_LINK,
     CONTENT_LINK_THUMBNAIL,
     CONTENT_LINK_FAVICON,
@@ -59,11 +59,11 @@ public interface SubmissionCommentsHeader {
     @Override
     public abstract long adapterId();
 
-    abstract SpannableWithValueEquality title();
+    abstract SpannableWithTextEquality title();
 
-    abstract SpannableWithValueEquality byline();
+    abstract SpannableWithTextEquality byline();
 
-    abstract Optional<SpannableWithValueEquality> optionalSelfText();
+    abstract Optional<SpannableWithTextEquality> optionalSelfText();
 
     abstract Optional<SubmissionContentLinkUiModel> optionalContentLinkModel();
 
@@ -71,8 +71,6 @@ public interface SubmissionCommentsHeader {
      * The original data model from which this Ui model was created.
      */
     abstract PostedOrInFlightContribution originalSubmission();
-
-    abstract ExtraInfoForEquality extraInfoForEquality();
 
     @Override
     public SubmissionCommentRowType type() {
@@ -87,37 +85,33 @@ public interface SubmissionCommentsHeader {
     abstract static class Builder {
       abstract Builder adapterId(long id);
 
-      abstract Builder title(SpannableWithValueEquality title);
+      abstract Builder title(SpannableWithTextEquality title);
 
-      abstract Builder byline(SpannableWithValueEquality byline);
+      abstract Builder byline(SpannableWithTextEquality byline);
 
-      Builder title(CharSequence title) {
-        return title(SpannableWithValueEquality.wrap(title));
+      Builder title(CharSequence title, Pair<Integer, VoteDirection> votes) {
+        return title(SpannableWithTextEquality.wrap(title, votes));
       }
 
-      Builder byline(CharSequence byline) {
-        return byline(SpannableWithValueEquality.wrap(byline));
+      Builder byline(CharSequence byline, Integer commentsCount) {
+        return byline(SpannableWithTextEquality.wrap(byline, commentsCount));
       }
 
-      abstract Builder optionalSelfText(Optional<SpannableWithValueEquality> text);
+      abstract Builder optionalSelfText(Optional<SpannableWithTextEquality> text);
 
       Builder selfText(Optional<CharSequence> optionalText) {
-        return optionalSelfText(optionalText.isPresent()
-            ? Optional.of(SpannableWithValueEquality.wrap(optionalText.get()))
-            : Optional.empty());
+        return optionalSelfText(optionalText.map(text -> SpannableWithTextEquality.wrap(text)));
       }
 
       abstract Builder optionalContentLinkModel(Optional<SubmissionContentLinkUiModel> link);
 
       abstract Builder originalSubmission(PostedOrInFlightContribution submission);
 
-      abstract Builder extraInfoForEquality(ExtraInfoForEquality info);
-
       abstract UiModel build();
     }
 
     /**
-     * Triggers a change because {@link SpannableWithValueEquality} otherwise won't as it only compares text and not spans.
+     * Triggers a change because {@link SpannableWithTextEquality} otherwise won't as it only compares text and not spans.
      */
     @AutoValue
     abstract static class ExtraInfoForEquality {
@@ -214,11 +208,11 @@ public interface SubmissionCommentsHeader {
         //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
           switch (partialChange) {
-            case SUBMISSION_VOTE:
+            case SUBMISSION_TITLE:
               setSubmissionTitle(uiModel);
               break;
 
-            case SUBMISSION_COMMENT_COUNT:
+            case SUBMISSION_BYLINE:
               setSubmissionByline(uiModel);
               break;
 

@@ -242,14 +242,11 @@ public class SubmissionUiModelConstructor {
 
     return SubmissionCommentsHeader.UiModel.builder()
         .adapterId(adapterId)
-        .title(title)
-        .byline(byline)
+        .title(title, Pair.create(vote, pendingOrDefaultVote))
+        .byline(byline, postedAndPendingCommentCount)
         .selfText(selfTextOptional)
         .optionalContentLinkModel(contentLinkUiModel)
         .originalSubmission(PostedOrInFlightContribution.from(submission))
-        .extraInfoForEquality(SubmissionCommentsHeader.UiModel.ExtraInfoForEquality.create(
-            Pair.create(vote, pendingOrDefaultVote),
-            postedAndPendingCommentCount))
         .build();
   }
 
@@ -283,8 +280,7 @@ public class SubmissionUiModelConstructor {
     return commentUiModelBuilder(context, dankCommentNode.fullName(), dankCommentNode.isCollapsed(), dankCommentNode.commentNode().getDepth())
         .originalComment(PostedOrInFlightContribution.from(comment))
         .optionalPendingSyncReply(Optional.empty())
-        .extraInfoForEquality(SubmissionComment.UiModel.ExtraInfoForEquality.create(commentScore))
-        .byline(byline)
+        .byline(byline, commentScore)
         .body(commentBody)
         .build();
   }
@@ -342,8 +338,7 @@ public class SubmissionUiModelConstructor {
     return commentUiModelBuilder(context, pendingSyncReplyRow.fullName(), pendingSyncReplyRow.isCollapsed(), pendingSyncReplyRow.depth())
         .originalComment(PostedOrInFlightContribution.createLocal(pendingSyncReply))
         .optionalPendingSyncReply(Optional.of(pendingSyncReply))
-        .extraInfoForEquality(SubmissionComment.UiModel.ExtraInfoForEquality.create(commentScore))
-        .byline(byline)
+        .byline(byline, commentScore)
         .body(commentBody)
         .build();
   }

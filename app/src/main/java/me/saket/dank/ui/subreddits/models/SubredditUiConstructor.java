@@ -212,14 +212,10 @@ public class SubredditUiConstructor {
     return SubredditSubmission.UiModel.builder()
         .submission(submission)
         .submissionInfo(PostedOrInFlightContribution.from(submission))
-        .extraInfoForEquality(SubredditSubmission.UiModel.ExtraInfoForEquality.create(
-            Pair.create(submissionScore, voteDirection),
-            postedAndPendingCommentCount
-        ))
         .adapterId(submission.getFullName().hashCode())
         .thumbnail(thumbnail)
-        .title(titleBuilder.build())
-        .byline(byline)
+        .title(titleBuilder.build(), Pair.create(submissionScore, voteDirection))
+        .byline(byline, postedAndPendingCommentCount)
         .build();
   }
 

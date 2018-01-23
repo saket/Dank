@@ -23,7 +23,7 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
-import me.saket.dank.data.SpannableWithValueEquality;
+import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -45,15 +45,13 @@ public interface SubredditSubmission {
 
     public abstract Optional<UiModel.Thumbnail> thumbnail();
 
-    public abstract SpannableWithValueEquality title();
+    public abstract SpannableWithTextEquality title();
 
-    public abstract SpannableWithValueEquality byline();
+    public abstract SpannableWithTextEquality byline();
 
     public abstract Submission submission();
 
     public abstract PostedOrInFlightContribution submissionInfo();
-
-    abstract ExtraInfoForEquality extraInfoForEquality();
 
     public static Builder builder() {
       return new AutoValue_SubredditSubmission_UiModel.Builder();
@@ -65,23 +63,21 @@ public interface SubredditSubmission {
 
       public abstract Builder thumbnail(Optional<UiModel.Thumbnail> thumbnail);
 
-      abstract Builder title(SpannableWithValueEquality title);
+      abstract Builder title(SpannableWithTextEquality title);
 
-      public Builder title(CharSequence title) {
-        return title(SpannableWithValueEquality.wrap(title));
+      abstract Builder byline(SpannableWithTextEquality byline);
+
+      public Builder title(CharSequence title, Pair<Integer, VoteDirection> votes) {
+        return title(SpannableWithTextEquality.wrap(title, votes));
       }
 
-      abstract Builder byline(SpannableWithValueEquality byline);
-
-      public Builder byline(CharSequence byline) {
-        return byline(SpannableWithValueEquality.wrap(byline));
+      public Builder byline(CharSequence byline, Integer commentsCount) {
+        return byline(SpannableWithTextEquality.wrap(byline, commentsCount));
       }
 
       public abstract Builder submission(Submission submission);
 
       public abstract Builder submissionInfo(PostedOrInFlightContribution info);
-
-      abstract Builder extraInfoForEquality(ExtraInfoForEquality extraInfo);
 
       public abstract UiModel build();
     }
@@ -119,20 +115,6 @@ public interface SubredditSubmission {
         public abstract Builder contentDescription(String description);
 
         public abstract Thumbnail build();
-      }
-    }
-
-    /**
-     * Triggers a change because {@link SpannableWithValueEquality} otherwise won't as it only compares text and not spans.
-     */
-    @AutoValue
-    abstract static class ExtraInfoForEquality {
-      public abstract Pair<Integer, VoteDirection> votes();
-
-      public abstract Integer commentsCount();
-
-      public static ExtraInfoForEquality create(Pair<Integer, VoteDirection> votes, Integer commentsCount) {
-        return new AutoValue_SubredditSubmission_UiModel_ExtraInfoForEquality(votes, commentsCount);
       }
     }
   }

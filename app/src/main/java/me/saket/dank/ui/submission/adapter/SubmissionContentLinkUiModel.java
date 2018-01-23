@@ -5,19 +5,19 @@ import android.support.annotation.ColorRes;
 
 import com.google.auto.value.AutoValue;
 
-import me.saket.dank.data.SpannableWithValueEquality;
+import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.utils.Optional;
 
 @AutoValue
 public abstract class SubmissionContentLinkUiModel {
 
-  public abstract SpannableWithValueEquality title();
+  public abstract SpannableWithTextEquality title();
 
   @ColorRes
   public abstract int titleTextColorRes();
 
-  public abstract SpannableWithValueEquality byline();
+  public abstract SpannableWithTextEquality byline();
 
   @ColorRes
   public abstract int bylineTextColorRes();
@@ -40,18 +40,18 @@ public abstract class SubmissionContentLinkUiModel {
 
   @AutoValue.Builder
   public abstract static class Builder {
-    abstract Builder title(SpannableWithValueEquality title);
+    abstract Builder title(SpannableWithTextEquality title);
 
     public Builder title(CharSequence title) {
-      return title(SpannableWithValueEquality.wrap(title));
+      return title(SpannableWithTextEquality.wrap(title));
     }
 
     public abstract Builder titleTextColorRes(@ColorRes int colorRes);
 
-    abstract Builder byline(SpannableWithValueEquality byline);
+    abstract Builder byline(SpannableWithTextEquality byline);
 
     public Builder byline(CharSequence byline) {
-      return byline(SpannableWithValueEquality.wrap(byline));
+      return byline(SpannableWithTextEquality.wrap(byline));
     }
 
     public abstract Builder bylineTextColorRes(@ColorRes int colorRes);

@@ -21,7 +21,7 @@ import io.reactivex.disposables.Disposables;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
-import me.saket.dank.data.SpannableWithValueEquality;
+import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownHints;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
@@ -46,7 +46,7 @@ public interface SubmissionCommentInlineReply {
     @Override
     public abstract long adapterId();
 
-    public abstract SpannableWithValueEquality authorHint();
+    public abstract SpannableWithTextEquality authorHint();
 
     public abstract PostedOrInFlightContribution parentContribution();
 
@@ -60,7 +60,7 @@ public interface SubmissionCommentInlineReply {
     public static UiModel create(long adapterId, CharSequence authorHint, PostedOrInFlightContribution parentContribution, int indentationDepth) {
       return new AutoValue_SubmissionCommentInlineReply_UiModel(
           adapterId,
-          SpannableWithValueEquality.wrap(authorHint),
+          SpannableWithTextEquality.wrap(authorHint),
           parentContribution,
           indentationDepth
       );

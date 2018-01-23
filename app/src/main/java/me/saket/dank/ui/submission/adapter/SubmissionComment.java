@@ -16,7 +16,7 @@ import java.util.List;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
-import me.saket.dank.data.SpannableWithValueEquality;
+import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
@@ -38,9 +38,9 @@ public interface SubmissionComment {
     @Override
     public abstract long adapterId();
 
-    public abstract SpannableWithValueEquality byline();
+    public abstract SpannableWithTextEquality byline();
 
-    public abstract SpannableWithValueEquality body();
+    public abstract SpannableWithTextEquality body();
 
     @ColorInt
     public abstract int bylineTextColor();
@@ -64,8 +64,6 @@ public interface SubmissionComment {
 
     public abstract boolean isCollapsed();
 
-    public abstract ExtraInfoForEquality extraInfoForEquality();
-
     public static UiModel.Builder builder() {
       return new AutoValue_SubmissionComment_UiModel.Builder();
     }
@@ -74,17 +72,17 @@ public interface SubmissionComment {
     public abstract static class Builder {
       public abstract Builder adapterId(long id);
 
-      public Builder byline(CharSequence byline) {
-        return byline(SpannableWithValueEquality.wrap(byline));
+      public Builder byline(CharSequence byline, int voteScore) {
+        return byline(SpannableWithTextEquality.wrap(byline, voteScore));
       }
 
-      abstract Builder byline(SpannableWithValueEquality byline);
+      abstract Builder byline(SpannableWithTextEquality byline);
 
       public Builder body(CharSequence body) {
-        return body(SpannableWithValueEquality.wrap(body));
+        return body(SpannableWithTextEquality.wrap(body));
       }
 
-      abstract Builder body(SpannableWithValueEquality body);
+      abstract Builder body(SpannableWithTextEquality body);
 
       public abstract Builder bylineTextColor(@ColorInt int color);
 
@@ -103,21 +101,7 @@ public interface SubmissionComment {
 
       public abstract Builder optionalPendingSyncReply(Optional<PendingSyncReply> optionalReply);
 
-      public abstract Builder extraInfoForEquality(ExtraInfoForEquality extraInfo);
-
       public abstract UiModel build();
-    }
-
-    /**
-     * Triggers a change because {@link SpannableWithValueEquality} otherwise won't as it only compares text and not spans.
-     */
-    @AutoValue
-    public abstract static class ExtraInfoForEquality {
-      public abstract int voteScore();
-
-      public static ExtraInfoForEquality create(int voteScore) {
-        return new AutoValue_SubmissionComment_UiModel_ExtraInfoForEquality(voteScore);
-      }
     }
   }
 

@@ -75,11 +75,11 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
           }
         }
 
-        if (oldHeader.extraInfoForEquality().votes() != newHeader.extraInfoForEquality().votes()) {
-          partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_VOTE);
+        if (oldHeader.title() != newHeader.title()) {
+          partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_TITLE);
         }
-        if (oldHeader.extraInfoForEquality().commentsCount().equals(newHeader.extraInfoForEquality().commentsCount())) {
-          partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_COMMENT_COUNT);
+        if (oldHeader.byline().equals(newHeader.byline())) {
+          partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_BYLINE);
         }
 
         //Timber.i("--------------------");
@@ -92,7 +92,7 @@ public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScr
         SubmissionComment.UiModel newComment = (SubmissionComment.UiModel) newItem;
 
         if (oldComment.isCollapsed() == newComment.isCollapsed() && (!oldComment.byline().equals(newComment.byline())
-            || oldComment.extraInfoForEquality().voteScore() != newComment.extraInfoForEquality().voteScore()))
+            || oldComment.byline() != newComment.byline()))
         {
           return Collections.singletonList(SubmissionComment.PartialChange.BYLINE);
         } else {
