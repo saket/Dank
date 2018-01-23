@@ -8,6 +8,7 @@ import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
 
+import java.util.List;
 import javax.inject.Inject;
 
 import me.saket.dank.R;
@@ -81,6 +82,11 @@ public interface SubredditSubmissionPagination {
     @Override
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
       holder.bind(uiModel);
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      throw new UnsupportedOperationException();
     }
   }
 }

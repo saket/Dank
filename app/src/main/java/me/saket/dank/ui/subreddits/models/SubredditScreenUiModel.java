@@ -26,6 +26,8 @@ public abstract class SubredditScreenUiModel {
     VH onCreateViewHolder(LayoutInflater inflater, ViewGroup parent);
 
     void onBindViewHolder(VH holder, T uiModel);
+
+    void onBindViewHolder(VH holder, T uiModel, List<Object> payloads);
   }
 
   public abstract boolean fullscreenProgressVisible();

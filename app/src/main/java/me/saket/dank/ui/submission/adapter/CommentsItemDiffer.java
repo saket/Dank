@@ -38,7 +38,6 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
 
     switch (oldItem.type()) {
       case SUBMISSION_HEADER: {
-        List<SubmissionCommentsHeader.PartialChange> partialChanges = new ArrayList<>(4);
         SubmissionCommentsHeader.UiModel oldHeader = (SubmissionCommentsHeader.UiModel) oldItem;
         SubmissionCommentsHeader.UiModel newHeader = (SubmissionCommentsHeader.UiModel) newItem;
 
@@ -48,6 +47,8 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
         //Timber.i("--------------------------");
         //Timber.i("oldContentLink: %s", oldContentLink);
         //Timber.i("newContentLink: %s", newContentLink);
+
+        List<SubmissionCommentsHeader.PartialChange> partialChanges = new ArrayList<>(8);
 
         if (oldContentLink.isPresent() != newContentLink.isPresent()) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK);

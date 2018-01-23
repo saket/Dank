@@ -18,6 +18,7 @@ import com.jakewharton.rxrelay2.Relay;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
 
+import java.util.List;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
@@ -32,6 +33,11 @@ import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
 public interface SubredditSubmission {
+
+  enum PartialChange {
+    TITLE,
+    BYLINE
+  }
 
   @AutoValue
   abstract class UiModel implements SubredditScreenUiModel.SubmissionRowUiModel {
@@ -169,6 +175,23 @@ public interface SubredditSubmission {
       }
     }
 
+    public void renderPartialChanges(List<Object> payloads) {
+      for (Object payload : payloads) {
+        //noinspection unchecked
+        for (PartialChange partialChange : (List<PartialChange>) payload) {
+          switch (partialChange) {
+            case TITLE:
+              titleView.setText(uiModel.title());
+              break;
+
+            case BYLINE:
+              bylineView.setText(uiModel.byline());
+              break;
+          }
+        }
+      }
+    }
+
     @Override
     public SwipeableLayout getSwipeableLayout() {
       return (SwipeableLayout) itemView;
@@ -207,6 +230,12 @@ public interface SubredditSubmission {
       holder.render();
 
       holder.getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submissionInfo()));
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      holder.setUiModel(uiModel);
+      holder.renderPartialChanges(payloads);
     }
 
     @CheckResult

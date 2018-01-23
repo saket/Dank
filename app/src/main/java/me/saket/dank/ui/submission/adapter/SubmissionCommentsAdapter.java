@@ -171,43 +171,43 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @SuppressLint("NewApi")
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
-    if (!payloads.isEmpty()) {
-      switch (getItem(position).type()) {
-        case SUBMISSION_HEADER:
-          SubmissionCommentsHeader.UiModel headerModel = (SubmissionCommentsHeader.UiModel) getItem(position);
-          SubmissionCommentsHeader.ViewHolder headerHolder = (SubmissionCommentsHeader.ViewHolder) holder;
-          headerHolder.handlePartialChanges(payloads, headerModel);
-          break;
-
-        case USER_COMMENT:
-          if (((List) payloads.get(0)).get(0) instanceof SubmissionCommentsHeader.PartialChange) {
-            Timber.w("Item: %s", getItem(position));
-            Timber.w("Item type: %s", getItem(position).type());
-            Timber.i("Payloads:");
-            payloads.forEach(payload -> {
-              Timber.i("payload: %s", payload);
-            });
-
-            Timber.w("WRRROONNGG PAYLOADS!");
-
-          } else {
-            SubmissionComment.UiModel commentModel = (SubmissionComment.UiModel) getItem(position);
-            SubmissionComment.ViewHolder commentHolder = (SubmissionComment.ViewHolder) holder;
-            commentHolder.handlePartialChanges(payloads, commentModel);
-          }
-          break;
-
-        case COMMENTS_LOAD_PROGRESS:
-        case INLINE_REPLY:
-        case LOAD_MORE_COMMENTS:
-          throw new UnsupportedOperationException("Partial change not supported yet for " + getItem(position).type() + ", payload: " + payloads);
-
-        default:
-          throw new UnsupportedOperationException("Unknown view type: " + getItem(position).type());
-      }
-
-    } else {
+    if (payloads.isEmpty()) {
       super.onBindViewHolder(holder, position, payloads);
+      return;
+    }
+
+    switch (getItem(position).type()) {
+      case SUBMISSION_HEADER:
+        SubmissionCommentsHeader.UiModel headerModel = (SubmissionCommentsHeader.UiModel) getItem(position);
+        SubmissionCommentsHeader.ViewHolder headerHolder = (SubmissionCommentsHeader.ViewHolder) holder;
+        headerHolder.handlePartialChanges(payloads, headerModel);
+        break;
+
+      case USER_COMMENT:
+        if (((List) payloads.get(0)).get(0) instanceof SubmissionCommentsHeader.PartialChange) {
+          Timber.w("Item: %s", getItem(position));
+          Timber.w("Item type: %s", getItem(position).type());
+          Timber.i("Payloads:");
+          payloads.forEach(payload -> {
+            Timber.i("payload: %s", payload);
+          });
+
+          Timber.w("WRRROONNGG PAYLOADS!");
+
+        } else {
+          SubmissionComment.UiModel commentModel = (SubmissionComment.UiModel) getItem(position);
+          SubmissionComment.ViewHolder commentHolder = (SubmissionComment.ViewHolder) holder;
+          commentHolder.handlePartialChanges(payloads, commentModel);
+        }
+        break;
+
+      case COMMENTS_LOAD_PROGRESS:
+      case INLINE_REPLY:
+      case LOAD_MORE_COMMENTS:
+        throw new UnsupportedOperationException("Partial change not supported yet for " + getItem(position).type() + ", payload: " + payloads);
+
+      default:
+        throw new UnsupportedOperationException("Unknown view type: " + getItem(position).type());
     }
   }
 

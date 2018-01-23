@@ -71,6 +71,19 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   }
 
   @Override
+  public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
+    if (payloads.isEmpty()) {
+      super.onBindViewHolder(holder, position, payloads);
+      return;
+    }
+
+    SubmissionRowUiModel item = getItem(position);
+    int viewType = getItemViewType(position);
+    //noinspection unchecked
+    childAdapters.get(VIEW_TYPES[viewType]).onBindViewHolder(holder, item, payloads);
+  }
+
+  @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
     SubmissionRowUiModel item = getItem(position);
     int viewType = getItemViewType(position);

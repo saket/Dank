@@ -1,10 +1,12 @@
 package me.saket.dank.ui.subreddits.models;
 
+import android.support.annotation.Nullable;
+
+import java.util.ArrayList;
 import java.util.List;
 
 import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
 import me.saket.dank.ui.subreddits.models.SubredditScreenUiModel.SubmissionRowUiModel;
-import timber.log.Timber;
 
 public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRowUiModel> {
 
@@ -23,12 +25,34 @@ public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRow
 
   @Override
   protected boolean areContentsTheSame(SubmissionRowUiModel oldItem, SubmissionRowUiModel newItem) {
-    boolean equals = oldItem.equals(newItem);
-//    if (!equals) {
-//      Timber.i("Different items:");
-//      Timber.i(oldItem.toString());
-//      Timber.i(newItem.toString());
-//    }
-    return equals;
+    return oldItem.equals(newItem);
+  }
+
+  @Nullable
+  @Override
+  public Object getChangePayload(SubmissionRowUiModel oldItem, SubmissionRowUiModel newItem) {
+    switch (oldItem.type()) {
+      case SUBMISSION:
+        SubredditSubmission.UiModel oldSubmission = (SubredditSubmission.UiModel) oldItem;
+        SubredditSubmission.UiModel newSubmission = (SubredditSubmission.UiModel) newItem;
+
+        List<SubredditSubmission.PartialChange> partialChanges = new ArrayList<>(2);
+        if (!oldSubmission.title().equals(newSubmission.title())) {
+          partialChanges.add(SubredditSubmission.PartialChange.TITLE);
+        }
+        if (!oldSubmission.byline().equals(newSubmission.byline())) {
+          partialChanges.add(SubredditSubmission.PartialChange.BYLINE);
+        }
+        if (oldSubmission.thumbnail().isPresent() != newSubmission.thumbnail().isPresent()) {
+          throw new AssertionError();
+        }
+        return partialChanges;
+
+      case PAGINATION_FOOTER:
+        return super.getChangePayload(oldItem, newItem);
+
+      default:
+        throw new AssertionError();
+    }
   }
 }
