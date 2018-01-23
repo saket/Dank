@@ -15,6 +15,7 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.v7.util.DiffUtil;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -59,7 +60,7 @@ import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
-import me.saket.dank.ui.subreddits.models.SubmissionDiffCallbacks;
+import me.saket.dank.ui.subreddits.models.SubmissionItemDiffer;
 import me.saket.dank.ui.subreddits.models.SubredditScreenUiModel;
 import me.saket.dank.ui.subreddits.models.SubredditUiConstructor;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -67,13 +68,13 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtils;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
-import me.saket.dank.widgets.InboxUI.ExpandablePageLayout.PageState;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.RxExpandablePage;
@@ -402,13 +403,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             .andThen(submissionRepository.loadAndSaveMoreSubmissions(folder).doOnNext(paginationResults).ignoreElements())
             .subscribeOn(io())
             .observeOn(mainThread())
-            .andThen(RxExpandablePage.pageStateChanges(submissionPage)
-                .map(PageState::isCollapsed)
-                .distinctUntilChanged()
-                .observeOn(io())
-                .switchMap(pageCollapsed -> pageCollapsed
-                    ? submissionRepository.submissions(folder)
-                    : Observable.never()))
+            .andThen(submissionRepository.submissions(folder))
             .map(Optional::of)
             .startWith(Optional.empty())
         )
@@ -420,13 +415,25 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .subscribeOn(io())
         .share();
 
-    // Adapter data-set.
-    sharedUiModels.map(SubredditScreenUiModel::rowUiModels)
+    Observable<Pair<List<SubredditScreenUiModel.SubmissionRowUiModel>, DiffUtil.DiffResult>> adapterUpdates = sharedUiModels
+        .map(SubredditScreenUiModel::rowUiModels)
         .observeOn(io())
         .toFlowable(BackpressureStrategy.LATEST)
-        .compose(RxDiffUtils.calculateDiff(SubmissionDiffCallbacks::create))
+        .compose(RxDiffUtils.calculateDiff(SubmissionItemDiffer::create))
+        .toObservable()
         .observeOn(mainThread())
-        .takeUntil(lifecycle().onDestroyFlowable())
+        .takeUntil(lifecycle().onDestroy());
+
+    // Suspend updates to the list while any submission is open. We don't want to hide updates.
+    Observable.combineLatest(adapterUpdates, RxExpandablePage.stateChanges(submissionPage), Pair::create)
+        .filter(pair -> pair.second().isCollapsed())
+        .map(pair -> pair.first())
+        .distinctUntilChanged((pair1, pair2) -> pair1.first().equals(pair2.first()))
+        .doOnNext(pair -> {
+          Timber.i("---------------------");
+          Timber.i("Data: %s", pair.first().size());
+          Timber.i("Diff: %s", pair.second());
+        })
         .subscribe(submissionsAdapter);
 
     // Full-screen progress.

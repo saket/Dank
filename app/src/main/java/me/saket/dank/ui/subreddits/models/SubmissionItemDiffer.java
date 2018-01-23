@@ -4,14 +4,15 @@ import java.util.List;
 
 import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
 import me.saket.dank.ui.subreddits.models.SubredditScreenUiModel.SubmissionRowUiModel;
+import timber.log.Timber;
 
-public class SubmissionDiffCallbacks extends SimpleDiffUtilsCallbacks<SubmissionRowUiModel> {
+public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRowUiModel> {
 
-  public static SubmissionDiffCallbacks create(List<SubmissionRowUiModel> oldItems, List<SubmissionRowUiModel> newItems) {
-    return new SubmissionDiffCallbacks(oldItems, newItems);
+  public static SubmissionItemDiffer create(List<SubmissionRowUiModel> oldItems, List<SubmissionRowUiModel> newItems) {
+    return new SubmissionItemDiffer(oldItems, newItems);
   }
 
-  private SubmissionDiffCallbacks(List<SubmissionRowUiModel> oldItems, List<SubmissionRowUiModel> newItems) {
+  private SubmissionItemDiffer(List<SubmissionRowUiModel> oldItems, List<SubmissionRowUiModel> newItems) {
     super(oldItems, newItems);
   }
 

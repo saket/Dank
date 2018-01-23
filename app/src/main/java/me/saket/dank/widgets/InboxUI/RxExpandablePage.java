@@ -11,7 +11,7 @@ import io.reactivex.Observable;
 public class RxExpandablePage {
 
   @CheckResult
-  public static Observable<ExpandablePageLayout.PageState> pageStateChanges(ExpandablePageLayout page) {
+  public static Observable<ExpandablePageLayout.PageState> stateChanges(ExpandablePageLayout page) {
     return Observable.create(emitter -> {
       if (!isMainThread()) {
         throw new IllegalStateException("Expected to be called on the main thread but was " + Thread.currentThread().getName());

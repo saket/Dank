@@ -218,8 +218,8 @@ public class SubmissionRepository {
   public Observable<NetworkCallStatus> loadAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
     return lastPaginationAnchor(folder)
         //.doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
-        .flatMap(anchor -> dankRedditClient
-            .withAuth(Single.create(emitter -> {
+        .flatMapCompletable(anchor -> dankRedditClient
+            .withAuth(Completable.fromAction(() -> {
               List<Submission> distinctNewItems = new ArrayList<>();
               PaginationAnchor nextAnchor = anchor;
 
@@ -240,9 +240,7 @@ public class SubmissionRepository {
                 Submission lastFetchedSubmission = fetchResult.fetchedSubmissions().get(fetchResult.fetchedSubmissions().size() - 1);
                 nextAnchor = PaginationAnchor.create(lastFetchedSubmission.getFullName());
               }
-
               //Timber.i("Fetched %s submissions", distinctNewItems.size());
-              emitter.onSuccess(FetchResult.create(Collections.unmodifiableList(distinctNewItems), distinctNewItems.size() > 0));
             }))
             .retryWhen(errors -> errors.flatMap(error -> {
               Throwable actualError = errorResolver.findActualCause(error);
@@ -256,7 +254,7 @@ public class SubmissionRepository {
               }
             }))
         )
-        .map(o -> NetworkCallStatus.createIdle())
+        .toSingleDefault(NetworkCallStatus.createIdle())
         .toObservable()
         .onErrorReturn(error -> NetworkCallStatus.createFailed(error))
         .startWith(NetworkCallStatus.createInFlight());
@@ -423,7 +421,7 @@ public class SubmissionRepository {
   }
 
   @AutoValue
-  public abstract static class FetchResult {
+  abstract static class FetchResult {
 
     public abstract List<Submission> fetchedSubmissions();
 
