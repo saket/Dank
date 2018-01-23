@@ -9,13 +9,13 @@ import java.util.List;
 import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
 import me.saket.dank.utils.Optional;
 
-public class CommentsDiffCallback extends SimpleDiffUtilsCallbacks<SubmissionScreenUiModel> {
+public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScreenUiModel> {
 
-  public static CommentsDiffCallback create(List<SubmissionScreenUiModel> oldComments, List<SubmissionScreenUiModel> newComments) {
-    return new CommentsDiffCallback(oldComments, newComments);
+  public static CommentsItemDiffer create(List<SubmissionScreenUiModel> oldComments, List<SubmissionScreenUiModel> newComments) {
+    return new CommentsItemDiffer(oldComments, newComments);
   }
 
-  private CommentsDiffCallback(List<SubmissionScreenUiModel> oldComments, List<SubmissionScreenUiModel> newComments) {
+  private CommentsItemDiffer(List<SubmissionScreenUiModel> oldComments, List<SubmissionScreenUiModel> newComments) {
     super(oldComments, newComments);
   }
 

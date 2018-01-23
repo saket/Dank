@@ -88,7 +88,7 @@ import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
-import me.saket.dank.ui.submission.adapter.CommentsDiffCallback;
+import me.saket.dank.ui.submission.adapter.CommentsItemDiffer;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
@@ -352,7 +352,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         )
         .subscribeOn(io())
         .toFlowable(BackpressureStrategy.LATEST)
-        .compose(RxDiffUtils.calculateDiff(CommentsDiffCallback::create))
+        .compose(RxDiffUtils.calculateDiff(CommentsItemDiffer::create))
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroyFlowable())
         .subscribe(submissionCommentsAdapter);
