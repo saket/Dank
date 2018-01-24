@@ -2,6 +2,7 @@ package me.saket.dank.ui.subreddits;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
+import static io.reactivex.schedulers.Schedulers.single;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
@@ -60,6 +61,7 @@ import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
+import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.subreddits.models.SubmissionItemDiffer;
 import me.saket.dank.ui.subreddits.models.SubredditScreenUiModel;
 import me.saket.dank.ui.subreddits.models.SubredditUiConstructor;
@@ -450,26 +452,22 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           //Timber.i("Toolbar refresh visible: %s", visible);
         });
 
-    // TODO.
     // Cache pre-fill.
-//    int displayWidth = getResources().getDisplayMetrics().widthPixels;
-//    int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
-//    cachedSubmissionStream
-//        .filter(Optional::isPresent)
-//        .map(Optional::get)
-//        .withLatestFrom(submissionFolderStream, Pair::create)
-//        .observeOn(single())
-//        .flatMap(pair -> subscriptionManager.isSubscribed(pair.second().subredditName())
-//            .flatMap(isSubscribed -> isSubscribed
-//                ? Observable.just(pair.first())
-//                : Observable.never())
-//        )
-//        .switchMap(cachedSubmissions -> cachePreFiller
-//            .preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
-//            .toObservable()
-//        )
-//        .takeUntil(lifecycle().onDestroy())
-//        .subscribe();
+    int displayWidth = getResources().getDisplayMetrics().widthPixels;
+    int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
+
+    submissionFolderStream
+        .observeOn(single())
+        .switchMap(folder -> subscriptionManager.isSubscribed(folder.subredditName()))
+        .filter(isSubscribed -> isSubscribed)
+        .switchMap(o -> cachedSubmissionStream
+            .filter(Optional::isPresent)
+            .map(Optional::get)
+            .switchMap(cachedSubmissions -> cachePreFiller
+                .preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
+                .toObservable()))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe();
   }
 
   @Override
