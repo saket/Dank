@@ -188,6 +188,12 @@ public class SubredditUiConstructor {
         break;
 
       case DEFAULT:
+        if (submission.getThumbnail() == null) {
+          thumbnail = Optional.empty();
+          break;
+        }
+        // Else, intentional fall-through.
+
       case URL:
         if (submission.getThumbnails() == null) {
           // Reddit couldn't create a thumbnail.
