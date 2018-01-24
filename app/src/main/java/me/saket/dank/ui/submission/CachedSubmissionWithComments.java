@@ -9,6 +9,7 @@ import com.squareup.moshi.Moshi;
 import net.dean.jraw.models.Submission;
 
 import io.reactivex.functions.Function;
+import me.saket.dank.utils.Cursors;
 import me.saket.dank.utils.DankSubmissionRequest;
 
 @AutoValue
@@ -55,11 +56,11 @@ public abstract class CachedSubmissionWithComments {
 
   public static Function<Cursor, CachedSubmissionWithComments> cursorMapper(Moshi moshi) {
     return cursor -> {
-      String requestJson = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_REQUEST_JSON));
-      String submissionJson = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_JSON));
+      String requestJson = Cursors.string(cursor, COLUMN_REQUEST_JSON);
+      String submissionJson = Cursors.string(cursor, COLUMN_JSON);
       DankSubmissionRequest request = moshi.adapter(DankSubmissionRequest.class).fromJson(requestJson);
       Submission submission = moshi.adapter(Submission.class).fromJson(submissionJson);
-      long saveTimeMillis = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_UPDATE_TIME));
+      long saveTimeMillis = Cursors.longg(cursor, COLUMN_UPDATE_TIME);
       //noinspection ConstantConditions
       return create(request, submission, saveTimeMillis);
     };

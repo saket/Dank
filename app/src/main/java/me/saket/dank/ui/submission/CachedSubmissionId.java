@@ -50,7 +50,10 @@ public abstract class CachedSubmissionId {
 
   public abstract long saveTimeMillis();
 
-  public static CachedSubmissionId create(String submissionFullName, String subredditName, SortingAndTimePeriod sortingAndTimePeriod,
+  public static CachedSubmissionId create(
+      String submissionFullName,
+      String subredditName,
+      SortingAndTimePeriod sortingAndTimePeriod,
       long saveTimeMillis)
   {
     return new AutoValue_CachedSubmissionId(submissionFullName, subredditName, sortingAndTimePeriod, saveTimeMillis);

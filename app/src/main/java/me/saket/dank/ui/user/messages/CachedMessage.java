@@ -14,6 +14,7 @@ import net.dean.jraw.models.PrivateMessage;
 import java.io.IOException;
 
 import io.reactivex.functions.Function;
+import me.saket.dank.utils.Cursors;
 
 /**
  * {@link Message} stored in the DB.
@@ -82,8 +83,8 @@ public abstract class CachedMessage {
   public static Function<Cursor, CachedMessage> mapFromCursor(Moshi moshi) {
     return cursor -> {
       Message message = mapMessageFromCursor(moshi).apply(cursor);
-      long latestMessageTimestamp = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_LATEST_MESSAGE_TIME));
-      InboxFolder folder = InboxFolder.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FOLDER)));
+      long latestMessageTimestamp = Cursors.longg(cursor, COLUMN_LATEST_MESSAGE_TIME);
+      InboxFolder folder = InboxFolder.valueOf(Cursors.string(cursor, COLUMN_FOLDER));
       return create(message.getFullName(), message, latestMessageTimestamp, folder);
     };
   }
@@ -92,7 +93,7 @@ public abstract class CachedMessage {
     return cursor -> {
       JsonAdapter<Message> adapter = moshi.adapter(Message.class);
       try {
-        return adapter.fromJson(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_MESSAGE)));
+        return adapter.fromJson(Cursors.string(cursor, COLUMN_MESSAGE));
       } catch (IOException e) {
         throw new RuntimeException(e);
       }

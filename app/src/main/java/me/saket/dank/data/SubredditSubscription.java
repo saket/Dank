@@ -7,6 +7,7 @@ import android.os.Parcelable;
 import com.google.auto.value.AutoValue;
 
 import io.reactivex.functions.Function;
+import me.saket.dank.utils.Cursors;
 
 /**
  * Represents a subreddit subscribed by the user.
@@ -92,9 +93,9 @@ public abstract class SubredditSubscription implements Parcelable {
   }
 
   public static final Function<Cursor, SubredditSubscription> MAPPER = cursor -> {
-    String subredditName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_NAME));
-    PendingState pendingState = PendingState.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PENDING_ACTION)));
-    boolean isHidden = HIDDEN.equals(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_IS_HIDDEN)));
+    String subredditName = Cursors.string(cursor, COLUMN_NAME);
+    PendingState pendingState = PendingState.valueOf(Cursors.string(cursor, COLUMN_PENDING_ACTION));
+    boolean isHidden = HIDDEN.equals(Cursors.string(cursor, COLUMN_IS_HIDDEN));
     return create(subredditName, pendingState, isHidden);
   };
 

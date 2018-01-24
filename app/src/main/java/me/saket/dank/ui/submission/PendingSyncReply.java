@@ -9,6 +9,7 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.Contribution;
 
 import io.reactivex.functions.Function;
+import me.saket.dank.utils.Cursors;
 
 /**
  * A reply made locally that acts as a placeholder until its actual model is fetched from remote.
@@ -130,14 +131,14 @@ public abstract class PendingSyncReply {
   }
 
   public static final Function<Cursor, PendingSyncReply> MAPPER = cursor -> {
-    String parentContributionFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PARENT_CONTRIBUTION_FULL_NAME));
-    String body = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_BODY));
-    State state = State.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_STATE)));
-    String parentThreadFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_PARENT_THREAD_FULL_NAME));
-    String author = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_AUTHOR));
-    long createdTime = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_CREATED_TIME_MILLIS));
-    long sentTime = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_SENT_TIME_MILLIS));
-    String postedFullName = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_POSTED_FULLNAME));
+    String parentContributionFullName = Cursors.string(cursor, COLUMN_PARENT_CONTRIBUTION_FULL_NAME);
+    String body = Cursors.string(cursor, COLUMN_BODY);
+    State state = State.valueOf(Cursors.string(cursor, COLUMN_STATE));
+    String parentThreadFullName = Cursors.string(cursor, COLUMN_PARENT_THREAD_FULL_NAME);
+    String author = Cursors.string(cursor, COLUMN_AUTHOR);
+    long createdTime = Cursors.longg(cursor, COLUMN_CREATED_TIME_MILLIS);
+    long sentTime = Cursors.longg(cursor, COLUMN_SENT_TIME_MILLIS);
+    String postedFullName = Cursors.string(cursor, COLUMN_POSTED_FULLNAME);
     return create(body, state, parentThreadFullName, parentContributionFullName, author, createdTime, sentTime, postedFullName);
   };
 
