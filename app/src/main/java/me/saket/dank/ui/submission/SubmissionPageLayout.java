@@ -110,7 +110,6 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtils;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
@@ -315,19 +314,21 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
             .flatMap(pair -> {
               // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
-              // In that case, trigger another request with the correct sort.
-              DankSubmissionRequest updatedRequest = pair.first;
+              // In that case, trigger another request with the correct sort. Doing this because we need to store
+              // and retain this request in case the Activity gets recreated.
+              DankSubmissionRequest updatedRequest = pair.first();
               if (updatedRequest != submissionRequest) {
                 //noinspection ConstantConditions
                 submissionRequestStream.accept(updatedRequest);
                 return Observable.never();
               } else {
                 //noinspection ConstantConditions
-                return Observable.just(pair.second);
+                return Observable.just(pair.second());
               }
             })
+            .subscribeOn(io())
+            .observeOn(mainThread())
             .takeUntil(lifecycle().onPageAboutToCollapse())
-            .compose(RxUtils.applySchedulers())
             .doOnNext(o -> commentsLoadProgressVisibleStream.accept(false))
             .onErrorResumeNext(error -> {
               ResolvedError resolvedError = errorResolver.resolve(error);

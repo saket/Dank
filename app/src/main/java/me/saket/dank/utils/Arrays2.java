@@ -29,4 +29,8 @@ public class Arrays2 {
   public static <T> ObservableConverter<List<T>, Observable<List<T>>> immutable() {
     return upstream -> upstream.map(items -> Collections.unmodifiableList(items));
   }
+
+  public static <T> Optional<T> optionallyFirst(List<T> items) {
+    return items.isEmpty() ? Optional.empty() : Optional.of(items.get(0));
+  }
 }

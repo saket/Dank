@@ -1,11 +1,17 @@
 package me.saket.dank.ui.submission;
 
 import android.content.ContentValues;
+import android.database.Cursor;
 
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Submission;
+
+import java.io.IOException;
+
+import me.saket.dank.utils.Cursors;
 
 /**
  * Cache for submission without comments. Enough to be displayed on the submission list screen.
@@ -31,6 +37,10 @@ public abstract class CachedSubmissionWithoutComments {
 
   public static final String WHERE_SAVE_TIME_BEFORE = COLUMN_SAVE_TIME + " < ?";
 
+  public static final String SELECT_BY_FULLNAME_AND_SAVE_TIME_NEWER_THAN
+      = "SELECT * FROM " + TABLE_NAME
+      + " WHERE " + COLUMN_SUBMISSION_FULL_NAME + " == ? AND " + COLUMN_SAVE_TIME + " > ?";
+
   public abstract String submissionFullName();
 
   public abstract Submission submission();
@@ -39,12 +49,6 @@ public abstract class CachedSubmissionWithoutComments {
 
   public abstract long saveTimeMillis();
 
-  public static CachedSubmissionWithoutComments create(String submissionFullName, Submission submissionWithoutComments, String suberdditName,
-      long saveTimeMillis)
-  {
-    return new AutoValue_CachedSubmissionWithoutComments(submissionFullName, submissionWithoutComments, suberdditName, saveTimeMillis);
-  }
-
   public ContentValues toContentValues(JsonAdapter<Submission> submissionJsonAdapter) {
     ContentValues values = new ContentValues(4);
     values.put(COLUMN_SUBMISSION_FULL_NAME, submissionFullName());
@@ -52,5 +56,24 @@ public abstract class CachedSubmissionWithoutComments {
     values.put(COLUMN_SUBREDDIT_NAME, subredditName());
     values.put(COLUMN_SAVE_TIME, saveTimeMillis());
     return values;
+  }
+
+  public static CachedSubmissionWithoutComments create(
+      String submissionFullName,
+      Submission submissionWithoutComments,
+      String subredditName,
+      long saveTimeMillis)
+  {
+    return new AutoValue_CachedSubmissionWithoutComments(submissionFullName, submissionWithoutComments, subredditName, saveTimeMillis);
+  }
+
+  public static CachedSubmissionWithoutComments createFromCursor(Cursor cursor, Moshi moshi) throws IOException {
+    String submissionFullName = Cursors.string(cursor, COLUMN_SUBMISSION_FULL_NAME);
+    String submissionJson = Cursors.string(cursor, COLUMN_SUBMISSION_JSON);
+    Submission submission = moshi.adapter(Submission.class).fromJson(submissionJson);
+    String subredditName = Cursors.string(cursor, COLUMN_SUBREDDIT_NAME);
+    long saveTimeMillis = Cursors.longg(cursor, COLUMN_SAVE_TIME);
+    //noinspection ConstantConditions
+    return create(submissionFullName, submission, subredditName, saveTimeMillis);
   }
 }

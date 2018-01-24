@@ -3,7 +3,6 @@ package me.saket.dank.ui.submission;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
-import android.support.v4.util.Pair;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxbinding2.internal.Notification;
@@ -41,6 +40,7 @@ import io.reactivex.Maybe;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
@@ -50,6 +50,8 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddits.NetworkCallStatus;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.Pair;
+import timber.log.Timber;
 
 @Singleton
 public class SubmissionRepository {
@@ -62,7 +64,7 @@ public class SubmissionRepository {
   private final ErrorResolver errorResolver;
   private final SubredditSubscriptionManager subscriptionManager;
   private final ReplyRepository replyRepository;
-  private Store<Submission, DankSubmissionRequest> submissionWithCommentsStore;
+  private Store<CachedSubmissionWithComments, DankSubmissionRequest> submissionWithCommentsStore;
 
   @Inject
   public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager,
@@ -86,45 +88,100 @@ public class SubmissionRepository {
    * different sort for comments and the submission object with comments.
    */
   @CheckResult
-  public Observable<Pair<DankSubmissionRequest, Submission>> submissionWithComments(DankSubmissionRequest submissionRequest) {
-    return getOrFetchSubmissionWithComments(submissionRequest)
+  public Observable<Pair<DankSubmissionRequest, Submission>> submissionWithComments(DankSubmissionRequest oldSubmissionRequest) {
+    Observable<Pair<DankSubmissionRequest, CachedSubmissionWithComments>> stream = getOrFetchSubmissionWithComments(oldSubmissionRequest)
         .take(1)
         .flatMap(submissionWithComments -> {
           // The aim is to always load comments in the sort mode suggested by a subreddit. In case we
           // load with the wrong sort (possibly because the submission's details were unknown), reload
           // comments using the suggested sort.
-          CommentSort suggestedSort = submissionWithComments.getSuggestedSort();
-          if (suggestedSort != null && suggestedSort != submissionRequest.commentSort()) {
-            DankSubmissionRequest newRequest = submissionRequest.toBuilder()
+          CommentSort suggestedSort = submissionWithComments.submission().getSuggestedSort();
+
+          if (suggestedSort != null && suggestedSort != oldSubmissionRequest.commentSort()) {
+            DankSubmissionRequest newRequest = oldSubmissionRequest.toBuilder()
                 .commentSort(suggestedSort)
                 .build();
             return getOrFetchSubmissionWithComments(newRequest)
-                .map(submissions -> Pair.create(newRequest, submissions));
+                .map(submissions -> Pair.create(newRequest, submissions))
+                .doAfterNext(o -> {
+                  Timber.i("Clearing old memory cache key because of submission request mismatch.");
+                  submissionWithCommentsStore.clear(oldSubmissionRequest);
+                })
+                ;
 
           } else {
-            return getOrFetchSubmissionWithComments(submissionRequest)
-                .map(submissions -> Pair.create(submissionRequest, submissions));
+            // This should return immediately because the store has an in-memory cache.
+            return getOrFetchSubmissionWithComments(oldSubmissionRequest)
+                .map(submissions -> Pair.create(oldSubmissionRequest, submissions));
           }
         });
+
+    Observable<Pair<DankSubmissionRequest, CachedSubmissionWithComments>> sharedStream = stream.share();
+
+    // Dank unfortunately has two storage locations for submissions:
+    // - one for submission list
+    // - one for submission with comments.
+    //
+    // I need to figure out to use a single storage for both, but for now keeping both of
+    // them in sync is the only option. When reading submissions with comments, we'll check
+    // if an updated copy is available in the submission list table. We do the reverse when
+    // saving a submission with comments. See saveSubmissionWithAndWithoutComments().
+    Completable updateCompletable = sharedStream
+        .take(1)
+        .flatMapCompletable(pair -> {
+          DankSubmissionRequest updatedSubmissionRequest = pair.first();
+          CachedSubmissionWithComments possiblyStaleSubWithComments = pair.second();
+
+          return database
+              .createQuery(
+                  CachedSubmissionWithoutComments.TABLE_NAME,
+                  CachedSubmissionWithoutComments.SELECT_BY_FULLNAME_AND_SAVE_TIME_NEWER_THAN,
+                  possiblyStaleSubWithComments.submission().getFullName(),
+                  String.valueOf(possiblyStaleSubWithComments.updateTimeMillis())
+              )
+              .mapToList(cursor -> CachedSubmissionWithoutComments.createFromCursor(cursor, moshi))
+              .take(1)
+              .flatMap(items -> items.isEmpty() ? Observable.empty() : Observable.just(items.get(0)))
+              .map(optionalNewerSubWithoutComments -> CachedSubmissionWithComments.create(
+                  updatedSubmissionRequest,
+                  new Submission(
+                      optionalNewerSubWithoutComments.submission().getDataNode(),
+                      possiblyStaleSubWithComments.submission().getComments()
+                  ),
+                  optionalNewerSubWithoutComments.saveTimeMillis()
+              ))
+              .flatMapCompletable(newCachedSub -> Completable.fromAction(() ->
+                  database.insert(CachedSubmissionWithComments.TABLE_NAME, newCachedSub.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE)
+              ))
+              // This will trigger another emission from the cache store.
+              .andThen(Completable.fromAction(() -> submissionWithCommentsStore.clear(updatedSubmissionRequest)));
+        });
+
+    updateCompletable
+        .subscribeOn(Schedulers.io())
+        .subscribe();
+
+    return sharedStream.map(pair -> Pair.create(pair.first(), pair.second().submission()));
   }
 
   /**
    * Get from DB or from the network if not present in DB.
    */
   @CheckResult
-  private Observable<Submission> getOrFetchSubmissionWithComments(DankSubmissionRequest submissionRequest) {
+  private Observable<CachedSubmissionWithComments> getOrFetchSubmissionWithComments(DankSubmissionRequest submissionRequest) {
     if (submissionWithCommentsStore == null) {
-      submissionWithCommentsStore = StoreBuilder.<DankSubmissionRequest, Submission>key()
-          .fetcher(request -> dankRedditClient.submission(request)
-              .flatMap(submissionWithComments -> replyRepository
-                  .removeSyncPendingPostedReplies(ParentThread.of(submissionWithComments))
-                  .andThen(Single.just(submissionWithComments))
-              )
+      submissionWithCommentsStore = StoreBuilder.<DankSubmissionRequest, CachedSubmissionWithComments>key()
+          .fetcher(request -> dankRedditClient
+              .submission(request)
+              .doOnSuccess(subWithComments -> replyRepository
+                  .removeSyncPendingPostedReplies(ParentThread.of(subWithComments))
+                  .blockingAwait())
+              .map(subWithComments -> CachedSubmissionWithComments.create(request, subWithComments, System.currentTimeMillis()))
           )
-          .persister(new Persister<Submission, DankSubmissionRequest>() {
+          .persister(new Persister<CachedSubmissionWithComments, DankSubmissionRequest>() {
             @Nonnull
             @Override
-            public Maybe<Submission> read(DankSubmissionRequest submissionRequest) {
+            public Maybe<CachedSubmissionWithComments> read(DankSubmissionRequest submissionRequest) {
               String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(submissionRequest);
 
               return database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
@@ -134,15 +191,15 @@ public class SubmissionRepository {
                     if (cachedSubmissions.isEmpty()) {
                       return Maybe.empty();
                     } else {
-                      return Maybe.just(cachedSubmissions.get(0).submission());
+                      return Maybe.just(cachedSubmissions.get(0));
                     }
                   });
             }
 
             @Nonnull
             @Override
-            public Single<Boolean> write(DankSubmissionRequest submissionRequest, Submission submission) {
-              return saveSubmissionWithComments(submissionRequest, submission).toSingleDefault(true);
+            public Single<Boolean> write(DankSubmissionRequest submissionRequest, CachedSubmissionWithComments cachedSubmission) {
+              return saveSubmissionWithAndWithoutComments(cachedSubmission).toSingleDefault(true);
             }
           })
           .open();
@@ -152,16 +209,15 @@ public class SubmissionRepository {
   }
 
   @CheckResult
-  private Completable saveSubmissionWithComments(DankSubmissionRequest submissionRequest, Submission submission) {
+  private Completable saveSubmissionWithAndWithoutComments(CachedSubmissionWithComments cachedSubmission) {
     return Completable.fromAction(() -> {
       //Timber.i("Saving submission with comments: %s", submission.getTitle());
 
       long saveTimeMillis = System.currentTimeMillis();
-      CachedSubmissionWithComments cachedSubmission = CachedSubmissionWithComments.create(submissionRequest, submission, saveTimeMillis);
 
-      Submission submissionWithoutComments = new Submission(submission.getDataNode());
+      Submission submissionWithoutComments = new Submission(cachedSubmission.submission().getDataNode());
       CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
-          submission.getFullName(),
+          cachedSubmission.submission().getFullName(),
           submissionWithoutComments,
           submissionWithoutComments.getSubredditName(),
           saveTimeMillis
@@ -188,7 +244,11 @@ public class SubmissionRepository {
     // instead re-save the submission to DB and let the UI update itself.
     return dankRedditClient.withAuth(dankRedditClient.loadMoreComments(commentNode))
         .toCompletable()
-        .andThen(saveSubmissionWithComments(submissionRequest, submission));
+        .andThen(saveSubmissionWithAndWithoutComments(CachedSubmissionWithComments.create(
+            submissionRequest,
+            submission,
+            System.currentTimeMillis()
+        )));
   }
 
 // ======== SUBMISSION LIST (W/O COMMENTS) ======== //
@@ -393,7 +453,7 @@ public class SubmissionRepository {
         );
         totalDeletedRows += database.delete(
             CachedSubmissionWithComments.TABLE_NAME,
-            CachedSubmissionWithComments.WHERE_SAVE_TIME_BEFORE,
+            CachedSubmissionWithComments.WHERE_UPDATE_TIME_BEFORE,
             millisBeforeNowString
         );
         transaction.markSuccessful();
