@@ -122,8 +122,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
-  private Relay<Object> forceResetSubmissionsRequestStream = PublishRelay.create();
+  private PublishRelay<Object> forceResetSubmissionsRequestStream = PublishRelay.create();
   private SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer = new SubmissionPageAnimationOptimizer();
+  private BehaviorRelay<Boolean> toolbarRefreshVisibilityStream = BehaviorRelay.createDefault(true);
 
   protected static void addStartExtrasToIntent(RedditSubredditLink subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
@@ -439,18 +440,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .takeUntil(lifecycle().onDestroy())
         .subscribe(visible -> fullscreenProgressView.setVisibility(visible ? View.VISIBLE : View.GONE));
 
-    // TODO.
     // Toolbar refresh.
     sharedUiModels.map(SubredditScreenUiModel::toolbarRefreshVisible)
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(visible -> {
-          MenuItem refreshMenuItem = toolbar.getMenu().findItem(R.id.action_refresh_submissions);
-          if (refreshMenuItem != null) {
-            refreshMenuItem.setVisible(visible);
-          }
-          //Timber.i("Toolbar refresh visible: %s", visible);
-        });
+        .subscribe(toolbarRefreshVisibilityStream);
 
     // Cache pre-fill.
     int displayWidth = getResources().getDisplayMetrics().widthPixels;
@@ -496,6 +490,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Override
   public boolean onCreateOptionsMenu(Menu menu) {
     getMenuInflater().inflate(R.menu.menu_subreddit, menu);
+
+    MenuItem refreshItem = menu.findItem(R.id.action_refresh_submissions);
+    toolbarRefreshVisibilityStream
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(refreshItem::setVisible);
+
     return super.onCreateOptionsMenu(menu);
   }
 
