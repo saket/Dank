@@ -94,7 +94,7 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
-import me.saket.dank.ui.submission.adapter.SubmissionUiModelConstructor;
+import me.saket.dank.ui.submission.adapter.SubmissionUiConstructor;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
@@ -168,7 +168,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject UserPreferences userPreferences;
   @Inject NetworkStateListener networkStateListener;
   @Inject HttpProxyCacheServer httpProxyCacheServer;
-  @Inject SubmissionUiModelConstructor submissionUiModelConstructor;
+  @Inject SubmissionUiConstructor submissionUiConstructor;
   @Inject SubmissionCommentsAdapter submissionCommentsAdapter;
   @Inject CommentTreeConstructor commentTreeConstructor;
 
@@ -288,7 +288,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
   /**
    * Data from persistence flows to this screen in a unidirectional manner. Any modifications are
-   * made on {@link CommentTreeConstructor} or {@link SubmissionUiModelConstructor} and
+   * made on {@link CommentTreeConstructor} or {@link SubmissionUiConstructor} and
    * {@link SubmissionCommentsAdapter} subscribes to its updates.
    */
   private void setupCommentRecyclerView() {
@@ -342,7 +342,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(submissionStream);
 
     // Adapter data-set.
-    submissionUiModelConstructor
+    submissionUiConstructor
         .stream(
             getContext(),
             commentTreeConstructor,
