@@ -203,4 +203,60 @@ public abstract class Optional<T> {
       }
     }
   }
+
+  /**
+   * Indicates whether some other object is "equal to" this Optional. The
+   * other object is considered equal if:
+   * <ul>
+   * <li>it is also an {@code Optional} and;
+   * <li>both instances have no value present or;
+   * <li>the present values are "equal to" each other via {@code equals()}.
+   * </ul>
+   *
+   * @param obj an object to be tested for equality
+   * @return {code true} if the other object is "equal to" this object
+   * otherwise {@code false}
+   */
+  @Override
+  public boolean equals(Object obj) {
+    if (this == obj) {
+      return true;
+    }
+
+    if (!(obj instanceof Optional)) {
+      return false;
+    }
+
+    Optional<?> other = (Optional<?>) obj;
+    return Objects.equals(value(), other.value());
+  }
+
+  /**
+   * Returns the hash code value of the present value, if any, or 0 (zero) if
+   * no value is present.
+   *
+   * @return hash code value of the present value or 0 if no value is present
+   */
+  @Override
+  public int hashCode() {
+    return Objects.hashCode(value());
+  }
+
+  /**
+   * Returns a non-empty string representation of this Optional suitable for
+   * debugging. The exact presentation format is unspecified and may vary
+   * between implementations and versions.
+   *
+   * @implSpec If a value is present the result must include its string
+   * representation in the result. Empty and present Optionals must be
+   * unambiguously differentiable.
+   *
+   * @return the string representation of this instance
+   */
+  @Override
+  public String toString() {
+    return value() != null
+        ? String.format("Optional[%s]", value())
+        : "Optional.empty";
+  }
 }

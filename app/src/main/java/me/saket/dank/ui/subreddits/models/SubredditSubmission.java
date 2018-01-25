@@ -36,7 +36,8 @@ public interface SubredditSubmission {
 
   enum PartialChange {
     TITLE,
-    BYLINE
+    BYLINE,
+    BACKGROUND
   }
 
   @AutoValue
@@ -150,29 +151,7 @@ public interface SubredditSubmission {
       titleView.setText(uiModel.title());
       bylineView.setText(uiModel.byline());
       thumbnailView.setVisibility(uiModel.thumbnail().isPresent() ? View.VISIBLE : View.GONE);
-
-      if (uiModel.thumbnail().isPresent()) {
-        UiModel.Thumbnail thumbnailUiModel = uiModel.thumbnail().get();
-        thumbnailView.setBackgroundResource(thumbnailUiModel.backgroundRes().orElse(0));
-        thumbnailView.setScaleType(thumbnailUiModel.scaleType());
-        thumbnailView.setContentDescription(thumbnailUiModel.contentDescription());
-
-        if (thumbnailUiModel.tintColor().isPresent()) {
-          thumbnailView.setColorFilter(thumbnailUiModel.tintColor().get());
-        } else {
-          thumbnailView.setColorFilter(null);
-        }
-
-        if (thumbnailUiModel.staticRes().isPresent()) {
-          thumbnailView.setImageResource(thumbnailUiModel.staticRes().get());
-        } else {
-          Glide.with(itemView)
-              .load(thumbnailUiModel.remoteUrl().get())
-              .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
-              .transition(DrawableTransitionOptions.withCrossFade())
-              .into(thumbnailView);
-        }
-      }
+      uiModel.thumbnail().ifPresent(thumb -> setThumbnail(thumb));
     }
 
     public void renderPartialChanges(List<Object> payloads) {
@@ -187,8 +166,33 @@ public interface SubredditSubmission {
             case BYLINE:
               bylineView.setText(uiModel.byline());
               break;
+
+            case BACKGROUND:
+              setThumbnail(uiModel.thumbnail().get());
           }
         }
+      }
+    }
+
+    private void setThumbnail(UiModel.Thumbnail thumbnailUiModel) {
+      thumbnailView.setBackgroundResource(thumbnailUiModel.backgroundRes().orElse(0));
+      thumbnailView.setScaleType(thumbnailUiModel.scaleType());
+      thumbnailView.setContentDescription(thumbnailUiModel.contentDescription());
+
+      if (thumbnailUiModel.tintColor().isPresent()) {
+        thumbnailView.setColorFilter(thumbnailUiModel.tintColor().get());
+      } else {
+        thumbnailView.setColorFilter(null);
+      }
+
+      if (thumbnailUiModel.staticRes().isPresent()) {
+        thumbnailView.setImageResource(thumbnailUiModel.staticRes().get());
+      } else {
+        Glide.with(itemView)
+            .load(thumbnailUiModel.remoteUrl().get())
+            .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
+            .transition(DrawableTransitionOptions.withCrossFade())
+            .into(thumbnailView);
       }
     }
 

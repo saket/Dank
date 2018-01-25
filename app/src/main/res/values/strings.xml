@@ -281,6 +281,9 @@
   <string name="userprefs_use_chrome_custom_tabs_description">Note: pull-to-collapse is only supported in the internal browser.</string>
   <string name="userprefs_group_media">Media</string>
 
+  <!--<string name="userprefs_group_nsfw_filters">NSFW</string>-->
+  <string name="userprefs_show_nsfw_thumbnails">NSFW thumbnails</string>
+
   <!-- Compose -->
   <string name="composereply_compose_field_hint">Write a reply…</string>
   <string name="composereply_send">Send</string>

@@ -9,6 +9,8 @@ import android.widget.LinearLayout;
 import android.widget.Switch;
 import android.widget.TextView;
 
+import com.f2prateek.rx.preferences2.Preference;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
@@ -23,10 +25,7 @@ public class UserPreferenceSwitch extends LinearLayout {
 
   public UserPreferenceSwitch(Context context, AttributeSet attrs) {
     super(context, attrs, 0, R.style.DankUserPreferenceButton);
-    init(attrs);
-  }
 
-  private void init(AttributeSet attrs) {
     LayoutInflater.from(getContext()).inflate(R.layout.custom_user_preferences_switch, this, true);
     ButterKnife.bind(this, this);
 
@@ -42,5 +41,10 @@ public class UserPreferenceSwitch extends LinearLayout {
 
     setOrientation(VERTICAL);
     setOnClickListener(o -> titleView.performClick());
+  }
+
+  public void applyFrom(Preference<Boolean> booleanPreference) {
+    titleView.setChecked(booleanPreference.get());
+    titleView.setOnCheckedChangeListener((buttonView, isChecked) -> booleanPreference.set(isChecked));
   }
 }

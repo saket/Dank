@@ -14,42 +14,47 @@ public enum RealSubmissionThumbnailType {
   SELF_POST,
   NONE;
 
-  public static RealSubmissionThumbnailType parse(Submission submission) {
-    if (submission.isNsfw()) {
+  public static RealSubmissionThumbnailType parse(Submission submission, Boolean showNsfwThumbnails) {
+    if (submission.isNsfw() && !showNsfwThumbnails) {
       return submission.isSelfPost() ? NSFW_SELF_POST : NSFW_LINK;
+    }
 
-    } else {
-      if (submission.getThumbnailType() == Submission.ThumbnailType.NONE) {
-        return NONE;
-      }
+    if (submission.getThumbnailType() == Submission.ThumbnailType.NONE) {
+      return NONE;
+    }
 
-      switch (submission.getThumbnailType()) {
-        case NSFW:
-          throw new AssertionError("Submission#isNsfw() did not return true :/");
-
-        case DEFAULT:
-          if (submission.getThumbnail() == null) {
-            return NONE;
-          } else {
-            throw new AssertionError("Submission with DEFAULT thumbnail type and non-null thumbnail URL");
-          }
-
-        case SELF:
+    switch (submission.getThumbnailType()) {
+      case NSFW:
+        if (submission.isSelfPost()) {
           return SELF_POST;
+        } else if (submission.getThumbnails() == null) {
+          return URL_STATIC_ICON;
+        } else {
+          return URL_REMOTE_THUMBNAIL;
+        }
 
-        case URL:
-          if (submission.getThumbnails() == null) {
-            return URL_STATIC_ICON;
-          } else {
-            return URL_REMOTE_THUMBNAIL;
-          }
-
-        case NONE:
+      case DEFAULT:
+        if (submission.getThumbnail() == null) {
           return NONE;
+        } else {
+          throw new AssertionError("Submission with DEFAULT thumbnail type and non-null thumbnail URL");
+        }
 
-        default:
-          throw new UnsupportedOperationException();
-      }
+      case SELF:
+        return SELF_POST;
+
+      case URL:
+        if (submission.getThumbnails() == null) {
+          return URL_STATIC_ICON;
+        } else {
+          return URL_REMOTE_THUMBNAIL;
+        }
+
+      case NONE:
+        return NONE;
+
+      default:
+        throw new UnsupportedOperationException();
     }
   }
 }

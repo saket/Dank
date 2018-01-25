@@ -7,7 +7,6 @@ import java.util.List;
 
 import me.saket.dank.ui.subreddits.SimpleDiffUtilsCallbacks;
 import me.saket.dank.ui.subreddits.models.SubredditScreenUiModel.SubmissionRowUiModel;
-import timber.log.Timber;
 
 public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRowUiModel> {
 
@@ -37,16 +36,15 @@ public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRow
         SubredditSubmission.UiModel oldSubmission = (SubredditSubmission.UiModel) oldItem;
         SubredditSubmission.UiModel newSubmission = (SubredditSubmission.UiModel) newItem;
 
-        List<SubredditSubmission.PartialChange> partialChanges = new ArrayList<>(2);
+        List<SubredditSubmission.PartialChange> partialChanges = new ArrayList<>(3);
         if (!oldSubmission.title().equals(newSubmission.title())) {
           partialChanges.add(SubredditSubmission.PartialChange.TITLE);
         }
         if (!oldSubmission.byline().equals(newSubmission.byline())) {
           partialChanges.add(SubredditSubmission.PartialChange.BYLINE);
         }
-        if (oldSubmission.thumbnail().isPresent() != newSubmission.thumbnail().isPresent()) {
-          //throw new AssertionError();
-          Timber.w("Thumbnail has appeared! :S");
+        if (!oldSubmission.thumbnail().equals(newSubmission.thumbnail())) {
+          partialChanges.add(SubredditSubmission.PartialChange.BACKGROUND);
         }
         return partialChanges;
 

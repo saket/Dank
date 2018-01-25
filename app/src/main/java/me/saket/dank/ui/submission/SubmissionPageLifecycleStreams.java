@@ -4,16 +4,16 @@ import android.support.annotation.CheckResult;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import io.reactivex.Observable;
-import me.saket.dank.utils.lifecycle.LifecycleOwnerViews.ViewLifecycleStreams;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerViews.Streams;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 
-public class SubmissionPageLifecycleStreams extends ViewLifecycleStreams {
+public class SubmissionPageLifecycleStreams extends Streams {
 
   private Relay<Object> pageCollapseStream = PublishRelay.create();
   private Relay<Object> pageAboutToCollapseStream = PublishRelay.create();
 
-  public static SubmissionPageLifecycleStreams wrap(ExpandablePageLayout pageLayout, ViewLifecycleStreams delegate) {
+  public static SubmissionPageLifecycleStreams wrap(ExpandablePageLayout pageLayout, Streams delegate) {
     return new SubmissionPageLifecycleStreams(pageLayout, delegate);
   }
 

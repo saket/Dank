@@ -22,6 +22,7 @@ import me.saket.dank.ui.media.BaseMediaViewerFragment;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
+import me.saket.dank.ui.preferences.FiltersUserPreferencesLayout;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.submission.RetryReplyJobService;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
@@ -106,4 +107,6 @@ public interface DankAppComponent {
   void inject(LoginActivity target);
 
   void inject(VoteJobService target);
+
+  void inject(FiltersUserPreferencesLayout target);
 }

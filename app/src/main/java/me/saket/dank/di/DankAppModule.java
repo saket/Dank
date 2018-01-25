@@ -16,6 +16,7 @@ import android.preference.PreferenceManager;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.danikula.videocache.HttpProxyCacheServer;
+import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -337,5 +338,17 @@ public class DankAppModule {
     // Not adding Glide to the dagger graph intentionally. Glide objects
     // should be created in Activity, Fragment and View contexts instead.
     return Glide.get(appContext).getBitmapPool();
+  }
+
+  @Provides
+  @Named("comment_count_in_submission_list_byline")
+  Preference<Boolean> showCommentCountInBylinePref(RxSharedPreferences rxPrefs) {
+    return rxPrefs.getBoolean("comment_count_in_submission_list_byline", false);
+  }
+
+  @Provides
+  @Named("nsfw_thumbnails")
+  Preference<Boolean> showNsfwThumbnailsPref(RxSharedPreferences rxPrefs) {
+    return rxPrefs.getBoolean("show_submission_comments_count_in_byline", false);
   }
 }

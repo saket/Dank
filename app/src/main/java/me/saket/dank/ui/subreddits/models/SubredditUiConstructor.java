@@ -16,12 +16,12 @@ import net.dean.jraw.models.VoteDirection;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.BiFunction;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
-import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
@@ -32,6 +32,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Truss;
+import timber.log.Timber;
 
 public class SubredditUiConstructor {
 
@@ -39,14 +40,21 @@ public class SubredditUiConstructor {
   private static final BiFunction<Boolean, Boolean, Boolean> OR_FUNCTION = (b1, b2) -> b1 || b2;
 
   private final VotingManager votingManager;
-  private final Preference<Boolean> showCommentCountInBylinePref;
   private final ReplyRepository replyRepository;
+  private final Preference<Boolean> showCommentCountInByline;
+  private final Preference<Boolean> showNsfwThumbnails;
 
   @Inject
-  public SubredditUiConstructor(VotingManager votingManager, UserPreferences userPreferences, ReplyRepository replyRepository) {
+  public SubredditUiConstructor(
+      VotingManager votingManager,
+      ReplyRepository replyRepository,
+      @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
+      @Named("nsfw_thumbnails") Preference<Boolean> showNsfwThumbnails)
+  {
     this.votingManager = votingManager;
-    this.showCommentCountInBylinePref = userPreferences.canShowSubmissionCommentCountInByline();
     this.replyRepository = replyRepository;
+    this.showCommentCountInByline = showCommentCountInByline;
+    this.showNsfwThumbnails = showNsfwThumbnails;
   }
 
   @CheckResult
@@ -55,14 +63,17 @@ public class SubredditUiConstructor {
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
       Observable<NetworkCallStatus> paginationResults)
   {
-    Observable<Object> userPrefChanges = showCommentCountInBylinePref.asObservable().cast(Object.class);
+    Observable<?> userPrefChanges = Observable.merge(showCommentCountInByline.asObservable(), showNsfwThumbnails.asObservable())
+        .skip(1); // Skip initial values.
+
     Observable<Boolean> sharedFullscreenProgressVisibilities = fullscreenProgressVisibilities(cachedSubmissionLists, paginationResults).share();
+
     return Observable.combineLatest(
         sharedFullscreenProgressVisibilities,
         toolbarRefreshVisibilities(sharedFullscreenProgressVisibilities),
         paginationProgressUiModels(cachedSubmissionLists, paginationResults),
         cachedSubmissionLists,
-        userPrefChanges,
+        userPrefChanges.doOnNext(o -> Timber.i("User pref changed")),
         votingManager.streamChanges(),
         (fullscreenProgressVisible, toolbarRefreshVisible, optionalPagination, optionalCachedSubs, o, oo) ->
         {
@@ -72,7 +83,7 @@ public class SubredditUiConstructor {
           optionalCachedSubs.ifPresent(cachedSubs -> {
             for (Submission submission : cachedSubs) {
               int pendingSyncReplyCount = 0;  // TODO v2:  Get this from database.
-              rowUiModels.add(submissionUiModel(context, submission, pendingSyncReplyCount, showCommentCountInBylinePref.get()));
+              rowUiModels.add(submissionUiModel(context, submission, pendingSyncReplyCount));
             }
           });
           optionalPagination.ifPresent(pagination -> rowUiModels.add(pagination));
@@ -144,8 +155,7 @@ public class SubredditUiConstructor {
   private SubredditSubmission.UiModel submissionUiModel(
       Context c,
       Submission submission,
-      Integer pendingSyncReplyCount,
-      boolean showCommentCountInByline)
+      Integer pendingSyncReplyCount)
   {
     int submissionScore = votingManager.getScoreAfterAdjustingPendingVote(submission);
     VoteDirection voteDirection = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
@@ -160,7 +170,7 @@ public class SubredditUiConstructor {
     titleBuilder.append(Html.fromHtml(submission.getTitle()));
 
     CharSequence byline;
-    if (showCommentCountInByline) {
+    if (showCommentCountInByline.get()) {
       byline = c.getString(
           R.string.subreddit_submission_item_byline_subreddit_name_author_and_comments_count,
           submission.getSubredditName(),
@@ -176,8 +186,9 @@ public class SubredditUiConstructor {
     }
 
     Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
+    RealSubmissionThumbnailType thumbnailType = RealSubmissionThumbnailType.parse(submission, showNsfwThumbnails.get());
 
-    switch (RealSubmissionThumbnailType.parse(submission)) {
+    switch (thumbnailType) {
       case NSFW_SELF_POST:
       case SELF_POST:
         thumbnail = Optional.of(
@@ -205,7 +216,7 @@ public class SubredditUiConstructor {
         break;
 
       default:
-        throw new UnsupportedOperationException("Unknown submission thumbnail type: " + RealSubmissionThumbnailType.parse(submission));
+        throw new UnsupportedOperationException("Unknown submission thumbnail type: " + thumbnailType);
     }
 
     return SubredditSubmission.UiModel.builder()

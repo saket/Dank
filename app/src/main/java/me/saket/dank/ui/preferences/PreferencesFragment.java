@@ -28,7 +28,6 @@ public class PreferencesFragment extends DankFragment {
   @BindView(R.id.userpreferences_scrollview) ScrollView contentScrollView;
   @BindView(R.id.userpreferences_viewswitcher) ViewFlipper layoutFlipper;
 
-  private ExpandablePageLayout contentPageLayout;
   private UserPreferenceGroup activePreferenceGroup;
 
   public static PreferencesFragment create() {
@@ -37,12 +36,13 @@ public class PreferencesFragment extends DankFragment {
 
   @Nullable
   @Override
-  public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+  public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
     super.onCreateView(inflater, container, savedInstanceState);
     View layout = inflater.inflate(R.layout.fragment_user_preferences, container, false);
     ButterKnife.bind(this, layout);
 
     if (savedInstanceState != null && savedInstanceState.containsKey(KEY_ACTIVE_PREFERENCE_GROUP)) {
+      //noinspection ConstantConditions
       populatePreferences((UserPreferenceGroup) savedInstanceState.getSerializable(KEY_ACTIVE_PREFERENCE_GROUP));
     }
 
@@ -53,8 +53,10 @@ public class PreferencesFragment extends DankFragment {
   public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 
+    //noinspection ConstantConditions
     toolbar.setNavigationOnClickListener(v -> ((UserPreferencesActivity) getActivity()).onClickPreferencesToolbarUp());
-    contentPageLayout = ((ExpandablePageLayout) view.getParent());
+
+    ExpandablePageLayout contentPageLayout = ((ExpandablePageLayout) view.getParent());
     contentPageLayout.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
       //noinspection CodeBlock2Expr
       return Views.touchLiesOn(contentScrollView, downX, downY) && contentScrollView.canScrollVertically(upwardPagePull ? 1 : -1);
@@ -79,7 +81,7 @@ public class PreferencesFragment extends DankFragment {
         break;
 
       case FILTERS:
-        groupLayoutRes = R.id.userpreferences_container_empty;
+        groupLayoutRes = R.id.userpreferences_container_filters;
         break;
 
       case DATA_USAGE:
