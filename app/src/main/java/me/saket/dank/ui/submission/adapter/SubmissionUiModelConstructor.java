@@ -217,7 +217,7 @@ public class SubmissionUiModelConstructor {
     int voteDirectionColor = Commons.voteColor(pendingOrDefaultVote);
     long adapterId = submission.getFullName().hashCode();
 
-    Optional<CharSequence> selfTextOptional = submission.isSelfPost()
+    Optional<CharSequence> selfTextOptional = submission.isSelfPost() && !submission.getSelftext().isEmpty()
         ? Optional.of(markdown.parseSelfText(submission))
         : Optional.empty();
 
