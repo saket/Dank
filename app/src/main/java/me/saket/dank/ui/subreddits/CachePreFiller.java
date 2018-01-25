@@ -164,7 +164,8 @@ public class CachePreFiller {
         .map(resolvedLink -> {
           ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
           switch (resolvedLink.type()) {
-            case SINGLE_IMAGE_OR_GIF:
+            case SINGLE_IMAGE:
+            case SINGLE_GIF:
               String imageUrl = redditSuppliedImages.findNearestFor(deviceDisplayWidth, resolvedLink.lowQualityUrl());
               return Collections.singletonList(imageUrl);
 

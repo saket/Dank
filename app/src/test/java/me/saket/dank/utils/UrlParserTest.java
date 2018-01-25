@@ -2,11 +2,11 @@ package me.saket.dank.utils;
 
 import static junit.framework.Assert.assertEquals;
 import static org.mockito.Matchers.any;
+import static org.mockito.Matchers.anyString;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
 
 import android.net.Uri;
-import android.support.annotation.NonNull;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.TextUtils;
@@ -63,12 +63,16 @@ public class UrlParserTest {
       PowerMockito.when(spannable.toString()).thenReturn(invocation.getArgumentAt(0, String.class));
       return spannable;
     });
+
+    PowerMockito.when(Uri.parse(anyString())).thenAnswer(invocation -> {
+      String url = invocation.getArgumentAt(0, String.class);
+      return createMockUriFor(url);
+    });
   }
 
   @Test
   public void parseEmail() {
     String url = "saket@saket.me";
-    PowerMockito.when(Uri.parse(url)).thenReturn(createMockUriFor(url));
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -80,7 +84,6 @@ public class UrlParserTest {
   @Test
   public void whenGivenGibberish_shouldParseAsAnExternalLink() {
     String url = "iturnedmyselfintoapickle";
-    PowerMockito.when(Uri.parse(url)).thenReturn(createMockUriFor(url));
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -95,7 +98,6 @@ public class UrlParserTest {
   @SuppressWarnings("ConstantConditions")
   public void parseRedditSubmission_whenUrlOnlyHasSubmissionId() {
     String url = "https://www.reddit.com/comments/656e5z";
-    PowerMockito.when(Uri.parse(url)).thenReturn(createMockUriFor(url));
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -115,9 +117,6 @@ public class UrlParserTest {
     };
 
     for (String url : urls) {
-      Uri mockUri = createMockUriFor(url);
-      PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
-
       Link parsedLink = UrlParser.parse(url);
 
       assertEquals(parsedLink instanceof RedditSubmissionLink, true);
@@ -131,8 +130,6 @@ public class UrlParserTest {
   @SuppressWarnings("ConstantConditions")
   public void parseRedditSubmission_whenUrlHasSubmissionId_andCommentId() {
     String url = "https://www.reddit.com/comments/5zm7tt/is_anyone_using_services_nowadays/dezzmre/";
-    Uri mockUri = createMockUriFor(url);
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -147,8 +144,6 @@ public class UrlParserTest {
   @SuppressWarnings("ConstantConditions")
   public void parseRedditSubmission_whenUrlHasSubredditName_andSubmissionId_andCommentId() {
     String url = "https://www.reddit.com/r/androiddev/comments/5zm7tt/is_anyone_using_services_nowadays/dezzmre/";
-    Uri mockUri = createMockUriFor(url);
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -163,9 +158,6 @@ public class UrlParserTest {
   @SuppressWarnings("ConstantConditions")
   public void parseRedditSubmission_whenUrlHasSubredditName_andSubmissionId_andCommentId_andCommentContext() {
     String url = "https://www.reddit.com/r/androiddev/comments/5zm7tt/is_anyone_using_services_nowadays/dezzmre/?context=100";
-    Uri mockUri = createMockUriFor(url);
-    when(mockUri.getQueryParameter("context")).thenReturn("100");
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -173,15 +165,13 @@ public class UrlParserTest {
     assertEquals(((RedditSubmissionLink) parsedLink).id(), "5zm7tt");
     assertEquals(((RedditSubmissionLink) parsedLink).subredditName(), "androiddev");
     assertEquals(((RedditSubmissionLink) parsedLink).initialComment().id(), "dezzmre");
-    assertEquals((int) ((RedditSubmissionLink) parsedLink).initialComment().contextCount(), 100);
+    assertEquals(((RedditSubmissionLink) parsedLink).initialComment().contextCount(), 100);
   }
 
   @Test
   @SuppressWarnings("ConstantConditions")
   public void parseRedditSubmission_whenShortUrl() {
     String url = "https://redd.it/5524cd";
-    Uri mockUri = createMockUriFor(url);
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -194,8 +184,6 @@ public class UrlParserTest {
   @Test
   public void parseLiveThreadUrl() {
     String url = "https://www.reddit.com/live/ysrfjcdc2lt1";
-    Uri mockUri = createMockUriFor(url);
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
 
     Link parsedLink = UrlParser.parse(url);
     assertEquals(parsedLink instanceof ExternalLink, true);
@@ -205,8 +193,6 @@ public class UrlParserTest {
   @SuppressWarnings("ConstantConditions")
   public void parseSubredditUrl() {
     String url = "https://www.reddit.com/r/pics";
-    Uri mockUri = createMockUriFor(url);
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -219,9 +205,6 @@ public class UrlParserTest {
   public void parseUserUrl() {
     String[] urls = { "https://www.reddit.com/u/saketme", "https://www.reddit.com/u/saketme/" };
     for (String url : urls) {
-      Uri mockUri = createMockUriFor(url);
-      PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
-
       Link parsedLink = UrlParser.parse(url);
 
       assertEquals(parsedLink instanceof RedditUserLink, true);
@@ -231,47 +214,51 @@ public class UrlParserTest {
 
   @Test
   public void parseAmpRedditUrls() {
-    String url = "https://www.google.com/amp/s/amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/";
-    Uri mockAmpUri = createMockUriFor(url);
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockAmpUri);
+    String[] urls = {
+        "https://www.google.com/amp/s/amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/",
+        "https://amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/"
+    };
 
-    Uri mockUri = createMockUriFor("https://amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/");
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
-
-    Link parsedLink = UrlParser.parse(url);
-
-    assertEquals(parsedLink instanceof RedditSubmissionLink, true);
+    for (String url : urls) {
+      Link parsedLink = UrlParser.parse(url);
+      assertEquals(true, parsedLink instanceof RedditSubmissionLink);
+    }
   }
 
 // ======== MEDIA URLs ======== //
 
   @Test
   public void parseRedditUploadedImages() {
-    String[] urls = {
+    String[] imageUrls = {
         "https://i.redd.it/ih32ovc92asy.png",
         "https://i.redd.it/jh0d5uf5asry.jpg",
         "https://i.redd.it/ge0nqqgjwrsy.jpg",
-        "https://i.redd.it/60dgs56ws4ny.gif",
         "https://i.reddituploads.com/df0af5450dd14902a3056ec73db8fa64?fit=max&h=1536&w=1536&s=8fa077352b28b8a3e94fcd845cf7ca83"
     };
 
-    for (String url : urls) {
-      Uri mockUri = createMockUriFor(url);
-      PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
+    String[] gifUrls = {
+        "https://i.redd.it/60dgs56ws4ny.gif",
+        "https://i.redd.it/ygp9vu6lo3c01.gif"
+    };
 
+    for (String url : imageUrls) {
       Link parsedLink = UrlParser.parse(url);
 
       assertEquals(parsedLink instanceof MediaLink, true);
-      assertEquals(parsedLink.type(), Link.Type.SINGLE_IMAGE_OR_GIF);
+      assertEquals(parsedLink.type(), Link.Type.SINGLE_IMAGE);
+    }
+
+    for (String url : gifUrls) {
+      Link parsedLink = UrlParser.parse(url);
+
+      assertEquals(parsedLink instanceof MediaLink, true);
+      assertEquals(parsedLink.type(), Link.Type.SINGLE_GIF);
     }
   }
 
   @Test
   public void parseImgurAlbumUrls() {
     for (String url : IMGUR_ALBUM_URLS) {
-      Uri mockUri = createMockUriFor(url);
-      PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
-
       try {
         Link parsedLink = UrlParser.parse(url);
         assertEquals(parsedLink instanceof ImgurAlbumUnresolvedLink, true);
@@ -299,22 +286,25 @@ public class UrlParserTest {
   @Test
   public void parseImgurImageUrls() {
     // Key: Imgur URLs to pass. Value: normalized URLs.
-    Map<String, String> imgurUrlMap = new HashMap<>();
-    imgurUrlMap.put("http://i.imgur.com/0Jp0l2R.jpg", "http://i.imgur.com/0Jp0l2R.jpg");
-    imgurUrlMap.put("http://imgur.com/sEpUFzt", "http://i.imgur.com/sEpUFzt.jpg");
+    String[] imageUrls = {
+        "http://i.imgur.com/0Jp0l2R.jpg",
+        "http://imgur.com/sEpUFzt",
+    };
 
-    imgurUrlMap.forEach((url, normalizedUrl) -> {
-      Uri mockUri = createMockUriFor(url);
-      PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
-
-      Uri mockNormalizedUri = createMockUriFor(normalizedUrl);
-      PowerMockito.when(Uri.parse(normalizedUrl)).thenReturn(mockNormalizedUri);
-
+    for (String url : imageUrls) {
       Link parsedLink = UrlParser.parse(url);
-
       assertEquals(parsedLink instanceof ImgurLink, true);
-      assertEquals(parsedLink.type(), Link.Type.SINGLE_IMAGE_OR_GIF);
-    });
+      assertEquals(parsedLink.type(), Link.Type.SINGLE_IMAGE);
+    }
+
+    Link parsedGifLink = UrlParser.parse("https://i.imgur.com/cuPUfRY.gif");
+    assertEquals(parsedGifLink instanceof ImgurLink, true);
+    assertEquals(parsedGifLink.type(), Link.Type.SINGLE_VIDEO);
+
+    // Redirects to a GIF, but Dank will recognize it as a static image.
+    // Glide will eventually load a GIF though.
+    Link parsedGifLinkWithoutExtension = UrlParser.parse("https://imgur.com/a/qU24g");
+    assertEquals(parsedGifLinkWithoutExtension instanceof ImgurAlbumUnresolvedLink, true);
   }
 
   @Test
@@ -328,9 +318,6 @@ public class UrlParserTest {
     };
 
     for (String url : urls) {
-      Uri mockUri = createMockUriFor(url);
-      PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
-
       Link parsedLink = UrlParser.parse(url);
 
       assertEquals(parsedLink instanceof GiphyLink, true);
@@ -352,12 +339,6 @@ public class UrlParserTest {
     gfycatUrlMap.put("https://zippy.gfycat.com/CompetentRemoteBurro.webm", "https://gfycat.com/CompetentRemoteBurro");
 
     gfycatUrlMap.forEach((url, normalizedUrl) -> {
-      Uri mockUri = createMockUriFor(url);
-      PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
-
-      Uri mockNormalizedUri = createMockUriFor(normalizedUrl);
-      PowerMockito.when(Uri.parse(normalizedUrl)).thenReturn(mockNormalizedUri);
-
       Link parsedLink = UrlParser.parse(url);
 
       assertEquals(parsedLink instanceof GfycatLink, true);
@@ -369,8 +350,6 @@ public class UrlParserTest {
   @SuppressWarnings("ConstantConditions")
   public void parseStreamableUrl() {
     String url = "https://streamable.com/jawcl";
-    Uri mockUri = createMockUriFor(url);
-    PowerMockito.when(Uri.parse(url)).thenReturn(mockUri);
 
     Link parsedLink = UrlParser.parse(url);
 
@@ -383,7 +362,7 @@ public class UrlParserTest {
   private Uri createMockUriFor(String url) {
     Uri mockUri = mock(Uri.class);
 
-    if (PatternsCopy.WEB_URL.matcher("url").matches()) {
+    if (PatternsCopy.WEB_URL.matcher(url).matches()) {
       // Really hacky way, but couldn't think of a better way.
       String domainTld;
       if (url.contains(".com/")) {
@@ -398,6 +377,17 @@ public class UrlParserTest {
       when(mockUri.getHost()).thenReturn(url.substring(url.indexOf("://") + "://".length(), url.indexOf(domainTld) + domainTld.length()));
       when(mockUri.getScheme()).thenReturn(url.substring(0, url.indexOf("://")));
       when(mockUri.toString()).thenReturn(url);
+
+      Map<String, String> queryAndArgs = new HashMap<>();
+
+      if (url.contains("?")) {
+        String[] queryAndArgParams = url.substring(url.indexOf("?") + 1).split("&");
+        for (String queryAndArgParam : queryAndArgParams) {
+          String[] queryAndArg = queryAndArgParam.split("=");
+          queryAndArgs.put(queryAndArg[0], queryAndArg[1]);
+        }
+        when(mockUri.getQueryParameter(anyString())).thenAnswer(invocation -> queryAndArgs.get(invocation.getArgumentAt(0, String.class)));
+      }
     }
     return mockUri;
   }

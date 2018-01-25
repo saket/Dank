@@ -4,7 +4,6 @@ import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
-import com.google.auto.value.extension.memoized.Memoized;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
@@ -12,6 +11,9 @@ import com.squareup.moshi.Moshi;
 public abstract class ImgurLink extends MediaLink implements Parcelable {
 
   public abstract String unparsedUrl();
+
+  @Override
+  public abstract Link.Type type();
 
   @Nullable
   public abstract String title();
@@ -25,14 +27,8 @@ public abstract class ImgurLink extends MediaLink implements Parcelable {
   @Override
   public abstract String lowQualityUrl();
 
-  @Memoized
-  @Override
-  public Link.Type type() {
-    return highQualityUrl().endsWith("mp4") ? Type.SINGLE_VIDEO : Type.SINGLE_IMAGE_OR_GIF;
-  }
-
-  public static ImgurLink create(String unparsedUrl, @Nullable String title, @Nullable String description, String imageUrl) {
-    return new AutoValue_ImgurLink(unparsedUrl, title, description, imageUrl, imageUrl);
+  public static ImgurLink create(String unparsedUrl, Type type, @Nullable String title, @Nullable String description, String imageUrl) {
+    return new AutoValue_ImgurLink(unparsedUrl, type, title, description, imageUrl, imageUrl);
   }
 
   public static JsonAdapter<ImgurLink> jsonAdapter(Moshi moshi) {

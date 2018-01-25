@@ -202,16 +202,25 @@ public class UrlParser {
       // Reddit sends HTML-escaped URLs for reddituploads.com. Decode them again.
       //noinspection deprecation
       String htmlUnescapedUrl = Html.fromHtml(url).toString();
-      return GenericMediaLink.create(htmlUnescapedUrl, Link.Type.SINGLE_IMAGE_OR_GIF);
+      return GenericMediaLink.create(htmlUnescapedUrl, Link.Type.SINGLE_IMAGE);
 
-    } else if (isImageOrGifUrlPath(urlPath)) {
-      return GenericMediaLink.create(url, Link.Type.SINGLE_IMAGE_OR_GIF);
-
-    } else if (isVideoPath(urlPath)) {
-      return GenericMediaLink.create(url, Link.Type.SINGLE_VIDEO);
+    } else if (isImageOrGifUrlPath(urlPath) || isVideoPath(urlPath)) {
+      return GenericMediaLink.create(url, getMediaUrlType(urlPath));
 
     } else {
       return ExternalLink.create(url);
+    }
+  }
+
+  private static Link.Type getMediaUrlType(String urlPath) {
+    if (isVideoPath(urlPath)) {
+      return Link.Type.SINGLE_VIDEO;
+    } else if (isGifPath(urlPath)) {
+      return Link.Type.SINGLE_GIF;
+    } else if (isImagePath(urlPath)) {
+      return Link.Type.SINGLE_IMAGE;
+    } else {
+      throw new AssertionError();
     }
   }
 
@@ -245,7 +254,9 @@ public class UrlParser {
       // If this happened to be a GIF submission, the user sadly will be forced to see it instead of its GIFV.
       directLinkURI = Uri.parse(directLinkURI.getScheme() + "://i.imgur.com" + directLinkURI.getPath() + ".jpg");
     }
-    return ImgurLink.create(url, title, description, directLinkURI.toString());
+
+    Link.Type urlType = getMediaUrlType(directLinkURI.getPath());
+    return ImgurLink.create(url, urlType, title, description, directLinkURI.toString());
   }
 
   /**
@@ -318,15 +329,15 @@ public class UrlParser {
   }
 
   private static boolean isImageOrGifUrlPath(String urlPath) {
-    return isImagePath(urlPath) || isGifUrlPath(urlPath);
+    return isImagePath(urlPath) || isGifPath(urlPath);
   }
 
-  private static boolean isGifUrlPath(String urlPath) {
+  private static boolean isGifPath(String urlPath) {
     return urlPath.endsWith(".gif");
   }
 
   public static boolean isGifUrl(String url) {
-    return isGifUrlPath(Uri.parse(url).getPath());
+    return isGifPath(Uri.parse(url).getPath());
   }
 
   private static boolean isVideoPath(String urlPath) {

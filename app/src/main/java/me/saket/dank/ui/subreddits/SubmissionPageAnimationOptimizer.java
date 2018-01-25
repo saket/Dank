@@ -37,7 +37,8 @@ public class SubmissionPageAnimationOptimizer {
         linkDetailsViewLaidOut = true;
         break;
 
-      case SINGLE_IMAGE_OR_GIF:
+      case SINGLE_IMAGE:
+      case SINGLE_GIF:
         contentImageViewLaidOut = true;
         break;
 
@@ -65,7 +66,8 @@ public class SubmissionPageAnimationOptimizer {
         needsDelay = !linkDetailsViewLaidOut;
         break;
 
-      case SINGLE_IMAGE_OR_GIF:
+      case SINGLE_IMAGE:
+      case SINGLE_GIF:
         needsDelay = !contentImageViewLaidOut;
         break;
 

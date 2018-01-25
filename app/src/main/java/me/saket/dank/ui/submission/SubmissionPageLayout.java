@@ -1038,7 +1038,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               submissionContentStream.accept(resolvedLink);
 
               switch (resolvedLink.type()) {
-                case SINGLE_IMAGE_OR_GIF:
+                case SINGLE_IMAGE:
+                case SINGLE_GIF:
                   Thumbnails redditSuppliedImages = submission.getThumbnails();
 
                   // Threading is handled internally by SubmissionImageHolder#load().

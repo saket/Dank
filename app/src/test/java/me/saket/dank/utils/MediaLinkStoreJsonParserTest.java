@@ -11,6 +11,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
+import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.data.links.ImgurLink;
 import me.saket.dank.data.links.MediaLink;
@@ -26,7 +27,7 @@ public class MediaLinkStoreJsonParserTest {
 
     MediaHostRepository.MediaLinkStoreJsonParser storeJsonParser = new MediaHostRepository.MediaLinkStoreJsonParser(moshi);
 
-    ImgurLink resolvedLink = ImgurLink.create("", "", "", "");
+    ImgurLink resolvedLink = ImgurLink.create("", Link.Type.SINGLE_IMAGE, "", "", "");
     String json = storeJsonParser.toJson(resolvedLink);
 
     InputStream stream = new ByteArrayInputStream(json.getBytes(StandardCharsets.UTF_8.name()));

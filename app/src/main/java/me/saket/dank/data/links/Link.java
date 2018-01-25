@@ -13,7 +13,9 @@ public abstract class Link implements Parcelable {
      */
     REDDIT_PAGE,
 
-    SINGLE_IMAGE_OR_GIF,
+    SINGLE_IMAGE,
+
+    SINGLE_GIF,
 
     SINGLE_VIDEO,
 
@@ -30,7 +32,15 @@ public abstract class Link implements Parcelable {
   public abstract Type type();
 
   public boolean isImageOrGif() {
-    return type() == Type.SINGLE_IMAGE_OR_GIF;
+    return isImage() || isGif();
+  }
+
+  public boolean isImage() {
+    return type() == Type.SINGLE_IMAGE;
+  }
+
+  public boolean isGif() {
+    return type() == Type.SINGLE_GIF;
   }
 
   public boolean isVideo() {
