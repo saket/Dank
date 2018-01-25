@@ -43,7 +43,7 @@ import timber.log.Timber;
 /**
  * Loads thumbnail, favicon and generates tint for a {@link Link}.
  */
-public class SubmissionContentLinkUiModelConstructor {
+public class SubmissionContentLinkUiConstructor {
 
   public static final boolean UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS = true;
   private static final TintDetails DEFAULT_TINT_DETAILS = TintDetails.create(Optional.empty(), R.color.submission_link_title, R.color.submission_link_byline);
@@ -53,7 +53,7 @@ public class SubmissionContentLinkUiModelConstructor {
   private final BitmapPool bitmapPool;
 
   @Inject
-  public SubmissionContentLinkUiModelConstructor(LinkMetadataRepository linkMetadataRepository, BitmapPool bitmapPool) {
+  public SubmissionContentLinkUiConstructor(LinkMetadataRepository linkMetadataRepository, BitmapPool bitmapPool) {
     this.linkMetadataRepository = linkMetadataRepository;
     this.bitmapPool = bitmapPool;
   }
@@ -428,7 +428,7 @@ public class SubmissionContentLinkUiModelConstructor {
     public abstract int bylineTextColorRes();
 
     public static TintDetails create(Optional<Integer> backgroundTint, @ColorRes int titleTextColorRes, @ColorRes int bylineTextColorRes) {
-      return new AutoValue_SubmissionContentLinkUiModelConstructor_TintDetails(backgroundTint, titleTextColorRes, bylineTextColorRes);
+      return new AutoValue_SubmissionContentLinkUiConstructor_TintDetails(backgroundTint, titleTextColorRes, bylineTextColorRes);
     }
   }
 }

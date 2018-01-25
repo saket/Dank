@@ -38,7 +38,7 @@ import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionImageHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
-import me.saket.dank.ui.submission.adapter.SubmissionContentLinkUiModelConstructor;
+import me.saket.dank.ui.submission.adapter.SubmissionContentLinkUiConstructor;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.UrlParser;
@@ -213,7 +213,7 @@ public class CachePreFiller {
       //noinspection ConstantConditions
       boolean isAnotherRedditPage = contentLink.isRedditPage() && !submission.isSelfPost();
       //noinspection ConstantConditions
-      return (SubmissionContentLinkUiModelConstructor.UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS && isAnotherRedditPage) || contentLink.isExternal();
+      return (SubmissionContentLinkUiConstructor.UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS && isAnotherRedditPage) || contentLink.isExternal();
     };
   }
 

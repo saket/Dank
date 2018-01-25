@@ -50,7 +50,7 @@ import timber.log.Timber;
 // TODO: Build a subcomponent for SubredditActivity?
 public class SubmissionUiConstructor {
 
-  private final SubmissionContentLinkUiModelConstructor contentLinkUiModelConstructor;
+  private final SubmissionContentLinkUiConstructor contentLinkUiModelConstructor;
   private final ReplyRepository replyRepository;
   private final VotingManager votingManager;
   private final Markdown markdown;
@@ -58,7 +58,7 @@ public class SubmissionUiConstructor {
 
   @Inject
   public SubmissionUiConstructor(
-      SubmissionContentLinkUiModelConstructor contentLinkUiModelConstructor,
+      SubmissionContentLinkUiConstructor contentLinkUiModelConstructor,
       ReplyRepository replyRepository,
       VotingManager votingManager,
       Markdown markdown,
