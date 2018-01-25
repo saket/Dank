@@ -1,6 +1,7 @@
 package me.saket.dank.utils;
 
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.support.v4.util.LruCache;
 import android.text.Html;
 import android.text.TextUtils;
@@ -227,7 +228,7 @@ public class UrlParser {
     }
   }
 
-  public static ImgurLink createImgurLink(String url, String title, String description) {
+  public static ImgurLink createImgurLink(String url, @Nullable String title, @Nullable String description) {
     // Convert GIFs to MP4s that are insanely light weight in size.
     String[] gifFormats = new String[] { ".gif", ".gifv" };
     for (String gifFormat : gifFormats) {
@@ -322,6 +323,10 @@ public class UrlParser {
 
   private static boolean isGifUrlPath(String urlPath) {
     return urlPath.endsWith(".gif");
+  }
+
+  public static boolean isGifUrl(String url) {
+    return isGifUrlPath(Uri.parse(url).getPath());
   }
 
   private static boolean isVideoPath(String urlPath) {

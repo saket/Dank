@@ -16,7 +16,6 @@ import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
-import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
@@ -29,9 +28,7 @@ import butterknife.ButterKnife;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Consumer;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.ui.media.MediaHostRepository;
@@ -39,11 +36,11 @@ import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
+import me.saket.dank.utils.glide.GlideUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
-import timber.log.Timber;
 
 /**
  * Manages showing of content image in {@link SubmissionPageLayout}. Only supports showing a single image right now.
@@ -123,35 +120,35 @@ public class SubmissionImageHolder {
    * Note: image loading is canceled in {@link #resetViews()}.
    */
   @CheckResult
-  public Completable load(MediaLink contentLink, Thumbnails redditSuppliedThumbnails) {
+  public Completable load(MediaLink mediaLink, Thumbnails redditSuppliedThumbnails) {
     if (!LOAD_LOW_QUALITY_IMAGES) {
       throw new AssertionError();
     }
 
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    //if (true) {
-    //  return Single.timer(1, TimeUnit.SECONDS, AndroidSchedulers.mainThread())
-    //      .flatMapCompletable(o -> Completable.error(new SocketTimeoutException()))
-    //      .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE));
-    //}
-
     Single<Drawable> imageSingle = Single.create(emitter -> {
-      FutureTarget<Drawable> futureTarget = Glide.with(imageView)
-          .load(ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplayWidth, contentLink.lowQualityUrl()))
+      String defaultImageUrl = mediaLink.lowQualityUrl();
+
+      // Images supplied by Reddit are static, so cannot optimize for GIFs.
+      String optimizedImageUrl = mediaLink.isGif()
+          ? defaultImageUrl
+          : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplayWidth, defaultImageUrl);
+
+      Glide.with(imageView)
+          .load(optimizedImageUrl)
           .apply(new RequestOptions()
               .priority(Priority.IMMEDIATE)
               .transform(glidePaddingTransformation)
           )
-          .submit();
-      emitter.onSuccess(futureTarget.get());
-      emitter.setCancellable(() -> Glide.with(imageView).clear(futureTarget));
+          .listener(new GlideUtils.LambdaRequestListener<>(
+              resource -> emitter.onSuccess(resource),
+              error -> emitter.onError(error)
+          ))
+          .into(imageView);
     });
 
     return imageSingle
-        .subscribeOn(Schedulers.io())
-        .observeOn(AndroidSchedulers.mainThread())
-        .doOnSuccess(drawable -> imageView.setImageDrawable(drawable))
         .doOnSuccess(drawable -> contentLoadProgressView.setVisibility(View.GONE))
         .doOnSuccess(imageStream)
         .flatMap(drawable -> Views.rxWaitTillMeasured(imageView).toSingleDefault(drawable))

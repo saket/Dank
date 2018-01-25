@@ -31,7 +31,7 @@ public abstract class ImgurLink extends MediaLink implements Parcelable {
     return highQualityUrl().endsWith("mp4") ? Type.SINGLE_VIDEO : Type.SINGLE_IMAGE_OR_GIF;
   }
 
-  public static ImgurLink create(String unparsedUrl, String title, String description, String imageUrl) {
+  public static ImgurLink create(String unparsedUrl, @Nullable String title, @Nullable String description, String imageUrl) {
     return new AutoValue_ImgurLink(unparsedUrl, title, description, imageUrl, imageUrl);
   }
 

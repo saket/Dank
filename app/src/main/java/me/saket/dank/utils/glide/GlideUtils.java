@@ -1,16 +1,14 @@
 package me.saket.dank.utils.glide;
 
-import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
-import android.widget.ImageView;
 
 import com.bumptech.glide.load.DataSource;
 import com.bumptech.glide.load.engine.GlideException;
 import com.bumptech.glide.request.RequestListener;
-import com.bumptech.glide.request.target.DrawableImageViewTarget;
-import com.bumptech.glide.request.target.ImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 
+import io.reactivex.exceptions.Exceptions;
+import io.reactivex.functions.Consumer;
 import timber.log.Timber;
 
 /**
@@ -18,32 +16,45 @@ import timber.log.Timber;
  */
 public class GlideUtils {
 
-  public interface OnImageResourceReadyListener {
-    void onImageReady(Drawable drawable);
-  }
+  public static class LambdaRequestListener<R> implements RequestListener<R> {
+    private final Consumer<R> resourceConsumer;
+    private final Consumer<Exception> errorConsumer;
 
-  /**
-   * This method exists to reduce line indentation by one level.
-   */
-  public static ImageViewTarget<Drawable> simpleImageViewTarget(ImageView imageView, OnImageResourceReadyListener listener) {
-    return new DrawableImageViewTarget(imageView) {
-      @Override
-      protected void setResource(Drawable resource) {
-        super.setResource(resource);
-        listener.onImageReady(resource);
+    public LambdaRequestListener(Consumer<R> resource, Consumer<Exception> error) {
+      this.resourceConsumer = resource;
+      this.errorConsumer = error;
+    }
+
+    @Override
+    public final boolean onLoadFailed(@Nullable GlideException e, Object model, Target<R> target, boolean isFirstResource) {
+      try {
+        errorConsumer.accept(e);
+      } catch (Exception anotherE) {
+        throw Exceptions.propagate(anotherE);
       }
-    };
+      return false;
+    }
+
+    @Override
+    public final boolean onResourceReady(R resource, Object model, Target<R> target, DataSource dataSource, boolean isFirstResource) {
+      try {
+        resourceConsumer.accept(resource);
+      } catch (Exception e) {
+        throw Exceptions.propagate(e);
+      }
+      return false;
+    }
   }
 
   public abstract static class SimpleRequestListener<R> implements RequestListener<R> {
     @Override
-    public boolean onLoadFailed(@Nullable GlideException e, Object model, Target<R> target, boolean isFirstResource) {
+    public final boolean onLoadFailed(@Nullable GlideException e, Object model, Target<R> target, boolean isFirstResource) {
       onLoadFailed(e);
       return false;
     }
 
     @Override
-    public boolean onResourceReady(R resource, Object model, Target<R> target, DataSource dataSource, boolean isFirstResource) {
+    public final boolean onResourceReady(R resource, Object model, Target<R> target, DataSource dataSource, boolean isFirstResource) {
       onResourceReady(resource);
       return false;
     }
@@ -54,7 +65,7 @@ public class GlideUtils {
       if (e != null) {
         e.printStackTrace();
       } else {
-        Timber.e("Couldn't load resource");
+        Timber.e("Couldn't load resourceConsumer");
       }
     }
   }
