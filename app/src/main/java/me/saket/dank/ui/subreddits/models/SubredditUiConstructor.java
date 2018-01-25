@@ -26,6 +26,7 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.subreddits.NetworkCallStatus;
+import me.saket.dank.ui.subreddits.RealSubmissionThumbnailType;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -176,10 +177,9 @@ public class SubredditUiConstructor {
 
     Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
 
-    switch (submission.getThumbnailType()) {
-      case NSFW:
-        // TODO: 08/02/17 NSFW thumbnails
-      case SELF:
+    switch (RealSubmissionThumbnailType.parse(submission)) {
+      case NSFW_SELF_POST:
+      case SELF_POST:
         thumbnail = Optional.of(
             thumbnailForStaticImage(c)
                 .staticRes(Optional.of(R.drawable.ic_text_fields_black_24dp))
@@ -187,24 +187,17 @@ public class SubredditUiConstructor {
                 .build());
         break;
 
-      case DEFAULT:
-        if (submission.getThumbnail() == null) {
-          thumbnail = Optional.empty();
-          break;
-        }
-        // Else, intentional fall-through.
+      case NSFW_LINK:
+      case URL_STATIC_ICON:
+        thumbnail = Optional.of(
+            thumbnailForStaticImage(c)
+                .staticRes(Optional.of(R.drawable.ic_link_black_24dp))
+                .contentDescription(c.getString(R.string.subreddit_submission_item_cd_external_url))
+                .build());
+        break;
 
-      case URL:
-        if (submission.getThumbnails() == null) {
-          // Reddit couldn't create a thumbnail.
-          thumbnail = Optional.of(
-              thumbnailForStaticImage(c)
-                  .staticRes(Optional.of(R.drawable.ic_link_black_24dp))
-                  .contentDescription(c.getString(R.string.subreddit_submission_item_cd_external_url))
-                  .build());
-        } else {
-          thumbnail = Optional.of(thumbnailForRemoteImage(c, submission.getThumbnails()));
-        }
+      case URL_REMOTE_THUMBNAIL:
+        thumbnail = Optional.of(thumbnailForRemoteImage(c, submission.getThumbnails()));
         break;
 
       case NONE:
@@ -212,7 +205,7 @@ public class SubredditUiConstructor {
         break;
 
       default:
-        throw new UnsupportedOperationException("Unknown submission thumbnail type: " + submission.getThumbnailType());
+        throw new UnsupportedOperationException("Unknown submission thumbnail type: " + RealSubmissionThumbnailType.parse(submission));
     }
 
     return SubredditSubmission.UiModel.builder()
