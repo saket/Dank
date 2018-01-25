@@ -97,7 +97,7 @@ public class CachePreFiller {
           }
 
           return submissionAndContentLinkStream
-              .filter(submissionContentAreImages())
+              .filter(submissionContentAreStaticImages())
               .concatMap(submissionAndLink -> {
                 Submission submission = submissionAndLink.first;
                 MediaLink mediaLink = (MediaLink) submissionAndLink.second;
@@ -146,9 +146,9 @@ public class CachePreFiller {
     return Observable.merge(imageCachePreFillStream, linkCacheFillStream, commentCacheFillStream).ignoreElements();
   }
 
-  private Predicate<Pair<Submission, Link>> submissionContentAreImages() {
+  private Predicate<Pair<Submission, Link>> submissionContentAreStaticImages() {
     //noinspection ConstantConditions
-    return submissionAndLink -> submissionAndLink.second.isImageOrGif() || submissionAndLink.second.isMediaAlbum();
+    return submissionAndLink -> submissionAndLink.second.isImage() || submissionAndLink.second.isMediaAlbum();
   }
 
   private Completable preFillImageOrAlbum(Submission submission, MediaLink mediaLink, int deviceDisplayWidth, int submissionAlbumLinkThumbnailWidth) {
@@ -165,7 +165,6 @@ public class CachePreFiller {
           ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
           switch (resolvedLink.type()) {
             case SINGLE_IMAGE:
-            case SINGLE_GIF:
               String imageUrl = redditSuppliedImages.findNearestFor(deviceDisplayWidth, resolvedLink.lowQualityUrl());
               return Collections.singletonList(imageUrl);
 
