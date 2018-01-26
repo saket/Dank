@@ -60,7 +60,7 @@ public class SubmissionContentLinkUiConstructor {
 
   /**
    * Warning: this method manages its own threading.
-   *
+   * <p>
    * TODO: Content description.
    * <p>
    * Emits multiple times:
@@ -375,12 +375,11 @@ public class SubmissionContentLinkUiConstructor {
           if (isGooglePlayThumbnail) {
             tint = palette.getLightVibrantColor(-1);
           }
-          if (tint == -1) {
-            // Mix the color with the window's background color to neutralize any possibly strong
-            // colors (e.g., strong blue, pink, etc.)
-            tint = Colors.mix(windowBackgroundColor, palette.getVibrantColor(-1));
+          if (tint == -1 && palette.getDarkMutedColor(-1) != -1 && palette.getMutedColor(-1) != -1) {
+            tint = Colors.mix(palette.getMutedColor(-1), palette.getDarkMutedColor(-1));
           }
           if (tint == -1) {
+            // Mix the color with the window's background color to neutralize possibly strong colors.
             tint = Colors.mix(windowBackgroundColor, palette.getMutedColor(-1));
           }
           return tint != -1
