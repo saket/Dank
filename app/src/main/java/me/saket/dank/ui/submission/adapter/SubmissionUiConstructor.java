@@ -36,6 +36,7 @@ import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionCommentRow;
+import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.Dates;
@@ -80,7 +81,7 @@ public class SubmissionUiConstructor {
       CommentTreeConstructor commentTreeConstructor,
       Observable<Optional<Submission>> optionalSubmissions,
       Observable<Optional<Link>> contentLinks,
-      Observable<Optional<ResolvedError>> mediaContentLoadErrors,
+      Observable<Optional<SubmissionContentLoadError>> mediaContentLoadErrors,
       Observable<Optional<ResolvedError>> commentsLoadErrors)
   {
     return optionalSubmissions
@@ -119,7 +120,6 @@ public class SubmissionUiConstructor {
               .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
               .map(pendingSyncReplies -> pendingSyncReplies.size());
 
-          // TODO: Share voting manager stream.
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = Observable.combineLatest(
               votingManager.streamChanges().map(o -> context),
               submissions.observeOn(io()),
@@ -152,7 +152,7 @@ public class SubmissionUiConstructor {
 
           // FIXME: The error message says "Reddit" even for imgur, and other services.
           Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModels = mediaContentLoadErrors
-              .map(optionalError -> optionalError.map(error -> mediaContentLoadErrorUiModel(context, error)));
+              .map(optionalError -> optionalError.map(error -> error.uiModel(context)));
 
           return Observable.combineLatest(
               headerUiModels,
@@ -202,13 +202,6 @@ public class SubmissionUiConstructor {
       }
     }
     return uiModels;
-  }
-
-  private SubmissionMediaContentLoadError.UiModel mediaContentLoadErrorUiModel(Context context, ResolvedError resolvedError) {
-    String title = context.getString(resolvedError.errorMessageRes());
-    String byline = context.getString(R.string.submission_link_error_loading_media_tap_to_retry);
-    int iconRes = R.drawable.ic_error_24dp;
-    return SubmissionMediaContentLoadError.UiModel.create(title, byline, iconRes);
   }
 
   /**

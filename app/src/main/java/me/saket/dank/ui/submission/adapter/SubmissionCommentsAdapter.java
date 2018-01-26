@@ -21,6 +21,7 @@ import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.DraftStore;
+import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
@@ -66,7 +67,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   private final Relay<Object> headerClickStream = PublishRelay.create();
   private final Relay<Link> contentLinkClickStream = PublishRelay.create();
   private final Relay<Optional<SubmissionCommentsHeader.ViewHolder>> headerBindStream = PublishRelay.create();
-  private final Relay<Object> mediaContentLoadRetryClickStream = PublishRelay.create();
+  private final Relay<SubmissionContentLoadError> mediaContentLoadRetryClickStream = PublishRelay.create();
   private final Relay<Object> commentsLoadRetryClickStream = PublishRelay.create();
 
   @Inject
@@ -326,7 +327,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
-  public Observable<Object> streamMediaContentLoadRetryClicks() {
+  public Observable<SubmissionContentLoadError> streamMediaContentLoadRetryClicks() {
     return mediaContentLoadRetryClickStream;
   }
 

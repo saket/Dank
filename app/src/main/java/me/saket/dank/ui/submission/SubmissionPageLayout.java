@@ -42,6 +42,7 @@ import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
+import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -54,11 +55,13 @@ import net.dean.jraw.models.Thumbnails;
 
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.BindDimen;
 import butterknife.BindDrawable;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -88,6 +91,8 @@ import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.preferences.UserPreferenceGroup;
+import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.adapter.CommentsItemDiffer;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
@@ -172,6 +177,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject SubmissionCommentsAdapter submissionCommentsAdapter;
   @Inject CommentTreeConstructor commentTreeConstructor;
 
+  @Inject @Named("show_nsfw_content") Lazy<Preference<Boolean>> showNsfwContentPreference;
+
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Link> submissionContentStream = BehaviorRelay.create();
@@ -179,7 +186,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private Relay<PostedOrInFlightContribution> inlineReplyStream = PublishRelay.create();
   private Relay<Optional<Link>> contentLinkStream = BehaviorRelay.createDefault(Optional.empty());
   private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
-  private Relay<Optional<ResolvedError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
+  private Relay<Optional<SubmissionContentLoadError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
   private Relay<Optional<ResolvedError>> submissionCommentsLoadErrors = BehaviorRelay.createDefault(Optional.empty());
 
   private ExpandablePageLayout submissionPageLayout;
@@ -236,6 +243,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     setupReplyFAB();
     setupSoftInputModeChangesAnimation();
     setupSubmissionLoadErrors();
+    setupSubmissionContentLoadErrors();
   }
 
   @Nullable
@@ -280,6 +288,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           .observeOn(mainThread())
           .takeUntil(lifecycle().onDestroyFlowable())
           .subscribe(retainedSubmission -> {
+            Timber.i("Restoring content");
             //noinspection ConstantConditions
             populateUi(retainedSubmission, retainedRequest);
           });
@@ -587,12 +596,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             .expandFromBelowToolbar()
             .open(getContext())
         );
-
-    // Media load error clicks.
-    submissionCommentsAdapter.streamMediaContentLoadRetryClicks()
-        .mergeWith(lifecycle().onPageCollapse())
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> mediaContentLoadErrors.accept(Optional.empty()));
 
     // Extra bottom padding in list to make space for FAB.
     Views.executeOnMeasure(replyFAB, () -> {
@@ -946,6 +949,40 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(o -> contentLoadProgressView.hide());
   }
 
+  private void setupSubmissionContentLoadErrors() {
+    lifecycle().onPageCollapse()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> mediaContentLoadErrors.accept(Optional.empty()));
+
+    submissionCommentsAdapter.streamMediaContentLoadRetryClicks()
+        .ofType(SubmissionContentLoadError.LoadFailure.class)
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), (o, sub) -> sub)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(submission -> {
+          mediaContentLoadErrors.accept(Optional.empty());
+          loadSubmissionContent(submission);
+        });
+
+    submissionCommentsAdapter.streamMediaContentLoadRetryClicks()
+        .ofType(SubmissionContentLoadError.NsfwContentDisabled.class)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> {
+          getContext().startActivity(UserPreferencesActivity.intent(getContext(), UserPreferenceGroup.FILTERS));
+
+          // Gotcha: Glide often fails to load the image if it's not postponed till onResume.
+          lifecycle().onResume()
+              .map(oo -> showNsfwContentPreference.get().get())
+              .filter(nsfwEnabled -> nsfwEnabled)
+              .flatMap(oo -> submissionStream.map(Optional::get))
+              .take(1)
+              .takeUntil(lifecycle().onPageCollapseOrDestroy())
+              .subscribe(submission -> {
+                mediaContentLoadErrors.accept(Optional.empty());
+                loadSubmissionContent(submission);
+              });
+        });
+  }
+
   /**
    * Update the submission to be shown. Since this page is retained by {@link SubredditActivity},
    * we only update the UI everytime a new submission is to be shown.
@@ -983,11 +1020,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
         .subscribeOn(io())
         .observeOn(mainThread())
-        // Warning: This will be a problem if the retry-click stream is ever changed to not a Subject because it's not shared.
-        .flatMapObservable(link -> submissionCommentsAdapter.streamMediaContentLoadRetryClicks()
-            .map(o -> link)
-            .startWith(link))
-        .flatMapSingle(parsedLink -> {
+        .flatMap(parsedLink -> {
           if (!(parsedLink instanceof UnresolvedMediaLink)) {
             return Single.just(parsedLink);
           }
@@ -1018,13 +1051,22 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                   return Single.just(ExternalLink.create(parsedLink.unparsedUrl()));
                 } else {
                   handleMediaLoadError(error);
-                  contentLoadProgressView.hide();
                   return Single.never();
                 }
               });
         })
+        .flatMap(link -> {
+          if (!showNsfwContentPreference.get().get() && link instanceof MediaLink && submission.isNsfw()) {
+            contentLoadProgressView.hide();
+            mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.NsfwContentDisabled.create()));
+            return Single.never();
+
+          } else {
+            return Single.just(link);
+          }
+        })
         .observeOn(mainThread())
-        .doOnNext(resolvedLink -> {
+        .doOnSuccess(resolvedLink -> {
           contentImageView.setVisibility(resolvedLink.isImageOrGif() ? View.VISIBLE : View.GONE);
           contentVideoViewContainer.setVisibility(resolvedLink.isVideo() ? View.VISIBLE : View.GONE);
 
@@ -1032,7 +1074,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           boolean transparentToolbar = resolvedLink.isImageOrGif() || resolvedLink.isVideo();
           toolbarBackground.setSyncScrollEnabled(transparentToolbar);
         })
-        .takeUntil(lifecycle().onPageCollapseOrDestroy())
+        .takeUntil(lifecycle().onPageCollapseOrDestroy().ignoreElements())
         .subscribe(
             resolvedLink -> {
               submissionContentStream.accept(resolvedLink);
@@ -1096,9 +1138,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   private void handleMediaLoadError(Throwable error) {
+    contentLoadProgressView.hide();
+
     ResolvedError resolvedError = errorResolver.resolve(error);
     resolvedError.ifUnknown(() -> Timber.e(error, "Media content load error"));
-    mediaContentLoadErrors.accept(Optional.of(resolvedError));
+    mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.LoadFailure.create(resolvedError)));
   }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //
@@ -1140,7 +1184,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
     submissionStream.accept(Optional.empty());
     contentLinkStream.accept(Optional.empty());
-    mediaContentLoadErrors.accept(Optional.empty());
   }
 
   public SubmissionPageLifecycleStreams lifecycle() {

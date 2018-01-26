@@ -1,5 +1,7 @@
 package me.saket.dank.ui.preferences;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
@@ -10,10 +12,12 @@ import android.widget.Button;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.Observable;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -24,6 +28,8 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 public class UserPreferencesActivity extends DankPullCollapsibleActivity {
 
+  private static final String KEY_INITIAL_PREF_GROUP = "initialPrefGroup";
+
   @BindView(R.id.userpreferences_root) IndependentExpandablePageLayout activityContentPage;
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.userpreferences_list) InboxRecyclerView preferenceList;
@@ -31,9 +37,16 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.userpreferences_hiddenoptions) Button hiddenOptionsButton;
 
   private PreferencesFragment preferencesFragment;
+  private List<UserPreferenceGroup> userPreferenceGroups;
+  private PreferencesAdapter preferencesAdapter;
 
-  public static void start(Context context) {
-    context.startActivity(new Intent(context, UserPreferencesActivity.class));
+  public static Intent intent(Context context) {
+    return new Intent(context, UserPreferencesActivity.class);
+  }
+
+  public static Intent intent(Context context, UserPreferenceGroup initialPreferenceGroup) {
+    return new Intent(context, UserPreferencesActivity.class)
+        .putExtra(KEY_INITIAL_PREF_GROUP, initialPreferenceGroup);
   }
 
   @Override
@@ -57,8 +70,23 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
   @Override
   protected void onPostCreate(@Nullable Bundle savedInstanceState) {
     super.onPostCreate(savedInstanceState);
+
+    userPreferenceGroups = constructPreferenceGroups();
+
     setupPreferencesFragment();
     setupPreferencesGroupList(savedInstanceState);
+
+    if (getIntent().hasExtra(KEY_INITIAL_PREF_GROUP)) {
+      UserPreferenceGroup initialPreferenceGroup = (UserPreferenceGroup) getIntent().getSerializableExtra(KEY_INITIAL_PREF_GROUP);
+      preferencesFragment.populatePreferences(initialPreferenceGroup);
+
+      Observable.timer(750, TimeUnit.MILLISECONDS, mainThread())
+          .takeUntil(lifecycle().onDestroy())
+          .subscribe(o -> preferencesPage.post(() -> {
+            int prefPosition = userPreferenceGroups.indexOf(initialPreferenceGroup);
+            preferenceList.expandItem(prefPosition, preferencesAdapter.getItemId(prefPosition));
+          }));
+    }
 
     hiddenOptionsButton.setVisibility(BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
   }
@@ -92,7 +120,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
       preferenceList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
-    PreferencesAdapter preferencesAdapter = new PreferencesAdapter(constructPreferenceGroups());
+    preferencesAdapter = new PreferencesAdapter(userPreferenceGroups);
     preferencesAdapter.setOnPreferenceGroupClickListener((preferenceGroup, itemView, groupId) -> {
       preferencesFragment.populatePreferences(preferenceGroup);
       preferencesPage.post(() -> preferenceList.expandItem(preferenceList.indexOfChild(itemView), groupId));

@@ -198,7 +198,7 @@ public class SubredditUiConstructor {
       case NSFW_LINK:
         thumbnail = Optional.of(
             thumbnailForStaticImage(c)
-                .staticRes(Optional.of(R.drawable.ic_block_24dp))
+                .staticRes(Optional.of(R.drawable.ic_visibility_off_24dp))
                 .contentDescription(c.getString(R.string.cd_subreddit_submission_item_nsfw_post))
                 .build());
         break;

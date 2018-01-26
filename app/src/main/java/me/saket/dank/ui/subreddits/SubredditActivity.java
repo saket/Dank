@@ -520,7 +520,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         return true;
 
       case R.id.action_preferences:
-        UserPreferencesActivity.start(this);
+        startActivity(UserPreferencesActivity.intent(this));
         //ComposeReplyActivity.start(this, ComposeStartOptions.builder()
         //    .secondPartyName("Test")
         //    .parentContribution(ContributionFullNameWrapper.create("Poop"))

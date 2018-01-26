@@ -126,7 +126,6 @@
   <string name="submission_link_linked_subreddit">Linked subreddit</string>
   <string name="submission_link_linked_submission">Linked submission</string>
   <string name="submission_link_linked_url">Linked URL</string>
-  <string name="submission_link_error_loading_media_tap_to_retry">Tap to retry</string>
   <string name="submission_link_imgur_gallery">Linked Imgur gallery</string>
   <string name="submission_image_scroll_down_hint">Scroll down to see more</string>
   <string name="submission_image_album_title">Album</string>
@@ -135,6 +134,11 @@
   <string name="submission_cd_play_video">Play video</string>
   <string name="cd_submission_return_to_submissions">Return to submissions</string>
   <string name="cd_submission_image">Image for submission: %s</string>
+
+  <string name="submission_media_content_load_failure_tap_to_retry">Tap to retry</string>
+
+  <string name="submission_nsfw_content_disabled_error">NSFW \u00A0( ͡° ͜ʖ ͡°)</string>
+  <string name="submission_tap_to_enable_nsfw_content">Tap to disable filtering</string>
 
   <string name="submission_byline">r/%1$s \u00b7 %2$s \u00b7 %3$s \u00b7 %4$s comments</string> <!-- r/subreddit * author * timestamp * comments count -->
   <string name="submission_comment_byline_item_separator">\u0020\u00b7\u0020</string>

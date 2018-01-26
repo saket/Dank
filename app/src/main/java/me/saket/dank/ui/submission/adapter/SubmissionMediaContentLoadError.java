@@ -12,6 +12,7 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.Relay;
 
 import me.saket.dank.R;
+import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.AnimatedProgressBar;
 
@@ -28,6 +29,8 @@ public interface SubmissionMediaContentLoadError {
     @DrawableRes
     public abstract int errorIconRes();
 
+    public abstract SubmissionContentLoadError error();
+
     @Override
     public long adapterId() {
       return SubmissionCommentsAdapter.ID_MEDIA_CONTENT_LOAD_ERROR;
@@ -38,8 +41,8 @@ public interface SubmissionMediaContentLoadError {
       return SubmissionCommentRowType.MEDIA_CONTENT_LOAD_ERROR;
     }
 
-    public static UiModel create(String title, String byline, int errorIconRes) {
-      return new AutoValue_SubmissionMediaContentLoadError_UiModel(title, byline, errorIconRes);
+    public static UiModel create(String title, String byline, int errorIconRes, SubmissionContentLoadError error) {
+      return new AutoValue_SubmissionMediaContentLoadError_UiModel(title, byline, errorIconRes, error);
     }
   }
 
@@ -48,6 +51,7 @@ public interface SubmissionMediaContentLoadError {
     private final TextView titleView;
     private final TextView bylineView;
     private final ImageView iconView;
+    private UiModel uiModel;
 
     public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new ViewHolder(inflater.inflate(R.layout.list_item_submission_comments_header_link, parent, false));
@@ -59,16 +63,20 @@ public interface SubmissionMediaContentLoadError {
       bylineView = itemView.findViewById(R.id.submission_link_byline);
       iconView = itemView.findViewById(R.id.submission_link_icon);
       containerView = itemView.findViewById(R.id.submission_link_container);
+
+      bylineView.setMaxLines(2);
       containerView.setClipToOutline(true);
 
       ((AnimatedProgressBar) itemView.findViewById(R.id.submission_link_progress)).setVisibilityWithoutAnimation(View.GONE);
     }
 
-    public void setupClickStream(Relay<Object> clickStream) {
-      itemView.setOnClickListener(o -> clickStream.accept(NOTHING));
+    public void setupClickStream(Relay<SubmissionContentLoadError> clickStream) {
+      itemView.setOnClickListener(o -> clickStream.accept(uiModel.error()));
     }
 
     void bind(UiModel uiModel) {
+      this.uiModel = uiModel;
+
       titleView.setText(uiModel.title());
       bylineView.setText(uiModel.byline());
       iconView.setImageResource(uiModel.errorIconRes());

@@ -347,6 +347,7 @@ public class DankAppModule {
   }
 
   @Provides
+  @Singleton
   @Named("show_nsfw_content")
   Preference<Boolean> showNsfwContentPref(RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("show_nsfw_content", false);
