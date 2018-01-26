@@ -16,7 +16,11 @@ public enum RealSubmissionThumbnailType {
 
   public static RealSubmissionThumbnailType parse(Submission submission, Boolean showNsfwThumbnails) {
     if (submission.isNsfw() && !showNsfwThumbnails) {
-      return submission.isSelfPost() ? NSFW_SELF_POST : NSFW_LINK;
+      if (submission.getThumbnail() == null || submission.getThumbnailType() == Submission.ThumbnailType.NONE) {
+        return NONE;
+      } else {
+        return submission.isSelfPost() ? NSFW_SELF_POST : NSFW_LINK;
+      }
     }
 
     if (submission.getThumbnailType() == Submission.ThumbnailType.NONE) {

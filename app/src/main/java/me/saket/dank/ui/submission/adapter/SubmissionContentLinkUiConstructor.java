@@ -278,7 +278,6 @@ public class SubmissionContentLinkUiConstructor {
 
   private Observable<String> fetchTitle(ExternalLink link, Observable<LinkMetadata> linkMetadataSingle) {
     return linkMetadataSingle
-        .observeOn(Schedulers.io())
         .map(metadata -> metadata.title())
         .startWith(link.unparsedUrl())
         .share();
