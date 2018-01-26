@@ -449,7 +449,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // Cache pre-fill.
     int displayWidth = getResources().getDisplayMetrics().widthPixels;
     int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
-
     submissionFolderStream
         .observeOn(single())
         .switchMap(folder -> subscriptionManager.isSubscribed(folder.subredditName()))

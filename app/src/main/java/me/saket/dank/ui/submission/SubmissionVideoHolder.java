@@ -114,13 +114,16 @@ public class SubmissionVideoHolder {
     return Completable.fromAction(() -> {
       exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
         int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - Views.statusBarHeight(contentVideoView.getResources());
-        Views.setHeight(contentVideoView, Math.min(contentHeightWithoutKeyboard, resizedVideoHeight));
+        int adjustedVideoViewHeight = Math.min(contentHeightWithoutKeyboard, resizedVideoHeight);
+        Views.setHeight(contentVideoView, adjustedVideoViewHeight);
 
         // Wait for the height change to happen and then reveal the video.
         Views.executeOnNextLayout(contentVideoView, () -> {
           contentLoadProgressView.setVisibility(View.GONE);
 
-          int videoHeightMinusToolbar = contentVideoView.getHeight() - commentListParentSheet.getTop();
+          // Warning: Avoid getting the height from view instead of reusing adjustedVideoViewHeight.
+          // I was seeing older values instead of the one passed to setHeight().
+          int videoHeightMinusToolbar = adjustedVideoViewHeight - commentListParentSheet.getTop();
           commentListParentSheet.setScrollingEnabled(true);
           commentListParentSheet.setMaxScrollY(videoHeightMinusToolbar);
           commentListParentSheet.scrollTo(videoHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);

@@ -3,7 +3,9 @@ package me.saket.dank.utils;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.net.Uri;
+import android.support.annotation.Nullable;
 import android.view.View;
+
 import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
@@ -14,6 +16,7 @@ import com.google.android.exoplayer2.source.MediaSource;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
+
 import me.saket.dank.R;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 
@@ -21,7 +24,7 @@ public class ExoPlayerManager {
 
   private final VideoView playerView;
   private final ExoTextureVideoView textureVideoView;
-  private OnVideoSizeChangeListener videoSizeChangeListener;
+  private @Nullable OnVideoSizeChangeListener videoSizeChangeListener;
   private boolean wasPlayingUponPause;
   private Bitmap cachedBitmapForFrameCapture;
 
@@ -49,7 +52,7 @@ public class ExoPlayerManager {
     this.textureVideoView = playerView.findViewById(R.id.exomedia_video_view);
   }
 
-  public void setOnVideoSizeChangeListener(OnVideoSizeChangeListener listener) {
+  public void setOnVideoSizeChangeListener(@Nullable OnVideoSizeChangeListener listener) {
     videoSizeChangeListener = listener;
   }
 
