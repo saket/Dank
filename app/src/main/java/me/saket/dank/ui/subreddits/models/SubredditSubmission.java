@@ -56,6 +56,8 @@ public interface SubredditSubmission {
 
     public abstract SpannableWithTextEquality byline();
 
+    public abstract Optional<Integer> backgroundDrawableRes();
+
     public abstract Submission submission();
 
     public abstract PostedOrInFlightContribution submissionInfo();
@@ -81,6 +83,8 @@ public interface SubredditSubmission {
       public Builder byline(CharSequence byline, Integer commentsCount) {
         return byline(SpannableWithTextEquality.wrap(byline, commentsCount));
       }
+
+      public abstract Builder backgroundDrawableRes(Optional<Integer> backgroundRes);
 
       public abstract Builder submission(Submission submission);
 
@@ -151,7 +155,15 @@ public interface SubredditSubmission {
       titleView.setText(uiModel.title());
       bylineView.setText(uiModel.byline());
       thumbnailView.setVisibility(uiModel.thumbnail().isPresent() ? View.VISIBLE : View.GONE);
+
+      Glide.with(thumbnailView).clear(thumbnailView);
       uiModel.thumbnail().ifPresent(thumb -> setThumbnail(thumb));
+
+      if (uiModel.backgroundDrawableRes().isPresent()) {
+        itemView.setBackgroundResource(uiModel.backgroundDrawableRes().get());
+      } else {
+        itemView.setBackground(null);
+      }
     }
 
     public void renderPartialChanges(List<Object> payloads) {

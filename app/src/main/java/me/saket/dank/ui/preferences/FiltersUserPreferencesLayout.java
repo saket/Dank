@@ -21,7 +21,7 @@ import me.saket.dank.widgets.prefs.UserPreferenceSwitch;
 
 public class FiltersUserPreferencesLayout extends LinearLayout {
 
-  @Inject @Named("nsfw_thumbnails") Preference<Boolean> showNsfwThumbnailsPref;
+  @Inject @Named("show_nsfw_content") Preference<Boolean> showNsfwContentPref;
 
   @BindView(R.id.filters_nsfw_thumbnails) UserPreferenceSwitch nsfwThumbnailsSwitch;
 
@@ -40,6 +40,6 @@ public class FiltersUserPreferencesLayout extends LinearLayout {
     ButterKnife.bind(this, this);
     Dank.dependencyInjector().inject(this);
 
-    nsfwThumbnailsSwitch.applyFrom(showNsfwThumbnailsPref);
+    nsfwThumbnailsSwitch.applyFrom(showNsfwContentPref);
   }
 }

@@ -15,6 +15,7 @@ import net.dean.jraw.models.VoteDirection;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -41,19 +42,19 @@ public class SubredditUiConstructor {
   private final VotingManager votingManager;
   private final ReplyRepository replyRepository;
   private final Preference<Boolean> showCommentCountInByline;
-  private final Preference<Boolean> showNsfwThumbnails;
+  private final Preference<Boolean> showNsfwContent;
 
   @Inject
   public SubredditUiConstructor(
       VotingManager votingManager,
       ReplyRepository replyRepository,
       @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
-      @Named("nsfw_thumbnails") Preference<Boolean> showNsfwThumbnails)
+      @Named("show_nsfw_content") Preference<Boolean> showNsfwContent)
   {
     this.votingManager = votingManager;
     this.replyRepository = replyRepository;
     this.showCommentCountInByline = showCommentCountInByline;
-    this.showNsfwThumbnails = showNsfwThumbnails;
+    this.showNsfwContent = showNsfwContent;
   }
 
   @CheckResult
@@ -62,7 +63,7 @@ public class SubredditUiConstructor {
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
       Observable<NetworkCallStatus> paginationResults)
   {
-    Observable<?> userPrefChanges = Observable.merge(showCommentCountInByline.asObservable(), showNsfwThumbnails.asObservable())
+    Observable<?> userPrefChanges = Observable.merge(showCommentCountInByline.asObservable(), showNsfwContent.asObservable())
         .skip(1); // Skip initial values.
 
     Observable<Boolean> sharedFullscreenProgressVisibilities = fullscreenProgressVisibilities(cachedSubmissionLists, paginationResults).share();
@@ -168,25 +169,30 @@ public class SubredditUiConstructor {
     //noinspection deprecation
     titleBuilder.append(Html.fromHtml(submission.getTitle()));
 
-    CharSequence byline;
+    // Setting textAllCaps removes all spans, so I'm applying uppercase manually.
+    Truss bylineBuilder = new Truss();
+    bylineBuilder.append(c.getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()).toUpperCase(Locale.ENGLISH));
+    bylineBuilder.append(" \u00b7 ");
+    bylineBuilder.append(submission.getAuthor().toUpperCase(Locale.ENGLISH));
     if (showCommentCountInByline.get()) {
-      byline = c.getString(
-          R.string.subreddit_submission_item_byline_subreddit_name_author_and_comments_count,
-          submission.getSubredditName(),
-          submission.getAuthor(),
-          Strings.abbreviateScore(postedAndPendingCommentCount)
-      );
-    } else {
-      byline = c.getString(
-          R.string.subreddit_submission_item_byline_subreddit_name_author,
-          submission.getSubredditName(),
-          submission.getAuthor()
-      );
+      bylineBuilder.append(" \u00b7 ");
+      bylineBuilder.append(c.getString(
+          R.string.subreddit_submission_item_byline_comment_count,
+          Strings.abbreviateScore(postedAndPendingCommentCount)));
+    }
+    if (submission.isNsfw()) {
+      bylineBuilder.append(" \u00b7 ");
+      bylineBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(c, R.color.pink_A100)));
+      bylineBuilder.append("NSFW");
+      bylineBuilder.popSpan();
     }
 
-    Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
-    RealSubmissionThumbnailType thumbnailType = RealSubmissionThumbnailType.parse(submission, showNsfwThumbnails.get());
+    Optional<Integer> backgroundResource = submission.isNsfw()
+        ? Optional.of(R.drawable.background_subreddit_submission_nsfw)
+        : Optional.empty();
 
+    Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
+    RealSubmissionThumbnailType thumbnailType = RealSubmissionThumbnailType.parse(submission, showNsfwContent.get());
     switch (thumbnailType) {
       case NSFW_SELF_POST:
       case NSFW_LINK:
@@ -231,7 +237,8 @@ public class SubredditUiConstructor {
         .adapterId(submission.getFullName().hashCode())
         .thumbnail(thumbnail)
         .title(titleBuilder.build(), Pair.create(submissionScore, voteDirection))
-        .byline(byline, postedAndPendingCommentCount)
+        .byline(bylineBuilder.build(), postedAndPendingCommentCount)
+        .backgroundDrawableRes(backgroundResource)
         .build();
   }
 

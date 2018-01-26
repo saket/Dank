@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.swipe.SwipeableLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<me.saket.dank.widgets.swipe.SwipeableLayout android:id="@+id/submission_item_root"
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
@@ -13,8 +14,7 @@
     android:elevation="2dp"
     android:foreground="?attr/selectableItemBackground"
     android:orientation="vertical"
-    android:paddingTop="@dimen/spacing12"
-    tools:layout_marginTop="25dp">
+    android:paddingTop="@dimen/spacing12">
 
     <RelativeLayout
       android:id="@+id/submission_item_content_container"
@@ -45,7 +45,6 @@
         android:layout_marginTop="@dimen/spacing4"
         android:ellipsize="end"
         android:maxLines="1"
-        android:textAllCaps="true"
         android:textColor="@color/subreddit_submission_item_byline"
         android:textSize="@dimen/textsize12"
         tools:text="/r/TodayILearned \u00b7 Saketme \u00b7 43 comments" />

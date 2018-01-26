@@ -347,8 +347,8 @@ public class DankAppModule {
   }
 
   @Provides
-  @Named("nsfw_thumbnails")
-  Preference<Boolean> showNsfwThumbnailsPref(RxSharedPreferences rxPrefs) {
-    return rxPrefs.getBoolean("show_submission_comments_count_in_byline", false);
+  @Named("show_nsfw_content")
+  Preference<Boolean> showNsfwContentPref(RxSharedPreferences rxPrefs) {
+    return rxPrefs.getBoolean("show_nsfw_content", false);
   }
 }

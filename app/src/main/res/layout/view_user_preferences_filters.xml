@@ -9,15 +9,16 @@
   tools:parentTag="android.widget.LinearLayout">
 
   <!--<TextView-->
-    <!--style="@style/DankPreferencesGroupTitle"-->
-    <!--android:layout_width="wrap_content"-->
-    <!--android:layout_height="wrap_content"-->
-    <!--android:layout_marginTop="@dimen/spacing24"-->
-    <!--android:text="@string/userprefs_group_nsfw_filters" />-->
+  <!--style="@style/DankPreferencesGroupTitle"-->
+  <!--android:layout_width="wrap_content"-->
+  <!--android:layout_height="wrap_content"-->
+  <!--android:layout_marginTop="@dimen/spacing24"-->
+  <!--android:text="@string/userprefs_group_nsfw_filters" />-->
 
   <me.saket.dank.widgets.prefs.UserPreferenceSwitch
     android:id="@+id/filters_nsfw_thumbnails"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:prefswitch_title="@string/userprefs_show_nsfw_thumbnails" />
+    app:prefswitch_summary="@string/userprefs_show_nsfw_content_summary_on"
+    app:prefswitch_title="@string/userprefs_show_nsfw_content" />
 </merge>
