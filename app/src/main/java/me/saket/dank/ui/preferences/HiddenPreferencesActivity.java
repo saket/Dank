@@ -1,5 +1,7 @@
 package me.saket.dank.ui.preferences;
 
+import static io.reactivex.schedulers.Schedulers.io;
+
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
@@ -18,8 +20,8 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Completable;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
+import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
@@ -41,13 +43,14 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @Inject SubmissionRepository submissionRepository;
   @Inject SubredditSubscriptionManager subscriptionManager;
   @Inject ReplyRepository replyRepository;
+  @Inject LinkMetadataRepository linkMetadataRepository;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
   }
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(@Nullable Bundle savedInstanceState) {
     Dank.dependencyInjector().inject(this);
     setPullToCollapseEnabled(true);
     super.onCreate(savedInstanceState);
@@ -83,24 +86,30 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     });
 
     addButton("Clear cached submission list", o -> {
-      submissionRepository.clearCachedSubmissionLists().subscribeOn(Schedulers.io()).subscribe();
+      submissionRepository.clearCachedSubmissionLists().subscribeOn(io()).subscribe();
     });
 
     addButton("Clear subreddit subscriptions", o -> {
       subscriptionManager.removeAll()
-          .subscribeOn(Schedulers.io())
+          .subscribeOn(io())
           .subscribe();
     });
 
     addButton("Clear pending votes", o -> {
       Dank.voting().removeAll()
-          .subscribeOn(Schedulers.io())
+          .subscribeOn(io())
           .subscribe();
     });
 
     addButton("Clear pending sync replies", o -> {
       replyRepository.removeAllPendingSyncReplies()
-          .subscribeOn(Schedulers.io())
+          .subscribeOn(io())
+          .subscribe();
+    });
+
+    addButton("Clear link meta-data store", o -> {
+      linkMetadataRepository.clearAll()
+          .subscribeOn(io())
           .subscribe();
     });
   }

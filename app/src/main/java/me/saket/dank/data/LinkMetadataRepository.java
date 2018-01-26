@@ -13,7 +13,9 @@ import java.io.IOException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import io.reactivex.Completable;
 import io.reactivex.Single;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.di.DankApi;
@@ -43,6 +45,14 @@ public class LinkMetadataRepository {
   @CheckResult
   public Single<LinkMetadata> unfurl(Link link) {
     return linkMetadataStore.get(link);
+  }
+
+  @CheckResult
+  public Completable clearAll() {
+    if (!BuildConfig.DEBUG) {
+      throw new IllegalStateException();
+    }
+    return Completable.fromAction(() -> linkMetadataStore.clear());
   }
 
   private static class LinkMetadataStoreJsonParser implements StoreFilePersister.JsonParser<Link, LinkMetadata> {
