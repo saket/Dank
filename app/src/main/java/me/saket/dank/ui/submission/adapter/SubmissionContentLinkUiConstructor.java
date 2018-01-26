@@ -1,5 +1,7 @@
 package me.saket.dank.ui.submission.adapter;
 
+import static io.reactivex.schedulers.Schedulers.io;
+import static io.reactivex.schedulers.Schedulers.single;
 import static java.util.Arrays.asList;
 
 import android.content.Context;
@@ -22,7 +24,6 @@ import javax.inject.Inject;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.links.ExternalLink;
@@ -94,7 +95,7 @@ public class SubmissionContentLinkUiConstructor {
       ImageWithMultipleVariants redditSuppliedThumbnails)
   {
     Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(link)
-        .subscribeOn(Schedulers.io())
+        .subscribeOn(io())
         .toObservable()
         .onErrorResumeNext(Observable.empty())
         .share();
@@ -172,7 +173,7 @@ public class SubmissionContentLinkUiConstructor {
       iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_linked_submission));
 
       Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(submissionLink)
-          .subscribeOn(Schedulers.io())
+          .subscribeOn(io())
           .toObservable()
           .share();
 
@@ -181,7 +182,7 @@ public class SubmissionContentLinkUiConstructor {
           .startWith(true);
 
       titleStream = sharedLinkMetadataStream
-          .observeOn(Schedulers.io())
+          .observeOn(io())
           .map(linkMetadata -> {
             String submissionPageTitle = linkMetadata.title();
             if (submissionPageTitle != null) {
@@ -299,14 +300,10 @@ public class SubmissionContentLinkUiConstructor {
             return Observable.just(redditSuppliedThumbnails.findNearestFor(thumbnailWidth));
           } else {
             return fallbackThumbnailUrlStream
-                .observeOn(Schedulers.io())
-                .flatMap(optionalUrl ->
-                    optionalUrl.isPresent()
-                        ? Observable.just(optionalUrl.get())
-                        : Observable.empty()
-                );
+                .flatMap(optionalUrl -> optionalUrl.isPresent() ? Observable.just(optionalUrl.get()) : Observable.empty());
           }
         })
+        .observeOn(io())
         .flatMap(imageUrl -> {
           FutureTarget<Drawable> imageTarget = Glide.with(context)
               .load(imageUrl)
@@ -320,7 +317,7 @@ public class SubmissionContentLinkUiConstructor {
   private Observable<Optional<Drawable>> fetchFavicon(Context context, Observable<LinkMetadata> linkMetadataStream) {
     //noinspection ConstantConditions
     return linkMetadataStream
-        .observeOn(Schedulers.io())
+        .observeOn(io())
         .flatMap(metadata -> metadata.hasFavicon() ? Observable.just(metadata.faviconUrl()) : Observable.empty())
         .flatMap(faviconUrl -> {
           // Keep this context in sync with the one used in loadImage() for clearing this load on dispose.
@@ -359,6 +356,7 @@ public class SubmissionContentLinkUiConstructor {
         .filter(imageOptional -> imageOptional.isPresent())
         .take(1)
         .map(imageOptional -> imageOptional.get())
+        .observeOn(single())
         .flatMapSingle(image -> generateTint(image, isGooglePlayThumbnail, windowBackgroundColor))
         .startWith(DEFAULT_TINT_DETAILS);
   }
