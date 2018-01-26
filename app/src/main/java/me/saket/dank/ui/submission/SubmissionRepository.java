@@ -30,6 +30,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -112,6 +113,19 @@ public class SubmissionRepository {
           } else {
             // This should return immediately because the store has an in-memory cache.
             return getOrFetchSubmissionWithComments(oldSubmissionRequest)
+                // There is an odd behavior where the cache store gets stuck and doesn't respond,
+                // leading to the comments never showing up.
+                .timeout(Observable.timer(300, TimeUnit.MILLISECONDS), o -> Observable.timer(100, TimeUnit.DAYS))
+                .retry(10, error -> {
+                  if (error instanceof TimeoutException) {
+                    Timber.w("Retrying because memory store isn't responding.");
+                    return true;
+                  } else {
+                    return false;
+                  }
+                })
+                .skip(1)
+                .startWith(submissionWithComments)
                 .map(submissions -> Pair.create(oldSubmissionRequest, submissions));
           }
         });

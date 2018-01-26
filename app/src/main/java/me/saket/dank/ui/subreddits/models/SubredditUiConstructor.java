@@ -32,7 +32,6 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Truss;
-import timber.log.Timber;
 
 public class SubredditUiConstructor {
 
@@ -73,7 +72,7 @@ public class SubredditUiConstructor {
         toolbarRefreshVisibilities(sharedFullscreenProgressVisibilities),
         paginationProgressUiModels(cachedSubmissionLists, paginationResults),
         cachedSubmissionLists,
-        userPrefChanges.doOnNext(o -> Timber.i("User pref changed")),
+        userPrefChanges,
         votingManager.streamChanges(),
         (fullscreenProgressVisible, toolbarRefreshVisible, optionalPagination, optionalCachedSubs, o, oo) ->
         {
