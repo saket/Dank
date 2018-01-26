@@ -12,6 +12,7 @@ import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import javax.inject.Inject;
@@ -156,6 +157,8 @@ public class CommentTreeConstructor {
       Observable<PendingSyncRepliesMap> pendingSyncRepliesMaps = submissions
           .distinctUntilChanged()
           .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
+          // I've seen this stream very occasionally take a second to emit, so starting with a default value.
+          .startWith(Collections.<PendingSyncReply>emptyList())
           .map(replyList -> createPendingSyncReplyMap(replyList));
 
       Observable<?> rowVisibilityChanges = Observable.merge(
@@ -168,7 +171,7 @@ public class CommentTreeConstructor {
           .combineLatest(
               submissions,
               pendingSyncRepliesMaps,
-              rowVisibilityChanges.observeOn(scheduler),
+              rowVisibilityChanges.observeOn(scheduler),    // observeOn() because they emit on the main thread.
               (submission, pendingSyncRepliesMap, o) -> constructComments(submission, pendingSyncRepliesMap))
           .as(immutable());
     };

@@ -1,8 +1,6 @@
 package me.saket.dank.utils;
 
 import android.annotation.SuppressLint;
-import android.os.Build;
-import android.os.Looper;
 
 import io.reactivex.CompletableTransformer;
 import io.reactivex.Observable;
@@ -100,19 +98,6 @@ public class RxUtils {
         isFirstDoOnNext = false;
       }
     });
-  }
-
-  public static <T> Consumer<T> crashIfMainThread() {
-    return o -> {
-      boolean isMainThread = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
-          ? Looper.getMainLooper().isCurrentThread()
-          : Looper.getMainLooper() == Looper.myLooper();
-
-      if (isMainThread) {
-        //Timber.w("Is on main thread!");
-        throw new AssertionError("Is on main thread!");
-      }
-    };
   }
 
   /**

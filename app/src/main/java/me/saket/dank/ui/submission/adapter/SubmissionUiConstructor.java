@@ -98,8 +98,8 @@ public class SubmissionUiConstructor {
               .takeWhile(optionalSub -> optionalSub.isPresent())
               .map(submissionOptional -> submissionOptional.get());
 
-          Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = contentLinks
-              .withLatestFrom(submissions, Pair::create)
+          Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = Observable
+              .combineLatest(contentLinks, submissions.observeOn(io()), Pair::create)
               .switchMap(pair -> {
                 Optional<Link> contentLink = pair.first();
                 if (!contentLink.isPresent()) {
@@ -113,32 +113,38 @@ public class SubmissionUiConstructor {
               });
 
           Observable<Integer> submissionPendingSyncReplyCounts = submissions
-              .take(1)  // switch flatMap -> switchMap if we expect more than 1 emissions.
+              .observeOn(io())
+              .take(1)  // replace flatMap -> switchMap if we expect more than 1 emissions.
               .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
               .map(pendingSyncReplies -> pendingSyncReplies.size());
 
+          // TODO: Share voting manager stream.
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = Observable.combineLatest(
               votingManager.streamChanges().map(o -> context),
-              submissions,
+              submissions.observeOn(io()),
               submissionPendingSyncReplyCounts,
               contentLinkUiModels,
               this::headerUiModel
           );
 
-          Observable<List<SubmissionScreenUiModel>> commentRowUiModels = submissions
-              .compose(commentTreeConstructor.stream(io()))
-              .withLatestFrom(submissions.map(submission -> submission.getAuthor()), Pair::create)
-              .map(pair -> commentRowUiModels(context, pair.first(), pair.second()));
+          Observable<List<SubmissionScreenUiModel>> commentRowUiModels = Observable.combineLatest(
+              submissions
+                  .observeOn(io())
+                  .compose(commentTreeConstructor.stream(io())),
+              submissions.take(1).map(Submission::getAuthor),
+              (rows, author) -> commentRowUiModels(context, rows, author)
+          );
 
           Observable<Optional<SubmissionCommentsLoadProgress.UiModel>> commentsLoadProgressUiModels = Observable
-              .combineLatest(submissions, commentsLoadErrors, Pair::create)
+              .combineLatest(submissions.observeOn(io()), commentsLoadErrors, Pair::create)
               .map(pair -> {
                 CommentNode comments = pair.first().getComments();
                 boolean commentsLoadingFailed = pair.second().isPresent();
                 return comments == null && !commentsLoadingFailed
                     ? Optional.of(SubmissionCommentsLoadProgress.UiModel.create())
-                    : Optional.empty();
-              });
+                    : Optional.<SubmissionCommentsLoadProgress.UiModel>empty();
+              })
+              .startWith(Optional.of(SubmissionCommentsLoadProgress.UiModel.create()));
 
           Observable<Optional<SubmissionCommentsLoadError.UiModel>> commentsLoadErrorUiModels = commentsLoadErrors
               .map(optionalError -> optionalError.map(error -> SubmissionCommentsLoadError.UiModel.create(error)));

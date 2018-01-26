@@ -308,6 +308,7 @@ public class SubmissionRepository {
         )
         .toSingleDefault(NetworkCallStatus.createIdle())
         .toObservable()
+        .doOnError(e -> Timber.e("%s", e.getMessage()))
         .onErrorReturn(error -> NetworkCallStatus.createFailed(error))
         .startWith(NetworkCallStatus.createInFlight());
   }
