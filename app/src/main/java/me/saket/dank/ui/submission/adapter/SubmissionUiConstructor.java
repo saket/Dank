@@ -100,6 +100,7 @@ public class SubmissionUiConstructor {
 
           Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = Observable
               .combineLatest(contentLinks, submissions.observeOn(io()), Pair::create)
+              .distinctUntilChanged()
               .switchMap(pair -> {
                 Optional<Link> contentLink = pair.first();
                 if (!contentLink.isPresent()) {
