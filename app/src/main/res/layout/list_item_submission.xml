@@ -61,7 +61,7 @@
         tools:background="@drawable/background_submission_self_thumbnail"
         tools:ignore="ContentDescription"
         tools:scaleType="centerInside"
-        tools:src="@drawable/ic_link_black_24dp"
+        tools:src="@drawable/ic_link_24dp"
         tools:tint="@color/gray_200" />
     </RelativeLayout>
 

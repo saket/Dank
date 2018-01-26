@@ -190,19 +190,26 @@ public class SubredditUiConstructor {
 
     switch (thumbnailType) {
       case NSFW_SELF_POST:
+      case NSFW_LINK:
+        thumbnail = Optional.of(
+            thumbnailForStaticImage(c)
+                .staticRes(Optional.of(R.drawable.ic_block_24dp))
+                .contentDescription(c.getString(R.string.cd_subreddit_submission_item_nsfw_post))
+                .build());
+        break;
+
       case SELF_POST:
         thumbnail = Optional.of(
             thumbnailForStaticImage(c)
-                .staticRes(Optional.of(R.drawable.ic_text_fields_black_24dp))
+                .staticRes(Optional.of(R.drawable.ic_text_fields_24dp))
                 .contentDescription(c.getString(R.string.subreddit_submission_item_cd_self_text))
                 .build());
         break;
 
-      case NSFW_LINK:
       case URL_STATIC_ICON:
         thumbnail = Optional.of(
             thumbnailForStaticImage(c)
-                .staticRes(Optional.of(R.drawable.ic_link_black_24dp))
+                .staticRes(Optional.of(R.drawable.ic_link_24dp))
                 .contentDescription(c.getString(R.string.subreddit_submission_item_cd_external_url))
                 .build());
         break;
