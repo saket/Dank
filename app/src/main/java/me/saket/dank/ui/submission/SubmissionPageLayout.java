@@ -672,7 +672,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         fragmentLayout,
         contentLoadProgressView,
         submissionPageLayout,
-        mediaHostRepository,
         deviceDisplayWidth
     );
   }
@@ -969,13 +968,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(o -> {
           getContext().startActivity(UserPreferencesActivity.intent(getContext(), UserPreferenceGroup.FILTERS));
 
-          // Gotcha: Glide often fails to load the image if it's not postponed till onResume.
           lifecycle().onResume()
               .map(oo -> showNsfwContentPreference.get().get())
               .filter(nsfwEnabled -> nsfwEnabled)
               .flatMap(oo -> submissionStream.map(Optional::get))
-              .take(1)
-              .takeUntil(lifecycle().onPageCollapseOrDestroy())
+              .firstOrError()
+              .takeUntil(lifecycle().onPageCollapseOrDestroy().ignoreElements())
               .subscribe(submission -> {
                 mediaContentLoadErrors.accept(Optional.empty());
                 loadSubmissionContent(submission);

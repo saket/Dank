@@ -1,8 +1,11 @@
 package me.saket.dank.ui.submission;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.Views.executeOnMeasure;
 
 import android.graphics.Bitmap;
+import android.graphics.drawable.Animatable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
@@ -31,12 +34,10 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
-import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
-import me.saket.dank.utils.glide.GlideUtils;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -56,7 +57,6 @@ public class SubmissionImageHolder {
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
   @BindColor(R.color.submission_media_content_background_padding) int paddingColorForSmallImages;
 
-  private final MediaHostRepository mediaHostRepository;
   private final int deviceDisplayWidth;
   private final ExpandablePageLayout submissionPageLayout;
   private final ProgressBar contentLoadProgressView;
@@ -68,11 +68,14 @@ public class SubmissionImageHolder {
    * God knows why (if he/she exists), ButterKnife is failing to bind <var>contentLoadProgressView</var>,
    * so we're supplying it manually from the fragment.
    */
-  public SubmissionImageHolder(SubmissionPageLifecycleStreams lifecycleStreams, View submissionLayout, ProgressBar contentLoadProgressView,
-      ExpandablePageLayout submissionPageLayout, MediaHostRepository mediaHostRepository, int deviceDisplayWidth)
+  public SubmissionImageHolder(
+      SubmissionPageLifecycleStreams lifecycleStreams,
+      View submissionLayout,
+      ProgressBar contentLoadProgressView,
+      ExpandablePageLayout submissionPageLayout,
+      int deviceDisplayWidth)
   {
     ButterKnife.bind(this, submissionLayout);
-    this.mediaHostRepository = mediaHostRepository;
     this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
     this.deviceDisplayWidth = deviceDisplayWidth;
@@ -105,7 +108,7 @@ public class SubmissionImageHolder {
 
   @CheckResult
   public Observable<Bitmap> streamImageBitmaps() {
-    return imageStream.map(drawable -> getBitmapFromDrawable(drawable));
+    return imageStream.map(SubmissionImageHolder::bitmapFromDrawable);
   }
 
   private Consumer<Object> resetViews() {
@@ -128,30 +131,31 @@ public class SubmissionImageHolder {
 
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    Single<Drawable> imageSingle = Single.create(emitter -> {
-      String defaultImageUrl = mediaLink.lowQualityUrl();
+    return Single
+        .fromCallable(() -> {
+          // Images supplied by Reddit are static, so cannot optimize for GIFs.
+          String defaultImageUrl = mediaLink.lowQualityUrl();
+          String optimizedImageUrl = mediaLink.isGif()
+              ? defaultImageUrl
+              : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplayWidth, defaultImageUrl);
 
-      // Images supplied by Reddit are static, so cannot optimize for GIFs.
-      String optimizedImageUrl = mediaLink.isGif()
-          ? defaultImageUrl
-          : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplayWidth, defaultImageUrl);
-
-      Glide.with(imageView)
-          .load(optimizedImageUrl)
-          .apply(new RequestOptions()
-              .priority(Priority.IMMEDIATE)
-              .transform(glidePaddingTransformation)
-          )
-          .listener(new GlideUtils.LambdaRequestListener<>(
-              resource -> emitter.onSuccess(resource),
-              error -> emitter.onError(error)
-          ))
-          .into(imageView);
-    });
-
-    return imageSingle
+          return Glide.with(imageView)
+              .load(optimizedImageUrl)
+              .apply(new RequestOptions()
+                  .priority(Priority.IMMEDIATE)
+                  .transform(glidePaddingTransformation))
+              .submit()
+              .get();
+        })
+        .subscribeOn(io())
+        .observeOn(mainThread())
+        .doOnSuccess(drawable -> {
+          imageView.setImageDrawable(drawable);
+          if (drawable instanceof Animatable) {
+            ((Animatable) drawable).start();
+          }
+        })
         .doOnSuccess(drawable -> contentLoadProgressView.setVisibility(View.GONE))
-        .doOnSuccess(imageStream)
         .flatMap(drawable -> Views.rxWaitTillMeasured(imageView).toSingleDefault(drawable))
         .doOnSuccess(drawable -> {
           float widthResizeFactor = deviceDisplayWidth / (float) drawable.getIntrinsicWidth();
@@ -243,7 +247,7 @@ public class SubmissionImageHolder {
     imageView.getController().addOnStateChangeListener(imageScrollListener);
   }
 
-  private static Bitmap getBitmapFromDrawable(Drawable drawable) {
+  private static Bitmap bitmapFromDrawable(Drawable drawable) {
     if (drawable instanceof BitmapDrawable) {
       return ((BitmapDrawable) drawable).getBitmap();
     } else if (drawable instanceof GifDrawable) {

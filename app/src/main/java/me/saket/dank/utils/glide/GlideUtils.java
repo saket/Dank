@@ -26,21 +26,21 @@ public class GlideUtils {
     }
 
     @Override
-    public final boolean onLoadFailed(@Nullable GlideException e, Object model, Target<R> target, boolean isFirstResource) {
-      try {
-        errorConsumer.accept(e);
-      } catch (Exception anotherE) {
-        throw Exceptions.propagate(anotherE);
-      }
-      return false;
-    }
-
-    @Override
     public final boolean onResourceReady(R resource, Object model, Target<R> target, DataSource dataSource, boolean isFirstResource) {
       try {
         resourceConsumer.accept(resource);
       } catch (Exception e) {
         throw Exceptions.propagate(e);
+      }
+      return false;
+    }
+
+    @Override
+    public final boolean onLoadFailed(@Nullable GlideException e, Object model, Target<R> target, boolean isFirstResource) {
+      try {
+        errorConsumer.accept(e);
+      } catch (Exception anotherE) {
+        throw Exceptions.propagate(anotherE);
       }
       return false;
     }
