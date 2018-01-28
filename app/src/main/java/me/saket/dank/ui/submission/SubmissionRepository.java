@@ -46,6 +46,7 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddits.NetworkCallStatus;
@@ -322,7 +323,10 @@ public class SubmissionRepository {
         )
         .toSingleDefault(NetworkCallStatus.createIdle())
         .toObservable()
-        .doOnError(e -> Timber.e("%s", e.getMessage()))
+        .doOnError(e -> {
+          ResolvedError resolvedError = errorResolver.resolve(e);
+          resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't fetch submissions"));
+        })
         .onErrorReturn(error -> NetworkCallStatus.createFailed(error))
         .startWith(NetworkCallStatus.createInFlight());
   }

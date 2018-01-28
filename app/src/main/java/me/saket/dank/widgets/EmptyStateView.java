@@ -2,7 +2,6 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.content.res.TypedArray;
-import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
@@ -18,7 +17,7 @@ public class EmptyStateView extends FrameLayout {
   @BindView(R.id.emptystate_emoji) TextView emojiView;
   @BindView(R.id.emptystate_message) TextView messageView;
 
-  public EmptyStateView(Context context, @Nullable AttributeSet attrs) {
+  public EmptyStateView(Context context, AttributeSet attrs) {
     super(context, attrs);
     init(attrs);
   }

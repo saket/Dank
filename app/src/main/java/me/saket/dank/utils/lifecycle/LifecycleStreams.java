@@ -13,11 +13,6 @@ public interface LifecycleStreams {
 
   Object NOTHING = new Object();
 
-  // Commented out because dialog fragments have two create methods: onCreate() and onCreateDialog().
-  /*public Observable<Object> onCreate() {
-    return onCreates;
-  }*/
-
   @CheckResult
   Observable<Object> onStart();
 

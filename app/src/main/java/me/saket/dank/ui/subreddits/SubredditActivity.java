@@ -16,6 +16,8 @@ import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
+import android.support.transition.TransitionManager;
+import android.support.transition.TransitionSet;
 import android.support.v7.util.DiffUtil;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -75,14 +77,12 @@ import me.saket.dank.utils.RxDiffUtils;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.widgets.DankToolbar;
-import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.RxExpandablePage;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
-import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionPageLayout.Callbacks,
     NewSubredditSubscriptionDialog.Callback
@@ -108,8 +108,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
   @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
   @BindView(R.id.subreddit_progress) View fullscreenProgressView;
-  @BindView(R.id.subreddit_submission_emptyState) EmptyStateView emptyStateView;
-  @BindView(R.id.subreddit_submission_errorState) ErrorStateView firstLoadErrorStateView;
+  @BindView(R.id.subreddit_submission_errorState) ErrorStateView fullscreenErrorStateView;
 
   @Inject SubmissionRepository submissionRepository;
   @Inject ErrorResolver errorResolver;
@@ -122,7 +121,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
-  private PublishRelay<Object> forceResetSubmissionsRequestStream = PublishRelay.create();
+  private PublishRelay<Object> forceRefreshSubmissionsRequestStream = PublishRelay.create();
   private SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer = new SubmissionPageAnimationOptimizer();
   private BehaviorRelay<Boolean> toolbarRefreshVisibilityStream = BehaviorRelay.createDefault(true);
 
@@ -198,9 +197,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             sortingModeButton.setText(getString(R.string.subreddit_sorting_mode, getString(sortingAndTimePeriod.getSortingDisplayTextRes())));
           }
         });
-
-    emptyStateView.setEmoji(R.string.subreddit_empty_state_title);
-    emptyStateView.setMessage(R.string.subreddit_empty_state_message);
 
     // Toggle the subscribe button's visibility.
     subredditChangesStream
@@ -377,7 +373,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     }
   }
 
-  // TODO: Handle full-screen error
   private void loadSubmissions() {
     Observable<CachedSubmissionFolder> submissionFolderStream = Observable.combineLatest(
         subredditChangesStream,
@@ -393,6 +388,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
         .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionList)
+            .mergeWith(submissionsAdapter.paginationFailureRetryClicks())
+            .mergeWith(fullscreenErrorStateView.retryClicks())
             .observeOn(io())
             .flatMap(o -> submissionRepository.loadAndSaveMoreSubmissions(folder))
         )
@@ -400,7 +397,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // Folder change.
     submissionFolderStream
-        .compose(RxUtils.replayLastItemWhen(forceResetSubmissionsRequestStream))
+        .compose(RxUtils.replayLastItemWhen(forceRefreshSubmissionsRequestStream))
         .switchMap(folder -> submissionRepository
             .clearCachedSubmissionLists(folder.subredditName())
             .andThen(submissionRepository.loadAndSaveMoreSubmissions(folder).doOnNext(paginationResults).ignoreElements())
@@ -434,14 +431,38 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .distinctUntilChanged((pair1, pair2) -> pair1.first().equals(pair2.first()))
         .subscribe(submissionsAdapter);
 
-    // Full-screen progress.
+    // Fullscreen progress.
     sharedUiModels.map(SubredditScreenUiModel::fullscreenProgressVisible)
+        .distinctUntilChanged()
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(visible -> fullscreenProgressView.setVisibility(visible ? View.VISIBLE : View.GONE));
 
+    // Fullscreen errors and empty states.
+    sharedUiModels
+        .distinctUntilChanged((f, s) -> f.fullscreenError().equals(s.fullscreenError()) && f.emptyState().equals(s.emptyState()))
+        .observeOn(mainThread())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(uiState -> {
+          TransitionSet transitions = Animations.transitions().addTarget(fullscreenErrorStateView);
+          TransitionManager.beginDelayedTransition(((ViewGroup) fullscreenErrorStateView.getParent()), transitions);
+
+          if (uiState.fullscreenError().isPresent()) {
+            fullscreenErrorStateView.setVisibility(View.VISIBLE);
+            fullscreenErrorStateView.applyFrom(uiState.fullscreenError().get());
+
+          } else if (uiState.emptyState().isPresent()) {
+            fullscreenErrorStateView.setVisibility(View.VISIBLE);
+            fullscreenErrorStateView.applyFrom(uiState.emptyState().get());
+
+          } else {
+            fullscreenErrorStateView.setVisibility(View.GONE);
+          }
+        });
+
     // Toolbar refresh.
     sharedUiModels.map(SubredditScreenUiModel::toolbarRefreshVisible)
+        .distinctUntilChanged()
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(toolbarRefreshVisibilityStream);
@@ -502,13 +523,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   public boolean onOptionsItemSelected(MenuItem item) {
     switch (item.getItemId()) {
       case R.id.action_refresh_submissions:
-        subredditChangesStream
-            .take(1)
-            .observeOn(io())
-            .doOnNext(o -> Timber.i("---------------------------"))
-            .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
-            .observeOn(mainThread())
-            .subscribe(() -> forceResetSubmissionsRequestStream.accept(Notification.INSTANCE));
+        forceRefreshSubmissionsRequestStream.accept(Notification.INSTANCE);
         return true;
 
       case R.id.action_user_profile:
@@ -622,7 +637,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .filter(subreddit -> subscriptionManager.isFrontpage(subreddit))
         .observeOn(Schedulers.io())
         .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
-        .subscribe(() -> forceResetSubmissionsRequestStream.accept(Notification.INSTANCE));
+        .subscribe(() -> forceRefreshSubmissionsRequestStream.accept(Notification.INSTANCE));
 
     if (!submissionPage.isExpanded()) {
       showUserProfileSheet();

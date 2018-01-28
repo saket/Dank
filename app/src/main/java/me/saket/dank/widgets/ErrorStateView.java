@@ -17,6 +17,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
 import me.saket.dank.R;
+import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ResolvedError;
 
 public class ErrorStateView extends LinearLayout {
@@ -52,6 +53,13 @@ public class ErrorStateView extends LinearLayout {
   public void applyFrom(ResolvedError error) {
     emojiView.setText(error.errorEmojiRes());
     messageView.setText(error.errorMessageRes());
+    retryButton.setText(R.string.common_error_retry);
+  }
+
+  public void applyFrom(EmptyState emptyState) {
+    emojiView.setText(emptyState.emojiRes());
+    messageView.setText(emptyState.messageRes());
+    retryButton.setText(R.string.common_emptystate_reload);
   }
 
   public void setOnRetryClickListener(View.OnClickListener listener) {

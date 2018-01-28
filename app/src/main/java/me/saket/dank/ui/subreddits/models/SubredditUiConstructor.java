@@ -22,7 +22,10 @@ import javax.inject.Named;
 import io.reactivex.Observable;
 import io.reactivex.functions.BiFunction;
 import me.saket.dank.R;
+import me.saket.dank.data.EmptyState;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
@@ -36,23 +39,26 @@ import me.saket.dank.utils.Truss;
 
 public class SubredditUiConstructor {
 
-  private static final BiFunction<Boolean, Boolean, Boolean> AND_BI_FUNCTION = (b1, b2) -> b1 && b2;
+  private static final BiFunction<Boolean, Boolean, Boolean> AND_FUNCTION = (b1, b2) -> b1 && b2;
   private static final BiFunction<Boolean, Boolean, Boolean> OR_FUNCTION = (b1, b2) -> b1 || b2;
 
   private final VotingManager votingManager;
   private final ReplyRepository replyRepository;
   private final Preference<Boolean> showCommentCountInByline;
   private final Preference<Boolean> showNsfwContent;
+  private final ErrorResolver errorResolver;
 
   @Inject
   public SubredditUiConstructor(
       VotingManager votingManager,
       ReplyRepository replyRepository,
+      ErrorResolver errorResolver,
       @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
       @Named("show_nsfw_content") Preference<Boolean> showNsfwContent)
   {
     this.votingManager = votingManager;
     this.replyRepository = replyRepository;
+    this.errorResolver = errorResolver;
     this.showCommentCountInByline = showCommentCountInByline;
     this.showNsfwContent = showNsfwContent;
   }
@@ -69,27 +75,31 @@ public class SubredditUiConstructor {
     Observable<Boolean> sharedFullscreenProgressVisibilities = fullscreenProgressVisibilities(cachedSubmissionLists, paginationResults).share();
 
     return Observable.combineLatest(
-        sharedFullscreenProgressVisibilities,
-        toolbarRefreshVisibilities(sharedFullscreenProgressVisibilities),
-        paginationProgressUiModels(cachedSubmissionLists, paginationResults),
+        sharedFullscreenProgressVisibilities.distinctUntilChanged(),
+        fullscreenErrors(cachedSubmissionLists, paginationResults).distinctUntilChanged(),
+        fullscreenEmptyStates(cachedSubmissionLists, paginationResults).distinctUntilChanged(),
+        toolbarRefreshVisibilities(sharedFullscreenProgressVisibilities).distinctUntilChanged(),
+        paginationProgressUiModels(cachedSubmissionLists, paginationResults).distinctUntilChanged(),
         cachedSubmissionLists,
         userPrefChanges,
         votingManager.streamChanges(),
-        (fullscreenProgressVisible, toolbarRefreshVisible, optionalPagination, optionalCachedSubs, o, oo) ->
+        (fullscreenProgressVisible, optFullscreenError, optEmptyState, toolbarRefreshVisible, optPagination, optCachedSubs, o, oo) ->
         {
-          int rowCount = optionalPagination.map(p -> 1).orElse(0) + optionalCachedSubs.map(subs -> subs.size()).orElse(0);
+          int rowCount = optPagination.map(p -> 1).orElse(0) + optCachedSubs.map(subs -> subs.size()).orElse(0);
           List<SubredditScreenUiModel.SubmissionRowUiModel> rowUiModels = new ArrayList<>(rowCount);
 
-          optionalCachedSubs.ifPresent(cachedSubs -> {
+          optCachedSubs.ifPresent(cachedSubs -> {
             for (Submission submission : cachedSubs) {
               int pendingSyncReplyCount = 0;  // TODO v2:  Get this from database.
               rowUiModels.add(submissionUiModel(context, submission, pendingSyncReplyCount));
             }
           });
-          optionalPagination.ifPresent(pagination -> rowUiModels.add(pagination));
+          optPagination.ifPresent(pagination -> rowUiModels.add(pagination));
 
           return SubredditScreenUiModel.builder()
               .fullscreenProgressVisible(fullscreenProgressVisible)
+              .fullscreenError(optFullscreenError)
+              .emptyState(optEmptyState)
               .toolbarRefreshVisible(toolbarRefreshVisible)
               .rowUiModels(rowUiModels)
               .build();
@@ -103,19 +113,53 @@ public class SubredditUiConstructor {
     Observable<Boolean> fullscreenProgressForAppLaunch = Observable.combineLatest(
         cachedSubmissionLists.map(Optional::isEmpty),
         paginationResults.map(NetworkCallStatus::isIdle),
-        AND_BI_FUNCTION
+        AND_FUNCTION
     );
 
     Observable<Boolean> fullscreenProgressForFolderChange = Observable.combineLatest(
         cachedSubmissionLists.map(Optional::isEmpty),
         paginationResults.map(NetworkCallStatus::isInFlight),
-        AND_BI_FUNCTION
+        AND_FUNCTION
     );
 
     return Observable.combineLatest(
         fullscreenProgressForAppLaunch,
         fullscreenProgressForFolderChange,
         OR_FUNCTION
+    );
+  }
+
+  private Observable<Optional<ResolvedError>> fullscreenErrors(
+      Observable<Optional<List<Submission>>> cachedSubmissionLists,
+      Observable<NetworkCallStatus> paginationResults)
+  {
+    return Observable.combineLatest(
+        cachedSubmissionLists.map(optionalSubs -> optionalSubs.isEmpty() || optionalSubs.get().isEmpty()),
+        paginationResults,
+        (areSubsEmpty, paginationResult) -> {
+          if (areSubsEmpty && paginationResult.isFailed()) {
+            return Optional.of(errorResolver.resolve(paginationResult.error()));
+          } else {
+            return Optional.<ResolvedError>empty();
+          }
+        }
+    );
+  }
+
+  private Observable<Optional<EmptyState>> fullscreenEmptyStates(
+      Observable<Optional<List<Submission>>> cachedSubmissionLists,
+      Observable<NetworkCallStatus> paginationResults)
+  {
+    return Observable.combineLatest(
+        cachedSubmissionLists.map(optionalSubs -> optionalSubs.isPresent() && optionalSubs.get().isEmpty()),
+        paginationResults,
+        (areSubsEmpty, paginationResult) -> {
+          if (areSubsEmpty && paginationResult.isIdle()) {
+            return Optional.of(EmptyState.create(R.string.subreddit_emptystate_emoji, R.string.subreddit_emptystate_message));
+          } else {
+            return Optional.<EmptyState>empty();
+          }
+        }
     );
   }
 

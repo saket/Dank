@@ -30,6 +30,7 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
 
   private final Map<SubmissionRowUiModel.Type, SubredditScreenUiModel.SubmissionRowUiChildAdapter> childAdapters;
   private final SubredditSubmission.Adapter submissionAdapter;
+  private final SubredditSubmissionPagination.Adapter paginationAdapter;
 
   @Inject
   public SubredditSubmissionsAdapter(SubredditSubmission.Adapter submissionAdapter, SubredditSubmissionPagination.Adapter paginationAdapter) {
@@ -37,6 +38,7 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
     childAdapters.put(SubmissionRowUiModel.Type.SUBMISSION, submissionAdapter);
     childAdapters.put(SubmissionRowUiModel.Type.PAGINATION_FOOTER, paginationAdapter);
 
+    this.paginationAdapter = paginationAdapter;
     this.submissionAdapter = submissionAdapter;
     setHasStableIds(true);
   }
@@ -44,6 +46,11 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   @CheckResult
   public Observable<SubredditSubmissionClickEvent> submissionClicks() {
     return submissionAdapter.submissionClicks();
+  }
+
+  @CheckResult
+  public Observable<?> paginationFailureRetryClicks() {
+    return paginationAdapter.failureRetryClicks();
   }
 
   @Override

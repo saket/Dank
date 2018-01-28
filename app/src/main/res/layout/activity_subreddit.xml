@@ -19,14 +19,6 @@
     android:scrollbars="vertical"
     tools:visibility="gone" />
 
-  <me.saket.dank.widgets.EmptyStateView
-    android:id="@+id/subreddit_submission_emptyState"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_centerInParent="true"
-    android:layout_marginTop="-60dp"
-    android:visibility="gone" />
-
   <me.saket.dank.widgets.ErrorStateView
     android:id="@+id/subreddit_submission_errorState"
     android:layout_width="wrap_content"
