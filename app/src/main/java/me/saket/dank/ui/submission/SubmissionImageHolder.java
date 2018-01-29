@@ -175,6 +175,7 @@ public class SubmissionImageHolder {
             }
           });
         })
+        .doOnSuccess(imageStream)
         .doOnError(e -> Timber.e(e, "Couldn't load image"))
         .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE))
         .toCompletable();
