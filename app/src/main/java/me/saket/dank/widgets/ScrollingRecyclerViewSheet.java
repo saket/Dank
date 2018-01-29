@@ -87,12 +87,10 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
   @CheckResult
   public Observable<Float> streamSheetScrollChanges() {
     return Observable.create(emitter -> {
-      SheetScrollChangeListener listener = newScrollY -> {
-        emitter.onNext(newScrollY);
-      };
+      SheetScrollChangeListener listener = newScrollY -> emitter.onNext(newScrollY);
+      post(() -> listener.onScrollChange(currentScrollY()));    // Initial value.
       addOnSheetScrollChangeListener(listener);
       emitter.setCancellable(() -> removeOnSheetScrollChangeListener(listener));
-      post(() -> listener.onScrollChange(currentScrollY()));    // Initial value.
     });
   }
 

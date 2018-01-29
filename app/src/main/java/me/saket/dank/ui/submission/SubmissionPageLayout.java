@@ -764,33 +764,25 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
   private void setupReplyFAB() {
     Observable<Boolean> fabSpaceAvailabilityChanges = submissionCommentsAdapter.streamHeaderBinds()
-        .switchMap(optional -> {
-          if (!optional.isPresent()) {
-            return Observable.just(true);
+        .switchMap(optionalHeaderVH -> {
+          if (optionalHeaderVH.isEmpty()) {
+            return Observable.just(false);
 
           } else {
-            SubmissionCommentsHeader.ViewHolder headerVH = optional.get();
+            SubmissionCommentsHeader.ViewHolder headerVH = optionalHeaderVH.get();
             return commentListParentSheet.streamSheetScrollChanges()
                 .map(sheetScrollY -> headerVH.bylineView.getBottom() + sheetScrollY + commentListParentSheet.getTop())
                 .map(bylineBottom -> bylineBottom < replyFAB.getTop());
           }
         });
 
-    // Show the FAB only while the keyboard is hidden and submission title + byline are positioned above it.
-    submissionStream
-        .observeOn(mainThread())
-        .doOnNext(o -> replyFAB.show())
-        .switchMap(submission -> {
-          if (submission.isPresent()) {
-            return Observable.combineLatest(
-                keyboardVisibilityChangeStream.map(event -> event.visible()),
-                fabSpaceAvailabilityChanges,
-                (keyboardVisible, spaceAvailable) -> !keyboardVisible && spaceAvailable
-            );
-          } else {
-            return Observable.just(false);
-          }
-        })
+    // Show the FAB only while the keyboard is hidden and
+    // submission title + byline are positioned above it.
+    Observable
+        .combineLatest(
+            keyboardVisibilityChangeStream.map(event -> event.visible()),
+            fabSpaceAvailabilityChanges,
+            (keyboardVisible, spaceAvailable) -> !keyboardVisible && spaceAvailable)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(canShowReplyFAB -> {
           if (canShowReplyFAB) {
@@ -821,7 +813,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             commentTreeConstructor.showReply(submissionInfo);
             inlineReplyStream.accept(submissionInfo);
           }
-        }, logError("reply FAB crash"));
+        });
   }
 
   /**
