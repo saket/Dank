@@ -96,6 +96,7 @@ import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.adapter.CommentsItemDiffer;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
+import me.saket.dank.ui.submission.adapter.SubmissionCommentRowType;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
@@ -618,22 +619,20 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .take(1)
         .map(adapter -> adapter.getData())
         .map(newItems -> {
-          int replyPosition = RecyclerView.NO_POSITION;
           for (int i = 0; i < newItems.size(); i++) {
             // Find the reply item's position.
             SubmissionScreenUiModel commentRow = newItems.get(i);
             //noinspection ConstantConditions Parent contribution's fullname cannot be null. Replies can only be made if they're non-null.
-            if (commentRow instanceof SubmissionCommentInlineReply.UiModel
+            if (commentRow.type() == SubmissionCommentRowType.INLINE_REPLY
                 && ((SubmissionCommentInlineReply.UiModel) commentRow).parentContribution().fullName().equals(parentContribution.fullName()))
             {
-              replyPosition = i;
-              break;
+              return i;
             }
           }
-          return replyPosition;
+          throw new AssertionError("Couldn't find inline reply's parent");
         })
         .flatMapCompletable(replyPosition -> Completable.fromAction(() -> {
-          RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition);
+          RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition - 1);
           int parentContributionBottom = parentContributionItemVH.itemView.getBottom() + commentListParentSheet.getTop();
           boolean isReplyHidden = parentContributionBottom >= submissionPageLayout.getBottom();
 
