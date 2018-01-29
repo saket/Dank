@@ -76,10 +76,10 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
           }
         }
 
-        if (oldHeader.title() != newHeader.title()) {
+        if (!oldHeader.title().equals(newHeader.title())) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_TITLE);
         }
-        if (oldHeader.byline().equals(newHeader.byline())) {
+        if (!oldHeader.byline().equals(newHeader.byline())) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_BYLINE);
         }
 
@@ -92,8 +92,7 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
         SubmissionComment.UiModel oldComment = (SubmissionComment.UiModel) oldItem;
         SubmissionComment.UiModel newComment = (SubmissionComment.UiModel) newItem;
 
-        if (oldComment.isCollapsed() == newComment.isCollapsed() && (!oldComment.byline().equals(newComment.byline())
-            || oldComment.byline() != newComment.byline()))
+        if (oldComment.isCollapsed() == newComment.isCollapsed() && !oldComment.byline().equals(newComment.byline()))
         {
           return Collections.singletonList(SubmissionComment.PartialChange.BYLINE);
         } else {

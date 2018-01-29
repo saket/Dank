@@ -121,7 +121,7 @@ public class SubmissionUiConstructor {
               .map(pendingSyncReplies -> pendingSyncReplies.size());
 
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = Observable.combineLatest(
-              votingManager.streamChanges().map(o -> context),
+              votingManager.streamChanges().observeOn(io()).map(o -> context),
               submissions.observeOn(io()),
               submissionPendingSyncReplyCounts,
               contentLinkUiModels,
@@ -129,11 +129,10 @@ public class SubmissionUiConstructor {
           );
 
           Observable<List<SubmissionScreenUiModel>> commentRowUiModels = Observable.combineLatest(
-              submissions
-                  .observeOn(io())
-                  .compose(commentTreeConstructor.stream(io())),
+              votingManager.streamChanges().observeOn(io()).map(o -> context),
+              submissions.observeOn(io()).compose(commentTreeConstructor.stream(io())),
               submissions.take(1).map(Submission::getAuthor),
-              (rows, author) -> commentRowUiModels(context, rows, author)
+              this::commentRowUiModels
           );
 
           Observable<Optional<SubmissionCommentsLoadProgress.UiModel>> commentsLoadProgressUiModels = Observable
