@@ -3,7 +3,6 @@ package me.saket.dank.ui.submission;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
@@ -101,6 +100,7 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.submission.adapter.SubmissionUiConstructor;
+import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
@@ -545,50 +545,52 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               commentRecyclerView.smoothScrollBy(0, (int) viewTop);
             }
           }
-
           commentTreeConstructor.toggleCollapse(clickEvent.commentInfo());
+        });
+
+    // Thread continuations.
+    submissionCommentsAdapter.streamLoadMoreCommentsClicks()
+        .filter(loadMoreClickEvent -> loadMoreClickEvent.parentCommentNode().isThreadContinuation())
+        .withLatestFrom(submissionRequestStream, Pair::create)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> {
+          LoadMoreCommentsClickEvent loadMoreClickEvent = pair.first();
+          DankSubmissionRequest continueThreadRequest = pair.second().toBuilder()
+              .focusComment(loadMoreClickEvent.parentCommentNode().getComment().getId())
+              .build();
+          Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
+          expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
+          SubmissionPageLayoutActivity.start(getContext(), continueThreadRequest, expandFromShape);
         });
 
     // Load-more-comment clicks.
     submissionCommentsAdapter.streamLoadMoreCommentsClicks()
-        // This distinct() is important. Stupid JRAW inserts new comments directly into
+        .filter(loadMoreClickEvent -> !loadMoreClickEvent.parentCommentNode().isThreadContinuation())
+        // This filter() is important. Stupid JRAW inserts new comments directly into
         // the comment tree so if multiple API calls are made, it'll insert duplicate
         // items and result in a crash because RecyclerView expects stable IDs.
-        .distinct()
-        .concatMapEager(loadMoreClickEvent -> {
-          if (loadMoreClickEvent.parentCommentNode().isThreadContinuation()) {
-            return submissionRequestStream
-                .take(1)
-                .flatMap(submissionRequest -> {
-                  DankSubmissionRequest continueThreadRequest = submissionRequest.toBuilder()
-                      .focusComment(loadMoreClickEvent.parentCommentNode().getComment().getId())
-                      .build();
-                  Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
-                  expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
-                  SubmissionPageLayoutActivity.start(getContext(), continueThreadRequest, expandFromShape);
-                  return Observable.empty();
-                });
-
-          } else {
-            return submissionRequestStream.zipWith(submissionStream.map(Optional::get), Pair::create)
-                .take(1)
-                .doOnNext(o -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentContribution(), true))
-                .flatMapCompletable(pair -> {
-                  DankSubmissionRequest submissionRequest = pair.first();
-                  Submission submission = pair.second();
-                  return submissionRepository.loadMoreComments(submission, submissionRequest, loadMoreClickEvent.parentCommentNode())
-                      .subscribeOn(Schedulers.io())
-                      .onErrorComplete();
-                })
-                .doOnTerminate(() -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentContribution(), false))
-                .toObservable();
-          }
-        })
+        .filter(loadMoreClickEvent -> !commentTreeConstructor.isMoreCommentsInFlightFor(loadMoreClickEvent.parentCommentNode()))
+        .doOnNext(loadMoreClickEvent -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentContribution(), true))
+        .concatMapEager(loadMoreClickEvent -> submissionRequestStream
+            .zipWith(submissionStream.map(Optional::get), Pair::create)
+            .take(1)
+            .flatMapCompletable(pair -> {
+              DankSubmissionRequest submissionRequest = pair.first();
+              Submission submission = pair.second();
+              return submissionRepository
+                  .loadMoreComments(submission, submissionRequest, loadMoreClickEvent.parentCommentNode())
+                  .subscribeOn(Schedulers.io());
+            })
+            .doOnError(e -> {
+              ResolvedError resolvedError = errorResolver.resolve(e);
+              resolvedError.ifUnknown(() -> Timber.e(e, "Failed to load more comments"));
+              Toast.makeText(getContext(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
+            })
+            .onErrorComplete()
+            .doOnTerminate(() -> commentTreeConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentContribution(), false))
+            .toObservable())
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(doNothing(), error -> {
-          Timber.e(error, "Failed to load more comments");
-          Toast.makeText(getContext(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
-        });
+        .subscribe();
 
     // Content link clicks.
     submissionCommentsAdapter.streamContentLinkClicks()

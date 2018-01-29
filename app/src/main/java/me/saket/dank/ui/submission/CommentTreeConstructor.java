@@ -266,6 +266,10 @@ public class CommentTreeConstructor {
     return ACTIVE_REPLY_IDS.isActive(contribution);
   }
 
+  public boolean isMoreCommentsInFlightFor(CommentNode commentNode) {
+    return IN_FLIGHT_LOAD_MORE_IDS.isInFlightFor(commentNode);
+  }
+
   /**
    * Walk through the tree in pre-order, ignoring any collapsed comment tree node and flatten them in a single List.
    */
