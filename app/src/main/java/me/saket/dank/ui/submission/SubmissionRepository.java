@@ -23,7 +23,6 @@ import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneId;
 
 import java.io.InterruptedIOException;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -92,6 +91,8 @@ public class SubmissionRepository {
    */
   @CheckResult
   public Observable<Pair<DankSubmissionRequest, Submission>> submissionWithComments(DankSubmissionRequest oldSubmissionRequest) {
+    Timber.i("Getting comments");
+
     Observable<Pair<DankSubmissionRequest, CachedSubmissionWithComments>> stream = getOrFetchSubmissionWithComments(oldSubmissionRequest)
         .take(1)
         .flatMap(submissionWithComments -> {
@@ -101,6 +102,8 @@ public class SubmissionRepository {
           CommentSort suggestedSort = submissionWithComments.submission().getSuggestedSort();
 
           if (suggestedSort != null && suggestedSort != oldSubmissionRequest.commentSort()) {
+            Timber.i("Different sort.");
+
             DankSubmissionRequest newRequest = oldSubmissionRequest.toBuilder()
                 .commentSort(suggestedSort)
                 .build();
@@ -109,10 +112,11 @@ public class SubmissionRepository {
                 .doAfterNext(o -> {
                   Timber.i("Clearing old memory cache key because of submission request mismatch.");
                   submissionWithCommentsStore.clear(oldSubmissionRequest);
-                })
-                ;
+                });
 
           } else {
+            Timber.i("Returning from memory");
+
             // This should return immediately because the store has an in-memory cache.
             return getOrFetchSubmissionWithComments(oldSubmissionRequest)
                 // There is an odd behavior where the cache store gets stuck and doesn't respond,

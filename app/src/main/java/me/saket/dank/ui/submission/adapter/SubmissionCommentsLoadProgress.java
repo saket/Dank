@@ -37,7 +37,7 @@ public interface SubmissionCommentsLoadProgress {
       super(itemView);
     }
 
-    public void bind(@SuppressWarnings("unused") UiModel model) {
+    public void render(@SuppressWarnings("unused") UiModel model) {
       // Nothing to do here.
     }
   }

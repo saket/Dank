@@ -91,7 +91,7 @@ public interface SubmissionCommentsLoadMore {
       indentedContainer = itemView.findViewById(R.id.item_loadmorecomments_indented_container);
     }
 
-    public void setupClickStream(SubmissionCommentsAdapter adapter, Relay<LoadMoreCommentsClickEvent> clickStream) {
+    public void setupClicks(SubmissionCommentsAdapter adapter, Relay<LoadMoreCommentsClickEvent> clickStream) {
       itemView.setOnClickListener(o -> loadMoreButton.performClick());
       itemView.setOnTouchListener((o, event) -> loadMoreButton.onTouchEvent(event));
 
@@ -105,7 +105,7 @@ public interface SubmissionCommentsLoadMore {
       });
     }
 
-    public void bind(UiModel uiModel) {
+    public void render(UiModel uiModel) {
       indentedContainer.setIndentationDepth(uiModel.indentationDepth());
       loadMoreButton.setEnabled(uiModel.clickEnabled());
       loadMoreButton.setText(uiModel.label());

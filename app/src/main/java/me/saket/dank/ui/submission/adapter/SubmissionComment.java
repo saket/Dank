@@ -168,7 +168,7 @@ public interface SubmissionComment {
       });
     }
 
-    public void bind(UiModel uiModel) {
+    public void render(UiModel uiModel) {
       indentedLayout.setIndentationDepth(uiModel.indentationDepth());
       bylineView.setText(uiModel.byline());
       bylineView.setTextColor(uiModel.bylineTextColor());

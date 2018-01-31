@@ -184,11 +184,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Link> submissionContentStream = BehaviorRelay.create();
   private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
-  private Relay<PostedOrInFlightContribution> inlineReplyStream = PublishRelay.create();
-  private Relay<Optional<Link>> contentLinkStream = BehaviorRelay.createDefault(Optional.empty());
-  private Relay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
-  private Relay<Optional<SubmissionContentLoadError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
-  private Relay<Optional<ResolvedError>> submissionCommentsLoadErrors = BehaviorRelay.createDefault(Optional.empty());
+  private PublishRelay<PostedOrInFlightContribution> inlineReplyStream = PublishRelay.create();
+  private BehaviorRelay<Optional<Link>> contentLinkStream = BehaviorRelay.createDefault(Optional.empty());
+  private PublishRelay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
+  private BehaviorRelay<Optional<SubmissionContentLoadError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
+  private BehaviorRelay<Optional<ResolvedError>> commentsLoadErrors = BehaviorRelay.createDefault(Optional.empty());
 
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionVideoHolder contentVideoViewHolder;
@@ -321,6 +321,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     submissionRequestStream
         .observeOn(mainThread())
         .doOnNext(o -> commentsLoadProgressVisibleStream.accept(true))
+        .doOnNext(o -> Timber.d("Request received"))
         .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
             .flatMap(pair -> {
               // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
@@ -343,7 +344,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             .onErrorResumeNext(error -> {
               ResolvedError resolvedError = errorResolver.resolve(error);
               resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't fetch comments"));
-              submissionCommentsLoadErrors.accept(Optional.of(resolvedError));
+              commentsLoadErrors.accept(Optional.of(resolvedError));
               return Observable.never();
             })
         )
@@ -359,7 +360,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             submissionStream.observeOn(io()),
             contentLinkStream.observeOn(io()),
             mediaContentLoadErrors.observeOn(io()),
-            submissionCommentsLoadErrors.observeOn(io())
+            commentsLoadErrors.observeOn(io())
         )
         .subscribeOn(io())
         .toFlowable(BackpressureStrategy.LATEST)
@@ -913,7 +914,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               toolbarCloseButton.setColorFilter(statusBarTint.isDarkColor() ? Color.WHITE : Color.DKGRAY);
             }
           }
-        }, logError("Wut?"));
+        }, logError("Failed to generate tint"));
   }
 
   /** Manage showing of error when loading the entire submission fails. */
@@ -922,7 +923,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
     sharedRetryClicks.mergeWith(lifecycle().onPageCollapse())
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> submissionCommentsLoadErrors.accept(Optional.empty()));
+        .subscribe(o -> commentsLoadErrors.accept(Optional.empty()));
 
     sharedRetryClicks
         .withLatestFrom(submissionRequestStream, (o, req) -> req)
@@ -935,7 +936,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> contentLoadProgressView.show());
 
-    submissionCommentsLoadErrors
+    commentsLoadErrors
         .filter(Optional::isPresent)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> contentLoadProgressView.hide());
@@ -982,28 +983,24 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    * @param submissionRequest used for loading the comments of this submission.
    */
   public void populateUi(Optional<Submission> submission, DankSubmissionRequest submissionRequest) {
-    // This will setup the title, byline and content immediately.
-    if (submission.isPresent()) {
-      submissionStream.accept(submission);
-    }
-
     // This will load comments and then again update the title, byline and content.
     submissionRequestStream.accept(submissionRequest);
 
-    if (submission.isPresent()) {
-      loadSubmissionContent(submission.get());
+    // Wait till the submission is fetched before loading content.
+    submissionStream
+        .skip(1)  // Current value.
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
+        .take(1)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(this::loadSubmissionContent);
 
+    if (submission.isPresent()) {
+      // This will setup the title, byline and content immediately.
+      submissionStream.accept(submission);
     } else {
       contentLoadProgressView.show();
-
-      // Wait till the submission is fetched before loading content.
-      submissionStream
-          .filter(Optional::isPresent)
-          .map(Optional::get)
-          .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
-          .take(1)
-          .takeUntil(lifecycle().onDestroy())
-          .subscribe(this::loadSubmissionContent);
     }
   }
 

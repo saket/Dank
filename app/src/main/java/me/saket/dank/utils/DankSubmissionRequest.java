@@ -27,6 +27,9 @@ public abstract class DankSubmissionRequest implements Parcelable {
   @Nullable
   public abstract Integer contextCount();
 
+  @Nullable
+  public abstract Integer commentLimit();
+
   /**
    * @param id Submission id.
    */
@@ -35,9 +38,6 @@ public abstract class DankSubmissionRequest implements Parcelable {
   }
 
   public abstract Builder toBuilder();
-
-  @Nullable
-  public abstract Integer commentLimit();
 
   @AutoValue.Builder
   public abstract static class Builder {

@@ -182,7 +182,7 @@ public interface SubmissionCommentsHeader {
       });
     }
 
-    public void bind(UiModel uiModel, SubmissionSwipeActionsProvider swipeActionsProvider) {
+    public void render(UiModel uiModel, SubmissionSwipeActionsProvider swipeActionsProvider) {
       setSubmissionTitle(uiModel);
       setSubmissionByline(uiModel);
       setContentLink(uiModel, false);

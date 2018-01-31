@@ -104,7 +104,7 @@ public interface SubmissionCommentInlineReply {
       });
     }
 
-    public void setupClickStreams(
+    public void setupClicks(
         SubmissionCommentsAdapter adapter,
         Relay<ReplyInsertGifClickEvent> replyGifClickRelay,
         Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
@@ -154,7 +154,7 @@ public interface SubmissionCommentInlineReply {
     }
 
     @CheckResult
-    public Disposable bind(UiModel uiModel, DraftStore draftStore) {
+    public Disposable render(UiModel uiModel, DraftStore draftStore) {
       // Saving this field instead of getting it from adapter later because this holder's position
       // becomes -1 when a focus-lost callback is received when this holder is being removed.
       this.parentContribution = uiModel.parentContribution();

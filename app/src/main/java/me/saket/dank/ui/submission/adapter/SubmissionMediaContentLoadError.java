@@ -70,11 +70,11 @@ public interface SubmissionMediaContentLoadError {
       ((AnimatedProgressBar) itemView.findViewById(R.id.submission_link_progress)).setVisibilityWithoutAnimation(View.GONE);
     }
 
-    public void setupClickStream(Relay<SubmissionContentLoadError> clickStream) {
+    public void setupClicks(Relay<SubmissionContentLoadError> clickStream) {
       itemView.setOnClickListener(o -> clickStream.accept(uiModel.error()));
     }
 
-    void bind(UiModel uiModel) {
+    void render(UiModel uiModel) {
       this.uiModel = uiModel;
 
       titleView.setText(uiModel.title());

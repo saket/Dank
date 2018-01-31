@@ -125,7 +125,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
       case MEDIA_CONTENT_LOAD_ERROR:
         SubmissionMediaContentLoadError.ViewHolder mediaLoadErrorHolder = SubmissionMediaContentLoadError.ViewHolder.create(inflater, parent);
-        mediaLoadErrorHolder.setupClickStream(mediaContentLoadRetryClickStream);
+        mediaLoadErrorHolder.setupClicks(mediaContentLoadRetryClickStream);
         return mediaLoadErrorHolder;
 
       case COMMENTS_LOAD_PROGRESS:
@@ -147,7 +147,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
       case INLINE_REPLY:
         SubmissionCommentInlineReply.ViewHolder inlineReplyHolder = SubmissionCommentInlineReply.ViewHolder.create(inflater, parent);
-        inlineReplyHolder.setupClickStreams(
+        inlineReplyHolder.setupClicks(
             this,
             replyGifClickStream,
             replyDiscardClickStream,
@@ -161,7 +161,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
       case LOAD_MORE_COMMENTS:
         SubmissionCommentsLoadMore.ViewHolder loadMoreViewHolder = SubmissionCommentsLoadMore.ViewHolder.create(inflater, parent);
-        loadMoreViewHolder.setupClickStream(this, loadMoreCommentsClickStream);
+        loadMoreViewHolder.setupClicks(this, loadMoreCommentsClickStream);
         return loadMoreViewHolder;
 
       default:
@@ -217,37 +217,39 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     switch (getItem(position).type()) {
       case SUBMISSION_HEADER:
         SubmissionCommentsHeader.ViewHolder headerVH = (SubmissionCommentsHeader.ViewHolder) holder;
-        headerVH.bind((SubmissionCommentsHeader.UiModel) getItem(position), submissionSwipeActionsProvider);
+        headerVH.render((SubmissionCommentsHeader.UiModel) getItem(position), submissionSwipeActionsProvider);
         headerBindStream.accept(Optional.of(headerVH));
         break;
 
       case MEDIA_CONTENT_LOAD_ERROR:
-        ((SubmissionMediaContentLoadError.ViewHolder) holder).bind((SubmissionMediaContentLoadError.UiModel) getItem(position));
+        ((SubmissionMediaContentLoadError.ViewHolder) holder).render((SubmissionMediaContentLoadError.UiModel) getItem(position));
+        break;
+
         break;
 
       case COMMENTS_LOAD_PROGRESS:
-        ((SubmissionCommentsLoadProgress.ViewHolder) holder).bind((SubmissionCommentsLoadProgress.UiModel) getItem(position));
+        ((SubmissionCommentsLoadProgress.ViewHolder) holder).render((SubmissionCommentsLoadProgress.UiModel) getItem(position));
         break;
 
       case COMMENTS_LOAD_ERROR:
-        ((SubmissionCommentsLoadError.ViewHolder) holder).bind((SubmissionCommentsLoadError.UiModel) getItem(position));
+        ((SubmissionCommentsLoadError.ViewHolder) holder).render((SubmissionCommentsLoadError.UiModel) getItem(position));
         break;
 
       case USER_COMMENT:
-        ((SubmissionComment.ViewHolder) holder).bind((SubmissionComment.UiModel) getItem(position));
+        ((SubmissionComment.ViewHolder) holder).render((SubmissionComment.UiModel) getItem(position));
         break;
 
       case INLINE_REPLY:
         SubmissionCommentInlineReply.UiModel replyUiModel = (SubmissionCommentInlineReply.UiModel) getItem(position);
         SubmissionCommentInlineReply.ViewHolder replyViewHolder = (SubmissionCommentInlineReply.ViewHolder) holder;
         inlineReplyDraftsDisposables.add(
-            replyViewHolder.bind(replyUiModel, draftStore)
+            replyViewHolder.render(replyUiModel, draftStore)
         );
         replyViewHolder.emitBindEvent(replyUiModel, replyViewBindStream);
         break;
 
       case LOAD_MORE_COMMENTS:
-        ((SubmissionCommentsLoadMore.ViewHolder) holder).bind((SubmissionCommentsLoadMore.UiModel) getItem(position));
+        ((SubmissionCommentsLoadMore.ViewHolder) holder).render((SubmissionCommentsLoadMore.UiModel) getItem(position));
         break;
 
       default:

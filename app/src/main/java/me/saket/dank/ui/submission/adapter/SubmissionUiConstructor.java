@@ -128,6 +128,10 @@ public class SubmissionUiConstructor {
               this::headerUiModel
           );
 
+          // FIXME: The error message says "Reddit" even for imgur, and other services.
+          Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModels = mediaContentLoadErrors
+              .map(optionalError -> optionalError.map(error -> error.uiModel(context)));
+
           Observable<List<SubmissionScreenUiModel>> commentRowUiModels = Observable.combineLatest(
               votingManager.streamChanges().observeOn(io()).map(o -> context),
               submissions.observeOn(io()).compose(commentTreeConstructor.stream(io())),
@@ -149,10 +153,6 @@ public class SubmissionUiConstructor {
           Observable<Optional<SubmissionCommentsLoadError.UiModel>> commentsLoadErrorUiModels = commentsLoadErrors
               .map(optionalError -> optionalError.map(error -> SubmissionCommentsLoadError.UiModel.create(error)));
 
-          // FIXME: The error message says "Reddit" even for imgur, and other services.
-          Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModels = mediaContentLoadErrors
-              .map(optionalError -> optionalError.map(error -> error.uiModel(context)));
-
           return Observable.combineLatest(
               headerUiModels,
               contentLoadErrorUiModels,
@@ -173,34 +173,6 @@ public class SubmissionUiConstructor {
               })
               .as(immutable());
         });
-  }
-
-  private List<SubmissionScreenUiModel> commentRowUiModels(Context context, List<SubmissionCommentRow> rows, String submissionAuthor) {
-    List<SubmissionScreenUiModel> uiModels = new ArrayList<>(rows.size());
-    for (SubmissionCommentRow row : rows) {
-      switch (row.type()) {
-        case USER_COMMENT:
-          uiModels.add(commentUiModel(context, ((DankCommentNode) row), submissionAuthor));
-          break;
-
-        case PENDING_SYNC_REPLY:
-          uiModels.add(pendingSyncCommentUiModel(context, ((CommentPendingSyncReplyItem) row)));
-          break;
-
-        case INLINE_REPLY:
-          String loggedInUserName = userSessionRepository.loggedInUserName();
-          uiModels.add(inlineReplyUiModel(context, ((CommentInlineReplyItem) row), loggedInUserName));
-          break;
-
-        case LOAD_MORE_COMMENTS:
-          uiModels.add(loadMoreUiModel(context, ((LoadMoreCommentItem) row)));
-          break;
-
-        default:
-          throw new AssertionError("Unknown type: " + row.type());
-      }
-    }
-    return uiModels;
   }
 
   /**
@@ -247,6 +219,34 @@ public class SubmissionUiConstructor {
         .optionalContentLinkModel(contentLinkUiModel)
         .originalSubmission(PostedOrInFlightContribution.from(submission))
         .build();
+  }
+
+  private List<SubmissionScreenUiModel> commentRowUiModels(Context context, List<SubmissionCommentRow> rows, String submissionAuthor) {
+    List<SubmissionScreenUiModel> uiModels = new ArrayList<>(rows.size());
+    for (SubmissionCommentRow row : rows) {
+      switch (row.type()) {
+        case USER_COMMENT:
+          uiModels.add(commentUiModel(context, ((DankCommentNode) row), submissionAuthor));
+          break;
+
+        case PENDING_SYNC_REPLY:
+          uiModels.add(pendingSyncCommentUiModel(context, ((CommentPendingSyncReplyItem) row)));
+          break;
+
+        case INLINE_REPLY:
+          String loggedInUserName = userSessionRepository.loggedInUserName();
+          uiModels.add(inlineReplyUiModel(context, ((CommentInlineReplyItem) row), loggedInUserName));
+          break;
+
+        case LOAD_MORE_COMMENTS:
+          uiModels.add(loadMoreUiModel(context, ((LoadMoreCommentItem) row)));
+          break;
+
+        default:
+          throw new AssertionError("Unknown type: " + row.type());
+      }
+    }
+    return uiModels;
   }
 
   private SubmissionComment.UiModel commentUiModel(Context context, DankCommentNode dankCommentNode, String submissionAuthor) {

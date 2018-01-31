@@ -35,14 +35,14 @@
     style="@style/DankSeparator.VerticalContent"
     android:layout_alignTop="@+id/privatemessagethread_reply_container"
     android:layout_marginTop="-1dp"
-    android:background="@color/white_opacity_0_25" />
+    android:background="@color/white_opacity_02_5" />
 
   <LinearLayout
     android:id="@+id/privatemessagethread_reply_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_alignParentBottom="true"
-    android:background="@color/white_opacity_0_25"
+    android:background="@color/white_opacity_02_5"
     android:orientation="horizontal">
 
     <EditText

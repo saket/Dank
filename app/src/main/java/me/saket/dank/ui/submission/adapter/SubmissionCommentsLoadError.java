@@ -52,7 +52,7 @@ public interface SubmissionCommentsLoadError {
       errorStateView.setOnRetryClickListener(o -> retryClickStream.accept(NOTHING));
     }
 
-    public void bind(UiModel model) {
+    public void render(UiModel model) {
       errorStateView.applyFrom(model.resolvedError());
     }
   }
