@@ -379,15 +379,17 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         });
 
     // Swipe gestures.
-    submissionCommentsAdapter.commentSwipeActionsProvider().setOnReplySwipeActionListener(parentCommentInfo -> {
-      if (commentTreeConstructor.isCollapsed(parentCommentInfo) || !commentTreeConstructor.isReplyActiveFor(parentCommentInfo)) {
-        commentTreeConstructor.showReplyAndExpandComments(parentCommentInfo);
-        inlineReplyStream.accept(parentCommentInfo);
-      } else {
-        Keyboards.hide(getContext(), commentRecyclerView);
-        commentTreeConstructor.hideReply(parentCommentInfo);
-      }
-    });
+    submissionCommentsAdapter.streamCommentSwipeActions()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(parentCommentInfo -> {
+          if (commentTreeConstructor.isCollapsed(parentCommentInfo) || !commentTreeConstructor.isReplyActiveFor(parentCommentInfo)) {
+            commentTreeConstructor.showReplyAndExpandComments(parentCommentInfo);
+            inlineReplyStream.accept(parentCommentInfo);
+          } else {
+            Keyboards.hide(getContext(), commentRecyclerView);
+            commentTreeConstructor.hideReply(parentCommentInfo);
+          }
+        });
     commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
     commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
 

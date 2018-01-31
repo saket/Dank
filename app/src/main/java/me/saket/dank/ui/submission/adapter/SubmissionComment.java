@@ -9,9 +9,11 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import java.util.List;
+import javax.inject.Inject;
 
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
@@ -111,6 +113,7 @@ public interface SubmissionComment {
     private final TextView bodyView;
     private View.OnClickListener collapseOnClickListener;
     private View.OnClickListener tapToRetryClickListener;
+    private UiModel uiModel;
 
     public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new ViewHolder(inflater.inflate(R.layout.list_item_submission_comment, parent, false));
@@ -127,21 +130,19 @@ public interface SubmissionComment {
       bodyView.setMovementMethod(movementMethod);
     }
 
-    public void setupGestures(SubmissionCommentsAdapter adapter, CommentSwipeActionsProvider commentSwipeActionsProvider) {
+    public void setupGestures(CommentSwipeActionsProvider commentSwipeActionsProvider) {
       getSwipeableLayout().setSwipeActionIconProvider(commentSwipeActionsProvider.iconProvider());
       getSwipeableLayout().setSwipeActions(commentSwipeActionsProvider.actions());
       getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
-        UiModel commentUiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        commentSwipeActionsProvider.performSwipeAction(action, commentUiModel.originalComment(), getSwipeableLayout());
+        commentSwipeActionsProvider.performSwipeAction(action, uiModel.originalComment(), getSwipeableLayout());
       });
     }
 
-    public void setupCollapseOnClick(SubmissionCommentsAdapter adapter, Relay<CommentClickEvent> clickStream) {
+    public void setupCollapseOnClick(Relay<CommentClickEvent> clickStream) {
       collapseOnClickListener = o -> {
-        UiModel commentUiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        boolean willCollapse = !commentUiModel.isCollapsed();
+        boolean willCollapse = !uiModel.isCollapsed();
         CommentClickEvent event = CommentClickEvent.create(
-            commentUiModel.originalComment(),
+            uiModel.originalComment(),
             getAdapterPosition(),
             itemView,
             willCollapse
@@ -150,10 +151,9 @@ public interface SubmissionComment {
       };
     }
 
-    public void setupTapToRetrySending(SubmissionCommentsAdapter adapter, Relay<ReplyRetrySendClickEvent> retrySendClickStream) {
+    public void setupTapToRetrySending(Relay<ReplyRetrySendClickEvent> retrySendClickStream) {
       tapToRetryClickListener = o -> {
-        UiModel commentUiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        PendingSyncReply failedPendingSyncReply = commentUiModel.optionalPendingSyncReply().get();
+        PendingSyncReply failedPendingSyncReply = uiModel.optionalPendingSyncReply().get();
         retrySendClickStream.accept(ReplyRetrySendClickEvent.create(failedPendingSyncReply));
       };
     }
@@ -168,7 +168,11 @@ public interface SubmissionComment {
       });
     }
 
-    public void render(UiModel uiModel) {
+    public void setUiModel(UiModel uiModel) {
+      this.uiModel = uiModel;
+    }
+
+    public void render() {
       indentedLayout.setIndentationDepth(uiModel.indentationDepth());
       bylineView.setText(uiModel.byline());
       bylineView.setTextColor(uiModel.bylineTextColor());
@@ -190,7 +194,7 @@ public interface SubmissionComment {
       }
     }
 
-    public void handlePartialChanges(List<Object> payloads, UiModel uiModel) {
+    public void renderPartialChanges(List<Object> payloads) {
       for (Object payload : payloads) {
         //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
@@ -209,6 +213,44 @@ public interface SubmissionComment {
     @Override
     public SwipeableLayout getSwipeableLayout() {
       return (SwipeableLayout) itemView;
+    }
+  }
+
+  class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
+    private final DankLinkMovementMethod linkMovementMethod;
+    private final CommentSwipeActionsProvider swipeActionsProvider;
+    final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
+    final PublishRelay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
+    final PublishRelay<PostedOrInFlightContribution> replySwipeActionStream = PublishRelay.create();
+
+    @Inject
+    public Adapter(DankLinkMovementMethod linkMovementMethod, CommentSwipeActionsProvider swipeActionsProvider) {
+      this.linkMovementMethod = linkMovementMethod;
+      this.swipeActionsProvider = swipeActionsProvider;
+      swipeActionsProvider.setOnReplySwipeActionListener(parentCommentInfo -> replySwipeActionStream.accept(parentCommentInfo));
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
+      ViewHolder holder = ViewHolder.create(inflater, parent);
+      holder.setBodyLinkMovementMethod(linkMovementMethod);
+      holder.setupGestures(swipeActionsProvider);
+      holder.setupCollapseOnClick(commentClickStream);
+      holder.setupTapToRetrySending(replyRetrySendClickStream);
+      holder.forwardTouchEventsToBackground(linkMovementMethod);
+      return holder;
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
+      holder.setUiModel(uiModel);
+      holder.render();
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      holder.setUiModel(uiModel);
+      holder.renderPartialChanges(payloads);
     }
   }
 }

@@ -8,9 +8,14 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.CommentNode;
+
+import java.util.List;
+
+import javax.inject.Inject;
 
 import me.saket.dank.R;
 import me.saket.dank.data.CommentNodeEqualsBandAid;
@@ -80,6 +85,7 @@ public interface SubmissionCommentsLoadMore {
   class ViewHolder extends RecyclerView.ViewHolder {
     private final TextView loadMoreButton;
     private final IndentedLayout indentedContainer;
+    private UiModel uiModel;
 
     public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new ViewHolder(inflater.inflate(R.layout.list_item_comments_load_more, parent, false));
@@ -91,25 +97,47 @@ public interface SubmissionCommentsLoadMore {
       indentedContainer = itemView.findViewById(R.id.item_loadmorecomments_indented_container);
     }
 
-    public void setupClicks(SubmissionCommentsAdapter adapter, Relay<LoadMoreCommentsClickEvent> clickStream) {
+    public void setupClicks(Relay<LoadMoreCommentsClickEvent> clickStream) {
       itemView.setOnClickListener(o -> loadMoreButton.performClick());
       itemView.setOnTouchListener((o, event) -> loadMoreButton.onTouchEvent(event));
-
-      loadMoreButton.setOnClickListener(o -> {
-        if (getAdapterPosition() == -1) {
-          // Is being removed.
-          return;
-        }
-        UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        clickStream.accept(LoadMoreCommentsClickEvent.create(itemView, uiModel.parentCommentNode()));
-      });
+      loadMoreButton.setOnClickListener(o -> clickStream.accept(LoadMoreCommentsClickEvent.create(itemView, uiModel.parentCommentNode())));
     }
 
-    public void render(UiModel uiModel) {
+    public void setUiModel(UiModel uiModel) {
+      this.uiModel = uiModel;
+    }
+
+    public void render() {
       indentedContainer.setIndentationDepth(uiModel.indentationDepth());
       loadMoreButton.setEnabled(uiModel.clickEnabled());
       loadMoreButton.setText(uiModel.label());
       Views.setCompoundDrawableEnd(loadMoreButton, uiModel.iconRes());
+    }
+  }
+
+  class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
+    final PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = PublishRelay.create();
+
+    @Inject
+    public Adapter() {
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
+      ViewHolder holder = ViewHolder.create(inflater, parent);
+      holder.setupClicks(loadMoreCommentsClickStream);
+      return holder;
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
+      holder.setUiModel(uiModel);
+      holder.render();
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      throw new UnsupportedOperationException();
     }
   }
 }

@@ -7,20 +7,17 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
-import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
-import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Consumer;
+import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.links.Link;
-import me.saket.dank.markdownhints.MarkdownHintOptions;
-import me.saket.dank.markdownhints.MarkdownSpanPool;
-import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
-import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
@@ -30,12 +27,9 @@ import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
-import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
-import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
-import timber.log.Timber;
 
 public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<SubmissionScreenUiModel, RecyclerView.ViewHolder>
     implements Consumer<Pair<List<SubmissionScreenUiModel>, DiffUtil.DiffResult>>
@@ -46,56 +40,44 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   public static final long ID_COMMENTS_LOAD_ERROR = -99;
   private static final SubmissionCommentRowType[] VIEW_TYPES = SubmissionCommentRowType.values();
 
-  // Injected by Dagger.
-  private final DankLinkMovementMethod linkMovementMethod;
-  private final SubmissionSwipeActionsProvider submissionSwipeActionsProvider;
-  private final CommentSwipeActionsProvider commentSwipeActionsProvider;
-  private final DraftStore draftStore;
-  private final CompositeDisposable inlineReplyDraftsDisposables = new CompositeDisposable();
-  private final MarkdownHintOptions markdownHintOptions;
-  private final MarkdownSpanPool markdownSpanPool;
-
-  // Event streams.
-  private final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
-  private final PublishRelay<LoadMoreCommentsClickEvent> loadMoreCommentsClickStream = PublishRelay.create();
-  private final Relay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
-  private final Relay<ReplyInsertGifClickEvent> replyGifClickStream = PublishRelay.create();
-  private final Relay<ReplyDiscardClickEvent> replyDiscardClickStream = PublishRelay.create();
-  private final Relay<ReplySendClickEvent> replySendClickStream = PublishRelay.create();
-  private final Relay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
-  private final Relay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
-  private final Relay<Object> headerClickStream = PublishRelay.create();
-  private final Relay<Link> contentLinkClickStream = PublishRelay.create();
-  private final Relay<Optional<SubmissionCommentsHeader.ViewHolder>> headerBindStream = PublishRelay.create();
-  private final Relay<SubmissionContentLoadError> mediaContentLoadRetryClickStream = PublishRelay.create();
-  private final Relay<Object> commentsLoadRetryClickStream = PublishRelay.create();
+  private final Map<SubmissionCommentRowType, SubmissionScreenUiModel.Adapter> childAdapters;
+  private final SubmissionCommentsHeader.Adapter headerAdapter;
+  private final SubmissionMediaContentLoadError.Adapter mediaContentLoadErrorAdapter;
+  private final SubmissionCommentsLoadError.Adapter commentsLoadErrorAdapter;
+  private final SubmissionComment.Adapter commentAdapter;
+  private final SubmissionCommentInlineReply.Adapter inlineReplyAdapter;
+  private final SubmissionCommentsLoadMore.Adapter loadMoreAdapter;
 
   @Inject
   public SubmissionCommentsAdapter(
-      DankLinkMovementMethod linkMovementMethod,
-      SubmissionSwipeActionsProvider submissionSwipeActionsProvider,
-      CommentSwipeActionsProvider commentSwipeActionsProvider,
-      DraftStore draftStore,
-      MarkdownHintOptions markdownHintOptions,
-      MarkdownSpanPool markdownSpanPool)
+      SubmissionCommentsHeader.Adapter headerAdapter,
+      SubmissionMediaContentLoadError.Adapter mediaContentLoadErrorAdapter,
+      SubmissionCommentsLoadError.Adapter commentsLoadErrorAdapter,
+      SubmissionCommentsLoadProgress.Adapter commentsLoadProgressAdapter,
+      SubmissionComment.Adapter commentAdapter,
+      SubmissionCommentInlineReply.Adapter inlineReplyAdapter,
+      SubmissionCommentsLoadMore.Adapter loadMoreAdapter)
   {
-    this.linkMovementMethod = linkMovementMethod;
-    this.submissionSwipeActionsProvider = submissionSwipeActionsProvider;
-    this.commentSwipeActionsProvider = commentSwipeActionsProvider;
-    this.draftStore = draftStore;
-    this.markdownHintOptions = markdownHintOptions;
-    this.markdownSpanPool = markdownSpanPool;
+    childAdapters = new HashMap<>(11);
+    childAdapters.put(SubmissionCommentRowType.SUBMISSION_HEADER, headerAdapter);
+    childAdapters.put(SubmissionCommentRowType.MEDIA_CONTENT_LOAD_ERROR, mediaContentLoadErrorAdapter);
+    childAdapters.put(SubmissionCommentRowType.COMMENTS_LOAD_ERROR, commentsLoadErrorAdapter);
+    childAdapters.put(SubmissionCommentRowType.COMMENTS_LOAD_PROGRESS, commentsLoadProgressAdapter);
+    childAdapters.put(SubmissionCommentRowType.USER_COMMENT, commentAdapter);
+    childAdapters.put(SubmissionCommentRowType.INLINE_REPLY, inlineReplyAdapter);
+    childAdapters.put(SubmissionCommentRowType.LOAD_MORE_COMMENTS, loadMoreAdapter);
+
+    this.headerAdapter = headerAdapter;
+    this.mediaContentLoadErrorAdapter = mediaContentLoadErrorAdapter;
+    this.commentsLoadErrorAdapter = commentsLoadErrorAdapter;
+    this.commentAdapter = commentAdapter;
+    this.inlineReplyAdapter = inlineReplyAdapter;
+    this.loadMoreAdapter = loadMoreAdapter;
     setHasStableIds(true);
   }
 
-  /**
-   * We try to automatically dispose drafts subscribers in {@link SubmissionCommentInlineReply} when the
-   * ViewHolder is getting recycled (in {@link #onViewRecycled(RecyclerView.ViewHolder)} or re-bound
-   * to data. But onViewRecycled() doesn't get called on Activity destroy so this has to be manually
-   * called.
-   */
   public void forceDisposeDraftSubscribers() {
-    inlineReplyDraftsDisposables.clear();
+    inlineReplyAdapter.forceDisposeDraftSubscribers();
   }
 
   @Override
@@ -111,62 +93,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
   @Override
   protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
-    switch (VIEW_TYPES[viewType]) {
-      case SUBMISSION_HEADER:
-        SubmissionCommentsHeader.ViewHolder headerHolder = SubmissionCommentsHeader.ViewHolder.create(
-            inflater,
-            parent,
-            headerClickStream,
-            linkMovementMethod
-        );
-        headerHolder.setupGestures(this, submissionSwipeActionsProvider);
-        headerHolder.setupContentLinkClickStream(this, contentLinkClickStream);
-        return headerHolder;
-
-      case MEDIA_CONTENT_LOAD_ERROR:
-        SubmissionMediaContentLoadError.ViewHolder mediaLoadErrorHolder = SubmissionMediaContentLoadError.ViewHolder.create(inflater, parent);
-        mediaLoadErrorHolder.setupClicks(mediaContentLoadRetryClickStream);
-        return mediaLoadErrorHolder;
-
-      case COMMENTS_LOAD_PROGRESS:
-        return SubmissionCommentsLoadProgress.ViewHolder.create(inflater, parent);
-
-      case COMMENTS_LOAD_ERROR:
-        SubmissionCommentsLoadError.ViewHolder commentsErrorHolder = SubmissionCommentsLoadError.ViewHolder.create(inflater, parent);
-        commentsErrorHolder.setupRetryClicks(commentsLoadRetryClickStream);
-        return commentsErrorHolder;
-
-      case USER_COMMENT:
-        SubmissionComment.ViewHolder commentHolder = SubmissionComment.ViewHolder.create(inflater, parent);
-        commentHolder.setBodyLinkMovementMethod(linkMovementMethod);
-        commentHolder.setupGestures(this, commentSwipeActionsProvider);
-        commentHolder.setupCollapseOnClick(this, commentClickStream);
-        commentHolder.setupTapToRetrySending(this, replyRetrySendClickStream);
-        commentHolder.forwardTouchEventsToBackground(linkMovementMethod);
-        return commentHolder;
-
-      case INLINE_REPLY:
-        SubmissionCommentInlineReply.ViewHolder inlineReplyHolder = SubmissionCommentInlineReply.ViewHolder.create(inflater, parent);
-        inlineReplyHolder.setupClicks(
-            this,
-            replyGifClickStream,
-            replyDiscardClickStream,
-            replyFullscreenClickStream,
-            replySendClickStream
-        );
-        // Note: We'll have to remove MarkdownHintOptions from Dagger graph when we introduce a light theme.
-        inlineReplyHolder.setupMarkdownHints(markdownHintOptions, markdownSpanPool);
-        inlineReplyHolder.setupSavingOfDraftOnFocusLost(draftStore);
-        return inlineReplyHolder;
-
-      case LOAD_MORE_COMMENTS:
-        SubmissionCommentsLoadMore.ViewHolder loadMoreViewHolder = SubmissionCommentsLoadMore.ViewHolder.create(inflater, parent);
-        loadMoreViewHolder.setupClicks(this, loadMoreCommentsClickStream);
-        return loadMoreViewHolder;
-
-      default:
-        throw new UnsupportedOperationException("Unknown view type: " + VIEW_TYPES[viewType]);
-    }
+    return childAdapters.get(VIEW_TYPES[viewType]).onCreateViewHolder(inflater, parent);
   }
 
   @SuppressLint("NewApi")
@@ -174,85 +101,17 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
     if (payloads.isEmpty()) {
       super.onBindViewHolder(holder, position, payloads);
-      return;
-    }
 
-    switch (getItem(position).type()) {
-      case SUBMISSION_HEADER:
-        SubmissionCommentsHeader.UiModel headerModel = (SubmissionCommentsHeader.UiModel) getItem(position);
-        SubmissionCommentsHeader.ViewHolder headerHolder = (SubmissionCommentsHeader.ViewHolder) holder;
-        headerHolder.handlePartialChanges(payloads, headerModel);
-        break;
-
-      case USER_COMMENT:
-        if (((List) payloads.get(0)).get(0) instanceof SubmissionCommentsHeader.PartialChange) {
-          Timber.w("Item: %s", getItem(position));
-          Timber.w("Item type: %s", getItem(position).type());
-          Timber.i("Payloads:");
-          payloads.forEach(payload -> {
-            Timber.i("payload: %s", payload);
-          });
-
-          Timber.w("WRRROONNGG PAYLOADS!");
-
-        } else {
-          SubmissionComment.UiModel commentModel = (SubmissionComment.UiModel) getItem(position);
-          SubmissionComment.ViewHolder commentHolder = (SubmissionComment.ViewHolder) holder;
-          commentHolder.handlePartialChanges(payloads, commentModel);
-        }
-        break;
-
-      case COMMENTS_LOAD_PROGRESS:
-      case INLINE_REPLY:
-      case LOAD_MORE_COMMENTS:
-        throw new UnsupportedOperationException("Partial change not supported yet for " + getItem(position).type() + ", payload: " + payloads);
-
-      default:
-        throw new UnsupportedOperationException("Unknown view type: " + getItem(position).type());
+    } else {
+      //noinspection unchecked
+      childAdapters.get(VIEW_TYPES[holder.getItemViewType()]).onBindViewHolder(holder, getItem(position), payloads);
     }
   }
 
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
-    switch (getItem(position).type()) {
-      case SUBMISSION_HEADER:
-        SubmissionCommentsHeader.ViewHolder headerVH = (SubmissionCommentsHeader.ViewHolder) holder;
-        headerVH.render((SubmissionCommentsHeader.UiModel) getItem(position), submissionSwipeActionsProvider);
-        headerBindStream.accept(Optional.of(headerVH));
-        break;
-
-      case MEDIA_CONTENT_LOAD_ERROR:
-        ((SubmissionMediaContentLoadError.ViewHolder) holder).render((SubmissionMediaContentLoadError.UiModel) getItem(position));
-        break;
-
-      case COMMENTS_LOAD_PROGRESS:
-        ((SubmissionCommentsLoadProgress.ViewHolder) holder).render((SubmissionCommentsLoadProgress.UiModel) getItem(position));
-        break;
-
-      case COMMENTS_LOAD_ERROR:
-        ((SubmissionCommentsLoadError.ViewHolder) holder).render((SubmissionCommentsLoadError.UiModel) getItem(position));
-        break;
-
-      case USER_COMMENT:
-        ((SubmissionComment.ViewHolder) holder).render((SubmissionComment.UiModel) getItem(position));
-        break;
-
-      case INLINE_REPLY:
-        SubmissionCommentInlineReply.UiModel replyUiModel = (SubmissionCommentInlineReply.UiModel) getItem(position);
-        SubmissionCommentInlineReply.ViewHolder replyViewHolder = (SubmissionCommentInlineReply.ViewHolder) holder;
-        inlineReplyDraftsDisposables.add(
-            replyViewHolder.render(replyUiModel, draftStore)
-        );
-        replyViewHolder.emitBindEvent(replyUiModel, replyViewBindStream);
-        break;
-
-      case LOAD_MORE_COMMENTS:
-        ((SubmissionCommentsLoadMore.ViewHolder) holder).render((SubmissionCommentsLoadMore.UiModel) getItem(position));
-        break;
-
-      default:
-        throw new UnsupportedOperationException("Unknown view type: " + VIEW_TYPES[getItemViewType(position)]);
-    }
+    //noinspection unchecked
+    childAdapters.get(VIEW_TYPES[holder.getItemViewType()]).onBindViewHolder(holder, getItem(position));
   }
 
   @Override
@@ -262,81 +121,78 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
   @Override
   public void onViewRecycled(RecyclerView.ViewHolder holder) {
-    if (holder instanceof SubmissionCommentInlineReply.ViewHolder) {
-      ((SubmissionCommentInlineReply.ViewHolder) holder).handleOnRecycle();
-    }
-    if (holder instanceof SubmissionCommentsHeader.ViewHolder) {
-      headerBindStream.accept(Optional.empty());
-    }
+    //noinspection unchecked
+    childAdapters.get(VIEW_TYPES[holder.getItemViewType()]).onViewRecycled(holder);
     super.onViewRecycled(holder);
   }
 
   @CheckResult
-  public Observable<CommentClickEvent> streamCommentCollapseExpandEvents() {
-    return commentClickStream;
-  }
-
-  @CheckResult
   public Observable<LoadMoreCommentsClickEvent> streamLoadMoreCommentsClicks() {
-    return loadMoreCommentsClickStream;
+    return loadMoreAdapter.loadMoreCommentsClickStream;
   }
 
   @CheckResult
   public Observable<ReplyDiscardClickEvent> streamReplyDiscardClicks() {
-    return replyDiscardClickStream;
+    return inlineReplyAdapter.replyDiscardClickStream;
   }
 
   @CheckResult
   public Observable<ReplySendClickEvent> streamReplySendClicks() {
-    return replySendClickStream;
-  }
-
-  @CheckResult
-  public Observable<ReplyRetrySendClickEvent> streamReplyRetrySendClicks() {
-    return replyRetrySendClickStream;
+    return inlineReplyAdapter.replySendClickStream;
   }
 
   @CheckResult
   public Observable<ReplyInsertGifClickEvent> streamReplyGifClicks() {
-    return replyGifClickStream;
+    return inlineReplyAdapter.replyGifClickStream;
   }
 
   @CheckResult
   public Observable<ReplyFullscreenClickEvent> streamReplyFullscreenClicks() {
-    return replyFullscreenClickStream;
+    return inlineReplyAdapter.replyFullscreenClickStream;
   }
 
   @CheckResult
   public Relay<ReplyItemViewBindEvent> streamReplyItemViewBinds() {
-    return replyViewBindStream;
+    return inlineReplyAdapter.replyViewBindStream;
+  }
+
+  @CheckResult
+  public Observable<CommentClickEvent> streamCommentCollapseExpandEvents() {
+    return commentAdapter.commentClickStream;
+  }
+
+  @CheckResult
+  public Observable<ReplyRetrySendClickEvent> streamReplyRetrySendClicks() {
+    return commentAdapter.replyRetrySendClickStream;
+  }
+
+  @CheckResult
+  public Observable<PostedOrInFlightContribution> streamCommentSwipeActions() {
+    return commentAdapter.replySwipeActionStream;
   }
 
   @CheckResult
   public Relay<Optional<SubmissionCommentsHeader.ViewHolder>> streamHeaderBinds() {
-    return headerBindStream;
+    return headerAdapter.headerBindStream;
   }
 
   @CheckResult
   public Observable<Object> streamHeaderClicks() {
-    return headerClickStream;
+    return headerAdapter.headerClickStream;
   }
 
   @CheckResult
   public Observable<Link> streamContentLinkClicks() {
-    return contentLinkClickStream;
+    return headerAdapter.contentLinkClickStream;
   }
 
   @CheckResult
   public Observable<SubmissionContentLoadError> streamMediaContentLoadRetryClicks() {
-    return mediaContentLoadRetryClickStream;
+    return mediaContentLoadErrorAdapter.mediaContentLoadRetryClickStream;
   }
 
   @CheckResult
   public Observable<Object> streamCommentsLoadRetryClicks() {
-    return commentsLoadRetryClickStream;
-  }
-
-  public CommentSwipeActionsProvider commentSwipeActionsProvider() {
-    return commentSwipeActionsProvider;
+    return commentsLoadErrorAdapter.commentsLoadRetryClickStream;
   }
 }

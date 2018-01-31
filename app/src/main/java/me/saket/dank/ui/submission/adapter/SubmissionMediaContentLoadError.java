@@ -9,7 +9,11 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
+
+import java.util.List;
+import javax.inject.Inject;
 
 import me.saket.dank.R;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
@@ -74,12 +78,40 @@ public interface SubmissionMediaContentLoadError {
       itemView.setOnClickListener(o -> clickStream.accept(uiModel.error()));
     }
 
-    void render(UiModel uiModel) {
+    public void setUiModel(UiModel uiModel) {
       this.uiModel = uiModel;
+    }
 
+    private void render() {
       titleView.setText(uiModel.title());
       bylineView.setText(uiModel.byline());
       iconView.setImageResource(uiModel.errorIconRes());
+    }
+  }
+
+  class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
+    final Relay<SubmissionContentLoadError> mediaContentLoadRetryClickStream = PublishRelay.create();
+
+    @Inject
+    public Adapter() {
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
+      ViewHolder holder = ViewHolder.create(inflater, parent);
+      holder.setupClicks(mediaContentLoadRetryClickStream);
+      return holder;
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
+      holder.setUiModel(uiModel);
+      holder.render();
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      throw new UnsupportedOperationException();
     }
   }
 }

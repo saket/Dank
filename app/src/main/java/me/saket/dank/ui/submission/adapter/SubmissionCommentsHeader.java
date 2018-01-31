@@ -13,11 +13,13 @@ import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.VoteDirection;
 
 import java.util.List;
+import javax.inject.Inject;
 
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
@@ -137,6 +139,7 @@ public interface SubmissionCommentsHeader {
     private final AnimatedProgressBar contentLinkProgressView;
     private final DankLinkMovementMethod movementMethod;
     private final @ColorInt int contentLinkBackgroundColor;
+    private UiModel uiModel;
 
     public static ViewHolder create(
         LayoutInflater inflater,
@@ -167,22 +170,22 @@ public interface SubmissionCommentsHeader {
       contentLinkBackgroundColor = ContextCompat.getColor(itemView.getContext(), R.color.submission_link_background_color);
     }
 
-    public void setupGestures(SubmissionCommentsAdapter adapter, SubmissionSwipeActionsProvider swipeActionsProvider) {
+    public void setupGestures(SubmissionSwipeActionsProvider swipeActionsProvider) {
       getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
       getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
-        UiModel headerUiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        swipeActionsProvider.performSwipeAction(action, headerUiModel.originalSubmission(), getSwipeableLayout());
+        swipeActionsProvider.performSwipeAction(action, uiModel.originalSubmission(), getSwipeableLayout());
       });
     }
 
-    public void setupContentLinkClickStream(SubmissionCommentsAdapter adapter, Relay<Link> clickStream) {
-      contentLinkView.setOnClickListener(o -> {
-        UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
-        clickStream.accept(uiModel.optionalContentLinkModel().get().link());
-      });
+    public void setupContentLinkClickStream(Relay<Link> clickStream) {
+      contentLinkView.setOnClickListener(o -> clickStream.accept(uiModel.optionalContentLinkModel().get().link()));
     }
 
-    public void render(UiModel uiModel, SubmissionSwipeActionsProvider swipeActionsProvider) {
+    public void setUiModel(UiModel uiModel) {
+      this.uiModel = uiModel;
+    }
+
+    public void render(SubmissionSwipeActionsProvider swipeActionsProvider) {
       setSubmissionTitle(uiModel);
       setSubmissionByline(uiModel);
       setContentLink(uiModel, false);
@@ -203,7 +206,7 @@ public interface SubmissionCommentsHeader {
       titleView.setText(uiModel.title());
     }
 
-    public void handlePartialChanges(List<Object> payloads, UiModel uiModel) {
+    public void handlePartialChanges(List<Object> payloads) {
       for (Object payload : payloads) {
         //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
@@ -351,6 +354,46 @@ public interface SubmissionCommentsHeader {
     @Override
     public SwipeableLayout getSwipeableLayout() {
       return (SwipeableLayout) itemView;
+    }
+  }
+
+  class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
+    private final DankLinkMovementMethod linkMovementMethod;
+    private final SubmissionSwipeActionsProvider swipeActionsProvider;
+    final PublishRelay<Object> headerClickStream = PublishRelay.create();
+    final PublishRelay<Link> contentLinkClickStream = PublishRelay.create();
+    final PublishRelay<Optional<SubmissionCommentsHeader.ViewHolder>> headerBindStream = PublishRelay.create();
+
+    @Inject
+    public Adapter(DankLinkMovementMethod linkMovementMethod, SubmissionSwipeActionsProvider swipeActionsProvider) {
+      this.linkMovementMethod = linkMovementMethod;
+      this.swipeActionsProvider = swipeActionsProvider;
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
+      ViewHolder holder = ViewHolder.create(inflater, parent, headerClickStream, linkMovementMethod);
+      holder.setupGestures(swipeActionsProvider);
+      holder.setupContentLinkClickStream(contentLinkClickStream);
+      return holder;
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
+      holder.setUiModel(uiModel);
+      holder.render(swipeActionsProvider);
+      headerBindStream.accept(Optional.of(holder));
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      holder.setUiModel(uiModel);
+      holder.handlePartialChanges(payloads);
+    }
+
+    @Override
+    public void onViewRecycled(ViewHolder holder) {
+      headerBindStream.accept(Optional.empty());
     }
   }
 }

@@ -14,8 +14,13 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import java.util.List;
+import javax.inject.Inject;
+
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import io.reactivex.schedulers.Schedulers;
@@ -79,6 +84,7 @@ public interface SubmissionCommentInlineReply {
     private Disposable draftDisposable = Disposables.disposed();
     private boolean savingDraftsAllowed;
     private PostedOrInFlightContribution parentContribution;
+    private UiModel uiModel;
 
     public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new ViewHolder(inflater.inflate(R.layout.list_item_submission_comments_inline_reply, parent, false));
@@ -105,14 +111,12 @@ public interface SubmissionCommentInlineReply {
     }
 
     public void setupClicks(
-        SubmissionCommentsAdapter adapter,
         Relay<ReplyInsertGifClickEvent> replyGifClickRelay,
         Relay<ReplyDiscardClickEvent> replyDiscardEventRelay,
         Relay<ReplyFullscreenClickEvent> replyFullscreenClickRelay,
         Relay<ReplySendClickEvent> replySendClickRelay)
     {
       discardButton.setOnClickListener(o -> {
-        UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
         replyDiscardEventRelay.accept(ReplyDiscardClickEvent.create(uiModel.parentContribution()));
       });
 
@@ -122,7 +126,6 @@ public interface SubmissionCommentInlineReply {
 
       goFullscreenButton.setOnClickListener(o -> {
         CharSequence replyMessage = replyField.getText();
-        UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
         String authorNameIfComment = uiModel.authorHint().toString();
         PostedOrInFlightContribution parentContribution = uiModel.parentContribution();
         replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, replyMessage, authorNameIfComment));
@@ -131,7 +134,6 @@ public interface SubmissionCommentInlineReply {
       sendButton.setOnClickListener(o -> {
         setSavingDraftsAllowed(false);
         String replyMessage = replyField.getText().toString().trim();
-        UiModel uiModel = (UiModel) adapter.getItem(getAdapterPosition());
         PostedOrInFlightContribution parentContribution = uiModel.parentContribution();
         replySendClickRelay.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
       });
@@ -153,8 +155,12 @@ public interface SubmissionCommentInlineReply {
       replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, markdownSpanPool));
     }
 
+    public void setUiModel(UiModel uiModel) {
+      this.uiModel = uiModel;
+    }
+
     @CheckResult
-    public Disposable render(UiModel uiModel, DraftStore draftStore) {
+    public Disposable render(DraftStore draftStore) {
       // Saving this field instead of getting it from adapter later because this holder's position
       // becomes -1 when a focus-lost callback is received when this holder is being removed.
       this.parentContribution = uiModel.parentContribution();
@@ -183,7 +189,7 @@ public interface SubmissionCommentInlineReply {
       return draftDisposable;
     }
 
-    public void emitBindEvent(UiModel uiModel, Relay<ReplyItemViewBindEvent> stream) {
+    public void emitBindEvent(Relay<ReplyItemViewBindEvent> stream) {
       stream.accept(ReplyItemViewBindEvent.create(uiModel, replyField));
     }
 
@@ -208,6 +214,69 @@ public interface SubmissionCommentInlineReply {
       // Keyboard might have gotten dismissed while the GIF list was being scrolled.
       // Works only if called delayed. Posting to reply field's message queue works.
       replyField.post(() -> Keyboards.show(replyField));
+    }
+  }
+
+  class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
+    private final MarkdownHintOptions markdownHintOptions;
+    private final MarkdownSpanPool markdownSpanPool;
+    private final DraftStore draftStore;
+    final PublishRelay<ReplyItemViewBindEvent> replyViewBindStream = PublishRelay.create();
+    final PublishRelay<ReplyInsertGifClickEvent> replyGifClickStream = PublishRelay.create();
+    final PublishRelay<ReplyDiscardClickEvent> replyDiscardClickStream = PublishRelay.create();
+    final PublishRelay<ReplySendClickEvent> replySendClickStream = PublishRelay.create();
+    final PublishRelay<ReplyFullscreenClickEvent> replyFullscreenClickStream = PublishRelay.create();
+    private final CompositeDisposable inlineReplyDraftsDisposables = new CompositeDisposable();
+
+    @Inject
+    public Adapter(MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool, DraftStore draftStore) {
+      this.markdownHintOptions = markdownHintOptions;
+      this.markdownSpanPool = markdownSpanPool;
+      this.draftStore = draftStore;
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
+      SubmissionCommentInlineReply.ViewHolder holder = SubmissionCommentInlineReply.ViewHolder.create(inflater, parent);
+      holder.setupClicks(
+          replyGifClickStream,
+          replyDiscardClickStream,
+          replyFullscreenClickStream,
+          replySendClickStream
+      );
+      // Note: We'll have to remove MarkdownHintOptions from Dagger graph when we introduce a light theme.
+      holder.setupMarkdownHints(markdownHintOptions, markdownSpanPool);
+      holder.setupSavingOfDraftOnFocusLost(draftStore);
+      return holder;
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
+      holder.setUiModel(uiModel);
+      inlineReplyDraftsDisposables.add(
+          holder.render(draftStore)
+      );
+      replyViewBindStream.accept(ReplyItemViewBindEvent.create(uiModel, holder.replyField));
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void onViewRecycled(ViewHolder holder) {
+      holder.handleOnRecycle();
+    }
+
+    /**
+     * We try to automatically dispose drafts subscribers in {@link SubmissionCommentInlineReply} when the
+     * ViewHolder is getting recycled (in {@link #onViewRecycled(RecyclerView.ViewHolder)} or re-bound
+     * to data. But onViewRecycled() doesn't get called on Activity destroy so this has to be manually
+     * called.
+     */
+    public void forceDisposeDraftSubscribers() {
+      inlineReplyDraftsDisposables.clear();
     }
   }
 }

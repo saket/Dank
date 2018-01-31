@@ -6,7 +6,12 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
+
+import java.util.List;
+
+import javax.inject.Inject;
 
 import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
@@ -54,6 +59,31 @@ public interface SubmissionCommentsLoadError {
 
     public void render(UiModel model) {
       errorStateView.applyFrom(model.resolvedError());
+    }
+  }
+
+  class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
+    final Relay<Object> commentsLoadRetryClickStream = PublishRelay.create();
+
+    @Inject
+    public Adapter() {
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
+      ViewHolder holder = ViewHolder.create(inflater, parent);
+      holder.setupRetryClicks(commentsLoadRetryClickStream);
+      return holder;
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
+      holder.render(uiModel);
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      throw new UnsupportedOperationException();
     }
   }
 }

@@ -7,6 +7,9 @@ import android.view.ViewGroup;
 
 import com.google.auto.value.AutoValue;
 
+import java.util.List;
+import javax.inject.Inject;
+
 import me.saket.dank.R;
 
 public interface SubmissionCommentsLoadProgress {
@@ -36,9 +39,26 @@ public interface SubmissionCommentsLoadProgress {
     public ViewHolder(View itemView) {
       super(itemView);
     }
+  }
 
-    public void render(@SuppressWarnings("unused") UiModel model) {
+  class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
+    @Inject
+    public Adapter() {
+    }
+
+    @Override
+    public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
+      return ViewHolder.create(inflater, parent);
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
       // Nothing to do here.
+    }
+
+    @Override
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      throw new UnsupportedOperationException();
     }
   }
 }
