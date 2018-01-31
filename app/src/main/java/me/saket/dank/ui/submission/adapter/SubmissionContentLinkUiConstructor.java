@@ -179,6 +179,7 @@ public class SubmissionContentLinkUiConstructor {
 
       progressVisibleStream = sharedLinkMetadataStream
           .map(o -> false)
+          .onErrorReturnItem(false)
           .startWith(true);
 
       titleStream = sharedLinkMetadataStream
@@ -252,6 +253,7 @@ public class SubmissionContentLinkUiConstructor {
     Observable<TintDetails> tintDetailsStream = streamTintDetails(albumLink, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
     Observable<Boolean> progressVisibleStream = sharedThumbnailStream
         .map(o -> false)
+        .onErrorReturnItem(false)
         .startWith(true);
 
     return Observable.combineLatest(

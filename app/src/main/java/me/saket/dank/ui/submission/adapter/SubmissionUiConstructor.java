@@ -273,7 +273,7 @@ public class SubmissionUiConstructor {
     );
 
     CharSequence commentBody = dankCommentNode.isCollapsed()
-        ? Markdown.stripMarkdown(JrawUtils.commentBodyHtml(comment))
+        ? markdown.stripMarkdown(JrawUtils.commentBodyHtml(comment))
         : markdown.parse(comment);
 
     return commentUiModelBuilder(context, dankCommentNode.fullName(), dankCommentNode.isCollapsed(), dankCommentNode.commentNode().getDepth())
@@ -331,7 +331,7 @@ public class SubmissionUiConstructor {
     }
 
     CharSequence commentBody = pendingSyncReplyRow.isCollapsed()
-        ? Markdown.stripMarkdown(pendingSyncReply.body())
+        ? markdown.stripMarkdown(pendingSyncReply.body())
         : markdown.parse(pendingSyncReply);
 
     return commentUiModelBuilder(context, pendingSyncReplyRow.fullName(), pendingSyncReplyRow.isCollapsed(), pendingSyncReplyRow.depth())

@@ -225,8 +225,6 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
         ((SubmissionMediaContentLoadError.ViewHolder) holder).render((SubmissionMediaContentLoadError.UiModel) getItem(position));
         break;
 
-        break;
-
       case COMMENTS_LOAD_PROGRESS:
         ((SubmissionCommentsLoadProgress.ViewHolder) holder).render((SubmissionCommentsLoadProgress.UiModel) getItem(position));
         break;

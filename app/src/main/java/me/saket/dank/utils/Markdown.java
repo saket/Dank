@@ -77,7 +77,8 @@ public class Markdown {
    * Convert "**Something**" -> "Something", without any styling.
    */
   public static String stripMarkdown(String markdown) {
-    // Since all the styling is added using spans, converting the CharSequence to a String will remove all the styling.
+    // TODO: Use non-html bodies sent by Reddit instead?
+    // Since all styling is added using spans, converting the CharSequence to a String will remove all styling.
     return parseRedditMarkdownHtml(markdown, EMPTY_TEXTPAINT).toString();
   }
 
@@ -86,7 +87,6 @@ public class Markdown {
       return null;
     }
 
-    // Loop back to the first non-whitespace character.
     int len = source.length();
     while (--len >= 0 && Character.isWhitespace(source.charAt(len))) {
     }
