@@ -132,20 +132,23 @@ public class SubmissionImageHolder {
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
     return Single
-        .fromCallable(() -> {
+        .<Drawable>create(emitter -> {
           // Images supplied by Reddit are static, so cannot optimize for GIFs.
           String defaultImageUrl = mediaLink.lowQualityUrl();
           String optimizedImageUrl = mediaLink.isGif()
               ? defaultImageUrl
               : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplayWidth, defaultImageUrl);
 
-          return Glide.with(imageView)
-              .load(optimizedImageUrl)
-              .apply(new RequestOptions()
-                  .priority(Priority.IMMEDIATE)
-                  .transform(glidePaddingTransformation))
-              .submit()
-              .get();
+          emitter.onSuccess(
+              Glide.with(imageView)
+                  .load(optimizedImageUrl)
+                  .apply(new RequestOptions()
+                      .priority(Priority.IMMEDIATE)
+                      .transform(glidePaddingTransformation))
+                  .submit()
+                  .get()
+          );
+          emitter.setCancellable(() -> Glide.with(imageView).clear(imageView));
         })
         .subscribeOn(io())
         .observeOn(mainThread())
