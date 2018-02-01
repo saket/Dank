@@ -62,14 +62,12 @@ public class JrawUtils {
     String destination = message.getDataNode().get("dest").asText();
     if (destination.startsWith("#")) {
       secondPartyName = resources.getString(R.string.subreddit_name_r_prefix, message.getSubreddit());
+    } else if (destination.equalsIgnoreCase(loggedInUserName)) {
+      secondPartyName = message.getAuthor() == null
+          ? resources.getString(R.string.subreddit_name_r_prefix, message.getSubreddit())
+          : message.getAuthor();
     } else {
-      if (destination.equalsIgnoreCase(loggedInUserName)) {
-        secondPartyName = message.getAuthor() == null
-            ? resources.getString(R.string.subreddit_name_r_prefix, message.getSubreddit())
-            : message.getAuthor();
-      } else {
-        secondPartyName = destination;
-      }
+      secondPartyName = destination;
     }
     return secondPartyName;
   }

@@ -5,30 +5,27 @@ import static java.util.Collections.unmodifiableList;
 import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
-
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
-
+import io.reactivex.Completable;
+import io.reactivex.Observable;
+import io.reactivex.Single;
+import io.reactivex.functions.Consumer;
+import java.util.ArrayList;
+import java.util.List;
+import javax.inject.Inject;
+import javax.inject.Singleton;
+import me.saket.dank.ui.submission.ParentThread;
+import me.saket.dank.ui.submission.ReplyRepository;
+import me.saket.dank.ui.user.messages.CachedMessage;
+import me.saket.dank.ui.user.messages.InboxFolder;
+import me.saket.dank.utils.Arrays2;
+import me.saket.dank.utils.JrawUtils;
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.PrivateMessage;
 import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.Paginator;
-
-import java.util.ArrayList;
-import java.util.List;
-import javax.inject.Inject;
-import javax.inject.Singleton;
-
-import io.reactivex.Completable;
-import io.reactivex.Observable;
-import io.reactivex.Single;
-import io.reactivex.functions.Consumer;
-import me.saket.dank.ui.submission.ParentThread;
-import me.saket.dank.ui.submission.ReplyRepository;
-import me.saket.dank.ui.user.messages.CachedMessage;
-import me.saket.dank.ui.user.messages.InboxFolder;
-import me.saket.dank.utils.JrawUtils;
 
 @Singleton
 public class InboxRepository {
@@ -59,7 +56,7 @@ public class InboxRepository {
     return briteDatabase
         .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
         .mapToList(CachedMessage.mapMessageFromCursor(moshi))
-        .map(mutableList -> unmodifiableList(mutableList));
+        .as(Arrays2.immutable());
   }
 
   /**

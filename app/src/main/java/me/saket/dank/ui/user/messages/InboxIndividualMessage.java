@@ -1,0 +1,148 @@
+package me.saket.dank.ui.user.messages;
+
+import android.support.v7.widget.RecyclerView;
+import android.text.Spannable;
+import android.view.LayoutInflater;
+import android.view.View;
+import android.view.ViewGroup;
+import android.widget.TextView;
+import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
+import dagger.Lazy;
+import java.util.List;
+import javax.inject.Inject;
+import me.saket.bettermovementmethod.BetterLinkMovementMethod;
+import me.saket.dank.R;
+import me.saket.dank.data.SpannableWithTextEquality;
+import me.saket.dank.utils.DankLinkMovementMethod;
+import me.saket.dank.utils.Optional;
+import net.dean.jraw.models.Message;
+
+public interface InboxIndividualMessage {
+
+  @AutoValue
+  abstract class UiModel implements InboxFolderScreenUiModel {
+
+    @Override
+    public abstract long adapterId();
+
+    public abstract String linkTitle();
+
+    public abstract String timestamp();
+
+    public abstract String authorName();
+
+    public abstract Optional<String> from();
+
+    public abstract SpannableWithTextEquality body();
+
+    @Override
+    public Type type() {
+      return Type.INDIVIDUAL_MESSAGE;
+    }
+
+    @Override
+    public abstract Message message();
+
+    public static UiModel create(
+        long adapterId,
+        String linkTitle,
+        String timestamp,
+        String authorName,
+        Optional<String> from,
+        CharSequence body,
+        Message message)
+    {
+      return new AutoValue_InboxIndividualMessage_UiModel(
+          adapterId,
+          linkTitle,
+          timestamp,
+          authorName,
+          from,
+          SpannableWithTextEquality.wrap(body),
+          message);
+    }
+  }
+
+  class ViewHolder extends RecyclerView.ViewHolder {
+
+    private TextView linkTitleView;
+    private TextView timestampView;
+    private TextView authorNameView;
+    private TextView fromView;
+    private TextView messageBodyView;
+    private UiModel uiModel;
+
+    public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
+      return new ViewHolder(inflater.inflate(R.layout.list_item_inbox_individual_message, parent, false));
+    }
+
+    public ViewHolder(View itemView) {
+      super(itemView);
+      linkTitleView = itemView.findViewById(R.id.individualmessage_reply_post_title);
+      timestampView = itemView.findViewById(R.id.individualmessage_reply_timestamp);
+      authorNameView = itemView.findViewById(R.id.individualmessage_reply_author_name);
+      fromView = itemView.findViewById(R.id.individualmessage_reply_from);
+      messageBodyView = itemView.findViewById(R.id.individualmessage_reply_body);
+    }
+
+    public void forwardTouchEventsToBackground(BetterLinkMovementMethod linkMovementMethod) {
+      // Bug workaround: TextView with clickable spans consume all touch events. Manually
+      // transfer them to the parent so that the background touch indicator shows up +
+      // click listener works.
+      messageBodyView.setOnTouchListener((__, event) -> {
+        boolean handledByMovementMethod = linkMovementMethod.onTouchEvent(messageBodyView, ((Spannable) messageBodyView.getText()), event);
+        return handledByMovementMethod || itemView.onTouchEvent(event);
+      });
+    }
+
+    public void setBodyLinkMovementMethod(DankLinkMovementMethod movementMethod) {
+      messageBodyView.setMovementMethod(movementMethod);
+    }
+
+    public void setUiModel(UiModel uiModel) {
+      this.uiModel = uiModel;
+    }
+
+    public void render() {
+      linkTitleView.setText(uiModel.linkTitle());
+      timestampView.setText(uiModel.timestamp());
+      authorNameView.setText(uiModel.authorName());
+      fromView.setVisibility(uiModel.from().isPresent() ? View.VISIBLE : View.GONE);
+      uiModel.from().ifPresent(from -> fromView.setText(from));
+      messageBodyView.setText(uiModel.body());
+    }
+  }
+
+  class Adapter implements InboxFolderScreenUiModel.Adapter<UiModel, ViewHolder> {
+    private Lazy<DankLinkMovementMethod> linkMovementMethod;
+    PublishRelay<MessageClickEvent> messageClicks = PublishRelay.create();
+
+    @Inject
+    public Adapter(Lazy<DankLinkMovementMethod> linkMovementMethod) {
+      this.linkMovementMethod = linkMovementMethod;
+    }
+
+    @Override
+    public ViewHolder onCreate(LayoutInflater inflater, ViewGroup parent) {
+      ViewHolder holder = ViewHolder.create(inflater, parent);
+      holder.setBodyLinkMovementMethod(linkMovementMethod.get());
+      holder.forwardTouchEventsToBackground(linkMovementMethod.get());
+      holder.itemView.setOnClickListener(o ->
+          messageClicks.accept(MessageClickEvent.create(holder.uiModel.message(), holder.itemView))
+      );
+      return holder;
+    }
+
+    @Override
+    public void onBind(ViewHolder holder, UiModel uiModel) {
+      holder.setUiModel(uiModel);
+      holder.render();
+    }
+
+    @Override
+    public void onBind(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
+      throw new UnsupportedOperationException();
+    }
+  }
+}

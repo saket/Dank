@@ -248,6 +248,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
     } else {
       String secondPartyName = JrawUtils.secondPartyName(getResources(), message, userSessionRepository.loggedInUserName());
+      //noinspection ConstantConditions
       startActivityForResult(
           PrivateMessageThreadActivity.intent(this, message, secondPartyName, messageItemViewRect),
           REQUESTCODE_REFRESH_MESSAGES_THREAD_ON_EXIT

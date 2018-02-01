@@ -3,6 +3,8 @@ package me.saket.dank.utils.lifecycle;
 import android.content.Intent;
 import android.support.annotation.CheckResult;
 
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
 import me.saket.dank.data.ActivityResult;
@@ -46,6 +48,10 @@ public class ActivityLifecycleStreams implements LifecycleStreams<ActivityLifecy
   }
 
   @Override
+  public Flowable<ActivityLifecycleEvent> onStopFlowable() {
+    return onStop().toFlowable(BackpressureStrategy.LATEST);
+  }
+
   @CheckResult
   public Observable<ActivityLifecycleEvent> onStop() {
     return events.filter(e -> e == ActivityLifecycleEvent.STOP);

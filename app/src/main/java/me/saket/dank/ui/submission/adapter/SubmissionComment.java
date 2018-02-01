@@ -68,14 +68,14 @@ public interface SubmissionComment {
     @ColorRes
     public abstract int backgroundColorRes();
 
+    public abstract boolean isCollapsed();
+
+    public abstract boolean isFocused();
+
     @Override
     public SubmissionCommentRowType type() {
       return SubmissionCommentRowType.USER_COMMENT;
     }
-
-    public abstract boolean isCollapsed();
-
-    public abstract boolean isFocused();
 
     public static UiModel.Builder builder() {
       return new AutoValue_SubmissionComment_UiModel.Builder();

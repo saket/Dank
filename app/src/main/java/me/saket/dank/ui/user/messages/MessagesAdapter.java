@@ -23,14 +23,16 @@ import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import timber.log.Timber;
 
+@Deprecated
 public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerView.ViewHolder> implements Consumer<List<Message>> {
 
   private static final int VIEW_TYPE_PRIVATE_MESSAGE_THREAD = 100;
   private static final int VIEW_TYPE_INDIVIDUAL_MESSAGE = 101;
 
-  private BetterLinkMovementMethod linkMovementMethod;
-  private boolean showMessageThreads;
-  private String loggedInUserName;
+  private final BetterLinkMovementMethod linkMovementMethod;
+  private final boolean showMessageThreads;
+  private final String loggedInUserName;
+  private final Markdown markdown;
   private OnMessageClickListener onMessageClickListener;
 
   interface OnMessageClickListener {
@@ -41,10 +43,11 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
    * @param showMessageThreads used for {@link InboxFolder#PRIVATE_MESSAGES}.
    * @param loggedInUserName Used for prefixing the body with "You: " for user sent messages.
    */
-  public MessagesAdapter(BetterLinkMovementMethod linkMovementMethod, boolean showMessageThreads, String loggedInUserName) {
+  public MessagesAdapter(BetterLinkMovementMethod linkMovementMethod, boolean showMessageThreads, String loggedInUserName, Markdown markdown) {
     this.linkMovementMethod = linkMovementMethod;
     this.showMessageThreads = showMessageThreads;
     this.loggedInUserName = loggedInUserName;
+    this.markdown = markdown;
     setHasStableIds(true);
   }
 
@@ -183,6 +186,5 @@ public class MessagesAdapter extends RecyclerViewArrayAdapter<Message, RecyclerV
       authorNameView.setText(message.getAuthor());
       timestampView.setText(Dates.createTimestamp(itemView.getResources(), JrawUtils.createdTimeUtc(message)));
     }
-
   }
 }

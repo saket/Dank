@@ -10,17 +10,13 @@ import android.text.Html;
 import android.text.Spanned;
 import android.text.TextPaint;
 import android.text.style.LineBackgroundSpan;
-
+import javax.inject.Inject;
+import me.saket.dank.ui.submission.PendingSyncReply;
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
-
 import org.sufficientlysecure.htmltextview.HtmlTagHandler;
 import org.xml.sax.XMLReader;
-
-import javax.inject.Inject;
-
-import me.saket.dank.ui.submission.PendingSyncReply;
 
 /**
  * Handles converting Reddit's markdown into Spans that can be rendered by TextView.
@@ -28,7 +24,7 @@ import me.saket.dank.ui.submission.PendingSyncReply;
  * TODO: Proivide using Dagger.
  * TODO: Use MarkdownHints through this class.
  */
-@SuppressWarnings({ "StatementWithEmptyBody", "deprecation" })
+@SuppressWarnings({"StatementWithEmptyBody", "deprecation"})
 public class Markdown {
 
   private static final TextPaint EMPTY_TEXTPAINT = new TextPaint();
@@ -74,6 +70,9 @@ public class Markdown {
   }
 
   /**
+   * Reddit sends escaped body: "JRAW is escaping html entities.\n\n&lt; &gt; &amp;"
+   * instead of "JRAW is escaping html entities.\n\n< > &".
+   *
    * Convert "**Something**" -> "Something", without any styling.
    */
   public static String stripMarkdown(String markdown) {
@@ -94,6 +93,7 @@ public class Markdown {
   }
 
   private static class RedditMarkdownHtmlHandler extends HtmlTagHandler {
+
     public RedditMarkdownHtmlHandler(TextPaint textPaint) {
       super(textPaint);
     }
@@ -133,6 +133,7 @@ public class Markdown {
      * {@link LineBackgroundSpan} is used for drawing spans that cover the entire line.
      */
     public static class HorizontalRuleSpan implements LineBackgroundSpan {
+
       private final int ruleColor;          // Color of line
       private final float line;         // Line size
 

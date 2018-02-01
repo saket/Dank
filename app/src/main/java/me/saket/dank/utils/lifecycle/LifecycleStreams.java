@@ -24,6 +24,11 @@ public interface LifecycleStreams<EVENT> {
   Observable<EVENT> onPause();
 
   @CheckResult
+  default Flowable<EVENT> onStopFlowable() {
+    return onStop().toFlowable(BackpressureStrategy.LATEST);
+  }
+
+  @CheckResult
   Observable<EVENT> onStop();
 
   @CheckResult
