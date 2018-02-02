@@ -770,7 +770,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     Observable<Boolean> fabSpaceAvailabilityChanges = submissionCommentsAdapter.streamHeaderBinds()
         .switchMap(optionalHeaderVH -> {
           if (optionalHeaderVH.isEmpty()) {
-            return Observable.just(false);
+            return Observable.never();
 
           } else {
             SubmissionCommentsHeader.ViewHolder headerVH = optionalHeaderVH.get();
