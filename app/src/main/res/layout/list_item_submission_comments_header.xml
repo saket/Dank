@@ -3,6 +3,7 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
+  tools:background="@color/window_background"
   tools:layout_below="@+id/submission_toolbar">
 
   <me.saket.dank.widgets.swipe.SwipeActionIconView style="@style/DankSwipeableLayoutIcon" />
@@ -43,9 +44,15 @@
       android:id="@+id/submission_selfpost_text"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/spacing16"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
-      android:layout_marginBottom="@dimen/spacing16"
+      android:background="@drawable/background_submission_self_text"
+      android:paddingBottom="@dimen/spacing12"
+      android:paddingEnd="@dimen/spacing16"
+      android:paddingStart="@dimen/spacing16"
+      android:paddingTop="@dimen/spacing12"
+      android:textColor="@color/white_opacity_75"
       android:textIsSelectable="true" />
 
     <include layout="@layout/list_item_submission_comments_header_link" />
