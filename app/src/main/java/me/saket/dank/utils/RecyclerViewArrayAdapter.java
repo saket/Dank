@@ -9,7 +9,6 @@ import android.widget.ArrayAdapter;
 
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerViewAdapter;
 import com.jakewharton.rxrelay2.PublishRelay;
-import com.jakewharton.rxrelay2.Relay;
 
 import java.util.List;
 
@@ -24,7 +23,7 @@ import java.util.List;
 public abstract class RecyclerViewArrayAdapter<T, VH extends RecyclerView.ViewHolder> extends RecyclerView.Adapter<VH> {
 
   private @Nullable List<T> items;
-  private Relay<RecyclerViewArrayAdapter<T, VH>> dataChanges;
+  private PublishRelay<List<T>> dataChanges;
 
   /**
    * @param items Initial items to show.
@@ -87,7 +86,10 @@ public abstract class RecyclerViewArrayAdapter<T, VH extends RecyclerView.ViewHo
 
   private void notifyChangesToDataStream() {
     if (dataChanges != null) {
-      dataChanges.accept(this);
+      if (items == null) {
+        throw new AssertionError("Items are null.");
+      }
+      dataChanges.accept(items);
     }
   }
 
@@ -96,7 +98,7 @@ public abstract class RecyclerViewArrayAdapter<T, VH extends RecyclerView.ViewHo
    * {@link #notifyDataSetChanged()} is called and not for {@link #notifyItemInserted(int)}, etc.
    */
   @CheckResult
-  public Relay<RecyclerViewArrayAdapter<T, VH>> dataChanges() {
+  public PublishRelay<List<T>> dataChanges() {
     if (dataChanges == null) {
       dataChanges = PublishRelay.create();
     }

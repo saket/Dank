@@ -615,14 +615,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    */
   @CheckResult
   private Completable scrollToNewlyAddedReplyIfHidden(PostedOrInFlightContribution parentContribution) {
-    if (submissionStream.getValue().get().getFullName().equals(parentContribution.fullName())) {
-      // Submission reply.
-      return Completable.fromAction(() -> commentRecyclerView.smoothScrollToPosition(0));
-    }
-
     return submissionCommentsAdapter.dataChanges()
         .take(1)
-        .map(adapter -> adapter.getData())
         .map(newItems -> {
           for (int i = 0; i < newItems.size(); i++) {
             // Find the reply item's position.
@@ -638,6 +632,16 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         })
         .flatMapCompletable(replyPosition -> Completable.fromAction(() -> {
           RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition - 1);
+          if (parentContributionItemVH == null && submissionStream.getValue().get().getFullName().equals(parentContribution.fullName())) {
+            // Submission reply. The ViewHolder is null because the header isn't visible.
+            commentRecyclerView.smoothScrollToPosition(replyPosition);
+            return;
+          }
+
+          if (parentContributionItemVH == null) {
+            throw new AssertionError("Couldn't find reply's parent VH. Submission: " + submissionStream.getValue().get().getPermalink());
+          }
+
           int parentContributionBottom = parentContributionItemVH.itemView.getBottom() + commentListParentSheet.getTop();
           boolean isReplyHidden = parentContributionBottom >= submissionPageLayout.getBottom();
 
