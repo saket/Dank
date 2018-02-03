@@ -27,6 +27,7 @@ import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
+import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
@@ -35,6 +36,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     implements Consumer<Pair<List<SubmissionScreenUiModel>, DiffUtil.DiffResult>>
 {
 
+  public static final long ID_VIEW_FULL_THREAD = -96;
   public static final long ID_MEDIA_CONTENT_LOAD_ERROR = -97;
   public static final long ID_COMMENTS_LOAD_PROGRESS = -98;
   public static final long ID_COMMENTS_LOAD_ERROR = -99;
@@ -42,6 +44,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
   private final Map<SubmissionCommentRowType, SubmissionScreenUiModel.Adapter> childAdapters;
   private final SubmissionCommentsHeader.Adapter headerAdapter;
+  private final SubmissionCommentsViewFullThread.Adapter viewFullThreadAdapter;
   private final SubmissionMediaContentLoadError.Adapter mediaContentLoadErrorAdapter;
   private final SubmissionCommentsLoadError.Adapter commentsLoadErrorAdapter;
   private final SubmissionComment.Adapter commentAdapter;
@@ -52,15 +55,18 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   public SubmissionCommentsAdapter(
       SubmissionCommentsHeader.Adapter headerAdapter,
       SubmissionMediaContentLoadError.Adapter mediaContentLoadErrorAdapter,
+      SubmissionCommentsViewFullThread.Adapter viewFullThreadAdapter,
       SubmissionCommentsLoadError.Adapter commentsLoadErrorAdapter,
       SubmissionCommentsLoadProgress.Adapter commentsLoadProgressAdapter,
       SubmissionComment.Adapter commentAdapter,
       SubmissionCommentInlineReply.Adapter inlineReplyAdapter,
       SubmissionCommentsLoadMore.Adapter loadMoreAdapter)
   {
+    this.viewFullThreadAdapter = viewFullThreadAdapter;
     childAdapters = new HashMap<>(11);
     childAdapters.put(SubmissionCommentRowType.SUBMISSION_HEADER, headerAdapter);
     childAdapters.put(SubmissionCommentRowType.MEDIA_CONTENT_LOAD_ERROR, mediaContentLoadErrorAdapter);
+    childAdapters.put(SubmissionCommentRowType.VIEW_FULL_THREAD, viewFullThreadAdapter);
     childAdapters.put(SubmissionCommentRowType.COMMENTS_LOAD_ERROR, commentsLoadErrorAdapter);
     childAdapters.put(SubmissionCommentRowType.COMMENTS_LOAD_PROGRESS, commentsLoadProgressAdapter);
     childAdapters.put(SubmissionCommentRowType.USER_COMMENT, commentAdapter);
@@ -194,5 +200,10 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @CheckResult
   public Observable<Object> streamCommentsLoadRetryClicks() {
     return commentsLoadErrorAdapter.commentsLoadRetryClickStream;
+  }
+
+  @CheckResult
+  public Observable<DankSubmissionRequest> streamViewAllCommentsClicks() {
+    return viewFullThreadAdapter.viewAllCommentsClicks;
   }
 }

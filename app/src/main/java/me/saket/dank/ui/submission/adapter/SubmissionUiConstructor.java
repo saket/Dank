@@ -39,6 +39,7 @@ import me.saket.dank.ui.submission.SubmissionCommentRow;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Commons;
+import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
@@ -80,6 +81,7 @@ public class SubmissionUiConstructor {
       Context context,
       CommentTreeConstructor commentTreeConstructor,
       Observable<Optional<Submission>> optionalSubmissions,
+      Observable<DankSubmissionRequest> submissionRequests,
       Observable<Optional<Link>> contentLinks,
       Observable<Optional<SubmissionContentLoadError>> mediaContentLoadErrors,
       Observable<Optional<ResolvedError>> commentsLoadErrors)
@@ -132,6 +134,11 @@ public class SubmissionUiConstructor {
           Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModels = mediaContentLoadErrors
               .map(optionalError -> optionalError.map(error -> error.uiModel(context)));
 
+          Observable<Optional<SubmissionCommentsViewFullThread.UiModel>> viewFullThreadUiModels = submissionRequests
+              .map(request -> request.focusComment() == null
+                  ? Optional.<SubmissionCommentsViewFullThread.UiModel>empty()
+                  : Optional.of(SubmissionCommentsViewFullThread.UiModel.create(request)));
+
           Observable<List<SubmissionScreenUiModel>> commentRowUiModels = Observable.combineLatest(
               votingManager.streamChanges().observeOn(io()).map(o -> context),
               submissions.observeOn(io()).compose(commentTreeConstructor.stream(io())),
@@ -156,13 +163,15 @@ public class SubmissionUiConstructor {
           return Observable.combineLatest(
               headerUiModels,
               contentLoadErrorUiModels,
+              viewFullThreadUiModels,
               commentsLoadProgressUiModels,
               commentsLoadErrorUiModels,
               commentRowUiModels,
-              (header, optionalContentError, optionalCommentsLoadProgress, optionalCommentsLoadError, commentRowModels) -> {
+              (header, optionalContentError, viewFullThread, optionalCommentsLoadProgress, optionalCommentsLoadError, commentRowModels) -> {
                 List<SubmissionScreenUiModel> allItems = new ArrayList<>(4 + commentRowModels.size());
                 allItems.add(header);
                 optionalContentError.ifPresent(allItems::add);
+                viewFullThread.ifPresent(allItems::add);
                 allItems.addAll(commentRowModels);
 
                 // Comments progress and error go after comment rows

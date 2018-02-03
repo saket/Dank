@@ -15,6 +15,12 @@ public enum RealSubmissionThumbnailType {
   NONE;
 
   public static RealSubmissionThumbnailType parse(Submission submission, Boolean showNsfwThumbnails) {
+    //Timber.d("-------------------");
+    //Timber.i("%s", submission.getTitle());
+    //Timber.i("Thumb type: %s", submission.getThumbnailType());
+    //Timber.i("Thumbnail: %s", submission.getThumbnail());
+    //Timber.i("Thumbnails: %s", submission.getThumbnails());
+
     if (submission.isNsfw() && !showNsfwThumbnails) {
       if (submission.getThumbnail() == null || submission.getThumbnailType() == Submission.ThumbnailType.NONE) {
         return NONE;

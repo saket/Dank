@@ -7,6 +7,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.squareup.moshi.JsonAdapter;
 
+import junit.framework.Assert;
+
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
 import net.dean.jraw.auth.AuthenticationState;
@@ -100,6 +102,8 @@ public class DankRedditClient {
 
   @CheckResult
   public Single<Submission> submission(DankSubmissionRequest submissionRequest) {
+    Assert.assertEquals(submissionRequest.focusComment() == null, submissionRequest.contextCount() == null);
+
     SubmissionRequest jrawSubmissionRequest = new SubmissionRequest.Builder(submissionRequest.id())
         .sort(submissionRequest.commentSort())
         .focus(submissionRequest.focusComment())

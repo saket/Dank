@@ -245,6 +245,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     setupSoftInputModeChangesAnimation();
     setupSubmissionLoadErrors();
     setupSubmissionContentLoadErrors();
+
+    // Extra bottom padding in list to make space for FAB.
+    Views.executeOnMeasure(replyFAB, () -> {
+      int spaceForFab = replyFAB.getHeight() + ((ViewGroup.MarginLayoutParams) replyFAB.getLayoutParams()).bottomMargin * 2;
+      Views.setPaddingBottom(commentRecyclerView, spaceForFab);
+    });
   }
 
   @Nullable
@@ -358,6 +364,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             getContext(),
             commentTreeConstructor,
             submissionStream.observeOn(io()),
+            submissionRequestStream.observeOn(io()),
             contentLinkStream.observeOn(io()),
             mediaContentLoadErrors.observeOn(io()),
             commentsLoadErrors.observeOn(io())
@@ -603,11 +610,19 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             .open(getContext())
         );
 
-    // Extra bottom padding in list to make space for FAB.
-    Views.executeOnMeasure(replyFAB, () -> {
-      int spaceForFab = replyFAB.getHeight() + ((ViewGroup.MarginLayoutParams) replyFAB.getLayoutParams()).bottomMargin * 2;
-      Views.setPaddingBottom(commentRecyclerView, spaceForFab);
-    });
+    // View full thread.
+    submissionCommentsAdapter.streamViewAllCommentsClicks()
+        .takeUntil(lifecycle().onDestroy())
+        .map(request -> request.toBuilder()
+            .focusComment(null)
+            .contextCount(null)
+            .build())
+        .withLatestFrom(submissionStream, Pair::create)
+        .subscribe(pair -> {
+          DankSubmissionRequest submissionRequest = pair.first();
+          Optional<Submission> submissionWithoutComments = pair.second().map(sub -> new Submission(sub.getDataNode()));
+          populateUi(submissionWithoutComments, submissionRequest);
+        });
   }
 
   /**

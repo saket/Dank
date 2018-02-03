@@ -107,7 +107,7 @@ dependencies {
   implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.4@aar'
   implementation 'it.gilvegliach.android:transparent-text-textview:1.0.3'
   implementation 'com.f2prateek.rx.preferences2:rx-preferences:2.0.0-RC3'
-  implementation 'com.werdpressed.partisan:rundo:1.0.5'
+  implementation 'com.werdpressed.partisan:rundo:1.0.5' // TODO: TextView supports undo on API 23+. Remove this once we update minSdk.
 
   // TODO: Replace all Date4J usages with ThreeTenAbp.
   implementation 'com.darwinsys:hirondelle-date4j:1.5.1'

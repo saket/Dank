@@ -31,6 +31,7 @@
   <color name="white_opacity_40">#66FFFFFF</color>
   <color name="white_opacity_50">#80FFFFFF</color>
   <color name="white_opacity_60">#99FFFFFF</color>
+  <color name="white_opacity_75">#C4FFFFFF</color>
   <color name="white_opacity_80">#CCFFFFFF</color>
   <color name="white_opacity_90">#E6FFFFFF</color>
 

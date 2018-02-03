@@ -97,6 +97,8 @@ public class VotingManager {
 
     return vote(contributionToVote, voteDirection)
         .onErrorComplete(error -> {
+          // TODO: Reddit replies with 400 bad request for archived submissions.
+
           if (!Dank.errors().resolve(error).isUnknown()) {
             Timber.i("Voting failed for %s. Will retry again later.", contributionToVote.fullName());
 

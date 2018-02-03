@@ -3,6 +3,7 @@ package me.saket.dank.ui.submission.adapter;
 public enum SubmissionCommentRowType {
   SUBMISSION_HEADER,
   MEDIA_CONTENT_LOAD_ERROR,
+  VIEW_FULL_THREAD,
   COMMENTS_LOAD_PROGRESS,
   COMMENTS_LOAD_ERROR,
   USER_COMMENT,
