@@ -25,29 +25,29 @@ import com.google.auto.value.AutoValue;
  * <p>
  * Container to ease passing around a tuple of two objects.
  */
-public interface Pair<F, S> {
+public abstract class Pair<F, S> {
 
-  F first();
+  public abstract F first();
 
-  S second();
+  public abstract S second();
 
-  static <A, B> Pair<A, B> create(A first, B second) {
+  public static <A, B> Pair<A, B> create(A first, B second) {
     return new AutoValue_Pair_NonNullPair<>(first, second);
   }
 
-  static <A, B> Pair<A, B> createNullable(@Nullable A first, @Nullable B second) {
+  public static <A, B> Pair<A, B> createNullable(@Nullable A first, @Nullable B second) {
     return new AutoValue_Pair_NullablePair<>(first, second);
   }
 
   @AutoValue
-  abstract class NonNullPair<F, S> implements Pair<F, S> {
+  abstract static class NonNullPair<F, S> extends Pair<F, S> {
     public abstract F first();
 
     public abstract S second();
   }
 
   @AutoValue
-  abstract class NullablePair<F, S> implements Pair<F, S> {
+  abstract static class NullablePair<F, S> extends Pair<F, S> {
     @Nullable
     public abstract F first();
 
