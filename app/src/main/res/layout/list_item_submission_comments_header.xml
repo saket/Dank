@@ -52,8 +52,8 @@
       android:paddingEnd="@dimen/spacing16"
       android:paddingStart="@dimen/spacing16"
       android:paddingTop="@dimen/spacing12"
-      android:textColor="@color/white_opacity_75"
-      android:textIsSelectable="true" />
+      android:textIsSelectable="true"
+      android:textColor="@color/white_opacity_75" />
 
     <include layout="@layout/list_item_submission_comments_header_link" />
   </LinearLayout>
