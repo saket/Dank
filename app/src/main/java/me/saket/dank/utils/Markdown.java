@@ -53,9 +53,9 @@ public class Markdown {
   }
 
   // TODO.
-  public String parseSelfText(Submission submission) {
+  public CharSequence parseSelfText(Submission submission) {
     //String selfTextHtml = submission.getDataNode().get("selftext_html").asText(submission.getSelftext() /* defaultValue */)
-    return submission.getSelftext();
+    return submission.getSelftext().trim();
   }
 
   public static CharSequence parseRedditMarkdownHtml(String markdown, TextPaint textPaint) {
