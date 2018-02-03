@@ -10,6 +10,7 @@
   android:background="@drawable/background_submission_link"
   android:foreground="?attr/selectableItemBackground"
   android:orientation="horizontal"
+  android:elevation="2dp"
   tools:visibility="visible">
   <!-- clipToOutline=true is set in code. -->
 
