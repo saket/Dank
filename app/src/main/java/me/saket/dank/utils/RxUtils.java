@@ -101,6 +101,23 @@ public class RxUtils {
   }
 
   /**
+   * Run <var>oneShotConsumer</var> after the stream emits an item, exactly once.
+   */
+  public static <T> ObservableTransformer<T, T> doOnceOnNext(Consumer<T> oneShotConsumer) {
+    return observable -> observable.doOnNext(new Consumer<T>() {
+      boolean isFirstDoOnNext = true;
+
+      @Override
+      public void accept(T t) throws Exception {
+        if (isFirstDoOnNext) {
+          oneShotConsumer.accept(t);
+        }
+        isFirstDoOnNext = false;
+      }
+    });
+  }
+
+  /**
    * Replay last item in upstream when <var>stream</var> emits.
    */
   public static <T> ObservableTransformer<T, T> replayLastItemWhen(Observable<Object> stream) {

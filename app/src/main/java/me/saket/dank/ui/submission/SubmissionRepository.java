@@ -53,6 +53,7 @@ import me.saket.dank.ui.subreddits.NetworkCallStatus;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Pair;
+import me.saket.dank.utils.RxUtils;
 import timber.log.Timber;
 
 @Singleton
@@ -91,7 +92,7 @@ public class SubmissionRepository {
    */
   @CheckResult
   public Observable<Pair<DankSubmissionRequest, Submission>> submissionWithComments(DankSubmissionRequest oldSubmissionRequest) {
-    Timber.i("Getting comments");
+    //Timber.i("Getting comments");
 
     Observable<Pair<DankSubmissionRequest, CachedSubmissionWithComments>> stream = getOrFetchSubmissionWithComments(oldSubmissionRequest)
         .take(1)
@@ -115,7 +116,7 @@ public class SubmissionRepository {
                 });
 
           } else {
-            Timber.i("Returning from memory");
+            //Timber.i("Returning from memory");
 
             // This should return immediately because the store has an in-memory cache.
             return getOrFetchSubmissionWithComments(oldSubmissionRequest)
@@ -132,27 +133,28 @@ public class SubmissionRepository {
                 })
                 .skip(1)
                 .startWith(submissionWithComments)
-                .map(submissions -> Pair.create(oldSubmissionRequest, submissions));
+                .map(submissions -> Pair.create(oldSubmissionRequest, submissions))
+                .compose(RxUtils.doOnceOnNext(o -> Timber.i("Returned from memory")))
+                ;
           }
         });
 
-    Observable<Pair<DankSubmissionRequest, CachedSubmissionWithComments>> sharedStream = stream.share();
-
-    // Dank unfortunately has two storage locations for submissions:
-    // - one for submission list
-    // - one for submission with comments.
-    //
-    // I need to figure out to use a single storage for both, but for now keeping both of
-    // them in sync is the only option. When reading submissions with comments, we'll check
-    // if an updated copy is available in the submission list table. We do the reverse when
-    // saving a submission with comments. See saveSubmissionWithAndWithoutComments().
-    Completable updateCompletable = sharedStream
-        .take(1)
-        .flatMapCompletable(pair -> {
+    // I first tried sharing the stream so that the submission item in submission-with-comments
+    // table can be updated, but then I think it will mess up with the subscribe-on thread.
+    // Doing it on-next is easier.
+    return stream
+        .compose(RxUtils.doOnceAfterNext(pair -> {
+          // Dank unfortunately has two storage locations for submissions:
+          // - one for submission list
+          // - one for submission with comments.
+          //
+          // I need to figure out to use a single storage for both, but for now keeping both of
+          // them in sync is the only option. When reading submissions with comments, we'll check
+          // if an updated copy is available in the submission list table. We do the reverse when
+          // saving a submission with comments. See saveSubmissionWithAndWithoutComments().
           DankSubmissionRequest updatedSubmissionRequest = pair.first();
           CachedSubmissionWithComments possiblyStaleSubWithComments = pair.second();
-
-          return database
+          database
               .createQuery(
                   CachedSubmissionWithoutComments.TABLE_NAME,
                   CachedSubmissionWithoutComments.SELECT_BY_FULLNAME_AND_SAVE_TIME_NEWER_THAN,
@@ -174,14 +176,11 @@ public class SubmissionRepository {
                   database.insert(CachedSubmissionWithComments.TABLE_NAME, newCachedSub.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE)
               ))
               // This will trigger another emission from the cache store.
-              .andThen(Completable.fromAction(() -> submissionWithCommentsStore.clear(updatedSubmissionRequest)));
-        });
-
-    updateCompletable
-        .subscribeOn(Schedulers.io())
-        .subscribe();
-
-    return sharedStream.map(pair -> Pair.create(pair.first(), pair.second().submission()));
+              .andThen(Completable.fromAction(() -> submissionWithCommentsStore.clear(updatedSubmissionRequest)))
+              .subscribeOn(Schedulers.io())
+              .subscribe();
+        }))
+        .map(pair -> Pair.create(pair.first(), pair.second().submission()));
   }
 
   /**
