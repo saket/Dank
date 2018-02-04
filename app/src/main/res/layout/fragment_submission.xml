@@ -53,12 +53,14 @@
     android:elevation="@dimen/elevation_toolbar"
     tools:layout_below="@+id/submission_comments_header">
 
+    <!-- WARNING: descendantFocusability="beforeDescendants" is important
+         or else RV will scroll to selectable text as they can receive focus. -->
     <android.support.v7.widget.RecyclerView
       android:id="@+id/submission_comment_list"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
-      android:descendantFocusability="beforeDescendants"
       android:clipToPadding="false"
+      android:descendantFocusability="beforeDescendants"
       android:scrollbarStyle="insideOverlay"
       android:scrollbars="vertical"
       tools:paddingStart="@dimen/spacing16"

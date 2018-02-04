@@ -119,7 +119,6 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtils;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
