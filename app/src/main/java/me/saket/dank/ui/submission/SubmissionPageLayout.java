@@ -359,9 +359,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               return Observable.never();
             })
         )
-        .takeUntil(lifecycle().onDestroy())
         .as(Optional.of())
         //.compose(RxUtils.doOnceOnNext(o -> Timber.i("Submission passed to stream")))
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(submissionStream);
 
     // Adapter data-set.
@@ -664,6 +664,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             .contextCount(null)
             .build())
         .withLatestFrom(submissionStream, Pair::create)
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
           DankSubmissionRequest submissionRequest = pair.first();
           Optional<Submission> submissionWithoutComments = pair.second().map(sub -> new Submission(sub.getDataNode()));
@@ -862,9 +863,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         });
 
     RxView.clicks(replyFAB)
-        .takeUntil(lifecycle().onDestroy())
         .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), (o, submission) -> submission)
         .map(submission -> PostedOrInFlightContribution.from(submission))
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(submissionInfo -> {
           if (!userSessionRepository.isUserLoggedIn()) {
             getContext().startActivity(LoginActivity.intent(getContext()));
