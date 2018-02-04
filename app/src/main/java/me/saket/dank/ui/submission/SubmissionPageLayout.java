@@ -1158,10 +1158,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
                 case REDDIT_PAGE:
                   contentLoadProgressView.hide();
-
-                  if (submission.isSelfPost()) {
-                    // TODO.
-                  } else {
+                  if (!submission.isSelfPost()) {
                     contentLinkStream.accept(Optional.of(resolvedLink));
                   }
                   break;
