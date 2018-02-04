@@ -12,7 +12,7 @@ import net.dean.jraw.models.PublicContribution;
 public abstract class CommentInlineReplyItem implements SubmissionCommentRow {
 
   @Override
-  public abstract String fullName();
+  public abstract String adapterId();
 
   public abstract PublicContribution parentContribution();
 

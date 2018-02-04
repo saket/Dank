@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission.adapter;
 
 import android.support.annotation.ColorInt;
+import android.support.annotation.ColorRes;
 import android.support.v7.widget.RecyclerView;
 import android.text.Spannable;
 import android.view.LayoutInflater;
@@ -59,12 +60,17 @@ public interface SubmissionComment {
     /** Present only for locally posted replies. Required because {@link ReplyRetrySendClickEvent} needs it. */
     public abstract Optional<PendingSyncReply> optionalPendingSyncReply();
 
+    @ColorRes
+    public abstract int backgroundColorRes();
+
     @Override
     public SubmissionCommentRowType type() {
       return SubmissionCommentRowType.USER_COMMENT;
     }
 
     public abstract boolean isCollapsed();
+
+    public abstract boolean isFocused();
 
     public static UiModel.Builder builder() {
       return new AutoValue_SubmissionComment_UiModel.Builder();
@@ -102,6 +108,10 @@ public interface SubmissionComment {
       public abstract Builder isCollapsed(boolean isCollapsed);
 
       public abstract Builder optionalPendingSyncReply(Optional<PendingSyncReply> optionalReply);
+
+      public abstract Builder backgroundColorRes(@ColorRes int backgroundColorRes);
+
+      public abstract Builder isFocused(boolean focused);
 
       public abstract UiModel build();
     }
@@ -173,6 +183,7 @@ public interface SubmissionComment {
     }
 
     public void render() {
+      itemView.setBackgroundResource(uiModel.backgroundColorRes());
       indentedLayout.setIndentationDepth(uiModel.indentationDepth());
       bylineView.setText(uiModel.byline());
       bylineView.setTextColor(uiModel.bylineTextColor());

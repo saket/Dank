@@ -90,7 +90,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
     RedditCommentLink initialComment = submissionLink.initialComment();
     if (initialComment != null) {
       submissionReqBuilder
-          .focusComment(initialComment.id())
+          .focusCommentId(initialComment.id())
           .contextCount(initialComment.contextCount());
     }
 

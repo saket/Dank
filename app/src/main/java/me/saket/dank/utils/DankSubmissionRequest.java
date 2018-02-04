@@ -22,7 +22,7 @@ public abstract class DankSubmissionRequest implements Parcelable {
   public abstract CommentSort commentSort();
 
   @Nullable
-  public abstract String focusComment();
+  public abstract String focusCommentId();
 
   @Nullable
   public abstract Integer contextCount();
@@ -48,7 +48,7 @@ public abstract class DankSubmissionRequest implements Parcelable {
      * Sets the ID of the comment to focus on. If this comment does not exist, then this parameter is ignored.
      * Otherwise, only one comment tree is returned: the one in which the given comment resides.
      */
-    public abstract Builder focusComment(@Nullable String commentId);
+    public abstract Builder focusCommentId(@Nullable String commentId);
 
     /**
      * Sets the sorting for the comments in the response. This will be used to request more comments using

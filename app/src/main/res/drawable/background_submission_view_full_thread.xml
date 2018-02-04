@@ -3,5 +3,5 @@
   android:shape="rectangle">
 
   <corners android:radius="@dimen/card_corner_radius" />
-  <solid android:color="@color/blue_gray_900" />
+  <solid android:color="@color/submission_comment_background_focused" />
 </shape>

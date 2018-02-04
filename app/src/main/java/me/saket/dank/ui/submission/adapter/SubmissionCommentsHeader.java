@@ -167,7 +167,7 @@ public interface SubmissionCommentsHeader {
       this.movementMethod = movementMethod;
 
       contentLinkView.setClipToOutline(true);
-      contentLinkBackgroundColor = ContextCompat.getColor(itemView.getContext(), R.color.submission_link_background_color);
+      contentLinkBackgroundColor = ContextCompat.getColor(itemView.getContext(), R.color.submission_link_background);
     }
 
     public void setupGestures(SubmissionSwipeActionsProvider swipeActionsProvider) {

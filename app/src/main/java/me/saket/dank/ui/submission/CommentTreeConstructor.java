@@ -332,13 +332,13 @@ public class CommentTreeConstructor {
       List<PendingSyncReply> pendingSyncReplies = pendingSyncRepliesMap.getForParent(nextNode.getComment());
       for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
         PendingSyncReply pendingSyncReply = pendingSyncReplies.get(i);
-        String replyFullName = PostedOrInFlightContribution.idForTogglingCollapseForLocallyPostedReply(
+        String adapterId = PostedOrInFlightContribution.idForTogglingCollapseForLocallyPostedReply(
             nextNode.getComment().getFullName(),
             pendingSyncReply.createdTimeMillis()
         );
-        boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(replyFullName);
+        boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(adapterId);
         int depth = nextNode.getDepth() + 1;
-        flattenComments.add(CommentPendingSyncReplyItem.create(nextNode.getComment(), replyFullName, pendingSyncReply, isReplyCollapsed, depth));
+        flattenComments.add(CommentPendingSyncReplyItem.create(nextNode.getComment(), adapterId, pendingSyncReply, isReplyCollapsed, depth));
       }
     }
 

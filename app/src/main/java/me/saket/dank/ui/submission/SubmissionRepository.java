@@ -106,7 +106,7 @@ public class SubmissionRepository {
           CommentSort suggestedSort = submissionWithComments.submission().getSuggestedSort();
 
           if (suggestedSort != null && suggestedSort != oldSubmissionRequest.commentSort()) {
-            Timber.i("Different sort.");
+            //Timber.i("Different sort.");
 
             DankSubmissionRequest newRequest = oldSubmissionRequest.toBuilder()
                 .commentSort(suggestedSort)
@@ -137,7 +137,7 @@ public class SubmissionRepository {
                 .skip(1)
                 .startWith(submissionWithComments)
                 .map(submissions -> Pair.create(oldSubmissionRequest, submissions))
-                .compose(RxUtils.doOnceOnNext(o -> Timber.i("Returned from memory")))
+                //.compose(RxUtils.doOnceOnNext(o -> Timber.i("Returned from memory")))
                 ;
           }
         });

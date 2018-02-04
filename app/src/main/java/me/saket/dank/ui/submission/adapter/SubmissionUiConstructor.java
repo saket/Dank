@@ -31,6 +31,7 @@ import me.saket.dank.ui.submission.CommentInlineReplyItem;
 import me.saket.dank.ui.submission.CommentPendingSyncReplyItem;
 import me.saket.dank.ui.submission.CommentTreeConstructor;
 import me.saket.dank.ui.submission.DankCommentNode;
+import me.saket.dank.ui.submission.FocusedComment;
 import me.saket.dank.ui.submission.LoadMoreCommentItem;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.PendingSyncReply;
@@ -135,7 +136,7 @@ public class SubmissionUiConstructor {
               .map(optionalError -> optionalError.map(error -> error.uiModel(context)));
 
           Observable<Optional<SubmissionCommentsViewFullThread.UiModel>> viewFullThreadUiModels = submissionRequests
-              .map(request -> request.focusComment() == null
+              .map(request -> request.focusCommentId() == null
                   ? Optional.<SubmissionCommentsViewFullThread.UiModel>empty()
                   : Optional.of(SubmissionCommentsViewFullThread.UiModel.create(request)));
 
@@ -143,6 +144,10 @@ public class SubmissionUiConstructor {
               votingManager.streamChanges().observeOn(io()).map(o -> context),
               submissions.observeOn(io()).compose(commentTreeConstructor.stream(io())),
               submissions.take(1).map(Submission::getAuthor),
+              submissionRequests
+                  .map(submissionRequest -> Optional.ofNullable(submissionRequest.focusCommentId()))
+                  .map(optionalId -> optionalId.map(FocusedComment::create))
+                  .distinctUntilChanged(),
               this::commentRowUiModels
           );
 
@@ -230,21 +235,33 @@ public class SubmissionUiConstructor {
         .build();
   }
 
-  private List<SubmissionScreenUiModel> commentRowUiModels(Context context, List<SubmissionCommentRow> rows, String submissionAuthor) {
+  private List<SubmissionScreenUiModel> commentRowUiModels(
+      Context context,
+      List<SubmissionCommentRow> rows,
+      String submissionAuthor,
+      Optional<FocusedComment> focusedComment)
+  {
     List<SubmissionScreenUiModel> uiModels = new ArrayList<>(rows.size());
     for (SubmissionCommentRow row : rows) {
       switch (row.type()) {
-        case USER_COMMENT:
-          uiModels.add(commentUiModel(context, ((DankCommentNode) row), submissionAuthor));
+        case USER_COMMENT: {
+          DankCommentNode dankCommentNode = (DankCommentNode) row;
+          String commentFullName = dankCommentNode.commentNode().getComment().getFullName();
+          boolean isFocused = focusedComment.isPresent() && focusedComment.get().fullname().equals(commentFullName);
+          uiModels.add(syncedCommentUiModel(context, dankCommentNode, submissionAuthor, isFocused));
           break;
+        }
 
         case PENDING_SYNC_REPLY:
-          uiModels.add(pendingSyncCommentUiModel(context, ((CommentPendingSyncReplyItem) row)));
+          CommentPendingSyncReplyItem pendingSyncReplyItem = (CommentPendingSyncReplyItem) row;
+          String replyFullName = pendingSyncReplyItem.pendingSyncReply().postedFullName();
+          boolean isFocused = focusedComment.isPresent() && focusedComment.get().fullname().equals(replyFullName);
+          uiModels.add(pendingSyncCommentUiModel(context, pendingSyncReplyItem, isFocused));
           break;
 
         case INLINE_REPLY:
           String loggedInUserName = userSessionRepository.loggedInUserName();
-          uiModels.add(inlineReplyUiModel(context, ((CommentInlineReplyItem) row), loggedInUserName));
+          uiModels.add(inlineReplyUiModel(context, (CommentInlineReplyItem) row, loggedInUserName));
           break;
 
         case LOAD_MORE_COMMENTS:
@@ -258,7 +275,7 @@ public class SubmissionUiConstructor {
     return uiModels;
   }
 
-  private SubmissionComment.UiModel commentUiModel(Context context, DankCommentNode dankCommentNode, String submissionAuthor) {
+  private SubmissionComment.UiModel syncedCommentUiModel(Context context, DankCommentNode dankCommentNode, String submissionAuthor, boolean isFocused) {
     Comment comment = dankCommentNode.commentNode().getComment();
     Optional<String> authorFlairText = comment.getAuthorFlair() != null ? Optional.ofNullable(comment.getAuthorFlair().getText()) : Optional.empty();
     long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
@@ -285,7 +302,7 @@ public class SubmissionUiConstructor {
         ? markdown.stripMarkdown(JrawUtils.commentBodyHtml(comment))
         : markdown.parse(comment);
 
-    return commentUiModelBuilder(context, dankCommentNode.fullName(), dankCommentNode.isCollapsed(), dankCommentNode.commentNode().getDepth())
+    return commentUiModelBuilder(context, dankCommentNode.adapterId(), dankCommentNode.isCollapsed(), isFocused, dankCommentNode.commentNode().getDepth())
         .originalComment(PostedOrInFlightContribution.from(comment))
         .optionalPendingSyncReply(Optional.empty())
         .byline(byline, commentScore)
@@ -296,7 +313,7 @@ public class SubmissionUiConstructor {
   /**
    * Reply posted by the logged in user that hasn't synced yet or whose actual comment hasn't been fetched yet.
    */
-  private SubmissionComment.UiModel pendingSyncCommentUiModel(Context context, CommentPendingSyncReplyItem pendingSyncReplyRow) {
+  private SubmissionComment.UiModel pendingSyncCommentUiModel(Context context, CommentPendingSyncReplyItem pendingSyncReplyRow, boolean isFocused) {
     PendingSyncReply pendingSyncReply = pendingSyncReplyRow.pendingSyncReply();
     CharSequence byline;
     int commentScore = 1;
@@ -343,7 +360,7 @@ public class SubmissionUiConstructor {
         ? markdown.stripMarkdown(pendingSyncReply.body())
         : markdown.parse(pendingSyncReply);
 
-    return commentUiModelBuilder(context, pendingSyncReplyRow.fullName(), pendingSyncReplyRow.isCollapsed(), pendingSyncReplyRow.depth())
+    return commentUiModelBuilder(context, pendingSyncReplyRow.adapterId(), pendingSyncReplyRow.isCollapsed(), isFocused, pendingSyncReplyRow.depth())
         .originalComment(PostedOrInFlightContribution.createLocal(pendingSyncReply))
         .optionalPendingSyncReply(Optional.of(pendingSyncReply))
         .byline(byline, commentScore)
@@ -356,12 +373,17 @@ public class SubmissionUiConstructor {
    */
   private SubmissionComment.UiModel.Builder commentUiModelBuilder(
       Context context,
-      String fullName,
+      String adapterId,
       boolean isCollapsed,
+      boolean isFocused,
       int depth)
   {
+    @ColorRes int backgroundColorRes = isFocused
+        ? R.color.submission_comment_background_focused
+        : R.color.submission_comment_background;
+
     return SubmissionComment.UiModel.builder()
-        .adapterId(fullName.hashCode())
+        .adapterId(adapterId.hashCode())
         .bylineTextColor(color(context,
             isCollapsed
                 ? R.color.submission_comment_body_collapsed
@@ -373,7 +395,9 @@ public class SubmissionUiConstructor {
         ))
         .indentationDepth(depth - 1)  // TODO: Why are we subtracting 1 here?
         .bodyMaxLines(isCollapsed ? 1 : Integer.MAX_VALUE)
-        .isCollapsed(isCollapsed);
+        .isCollapsed(isCollapsed)
+        .backgroundColorRes(backgroundColorRes)
+        .isFocused(isFocused);
   }
 
   private CharSequence constructCommentByline(
@@ -418,7 +442,7 @@ public class SubmissionUiConstructor {
   }
 
   private SubmissionCommentInlineReply.UiModel inlineReplyUiModel(Context context, CommentInlineReplyItem inlineReplyItem, String loggedInUserName) {
-    long adapterId = inlineReplyItem.fullName().hashCode();
+    long adapterId = inlineReplyItem.adapterId().hashCode();
     PostedOrInFlightContribution parentContribution = PostedOrInFlightContribution.from(inlineReplyItem.parentContribution());
     CharSequence authorHint = context.getResources().getString(R.string.submission_comment_reply_author_hint, loggedInUserName);
     return SubmissionCommentInlineReply.UiModel.create(adapterId, authorHint, parentContribution, inlineReplyItem.depth());
@@ -443,7 +467,7 @@ public class SubmissionUiConstructor {
     }
 
     return SubmissionCommentsLoadMore.UiModel.builder()
-        .adapterId((long) row.fullName().hashCode())
+        .adapterId((long) row.adapterId().hashCode())
         .label(label)
         .iconRes(parentCommentNode.isThreadContinuation() ? R.drawable.ic_arrow_forward_12dp : 0)
         .indentationDepth(parentCommentNode.getDepth())

@@ -73,9 +73,9 @@ public class ReplyRepository implements DraftStore {
   public Completable reSendReply(PendingSyncReply pendingSyncReply) {
     String parentThreadFullName = pendingSyncReply.parentThreadFullName();
     ParentThread parentThread;
-    if (parentThreadFullName.startsWith("t3_")) {
+    if (parentThreadFullName.startsWith(DankRedditClient.SUBMISSION_FULLNAME_PREFIX)) {
       parentThread = ParentThread.createSubmission(parentThreadFullName);
-    } else if (parentThreadFullName.startsWith("t4_")) {
+    } else if (parentThreadFullName.startsWith(DankRedditClient.MESSAGE_FULLNAME_PREFIX)) {
       parentThread = ParentThread.createPrivateMessage(parentThreadFullName);
     } else {
       throw new UnsupportedOperationException("Unknown thread name: " + parentThreadFullName);

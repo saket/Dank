@@ -56,6 +56,11 @@ import timber.log.Timber;
  */
 public class DankRedditClient {
 
+  // Fullname == prefix + ID.
+  public static final String COMMENT_FULLNAME_PREFIX = "t1_";
+  public static final String SUBMISSION_FULLNAME_PREFIX = "t3_";
+  public static final String MESSAGE_FULLNAME_PREFIX = "t4_";
+
   public static final CommentSort DEFAULT_COMMENT_SORT = CommentSort.TOP;
 
   private final RedditClient redditClient;
@@ -102,11 +107,11 @@ public class DankRedditClient {
 
   @CheckResult
   public Single<Submission> submission(DankSubmissionRequest submissionRequest) {
-    Assert.assertEquals(submissionRequest.focusComment() == null, submissionRequest.contextCount() == null);
+    Assert.assertEquals(submissionRequest.focusCommentId() == null, submissionRequest.contextCount() == null);
 
     SubmissionRequest jrawSubmissionRequest = new SubmissionRequest.Builder(submissionRequest.id())
         .sort(submissionRequest.commentSort())
-        .focus(submissionRequest.focusComment())
+        .focus(submissionRequest.focusCommentId())
         .context(submissionRequest.contextCount())
         .limit(submissionRequest.commentLimit())
         .build();

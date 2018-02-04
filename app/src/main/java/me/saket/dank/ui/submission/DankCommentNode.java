@@ -13,7 +13,7 @@ import net.dean.jraw.models.CommentNode;
 public abstract class DankCommentNode implements SubmissionCommentRow {
 
   @Override
-  public abstract String fullName();
+  public abstract String adapterId();
 
   public abstract CommentNode commentNode();
 

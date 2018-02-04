@@ -63,7 +63,7 @@
   <color name="submission_link_byline">@color/white_opacity_50</color>
   <color name="submission_link_title_light_background">@color/black_opacity_90</color>
   <color name="submission_link_byline_light_background">@color/black_opacity_50</color>
-  <color name="submission_link_background_color">#3A3A3A</color>
+  <color name="submission_link_background">#3A3A3A</color>
   <color name="submission_comment_byline_author">@color/blue_gray_300</color>
   <color name="submission_comment_byline_author_op">@color/color_accent</color>
   <color name="submission_comment_byline_default_color">@color/vote_direction_none</color>
@@ -71,6 +71,8 @@
   <color name="submission_comment_body_collapsed">@color/gray_600</color>
   <color name="submission_comment_byline_failed_to_post">@color/error_text_color</color>
   <color name="submission_media_content_background_padding">@color/gray_900</color>
+  <color name="submission_comment_background">@color/window_background</color>
+  <color name="submission_comment_background_focused">@color/blue_gray_900</color>
 
   <color name="videoplayer_buffer_color">@color/gray_800</color>
 </resources>

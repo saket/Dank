@@ -3,10 +3,11 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:background="@color/window_background"
+  android:background="@color/submission_comment_background"
   android:elevation="@dimen/submission_comment_elevation"
   android:outlineProvider="none"
   tools:outlineProvider="background">
+  <!-- WARNING: the background is overridden in code. -->
 
   <me.saket.dank.widgets.swipe.SwipeActionIconView style="@style/DankSwipeableLayoutIcon" />
 

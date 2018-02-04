@@ -2,6 +2,7 @@ package me.saket.dank.utils;
 
 import android.graphics.Color;
 import android.support.annotation.ColorInt;
+import android.support.annotation.FloatRange;
 
 /**
  * Utility methods for manipulating colors.
@@ -17,7 +18,7 @@ public class Colors {
    * <p>
    * Usage: setColorAlpha(0xFFFFFFFF, 0.5f);
    */
-  public static int applyAlpha(@ColorInt int color, float alphaPercent) {
+  public static int applyAlpha(@ColorInt int color, @FloatRange(from = 0, to = 1) float alphaPercent) {
     int alpha = Math.round(Color.alpha(color) * alphaPercent);
     return Color.argb(alpha, Color.red(color), Color.green(color), Color.blue(color));
   }

@@ -14,7 +14,7 @@ public abstract class CommentPendingSyncReplyItem implements SubmissionCommentRo
   public abstract PublicContribution parentContribution();
 
   @Override
-  public abstract String fullName();
+  public abstract String adapterId();
 
   public abstract PendingSyncReply pendingSyncReply();
 
@@ -27,9 +27,13 @@ public abstract class CommentPendingSyncReplyItem implements SubmissionCommentRo
     return Type.PENDING_SYNC_REPLY;
   }
 
-  public static CommentPendingSyncReplyItem create(PublicContribution parentContribution, String fullName, PendingSyncReply pendingSyncReply,
-      boolean isCollapsed, int depth)
+  public static CommentPendingSyncReplyItem create(
+      PublicContribution parentContribution,
+      String adapterId,
+      PendingSyncReply pendingSyncReply,
+      boolean isCollapsed,
+      int depth)
   {
-    return new AutoValue_CommentPendingSyncReplyItem(parentContribution, fullName, pendingSyncReply, isCollapsed, depth);
+    return new AutoValue_CommentPendingSyncReplyItem(parentContribution, adapterId, pendingSyncReply, isCollapsed, depth);
   }
 }

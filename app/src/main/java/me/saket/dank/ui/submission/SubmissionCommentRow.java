@@ -13,7 +13,7 @@ public interface SubmissionCommentRow {
     LOAD_MORE_COMMENTS,
   }
 
-  String fullName();
+  String adapterId();
 
   Type type();
 }

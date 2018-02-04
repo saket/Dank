@@ -12,7 +12,7 @@ import net.dean.jraw.models.CommentNode;
 public abstract class LoadMoreCommentItem implements SubmissionCommentRow {
 
   @Override
-  public abstract String fullName();
+  public abstract String adapterId();
 
   /**
    * The comment node for which more comments can be fetched.
@@ -30,9 +30,6 @@ public abstract class LoadMoreCommentItem implements SubmissionCommentRow {
   }
 
   public static LoadMoreCommentItem create(String parentNodeFullname, CommentNode parentNode, boolean progressVisible) {
-    if (parentNodeFullname == null) {
-      throw new NullPointerException();
-    }
     String fullName = parentNodeFullname + "_loadMore";
     return new AutoValue_LoadMoreCommentItem(fullName, parentNode, progressVisible);
   }

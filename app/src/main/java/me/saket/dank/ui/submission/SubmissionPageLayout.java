@@ -26,6 +26,7 @@ import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.util.AttributeSet;
@@ -94,6 +95,7 @@ import me.saket.dank.ui.preferences.UserPreferenceGroup;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.adapter.CommentsItemDiffer;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
+import me.saket.dank.ui.submission.adapter.SubmissionComment;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentRowType;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
@@ -112,10 +114,12 @@ import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
+import me.saket.dank.utils.LinearSmoothScrollerWithVerticalSnapPref;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtils;
+import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
@@ -295,7 +299,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           .observeOn(mainThread())
           .takeUntil(lifecycle().onDestroyFlowable())
           .subscribe(retainedSubmission -> {
-            Timber.i("Restoring content");
             //noinspection ConstantConditions
             populateUi(retainedSubmission, retainedRequest);
           });
@@ -327,14 +330,16 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     submissionRequestStream
         .observeOn(mainThread())
         .doOnNext(o -> commentsLoadProgressVisibleStream.accept(true))
-        .doOnNext(o -> Timber.d("Request received"))
+        //.doOnNext(o -> Timber.d("------------------"))
         .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
+            //.compose(RxUtils.doOnceOnNext(o -> Timber.i("Submission received")))
             .flatMap(pair -> {
               // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
               // In that case, trigger another request with the correct sort. Doing this because we need to store
               // and retain this request in case the Activity gets recreated.
               DankSubmissionRequest updatedRequest = pair.first();
               if (updatedRequest != submissionRequest) {
+                //Timber.i("Triggering another request");
                 //noinspection ConstantConditions
                 submissionRequestStream.accept(updatedRequest);
                 return Observable.never();
@@ -356,6 +361,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         )
         .takeUntil(lifecycle().onDestroy())
         .as(Optional.of())
+        //.compose(RxUtils.doOnceOnNext(o -> Timber.i("Submission passed to stream")))
         .subscribe(submissionStream);
 
     // Adapter data-set.
@@ -376,6 +382,36 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .takeUntil(lifecycle().onDestroyFlowable())
         .subscribe(submissionCommentsAdapter);
 
+    // Scroll to focused comment on start.
+    submissionRequestStream
+        .switchMap(request -> {
+          if (request.focusCommentId() == null) {
+            return Observable.empty();
+          } else {
+            return submissionCommentsAdapter.dataChanges()
+                .observeOn(io())
+                .flatMap(rows -> {
+                  for (int i = 0; i < rows.size(); i++) {
+                    SubmissionScreenUiModel row = rows.get(i);
+                    if (row instanceof SubmissionComment.UiModel && ((SubmissionComment.UiModel) row).isFocused()) {
+                      return Observable.just(i);
+                    }
+                  }
+                  return Observable.never();
+                })
+                .take(1)
+                .takeUntil(lifecycle().onPageCollapse());
+          }
+        })
+        .delay(500, TimeUnit.MILLISECONDS, mainThread())
+        .takeUntil(lifecycle().onDestroy())
+        .doOnNext(o -> Timber.i("Scrolling to %s", o))
+        .subscribe(
+            focusedCommentPosition -> commentRecyclerView.post(() -> commentRecyclerView.smoothScrollToPosition(focusedCommentPosition)),
+            error -> Timber.w(error.getMessage())
+        );
+
+    // When request changes, wait until adapter's data-set gets updated AND with comment rows.
     lifecycle().onPageCollapse()
         .startWith(LifecycleStreams.NOTHING)
         .takeUntil(lifecycle().onDestroy())
@@ -398,7 +434,17 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           }
         });
     commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
-    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()));
+    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()) {
+      @Override
+      public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
+        // Bug workaround: when smooth-scrolling to a position, if the target View is already visible,
+        // RecyclerView ends up snapping to the bottom of the child. This is not what is needed in any
+        // case so I'm defaulting to SNAP_TO_START.
+        LinearSmoothScroller linearSmoothScroller = new LinearSmoothScrollerWithVerticalSnapPref(getContext(), LinearSmoothScroller.SNAP_TO_START);
+        linearSmoothScroller.setTargetPosition(position);
+        startSmoothScroll(linearSmoothScroller);
+      }
+    });
 
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
@@ -566,7 +612,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(pair -> {
           LoadMoreCommentsClickEvent loadMoreClickEvent = pair.first();
           DankSubmissionRequest continueThreadRequest = pair.second().toBuilder()
-              .focusComment(loadMoreClickEvent.parentCommentNode().getComment().getId())
+              .focusCommentId(loadMoreClickEvent.parentCommentNode().getComment().getId())
               .build();
           Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
           expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
@@ -614,7 +660,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     submissionCommentsAdapter.streamViewAllCommentsClicks()
         .takeUntil(lifecycle().onDestroy())
         .map(request -> request.toBuilder()
-            .focusComment(null)
+            .focusCommentId(null)
             .contextCount(null)
             .build())
         .withLatestFrom(submissionStream, Pair::create)
@@ -1103,7 +1149,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                       .withRedditSuppliedImages(submission.getThumbnails())
                       .open(getContext())
                   );
-
                   contentImageView.setContentDescription(getResources().getString(
                       R.string.cd_submission_image,
                       submission.getTitle()
