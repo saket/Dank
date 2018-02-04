@@ -80,14 +80,6 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
   }
 
   /**
-   * Expands this page without animation so that it fills the whole screen.
-   */
-  public void expandImmediatelyFrom() {
-    setClippedDimensions(getWidth(), 0);
-    expandImmediately();
-  }
-
-  /**
    * @param toShapeRect Final dimensions of this page, when it fully collapses.
    */
   public void collapseTo(Rect toShapeRect) {

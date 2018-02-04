@@ -532,6 +532,9 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
    * To be used when another ExpandablePageLayout is shown inside this page.Z
    * This page will avoid all draw calls while the nested page is open to
    * minimize overdraw.
+   * <p>
+   * WARNING: DO NOT USE THIS IF THE NESTED PAGE IS THE ONLY PULL-COLLAPSIBLE
+   * PAGE IN AN ACTIVITY.
    */
   public void setNestedExpandablePage(ExpandablePageLayout nestedPage) {
     this.nestedPage = nestedPage;

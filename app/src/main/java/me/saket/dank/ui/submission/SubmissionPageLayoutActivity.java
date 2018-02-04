@@ -62,10 +62,9 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
     ButterKnife.bind(this);
 
     setupContentExpandablePage(contentPage);
-    expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
-
-    contentPage.setNestedExpandablePage(submissionPageLayout);
     submissionPageLayout.expandImmediately();
+    expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
+    contentPage.setPullToCollapseIntercepter(submissionPageLayout);
 
     // SubmissionPageLayout will handle retaining its data on its own when savedInstance != null.
     if (savedInstanceState == null) {
