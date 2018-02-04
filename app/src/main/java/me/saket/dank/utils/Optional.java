@@ -159,7 +159,7 @@ public abstract class Optional<T> {
    * @param other the value to be returned if there is no value present, may be null
    * @return the value, if present, otherwise {@code other}
    */
-  public T orElse(T other) {
+  public T orElse(@Nullable T other) {
     return value() != null ? value() : other;
   }
 
