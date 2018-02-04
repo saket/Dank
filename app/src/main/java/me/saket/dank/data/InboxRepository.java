@@ -2,6 +2,7 @@ package me.saket.dank.data;
 
 import static java.util.Collections.unmodifiableList;
 
+import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
@@ -194,22 +195,26 @@ public class InboxRepository {
    */
   private Consumer<List<Message>> saveMessages(InboxFolder folder, boolean removeExistingMessages) {
     return fetchedMessages -> {
+      List<ContentValues> messagesValuesToStore = new ArrayList<>(fetchedMessages.size());
+      for (Message fetchedMessage : fetchedMessages) {
+        long latestMessageTimestamp;
+        if (fetchedMessage.isComment()) {
+          latestMessageTimestamp = JrawUtils.createdTimeUtc(fetchedMessage);
+        } else {
+          List<Message> messageReplies = JrawUtils.messageReplies(fetchedMessage);
+          Message latestMessage = messageReplies.isEmpty() ? fetchedMessage : messageReplies.get(messageReplies.size() - 1);
+          latestMessageTimestamp = JrawUtils.createdTimeUtc(latestMessage);
+        }
+        CachedMessage cachedMessage = CachedMessage.create(fetchedMessage.getFullName(), fetchedMessage, latestMessageTimestamp, folder);
+        messagesValuesToStore.add(cachedMessage.toContentValues(moshi));
+      }
+
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
         if (removeExistingMessages) {
           briteDatabase.delete(CachedMessage.TABLE_NAME, CachedMessage.WHERE_FOLDER, folder.name());
         }
-
-        for (Message fetchedMessage : fetchedMessages) {
-          long latestMessageTimestamp;
-          if (fetchedMessage.isComment()) {
-            latestMessageTimestamp = JrawUtils.createdTimeUtc(fetchedMessage);
-          } else {
-            List<Message> messageReplies = JrawUtils.messageReplies(fetchedMessage);
-            Message latestMessage = messageReplies.isEmpty() ? fetchedMessage : messageReplies.get(messageReplies.size() - 1);
-            latestMessageTimestamp = JrawUtils.createdTimeUtc(latestMessage);
-          }
-          CachedMessage messageToStore = CachedMessage.create(fetchedMessage.getFullName(), fetchedMessage, latestMessageTimestamp, folder);
-          briteDatabase.insert(CachedMessage.TABLE_NAME, messageToStore.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
+        for (ContentValues cachedMessageValues : messagesValuesToStore) {
+          briteDatabase.insert(CachedMessage.TABLE_NAME, cachedMessageValues, SQLiteDatabase.CONFLICT_REPLACE);
         }
         transaction.markSuccessful();
       }

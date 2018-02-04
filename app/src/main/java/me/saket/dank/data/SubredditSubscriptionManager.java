@@ -4,10 +4,10 @@ import static me.saket.dank.utils.Commons.toImmutable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
 import android.app.Application;
+import android.content.ContentValues;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
-import android.support.annotation.NonNull;
 import android.support.annotation.VisibleForTesting;
 
 import com.google.common.collect.ImmutableList;
@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
-
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -374,13 +373,16 @@ public class SubredditSubscriptionManager {
    */
   private Consumer<List<SubredditSubscription>> saveSubscriptionsToDatabase() {
     return newSubscriptions -> {
+      List<ContentValues> newSubscriptionValuesList = new ArrayList<>(newSubscriptions.size());
+      for (SubredditSubscription newSubscription : newSubscriptions) {
+       newSubscriptionValuesList.add(newSubscription.toContentValues());
+      }
+
       try (BriteDatabase.Transaction transaction = database.newTransaction()) {
         database.delete(SubredditSubscription.TABLE_NAME, null);
-
-        for (SubredditSubscription freshSubscription : newSubscriptions) {
-          database.insert(SubredditSubscription.TABLE_NAME, freshSubscription.toContentValues());
+        for (ContentValues newSubscriptionValues : newSubscriptionValuesList) {
+          database.insert(SubredditSubscription.TABLE_NAME, newSubscriptionValues);
         }
-
         transaction.markSuccessful();
       }
     };

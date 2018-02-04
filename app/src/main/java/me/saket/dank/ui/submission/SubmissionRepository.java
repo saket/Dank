@@ -1,5 +1,8 @@
 package me.saket.dank.ui.submission;
 
+import static junit.framework.Assert.assertEquals;
+
+import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
@@ -242,11 +245,12 @@ public class SubmissionRepository {
           saveTimeMillis
       );
       JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
+      ContentValues valuesWithoutComments = cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter);
+      ContentValues valuesWithComments = cachedSubmission.toContentValues(moshi);
 
       try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-        database.insert(CachedSubmissionWithComments.TABLE_NAME, cachedSubmission.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE);
-        database.insert(CachedSubmissionWithoutComments.TABLE_NAME, cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
-            SQLiteDatabase.CONFLICT_REPLACE);
+        database.insert(CachedSubmissionWithComments.TABLE_NAME, valuesWithComments, SQLiteDatabase.CONFLICT_REPLACE);
+        database.insert(CachedSubmissionWithoutComments.TABLE_NAME, valuesWithoutComments, SQLiteDatabase.CONFLICT_REPLACE);
         transaction.markSuccessful();
       }
     });
@@ -377,51 +381,58 @@ public class SubmissionRepository {
    */
   @CheckResult
   private SaveResult saveSubmissions(CachedSubmissionFolder folder, List<Submission> submissionsToSave) {
-    List<Submission> savedSubmissions = new ArrayList<>(submissionsToSave.size());
     JsonAdapter<SortingAndTimePeriod> andTimePeriodJsonAdapter = moshi.adapter(SortingAndTimePeriod.class);
     JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
 
+    List<ContentValues> submissionIdValuesList = new ArrayList<>(submissionsToSave.size());
+    List<ContentValues> submissionWithoutCommentsValuesList = new ArrayList<>(submissionsToSave.size());
+
+    for (int i = 0; i < submissionsToSave.size(); i++) {
+      // Reddit sends submissions according to their sorting order. So they may or may not be
+      // sorted by their creation time. However, we want to store their download time so that
+      // they can be fetched in the same order (because SQLite doesn't guarantee preservation
+      // of insertion order). Adding the index to avoid duplicate times.
+      long saveTimeMillis = System.currentTimeMillis() + i;
+      Submission submission = submissionsToSave.get(i);
+
+      // Warning: get the subreddit name from the folder and not the submissions or else
+      // "Frontpage", "Popular", etc. will never get anything.
+      String subredditName = folder.subredditName();
+
+      CachedSubmissionId cachedSubmissionId = CachedSubmissionId.create(
+          submission.getFullName(),
+          subredditName,
+          folder.sortingAndTimePeriod(),
+          saveTimeMillis
+      );
+
+      CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
+          submission.getFullName(),
+          submission,
+          submission.getSubredditName(),
+          saveTimeMillis
+      );
+
+      submissionIdValuesList.add(cachedSubmissionId.toContentValues(andTimePeriodJsonAdapter));
+      submissionWithoutCommentsValuesList.add(cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter));
+    }
+
+    List<Submission> savedSubmissions = new ArrayList<>(submissionsToSave.size());
+
     try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-      for (int i = 0; i < submissionsToSave.size(); i++) {
-        // Reddit sends submissions according to their sorting order. So they may or may not be
-        // sorted by their creation time. However, we want to store their download time so that
-        // they can be fetched in the same order (because SQLite doesn't guarantee preservation
-        // of insertion order). Adding the index to avoid duplicate times.
-        long saveTimeMillis = System.currentTimeMillis() + i;
-        Submission submission = submissionsToSave.get(i);
-
-        // Warning: get the subreddit name from the folder and not the submissions or else
-        // "Frontpage", "Popular", etc. will never get anything.
-        String subredditName = folder.subredditName();
-
-        CachedSubmissionId cachedSubmissionId = CachedSubmissionId.create(
-            submission.getFullName(),
-            subredditName,
-            folder.sortingAndTimePeriod(),
-            saveTimeMillis
-        );
-
-        CachedSubmissionWithoutComments cachedSubmissionWithoutComments = CachedSubmissionWithoutComments.create(
-            submission.getFullName(),
-            submission,
-            submission.getSubredditName(),
-            saveTimeMillis
-        );
+      for (int i = 0; i < submissionIdValuesList.size(); i++) {
+        ContentValues submissionIdValues = submissionIdValuesList.get(i);
+        ContentValues submissionWithoutCommentsValues = submissionWithoutCommentsValuesList.get(i);
 
         // Again, since Reddit does not send submissions sorted by time, it's possible to receive
         // duplicate submissions.Ignore them.
-        long insertedRowId = database.insert(
-            CachedSubmissionId.TABLE_NAME,
-            cachedSubmissionId.toContentValues(andTimePeriodJsonAdapter),
-            SQLiteDatabase.CONFLICT_IGNORE
-        );
+        long insertedRowId = database.insert(CachedSubmissionId.TABLE_NAME, submissionIdValues, SQLiteDatabase.CONFLICT_IGNORE);
         if (insertedRowId != -1) {
-          database.insert(
-              CachedSubmissionWithoutComments.TABLE_NAME,
-              cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter),
-              SQLiteDatabase.CONFLICT_REPLACE /* To handle updated submissions received from remote */
-          );
-          savedSubmissions.add(submission);
+          // CONFLICT_REPLACE: to handle updated submissions received from remote.
+          database.insert(CachedSubmissionWithoutComments.TABLE_NAME, submissionWithoutCommentsValues, SQLiteDatabase.CONFLICT_REPLACE);
+          Submission savedSubmission = submissionsToSave.get(i);
+          assertEquals(submissionIdValues.get(CachedSubmissionId.COLUMN_SUBMISSION_FULL_NAME), savedSubmission.getFullName());
+          savedSubmissions.add(savedSubmission);
         }
       }
 
@@ -437,7 +448,6 @@ public class SubmissionRepository {
       try (BriteDatabase.Transaction transaction = database.newTransaction()) {
         database.delete(CachedSubmissionId.TABLE_NAME, null);
         database.delete(CachedSubmissionWithoutComments.TABLE_NAME, null);
-
         transaction.markSuccessful();
       }
     });
