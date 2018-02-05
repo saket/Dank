@@ -44,7 +44,7 @@ public class UrlParser {
   /**
    * /u/$user.
    */
-  private static final Pattern USER_PATTERN = Pattern.compile("^/u/([a-zA-Z0-9-_.]+)(/)*$");
+  private static final Pattern USER_PATTERN = Pattern.compile("^/u(?:ser)?/([a-zA-Z0-9-_.]+)(?:/)*$");
 
   /**
    * Submission: /r/$subreddit/comments/$post_id/post_title.
