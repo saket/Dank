@@ -22,6 +22,11 @@ public abstract class RedditSubmissionLink extends RedditLink implements Parcela
    */
   @Nullable public abstract RedditCommentLink initialComment();
 
+  @Override
+  public RedditLinkType redditLinkType() {
+    return RedditLinkType.SUBMISSION;
+  }
+
   public static RedditSubmissionLink create(String unparsedUrl, String id, String subredditName) {
     return new AutoValue_RedditSubmissionLink(unparsedUrl, id, subredditName, null);
   }

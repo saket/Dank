@@ -17,6 +17,11 @@ public abstract class RedditCommentLink extends RedditLink implements Parcelable
    */
   public abstract int contextCount();
 
+  @Override
+  public RedditLinkType redditLinkType() {
+    return RedditLinkType.COMMENT;
+  }
+
   public static RedditCommentLink create(String unparsedUrl, String id, Integer contextCount) {
     return new AutoValue_RedditCommentLink(unparsedUrl, id, contextCount);
   }

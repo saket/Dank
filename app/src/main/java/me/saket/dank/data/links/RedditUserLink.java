@@ -12,6 +12,11 @@ public abstract class RedditUserLink extends RedditLink implements Parcelable {
 
   public abstract String name();
 
+  @Override
+  public RedditLinkType redditLinkType() {
+    return RedditLinkType.USER;
+  }
+
   public static RedditUserLink create(String unparsedUrl, String userName) {
     return new AutoValue_RedditUserLink(unparsedUrl, userName);
   }

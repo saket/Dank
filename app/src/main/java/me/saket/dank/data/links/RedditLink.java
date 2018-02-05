@@ -5,8 +5,17 @@ package me.saket.dank.data.links;
  */
 public abstract class RedditLink extends Link {
 
+  public enum RedditLinkType {
+    COMMENT,
+    SUBMISSION,
+    SUBREDDIT,
+    USER
+  }
+
   @Override
   public Link.Type type() {
     return Link.Type.REDDIT_PAGE;
   }
+
+  public abstract RedditLinkType redditLinkType();
 }

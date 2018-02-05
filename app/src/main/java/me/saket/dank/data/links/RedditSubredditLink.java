@@ -12,6 +12,11 @@ public abstract class RedditSubredditLink extends RedditLink implements Parcelab
 
   public abstract String name();
 
+  @Override
+  public RedditLinkType redditLinkType() {
+    return RedditLinkType.SUBREDDIT;
+  }
+
   public static RedditSubredditLink create(String unparsedUrl, String subredditName) {
     return new AutoValue_RedditSubredditLink(unparsedUrl, subredditName);
   }
