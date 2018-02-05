@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddits;
+package me.saket.dank.ui.subreddit;
 
 import android.support.annotation.Nullable;
 

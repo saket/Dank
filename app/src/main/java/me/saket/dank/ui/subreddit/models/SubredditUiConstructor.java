@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddits.models;
+package me.saket.dank.ui.subreddit.models;
 
 import android.content.Context;
 import android.support.annotation.CheckResult;
@@ -29,8 +29,8 @@ import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
-import me.saket.dank.ui.subreddits.NetworkCallStatus;
-import me.saket.dank.ui.subreddits.RealSubmissionThumbnailType;
+import me.saket.dank.ui.subreddit.NetworkCallStatus;
+import me.saket.dank.ui.subreddit.RealSubmissionThumbnailType;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;

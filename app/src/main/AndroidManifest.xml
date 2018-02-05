@@ -22,7 +22,7 @@
     android:theme="@style/DankTheme.TransparentBackground">
 
     <activity
-      android:name=".ui.subreddits.SubredditActivity"
+      android:name=".ui.subreddit.SubredditActivity"
       android:launchMode="singleTop"
       android:theme="@style/DankTheme"
       android:windowSoftInputMode="adjustResize">
@@ -32,19 +32,19 @@
       </intent-filter>
     </activity>
 
-    <activity android:name=".ui.subreddits.SubredditActivityWithTransparentWindowBackground" />
+    <activity android:name=".ui.subreddit.SubredditActivityWithTransparentWindowBackground" />
 
     <activity
       android:name=".ui.authentication.LoginActivity"
       android:label="@string/login"
-      android:parentActivityName=".ui.subreddits.SubredditActivity"
+      android:parentActivityName=".ui.subreddit.SubredditActivity"
       android:theme="@style/DankTheme.DialogLikeActivity"
       android:windowSoftInputMode="adjustResize" />
 
     <activity
       android:name=".ui.preferences.UserPreferencesActivity"
       android:label="@string/activity_userpreferences"
-      android:parentActivityName=".ui.subreddits.SubredditActivity" />
+      android:parentActivityName=".ui.subreddit.SubredditActivity" />
 
     <activity android:name=".ui.webview.WebViewActivity" />
 
@@ -53,7 +53,7 @@
     <activity
       android:name=".ui.user.messages.InboxActivity"
       android:launchMode="singleTask"
-      android:parentActivityName=".ui.subreddits.SubredditActivity" />
+      android:parentActivityName=".ui.subreddit.SubredditActivity" />
 
     <activity
       android:name=".ui.preferences.HiddenPreferencesActivity"
@@ -78,7 +78,7 @@
     <activity
       android:name=".ui.PlaygroundActivity"
       android:label="Playground"
-      android:parentActivityName=".ui.subreddits.SubredditActivity" />
+      android:parentActivityName=".ui.subreddit.SubredditActivity" />
 
     <activity
       android:name=".ui.media.MediaAlbumViewerActivity"
@@ -86,7 +86,7 @@
       android:theme="@style/DankTheme.TransparentBackground.Fullscreen" />
 
     <service
-      android:name=".ui.subreddits.SubredditSubscriptionsSyncJob"
+      android:name=".ui.subreddit.SubredditSubscriptionsSyncJob"
       android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 

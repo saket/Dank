@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddits;
+package me.saket.dank.ui.subreddit;
 
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 

@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddits;
+package me.saket.dank.ui.subreddit;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
@@ -64,9 +64,9 @@ import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
-import me.saket.dank.ui.subreddits.models.SubmissionItemDiffer;
-import me.saket.dank.ui.subreddits.models.SubredditScreenUiModel;
-import me.saket.dank.ui.subreddits.models.SubredditUiConstructor;
+import me.saket.dank.ui.subreddit.models.SubmissionItemDiffer;
+import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
+import me.saket.dank.ui.subreddit.models.SubredditUiConstructor;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankSubmissionRequest;

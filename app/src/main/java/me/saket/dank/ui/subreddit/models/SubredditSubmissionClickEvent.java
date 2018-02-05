@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddits.models;
+package me.saket.dank.ui.subreddit.models;
 
 import android.view.View;
 

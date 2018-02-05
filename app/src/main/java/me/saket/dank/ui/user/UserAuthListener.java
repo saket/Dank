@@ -10,7 +10,7 @@ import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
-import me.saket.dank.ui.subreddits.SubredditSubscriptionsSyncJob;
+import me.saket.dank.ui.subreddit.SubredditSubscriptionsSyncJob;
 import timber.log.Timber;
 
 public class UserAuthListener {

@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddits;
+package me.saket.dank.ui.subreddit;
 
 import android.support.annotation.CheckResult;
 import android.support.v7.util.DiffUtil;
@@ -13,11 +13,11 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
-import me.saket.dank.ui.subreddits.models.SubredditScreenUiModel;
-import me.saket.dank.ui.subreddits.models.SubredditScreenUiModel.SubmissionRowUiModel;
-import me.saket.dank.ui.subreddits.models.SubredditSubmission;
-import me.saket.dank.ui.subreddits.models.SubredditSubmissionClickEvent;
-import me.saket.dank.ui.subreddits.models.SubredditSubmissionPagination;
+import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
+import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel.SubmissionRowUiModel;
+import me.saket.dank.ui.subreddit.models.SubredditSubmission;
+import me.saket.dank.ui.subreddit.models.SubredditSubmissionClickEvent;
+import me.saket.dank.ui.subreddit.models.SubredditSubmissionPagination;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 

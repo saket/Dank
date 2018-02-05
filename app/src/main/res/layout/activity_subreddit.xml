@@ -6,7 +6,7 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:background="@null"
   android:elevation="0dp"
-  tools:context="me.saket.dank.ui.subreddits.SubredditActivity">
+  tools:context="me.saket.dank.ui.subreddit.SubredditActivity">
 
   <me.saket.dank.widgets.InboxUI.InboxRecyclerView
     android:id="@+id/subreddit_submission_list"

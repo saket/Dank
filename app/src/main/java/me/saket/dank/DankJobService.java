@@ -14,7 +14,7 @@ import com.jakewharton.rxrelay2.Relay;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
-import me.saket.dank.ui.subreddits.SubredditActivity;
+import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 
 /**

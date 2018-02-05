@@ -9,7 +9,7 @@ import com.jakewharton.rxbinding2.support.v7.widget.RecyclerViewScrollEvent;
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 
 import io.reactivex.Observable;
-import me.saket.dank.ui.subreddits.InfiniteScroller;
+import me.saket.dank.ui.subreddit.InfiniteScroller;
 
 /**
  * Prefer {@link InfiniteScroller} instead.

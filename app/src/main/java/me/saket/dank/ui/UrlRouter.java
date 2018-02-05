@@ -20,7 +20,7 @@ import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
-import me.saket.dank.ui.subreddits.SubredditActivityWithTransparentWindowBackground;
+import me.saket.dank.ui.subreddit.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.webview.WebViewActivity;
 import me.saket.dank.utils.Intents;

@@ -25,7 +25,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.data.links.Link;
-import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
+import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.DankLinkMovementMethod;

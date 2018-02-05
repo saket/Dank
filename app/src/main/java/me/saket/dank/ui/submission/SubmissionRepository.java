@@ -52,7 +52,7 @@ import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
-import me.saket.dank.ui.subreddits.NetworkCallStatus;
+import me.saket.dank.ui.subreddit.NetworkCallStatus;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Pair;

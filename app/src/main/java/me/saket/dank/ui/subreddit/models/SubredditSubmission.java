@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddits.models;
+package me.saket.dank.ui.subreddit.models;
 
 import android.support.annotation.CheckResult;
 import android.support.v7.widget.RecyclerView;
@@ -25,7 +25,7 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithTextEquality;
-import me.saket.dank.ui.subreddits.SubmissionSwipeActionsProvider;
+import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.glide.GlideCircularTransformation;

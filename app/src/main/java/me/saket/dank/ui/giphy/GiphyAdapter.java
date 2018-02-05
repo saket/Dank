@@ -23,7 +23,7 @@ import butterknife.ButterKnife;
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.ui.subreddits.InfinitelyScrollableRecyclerViewAdapter;
+import me.saket.dank.ui.subreddit.InfinitelyScrollableRecyclerViewAdapter;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
 public class GiphyAdapter extends RecyclerViewArrayAdapter<GiphyGif, GiphyAdapter.GiphyGifViewHolder>

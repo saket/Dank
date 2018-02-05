@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddits.models;
+package me.saket.dank.ui.subreddit.models;
 
 import android.support.annotation.CheckResult;
 import android.support.v7.widget.RecyclerView;
@@ -16,7 +16,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.ui.subreddits.SubredditSubmissionsAdapter;
+import me.saket.dank.ui.subreddit.SubredditSubmissionsAdapter;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 
