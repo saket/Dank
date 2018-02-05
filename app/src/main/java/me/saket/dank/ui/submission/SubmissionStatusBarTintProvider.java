@@ -4,12 +4,15 @@ import android.graphics.Bitmap;
 import android.support.annotation.CheckResult;
 
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import me.saket.dank.data.StatusBarTint;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.StatusBarTintProvider;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.PullToCollapseListener;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
+import timber.log.Timber;
 
 class SubmissionStatusBarTintProvider {
 
@@ -33,12 +36,21 @@ class SubmissionStatusBarTintProvider {
   }
 
   @CheckResult
-  public Observable<StatusBarTint> streamStatusBarTintColor(Observable<Bitmap> contentBitmapStream, ExpandablePageLayout expandablePageLayout,
+  public Observable<StatusBarTint> streamStatusBarTintColor(
+      Observable<Optional<Bitmap>> contentBitmapStream,
+      ExpandablePageLayout expandablePageLayout,
       ScrollingRecyclerViewSheet commentListParentSheet)
   {
     StatusBarTint defaultTint = StatusBarTint.create(defaultStatusBarColor, true);
     return contentBitmapStream
-        .switchMapSingle(bitmap -> statusBarTintProvider.generateTint(bitmap))
+        .switchMapSingle(optionalBitmap -> {
+          if (optionalBitmap.isPresent()) {
+            return statusBarTintProvider.generateTint(optionalBitmap.get());
+          } else {
+            Timber.i("Empty image. Returning default tint.");
+            return Single.just(defaultTint);
+          }
+        })
         .startWith(defaultTint)
         .switchMap(statusBarTint -> {
           Observable<SubmissionPageState> pageStateStream = streamPageState(expandablePageLayout).distinctUntilChanged();

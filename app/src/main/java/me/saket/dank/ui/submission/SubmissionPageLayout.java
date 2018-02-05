@@ -927,9 +927,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     //noinspection ConstantConditions
     int defaultStatusBarColor = ContextCompat.getColor(getContext(), R.color.color_primary_dark);
     int statusBarHeight = Views.statusBarHeight(getResources());
-    Observable<Bitmap> contentBitmapStream = Observable.merge(
+    Observable<Optional<Bitmap>> contentBitmapStream = Observable.merge(
         contentImageViewHolder.streamImageBitmaps(),
-        contentVideoViewHolder.streamVideoFirstFrameBitmaps(statusBarHeight)
+        contentVideoViewHolder.streamVideoFirstFrameBitmaps(statusBarHeight).map(Optional::of)
     );
 
     SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(

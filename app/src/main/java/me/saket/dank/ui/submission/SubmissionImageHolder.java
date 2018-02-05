@@ -36,6 +36,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -107,7 +108,7 @@ public class SubmissionImageHolder {
   }
 
   @CheckResult
-  public Observable<Bitmap> streamImageBitmaps() {
+  public Observable<Optional<Bitmap>> streamImageBitmaps() {
     return imageStream.map(SubmissionImageHolder::bitmapFromDrawable);
   }
 
@@ -251,11 +252,13 @@ public class SubmissionImageHolder {
     imageView.getController().addOnStateChangeListener(imageScrollListener);
   }
 
-  private static Bitmap bitmapFromDrawable(Drawable drawable) {
+  private static Optional<Bitmap> bitmapFromDrawable(Drawable drawable) {
     if (drawable instanceof BitmapDrawable) {
-      return ((BitmapDrawable) drawable).getBitmap();
+      return Optional.of(((BitmapDrawable) drawable).getBitmap());
     } else if (drawable instanceof GifDrawable) {
-      return ((GifDrawable) drawable).getFirstFrame();
+      // First frame of a GIF can be null if it has already started playing
+      // and the first frame has been thrown away.
+      return Optional.ofNullable(((GifDrawable) drawable).getFirstFrame());
     } else {
       throw new IllegalStateException("Unknown Drawable: " + drawable);
     }
