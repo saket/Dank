@@ -57,6 +57,7 @@
         android:layout_marginBottom="@dimen/spacing16"
         android:layout_marginEnd="@dimen/spacing16"
         android:layout_marginTop="6dp"
+        android:foreground="?attr/selectableItemBackgroundBorderless"
         tools:background="@drawable/background_submission_self_thumbnail"
         tools:ignore="ContentDescription"
         tools:scaleType="centerInside"

@@ -404,7 +404,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         })
         .delay(500, TimeUnit.MILLISECONDS, mainThread())
         .takeUntil(lifecycle().onDestroy())
-        .doOnNext(o -> Timber.i("Scrolling to %s", o))
         .subscribe(
             focusedCommentPosition -> commentRecyclerView.post(() -> commentRecyclerView.smoothScrollToPosition(focusedCommentPosition)),
             error -> Timber.w(error.getMessage())

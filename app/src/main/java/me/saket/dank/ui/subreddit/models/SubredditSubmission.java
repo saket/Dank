@@ -13,7 +13,6 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions;
 import com.bumptech.glide.request.RequestOptions;
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
-import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
@@ -215,7 +214,8 @@ public interface SubredditSubmission {
   }
 
   class Adapter implements SubredditScreenUiModel.SubmissionRowUiChildAdapter<UiModel, ViewHolder> {
-    private final Relay<SubredditSubmissionClickEvent> submissionClicks = PublishRelay.create();
+    private final PublishRelay<SubredditSubmissionClickEvent> submissionClicks = PublishRelay.create();
+    private final PublishRelay<SubredditSubmissionThumbnailClickEvent> thumbnailClicks = PublishRelay.create();
     private final SubmissionSwipeActionsProvider swipeActionsProvider;
 
     @Inject
@@ -226,9 +226,14 @@ public interface SubredditSubmission {
     @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
       ViewHolder holder = ViewHolder.create(inflater, parent);
-      holder.itemView.setOnClickListener(o -> {
-        if (holder.getAdapterPosition() != RecyclerView.NO_POSITION) {
-          submissionClicks.accept(SubredditSubmissionClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.getItemId()));
+      holder.itemView.setOnClickListener(o ->
+          submissionClicks.accept(SubredditSubmissionClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.getItemId()))
+      );
+      holder.thumbnailView.setOnClickListener(o -> {
+        if (holder.uiModel.submission().isSelfPost()) {
+          holder.itemView.performClick();
+        } else {
+          thumbnailClicks.accept(SubredditSubmissionThumbnailClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.thumbnailView));
         }
       });
 
@@ -257,6 +262,11 @@ public interface SubredditSubmission {
     @CheckResult
     public Observable<SubredditSubmissionClickEvent> submissionClicks() {
       return submissionClicks;
+    }
+
+    @CheckResult
+    public Observable<SubredditSubmissionThumbnailClickEvent> thumbnailClicks() {
+      return thumbnailClicks;
     }
   }
 }

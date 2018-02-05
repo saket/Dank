@@ -18,6 +18,7 @@ import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel.SubmissionRowUiM
 import me.saket.dank.ui.subreddit.models.SubredditSubmission;
 import me.saket.dank.ui.subreddit.models.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.subreddit.models.SubredditSubmissionPagination;
+import me.saket.dank.ui.subreddit.models.SubredditSubmissionThumbnailClickEvent;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
@@ -46,6 +47,11 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   @CheckResult
   public Observable<SubredditSubmissionClickEvent> submissionClicks() {
     return submissionAdapter.submissionClicks();
+  }
+
+  @CheckResult
+  public Observable<SubredditSubmissionThumbnailClickEvent> thumbnailClicks() {
+    return submissionAdapter.thumbnailClicks();
   }
 
   @CheckResult

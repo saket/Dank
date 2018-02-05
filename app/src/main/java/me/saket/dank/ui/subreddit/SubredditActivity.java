@@ -13,6 +13,7 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.LayoutTransition;
 import android.content.Intent;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
@@ -43,6 +44,7 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -54,9 +56,13 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
+import me.saket.dank.data.links.Link;
+import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
@@ -75,6 +81,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtils;
 import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.ErrorStateView;
@@ -110,6 +117,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @BindView(R.id.subreddit_progress) View fullscreenProgressView;
   @BindView(R.id.subreddit_submission_errorState) ErrorStateView fullscreenErrorStateView;
 
+  // TODO: convert all to lazy injections.
   @Inject SubmissionRepository submissionRepository;
   @Inject ErrorResolver errorResolver;
   @Inject CachePreFiller cachePreFiller;
@@ -118,6 +126,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Inject UserSessionRepository userSessionRepository;
   @Inject SubredditUiConstructor uiConstructor;
   @Inject SubredditSubmissionsAdapter submissionsAdapter;
+  @Inject Lazy<UrlRouter> urlRouter;
 
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
@@ -325,6 +334,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     submissionList.addOnItemTouchListener(new RecyclerSwipeListener(submissionList));
     submissionList.setAdapter(submissionsAdapter);
 
+    // Row clicks.
     submissionsAdapter.submissionClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(clickEvent -> {
@@ -349,6 +359,60 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
                   .takeUntil(lifecycle().onDestroy())
                   .subscribe(o -> submissionList.expandItem(submissionList.indexOfChild(clickEvent.itemView()), clickEvent.itemId()))
           );
+        });
+
+    // Thumbnail clicks.
+    submissionsAdapter.thumbnailClicks()
+        .doOnNext(event -> {
+          if (event.submission().isSelfPost()) {
+            throw new AssertionError("Shouldn't happen");
+          }
+        })
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(event -> {
+          Submission submission = event.submission();
+          Link contentLink = UrlParser.parse(submission.getUrl());
+
+          switch (contentLink.type()) {
+            case SINGLE_IMAGE:
+            case SINGLE_GIF:
+            case SINGLE_VIDEO:
+            case MEDIA_ALBUM:
+              urlRouter.get()
+                  .forLink(((MediaLink) contentLink))
+                  .withRedditSuppliedImages(submission.getThumbnails())
+                  .open(this);
+              break;
+
+            case REDDIT_PAGE:
+              switch (((RedditLink) contentLink).redditLinkType()) {
+                case COMMENT:
+                case SUBMISSION:
+                case SUBREDDIT:
+                  urlRouter.get()
+                      .forLink(contentLink)
+                      .expandFrom(new Point(0, event.itemView().getBottom()))
+                      .open(this);
+                  break;
+
+                case USER:
+                  throw new AssertionError("Did not expect Reddit to create a thumbnail for user links");
+
+                default:
+                  throw new AssertionError();
+              }
+              break;
+
+            case EXTERNAL:
+              urlRouter.get()
+                  .forLink(contentLink)
+                  .expandFrom(new Point(0, event.itemView().getBottom()))
+                  .open(this);
+              break;
+
+            default:
+              throw new AssertionError();
+          }
         });
 
     subredditChangesStream
