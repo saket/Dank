@@ -22,10 +22,12 @@ public enum RealSubmissionThumbnailType {
     //Timber.i("Thumbnails: %s", submission.getThumbnails());
 
     if (submission.isNsfw() && !showNsfwThumbnails) {
-      if (submission.getThumbnail() == null || submission.getThumbnailType() == Submission.ThumbnailType.NONE) {
+      if (submission.isSelfPost()) {
+        return NSFW_SELF_POST;
+      } else if (submission.getThumbnail() == null || submission.getThumbnailType() == Submission.ThumbnailType.NONE) {
         return NONE;
       } else {
-        return submission.isSelfPost() ? NSFW_SELF_POST : NSFW_LINK;
+        return NSFW_LINK;
       }
     }
 
