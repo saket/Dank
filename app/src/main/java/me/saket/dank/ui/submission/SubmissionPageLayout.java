@@ -16,6 +16,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
+import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
@@ -82,6 +83,7 @@ import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.UrlRouter;
@@ -649,10 +651,21 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     // Content link clicks.
     submissionCommentsAdapter.streamContentLinkClicks()
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(link -> urlRouter.forLink(link)
-            .expandFromBelowToolbar()
-            .open(getContext())
-        );
+        .subscribe(event -> {
+          if (event.link() instanceof RedditUserLink) {
+            // TODO: Open fullscreen user profile.
+            Point expandFromPoint = new Point(event.contentLinkView().getLeft(), event.contentLinkView().getBottom());
+            Timber.i("expandFromPoint: %s", expandFromPoint);
+            urlRouter.forLink(((RedditUserLink) event.link()))
+                .expandFrom(expandFromPoint)
+                .open(event.contentLinkView());
+
+          } else {
+            urlRouter.forLink(event.link())
+                .expandFromBelowToolbar()
+                .open(getContext());
+          }
+        });
 
     // View full thread.
     submissionCommentsAdapter.streamViewAllCommentsClicks()

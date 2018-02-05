@@ -17,7 +17,6 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.data.PostedOrInFlightContribution;
-import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
@@ -27,6 +26,7 @@ import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
+import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -188,7 +188,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
-  public Observable<Link> streamContentLinkClicks() {
+  public Observable<SubmissionContentLinkClickEvent> streamContentLinkClicks() {
     return headerAdapter.contentLinkClickStream;
   }
 

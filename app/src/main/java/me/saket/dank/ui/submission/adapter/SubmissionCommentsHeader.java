@@ -24,7 +24,7 @@ import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithTextEquality;
-import me.saket.dank.data.links.Link;
+import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
@@ -177,8 +177,10 @@ public interface SubmissionCommentsHeader {
       });
     }
 
-    public void setupContentLinkClickStream(Relay<Link> clickStream) {
-      contentLinkView.setOnClickListener(o -> clickStream.accept(uiModel.optionalContentLinkModel().get().link()));
+    public void setupContentLinkClickStream(Relay<SubmissionContentLinkClickEvent> clickStream) {
+      contentLinkView.setOnClickListener(o ->
+          clickStream.accept(SubmissionContentLinkClickEvent.create(contentLinkView, uiModel.optionalContentLinkModel().get().link()))
+      );
     }
 
     public void setUiModel(UiModel uiModel) {
@@ -361,7 +363,7 @@ public interface SubmissionCommentsHeader {
     private final DankLinkMovementMethod linkMovementMethod;
     private final SubmissionSwipeActionsProvider swipeActionsProvider;
     final PublishRelay<Object> headerClickStream = PublishRelay.create();
-    final PublishRelay<Link> contentLinkClickStream = PublishRelay.create();
+    final PublishRelay<SubmissionContentLinkClickEvent> contentLinkClickStream = PublishRelay.create();
     final PublishRelay<Optional<SubmissionCommentsHeader.ViewHolder>> headerBindStream = PublishRelay.create();
 
     @Inject
