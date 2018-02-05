@@ -68,6 +68,7 @@ public class UrlRouter {
      * Just makes the entry animation explicit for the code reader; nothing else.
      */
     public IntentRouter expandFromBelowToolbar() {
+      //noinspection ConstantConditions
       return expandFrom((Rect) null);
     }
 
@@ -108,7 +109,7 @@ public class UrlRouter {
           context.startActivity(openUrlIntent);
 
         } else {
-          WebViewActivity.start(context, url);
+          context.startActivity(WebViewActivity.intent(context, url, expandFromRect));
         }
 
       } else {
@@ -145,7 +146,7 @@ public class UrlRouter {
 
   public static class UserProfilePopupRouter extends UrlRouter {
     private RedditUserLink link;
-    @Nullable private Point expandFromPoint;
+    private Point expandFromPoint;
 
     public UserProfilePopupRouter(RedditUserLink link) {
       this.link = link;

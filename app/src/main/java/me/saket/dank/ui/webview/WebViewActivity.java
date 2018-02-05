@@ -5,6 +5,7 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Rect;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.Menu;
@@ -35,10 +36,11 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.webviewfallback_webview) WebView webView;
   @BindView(R.id.webviewfallback_progress) ProgressBar progressView;
 
-  public static void start(Context context, String url) {
+  public static Intent intent(Context context, String url, Rect expandFromShape) {
     Intent intent = new Intent(context, WebViewActivity.class);
     intent.putExtra(KEY_URL, url);
-    context.startActivity(intent);
+    intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
+    return intent;
   }
 
   @Override
@@ -56,7 +58,7 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
     setupWebView(urlToLoad);
 
     setupContentExpandablePage();
-    expandFromBelowToolbar();
+    expandFrom(getIntent().getParcelableExtra(KEY_EXPAND_FROM_SHAPE));
   }
 
   @SuppressLint("SetJavaScriptEnabled")
