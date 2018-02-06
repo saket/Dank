@@ -485,14 +485,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .toFlowable(BackpressureStrategy.LATEST)
         .compose(RxDiffUtils.calculateDiff(SubmissionItemDiffer::create))
         .toObservable()
-        .observeOn(mainThread())
-        .takeUntil(lifecycle().onDestroy());
+        .observeOn(mainThread());
 
     // Suspend updates to the list while any submission is open. We don't want to hide updates.
     Observable.combineLatest(adapterUpdates, RxExpandablePage.stateChanges(submissionPage), Pair::create)
         .filter(pair -> pair.second().isCollapsed())
         .map(pair -> pair.first())
         .distinctUntilChanged((pair1, pair2) -> pair1.first().equals(pair2.first()))
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(submissionsAdapter);
 
     // Fullscreen progress.

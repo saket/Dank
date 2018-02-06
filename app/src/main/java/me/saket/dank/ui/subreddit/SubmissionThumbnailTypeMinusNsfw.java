@@ -2,38 +2,22 @@ package me.saket.dank.ui.subreddit;
 
 import net.dean.jraw.models.Submission;
 
-/**
- * This exists because {@link Submission#getThumbnailType()} is not realiable.
- */
-public enum RealSubmissionThumbnailType {
+public enum SubmissionThumbnailTypeMinusNsfw {
 
-  NSFW_SELF_POST,
-  NSFW_LINK,
   URL_STATIC_ICON,
   URL_REMOTE_THUMBNAIL,
   SELF_POST,
   NONE;
 
-  public static RealSubmissionThumbnailType parse(Submission submission, Boolean showNsfwThumbnails) {
+  /**
+   * Like {@link Submission#getThumbnailType()}, but doesn't consider if a submission is NSFW, assuming that NSFW content is allowed.
+   */
+  public static SubmissionThumbnailTypeMinusNsfw parse(Submission submission) {
     //Timber.d("-------------------");
     //Timber.i("%s", submission.getTitle());
     //Timber.i("Thumb type: %s", submission.getThumbnailType());
     //Timber.i("Thumbnail: %s", submission.getThumbnail());
     //Timber.i("Thumbnails: %s", submission.getThumbnails());
-
-    if (submission.isNsfw() && !showNsfwThumbnails) {
-      if (submission.isSelfPost()) {
-        return NSFW_SELF_POST;
-      } else if (submission.getThumbnail() == null || submission.getThumbnailType() == Submission.ThumbnailType.NONE) {
-        return NONE;
-      } else {
-        return NSFW_LINK;
-      }
-    }
-
-    if (submission.getThumbnailType() == Submission.ThumbnailType.NONE) {
-      return NONE;
-    }
 
     switch (submission.getThumbnailType()) {
       case NSFW:

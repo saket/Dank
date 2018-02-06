@@ -51,6 +51,8 @@ public interface SubredditSubmission {
 
     public abstract Optional<UiModel.Thumbnail> thumbnail();
 
+    public abstract boolean isThumbnailClickable();
+
     public abstract SpannableWithTextEquality title();
 
     public abstract SpannableWithTextEquality byline();
@@ -70,6 +72,8 @@ public interface SubredditSubmission {
       public abstract Builder adapterId(long id);
 
       public abstract Builder thumbnail(Optional<UiModel.Thumbnail> thumbnail);
+
+      public abstract Builder isThumbnailClickable(boolean clickable);
 
       abstract Builder title(SpannableWithTextEquality title);
 
@@ -230,7 +234,7 @@ public interface SubredditSubmission {
           submissionClicks.accept(SubredditSubmissionClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.getItemId()))
       );
       holder.thumbnailView.setOnClickListener(o -> {
-        if (holder.uiModel.submission().isSelfPost()) {
+        if (!holder.uiModel.isThumbnailClickable()) {
           holder.itemView.performClick();
         } else {
           thumbnailClicks.accept(SubredditSubmissionThumbnailClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.thumbnailView));
