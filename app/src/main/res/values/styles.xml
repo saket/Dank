@@ -239,6 +239,30 @@
     <item name="android:padding">@dimen/spacing16</item>
   </style>
 
+  <style name="DankButton.OptionsPopupMenu">
+    <item name="android:background">?attr/selectableItemBackground</item>
+    <item name="android:drawablePadding">@dimen/spacing24</item>
+    <item name="android:gravity">start|center_vertical</item>
+    <item name="android:paddingEnd">@dimen/spacing16</item>
+    <item name="android:paddingStart">@dimen/spacing16</item>
+    <item name="android:textAllCaps">false</item>
+  </style>
+
+  <style name="DankSubmissionOptionsSubmenuButton">
+    <item name="android:layout_width">match_parent</item>
+    <item name="android:layout_height">wrap_content</item>
+    <item name="android:background">?attr/selectableItemBackground</item>
+    <item name="android:ellipsize">end</item>
+    <item name="android:maxLines">3</item>
+    <item name="android:paddingBottom">@dimen/spacing12</item>
+    <item name="android:paddingEnd">@dimen/spacing16</item>
+    <item name="android:paddingStart">@dimen/spacing16</item>
+    <item name="android:paddingTop">@dimen/spacing12</item>
+    <item name="android:gravity">start|center_vertical</item>
+    <item name="android:textAllCaps">false</item>
+    <item name="android:lineSpacingExtra">@dimen/spacing2</item>
+  </style>
+
   <!-- Submission -->
   <style name="DankSubmissionCommentItem">
     <item name="android:layout_width">match_parent</item>

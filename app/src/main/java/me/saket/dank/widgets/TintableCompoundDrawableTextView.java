@@ -11,6 +11,10 @@ import android.util.AttributeSet;
  */
 public class TintableCompoundDrawableTextView extends AppCompatTextView {
 
+  public TintableCompoundDrawableTextView(Context context) {
+    super(context);
+  }
+
   public TintableCompoundDrawableTextView(Context context, AttributeSet attrs) {
     super(context, attrs);
     init();

@@ -231,7 +231,7 @@ public class SubmissionUiConstructor {
         .byline(byline, postedAndPendingCommentCount)
         .selfText(selfTextOptional)
         .optionalContentLinkModel(contentLinkUiModel)
-        .originalSubmission(PostedOrInFlightContribution.from(submission))
+        .submission(submission)
         .build();
   }
 

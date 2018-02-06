@@ -16,13 +16,13 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
 
 import java.util.List;
 import javax.inject.Inject;
 
 import me.saket.dank.R;
-import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
@@ -72,7 +72,7 @@ public interface SubmissionCommentsHeader {
     /**
      * The original data model from which this Ui model was created.
      */
-    abstract PostedOrInFlightContribution originalSubmission();
+    abstract Submission submission();
 
     @Override
     public SubmissionCommentRowType type() {
@@ -107,7 +107,7 @@ public interface SubmissionCommentsHeader {
 
       abstract Builder optionalContentLinkModel(Optional<SubmissionContentLinkUiModel> link);
 
-      abstract Builder originalSubmission(PostedOrInFlightContribution submission);
+      abstract Builder submission(Submission submission);
 
       abstract UiModel build();
     }
@@ -173,7 +173,7 @@ public interface SubmissionCommentsHeader {
     public void setupGestures(SubmissionSwipeActionsProvider swipeActionsProvider) {
       getSwipeableLayout().setSwipeActionIconProvider(swipeActionsProvider);
       getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
-        swipeActionsProvider.performSwipeAction(action, uiModel.originalSubmission(), getSwipeableLayout());
+        swipeActionsProvider.performSwipeAction(action, uiModel.submission(), getSwipeableLayout());
       });
     }
 
@@ -197,7 +197,7 @@ public interface SubmissionCommentsHeader {
       selfTextView.setMovementMethod(movementMethod);
 
       // Gestures.
-      getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.originalSubmission()));
+      getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
     }
 
     private void setSubmissionByline(UiModel uiModel) {

@@ -58,6 +58,8 @@
   <color name="subredditpicker_subreddit_button_text_normal">@color/gray_400</color>
   <color name="subredditpicker_subreddit_button_text_hidden">@color/gray_700</color>
 
+  <color name="submission_option_button_byline">@color/white_opacity_60</color>
+
   <!-- Submission -->
   <color name="submission_link_title">@color/white_opacity_90</color>
   <color name="submission_link_byline">@color/white_opacity_50</color>

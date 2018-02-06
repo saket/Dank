@@ -27,6 +27,7 @@ import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.submission.RetryReplyJobService;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.VoteJobService;
+import me.saket.dank.ui.subreddit.SubmissionOptionsPopupMenu;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.subreddit.SubredditPickerSheetView;
 import me.saket.dank.ui.subreddit.SubredditSubscriptionsSyncJob;
@@ -109,4 +110,6 @@ public interface DankAppComponent {
   void inject(VoteJobService target);
 
   void inject(FiltersUserPreferencesLayout target);
+
+  void inject(SubmissionOptionsPopupMenu target);
 }

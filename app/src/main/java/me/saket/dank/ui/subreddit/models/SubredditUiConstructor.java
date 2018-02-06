@@ -24,7 +24,6 @@ import io.reactivex.functions.BiFunction;
 import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.ReplyRepository;
@@ -283,7 +282,6 @@ public class SubredditUiConstructor {
 
     return SubredditSubmission.UiModel.builder()
         .submission(submission)
-        .submissionInfo(PostedOrInFlightContribution.from(submission))
         .adapterId(submission.getFullName().hashCode())
         .thumbnail(thumbnail)
         .isThumbnailClickable(isThumbnailClickable)

@@ -655,7 +655,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           if (event.link() instanceof RedditUserLink) {
             // TODO: Open fullscreen user profile.
             Point expandFromPoint = new Point(event.contentLinkView().getLeft(), event.contentLinkView().getBottom());
-            Timber.i("expandFromPoint: %s", expandFromPoint);
             urlRouter.forLink(((RedditUserLink) event.link()))
                 .expandFrom(expandFromPoint)
                 .open(event.contentLinkView());

@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.ViewFlipperWithDebugPreview android:id="@+id/submissionoptions_viewflipper"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="220dp"
+  android:layout_height="wrap_content"
+  android:background="@drawable/background_popup_window"
+  android:orientation="vertical"
+  app:debug_displayedChild="0">
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical">
+
+    <android.support.v7.widget.AppCompatTextView
+      android:id="@+id/submissionoptions_title"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:background="@color/black_opacity_10"
+      android:ellipsize="end"
+      android:maxLines="1"
+      android:padding="@dimen/spacing16"
+      android:textIsSelectable="false"
+      tools:text="Title" />
+
+    <View style="@style/DankSeparator.VerticalContent" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableButton
+      android:id="@+id/submissionoptions_author"
+      style="@style/DankButton.OptionsPopupMenu"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:drawableStart="@drawable/ic_user_profile_20dp"
+      tools:text="u/GallowBoob" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableButton
+      android:id="@+id/submissionoptions_subreddit"
+      style="@style/DankButton.OptionsPopupMenu"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:drawableStart="@drawable/ic_subreddits_20dp"
+      tools:text="r/Worldnews" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableButton
+      android:id="@+id/submissionoptions_share"
+      style="@style/DankButton.OptionsPopupMenu"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:drawableStart="@drawable/ic_share_20dp"
+      android:text="@string/submission_option_share" />
+
+    <me.saket.dank.widgets.TintableCompoundDrawableButton
+      android:id="@+id/submissionoptions_copy"
+      style="@style/DankButton.OptionsPopupMenu"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:drawableStart="@drawable/ic_content_copy_20dp"
+      android:text="@string/submission_option_copy" />
+  </LinearLayout>
+
+  <LinearLayout
+    android:id="@+id/submissionoptions_sharecopy_submenu"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/background_popup_window"
+    android:orientation="vertical">
+
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
+      android:id="@+id/submissionoptions_sharecopy_title"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:background="@color/black_opacity_10"
+      android:drawablePadding="@dimen/spacing24"
+      android:drawableStart="@drawable/ic_arrow_back_20dp"
+      android:ellipsize="end"
+      android:foreground="?attr/selectableItemBackground"
+      android:gravity="center_vertical"
+      android:maxLines="1"
+      android:padding="@dimen/spacing16"
+      android:text="@string/submission_option_share" />
+
+    <View style="@style/DankSeparator.VerticalContent" />
+
+    <!-- Content description set in code. -->
+    <android.support.v7.widget.AppCompatButton
+      android:id="@+id/submissionoptions_sharecopy_reddit_comments"
+      style="@style/DankSubmissionOptionsSubmenuButton"
+      tools:text="Reddit link
+https://www.reddit.com/r/photoshopbattles/..." />
+
+    <!-- Content description set in code. -->
+    <android.support.v7.widget.AppCompatButton
+      android:id="@+id/submissionoptions_sharecopy_content"
+      style="@style/DankSubmissionOptionsSubmenuButton"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      tools:text="Content link
+https://i.redd.it/4a4caw1hgoe01.jpg" />
+  </LinearLayout>
+</me.saket.dank.widgets.ViewFlipperWithDebugPreview>

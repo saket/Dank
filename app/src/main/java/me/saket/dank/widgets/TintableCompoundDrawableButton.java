@@ -3,6 +3,7 @@ package me.saket.dank.widgets;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.ColorInt;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.AppCompatButton;
 import android.util.AttributeSet;
 
@@ -26,7 +27,12 @@ public class TintableCompoundDrawableButton extends AppCompatButton {
   }
 
   @Override
-  public void setCompoundDrawablesRelativeWithIntrinsicBounds(Drawable start, Drawable top, Drawable end, Drawable bottom) {
+  public void setCompoundDrawablesRelativeWithIntrinsicBounds(
+      @Nullable Drawable start,
+      @Nullable Drawable top,
+      @Nullable Drawable end,
+      @Nullable Drawable bottom)
+  {
     super.setCompoundDrawablesRelativeWithIntrinsicBounds(start, top, end, bottom);
     applyColorTintToCompoundDrawables(getCurrentTextColor());
   }
@@ -51,7 +57,6 @@ public class TintableCompoundDrawableButton extends AppCompatButton {
         drawables[i].setTint(tintColor);
       }
     }
-
     super.setCompoundDrawablesRelativeWithIntrinsicBounds(drawables[0], drawables[1], drawables[2], drawables[3]);
   }
 }

@@ -42,7 +42,9 @@ public class CommentSwipeActionsProvider {
   }
 
   @Inject
-  public CommentSwipeActionsProvider(VotingManager votingManager, UserSessionRepository userSessionRepository,
+  public CommentSwipeActionsProvider(
+      VotingManager votingManager,
+      UserSessionRepository userSessionRepository,
       OnLoginRequireListener loginRequireListener)
   {
     this.votingManager = votingManager;

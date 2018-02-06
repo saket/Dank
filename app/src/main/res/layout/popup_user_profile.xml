@@ -9,7 +9,7 @@
 
   <LinearLayout
     android:id="@+id/userprofilepopup_header"
-    android:layout_width="284dp"
+    android:layout_width="@dimen/popupwindow_width"
     android:layout_height="wrap_content"
     android:layout_marginTop="@dimen/spacing12"
     android:animateLayoutChanges="true"
@@ -37,6 +37,7 @@
       android:paddingBottom="10dp"
       android:paddingTop="6dp"
       android:textColor="@color/color_accent"
+      android:textIsSelectable="true"
       android:textSize="@dimen/textsize18"
       tools:text="u/saketme" />
   </LinearLayout>

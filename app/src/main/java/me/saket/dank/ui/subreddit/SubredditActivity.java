@@ -20,6 +20,7 @@ import android.support.annotation.Nullable;
 import android.support.transition.TransitionManager;
 import android.support.transition.TransitionSet;
 import android.support.v7.util.DiffUtil;
+import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -82,6 +83,7 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtils;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
+import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.ErrorStateView;
@@ -169,7 +171,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   protected void onPostCreate(@Nullable Bundle savedState) {
     super.onPostCreate(savedState);
 
-    setupSubmissionList(savedState);
+    setupSubmissionRecyclerView(savedState);
     loadSubmissions();
     setupSubmissionPage();
     setupToolbarSheet();
@@ -324,7 +326,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
 // ======== SUBMISSION LIST ======== //
 
-  private void setupSubmissionList(@Nullable Bundle savedState) {
+  private void setupSubmissionRecyclerView(@Nullable Bundle savedState) {
     submissionList.setLayoutManager(submissionList.createLayoutManager());
     submissionList.setItemAnimator(new SubmissionCommentsItemAnimator(0)
         .withInterpolator(Animations.INTERPOLATOR)
@@ -412,6 +414,26 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
             default:
               throw new AssertionError();
+          }
+        });
+
+    // Option gestures.
+    submissionsAdapter.optionSwipeActions()
+        .withLatestFrom(subredditChangesStream, Pair::create)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> {
+          SubmissionOptionSwipeEvent swipeEvent = pair.first();
+          int extraOffset = getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
+          Point location = new Point(extraOffset, swipeEvent.itemView().getTop() + extraOffset + Views.statusBarHeight(getResources()));
+
+          String subredditName = pair.second();
+          boolean showVisitSubredditOption = !subredditName.equals(swipeEvent.submission().getSubredditName());
+
+          try {
+            SubmissionOptionsPopupMenu menu = new SubmissionOptionsPopupMenu(this, swipeEvent.submission(), showVisitSubredditOption);
+            menu.showAtLocation(swipeEvent.itemView(), Gravity.BOTTOM | Gravity.START, location);
+          } catch (Exception e) {
+            e.printStackTrace();
           }
         });
 

@@ -20,6 +20,9 @@ import me.saket.dank.ui.submission.PendingSyncReply;
  * A contribution that is either present on remote or is still being posted.
  * Could be a submission, a comment or a message.
  * <p>
+ * This is used by actions that are applied on submissions, comments and messages,
+ * like when voting, replying, etc.
+ * <p>
  * I have been thinking that the subclasses are wrongly split. Instead of "Remote"
  * and "Local" maybe we should have "Posted" and "PendingSync". But then
  * {@link CommentTreeConstructor} also requires that a locally posted comment

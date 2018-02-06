@@ -23,7 +23,7 @@
       android:id="@+id/textformattoolbar_insert_link"
       style="@style/DankTextFormatToolbarButton"
       android:contentDescription="@string/cd_textformat_insert_link"
-      android:src="@drawable/ic_insert_link_24dp" />
+      android:src="@drawable/ic_link_24dp" />
 
     <ImageButton
       android:id="@+id/textformattoolbar_insert_image"

@@ -6,6 +6,8 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
+import net.dean.jraw.models.Submission;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +54,11 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   @CheckResult
   public Observable<SubredditSubmissionThumbnailClickEvent> thumbnailClicks() {
     return submissionAdapter.thumbnailClicks();
+  }
+
+  @CheckResult
+  public Observable<SubmissionOptionSwipeEvent> optionSwipeActions() {
+    return submissionAdapter.optionSwipeActions();
   }
 
   @CheckResult

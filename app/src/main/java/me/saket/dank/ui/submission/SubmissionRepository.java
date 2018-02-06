@@ -48,7 +48,6 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
-import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
@@ -522,15 +521,15 @@ public class SubmissionRepository {
 
 // ======== SAVE ======== //
 
-  public void markAsSaved(PostedOrInFlightContribution submission) {
-    savedSubmissionIds.add(submission.fullName());
+  public void markAsSaved(Submission submission) {
+    savedSubmissionIds.add(submission.getFullName());
   }
 
-  public void markAsUnsaved(PostedOrInFlightContribution submission) {
-    savedSubmissionIds.remove(submission.fullName());
+  public void markAsUnsaved(Submission submission) {
+    savedSubmissionIds.remove(submission.getFullName());
   }
 
-  public boolean isSaved(PostedOrInFlightContribution submission) {
-    return savedSubmissionIds.contains(submission.fullName());
+  public boolean isSaved(Submission submission) {
+    return savedSubmissionIds.contains(submission.getFullName());
   }
 }

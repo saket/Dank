@@ -1,12 +1,16 @@
 package me.saket.dank.ui.subreddit;
 
+import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
+
+import com.jakewharton.rxrelay2.PublishRelay;
 
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
 
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -40,6 +44,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   private VotingManager votingManager;
   private final UserSessionRepository userSessionRepository;
   private final OnLoginRequireListener onLoginRequireListener;
+  private final PublishRelay<SubmissionOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
 
   @Inject
   public SubmissionSwipeActionsProvider(
@@ -82,12 +87,12 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
         .build();
   }
 
-  @Deprecated
-  public SwipeActions actionsFor(Submission submission) {
-    return actionsFor(PostedOrInFlightContribution.from(submission));
+  @CheckResult
+  public Observable<SubmissionOptionSwipeEvent> optionSwipeActions() {
+    return optionSwipeActions;
   }
 
-  public SwipeActions actionsFor(PostedOrInFlightContribution submission) {
+  public SwipeActions actionsFor(Submission submission) {
     boolean isSubmissionSaved = submissionRepository.isSaved(submission);
     return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
   }
@@ -135,12 +140,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     }
   }
 
-  @Deprecated
   public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
-    performSwipeAction(swipeAction, PostedOrInFlightContribution.from(submission), swipeableLayout);
-  }
-
-  public void performSwipeAction(SwipeAction swipeAction, PostedOrInFlightContribution submission, SwipeableLayout swipeableLayout) {
     if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.isUserLoggedIn()) {
       onLoginRequireListener.onLoginRequired();
       return;
@@ -150,8 +150,8 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
     switch (swipeAction.name()) {
       case ACTION_NAME_OPTIONS:
+        optionSwipeActions.accept(SubmissionOptionSwipeEvent.create(submission, swipeableLayout));
         isUndoAction = false;
-        Timber.i("TODO: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_SAVE:
@@ -167,9 +167,10 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
         break;
 
       case ACTION_NAME_UPVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.voteDirection());
+        PostedOrInFlightContribution submissionInfo = PostedOrInFlightContribution.from(submission);
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submissionInfo, submissionInfo.voteDirection());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.voteWithAutoRetry(submission, newVoteDirection)
+        votingManager.voteWithAutoRetry(submissionInfo, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 
@@ -178,9 +179,10 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
       }
 
       case ACTION_NAME_DOWNVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submission, submission.voteDirection());
+        PostedOrInFlightContribution submissionInfo = PostedOrInFlightContribution.from(submission);
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submissionInfo, submissionInfo.voteDirection());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.voteWithAutoRetry(submission, newVoteDirection)
+        votingManager.voteWithAutoRetry(submissionInfo, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 

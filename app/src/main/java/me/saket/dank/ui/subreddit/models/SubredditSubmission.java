@@ -22,8 +22,8 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.SpannableWithTextEquality;
+import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -61,8 +61,6 @@ public interface SubredditSubmission {
 
     public abstract Submission submission();
 
-    public abstract PostedOrInFlightContribution submissionInfo();
-
     public static Builder builder() {
       return new AutoValue_SubredditSubmission_UiModel.Builder();
     }
@@ -90,8 +88,6 @@ public interface SubredditSubmission {
       public abstract Builder backgroundDrawableRes(Optional<Integer> backgroundRes);
 
       public abstract Builder submission(Submission submission);
-
-      public abstract Builder submissionInfo(PostedOrInFlightContribution info);
 
       public abstract UiModel build();
     }
@@ -244,7 +240,7 @@ public interface SubredditSubmission {
       SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
       swipeableLayout.setSwipeActionIconProvider(swipeActionsProvider);
       swipeableLayout.setOnPerformSwipeActionListener(action ->
-          swipeActionsProvider.performSwipeAction(action, holder.uiModel.submissionInfo(), swipeableLayout)
+          swipeActionsProvider.performSwipeAction(action, holder.uiModel.submission(), swipeableLayout)
       );
       return holder;
     }
@@ -254,7 +250,7 @@ public interface SubredditSubmission {
       holder.setUiModel(uiModel);
       holder.render();
 
-      holder.getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submissionInfo()));
+      holder.getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
     }
 
     @Override
@@ -271,6 +267,11 @@ public interface SubredditSubmission {
     @CheckResult
     public Observable<SubredditSubmissionThumbnailClickEvent> thumbnailClicks() {
       return thumbnailClicks;
+    }
+
+    @CheckResult
+    public Observable<SubmissionOptionSwipeEvent> optionSwipeActions() {
+      return swipeActionsProvider.optionSwipeActions();
     }
   }
 }

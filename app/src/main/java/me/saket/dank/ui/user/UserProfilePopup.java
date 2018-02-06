@@ -5,6 +5,7 @@ import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
+import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.IdRes;
 import android.view.Gravity;
@@ -81,6 +82,12 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
     setContentView(popupView);
 
     setOnDismissListener(() -> onDismissDisposables.clear());
+  }
+
+  @Override
+  protected Rect calculateTransitionEpicenter(View anchor, ViewGroup popupDecorView, Point showLocation) {
+    // Set the epicenter at (x,y).
+    return new Rect(showLocation.x, showLocation.y, showLocation.x, showLocation.y);
   }
 
   public void loadUserProfile(RedditUserLink userLink) {

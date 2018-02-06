@@ -26,7 +26,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/spacing24"
-        android:layout_marginStart="@dimen/spacing16"
+        android:layout_marginStart="@dimen/subreddit_submission_start_padding"
         android:layout_toStartOf="@+id/submission_item_icon"
         android:textColor="@color/gray_100"
         android:textIsSelectable="false"
