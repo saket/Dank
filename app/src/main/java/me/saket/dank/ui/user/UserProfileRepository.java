@@ -24,7 +24,8 @@ public class UserProfileRepository {
     userProfileStore = StoreBuilder.<RedditUserLink, UserProfile>key()
         .fetcher(userLink -> dankRedditClient.userProfile(userLink.name()))
         .memoryPolicy(MemoryPolicy.builder()
-            .setExpireAfterAccess(6)
+            // Warning: Memory-only store doesn't support expire-after-access policy.
+            .setExpireAfterWrite(6)
             .setExpireAfterTimeUnit(TimeUnit.HOURS)
             .build())
         .open();
