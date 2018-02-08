@@ -3,20 +3,17 @@ package me.saket.dank.ui.user;
 import android.content.Context;
 import android.graphics.Point;
 import android.graphics.Rect;
-import android.support.annotation.LayoutRes;
 import android.transition.Transition;
 import android.transition.Transition.EpicenterCallback;
 import android.transition.TransitionInflater;
 import android.transition.TransitionManager;
 import android.view.Gravity;
-import android.view.LayoutInflater;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.ViewTreeObserver.OnGlobalLayoutListener;
 import android.view.WindowManager;
-import android.widget.FrameLayout;
 import android.widget.PopupMenu;
 import android.widget.PopupWindow;
 
@@ -30,27 +27,15 @@ import me.saket.dank.utils.Views;
 public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
 
   private final WindowManager windowManager;
-  private final Context context;
 
   public PopupWindowWithMaterialTransition(Context context) {
     super(context, null, 0, R.style.DankPopupWindow);
-    this.context = context;
     this.windowManager = (WindowManager) context.getSystemService(Context.WINDOW_SERVICE);
   }
 
-  @Deprecated
   @Override
   public void setContentView(View contentView) {
     super.setContentView(contentView);
-  }
-
-  public void setContentView(@LayoutRes int layoutRes) {
-    // Not sure why, but inflating into a parent results in future measurement of content View
-    // using UNSPECIFIED measure-spec to be equal to what the dimensions are set in XML.
-    FrameLayout frameLayout = new FrameLayout(context);
-    View popupView = LayoutInflater.from(context).inflate(layoutRes, frameLayout, true);
-    frameLayout.removeView(popupView);
-    super.setContentView(popupView);
   }
 
   public void showWithAnchor(View anchorView, int gravity) {
@@ -145,7 +130,16 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
   protected abstract Rect calculateTransitionEpicenter(View anchor, ViewGroup popupDecorView, Point showLocation);
 
   protected Point adjustPositionWithAnchorWithoutGoingOutsideWindow(Point showLocation, View contentView, boolean isTopGravity) {
-    contentView.measure(MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED), MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+    if (contentView.getLayoutParams() != null) {
+      contentView.measure(
+          MeasureSpec.makeMeasureSpec(contentView.getLayoutParams().width, MeasureSpec.EXACTLY),
+          MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+
+    } else {
+      contentView.measure(
+          MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED),
+          MeasureSpec.makeMeasureSpec(0, MeasureSpec.UNSPECIFIED));
+    }
     int contentWidth = contentView.getMeasuredWidth();
     int contentHeight = contentView.getMeasuredHeight();
 

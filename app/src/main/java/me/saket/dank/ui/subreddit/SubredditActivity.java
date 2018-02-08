@@ -425,16 +425,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           SubmissionOptionSwipeEvent swipeEvent = pair.first();
           int extraOffset = getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
           Point location = new Point(extraOffset, swipeEvent.itemView().getTop() + extraOffset + Views.statusBarHeight(getResources()));
-
           String subredditName = pair.second();
           boolean showVisitSubredditOption = !subredditName.equals(swipeEvent.submission().getSubredditName());
 
-          try {
-            SubmissionOptionsPopupMenu menu = new SubmissionOptionsPopupMenu(this, swipeEvent.submission(), showVisitSubredditOption);
-            menu.showAtLocation(swipeEvent.itemView(), Gravity.BOTTOM | Gravity.START, location);
-          } catch (Exception e) {
-            e.printStackTrace();
-          }
+          SubmissionOptionsPopupMenu optionsMenu = new SubmissionOptionsPopupMenu(this, swipeEvent.submission(), showVisitSubredditOption);
+          optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.BOTTOM | Gravity.START, location);
         });
 
     subredditChangesStream
