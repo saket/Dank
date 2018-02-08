@@ -66,8 +66,8 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
     swipeActionsWithUnsave = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
-            .add(unSaveSwipeAction)
             .add(moreOptionsSwipeAction)
+            .add(unSaveSwipeAction)
             .build())
         .endActions(SwipeActionsHolder.builder()
             .add(downvoteSwipeAction)
@@ -77,8 +77,8 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
     swipeActionsWithSave = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
-            .add(saveSwipeAction)
             .add(moreOptionsSwipeAction)
+            .add(saveSwipeAction)
             .build())
         .endActions(SwipeActionsHolder.builder()
             .add(downvoteSwipeAction)
