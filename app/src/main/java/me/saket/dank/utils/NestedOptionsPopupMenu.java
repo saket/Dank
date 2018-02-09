@@ -201,9 +201,9 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
     anchor.getLocationOnScreen(anchorLocation);
     popupDecorView.getLocationOnScreen(popupLocation);
 
-    // Compute the position of the anchor relative to the popup.
-    final Rect bounds = new Rect(0, 0, 0, anchor.getHeight());
-    bounds.offset(anchorLocation[0] - popupLocation[0], anchorLocation[1] - popupLocation[1]);
+    final Rect bounds = new Rect();
+    bounds.left = bounds.right = anchorLocation[0] - popupLocation[0];
+    bounds.top = bounds.bottom = anchorLocation[1] - popupLocation[1];
     return bounds;
   }
 }
