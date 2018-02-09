@@ -51,14 +51,15 @@ public class CommentSwipeActionsProvider {
     this.userSessionRepository = userSessionRepository;
     this.onLoginRequireListener = loginRequireListener;
 
+    // Actions on both sides are aligned from left to right.
     commentSwipeActions = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
             .add(SwipeAction.create(ACTION_NAME_REPLY, R.color.list_item_swipe_reply, 1f))
             .add(SwipeAction.create(ACTION_NAME_OPTIONS, R.color.list_item_swipe_more_options, 1f))
             .build())
         .endActions(SwipeActionsHolder.builder()
-            .add(SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 1f))
             .add(SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 1f))
+            .add(SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 1f))
             .build())
         .build();
 

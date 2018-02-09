@@ -5,14 +5,12 @@ import android.support.annotation.CheckResult;
 import java.util.ArrayList;
 import java.util.List;
 
-import timber.log.Timber;
-
 /**
  * Holds {@link SwipeAction} for one side of a Swipeable View.
  */
 public class SwipeActionsHolder {
 
-  private List<SwipeAction> actions = new ArrayList<>(4);
+  private List<SwipeAction> actions = new ArrayList<>(8);
 
   public SwipeActionsHolder(List<SwipeAction> actions) {
     this.actions = actions;
@@ -23,35 +21,37 @@ public class SwipeActionsHolder {
   }
 
   /**
-   * @param swipeDirection Distance swiped relative to this layout.
+   * @param swipeDirection Distance swiped relative to this layout. Always positive.
    */
   @CheckResult
   protected SwipeAction findActionAtSwipeDistance(int swipeableLayoutWidth, float swipeDistance, SwipeDirection swipeDirection) {
+    float totalWeights = calculateTotalWeights();
+
     switch (swipeDirection) {
       case END_TO_START:
-        for (int i = actions.size() - 1; i >= 0; i--) {
-          if (swipeableLayoutWidth - swipeDistance >= calculateLeft(actions.get(i), swipeableLayoutWidth)) {
+        // Avoiding iterators intentionally because this method gets called on every motion event.
+        float distanceAddedFromRight = 0;
+        for (int i = 0; i < actions.size(); i++) {
+          float actionReleaseLengthFromRight = (actions.get(i).layoutWeight() / totalWeights) * swipeableLayoutWidth;
+          if (swipeDistance <= actionReleaseLengthFromRight + distanceAddedFromRight) {
             return actions.get(i);
           }
+          distanceAddedFromRight += actionReleaseLengthFromRight;
         }
-        throw new IllegalStateException("What? We should have found someone :O");
+        throw new IllegalStateException("Couldn't find swipe action. actions: " + actions + ", swipeableLayoutWidth: "
+            + swipeableLayoutWidth + ", swipeDistance: " + swipeDistance);
 
       case START_TO_END:
+        float distanceAddedFromLeft = 0;
         for (int i = 0; i < actions.size(); i++) {
-          if (swipeDistance <= calculateRight(actions.get(i), swipeableLayoutWidth)) {
+          float actionReleaseLengthFromLeft = (actions.get(i).layoutWeight() / totalWeights) * swipeableLayoutWidth;
+          if (swipeDistance <= actionReleaseLengthFromLeft + distanceAddedFromLeft) {
             return actions.get(i);
           }
+          distanceAddedFromLeft += actionReleaseLengthFromLeft;
         }
-
-        Timber.w("Error:");
-        for (int i = 0; i < actions.size(); i++) {
-          int right = calculateRight(actions.get(i), swipeableLayoutWidth);
-          Timber.i("Right of: %s: %s", actions.get(i).name(), right);
-          if (swipeDistance <= right) {
-            return actions.get(i);
-          }
-        }
-        throw new IllegalStateException("What? We should have found someone :O swipeDistance: " + swipeDistance);
+        throw new IllegalStateException("Couldn't find swipe action. actions: " + actions + ", swipeableLayoutWidth: "
+            + swipeableLayoutWidth + ", swipeDistance: " + swipeDistance);
 
       default:
         throw new UnsupportedOperationException("Unknown swipe direction: " + swipeDirection);
@@ -60,49 +60,6 @@ public class SwipeActionsHolder {
 
   public boolean contains(SwipeAction swipeAction) {
     return actions.contains(swipeAction);
-  }
-
-  /**
-   * Calculate left position of <var>releaseTarget</var> relative to this ViewGroup.
-   * We calculate the positions manually because we're not adding them as child Views.
-   */
-  private int calculateLeft(SwipeAction releaseTarget, int swipeableLayoutWidth) {
-    float totalWeights = calculateTotalWeights();
-
-    int distanceAddedFromLeft = 0;
-
-    for (SwipeAction target : actions) {
-      if (target == releaseTarget) {
-        return distanceAddedFromLeft;
-      }
-      float targetWeight = releaseTarget.layoutWeight() / totalWeights;
-      int targetImaginaryWidth = (int) (swipeableLayoutWidth * targetWeight);
-      distanceAddedFromLeft += targetImaginaryWidth;
-    }
-
-    throw new IllegalStateException("What? We should have found something :O");
-  }
-
-  /**
-   * Calculate right position of <var>releaseTarget</var> relative to this ViewGroup.
-   */
-  private int calculateRight(SwipeAction releaseTarget, int swipeableLayoutWidth) {
-    float totalWeights = calculateTotalWeights();
-
-    int distanceAddedFromLeft = 0;
-
-    for (SwipeAction target : actions) {
-      float targetWeight = releaseTarget.layoutWeight() / totalWeights;
-      int targetImaginaryWidth = (int) (swipeableLayoutWidth * targetWeight);
-
-      if (target == releaseTarget) {
-        return distanceAddedFromLeft + targetImaginaryWidth;
-      }
-
-      distanceAddedFromLeft += targetImaginaryWidth;
-    }
-
-    throw new IllegalStateException("What? We should have found something :O");
   }
 
   private float calculateTotalWeights() {
