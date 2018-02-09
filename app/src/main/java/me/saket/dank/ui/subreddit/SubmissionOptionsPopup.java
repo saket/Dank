@@ -23,7 +23,7 @@ import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.NestedOptionsPopupMenu;
 import me.saket.dank.utils.Truss;
 
-public class SubmissionOptionsPopupMenu extends NestedOptionsPopupMenu {
+public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
 
   private static final int ID_SHOW_USER_PROFILE = 1;
   private static final int ID_SHOW_SUBREDDIT = 2;
@@ -35,7 +35,7 @@ public class SubmissionOptionsPopupMenu extends NestedOptionsPopupMenu {
   @Inject Lazy<UrlRouter> urlRouter;
   private final Submission submission;
 
-  public SubmissionOptionsPopupMenu(Context c, Submission submission, boolean showVisitSubredditOption) {
+  public SubmissionOptionsPopup(Context c, Submission submission, boolean showVisitSubredditOption) {
     super(c, createMenuInfo(c, submission, showVisitSubredditOption));
     Dank.dependencyInjector().inject(this);
     this.submission = submission;

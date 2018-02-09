@@ -110,7 +110,7 @@ import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
-import me.saket.dank.ui.subreddit.SubmissionOptionsPopupMenu;
+import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -461,7 +461,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               .map(name -> !swipeEvent.submission().getSubredditName().equals(name))
               .orElse(true);
 
-          SubmissionOptionsPopupMenu optionsMenu = new SubmissionOptionsPopupMenu(getContext(), swipeEvent.submission(), showVisitSubredditOption);
+          SubmissionOptionsPopup optionsMenu = new SubmissionOptionsPopup(getContext(), swipeEvent.submission(), showVisitSubredditOption);
           optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, menuLocation);
         });
 
