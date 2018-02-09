@@ -31,6 +31,7 @@ import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -108,6 +109,8 @@ import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
+import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
+import me.saket.dank.ui.subreddit.SubmissionOptionsPopupMenu;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -147,6 +150,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
   private static final String KEY_INLINE_REPLY_ROW_ID = "inlineReplyRowId";
+  private static final String KEY_CALLING_SUBREDDIT = "immediateParentSubreddit";
   private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = ExpandablePageLayout.DEFAULT_ANIM_DURATION;
   private static final long ACTIVITY_CONTENT_RESIZE_ANIM_DURATION = 300;
   private static final int REQUEST_CODE_PICK_GIF = 98;
@@ -194,6 +198,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private PublishRelay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
   private BehaviorRelay<Optional<SubmissionContentLoadError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Optional<ResolvedError>> commentsLoadErrors = BehaviorRelay.createDefault(Optional.empty());
+  private BehaviorRelay<Optional<String>> callingSubreddits = BehaviorRelay.createDefault(Optional.empty());
 
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionVideoHolder contentVideoViewHolder;
@@ -274,6 +279,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       }
     }
 
+    callingSubreddits.getValue().ifPresent(subredditName -> {
+      outState.putString(KEY_CALLING_SUBREDDIT, subredditName);
+    });
     outState.putBoolean(KEY_WAS_PAGE_EXPANDED_OR_EXPANDING, isExpandedOrExpanding());
     outState.putParcelable(KEY_SUPER_CLASS_STATE, super.onSaveInstanceState());
     return outState;
@@ -286,6 +294,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     super.onRestoreInstanceState(superState);
 
     boolean willPageExpandAgain = savedState.getBoolean(KEY_WAS_PAGE_EXPANDED_OR_EXPANDING, false);
+    Optional<String> callingSubreddit = Optional.ofNullable(savedState.getString(KEY_CALLING_SUBREDDIT));
+
     if (willPageExpandAgain && savedState.containsKey(KEY_SUBMISSION_REQUEST)) {
       DankSubmissionRequest retainedRequest = savedState.getParcelable(KEY_SUBMISSION_REQUEST);
       Single
@@ -301,7 +311,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           .takeUntil(lifecycle().onDestroyFlowable())
           .subscribe(retainedSubmission -> {
             //noinspection ConstantConditions
-            populateUi(retainedSubmission, retainedRequest);
+            populateUi(retainedSubmission, retainedRequest, callingSubreddit);
           });
     }
   }
@@ -422,7 +432,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         });
 
     // Swipe gestures.
-    submissionCommentsAdapter.streamCommentSwipeActions()
+    submissionCommentsAdapter.streamCommentReplySwipeActions()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(parentCommentInfo -> {
           if (commentTreeConstructor.isCollapsed(parentCommentInfo) || !commentTreeConstructor.isReplyActiveFor(parentCommentInfo)) {
@@ -433,6 +443,28 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             commentTreeConstructor.hideReply(parentCommentInfo);
           }
         });
+    submissionCommentsAdapter.streamSubmissionOptionSwipeActions()
+        .withLatestFrom(callingSubreddits, Pair::create)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> {
+          Point sheetLocation = Views.locationOnScreen(commentListParentSheet);
+          Point menuLocation = new Point(0, sheetLocation.y);
+
+          // Align the menu with submission title.
+          int headerPadding = getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
+          menuLocation.offset(headerPadding, headerPadding);
+
+          SubmissionOptionSwipeEvent swipeEvent = pair.first();
+          Optional<String> optionalCallingSubreddit = pair.second();
+
+          boolean showVisitSubredditOption = optionalCallingSubreddit
+              .map(name -> !swipeEvent.submission().getSubredditName().equals(name))
+              .orElse(true);
+
+          SubmissionOptionsPopupMenu optionsMenu = new SubmissionOptionsPopupMenu(getContext(), swipeEvent.submission(), showVisitSubredditOption);
+          optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, menuLocation);
+        });
+
     commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
     commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()) {
       @Override
@@ -678,7 +710,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(pair -> {
           DankSubmissionRequest submissionRequest = pair.first();
           Optional<Submission> submissionWithoutComments = pair.second().map(sub -> new Submission(sub.getDataNode()));
-          populateUi(submissionWithoutComments, submissionRequest);
+          populateUi(submissionWithoutComments, submissionRequest, callingSubreddits.getValue());
         });
   }
 
@@ -1057,12 +1089,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout
    * Update the submission to be shown. Since this page is retained by {@link SubredditActivity},
    * we only update the UI everytime a new submission is to be shown.
    *
-   * @param submission        when empty, the UI gets populated when comments are loaded along with the submission details.
-   * @param submissionRequest used for loading the comments of this submission.
+   * @param submission        When empty, the UI gets populated when comments are loaded along with the submission details.
+   * @param submissionRequest Used for loading the comments of this submission.
+   * @param callingSubreddit  Subreddit name from where this submission is being open. Empty when being opened from elsewhere.
    */
-  public void populateUi(Optional<Submission> submission, DankSubmissionRequest submissionRequest) {
+  public void populateUi(Optional<Submission> submission, DankSubmissionRequest submissionRequest, Optional<String> callingSubreddit) {
     // This will load comments and then again update the title, byline and content.
     submissionRequestStream.accept(submissionRequest);
+
+    callingSubreddits.accept(callingSubreddit);
 
     // Wait till the submission is fetched before loading content.
     submissionStream

@@ -224,6 +224,12 @@ public class Views {
     return rect;
   }
 
+  public static Point locationOnScreen(View view) {
+    int[] location = new int[2];
+    view.getLocationOnScreen(location);
+    return new Point(location[0], location[1]);
+  }
+
   public static Point getNavigationBarSize(Context context) {
     Point appUsableSize = getAppUsableScreenSize(context);
     Point realScreenSize = getRealScreenSize(context);

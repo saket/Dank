@@ -3,6 +3,6 @@
 
   <translate
     android:duration="@integer/submissionoptions_animation_duration"
-    android:fromXDelta="-33%p"
+    android:fromXDelta="-25%p"
     android:toXDelta="0%p" />
 </set>

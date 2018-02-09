@@ -76,7 +76,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
       } else {
         throw new AssertionError();
       }
-      submissionPageLayout.populateUi(Optional.empty(), submissionRequest);
+      submissionPageLayout.populateUi(Optional.empty(), submissionRequest, Optional.empty());
     }
   }
 

@@ -73,6 +73,7 @@ import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.subreddit.models.SubmissionItemDiffer;
 import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
+import me.saket.dank.ui.subreddit.models.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.subreddit.models.SubredditUiConstructor;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
@@ -338,9 +339,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
     // Row clicks.
     submissionsAdapter.submissionClicks()
+        .withLatestFrom(subredditChangesStream, Pair::create)
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(clickEvent -> {
+        .subscribe(pair -> {
+          SubredditSubmissionClickEvent clickEvent = pair.first();
+          String currentSubredditName = pair.second();
           Submission submission = clickEvent.submission();
+
           DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
               .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : DankRedditClient.DEFAULT_COMMENT_SORT)
               .build();
@@ -352,7 +357,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           Single.timer(delay, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
               .takeUntil(lifecycle().onDestroy().ignoreElements())
               .subscribe(o -> {
-                submissionPage.populateUi(Optional.of(submission), submissionRequest);
+                submissionPage.populateUi(Optional.of(submission), submissionRequest, Optional.of(currentSubredditName));
                 submissionPageAnimationOptimizer.trackSubmissionOpened(submission);
               });
 
@@ -425,7 +430,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           SubmissionOptionSwipeEvent swipeEvent = pair.first();
           int extraOffset = getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
           Point location = new Point(extraOffset, swipeEvent.itemView().getTop() + extraOffset + Views.statusBarHeight(getResources()));
-          String subredditName = pair.second();
+          String subredditName = pair.second(); // This will be different from submission.getSubredditName() in case of frontpage, etc.
           boolean showVisitSubredditOption = !subredditName.equals(swipeEvent.submission().getSubredditName());
 
           SubmissionOptionsPopupMenu optionsMenu = new SubmissionOptionsPopupMenu(this, swipeEvent.submission(), showVisitSubredditOption);

@@ -27,6 +27,7 @@ import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
+import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -173,8 +174,13 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
-  public Observable<PostedOrInFlightContribution> streamCommentSwipeActions() {
+  public Observable<PostedOrInFlightContribution> streamCommentReplySwipeActions() {
     return commentAdapter.replySwipeActionStream;
+  }
+
+  @CheckResult
+  public Observable<SubmissionOptionSwipeEvent> streamSubmissionOptionSwipeActions() {
+    return headerAdapter.optionSwipeActionStream();
   }
 
   @CheckResult

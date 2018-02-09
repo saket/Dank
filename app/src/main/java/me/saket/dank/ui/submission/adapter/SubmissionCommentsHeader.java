@@ -3,6 +3,7 @@ package me.saket.dank.ui.submission.adapter;
 import android.animation.ValueAnimator;
 import android.content.Context;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.CheckResult;
 import android.support.annotation.ColorInt;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
@@ -22,9 +23,11 @@ import net.dean.jraw.models.VoteDirection;
 import java.util.List;
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
+import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
@@ -396,6 +399,11 @@ public interface SubmissionCommentsHeader {
     @Override
     public void onViewRecycled(ViewHolder holder) {
       headerBindStream.accept(Optional.empty());
+    }
+
+    @CheckResult
+    public Observable<SubmissionOptionSwipeEvent> optionSwipeActionStream() {
+      return swipeActionsProvider.optionSwipeActions();
     }
   }
 }
