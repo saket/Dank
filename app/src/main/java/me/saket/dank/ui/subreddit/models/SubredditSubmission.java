@@ -36,7 +36,8 @@ public interface SubredditSubmission {
   enum PartialChange {
     TITLE,
     BYLINE,
-    BACKGROUND
+    BACKGROUND,
+    SAVE_STATUS
   }
 
   @AutoValue
@@ -60,6 +61,8 @@ public interface SubredditSubmission {
     public abstract Optional<Integer> backgroundDrawableRes();
 
     public abstract Submission submission();
+
+    public abstract boolean isSaved();
 
     public static Builder builder() {
       return new AutoValue_SubredditSubmission_UiModel.Builder();
@@ -88,6 +91,8 @@ public interface SubredditSubmission {
       public abstract Builder backgroundDrawableRes(Optional<Integer> backgroundRes);
 
       public abstract Builder submission(Submission submission);
+
+      public abstract Builder isSaved(boolean isSaved);
 
       public abstract UiModel build();
     }
@@ -165,7 +170,7 @@ public interface SubredditSubmission {
       }
     }
 
-    public void renderPartialChanges(List<Object> payloads) {
+    public void renderPartialChanges(List<Object> payloads, SubmissionSwipeActionsProvider swipeActionsProvider) {
       for (Object payload : payloads) {
         //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
@@ -180,6 +185,14 @@ public interface SubredditSubmission {
 
             case BACKGROUND:
               setThumbnail(uiModel.thumbnail().get());
+              break;
+
+            case SAVE_STATUS:
+              getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
+              break;
+
+            default:
+              throw new UnsupportedOperationException("Unknown partial change: " + partialChange);
           }
         }
       }
@@ -248,15 +261,14 @@ public interface SubredditSubmission {
     @Override
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
       holder.setUiModel(uiModel);
-      holder.render();
-
       holder.getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
+      holder.render();
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
       holder.setUiModel(uiModel);
-      holder.renderPartialChanges(payloads);
+      holder.renderPartialChanges(payloads, swipeActionsProvider);
     }
 
     @CheckResult

@@ -7,6 +7,7 @@ import java.util.List;
 
 import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
 import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel.SubmissionRowUiModel;
+import timber.log.Timber;
 
 public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRowUiModel> {
 
@@ -45,6 +46,9 @@ public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRow
         }
         if (!oldSubmission.thumbnail().equals(newSubmission.thumbnail())) {
           partialChanges.add(SubredditSubmission.PartialChange.BACKGROUND);
+        }
+        if (oldSubmission.isSaved() != newSubmission.isSaved()) {
+          partialChanges.add(SubredditSubmission.PartialChange.SAVE_STATUS);
         }
         return partialChanges;
 

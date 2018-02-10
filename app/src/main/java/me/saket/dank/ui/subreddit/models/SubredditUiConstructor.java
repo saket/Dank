@@ -19,6 +19,7 @@ import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.functions.BiFunction;
 import me.saket.dank.R;
@@ -26,6 +27,7 @@ import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.subreddit.NetworkCallStatus;
@@ -46,18 +48,21 @@ public class SubredditUiConstructor {
   private final Preference<Boolean> showCommentCountInByline;
   private final Preference<Boolean> showNsfwContent;
   private final ErrorResolver errorResolver;
+  private final Lazy<BookmarksRepository> bookmarksRepository;
 
   @Inject
   public SubredditUiConstructor(
       VotingManager votingManager,
       ReplyRepository replyRepository,
       ErrorResolver errorResolver,
+      Lazy<BookmarksRepository> bookmarksRepository,
       @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
       @Named("show_nsfw_content") Preference<Boolean> showNsfwContent)
   {
     this.votingManager = votingManager;
     this.replyRepository = replyRepository;
     this.errorResolver = errorResolver;
+    this.bookmarksRepository = bookmarksRepository;
     this.showCommentCountInByline = showCommentCountInByline;
     this.showNsfwContent = showNsfwContent;
   }
@@ -70,6 +75,7 @@ public class SubredditUiConstructor {
   {
     Observable<?> userPrefChanges = Observable.merge(showCommentCountInByline.asObservable(), showNsfwContent.asObservable())
         .skip(1); // Skip initial values.
+    Observable<Object> externalChanges = Observable.merge(userPrefChanges, votingManager.streamChanges(), bookmarksRepository.get().streamChanges());
 
     Observable<Boolean> sharedFullscreenProgressVisibilities = fullscreenProgressVisibilities(cachedSubmissionLists, paginationResults).share();
 
@@ -80,9 +86,8 @@ public class SubredditUiConstructor {
         toolbarRefreshVisibilities(sharedFullscreenProgressVisibilities).distinctUntilChanged(),
         paginationProgressUiModels(cachedSubmissionLists, paginationResults).distinctUntilChanged(),
         cachedSubmissionLists,
-        userPrefChanges,
-        votingManager.streamChanges(),
-        (fullscreenProgressVisible, optFullscreenError, optEmptyState, toolbarRefreshVisible, optPagination, optCachedSubs, o, oo) ->
+        externalChanges,
+        (fullscreenProgressVisible, optFullscreenError, optEmptyState, toolbarRefreshVisible, optPagination, optCachedSubs, o) ->
         {
           int rowCount = optPagination.map(p -> 1).orElse(0) + optCachedSubs.map(subs -> subs.size()).orElse(0);
           List<SubredditScreenUiModel.SubmissionRowUiModel> rowUiModels = new ArrayList<>(rowCount);
@@ -288,6 +293,7 @@ public class SubredditUiConstructor {
         .title(titleBuilder.build(), Pair.create(submissionScore, voteDirection))
         .byline(bylineBuilder.build(), postedAndPendingCommentCount)
         .backgroundDrawableRes(backgroundResource)
+        .isSaved(bookmarksRepository.get().isSaved(submission))
         .build();
   }
 

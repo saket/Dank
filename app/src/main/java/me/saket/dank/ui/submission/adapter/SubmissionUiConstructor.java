@@ -21,12 +21,14 @@ import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 
+import dagger.Lazy;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
+import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.CommentInlineReplyItem;
 import me.saket.dank.ui.submission.CommentPendingSyncReplyItem;
 import me.saket.dank.ui.submission.CommentTreeConstructor;
@@ -58,6 +60,7 @@ public class SubmissionUiConstructor {
   private final VotingManager votingManager;
   private final Markdown markdown;
   private final UserSessionRepository userSessionRepository;
+  private final Lazy<BookmarksRepository> bookmarksRepository;
 
   @Inject
   public SubmissionUiConstructor(
@@ -65,13 +68,15 @@ public class SubmissionUiConstructor {
       ReplyRepository replyRepository,
       VotingManager votingManager,
       Markdown markdown,
-      UserSessionRepository userSessionRepository)
+      UserSessionRepository userSessionRepository,
+      Lazy<BookmarksRepository> bookmarksRepository)
   {
     this.contentLinkUiModelConstructor = contentLinkUiModelConstructor;
     this.replyRepository = replyRepository;
     this.votingManager = votingManager;
     this.markdown = markdown;
     this.userSessionRepository = userSessionRepository;
+    this.bookmarksRepository = bookmarksRepository;
   }
 
   /**
@@ -123,8 +128,10 @@ public class SubmissionUiConstructor {
               .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
               .map(pendingSyncReplies -> pendingSyncReplies.size());
 
+          Observable<Object> externalChanges = Observable.merge(votingManager.streamChanges(), bookmarksRepository.get().streamChanges());
+
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = Observable.combineLatest(
-              votingManager.streamChanges().observeOn(io()).map(o -> context),
+              externalChanges.observeOn(io()).map(o -> context),
               submissions.observeOn(io()),
               submissionPendingSyncReplyCounts,
               contentLinkUiModels,
@@ -232,6 +239,7 @@ public class SubmissionUiConstructor {
         .selfText(selfTextOptional)
         .optionalContentLinkModel(contentLinkUiModel)
         .submission(submission)
+        .isSaved(bookmarksRepository.get().isSaved(submission))
         .build();
   }
 

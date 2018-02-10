@@ -47,6 +47,7 @@ public interface SubmissionCommentsHeader {
   enum PartialChange {
     SUBMISSION_TITLE,
     SUBMISSION_BYLINE,
+    SUBMISSION_SAVE_STATUS,
     CONTENT_LINK,
     CONTENT_LINK_THUMBNAIL,
     CONTENT_LINK_FAVICON,
@@ -76,6 +77,8 @@ public interface SubmissionCommentsHeader {
      * The original data model from which this Ui model was created.
      */
     abstract Submission submission();
+
+    public abstract boolean isSaved();
 
     @Override
     public SubmissionCommentRowType type() {
@@ -111,6 +114,8 @@ public interface SubmissionCommentsHeader {
       abstract Builder optionalContentLinkModel(Optional<SubmissionContentLinkUiModel> link);
 
       abstract Builder submission(Submission submission);
+
+      public abstract Builder isSaved(boolean saved);
 
       abstract UiModel build();
     }
@@ -190,7 +195,7 @@ public interface SubmissionCommentsHeader {
       this.uiModel = uiModel;
     }
 
-    public void render(SubmissionSwipeActionsProvider swipeActionsProvider) {
+    public void render() {
       setSubmissionTitle(uiModel);
       setSubmissionByline(uiModel);
       setContentLink(uiModel, false);
@@ -198,9 +203,6 @@ public interface SubmissionCommentsHeader {
       uiModel.optionalSelfText().ifPresent(selfText -> selfTextView.setText(selfText));
       selfTextView.setVisibility(uiModel.optionalSelfText().isPresent() ? View.VISIBLE : View.GONE);
       selfTextView.setMovementMethod(movementMethod);
-
-      // Gestures.
-      getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
     }
 
     private void setSubmissionByline(UiModel uiModel) {
@@ -211,7 +213,7 @@ public interface SubmissionCommentsHeader {
       titleView.setText(uiModel.title());
     }
 
-    public void handlePartialChanges(List<Object> payloads) {
+    public void handlePartialChanges(List<Object> payloads, SubmissionSwipeActionsProvider swipeActionsProvider) {
       for (Object payload : payloads) {
         //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
@@ -222,6 +224,10 @@ public interface SubmissionCommentsHeader {
 
             case SUBMISSION_BYLINE:
               setSubmissionByline(uiModel);
+              break;
+
+            case SUBMISSION_SAVE_STATUS:
+              getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
               break;
 
             case CONTENT_LINK:
@@ -386,14 +392,16 @@ public interface SubmissionCommentsHeader {
     @Override
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
       holder.setUiModel(uiModel);
-      holder.render(swipeActionsProvider);
+      holder.getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
+      holder.render();
+
       headerBindStream.accept(Optional.of(holder));
     }
 
     @Override
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
       holder.setUiModel(uiModel);
-      holder.handlePartialChanges(payloads);
+      holder.handlePartialChanges(payloads, swipeActionsProvider);
     }
 
     @Override

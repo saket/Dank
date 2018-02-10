@@ -82,6 +82,9 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
         if (!oldHeader.byline().equals(newHeader.byline())) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_BYLINE);
         }
+        if (oldHeader.isSaved() != newHeader.isSaved()) {
+          partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_SAVE_STATUS);
+        }
 
         //Timber.i("--------------------");
         //Timber.i(partialChanges.toString());
@@ -92,8 +95,7 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
         SubmissionComment.UiModel oldComment = (SubmissionComment.UiModel) oldItem;
         SubmissionComment.UiModel newComment = (SubmissionComment.UiModel) newItem;
 
-        if (oldComment.isCollapsed() == newComment.isCollapsed() && !oldComment.byline().equals(newComment.byline()))
-        {
+        if (oldComment.isCollapsed() == newComment.isCollapsed() && !oldComment.byline().equals(newComment.byline())) {
           return Collections.singletonList(SubmissionComment.PartialChange.BYLINE);
         } else {
           // In case of comment collapse, a full re-bind is required AND the
