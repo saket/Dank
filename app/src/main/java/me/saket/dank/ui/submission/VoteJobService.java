@@ -10,6 +10,7 @@ import android.os.PersistableBundle;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.VoteDirection;
 
 import javax.inject.Inject;
@@ -19,7 +20,7 @@ import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.DankJobService;
-import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.di.Dank;
@@ -30,7 +31,7 @@ import timber.log.Timber;
  */
 public class VoteJobService extends DankJobService {
 
-  private static final String KEY_VOTABLE_CONTRIBUTION_JSON = "votableThingName";
+  private static final String KEY_VOTABLE_CONTRIBUTION_JSON2 = "votableThingName";
   private static final String KEY_VOTE_DIRECTION = "voteDirection";
 
   @Inject Moshi moshi;
@@ -39,10 +40,12 @@ public class VoteJobService extends DankJobService {
   /**
    * Schedule a voting attempt whenever JobScheduler deems it fit.
    */
-  public static void scheduleRetry(Context context, PostedOrInFlightContribution votableContribution, VoteDirection voteDirection, Moshi moshi) {
+  public static void scheduleRetry(Context context, Contribution votableContribution, VoteDirection voteDirection, Moshi moshi) {
     PersistableBundle extras = new PersistableBundle(2);
     extras.putString(KEY_VOTE_DIRECTION, voteDirection.name());
-    extras.putString(KEY_VOTABLE_CONTRIBUTION_JSON, moshi.adapter(PostedOrInFlightContribution.class).toJson(votableContribution));
+
+    ContributionFullNameWrapper serializableContribution = ContributionFullNameWrapper.createFrom(votableContribution);
+    extras.putString(KEY_VOTABLE_CONTRIBUTION_JSON2, moshi.adapter(ContributionFullNameWrapper.class).toJson(serializableContribution));
 
     JobInfo retryJobInfo = new JobInfo.Builder(ID_VOTE + votableContribution.hashCode(), new ComponentName(context, VoteJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
@@ -65,11 +68,11 @@ public class VoteJobService extends DankJobService {
   public boolean onStartJob(JobParameters params) {
     VoteDirection voteDirection = VoteDirection.valueOf(params.getExtras().getString(KEY_VOTE_DIRECTION));
 
-    JsonAdapter<PostedOrInFlightContribution> adapter = moshi.adapter(PostedOrInFlightContribution.class);
-    String votableContributionJson = params.getExtras().getString(KEY_VOTABLE_CONTRIBUTION_JSON);
+    JsonAdapter<ContributionFullNameWrapper> jsonAdapter = moshi.adapter(ContributionFullNameWrapper.class);
+    String votableContributionJson = params.getExtras().getString(KEY_VOTABLE_CONTRIBUTION_JSON2);
 
     //noinspection ConstantConditions
-    Single.fromCallable(() -> adapter.fromJson(votableContributionJson))
+    Single.fromCallable(() -> jsonAdapter.fromJson(votableContributionJson))
         .flatMapCompletable(votableContribution -> {
           if (!votingManager.isVotePending(votableContribution)) {
             // Looks like the pending vote was cleared upon refreshing data from remote.

@@ -9,6 +9,8 @@ import android.view.ViewGroup;
 
 import com.jakewharton.rxrelay2.Relay;
 
+import net.dean.jraw.models.Comment;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +18,6 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
-import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
@@ -174,7 +175,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
-  public Observable<PostedOrInFlightContribution> streamCommentReplySwipeActions() {
+  public Observable<Comment> streamCommentReplySwipeActions() {
     return commentAdapter.replySwipeActions();
   }
 

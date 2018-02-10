@@ -24,15 +24,16 @@ import javax.inject.Inject;
 import dagger.Lazy;
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.ContributionFullNameWrapper;
+import me.saket.dank.data.LocallyPostedComment;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.CommentInlineReplyItem;
-import me.saket.dank.ui.submission.CommentPendingSyncReplyItem;
 import me.saket.dank.ui.submission.CommentTreeConstructor;
 import me.saket.dank.ui.submission.DankCommentNode;
+import me.saket.dank.ui.submission.DankLocallyPostedCommentItem;
 import me.saket.dank.ui.submission.FocusedComment;
 import me.saket.dank.ui.submission.LoadMoreCommentItem;
 import me.saket.dank.ui.submission.ParentThread;
@@ -261,8 +262,8 @@ public class SubmissionUiConstructor {
         }
 
         case PENDING_SYNC_REPLY:
-          CommentPendingSyncReplyItem pendingSyncReplyItem = (CommentPendingSyncReplyItem) row;
-          String replyFullName = pendingSyncReplyItem.pendingSyncReply().postedFullName();
+          DankLocallyPostedCommentItem pendingSyncReplyItem = (DankLocallyPostedCommentItem) row;
+          String replyFullName = pendingSyncReplyItem.comment().pendingSyncReply().postedFullName();
           boolean isFocused = focusedComment.isPresent() && focusedComment.get().fullname().equals(replyFullName);
           uiModels.add(pendingSyncCommentUiModel(context, pendingSyncReplyItem, isFocused));
           break;
@@ -311,8 +312,7 @@ public class SubmissionUiConstructor {
         : markdown.parse(comment);
 
     return commentUiModelBuilder(context, dankCommentNode.adapterId(), dankCommentNode.isCollapsed(), isFocused, dankCommentNode.commentNode().getDepth())
-        .optionalComment(Optional.of(comment))
-        .commentInfo(PostedOrInFlightContribution.from(comment))
+        .comment(comment)
         .optionalPendingSyncReply(Optional.empty())
         .byline(byline, commentScore)
         .body(commentBody)
@@ -322,8 +322,8 @@ public class SubmissionUiConstructor {
   /**
    * Reply posted by the logged in user that hasn't synced yet or whose actual comment hasn't been fetched yet.
    */
-  private SubmissionComment.UiModel pendingSyncCommentUiModel(Context context, CommentPendingSyncReplyItem pendingSyncReplyRow, boolean isFocused) {
-    PendingSyncReply pendingSyncReply = pendingSyncReplyRow.pendingSyncReply();
+  private SubmissionComment.UiModel pendingSyncCommentUiModel(Context context, DankLocallyPostedCommentItem locallyPostedRow, boolean isFocused) {
+    PendingSyncReply pendingSyncReply = locallyPostedRow.comment().pendingSyncReply();
     CharSequence byline;
     int commentScore = 1;
 
@@ -338,12 +338,12 @@ public class SubmissionUiConstructor {
           VoteDirection.UPVOTE,
           commentScore,
           0,
-          pendingSyncReplyRow.isCollapsed()
+          locallyPostedRow.isCollapsed()
       );
 
     } else {
       Truss bylineBuilder = new Truss();
-      if (pendingSyncReplyRow.isCollapsed()) {
+      if (locallyPostedRow.isCollapsed()) {
         bylineBuilder.append(pendingSyncReply.author());
       } else {
         bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, R.color.submission_comment_byline_author_op)));
@@ -365,13 +365,12 @@ public class SubmissionUiConstructor {
       byline = bylineBuilder.build();
     }
 
-    CharSequence commentBody = pendingSyncReplyRow.isCollapsed()
+    CharSequence commentBody = locallyPostedRow.isCollapsed()
         ? markdown.stripMarkdown(pendingSyncReply.body())
         : markdown.parse(pendingSyncReply);
 
-    return commentUiModelBuilder(context, pendingSyncReplyRow.adapterId(), pendingSyncReplyRow.isCollapsed(), isFocused, pendingSyncReplyRow.depth())
-        .optionalComment(Optional.empty())
-        .commentInfo(PostedOrInFlightContribution.createLocal(pendingSyncReply))
+    return commentUiModelBuilder(context, locallyPostedRow.adapterId(), locallyPostedRow.isCollapsed(), isFocused, locallyPostedRow.depth())
+        .comment(LocallyPostedComment.create(pendingSyncReply))
         .optionalPendingSyncReply(Optional.of(pendingSyncReply))
         .byline(byline, commentScore)
         .body(commentBody)
@@ -453,7 +452,7 @@ public class SubmissionUiConstructor {
 
   private SubmissionCommentInlineReply.UiModel inlineReplyUiModel(Context context, CommentInlineReplyItem inlineReplyItem, String loggedInUserName) {
     long adapterId = inlineReplyItem.adapterId().hashCode();
-    PostedOrInFlightContribution parentContribution = PostedOrInFlightContribution.from(inlineReplyItem.parentContribution());
+    ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.createFrom(inlineReplyItem.parentContribution());
     CharSequence authorHint = context.getResources().getString(R.string.submission_comment_reply_author_hint, loggedInUserName);
     return SubmissionCommentInlineReply.UiModel.create(adapterId, authorHint, parentContribution, inlineReplyItem.depth());
   }

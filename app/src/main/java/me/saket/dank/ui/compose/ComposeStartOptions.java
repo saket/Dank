@@ -8,7 +8,7 @@ import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Contribution;
 
-import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.utils.Optional;
 
 @AutoValue
@@ -21,13 +21,13 @@ public abstract class ComposeStartOptions implements Parcelable {
   public abstract CharSequence preFilledText();
 
   @Nullable
-  abstract PostedOrInFlightContribution parentContribution();
+  abstract ContributionFullNameWrapper parentContribution();
 
-  public Optional<PostedOrInFlightContribution> optionalParentContribution() {
+  public Optional<ContributionFullNameWrapper> optionalParentContribution() {
     return Optional.ofNullable(parentContribution());
   }
 
-  public abstract PostedOrInFlightContribution draftKey();
+  public abstract ContributionFullNameWrapper draftKey();
 
   @Nullable
   public abstract Bundle extras();
@@ -53,8 +53,8 @@ public abstract class ComposeStartOptions implements Parcelable {
      * <p>
      * Optional only if you don't want it back in {@link ComposeResult}.
      */
-    public Builder parentContribution(Optional<PostedOrInFlightContribution> replyingTo) {
-      return parentContribution(replyingTo.isPresent() ? replyingTo.get() : null);
+    public Builder parentContribution(Optional<ContributionFullNameWrapper> replyingTo) {
+      return parentContribution(replyingTo.orElse(null));
     }
 
     /**
@@ -62,12 +62,12 @@ public abstract class ComposeStartOptions implements Parcelable {
      * Sent back to calling Activity through {@link ComposeResult}.
      * Not used for anything else.
      */
-    public abstract Builder parentContribution(@Nullable PostedOrInFlightContribution replyingTo);
+    public abstract Builder parentContribution(@Nullable ContributionFullNameWrapper replyingTo);
 
     /**
      * The ID (contribution's full-name) to use for saving and retaining drafts.
      */
-    public abstract Builder draftKey(PostedOrInFlightContribution contributionAsDraftKey);
+    public abstract Builder draftKey(ContributionFullNameWrapper contributionAsDraftKey);
 
     /**
      * Delivered back with {@link ComposeResult}.

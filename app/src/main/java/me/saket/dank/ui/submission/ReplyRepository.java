@@ -12,8 +12,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
-import net.dean.jraw.models.Message;
-import net.dean.jraw.models.VoteDirection;
+import net.dean.jraw.models.Contribution;
 
 import java.util.HashMap;
 import java.util.List;
@@ -30,8 +29,8 @@ import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.utils.Preconditions;
 import timber.log.Timber;
 
 /**
@@ -83,20 +82,8 @@ public class ReplyRepository implements DraftStore {
 
     String replyBody = pendingSyncReply.body();
     long replyCreatedTimeMillis = pendingSyncReply.createdTimeMillis();
-    PostedOrInFlightContribution parentContribution = PostedOrInFlightContribution.createRemote(
-        parentThreadFullName,
-        1,
-        VoteDirection.NO_VOTE
-    );
+    ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(parentThreadFullName);
     return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
-  }
-
-  /**
-   * @param parentThread Root submission/message-thread.
-   */
-  @CheckResult
-  public Completable sendReply(Message parentMessage, ParentThread parentThread, String replyBody) {
-    return sendReply(PostedOrInFlightContribution.from(parentMessage), parentThread, replyBody);
   }
 
   /**
@@ -104,14 +91,14 @@ public class ReplyRepository implements DraftStore {
    * @param parentThread       Root submission/message-thread.
    */
   @CheckResult
-  public Completable sendReply(PostedOrInFlightContribution parentContribution, ParentThread parentThread, String replyBody) {
+  public Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody) {
     long replyCreatedTimeMillis = System.currentTimeMillis();
     return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
   }
 
   @CheckResult
   private Completable sendReply(
-      PostedOrInFlightContribution parentContribution,
+      Contribution parentContribution,
       ParentThread parentThread,
       String replyBody,
       long replyCreatedTimeMillis)
@@ -123,7 +110,7 @@ public class ReplyRepository implements DraftStore {
         replyBody,
         PendingSyncReply.State.POSTING,
         parentThread.fullName(),
-        parentContribution.fullName(),
+        parentContribution.getFullName(),
         userSessionRepository.loggedInUserName(),
         replyCreatedTimeMillis,
         sentTimeMillis
@@ -132,8 +119,7 @@ public class ReplyRepository implements DraftStore {
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
         .andThen(dankRedditClient.withAuth(Single.fromCallable(() -> {
           //noinspection ConstantConditions
-          ContributionFullNameWrapper fauxContribution = ContributionFullNameWrapper.create(parentContribution.fullName());
-          String postedReplyId = dankRedditClient.userAccountManager().reply(fauxContribution, replyBody);
+          String postedReplyId = dankRedditClient.userAccountManager().reply(parentContribution, replyBody);
           String postedFullName = parentThread.type().fullNamePrefix() + postedReplyId;
           Timber.i("Posted full-name: %s", postedFullName);
           return postedFullName;   // full-name.
@@ -198,8 +184,7 @@ public class ReplyRepository implements DraftStore {
 // ======== DRAFTS ======== //
 
   @Override
-  @CheckResult
-  public Completable saveDraft(PostedOrInFlightContribution contribution, String draftBody) {
+  public Completable saveDraft(Contribution contribution, String draftBody) {
     if (draftBody.isEmpty()) {
       return removeDraft(contribution);
     }
@@ -245,14 +230,12 @@ public class ReplyRepository implements DraftStore {
   }
 
   @Override
-  @CheckResult
-  public Observable<String> streamDrafts(PostedOrInFlightContribution contribution) {
+  public Observable<String> streamDrafts(Contribution contribution) {
     return rxSharedPrefs.getString(keyForDraft(contribution), "")
         .asObservable()
         .map(replyDraftJson -> {
           if ("".equals(replyDraftJson)) {
-            // Following RxBinding, which always emits the default value, we'll also emit an
-            // empty draft instead of Single.never() so that the UI's initial setup is done.
+            // Always emit a default value so that the UI's initial setup is done.
             return "";
 
           } else {
@@ -261,13 +244,11 @@ public class ReplyRepository implements DraftStore {
             return replyDraft.body();
           }
         })
-        .distinctUntilChanged()
-        //.doOnNext(draft -> Timber.i("Sending draft: %s", draft))
-        ;
+        .distinctUntilChanged();
   }
 
   @Override
-  public Completable removeDraft(PostedOrInFlightContribution contribution) {
+  public Completable removeDraft(Contribution contribution) {
     //String parent;
     //if (contribution instanceof Comment) {
     //  parent = ((Comment) contribution).getBody();
@@ -285,10 +266,8 @@ public class ReplyRepository implements DraftStore {
   }
 
   @VisibleForTesting
-  static String keyForDraft(PostedOrInFlightContribution parentContribution) {
-    if (parentContribution.fullName() == null) {
-      throw new NullPointerException("Wut");
-    }
-    return "replyDraftFor_" + parentContribution.fullName();
+  static String keyForDraft(Contribution contribution) {
+    Preconditions.checkNotNull(contribution.getFullName(), "fullname");
+    return "replyDraftFor_" + contribution.getFullName();
   }
 }

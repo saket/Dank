@@ -14,7 +14,6 @@ import dagger.Lazy;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
-import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
@@ -43,7 +42,7 @@ public class CommentSwipeActionsProvider {
   private final SwipeActions commentSwipeActions;
   private final SwipeActionIconProvider swipeActionIconProvider;
 
-  public final PublishRelay<PostedOrInFlightContribution> replySwipeActions = PublishRelay.create();
+  public final PublishRelay<Comment> replySwipeActions = PublishRelay.create();
 
   @Inject
   public CommentSwipeActionsProvider(
@@ -122,7 +121,7 @@ public class CommentSwipeActionsProvider {
     imageView.setRotation(0);
   }
 
-  public void performSwipeAction(SwipeAction swipeAction, Comment comment, PostedOrInFlightContribution commentInfo, SwipeableLayout swipeableLayout) {
+  public void performSwipeAction(SwipeAction swipeAction, Comment comment, SwipeableLayout swipeableLayout) {
     if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.get().isUserLoggedIn()) {
       onLoginRequireListener.get().onLoginRequired();
       return;
@@ -144,14 +143,14 @@ public class CommentSwipeActionsProvider {
         break;
 
       case ACTION_NAME_REPLY:
-        replySwipeActions.accept(commentInfo);
+        replySwipeActions.accept(comment);
         isUndoAction = false;
         break;
 
       case ACTION_NAME_UPVOTE: {
-        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(commentInfo, commentInfo.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.get().voteWithAutoRetry(commentInfo, newVoteDirection)
+        votingManager.get().voteWithAutoRetry(comment, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 
@@ -160,9 +159,9 @@ public class CommentSwipeActionsProvider {
       }
 
       case ACTION_NAME_DOWNVOTE: {
-        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(commentInfo, commentInfo.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.get().voteWithAutoRetry(commentInfo, newVoteDirection)
+        votingManager.get().voteWithAutoRetry(comment, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 

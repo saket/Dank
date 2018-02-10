@@ -5,10 +5,7 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
 
-import me.saket.dank.data.PostedOrInFlightContribution;
-
 /**
- * TODO: This class can possibly be merged with {@link PostedOrInFlightContribution}.
  * Thread == submission comment thread or private message thread.
  */
 @AutoValue

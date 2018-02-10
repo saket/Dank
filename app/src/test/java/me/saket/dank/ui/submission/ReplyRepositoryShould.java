@@ -15,6 +15,8 @@ import android.content.SharedPreferences;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.models.Contribution;
+
 import org.junit.Before;
 import org.junit.Rule;
 import org.junit.Test;
@@ -30,7 +32,6 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import hirondelle.date4j.DateTime;
-import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 
 public class ReplyRepositoryShould {
@@ -62,8 +63,8 @@ public class ReplyRepositoryShould {
   @Test
   @SuppressLint("CommitPrefEdits")
   public void onSaveDraft_shouldSaveDraft_shouldCallRecycleDrafts() throws Exception {
-    PostedOrInFlightContribution parentComment = mock(PostedOrInFlightContribution.class);
-    when(parentComment.fullName()).thenReturn("fullName");
+    Contribution parentComment = mock(Contribution.class);
+    when(parentComment.getFullName()).thenReturn("fullName");
     when(sharedPrefs.getAll()).thenReturn(Collections.emptyMap());
 
     replyRepository.saveDraft(parentComment, "draft").subscribe();

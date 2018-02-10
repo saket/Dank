@@ -42,6 +42,7 @@ import dagger.Provides;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
+import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
@@ -61,7 +62,6 @@ import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.MoshiAccountAdapter;
 import me.saket.dank.utils.MoshiMessageAdapter;
-import me.saket.dank.utils.MoshiPostedOrInFlightContributionAdapterFactory;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
 import me.saket.dank.utils.StreamableRepository;
@@ -170,10 +170,10 @@ public class DankAppModule {
   Moshi provideMoshi(JacksonHelper jacksonHelper) {
     return new Moshi.Builder()
         .add(AutoValueMoshiAdapterFactory.create())
-        .add(new MoshiPostedOrInFlightContributionAdapterFactory())
         .add(new MoshiMessageAdapter(jacksonHelper))
         .add(new MoshiSubmissionAdapter(jacksonHelper))
         .add(new MoshiAccountAdapter(jacksonHelper))
+        .add(ContributionFullNameWrapper.class, new ContributionFullNameWrapper.MoshiJsonAdapter())
         .build();
   }
 

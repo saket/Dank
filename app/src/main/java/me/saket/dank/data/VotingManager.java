@@ -8,10 +8,10 @@ import android.support.annotation.CheckResult;
 import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Comment;
+import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thing;
 import net.dean.jraw.models.VoteDirection;
-import net.dean.jraw.models.attr.Votable;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -34,7 +34,7 @@ import timber.log.Timber;
  */
 public class VotingManager {
 
-  public static final String SHARED_PREFS_NAME = "sharedpreferences_votingManager";
+  public static final String SHARED_PREFS_NAME = "SharedPreferences.Votes";
   private static final Object NOTHING = LifecycleStreams.NOTHING;
   private static final String KEY_PENDING_VOTE_ = "pendingVote_";
 
@@ -70,8 +70,8 @@ public class VotingManager {
   }
 
   @CheckResult
-  public Completable vote(PostedOrInFlightContribution contributionToVote, VoteDirection voteDirection) {
-    if (contributionToVote.fullName() == null) {
+  public Completable vote(Contribution contributionToVote, VoteDirection voteDirection) {
+    if (contributionToVote.getFullName() == null) {
       throw new AssertionError();
     }
 
@@ -79,7 +79,7 @@ public class VotingManager {
     markVoteAsPending(contributionToVote, voteDirection);
 
     //noinspection ConstantConditions
-    VotableThingFullNameWrapper votableThing = VotableThingFullNameWrapper.create(contributionToVote.fullName());
+    VotableThingFullNameWrapper votableThing = VotableThingFullNameWrapper.create(contributionToVote.getFullName());
     return dankRedditClient.withAuth(Completable.fromAction(() -> dankRedditClient.userAccountManager().vote(votableThing, voteDirection)))
 //        .doOnSubscribe(o -> Timber.i("Voting for %s…", contributionToVote.fullName()()))
 //        .doOnComplete(() -> Timber.i("Voting done for %s", contributionToVote.fullName()()))
@@ -92,7 +92,7 @@ public class VotingManager {
    * before the API call returns and we're able to retry.
    */
   @CheckResult
-  public Completable voteWithAutoRetry(PostedOrInFlightContribution contributionToVote, VoteDirection voteDirection) {
+  public Completable voteWithAutoRetry(Contribution contributionToVote, VoteDirection voteDirection) {
     //Timber.i("Voting for %s with %s", contributionToVote.fullName(), voteDirection);
 
     return vote(contributionToVote, voteDirection)
@@ -100,7 +100,7 @@ public class VotingManager {
           // TODO: Reddit replies with 400 bad request for archived submissions.
 
           if (!Dank.errors().resolve(error).isUnknown()) {
-            Timber.i("Voting failed for %s. Will retry again later.", contributionToVote.fullName());
+            Timber.i("Voting failed for %s. Will retry again later.", contributionToVote.getFullName());
 
             // For network/Reddit errors, swallow the error and attempt retries later.
             VoteJobService.scheduleRetry(appContext, contributionToVote, voteDirection, moshi);
@@ -126,29 +126,24 @@ public class VotingManager {
 
       SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.edit();
       for (Submission submission : submissionsFromRemote) {
-        PostedOrInFlightContribution votableSubmission = PostedOrInFlightContribution.from(submission);
-        if (isVotePending(votableSubmission)) {
+        if (isVotePending(submission)) {
           //Timber.i("Removing stale pending vote for %s", ((Submission) submission).getTitle());
-          sharedPrefsEditor.remove(keyFor(votableSubmission));
+          sharedPrefsEditor.remove(keyFor(submission));
         }
       }
       sharedPrefsEditor.apply();
     });
   }
 
-  public <T extends Thing & Votable> VoteDirection getPendingOrDefaultVote(T thing, VoteDirection defaultValue) {
-    return VoteDirection.valueOf(sharedPrefs.getString(keyFor(thing.getFullName()), defaultValue.name()));
-  }
-
-  public VoteDirection getPendingOrDefaultVote(PostedOrInFlightContribution votableContribution, VoteDirection defaultValue) {
+  public VoteDirection getPendingOrDefaultVote(Contribution votableContribution, VoteDirection defaultValue) {
     return VoteDirection.valueOf(sharedPrefs.getString(keyFor(votableContribution), defaultValue.name()));
   }
 
-  public boolean isVotePending(PostedOrInFlightContribution votableContribution) {
+  public boolean isVotePending(Contribution votableContribution) {
     return sharedPrefs.contains(keyFor(votableContribution));
   }
 
-  private void markVoteAsPending(PostedOrInFlightContribution votableContribution, VoteDirection voteDirection) {
+  private void markVoteAsPending(Contribution votableContribution, VoteDirection voteDirection) {
     sharedPrefs.edit().putString(keyFor(votableContribution), voteDirection.name()).apply();
   }
 
@@ -167,26 +162,19 @@ public class VotingManager {
   /**
    * Get <var>thing</var>'s score assuming that any pending vote has been synced with remote.
    */
-  public <T extends Thing & Votable> int getScoreAfterAdjustingPendingVote(T votableContribution) {
-    return getScoreAfterAdjustingPendingVote(PostedOrInFlightContribution.from(votableContribution));
-  }
-
-  /**
-   * Get <var>thing</var>'s score assuming that any pending vote has been synced with remote.
-   */
-  public int getScoreAfterAdjustingPendingVote(PostedOrInFlightContribution votableContribution) {
+  public int getScoreAfterAdjustingPendingVote(PublicContribution votableContribution) {
     if (!isVotePending(votableContribution)) {
-      return votableContribution.score();
+      return votableContribution.getScore();
     }
 
-    VoteDirection actualVoteDirection = votableContribution.voteDirection();
+    VoteDirection actualVoteDirection = votableContribution.getVote();
     VoteDirection pendingVoteDirection = getPendingOrDefaultVote(votableContribution, actualVoteDirection);
 
     if (actualVoteDirection == pendingVoteDirection) {
-      return votableContribution.score();
+      return votableContribution.getScore();
     }
 
-    int resultingScore = votableContribution.score();
+    int resultingScore = votableContribution.getScore();
     switch (pendingVoteDirection) {
       case UPVOTE:
         resultingScore += 1;
@@ -198,7 +186,7 @@ public class VotingManager {
 
       default:
       case NO_VOTE:
-        switch (votableContribution.voteDirection()) {
+        switch (votableContribution.getVote()) {
           case UPVOTE:
             resultingScore -= 1;
             break;
@@ -221,7 +209,7 @@ public class VotingManager {
     return KEY_PENDING_VOTE_ + contributionFullName;
   }
 
-  private String keyFor(PostedOrInFlightContribution contribution) {
-    return keyFor(contribution.fullName());
+  private String keyFor(Contribution contribution) {
+    return keyFor(contribution.getFullName());
   }
 }

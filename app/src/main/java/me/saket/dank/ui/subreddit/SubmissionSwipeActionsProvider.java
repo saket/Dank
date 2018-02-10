@@ -15,7 +15,6 @@ import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
-import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -166,10 +165,9 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
         break;
 
       case ACTION_NAME_UPVOTE: {
-        PostedOrInFlightContribution submissionInfo = PostedOrInFlightContribution.from(submission);
-        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submissionInfo, submissionInfo.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submission, submission.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.get().voteWithAutoRetry(submissionInfo, newVoteDirection)
+        votingManager.get().voteWithAutoRetry(submission, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 
@@ -178,10 +176,9 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
       }
 
       case ACTION_NAME_DOWNVOTE: {
-        PostedOrInFlightContribution submissionInfo = PostedOrInFlightContribution.from(submission);
-        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submissionInfo, submissionInfo.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submission, submission.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.get().voteWithAutoRetry(submissionInfo, newVoteDirection)
+        votingManager.get().voteWithAutoRetry(submission, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 

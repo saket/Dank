@@ -22,7 +22,7 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
-import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.LocallyPostedComment;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.PendingSyncReply;
@@ -59,9 +59,7 @@ public interface SubmissionComment {
 
     public abstract int indentationDepth();
 
-    public abstract Optional<Comment> optionalComment();
-
-    public abstract PostedOrInFlightContribution commentInfo();
+    public abstract Comment comment();
 
     /** Present only for locally posted replies. Required because {@link ReplyRetrySendClickEvent} needs it. */
     public abstract Optional<PendingSyncReply> optionalPendingSyncReply();
@@ -106,13 +104,6 @@ public interface SubmissionComment {
 
       public abstract Builder bodyMaxLines(int maxLines);
 
-      /**
-       * The original data model from which this Ui model was created.
-       */
-      public abstract Builder commentInfo(PostedOrInFlightContribution comment);
-
-      public abstract Builder optionalComment(Optional<Comment> comment);
-
       public abstract Builder optionalPendingSyncReply(Optional<PendingSyncReply> optionalReply);
 
       public abstract Builder isCollapsed(boolean isCollapsed);
@@ -120,6 +111,8 @@ public interface SubmissionComment {
       public abstract Builder backgroundColorRes(@ColorRes int backgroundColorRes);
 
       public abstract Builder isFocused(boolean focused);
+
+      public abstract Builder comment(Comment comment);
 
       public abstract UiModel build();
     }
@@ -152,20 +145,14 @@ public interface SubmissionComment {
       getSwipeableLayout().setSwipeActionIconProvider(commentSwipeActionsProvider.iconProvider());
       getSwipeableLayout().setSwipeActions(commentSwipeActionsProvider.actions());
       getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
-        commentSwipeActionsProvider.performSwipeAction(action, uiModel.optionalComment().get(), uiModel.commentInfo(), getSwipeableLayout());
+        commentSwipeActionsProvider.performSwipeAction(action, uiModel.comment(), getSwipeableLayout());
       });
     }
 
     public void setupCollapseOnClick(Relay<CommentClickEvent> clickStream) {
       collapseOnClickListener = o -> {
         boolean willCollapse = !uiModel.isCollapsed();
-        CommentClickEvent event = CommentClickEvent.create(
-            uiModel.commentInfo(),
-            getAdapterPosition(),
-            itemView,
-            willCollapse
-        );
-        clickStream.accept(event);
+        clickStream.accept(CommentClickEvent.create(uiModel.comment(), getAdapterPosition(), itemView, willCollapse));
       };
     }
 
@@ -201,7 +188,7 @@ public interface SubmissionComment {
 
       // Enable gestures only if it's a posted comment.
       // TODO: Add support for locally posted replies too.
-      boolean isPresentOnRemote = uiModel.commentInfo() instanceof PostedOrInFlightContribution.ContributionFetchedFromRemote;
+      boolean isPresentOnRemote = !(uiModel.comment() instanceof LocallyPostedComment);
       getSwipeableLayout().setSwipeEnabled(isPresentOnRemote);
 
       Optional<PendingSyncReply> optionalReply = uiModel.optionalPendingSyncReply();
@@ -271,7 +258,7 @@ public interface SubmissionComment {
     }
 
     @CheckResult
-    public Observable<PostedOrInFlightContribution> replySwipeActions() {
+    public Observable<Comment> replySwipeActions() {
       return swipeActionsProvider.replySwipeActions;
     }
   }

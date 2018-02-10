@@ -1,7 +1,6 @@
 package me.saket.dank.ui.submission;
 
 
-import static junit.framework.Assert.assertNotNull;
 import static me.saket.dank.utils.Arrays2.immutable;
 
 import android.support.annotation.CheckResult;
@@ -20,7 +19,9 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.Scheduler;
-import me.saket.dank.data.PostedOrInFlightContribution;
+import me.saket.dank.data.ContributionFullNameWrapper;
+import me.saket.dank.data.LocallyPostedComment;
+import me.saket.dank.utils.Preconditions;
 import me.saket.dank.utils.RxHashSet;
 import timber.log.Timber;
 
@@ -37,22 +38,36 @@ public class CommentTreeConstructor {
 
   private final ReplyRepository replyRepository;
 
+  private static String keyFor(Contribution contribution) {
+    if (contribution instanceof Submission) {
+      return contribution.getFullName();
+    }
+    if (contribution instanceof ContributionFullNameWrapper) {
+      Timber.i("Huh?");
+      return contribution.getFullName();
+    }
+    if (contribution instanceof LocallyPostedComment) {
+      String key = ((LocallyPostedComment) contribution).getPostingStatusIndependentId();
+      return Preconditions.checkNotNull(key, "LocallyPostedComment#getPostingStatusIndependentId()");
+    }
+    if (contribution instanceof Comment) {
+      return contribution.getFullName();
+    }
+    throw new UnsupportedOperationException("Unknown contribution: " + contribution);
+  }
+
   /** Contribution IDs for which inline replies are active. */
   static class ActiveReplyIds extends RxHashSet<String> {
-    boolean isActive(Contribution parentContribution) {
-      return contains(idForTogglingCollapse(parentContribution));
+    public boolean isActive(Contribution parentContribution) {
+      return contains(keyFor(parentContribution));
     }
 
-    public boolean isActive(PostedOrInFlightContribution contribution) {
-      return contains(contribution.idForTogglingCollapse());
+    public void showFor(Contribution parentContribution) {
+      add(keyFor(parentContribution));
     }
 
-    public void showFor(PostedOrInFlightContribution parentContribution) {
-      add(parentContribution.idForTogglingCollapse());
-    }
-
-    public void hideFor(PostedOrInFlightContribution parentContribution) {
-      remove(parentContribution.idForTogglingCollapse());
+    public void hideFor(Contribution parentContribution) {
+      remove(keyFor(parentContribution));
     }
   }
 
@@ -76,27 +91,19 @@ public class CommentTreeConstructor {
           });
     }
 
-    public boolean isCollapsed(String commentFullName) {
-      return contains(commentFullName);
-    }
-
     public boolean isCollapsed(Comment comment) {
-      return isCollapsed(idForTogglingCollapse(comment));
+      return contains(keyFor(comment));
     }
 
-    public boolean isCollapsed(PostedOrInFlightContribution contribution) {
-      return isCollapsed(contribution.idForTogglingCollapse());
-    }
-
-    public void expand(PostedOrInFlightContribution contribution) {
-      boolean removed = remove(contribution.idForTogglingCollapse());
+    public void expand(Comment comment) {
+      boolean removed = remove(keyFor(comment));
       if (!removed) {
-        throw new AssertionError("This contribution isn't collapsed: " + contribution);
+        throw new AssertionError("This comment isn't collapsed: " + comment);
       }
     }
 
-    public void collapse(PostedOrInFlightContribution contribution) {
-      add(contribution.idForTogglingCollapse());
+    public void collapse(Comment comment) {
+      add(keyFor(comment));
     }
 
     public void pauseChangeEvents() {
@@ -111,17 +118,17 @@ public class CommentTreeConstructor {
   /** Comment IDs for which more child comments are being fetched. */
   static class InFlightLoadMoreIds extends RxHashSet<String> {
     public boolean isInFlightFor(CommentNode commentNode) {
-      return contains(idForTogglingCollapse(commentNode.getComment()));
+      return contains(keyFor(commentNode.getComment()));
     }
 
-    public void showLoadMoreFor(PostedOrInFlightContribution parentContribution) {
-      add(parentContribution.idForTogglingCollapse());
+    public void showLoadMoreFor(Comment parentComment) {
+      add(keyFor(parentComment));
     }
 
-    public void hideLoadMoreFor(PostedOrInFlightContribution parentContribution) {
-      boolean removed = remove(parentContribution.idForTogglingCollapse());
+    public void hideLoadMoreFor(Comment parentComment) {
+      boolean removed = remove(keyFor(parentComment));
       if (!removed) {
-        throw new AssertionError("More comments weren't in flight for: " + parentContribution);
+        throw new AssertionError("More comments weren't in flight for: " + parentComment);
       }
     }
   }
@@ -197,72 +204,59 @@ public class CommentTreeConstructor {
   /**
    * Collapse/expand a comment.
    */
-  void toggleCollapse(PostedOrInFlightContribution contribution) {
-    assertNotNull(contribution.idForTogglingCollapse());
-
-    if (COLLAPSED_COMMENT_IDS.isCollapsed(contribution)) {
-      COLLAPSED_COMMENT_IDS.expand(contribution);
+  void toggleCollapse(Comment comment) {
+    if (COLLAPSED_COMMENT_IDS.isCollapsed(comment)) {
+      COLLAPSED_COMMENT_IDS.expand(comment);
     } else {
-      COLLAPSED_COMMENT_IDS.collapse(contribution);
+      COLLAPSED_COMMENT_IDS.collapse(comment);
     }
   }
 
-  boolean isCollapsed(PostedOrInFlightContribution contribution) {
+  boolean isCollapsed(Comment contribution) {
     return COLLAPSED_COMMENT_IDS.isCollapsed(contribution);
   }
 
   /**
    * Enable "loading more…" progress indicator.
    *
-   * @param parentContribution for which more child nodes are being fetched.
+   * @param parentComment for which more child nodes are being fetched.
    */
-  void setMoreCommentsLoading(PostedOrInFlightContribution parentContribution, boolean loading) {
-    if (parentContribution.idForTogglingCollapse() == null) {
-      throw new AssertionError();
-    }
-
+  void setMoreCommentsLoading(Comment parentComment, boolean loading) {
     if (loading) {
-      IN_FLIGHT_LOAD_MORE_IDS.showLoadMoreFor(parentContribution);
+      IN_FLIGHT_LOAD_MORE_IDS.showLoadMoreFor(parentComment);
     } else {
-      IN_FLIGHT_LOAD_MORE_IDS.hideLoadMoreFor(parentContribution);
+      IN_FLIGHT_LOAD_MORE_IDS.hideLoadMoreFor(parentComment);
     }
-  }
-
-  /**
-   * See {@link PostedOrInFlightContribution.ContributionFetchedFromRemote#idForTogglingCollapse()}
-   */
-  private static String idForTogglingCollapse(Contribution contribution) {
-    return contribution.getFullName();
   }
 
   /**
    * Show reply field for a comment and also expand any hidden comments.
    */
-  void showReplyAndExpandComments(PostedOrInFlightContribution parentContribution) {
-    if (COLLAPSED_COMMENT_IDS.isCollapsed(parentContribution)) {
+  void showReplyAndExpandComments(Comment parentComment) {
+    if (COLLAPSED_COMMENT_IDS.isCollapsed(parentComment)) {
       COLLAPSED_COMMENT_IDS.pauseChangeEvents();
-      COLLAPSED_COMMENT_IDS.expand(parentContribution);
+      COLLAPSED_COMMENT_IDS.expand(parentComment);
       COLLAPSED_COMMENT_IDS.resumeChangeEvents();
     }
 
-    ACTIVE_REPLY_IDS.showFor(parentContribution);
+    ACTIVE_REPLY_IDS.showFor(parentComment);
   }
 
   /**
    * Show reply field for the submission or a comment.
    */
-  void showReply(PostedOrInFlightContribution parentContribution) {
+  void showReply(Contribution parentContribution) {
     ACTIVE_REPLY_IDS.showFor(parentContribution);
   }
 
   /**
    * Hide reply field for a comment.
    */
-  void hideReply(PostedOrInFlightContribution parentContribution) {
+  void hideReply(Contribution parentContribution) {
     ACTIVE_REPLY_IDS.hideFor(parentContribution);
   }
 
-  boolean isReplyActiveFor(PostedOrInFlightContribution contribution) {
+  boolean isReplyActiveFor(Contribution contribution) {
     return ACTIVE_REPLY_IDS.isActive(contribution);
   }
 
@@ -331,14 +325,10 @@ public class CommentTreeConstructor {
     if (!isCommentNodeCollapsed && pendingSyncRepliesMap.hasForParent(nextNode.getComment())) {
       List<PendingSyncReply> pendingSyncReplies = pendingSyncRepliesMap.getForParent(nextNode.getComment());
       for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
-        PendingSyncReply pendingSyncReply = pendingSyncReplies.get(i);
-        String adapterId = PostedOrInFlightContribution.idForTogglingCollapseForLocallyPostedReply(
-            nextNode.getComment().getFullName(),
-            pendingSyncReply.createdTimeMillis()
-        );
-        boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(adapterId);
+        LocallyPostedComment locallyPostedComment = LocallyPostedComment.create(pendingSyncReplies.get(i));
+        boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(locallyPostedComment);
         int depth = nextNode.getDepth() + 1;
-        flattenComments.add(CommentPendingSyncReplyItem.create(nextNode.getComment(), adapterId, pendingSyncReply, isReplyCollapsed, depth));
+        flattenComments.add(DankLocallyPostedCommentItem.create(locallyPostedComment, isReplyCollapsed, depth));
       }
     }
 

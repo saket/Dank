@@ -4,10 +4,10 @@ import android.view.View;
 
 import com.google.auto.value.AutoValue;
 
+import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 
 import me.saket.dank.data.CommentNodeEqualsBandAid;
-import me.saket.dank.data.PostedOrInFlightContribution;
 
 @AutoValue
 public abstract class LoadMoreCommentsClickEvent {
@@ -19,7 +19,9 @@ public abstract class LoadMoreCommentsClickEvent {
 
   abstract CommentNodeEqualsBandAid parentCommentNodeEqualsBandAid();
 
-  public abstract PostedOrInFlightContribution parentContribution();
+  public Comment parentComment() {
+    return parentCommentNode().getComment();
+  }
 
   /**
    * Node whose more comments have to be fetched.
@@ -29,7 +31,6 @@ public abstract class LoadMoreCommentsClickEvent {
   }
 
   public static LoadMoreCommentsClickEvent create(View loadMoreItemView, CommentNode parentNode) {
-    PostedOrInFlightContribution parentContribution = PostedOrInFlightContribution.from(parentNode.getComment());
-    return new AutoValue_LoadMoreCommentsClickEvent(loadMoreItemView, CommentNodeEqualsBandAid.create(parentNode), parentContribution);
+    return new AutoValue_LoadMoreCommentsClickEvent(loadMoreItemView, CommentNodeEqualsBandAid.create(parentNode));
   }
 }

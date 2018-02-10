@@ -4,12 +4,12 @@ import android.view.View;
 
 import com.google.auto.value.AutoValue;
 
-import me.saket.dank.data.PostedOrInFlightContribution;
+import net.dean.jraw.models.Comment;
 
 @AutoValue
 public abstract class CommentClickEvent {
 
-  public abstract PostedOrInFlightContribution commentInfo();
+  public abstract Comment comment();
 
   public abstract int commentRowPosition();
 
@@ -17,12 +17,7 @@ public abstract class CommentClickEvent {
 
   public abstract boolean willCollapseOnClick();
 
-  public static CommentClickEvent create(
-      PostedOrInFlightContribution commentInfo,
-      int commentPosition,
-      View commentItemView,
-      boolean willCollapseOnClick)
-  {
-    return new AutoValue_CommentClickEvent(commentInfo, commentPosition, commentItemView, willCollapseOnClick);
+  public static CommentClickEvent create(Comment comment, int commentPosition, View commentItemView, boolean willCollapseOnClick) {
+    return new AutoValue_CommentClickEvent(comment, commentPosition, commentItemView, willCollapseOnClick);
   }
 }

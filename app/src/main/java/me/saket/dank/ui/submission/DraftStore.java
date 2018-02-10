@@ -2,18 +2,19 @@ package me.saket.dank.ui.submission;
 
 import android.support.annotation.CheckResult;
 
+import net.dean.jraw.models.Contribution;
+
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import me.saket.dank.data.PostedOrInFlightContribution;
 
 public interface DraftStore {
 
   @CheckResult
-  Completable saveDraft(PostedOrInFlightContribution contribution, String draft);
+  Completable saveDraft(Contribution contribution, String draftBody);
 
   @CheckResult
-  Observable<String> streamDrafts(PostedOrInFlightContribution contribution);
+  Observable<String> streamDrafts(Contribution contribution);
 
   @CheckResult
-  Completable removeDraft(PostedOrInFlightContribution contribution);
+  Completable removeDraft(Contribution contribution);
 }

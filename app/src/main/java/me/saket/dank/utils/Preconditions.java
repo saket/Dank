@@ -20,10 +20,11 @@ import android.support.annotation.Nullable;
 import io.reactivex.Observer;
 
 public final class Preconditions {
-  public static void checkNotNull(@Nullable Object value, String message) {
+  public static <T> T checkNotNull(@Nullable T value, String message) {
     if (value == null) {
       throw new NullPointerException(message);
     }
+    return value;
   }
 
   public static boolean checkMainThread(Observer<?> observer) {

@@ -71,7 +71,7 @@ public abstract class PendingSyncReply {
   public abstract String parentThreadFullName();
 
   /**
-   * Full-name of parent {@link Contribution}.
+   * Full-name of parent {@link Contribution comment/submission/message}.
    */
   public abstract String parentContributionFullName();
 
