@@ -10,6 +10,7 @@ import net.dean.jraw.models.VoteDirection;
 
 import javax.inject.Inject;
 
+import dagger.Lazy;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -36,9 +37,9 @@ public class CommentSwipeActionsProvider {
   private static final String ACTION_NAME_UPVOTE = "CommentUpvote";
   private static final String ACTION_NAME_DOWNVOTE = "CommentDownvote";
 
-  private final VotingManager votingManager;
-  private final UserSessionRepository userSessionRepository;
-  private final OnLoginRequireListener onLoginRequireListener;
+  private final Lazy<VotingManager> votingManager;
+  private final Lazy<UserSessionRepository> userSessionRepository;
+  private final Lazy<OnLoginRequireListener> onLoginRequireListener;
   private final SwipeActions commentSwipeActions;
   private final SwipeActionIconProvider swipeActionIconProvider;
 
@@ -46,9 +47,9 @@ public class CommentSwipeActionsProvider {
 
   @Inject
   public CommentSwipeActionsProvider(
-      VotingManager votingManager,
-      UserSessionRepository userSessionRepository,
-      OnLoginRequireListener loginRequireListener)
+      Lazy<VotingManager> votingManager,
+      Lazy<UserSessionRepository> userSessionRepository,
+      Lazy<OnLoginRequireListener> loginRequireListener)
   {
     this.votingManager = votingManager;
     this.userSessionRepository = userSessionRepository;
@@ -122,8 +123,8 @@ public class CommentSwipeActionsProvider {
   }
 
   public void performSwipeAction(SwipeAction swipeAction, Comment comment, PostedOrInFlightContribution commentInfo, SwipeableLayout swipeableLayout) {
-    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.isUserLoggedIn()) {
-      onLoginRequireListener.onLoginRequired();
+    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.get().isUserLoggedIn()) {
+      onLoginRequireListener.get().onLoginRequired();
       return;
     }
 
@@ -148,9 +149,9 @@ public class CommentSwipeActionsProvider {
         break;
 
       case ACTION_NAME_UPVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(commentInfo, commentInfo.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(commentInfo, commentInfo.voteDirection());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.voteWithAutoRetry(commentInfo, newVoteDirection)
+        votingManager.get().voteWithAutoRetry(commentInfo, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 
@@ -159,9 +160,9 @@ public class CommentSwipeActionsProvider {
       }
 
       case ACTION_NAME_DOWNVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(commentInfo, commentInfo.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(commentInfo, commentInfo.voteDirection());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.voteWithAutoRetry(commentInfo, newVoteDirection)
+        votingManager.get().voteWithAutoRetry(commentInfo, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 

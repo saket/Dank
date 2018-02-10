@@ -10,6 +10,7 @@ import net.dean.jraw.models.VoteDirection;
 
 import javax.inject.Inject;
 
+import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
@@ -37,20 +38,20 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   private static final String ACTION_NAME_UPVOTE = "Upvote";
   private static final String ACTION_NAME_DOWNVOTE = "Downvote";
 
+  private final Lazy<VotingManager> votingManager;
+  private final Lazy<BookmarksRepository> bookmarksRepository;
+  private final Lazy<UserSessionRepository> userSessionRepository;
+  private final Lazy<OnLoginRequireListener> onLoginRequireListener;
   private final SwipeActions swipeActionsWithUnsave;
   private final SwipeActions swipeActionsWithSave;
-  private final VotingManager votingManager;
-  private final BookmarksRepository bookmarksRepository;
-  private final UserSessionRepository userSessionRepository;
-  private final OnLoginRequireListener onLoginRequireListener;
   private final PublishRelay<SubmissionOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
 
   @Inject
   public SubmissionSwipeActionsProvider(
-      VotingManager votingManager,
-      BookmarksRepository bookmarksRepository,
-      UserSessionRepository userSessionRepository,
-      OnLoginRequireListener onLoginRequireListener)
+      Lazy<VotingManager> votingManager,
+      Lazy<BookmarksRepository> bookmarksRepository,
+      Lazy<UserSessionRepository> userSessionRepository,
+      Lazy<OnLoginRequireListener> onLoginRequireListener)
   {
     this.votingManager = votingManager;
     this.bookmarksRepository = bookmarksRepository;
@@ -93,7 +94,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   public SwipeActions actionsFor(Submission submission) {
-    boolean isSubmissionSaved = bookmarksRepository.isSaved(submission);
+    boolean isSubmissionSaved = bookmarksRepository.get().isSaved(submission);
     return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
   }
 
@@ -141,8 +142,8 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
-    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.isUserLoggedIn()) {
-      onLoginRequireListener.onLoginRequired();
+    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.get().isUserLoggedIn()) {
+      onLoginRequireListener.get().onLoginRequired();
       return;
     }
 
@@ -155,20 +156,20 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
         break;
 
       case ACTION_NAME_SAVE:
-        bookmarksRepository.markAsSaved(submission);
+        bookmarksRepository.get().markAsSaved(submission);
         isUndoAction = false;
         break;
 
       case ACTION_NAME_UNSAVE:
-        bookmarksRepository.markAsUnsaved(submission);
+        bookmarksRepository.get().markAsUnsaved(submission);
         isUndoAction = true;
         break;
 
       case ACTION_NAME_UPVOTE: {
         PostedOrInFlightContribution submissionInfo = PostedOrInFlightContribution.from(submission);
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submissionInfo, submissionInfo.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submissionInfo, submissionInfo.voteDirection());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.voteWithAutoRetry(submissionInfo, newVoteDirection)
+        votingManager.get().voteWithAutoRetry(submissionInfo, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 
@@ -178,9 +179,9 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
       case ACTION_NAME_DOWNVOTE: {
         PostedOrInFlightContribution submissionInfo = PostedOrInFlightContribution.from(submission);
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(submissionInfo, submissionInfo.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submissionInfo, submissionInfo.voteDirection());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.voteWithAutoRetry(submissionInfo, newVoteDirection)
+        votingManager.get().voteWithAutoRetry(submissionInfo, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 
