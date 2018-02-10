@@ -61,6 +61,9 @@ public class DankRedditClient {
   public static final String SUBMISSION_FULLNAME_PREFIX = "t3_";
   public static final String MESSAGE_FULLNAME_PREFIX = "t4_";
 
+  public static final String CONTEXT_QUERY_PARAM = "context";
+  public static final int COMMENT_DEFAULT_CONTEXT_COUNT = 3;
+
   public static final CommentSort DEFAULT_COMMENT_SORT = CommentSort.TOP;
 
   private final RedditClient redditClient;

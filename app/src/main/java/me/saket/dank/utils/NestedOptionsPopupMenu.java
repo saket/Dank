@@ -35,13 +35,13 @@ import me.saket.dank.widgets.TintableCompoundDrawableTextView;
 public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTransition {
 
   @AutoValue
-  public abstract static class MenuInfo {
+  public abstract static class MenuStructure {
     public abstract CharSequence title();
 
     public abstract List<SingleLineItem> items();
 
-    public static MenuInfo create(CharSequence title, List<SingleLineItem> items) {
-      return new AutoValue_NestedOptionsPopupMenu_MenuInfo(title, items);
+    public static MenuStructure create(CharSequence title, List<SingleLineItem> items) {
+      return new AutoValue_NestedOptionsPopupMenu_MenuStructure(title, items);
     }
 
     @AutoValue
@@ -56,8 +56,12 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
       @Nullable
       public abstract List<ThreeLineItem> subItems();
 
+      public static SingleLineItem create(int id, String label, @DrawableRes int iconRes) {
+        return new AutoValue_NestedOptionsPopupMenu_MenuStructure_SingleLineItem(id, label, iconRes, null);
+      }
+
       public static SingleLineItem create(int id, String label, @DrawableRes int iconRes, @Nullable List<ThreeLineItem> subItems) {
-        return new AutoValue_NestedOptionsPopupMenu_MenuInfo_SingleLineItem(id, label, iconRes, subItems);
+        return new AutoValue_NestedOptionsPopupMenu_MenuStructure_SingleLineItem(id, label, iconRes, subItems);
       }
     }
 
@@ -71,17 +75,18 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
       public abstract int contentDescriptionRes();
 
       public static ThreeLineItem create(int id, CharSequence label, @StringRes int contentDescriptionRes) {
-        return new AutoValue_NestedOptionsPopupMenu_MenuInfo_ThreeLineItem(id, label, contentDescriptionRes);
+        return new AutoValue_NestedOptionsPopupMenu_MenuStructure_ThreeLineItem(id, label, contentDescriptionRes);
       }
     }
   }
 
-  public NestedOptionsPopupMenu(Context c, MenuInfo menuInfo) {
+  public NestedOptionsPopupMenu(Context c) {
     super(c);
-    createLayout(c, menuInfo);
   }
 
-  private void createLayout(Context c, MenuInfo menuInfo) {
+  protected abstract void handleAction(Context c, int actionId);
+
+  protected void createMenuLayout(Context c, MenuStructure menuStructure) {
     int spacing2 = c.getResources().getDimensionPixelSize(R.dimen.spacing2);
     int spacing16 = c.getResources().getDimensionPixelSize(R.dimen.spacing16);
     int spacing12 = c.getResources().getDimensionPixelSize(R.dimen.spacing12);
@@ -103,10 +108,10 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
     mainMenuTitle.setSingleLine();
     mainMenuTitle.setEllipsize(TextUtils.TruncateAt.END);
     mainMenuTitle.setPadding(spacing16, spacing16, spacing16, spacing16);
-    mainMenuTitle.setText(menuInfo.title());
+    mainMenuTitle.setText(menuStructure.title());
     mainMenuContainer.addView(mainMenuTitle, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
 
-    for (MenuInfo.SingleLineItem singleLineItem : menuInfo.items()) {
+    for (MenuStructure.SingleLineItem singleLineItem : menuStructure.items()) {
       TintableCompoundDrawableTextView menuButton = new TintableCompoundDrawableTextView(c);
       menuButton.setText(singleLineItem.label());
       menuButton.setCompoundDrawablesRelativeWithIntrinsicBounds(singleLineItem.iconRes(), 0, 0, 0);
@@ -116,7 +121,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
       menuButton.setTextColor(ContextCompat.getColor(c, R.color.gray_200));
       mainMenuContainer.addView(menuButton, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 
-      List<MenuInfo.ThreeLineItem> subMenuItems = singleLineItem.subItems();
+      List<MenuStructure.ThreeLineItem> subMenuItems = singleLineItem.subItems();
       if (subMenuItems != null) {
         LinearLayout subMenuContainer = new LinearLayout(c);
         subMenuContainer.setOrientation(LinearLayout.VERTICAL);
@@ -147,7 +152,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
         subMenuContainer.addView(subMenuTitle, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 
         for (int i = 0; i < subMenuItems.size(); i++) {
-          MenuInfo.ThreeLineItem subItem = subMenuItems.get(i);
+          MenuStructure.ThreeLineItem subItem = subMenuItems.get(i);
           AppCompatTextView subMenuButton = new AppCompatTextView(c);
           subMenuButton.setText(subItem.label());
           subMenuButton.setBackgroundDrawable(getSelectableItemBackground(c));
@@ -188,8 +193,6 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
     animation.setInterpolator(Animations.INTERPOLATOR);
     return animation;
   }
-
-  protected abstract void handleAction(Context c, int actionId);
 
   /**
    * Calculation copied from {@link PopupWindow}.

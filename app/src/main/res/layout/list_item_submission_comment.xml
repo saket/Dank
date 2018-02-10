@@ -15,15 +15,15 @@
     android:id="@+id/item_comment_indented_container"
     style="@style/DankSubmissionCommentItem"
     android:orientation="vertical"
-    android:paddingTop="@dimen/spacing8">
+    android:paddingTop="@dimen/submission_comment_top_padding">
 
     <TextView
       android:id="@+id/item_comment_byline"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_marginBottom="@dimen/spacing4"
-      android:layout_marginEnd="@dimen/spacing16"
-      android:layout_marginStart="@dimen/spacing16"
+      android:layout_marginEnd="@dimen/submission_comment_horiz_padding"
+      android:layout_marginStart="@dimen/submission_comment_horiz_padding"
       android:ellipsize="end"
       android:maxLines="1"
       android:textColor="@color/submission_comment_byline_default_color"

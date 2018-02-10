@@ -1,5 +1,11 @@
 package me.saket.dank.ui.submission;
 
+import android.graphics.Point;
+import android.view.Gravity;
+
+import com.jakewharton.rxrelay2.PublishRelay;
+
+import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.VoteDirection;
 
 import javax.inject.Inject;
@@ -11,6 +17,7 @@ import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
@@ -18,7 +25,6 @@ import me.saket.dank.widgets.swipe.SwipeActionsHolder;
 import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable.RippleType;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout.SwipeActionIconProvider;
-import timber.log.Timber;
 
 /**
  * Controls gesture actions on comments and submission details.
@@ -35,11 +41,8 @@ public class CommentSwipeActionsProvider {
   private final OnLoginRequireListener onLoginRequireListener;
   private final SwipeActions commentSwipeActions;
   private final SwipeActionIconProvider swipeActionIconProvider;
-  private OnReplySwipeActionListener onReplySwipeActionListener;
 
-  public interface OnReplySwipeActionListener {
-    void onReplySwipeAction(PostedOrInFlightContribution parentComment);
-  }
+  public final PublishRelay<PostedOrInFlightContribution> replySwipeActions = PublishRelay.create();
 
   @Inject
   public CommentSwipeActionsProvider(
@@ -64,10 +67,6 @@ public class CommentSwipeActionsProvider {
         .build();
 
     swipeActionIconProvider = createActionIconProvider();
-  }
-
-  public void setOnReplySwipeActionListener(OnReplySwipeActionListener listener) {
-    onReplySwipeActionListener = listener;
   }
 
   public SwipeActions actions() {
@@ -122,7 +121,7 @@ public class CommentSwipeActionsProvider {
     imageView.setRotation(0);
   }
 
-  public void performSwipeAction(SwipeAction swipeAction, PostedOrInFlightContribution comment, SwipeableLayout swipeableLayout) {
+  public void performSwipeAction(SwipeAction swipeAction, Comment comment, PostedOrInFlightContribution commentInfo, SwipeableLayout swipeableLayout) {
     if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.isUserLoggedIn()) {
       onLoginRequireListener.onLoginRequired();
       return;
@@ -132,19 +131,26 @@ public class CommentSwipeActionsProvider {
 
     switch (swipeAction.name()) {
       case ACTION_NAME_OPTIONS:
-        Timber.i("TODO: %s", swipeAction.name());
+        Point sheetLocation = Views.locationOnScreen(swipeableLayout);
+        Point menuLocation = new Point(0, sheetLocation.y);
+        menuLocation.offset(  // Align with comment body.
+            swipeableLayout.getResources().getDimensionPixelSize(R.dimen.submission_comment_horiz_padding),
+            swipeableLayout.getResources().getDimensionPixelSize(R.dimen.submission_comment_top_padding));
+
+        CommentOptionsPopup optionsPopup = new CommentOptionsPopup(swipeableLayout.getContext(), comment);
+        optionsPopup.showAtLocation(swipeableLayout, Gravity.TOP | Gravity.START, menuLocation);
         isUndoAction = false;
         break;
 
       case ACTION_NAME_REPLY:
-        onReplySwipeActionListener.onReplySwipeAction(comment);
+        replySwipeActions.accept(commentInfo);
         isUndoAction = false;
         break;
 
       case ACTION_NAME_UPVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(commentInfo, commentInfo.voteDirection());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.voteWithAutoRetry(comment, newVoteDirection)
+        votingManager.voteWithAutoRetry(commentInfo, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 
@@ -153,9 +159,9 @@ public class CommentSwipeActionsProvider {
       }
 
       case ACTION_NAME_DOWNVOTE: {
-        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(comment, comment.voteDirection());
+        VoteDirection currentVoteDirection = votingManager.getPendingOrDefaultVote(commentInfo, commentInfo.voteDirection());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.voteWithAutoRetry(comment, newVoteDirection)
+        votingManager.voteWithAutoRetry(commentInfo, newVoteDirection)
             .subscribeOn(Schedulers.io())
             .subscribe();
 

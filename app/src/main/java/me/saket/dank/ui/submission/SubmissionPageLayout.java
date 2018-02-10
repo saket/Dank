@@ -450,7 +450,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           Point sheetLocation = Views.locationOnScreen(commentListParentSheet);
           Point menuLocation = new Point(0, sheetLocation.y);
 
-          // Align the menu with submission title.
+          // Align with submission title.
           int headerPadding = getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
           menuLocation.offset(headerPadding, headerPadding);
 

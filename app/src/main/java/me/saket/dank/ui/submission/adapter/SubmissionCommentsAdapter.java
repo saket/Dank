@@ -175,7 +175,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
   @CheckResult
   public Observable<PostedOrInFlightContribution> streamCommentReplySwipeActions() {
-    return commentAdapter.replySwipeActionStream;
+    return commentAdapter.replySwipeActions();
   }
 
   @CheckResult

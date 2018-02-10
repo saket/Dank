@@ -21,7 +21,7 @@ import me.saket.dank.ui.submission.PendingSyncReply;
  * Could be a submission, a comment or a message.
  * <p>
  * This is used by actions that are applied on submissions, comments and messages,
- * like when voting, replying, etc.
+ * like when voting, replying, etc. AND applied on both synced and pending-sync comments.
  * <p>
  * I have been thinking that the subclasses are wrongly split. Instead of "Remote"
  * and "Local" maybe we should have "Posted" and "PendingSync". But then

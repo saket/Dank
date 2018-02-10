@@ -11,6 +11,7 @@ import net.dean.jraw.models.Submission;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.GenericMediaLink;
 import me.saket.dank.data.links.GfycatLink;
@@ -137,7 +138,7 @@ public class UrlParser {
             parsedLink = RedditSubmissionLink.create(url, submissionId, subredditName);
 
           } else {
-            String contextParamValue = linkURI.getQueryParameter("context");
+            String contextParamValue = linkURI.getQueryParameter(DankRedditClient.CONTEXT_QUERY_PARAM);
             int contextCount = TextUtils.isEmpty(contextParamValue) ? 0 : Integer.parseInt(contextParamValue);
             RedditCommentLink initialComment = RedditCommentLink.create(url, commentId, contextCount);
             parsedLink = RedditSubmissionLink.createWithComment(url, submissionId, subredditName, initialComment);

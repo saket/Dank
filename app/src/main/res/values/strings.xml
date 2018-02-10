@@ -146,6 +146,11 @@
   <string name="cd_submission_return_to_submissions">Return to submissions</string>
   <string name="cd_submission_image">Image for submission: %s</string>
 
+  <string name="comment_option_save">Save</string>
+  <string name="comment_option_unsave">Unsave</string>
+  <string name="comment_option_share_link">Share link</string>
+  <string name="comment_option_copy_link">Copy link</string>
+
   <string name="submission_media_content_load_failure_tap_to_retry">Tap to retry</string>
 
   <string name="submission_nsfw_content_disabled_error">NSFW \u00A0( ͡° ͜ʖ ͡°)</string>

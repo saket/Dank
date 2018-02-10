@@ -19,6 +19,7 @@ import java.util.List;
 
 import me.saket.dank.R;
 
+// TODO: Submit all these methods to JRAW.
 public class JrawUtils {
 
   public static Message parseMessageJson(String json, JacksonHelper jacksonHelper) {
@@ -35,7 +36,6 @@ public class JrawUtils {
     return thing.getDataNode().get("created_utc").longValue() * 1000;
   }
 
-  // TODO: Submit this to JRAW.
   public static List<Message> messageReplies(Message message) {
     if (!(message instanceof PrivateMessage)) {
       throw new AssertionError();
@@ -47,17 +47,14 @@ public class JrawUtils {
         : Collections.emptyList();
   }
 
-  // TODO: Submit this to JRAW.
   public static String messageBodyHtml(Message message) {
     return message.getDataNode().get("body_html").asText();
   }
 
-  // TODO: Submit this to JRAW.
   public static String commentBodyHtml(Comment comment) {
     return comment.getDataNode().get("body_html").asText();
   }
 
-  // TODO: Submit this to JRAW.
   @Nullable
   public static String secondPartyName(Resources resources, Message message, String loggedInUserName) {
     String secondPartyName;
@@ -74,5 +71,9 @@ public class JrawUtils {
       }
     }
     return secondPartyName;
+  }
+
+  public static String permalink(Comment comment) {
+    return comment.getDataNode().get("permalink").asText();
   }
 }

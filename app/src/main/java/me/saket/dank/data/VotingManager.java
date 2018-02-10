@@ -71,7 +71,7 @@ public class VotingManager {
 
   @CheckResult
   public Completable vote(PostedOrInFlightContribution contributionToVote, VoteDirection voteDirection) {
-    if (!contributionToVote.isPosted()) {
+    if (contributionToVote.fullName() == null) {
       throw new AssertionError();
     }
 

@@ -172,12 +172,13 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
     );
   }
 
+  // Used only for testing.
   public void showWithAnchor(View anchorView) {
     super.showWithAnchor(anchorView, Gravity.TOP | Gravity.START);
   }
 
   public void showAtLocation(View anchorView, Point location) {
-    super.showAtLocation(anchorView, Gravity.TOP | Gravity.START, location);
+    super.showAtLocation(anchorView, Gravity.BOTTOM | Gravity.START, location);
   }
 
   private String constructAccountAge(Date acctCreationDate) {

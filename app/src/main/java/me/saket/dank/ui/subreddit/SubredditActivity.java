@@ -428,13 +428,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
           SubmissionOptionSwipeEvent swipeEvent = pair.first();
-          int extraOffset = getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
-          Point location = new Point(extraOffset, swipeEvent.itemView().getTop() + extraOffset + Views.statusBarHeight(getResources()));
+          Point showLocation = new Point(0, swipeEvent.itemView().getTop() + Views.statusBarHeight(getResources()));
+
+          // Align with submission body.
+          int padding = getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
+          showLocation.offset(padding, padding);
+
           String subredditName = pair.second(); // This will be different from submission.getSubredditName() in case of frontpage, etc.
           boolean showVisitSubredditOption = !subredditName.equals(swipeEvent.submission().getSubredditName());
 
           SubmissionOptionsPopup optionsMenu = new SubmissionOptionsPopup(this, swipeEvent.submission(), showVisitSubredditOption);
-          optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.BOTTOM | Gravity.START, location);
+          optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, showLocation);
         });
 
     subredditChangesStream

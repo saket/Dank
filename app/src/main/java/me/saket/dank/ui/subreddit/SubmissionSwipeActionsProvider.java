@@ -16,7 +16,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.PostedOrInFlightContribution;
 import me.saket.dank.data.VotingManager;
-import me.saket.dank.ui.submission.SubmissionRepository;
+import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.widgets.swipe.SwipeAction;
@@ -25,7 +25,6 @@ import me.saket.dank.widgets.swipe.SwipeActions;
 import me.saket.dank.widgets.swipe.SwipeActionsHolder;
 import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable.RippleType;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
-import timber.log.Timber;
 
 /**
  * Controls gesture actions on submissions.
@@ -40,21 +39,21 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
   private final SwipeActions swipeActionsWithUnsave;
   private final SwipeActions swipeActionsWithSave;
-  private final SubmissionRepository submissionRepository;
-  private VotingManager votingManager;
+  private final VotingManager votingManager;
+  private final BookmarksRepository bookmarksRepository;
   private final UserSessionRepository userSessionRepository;
   private final OnLoginRequireListener onLoginRequireListener;
   private final PublishRelay<SubmissionOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
 
   @Inject
   public SubmissionSwipeActionsProvider(
-      SubmissionRepository submissionRepository,
       VotingManager votingManager,
+      BookmarksRepository bookmarksRepository,
       UserSessionRepository userSessionRepository,
       OnLoginRequireListener onLoginRequireListener)
   {
-    this.submissionRepository = submissionRepository;
     this.votingManager = votingManager;
+    this.bookmarksRepository = bookmarksRepository;
     this.userSessionRepository = userSessionRepository;
     this.onLoginRequireListener = onLoginRequireListener;
 
@@ -94,7 +93,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   public SwipeActions actionsFor(Submission submission) {
-    boolean isSubmissionSaved = submissionRepository.isSaved(submission);
+    boolean isSubmissionSaved = bookmarksRepository.isSaved(submission);
     return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
   }
 
@@ -108,12 +107,12 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
       case ACTION_NAME_SAVE:
         resetIconRotation(imageView);
-        imageView.setImageResource(R.drawable.ic_star_24dp);
+        imageView.setImageResource(R.drawable.ic_save_24dp);
         break;
 
       case ACTION_NAME_UNSAVE:
         resetIconRotation(imageView);
-        imageView.setImageResource(R.drawable.ic_star_border_24dp);
+        imageView.setImageResource(R.drawable.ic_unsave_24dp);
         break;
 
       case ACTION_NAME_UPVOTE:
@@ -156,15 +155,13 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
         break;
 
       case ACTION_NAME_SAVE:
-        submissionRepository.markAsSaved(submission);
+        bookmarksRepository.markAsSaved(submission);
         isUndoAction = false;
-        Timber.i("TODO: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_UNSAVE:
-        submissionRepository.markAsUnsaved(submission);
+        bookmarksRepository.markAsUnsaved(submission);
         isUndoAction = true;
-        Timber.i("TODO: %s", swipeAction.name());
         break;
 
       case ACTION_NAME_UPVOTE: {

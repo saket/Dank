@@ -29,9 +29,7 @@ import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
@@ -65,7 +63,6 @@ public class SubmissionRepository {
   private final Moshi moshi;
   private final DankRedditClient dankRedditClient;
   private final VotingManager votingManager;
-  private final Set<String> savedSubmissionIds = new HashSet<>();
   private final ErrorResolver errorResolver;
   private final SubredditSubscriptionManager subscriptionManager;
   private final ReplyRepository replyRepository;
@@ -517,19 +514,5 @@ public class SubmissionRepository {
     public static FetchResult create(List<Submission> fetchedItems, boolean hasMoreItems) {
       return new AutoValue_SubmissionRepository_FetchResult(fetchedItems, hasMoreItems);
     }
-  }
-
-// ======== SAVE ======== //
-
-  public void markAsSaved(Submission submission) {
-    savedSubmissionIds.add(submission.getFullName());
-  }
-
-  public void markAsUnsaved(Submission submission) {
-    savedSubmissionIds.remove(submission.getFullName());
-  }
-
-  public boolean isSaved(Submission submission) {
-    return savedSubmissionIds.contains(submission.getFullName());
   }
 }

@@ -7,7 +7,6 @@ import android.transition.Transition;
 import android.transition.Transition.EpicenterCallback;
 import android.transition.TransitionInflater;
 import android.transition.TransitionManager;
-import android.view.Gravity;
 import android.view.View;
 import android.view.View.MeasureSpec;
 import android.view.ViewGroup;
@@ -56,9 +55,9 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
     setFocusable(true);
     setOutsideTouchable(true);
 
-    boolean isTopGravity = (gravity | Gravity.TOP) == gravity;
-    Point positionToShow = adjustPositionWithAnchorWithoutGoingOutsideWindow(showLocation, getContentView(), isTopGravity);
-    showAtLocation(anchorView, Gravity.TOP | Gravity.START, positionToShow.x, positionToShow.y);
+    boolean displayAboveAnchor = false;
+    Point positionToShow = adjustPositionWithAnchorWithoutGoingOutsideWindow(showLocation, getContentView(), displayAboveAnchor);
+    showAtLocation(anchorView, gravity, positionToShow.x, positionToShow.y);
 
     addBackgroundDimming();
     playPopupEnterTransition(positionToShow, anchorView);
@@ -129,7 +128,7 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
 
   protected abstract Rect calculateTransitionEpicenter(View anchor, ViewGroup popupDecorView, Point showLocation);
 
-  protected Point adjustPositionWithAnchorWithoutGoingOutsideWindow(Point showLocation, View contentView, boolean isTopGravity) {
+  protected Point adjustPositionWithAnchorWithoutGoingOutsideWindow(Point showLocation, View contentView, boolean displayAboveAnchor) {
     if (contentView.getLayoutParams() != null) {
       contentView.measure(
           MeasureSpec.makeMeasureSpec(contentView.getLayoutParams().width, MeasureSpec.EXACTLY),
@@ -160,7 +159,7 @@ public abstract class PopupWindowWithMaterialTransition extends PopupWindow {
 
     } else {
       // Display above the anchor view.
-      if (isTopGravity || yPos + contentHeight > screenHeight) {
+      if (displayAboveAnchor || yPos + contentHeight > screenHeight) {
         yPos = showLocation.y - contentHeight;
       }
     }

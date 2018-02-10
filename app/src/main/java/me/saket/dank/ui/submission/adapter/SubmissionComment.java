@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission.adapter;
 
+import android.support.annotation.CheckResult;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
 import android.support.v7.widget.RecyclerView;
@@ -13,9 +14,12 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import net.dean.jraw.models.Comment;
+
 import java.util.List;
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.PostedOrInFlightContribution;
@@ -55,7 +59,9 @@ public interface SubmissionComment {
 
     public abstract int indentationDepth();
 
-    public abstract PostedOrInFlightContribution originalComment();
+    public abstract Optional<Comment> optionalComment();
+
+    public abstract PostedOrInFlightContribution commentInfo();
 
     /** Present only for locally posted replies. Required because {@link ReplyRetrySendClickEvent} needs it. */
     public abstract Optional<PendingSyncReply> optionalPendingSyncReply();
@@ -103,11 +109,13 @@ public interface SubmissionComment {
       /**
        * The original data model from which this Ui model was created.
        */
-      public abstract Builder originalComment(PostedOrInFlightContribution comment);
+      public abstract Builder commentInfo(PostedOrInFlightContribution comment);
 
-      public abstract Builder isCollapsed(boolean isCollapsed);
+      public abstract Builder optionalComment(Optional<Comment> comment);
 
       public abstract Builder optionalPendingSyncReply(Optional<PendingSyncReply> optionalReply);
+
+      public abstract Builder isCollapsed(boolean isCollapsed);
 
       public abstract Builder backgroundColorRes(@ColorRes int backgroundColorRes);
 
@@ -144,7 +152,7 @@ public interface SubmissionComment {
       getSwipeableLayout().setSwipeActionIconProvider(commentSwipeActionsProvider.iconProvider());
       getSwipeableLayout().setSwipeActions(commentSwipeActionsProvider.actions());
       getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
-        commentSwipeActionsProvider.performSwipeAction(action, uiModel.originalComment(), getSwipeableLayout());
+        commentSwipeActionsProvider.performSwipeAction(action, uiModel.optionalComment().get(), uiModel.commentInfo(), getSwipeableLayout());
       });
     }
 
@@ -152,7 +160,7 @@ public interface SubmissionComment {
       collapseOnClickListener = o -> {
         boolean willCollapse = !uiModel.isCollapsed();
         CommentClickEvent event = CommentClickEvent.create(
-            uiModel.originalComment(),
+            uiModel.commentInfo(),
             getAdapterPosition(),
             itemView,
             willCollapse
@@ -193,7 +201,7 @@ public interface SubmissionComment {
 
       // Enable gestures only if it's a posted comment.
       // TODO: Add support for locally posted replies too.
-      boolean isPresentOnRemote = uiModel.originalComment() instanceof PostedOrInFlightContribution.ContributionFetchedFromRemote;
+      boolean isPresentOnRemote = uiModel.commentInfo() instanceof PostedOrInFlightContribution.ContributionFetchedFromRemote;
       getSwipeableLayout().setSwipeEnabled(isPresentOnRemote);
 
       Optional<PendingSyncReply> optionalReply = uiModel.optionalPendingSyncReply();
@@ -232,13 +240,11 @@ public interface SubmissionComment {
     private final CommentSwipeActionsProvider swipeActionsProvider;
     final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
     final PublishRelay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
-    final PublishRelay<PostedOrInFlightContribution> replySwipeActionStream = PublishRelay.create();
 
     @Inject
     public Adapter(DankLinkMovementMethod linkMovementMethod, CommentSwipeActionsProvider swipeActionsProvider) {
       this.linkMovementMethod = linkMovementMethod;
       this.swipeActionsProvider = swipeActionsProvider;
-      swipeActionsProvider.setOnReplySwipeActionListener(parentCommentInfo -> replySwipeActionStream.accept(parentCommentInfo));
     }
 
     @Override
@@ -262,6 +268,11 @@ public interface SubmissionComment {
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
       holder.setUiModel(uiModel);
       holder.renderPartialChanges(payloads);
+    }
+
+    @CheckResult
+    public Observable<PostedOrInFlightContribution> replySwipeActions() {
+      return swipeActionsProvider.replySwipeActions;
     }
   }
 }

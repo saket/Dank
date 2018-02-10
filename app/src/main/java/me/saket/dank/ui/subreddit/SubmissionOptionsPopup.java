@@ -31,32 +31,34 @@ public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
   private static final int ID_SHARE_CONTENT_LINK = 5;
   private static final int ID_COPY_REDDIT_COMMENTS_LINK = 6;
   private static final int ID_COPY_CONTENT_LINK = 7;
+  private final boolean showVisitSubredditOption;
 
   @Inject Lazy<UrlRouter> urlRouter;
   private final Submission submission;
 
   public SubmissionOptionsPopup(Context c, Submission submission, boolean showVisitSubredditOption) {
-    super(c, createMenuInfo(c, submission, showVisitSubredditOption));
-    Dank.dependencyInjector().inject(this);
+    super(c);
+    this.showVisitSubredditOption = showVisitSubredditOption;
     this.submission = submission;
+
+    Dank.dependencyInjector().inject(this);
+    createMenuLayout(c, menuStructure(c));
   }
 
-  private static MenuInfo createMenuInfo(Context c, Submission submission, boolean showVisitSubredditOption) {
-    List<MenuInfo.SingleLineItem> topLevelItems = new ArrayList<>(4);
+  private MenuStructure menuStructure(Context c) {
+    List<MenuStructure.SingleLineItem> topLevelItems = new ArrayList<>(4);
 
-    topLevelItems.add(MenuInfo.SingleLineItem.create(
+    topLevelItems.add(MenuStructure.SingleLineItem.create(
         ID_SHOW_USER_PROFILE,
         c.getString(R.string.user_name_u_prefix, submission.getAuthor()),
-        R.drawable.ic_user_profile_20dp,
-        null
+        R.drawable.ic_user_profile_20dp
     ));
 
     if (showVisitSubredditOption) {
-      topLevelItems.add(MenuInfo.SingleLineItem.create(
+      topLevelItems.add(MenuStructure.SingleLineItem.create(
           ID_SHOW_SUBREDDIT,
           c.getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()),
-          R.drawable.ic_subreddits_20dp,
-          null
+          R.drawable.ic_subreddits_20dp
       ));
     }
 
@@ -77,29 +79,29 @@ public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
 
     boolean isSelfPost = submission.isSelfPost();
 
-    topLevelItems.add(MenuInfo.SingleLineItem.create(
+    topLevelItems.add(MenuStructure.SingleLineItem.create(
         isSelfPost ? ID_SHARE_REDDIT_COMMENTS_LINK : -1,
         c.getString(R.string.submission_option_share),
         R.drawable.ic_share_20dp,
         isSelfPost
             ? null
             : Arrays.asList(
-                MenuInfo.ThreeLineItem.create(ID_SHARE_REDDIT_COMMENTS_LINK, redditCommentsText, R.string.cd_submission_option_share_reddit_link),
-                MenuInfo.ThreeLineItem.create(ID_SHARE_CONTENT_LINK, contentLinkText, R.string.cd_submission_option_share_content_link))
+                MenuStructure.ThreeLineItem.create(ID_SHARE_REDDIT_COMMENTS_LINK, redditCommentsText, R.string.cd_submission_option_share_reddit_link),
+                MenuStructure.ThreeLineItem.create(ID_SHARE_CONTENT_LINK, contentLinkText, R.string.cd_submission_option_share_content_link))
     ));
 
-    topLevelItems.add(MenuInfo.SingleLineItem.create(
+    topLevelItems.add(MenuStructure.SingleLineItem.create(
         isSelfPost ? ID_COPY_REDDIT_COMMENTS_LINK : -1,
         c.getString(R.string.submission_option_copy),
-        R.drawable.ic_content_copy_20dp,
+        R.drawable.ic_copy_20dp,
         isSelfPost
             ? null
             : Arrays.asList(
-                MenuInfo.ThreeLineItem.create(ID_COPY_REDDIT_COMMENTS_LINK, redditCommentsText, R.string.cd_submission_option_copy_reddit_link),
-                MenuInfo.ThreeLineItem.create(ID_COPY_CONTENT_LINK, contentLinkText, R.string.cd_submission_option_copy_content_link))
+                MenuStructure.ThreeLineItem.create(ID_COPY_REDDIT_COMMENTS_LINK, redditCommentsText, R.string.cd_submission_option_copy_reddit_link),
+                MenuStructure.ThreeLineItem.create(ID_COPY_CONTENT_LINK, contentLinkText, R.string.cd_submission_option_copy_content_link))
     ));
 
-    return MenuInfo.create(submission.getTitle(), topLevelItems);
+    return MenuStructure.create(submission.getTitle(), topLevelItems);
   }
 
   @Override

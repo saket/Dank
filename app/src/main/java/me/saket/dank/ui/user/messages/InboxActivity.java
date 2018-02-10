@@ -39,6 +39,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.di.Dank;
@@ -239,7 +240,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     messageItemViewRect.top = messageItemViewRect.bottom;
 
     if (message.isComment()) {
-      String commentUrl = "https://reddit.com" + message.getDataNode().get("context").asText();
+      String commentUrl = "https://reddit.com" + message.getDataNode().get(DankRedditClient.CONTEXT_QUERY_PARAM).asText();
       Link parsedLink = UrlParser.parse(commentUrl);
       urlRouter.forLink(parsedLink)
           .expandFrom(messageItemViewRect)

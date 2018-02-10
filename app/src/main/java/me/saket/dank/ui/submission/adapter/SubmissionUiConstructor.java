@@ -303,7 +303,8 @@ public class SubmissionUiConstructor {
         : markdown.parse(comment);
 
     return commentUiModelBuilder(context, dankCommentNode.adapterId(), dankCommentNode.isCollapsed(), isFocused, dankCommentNode.commentNode().getDepth())
-        .originalComment(PostedOrInFlightContribution.from(comment))
+        .optionalComment(Optional.of(comment))
+        .commentInfo(PostedOrInFlightContribution.from(comment))
         .optionalPendingSyncReply(Optional.empty())
         .byline(byline, commentScore)
         .body(commentBody)
@@ -361,7 +362,8 @@ public class SubmissionUiConstructor {
         : markdown.parse(pendingSyncReply);
 
     return commentUiModelBuilder(context, pendingSyncReplyRow.adapterId(), pendingSyncReplyRow.isCollapsed(), isFocused, pendingSyncReplyRow.depth())
-        .originalComment(PostedOrInFlightContribution.createLocal(pendingSyncReply))
+        .optionalComment(Optional.empty())
+        .commentInfo(PostedOrInFlightContribution.createLocal(pendingSyncReply))
         .optionalPendingSyncReply(Optional.of(pendingSyncReply))
         .byline(byline, commentScore)
         .body(commentBody)
