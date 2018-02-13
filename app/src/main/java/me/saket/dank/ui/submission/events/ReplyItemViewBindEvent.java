@@ -4,7 +4,6 @@ import android.widget.EditText;
 
 import com.google.auto.value.AutoValue;
 
-import me.saket.dank.ui.submission.CommentInlineReplyItem;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 
 @AutoValue

@@ -14,8 +14,13 @@ import net.dean.jraw.models.Thing;
 import java.io.IOException;
 import java.io.Serializable;
 
+import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
+
 /**
  * See {@link ThingFullNameWrapper}.
+ * <p>
+ * This class is also used in all {@link SubredditScreenUiModel.SubmissionRowUiModel} over
+ * actual {@link Contribution} objects to speed up equals() calls.
  */
 public class ContributionFullNameWrapper extends Contribution implements Serializable {
 

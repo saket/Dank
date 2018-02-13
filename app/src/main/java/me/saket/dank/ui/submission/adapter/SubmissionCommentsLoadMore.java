@@ -57,7 +57,7 @@ public interface SubmissionCommentsLoadMore {
     }
 
     @AutoValue.Builder
-    abstract static class Builder {
+    public abstract static class Builder {
       public abstract Builder adapterId(long id);
 
       public Builder label(CharSequence label) {
