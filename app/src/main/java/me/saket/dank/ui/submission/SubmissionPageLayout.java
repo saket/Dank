@@ -42,7 +42,6 @@ import android.widget.Toast;
 
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
-import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxbinding2.view.RxView;
@@ -182,12 +181,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject ErrorResolver errorResolver;
   @Inject UserPreferences userPreferences;
   @Inject NetworkStateListener networkStateListener;
-  @Inject HttpProxyCacheServer httpProxyCacheServer;
   @Inject SubmissionUiConstructor submissionUiConstructor;
   @Inject SubmissionCommentsAdapter submissionCommentsAdapter;
   @Inject SubmissionCommentTreeUiConstructor submissionCommentTreeUiConstructor;
 
   @Inject @Named("show_nsfw_content") Lazy<Preference<Boolean>> showNsfwContentPreference;
+  @Inject Lazy<SubmissionVideoHolder> contentVideoViewHolder;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
@@ -201,7 +200,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private BehaviorRelay<Optional<String>> callingSubreddits = BehaviorRelay.createDefault(Optional.empty());
 
   private ExpandablePageLayout submissionPageLayout;
-  private SubmissionVideoHolder contentVideoViewHolder;
   private SubmissionImageHolder contentImageViewHolder;
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
@@ -789,15 +787,14 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   private void setupContentVideoView() {
-    contentVideoViewHolder = new SubmissionVideoHolder(
+    contentVideoViewHolder.get().setup(
+        ExoPlayerManager.newInstance(lifecycle(), contentVideoView),
         contentVideoView,
         commentListParentSheet,
         contentLoadProgressView,
         submissionPageLayout,
-        ExoPlayerManager.newInstance(lifecycle(), contentVideoView),
-        mediaHostRepository,
-        httpProxyCacheServer,
         deviceDisplayHeight,
+        Views.statusBarHeight(getResources()),
         commentsSheetMinimumVisibleHeight
     );
   }
@@ -968,15 +965,14 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private void setupStatusBarTint() {
     //noinspection ConstantConditions
     int defaultStatusBarColor = ContextCompat.getColor(getContext(), R.color.color_primary_dark);
-    int statusBarHeight = Views.statusBarHeight(getResources());
     Observable<Optional<Bitmap>> contentBitmapStream = Observable.merge(
         contentImageViewHolder.streamImageBitmaps(),
-        contentVideoViewHolder.streamVideoFirstFrameBitmaps(statusBarHeight).map(Optional::of)
+        contentVideoViewHolder.get().streamVideoFirstFrameBitmaps().map(Optional::of)
     );
 
     SubmissionStatusBarTintProvider statusBarTintProvider = new SubmissionStatusBarTintProvider(
         defaultStatusBarColor,
-        statusBarHeight,
+        Views.statusBarHeight(getResources()),
         deviceDisplayWidth
     );
 
@@ -1217,7 +1213,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                   userPreferences.streamHighResolutionMediaNetworkStrategy()
                       .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
                       .firstOrError()
-                      .flatMapCompletable(canLoadHighQualityVideo -> contentVideoViewHolder.load((MediaLink) resolvedLink, canLoadHighQualityVideo))
+                      .flatMapCompletable(canLoadHighQualityVideo -> {
+                        return contentVideoViewHolder.get().load((MediaLink) resolvedLink, canLoadHighQualityVideo);
+                      })
                       .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
                       .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
                   break;
@@ -1273,7 +1271,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
   @Override
   public void onPageCollapsed() {
-    contentVideoViewHolder.pausePlayback();
+    contentVideoViewHolder.get().pausePlayback();
 
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);

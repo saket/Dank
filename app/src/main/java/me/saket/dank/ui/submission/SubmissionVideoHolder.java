@@ -14,6 +14,7 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -34,38 +35,50 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
  */
 public class SubmissionVideoHolder {
 
-  private final VideoView contentVideoView;
-  private final ScrollingRecyclerViewSheet commentListParentSheet;
-
-  private final ExpandablePageLayout submissionPageLayout;
-  private final ExoPlayerManager exoPlayerManager;
   private final MediaHostRepository mediaHostRepository;
-  private final int deviceDisplayHeight;
-  private final int minimumGapWithBottom;
-  private final ProgressBar contentLoadProgressView;
   private final Relay<Integer> videoWidthChangeStream = PublishRelay.create();
   private final Relay<Object> videoPreparedStream = BehaviorRelay.create();
   private final HttpProxyCacheServer httpProxyCacheServer;
+
+  private ExoPlayerManager exoPlayerManager;
+  private VideoView contentVideoView;
+  private ScrollingRecyclerViewSheet commentListParentSheet;
+  private ExpandablePageLayout submissionPageLayout;
+  private int deviceDisplayHeight;
+  private int statusBarHeight;
+  private int minimumGapWithBottom;
+  private ProgressBar contentLoadProgressView;
+
+  @Inject
+  public SubmissionVideoHolder(MediaHostRepository mediaHostRepository, HttpProxyCacheServer httpProxyCacheServer) {
+    this.mediaHostRepository = mediaHostRepository;
+    this.httpProxyCacheServer = httpProxyCacheServer;
+  }
 
   /**
    * <var>displayWidth</var> and <var>statusBarHeight</var> are used for capturing the video's bitmap,
    * which is in turn used for generating status bar tint. To minimize bitmap creation time, a Bitmap
    * of height equal to the status bar is created instead of the entire video height.
    *
-   * @param minimumGapWithBottom The difference between video's bottom and the window's bottom will
+   * @param minimumGapWithBottom The difference between video's bottom and the window's bottom.
    */
-  public SubmissionVideoHolder(VideoView contentVideoView, ScrollingRecyclerViewSheet commentListParentSheet,
-      ProgressBar contentLoadProgressView, ExpandablePageLayout submissionPageLayout, ExoPlayerManager exoPlayerManager,
-      MediaHostRepository mediaHostRepository, HttpProxyCacheServer httpProxyCacheServer, int deviceDisplayHeight, int minimumGapWithBottom)
+  public void setup(
+      ExoPlayerManager exoPlayerManager,
+      VideoView contentVideoView,
+      ScrollingRecyclerViewSheet commentListParentSheet,
+      ProgressBar contentLoadProgressView,
+      ExpandablePageLayout submissionPageLayout,
+      int deviceDisplayHeight,
+      int statusBarHeight,
+      int minimumGapWithBottom)
   {
+    this.exoPlayerManager = exoPlayerManager;
     this.contentVideoView = contentVideoView;
     this.commentListParentSheet = commentListParentSheet;
-    this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
-    this.exoPlayerManager = exoPlayerManager;
-    this.mediaHostRepository = mediaHostRepository;
-    this.httpProxyCacheServer = httpProxyCacheServer;
+    this.submissionPageLayout = submissionPageLayout;
     this.deviceDisplayHeight = deviceDisplayHeight;
+    this.statusBarHeight = statusBarHeight;
     this.minimumGapWithBottom = minimumGapWithBottom;
 
     DankVideoControlsView controlsView = new DankVideoControlsView(contentVideoView.getContext());
@@ -85,12 +98,8 @@ public class SubmissionVideoHolder {
         .flatMapCompletable(videoUrl -> loadVideo(videoUrl));
   }
 
-  /**
-   * <var>displayWidth</var> and <var>statusBarHeight</var> are used for creating a bitmap for capturing
-   * the video's first frame. Creating a bitmap is expensive so we'll
-   */
   @CheckResult
-  public Observable<Bitmap> streamVideoFirstFrameBitmaps(int statusBarHeight) {
+  public Observable<Bitmap> streamVideoFirstFrameBitmaps() {
     return Observable.zip(videoPreparedStream, videoWidthChangeStream, (o, videoWidth) -> videoWidth)
         .delay(new Function<Integer, ObservableSource<Integer>>() {
           private boolean firstDelayDone;
@@ -113,7 +122,7 @@ public class SubmissionVideoHolder {
   private Completable loadVideo(String videoUrl) {
     return Completable.fromAction(() -> {
       exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
-        int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - Views.statusBarHeight(contentVideoView.getResources());
+        int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - statusBarHeight;
         int adjustedVideoViewHeight = Math.min(contentHeightWithoutKeyboard, resizedVideoHeight);
         Views.setHeight(contentVideoView, adjustedVideoViewHeight);
 
