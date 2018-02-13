@@ -8,6 +8,7 @@ import android.widget.ProgressBar;
 
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
+import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -15,16 +16,21 @@ import com.jakewharton.rxrelay2.Relay;
 
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Named;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
+import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.ExoPlayerManager;
+import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -35,10 +41,13 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
  */
 public class SubmissionVideoHolder {
 
-  private final MediaHostRepository mediaHostRepository;
   private final Relay<Integer> videoWidthChangeStream = PublishRelay.create();
   private final Relay<Object> videoPreparedStream = BehaviorRelay.create();
-  private final HttpProxyCacheServer httpProxyCacheServer;
+  private final Lazy<MediaHostRepository> mediaHostRepository;
+  private final Lazy<HttpProxyCacheServer> httpProxyCacheServer;
+  private final Lazy<NetworkStateListener> networkStateListener;
+  private final Lazy<Preference<NetworkStrategy>> highResolutionMediaNetworkStrategy;
+  private final Lazy<Preference<NetworkStrategy>> autoPlayVideosNetworkStrategy;
 
   private ExoPlayerManager exoPlayerManager;
   private VideoView contentVideoView;
@@ -50,9 +59,18 @@ public class SubmissionVideoHolder {
   private ProgressBar contentLoadProgressView;
 
   @Inject
-  public SubmissionVideoHolder(MediaHostRepository mediaHostRepository, HttpProxyCacheServer httpProxyCacheServer) {
+  public SubmissionVideoHolder(
+      Lazy<MediaHostRepository> mediaHostRepository,
+      Lazy<HttpProxyCacheServer> httpProxyCacheServer,
+      Lazy<NetworkStateListener> networkStateListener,
+      @Named("high_resolution_media_network_strategy") Lazy<Preference<NetworkStrategy>> highResolutionMediaNetworkStrategy,
+      @Named("auto_play_videos_network_strategy") Lazy<Preference<NetworkStrategy>> autoPlayVideosNetworkStrategy)
+  {
     this.mediaHostRepository = mediaHostRepository;
     this.httpProxyCacheServer = httpProxyCacheServer;
+    this.networkStateListener = networkStateListener;
+    this.highResolutionMediaNetworkStrategy = highResolutionMediaNetworkStrategy;
+    this.autoPlayVideosNetworkStrategy = autoPlayVideosNetworkStrategy;
   }
 
   /**
@@ -87,15 +105,28 @@ public class SubmissionVideoHolder {
   }
 
   @CheckResult
-  public Completable load(MediaLink mediaLink, boolean loadHighQualityVideo) {
+  public Completable load(MediaLink mediaLink) {
     // Later hidden inside loadVideo(), when the video's height becomes available.
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
+    Single<Boolean> loadHighQualityVideoPredicate = highResolutionMediaNetworkStrategy.get()
+        .asObservable()
+        .flatMap(networkStateListener.get()::streamNetworkInternetCapability)
+        .firstOrError();
+
+    Completable autoPlayVideoIfAllowed = autoPlayVideosNetworkStrategy.get()
+        .asObservable()
+        .flatMap(networkStateListener.get()::streamNetworkInternetCapability)
+        .firstOrError()
+        .flatMapCompletable(canAutoPlay -> Completable.fromAction(() -> exoPlayerManager.startVideoPlayback()));
+
+    return mediaHostRepository.get().resolveActualLinkIfNeeded(mediaLink)
         .subscribeOn(Schedulers.io())
+        .flatMap(resolvedLink -> loadHighQualityVideoPredicate
+            .map(loadHQ -> loadHQ ? resolvedLink.highQualityUrl() : resolvedLink.lowQualityUrl()))
         .observeOn(AndroidSchedulers.mainThread())
-        .map(link -> loadHighQualityVideo ? link.highQualityUrl() : link.lowQualityUrl())
-        .flatMapCompletable(videoUrl -> loadVideo(videoUrl));
+        .flatMapCompletable(videoUrl -> loadVideo(videoUrl))
+        .andThen(autoPlayVideoIfAllowed);
   }
 
   @CheckResult
@@ -142,8 +173,9 @@ public class SubmissionVideoHolder {
         });
       });
 
-      String cachedVideoUrl = httpProxyCacheServer.getProxyUrl(videoUrl);
+      String cachedVideoUrl = httpProxyCacheServer.get().getProxyUrl(videoUrl);
       exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
+
     });
   }
 

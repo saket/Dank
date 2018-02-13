@@ -119,7 +119,6 @@ import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.LinearSmoothScrollerWithVerticalSnapPref;
-import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtils;
@@ -180,7 +179,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject UserSessionRepository userSessionRepository;
   @Inject ErrorResolver errorResolver;
   @Inject UserPreferences userPreferences;
-  @Inject NetworkStateListener networkStateListener;
+
   @Inject SubmissionUiConstructor submissionUiConstructor;
   @Inject SubmissionCommentsAdapter submissionCommentsAdapter;
   @Inject SubmissionCommentTreeUiConstructor submissionCommentTreeUiConstructor;
@@ -1210,12 +1209,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                   break;
 
                 case SINGLE_VIDEO:
-                  userPreferences.streamHighResolutionMediaNetworkStrategy()
-                      .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
-                      .firstOrError()
-                      .flatMapCompletable(canLoadHighQualityVideo -> {
-                        return contentVideoViewHolder.get().load((MediaLink) resolvedLink, canLoadHighQualityVideo);
-                      })
+                  contentVideoViewHolder.get().load((MediaLink) resolvedLink)
                       .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
                       .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
                   break;

@@ -46,6 +46,7 @@ import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
@@ -64,6 +65,7 @@ import me.saket.dank.utils.MoshiAccountAdapter;
 import me.saket.dank.utils.MoshiMessageAdapter;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
+import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
 import me.saket.dank.utils.StreamableRepository;
 import me.saket.dank.utils.UrlParser;
 import okhttp3.OkHttpClient;
@@ -341,6 +343,7 @@ public class DankAppModule {
   }
 
   @Provides
+  @Singleton
   @Named("comment_count_in_submission_list_byline")
   Preference<Boolean> showCommentCountInBylinePref(RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("comment_count_in_submission_list_byline", false);
@@ -351,5 +354,21 @@ public class DankAppModule {
   @Named("show_nsfw_content")
   Preference<Boolean> showNsfwContentPref(RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("show_nsfw_content", false);
+  }
+
+  @Provides
+  @Singleton
+  @Named("high_resolution_media_network_strategy")
+  Preference<NetworkStrategy> highResolutionMediaNetworkStrategyPref(RxSharedPreferences rxPrefs) {
+    RxPreferencesEnumTypeAdapter<NetworkStrategy> typeAdapter = new RxPreferencesEnumTypeAdapter<>(NetworkStrategy.class);
+    return rxPrefs.getObject("high_resolution_media_network_strategy", NetworkStrategy.WIFI_ONLY, typeAdapter);
+  }
+
+  @Provides
+  @Singleton
+  @Named("auto_play_videos_network_strategy")
+  Preference<NetworkStrategy> autoPlayVideosNetworkStrategyPref(RxSharedPreferences rxPrefs) {
+    RxPreferencesEnumTypeAdapter<NetworkStrategy> typeAdapter = new RxPreferencesEnumTypeAdapter<>(NetworkStrategy.class);
+    return rxPrefs.getObject("auto_play_videos_network_strategy", NetworkStrategy.WIFI_ONLY, typeAdapter);
   }
 }

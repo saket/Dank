@@ -86,7 +86,6 @@ public class ExoPlayerManager {
         null,
         null
     ));
-
     playerView.setVideoURI(videoUri, videoSource);
   }
 
