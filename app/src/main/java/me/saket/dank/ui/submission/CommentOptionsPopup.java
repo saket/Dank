@@ -105,6 +105,7 @@ public class CommentOptionsPopup extends NestedOptionsPopupMenu {
 
       case ID_COPY_PERMALINK:
         Clipboards.save(c, permalinkWithContext);
+        Toast.makeText(c, R.string.copy_to_clipboard_confirmation, Toast.LENGTH_SHORT).show();
         break;
 
       default:
