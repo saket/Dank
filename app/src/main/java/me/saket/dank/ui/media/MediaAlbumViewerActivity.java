@@ -26,9 +26,7 @@ import android.view.animation.DecelerateInterpolator;
 import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
-import butterknife.BindView;
-import butterknife.ButterKnife;
-import butterknife.OnClick;
+
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
@@ -38,8 +36,9 @@ import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.tbruyelle.rxpermissions2.RxPermissions;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+
+import net.dean.jraw.models.Thumbnails;
+
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -49,6 +48,12 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import butterknife.OnClick;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
@@ -72,7 +77,6 @@ import me.saket.dank.widgets.ScrollInterceptibleViewPager;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
-import net.dean.jraw.models.Thumbnails;
 import timber.log.Timber;
 
 public class MediaAlbumViewerActivity extends DankActivity implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks {
@@ -211,16 +215,23 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         });
 
     // Toggle HD button's visibility if a higher-res version can be shown and is not already visible.
+    // TODO: Simplify this Rx chain. Concat-mapping with hdEnabledMediaLinksStream doesn't make sense.
     viewpagerPageChangeStream
         .concatMap(activeMediaItem -> hdEnabledMediaLinksStream.map(o -> activeMediaItem))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(activeMediaItem -> {
           String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
-          ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(getRedditSuppliedImages());
-          String optimizedQualityUrl = imageVariants.findNearestFor(
-              getResources().getDisplayMetrics().widthPixels,
-              activeMediaItem.mediaLink().lowQualityUrl() /* defaultValue */
-          );
+          String optimizedQualityUrl;
+
+          if (activeMediaItem.mediaLink().isGif()) {
+            optimizedQualityUrl = activeMediaItem.mediaLink().lowQualityUrl();
+          } else {
+            ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(getRedditSuppliedImages());
+            optimizedQualityUrl = imageVariants.findNearestFor(
+                getResources().getDisplayMetrics().widthPixels,
+                activeMediaItem.mediaLink().lowQualityUrl() /* defaultValue */
+            );
+          }
 
           //noinspection ConstantConditions
           boolean hasHighDefVersion = !optimizedQualityUrl.equals(highQualityUrl);
