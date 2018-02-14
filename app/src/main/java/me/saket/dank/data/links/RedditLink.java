@@ -9,7 +9,8 @@ public abstract class RedditLink extends Link {
     COMMENT,
     SUBMISSION,
     SUBREDDIT,
-    USER
+    USER,
+    VIDEO
   }
 
   @Override

@@ -20,6 +20,7 @@ import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
 import me.saket.dank.data.links.ImgurLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.RedditCommentLink;
+import me.saket.dank.data.links.RedditHostedVideoLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
@@ -136,7 +137,6 @@ public class UrlParser {
 
           if (TextUtils.isEmpty(commentId)) {
             parsedLink = RedditSubmissionLink.create(url, submissionId, subredditName);
-
           } else {
             String contextParamValue = linkURI.getQueryParameter(DankRedditClient.CONTEXT_QUERY_PARAM);
             int contextCount = TextUtils.isEmpty(contextParamValue) ? 0 : Integer.parseInt(contextParamValue);
@@ -144,27 +144,45 @@ public class UrlParser {
             parsedLink = RedditSubmissionLink.createWithComment(url, submissionId, subredditName, initialComment);
           }
 
+        } else if (urlDomain.contains("i.reddit.com")) {
+          // Old mobile website that nobody uses anymore. Format: i.reddit.com/post_id. Eg., https://i.reddit.com/5524cd
+          String submissionId = urlPath.substring(1);  // Remove the leading slash.
+          parsedLink = RedditSubmissionLink.create(url, submissionId, null);
         } else {
-          //Matcher liveThreadMatcher = LIVE_THREAD_PATTERN.matcher(urlPath);
-          //if (liveThreadMatcher.matches()) {
-          //  parsedLink = ExternalLink.create(url);
-          //}
-          parsedLink = ExternalLink.create(url);
+          Optional<String> urlSubdomain = Urls.subdomain(linkURI);
+          if (urlSubdomain.isPresent() && urlSubdomain.get().equals("v")) {
+            parsedLink = RedditHostedVideoLink.create(url);
+          } else {
+            parsedLink = ExternalLink.create(url);
+          }
         }
 
-      } else if (urlDomain.endsWith("redd.it") && !isImageOrGifUrlPath(urlPath) && !isVideoPath(urlPath)) {
-        // Short redd.it url. Format: redd.it/post_id. Eg., https://redd.it/5524cd
-        String submissionId = urlPath.substring(1);  // Remove the leading slash.
-        parsedLink = RedditSubmissionLink.create(url, submissionId, null);
+      } else if (urlDomain.endsWith("redd.it")) {
+        Optional<String> urlSubdomain = Urls.subdomain(linkURI);
+        if (urlSubdomain.isPresent() && urlSubdomain.get().equals("v")) {
+          parsedLink = RedditHostedVideoLink.create(url);
 
-      } else if (urlDomain.contains("google") && urlPath.startsWith("/amp/s/amp.reddit.com")) {
-        // Google AMP url.
-        // https://www.google.com/amp/s/amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/
-        String nonAmpUrl = "https://" + url.substring(url.indexOf("/amp/s/") + "/amp/s/".length());
-        parsedLink = parse(nonAmpUrl);
+        } else if ((urlSubdomain.isEmpty() || urlSubdomain.get().equals("i")) // i.redd.it
+            && (!isImageOrGifUrlPath(urlPath) && !isVideoPath(urlPath)))
+        {
+          // Short redd.it url. Format: redd.it/post_id. Eg., https://redd.it/5524cd
+          String submissionId = urlPath.substring(1);  // Remove the leading slash.
+          parsedLink = RedditSubmissionLink.create(url, submissionId, null);
+
+        } else {
+          parsedLink = parseNonRedditUrl(url);
+        }
 
       } else {
-        parsedLink = parseNonRedditUrl(url);
+        if (urlDomain.contains("google") && urlPath.startsWith("/amp/s/amp.reddit.com")) {
+          // Google AMP url.
+          // https://www.google.com/amp/s/amp.reddit.com/r/NoStupidQuestions/comments/2qwyo7/what_is_red_velvet_supposed_to_taste_like/
+          String nonAmpUrl = "https://" + url.substring(url.indexOf("/amp/s/") + "/amp/s/".length());
+          parsedLink = parse(nonAmpUrl);
+
+        } else {
+          parsedLink = parseNonRedditUrl(url);
+        }
       }
     }
 

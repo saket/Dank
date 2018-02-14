@@ -30,6 +30,7 @@ import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
 import me.saket.dank.data.links.ImgurLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.data.links.RedditHostedVideoLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
@@ -171,14 +172,16 @@ public class UrlParserTest {
   @Test
   @SuppressWarnings("ConstantConditions")
   public void parseRedditSubmission_whenShortUrl() {
-    String url = "https://redd.it/5524cd";
+    String[] urls = { "https://redd.it/5524cd", "http://i.reddit.com/5524cd" };
 
-    Link parsedLink = UrlParser.parse(url);
+    for (String url : urls) {
+      Link parsedLink = UrlParser.parse(url);
 
-    assertEquals(parsedLink instanceof RedditSubmissionLink, true);
-    assertEquals(((RedditSubmissionLink) parsedLink).id(), "5524cd");
-    assertEquals(((RedditSubmissionLink) parsedLink).subredditName(), null);
-    assertEquals(((RedditSubmissionLink) parsedLink).initialComment(), null);
+      assertEquals(parsedLink instanceof RedditSubmissionLink, true);
+      assertEquals(((RedditSubmissionLink) parsedLink).id(), "5524cd");
+      assertEquals(((RedditSubmissionLink) parsedLink).subredditName(), null);
+      assertEquals(((RedditSubmissionLink) parsedLink).initialComment(), null);
+    }
   }
 
   @Test
@@ -228,7 +231,7 @@ public class UrlParserTest {
 // ======== MEDIA URLs ======== //
 
   @Test
-  public void parseRedditUploadedImages() {
+  public void parseRedditHostedImages() {
     String[] imageUrls = {
         "https://i.redd.it/ih32ovc92asy.png",
         "https://i.redd.it/jh0d5uf5asry.jpg",
@@ -253,6 +256,18 @@ public class UrlParserTest {
 
       assertEquals(parsedLink instanceof MediaLink, true);
       assertEquals(parsedLink.type(), Link.Type.SINGLE_GIF);
+    }
+  }
+
+  @Test
+  public void parseRedditHostedVideos() {
+    String[] videoUrls = {
+        "https://v.redd.it/fjpqnd127wf01",
+        "https://v.reddit.com/fjpqnd127wf01"
+    };
+    for (String videoUrl : videoUrls) {
+      Link parsedLink = UrlParser.parse(videoUrl);
+      assertEquals(true, parsedLink instanceof RedditHostedVideoLink);
     }
   }
 
@@ -359,7 +374,7 @@ public class UrlParserTest {
   }
 
   // TODO: Extract this into an @Rule.
-  private Uri createMockUriFor(String url) {
+  public static Uri createMockUriFor(String url) {
     Uri mockUri = mock(Uri.class);
 
     if (PatternsCopy.WEB_URL.matcher(url).matches()) {

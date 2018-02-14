@@ -36,4 +36,23 @@ public class Urls {
     String path = Uri.parse(url).getPath();
     return path.substring(path.lastIndexOf('/') + 1);
   }
+
+  public static Optional<String> subdomain(Uri URI) {
+    String host = URI.getHost();
+    int dotCount = 0;
+
+    for (int i = 0; i < host.length(); i++) {
+      if (host.charAt(i) == '.') {
+        ++dotCount;
+      }
+    }
+    boolean hasSubDomain = dotCount > 1;
+    if (hasSubDomain) {
+      String hostWithoutTold = host.substring(0, host.lastIndexOf('.'));
+      String subdomain = hostWithoutTold.substring(0, hostWithoutTold.lastIndexOf('.'));
+      return Optional.of(subdomain);
+    } else {
+      return Optional.empty();
+    }
+  }
 }
