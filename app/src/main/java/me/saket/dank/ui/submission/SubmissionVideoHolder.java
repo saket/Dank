@@ -119,7 +119,9 @@ public class SubmissionVideoHolder {
         .asObservable()
         .flatMap(strategy -> networkStateListener.get().streamNetworkInternetCapability(strategy, Optional.of(mainThread())))
         .firstOrError()
-        .flatMapCompletable(canAutoPlay -> Completable.fromAction(() -> exoPlayerManager.startVideoPlayback()));
+        .flatMapCompletable(canAutoPlay -> canAutoPlay
+            ? Completable.fromAction(() -> exoPlayerManager.startVideoPlayback())
+            : Completable.complete());
 
     return mediaHostRepository.get().resolveActualLinkIfNeeded(mediaLink)
         .subscribeOn(io())
