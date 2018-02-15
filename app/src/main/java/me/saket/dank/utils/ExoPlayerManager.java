@@ -8,15 +8,20 @@ import android.view.View;
 
 import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
-import com.google.android.exoplayer2.extractor.DefaultExtractorsFactory;
-import com.google.android.exoplayer2.extractor.ExtractorsFactory;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.LoopingMediaSource;
 import com.google.android.exoplayer2.source.MediaSource;
+import com.google.android.exoplayer2.source.dash.DashMediaSource;
+import com.google.android.exoplayer2.source.dash.DefaultDashChunkSource;
+import com.google.android.exoplayer2.source.hls.HlsMediaSource;
+import com.google.android.exoplayer2.source.smoothstreaming.DefaultSsChunkSource;
+import com.google.android.exoplayer2.source.smoothstreaming.SsMediaSource;
 import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 
+import io.reactivex.exceptions.Exceptions;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 
@@ -71,22 +76,44 @@ public class ExoPlayerManager {
     });
   }
 
-  public void setVideoUriToPlayInLoop(Uri videoUri) {
-    // Produces DataSource instances through which media data is loaded.
-    DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(playerView.getContext(),
-        Util.getUserAgent(playerView.getContext(), playerView.getContext().getPackageName())
-    );
+  public void setVideoUriToPlayInLoop(String videoUrl, VideoFormat videoFormat) {
+    Uri videoURI = Uri.parse(videoUrl);
+    MediaSource source = createMediaSource(videoURI, videoFormat);
+    MediaSource loopingSource = new LoopingMediaSource(source);
+    playerView.setVideoURI(videoURI, loopingSource);
+  }
 
-    // Produces Extractor instances for parsing the media data.
-    ExtractorsFactory extractorsFactory = new DefaultExtractorsFactory();
-    MediaSource videoSource = new LoopingMediaSource(new ExtractorMediaSource(
-        videoUri,
-        dataSourceFactory,
-        extractorsFactory,
-        null,
-        null
-    ));
-    playerView.setVideoURI(videoUri, videoSource);
+  private MediaSource createMediaSource(Uri videoURI, VideoFormat videoFormat) {
+    // Produces DataSource instances through which media data is loaded.
+    DataSource.Factory dataSourceFactory = new DefaultDataSourceFactory(
+        playerView.getContext(),
+        Util.getUserAgent(playerView.getContext(), playerView.getContext().getPackageName()));
+
+    switch (videoFormat) {
+      case DASH:
+        return new DashMediaSource
+            .Factory(new DefaultDashChunkSource.Factory(dataSourceFactory), dataSourceFactory)
+            .createMediaSource(videoURI);
+
+      case SMOOTH_STREAMING:
+        return new SsMediaSource
+            .Factory(new DefaultSsChunkSource.Factory(dataSourceFactory), dataSourceFactory)
+            .createMediaSource(videoURI);
+
+      case HLS:
+        return new HlsMediaSource
+            .Factory(dataSourceFactory)
+            .createMediaSource(videoURI);
+
+      case OTHER:
+        return new ExtractorMediaSource
+            .Factory(dataSourceFactory)
+            .createMediaSource(videoURI);
+
+      default: {
+        throw new IllegalStateException("Unsupported type: " + videoFormat + ", for videoURI: " + videoURI);
+      }
+    }
   }
 
   public void startVideoPlayback() {
@@ -96,6 +123,18 @@ public class ExoPlayerManager {
   public void pauseVideoPlayback() {
     wasPlayingUponPause = playerView.isPlaying();
     playerView.pause();
+  }
+
+  public void setOnErrorListener(Consumer<Throwable> errorListener) {
+    playerView.setOnErrorListener(e -> {
+      try {
+        errorListener.accept(e);
+        return true;  // true == error handled.
+
+      } catch (Exception anotherE) {
+        throw Exceptions.propagate(anotherE);
+      }
+    });
   }
 
   private void releasePlayer() {

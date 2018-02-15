@@ -4,7 +4,6 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 
 import android.graphics.Bitmap;
-import android.net.Uri;
 import android.support.annotation.CheckResult;
 import android.view.View;
 import android.widget.ProgressBar;
@@ -33,6 +32,7 @@ import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -103,7 +103,6 @@ public class SubmissionVideoHolder {
 
     DankVideoControlsView controlsView = new DankVideoControlsView(contentVideoView.getContext());
     contentVideoView.setControls(controlsView);
-    contentVideoView.setOnPreparedListener(() -> videoPreparedStream.accept(Notification.INSTANCE));
   }
 
   @CheckResult
@@ -139,12 +138,12 @@ public class SubmissionVideoHolder {
 
           @Override
           public ObservableSource<Integer> apply(Integer videoWidth) throws Exception {
-            // onPrepared() gets called way too early when loading a video for the first time.
-            // We'll manually add a delay.
             if (firstDelayDone) {
               return Observable.just(videoWidth);
             } else {
               firstDelayDone = true;
+              // Adding delay because onPrepared() gets called way too early when
+              // loading a video for the first time.
               return Observable.just(videoWidth).delay(200, TimeUnit.MILLISECONDS);
             }
           }
@@ -153,7 +152,7 @@ public class SubmissionVideoHolder {
   }
 
   private Completable loadVideo(String videoUrl) {
-    return Completable.fromAction(() -> {
+    return Completable.create(emitter -> {
       exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
         int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - statusBarHeight;
         int adjustedVideoViewHeight = Math.min(contentHeightWithoutKeyboard, resizedVideoHeight);
@@ -175,9 +174,20 @@ public class SubmissionVideoHolder {
         });
       });
 
-      String cachedVideoUrl = httpProxyCacheServer.get().getProxyUrl(videoUrl);
-      exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
+      VideoFormat videoFormat = VideoFormat.parse(videoUrl);
+      
+      if (videoFormat.canBeCached()) {
+        String cachedVideoUrl = httpProxyCacheServer.get().getProxyUrl(videoUrl);
+        exoPlayerManager.setVideoUriToPlayInLoop(cachedVideoUrl, videoFormat);
+      } else {
+        exoPlayerManager.setVideoUriToPlayInLoop(videoUrl, videoFormat);
+      }
 
+      contentVideoView.setOnPreparedListener(() -> {
+        emitter.onComplete();
+        videoPreparedStream.accept(Notification.INSTANCE);
+      });
+      exoPlayerManager.setOnErrorListener(e -> emitter.onError(e));
     });
   }
 
@@ -185,4 +195,3 @@ public class SubmissionVideoHolder {
     exoPlayerManager.pauseVideoPlayback();
   }
 }
-

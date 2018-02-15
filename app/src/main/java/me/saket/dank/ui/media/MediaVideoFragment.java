@@ -2,7 +2,6 @@ package me.saket.dank.ui.media;
 
 import android.animation.LayoutTransition;
 import android.content.Context;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
@@ -24,6 +23,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
+import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.ErrorStateView;
@@ -143,7 +143,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
     // VideoView internally sets its height to match-parent. Forcefully resize it to match the video height.
     exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) ->
-      Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar())
+        Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar())
     );
 
     loadVideo(mediaAlbumItem);
@@ -164,11 +164,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
   private void loadVideo(MediaAlbumItem mediaAlbumItem) {
     moveToScreenState(ScreenState.LOADING_VIDEO_OR_READY);
 
-    String videoUrl = mediaAlbumItem.highDefinitionEnabled()
-        ? mediaAlbumItem.mediaLink().highQualityUrl()
-        : mediaAlbumItem.mediaLink().lowQualityUrl();
-
-    videoView.setOnErrorListener(error -> {
+    exoPlayerManager.setOnErrorListener(error -> {
       moveToScreenState(ScreenState.FAILED);
 
       ResolvedError resolvedError = errorResolver.resolve(error);
@@ -176,14 +172,22 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
       loadErrorStateView.setOnRetryClickListener(o -> loadVideo(mediaAlbumItem));
 
       if (resolvedError.isUnknown()) {
-        Timber.e(error, "Error while loading video: %s", videoUrl);
+        Timber.e(error, "Error while loading video: %s", mediaAlbumItem);
       }
-
-      return true;    // True to indicate it was handled.
     });
 
-    String cachedVideoUrl = httpProxyCacheServer.getProxyUrl(videoUrl);
-    exoPlayerManager.setVideoUriToPlayInLoop(Uri.parse(cachedVideoUrl));
+    String videoUrl = mediaAlbumItem.highDefinitionEnabled()
+        ? mediaAlbumItem.mediaLink().highQualityUrl()
+        : mediaAlbumItem.mediaLink().lowQualityUrl();
+
+    VideoFormat videoFormat = VideoFormat.parse(videoUrl);
+
+    if (videoFormat.canBeCached()) {
+      String cachedVideoUrl = httpProxyCacheServer.getProxyUrl(videoUrl);
+      exoPlayerManager.setVideoUriToPlayInLoop(cachedVideoUrl, videoFormat);
+    } else {
+      exoPlayerManager.setVideoUriToPlayInLoop(videoUrl, videoFormat);
+    }
   }
 
   @Override
@@ -202,6 +206,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
   }
 
   private void setupFlickGestures(FlickDismissLayout flickDismissLayout) {
+    //noinspection ConstantConditions
     FlickGestureListener flickListener = super.createFlickGestureListener(((FlickGestureListener.GestureCallbacks) getActivity()));
     flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
       @Override
