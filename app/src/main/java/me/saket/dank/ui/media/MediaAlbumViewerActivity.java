@@ -68,6 +68,7 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.NetworkStateListener;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.Urls;
@@ -263,7 +264,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         })
         // Toggle HD for all images with the default value.
         .flatMap(mediaLinks -> userPreferences.streamHighResolutionMediaNetworkStrategy()
-            .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
+            .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
             .firstOrError()
             .doOnSuccess(canLoadHighResolutionMedia -> {
               if (canLoadHighResolutionMedia) {

@@ -48,7 +48,7 @@ public class NetworkStateListenerShould {
     }).when(connectivityManager).registerNetworkCallback(any(NetworkRequest.class), any(ConnectivityManager.NetworkCallback.class));
     doReturn(mock(NetworkRequest.class)).when(networkStateListener).createInternetCapableNetworkRequest();
 
-    networkStateListener.streamNetworkInternetCapability(NetworkStrategy.WIFI_ONLY)
+    networkStateListener.streamNetworkInternetCapability(NetworkStrategy.WIFI_ONLY, Optional.empty())
         .take(1)
         .test()
         .assertValue(false);

@@ -1,5 +1,8 @@
 package me.saket.dank.ui.submission;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
+
 import android.graphics.Bitmap;
 import android.net.Uri;
 import android.support.annotation.CheckResult;
@@ -23,14 +26,13 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.functions.Function;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.NetworkStateListener;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -111,20 +113,20 @@ public class SubmissionVideoHolder {
 
     Single<Boolean> loadHighQualityVideoPredicate = highResolutionMediaNetworkStrategy.get()
         .asObservable()
-        .flatMap(networkStateListener.get()::streamNetworkInternetCapability)
+        .flatMap(strategy -> networkStateListener.get().streamNetworkInternetCapability(strategy, Optional.empty()))
         .firstOrError();
 
     Completable autoPlayVideoIfAllowed = autoPlayVideosNetworkStrategy.get()
         .asObservable()
-        .flatMap(networkStateListener.get()::streamNetworkInternetCapability)
+        .flatMap(strategy -> networkStateListener.get().streamNetworkInternetCapability(strategy, Optional.of(mainThread())))
         .firstOrError()
         .flatMapCompletable(canAutoPlay -> Completable.fromAction(() -> exoPlayerManager.startVideoPlayback()));
 
     return mediaHostRepository.get().resolveActualLinkIfNeeded(mediaLink)
-        .subscribeOn(Schedulers.io())
+        .subscribeOn(io())
         .flatMap(resolvedLink -> loadHighQualityVideoPredicate
             .map(loadHQ -> loadHQ ? resolvedLink.highQualityUrl() : resolvedLink.lowQualityUrl()))
-        .observeOn(AndroidSchedulers.mainThread())
+        .observeOn(mainThread())
         .flatMapCompletable(videoUrl -> loadVideo(videoUrl))
         .andThen(autoPlayVideoIfAllowed);
   }

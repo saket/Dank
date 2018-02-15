@@ -3,7 +3,6 @@ package me.saket.dank.ui.subreddit;
 import android.app.Application;
 import android.support.annotation.CheckResult;
 import android.support.annotation.Px;
-import android.support.v4.util.Pair;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
@@ -19,15 +18,15 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import javax.inject.Inject;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import io.reactivex.functions.Predicate;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.UserPreferences;
@@ -41,6 +40,9 @@ import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionContentLinkUiConstructor;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.NetworkStateListener;
+import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Pair;
+import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 
 /**
@@ -57,13 +59,20 @@ public class CachePreFiller {
   private final MediaHostRepository mediaHostRepository;
   private final LinkMetadataRepository linkMetadataRepository;
   private final UserPreferences userPreferences;
+  private final Lazy<Scheduler> preFillingScheduler;
 
   // Key: <submission-fullname>_<CachePreFillThing>.
   private Set<String> completedPreFills = new HashSet<>(50);
 
   @Inject
-  public CachePreFiller(Application appContext, SubmissionRepository submissionRepository, NetworkStateListener networkStateListener,
-      MediaHostRepository mediaHostRepository, LinkMetadataRepository linkMetadataRepository, UserPreferences userPreferences)
+  public CachePreFiller(
+      Application appContext,
+      SubmissionRepository submissionRepository,
+      NetworkStateListener networkStateListener,
+      MediaHostRepository mediaHostRepository,
+      LinkMetadataRepository linkMetadataRepository,
+      UserPreferences userPreferences,
+      @Named("cache_pre_filling") Lazy<Scheduler> preFillingScheduler)
   {
     this.appContext = appContext;
     this.submissionRepository = submissionRepository;
@@ -71,6 +80,7 @@ public class CachePreFiller {
     this.mediaHostRepository = mediaHostRepository;
     this.linkMetadataRepository = linkMetadataRepository;
     this.userPreferences = userPreferences;
+    this.preFillingScheduler = preFillingScheduler;
   }
 
   @CheckResult
@@ -82,12 +92,12 @@ public class CachePreFiller {
           return Pair.create(submission, contentLink);
         });
 
-    Scheduler scheduler = Schedulers.from(Executors.newCachedThreadPool());
     //Timber.d("Pre-filling cache for %s submissions", submissions.size());
 
     // Images and GIFs that couldn't be converted to videos.
     Observable imageCachePreFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.IMAGES)
-        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
+        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
+        .doOnNext(RxUtils.errorIfMainThread())
         .switchMap(canPreFill -> {
           if (!canPreFill) {
             // Cannot use filter() instead here so that switchMap() gets called and cancels the previous call.
@@ -99,11 +109,11 @@ public class CachePreFiller {
           return submissionAndContentLinkStream
               .filter(submissionContentAreStaticImages())
               .concatMap(submissionAndLink -> {
-                Submission submission = submissionAndLink.first;
-                MediaLink mediaLink = (MediaLink) submissionAndLink.second;
+                Submission submission = submissionAndLink.first();
+                MediaLink mediaLink = (MediaLink) submissionAndLink.second();
                 return preFillImageOrAlbum(submission, mediaLink, deviceDisplayWidth, submissionAlbumLinkThumbnailWidth)
-                    .subscribeOn(scheduler)
-                    //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first.getTitle()))
+                    .subscribeOn(preFillingScheduler.get())
+                    //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first().getTitle()))
                     .onErrorComplete()
                     .toObservable();
               });
@@ -111,7 +121,7 @@ public class CachePreFiller {
 
     // Link metadata.
     Observable linkCacheFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.LINK_METADATA)
-        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
+        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
         .switchMap(canPreFill -> {
           if (!canPreFill) {
             return Observable.empty();
@@ -120,9 +130,9 @@ public class CachePreFiller {
           return submissionAndContentLinkStream
               .filter(submissionContentIsExternalLink())
               .concatMap(
-                  submissionAndLink -> preFillLinkMetadata(submissionAndLink.first, submissionAndLink.second, submissionAlbumLinkThumbnailWidth)
-                      .subscribeOn(scheduler)
-                      //.doOnSubscribe(d -> Timber.i("Caching link: %s", submissionAndLink.first.getTitle()))
+                  submissionAndLink -> preFillLinkMetadata(submissionAndLink.first(), submissionAndLink.second(), submissionAlbumLinkThumbnailWidth)
+                      //.subscribeOn(preFillingScheduler.get())
+                      //.doOnSubscribe(d -> Timber.i("Caching link: %s", submissionAndLink.first().getTitle()))
                       .toObservable()
                       .onErrorResumeNext(Observable.empty())
               );
@@ -130,14 +140,14 @@ public class CachePreFiller {
 
     // Comments.
     Observable commentCacheFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.COMMENTS)
-        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy))
+        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
         .switchMap(canPreFill -> {
           if (!canPreFill) {
             return Observable.empty();
           }
 
-          return submissionAndContentLinkStream.concatMap(submissionAndLink -> preFillComment(submissionAndLink.first)
-              .subscribeOn(scheduler)
+          return submissionAndContentLinkStream.concatMap(submissionAndLink -> preFillComment(submissionAndLink.first())
+              .subscribeOn(preFillingScheduler.get())
               //.doOnSubscribe(d -> Timber.i("Caching comments: %s", submissionAndLink.first.getTitle()))
               .toObservable())
               .onErrorResumeNext(Observable.empty());
@@ -148,7 +158,7 @@ public class CachePreFiller {
 
   private Predicate<Pair<Submission, Link>> submissionContentAreStaticImages() {
     //noinspection ConstantConditions
-    return submissionAndLink -> submissionAndLink.second.isImage() || submissionAndLink.second.isMediaAlbum();
+    return submissionAndLink -> submissionAndLink.second().isImage() || submissionAndLink.second().isMediaAlbum();
   }
 
   private Completable preFillImageOrAlbum(Submission submission, MediaLink mediaLink, int deviceDisplayWidth, int submissionAlbumLinkThumbnailWidth) {
@@ -208,8 +218,8 @@ public class CachePreFiller {
 
   private Predicate<Pair<Submission, Link>> submissionContentIsExternalLink() {
     return submissionAndLink -> {
-      Link contentLink = submissionAndLink.second;
-      Submission submission = submissionAndLink.first;
+      Link contentLink = submissionAndLink.second();
+      Submission submission = submissionAndLink.first();
       //noinspection ConstantConditions
       boolean isAnotherRedditPage = contentLink.isRedditPage() && !submission.isSelfPost();
       //noinspection ConstantConditions

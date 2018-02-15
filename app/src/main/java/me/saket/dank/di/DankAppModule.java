@@ -33,12 +33,14 @@ import net.dean.jraw.http.UserAgent;
 
 import java.io.IOException;
 import java.util.UUID;
+import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Module;
 import dagger.Provides;
+import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
@@ -370,5 +372,11 @@ public class DankAppModule {
   Preference<NetworkStrategy> autoPlayVideosNetworkStrategyPref(RxSharedPreferences rxPrefs) {
     RxPreferencesEnumTypeAdapter<NetworkStrategy> typeAdapter = new RxPreferencesEnumTypeAdapter<>(NetworkStrategy.class);
     return rxPrefs.getObject("auto_play_videos_network_strategy", NetworkStrategy.WIFI_ONLY, typeAdapter);
+  }
+
+  @Provides
+  @Named("cache_pre_filling")
+  Scheduler cachePreFillingScheduler() {
+    return Schedulers.from(Executors.newCachedThreadPool());
   }
 }

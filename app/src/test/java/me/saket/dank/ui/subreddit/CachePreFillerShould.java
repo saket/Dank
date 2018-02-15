@@ -28,6 +28,7 @@ import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.UserPreferences;
@@ -35,9 +36,12 @@ import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.utils.NetworkStateListener;
+import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.UrlParserTest;
 
 @RunWith(PowerMockRunner.class)
-@PrepareForTest({ Submission.class, Uri.class })
+@PrepareForTest({ Submission.class, Uri.class, RxUtils.class })
 public class CachePreFillerShould {
 
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
@@ -53,13 +57,27 @@ public class CachePreFillerShould {
   @Before
   public void setUp() throws Exception {
     PowerMockito.mockStatic(Uri.class);
-    cachePreFiller = new CachePreFiller(null, submissionRepo, networkStateListener, mediaHostRepo, linkMetadataRepo, userPreferences);
+    //noinspection ConstantConditions
+    cachePreFiller = new CachePreFiller(
+        null,
+        submissionRepo,
+        networkStateListener,
+        mediaHostRepo,
+        linkMetadataRepo,
+        userPreferences,
+        () -> Schedulers.computation()
+    );
+
+    PowerMockito.mockStatic(RxUtils.class);
+    PowerMockito.when(RxUtils.errorIfMainThread()).thenReturn(o -> {
+      // Suppress internal accesses of Looper.
+    });
   }
 
   @Test
   public void whenPreFillingIsDisabled_shouldNotCacheAnything_shouldCompleteRxChain() {
     when(userPreferences.streamCachePreFillNetworkStrategy(any())).thenReturn(Observable.just(NetworkStrategy.NEVER));
-    when(networkStateListener.streamNetworkInternetCapability(NetworkStrategy.NEVER)).thenReturn(Observable.just(false));
+    when(networkStateListener.streamNetworkInternetCapability(NetworkStrategy.NEVER, Optional.empty())).thenReturn(Observable.just(false));
 
     cachePreFiller.preFillInParallelThreads(Collections.emptyList(), 720, 160)
         .test()
@@ -80,42 +98,21 @@ public class CachePreFillerShould {
     Submission submission = PowerMockito.mock(Submission.class);
     String url = "https://play.google.com/store/apps/details?id=com.pinpinteam.vikings";
     PowerMockito.when(submission.getUrl()).thenReturn(url);
-    Uri uri = createMockUriFor(url);
+    Uri uri = UrlParserTest.createMockUriFor(url);
     PowerMockito.when(Uri.parse(url)).thenReturn(uri);
     submissions.add(submission);
     submissions.add(submission);
 
     when(userPreferences.streamCachePreFillNetworkStrategy(any())).thenReturn(Observable.just(NetworkStrategy.WIFI_ONLY));
-    when(networkStateListener.streamNetworkInternetCapability(NetworkStrategy.WIFI_ONLY)).thenReturn(Observable.just(true));
+    when(networkStateListener.streamNetworkInternetCapability(NetworkStrategy.WIFI_ONLY, Optional.empty())).thenReturn(Observable.just(true));
+
     when(linkMetadataRepo.unfurl(any())).thenReturn(Single.just(mock(LinkMetadata.class)));
 
     cachePreFiller.preFillInParallelThreads(submissions, 720, 160)
-        .subscribe();
         .test()
         .assertNoErrors()
         .assertComplete();
 
     verify(linkMetadataRepo, times(1)).unfurl(any());
-  }
-
-  // TODO: Extract this into an @Rule.
-  private Uri createMockUriFor(String url) {
-    Uri mockUri = mock(Uri.class);
-
-    // Really hacky way, but couldn't think of a better way.
-    String domainTld;
-    if (url.contains(".com/")) {
-      domainTld = ".com";
-    } else if (url.contains(".it/")) {
-      domainTld = ".it";
-    } else {
-      throw new UnsupportedOperationException("Unknown TLD");
-    }
-
-    when(mockUri.getPath()).thenReturn(url.substring(url.indexOf(domainTld) + domainTld.length()));
-    when(mockUri.getHost()).thenReturn(url.substring(url.indexOf("://") + "://".length(), url.indexOf(domainTld) + domainTld.length()));
-    when(mockUri.getScheme()).thenReturn(url.substring(0, url.indexOf("://")));
-    when(mockUri.toString()).thenReturn(url);
-    return mockUri;
   }
 }

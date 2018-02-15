@@ -13,6 +13,7 @@ import com.google.auto.value.AutoValue;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import me.saket.dank.data.NetworkStrategy;
 
 public class NetworkStateListener {
@@ -42,11 +43,18 @@ public class NetworkStateListener {
     this.connectivityManager = connectivityManager;
   }
 
+  /**
+   * @param scheduler ConnectivityManager's network callbacks are called on a background thread by default.
+   */
   @CheckResult
-  public Observable<Boolean> streamNetworkInternetCapability(NetworkStrategy strategy) {
-    return streamInternetCapableNetworkStateChanges()
+  public Observable<Boolean> streamNetworkInternetCapability(NetworkStrategy strategy, Optional<Scheduler> scheduler) {
+    Observable<Boolean> capabilities = streamInternetCapableNetworkStateChanges()
         .distinctUntilChanged()
         .map(networkState -> satisfiesNetworkRequirement(strategy, networkState));
+
+    return scheduler.isPresent()
+        ? capabilities.observeOn(scheduler.get())
+        : capabilities;
   }
 
   @CheckResult
