@@ -5,12 +5,12 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 
-public abstract class LifecycleOwnerActivity extends AppCompatActivity implements LifecycleOwner {
+public abstract class LifecycleOwnerActivity extends AppCompatActivity implements LifecycleOwner<ActivityLifecycleEvent> {
 
   private ActivityLifecycleStreams lifecycleStreams;
 
   @Override
-  public LifecycleStreams lifecycle() {
+  public ActivityLifecycleStreams lifecycle() {
     return lifecycleStreams;
   }
 
@@ -18,36 +18,35 @@ public abstract class LifecycleOwnerActivity extends AppCompatActivity implement
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
     lifecycleStreams = new ActivityLifecycleStreams();
-    lifecycleStreams.notifyOnCreate();
   }
 
   @Override
   protected void onStart() {
     super.onStart();
-    lifecycleStreams.notifyOnStart();
+    lifecycleStreams.accept(ActivityLifecycleEvent.START);
   }
 
   @Override
   protected void onResume() {
     super.onResume();
-    lifecycleStreams.notifyOnResume();
+    lifecycleStreams.accept(ActivityLifecycleEvent.RESUME);
   }
 
   @Override
   protected void onPause() {
-    lifecycleStreams.notifyOnPause();
+    lifecycleStreams.accept(ActivityLifecycleEvent.PAUSE);
     super.onPause();
   }
 
   @Override
   protected void onStop() {
-    lifecycleStreams.notifyOnStop();
+    lifecycleStreams.accept(ActivityLifecycleEvent.STOP);
     super.onStop();
   }
 
   @Override
   protected void onDestroy() {
-    lifecycleStreams.notifyOnDestroy();
+    lifecycleStreams.accept(ActivityLifecycleEvent.DESTROY);
     super.onDestroy();
   }
 

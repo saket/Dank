@@ -15,7 +15,8 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.utils.lifecycle.LifecycleOwner;
+import me.saket.dank.utils.lifecycle.ActivityLifecycleStreams;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.widgets.prefs.UserPreferenceSwitch;
 
@@ -30,7 +31,9 @@ public class FiltersUserPreferencesLayout extends LinearLayout {
     LayoutInflater.from(context).inflate(R.layout.view_user_preferences_filters, this, true);
     setOrientation(VERTICAL);
 
-    LifecycleOwnerViews.Streams lifecycle = LifecycleOwnerViews.create(this, (LifecycleOwner) getContext());
+    ActivityLifecycleStreams parentLifecycle = ((LifecycleOwnerActivity) getContext()).lifecycle();
+    LifecycleOwnerViews.Streams lifecycle = LifecycleOwnerViews.create(this, parentLifecycle);
+
     lifecycle.viewAttaches()
         .takeUntil(lifecycle.onDestroy())
         .subscribe(o -> onViewFirstAttach());

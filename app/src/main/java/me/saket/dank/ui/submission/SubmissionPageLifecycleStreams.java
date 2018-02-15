@@ -1,24 +1,28 @@
 package me.saket.dank.ui.submission;
 
 import android.support.annotation.CheckResult;
+
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
+
 import io.reactivex.Observable;
-import me.saket.dank.utils.lifecycle.LifecycleOwnerViews.Streams;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 
-public class SubmissionPageLifecycleStreams extends Streams {
+public class SubmissionPageLifecycleStreams extends LifecycleOwnerViews.Streams {
 
+  private static final Object NOTHING = LifecycleStreams.NOTHING;
   private Relay<Object> pageCollapseStream = PublishRelay.create();
   private Relay<Object> pageAboutToCollapseStream = PublishRelay.create();
 
-  public static SubmissionPageLifecycleStreams wrap(ExpandablePageLayout pageLayout, Streams delegate) {
-    return new SubmissionPageLifecycleStreams(pageLayout, delegate);
+  public static SubmissionPageLifecycleStreams create(ExpandablePageLayout pageLayout, LifecycleOwnerActivity parent) {
+    return new SubmissionPageLifecycleStreams(pageLayout, parent);
   }
 
-  public SubmissionPageLifecycleStreams(ExpandablePageLayout pageLayout, LifecycleStreams delegate) {
-    super(pageLayout, delegate);
+  public SubmissionPageLifecycleStreams(ExpandablePageLayout pageLayout, LifecycleOwnerActivity parent) {
+    super(pageLayout, parent.lifecycle());
 
     pageLayout.addStateChangeCallbacks(new ExpandablePageLayout.StateChangeCallbacks() {
       @Override
@@ -31,12 +35,12 @@ public class SubmissionPageLifecycleStreams extends Streams {
 
       @Override
       public void onPageAboutToCollapse(long collapseAnimDuration) {
-        pageAboutToCollapseStream.accept(LifecycleStreams.NOTHING);
+        pageAboutToCollapseStream.accept(NOTHING);
       }
 
       @Override
       public void onPageCollapsed() {
-        pageCollapseStream.accept(LifecycleStreams.NOTHING);
+        pageCollapseStream.accept(NOTHING);
       }
     });
   }

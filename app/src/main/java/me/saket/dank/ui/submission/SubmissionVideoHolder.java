@@ -55,6 +55,7 @@ public class SubmissionVideoHolder {
   private VideoView contentVideoView;
   private ScrollingRecyclerViewSheet commentListParentSheet;
   private ExpandablePageLayout submissionPageLayout;
+  private SubmissionPageLifecycleStreams lifecycle;
   private int deviceDisplayHeight;
   private int statusBarHeight;
   private int minimumGapWithBottom;
@@ -88,6 +89,7 @@ public class SubmissionVideoHolder {
       ScrollingRecyclerViewSheet commentListParentSheet,
       ProgressBar contentLoadProgressView,
       ExpandablePageLayout submissionPageLayout,
+      SubmissionPageLifecycleStreams lifecycle,
       int deviceDisplayHeight,
       int statusBarHeight,
       int minimumGapWithBottom)
@@ -97,6 +99,7 @@ public class SubmissionVideoHolder {
     this.commentListParentSheet = commentListParentSheet;
     this.contentLoadProgressView = contentLoadProgressView;
     this.submissionPageLayout = submissionPageLayout;
+    this.lifecycle = lifecycle;
     this.deviceDisplayHeight = deviceDisplayHeight;
     this.statusBarHeight = statusBarHeight;
     this.minimumGapWithBottom = minimumGapWithBottom;

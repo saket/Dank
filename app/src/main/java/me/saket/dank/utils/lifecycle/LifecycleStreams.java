@@ -2,35 +2,34 @@ package me.saket.dank.utils.lifecycle;
 
 import android.support.annotation.CheckResult;
 
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
-import me.saket.dank.data.ActivityResult;
 
-/**
- * This is an interface so that subclasses don't forget to expose all the streams, especially delegating subclasses.
- */
-public interface LifecycleStreams {
+public interface LifecycleStreams<EVENT> {
 
   Object NOTHING = new Object();
 
   @CheckResult
-  Observable<Object> onStart();
+  Observable<EVENT> events();
 
   @CheckResult
-  Observable<Object> onResume();
+  Observable<EVENT> onStart();
 
   @CheckResult
-  Observable<Object> onPause();
+  Observable<EVENT> onResume();
 
   @CheckResult
-  Observable<Object> onStop();
+  Observable<EVENT> onPause();
 
   @CheckResult
-  Observable<Object> onDestroy();
+  Observable<EVENT> onStop();
 
   @CheckResult
-  Flowable<Object> onDestroyFlowable();
+  Observable<EVENT> onDestroy();
 
   @CheckResult
-  Observable<ActivityResult> onActivityResults();
+  default Flowable<EVENT> onDestroyFlowable() {
+    return onDestroy().toFlowable(BackpressureStrategy.LATEST);
+  }
 }

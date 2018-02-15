@@ -2,16 +2,14 @@ package me.saket.dank.utils.lifecycle;
 
 import android.content.Context;
 import android.content.Intent;
-import android.os.Bundle;
 import android.support.v4.app.Fragment;
 
-public class LifecycleOwnerFragment extends Fragment implements LifecycleOwner {
+public class LifecycleOwnerFragment extends Fragment implements LifecycleOwner<FragmentLifecycleEvent> {
 
-  // Can do without FragmentLifecycleStreams for now.
-  private ActivityLifecycleStreams lifecycleStreams;
+  private FragmentLifecycleStreams lifecycleStreams;
 
   @Override
-  public LifecycleStreams lifecycle() {
+  public FragmentLifecycleStreams lifecycle() {
     return lifecycleStreams;
   }
 
@@ -19,43 +17,37 @@ public class LifecycleOwnerFragment extends Fragment implements LifecycleOwner {
   public void onAttach(Context context) {
     super.onAttach(context);
     if (lifecycleStreams == null) {
-      lifecycleStreams = new ActivityLifecycleStreams();
+      lifecycleStreams = new FragmentLifecycleStreams();
     }
-  }
-
-  @Override
-  public void onCreate(Bundle savedInstanceState) {
-    super.onCreate(savedInstanceState);
-    lifecycleStreams.notifyOnCreate();
   }
 
   @Override
   public void onStart() {
     super.onStart();
-    lifecycleStreams.notifyOnStart();
+    lifecycleStreams.accept(FragmentLifecycleEvent.START);
   }
 
   @Override
   public void onResume() {
     super.onResume();
-    lifecycleStreams.notifyOnResume();
+    lifecycleStreams.accept(FragmentLifecycleEvent.RESUME);
   }
 
   @Override
   public void onPause() {
-    lifecycleStreams.notifyOnPause();
+    lifecycleStreams.accept(FragmentLifecycleEvent.PAUSE);
     super.onPause();
   }
 
   @Override
   public void onStop() {
-    lifecycleStreams.notifyOnStop();
+    lifecycleStreams.accept(FragmentLifecycleEvent.STOP);
     super.onStop();
   }
 
   @Override
   public void onDestroy() {
-    lifecycleStreams.notifyOnDestroy();
+    lifecycleStreams.accept(FragmentLifecycleEvent.DESTROY);
     super.onDestroy();
   }
 

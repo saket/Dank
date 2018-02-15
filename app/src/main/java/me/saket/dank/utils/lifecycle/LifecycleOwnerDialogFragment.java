@@ -1,60 +1,51 @@
 package me.saket.dank.utils.lifecycle;
 
-import android.content.Intent;
 import android.os.Bundle;
+import android.support.annotation.Nullable;
+import android.support.v4.app.DialogFragment;
 
-import com.trello.navi2.component.support.NaviDialogFragment;
+public class LifecycleOwnerDialogFragment extends DialogFragment implements LifecycleOwner<DialogLifecycleEvent> {
 
-public class LifecycleOwnerDialogFragment extends NaviDialogFragment implements LifecycleOwner {
-
-  // Can do without FragmentLifecycleStreams for now.
-  private ActivityLifecycleStreams lifecycleStreams;
+  private DialogLifecycleStreams lifecycleStreams;
 
   @Override
-  public LifecycleStreams lifecycle() {
+  public DialogLifecycleStreams lifecycle() {
     return lifecycleStreams;
   }
 
   @Override
-  public void onCreate(Bundle savedInstanceState) {
+  public void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    lifecycleStreams = new ActivityLifecycleStreams();
-    lifecycleStreams.notifyOnCreate();
+    lifecycleStreams = new DialogLifecycleStreams();
   }
 
   @Override
   public void onStart() {
     super.onStart();
-    lifecycleStreams.notifyOnStart();
+    lifecycleStreams.accept(DialogLifecycleEvent.START);
   }
 
   @Override
   public void onResume() {
     super.onResume();
-    lifecycleStreams.notifyOnResume();
+    lifecycleStreams.accept(DialogLifecycleEvent.RESUME);
   }
 
   @Override
   public void onPause() {
-    lifecycleStreams.notifyOnPause();
+    lifecycleStreams.accept(DialogLifecycleEvent.PAUSE);
     super.onPause();
   }
 
   @Override
   public void onStop() {
-    lifecycleStreams.notifyOnStop();
+    lifecycleStreams.accept(DialogLifecycleEvent.STOP);
     super.onStop();
   }
 
   @Override
   public void onDestroy() {
-    lifecycleStreams.notifyOnDestroy();
+    lifecycleStreams.accept(DialogLifecycleEvent.DESTROY);
     super.onDestroy();
-  }
-
-  @Override
-  public void onActivityResult(int requestCode, int resultCode, Intent data) {
-    super.onActivityResult(requestCode, resultCode, data);
-    lifecycleStreams.notifyOnActivityResult(requestCode, resultCode, data);
   }
 }

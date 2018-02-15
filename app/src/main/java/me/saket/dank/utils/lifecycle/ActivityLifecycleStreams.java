@@ -3,86 +3,58 @@ package me.saket.dank.utils.lifecycle;
 import android.content.Intent;
 import android.support.annotation.CheckResult;
 
-import io.reactivex.BackpressureStrategy;
-import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.subjects.PublishSubject;
-import io.reactivex.subjects.Subject;
 import me.saket.dank.data.ActivityResult;
 
-public class ActivityLifecycleStreams implements LifecycleStreams {
+public class ActivityLifecycleStreams implements LifecycleStreams<ActivityLifecycleEvent> {
 
   protected static final Object INSTANCE = new Object();
 
-  private Subject<Object> onCreates = PublishSubject.create();
-  private Subject<Object> onStarts = PublishSubject.create();
-  private Subject<Object> onResumes = PublishSubject.create();
-  private Subject<Object> onPauses = PublishSubject.create();
-  private Subject<Object> onStops = PublishSubject.create();
-  private Subject<Object> onDestroys = PublishSubject.create();
-  private Subject<ActivityResult> onActivityResults = PublishSubject.create();
+  private PublishSubject<ActivityLifecycleEvent> events = PublishSubject.create();
+  private PublishSubject<ActivityResult> onActivityResults = PublishSubject.create();
 
-  protected void notifyOnCreate() {
-    onCreates.onNext(INSTANCE);
-  }
-
-  protected void notifyOnStart() {
-    onStarts.onNext(INSTANCE);
-  }
-
-  protected void notifyOnResume() {
-    onResumes.onNext(INSTANCE);
-  }
-
-  protected void notifyOnPause() {
-    onPauses.onNext(INSTANCE);
-  }
-
-  protected void notifyOnStop() {
-    onStops.onNext(INSTANCE);
-  }
-
-  protected void notifyOnDestroy() {
-    onDestroys.onNext(INSTANCE);
+  protected void accept(ActivityLifecycleEvent event) {
+    events.onNext(event);
   }
 
   public void notifyOnActivityResult(int requestCode, int resultCode, Intent data) {
     onActivityResults.onNext(ActivityResult.create(requestCode, resultCode, data));
   }
 
-  // Commented out because dialog fragments have two create methods: onCreate() and onCreateDialog().
-  /*public Observable<Object> onCreate() {
-    return onCreates;
-  }*/
-
-  @CheckResult
-  public Observable<Object> onStart() {
-    return onStarts;
+  @Override
+  public Observable<ActivityLifecycleEvent> events() {
+    return events;
   }
 
+  @Override
   @CheckResult
-  public Observable<Object> onResume() {
-    return onResumes;
+  public Observable<ActivityLifecycleEvent> onStart() {
+    return events.filter(e -> e == ActivityLifecycleEvent.START);
   }
 
+  @Override
   @CheckResult
-  public Observable<Object> onPause() {
-    return onPauses;
+  public Observable<ActivityLifecycleEvent> onResume() {
+    return events.filter(e -> e == ActivityLifecycleEvent.RESUME);
   }
 
+  @Override
   @CheckResult
-  public Observable<Object> onStop() {
-    return onStops;
+  public Observable<ActivityLifecycleEvent> onPause() {
+    return events.filter(e -> e == ActivityLifecycleEvent.PAUSE);
   }
 
+  @Override
   @CheckResult
-  public Observable<Object> onDestroy() {
-    return onDestroys;
+  public Observable<ActivityLifecycleEvent> onStop() {
+    return events.filter(e -> e == ActivityLifecycleEvent.STOP);
   }
 
+  @Override
   @CheckResult
-  public Flowable<Object> onDestroyFlowable() {
-    return onDestroy().toFlowable(BackpressureStrategy.LATEST);
+  public Observable<ActivityLifecycleEvent> onDestroy() {
+    return events.filter(e -> e == ActivityLifecycleEvent.DESTROY);
   }
 
   @CheckResult

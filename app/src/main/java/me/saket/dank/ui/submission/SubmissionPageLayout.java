@@ -126,8 +126,6 @@ import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
-import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
-import me.saket.dank.utils.lifecycle.LifecycleOwnerViews.Streams;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -217,8 +215,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     ButterKnife.bind(this, this);
 
     LifecycleOwnerActivity parentLifecycleOwner = (LifecycleOwnerActivity) getContext();
-    Streams viewLifecycleStreams = LifecycleOwnerViews.create(this, parentLifecycleOwner);
-    lifecycleStreams = SubmissionPageLifecycleStreams.wrap(this, viewLifecycleStreams);
+    lifecycleStreams = SubmissionPageLifecycleStreams.create(this, parentLifecycleOwner);
 
     // Get the display width, that will be used in populateUi() for loading an optimized image for the user.
     deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
@@ -792,6 +789,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         commentListParentSheet,
         contentLoadProgressView,
         submissionPageLayout,
+        lifecycle(),
         deviceDisplayHeight,
         Views.statusBarHeight(getResources()),
         commentsSheetMinimumVisibleHeight

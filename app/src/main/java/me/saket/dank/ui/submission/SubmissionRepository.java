@@ -124,7 +124,7 @@ public class SubmissionRepository {
                 .timeout(Observable.timer(300, TimeUnit.MILLISECONDS), o -> Observable.timer(100, TimeUnit.DAYS))
                 .retry(10, error -> {
                   if (error instanceof TimeoutException) {
-                    Timber.w("Retrying because memory store isn't responding.");
+                    //Timber.w("Retrying because memory store isn't responding.");
                     return true;
                   } else {
                     return false;

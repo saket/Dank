@@ -1,6 +1,6 @@
 package me.saket.dank.utils.lifecycle;
 
-public interface LifecycleOwner {
+public interface LifecycleOwner<EVENT> {
 
-  LifecycleStreams lifecycle();
+  LifecycleStreams<EVENT> lifecycle();
 }

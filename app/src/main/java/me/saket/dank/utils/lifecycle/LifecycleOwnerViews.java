@@ -2,8 +2,9 @@ package me.saket.dank.utils.lifecycle;
 
 import android.support.annotation.CheckResult;
 import android.view.View;
-import com.jakewharton.rxrelay2.PublishRelay;
-import com.jakewharton.rxrelay2.Relay;
+
+import io.reactivex.Observable;
+import me.saket.dank.data.ActivityResult;
 
 /**
  * This class exists instead of just {@link Streams} to keep it consistent with
@@ -12,41 +13,115 @@ import com.jakewharton.rxrelay2.Relay;
 public class LifecycleOwnerViews {
 
   /**
-   * @param parentLifecycleOwner From parent Activity or fragment.
+   * @param streams From parent Activity or fragment.
    */
-  public static Streams create(View view, LifecycleOwner parentLifecycleOwner) {
-    return new Streams(view, parentLifecycleOwner.lifecycle());
+  public static Streams create(View view, ActivityLifecycleStreams streams) {
+    return new Streams(view, streams);
   }
 
-  public static class Streams extends ForwardingLifecycleStreams {
+  public static class Streams implements LifecycleStreams<ViewLifecycleEvent> {
+    private final ActivityLifecycleStreams parentStreams;
+    private final Observable<ViewLifecycleEvent> events;
+    private final Observable<ViewLifecycleEvent> replayedEvents;
 
-    private Relay<Object> viewAttaches = PublishRelay.create();
-    private Relay<Object> viewDetaches = PublishRelay.create();
+    public Streams(View view, ActivityLifecycleStreams parentStreams) {
+      this.parentStreams = parentStreams;
 
-    public Streams(View view, LifecycleStreams delegate) {
-      super(delegate);
+      Observable<ViewLifecycleEvent> viewEvents = Observable.create(emitter -> {
+        View.OnAttachStateChangeListener listener = new View.OnAttachStateChangeListener() {
+          @Override
+          public void onViewAttachedToWindow(View v) {
+            emitter.onNext(ViewLifecycleEvent.ATTACH);
+          }
 
-      view.addOnAttachStateChangeListener(new View.OnAttachStateChangeListener() {
-        @Override
-        public void onViewAttachedToWindow(View v) {
-          viewAttaches.accept(LifecycleStreams.NOTHING);
-        }
+          @Override
+          public void onViewDetachedFromWindow(View v) {
+            emitter.onNext(ViewLifecycleEvent.DETACH);
+          }
+        };
 
-        @Override
-        public void onViewDetachedFromWindow(View v) {
-          viewDetaches.accept(LifecycleStreams.NOTHING);
-        }
+        view.addOnAttachStateChangeListener(listener);
+        emitter.setCancellable(() -> view.removeOnAttachStateChangeListener(listener));
       });
+
+      Observable<ViewLifecycleEvent> activityEvents = parentStreams.events()
+          .map(activityLifecycleEvent -> {
+            switch (activityLifecycleEvent) {
+              case START:
+                return ViewLifecycleEvent.START;
+
+              case STOP:
+                return ViewLifecycleEvent.STOP;
+
+              case RESUME:
+                return ViewLifecycleEvent.RESUME;
+
+              case PAUSE:
+                return ViewLifecycleEvent.PAUSE;
+
+              case DESTROY:
+                return ViewLifecycleEvent.DESTROY;
+
+              default:
+                throw new UnsupportedOperationException("Unknown activity lifecycle event: " + activityLifecycleEvent);
+            }
+          });
+
+      events = viewEvents
+          .mergeWith(activityEvents)
+          .takeUntil(viewEvents.filter(e -> e == ViewLifecycleEvent.DESTROY));
+
+      replayedEvents = events.replay(1);
     }
 
     @CheckResult
-    public Relay<Object> viewAttaches() {
-      return viewAttaches;
+    public Observable<ViewLifecycleEvent> viewAttaches() {
+      return events.filter(e -> e == ViewLifecycleEvent.ATTACH);
     }
 
     @CheckResult
-    public Relay<Object> viewDetaches() {
-      return viewDetaches;
+    public Observable<ViewLifecycleEvent> viewDetaches() {
+      return events.filter(e -> e == ViewLifecycleEvent.DETACH);
+    }
+
+    @Override
+    public Observable<ViewLifecycleEvent> events() {
+      return events;
+    }
+
+    @CheckResult
+    public Observable<ViewLifecycleEvent> onStart() {
+      return events.filter(e -> e == ViewLifecycleEvent.START);
+    }
+
+    @CheckResult
+    public Observable<ViewLifecycleEvent> onResume() {
+      return events.filter(e -> e == ViewLifecycleEvent.RESUME);
+    }
+
+    @CheckResult
+    public Observable<ViewLifecycleEvent> onPause() {
+      return events.filter(e -> e == ViewLifecycleEvent.PAUSE);
+    }
+
+    @CheckResult
+    public Observable<ViewLifecycleEvent> onStop() {
+      return events.filter(e -> e == ViewLifecycleEvent.STOP);
+    }
+
+    @CheckResult
+    public Observable<ViewLifecycleEvent> onDestroy() {
+      return events.filter(e -> e == ViewLifecycleEvent.DESTROY);
+    }
+
+    @CheckResult
+    public Observable<ActivityResult> onActivityResults() {
+      return parentStreams.onActivityResults();
+    }
+
+    @CheckResult
+    public Observable<ViewLifecycleEvent> replayedEvents() {
+      return replayedEvents;
     }
   }
 }
