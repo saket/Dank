@@ -378,7 +378,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .takeUntil(lifecycle().onDestroy())
         .subscribe(event -> {
           Submission submission = event.submission();
-          Link contentLink = UrlParser.parse(submission.getUrl());
+          Link contentLink = UrlParser.parse(submission.getUrl(), submission);
 
           switch (contentLink.type()) {
             case SINGLE_IMAGE:

@@ -11,6 +11,7 @@ import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.PrivateMessage;
+import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thing;
 import net.dean.jraw.models.attr.Created;
 
@@ -75,5 +76,10 @@ public class JrawUtils {
 
   public static String permalink(Comment comment) {
     return comment.getDataNode().get("permalink").asText();
+  }
+
+  public static String redditVideoDashPlaylistUrl(Submission submission) {
+    JsonNode redditVideoNode = submission.getDataNode().get("secure_media").get("reddit_video");
+    return redditVideoNode.get("dash_url").asText();
   }
 }

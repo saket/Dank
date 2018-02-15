@@ -88,7 +88,7 @@ public class CachePreFiller {
     Observable<Pair<Submission, Link>> submissionAndContentLinkStream = Observable.fromIterable(submissions)
         .take(SUBMISSION_LIMIT_PER_SUBREDDIT)
         .map(submission -> {
-          Link contentLink = UrlParser.parse(submission.getUrl());
+          Link contentLink = UrlParser.parse(submission.getUrl(), submission);
           return Pair.create(submission, contentLink);
         });
 

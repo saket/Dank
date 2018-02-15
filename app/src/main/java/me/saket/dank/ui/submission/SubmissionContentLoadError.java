@@ -24,7 +24,7 @@ public interface SubmissionContentLoadError {
     @Override
     public SubmissionMediaContentLoadError.UiModel uiModel(Context context) {
       return SubmissionMediaContentLoadError.UiModel.create(
-          context.getString(resolvedError().errorEmojiRes()),
+          context.getString(resolvedError().errorMessageRes()),
           context.getString(R.string.submission_media_content_load_failure_tap_to_retry),
           R.drawable.ic_error_24dp,
           this

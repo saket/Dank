@@ -1112,7 +1112,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   private void loadSubmissionContent(Submission submission) {
-    Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
+    Single.fromCallable(() -> UrlParser.parse(submission.getUrl(), submission))
         .subscribeOn(io())
         .observeOn(mainThread())
         .flatMap(parsedLink -> {
@@ -1221,6 +1221,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             }, error -> {
               ResolvedError resolvedError = errorResolver.resolve(error);
               resolvedError.ifUnknown(() -> Timber.e(error, "Error while loading content"));
+
+              // TODO: Rename SubmissionMediaContentLoadError to SubmissionContentLoadError.
+              // TODO: Handle content load errors?
             }
         );
   }
@@ -1229,7 +1232,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     contentLoadProgressView.hide();
 
     ResolvedError resolvedError = errorResolver.resolve(error);
-    resolvedError.ifUnknown(() -> Timber.e(error, "Media content load error"));
+    resolvedError.ifUnknown(() ->
+        Timber.e(error, "Media content load error. Submission: %s", submissionStream.getValue().get().getPermalink())
+    );
     mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.LoadFailure.create(resolvedError)));
   }
 

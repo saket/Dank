@@ -65,6 +65,7 @@ public class NetworkStateListener {
         @Override
         public void onAvailable(Network network) {
           //Timber.d("Network changed");
+
           NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
           emitter.onNext(activeNetworkInfo == null
               ? NetworkState.createInactive()

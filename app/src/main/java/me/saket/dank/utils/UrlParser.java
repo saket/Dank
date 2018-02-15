@@ -11,6 +11,7 @@ import net.dean.jraw.models.Submission;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.links.ExternalLink;
 import me.saket.dank.data.links.GenericMediaLink;
@@ -105,6 +106,24 @@ public class UrlParser {
    * @return null if the url couldn't be identified. A class implementing {@link Link} otherwise.
    */
   public static Link parse(String url) {
+    return parse(url, Optional.empty());
+  }
+
+  /**
+   * Determine type of the url.
+   *
+   * @return null if the url couldn't be identified. A class implementing {@link Link} otherwise.
+   */
+  public static Link parse(String url, Submission submission) {
+    return parse(url, Optional.of(submission));
+  }
+
+  /**
+   * Determine type of the url.
+   *
+   * @return null if the url couldn't be identified. A class implementing {@link Link} otherwise.
+   */
+  private static Link parse(String url, Optional<Submission> submission) {
     // TODO: Support "np" subdomain?
     // TODO: Support wiki pages.
 
@@ -151,7 +170,7 @@ public class UrlParser {
         } else {
           Optional<String> urlSubdomain = Urls.subdomain(linkURI);
           if (urlSubdomain.isPresent() && urlSubdomain.get().equals("v")) {
-            parsedLink = RedditHostedVideoLink.create(url);
+            parsedLink = createRedditHostedVideoLink(url, submission.get());
           } else {
             parsedLink = ExternalLink.create(url);
           }
@@ -160,7 +179,7 @@ public class UrlParser {
       } else if (urlDomain.endsWith("redd.it")) {
         Optional<String> urlSubdomain = Urls.subdomain(linkURI);
         if (urlSubdomain.isPresent() && urlSubdomain.get().equals("v")) {
-          parsedLink = RedditHostedVideoLink.create(url);
+          parsedLink = createRedditHostedVideoLink(url, submission.get());
 
         } else if ((urlSubdomain.isEmpty() || urlSubdomain.get().equals("i")) // i.redd.it
             && (!isImageOrGifUrlPath(urlPath) && !isVideoPath(urlPath)))
@@ -229,6 +248,11 @@ public class UrlParser {
     } else {
       return ExternalLink.create(url);
     }
+  }
+
+  private static RedditHostedVideoLink createRedditHostedVideoLink(String url, Submission submission) {
+    String dashPlaylistUrl = JrawUtils.redditVideoDashPlaylistUrl(submission);
+    return RedditHostedVideoLink.create(url, dashPlaylistUrl, dashPlaylistUrl);
   }
 
   private static Link.Type getMediaUrlType(String urlPath) {
@@ -369,5 +393,12 @@ public class UrlParser {
 
   public static boolean isGooglePlayUrl(String urlHost, String uriPath) {
     return urlHost.endsWith("play.google.com") && uriPath.startsWith("/store");
+  }
+
+  public static void clearCache() {
+    if (!BuildConfig.DEBUG) {
+      throw new AssertionError();
+    }
+    cache.evictAll();
   }
 }

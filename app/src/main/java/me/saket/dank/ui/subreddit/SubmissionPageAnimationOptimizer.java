@@ -20,7 +20,7 @@ public class SubmissionPageAnimationOptimizer {
   private boolean contentVideoViewLaidOut;
 
   public void trackSubmissionOpened(Submission submission) {
-    Single.fromCallable(() -> UrlParser.parse(submission.getUrl()))
+    Single.fromCallable(() -> UrlParser.parse(submission.getUrl(), submission))
         .subscribeOn(Schedulers.io())
         .subscribe(submissionContentLink -> trackSubmissionOpened(submissionContentLink));
   }
@@ -56,7 +56,7 @@ public class SubmissionPageAnimationOptimizer {
       return false;
     }
 
-    Link submissionContentLink = UrlParser.parse(submission.getUrl());
+    Link submissionContentLink = UrlParser.parse(submission.getUrl(), submission);
     boolean needsDelay;
 
     switch (submissionContentLink.type()) {

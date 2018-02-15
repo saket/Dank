@@ -175,7 +175,7 @@ public class SubmissionVideoHolder {
       });
 
       VideoFormat videoFormat = VideoFormat.parse(videoUrl);
-      
+
       if (videoFormat.canBeCached()) {
         String cachedVideoUrl = httpProxyCacheServer.get().getProxyUrl(videoUrl);
         exoPlayerManager.setVideoUriToPlayInLoop(cachedVideoUrl, videoFormat);

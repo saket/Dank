@@ -30,6 +30,7 @@ import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.UrlParser;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 @SuppressLint("SetTextI18n")
@@ -112,6 +113,8 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           .subscribeOn(io())
           .subscribe();
     });
+
+    addButton("Clear UrlParser cache", o -> UrlParser.clearCache());
   }
 
   private void addButton(String label, View.OnClickListener clickListener) {
