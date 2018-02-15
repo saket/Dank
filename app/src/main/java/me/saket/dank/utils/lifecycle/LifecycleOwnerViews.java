@@ -3,6 +3,8 @@ package me.saket.dank.utils.lifecycle;
 import android.support.annotation.CheckResult;
 import android.view.View;
 
+import com.jakewharton.rxrelay2.BehaviorRelay;
+
 import io.reactivex.Observable;
 import me.saket.dank.data.ActivityResult;
 
@@ -22,7 +24,7 @@ public class LifecycleOwnerViews {
   public static class Streams implements LifecycleStreams<ViewLifecycleEvent> {
     private final ActivityLifecycleStreams parentStreams;
     private final Observable<ViewLifecycleEvent> events;
-    private final Observable<ViewLifecycleEvent> replayedEvents;
+    private final BehaviorRelay<ViewLifecycleEvent> replayedEvents = BehaviorRelay.create();
 
     public Streams(View view, ActivityLifecycleStreams parentStreams) {
       this.parentStreams = parentStreams;
@@ -69,9 +71,12 @@ public class LifecycleOwnerViews {
 
       events = viewEvents
           .mergeWith(activityEvents)
-          .takeUntil(viewEvents.filter(e -> e == ViewLifecycleEvent.DESTROY));
+          .takeUntil(viewEvents.filter(e -> e == ViewLifecycleEvent.DESTROY))
+          .share();
 
-      replayedEvents = events.replay(1);
+      events
+          .takeUntil(onDestroy())
+          .subscribe(replayedEvents);
     }
 
     @CheckResult

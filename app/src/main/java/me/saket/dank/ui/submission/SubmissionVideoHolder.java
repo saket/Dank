@@ -34,6 +34,7 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.lifecycle.ViewLifecycleEvent;
 import me.saket.dank.widgets.DankVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -122,6 +123,7 @@ public class SubmissionVideoHolder {
         .asObservable()
         .flatMap(strategy -> networkStateListener.get().streamNetworkInternetCapability(strategy, Optional.of(mainThread())))
         .firstOrError()
+        .flatMap(waitTillInForeground())
         .flatMapCompletable(canAutoPlay -> canAutoPlay
             ? Completable.fromAction(() -> exoPlayerManager.startVideoPlayback())
             : Completable.complete());
@@ -133,6 +135,16 @@ public class SubmissionVideoHolder {
         .observeOn(mainThread())
         .flatMapCompletable(videoUrl -> loadVideo(videoUrl))
         .andThen(autoPlayVideoIfAllowed);
+  }
+
+  private <T> Function<T, Single<T>> waitTillInForeground() {
+    return item -> lifecycle.replayedEvents()
+        .take(1)
+        .map(ev -> ev == ViewLifecycleEvent.STOP || ev == ViewLifecycleEvent.PAUSE)
+        .flatMapCompletable(isInBackground -> isInBackground
+            ? lifecycle.onStart().take(1).ignoreElements()
+            : Completable.complete())
+        .andThen(Single.just(item));
   }
 
   @CheckResult
