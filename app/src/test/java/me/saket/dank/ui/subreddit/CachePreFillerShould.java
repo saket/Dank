@@ -91,6 +91,9 @@ public class CachePreFillerShould {
 
     cachePreFiller.preFillInParallelThreads(submissions, 720, 160)
         .subscribe();
+        .test()
+        .assertNoErrors()
+        .assertComplete();
 
     verify(linkMetadataRepo, times(1)).unfurl(any());
   }

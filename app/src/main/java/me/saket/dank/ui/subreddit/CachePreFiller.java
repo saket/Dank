@@ -225,15 +225,14 @@ public class CachePreFiller {
 
     return linkMetadataRepository.unfurl(contentLink)
         .flatMapCompletable(linkMetadata -> {
-          String faviconUrl = linkMetadata.faviconUrl();
-          ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
-          String thumbnailImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, linkMetadata.imageUrl());
-
           List<String> imagesToDownload = new ArrayList<>(2);
-          if (faviconUrl != null) {
-            imagesToDownload.add(faviconUrl);
+          if (linkMetadata.hasFavicon()) {
+            imagesToDownload.add(linkMetadata.faviconUrl());
           }
-          if (thumbnailImageUrl != null) {
+          if (linkMetadata.hasImage()) {
+            ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
+            //noinspection ConstantConditions
+            String thumbnailImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, linkMetadata.imageUrl());
             imagesToDownload.add(thumbnailImageUrl);
           }
           return downloadImages(imagesToDownload);
