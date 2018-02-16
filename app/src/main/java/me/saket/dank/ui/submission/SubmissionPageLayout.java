@@ -211,7 +211,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   public SubmissionPageLayout(Context context, AttributeSet attrs) {
     super(context, attrs);
     Dank.dependencyInjector().inject(this);
-    LayoutInflater.from(context).inflate(R.layout.fragment_submission, this, true);
+    LayoutInflater.from(context).inflate(R.layout.view_submission, this, true);
     ButterKnife.bind(this, this);
 
     LifecycleOwnerActivity parentLifecycleOwner = (LifecycleOwnerActivity) getContext();
