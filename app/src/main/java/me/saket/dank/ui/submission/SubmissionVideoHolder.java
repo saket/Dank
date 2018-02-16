@@ -35,7 +35,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.lifecycle.ViewLifecycleEvent;
-import me.saket.dank.widgets.DankVideoControlsView;
+import me.saket.dank.widgets.ExoMediaVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 
@@ -104,9 +104,6 @@ public class SubmissionVideoHolder {
     this.deviceDisplayHeight = deviceDisplayHeight;
     this.statusBarHeight = statusBarHeight;
     this.minimumGapWithBottom = minimumGapWithBottom;
-
-    DankVideoControlsView controlsView = new DankVideoControlsView(contentVideoView.getContext());
-    contentVideoView.setControls(controlsView);
   }
 
   @CheckResult
@@ -170,6 +167,11 @@ public class SubmissionVideoHolder {
 
   private Completable loadVideo(String videoUrl) {
     return Completable.create(emitter -> {
+      if (contentVideoView.getVideoControls() == null) {
+        ExoMediaVideoControlsView controlsView = new SubmissionVideoControlsView(contentVideoView.getContext());
+        contentVideoView.setControls(controlsView);
+      }
+
       exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
         int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - statusBarHeight;
         int adjustedVideoViewHeight = Math.min(contentHeightWithoutKeyboard, resizedVideoHeight);

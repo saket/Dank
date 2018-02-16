@@ -168,6 +168,8 @@ public class UrlRouter {
    * I'd ideally like to send a deeplink intent if any app can open a URL, but I also don't
    * want web browsers to open a link because Dank already has an internal web browser. So
    * we're selectively checking if we want to let an app take over the URL.
+   *
+   * TODO: Add Twitter, Instagram.
    */
   @Nullable
   public static String findAllowedPackageNameForDeepLink(String url) {
