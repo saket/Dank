@@ -213,7 +213,6 @@ public class SubmissionCommentTreeUiConstructor {
       return contribution.getFullName();
     }
     if (contribution instanceof ContributionFullNameWrapper) {
-      Timber.i("Huh?");
       return contribution.getFullName();
     }
     if (contribution instanceof LocallyPostedComment) {

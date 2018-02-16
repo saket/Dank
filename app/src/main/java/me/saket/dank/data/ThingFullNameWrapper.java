@@ -11,7 +11,7 @@ import net.dean.jraw.models.Thing;
  */
 public class ThingFullNameWrapper extends Thing {
 
-  private String fullName;
+  private final String fullName;
 
   public static ThingFullNameWrapper create(String fullName) {
     return new ThingFullNameWrapper(fullName);
@@ -25,5 +25,22 @@ public class ThingFullNameWrapper extends Thing {
   @Override
   public String getFullName() {
     return fullName;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ThingFullNameWrapper)) {
+      return false;
+    }
+    ThingFullNameWrapper that = (ThingFullNameWrapper) o;
+    return fullName.equals(that.fullName);
+  }
+
+  @Override
+  public int hashCode() {
+    return fullName.hashCode();
   }
 }

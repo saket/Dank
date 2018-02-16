@@ -44,6 +44,23 @@ public class ContributionFullNameWrapper extends Contribution implements Seriali
     return fullName;
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof ContributionFullNameWrapper)) {
+      return false;
+    }
+    ContributionFullNameWrapper that = (ContributionFullNameWrapper) o;
+    return fullName.equals(that.fullName);
+  }
+
+  @Override
+  public int hashCode() {
+    return fullName.hashCode();
+  }
+
   public static class MoshiJsonAdapter extends JsonAdapter<ContributionFullNameWrapper> {
     @Override
     public ContributionFullNameWrapper fromJson(JsonReader reader) throws IOException {
