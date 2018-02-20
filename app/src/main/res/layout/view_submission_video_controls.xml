@@ -5,6 +5,7 @@
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   android:layout_below="@+id/exomedia_video_view"
+  android:foreground="?attr/selectableItemBackgroundBorderless"
   tools:background="@color/window_background"
   tools:layout_height="240dp">
 
@@ -60,9 +61,10 @@
     android:layout_alignParentEnd="true"
     android:layout_alignTop="@+id/videocontrols_seek"
     android:gravity="center_vertical"
-    android:textColor="@color/white_opacity_30"
     android:paddingEnd="@dimen/spacing16"
     android:paddingStart="@dimen/spacing16"
+    android:textColor="@color/white_opacity_30"
     android:textIsSelectable="false"
+    tools:ignore="RelativeOverlap"
     tools:text="15" />
 </RelativeLayout>

@@ -22,12 +22,16 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
   private static final StringBuilder TIME_DURATION_FORMAT_BUILDER = new StringBuilder();
   private static final Formatter TIME_DURATION_FORMATTER = new Formatter(TIME_DURATION_FORMAT_BUILDER, Locale.ENGLISH);
 
-  private ViewGroup buttonsContainer;
   private ReversibleAnimatedVectorDrawable playPauseIcon;
+  private ViewGroup buttonsContainer;
   private TextView remainingDurationView;
 
   public SubmissionVideoControlsView(Context context) {
     super(context);
+  }
+
+  public int heightOfControlButtons() {
+    return buttonsContainer.getHeight();
   }
 
   @Override
@@ -58,10 +62,6 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
     });
   }
 
-  public int heightOfControlButtons() {
-    return buttonsContainer.getHeight();
-  }
-
   @Override
   protected void updatePlayPauseImage(boolean isPlaying, boolean userInteractingWithSeek) {
     if (isPlaying) {
@@ -84,7 +84,7 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
   /**
    * Format milliseconds to h:mm:ss.
    */
-  public static String formatTimeDuration(long milliseconds) {
+  private static String formatTimeDuration(long milliseconds) {
     if (milliseconds < 0) {
       return "";
     }

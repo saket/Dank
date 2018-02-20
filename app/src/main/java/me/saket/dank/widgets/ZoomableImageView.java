@@ -145,10 +145,7 @@ public class ZoomableImageView extends GestureImageView {
 
   @Override
   public boolean dispatchTouchEvent(MotionEvent event) {
-    if (getDrawable() == null) {
-      return false;
-    }
-    return super.dispatchTouchEvent(event);
+    return getDrawable() != null && super.dispatchTouchEvent(event);
   }
 
   @Override

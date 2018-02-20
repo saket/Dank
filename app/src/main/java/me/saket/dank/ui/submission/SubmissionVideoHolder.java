@@ -14,7 +14,6 @@ import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
-import com.jakewharton.rxrelay2.Relay;
 
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -34,8 +33,8 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.utils.lifecycle.ViewLifecycleEvent;
-import me.saket.dank.widgets.ExoMediaVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 
@@ -44,8 +43,9 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
  */
 public class SubmissionVideoHolder {
 
-  private final Relay<Integer> videoWidthChangeStream = PublishRelay.create();
-  private final Relay<Object> videoPreparedStream = BehaviorRelay.create();
+  private final PublishRelay<Integer> videoWidthChangeStream = PublishRelay.create();
+  private final BehaviorRelay<Object> videoPreparedStream = BehaviorRelay.create();
+  private final PublishRelay<Object> videoClickStream = PublishRelay.create();
   private final Lazy<MediaHostRepository> mediaHostRepository;
   private final Lazy<HttpProxyCacheServer> httpProxyCacheServer;
   private final Lazy<NetworkStateListener> networkStateListener;
@@ -165,10 +165,18 @@ public class SubmissionVideoHolder {
         .map(videoWidth -> exoPlayerManager.getBitmapOfCurrentVideoFrame(videoWidth, statusBarHeight, Bitmap.Config.RGB_565));
   }
 
+  @CheckResult
+  public Observable<Object> streamVideoClicks() {
+    return videoClickStream;
+  }
+
   private Completable loadVideo(String videoUrl) {
     return Completable.create(emitter -> {
       if (contentVideoView.getVideoControls() == null) {
-        ExoMediaVideoControlsView controlsView = new SubmissionVideoControlsView(contentVideoView.getContext());
+        SubmissionVideoControlsView controlsView = new SubmissionVideoControlsView(contentVideoView.getContext());
+        controlsView.setOnClickListener(o -> {
+          videoClickStream.accept(LifecycleStreams.NOTHING);
+        });
         contentVideoView.setControls(controlsView);
       }
 

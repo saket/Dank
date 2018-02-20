@@ -780,6 +780,19 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         submissionPageLayout,
         deviceDisplayWidth
     );
+
+    // Open media in full-screen on click.
+    RxView.clicks(contentImageView)
+        .withLatestFrom(submissionContentStream, (o, contentLink) -> contentLink)
+        .filter(contentLink -> contentLink.isImageOrGif())
+        .cast(MediaLink.class)
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair ->
+            urlRouter.forLink(pair.first())
+                .withRedditSuppliedImages(pair.second().getThumbnails())
+                .open(getContext())
+        );
   }
 
   private void setupContentVideoView() {
@@ -794,6 +807,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         Views.statusBarHeight(getResources()),
         commentsSheetMinimumVisibleHeight
     );
+
+    // Open media in full-screen on click.
+    contentVideoViewHolder.get().streamVideoClicks()
+        .withLatestFrom(submissionContentStream, (o, contentLink) -> contentLink)
+        .filter(contentLink -> contentLink.isVideo())
+        .cast(MediaLink.class)
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> urlRouter.forLink(pair.first()).open(getContext()));
   }
 
   private void setupCommentsSheet() {
@@ -1181,12 +1203,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                   contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages)
                       .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
                       .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
-
-                  // Open media in full-screen on click.
-                  contentImageView.setOnClickListener(o -> urlRouter.forLink(((MediaLink) resolvedLink))
-                      .withRedditSuppliedImages(submission.getThumbnails())
-                      .open(getContext())
-                  );
                   contentImageView.setContentDescription(getResources().getString(
                       R.string.cd_submission_image,
                       submission.getTitle()
