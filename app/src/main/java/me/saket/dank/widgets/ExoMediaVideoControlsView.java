@@ -2,8 +2,6 @@ package me.saket.dank.widgets;
 
 import android.content.Context;
 import android.support.annotation.IntRange;
-import android.support.annotation.Px;
-import android.view.ViewGroup;
 import android.widget.ImageButton;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
@@ -21,19 +19,10 @@ import me.saket.dank.R;
 public abstract class ExoMediaVideoControlsView extends VideoControls {
 
   @BindView(R.id.videocontrols_seek) public SeekBar progressSeekBar;
-  @BindView(R.id.videocontrols_video_seek_container) public ViewGroup progressSeekBarContainer;
   @BindView(R.id.videocontrols_video_loading) public ProgressWithFileSizeView loadingProgressBar;
 
   private boolean userInteractingWithSeek;
   private VideoProgressChangeListener progressChangeListener;
-
-  /**
-   * See {@link #showVideoState(VideoState)}.
-   */
-  public enum VideoState {
-    PREPARING,
-    PREPARED
-  }
 
   public interface VideoProgressChangeListener {
     void onProgressChange();
@@ -45,29 +34,6 @@ public abstract class ExoMediaVideoControlsView extends VideoControls {
 
   public void setVideoProgressChangeListener(VideoProgressChangeListener listener) {
     progressChangeListener = listener;
-  }
-
-  /**
-   * Extra space required below the video so that the progress seek-bar and its extra touch space are visible.
-   */
-  @Px
-  public int getBottomExtraSpaceForProgressSeekBar() {
-    return progressSeekBar.getHeight() + progressSeekBarContainer.getPaddingBottom();
-  }
-
-  public void showVideoState(VideoState videoState) {
-    switch (videoState) {
-      case PREPARING:
-        loadingProgressBar.setVisibility(VISIBLE);
-        progressSeekBarContainer.setVisibility(INVISIBLE);
-        playPauseButton.setClickable(false);
-        break;
-
-      case PREPARED:
-        playPauseButton.setClickable(true);
-        progressSeekBarContainer.setVisibility(VISIBLE);
-        break;
-    }
   }
 
   @Override

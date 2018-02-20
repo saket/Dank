@@ -25,7 +25,6 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
-import me.saket.dank.widgets.ExoMediaVideoControlsView;
 import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
@@ -115,9 +114,9 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
         });
 
     exoPlayerManager = ExoPlayerManager.newInstance(lifecycle(), videoView);
-    ExoMediaVideoControlsView videoControlsView = new MediaVideoControlsView(getActivity());
+    MediaVideoControlsView videoControlsView = new MediaVideoControlsView(getActivity());
     videoView.setControls(videoControlsView);
-    videoControlsView.showVideoState(ExoMediaVideoControlsView.VideoState.PREPARING);
+    videoControlsView.showVideoState(MediaVideoControlsView.VideoState.PREPARING);
 
     // The preview image takes time to be drawn. Fade the video in slowly.
     LayoutTransition layoutTransition = ((ViewGroup) videoView.getParent()).getLayoutTransition();
@@ -127,7 +126,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
     videoView.setOnPreparedListener(() -> {
       textureViewContainer.setVisibility(View.VISIBLE);
-      videoControlsView.showVideoState(ExoMediaVideoControlsView.VideoState.PREPARED);
+      videoControlsView.showVideoState(MediaVideoControlsView.VideoState.PREPARED);
 
       // Auto-play when this Fragment becomes visible.
       fragmentVisibleToUserStream

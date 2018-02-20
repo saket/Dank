@@ -15,45 +15,27 @@
     app:progressBarSize="74dp"
     tools:visibility="visible" />
 
-  <!--<ImageButton-->
-  <!--android:layout_width="32dp"-->
-  <!--android:layout_height="32dp"-->
-  <!--android:layout_gravity="center_vertical"-->
-  <!--android:background="@null"-->
-  <!--android:padding="@dimen/spacing4"-->
-  <!--android:scaleType="centerCrop"-->
-  <!--android:src="@drawable/ic_volume_off_24dp" />-->
-
-  <!-- Extra touch area for the seek-bar, because it's too small in itself.
-       This is moved downwards in code so that the seek-bar is aligned with
-       the video's bottom. -->
-  <me.saket.dank.widgets.TouchForwardingFrameLayout
-    android:id="@+id/videocontrols_video_seek_container"
+  <!-- NOTE: Negative margin-start needs to be in sync with padding-start of buttons-container VIewGroup. -->
+  <me.saket.dank.widgets.SeekBarWithFullHeightProgress
+    android:id="@+id/videocontrols_seek"
     android:layout_width="match_parent"
     android:layout_height="44dp"
     android:layout_alignParentBottom="true"
     android:layout_marginStart="-16dp"
-    android:layout_toEndOf="@+id/submission_videocontrols_buttons_container">
-    <!-- NOTE: Negative margin-start needs to be in sync with padding-start of buttons-container VIewGroup. -->
-
-    <me.saket.dank.widgets.SeekBarWithFullHeightProgress
-      android:id="@+id/videocontrols_seek"
-      android:layout_width="match_parent"
-      android:layout_height="match_parent"
-      android:paddingEnd="0dp"
-      android:paddingStart="0dp"
-      android:progressDrawable="@drawable/submission_seekbar_video_progress"
-      android:splitTrack="false"
-      android:thumb="@color/transparent"
-      tools:progress="20" />
-  </me.saket.dank.widgets.TouchForwardingFrameLayout>
+    android:layout_toEndOf="@+id/submission_videocontrols_buttons_container"
+    android:paddingEnd="0dp"
+    android:paddingStart="0dp"
+    android:progressDrawable="@drawable/submission_seekbar_video_progress"
+    android:splitTrack="false"
+    android:thumb="@color/transparent"
+    tools:progress="20" />
 
   <LinearLayout
     android:id="@+id/submission_videocontrols_buttons_container"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
-    android:layout_alignBottom="@+id/videocontrols_video_seek_container"
-    android:layout_alignTop="@+id/videocontrols_video_seek_container"
+    android:layout_alignBottom="@+id/videocontrols_seek"
+    android:layout_alignTop="@+id/videocontrols_seek"
     android:background="@color/submission_videoplayer_progress"
     android:orientation="horizontal"
     android:paddingEnd="@dimen/spacing16"
