@@ -239,7 +239,8 @@ public class CachePreFiller {
           if (linkMetadata.hasFavicon()) {
             imagesToDownload.add(linkMetadata.faviconUrl());
           }
-          if (linkMetadata.hasImage()) {
+          //noinspection ConstantConditions
+          if (linkMetadata.hasImage() && !UrlParser.isGifUrl(linkMetadata.imageUrl())) {
             ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
             //noinspection ConstantConditions
             String thumbnailImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, linkMetadata.imageUrl());
