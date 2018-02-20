@@ -60,12 +60,13 @@
     tools:ignore="RtlSymmetry">
     <!-- ^ Padding-end accounts for extra spacing needed for round ripples. -->
 
-    <!-- TODO: content description. -->
+    <!-- Content description is set in code. -->
     <ImageButton
       android:id="@+id/videocontrols_play_pause_btn"
       android:layout_width="48dp"
       android:layout_height="match_parent"
       android:background="?attr/selectableItemBackgroundBorderless"
-      android:src="@drawable/avd_play_to_pause_white_24dp" />
+      android:src="@drawable/avd_play_to_pause_white_24dp"
+      tools:ignore="ContentDescription" />
   </LinearLayout>
 </RelativeLayout>

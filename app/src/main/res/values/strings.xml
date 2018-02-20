@@ -145,6 +145,8 @@
   <string name="submission_cd_play_video">Play video</string>
   <string name="cd_submission_return_to_submissions">Return to submissions</string>
   <string name="cd_submission_image">Image for submission: %s</string>
+  <string name="submission_video_controls_cd_pause">Pause video</string>
+  <string name="submission_video_controls_cd_play">Play video</string>
 
   <string name="comment_option_save">Save</string>
   <string name="comment_option_unsave">Unsave</string>
@@ -169,6 +171,7 @@
   <string name="submission_comment_reply_byline_posting_status">Posting…</string>
   <string name="submission_comments_viewing_single_comments_thread">Viewing a single comment\'s thread</string>
   <string name="submission_comments_view_all_comments">Tap to view all comments</string>
+
 
   <plurals name="submission_comment_hidden_comments">
     <item quantity="one">1 hidden</item>

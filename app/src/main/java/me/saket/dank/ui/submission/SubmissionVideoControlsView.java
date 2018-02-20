@@ -56,8 +56,10 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
   protected void updatePlayPauseImage(boolean isPlaying, boolean userInteractingWithSeek) {
     if (isPlaying) {
       playPauseIcon.play();
+      playPauseButton.setContentDescription(getResources().getString(R.string.submission_video_controls_cd_pause));
     } else {
       playPauseIcon.reverse();
+      playPauseButton.setContentDescription(getResources().getString(R.string.submission_video_controls_cd_play));
     }
   }
 }
