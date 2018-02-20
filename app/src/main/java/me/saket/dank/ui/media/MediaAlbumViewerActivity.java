@@ -245,7 +245,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         return ((ZoomableImageView) view).canPanAnyFurtherHorizontally(deltaX);
       } else {
         // Avoid paging when a video's SeekBar is being used.
-        return view.getId() == R.id.exomedia_controls_video_seek || view.getId() == R.id.exomedia_controls_video_seek_container;
+        return view.getId() == R.id.videocontrols_seek || view.getId() == R.id.videocontrols_video_seek_container;
       }
     });
   }

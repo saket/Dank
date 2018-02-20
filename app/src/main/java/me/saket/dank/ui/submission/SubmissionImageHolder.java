@@ -171,7 +171,12 @@ public class SubmissionImageHolder {
             int imageHeightMinusToolbar = (int) (visibleImageHeight - commentListParentSheet.getTop());
             commentListParentSheet.setScrollingEnabled(true);
             commentListParentSheet.setMaxScrollY(imageHeightMinusToolbar);
-            commentListParentSheet.scrollTo(imageHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);
+
+            if (submissionPageLayout.isExpanded()) {
+              commentListParentSheet.smoothScrollTo(imageHeightMinusToolbar);
+            } else {
+              commentListParentSheet.scrollTo(imageHeightMinusToolbar);
+            }
 
             if (imageHeight > visibleImageHeight) {
               // Image is scrollable. Let the user know about this.

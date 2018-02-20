@@ -173,20 +173,29 @@ public class SubmissionVideoHolder {
       }
 
       exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
-        int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - statusBarHeight;
-        int adjustedVideoViewHeight = Math.min(contentHeightWithoutKeyboard, resizedVideoHeight);
-        Views.setHeight(contentVideoView, adjustedVideoViewHeight);
+        //noinspection ConstantConditions
+        int seekBarContainerHeight = ((SubmissionVideoControlsView) contentVideoView.getVideoControls()).heightOfControlButtons();
+
+        // This height is independent of whether the content is resized by the keyboard.
+        int spaceAvailableIndependentOfKeyboard = deviceDisplayHeight - statusBarHeight - minimumGapWithBottom - seekBarContainerHeight;
+        int videoHeightAdjustedToFitInSpace = Math.min(spaceAvailableIndependentOfKeyboard, resizedVideoHeight + seekBarContainerHeight);
+        Views.setHeight(contentVideoView, videoHeightAdjustedToFitInSpace);
 
         // Wait for the height change to happen and then reveal the video.
         Views.executeOnNextLayout(contentVideoView, () -> {
           contentLoadProgressView.setVisibility(View.GONE);
 
-          // Warning: Avoid getting the height from view instead of reusing adjustedVideoViewHeight.
+          // Warning: Avoid getting the height from view instead of reusing videoHeightAdjustedToFitInSpace.
           // I was seeing older values instead of the one passed to setHeight().
-          int videoHeightMinusToolbar = adjustedVideoViewHeight - commentListParentSheet.getTop();
+          int videoHeightMinusToolbar = videoHeightAdjustedToFitInSpace - commentListParentSheet.getTop();
           commentListParentSheet.setScrollingEnabled(true);
           commentListParentSheet.setMaxScrollY(videoHeightMinusToolbar);
-          commentListParentSheet.scrollTo(videoHeightMinusToolbar, submissionPageLayout.isExpanded() /* smoothScroll */);
+
+          if (submissionPageLayout.isExpanded()) {
+            commentListParentSheet.smoothScrollTo(videoHeightMinusToolbar);
+          } else {
+            commentListParentSheet.scrollTo(videoHeightMinusToolbar);
+          }
 
           exoPlayerManager.setOnVideoSizeChangeListener(null);
           videoWidthChangeStream.accept(actualVideoWidth);

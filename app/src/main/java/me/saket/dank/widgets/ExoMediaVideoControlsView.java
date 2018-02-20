@@ -20,9 +20,9 @@ import me.saket.dank.R;
  */
 public abstract class ExoMediaVideoControlsView extends VideoControls {
 
-  @BindView(R.id.exomedia_controls_video_seek) public SeekBar progressSeekBar;
-  @BindView(R.id.exomedia_controls_video_seek_container) public ViewGroup progressSeekBarContainer;
-  @BindView(R.id.exomedia_controls_video_loading) public ProgressWithFileSizeView loadingProgressBar;
+  @BindView(R.id.videocontrols_seek) public SeekBar progressSeekBar;
+  @BindView(R.id.videocontrols_video_seek_container) public ViewGroup progressSeekBarContainer;
+  @BindView(R.id.videocontrols_video_loading) public ProgressWithFileSizeView loadingProgressBar;
 
   private boolean userInteractingWithSeek;
   private VideoProgressChangeListener progressChangeListener;
@@ -74,7 +74,7 @@ public abstract class ExoMediaVideoControlsView extends VideoControls {
   protected void retrieveViews() {
     ButterKnife.bind(this, this);
 
-    playPauseButton = ButterKnife.findById(this, R.id.exomedia_controls_play_pause_btn);
+    playPauseButton = findViewById(R.id.videocontrols_play_pause_btn);
     loadingProgressBar.setIndeterminate(true);
     loadingProgressBar.setProgressBarBackgroundFillEnabled(false);
 
@@ -171,7 +171,6 @@ public abstract class ExoMediaVideoControlsView extends VideoControls {
       if (!fromUser) {
         return;
       }
-
       seekToTime = progress;
     }
 

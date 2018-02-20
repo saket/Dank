@@ -5,44 +5,67 @@
   android:layout_width="match_parent"
   android:layout_height="match_parent"
   android:layout_below="@+id/exomedia_video_view"
-  tools:background="@color/blue_gray_800">
-
-  <ImageButton
-    android:id="@+id/exomedia_controls_play_pause_btn"
-    android:layout_width="match_parent"
-    android:layout_height="match_parent"
-    android:background="?attr/selectableItemBackground"
-    tools:ignore="ContentDescription" />
+  tools:background="@color/window_background"
+  tools:layout_height="240dp">
 
   <me.saket.dank.widgets.ProgressWithFileSizeView
-    android:id="@+id/exomedia_controls_video_loading"
+    android:id="@+id/videocontrols_video_loading"
+    style="@style/DankVideoProgressWithSize"
     android:visibility="gone"
     app:progressBarSize="74dp"
-    tools:visibility="visible"
-    style="@style/DankVideoProgressWithSize" />
+    tools:visibility="visible" />
+
+  <!--<ImageButton-->
+  <!--android:layout_width="32dp"-->
+  <!--android:layout_height="32dp"-->
+  <!--android:layout_gravity="center_vertical"-->
+  <!--android:background="@null"-->
+  <!--android:padding="@dimen/spacing4"-->
+  <!--android:scaleType="centerCrop"-->
+  <!--android:src="@drawable/ic_volume_off_24dp" />-->
 
   <!-- Extra touch area for the seek-bar, because it's too small in itself.
        This is moved downwards in code so that the seek-bar is aligned with
        the video's bottom. -->
   <me.saket.dank.widgets.TouchForwardingFrameLayout
-    android:id="@+id/exomedia_controls_video_seek_container"
+    android:id="@+id/videocontrols_video_seek_container"
     android:layout_width="match_parent"
-    android:layout_height="wrap_content"
+    android:layout_height="44dp"
     android:layout_alignParentBottom="true"
-    android:paddingTop="@dimen/spacing24">
+    android:layout_marginStart="-16dp"
+    android:layout_toEndOf="@+id/submission_videocontrols_buttons_container">
+    <!-- NOTE: Negative margin-start needs to be in sync with padding-start of buttons-container VIewGroup. -->
 
-    <SeekBar
-      android:id="@+id/exomedia_controls_video_seek"
-      style="?android:seekBarStyle"
+    <me.saket.dank.widgets.SeekBarWithFullHeightProgress
+      android:id="@+id/videocontrols_seek"
       android:layout_width="match_parent"
-      android:layout_height="@dimen/videocontrols_seekbar_height"
-      android:background="@color/gray_900"
+      android:layout_height="match_parent"
       android:paddingEnd="0dp"
       android:paddingStart="0dp"
-      android:progressDrawable="@drawable/seekbar_video_progress"
+      android:progressDrawable="@drawable/submission_seekbar_video_progress"
       android:splitTrack="false"
       android:thumb="@color/transparent"
-      android:thumbTint="@color/color_primary_dark"
-      tools:progress="50" />
+      tools:progress="20" />
   </me.saket.dank.widgets.TouchForwardingFrameLayout>
+
+  <LinearLayout
+    android:id="@+id/submission_videocontrols_buttons_container"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_alignBottom="@+id/videocontrols_video_seek_container"
+    android:layout_alignTop="@+id/videocontrols_video_seek_container"
+    android:background="@color/submission_videoplayer_progress"
+    android:orientation="horizontal"
+    android:paddingEnd="@dimen/spacing16"
+    tools:ignore="RtlSymmetry">
+    <!-- ^ Padding-end accounts for extra spacing needed for round ripples. -->
+
+    <!-- TODO: content description. -->
+    <ImageButton
+      android:id="@+id/videocontrols_play_pause_btn"
+      android:layout_width="48dp"
+      android:layout_height="match_parent"
+      android:background="?attr/selectableItemBackgroundBorderless"
+      android:src="@drawable/avd_play_to_pause_white_24dp" />
+  </LinearLayout>
 </RelativeLayout>

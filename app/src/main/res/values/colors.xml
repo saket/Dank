@@ -76,5 +76,9 @@
   <color name="submission_comment_background">@color/window_background</color>
   <color name="submission_comment_background_focused">@color/blue_gray_900</color>
 
-  <color name="videoplayer_buffer_color">@color/gray_800</color>
+  <color name="submission_videoplayer_buffer">@color/gray_900</color>
+  <color name="submission_videoplayer_progress">@color/gray_850</color>
+
+  <!-- Media -->
+  <color name="videoplayer_buffer">@color/gray_800</color>
 </resources>

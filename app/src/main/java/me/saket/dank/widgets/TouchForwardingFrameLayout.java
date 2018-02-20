@@ -18,6 +18,11 @@ public class TouchForwardingFrameLayout extends FrameLayout {
 
   public TouchForwardingFrameLayout(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
+
+    if (getPaddingStart() > 0 || getPaddingEnd() > 0) {
+      throw new AssertionError("Horizontal paddings aren't supported. " +
+          "The coordinates of touch events will have to be transformed in order to do that.");
+    }
   }
 
   @Override

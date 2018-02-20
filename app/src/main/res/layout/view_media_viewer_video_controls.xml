@@ -8,7 +8,7 @@
   tools:background="@color/blue_gray_800">
 
   <ImageButton
-    android:id="@+id/exomedia_controls_play_pause_btn"
+    android:id="@+id/videocontrols_play_pause_btn"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="?attr/selectableItemBackground"
@@ -26,7 +26,7 @@
     android:src="@drawable/ic_play_circle_72dp" />
 
   <me.saket.dank.widgets.ProgressWithFileSizeView
-    android:id="@+id/exomedia_controls_video_loading"
+    android:id="@+id/videocontrols_video_loading"
     android:visibility="gone"
     app:progressBarSize="74dp"
     tools:visibility="visible"
@@ -36,7 +36,7 @@
        This is moved downwards in code so that the seek-bar is aligned with
        the video's bottom. -->
   <me.saket.dank.widgets.TouchForwardingFrameLayout
-    android:id="@+id/exomedia_controls_video_seek_container"
+    android:id="@+id/videocontrols_video_seek_container"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_alignParentBottom="true"
@@ -44,14 +44,14 @@
     android:paddingTop="@dimen/spacing16">
 
     <SeekBar
-      android:id="@+id/exomedia_controls_video_seek"
+      android:id="@+id/videocontrols_seek"
       style="?android:seekBarStyle"
       android:layout_width="match_parent"
       android:layout_height="@dimen/videocontrols_seekbar_height"
       android:background="@color/gray_900"
       android:paddingEnd="0dp"
       android:paddingStart="0dp"
-      android:progressDrawable="@drawable/seekbar_video_progress"
+      android:progressDrawable="@drawable/mediaviewer_seekbar_video_progress"
       android:splitTrack="false"
       android:thumb="@color/transparent"
       android:thumbTint="@color/color_primary_dark"
