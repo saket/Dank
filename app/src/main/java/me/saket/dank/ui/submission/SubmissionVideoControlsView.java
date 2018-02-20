@@ -2,10 +2,15 @@ package me.saket.dank.ui.submission;
 
 import android.content.Context;
 import android.graphics.drawable.AnimatedVectorDrawable;
+import android.text.format.DateUtils;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
+import android.widget.TextView;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
+
+import java.util.Formatter;
+import java.util.Locale;
 
 import me.saket.dank.R;
 import me.saket.dank.utils.ReversibleAnimatedVectorDrawable;
@@ -14,8 +19,12 @@ import me.saket.dank.widgets.ExoMediaVideoControlsView;
 
 public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
 
+  private static final StringBuilder TIME_DURATION_FORMAT_BUILDER = new StringBuilder();
+  private static final Formatter TIME_DURATION_FORMATTER = new Formatter(TIME_DURATION_FORMAT_BUILDER, Locale.ENGLISH);
+
   private ViewGroup buttonsContainer;
   private ReversibleAnimatedVectorDrawable playPauseIcon;
+  private TextView remainingDurationView;
 
   public SubmissionVideoControlsView(Context context) {
     super(context);
@@ -30,6 +39,7 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
   protected void retrieveViews() {
     super.retrieveViews();
     buttonsContainer = findViewById(R.id.submission_videocontrols_buttons_container);
+    remainingDurationView = findViewById(R.id.videocontrols_remaining_duration);
     playPauseIcon = new ReversibleAnimatedVectorDrawable(((AnimatedVectorDrawable) playPauseButton.getDrawable()));
   }
 
@@ -61,5 +71,32 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
       playPauseIcon.reverse();
       playPauseButton.setContentDescription(getResources().getString(R.string.submission_video_controls_cd_play));
     }
+  }
+
+  @Override
+  public void updateProgress(long position, long duration, int bufferPercent) {
+    super.updateProgress(position, duration, bufferPercent);
+
+    long remainingDurationMillis = duration - position;
+    remainingDurationView.setText(formatTimeDuration(remainingDurationMillis));
+  }
+
+  /**
+   * Format milliseconds to h:mm:ss.
+   */
+  public static String formatTimeDuration(long milliseconds) {
+    if (milliseconds < 0) {
+      return "";
+    }
+
+    long seconds = (milliseconds % DateUtils.MINUTE_IN_MILLIS) / DateUtils.SECOND_IN_MILLIS;
+    long minutes = (milliseconds % DateUtils.HOUR_IN_MILLIS) / DateUtils.MINUTE_IN_MILLIS;
+    long hours = (milliseconds % DateUtils.DAY_IN_MILLIS) / DateUtils.HOUR_IN_MILLIS;
+
+    TIME_DURATION_FORMAT_BUILDER.setLength(0);
+    if (hours > 0) {
+      return TIME_DURATION_FORMATTER.format("%d:%02d:%02d", hours, minutes, seconds).toString();
+    }
+    return TIME_DURATION_FORMATTER.format("%02d:%02d", minutes, seconds).toString();
   }
 }
