@@ -28,6 +28,7 @@
   <style name="DankTheme.TransparentBackground">
     <item name="android:windowIsTranslucent">true</item>
     <item name="android:windowBackground">@android:color/transparent</item>
+    <item name="android:colorBackgroundCacheHint">@null</item>
   </style>
 
   <style name="DankTheme.TransparentBackground.Fullscreen">
@@ -40,10 +41,18 @@
   </style>
 
   <style name="DankTheme.DialogLikeActivity" parent="DankTheme.TransparentBackground">
-    <item name="android:windowTranslucentStatus">false</item>
     <item name="android:windowDrawsSystemBarBackgrounds">true</item>
     <item name="android:statusBarColor">@color/transparent</item>
     <item name="android:navigationBarColor">@color/transparent</item>
+  </style>
+
+  <style name="DankTheme.DialogLikeActivity.MorphFromFab">
+    <item name="android:windowAllowReturnTransitionOverlap">false</item>
+    <item name="android:windowContentOverlay">@null</item>
+    <item name="android:windowIsFloating">false</item>
+    <item name="android:windowIsTranslucent">true</item>
+    <item name="android:windowNoTitle">true</item>
+    <item name="android:windowAnimationStyle">@null</item>
   </style>
 
   <style name="DankDialogTitleStyle" parent="@android:style/TextAppearance.Material.WindowTitle">

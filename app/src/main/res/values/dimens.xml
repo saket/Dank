@@ -13,6 +13,7 @@
   <dimen name="spacing20">20dp</dimen>
   <dimen name="spacing24">24dp</dimen>
   <dimen name="spacing32">32dp</dimen>
+  <dimen name="spacing48">48dp</dimen>
 
   <dimen name="elevation_toolbar">4dp</dimen>
   <dimen name="card_corner_radius">4dp</dimen>
@@ -54,4 +55,5 @@
 
   <!-- Compose -->
   <dimen name="giphypicker_searchfield_top_spacing">@dimen/spacing16</dimen>
+  <dimen name="elevation_fab">6dp</dimen>
 </resources>

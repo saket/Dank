@@ -85,6 +85,10 @@
       android:exported="true"
       android:theme="@style/DankTheme.TransparentBackground.Fullscreen" />
 
+    <activity
+      android:name=".ui.submission.ArchivedSubmissionDialogActivity"
+      android:theme="@style/DankTheme.DialogLikeActivity" />
+
     <service
       android:name=".ui.subreddit.SubredditSubscriptionsSyncJob"
       android:exported="true"

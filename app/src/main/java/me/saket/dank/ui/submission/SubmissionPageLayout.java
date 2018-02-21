@@ -13,7 +13,9 @@ import android.animation.ObjectAnimator;
 import android.animation.ValueAnimator;
 import android.annotation.SuppressLint;
 import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
@@ -74,6 +76,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.LinkMetadataRepository;
+import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.UserPreferences;
@@ -87,7 +90,6 @@ import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.UrlRouter;
-import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.giphy.GiphyGif;
@@ -128,6 +130,7 @@ import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
+import me.saket.dank.widgets.FabTransform;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.KeyboardVisibilityDetector.KeyboardVisibilityChangeEvent;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -184,6 +187,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
   @Inject @Named("show_nsfw_content") Lazy<Preference<Boolean>> showNsfwContentPreference;
   @Inject Lazy<SubmissionVideoHolder> contentVideoViewHolder;
+  @Inject Lazy<OnLoginRequireListener> onLoginRequireListener;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
@@ -925,7 +929,18 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .takeUntil(lifecycle().onDestroy())
         .subscribe(submission -> {
           if (!userSessionRepository.isUserLoggedIn()) {
-            getContext().startActivity(LoginActivity.intent(getContext()));
+            onLoginRequireListener.get().onLoginRequired();
+            return;
+          }
+
+          if (submission.isArchived()) {
+            Intent archivedIntent = ArchivedSubmissionDialogActivity.intent(getContext());
+            FabTransform.addExtras(archivedIntent, ContextCompat.getColor(getContext(), R.color.submission_fab), R.drawable.ic_reply_24dp);
+            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(
+                ((Activity) getContext()),
+                replyFAB,
+                getResources().getString(R.string.transition_locked_submission));
+            getContext().startActivity(archivedIntent, options.toBundle());
             return;
           }
 

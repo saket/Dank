@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:id="@+id/archivedsubmission_background"
+  android:orientation="vertical">
+
+  <LinearLayout
+    android:id="@+id/archivedsubmission_dialog_container"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_gravity="center"
+    android:layout_margin="@dimen/spacing48"
+    android:background="@drawable/background_popup_window"
+    android:elevation="@dimen/elevation_fab"
+    android:orientation="horizontal"
+    android:transitionName="@string/transition_locked_submission"
+    tools:ignore="UselessParent">
+
+    <ImageView
+      android:layout_width="80dp"
+      android:layout_height="match_parent"
+      android:background="@color/white_opacity_05"
+      android:scaleType="center"
+      android:src="@drawable/ic_archive_32dp"
+      android:contentDescription="@string/submission_archiveddialog_cd_thumbnail" />
+
+    <TextView
+      android:layout_width="wrap_content"
+      android:layout_height="wrap_content"
+      android:paddingBottom="@dimen/spacing32"
+      android:paddingEnd="@dimen/spacing24"
+      android:paddingStart="@dimen/spacing24"
+      android:paddingTop="@dimen/spacing32"
+      android:text="@string/archived_submission_message" />
+  </LinearLayout>
+</FrameLayout>
