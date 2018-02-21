@@ -169,7 +169,7 @@ public class UrlRouter {
    * want web browsers to open a link because Dank already has an internal web browser. So
    * we're selectively checking if we want to let an app take over the URL.
    *
-   * TODO: Add Twitter, Instagram, Spotify, Netflix,
+   * TODO: Add Twitter, Instagram, Spotify, Netflix, Medium, Nytimes, Wikipedia, Sound cloud, Google photos,
    */
   @Nullable
   public static String findAllowedPackageNameForDeepLink(String url) {
@@ -193,7 +193,7 @@ public class UrlRouter {
       return true;
 
     } catch (PackageManager.NameNotFoundException ignored) {
+      return false;
     }
-    return false;
   }
 }

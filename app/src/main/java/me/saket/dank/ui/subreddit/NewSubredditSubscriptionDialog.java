@@ -6,6 +6,7 @@ import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
@@ -68,6 +69,7 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
   }
 
 
+  @NonNull
   @Override
   @SuppressLint("InflateParams")
   public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -81,11 +83,12 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
         .create();
 
     // Clear any error when user starts typing.
-    unsubscribeOnDestroy(RxTextView.textChanges(subredditView)
+    RxTextView.textChanges(subredditView)
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> {
           subredditViewInputLayout.setError(null);
           subredditViewInputLayout.setErrorEnabled(false);
-        }));
+        });
 
     // Force show keyboard on start.
     //noinspection ConstantConditions
@@ -120,11 +123,14 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
     }
 
     progressView.setVisibility(View.VISIBLE);
+    //noinspection ConstantConditions
     Keyboards.hide(getContext(), subredditView);
 
-    unsubscribeOnDestroy(Dank.reddit().findSubreddit(subredditName)
+    Dank.reddit().findSubreddit(subredditName)
         .compose(applySchedulersSingle())
+        .takeUntil(lifecycle().onDestroyFlowable())
         .subscribe(subreddit -> {
+          //noinspection ConstantConditions
           ((Callback) getActivity()).onEnterNewSubredditForSubscription(subreddit);
           dismissWithKeyboardDismissDelay();
 
@@ -136,7 +142,8 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
             subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_private_subreddit));
 
           } else if (error instanceof IllegalArgumentException && error.getMessage().contains("does not exist")
-              || (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 404)) {
+              || (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 404))
+          {
             subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_subreddit_doesnt_exist));
 
           } else {
@@ -145,8 +152,7 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
           }
 
           Timber.e(error, "Couldn't subscribe");
-        })
-    );
+        });
   }
 
   /**
