@@ -55,6 +55,7 @@ import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.links.Link;
@@ -93,6 +94,7 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.RxExpandablePage;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
+import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionPageLayout.Callbacks,
     NewSubredditSubscriptionDialog.Callback
@@ -569,6 +571,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
             .map(Optional::get)
             .switchMap(cachedSubmissions -> cachePreFiller
                 .preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
+                .doOnError(error -> {
+                  ResolvedError resolvedError = errorResolver.resolve(error);
+                  resolvedError.ifUnknown(() -> Timber.e(error, "Unknown error while pre-filling cache."));
+                })
+                .onErrorComplete()
                 .toObservable()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe();

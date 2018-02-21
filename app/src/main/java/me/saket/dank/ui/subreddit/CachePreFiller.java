@@ -85,6 +85,7 @@ public class CachePreFiller {
 
   @CheckResult
   public Completable preFillInParallelThreads(List<Submission> submissions, @Px int deviceDisplayWidth, @Px int submissionAlbumLinkThumbnailWidth) {
+    // WARNING: this Observable is intentionally not shared to allow parallel execution of its subscribers.
     Observable<Pair<Submission, Link>> submissionAndContentLinkStream = Observable.fromIterable(submissions)
         .take(SUBMISSION_LIMIT_PER_SUBREDDIT)
         .map(submission -> {
