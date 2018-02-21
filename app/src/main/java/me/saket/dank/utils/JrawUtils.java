@@ -80,6 +80,25 @@ public class JrawUtils {
 
   public static String redditVideoDashPlaylistUrl(Submission submission) {
     JsonNode redditVideoNode = submission.getDataNode().get("secure_media").get("reddit_video");
-    return redditVideoNode.get("dash_url").asText();
+    if (redditVideoNode != null) {
+      return redditVideoNode.get("dash_url").asText();
+    }
+
+    String postHint = submission.getDataNode().get("post_hint").asText();
+    if ("hosted:video".equals(postHint)) {
+      throw new IllegalStateException("Submission contains a hosted video, but couldn't find its URL: " + submission.getPermalink());
+    }
+
+    String crossParentFullName = submission.getDataNode().get("crosspost_parent").asText();
+    if (crossParentFullName != null && !crossParentFullName.isEmpty()) {
+      JsonNode crossPostParentListNode = submission.getDataNode().get("crosspost_parent_list");
+      if (crossPostParentListNode.size() > 1) {
+        throw new UnsupportedOperationException("Multiple cross-post parents! " + submission.getPermalink());
+      }
+      JsonNode crossPostParentVideoNode = crossPostParentListNode.get(0).get("secure_media").get("reddit_video");
+      return crossPostParentVideoNode.get("dash_url").asText();
+    }
+
+    throw new UnsupportedOperationException("Couldn't find reddit video URL for sub: " + submission.getPermalink());
   }
 }
