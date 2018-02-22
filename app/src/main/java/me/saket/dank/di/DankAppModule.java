@@ -44,7 +44,6 @@ import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
-import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
@@ -177,7 +176,6 @@ public class DankAppModule {
         .add(new MoshiMessageAdapter(jacksonHelper))
         .add(new MoshiSubmissionAdapter(jacksonHelper))
         .add(new MoshiAccountAdapter(jacksonHelper))
-        .add(ContributionFullNameWrapper.class, new ContributionFullNameWrapper.MoshiJsonAdapter())
         .build();
   }
 

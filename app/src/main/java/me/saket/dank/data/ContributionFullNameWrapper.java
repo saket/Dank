@@ -1,18 +1,13 @@
 package me.saket.dank.data;
 
-import static me.saket.dank.utils.Preconditions.checkNotNull;
+import android.os.Parcelable;
 
-import android.support.annotation.Nullable;
-
+import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.JsonReader;
-import com.squareup.moshi.JsonWriter;
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Thing;
-
-import java.io.IOException;
-import java.io.Serializable;
 
 import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
 
@@ -22,61 +17,25 @@ import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
  * This class is also used in all {@link SubredditScreenUiModel.SubmissionRowUiModel} over
  * actual {@link Contribution} objects to speed up equals() calls.
  */
-public class ContributionFullNameWrapper extends Contribution implements Serializable {
+@AutoValue
+public abstract class ContributionFullNameWrapper extends NoOpContribution implements Parcelable {
 
-  private final String fullName;
+  public abstract String fullName();
 
   public static ContributionFullNameWrapper create(String fullName) {
-    return new ContributionFullNameWrapper(fullName);
+    return new AutoValue_ContributionFullNameWrapper(fullName);
   }
 
   public static ContributionFullNameWrapper createFrom(Thing thing) {
     return create(thing.getFullName());
   }
 
-  private ContributionFullNameWrapper(String fullName) {
-    super(null);
-    this.fullName = fullName;
-  }
-
   @Override
   public String getFullName() {
-    return fullName;
+    return fullName();
   }
 
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) {
-      return true;
-    }
-    if (!(o instanceof ContributionFullNameWrapper)) {
-      return false;
-    }
-    ContributionFullNameWrapper that = (ContributionFullNameWrapper) o;
-    return fullName.equals(that.fullName);
-  }
-
-  @Override
-  public int hashCode() {
-    return fullName.hashCode();
-  }
-
-  public static class MoshiJsonAdapter extends JsonAdapter<ContributionFullNameWrapper> {
-    @Override
-    public ContributionFullNameWrapper fromJson(JsonReader reader) throws IOException {
-      reader.beginObject();
-      String fullname = reader.nextString();
-      reader.endObject();
-      return create(fullname);
-    }
-
-    @Override
-    public void toJson(JsonWriter writer, @Nullable ContributionFullNameWrapper value) throws IOException {
-      checkNotNull(value, "contribution");
-      writer.beginObject();
-      writer.name("fullname");
-      writer.value(value.fullName);
-      writer.endObject();
-    }
+  public static JsonAdapter<ContributionFullNameWrapper> jsonAdapter(Moshi moshi) {
+    return new AutoValue_ContributionFullNameWrapper.MoshiJsonAdapter(moshi);
   }
 }
