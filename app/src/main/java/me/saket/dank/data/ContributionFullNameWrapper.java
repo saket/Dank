@@ -18,7 +18,7 @@ import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
  * actual {@link Contribution} objects to speed up equals() calls.
  */
 @AutoValue
-public abstract class ContributionFullNameWrapper extends NoOpContribution implements Parcelable {
+public abstract class ContributionFullNameWrapper extends StubContribution implements Parcelable {
 
   public abstract String fullName();
 

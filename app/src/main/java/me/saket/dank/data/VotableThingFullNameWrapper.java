@@ -1,19 +1,20 @@
 package me.saket.dank.data;
 
+import com.google.auto.value.AutoValue;
+
 import net.dean.jraw.models.VoteDirection;
 import net.dean.jraw.models.attr.Votable;
 
 /**
  * See {@link ThingFullNameWrapper}. Calling any method other than {@link #getFullName()} will result in an NPE.
  */
-public class VotableThingFullNameWrapper extends ThingFullNameWrapper implements Votable {
+@AutoValue
+public abstract class VotableThingFullNameWrapper extends StubThing implements Votable {
+
+  public abstract String fullName();
 
   public static VotableThingFullNameWrapper create(String fullName) {
-    return new VotableThingFullNameWrapper(fullName);
-  }
-
-  public VotableThingFullNameWrapper(String fullName) {
-    super(fullName);
+    return new AutoValue_VotableThingFullNameWrapper(fullName);
   }
 
   @Override

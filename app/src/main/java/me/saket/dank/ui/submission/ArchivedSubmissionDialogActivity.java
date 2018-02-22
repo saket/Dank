@@ -34,7 +34,6 @@ public class ArchivedSubmissionDialogActivity extends DankActivity {
     // For some reason, I'm unable to override the window's background color in this Activity's parent style.
     getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.dialog_like_activity_window_background)));
 
-    // TODO: window background
     // TODO: status bar tint (get from caller)
   }
 
