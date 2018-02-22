@@ -32,16 +32,26 @@ public class ArchivedSubmissionDialogActivity extends DankActivity {
     setContentView(R.layout.activity_dialog_archived_submission);
     ButterKnife.bind(this);
 
-    FabTransform.setupActivityTransition(this, dialogContainer);
-
     // For some reason, I'm unable to override the window's background color in this Activity's parent Xml style.
-    int backgroundColor = ContextCompat.getColor(this, R.color.dialog_like_activity_window_background);
-    getWindow().setBackgroundDrawable(new ColorDrawable(backgroundColor));
+    int windowBackgroundColor = ContextCompat.getColor(this, R.color.dialog_like_activity_window_background);
+    ColorDrawable windowBackground = new ColorDrawable(windowBackgroundColor);
+    getWindow().setBackgroundDrawable(windowBackground);
+
+    if (FabTransform.hasActivityTransition(this)) {
+      FabTransform.setupActivityTransition(this, dialogContainer);
+    } else {
+      overridePendingTransition(R.anim.dialog_fade_in, 0);
+    }
   }
 
   @OnClick({ R.id.archivedsubmission_background, R.id.archivedsubmission_dismiss_button })
   public void dismiss() {
-    finishAfterTransition();
+    if (FabTransform.hasActivityTransition(this)) {
+      finishAfterTransition();
+    } else {
+      finish();
+      overridePendingTransition(0, R.anim.dialog_fade_out);
+    }
   }
 
   @Override

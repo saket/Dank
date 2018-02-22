@@ -16,8 +16,8 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:animateFirstView="false"
-      android:inAnimation="@anim/fade_in"
-      android:outAnimation="@anim/fade_out">
+      android:inAnimation="@anim/fade_in_300"
+      android:outAnimation="@anim/fade_out_300">
 
       <!-- Height is re-set in code. -->
       <com.devbrackets.android.exomedia.ui.widget.VideoView

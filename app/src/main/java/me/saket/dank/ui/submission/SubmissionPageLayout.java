@@ -52,6 +52,7 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Submission;
@@ -430,9 +431,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         });
 
     // Swipe gestures.
-    submissionCommentsAdapter.streamCommentReplySwipeActions()
+    Observable<Pair<Comment, Submission>> sharedReplySwipeActions = submissionCommentsAdapter.streamCommentReplySwipeActions()
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
+        .share();
+
+    sharedReplySwipeActions
+        .filter(pair -> !pair.second().isArchived())
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(parentComment -> {
+        .subscribe(pair -> {
+          Comment parentComment = pair.first();
           if (submissionCommentTreeUiConstructor.isCollapsed(parentComment) || !submissionCommentTreeUiConstructor.isReplyActiveFor(parentComment)) {
             submissionCommentTreeUiConstructor.showReplyAndExpandComments(parentComment);
             inlineReplyStream.accept(parentComment);
@@ -441,6 +448,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
             submissionCommentTreeUiConstructor.hideReply(parentComment);
           }
         });
+
+    sharedReplySwipeActions
+        .filter(pair -> pair.second().isArchived())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext())));
+
     submissionCommentsAdapter.streamSubmissionOptionSwipeActions()
         .withLatestFrom(callingSubreddits, Pair::create)
         .takeUntil(lifecycle().onDestroy())

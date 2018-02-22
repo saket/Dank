@@ -148,7 +148,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     getWindow().addFlags(WindowManager.LayoutParams.FLAG_LAYOUT_NO_LIMITS);
 
     super.onCreate(savedInstanceState);
-    overridePendingTransition(R.anim.fade_in, 0);
+    overridePendingTransition(R.anim.fade_in_300, 0);
 
     setContentView(R.layout.activity_media_album_viewer);
     ButterKnife.bind(this);
@@ -184,7 +184,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @Override
   public void finish() {
     super.finish();
-    overridePendingTransition(0, R.anim.fade_out);
+    overridePendingTransition(0, R.anim.fade_out_300);
   }
 
   @Override

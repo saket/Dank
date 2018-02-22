@@ -113,11 +113,11 @@ public class FabTransform extends Transition {
      * shared element enter/return transition.
      */
     public static boolean setupActivityTransition(@NonNull Activity activity, @Nullable View target) {
-        final Intent intent = activity.getIntent();
-        if (!intent.hasExtra(EXTRA_FAB_COLOR) || !intent.hasExtra(EXTRA_FAB_ICON_RES_ID)) {
+        if (!hasActivityTransition(activity)) {
             return false;
         }
 
+        final Intent intent = activity.getIntent();
         final int color = intent.getIntExtra(EXTRA_FAB_COLOR, Color.TRANSPARENT);
         final int icon = intent.getIntExtra(EXTRA_FAB_ICON_RES_ID, -1);
         final FabTransform sharedEnter = new FabTransform(color, icon);
@@ -126,6 +126,10 @@ public class FabTransform extends Transition {
         }
         activity.getWindow().setSharedElementEnterTransition(sharedEnter);
         return true;
+    }
+
+    public static boolean hasActivityTransition(Activity activity) {
+        return activity.getIntent().hasExtra(EXTRA_FAB_COLOR) && activity.getIntent().hasExtra(EXTRA_FAB_ICON_RES_ID);
     }
 
     @Override

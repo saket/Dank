@@ -32,8 +32,8 @@
         android:layout_gravity="center"
         android:layout_marginEnd="@dimen/spacing8"
         android:layout_marginStart="@dimen/spacing24"
-        android:inAnimation="@anim/fade_in"
-        android:outAnimation="@anim/fade_out"
+        android:inAnimation="@anim/fade_in_300"
+        android:outAnimation="@anim/fade_out_300"
         app:debug_displayedChild="0">
 
         <ImageButton
