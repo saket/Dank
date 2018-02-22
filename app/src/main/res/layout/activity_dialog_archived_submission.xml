@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout android:id="@+id/archivedsubmission_background"
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:id="@+id/archivedsubmission_background"
   android:orientation="vertical">
 
   <LinearLayout
@@ -22,17 +22,41 @@
       android:layout_width="80dp"
       android:layout_height="match_parent"
       android:background="@color/white_opacity_05"
+      android:contentDescription="@string/submission_archiveddialog_cd_thumbnail"
       android:scaleType="center"
-      android:src="@drawable/ic_archive_32dp"
-      android:contentDescription="@string/submission_archiveddialog_cd_thumbnail" />
+      android:src="@drawable/ic_archive_32dp" />
 
-    <TextView
+    <LinearLayout
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
-      android:paddingBottom="@dimen/spacing32"
-      android:paddingEnd="@dimen/spacing24"
+      android:orientation="vertical"
+      android:paddingBottom="@dimen/spacing8"
+      android:paddingEnd="@dimen/spacing12"
       android:paddingStart="@dimen/spacing24"
-      android:paddingTop="@dimen/spacing32"
-      android:text="@string/archived_submission_message" />
+      android:paddingTop="@dimen/spacing24">
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="@dimen/spacing12"
+        android:text="@string/archived_submission_title"
+        android:textColor="@color/white_opacity_80"
+        android:textSize="@dimen/textsize16" />
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing20"
+        android:text="@string/archived_submission_message" />
+
+      <Button
+        android:id="@+id/archivedsubmission_dismiss_button"
+        style="?attr/buttonBarPositiveButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_marginTop="@dimen/spacing4"
+        android:text="@string/archived_submission_action" />
+    </LinearLayout>
   </LinearLayout>
 </FrameLayout>

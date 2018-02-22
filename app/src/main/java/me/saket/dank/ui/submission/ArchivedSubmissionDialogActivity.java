@@ -15,6 +15,9 @@ import me.saket.dank.R;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.widgets.FabTransform;
 
+/**
+ * This exists as an Activity just to do shared element transitions.
+ */
 public class ArchivedSubmissionDialogActivity extends DankActivity {
 
   @BindView(R.id.archivedsubmission_dialog_container) ViewGroup dialogContainer;
@@ -31,13 +34,12 @@ public class ArchivedSubmissionDialogActivity extends DankActivity {
 
     FabTransform.setupActivityTransition(this, dialogContainer);
 
-    // For some reason, I'm unable to override the window's background color in this Activity's parent style.
-    getWindow().setBackgroundDrawable(new ColorDrawable(ContextCompat.getColor(this, R.color.dialog_like_activity_window_background)));
-
-    // TODO: status bar tint (get from caller)
+    // For some reason, I'm unable to override the window's background color in this Activity's parent Xml style.
+    int backgroundColor = ContextCompat.getColor(this, R.color.dialog_like_activity_window_background);
+    getWindow().setBackgroundDrawable(new ColorDrawable(backgroundColor));
   }
 
-  @OnClick(R.id.archivedsubmission_background)
+  @OnClick({ R.id.archivedsubmission_background, R.id.archivedsubmission_dismiss_button })
   public void dismiss() {
     finishAfterTransition();
   }
