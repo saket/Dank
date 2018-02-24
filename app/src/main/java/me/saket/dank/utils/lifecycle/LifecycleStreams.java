@@ -3,6 +3,7 @@ package me.saket.dank.utils.lifecycle;
 import android.support.annotation.CheckResult;
 
 import io.reactivex.BackpressureStrategy;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 
@@ -31,5 +32,9 @@ public interface LifecycleStreams<EVENT> {
   @CheckResult
   default Flowable<EVENT> onDestroyFlowable() {
     return onDestroy().toFlowable(BackpressureStrategy.LATEST);
+  }
+
+  default Completable onDestroyCompletable() {
+    return onDestroy().ignoreElements();
   }
 }
