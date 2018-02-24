@@ -108,6 +108,7 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.submission.adapter.SubmissionUiConstructor;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
+import me.saket.dank.ui.submission.events.InlineReplyRequestEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
@@ -126,6 +127,7 @@ import me.saket.dank.utils.LinearSmoothScrollerWithVerticalSnapPref;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtils;
+import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
@@ -194,13 +196,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Link> submissionContentStream = BehaviorRelay.create();
   private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
-  private PublishRelay<Contribution> inlineReplyStream = PublishRelay.create();
+  private PublishRelay<InlineReplyRequestEvent> inlineReplyRequestStream = PublishRelay.create();
+  private PublishRelay<Contribution> inlineReplyAdditionStream = PublishRelay.create();
   private BehaviorRelay<Optional<Link>> contentLinkStream = BehaviorRelay.createDefault(Optional.empty());
   private PublishRelay<Boolean> commentsLoadProgressVisibleStream = PublishRelay.create();
   private BehaviorRelay<Optional<SubmissionContentLoadError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Optional<ResolvedError>> commentsLoadErrors = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Optional<String>> callingSubreddits = BehaviorRelay.createDefault(Optional.empty());
-  private final Observable<Boolean> isUserASubredditMod = Observable.just(false);  // TODO v2.
 
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionImageHolder contentImageViewHolder;
@@ -469,36 +471,77 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         });
 
     // Reply swipe gestures.
-    Observable<Pair<Comment, Submission>> sharedReplySwipeActions = submissionCommentsAdapter.streamCommentReplySwipeActions()
-        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
-        .share();
+    submissionCommentsAdapter.streamCommentReplySwipeActions()
+        .takeUntil(lifecycle().onDestroy())
+        .map(comment -> InlineReplyRequestEvent.create(comment))
+        .subscribe(inlineReplyRequestStream);
 
-    sharedReplySwipeActions
+    inlineReplyRequestStream
         .filter(o -> !userSessionRepository.get().isUserLoggedIn())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> onLoginRequireListener.get().onLoginRequired());
 
-    sharedReplySwipeActions
+    Observable<Boolean> isUserASubredditMod = Observable.just(false);  // TODO v2.
+
+    inlineReplyRequestStream
         .filter(o -> userSessionRepository.get().isUserLoggedIn())
-        .withLatestFrom(isUserASubredditMod, Pair::create)
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
+        .withLatestFrom(isUserASubredditMod, Trio::create)
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(pair -> {
-          Comment parentComment = pair.first().first();
-          Submission submission = pair.first().second();
-          Boolean isUserMod = pair.second();
+        .subscribe(trio -> {
+          Submission submission = trio.second();
+          Boolean isUserMod = trio.third();
+          Contribution parentContribution = trio.first().parentContribution();
+          boolean isSubmissionReply = parentContribution instanceof Submission;
 
           if (submission.isArchived()) {
-            getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext()));
+            if (isSubmissionReply) {
+              Pair<Intent, ActivityOptions> archivedIntent = ArchivedSubmissionDialogActivity.intentWithFabTransform(
+                  ((Activity) getContext()),
+                  replyFAB,
+                  R.color.submission_fab,
+                  R.drawable.ic_reply_white_24dp);
+              getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
+            } else {
+              getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext()));
+            }
+
           } else {
             if (submission.isLocked() && !isUserMod) {
-              getContext().startActivity(LockedSubmissionDialogActivity.intent(getContext()));
-            } else {
-              if (submissionCommentTreeUiConstructor.isCollapsed(parentComment) || !submissionCommentTreeUiConstructor.isReplyActiveFor(parentComment)) {
-                submissionCommentTreeUiConstructor.showReplyAndExpandComments(parentComment);
-                inlineReplyStream.accept(parentComment);
+              if (isSubmissionReply) {
+                Pair<Intent, ActivityOptions> archivedIntent = LockedSubmissionDialogActivity.intentWithFabTransform(
+                    ((Activity) getContext()),
+                    replyFAB,
+                    R.color.submission_fab,
+                    R.drawable.ic_reply_white_24dp);
+                getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
               } else {
-                Keyboards.hide(getContext(), commentRecyclerView);
-                submissionCommentTreeUiConstructor.hideReply(parentComment);
+                getContext().startActivity(LockedSubmissionDialogActivity.intent(getContext()));
+              }
+
+            } else {
+              if (isSubmissionReply) {
+                int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+                boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
+
+                if (submissionCommentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
+                  // Hide reply only if it's visible. Otherwise the user
+                  // won't understand why the reply FAB did not do anything.
+                  submissionCommentTreeUiConstructor.hideReply(submission);
+                } else {
+                  submissionCommentTreeUiConstructor.showReply(submission);
+                  inlineReplyAdditionStream.accept(submission);
+                }
+
+              } else {
+                Comment parentComment = ((Comment) parentContribution);
+                if (submissionCommentTreeUiConstructor.isCollapsed(parentComment) || !submissionCommentTreeUiConstructor.isReplyActiveFor(parentComment)) {
+                  submissionCommentTreeUiConstructor.showReplyAndExpandComments(parentComment);
+                  inlineReplyAdditionStream.accept(parentComment);
+                } else {
+                  Keyboards.hide(getContext(), commentRecyclerView);
+                  submissionCommentTreeUiConstructor.hideReply(parentComment);
+                }
               }
             }
           }
@@ -526,7 +569,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
-    inlineReplyStream
+    inlineReplyAdditionStream
         .switchMapSingle(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution).toSingleDefault(parentContribution))
         .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
         .takeUntil(lifecycle().onDestroy())
@@ -972,55 +1015,52 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           }
         });
 
-    Observable<Submission> sharedReplyFabClicks = RxView.clicks(replyFAB)
+    RxView.clicks(replyFAB)
+        .takeUntil(lifecycle().onDestroy())
         .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), (o, submission) -> submission)
-        .share();
+        .map(submission -> InlineReplyRequestEvent.create(submission))
+        .subscribe(inlineReplyRequestStream);
 
-    sharedReplyFabClicks
-        .filter(o -> !userSessionRepository.get().isUserLoggedIn())
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> onLoginRequireListener.get().onLoginRequired());
-
-    sharedReplyFabClicks
-        .filter(o -> userSessionRepository.get().isUserLoggedIn())
-        .withLatestFrom(isUserASubredditMod, Pair::create)
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(pair -> {
-          Submission submission = pair.first();
-          Boolean isUserMod = pair.second();
-
-          if (submission.isArchived()) {
-            Pair<Intent, ActivityOptions> archivedIntent = ArchivedSubmissionDialogActivity.intentWithFabTransform(
-                ((Activity) getContext()),
-                replyFAB,
-                R.color.submission_fab,
-                R.drawable.ic_reply_white_24dp);
-            getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
-
-          } else {
-            if (submission.isLocked() && !isUserMod) {
-              Pair<Intent, ActivityOptions> archivedIntent = LockedSubmissionDialogActivity.intentWithFabTransform(
-                  ((Activity) getContext()),
-                  replyFAB,
-                  R.color.submission_fab,
-                  R.drawable.ic_reply_white_24dp);
-              getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
-
-            } else {
-              int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-              boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
-
-              if (submissionCommentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
-                // Hide reply only if it's visible. Otherwise the user
-                // won't understand why the reply FAB did not do anything.
-                submissionCommentTreeUiConstructor.hideReply(submission);
-              } else {
-                submissionCommentTreeUiConstructor.showReply(submission);
-                inlineReplyStream.accept(submission);
-              }
-            }
-          }
-        });
+//    sharedReplyFabClicks
+//        .filter(o -> userSessionRepository.get().isUserLoggedIn())
+//        .withLatestFrom(isUserASubredditMod, Pair::create)
+//        .takeUntil(lifecycle().onDestroy())
+//        .subscribe(pair -> {
+//          Submission submission = pair.first();
+//          Boolean isUserMod = pair.second();
+//
+//          if (submission.isArchived()) {
+//            Pair<Intent, ActivityOptions> archivedIntent = ArchivedSubmissionDialogActivity.intentWithFabTransform(
+//                ((Activity) getContext()),
+//                replyFAB,
+//                R.color.submission_fab,
+//                R.drawable.ic_reply_white_24dp);
+//            getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
+//
+//          } else {
+//            if (submission.isLocked() && !isUserMod) {
+//              Pair<Intent, ActivityOptions> archivedIntent = LockedSubmissionDialogActivity.intentWithFabTransform(
+//                  ((Activity) getContext()),
+//                  replyFAB,
+//                  R.color.submission_fab,
+//                  R.drawable.ic_reply_white_24dp);
+//              getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
+//
+//            } else {
+//              int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+//              boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
+//
+//              if (submissionCommentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
+//                // Hide reply only if it's visible. Otherwise the user
+//                // won't understand why the reply FAB did not do anything.
+//                submissionCommentTreeUiConstructor.hideReply(submission);
+//              } else {
+//                submissionCommentTreeUiConstructor.showReply(submission);
+//                inlineReplyAdditionStream.accept(submission);
+//              }
+//            }
+//          }
+//        });
   }
 
   /**
