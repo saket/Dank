@@ -94,7 +94,4 @@
     <item>@color/red_400</item>
     <item>@color/deep_purple_400</item>
   </integer-array>
-
-  <!-- Transition shared elements -->
-  <string name="transition_locked_submission">locked_submission</string>
 </resources>

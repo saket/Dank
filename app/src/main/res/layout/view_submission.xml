@@ -103,12 +103,17 @@
       android:tint="@color/white" />
   </FrameLayout>
 
+  <!--
+    Specifically using "ic_reply_white_24dp" instead of "ic_reply_24dp"
+    because FAB-morphing shared-element-transition won't take tint into
+    consideration that has been manually applied here.
+   -->
   <android.support.design.widget.FloatingActionButton
     android:id="@+id/submission_reply"
     style="@style/DankFAB"
     android:layout_margin="@dimen/spacing16"
-    android:src="@drawable/ic_reply_24dp"
-    android:tint="@color/gray_200"
+    android:src="@drawable/ic_reply_white_24dp"
+    android:tint="@color/white"
     app:backgroundTint="@color/submission_fab"
     app:elevation="@dimen/elevation_fab"
     app:rippleColor="@color/gray_500"

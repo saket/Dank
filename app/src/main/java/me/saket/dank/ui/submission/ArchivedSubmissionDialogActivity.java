@@ -1,10 +1,15 @@
 package me.saket.dank.ui.submission;
 
+import android.app.Activity;
+import android.app.ActivityOptions;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.drawable.ColorDrawable;
 import android.os.Bundle;
+import android.support.annotation.ColorRes;
+import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
+import android.support.design.widget.FloatingActionButton;
 import android.support.v4.content.ContextCompat;
 import android.view.ViewGroup;
 
@@ -13,6 +18,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.utils.Pair;
 import me.saket.dank.widgets.FabTransform;
 
 /**
@@ -20,10 +26,24 @@ import me.saket.dank.widgets.FabTransform;
  */
 public class ArchivedSubmissionDialogActivity extends DankActivity {
 
+  private static final String SHARED_ELEMENT_TRANSITION_NAME = "sharedElement:ArchivedSubmissionDialogActivity";
+
   @BindView(R.id.archivedsubmission_dialog_container) ViewGroup dialogContainer;
 
   public static Intent intent(Context context) {
     return new Intent(context, ArchivedSubmissionDialogActivity.class);
+  }
+
+  public static Pair<Intent, ActivityOptions> intentForFabTransform(
+      Activity activity,
+      FloatingActionButton fab,
+      @ColorRes int fabColorRes,
+      @DrawableRes int fabIconRes)
+  {
+    Intent intent = intent(activity);
+    FabTransform.addExtras(intent, ContextCompat.getColor(activity, fabColorRes), fabIconRes);
+    ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(activity, fab, SHARED_ELEMENT_TRANSITION_NAME);
+    return Pair.create(intent, options);
   }
 
   @Override
@@ -38,6 +58,7 @@ public class ArchivedSubmissionDialogActivity extends DankActivity {
     getWindow().setBackgroundDrawable(windowBackground);
 
     if (FabTransform.hasActivityTransition(this)) {
+      dialogContainer.setTransitionName(SHARED_ELEMENT_TRANSITION_NAME);
       FabTransform.setupActivityTransition(this, dialogContainer);
     } else {
       overridePendingTransition(R.anim.dialog_fade_in, 0);

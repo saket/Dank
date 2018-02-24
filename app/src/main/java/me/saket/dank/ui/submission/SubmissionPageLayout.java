@@ -973,13 +973,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           }
 
           if (submission.isArchived()) {
-            Intent archivedIntent = ArchivedSubmissionDialogActivity.intent(getContext());
-            FabTransform.addExtras(archivedIntent, ContextCompat.getColor(getContext(), R.color.submission_fab), R.drawable.ic_reply_24dp);
-            ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(
+            Pair<Intent, ActivityOptions> fabMorphingIntent = ArchivedSubmissionDialogActivity.intentForFabTransform(
                 ((Activity) getContext()),
                 replyFAB,
-                getResources().getString(R.string.transition_locked_submission));
-            getContext().startActivity(archivedIntent, options.toBundle());
+                R.color.submission_fab,
+                R.drawable.ic_reply_white_24dp);
+            getContext().startActivity(fabMorphingIntent.first(), fabMorphingIntent.second().toBundle());
             return;
           }
 
