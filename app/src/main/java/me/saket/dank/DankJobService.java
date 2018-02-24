@@ -85,6 +85,6 @@ public abstract class DankJobService extends JobService {
   }
 
   public Observable<Object> lifecycleOnDestroy() {
-    return onDestroyStream;
+    return onDestroyStream.take(1);
   }
 }

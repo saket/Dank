@@ -52,7 +52,7 @@ public class FragmentLifecycleStreams implements LifecycleStreams<FragmentLifecy
   @Override
   @CheckResult
   public Observable<FragmentLifecycleEvent> onDestroy() {
-    return events.filter(e -> e == FragmentLifecycleEvent.DESTROY);
+    return events.filter(e -> e == FragmentLifecycleEvent.DESTROY).take(1);
   }
 
   @CheckResult

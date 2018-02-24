@@ -54,7 +54,7 @@ public class ActivityLifecycleStreams implements LifecycleStreams<ActivityLifecy
   @Override
   @CheckResult
   public Observable<ActivityLifecycleEvent> onDestroy() {
-    return events.filter(e -> e == ActivityLifecycleEvent.DESTROY);
+    return events.filter(e -> e == ActivityLifecycleEvent.DESTROY).take(1);
   }
 
   @CheckResult

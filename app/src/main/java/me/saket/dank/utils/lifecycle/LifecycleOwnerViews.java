@@ -116,7 +116,7 @@ public class LifecycleOwnerViews {
 
     @CheckResult
     public Observable<ViewLifecycleEvent> onDestroy() {
-      return events.filter(e -> e == ViewLifecycleEvent.DESTROY);
+      return events.filter(e -> e == ViewLifecycleEvent.DESTROY).take(1);
     }
 
     @CheckResult

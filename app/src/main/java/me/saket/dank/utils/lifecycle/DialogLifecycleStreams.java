@@ -40,6 +40,6 @@ public class DialogLifecycleStreams implements LifecycleStreams<DialogLifecycleE
 
   @CheckResult
   public Observable<DialogLifecycleEvent> onDestroy() {
-    return events.filter(e -> e == DialogLifecycleEvent.DESTROY);
+    return events.filter(e -> e == DialogLifecycleEvent.DESTROY).take(1);
   }
 }
