@@ -192,16 +192,19 @@ public class SubmissionCommentTreeUiConstructor {
         IN_FLIGHT_LOAD_MORE_IDS.changes()
     );
 
+    Observable<Optional<FocusedComment>> focusedComments = submissionRequests
+        .map(submissionRequest -> Optional.ofNullable(submissionRequest.focusCommentId()))
+        .map(optionalId -> optionalId.map(FocusedComment::create))
+        .distinctUntilChanged();
+
     return Observable
         .combineLatest(
             submissions,
             pendingSyncRepliesMaps,
-            submissionRequests
-                .map(submissionRequest -> Optional.ofNullable(submissionRequest.focusCommentId()))
-                .map(optionalId -> optionalId.map(FocusedComment::create))
-                .distinctUntilChanged(),
-            rowVisibilityChanges.observeOn(scheduler),    // observeOn() because the relays emit on the main thread.
-            (submission, pendingSyncRepliesMap, focusedComment, o) -> {
+            focusedComments,
+            rowVisibilityChanges.observeOn(scheduler),                // observeOn() because the relays emit on the main thread.
+            votingManager.get().streamChanges().observeOn(scheduler),
+            (submission, pendingSyncRepliesMap, focusedComment, o, oo) -> {
               String submissionAuthor = submission.getAuthor();
               return constructComments(context, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);
             })
