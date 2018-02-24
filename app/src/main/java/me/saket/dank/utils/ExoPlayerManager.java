@@ -37,15 +37,16 @@ public class ExoPlayerManager {
     void onVideoSizeChange(int resizedVideoWidth, int resizedVideoHeight, int actualVideoWidth, int actualVideoHeight);
   }
 
+  @SuppressWarnings("unchecked")
   public static ExoPlayerManager newInstance(LifecycleStreams lifecycleStreams, VideoView playerView) {
     ExoPlayerManager exoPlayerManager = new ExoPlayerManager(playerView);
     exoPlayerManager.setupVideoView();
 
     lifecycleStreams.onDestroy().subscribe(o -> exoPlayerManager.releasePlayer());
-    lifecycleStreams.onPause().subscribe(o -> exoPlayerManager.pauseVideoPlayback());
+    lifecycleStreams.onPause().subscribe(o -> exoPlayerManager.pausePlayback());
     lifecycleStreams.onResume().subscribe(o -> {
       if (exoPlayerManager.wasPlayingUponPause) {
-        exoPlayerManager.startVideoPlayback();
+        exoPlayerManager.startPlayback();
       }
     });
 
@@ -116,11 +117,18 @@ public class ExoPlayerManager {
     }
   }
 
-  public void startVideoPlayback() {
+  public void resetPlayback() {
+    playerView.suspend();
+    if (playerView.getVideoUri() != null) {
+      playerView.setVideoURI(null);
+    }
+  }
+
+  public void startPlayback() {
     playerView.start();
   }
 
-  public void pauseVideoPlayback() {
+  public void pausePlayback() {
     wasPlayingUponPause = playerView.isPlaying();
     playerView.pause();
   }

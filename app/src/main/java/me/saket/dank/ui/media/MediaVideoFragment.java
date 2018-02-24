@@ -133,9 +133,9 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
           .takeUntil(lifecycle().onDestroy())
           .subscribe(visibleToUser -> {
             if (!visibleToUser) {
-              exoPlayerManager.pauseVideoPlayback();
+              exoPlayerManager.pausePlayback();
             } else {
-              exoPlayerManager.startVideoPlayback();
+              exoPlayerManager.startPlayback();
             }
           });
     });

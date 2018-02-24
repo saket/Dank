@@ -122,7 +122,7 @@ public class SubmissionVideoHolder {
         .firstOrError()
         .flatMap(waitTillInForeground())
         .flatMapCompletable(canAutoPlay -> canAutoPlay
-            ? Completable.fromAction(() -> exoPlayerManager.startVideoPlayback())
+            ? Completable.fromAction(() -> exoPlayerManager.startPlayback())
             : Completable.complete());
 
     return mediaHostRepository.get().resolveActualLinkIfNeeded(mediaLink)
@@ -226,7 +226,7 @@ public class SubmissionVideoHolder {
     });
   }
 
-  public void pausePlayback() {
-    exoPlayerManager.pauseVideoPlayback();
+  public void resetPlayback() {
+    exoPlayerManager.resetPlayback();
   }
 }

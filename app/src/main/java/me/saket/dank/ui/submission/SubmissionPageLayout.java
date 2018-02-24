@@ -1252,7 +1252,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
                 case SINGLE_VIDEO:
                   contentVideoViewHolder.get().load((MediaLink) resolvedLink)
-                      .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
+                      .ambWith(lifecycle().onPageCollapseOrDestroy().take(1).ignoreElements())
                       .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
                   break;
 
@@ -1265,7 +1265,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               resolvedError.ifUnknown(() -> Timber.e(error, "Error while loading content"));
 
               // TODO: Rename SubmissionMediaContentLoadError to SubmissionContentLoadError.
-              // TODO: Handle content load errors?
             }
         );
   }
@@ -1312,7 +1311,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
   @Override
   public void onPageCollapsed() {
-    contentVideoViewHolder.get().pausePlayback();
+    contentVideoViewHolder.get().resetPlayback();
 
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
