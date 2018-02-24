@@ -6,6 +6,7 @@
   android:layout_height="match_parent"
   android:orientation="vertical">
 
+  <!-- clipToOutline is set in code. -->
   <LinearLayout
     android:id="@+id/archivedsubmission_dialog_container"
     android:layout_width="wrap_content"

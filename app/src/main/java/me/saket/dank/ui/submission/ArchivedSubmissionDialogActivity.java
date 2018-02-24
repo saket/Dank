@@ -73,6 +73,8 @@ public class ArchivedSubmissionDialogActivity extends DankActivity {
     } else {
       overridePendingTransition(R.anim.dialog_fade_in, 0);
     }
+
+    dialogContainer.setClipToOutline(true);
   }
 
   @OnClick({ R.id.archivedsubmission_background, R.id.archivedsubmission_dismiss_button })
