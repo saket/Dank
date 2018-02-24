@@ -172,6 +172,9 @@
   <string name="submission_comments_viewing_single_comments_thread">Viewing a single comment\'s thread</string>
   <string name="submission_comments_view_all_comments">Tap to view all comments</string>
 
+  <string name="submission_header_archived">Archived</string>
+  <string name="submission_header_locked">Locked</string>
+
   <string name="archived_submission_icon_cd">Archived submission</string>
   <string name="archived_submission_title">Archived</string>
   <string name="archived_submission_message">This submission is older than 6 months. You won\'t be able to vote or comment.</string>

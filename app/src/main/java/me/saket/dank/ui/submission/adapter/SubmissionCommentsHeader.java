@@ -46,6 +46,7 @@ public interface SubmissionCommentsHeader {
   int CONTENT_LINK_TRANSITION_ANIM_DURATION = 300;
 
   enum PartialChange {
+    SUBMISSION_ARCHIVED_OR_LOCKED_TAG,
     SUBMISSION_TITLE,
     SUBMISSION_BYLINE,
     SUBMISSION_SAVE_STATUS,
@@ -65,6 +66,8 @@ public interface SubmissionCommentsHeader {
   abstract class UiModel implements SubmissionScreenUiModel {
     @Override
     public abstract long adapterId();
+
+    abstract Optional<Integer> archivedOrLockedTagRes();
 
     abstract SpannableWithTextEquality title();
 
@@ -93,6 +96,8 @@ public interface SubmissionCommentsHeader {
     @AutoValue.Builder
     abstract static class Builder {
       abstract Builder adapterId(long id);
+
+      abstract Builder archivedOrLockedTagRes(Optional<Integer> tag);
 
       abstract Builder title(SpannableWithTextEquality title);
 
@@ -137,6 +142,7 @@ public interface SubmissionCommentsHeader {
   }
 
   class ViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
+    private final TextView archivedOrLockedTagView;
     private final TextView titleView;
     public final TextView bylineView;
     private final TextView selfTextView;
@@ -164,6 +170,7 @@ public interface SubmissionCommentsHeader {
 
     public ViewHolder(View itemView, DankLinkMovementMethod movementMethod) {
       super(itemView);
+      archivedOrLockedTagView = itemView.findViewById(R.id.submission_archived_locked_tag);
       titleView = itemView.findViewById(R.id.submission_title);
       bylineView = itemView.findViewById(R.id.submission_byline);
       selfTextView = itemView.findViewById(R.id.submission_selfpost_text);
@@ -197,6 +204,7 @@ public interface SubmissionCommentsHeader {
     }
 
     public void render() {
+      setSubmissionArchivedOrLockedTag();
       setSubmissionTitle(uiModel);
       setSubmissionByline(uiModel);
       setContentLink(uiModel, false);
@@ -210,15 +218,28 @@ public interface SubmissionCommentsHeader {
       bylineView.setText(uiModel.byline());
     }
 
+    private void setSubmissionArchivedOrLockedTag() {
+      if (uiModel.archivedOrLockedTagRes().isPresent()) {
+        archivedOrLockedTagView.setText(uiModel.archivedOrLockedTagRes().get());
+        archivedOrLockedTagView.setVisibility(View.VISIBLE);
+      } else {
+        archivedOrLockedTagView.setVisibility(View.GONE);
+      }
+    }
+
     private void setSubmissionTitle(UiModel uiModel) {
       titleView.setText(uiModel.title());
     }
 
-    public void handlePartialChanges(List<Object> payloads, SubmissionSwipeActionsProvider swipeActionsProvider) {
+    public void renderPartialChanges(List<Object> payloads, SubmissionSwipeActionsProvider swipeActionsProvider) {
       for (Object payload : payloads) {
         //noinspection unchecked
         for (PartialChange partialChange : (List<PartialChange>) payload) {
           switch (partialChange) {
+            case SUBMISSION_ARCHIVED_OR_LOCKED_TAG:
+              setSubmissionArchivedOrLockedTag();
+              break;
+
             case SUBMISSION_TITLE:
               setSubmissionTitle(uiModel);
               break;
@@ -402,7 +423,7 @@ public interface SubmissionCommentsHeader {
     @Override
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
       holder.setUiModel(uiModel);
-      holder.handlePartialChanges(payloads, swipeActionsProvider);
+      holder.renderPartialChanges(payloads, swipeActionsProvider);
     }
 
     @Override

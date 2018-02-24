@@ -27,9 +27,9 @@ import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.submission.BookmarksRepository;
-import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.ReplyRepository;
+import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Commons;
@@ -203,14 +203,21 @@ public class SubmissionUiConstructor {
     int vote = votingManager.getScoreAfterAdjustingPendingVote(submission);
     int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
 
-    Truss titleBuilder = new Truss();
-    titleBuilder.pushSpan(new ForegroundColorSpan(color(context, voteDirectionColor)));
-    titleBuilder.append(Strings.abbreviateScore(vote));
-    titleBuilder.popSpan();
-    titleBuilder.append("  ");
-    //noinspection deprecation
-    titleBuilder.append(Html.fromHtml(submission.getTitle()));
-    CharSequence title = titleBuilder.build();
+    Optional<Integer> archivedOrLockedTag;
+    if (submission.isArchived()) {
+      archivedOrLockedTag = Optional.of(R.string.submission_header_archived);
+    } else if (submission.isLocked()) {
+      archivedOrLockedTag = Optional.of(R.string.submission_header_locked);
+    } else {
+      archivedOrLockedTag = Optional.empty();
+    }
+
+    Truss titleBuilder = new Truss().pushSpan(new ForegroundColorSpan(color(context, voteDirectionColor)))
+        .append(Strings.abbreviateScore(vote))
+        .popSpan()
+        .append("  ")
+        .append(Html.fromHtml(submission.getTitle()));
+
     String byline = context.getString(
         R.string.submission_byline,
         submission.getSubredditName(),
@@ -221,7 +228,8 @@ public class SubmissionUiConstructor {
 
     return SubmissionCommentsHeader.UiModel.builder()
         .adapterId(adapterId)
-        .title(title, Pair.create(vote, pendingOrDefaultVote))
+        .archivedOrLockedTagRes(archivedOrLockedTag)
+        .title(titleBuilder.build(), Pair.create(vote, pendingOrDefaultVote))
         .byline(byline, postedAndPendingCommentCount)
         .selfText(selfTextOptional)
         .optionalContentLinkModel(contentLinkUiModel)

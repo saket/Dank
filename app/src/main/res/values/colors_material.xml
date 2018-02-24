@@ -44,6 +44,7 @@
   <color name="black_opacity_50">#80000000</color>
   <color name="black_opacity_60">#99000000</color>
   <color name="black_opacity_75">#C4000000</color>
+  <color name="black_opacity_80">#CC000000</color>
   <color name="black_opacity_90">#E6000000</color>
 
   <!--reds-->
