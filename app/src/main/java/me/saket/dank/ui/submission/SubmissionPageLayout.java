@@ -184,7 +184,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
   @Inject SubmissionUiConstructor submissionUiConstructor;
   @Inject SubmissionCommentsAdapter submissionCommentsAdapter;
-  @Inject SubmissionCommentTreeUiConstructor submissionCommentTreeUiConstructor;
+  @Inject SubmissionCommentTreeUiConstructor commentTreeUiConstructor;
 
   @Inject @Named("show_nsfw_content") Lazy<Preference<Boolean>> showNsfwContentPreference;
   @Inject Lazy<SubmissionVideoHolder> contentVideoViewHolder;
@@ -382,7 +382,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     submissionUiConstructor
         .stream(
             getContext(),
-            submissionCommentTreeUiConstructor,
+            commentTreeUiConstructor,
             submissionStream.observeOn(io()),
             submissionRequestStream.observeOn(io()),
             contentLinkStream.observeOn(io()),
@@ -524,23 +524,23 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                 int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
                 boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
 
-                if (submissionCommentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
+                if (commentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
                   // Hide reply only if it's visible. Otherwise the user
                   // won't understand why the reply FAB did not do anything.
-                  submissionCommentTreeUiConstructor.hideReply(submission);
+                  commentTreeUiConstructor.hideReply(submission);
                 } else {
-                  submissionCommentTreeUiConstructor.showReply(submission);
+                  commentTreeUiConstructor.showReply(submission);
                   inlineReplyAdditionStream.accept(submission);
                 }
 
               } else {
                 Comment parentComment = ((Comment) parentContribution);
-                if (submissionCommentTreeUiConstructor.isCollapsed(parentComment) || !submissionCommentTreeUiConstructor.isReplyActiveFor(parentComment)) {
-                  submissionCommentTreeUiConstructor.showReplyAndExpandComments(parentComment);
+                if (commentTreeUiConstructor.isCollapsed(parentComment) || !commentTreeUiConstructor.isReplyActiveFor(parentComment)) {
+                  commentTreeUiConstructor.showReplyAndExpandComments(parentComment);
                   inlineReplyAdditionStream.accept(parentComment);
                 } else {
                   Keyboards.hide(getContext(), commentRecyclerView);
-                  submissionCommentTreeUiConstructor.hideReply(parentComment);
+                  commentTreeUiConstructor.hideReply(parentComment);
                 }
               }
             }
@@ -586,7 +586,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .takeUntil(lifecycle().onDestroy())
         .subscribe(discardEvent -> {
           Keyboards.hide(getContext(), commentRecyclerView);
-          submissionCommentTreeUiConstructor.hideReply(discardEvent.parentContribution());
+          commentTreeUiConstructor.hideReply(discardEvent.parentContribution());
         });
 
     // Reply GIF clicks.
@@ -681,7 +681,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           // Posting to RecyclerView's message queue, because onActivityResult() gets called before
           // ComposeReplyActivity is able to exit and so keyboard doesn't get shown otherwise.
           commentRecyclerView.post(() -> Keyboards.hide(getContext(), commentRecyclerView));
-          submissionCommentTreeUiConstructor.hideReply(sendClickEvent.parentContribution());
+          commentTreeUiConstructor.hideReply(sendClickEvent.parentContribution());
 
           // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
           // We're also removing the draft before sending it because even if the reply fails, it'll still
@@ -722,7 +722,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               commentRecyclerView.smoothScrollBy(0, (int) viewTop);
             }
           }
-          submissionCommentTreeUiConstructor.toggleCollapse(clickEvent.comment());
+          commentTreeUiConstructor.toggleCollapse(clickEvent.comment());
         });
 
     // Thread continuations.
@@ -746,8 +746,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         // This filter() is important. Stupid JRAW inserts new comments directly into
         // the comment tree so if multiple API calls are made, it'll insert duplicate
         // items and result in a crash because RecyclerView expects stable IDs.
-        .filter(loadMoreClickEvent -> !submissionCommentTreeUiConstructor.isMoreCommentsInFlightFor(loadMoreClickEvent.parentCommentNode()))
-        .doOnNext(loadMoreClickEvent -> submissionCommentTreeUiConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentComment(), true))
+        .filter(loadMoreClickEvent -> !commentTreeUiConstructor.isMoreCommentsInFlightFor(loadMoreClickEvent.parentCommentNode()))
+        .doOnNext(loadMoreClickEvent -> commentTreeUiConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentComment(), true))
         .concatMapEager(loadMoreClickEvent -> submissionRequestStream
             .zipWith(submissionStream.map(Optional::get), Pair::create)
             .take(1)
@@ -764,7 +764,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               Toast.makeText(getContext(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
             })
             .onErrorComplete()
-            .doOnTerminate(() -> submissionCommentTreeUiConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentComment(), false))
+            .doOnTerminate(() -> commentTreeUiConstructor.setMoreCommentsLoading(loadMoreClickEvent.parentComment(), false))
             .toObservable())
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
@@ -1050,12 +1050,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 //              int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
 //              boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
 //
-//              if (submissionCommentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
+//              if (commentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
 //                // Hide reply only if it's visible. Otherwise the user
 //                // won't understand why the reply FAB did not do anything.
-//                submissionCommentTreeUiConstructor.hideReply(submission);
+//                commentTreeUiConstructor.hideReply(submission);
 //              } else {
-//                submissionCommentTreeUiConstructor.showReply(submission);
+//                commentTreeUiConstructor.showReply(submission);
 //                inlineReplyAdditionStream.accept(submission);
 //              }
 //            }
