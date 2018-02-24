@@ -1229,7 +1229,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
                   // Threading is handled internally by SubmissionImageHolder#load().
                   contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages)
-                      .ambWith(lifecycle().onPageCollapseOrDestroy().ignoreElements())
+                      .ambWith(lifecycle().onPageCollapseOrDestroy().take(1).ignoreElements())
                       .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
                   contentImageView.setContentDescription(getResources().getString(
                       R.string.cd_submission_image,
