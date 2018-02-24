@@ -43,7 +43,7 @@ public class LockedSubmissionDialogActivity extends ArchivedSubmissionDialogActi
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
 
-    iconView.setImageResource(R.drawable.ic_lock_24dp);
+    iconView.setImageResource(R.drawable.ic_lock_32dp);
     iconView.setContentDescription(getString(R.string.locked_submission_icon_cd));
     titleView.setText(R.string.locked_submission_title);
     descriptionView.setText(R.string.locked_submission_description);
