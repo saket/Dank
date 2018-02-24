@@ -70,7 +70,7 @@ public class VotingManager {
   }
 
   @CheckResult
-  public Completable vote(Contribution contributionToVote, VoteDirection voteDirection) {
+  public Completable vote(PublicContribution contributionToVote, VoteDirection voteDirection) {
     if (contributionToVote.getFullName() == null) {
       throw new AssertionError();
     }
@@ -79,7 +79,7 @@ public class VotingManager {
     markVoteAsPending(contributionToVote, voteDirection);
 
     //noinspection ConstantConditions
-    VotableThingFullNameWrapper votableThing = VotableThingFullNameWrapper.create(contributionToVote.getFullName());
+    VotableContributionFullNameWrapper votableThing = VotableContributionFullNameWrapper.createFrom(contributionToVote);
     return dankRedditClient.withAuth(Completable.fromAction(() -> dankRedditClient.userAccountManager().vote(votableThing, voteDirection)))
 //        .doOnSubscribe(o -> Timber.i("Voting for %s…", contributionToVote.fullName()()))
 //        .doOnComplete(() -> Timber.i("Voting done for %s", contributionToVote.fullName()()))
@@ -92,8 +92,8 @@ public class VotingManager {
    * before the API call returns and we're able to retry.
    */
   @CheckResult
-  public Completable voteWithAutoRetry(Contribution contributionToVote, VoteDirection voteDirection) {
-    //Timber.i("Voting for %s with %s", contributionToVote.fullName(), voteDirection);
+  public Completable voteWithAutoRetry(PublicContribution contributionToVote, VoteDirection voteDirection) {
+    //Timber.i("Voting for %s with %s", contributionToVote.getFullName(), voteDirection);
 
     return vote(contributionToVote, voteDirection)
         .onErrorComplete(error -> {
