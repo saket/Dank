@@ -89,6 +89,10 @@
       android:name=".ui.submission.ArchivedSubmissionDialogActivity"
       android:theme="@style/DankTheme.DialogLikeActivity" />
 
+    <activity
+      android:name=".ui.submission.LockedSubmissionDialogActivity"
+      android:theme="@style/DankTheme.DialogLikeActivity" />
+
     <service
       android:name=".ui.subreddit.SubredditSubscriptionsSyncJob"
       android:exported="true"

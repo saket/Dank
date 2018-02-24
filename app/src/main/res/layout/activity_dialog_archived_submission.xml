@@ -15,14 +15,14 @@
     android:background="@drawable/background_popup_window"
     android:elevation="@dimen/elevation_fab"
     android:orientation="horizontal"
-    android:transitionName="@string/transition_locked_submission"
     tools:ignore="UselessParent">
 
     <ImageView
+      android:id="@+id/archivedsubmission_dialog_icon"
       android:layout_width="80dp"
       android:layout_height="match_parent"
       android:background="@color/white_opacity_05"
-      android:contentDescription="@string/submission_archiveddialog_cd_thumbnail"
+      android:contentDescription="@string/archived_submission_icon_cd"
       android:scaleType="center"
       android:src="@drawable/ic_archive_32dp" />
 
@@ -36,6 +36,7 @@
       android:paddingTop="@dimen/spacing24">
 
       <TextView
+        android:id="@+id/archivedsubmission_dialog_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginBottom="@dimen/spacing12"
@@ -44,6 +45,7 @@
         android:textSize="@dimen/textsize16" />
 
       <TextView
+        android:id="@+id/archivedsubmission_dialog_description"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/spacing20"

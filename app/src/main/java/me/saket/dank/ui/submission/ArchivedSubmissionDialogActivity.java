@@ -34,13 +34,23 @@ public class ArchivedSubmissionDialogActivity extends DankActivity {
     return new Intent(context, ArchivedSubmissionDialogActivity.class);
   }
 
-  public static Pair<Intent, ActivityOptions> intentForFabTransform(
+  public static Pair<Intent, ActivityOptions> intentWithFabTransform(
       Activity activity,
       FloatingActionButton fab,
       @ColorRes int fabColorRes,
       @DrawableRes int fabIconRes)
   {
     Intent intent = intent(activity);
+    return addFabTransformAndActivityOptions(intent, activity, fab, fabColorRes, fabIconRes);
+  }
+
+  public static Pair<Intent, ActivityOptions> addFabTransformAndActivityOptions(
+      Intent intent,
+      Activity activity,
+      FloatingActionButton fab,
+      @ColorRes int fabColorRes,
+      @DrawableRes int fabIconRes)
+  {
     FabTransform.addExtras(intent, ContextCompat.getColor(activity, fabColorRes), fabIconRes);
     ActivityOptions options = ActivityOptions.makeSceneTransitionAnimation(activity, fab, SHARED_ELEMENT_TRANSITION_NAME);
     return Pair.create(intent, options);

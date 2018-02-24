@@ -172,10 +172,14 @@
   <string name="submission_comments_viewing_single_comments_thread">Viewing a single comment\'s thread</string>
   <string name="submission_comments_view_all_comments">Tap to view all comments</string>
 
-  <string name="submission_archiveddialog_cd_thumbnail">Archived submission</string>
+  <string name="archived_submission_icon_cd">Archived submission</string>
   <string name="archived_submission_title">Archived</string>
   <string name="archived_submission_message">This submission is older than 6 months. You won\'t be able to vote or comment.</string>
   <string name="archived_submission_action">Aight</string>
+
+  <string name="locked_submission_icon_cd">Locked submission</string>
+  <string name="locked_submission_title">Locked</string>
+  <string name="locked_submission_description">This post has been locked by the community mods. New comments can no longer be added.</string>
 
   <plurals name="submission_comment_hidden_comments">
     <item quantity="one">1 hidden</item>

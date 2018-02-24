@@ -177,7 +177,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject Moshi moshi;
   @Inject LinkMetadataRepository linkMetadataRepository;
   @Inject ReplyRepository replyRepository;
-  @Inject UserSessionRepository userSessionRepository;
   @Inject ErrorResolver errorResolver;
   @Inject UserPreferences userPreferences;
 
@@ -189,6 +188,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject Lazy<SubmissionVideoHolder> contentVideoViewHolder;
   @Inject Lazy<OnLoginRequireListener> onLoginRequireListener;
   @Inject Lazy<VotingManager> votingManager;
+  @Inject Lazy<UserSessionRepository> userSessionRepository;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
@@ -200,6 +200,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   private BehaviorRelay<Optional<SubmissionContentLoadError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Optional<ResolvedError>> commentsLoadErrors = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Optional<String>> callingSubreddits = BehaviorRelay.createDefault(Optional.empty());
+  private final Observable<Boolean> isUserASubredditMod = Observable.just(false);  // TODO v2.
 
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionImageHolder contentImageViewHolder;
@@ -431,49 +432,18 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           toolbarBackground.setSyncScrollEnabled(false);
         });
 
-    // Reply swipe gestures.
-    Observable<Pair<Comment, Submission>> sharedReplySwipeActions = submissionCommentsAdapter.streamCommentReplySwipeActions()
-        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
-        .share();
-
-    sharedReplySwipeActions
-        .filter(pair -> !pair.second().isArchived())
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(pair -> {
-          Comment parentComment = pair.first();
-          if (submissionCommentTreeUiConstructor.isCollapsed(parentComment) || !submissionCommentTreeUiConstructor.isReplyActiveFor(parentComment)) {
-            submissionCommentTreeUiConstructor.showReplyAndExpandComments(parentComment);
-            inlineReplyStream.accept(parentComment);
-          } else {
-            Keyboards.hide(getContext(), commentRecyclerView);
-            submissionCommentTreeUiConstructor.hideReply(parentComment);
-          }
-        });
-
-    sharedReplySwipeActions
-        .filter(pair -> pair.second().isArchived())
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext())));
-
-    // Vote swipe gesture.
-    Observable<Pair<ContributionVoteSwipeEvent, Submission>> sharedVoteActions = submissionCommentsAdapter
-        .streamCommentVoteSwipeActions()
-        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
-        .share();
-
-    sharedVoteActions
-        .filter(pair -> !pair.second().isArchived())
-        .map(pair -> pair.first())
-        .flatMapCompletable(voteEvent -> votingManager.get()
-            .voteWithAutoRetry(voteEvent.contribution(), voteEvent.newVoteDirection())
-            .subscribeOn(io()))
-        .ambWith(lifecycle().onDestroyCompletable())
-        .subscribe();
-
-    sharedVoteActions
-        .filter(pair -> pair.second().isArchived())
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext())));
+    commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
+    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()) {
+      @Override
+      public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
+        // Bug workaround: when smooth-scrolling to a position, if the target View is already visible,
+        // RecyclerView ends up snapping to the bottom of the child. This is not what is needed in any
+        // case so I'm defaulting to SNAP_TO_START.
+        LinearSmoothScroller linearSmoothScroller = new LinearSmoothScrollerWithVerticalSnapPref(getContext(), LinearSmoothScroller.SNAP_TO_START);
+        linearSmoothScroller.setTargetPosition(position);
+        startSmoothScroll(linearSmoothScroller);
+      }
+    });
 
     // Option swipe gesture.
     submissionCommentsAdapter.streamSubmissionOptionSwipeActions()
@@ -498,18 +468,61 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, menuLocation);
         });
 
-    commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
-    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()) {
-      @Override
-      public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
-        // Bug workaround: when smooth-scrolling to a position, if the target View is already visible,
-        // RecyclerView ends up snapping to the bottom of the child. This is not what is needed in any
-        // case so I'm defaulting to SNAP_TO_START.
-        LinearSmoothScroller linearSmoothScroller = new LinearSmoothScrollerWithVerticalSnapPref(getContext(), LinearSmoothScroller.SNAP_TO_START);
-        linearSmoothScroller.setTargetPosition(position);
-        startSmoothScroll(linearSmoothScroller);
-      }
-    });
+    // Reply swipe gestures.
+    Observable<Pair<Comment, Submission>> sharedReplySwipeActions = submissionCommentsAdapter.streamCommentReplySwipeActions()
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
+        .share();
+
+    sharedReplySwipeActions
+        .filter(o -> !userSessionRepository.get().isUserLoggedIn())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> onLoginRequireListener.get().onLoginRequired());
+
+    sharedReplySwipeActions
+        .filter(o -> userSessionRepository.get().isUserLoggedIn())
+        .withLatestFrom(isUserASubredditMod, Pair::create)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> {
+          Comment parentComment = pair.first().first();
+          Submission submission = pair.first().second();
+          Boolean isUserMod = pair.second();
+
+          if (submission.isArchived()) {
+            getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext()));
+          } else {
+            if (submission.isLocked() && !isUserMod) {
+              getContext().startActivity(LockedSubmissionDialogActivity.intent(getContext()));
+            } else {
+              if (submissionCommentTreeUiConstructor.isCollapsed(parentComment) || !submissionCommentTreeUiConstructor.isReplyActiveFor(parentComment)) {
+                submissionCommentTreeUiConstructor.showReplyAndExpandComments(parentComment);
+                inlineReplyStream.accept(parentComment);
+              } else {
+                Keyboards.hide(getContext(), commentRecyclerView);
+                submissionCommentTreeUiConstructor.hideReply(parentComment);
+              }
+            }
+          }
+        });
+
+    // Vote swipe gesture.
+    Observable<Pair<ContributionVoteSwipeEvent, Submission>> sharedVoteActions = submissionCommentsAdapter
+        .streamCommentVoteSwipeActions()
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
+        .share();
+
+    sharedVoteActions
+        .filter(pair -> !pair.second().isArchived())
+        .map(pair -> pair.first())
+        .flatMapCompletable(voteEvent -> votingManager.get()
+            .voteWithAutoRetry(voteEvent.contribution(), voteEvent.newVoteDirection())
+            .subscribeOn(io()))
+        .ambWith(lifecycle().onDestroyCompletable())
+        .subscribe();
+
+    sharedVoteActions
+        .filter(pair -> pair.second().isArchived())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext())));
 
     // Inline reply additions.
     // Wait till the reply's View is added to the list and show keyboard.
@@ -959,35 +972,53 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           }
         });
 
-    RxView.clicks(replyFAB)
+    Observable<Submission> sharedReplyFabClicks = RxView.clicks(replyFAB)
         .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), (o, submission) -> submission)
+        .share();
+
+    sharedReplyFabClicks
+        .filter(o -> !userSessionRepository.get().isUserLoggedIn())
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(submission -> {
-          if (!userSessionRepository.isUserLoggedIn()) {
-            onLoginRequireListener.get().onLoginRequired();
-            return;
-          }
+        .subscribe(o -> onLoginRequireListener.get().onLoginRequired());
+
+    sharedReplyFabClicks
+        .filter(o -> userSessionRepository.get().isUserLoggedIn())
+        .withLatestFrom(isUserASubredditMod, Pair::create)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> {
+          Submission submission = pair.first();
+          Boolean isUserMod = pair.second();
 
           if (submission.isArchived()) {
-            Pair<Intent, ActivityOptions> fabMorphingIntent = ArchivedSubmissionDialogActivity.intentForFabTransform(
+            Pair<Intent, ActivityOptions> archivedIntent = ArchivedSubmissionDialogActivity.intentWithFabTransform(
                 ((Activity) getContext()),
                 replyFAB,
                 R.color.submission_fab,
                 R.drawable.ic_reply_white_24dp);
-            getContext().startActivity(fabMorphingIntent.first(), fabMorphingIntent.second().toBundle());
-            return;
-          }
+            getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
 
-          int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-          boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
-
-          if (submissionCommentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
-            // Hide reply only if it's visible. Otherwise the user
-            // won't understand why the reply FAB did not do anything.
-            submissionCommentTreeUiConstructor.hideReply(submission);
           } else {
-            submissionCommentTreeUiConstructor.showReply(submission);
-            inlineReplyStream.accept(submission);
+            if (submission.isLocked() && !isUserMod) {
+              Pair<Intent, ActivityOptions> archivedIntent = LockedSubmissionDialogActivity.intentWithFabTransform(
+                  ((Activity) getContext()),
+                  replyFAB,
+                  R.color.submission_fab,
+                  R.drawable.ic_reply_white_24dp);
+              getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
+
+            } else {
+              int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
+              boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
+
+              if (submissionCommentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
+                // Hide reply only if it's visible. Otherwise the user
+                // won't understand why the reply FAB did not do anything.
+                submissionCommentTreeUiConstructor.hideReply(submission);
+              } else {
+                submissionCommentTreeUiConstructor.showReply(submission);
+                inlineReplyStream.accept(submission);
+              }
+            }
           }
         });
   }
