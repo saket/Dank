@@ -76,9 +76,6 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
           }
         }
 
-        if (!oldHeader.archivedOrLockedTagRes().equals(newHeader.archivedOrLockedTagRes())) {
-          partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_ARCHIVED_OR_LOCKED_TAG);
-        }
         if (!oldHeader.title().equals(newHeader.title())) {
           partialChanges.add(SubmissionCommentsHeader.PartialChange.SUBMISSION_TITLE);
         }

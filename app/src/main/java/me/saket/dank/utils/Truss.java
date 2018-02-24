@@ -34,6 +34,11 @@ public class Truss {
     return this;
   }
 
+  @Deprecated
+  public Truss pushSpan(String iKeepMakingThisMistake) {
+    throw new AssertionError();
+  }
+
   /** End the most recently pushed span at the current position in the builder. */
   public Truss popSpan() {
     Span span = stack.removeLast();

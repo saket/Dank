@@ -41,6 +41,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.widgets.RoundedBackgroundSpan;
 import timber.log.Timber;
 
 // TODO: Build a subcomponent for SubredditActivity?
@@ -203,16 +204,29 @@ public class SubmissionUiConstructor {
     int vote = votingManager.getScoreAfterAdjustingPendingVote(submission);
     int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
 
-    Optional<Integer> archivedOrLockedTag;
-    if (submission.isArchived()) {
-      archivedOrLockedTag = Optional.of(R.string.submission_header_archived);
-    } else if (submission.isLocked()) {
-      archivedOrLockedTag = Optional.of(R.string.submission_header_locked);
-    } else {
-      archivedOrLockedTag = Optional.empty();
+    Truss titleBuilder = new Truss();
+
+    if (submission.isArchived() || submission.isLocked()) {
+      String tag = submission.isArchived()
+          ? context.getString(R.string.submission_header_archived)
+          : context.getString(R.string.submission_header_locked);
+
+      titleBuilder
+          .pushSpan(new RoundedBackgroundSpan(
+              color(context, R.color.yellow_600),
+              color(context, R.color.black_opacity_75),
+              context.getResources().getDimensionPixelSize(R.dimen.spacing2),
+              context.getResources().getDimensionPixelSize(R.dimen.textsize12),
+              context.getResources().getDimensionPixelSize(R.dimen.spacing16),
+              context.getResources().getDimensionPixelSize(R.dimen.spacing8)
+          ))
+          .append(tag.toUpperCase())
+          .popSpan()
+          .append("\n")
+          .append("\n");
     }
 
-    Truss titleBuilder = new Truss().pushSpan(new ForegroundColorSpan(color(context, voteDirectionColor)))
+    titleBuilder = titleBuilder.pushSpan(new ForegroundColorSpan(color(context, voteDirectionColor)))
         .append(Strings.abbreviateScore(vote))
         .popSpan()
         .append("  ")
@@ -228,7 +242,6 @@ public class SubmissionUiConstructor {
 
     return SubmissionCommentsHeader.UiModel.builder()
         .adapterId(adapterId)
-        .archivedOrLockedTagRes(archivedOrLockedTag)
         .title(titleBuilder.build(), Pair.create(vote, pendingOrDefaultVote))
         .byline(byline, postedAndPendingCommentCount)
         .selfText(selfTextOptional)
@@ -236,10 +249,6 @@ public class SubmissionUiConstructor {
         .submission(submission)
         .isSaved(bookmarksRepository.get().isSaved(submission))
         .build();
-  }
-
-  private List<SubmissionScreenUiModel> commentRowUiModels(List<SubmissionScreenUiModel> rows) {
-    return rows;
   }
 
   @ColorInt

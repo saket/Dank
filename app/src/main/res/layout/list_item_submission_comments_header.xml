@@ -14,22 +14,22 @@
     android:orientation="vertical"
     android:paddingTop="@dimen/spacing16">
 
-    <TextView
-      android:id="@+id/submission_archived_locked_tag"
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginBottom="@dimen/spacing12"
-      android:layout_marginEnd="@dimen/spacing16"
-      android:layout_marginStart="@dimen/spacing16"
-      android:background="@drawable/background_submission_header_archived_label"
-      android:paddingBottom="@dimen/spacing2"
-      android:paddingEnd="@dimen/spacing8"
-      android:paddingStart="@dimen/spacing8"
-      android:paddingTop="@dimen/spacing2"
-      android:text="@string/submission_header_locked"
-      android:textAllCaps="true"
-      android:textColor="@color/black_opacity_75"
-      android:textSize="@dimen/textsize12" />
+    <!--<TextView-->
+    <!--android:id="@+id/submission_archived_locked_tag"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginBottom="@dimen/spacing12"-->
+    <!--android:layout_marginEnd="@dimen/spacing16"-->
+    <!--android:layout_marginStart="@dimen/spacing16"-->
+    <!--android:background="@drawable/background_submission_header_archived_label"-->
+    <!--android:paddingBottom="@dimen/spacing2"-->
+    <!--android:paddingEnd="@dimen/spacing8"-->
+    <!--android:paddingStart="@dimen/spacing8"-->
+    <!--android:paddingTop="@dimen/spacing2"-->
+    <!--android:text="@string/submission_header_locked"-->
+    <!--android:textAllCaps="true"-->
+    <!--android:textColor="@color/black_opacity_75"-->
+    <!--android:textSize="@dimen/textsize12" />-->
 
     <!-- TODO: Merge these three TextViews and use spans instead -->
     <TextView
