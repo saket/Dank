@@ -235,55 +235,59 @@ public class SubredditUiConstructor {
       bylineBuilder.popSpan();
     }
 
-    Optional<Integer> backgroundResource = submission.isNsfw()
-        ? Optional.of(R.drawable.background_subreddit_submission_nsfw)
-        : Optional.empty();
-
-    Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
     SubmissionThumbnailTypeMinusNsfw thumbnailType = SubmissionThumbnailTypeMinusNsfw.parse(submission);
+    Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
 
-    if (submission.isNsfw() && !showNsfwContent.get()) {
-      thumbnail = Optional.of(
-          thumbnailForStaticImage(c)
-              .staticRes(Optional.of(R.drawable.ic_visibility_off_24dp))
-              .contentDescription(c.getString(R.string.cd_subreddit_submission_item_nsfw_post))
-              .build());
+    if (thumbnailType == SubmissionThumbnailTypeMinusNsfw.NONE) {
+      thumbnail = Optional.empty();
 
     } else {
-      switch (thumbnailType) {
-        case SELF_POST:
-          thumbnail = Optional.of(
-              thumbnailForStaticImage(c)
-                  .staticRes(Optional.of(R.drawable.ic_text_fields_24dp))
-                  .contentDescription(c.getString(R.string.subreddit_submission_item_cd_self_text))
-                  .build());
-          break;
+      if (submission.isNsfw() && !showNsfwContent.get()) {
+        thumbnail = Optional.of(
+            thumbnailForStaticImage(c)
+                .staticRes(Optional.of(R.drawable.ic_visibility_off_24dp))
+                .contentDescription(c.getString(R.string.cd_subreddit_submission_item_nsfw_post))
+                .build());
 
-        case URL_STATIC_ICON:
-          thumbnail = Optional.of(
-              thumbnailForStaticImage(c)
-                  .staticRes(Optional.of(R.drawable.ic_link_24dp))
-                  .contentDescription(c.getString(R.string.subreddit_submission_item_cd_external_url))
-                  .build());
-          break;
+      } else {
+        switch (thumbnailType) {
+          case SELF_POST:
+            thumbnail = Optional.of(
+                thumbnailForStaticImage(c)
+                    .staticRes(Optional.of(R.drawable.ic_text_fields_24dp))
+                    .contentDescription(c.getString(R.string.subreddit_submission_item_cd_self_text))
+                    .build());
+            break;
 
-        case URL_REMOTE_THUMBNAIL:
-          thumbnail = Optional.of(thumbnailForRemoteImage(c, submission.getThumbnails()));
-          break;
+          case URL_STATIC_ICON:
+            thumbnail = Optional.of(
+                thumbnailForStaticImage(c)
+                    .staticRes(Optional.of(R.drawable.ic_link_24dp))
+                    .contentDescription(c.getString(R.string.subreddit_submission_item_cd_external_url))
+                    .build());
+            break;
 
-        case NONE:
-          thumbnail = Optional.empty();
-          break;
+          case URL_REMOTE_THUMBNAIL:
+            thumbnail = Optional.of(thumbnailForRemoteImage(c, submission.getThumbnails()));
+            break;
 
-        default:
-          throw new UnsupportedOperationException("Unknown submission thumbnail type: " + thumbnailType);
+          case NONE:
+            throw new AssertionError();
+
+          default:
+            throw new UnsupportedOperationException("Unknown submission thumbnail type: " + thumbnailType);
+        }
       }
-
     }
 
     // Don't want to display NSFW content if it's disabled on thumbnail click.
     // Might get flagged by Play Store's automatic review thing.
     boolean isThumbnailClickable = submission.isNsfw() ? showNsfwContent.get() : !submission.isSelfPost();
+
+    // Just in case I forget again. This == row background, not thumbnail background.
+    Optional<Integer> rowBackgroundResource = submission.isNsfw()
+        ? Optional.of(R.drawable.background_subreddit_submission_nsfw)
+        : Optional.empty();
 
     return SubredditSubmission.UiModel.builder()
         .submission(submission)
@@ -292,7 +296,7 @@ public class SubredditUiConstructor {
         .isThumbnailClickable(isThumbnailClickable)
         .title(titleBuilder.build(), Pair.create(submissionScore, voteDirection))
         .byline(bylineBuilder.build(), postedAndPendingCommentCount)
-        .backgroundDrawableRes(backgroundResource)
+        .backgroundDrawableRes(rowBackgroundResource)
         .isSaved(bookmarksRepository.get().isSaved(submission))
         .build();
   }
