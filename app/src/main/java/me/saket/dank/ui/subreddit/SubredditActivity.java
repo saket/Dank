@@ -58,6 +58,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
+import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditLink;
@@ -67,11 +68,13 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
+import me.saket.dank.ui.submission.ArchivedSubmissionDialogActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
+import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.subreddit.models.SubmissionItemDiffer;
 import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
 import me.saket.dank.ui.subreddit.models.SubredditSubmissionClickEvent;
@@ -132,6 +135,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Inject SubredditUiConstructor uiConstructor;
   @Inject SubredditSubmissionsAdapter submissionsAdapter;
   @Inject Lazy<UrlRouter> urlRouter;
+  @Inject Lazy<VotingManager> votingManager;
 
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
@@ -424,7 +428,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           }
         });
 
-    // Option gestures.
+    // Option swipe gestures.
     submissionsAdapter.optionSwipeActions()
         .withLatestFrom(subredditChangesStream, Pair::create)
         .takeUntil(lifecycle().onDestroy())
@@ -442,6 +446,26 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           SubmissionOptionsPopup optionsMenu = new SubmissionOptionsPopup(this, swipeEvent.submission(), showVisitSubredditOption);
           optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, showLocation);
         });
+
+    // Vote swipe gestures.
+    Observable<Pair<ContributionVoteSwipeEvent, SubmissionLockType>> sharedVoteSwipeActions = submissionsAdapter.voteSwipeActions()
+        .map(voteEvent -> Pair.create(voteEvent, SubmissionLockType.from((Submission) voteEvent.contribution())))
+        .share();
+
+    sharedVoteSwipeActions
+        .filter(pair -> pair.second() == SubmissionLockType.OPEN)
+        .map(pair -> pair.first())
+        .flatMapCompletable(voteEvent -> votingManager.get()
+            .voteWithAutoRetry(voteEvent.contribution(), voteEvent.newVoteDirection())
+            .subscribeOn(io()))
+        .ambWith(lifecycle().onDestroyCompletable())
+        .subscribe();
+
+    sharedVoteSwipeActions
+        .filter(pair -> pair.second() == SubmissionLockType.ARCHIVED)
+        .map(pair -> pair.first())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(voteEvent -> startActivity(ArchivedSubmissionDialogActivity.intent(this)));
 
     subredditChangesStream
         .observeOn(mainThread())

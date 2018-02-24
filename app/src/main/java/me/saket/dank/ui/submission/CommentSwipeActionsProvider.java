@@ -11,10 +11,10 @@ import net.dean.jraw.models.VoteDirection;
 import javax.inject.Inject;
 
 import dagger.Lazy;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
@@ -43,6 +43,7 @@ public class CommentSwipeActionsProvider {
   private final SwipeActionIconProvider swipeActionIconProvider;
 
   public final PublishRelay<Comment> replySwipeActions = PublishRelay.create();
+  public final PublishRelay<ContributionVoteSwipeEvent> voteSwipeActions = PublishRelay.create();
 
   @Inject
   public CommentSwipeActionsProvider(
@@ -150,10 +151,7 @@ public class CommentSwipeActionsProvider {
       case ACTION_NAME_UPVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.get().voteWithAutoRetry(comment, newVoteDirection)
-            .subscribeOn(Schedulers.io())
-            .subscribe();
-
+        voteSwipeActions.accept(ContributionVoteSwipeEvent.create(comment, newVoteDirection));
         isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
         break;
       }
@@ -161,10 +159,7 @@ public class CommentSwipeActionsProvider {
       case ACTION_NAME_DOWNVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.get().voteWithAutoRetry(comment, newVoteDirection)
-            .subscribeOn(Schedulers.io())
-            .subscribe();
-
+        voteSwipeActions.accept(ContributionVoteSwipeEvent.create(comment, newVoteDirection));
         isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
         break;
       }

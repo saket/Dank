@@ -1,6 +1,5 @@
 package me.saket.dank.ui.subreddit;
 
-import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -11,12 +10,11 @@ import net.dean.jraw.models.VoteDirection;
 import javax.inject.Inject;
 
 import dagger.Lazy;
-import io.reactivex.Observable;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.BookmarksRepository;
+import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.widgets.swipe.SwipeAction;
@@ -43,7 +41,8 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   private final Lazy<OnLoginRequireListener> onLoginRequireListener;
   private final SwipeActions swipeActionsWithUnsave;
   private final SwipeActions swipeActionsWithSave;
-  private final PublishRelay<SubmissionOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
+  public final PublishRelay<SubmissionOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
+  public final PublishRelay<ContributionVoteSwipeEvent> voteSwipeActions = PublishRelay.create();
 
   @Inject
   public SubmissionSwipeActionsProvider(
@@ -85,11 +84,6 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
             .add(downvoteSwipeAction)
             .build())
         .build();
-  }
-
-  @CheckResult
-  public Observable<SubmissionOptionSwipeEvent> optionSwipeActions() {
-    return optionSwipeActions;
   }
 
   public SwipeActions actionsFor(Submission submission) {
@@ -167,10 +161,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
       case ACTION_NAME_UPVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submission, submission.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        votingManager.get().voteWithAutoRetry(submission, newVoteDirection)
-            .subscribeOn(Schedulers.io())
-            .subscribe();
-
+        voteSwipeActions.accept(ContributionVoteSwipeEvent.create(submission, newVoteDirection));
         isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
         break;
       }
@@ -178,10 +169,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
       case ACTION_NAME_DOWNVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submission, submission.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        votingManager.get().voteWithAutoRetry(submission, newVoteDirection)
-            .subscribeOn(Schedulers.io())
-            .subscribe();
-
+        voteSwipeActions.accept(ContributionVoteSwipeEvent.create(submission, newVoteDirection));
         isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
         break;
       }

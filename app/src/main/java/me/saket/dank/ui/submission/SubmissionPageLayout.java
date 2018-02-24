@@ -107,10 +107,12 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.submission.adapter.SubmissionUiConstructor;
+import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
+import me.saket.dank.ui.subreddit.SubmissionLockType;
 import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
@@ -177,7 +179,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject Moshi moshi;
   @Inject LinkMetadataRepository linkMetadataRepository;
   @Inject ReplyRepository replyRepository;
-  @Inject VotingManager votingManager;
   @Inject UserSessionRepository userSessionRepository;
   @Inject ErrorResolver errorResolver;
   @Inject UserPreferences userPreferences;
@@ -189,6 +190,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject @Named("show_nsfw_content") Lazy<Preference<Boolean>> showNsfwContentPreference;
   @Inject Lazy<SubmissionVideoHolder> contentVideoViewHolder;
   @Inject Lazy<OnLoginRequireListener> onLoginRequireListener;
+  @Inject Lazy<VotingManager> votingManager;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
@@ -278,6 +280,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       }
     }
 
+    //noinspection CodeBlock2Expr
     callingSubreddits.getValue().ifPresent(subredditName -> {
       outState.putString(KEY_CALLING_SUBREDDIT, subredditName);
     });
@@ -430,7 +433,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           toolbarBackground.setSyncScrollEnabled(false);
         });
 
-    // Swipe gestures.
+    // Reply swipe gestures.
     Observable<Pair<Comment, Submission>> sharedReplySwipeActions = submissionCommentsAdapter.streamCommentReplySwipeActions()
         .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
         .share();
@@ -454,6 +457,29 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext())));
 
+    // Vote swipe gesture.
+    Observable<Pair<ContributionVoteSwipeEvent, SubmissionLockType>> sharedVoteActions = submissionCommentsAdapter
+        .streamCommentVoteSwipeActions()
+        .withLatestFrom(
+            submissionStream.filter(Optional::isPresent).map(Optional::get).map(SubmissionLockType::from),
+            Pair::create)
+        .share();
+
+    sharedVoteActions
+        .filter(pair -> pair.second() == SubmissionLockType.OPEN)
+        .map(pair -> pair.first())
+        .flatMapCompletable(voteEvent -> votingManager.get()
+            .voteWithAutoRetry(voteEvent.contribution(), voteEvent.newVoteDirection())
+            .subscribeOn(io()))
+        .ambWith(lifecycle().onDestroyCompletable())
+        .subscribe();
+
+    sharedVoteActions
+        .filter(pair -> pair.second() == SubmissionLockType.ARCHIVED)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext())));
+
+    // Option swipe gesture.
     submissionCommentsAdapter.streamSubmissionOptionSwipeActions()
         .withLatestFrom(callingSubreddits, Pair::create)
         .takeUntil(lifecycle().onDestroy())

@@ -6,8 +6,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
 
-import net.dean.jraw.models.Submission;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -15,6 +13,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
+import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
 import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel.SubmissionRowUiModel;
 import me.saket.dank.ui.subreddit.models.SubredditSubmission;
@@ -59,6 +58,11 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   @CheckResult
   public Observable<SubmissionOptionSwipeEvent> optionSwipeActions() {
     return submissionAdapter.optionSwipeActions();
+  }
+
+  @CheckResult
+  public Observable<ContributionVoteSwipeEvent> voteSwipeActions() {
+    return submissionAdapter.voteSwipeActions();
   }
 
   @CheckResult
