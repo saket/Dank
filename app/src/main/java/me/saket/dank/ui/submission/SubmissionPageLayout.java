@@ -112,7 +112,6 @@ import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
-import me.saket.dank.ui.subreddit.SubmissionLockType;
 import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
@@ -133,7 +132,6 @@ import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
-import me.saket.dank.widgets.FabTransform;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.KeyboardVisibilityDetector.KeyboardVisibilityChangeEvent;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
@@ -458,15 +456,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe(o -> getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext())));
 
     // Vote swipe gesture.
-    Observable<Pair<ContributionVoteSwipeEvent, SubmissionLockType>> sharedVoteActions = submissionCommentsAdapter
+    Observable<Pair<ContributionVoteSwipeEvent, Submission>> sharedVoteActions = submissionCommentsAdapter
         .streamCommentVoteSwipeActions()
-        .withLatestFrom(
-            submissionStream.filter(Optional::isPresent).map(Optional::get).map(SubmissionLockType::from),
-            Pair::create)
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
         .share();
 
     sharedVoteActions
-        .filter(pair -> pair.second() == SubmissionLockType.OPEN)
+        .filter(pair -> !pair.second().isArchived())
         .map(pair -> pair.first())
         .flatMapCompletable(voteEvent -> votingManager.get()
             .voteWithAutoRetry(voteEvent.contribution(), voteEvent.newVoteDirection())
@@ -475,7 +471,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         .subscribe();
 
     sharedVoteActions
-        .filter(pair -> pair.second() == SubmissionLockType.ARCHIVED)
+        .filter(pair -> pair.second().isArchived())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> getContext().startActivity(ArchivedSubmissionDialogActivity.intent(getContext())));
 

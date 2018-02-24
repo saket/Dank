@@ -448,13 +448,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         });
 
     // Vote swipe gestures.
-    Observable<Pair<ContributionVoteSwipeEvent, SubmissionLockType>> sharedVoteSwipeActions = submissionsAdapter.voteSwipeActions()
-        .map(voteEvent -> Pair.create(voteEvent, SubmissionLockType.from((Submission) voteEvent.contribution())))
-        .share();
+    Observable<ContributionVoteSwipeEvent> sharedVoteSwipeActions = submissionsAdapter.voteSwipeActions().share();
 
     sharedVoteSwipeActions
-        .filter(pair -> pair.second() == SubmissionLockType.OPEN)
-        .map(pair -> pair.first())
+        .filter(voteEvent -> !voteEvent.contribution().isArchived())
         .flatMapCompletable(voteEvent -> votingManager.get()
             .voteWithAutoRetry(voteEvent.contribution(), voteEvent.newVoteDirection())
             .subscribeOn(io()))
@@ -462,8 +459,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .subscribe();
 
     sharedVoteSwipeActions
-        .filter(pair -> pair.second() == SubmissionLockType.ARCHIVED)
-        .map(pair -> pair.first())
+        .filter(voteEvent -> voteEvent.contribution().isArchived())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(voteEvent -> startActivity(ArchivedSubmissionDialogActivity.intent(this)));
 
