@@ -1,22 +1,25 @@
 package me.saket.dank.utils;
 
-import android.graphics.Canvas;
 import android.graphics.Color;
-import android.graphics.Paint;
-import android.graphics.RectF;
 import android.support.annotation.Nullable;
 import android.text.Editable;
 import android.text.Html;
 import android.text.Spanned;
 import android.text.TextPaint;
-import android.text.style.LineBackgroundSpan;
-import javax.inject.Inject;
-import me.saket.dank.ui.submission.PendingSyncReply;
+
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
+
 import org.sufficientlysecure.htmltextview.HtmlTagHandler;
 import org.xml.sax.XMLReader;
+
+import javax.inject.Inject;
+
+import dagger.Lazy;
+import me.saket.dank.markdownhints.MarkdownSpanPool;
+import me.saket.dank.ui.submission.PendingSyncReply;
+import me.saket.dank.widgets.span.HorizontalRuleSpan;
 
 /**
  * Handles converting Reddit's markdown into Spans that can be rendered by TextView.
@@ -29,13 +32,32 @@ public class Markdown {
 
   private static final TextPaint EMPTY_TEXTPAINT = new TextPaint();
 
+  private final Lazy<MarkdownSpanPool> spanPool;
+
   @Inject
-  public Markdown() {
+  public Markdown(Lazy<MarkdownSpanPool> spanPool) {
+    this.spanPool = spanPool;
+  }
+
+  private CharSequence parse(String textWithMarkdown) {
+    RedditMarkdownHtmlHandler htmlTagHandler = new RedditMarkdownHtmlHandler(null);
+    String source = Html.fromHtml(textWithMarkdown).toString();
+
+    try {
+      String sourceWithCustomTags = htmlTagHandler.overrideTags(source);
+      Spanned spanned = Html.fromHtml(sourceWithCustomTags, null, htmlTagHandler);
+      return trimTrailingWhitespace(spanned);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      return Html.fromHtml(source);
+    }
   }
 
   // TODO: Use Flexmark for markdown.
   public CharSequence parse(Message message) {
-    return message.getBody();
+    String messageBodyWithHtml = JrawUtils.messageBodyHtml(message);
+    return parse(messageBodyWithHtml);
   }
 
   // TODO.
@@ -54,31 +76,29 @@ public class Markdown {
     return submission.getSelftext().trim();
   }
 
-  public static CharSequence parseRedditMarkdownHtml(String markdown, TextPaint textPaint) {
-    RedditMarkdownHtmlHandler htmlTagHandler = new RedditMarkdownHtmlHandler(textPaint);
-    String source = Html.fromHtml(markdown).toString();
-
-    try {
-      String sourceWithCustomTags = htmlTagHandler.overrideTags(source);
-      Spanned spanned = Html.fromHtml(sourceWithCustomTags, null, htmlTagHandler);
-      return trimTrailingWhitespace(spanned);
-
-    } catch (Exception e) {
-      e.printStackTrace();
-      return Html.fromHtml(source);
-    }
-  }
-
   /**
    * Reddit sends escaped body: "JRAW is escaping html entities.\n\n&lt; &gt; &amp;"
    * instead of "JRAW is escaping html entities.\n\n< > &".
    *
    * Convert "**Something**" -> "Something", without any styling.
    */
-  public static String stripMarkdown(String markdown) {
+  public String stripMarkdown(String markdown) {
     // TODO: Use non-html bodies sent by Reddit instead?
     // Since all styling is added using spans, converting the CharSequence to a String will remove all styling.
-    return parseRedditMarkdownHtml(markdown, EMPTY_TEXTPAINT).toString();
+    CharSequence result;
+    RedditMarkdownHtmlHandler htmlTagHandler = new RedditMarkdownHtmlHandler(EMPTY_TEXTPAINT);
+    String source = Html.fromHtml(markdown).toString();
+
+    try {
+      String sourceWithCustomTags = htmlTagHandler.overrideTags(source);
+      Spanned spanned = Html.fromHtml(sourceWithCustomTags, null, htmlTagHandler);
+      result = trimTrailingWhitespace(spanned);
+
+    } catch (Exception e) {
+      e.printStackTrace();
+      result = Html.fromHtml(source);
+    }
+    return result.toString();
   }
 
   private static CharSequence trimTrailingWhitespace(CharSequence source) {
@@ -129,30 +149,6 @@ public class Markdown {
       output.setSpan(new HorizontalRuleSpan(Color.DKGRAY, 4f), start, output.length(), 0);
     }
 
-    /**
-     * {@link LineBackgroundSpan} is used for drawing spans that cover the entire line.
-     */
-    public static class HorizontalRuleSpan implements LineBackgroundSpan {
-
-      private final int ruleColor;          // Color of line
-      private final float line;         // Line size
-
-      public HorizontalRuleSpan(int ruleColor, float lineHeight) {
-        this.ruleColor = ruleColor;
-        this.line = lineHeight;
-      }
-
-      @Override
-      public void drawBackground(Canvas canvas, Paint paint, int left, int right, int top, int baseline, int bottom, CharSequence text,
-          int start, int end, int lnum)
-      {
-        int originalPaintColor = paint.getColor();
-        float y = (float) (top + (bottom - top) / 2) - (line / 2);
-        RectF lineRect = new RectF(left, y, (right - left), y + line);
-        paint.setColor(ruleColor);
-        canvas.drawRect(lineRect, paint);
-        paint.setColor(originalPaintColor);
-      }
-    }
   }
+
 }

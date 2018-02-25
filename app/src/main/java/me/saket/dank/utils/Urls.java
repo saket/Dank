@@ -14,22 +14,26 @@ public class Urls {
    * <var>url</var> is "http://www.nytimes.com/2016/11/30/technology/while...".
    */
   public static String parseDomainName(String url) {
-    String domainName = null;
-
     try {
       // getHost() returns the part between http(s):// and the first slash.
       // So this will contain the TLD and possibly a "www".
-      domainName = Uri.parse(url).getHost();
+      String uriHost = Uri.parse(url).getHost();
 
+      if (uriHost == null) {
+        // Uri host is null for emails.
+        return url;
+      }
+
+      String domainName = uriHost;
       if (domainName.startsWith("www.")) {
         domainName = domainName.substring(4);
       }
+      return domainName;
 
     } catch (Exception e) {
       Timber.e(e, "Error while parsing domain name from URL: %s", url);
+      return url;
     }
-
-    return domainName;
   }
 
   public static String parseFileNameWithExtension(String url) {
@@ -40,6 +44,11 @@ public class Urls {
   public static Optional<String> subdomain(Uri URI) {
     String host = URI.getHost();
     int dotCount = 0;
+
+    if (host == null) {
+      // Probably email address.
+      return Optional.empty();
+    }
 
     for (int i = 0; i < host.length(); i++) {
       if (host.charAt(i) == '.') {

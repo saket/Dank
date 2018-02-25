@@ -6,6 +6,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.net.Uri;
 import android.support.annotation.Nullable;
+import android.util.Patterns;
 import android.view.View;
 
 import net.dean.jraw.models.Thumbnails;
@@ -102,14 +103,20 @@ public class UrlRouter {
 
       } else if (link.isExternal()) {
         String url = link.unparsedUrl();
-        String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
-        if (packageNameForDeepLink != null && isPackageNameInstalled(context, packageNameForDeepLink)) {
-          android.content.Intent openUrlIntent = Intents.createForOpeningUrl(url);
-          openUrlIntent.setPackage(packageNameForDeepLink);
-          context.startActivity(openUrlIntent);
+        boolean isWebUrl = Patterns.WEB_URL.matcher(url).matches();
 
+        if (isWebUrl) {
+          String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
+          if (packageNameForDeepLink != null && isPackageNameInstalled(context, packageNameForDeepLink)) {
+            android.content.Intent openUrlIntent = Intents.createForOpeningUrl(url);
+            openUrlIntent.setPackage(packageNameForDeepLink);
+            context.startActivity(openUrlIntent);
+
+          } else {
+            context.startActivity(WebViewActivity.intent(context, url, expandFromRect));
+          }
         } else {
-          context.startActivity(WebViewActivity.intent(context, url, expandFromRect));
+          context.startActivity(Intents.createForOpeningUrl(url));
         }
 
       } else {
@@ -175,6 +182,11 @@ public class UrlRouter {
   public static String findAllowedPackageNameForDeepLink(String url) {
     Uri URI = Uri.parse(url);
     String urlHost = URI.getHost();
+
+    if (urlHost == null) {
+      return null;
+    }
+
     if (urlHost.endsWith("youtube.com") || urlHost.endsWith("youtu.be")) {
       return "com.google.android.youtube";
 
