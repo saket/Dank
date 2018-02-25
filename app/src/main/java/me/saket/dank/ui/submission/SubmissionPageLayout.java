@@ -1398,12 +1398,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   @Override
-  public void onPageAboutToExpand(long expandAnimDuration) {
-  }
-
+  public void onPageAboutToExpand(long expandAnimDuration) {}
   @Override
-  public void onPageExpanded() {
-  }
+  public void onPageExpanded() {}
 
   @Override
   public void onPageAboutToCollapse(long collapseAnimDuration) {
@@ -1416,6 +1413,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
+    commentListParentSheet.setMaxScrollY(0);
 
     submissionStream.accept(Optional.empty());
     contentLinkStream.accept(Optional.empty());
