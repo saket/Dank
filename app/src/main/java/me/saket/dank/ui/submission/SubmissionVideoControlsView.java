@@ -57,7 +57,7 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
     Views.executeOnMeasure(buttonsContainer, () -> {
       RelativeLayout videoTextureViewContainer = (RelativeLayout) videoView.getChildAt(0);
       RelativeLayout.LayoutParams textureViewContainerLP = ((RelativeLayout.LayoutParams) videoTextureViewContainer.getLayoutParams());
-      textureViewContainerLP.topMargin = -buttonsContainer.getHeight();
+      textureViewContainerLP.bottomMargin = heightOfControlButtons();
       videoTextureViewContainer.setLayoutParams(textureViewContainerLP);
     });
   }

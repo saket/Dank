@@ -184,10 +184,18 @@ public class SubmissionVideoHolder {
         //noinspection ConstantConditions
         int seekBarContainerHeight = ((SubmissionVideoControlsView) contentVideoView.getVideoControls()).heightOfControlButtons();
 
+        //Timber.d("-------------------------------");
+        //Timber.i("resizedVideoHeight: %s", resizedVideoHeight);
+        //Timber.i("actualVideoHeight: %s", actualVideoHeight);
+        //Timber.i("seekBarContainerHeight: %s", seekBarContainerHeight);
+
         // This height is independent of whether the content is resized by the keyboard.
-        int spaceAvailableIndependentOfKeyboard = deviceDisplayHeight - statusBarHeight - minimumGapWithBottom - seekBarContainerHeight;
+        int spaceAvailableIndependentOfKeyboard = deviceDisplayHeight - statusBarHeight - minimumGapWithBottom;
         int videoHeightAdjustedToFitInSpace = Math.min(spaceAvailableIndependentOfKeyboard, resizedVideoHeight + seekBarContainerHeight);
         Views.setHeight(contentVideoView, videoHeightAdjustedToFitInSpace);
+
+        //Timber.i("spaceAvailableIndependentOfKeyboard: %s", spaceAvailableIndependentOfKeyboard);
+        //Timber.i("videoHeightAdjustedToFitInSpace: %s", videoHeightAdjustedToFitInSpace);
 
         // Wait for the height change to happen and then reveal the video.
         Views.executeOnNextLayout(contentVideoView, () -> {
