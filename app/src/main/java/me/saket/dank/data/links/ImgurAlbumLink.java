@@ -22,7 +22,7 @@ public abstract class ImgurAlbumLink extends MediaLink implements Parcelable {
 
   public boolean hasAlbumTitle() {
     //noinspection ConstantConditions
-    return albumTitle() == null || albumTitle().isEmpty();
+    return albumTitle() != null && !albumTitle().isEmpty();
   }
 
   public abstract String coverImageUrl();
