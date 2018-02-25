@@ -73,6 +73,11 @@ public class StoreFilePersister<Key, Value> implements Persister<Value, Key>, Cl
       fileSystem.delete(pathResolver.resolve(key));
     } catch (IOException e) {
       Timber.e(e, "Error deleting item with key %s", key.toString());
+    } catch (IllegalStateException e) {
+      if (!e.getMessage().contains("unable to delete")) {
+        throw e;
+      }
+      // Else, file isn't present. Probably got removed by Android.
     }
   }
 
