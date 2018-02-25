@@ -49,11 +49,15 @@ public class JrawUtils {
   }
 
   public static String messageBodyHtml(Message message) {
-    return message.getDataNode().get("body_html").asText();
+    return message.getDataNode().get("body_html").asText(message.getBody());
   }
 
   public static String commentBodyHtml(Comment comment) {
-    return comment.getDataNode().get("body_html").asText();
+    return comment.getDataNode().get("body_html").asText(comment.getBody());
+  }
+
+  public static String selfPostHtml(Submission submission) {
+    return submission.getDataNode().get("selftext_html").asText(submission.getSelftext() /* defaultValue */);
   }
 
   @Nullable

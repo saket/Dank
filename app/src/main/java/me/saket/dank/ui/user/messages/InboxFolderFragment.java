@@ -43,7 +43,7 @@ import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
-import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.EmptyStateView;

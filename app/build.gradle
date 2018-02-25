@@ -100,7 +100,7 @@ dependencies {
   implementation 'com.google.android:flexbox:0.3.0'
   implementation 'com.github.zagum:Android-ExpandIcon:1.1.1'
   implementation 'com.github.Saketme:Better-Link-Movement-Method:40b13980d4'
-  implementation 'org.sufficientlysecure:html-textview:3.3'
+  implementation 'org.sufficientlysecure:html-textview:3.5'
   implementation 'org.jsoup:jsoup:1.10.3'
   implementation 'com.trello.navi2:navi:2.0'
   implementation 'com.github.rahatarmanahmed:circularprogressview:2.5.0'

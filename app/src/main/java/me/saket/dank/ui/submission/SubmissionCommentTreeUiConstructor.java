@@ -38,7 +38,7 @@ import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Preconditions;
 import me.saket.dank.utils.RxHashSet;

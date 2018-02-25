@@ -10,7 +10,7 @@ import me.saket.dank.R;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.Optional;
 import net.dean.jraw.models.CommentMessage;
 import net.dean.jraw.models.Message;

@@ -28,6 +28,7 @@ import java.util.List;
 import java.util.Set;
 import javax.inject.Inject;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
@@ -35,7 +36,7 @@ import me.saket.dank.data.InboxRepository;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.Strings;
 import timber.log.Timber;
 
@@ -50,11 +51,17 @@ public class MessagesNotificationManager {
 
   private final SeenUnreadMessagesIdStore seenMessageIdsStore;
   private final UserSessionRepository userSessionRepository;
+  private final Lazy<Markdown> markdown;
 
   @Inject
-  public MessagesNotificationManager(SeenUnreadMessagesIdStore seenMessageIdsStore, UserSessionRepository userSessionRepository) {
+  public MessagesNotificationManager(
+      SeenUnreadMessagesIdStore seenMessageIdsStore,
+      UserSessionRepository userSessionRepository,
+      Lazy<Markdown> markdown)
+  {
     this.seenMessageIdsStore = seenMessageIdsStore;
     this.userSessionRepository = userSessionRepository;
+    this.markdown = markdown;
   }
 
   /**
@@ -255,7 +262,7 @@ public class MessagesNotificationManager {
             PendingIntent.FLAG_UPDATE_CURRENT
         );
 
-        String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
+        String markdownStrippedBody = markdown.get().stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
 
         Notification bundledNotification = new NotificationCompat.Builder(context, context.getString(R.string.notification_channel_unread_messages_id))
             .setContentTitle(unreadMessage.getAuthor())
@@ -290,7 +297,7 @@ public class MessagesNotificationManager {
     PendingIntent deletePendingIntent = createMarkAsSeenPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN);
 
     // Update: Lol using some tags crashes Android's SystemUi. We'll have to remove all markdown tags.
-    String markdownStrippedBody = Markdown.stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
+    String markdownStrippedBody = markdown.get().stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
 
     return new NotificationCompat.Builder(context, context.getString(R.string.notification_channel_unread_messages_id))
         .setContentTitle(unreadMessage.getAuthor())
@@ -315,7 +322,7 @@ public class MessagesNotificationManager {
     int linesAdded = 0;
 
     for (Message unreadMessage : unreadMessages) {
-      CharSequence messageBodyWithMarkdown = Markdown.stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
+      CharSequence messageBodyWithMarkdown = markdown.get().stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
       String markdownStrippedBody = messageBodyWithMarkdown.toString();
       //noinspection deprecation
       messagingStyleBuilder.addLine(Html.fromHtml(context.getString(

@@ -1,4 +1,4 @@
-package me.saket.dank.widgets;
+package me.saket.dank.widgets.span;
 
 import android.graphics.Canvas;
 import android.graphics.Paint;

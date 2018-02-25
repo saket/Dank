@@ -16,7 +16,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Clipboards;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.Markdown;
+import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.NestedOptionsPopupMenu;
 import okhttp3.HttpUrl;
 
