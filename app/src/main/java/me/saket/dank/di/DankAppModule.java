@@ -32,6 +32,8 @@ import net.dean.jraw.http.LoggingMode;
 import net.dean.jraw.http.UserAgent;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -44,11 +46,13 @@ import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
+import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.OnLoginRequireListener;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.RedditUserLink;
@@ -343,33 +347,60 @@ public class DankAppModule {
   }
 
   @Provides
-  @Singleton
   @Named("comment_count_in_submission_list_byline")
   Preference<Boolean> showCommentCountInBylinePref(RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("comment_count_in_submission_list_byline", false);
   }
 
   @Provides
-  @Singleton
   @Named("show_nsfw_content")
   Preference<Boolean> showNsfwContentPref(RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("show_nsfw_content", false);
   }
 
   @Provides
-  @Singleton
-  @Named("high_resolution_media_network_strategy")
-  Preference<NetworkStrategy> highResolutionMediaNetworkStrategyPref(RxSharedPreferences rxPrefs) {
-    RxPreferencesEnumTypeAdapter<NetworkStrategy> typeAdapter = new RxPreferencesEnumTypeAdapter<>(NetworkStrategy.class);
-    return rxPrefs.getObject("high_resolution_media_network_strategy", NetworkStrategy.WIFI_ONLY, typeAdapter);
+  RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyRxPreferencesEnumTypeAdapter() {
+    return new RxPreferencesEnumTypeAdapter<>(NetworkStrategy.class);
   }
 
   @Provides
   @Singleton
+  @Named("high_resolution_media_network_strategy")
+  Preference<NetworkStrategy> highResolutionMediaNetworkStrategyPref(
+      RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyTypeAdapter)
+  {
+    return rxPrefs.getObject(UserPreferences.KEY_HIGH_RESOLUTION_MEDIA_NETWORK_STRATEGY, NetworkStrategy.WIFI_ONLY, networkStrategyTypeAdapter);
+  }
+
+  @Provides
   @Named("auto_play_videos_network_strategy")
-  Preference<NetworkStrategy> autoPlayVideosNetworkStrategyPref(RxSharedPreferences rxPrefs) {
-    RxPreferencesEnumTypeAdapter<NetworkStrategy> typeAdapter = new RxPreferencesEnumTypeAdapter<>(NetworkStrategy.class);
-    return rxPrefs.getObject("auto_play_videos_network_strategy", NetworkStrategy.WIFI_ONLY, typeAdapter);
+  Preference<NetworkStrategy> autoPlayVideosNetworkStrategyPref(
+      RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyTypeAdapter)
+  {
+    return rxPrefs.getObject("auto_play_videos_network_strategy", NetworkStrategy.WIFI_ONLY, networkStrategyTypeAdapter);
+  }
+
+  @Provides
+  @Named("open_links_in_external_browser")
+  Preference<Boolean> openLinksInExternalBrowserPref(RxSharedPreferences rxPrefs) {
+    return rxPrefs.getBoolean("open_links_in_external_browser", false);
+  }
+
+  @Provides
+  @Named("cache_pre_filling_network_strategies")
+  Map<CachePreFillThing, Preference<NetworkStrategy>> cachePreFillingNetworkStrategies(
+      RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyTypeAdapter)
+  {
+    Map<CachePreFillThing, Preference<NetworkStrategy>> strategies = new HashMap<>();
+    for (CachePreFillThing thing : CachePreFillThing.values()) {
+      strategies.put(
+          thing,
+          rxPrefs.getObject("cache_pre_filling_network_strategy_for_" + thing.name(), NetworkStrategy.WIFI_ONLY, networkStrategyTypeAdapter));
+    }
+    return strategies;
   }
 
   @Provides

@@ -9,6 +9,8 @@ import static org.mockito.Mockito.when;
 
 import android.net.Uri;
 
+import com.f2prateek.rx.preferences2.Preference;
+
 import net.dean.jraw.models.Submission;
 
 import org.junit.Before;
@@ -23,15 +25,15 @@ import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.util.ArrayList;
-import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.NetworkStrategy;
-import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
@@ -50,7 +52,7 @@ public class CachePreFillerShould {
   @Mock NetworkStateListener networkStateListener;
   @Mock MediaHostRepository mediaHostRepo;
   @Mock LinkMetadataRepository linkMetadataRepo;
-  @Mock UserPreferences userPreferences;
+  @Mock HashMap<CachePreFillThing, Preference<NetworkStrategy>> networkStrategies;
 
   private CachePreFiller cachePreFiller;
 
@@ -64,9 +66,8 @@ public class CachePreFillerShould {
         networkStateListener,
         mediaHostRepo,
         linkMetadataRepo,
-        userPreferences,
-        () -> Schedulers.computation()
-    );
+        () -> Schedulers.computation(),
+        () -> networkStrategies);
 
     PowerMockito.mockStatic(RxUtils.class);
     PowerMockito.when(RxUtils.errorIfMainThread()).thenReturn(o -> {
@@ -75,11 +76,19 @@ public class CachePreFillerShould {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void whenPreFillingIsDisabled_shouldNotCacheAnything_shouldCompleteRxChain() {
-    when(userPreferences.streamCachePreFillNetworkStrategy(any())).thenReturn(Observable.just(NetworkStrategy.NEVER));
+    Preference mockPref = mock(Preference.class);
+    when(mockPref.asObservable()).thenReturn(Observable.just(NetworkStrategy.NEVER));
+    when(networkStrategies.get(any(CachePreFillThing.class))).thenReturn(mockPref);
+
     when(networkStateListener.streamNetworkInternetCapability(NetworkStrategy.NEVER, Optional.empty())).thenReturn(Observable.just(false));
 
-    cachePreFiller.preFillInParallelThreads(Collections.emptyList(), 720, 160)
+    List<Submission> submissions = new ArrayList<>();
+    submissions.add(PowerMockito.mock(Submission.class));
+    submissions.add(PowerMockito.mock(Submission.class));
+
+    cachePreFiller.preFillInParallelThreads(submissions, 720, 160)
         .test()
         .assertSubscribed()
         .assertNoValues()
@@ -92,6 +101,7 @@ public class CachePreFillerShould {
   }
 
   @Test
+  @SuppressWarnings("unchecked")
   public void shouldAvoidPreFillingSameThingTwice() {
     List<Submission> submissions = new ArrayList<>();
 
@@ -103,7 +113,10 @@ public class CachePreFillerShould {
     submissions.add(submission);
     submissions.add(submission);
 
-    when(userPreferences.streamCachePreFillNetworkStrategy(any())).thenReturn(Observable.just(NetworkStrategy.WIFI_ONLY));
+    Preference mockPref = mock(Preference.class);
+    when(mockPref.asObservable()).thenReturn(Observable.just(NetworkStrategy.WIFI_ONLY));
+    when(networkStrategies.get(any(CachePreFillThing.class))).thenReturn(mockPref);
+
     when(networkStateListener.streamNetworkInternetCapability(NetworkStrategy.WIFI_ONLY, Optional.empty())).thenReturn(Observable.just(true));
 
     when(linkMetadataRepo.unfurl(any())).thenReturn(Single.just(mock(LinkMetadata.class)));

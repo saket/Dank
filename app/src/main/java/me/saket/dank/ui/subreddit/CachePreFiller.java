@@ -8,6 +8,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
+import com.f2prateek.rx.preferences2.Preference;
 
 import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Submission;
@@ -17,6 +18,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -29,7 +31,7 @@ import io.reactivex.Scheduler;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
-import me.saket.dank.data.UserPreferences;
+import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.links.ImgurAlbumLink;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
@@ -58,8 +60,9 @@ public class CachePreFiller {
   private final NetworkStateListener networkStateListener;
   private final MediaHostRepository mediaHostRepository;
   private final LinkMetadataRepository linkMetadataRepository;
-  private final UserPreferences userPreferences;
+
   private final Lazy<Scheduler> preFillingScheduler;
+  private final Lazy<Map<CachePreFillThing, Preference<NetworkStrategy>>> preFillingNetworkStrategies;
 
   // Key: <submission-fullname>_<CachePreFillThing>.
   private Set<String> completedPreFills = new HashSet<>(50);
@@ -71,15 +74,15 @@ public class CachePreFiller {
       NetworkStateListener networkStateListener,
       MediaHostRepository mediaHostRepository,
       LinkMetadataRepository linkMetadataRepository,
-      UserPreferences userPreferences,
-      @Named("cache_pre_filling") Lazy<Scheduler> preFillingScheduler)
+      @Named("cache_pre_filling") Lazy<Scheduler> preFillingScheduler,
+      @Named("cache_pre_filling_network_strategies") Lazy<Map<CachePreFillThing, Preference<NetworkStrategy>>> preFillingNetworkStrategies)
   {
     this.appContext = appContext;
     this.submissionRepository = submissionRepository;
     this.networkStateListener = networkStateListener;
     this.mediaHostRepository = mediaHostRepository;
     this.linkMetadataRepository = linkMetadataRepository;
-    this.userPreferences = userPreferences;
+    this.preFillingNetworkStrategies = preFillingNetworkStrategies;
     this.preFillingScheduler = preFillingScheduler;
   }
 
@@ -96,7 +99,7 @@ public class CachePreFiller {
     //Timber.d("Pre-filling cache for %s submissions", submissions.size());
 
     // Images and GIFs that couldn't be converted to videos.
-    Observable imageCachePreFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.IMAGES)
+    Observable imageCachePreFillStream = preFillingNetworkStrategies.get().get(CachePreFillThing.IMAGES).asObservable()
         .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
         .doOnNext(RxUtils.errorIfMainThread())
         .switchMap(canPreFill -> {
@@ -121,7 +124,7 @@ public class CachePreFiller {
         });
 
     // Link metadata.
-    Observable linkCacheFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.LINK_METADATA)
+    Observable linkCacheFillStream = preFillingNetworkStrategies.get().get(CachePreFillThing.LINK_METADATA).asObservable()
         .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
         .switchMap(canPreFill -> {
           if (!canPreFill) {
@@ -140,7 +143,7 @@ public class CachePreFiller {
         });
 
     // Comments.
-    Observable commentCacheFillStream = userPreferences.streamCachePreFillNetworkStrategy(CachePreFillThing.COMMENTS)
+    Observable commentCacheFillStream = preFillingNetworkStrategies.get().get(CachePreFillThing.COMMENTS).asObservable()
         .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
         .switchMap(canPreFill -> {
           if (!canPreFill) {

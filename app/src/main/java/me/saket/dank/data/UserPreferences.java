@@ -21,8 +21,7 @@ public class UserPreferences {
 
   private static final String KEY_DEFAULT_SUBREDDIT = "defaultSubreddit";
   private static final String KEY_UNREAD_MESSAGES_CHECK_INTERVAL_MILLIS = "unreadMessagesCheckInterval";
-  private static final String KEY_CACHE_THING_PRE_FILL_NETWORK_PREFERENCE_ = "cacheThingPreFillNetworkPreference_";
-  private static final String KEY_HIGH_RESOLUTION_MEDIA_NETWORK_STRATEGY = "highResolutionMediaNetworkStrategy";
+  public static final String KEY_HIGH_RESOLUTION_MEDIA_NETWORK_STRATEGY = "high_resolution_media_network_strategy";
 
   private final SharedPreferences sharedPrefs;
   private final RxSharedPreferences rxPreferences;
@@ -46,19 +45,10 @@ public class UserPreferences {
   }
 
   /**
-   * Network strategy for pre-filling <var>thing</var> in cache.
-   */
-  @CheckResult
-  public Observable<NetworkStrategy> streamCachePreFillNetworkStrategy(CachePreFillThing thing) {
-    return rxPreferences.getString(KEY_CACHE_THING_PRE_FILL_NETWORK_PREFERENCE_ + thing.name(), NetworkStrategy.WIFI_ONLY.name())
-        .asObservable()
-        .map(preferenceString -> NetworkStrategy.valueOf(preferenceString));
-  }
-
-  /**
    * Network strategy for loading high-resolution images and videos.
    */
   @CheckResult
+  @Deprecated
   public Observable<NetworkStrategy> streamHighResolutionMediaNetworkStrategy() {
     return rxPreferences.getString(KEY_HIGH_RESOLUTION_MEDIA_NETWORK_STRATEGY, NetworkStrategy.WIFI_ONLY.name())
         .asObservable()
