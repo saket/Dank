@@ -36,6 +36,7 @@ import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
@@ -98,44 +99,69 @@ public class SubmissionContentLinkUiConstructor {
         .subscribeOn(io())
         .toObservable()
         .onErrorResumeNext(Observable.empty())
-        .share();
+        .replay(1)
+        .refCount();
 
-    Observable<String> sharedTitleStream = fetchTitle(link, sharedLinkMetadataStream);
-    Observable<Optional<Drawable>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream).share();
+    Observable<String> sharedTitleStream = fetchTitle(link, sharedLinkMetadataStream)
+        .replay(1)
+        .refCount();
+    Observable<Optional<Drawable>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream)
+        .replay(1)
+        .refCount();
     Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.ofNullable(linkMetadata.imageUrl()));
-    Observable<Optional<Drawable>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, thumbnailUrlStream).share();
+    Observable<Optional<Drawable>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, thumbnailUrlStream)
+        .replay(1)
+        .refCount();
     Observable<TintDetails> tintDetailsStream = streamTintDetails(link, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
 
     Observable<Boolean> progressVisibleStream = Completable
         .mergeDelayError(asList(
             sharedTitleStream.ignoreElements(),
-            // take(2): Not sure why, but sometimes this stream never completes. This is sort of a hack to force complete.
-            sharedFaviconStream.take(2).ignoreElements(),
+            sharedFaviconStream.ignoreElements(),
             sharedThumbnailStream.ignoreElements()
         ))
         .andThen(Observable.just(PROGRESS_HIDDEN))
         .onErrorReturnItem(PROGRESS_HIDDEN)
         .startWith(PROGRESS_VISIBLE);
 
+    // If neither thumbnail nor icon are present, this gets a default icon.
+    // This is used only for showing the favicon and not for generating tint.
+    Observable<Optional<Drawable>> defaultFaviconIfNoImageAvailable = Observable
+        .combineLatest(sharedFaviconStream, sharedThumbnailStream.map(Optional::isPresent), Pair::create)
+        .map(pair -> {
+          Optional<Drawable> optionalFavicon = pair.first();
+          boolean hasThumbnail = pair.second();
+
+          //noinspection ConstantConditions
+          if (optionalFavicon.isPresent() || hasThumbnail) {
+            return optionalFavicon;
+          } else {
+            //noinspection ConstantConditions
+            return Optional.of(context.getDrawable(R.drawable.ic_link_24dp));
+          }
+        })
+        .startWith(Optional.empty());
+
     return Observable.combineLatest(
         sharedTitleStream,
-        sharedFaviconStream,
+        defaultFaviconIfNoImageAvailable,
         sharedThumbnailStream,
         tintDetailsStream,
         progressVisibleStream,
-        (title, optionalFavicon, optionalThumbnail, tintDetails, progressVisible) ->
-            SubmissionContentLinkUiModel.builder()
-                .title(title)
-                .titleMaxLines(2)
-                .titleTextColorRes(tintDetails.titleTextColorRes())
-                .byline(Urls.parseDomainName(link.unparsedUrl()))
-                .bylineTextColorRes(tintDetails.bylineTextColorRes())
-                .icon(optionalFavicon)
-                .thumbnail(optionalThumbnail)
-                .progressVisible(progressVisible)
-                .backgroundTintColor(tintDetails.backgroundTint())
-                .link(link)
-                .build());
+        (title, optionalFavicon, optionalThumbnail, tintDetails, progressVisible) -> {
+          return SubmissionContentLinkUiModel.builder()
+              .title(title)
+              .titleMaxLines(2)
+              .titleTextColorRes(tintDetails.titleTextColorRes())
+              .byline(Urls.parseDomainName(link.unparsedUrl()))
+              .bylineTextColorRes(tintDetails.bylineTextColorRes())
+              .icon(optionalFavicon)
+              .thumbnail(optionalThumbnail)
+              .progressVisible(progressVisible)
+              .backgroundTintColor(tintDetails.backgroundTint())
+              .link(link)
+              .build();
+        });
   }
 
   private Observable<SubmissionContentLinkUiModel> streamLoadRedditLink(Context context, RedditLink redditLink) {
@@ -175,7 +201,8 @@ public class SubmissionContentLinkUiConstructor {
       Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(submissionLink)
           .subscribeOn(io())
           .toObservable()
-          .share();
+          .replay(1)
+          .refCount();
 
       progressVisibleStream = sharedLinkMetadataStream
           .map(o -> false)
@@ -245,10 +272,13 @@ public class SubmissionContentLinkUiConstructor {
             : context.getString(R.string.submission_image_album_image_count, albumLink.images().size()));
 
     Observable<Optional<String>> albumThumbnailStream = Observable.just(Optional.of(albumLink.coverImageUrl()));
-    Observable<Optional<Drawable>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, albumThumbnailStream).share();
+    Observable<Optional<Drawable>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, albumThumbnailStream)
+        .replay(1)
+        .refCount();
     Observable<Optional<Drawable>> sharedFaviconStream = Observable.fromCallable(() -> context.getDrawable(R.drawable.ic_photo_library_24dp))
         .as(Optional.of())
-        .share();
+        .replay(1)
+        .refCount();
 
     Observable<TintDetails> tintDetailsStream = streamTintDetails(albumLink, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
     Observable<Boolean> progressVisibleStream = sharedThumbnailStream
@@ -282,8 +312,7 @@ public class SubmissionContentLinkUiConstructor {
   private Observable<String> fetchTitle(ExternalLink link, Observable<LinkMetadata> linkMetadataSingle) {
     return linkMetadataSingle
         .map(metadata -> metadata.title())
-        .startWith(link.unparsedUrl())
-        .share();
+        .startWith(link.unparsedUrl());
   }
 
   /**
@@ -341,7 +370,7 @@ public class SubmissionContentLinkUiConstructor {
           emitter.setCancellable(() -> Glide.with(context).clear(futureTarget));
         })
         .onErrorResumeNext(error -> {
-          Timber.e(error.getMessage());
+          Timber.e(error.getMessage(), "Couldn't load image using glide");
           return Observable.empty();
         });
   }
@@ -355,7 +384,7 @@ public class SubmissionContentLinkUiConstructor {
     boolean isGooglePlayThumbnail = UrlParser.isGooglePlayUrl(Uri.parse(link.unparsedUrl()));
 
     return Observable.concat(sharedThumbnailStream, sharedFaviconStream)
-        .filter(imageOptional -> imageOptional.isPresent())
+        .filter(Optional::isPresent)
         .take(1)
         .map(imageOptional -> imageOptional.get())
         .observeOn(single())
