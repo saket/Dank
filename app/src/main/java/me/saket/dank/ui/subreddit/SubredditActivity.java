@@ -85,7 +85,7 @@ import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
-import me.saket.dank.utils.RxDiffUtils;
+import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -531,7 +531,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .map(SubredditScreenUiModel::rowUiModels)
         .observeOn(io())
         .toFlowable(BackpressureStrategy.LATEST)
-        .compose(RxDiffUtils.calculateDiff(SubmissionItemDiffer::create))
+        .compose(RxDiffUtil.calculateDiff(SubmissionItemDiffer::create))
         .toObservable()
         .observeOn(mainThread());
 

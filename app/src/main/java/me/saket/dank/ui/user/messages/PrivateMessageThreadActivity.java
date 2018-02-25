@@ -38,6 +38,7 @@ import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
@@ -60,6 +61,7 @@ import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Markdown;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
+import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
@@ -165,7 +167,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         });
 
     // Adapter data-set.
-    Pair<List<PrivateMessageUiModel>, DiffUtil.DiffResult> initialPair = Pair.create(Collections.emptyList(), null);
     Observable.combineLatest(messageThread, pendingSyncRepliesStream, Pair::create)
         .subscribeOn(io())
         .map(pair -> {
@@ -175,14 +176,10 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
           String loggedInUserName = userSessionRepository.loggedInUserName();
           return constructUiModels(parentMessage, messageReplies, pendingSyncReplies, loggedInUserName);
         })
-        .scan(initialPair, (latestPair, nextItems) -> {
-          PrivateMessagesDiffCallback callback = new PrivateMessagesDiffCallback(latestPair.first(), nextItems);
-          DiffUtil.DiffResult result = DiffUtil.calculateDiff(callback, true);
-          return Pair.create(nextItems, result);
-        })
-        .skip(1)  // Initial value is dummy.
+        .toFlowable(BackpressureStrategy.LATEST)
+        .compose(RxDiffUtil.calculateDiff(PrivateMessageItemDiffer::create))
         .observeOn(mainThread())
-        .takeUntil(lifecycle().onDestroy())
+        .takeUntil(lifecycle().onDestroyFlowable())
         .subscribe(
             itemsAndDiff -> {
               List<PrivateMessageUiModel> newComments = itemsAndDiff.first();

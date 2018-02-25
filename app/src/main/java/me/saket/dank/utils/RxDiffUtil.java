@@ -9,7 +9,7 @@ import io.reactivex.FlowableTransformer;
 import io.reactivex.functions.BiFunction;
 import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
 
-public class RxDiffUtils {
+public class RxDiffUtil {
 
   public static <T> FlowableTransformer<List<T>, Pair<List<T>, DiffUtil.DiffResult>> calculateDiff(
       BiFunction<List<T>, List<T>, SimpleDiffUtilsCallbacks<T>> diffCallbacks)

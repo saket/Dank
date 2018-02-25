@@ -6,9 +6,13 @@ import java.util.List;
 
 import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
 
-public class PrivateMessagesDiffCallback extends SimpleDiffUtilsCallbacks<PrivateMessageUiModel> {
+public class PrivateMessageItemDiffer extends SimpleDiffUtilsCallbacks<PrivateMessageUiModel> {
 
-  public PrivateMessagesDiffCallback(List<PrivateMessageUiModel> oldItems, List<PrivateMessageUiModel> newItems) {
+  public static PrivateMessageItemDiffer create(List<PrivateMessageUiModel> oldItems, List<PrivateMessageUiModel> newItems) {
+    return new PrivateMessageItemDiffer(oldItems, newItems);
+  }
+
+  private PrivateMessageItemDiffer(List<PrivateMessageUiModel> oldItems, List<PrivateMessageUiModel> newItems) {
     super(oldItems, newItems);
   }
 

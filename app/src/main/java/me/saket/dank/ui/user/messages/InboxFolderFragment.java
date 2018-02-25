@@ -16,18 +16,23 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewGroup.MarginLayoutParams;
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import com.jakewharton.rxbinding2.view.RxView;
+
+import net.dean.jraw.models.Message;
+
+import java.util.List;
+import javax.inject.Inject;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.SingleTransformer;
 import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
-import java.util.List;
-import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.InfiniteScrollHeaderFooter;
@@ -39,11 +44,10 @@ import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
 import me.saket.dank.utils.Markdown;
-import me.saket.dank.utils.RxDiffUtils;
+import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
-import net.dean.jraw.models.Message;
 import timber.log.Timber;
 
 /**
@@ -191,7 +195,7 @@ public class InboxFolderFragment extends DankFragment {
     //noinspection ConstantConditions
     uiConstructor.get().stream(getContext(), sharedMessageStream, constructThreads)
         .toFlowable(BackpressureStrategy.LATEST)
-        .compose(RxDiffUtils.calculateDiff(InboxFolderScreenUiModel.ItemDiffer::new))
+        .compose(RxDiffUtil.calculateDiff(InboxFolderScreenUiModel.ItemDiffer::new))
         .observeOn(mainThread())
         .takeUntil(lifecycle().onStopFlowable())
         .subscribe(messagesAdapter.get());

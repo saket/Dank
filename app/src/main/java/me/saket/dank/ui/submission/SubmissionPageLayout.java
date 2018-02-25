@@ -126,7 +126,7 @@ import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.LinearSmoothScrollerWithVerticalSnapPref;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
-import me.saket.dank.utils.RxDiffUtils;
+import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
@@ -391,7 +391,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         )
         .subscribeOn(io())
         .toFlowable(BackpressureStrategy.LATEST)
-        .compose(RxDiffUtils.calculateDiff(CommentsItemDiffer::create))
+        .compose(RxDiffUtil.calculateDiff(CommentsItemDiffer::create))
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroyFlowable())
         .subscribe(submissionCommentsAdapter);
