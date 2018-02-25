@@ -153,6 +153,10 @@
   <string name="comment_option_share_link">Share link</string>
   <string name="comment_option_copy_link">Copy link</string>
 
+  <string name="link_option_share">Share link</string>
+  <string name="link_option_copy">Copy link</string>
+  <string name="link_option_open_in_external_browser">Open in external browser</string>
+
   <string name="submission_media_content_load_failure_tap_to_retry">Tap to retry</string>
 
   <string name="submission_nsfw_content_disabled_error">NSFW \u00A0( ͡° ͜ʖ ͡°)</string>

@@ -206,6 +206,11 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
+  public Observable<SubmissionContentLinkClickEvent> streamContentLinkLongClicks() {
+    return headerAdapter.contentLinkLongClickStream;
+  }
+
+  @CheckResult
   public Observable<SubmissionContentLoadError> streamMediaContentLoadRetryClicks() {
     return mediaContentLoadErrorAdapter.mediaContentLoadRetryClickStream;
   }

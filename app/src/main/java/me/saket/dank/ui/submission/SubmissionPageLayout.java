@@ -787,6 +787,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout
           }
         });
 
+    // Content link long clicks.
+    submissionCommentsAdapter.streamContentLinkLongClicks()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(event -> {
+          Point linkViewLocation = Views.locationOnScreen(event.contentLinkView());
+          LinkOptionsPopup linkOptionsPopup = new LinkOptionsPopup(getContext(), event.link());
+          linkOptionsPopup.showAtLocation(event.contentLinkView(), Gravity.TOP | Gravity.START, linkViewLocation);
+        });
+
     // View full thread.
     submissionCommentsAdapter.streamViewAllCommentsClicks()
         .takeUntil(lifecycle().onDestroy())

@@ -25,6 +25,7 @@ import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.preferences.FiltersUserPreferencesLayout;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
+import me.saket.dank.ui.submission.LinkOptionsPopup;
 import me.saket.dank.ui.submission.RetryReplyJobService;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.VoteJobService;
@@ -115,4 +116,6 @@ public interface DankAppComponent {
   void inject(SubmissionOptionsPopup target);
 
   void inject(CommentOptionsPopup target);
+
+  void inject(LinkOptionsPopup target);
 }

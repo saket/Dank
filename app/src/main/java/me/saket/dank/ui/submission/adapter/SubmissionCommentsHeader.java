@@ -186,10 +186,17 @@ public interface SubmissionCommentsHeader {
       });
     }
 
-    public void setupContentLinkClickStream(Relay<SubmissionContentLinkClickEvent> clickStream) {
+    public void setupContentLinkClickStreams(
+        Relay<SubmissionContentLinkClickEvent> clickStream,
+        Relay<SubmissionContentLinkClickEvent> longClickStream)
+    {
       contentLinkView.setOnClickListener(o ->
           clickStream.accept(SubmissionContentLinkClickEvent.create(contentLinkView, uiModel.optionalContentLinkModel().get().link()))
       );
+      contentLinkView.setOnLongClickListener(o -> {
+        longClickStream.accept(SubmissionContentLinkClickEvent.create(contentLinkView, uiModel.optionalContentLinkModel().get().link()));
+        return true;  // true == long click handled.
+      });
     }
 
     public void setUiModel(UiModel uiModel) {
@@ -374,6 +381,7 @@ public interface SubmissionCommentsHeader {
     private final SubmissionSwipeActionsProvider swipeActionsProvider;
     final PublishRelay<Object> headerClickStream = PublishRelay.create();
     final PublishRelay<SubmissionContentLinkClickEvent> contentLinkClickStream = PublishRelay.create();
+    final PublishRelay<SubmissionContentLinkClickEvent> contentLinkLongClickStream = PublishRelay.create();
     final PublishRelay<Optional<SubmissionCommentsHeader.ViewHolder>> headerBindStream = PublishRelay.create();
 
     @Inject
@@ -386,7 +394,7 @@ public interface SubmissionCommentsHeader {
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
       ViewHolder holder = ViewHolder.create(inflater, parent, headerClickStream, linkMovementMethod);
       holder.setupGestures(swipeActionsProvider);
-      holder.setupContentLinkClickStream(contentLinkClickStream);
+      holder.setupContentLinkClickStreams(contentLinkClickStream, contentLinkLongClickStream);
       return holder;
     }
 
