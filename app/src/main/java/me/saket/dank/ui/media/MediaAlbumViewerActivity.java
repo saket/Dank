@@ -31,6 +31,7 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.danikula.videocache.HttpProxyCacheServer;
+import com.f2prateek.rx.preferences2.Preference;
 import com.google.common.io.Files;
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -48,14 +49,17 @@ import java.util.NoSuchElementException;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.links.ImgurAlbumLink;
@@ -106,6 +110,9 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @Inject ErrorResolver errorResolver;
   @Inject UserPreferences userPreferences;
   @Inject NetworkStateListener networkStateListener;
+
+  @Inject @Named("high_resolution_media_network_strategy")
+  Lazy<Preference<NetworkStrategy>> highResolutionMediaNetworkStrategyPref;
 
   private SystemUiHelper systemUiHelper;
   private Drawable activityBackgroundDrawable;
@@ -263,7 +270,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
           }
         })
         // Toggle HD for all images with the default value.
-        .flatMap(mediaLinks -> userPreferences.streamHighResolutionMediaNetworkStrategy()
+        .flatMap(mediaLinks -> highResolutionMediaNetworkStrategyPref.get().asObservable()
             .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
             .firstOrError()
             .doOnSuccess(canLoadHighResolutionMedia -> {
