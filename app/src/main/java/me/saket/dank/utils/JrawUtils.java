@@ -86,13 +86,8 @@ public class JrawUtils {
       return redditVideoNode.get("dash_url").asText();
     }
 
-    String postHint = submission.getDataNode().get("post_hint").asText();
-    if ("hosted:video".equals(postHint)) {
-      throw new IllegalStateException("Submission contains a hosted video, but couldn't find its URL: " + submission.getPermalink());
-    }
-
-    String crossParentFullName = submission.getDataNode().get("crosspost_parent").asText();
-    if (crossParentFullName != null && !crossParentFullName.isEmpty()) {
+    boolean hasCrossParent = submission.getDataNode().get("crosspost_parent_list") != null;
+    if (hasCrossParent) {
       JsonNode crossPostParentListNode = submission.getDataNode().get("crosspost_parent_list");
       if (crossPostParentListNode.size() > 1) {
         throw new UnsupportedOperationException("Multiple cross-post parents! " + submission.getPermalink());

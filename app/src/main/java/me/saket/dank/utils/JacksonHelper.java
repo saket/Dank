@@ -72,13 +72,4 @@ public class JacksonHelper {
       throw Exceptions.propagate(e);
     }
   }
-
-  public <T> T fromJson(String json, Class<T> dataClass) {
-    try {
-      return objectMapper.readValue(json, dataClass);
-    } catch (IOException e) {
-      Timber.e(e, "Couldn't deserialize json: %s", json);
-      throw Exceptions.propagate(e);
-    }
-  }
 }

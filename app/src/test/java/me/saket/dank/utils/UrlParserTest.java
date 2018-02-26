@@ -12,7 +12,10 @@ import android.text.Spannable;
 import android.text.TextUtils;
 import android.util.Patterns;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nytimes.android.external.cache3.CacheBuilder;
+
+import net.dean.jraw.models.Submission;
 
 import org.junit.Before;
 import org.junit.Test;
@@ -21,6 +24,7 @@ import org.powermock.api.mockito.PowerMockito;
 import org.powermock.core.classloader.annotations.PrepareForTest;
 import org.powermock.modules.junit4.PowerMockRunner;
 
+import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -268,14 +272,73 @@ public class UrlParserTest {
   }
 
   @Test
-  public void parseRedditHostedVideos() {
+  public void parseRedditHostedVideos() throws IOException {
     String[] videoUrls = {
         "https://v.redd.it/fjpqnd127wf01",
         "https://v.reddit.com/fjpqnd127wf01"
     };
     for (String videoUrl : videoUrls) {
-      Link parsedLink = urlParser.parse(videoUrl);
+      String dashPlaylistUrl = "poop";
+      String submissionJson = "{\n" +
+          "  \"secure_media\": {\n" +
+          "    \"reddit_video\": {\n" +
+          "      \"fallback_url\": \"https://v.redd.it/nwypmagtjvf01/DASH_4_8_M\",\n" +
+          "      \"height\": 720,\n" +
+          "      \"width\": 1280,\n" +
+          "      \"scrubber_media_url\": \"https://v.redd.it/nwypmagtjvf01/DASH_600_K\",\n" +
+          "      \"dash_url\": \"" + dashPlaylistUrl + "\",\n" +
+          "      \"duration\": 10,\n" +
+          "      \"hls_url\": \"https://v.redd.it/nwypmagtjvf01/HLSPlaylist.m3u8\",\n" +
+          "      \"is_gif\": true,\n" +
+          "      \"transcoding_status\": \"completed\"\n" +
+          "    }\n" +
+          "  }\n" +
+          "}\n";
+      JacksonHelper jacksonHelper = new JacksonHelper(new ObjectMapper());
+      Submission submission = new Submission(jacksonHelper.parseJsonNode(submissionJson));
+
+      Link parsedLink = urlParser.parse(videoUrl, submission);
       assertEquals(true, parsedLink instanceof RedditHostedVideoLink);
+      //noinspection ConstantConditions
+      assertEquals(dashPlaylistUrl, ((RedditHostedVideoLink) parsedLink).highQualityUrl());
+    }
+  }
+
+  @Test
+  public void parseRedditHostedVideosForCrossPostParent() {
+    String[] videoUrls = {
+        "https://v.redd.it/fjpqnd127wf01",
+        "https://v.reddit.com/fjpqnd127wf01"
+    };
+    for (String videoUrl : videoUrls) {
+      String dashPlaylistUrl = "poop";
+      String submissionJson = "{\n" +
+          "  \"secure_media\": null,\n" +
+          "  \"crosspost_parent_list\": [\n" +
+          "    {\n" +
+          "      \"secure_media\": {\n" +
+          "        \"reddit_video\": {\n" +
+          "          \"fallback_url\": \"https://v.redd.it/hmkehapuwjh01/DASH_2_4_M\",\n" +
+          "          \"height\": 480,\n" +
+          "          \"width\": 444,\n" +
+          "          \"scrubber_media_url\": \"https://v.redd.it/hmkehapuwjh01/DASH_600_K\",\n" +
+          "          \"dash_url\": \"" + dashPlaylistUrl + "\",\n" +
+          "          \"duration\": 11,\n" +
+          "          \"hls_url\": \"https://v.redd.it/hmkehapuwjh01/HLSPlaylist.m3u8\",\n" +
+          "          \"is_gif\": false,\n" +
+          "          \"transcoding_status\": \"completed\"\n" +
+          "        }\n" +
+          "      }\n" +
+          "    }\n" +
+          "  ]\n" +
+          "}\n";
+      JacksonHelper jacksonHelper = new JacksonHelper(new ObjectMapper());
+      Submission submission = new Submission(jacksonHelper.parseJsonNode(submissionJson));
+
+      Link parsedLink = urlParser.parse(videoUrl, submission);
+      assertEquals(true, parsedLink instanceof RedditHostedVideoLink);
+      //noinspection ConstantConditions
+      assertEquals(dashPlaylistUrl, ((RedditHostedVideoLink) parsedLink).highQualityUrl());
     }
   }
 
