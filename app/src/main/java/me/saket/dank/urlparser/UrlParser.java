@@ -1,16 +1,20 @@
-package me.saket.dank.utils;
+package me.saket.dank.urlparser;
 
 import android.net.Uri;
 import android.support.annotation.Nullable;
-import android.support.v4.util.LruCache;
 import android.text.Html;
 import android.text.TextUtils;
 
+import com.nytimes.android.external.cache3.Cache;
+
 import net.dean.jraw.models.Submission;
 
+import java.util.concurrent.ExecutionException;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+import javax.inject.Inject;
+import javax.inject.Named;
 
+import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.links.ExternalLink;
@@ -26,6 +30,9 @@ import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.data.links.StreamableUnresolvedLink;
+import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Urls;
 
 /**
  * Parses URLs found in the wilderness of Reddit and categorizes them into {@link Link} subclasses.
@@ -39,74 +46,13 @@ import me.saket.dank.data.links.StreamableUnresolvedLink;
  */
 public class UrlParser {
 
-  /**
-   * /r/$subreddit.
-   */
-  private static final Pattern SUBREDDIT_PATTERN = Pattern.compile("^/r/([a-zA-Z0-9-_.]+)(/)*$");
+  private final Cache<String, Link> cache;
+  private final UrlParserConfig config;
 
-  /**
-   * /u/$user.
-   */
-  private static final Pattern USER_PATTERN = Pattern.compile("^/u(?:ser)?/([a-zA-Z0-9-_.]+)(?:/)*$");
-
-  /**
-   * Submission: /r/$subreddit/comments/$post_id/post_title.
-   * Comment:    /r/$subreddit/comments/$post_id/post_title/$comment_id.
-   * <p>
-   * ('post_title' and '/r/$subreddit/' can be empty).
-   */
-  private static final Pattern SUBMISSION_OR_COMMENT_PATTERN = Pattern.compile("^(/r/([a-zA-Z0-9-_.]+))*/comments/(\\w+)(/\\w*/(\\w*))?.*");
-
-  /**
-   * /live/$thread_id.
-   */
-  private static final Pattern LIVE_THREAD_PATTERN = Pattern.compile("^/live/\\w*(/)*$");
-
-  /**
-   * Extracts the three-word name of a gfycat until a '.' or '-' is encountered. Example URLs:
-   * <p>
-   * /MessySpryAfricancivet
-   * /MessySpryAfricancivet.gif
-   * /MessySpryAfricancivet-size_restricted.gif
-   * /MessySpryAfricancivet.webm
-   * /MessySpryAfricancivet-mobile.mp4
-   */
-  private static final Pattern GFYCAT_ID_PATTERN = Pattern.compile("^(/[^-.]*).*$");
-
-  /**
-   * Extracts the ID of a giphy link. In these examples, the ID is 'l2JJyLbhqCF4va86c
-   * <p>
-   * /media/l2JJyLbhqCF4va86c/giphy.mp4
-   * /media/l2JJyLbhqCF4va86c/giphy.gif
-   * /gifs/l2JJyLbhqCF4va86c/html5
-   * /l2JJyLbhqCF4va86c.gif
-   */
-  private static final Pattern GIPHY_ID_PATTERN = Pattern.compile("^/(?:(?:media)?(?:gifs)?/)?(\\w*)[/.].*$");
-
-  /**
-   * Extracts the ID of a streamable link. Eg., https://streamable.com/fxn88 -> 'fxn88'.
-   */
-  private static final Pattern STREAMABLE_ID_PATTERN = Pattern.compile("/(\\w*\\d*)[^/.?]*");
-
-  /**
-   * Extracts the ID of an Imgur album.
-   * <p>
-   * /gallery/9Uq7u
-   * /gallery/coZb0HC
-   * /t/a_day_in_the_life/85Egn
-   * /a/RBpAe
-   */
-  private static final Pattern IMGUR_ALBUM_PATTERN = Pattern.compile("/(?:gallery)?(?:a)?(?:t/\\w*)?/(\\w*).*");
-
-  private static LruCache<String, Link> cache = new LruCache<>(100);
-
-  /**
-   * Determine type of the url.
-   *
-   * @return null if the url couldn't be identified. A class implementing {@link Link} otherwise.
-   */
-  public static Link parse(String url) {
-    return parse(url, Optional.empty());
+  @Inject
+  public UrlParser(@Named("url_parser") Cache<String, Link> cache, UrlParserConfig config) {
+    this.cache = cache;
+    this.config = config;
   }
 
   /**
@@ -114,8 +60,12 @@ public class UrlParser {
    *
    * @return null if the url couldn't be identified. A class implementing {@link Link} otherwise.
    */
-  public static Link parse(String url, Submission submission) {
-    return parse(url, Optional.of(submission));
+  public Link parse(String url) {
+    try {
+      return cache.get(url, () -> parseInternal(url, Optional.empty()));
+    } catch (ExecutionException e) {
+      throw Exceptions.propagate(e);
+    }
   }
 
   /**
@@ -123,32 +73,38 @@ public class UrlParser {
    *
    * @return null if the url couldn't be identified. A class implementing {@link Link} otherwise.
    */
-  private static Link parse(String url, Optional<Submission> submission) {
+  public Link parse(String url, Submission submission) {
+    try {
+      return cache.get(url, () -> parseInternal(url, Optional.of(submission)));
+    } catch (ExecutionException e) {
+      throw Exceptions.propagate(e);
+    }
+  }
+
+  /**
+   * Determine type of the url.
+   *
+   * @return null if the url couldn't be identified. A class implementing {@link Link} otherwise.
+   */
+  private Link parseInternal(String url, Optional<Submission> submission) {
     // TODO: Support "np" subdomain?
     // TODO: Support wiki pages.
-
-    Link cachedLink = cache.get(url);
-    if (cachedLink != null) {
-      return cachedLink;
-    }
-
     Link parsedLink;
-
     Uri linkURI = Uri.parse(url);
     String urlDomain = linkURI.getHost() != null ? linkURI.getHost() : "";
     String urlPath = linkURI.getPath() != null ? linkURI.getPath() : "";  // Path is the part of the URL without the domain. E.g.,: /something/image.jpg.
 
-    Matcher subredditMatcher = SUBREDDIT_PATTERN.matcher(urlPath);
+    Matcher subredditMatcher = config.subredditPattern().matcher(urlPath);
     if (subredditMatcher.matches()) {
       parsedLink = RedditSubredditLink.create(url, subredditMatcher.group(1));
 
     } else {
-      Matcher userMatcher = USER_PATTERN.matcher(urlPath);
+      Matcher userMatcher = config.userPattern().matcher(urlPath);
       if (userMatcher.matches()) {
         parsedLink = RedditUserLink.create(url, userMatcher.group(1));
 
       } else if (urlDomain.endsWith("reddit.com")) {
-        Matcher submissionOrCommentMatcher = SUBMISSION_OR_COMMENT_PATTERN.matcher(urlPath);
+        Matcher submissionOrCommentMatcher = config.submissionOrCommentPattern().matcher(urlPath);
         if (submissionOrCommentMatcher.matches()) {
           String subredditName = submissionOrCommentMatcher.group(2);
           String submissionId = submissionOrCommentMatcher.group(3);
@@ -209,7 +165,7 @@ public class UrlParser {
     return parsedLink;
   }
 
-  private static Link parseNonRedditUrl(String url) {
+  private Link parseNonRedditUrl(String url) {
     Uri linkURI = Uri.parse(url);
 
     String urlDomain = linkURI.getHost() != null ? linkURI.getHost() : "";
@@ -220,11 +176,18 @@ public class UrlParser {
         // These are links that Imgur no longer uses so Dank does not expect them either.
         return ExternalLink.create(url);
 
-      } else if (isImgurAlbum(urlPath)) {
-        return createUnresolvedImgurAlbum(url);
-
       } else {
-        return createImgurLink(url, null, null);
+        Matcher albumUrlMatcher = config.imgurAlbumPattern().matcher(Uri.parse(url).getPath());
+        // matches() is important or else groups don't get formed.
+        if (albumUrlMatcher.matches()) {
+          String albumId = albumUrlMatcher.group(1);
+          // It's titled as unresolved because we don't know if the gallery
+          // contains a single image or multiple images.
+          return ImgurAlbumUnresolvedLink.create(url, albumId);
+
+        } else {
+          return createImgurLink(url, null, null);
+        }
       }
 
     } else if (urlDomain.contains("gfycat.com")) {
@@ -267,20 +230,7 @@ public class UrlParser {
     }
   }
 
-  /**
-   * It's titled as unresolved because we don't know if the gallery contains a single image or multiple images.
-   */
-  private static ImgurAlbumUnresolvedLink createUnresolvedImgurAlbum(String albumUrl) {
-    Matcher albumUrlMatcher = IMGUR_ALBUM_PATTERN.matcher(Uri.parse(albumUrl).getPath());
-    if (albumUrlMatcher.matches()) {  // matches() is important or else groups don't get formed.
-      String albumId = albumUrlMatcher.group(1);
-      return ImgurAlbumUnresolvedLink.create(albumUrl, albumId);
-    } else {
-      throw new IllegalStateException("Couldn't match regex. Album URL: " + albumUrl);
-    }
-  }
-
-  public static ImgurLink createImgurLink(String url, @Nullable String title, @Nullable String description) {
+  public ImgurLink createImgurLink(String url, @Nullable String title, @Nullable String description) {
     // Convert GIFs to MP4s that are insanely light weight in size.
     String[] gifFormats = new String[] { ".gif", ".gifv" };
     for (String gifFormat : gifFormats) {
@@ -314,8 +264,8 @@ public class UrlParser {
    * <p>
    * https://gfycat.com/MessySpryAfricancivet
    */
-  private static Link createGfycatLink(Uri gfycatURI) {
-    Matcher matcher = GFYCAT_ID_PATTERN.matcher(gfycatURI.getPath());
+  private Link createGfycatLink(Uri gfycatURI) {
+    Matcher matcher = config.gfycatIdPattern().matcher(gfycatURI.getPath());
     if (matcher.matches()) {
       String gfycatThreeWordId = matcher.group(1);
       String url = gfycatURI.getScheme() + "://gfycat.com" + gfycatThreeWordId;
@@ -329,11 +279,11 @@ public class UrlParser {
     }
   }
 
-  private static Link createGiphyLink(Uri giphyURI) {
+  private Link createGiphyLink(Uri giphyURI) {
     String url = giphyURI.toString();
     String urlPath = giphyURI.getPath();
 
-    Matcher giphyIdMatcher = GIPHY_ID_PATTERN.matcher(urlPath);
+    Matcher giphyIdMatcher = config.giphyIdPattern().matcher(urlPath);
     if (giphyIdMatcher.matches()) {
       String videoId = giphyIdMatcher.group(1);
       String gifVideoUrl = giphyURI.getScheme() + "://i.giphy.com/" + videoId + ".mp4";
@@ -345,10 +295,10 @@ public class UrlParser {
     }
   }
 
-  private static Link createUnresolvedStreamableLink(Uri streamableUri) {
+  private Link createUnresolvedStreamableLink(Uri streamableUri) {
     String url = streamableUri.toString();
 
-    Matcher streamableIdMatcher = STREAMABLE_ID_PATTERN.matcher(streamableUri.getPath());
+    Matcher streamableIdMatcher = config.streamableIdPattern().matcher(streamableUri.getPath());
     if (streamableIdMatcher.matches()) {
       String videoId = streamableIdMatcher.group(1);
       return StreamableUnresolvedLink.create(url, videoId);
@@ -357,10 +307,6 @@ public class UrlParser {
       // Fallback.
       return ExternalLink.create(url);
     }
-  }
-
-  static boolean isImgurAlbum(String urlPath) {
-    return IMGUR_ALBUM_PATTERN.matcher(urlPath).matches();
   }
 
   private static boolean isUnsupportedImgurLink(String urlPath) {
@@ -395,10 +341,10 @@ public class UrlParser {
     return urlHost.endsWith("play.google.com") && uriPath.startsWith("/store");
   }
 
-  public static void clearCache() {
+  public void clearCache() {
     if (!BuildConfig.DEBUG) {
       throw new AssertionError();
     }
-    cache.evictAll();
+    cache.invalidateAll();
   }
 }

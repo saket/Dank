@@ -14,6 +14,7 @@ import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.notifs.MessageNotifActionsJobService;
 import me.saket.dank.notifs.MessagesNotificationManager;
+import me.saket.dank.ui.PlaygroundActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.UploadImageDialog;
@@ -118,4 +119,6 @@ public interface DankAppComponent {
   void inject(CommentOptionsPopup target);
 
   void inject(LinkOptionsPopup target);
+
+  void inject(PlaygroundActivity target);
 }

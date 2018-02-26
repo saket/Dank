@@ -128,7 +128,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Trio;
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
@@ -191,6 +191,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   @Inject Lazy<OnLoginRequireListener> onLoginRequireListener;
   @Inject Lazy<VotingManager> votingManager;
   @Inject Lazy<UserSessionRepository> userSessionRepository;
+  @Inject Lazy<UrlParser> urlParser;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
@@ -1261,7 +1262,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   private void loadSubmissionContent(Submission submission) {
-    Single.fromCallable(() -> UrlParser.parse(submission.getUrl(), submission))
+    Single.fromCallable(() -> urlParser.get().parse(submission.getUrl(), submission))
         .subscribeOn(io())
         .observeOn(mainThread())
         .flatMap(parsedLink -> {

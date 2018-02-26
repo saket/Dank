@@ -74,7 +74,7 @@ import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
 import me.saket.dank.utils.StreamableRepository;
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -306,10 +306,10 @@ public class DankAppModule {
 
   @Provides
   @Singleton
-  DankLinkMovementMethod provideBetterLinkMovementMethod(UrlRouter urlRouter) {
+  DankLinkMovementMethod provideBetterLinkMovementMethod(UrlRouter urlRouter, UrlParser urlParser) {
     DankLinkMovementMethod linkMovementMethod = DankLinkMovementMethod.newInstance();
     linkMovementMethod.setOnLinkClickListener((textView, url) -> {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
       Point clickedUrlCoordinates = linkMovementMethod.getLastUrlClickCoordinates();
 
       if (parsedLink instanceof RedditUserLink) {
@@ -415,8 +415,17 @@ public class DankAppModule {
   @Singleton
   @Named("markdown")
   Cache<String, CharSequence> provideMarkdownCache() {
-    return CacheBuilder.<String, CharSequence>newBuilder()
+    return CacheBuilder.newBuilder()
         .expireAfterAccess(15, TimeUnit.MINUTES)
+        .build();
+  }
+
+  @Provides
+  @Singleton
+  @Named("url_parser")
+  Cache<String, Link> provideUrlParserCache() {
+    return CacheBuilder.newBuilder()
+        .maximumSize(100)
         .build();
   }
 }

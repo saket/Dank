@@ -100,7 +100,8 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
   @Override
   public SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer() {
     // Should never get used.
-    return new SubmissionPageAnimationOptimizer() {
+    //noinspection ConstantConditions
+    return new SubmissionPageAnimationOptimizer(null) {
       @Override
       public boolean isOptimizationPending() {
         throw new AssertionError();

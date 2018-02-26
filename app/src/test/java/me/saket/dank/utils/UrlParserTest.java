@@ -12,6 +12,8 @@ import android.text.Spannable;
 import android.text.TextUtils;
 import android.util.Patterns;
 
+import com.nytimes.android.external.cache3.CacheBuilder;
+
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -35,6 +37,8 @@ import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.data.links.StreamableUnresolvedLink;
+import me.saket.dank.urlparser.UrlParser;
+import me.saket.dank.urlparser.UrlParserConfig;
 
 @RunWith(PowerMockRunner.class)
 @PrepareForTest({ Uri.class, TextUtils.class, Html.class })
@@ -47,8 +51,12 @@ public class UrlParserTest {
       "http://imgur.com/t/a_day_in_the_life/85Egn",
   };
 
+  private UrlParser urlParser;
+
   @Before
   public void setUp() {
+    urlParser = new UrlParser(CacheBuilder.newBuilder().build(), new UrlParserConfig());
+
     PowerMockito.mockStatic(Uri.class);
 
     PowerMockito.mockStatic(TextUtils.class);
@@ -75,7 +83,7 @@ public class UrlParserTest {
   public void parseEmail() {
     String url = "saket@saket.me";
 
-    Link parsedLink = UrlParser.parse(url);
+    Link parsedLink = urlParser.parse(url);
 
     assertEquals(parsedLink instanceof ExternalLink, true);
     assertEquals(parsedLink.type(), Link.Type.EXTERNAL);
@@ -86,7 +94,7 @@ public class UrlParserTest {
   public void whenGivenGibberish_shouldParseAsAnExternalLink() {
     String url = "iturnedmyselfintoapickle";
 
-    Link parsedLink = UrlParser.parse(url);
+    Link parsedLink = urlParser.parse(url);
 
     assertEquals(parsedLink instanceof ExternalLink, true);
     assertEquals(parsedLink.type(), Link.Type.EXTERNAL);
@@ -100,7 +108,7 @@ public class UrlParserTest {
   public void parseRedditSubmission_whenUrlOnlyHasSubmissionId() {
     String url = "https://www.reddit.com/comments/656e5z";
 
-    Link parsedLink = UrlParser.parse(url);
+    Link parsedLink = urlParser.parse(url);
 
     assertEquals(parsedLink instanceof RedditSubmissionLink, true);
     assertEquals(((RedditSubmissionLink) parsedLink).id(), "656e5z");
@@ -118,7 +126,7 @@ public class UrlParserTest {
     };
 
     for (String url : urls) {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
 
       assertEquals(parsedLink instanceof RedditSubmissionLink, true);
       assertEquals(((RedditSubmissionLink) parsedLink).id(), "60e610");
@@ -132,7 +140,7 @@ public class UrlParserTest {
   public void parseRedditSubmission_whenUrlHasSubmissionId_andCommentId() {
     String url = "https://www.reddit.com/comments/5zm7tt/is_anyone_using_services_nowadays/dezzmre/";
 
-    Link parsedLink = UrlParser.parse(url);
+    Link parsedLink = urlParser.parse(url);
 
     assertEquals(parsedLink instanceof RedditSubmissionLink, true);
     assertEquals(((RedditSubmissionLink) parsedLink).id(), "5zm7tt");
@@ -146,7 +154,7 @@ public class UrlParserTest {
   public void parseRedditSubmission_whenUrlHasSubredditName_andSubmissionId_andCommentId() {
     String url = "https://www.reddit.com/r/androiddev/comments/5zm7tt/is_anyone_using_services_nowadays/dezzmre/";
 
-    Link parsedLink = UrlParser.parse(url);
+    Link parsedLink = urlParser.parse(url);
 
     assertEquals(parsedLink instanceof RedditSubmissionLink, true);
     assertEquals(((RedditSubmissionLink) parsedLink).id(), "5zm7tt");
@@ -160,7 +168,7 @@ public class UrlParserTest {
   public void parseRedditSubmission_whenUrlHasSubredditName_andSubmissionId_andCommentId_andCommentContext() {
     String url = "https://www.reddit.com/r/androiddev/comments/5zm7tt/is_anyone_using_services_nowadays/dezzmre/?context=100";
 
-    Link parsedLink = UrlParser.parse(url);
+    Link parsedLink = urlParser.parse(url);
 
     assertEquals(parsedLink instanceof RedditSubmissionLink, true);
     assertEquals(((RedditSubmissionLink) parsedLink).id(), "5zm7tt");
@@ -175,7 +183,7 @@ public class UrlParserTest {
     String[] urls = { "https://redd.it/5524cd", "http://i.reddit.com/5524cd" };
 
     for (String url : urls) {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
 
       assertEquals(parsedLink instanceof RedditSubmissionLink, true);
       assertEquals(((RedditSubmissionLink) parsedLink).id(), "5524cd");
@@ -188,7 +196,7 @@ public class UrlParserTest {
   public void parseLiveThreadUrl() {
     String url = "https://www.reddit.com/live/ysrfjcdc2lt1";
 
-    Link parsedLink = UrlParser.parse(url);
+    Link parsedLink = urlParser.parse(url);
     assertEquals(parsedLink instanceof ExternalLink, true);
   }
 
@@ -197,7 +205,7 @@ public class UrlParserTest {
   public void parseSubredditUrl() {
     String url = "https://www.reddit.com/r/pics";
 
-    Link parsedLink = UrlParser.parse(url);
+    Link parsedLink = urlParser.parse(url);
 
     assertEquals(parsedLink instanceof RedditSubredditLink, true);
     assertEquals(((RedditSubredditLink) parsedLink).name(), "pics");
@@ -208,7 +216,7 @@ public class UrlParserTest {
   public void parseUserUrl() {
     String[] urls = { "https://www.reddit.com/u/saketme", "https://www.reddit.com/u/saketme/" };
     for (String url : urls) {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
 
       assertEquals(parsedLink instanceof RedditUserLink, true);
       assertEquals(((RedditUserLink) parsedLink).name(), "saketme");
@@ -223,7 +231,7 @@ public class UrlParserTest {
     };
 
     for (String url : urls) {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
       assertEquals(true, parsedLink instanceof RedditSubmissionLink);
     }
   }
@@ -245,14 +253,14 @@ public class UrlParserTest {
     };
 
     for (String url : imageUrls) {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
 
       assertEquals(parsedLink instanceof MediaLink, true);
       assertEquals(parsedLink.type(), Link.Type.SINGLE_IMAGE);
     }
 
     for (String url : gifUrls) {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
 
       assertEquals(parsedLink instanceof MediaLink, true);
       assertEquals(parsedLink.type(), Link.Type.SINGLE_GIF);
@@ -266,7 +274,7 @@ public class UrlParserTest {
         "https://v.reddit.com/fjpqnd127wf01"
     };
     for (String videoUrl : videoUrls) {
-      Link parsedLink = UrlParser.parse(videoUrl);
+      Link parsedLink = urlParser.parse(videoUrl);
       assertEquals(true, parsedLink instanceof RedditHostedVideoLink);
     }
   }
@@ -275,27 +283,16 @@ public class UrlParserTest {
   public void parseImgurAlbumUrls() {
     for (String url : IMGUR_ALBUM_URLS) {
       try {
-        Link parsedLink = UrlParser.parse(url);
+        Link parsedLink = urlParser.parse(url);
         assertEquals(parsedLink instanceof ImgurAlbumUnresolvedLink, true);
 
       } catch (Exception e) {
         throw new IllegalStateException("Exception for url: " + url, e);
       }
     }
-  }
 
-  @Test
-  public void isImgurAlbum() throws Exception {
-    for (String imgurAlbumUrl : IMGUR_ALBUM_URLS) {
-      Uri mockUri = createMockUriFor(imgurAlbumUrl);
-
-      boolean isImgurAlbum = UrlParser.isImgurAlbum(mockUri.getPath());
-
-      assertEquals(isImgurAlbum, true);
-    }
-
-    boolean isRandomAddressAnImgurAlbum = UrlParser.isImgurAlbum("http://i.imgur.com/0Jp0l2R.jpg");
-    assertEquals(isRandomAddressAnImgurAlbum, false);
+    Link link = urlParser.parse("http://i.imgur.com/0Jp0l2R.jpg");
+    assertEquals(false, link instanceof ImgurAlbumUnresolvedLink);
   }
 
   @Test
@@ -307,18 +304,18 @@ public class UrlParserTest {
     };
 
     for (String url : imageUrls) {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
       assertEquals(parsedLink instanceof ImgurLink, true);
       assertEquals(parsedLink.type(), Link.Type.SINGLE_IMAGE);
     }
 
-    Link parsedGifLink = UrlParser.parse("https://i.imgur.com/cuPUfRY.gif");
+    Link parsedGifLink = urlParser.parse("https://i.imgur.com/cuPUfRY.gif");
     assertEquals(parsedGifLink instanceof ImgurLink, true);
     assertEquals(parsedGifLink.type(), Link.Type.SINGLE_VIDEO);
 
     // Redirects to a GIF, but Dank will recognize it as a static image.
     // Glide will eventually load a GIF though.
-    Link parsedGifLinkWithoutExtension = UrlParser.parse("https://imgur.com/a/qU24g");
+    Link parsedGifLinkWithoutExtension = urlParser.parse("https://imgur.com/a/qU24g");
     assertEquals(parsedGifLinkWithoutExtension instanceof ImgurAlbumUnresolvedLink, true);
   }
 
@@ -333,7 +330,7 @@ public class UrlParserTest {
     };
 
     for (String url : urls) {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
 
       assertEquals(parsedLink instanceof GiphyLink, true);
       assertEquals(parsedLink.type(), Link.Type.SINGLE_VIDEO);
@@ -354,7 +351,7 @@ public class UrlParserTest {
     gfycatUrlMap.put("https://zippy.gfycat.com/CompetentRemoteBurro.webm", "https://gfycat.com/CompetentRemoteBurro");
 
     gfycatUrlMap.forEach((url, normalizedUrl) -> {
-      Link parsedLink = UrlParser.parse(url);
+      Link parsedLink = urlParser.parse(url);
 
       assertEquals(parsedLink instanceof GfycatLink, true);
       assertEquals(parsedLink.type(), Link.Type.SINGLE_VIDEO);
@@ -366,7 +363,7 @@ public class UrlParserTest {
   public void parseStreamableUrl() {
     String url = "https://streamable.com/jawcl";
 
-    Link parsedLink = UrlParser.parse(url);
+    Link parsedLink = urlParser.parse(url);
 
     assertEquals(parsedLink instanceof StreamableUnresolvedLink, true);
     assertEquals(((StreamableUnresolvedLink) parsedLink).videoId(), "jawcl");

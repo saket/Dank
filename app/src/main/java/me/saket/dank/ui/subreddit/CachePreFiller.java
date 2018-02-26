@@ -40,12 +40,12 @@ import me.saket.dank.ui.submission.SubmissionImageHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionContentLinkUiConstructor;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
-import me.saket.dank.utils.UrlParser;
 
 /**
  * Pre-fetches submission content and comments.
@@ -63,6 +63,7 @@ public class CachePreFiller {
 
   private final Lazy<Scheduler> preFillingScheduler;
   private final Lazy<Map<CachePreFillThing, Preference<NetworkStrategy>>> preFillingNetworkStrategies;
+  private final Lazy<UrlParser> urlParser;
 
   // Key: <submission-fullname>_<CachePreFillThing>.
   private Set<String> completedPreFills = new HashSet<>(50);
@@ -74,6 +75,7 @@ public class CachePreFiller {
       NetworkStateListener networkStateListener,
       MediaHostRepository mediaHostRepository,
       LinkMetadataRepository linkMetadataRepository,
+      Lazy<UrlParser> urlParser,
       @Named("cache_pre_filling") Lazy<Scheduler> preFillingScheduler,
       @Named("cache_pre_filling_network_strategies") Lazy<Map<CachePreFillThing, Preference<NetworkStrategy>>> preFillingNetworkStrategies)
   {
@@ -82,6 +84,7 @@ public class CachePreFiller {
     this.networkStateListener = networkStateListener;
     this.mediaHostRepository = mediaHostRepository;
     this.linkMetadataRepository = linkMetadataRepository;
+    this.urlParser = urlParser;
     this.preFillingNetworkStrategies = preFillingNetworkStrategies;
     this.preFillingScheduler = preFillingScheduler;
   }
@@ -92,7 +95,7 @@ public class CachePreFiller {
     Observable<Pair<Submission, Link>> submissionAndContentLinkStream = Observable.fromIterable(submissions)
         .take(SUBMISSION_LIMIT_PER_SUBREDDIT)
         .map(submission -> {
-          Link contentLink = UrlParser.parse(submission.getUrl(), submission);
+          Link contentLink = urlParser.get().parse(submission.getUrl(), submission);
           return Pair.create(submission, contentLink);
         });
 

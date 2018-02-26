@@ -37,6 +37,7 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import dagger.Lazy;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -48,9 +49,9 @@ import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
@@ -72,6 +73,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @Inject MessagesNotificationManager messagesNotifManager;
   @Inject UserSessionRepository userSessionRepository;
   @Inject InboxRepository inboxRepository;
+  @Inject Lazy<UrlParser> urlParser;
 
   private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.ALL.length);
   private InboxPagerAdapter inboxPagerAdapter;
@@ -241,7 +243,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
     if (message.isComment()) {
       String commentUrl = "https://reddit.com" + message.getDataNode().get(DankRedditClient.CONTEXT_QUERY_PARAM).asText();
-      Link parsedLink = UrlParser.parse(commentUrl);
+      Link parsedLink = urlParser.get().parse(commentUrl);
       urlRouter.forLink(parsedLink)
           .expandFrom(messageItemViewRect)
           .open(this);

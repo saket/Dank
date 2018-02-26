@@ -2,11 +2,14 @@ package me.saket.dank.ui.subreddit;
 
 import net.dean.jraw.models.Submission;
 
+import javax.inject.Inject;
+
+import dagger.Lazy;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 
 /**
  * Animating {@link SubmissionPageLayout}'s entry while loading data at the same time is expensive.
@@ -15,12 +18,18 @@ import me.saket.dank.utils.UrlParser;
  */
 public class SubmissionPageAnimationOptimizer {
 
+  private final Lazy<UrlParser> urlParser;
   private boolean linkDetailsViewLaidOut;
   private boolean contentImageViewLaidOut;
   private boolean contentVideoViewLaidOut;
 
+  @Inject
+  public SubmissionPageAnimationOptimizer(Lazy<UrlParser> urlParser) {
+    this.urlParser = urlParser;
+  }
+
   public void trackSubmissionOpened(Submission submission) {
-    Single.fromCallable(() -> UrlParser.parse(submission.getUrl(), submission))
+    Single.fromCallable(() -> urlParser.get().parse(submission.getUrl(), submission))
         .subscribeOn(Schedulers.io())
         .subscribe(submissionContentLink -> trackSubmissionOpened(submissionContentLink));
   }
@@ -56,7 +65,7 @@ public class SubmissionPageAnimationOptimizer {
       return false;
     }
 
-    Link submissionContentLink = UrlParser.parse(submission.getUrl(), submission);
+    Link submissionContentLink = urlParser.get().parse(submission.getUrl(), submission);
     boolean needsDelay;
 
     switch (submissionContentLink.type()) {

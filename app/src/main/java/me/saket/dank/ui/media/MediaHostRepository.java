@@ -3,20 +3,24 @@ package me.saket.dank.ui.media;
 import static java.util.Collections.unmodifiableList;
 
 import android.support.annotation.CheckResult;
+
 import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
 import com.squareup.moshi.JsonDataException;
 import com.squareup.moshi.Moshi;
-import io.reactivex.Observable;
-import io.reactivex.Single;
+
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
+
+import dagger.Lazy;
+import io.reactivex.Observable;
+import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.CachedResolvedLinkInfo;
 import me.saket.dank.data.FileUploadProgressEvent;
@@ -34,9 +38,9 @@ import me.saket.dank.data.links.StreamableUnresolvedLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyRepository;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.StoreFilePersister;
 import me.saket.dank.utils.StreamableRepository;
-import me.saket.dank.utils.UrlParser;
 import me.saket.dank.utils.Urls;
 import okio.BufferedSource;
 
@@ -50,14 +54,21 @@ public class MediaHostRepository {
   private final ImgurRepository imgurRepository;
   private final GiphyRepository giphyRepository;
   private final Store<MediaLink, MediaLink> cacheStore;
+  private final Lazy<UrlParser> urlParser;
 
   @Inject
-  public MediaHostRepository(StreamableRepository streamableRepository, ImgurRepository imgurRepository, FileSystem cacheFileSystem, Moshi moshi,
-      GiphyRepository giphyRepository)
+  public MediaHostRepository(
+      StreamableRepository streamableRepository,
+      ImgurRepository imgurRepository,
+      FileSystem cacheFileSystem,
+      Moshi moshi,
+      GiphyRepository giphyRepository,
+      Lazy<UrlParser> urlParser)
   {
     this.streamableRepository = streamableRepository;
     this.imgurRepository = imgurRepository;
     this.giphyRepository = giphyRepository;
+    this.urlParser = urlParser;
 
     StoreFilePersister.JsonParser<MediaLink, MediaLink> jsonParser = new MediaLinkStoreJsonParser(moshi);
     PathResolver<MediaLink> pathResolver = key -> key.getClass().getSimpleName() + "_" + Urls.parseFileNameWithExtension(key.unparsedUrl());
@@ -137,7 +148,7 @@ public class MediaHostRepository {
 
             } else {
               // Single image.
-              return ((MediaLink) UrlParser.parse(imgurResponse.images().get(0).url()));
+              return ((MediaLink) urlParser.get().parse(imgurResponse.images().get(0).url()));
             }
           });
 
@@ -149,7 +160,7 @@ public class MediaHostRepository {
   private List<ImgurLink> convertImgurImagesToImgurMediaLinks(List<ImgurImage> imgurImages) {
     List<ImgurLink> imgurImageLinks = new ArrayList<>(imgurImages.size());
     for (ImgurImage imgurImage : imgurImages) {
-      imgurImageLinks.add(UrlParser.createImgurLink(imgurImage.url(), imgurImage.title(), imgurImage.description()));
+      imgurImageLinks.add(urlParser.get().createImgurLink(imgurImage.url(), imgurImage.title(), imgurImage.description()));
     }
     return imgurImageLinks;
   }

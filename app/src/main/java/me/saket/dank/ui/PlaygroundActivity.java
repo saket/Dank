@@ -6,14 +6,20 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.PopupMenu;
 import android.widget.Button;
+
+import javax.inject.Inject;
+
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserProfilePopup;
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 
 public class PlaygroundActivity extends DankPullCollapsibleActivity {
+
+  @Inject UrlParser urlParser;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, PlaygroundActivity.class));
@@ -21,6 +27,7 @@ public class PlaygroundActivity extends DankPullCollapsibleActivity {
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
+    Dank.dependencyInjector().inject(this);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_playground);
     ButterKnife.bind(this);
@@ -33,7 +40,7 @@ public class PlaygroundActivity extends DankPullCollapsibleActivity {
   @OnClick(R.id.playground_user_profile_popup)
   void onClickShowProfilePopup(Button button) {
     UserProfilePopup userProfilePopup = new UserProfilePopup(this);
-    userProfilePopup.loadUserProfile((RedditUserLink) UrlParser.parse("http://reddit.com/u/kn0thing"));
+    userProfilePopup.loadUserProfile((RedditUserLink) urlParser.parse("http://reddit.com/u/kn0thing"));
     userProfilePopup.showWithAnchor(button);
   }
 

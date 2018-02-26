@@ -26,7 +26,7 @@ import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.webview.WebViewActivity;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 
 @Singleton
 public class UrlRouter {

@@ -9,7 +9,7 @@ import java.util.NoSuchElementException;
 
 import me.saket.dank.BuildConfig;
 import me.saket.dank.utils.Optional;
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 import timber.log.Timber;
 
 public class ImageWithMultipleVariants {

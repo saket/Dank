@@ -38,7 +38,7 @@ public class MessagesNotificationManagerTest {
       }
     };
 
-    notificationManager = new MessagesNotificationManager(seenUnreadMessagesIdStore, null);
+    notificationManager = new MessagesNotificationManager(seenUnreadMessagesIdStore, null, null);
   }
 
   @Test

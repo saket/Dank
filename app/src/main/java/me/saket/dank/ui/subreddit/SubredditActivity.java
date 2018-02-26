@@ -87,7 +87,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.RxUtils;
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.widgets.DankToolbar;
@@ -135,12 +135,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Inject SubredditUiConstructor uiConstructor;
   @Inject SubredditSubmissionsAdapter submissionsAdapter;
   @Inject Lazy<UrlRouter> urlRouter;
+  @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<VotingManager> votingManager;
+  @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
 
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
   private PublishRelay<Object> forceRefreshSubmissionsRequestStream = PublishRelay.create();
-  private SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer = new SubmissionPageAnimationOptimizer();
   private BehaviorRelay<Boolean> toolbarRefreshVisibilityStream = BehaviorRelay.createDefault(true);
 
   protected static void addStartExtrasToIntent(RedditSubredditLink subredditLink, @Nullable Rect expandFromShape, Intent intent) {
@@ -356,7 +357,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
               .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : DankRedditClient.DEFAULT_COMMENT_SORT)
               .build();
 
-          long delay = submissionPageAnimationOptimizer.shouldDelayLoad(submission)
+          long delay = submissionPageAnimationOptimizer.get().shouldDelayLoad(submission)
               ? submissionPage.getAnimationDurationMillis()
               : 0;
 
@@ -364,7 +365,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
               .takeUntil(lifecycle().onDestroy().ignoreElements())
               .subscribe(o -> {
                 submissionPage.populateUi(Optional.of(submission), submissionRequest, Optional.of(currentSubredditName));
-                submissionPageAnimationOptimizer.trackSubmissionOpened(submission);
+                submissionPageAnimationOptimizer.get().trackSubmissionOpened(submission);
               });
 
           submissionPage.post(() ->
@@ -384,7 +385,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .takeUntil(lifecycle().onDestroy())
         .subscribe(event -> {
           Submission submission = event.submission();
-          Link contentLink = UrlParser.parse(submission.getUrl(), submission);
+          Link contentLink = urlParser.get().parse(submission.getUrl(), submission);
 
           switch (contentLink.type()) {
             case SINGLE_IMAGE:
@@ -603,7 +604,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
 
   @Override
   public SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer() {
-    return submissionPageAnimationOptimizer;
+    return submissionPageAnimationOptimizer.get();
   }
 
 // ======== SORTING MODE ======== //

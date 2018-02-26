@@ -23,6 +23,7 @@ import io.reactivex.Completable;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.SubredditSubscriptionManager;
+import me.saket.dank.data.VotingManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -30,7 +31,7 @@ import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.utils.RxUtils;
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 @SuppressLint("SetTextI18n")
@@ -45,6 +46,8 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @Inject SubredditSubscriptionManager subscriptionManager;
   @Inject ReplyRepository replyRepository;
   @Inject LinkMetadataRepository linkMetadataRepository;
+  @Inject VotingManager votingManager;
+  @Inject UrlParser urlParser;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
@@ -97,7 +100,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     });
 
     addButton("Clear pending votes", o -> {
-      Dank.voting().removeAll()
+      votingManager.removeAll()
           .subscribeOn(io())
           .subscribe();
     });
@@ -114,7 +117,9 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           .subscribe();
     });
 
-    addButton("Clear UrlParser cache", o -> UrlParser.clearCache());
+    addButton("Clear UrlParser cache", o -> {
+      urlParser.clearCache();
+    });
   }
 
   private void addButton(String label, View.OnClickListener clickListener) {

@@ -37,7 +37,7 @@ import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
 import timber.log.Timber;

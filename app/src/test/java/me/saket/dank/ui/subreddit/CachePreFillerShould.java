@@ -37,6 +37,7 @@ import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxUtils;
@@ -52,6 +53,7 @@ public class CachePreFillerShould {
   @Mock NetworkStateListener networkStateListener;
   @Mock MediaHostRepository mediaHostRepo;
   @Mock LinkMetadataRepository linkMetadataRepo;
+  @Mock UrlParser urlParser;
   @Mock HashMap<CachePreFillThing, Preference<NetworkStrategy>> networkStrategies;
 
   private CachePreFiller cachePreFiller;
@@ -66,6 +68,7 @@ public class CachePreFillerShould {
         networkStateListener,
         mediaHostRepo,
         linkMetadataRepo,
+        () -> urlParser,
         () -> Schedulers.computation(),
         () -> networkStrategies);
 

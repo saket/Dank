@@ -1,6 +1,6 @@
 package me.saket.dank.data.links;
 
-import me.saket.dank.utils.UrlParser;
+import me.saket.dank.urlparser.UrlParser;
 
 /**
  * An image, GIF or a video. See implementations.
