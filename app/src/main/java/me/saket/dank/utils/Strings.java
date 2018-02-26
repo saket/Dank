@@ -1,6 +1,7 @@
 package me.saket.dank.utils;
 
 import android.content.res.Resources;
+import android.support.annotation.Nullable;
 
 import java.text.DecimalFormat;
 import java.util.Collection;
@@ -63,10 +64,15 @@ public class Strings {
   }
 
   public static String substringWithBounds(String string, int endIndex) {
-    return string.substring(0, Math.min(string.length(), endIndex));
+    int bound = Math.min(string.length(), endIndex);
+    String substringWithBounds = string.substring(0, bound);
+    if (string.length() > bound) {
+      substringWithBounds += "...";
+    }
+    return substringWithBounds;
   }
 
-  public static boolean isNullOrEmpty(CharSequence string) {
+  public static boolean isNullOrEmpty(@Nullable CharSequence string) {
     return string == null || string.length() == 0;
   }
 }
