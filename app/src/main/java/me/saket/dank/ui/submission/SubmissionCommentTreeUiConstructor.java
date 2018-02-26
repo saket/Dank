@@ -206,7 +206,10 @@ public class SubmissionCommentTreeUiConstructor {
             votingManager.get().streamChanges().observeOn(scheduler),
             (submission, pendingSyncRepliesMap, focusedComment, o, oo) -> {
               String submissionAuthor = submission.getAuthor();
-              return constructComments(context, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);
+              final long startTime = System.currentTimeMillis();
+              List<SubmissionScreenUiModel> p = constructComments(context, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);
+              Timber.i("comments in: %sms", System.currentTimeMillis() - startTime);
+              return p;
             })
         .as(immutable());
   }

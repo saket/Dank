@@ -20,6 +20,8 @@ import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.nytimes.android.external.cache3.Cache;
+import com.nytimes.android.external.cache3.CacheBuilder;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.fs3.filesystem.FileSystemFactory;
 import com.squareup.moshi.Moshi;
@@ -407,5 +409,14 @@ public class DankAppModule {
   @Named("cache_pre_filling")
   Scheduler cachePreFillingScheduler() {
     return Schedulers.from(Executors.newCachedThreadPool());
+  }
+
+  @Provides
+  @Singleton
+  @Named("markdown")
+  Cache<String, CharSequence> provideMarkdownCache() {
+    return CacheBuilder.<String, CharSequence>newBuilder()
+        .expireAfterAccess(15, TimeUnit.MINUTES)
+        .build();
   }
 }
