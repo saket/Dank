@@ -22,6 +22,7 @@ public class Keyboards {
   public static boolean show(EditText editText) {
     editText.requestFocus();
     InputMethodManager inputMethodManager = (InputMethodManager) editText.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
+    //noinspection ConstantConditions
     return inputMethodManager.showSoftInput(editText, InputMethodManager.SHOW_IMPLICIT);
   }
 
@@ -30,6 +31,7 @@ public class Keyboards {
    */
   public static void hide(Context context, View anyViewInLayout) {
     InputMethodManager inputManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+    //noinspection ConstantConditions
     inputManager.hideSoftInputFromWindow(anyViewInLayout.getWindowToken(), 0);
   }
 

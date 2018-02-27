@@ -45,6 +45,7 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import butterknife.OnLongClick;
 import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
@@ -80,6 +81,7 @@ import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
 import me.saket.dank.ui.subreddit.models.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.subreddit.models.SubredditUiConstructor;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Keyboards;
@@ -87,7 +89,6 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.RxUtils;
-import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.widgets.DankToolbar;
@@ -187,7 +188,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // Restore state of subreddit picker sheet / user profile sheet.
     if (savedState != null) {
       if (savedState.getBoolean(KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE)) {
-        showSubredditPickerSheet();
+        showSubredditPickerSheet(false);
       } else if (savedState.getBoolean(KEY_IS_USER_PROFILE_SHEET_VISIBLE)) {
         showUserProfileSheet();
       }
@@ -667,19 +668,32 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
   @OnClick(R.id.subreddit_toolbar_title)
-  void onClickToolbarTitle() {
+  void onToolbarTitleClick() {
     if (isUserProfileSheetVisible() || isSubredditPickerVisible()) {
       toolbarSheet.collapse();
     } else {
-      showSubredditPickerSheet();
+      showSubredditPickerSheet(false);
     }
+  }
+
+  @OnLongClick(R.id.subreddit_toolbar_title)
+  boolean onToolbarTitleLongClick() {
+    if (!isSubredditPickerVisible() && !isUserProfileSheetVisible()) {
+      showSubredditPickerSheet(true);
+    }
+    return true;
   }
 
 // ======== SUBREDDIT PICKER SHEET ======== //
 
-  void showSubredditPickerSheet() {
-    SubredditPickerSheetView pickerSheet = SubredditPickerSheetView.showIn(toolbarSheet, contentPage);
+  void showSubredditPickerSheet(boolean showKeyboardOnStart) {
+    SubredditPickerSheetView pickerSheet = new SubredditPickerSheetView(this);
+    pickerSheet.showIn(toolbarSheet, contentPage);
     pickerSheet.post(() -> toolbarSheet.expand());
+
+    if (showKeyboardOnStart) {
+      Keyboards.show(pickerSheet.searchView);
+    }
 
     pickerSheet.setCallbacks(new SubredditPickerSheetView.Callbacks() {
       @Override

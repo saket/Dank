@@ -122,12 +122,10 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     void onSubredditsChanged();
   }
 
-  public static SubredditPickerSheetView showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
-    SubredditPickerSheetView subredditPickerView = new SubredditPickerSheetView(toolbarSheet.getContext());
-    subredditPickerView.setActivityRootLayout(activityRootLayout);
-    subredditPickerView.setParentSheet(toolbarSheet);
-    toolbarSheet.addView(subredditPickerView, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
-    return subredditPickerView;
+  public void showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
+    setActivityRootLayout(activityRootLayout);
+    setParentSheet(toolbarSheet);
+    toolbarSheet.addView(this, ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
   }
 
   public SubredditPickerSheetView(Context context) {
