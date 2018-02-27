@@ -39,7 +39,7 @@ public class UrlParserConfig {
    * /MessySpryAfricancivet.webm
    * /MessySpryAfricancivet-mobile.mp4
    */
-  private static final Pattern DEFAULT_GFYCAT_ID_PATTERN = Pattern.compile("^(/[^-.]*).*$");
+  private static final Pattern DEFAULT_GFYCAT_ID_PATTERN_2 = Pattern.compile("^/([^-.]*).*$");
 
   /**
    * Extracts the ID of a giphy link. In these examples, the ID is 'l2JJyLbhqCF4va86c
@@ -87,7 +87,19 @@ public class UrlParserConfig {
   }
 
   Pattern gfycatIdPattern() {
-    return DEFAULT_GFYCAT_ID_PATTERN;
+    return DEFAULT_GFYCAT_ID_PATTERN_2;
+  }
+
+  String gfycatUnparsedUrl(String videoId) {
+    return String.format("https://gfycat.com/%s", videoId);
+  }
+
+  String gfycatHighQualityUrlPlaceholder(String videoId) {
+    return String.format("https://giant.gfycat.com/%s.webm", videoId);
+  }
+
+  String gfycatLowQualityUrlPlaceholder(String videoId) {
+    return String.format("https://thumbs.gfycat.com/%s-mini.mp4", videoId);
   }
 
   Pattern giphyIdPattern() {

@@ -253,14 +253,14 @@ public class UrlParser {
   }
 
   /**
-   * Gfycat uses different type URL structures. This method converts these:
+   * Gfycat uses different type URL structures. This method recognizes these:
    * <p>
    * https://giant.gfycat.com/MessySpryAfricancivet.gif
    * https://thumbs.gfycat.com/MessySpryAfricancivet-size_restricted.gif
    * https://zippy.gfycat.com/MessySpryAfricancivet.webm
    * https://thumbs.gfycat.com/MessySpryAfricancivet-mobile.mp4
    * <p>
-   * to this:
+   * as this:
    * <p>
    * https://gfycat.com/MessySpryAfricancivet
    */
@@ -268,9 +268,9 @@ public class UrlParser {
     Matcher matcher = config.gfycatIdPattern().matcher(gfycatURI.getPath());
     if (matcher.matches()) {
       String gfycatThreeWordId = matcher.group(1);
-      String url = gfycatURI.getScheme() + "://gfycat.com" + gfycatThreeWordId;
-      String highQualityVideoUrl = gfycatURI.getScheme() + "://zippy.gfycat.com" + gfycatURI.getPath() + ".webm";
-      String lowQualityVideoUrl = gfycatURI.getScheme() + "://thumbs.gfycat.com" + gfycatURI.getPath() + "-mobile.mp4";
+      String url = config.gfycatUnparsedUrl(gfycatThreeWordId);
+      String highQualityVideoUrl = config.gfycatHighQualityUrlPlaceholder(gfycatThreeWordId);
+      String lowQualityVideoUrl = config.gfycatLowQualityUrlPlaceholder(gfycatThreeWordId);
       return GfycatLink.create(url, highQualityVideoUrl, lowQualityVideoUrl);
 
     } else {
