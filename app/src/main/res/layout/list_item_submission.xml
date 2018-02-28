@@ -50,7 +50,7 @@
         android:textSize="@dimen/textsize12"
         tools:text="/r/TodayILearned \u00b7 Saketme \u00b7 43 comments" />
 
-      <ImageView
+      <me.saket.dank.ImageViewWithStackTraceName
         android:id="@+id/submission_item_icon"
         android:layout_width="@dimen/subreddit_submission_thumbnail"
         android:layout_height="@dimen/subreddit_submission_thumbnail"
