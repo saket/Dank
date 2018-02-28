@@ -57,7 +57,7 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
           if (!oldContentLink.get().thumbnail().isPresent() && newContentLink.get().thumbnail().isPresent()) {
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_THUMBNAIL);
           }
-          if (oldContentLink.get().icon().isPresent() != newContentLink.get().icon().isPresent()) {
+          if (!oldContentLink.get().icon().equals(newContentLink.get().icon())) {
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_FAVICON);
           }
           if (oldContentLink.get().progressVisible() != newContentLink.get().progressVisible()) {
