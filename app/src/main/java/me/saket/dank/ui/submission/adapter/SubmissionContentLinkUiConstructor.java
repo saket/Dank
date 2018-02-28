@@ -34,10 +34,10 @@ import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Colors;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
-import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.glide.GlideCircularTransformation;
 import timber.log.Timber;
@@ -126,7 +126,7 @@ public class SubmissionContentLinkUiConstructor {
 
     // If neither thumbnail nor icon are present, this gets a default icon.
     // This is used only for showing the favicon and not for generating tint.
-    Observable<Optional<Drawable>> defaultFaviconIfNoImageAvailable = Observable
+    Observable<Optional<Drawable>> faviconStreamWithDefault = Observable
         .combineLatest(sharedFaviconStream, sharedThumbnailStream.map(Optional::isPresent), Pair::create)
         .map(pair -> {
           Optional<Drawable> optionalFavicon = pair.first();
@@ -144,11 +144,16 @@ public class SubmissionContentLinkUiConstructor {
 
     return Observable.combineLatest(
         sharedTitleStream,
-        defaultFaviconIfNoImageAvailable,
+        faviconStreamWithDefault,
         sharedThumbnailStream,
         tintDetailsStream,
         progressVisibleStream,
         (title, optionalFavicon, optionalThumbnail, tintDetails, progressVisible) -> {
+          //noinspection ConstantConditions
+          Optional<Integer> optionalFaviconBackground = optionalThumbnail.isPresent()
+              ? Optional.of(R.drawable.background_submission_link_favicon_circle)
+              : Optional.empty();
+
           return SubmissionContentLinkUiModel.builder()
               .title(title)
               .titleMaxLines(2)
@@ -156,6 +161,7 @@ public class SubmissionContentLinkUiConstructor {
               .byline(Urls.parseDomainName(link.unparsedUrl()))
               .bylineTextColorRes(tintDetails.bylineTextColorRes())
               .icon(optionalFavicon)
+              .iconBackgroundRes(optionalFaviconBackground)
               .thumbnail(optionalThumbnail)
               .progressVisible(progressVisible)
               .backgroundTintColor(tintDetails.backgroundTint())
@@ -244,6 +250,7 @@ public class SubmissionContentLinkUiConstructor {
                 .byline(byline)
                 .bylineTextColorRes(tintDetails.bylineTextColorRes())
                 .icon(Optional.of(favicon))
+                .iconBackgroundRes(Optional.empty())
                 .thumbnail(optionalThumbnail)
                 .progressVisible(progressVisible)
                 .backgroundTintColor(tintDetails.backgroundTint())
@@ -301,6 +308,7 @@ public class SubmissionContentLinkUiConstructor {
                 .byline(byline)
                 .bylineTextColorRes(tintDetails.bylineTextColorRes())
                 .icon(optionalFavicon)
+                .iconBackgroundRes(Optional.empty())
                 .thumbnail(optionalThumbnail)
                 .progressVisible(progressVisible)
                 .backgroundTintColor(tintDetails.backgroundTint())

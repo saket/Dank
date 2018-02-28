@@ -12,7 +12,8 @@ import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
 import java.security.MessageDigest;
 
 public class GlideCircularTransformation extends BitmapTransformation {
-  private static final String ID = "me.saket.dank.utils.glide.GlideCircularTransformation";
+
+  private static final String ID = "dank:GlideCircularTransformation";
   private static final byte[] ID_BYTES = ID.getBytes(CHARSET);
 
   public static final GlideCircularTransformation INSTANCE = new GlideCircularTransformation();

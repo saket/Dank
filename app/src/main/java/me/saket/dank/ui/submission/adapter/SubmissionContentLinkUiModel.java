@@ -24,6 +24,8 @@ public abstract class SubmissionContentLinkUiModel {
 
   public abstract Optional<Drawable> icon();
 
+  public abstract Optional<Integer> iconBackgroundRes();
+
   public abstract Optional<Drawable> thumbnail();
 
   public abstract int titleMaxLines();
@@ -57,6 +59,8 @@ public abstract class SubmissionContentLinkUiModel {
     public abstract Builder bylineTextColorRes(@ColorRes int colorRes);
 
     public abstract Builder icon(Optional<Drawable> icon);
+
+    public abstract Builder iconBackgroundRes(Optional<Integer> icon);
 
     public abstract Builder thumbnail(Optional<Drawable> thumbnail);
 

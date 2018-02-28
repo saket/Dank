@@ -343,6 +343,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .withAddDuration(250));
     submissionList.setExpandablePage(submissionPage, toolbarContainer);
     submissionList.addOnItemTouchListener(new RecyclerSwipeListener(submissionList));
+
+    // Note to self: if adding support for preserving data across orientation changes
+    // is being considered, make sure to also preserve scroll position.
     submissionList.setAdapter(submissionsAdapter);
 
     // Row clicks.

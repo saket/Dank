@@ -3,9 +3,12 @@ package me.saket.dank.ui.user.messages;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-import java.util.List;
-import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
+
 import net.dean.jraw.models.Message;
+
+import java.util.List;
+
+import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
 
 public interface InboxFolderScreenUiModel {
 

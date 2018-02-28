@@ -1,5 +1,6 @@
 package me.saket.dank.ui.preferences;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 
 import android.annotation.SuppressLint;
@@ -13,6 +14,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
 
+import com.bumptech.glide.Glide;
 import com.squareup.sqlbrite2.BriteDatabase;
 
 import javax.inject.Inject;
@@ -30,8 +32,8 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.urlparser.UrlParser;
+import me.saket.dank.utils.RxUtils;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 @SuppressLint("SetTextI18n")
@@ -119,6 +121,15 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
     addButton("Clear UrlParser cache", o -> {
       urlParser.clearCache();
+    });
+
+    addButton("Clear Glide cache", o -> {
+      Completable
+          .fromAction(() -> Glide.get(this).clearDiskCache())
+          .subscribeOn(io())
+          .observeOn(mainThread())
+          .andThen(Completable.fromAction(() -> Glide.get(this).clearMemory()))
+          .subscribe();
     });
   }
 

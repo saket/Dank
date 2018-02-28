@@ -296,8 +296,12 @@ public interface SubmissionCommentsHeader {
     }
 
     private void setContentLinkIcon(SubmissionContentLinkUiModel contentLinkUiModel, boolean animate) {
-      Drawable favicon = contentLinkUiModel.icon().isPresent() ? contentLinkUiModel.icon().get() : null;
-      contentLinkIconView.setImageDrawable(favicon);
+      contentLinkIconView.setImageDrawable(contentLinkUiModel.icon().orElse(null));
+      if (contentLinkUiModel.iconBackgroundRes().isPresent()) {
+        contentLinkIconView.setBackgroundResource(contentLinkUiModel.iconBackgroundRes().get());
+      } else {
+        contentLinkIconView.setBackground(null);
+      }
 
       if (contentLinkUiModel.icon().isPresent()) {
         contentLinkIconView.setVisibility(View.VISIBLE);
