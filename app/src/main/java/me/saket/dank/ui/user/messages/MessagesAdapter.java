@@ -16,7 +16,7 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
-public class MessagesAdapter2 extends RecyclerViewArrayAdapter<InboxFolderScreenUiModel, RecyclerView.ViewHolder>
+public class MessagesAdapter extends RecyclerViewArrayAdapter<InboxFolderScreenUiModel, RecyclerView.ViewHolder>
     implements Consumer<Pair<List<InboxFolderScreenUiModel>, DiffUtil.DiffResult>>
 {
 
@@ -27,7 +27,7 @@ public class MessagesAdapter2 extends RecyclerViewArrayAdapter<InboxFolderScreen
   private final InboxMessageThread.Adapter messageThreadAdapter;
 
   @Inject
-  public MessagesAdapter2(InboxIndividualMessage.Adapter individualMessageAdapter, InboxMessageThread.Adapter messageThreadAdapter) {
+  public MessagesAdapter(InboxIndividualMessage.Adapter individualMessageAdapter, InboxMessageThread.Adapter messageThreadAdapter) {
     this.individualMessageAdapter = individualMessageAdapter;
     this.messageThreadAdapter = messageThreadAdapter;
 

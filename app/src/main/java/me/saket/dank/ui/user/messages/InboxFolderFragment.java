@@ -68,7 +68,7 @@ public class InboxFolderFragment extends DankFragment {
   @Inject InboxRepository inboxRepository;
   @Inject Markdown markdown;
   @Inject Lazy<InboxFolderUiConstructor> uiConstructor;
-  @Inject Lazy<MessagesAdapter2> messagesAdapter;
+  @Inject Lazy<MessagesAdapter> messagesAdapter;
 
   private InboxFolder folder;
   private InfiniteScrollRecyclerAdapter<InboxFolderScreenUiModel, ?> messagesAdapterWithProgress;
