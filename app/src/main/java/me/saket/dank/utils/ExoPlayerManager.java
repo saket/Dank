@@ -43,7 +43,11 @@ public class ExoPlayerManager {
     exoPlayerManager.setupVideoView();
 
     lifecycleStreams.onDestroy().subscribe(o -> exoPlayerManager.releasePlayer());
-    lifecycleStreams.onPause().subscribe(o -> exoPlayerManager.pausePlayback());
+    lifecycleStreams.onPause().subscribe(o -> {
+      if (exoPlayerManager.playerView.isPlaying()) {
+        exoPlayerManager.pausePlayback();
+      }
+    });
     lifecycleStreams.onResume().subscribe(o -> {
       if (exoPlayerManager.wasPlayingUponPause) {
         exoPlayerManager.startPlayback();
@@ -119,9 +123,7 @@ public class ExoPlayerManager {
 
   public void resetPlayback() {
     playerView.suspend();
-    if (playerView.getVideoUri() != null) {
-      playerView.setVideoURI(null);
-    }
+    playerView.setVideoURI(null);
   }
 
   public void startPlayback() {
