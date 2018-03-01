@@ -6,8 +6,7 @@
   android:background="?attr/selectableItemBackground"
   android:orientation="vertical"
   android:paddingTop="@dimen/spacing12"
-  tools:background="@color/window_background"
-  tools:layout_marginTop="25dp">
+  tools:background="@color/window_background">
 
   <TextView
     android:id="@+id/individualmessage_reply_post_title"
@@ -21,11 +20,11 @@
     tools:text="Litho: A Declarative UI Framework for Android" />
 
   <TextView
-    android:id="@+id/individualmessage_reply_timestamp"
+    android:id="@+id/individualmessage_reply_byline"
+    style="@style/DankMessageByline"
     android:layout_marginEnd="@dimen/spacing16"
     android:layout_marginStart="@dimen/spacing16"
-    tools:text="2 days ago"
-    style="@style/DankMessageByline" />
+    tools:text="Comment reply \u00b7 2 days ago" />
 
   <LinearLayout
     android:layout_width="match_parent"
@@ -39,46 +38,19 @@
     android:paddingStart="@dimen/spacing16"
     android:paddingTop="@dimen/spacing12">
 
-    <LinearLayout
+    <!-- TODO: Having 4 TextViews for one line is so shitty. Use spans instead. -->
+    <TextView
+      android:id="@+id/individualmessage_sender_information"
       android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      android:textColor="@color/gray_500"
       android:layout_marginBottom="@dimen/spacing8"
-      android:orientation="horizontal">
-
-      <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing4"
-        android:text="@string/inbox_reply_from"
-        android:textColor="@color/gray_500" />
-
-      <TextView
-        android:id="@+id/individualmessage_reply_author_name"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing4"
-        android:textColor="@color/gray_500"
-        tools:text="saketme" />
-
-      <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginEnd="@dimen/spacing4"
-        android:text="@string/inbox_via"
-        android:textColor="@color/gray_500" />
-
-      <TextView
-        android:id="@+id/individualmessage_reply_from"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textColor="@color/gray_500"
-        tools:text="/r/androiddev" />
-    </LinearLayout>
+      tools:text="Reply from kn0thing via r/Android"
+      android:layout_height="wrap_content" />
 
     <TextView
       android:id="@+id/individualmessage_reply_body"
-      tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..."
-      style="@style/DankMessageBody" />
+      style="@style/DankMessageBody"
+      tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..." />
   </LinearLayout>
 
   <View

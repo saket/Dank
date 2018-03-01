@@ -43,9 +43,9 @@ import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.InfiniteScrollListener;
 import me.saket.dank.utils.InfiniteScrollRecyclerAdapter;
-import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.EmptyStateView;
 import me.saket.dank.widgets.ErrorStateView;
 import timber.log.Timber;
@@ -122,8 +122,6 @@ public class InboxFolderFragment extends DankFragment {
     //noinspection ConstantConditions
     folder = (InboxFolder) getArguments().getSerializable(KEY_FOLDER);
 
-    boolean showMessageThreads = folder == InboxFolder.PRIVATE_MESSAGES;
-
     messagesAdapterWithProgress = InfiniteScrollRecyclerAdapter.wrap(messagesAdapter.get());
     messageRecyclerView.setAdapter(messagesAdapterWithProgress);
     messageRecyclerView.setLayoutManager(new LinearLayoutManager(getActivity()));
@@ -192,8 +190,9 @@ public class InboxFolderFragment extends DankFragment {
 
     // Adapter data-set.
     boolean constructThreads = folder == InboxFolder.PRIVATE_MESSAGES;
+    boolean isUnreadFolder = folder == InboxFolder.UNREAD;
     //noinspection ConstantConditions
-    uiConstructor.get().stream(getContext(), sharedMessageStream, constructThreads)
+    uiConstructor.get().stream(getContext(), sharedMessageStream, constructThreads, isUnreadFolder)
         .toFlowable(BackpressureStrategy.LATEST)
         .compose(RxDiffUtil.calculateDiff(InboxFolderScreenUiModel.ItemDiffer::new))
         .observeOn(mainThread())

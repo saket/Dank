@@ -6,17 +6,20 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
+
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
-import dagger.Lazy;
+
+import net.dean.jraw.models.Message;
+
 import java.util.List;
 import javax.inject.Inject;
+
+import dagger.Lazy;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.utils.DankLinkMovementMethod;
-import me.saket.dank.utils.Optional;
-import net.dean.jraw.models.Message;
 
 public interface InboxIndividualMessage {
 
@@ -26,13 +29,11 @@ public interface InboxIndividualMessage {
     @Override
     public abstract long adapterId();
 
-    public abstract String linkTitle();
+    public abstract String title();
 
-    public abstract String timestamp();
+    public abstract String byline();
 
-    public abstract String authorName();
-
-    public abstract Optional<String> from();
+    public abstract String senderInformation();
 
     public abstract SpannableWithTextEquality body();
 
@@ -46,19 +47,17 @@ public interface InboxIndividualMessage {
 
     public static UiModel create(
         long adapterId,
-        String linkTitle,
-        String timestamp,
-        String authorName,
-        Optional<String> from,
+        String title,
+        String byline,
+        String senderInformation,
         CharSequence body,
         Message message)
     {
       return new AutoValue_InboxIndividualMessage_UiModel(
           adapterId,
-          linkTitle,
-          timestamp,
-          authorName,
-          from,
+          title,
+          byline,
+          senderInformation,
           SpannableWithTextEquality.wrap(body),
           message);
     }
@@ -66,10 +65,9 @@ public interface InboxIndividualMessage {
 
   class ViewHolder extends RecyclerView.ViewHolder {
 
-    private TextView linkTitleView;
-    private TextView timestampView;
-    private TextView authorNameView;
-    private TextView fromView;
+    private TextView titleView;
+    private TextView bylineView;
+    private TextView senderInformationView;
     private TextView messageBodyView;
     private UiModel uiModel;
 
@@ -79,10 +77,9 @@ public interface InboxIndividualMessage {
 
     public ViewHolder(View itemView) {
       super(itemView);
-      linkTitleView = itemView.findViewById(R.id.individualmessage_reply_post_title);
-      timestampView = itemView.findViewById(R.id.individualmessage_reply_timestamp);
-      authorNameView = itemView.findViewById(R.id.individualmessage_reply_author_name);
-      fromView = itemView.findViewById(R.id.individualmessage_reply_from);
+      titleView = itemView.findViewById(R.id.individualmessage_reply_post_title);
+      bylineView = itemView.findViewById(R.id.individualmessage_reply_byline);
+      senderInformationView = itemView.findViewById(R.id.individualmessage_sender_information);
       messageBodyView = itemView.findViewById(R.id.individualmessage_reply_body);
     }
 
@@ -105,11 +102,9 @@ public interface InboxIndividualMessage {
     }
 
     public void render() {
-      linkTitleView.setText(uiModel.linkTitle());
-      timestampView.setText(uiModel.timestamp());
-      authorNameView.setText(uiModel.authorName());
-      fromView.setVisibility(uiModel.from().isPresent() ? View.VISIBLE : View.GONE);
-      uiModel.from().ifPresent(from -> fromView.setText(from));
+      titleView.setText(uiModel.title());
+      bylineView.setText(uiModel.byline());
+      senderInformationView.setText(uiModel.senderInformation());
       messageBodyView.setText(uiModel.body());
     }
   }

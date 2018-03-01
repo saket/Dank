@@ -201,8 +201,6 @@
 
   <!-- Inbox -->
   <string name="activity_inbox">Inbox</string>
-  <string name="inbox_reply_from">Reply from</string>
-  <string name="inbox_via">via</string>
   <string name="inbox_tab_unread">Unread</string>
   <string name="inbox_tab_private_messages">Private messages</string>
   <string name="inbox_tab_comment_replies">Comment replies</string>
@@ -219,10 +217,22 @@
   <string name="inbox_error_failed_to_load_more_messages">Failed to load more messages. Tap to retry.</string>
   <string name="inbox_snippet_sent_by_logged_in_user">You: %s</string>
   <string name="cd_inbox_mark_all_unread_messages_as_read">Mark all unread messages as read</string>
+
+  <string name="inbox_message_byline_for_unread_folder_comment_reply">Comment reply \u00b7 %s</string>
+  <string name="inbox_message_sender_info_for_comment_reply">From %s via %s</string> <!-- From kn0thing via r/Android -->
+
+  <string name="inbox_message_byline_for_unread_folder_post_reply">Post reply \u00b7 %s</string>
+  <string name="inbox_message_sender_info_for_post_reply">From %s via %s</string>
+
+  <string name="inbox_message_byline_for_unread_folder_subreddit_message">Subreddit message \u00b7 %s</string>
+  <string name="inbox_message_sender_info_for_subreddit_message">Via %s</string> <!-- Via r/Android -->
+
+  <string name="inbox_message_byline_for_unread_folder_private_message">Private message \u00b7 %s</string>
+  <string name="inbox_message_sender_info_for_private_message">From %s</string>
+
   <string name="cd_privatemessagethread_fullscreen">Compose reply in the fullscreen editor</string>
   <string name="cd_privatemessagethread_send_message">Send message</string>
   <string name="privatemessagethread_comment_reply_hint">@string/submission_comment_reply_hint</string>
-
   <string name="privatemessagethread_reply_byline_failed_status">@string/submission_comment_reply_byline_failed_status</string>
   <string name="privatemessagethread_reply_byline_posting_status">@string/submission_comment_reply_byline_posting_status</string>
 
