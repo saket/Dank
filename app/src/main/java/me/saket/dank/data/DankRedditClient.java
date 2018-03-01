@@ -54,11 +54,6 @@ import timber.log.Timber;
  */
 public class DankRedditClient {
 
-  // Fullname == prefix + ID.
-  public static final String COMMENT_FULLNAME_PREFIX = "t1_";
-  public static final String SUBMISSION_FULLNAME_PREFIX = "t3_";
-  public static final String MESSAGE_FULLNAME_PREFIX = "t4_";
-
   public static final String CONTEXT_QUERY_PARAM = "context";
   public static final int COMMENT_DEFAULT_CONTEXT_COUNT = 3;
 

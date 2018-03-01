@@ -29,6 +29,7 @@ import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.FullNameType;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Preconditions;
 import timber.log.Timber;
@@ -72,9 +73,9 @@ public class ReplyRepository implements DraftStore {
   public Completable reSendReply(PendingSyncReply pendingSyncReply) {
     String parentThreadFullName = pendingSyncReply.parentThreadFullName();
     ParentThread parentThread;
-    if (parentThreadFullName.startsWith(DankRedditClient.SUBMISSION_FULLNAME_PREFIX)) {
+    if (parentThreadFullName.startsWith(FullNameType.SUBMISSION.prefix())) {
       parentThread = ParentThread.createSubmission(parentThreadFullName);
-    } else if (parentThreadFullName.startsWith(DankRedditClient.MESSAGE_FULLNAME_PREFIX)) {
+    } else if (parentThreadFullName.startsWith(FullNameType.MESSAGE.prefix())) {
       parentThread = ParentThread.createPrivateMessage(parentThreadFullName);
     } else {
       throw new UnsupportedOperationException("Unknown thread name: " + parentThreadFullName);
