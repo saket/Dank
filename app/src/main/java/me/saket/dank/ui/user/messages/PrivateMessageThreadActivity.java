@@ -9,11 +9,8 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
-import android.graphics.drawable.ColorDrawable;
-import android.graphics.drawable.Drawable;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -28,6 +25,7 @@ import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.Message;
+import net.dean.jraw.models.PrivateMessage;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -58,12 +56,12 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
+import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
@@ -94,10 +92,17 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   private Relay<Message> latestMessageStream = BehaviorRelay.create();
   private ContributionFullNameWrapper privateMessageFullName;
 
-  public static Intent intent(Context context, Message message, String threadSecondPartyName, @Nullable Rect expandFromShape) {
+  public static Intent intent(Context context, PrivateMessage privateMessage, String threadSecondPartyName, @Nullable Rect expandFromShape) {
+    String firstMessageFullName = privateMessage.getFirstMessage();
+
+    if (firstMessageFullName == null && JrawUtils.hasMessageReplies(privateMessage)) {
+      firstMessageFullName = privateMessage.getFullName();
+    }
+
     Intent intent = new Intent(context, PrivateMessageThreadActivity.class);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
-    intent.putExtra(KEY_MESSAGE_FULLNAME, ContributionFullNameWrapper.createFrom(message));
+    //noinspection ConstantConditions
+    intent.putExtra(KEY_MESSAGE_FULLNAME, ContributionFullNameWrapper.create(firstMessageFullName));
     intent.putExtra(KEY_THREAD_SECOND_PARTY_NAME, threadSecondPartyName);
     return intent;
   }
@@ -136,17 +141,18 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     messagesAdapter = new ThreadedMessagesAdapter(linkMovementMethod);
     messageRecyclerView.setAdapter(messagesAdapter);
 
-    Drawable itemBackgroundDuringAnimation = new ColorDrawable(ContextCompat.getColor(this, R.color.window_background));
     messageRecyclerView.setItemAnimator(new SlideUpAlphaAnimator()
         .withInterpolator(Animations.INTERPOLATOR)
         .withRemoveDuration(250)
         .withAddDuration(250));
 
     ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageFullName.getFullName());
+    Timber.i("privateMessageThread: %s", privateMessageThread);
 
     Observable<List<PendingSyncReply>> pendingSyncRepliesStream = replyRepository.streamPendingSyncReplies(privateMessageThread);
 
-    Observable<Message> messageThread = inboxRepository.message(privateMessageFullName.getFullName(), InboxFolder.PRIVATE_MESSAGES)
+    Observable<PrivateMessage> messageThread = inboxRepository.message(privateMessageFullName.getFullName(), InboxFolder.PRIVATE_MESSAGES)
+        .cast(PrivateMessage.class)
         .replay(1)
         .refCount();
 
@@ -170,7 +176,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     Observable.combineLatest(messageThread, pendingSyncRepliesStream, Pair::create)
         .subscribeOn(io())
         .map(pair -> {
-          Message parentMessage = pair.first();
+          PrivateMessage parentMessage = pair.first();
           List<Message> messageReplies = JrawUtils.messageReplies(parentMessage);
           List<PendingSyncReply> pendingSyncReplies = pair.second();
           String loggedInUserName = userSessionRepository.loggedInUserName();

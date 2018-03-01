@@ -37,15 +37,16 @@ public class JrawUtils {
     return thing.getDataNode().get("created_utc").longValue() * 1000;
   }
 
-  public static List<Message> messageReplies(Message message) {
-    if (!(message instanceof PrivateMessage)) {
-      throw new AssertionError();
-    }
-
+  public static List<Message> messageReplies(PrivateMessage message) {
     JsonNode repliesNode = message.getDataNode().get("replies");
     return repliesNode.isObject()
         ? new Listing<>(repliesNode.get("data"), Message.class)
         : Collections.emptyList();
+  }
+
+  public static boolean hasMessageReplies(PrivateMessage message) {
+    JsonNode repliesNode = message.getDataNode().get("replies");
+    return repliesNode.isObject();
   }
 
   public static String messageBodyHtml(Message message) {

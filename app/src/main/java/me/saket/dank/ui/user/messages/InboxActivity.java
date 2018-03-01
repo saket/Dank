@@ -27,6 +27,7 @@ import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 
 import net.dean.jraw.models.Message;
+import net.dean.jraw.models.PrivateMessage;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -252,7 +253,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
       String secondPartyName = JrawUtils.secondPartyName(getResources(), message, userSessionRepository.loggedInUserName());
       //noinspection ConstantConditions
       startActivityForResult(
-          PrivateMessageThreadActivity.intent(this, message, secondPartyName, messageItemViewRect),
+          PrivateMessageThreadActivity.intent(this, (PrivateMessage) message, secondPartyName, messageItemViewRect),
           REQUESTCODE_REFRESH_MESSAGES_THREAD_ON_EXIT
       );
     }

@@ -64,7 +64,6 @@ public interface InboxIndividualMessage {
   }
 
   class ViewHolder extends RecyclerView.ViewHolder {
-
     private TextView titleView;
     private TextView bylineView;
     private TextView senderInformationView;

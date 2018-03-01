@@ -45,7 +45,7 @@ public class InboxFolderUiConstructor {
           String loggedInUserName = userSessionRepo.get().loggedInUserName();
           for (Message message : messages) {
             if (constructThreads) {
-              models.add(messageThreadUiModel(c, message, loggedInUserName));
+              models.add(messageThreadUiModel(c, (PrivateMessage) message, loggedInUserName));
             } else {
               models.add(individualMessageUiModel(c, message, isUnreadFolder));
             }
@@ -137,7 +137,7 @@ public class InboxFolderUiConstructor {
     return InboxIndividualMessage.UiModel.create(adapterId, title, byline, senderInformation, body, message);
   }
 
-  private InboxMessageThread.UiModel messageThreadUiModel(Context c, Message messageThread, String loggedInUserName) {
+  private InboxMessageThread.UiModel messageThreadUiModel(Context c, PrivateMessage messageThread, String loggedInUserName) {
     List<Message> replies = JrawUtils.messageReplies(messageThread);
     Message latestMessageInThread = replies.isEmpty()
         ? messageThread
