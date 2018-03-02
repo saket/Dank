@@ -139,14 +139,14 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     FAILED,
   }
 
-  public static void start(Context context, MediaLink mediaLink, @Nullable Thumbnails redditSuppliedImages, JacksonHelper jacksonHelper) {
+  public static Intent intent(Context context, MediaLink mediaLink, @Nullable Thumbnails redditSuppliedImages, JacksonHelper jacksonHelper) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
     intent.putExtra(KEY_MEDIA_LINK_TO_SHOW, mediaLink);
     if (redditSuppliedImages != null) {
       String redditSuppliedImageJson = jacksonHelper.toJson(redditSuppliedImages.getDataNode());
       intent.putExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON, redditSuppliedImageJson);
     }
-    context.startActivity(intent);
+    return intent;
   }
 
   @Override

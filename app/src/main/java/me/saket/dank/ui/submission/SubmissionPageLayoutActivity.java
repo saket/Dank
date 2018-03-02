@@ -38,11 +38,11 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
   /**
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
    */
-  public static void start(Context context, RedditSubmissionLink submissionLink, @Nullable Rect expandFromShape) {
+  public static Intent intent(Context context, RedditSubmissionLink submissionLink, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, SubmissionPageLayoutActivity.class);
     intent.putExtra(KEY_SUBMISSION_LINK, submissionLink);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
-    context.startActivity(intent);
+    return intent;
   }
 
   /**

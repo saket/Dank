@@ -16,6 +16,8 @@ import android.support.v4.app.RemoteInput;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
 
+import com.squareup.moshi.Moshi;
+
 import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
@@ -35,33 +37,34 @@ import me.saket.dank.R;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.ui.user.messages.InboxMessageType;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.markdown.Markdown;
 import timber.log.Timber;
 
 public class MessagesNotificationManager {
 
   private static final int P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_SEEN = 200;
   private static final int P_INTENT_REQ_ID_SUMMARY_MARK_ALL_AS_READ = 201;
-  private static final int P_INTENT_REQ_ID_MARK_AS_READ = 202;
-  private static final int P_INTENT_REQ_ID_MARK_AS_SEEN = 203;
-  private static final int P_INTENT_REQ_ID_DIRECT_REPLY = 204;
-  private static final int P_INTENT_REQ_ID_OPEN_INBOX = 205;
+  private static final int P_INTENT_REQ_ID_OPEN_INBOX = 202;
 
   private final SeenUnreadMessagesIdStore seenMessageIdsStore;
-  private final UserSessionRepository userSessionRepository;
+  private final Lazy<UserSessionRepository> userSessionRepository;
   private final Lazy<Markdown> markdown;
+  private final Lazy<Moshi> moshi;
 
   @Inject
   public MessagesNotificationManager(
       SeenUnreadMessagesIdStore seenMessageIdsStore,
-      UserSessionRepository userSessionRepository,
-      Lazy<Markdown> markdown)
+      Lazy<UserSessionRepository> userSessionRepository,
+      Lazy<Markdown> markdown,
+      Lazy<Moshi> moshi)
   {
     this.seenMessageIdsStore = seenMessageIdsStore;
     this.userSessionRepository = userSessionRepository;
     this.markdown = markdown;
+    this.moshi = moshi;
   }
 
   /**
@@ -95,6 +98,11 @@ public class MessagesNotificationManager {
           updatedSeenMessages.addAll(messageIds);
           return seenMessageIdsStore.save(updatedSeenMessages);
         });
+  }
+
+  @CheckResult
+  public Completable markMessageNotifAsSeen(String messageId) {
+    return markMessageNotifAsSeen(Collections.singletonList(messageId));
   }
 
   @CheckResult
@@ -165,7 +173,7 @@ public class MessagesNotificationManager {
 
   public Completable displayNotification(Context context, List<Message> unreadMessages) {
     return Completable.fromAction(() -> {
-      String loggedInUserName = userSessionRepository.loggedInUserName();
+      String loggedInUserName = userSessionRepository.get().loggedInUserName();
 
       Comparator<Message> oldestMessageFirstComparator = (first, second) -> {
         Date firstDate = first.getCreated();
@@ -208,7 +216,7 @@ public class MessagesNotificationManager {
     PendingIntent onSummaryClickPendingIntent = PendingIntent.getBroadcast(
         context,
         P_INTENT_REQ_ID_OPEN_INBOX,
-        MessageNotifActionReceiver.createMarkAllSeenAndOpenInboxIntent(context, unreadMessages),
+        MessageNotifActionReceiver.createMarkSeenAndOpenInboxIntent(context, unreadMessages),
         PendingIntent.FLAG_UPDATE_CURRENT
     );
 
@@ -225,7 +233,7 @@ public class MessagesNotificationManager {
         .build();
     notificationManager.notify(NotificationConstants.ID_UNREAD_MESSAGES_BUNDLE_SUMMARY, summaryNotification);
 
-    // Add bundled notifications (Nougat+).
+    // Bundled notifications.
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
       Timber.i("%s bundled notifs", unreadMessages.size());
 
@@ -233,14 +241,14 @@ public class MessagesNotificationManager {
         int notificationId = createNotificationIdFor(unreadMessage);
 
         // Mark as read action.
-        PendingIntent markAsReadPendingIntent = createMarkAsReadPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_MARK_AS_READ + notificationId);
+        PendingIntent markAsReadPendingIntent = createMarkAsReadPendingIntent(context, unreadMessage, (int) System.nanoTime());
         Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
 
         // Direct reply action.
         Intent directReplyIntent = MessageNotifActionReceiver.createDirectReplyIntent(context, unreadMessage, Dank.moshi(), notificationId);
         PendingIntent directReplyPendingIntent = PendingIntent.getBroadcast(
             context,
-            P_INTENT_REQ_ID_DIRECT_REPLY + notificationId,
+            (int) System.nanoTime(),
             directReplyIntent,
             PendingIntent.FLAG_UPDATE_CURRENT
         );
@@ -252,13 +260,13 @@ public class MessagesNotificationManager {
             .build();
 
         // Mark as seen on dismissal.
-        PendingIntent deletePendingIntent = createMarkAsSeenPendingIntent(context, unreadMessage, P_INTENT_REQ_ID_MARK_AS_SEEN + notificationId);
+        PendingIntent deletePendingIntent = createMarkAsSeenPendingIntent(context, unreadMessage, (int) System.nanoTime());
 
-        // Open Inbox on click.
+        // Open message on click.
         PendingIntent onClickPendingIntent = PendingIntent.getBroadcast(
             context,
-            P_INTENT_REQ_ID_OPEN_INBOX,
-            MessageNotifActionReceiver.createMarkAsSeenAndOpenInboxIntent(context, unreadMessage),
+            (int) System.nanoTime(),
+            MessageNotifActionReceiver.createMarkAsSeenAndOpenMessageIntent(context, unreadMessage, moshi.get()),
             PendingIntent.FLAG_UPDATE_CURRENT
         );
 
@@ -330,7 +338,9 @@ public class MessagesNotificationManager {
   /**
    * Create an "InboxStyle" notification for multiple unread messages.
    */
-  private NotificationCompat.Builder createMultipleMessagesSummaryNotifBuilder(Context context, List<Message> unreadMessages,
+  private NotificationCompat.Builder createMultipleMessagesSummaryNotifBuilder(
+      Context context,
+      List<Message> unreadMessages,
       String loggedInUserName)
   {
     // Create a "InboxStyle" summary notification for the bundled notifs, that will only be visible on < Nougat.

@@ -12,17 +12,27 @@ import android.widget.Toast;
 
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.models.CommentMessage;
 import net.dean.jraw.models.Message;
+import net.dean.jraw.models.PrivateMessage;
 
 import java.util.ArrayList;
 import java.util.List;
+import javax.inject.Inject;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
+import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.UrlRouter;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.InboxFolder;
+import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
+import me.saket.dank.urlparser.UrlParser;
+import me.saket.dank.utils.JrawUtils;
 import timber.log.Timber;
 
 /**
@@ -36,20 +46,27 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
   private static final String INTENT_KEY_MESSAGE_ID_LIST = "me.saket.dank.messageIdList";
   private static final String INTENT_KEY_MESSAGE_ARRAY_JSON = "me.saket.dank.messageArrayJson";
 
-  private static final String ACTION_DIRECT_REPLY = "quickReply";
-  private static final String ACTION_MARK_AS_READ = "markAsRead";
-  private static final String ACTION_MARK_ALL_AS_READ = "markAllAsRead";
-  private static final String ACTION_MARK_AS_SEEN = "markAllAsSeen";
-  private static final String ACTION_MARK_AS_SEEN_AND_OPEN_INBOX = "markAsSeenAndOpenInbox";
+  @Inject Lazy<UserSessionRepository> userSessionRepository;
+  @Inject Lazy<UrlParser> urlParser;
+  @Inject Lazy<UrlRouter> urlRouter;
+
+  public enum NotificationAction {
+    DIRECT_REPLY,
+    MARK_AS_READ,
+    MARK_ALL_AS_READ,
+    MARK_AS_SEEN,
+    MARK_AS_SEEN_AND_OPEN_INBOX,
+    MARK_AS_SEEN_AND_OPEN_MESSAGE,
+  }
 
   @CheckResult
   public static Intent createDirectReplyIntent(Context context, Message replyToMessage, Moshi moshi, int notificationId) {
-    if (notificationId == -1 || replyToMessage == null) {
+    if (notificationId == -1) {
       throw new AssertionError();
     }
 
     Intent intent = new Intent(context, MessageNotifActionReceiver.class);
-    intent.setAction(ACTION_DIRECT_REPLY);
+    intent.setAction(NotificationAction.DIRECT_REPLY.name());
     intent.putExtra(INTENT_KEY_MESSAGE_JSON, moshi.adapter(Message.class).toJson(replyToMessage));
     return intent;
   }
@@ -61,7 +78,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
     }
 
     Intent intent = new Intent(context, MessageNotifActionReceiver.class);
-    intent.setAction(ACTION_MARK_AS_READ);
+    intent.setAction(NotificationAction.MARK_AS_READ.name());
     intent.putExtra(INTENT_KEY_MESSAGE_ARRAY_JSON, moshi.adapter(Message[].class).toJson(messages));
     return intent;
   }
@@ -79,7 +96,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
     // Don't need to store the message objects because marking all as read doesn't require any Message param.
 
     Intent intent = new Intent(context, MessageNotifActionReceiver.class);
-    intent.setAction(ACTION_MARK_ALL_AS_READ);
+    intent.setAction(NotificationAction.MARK_ALL_AS_READ.name());
     intent.putStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST, messageIdsToMarkAsRead);
     return intent;
   }
@@ -105,7 +122,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
     }
 
     Intent intent = new Intent(context, MessageNotifActionReceiver.class);
-    intent.setAction(ACTION_MARK_AS_SEEN);
+    intent.setAction(NotificationAction.MARK_AS_SEEN.name());
     intent.putStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST, messageIdsToMarkAsSeen);
     return intent;
   }
@@ -114,31 +131,34 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
    * Mark all unread messages as seen and then open {@link InboxActivity}.
    */
   @CheckResult
-  public static Intent createMarkAllSeenAndOpenInboxIntent(Context context, List<Message> messagesToMarkAsSeen) {
+  public static Intent createMarkSeenAndOpenInboxIntent(Context context, List<Message> messagesToMarkAsSeen) {
     ArrayList<String> messageIdsToMarkAsSeen = new ArrayList<>(messagesToMarkAsSeen.size());
     for (Message message : messagesToMarkAsSeen) {
       messageIdsToMarkAsSeen.add(message.getId());
     }
 
     return new Intent(context, MessageNotifActionReceiver.class)
-        .setAction(ACTION_MARK_AS_SEEN_AND_OPEN_INBOX)
+        .setAction(NotificationAction.MARK_AS_SEEN_AND_OPEN_INBOX.name())
         .putStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST, messageIdsToMarkAsSeen);
   }
 
   /**
-   * Mark <var>unreadMessage</var> as seen and then open {@link InboxActivity}.
+   * Mark <var>unreadMessage</var> as seen and then open the message.
    */
   @CheckResult
-  public static Intent createMarkAsSeenAndOpenInboxIntent(Context context, Message unreadMessage) {
-    ArrayList<Message> singleList = new ArrayList<>(1);
-    singleList.add(unreadMessage);
-    return createMarkAllSeenAndOpenInboxIntent(context, singleList);
+  public static Intent createMarkAsSeenAndOpenMessageIntent(Context context, Message unreadMessage, Moshi moshi) {
+    return new Intent(context, MessageNotifActionReceiver.class)
+        .setAction(NotificationAction.MARK_AS_SEEN_AND_OPEN_MESSAGE.name())
+        .putExtra(INTENT_KEY_MESSAGE_JSON, moshi.adapter(Message.class).toJson(unreadMessage));
   }
 
   @Override
   public void onReceive(Context context, Intent intent) {
-    switch (intent.getAction()) {
-      case ACTION_DIRECT_REPLY: {
+    Dank.dependencyInjector().inject(this);
+
+    //noinspection ConstantConditions
+    switch (NotificationAction.valueOf(intent.getAction())) {
+      case DIRECT_REPLY: {
         parseMessage(intent.getStringExtra(INTENT_KEY_MESSAGE_JSON))
             .flatMapCompletable(message -> {
               // Note: dismiss notification after calling CheckUnreadMessagesJobService.refreshNotifications()
@@ -150,6 +170,9 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
                   .fromAction(() -> {
                     Bundle directReplyResult = RemoteInput.getResultsFromIntent(intent);
                     String replyText = directReplyResult.getString(KEY_DIRECT_REPLY_MESSAGE);
+
+                    // Send button is only enabled when the message is non-empty.
+                    //noinspection ConstantConditions
                     MessageNotifActionsJobService.sendDirectReply(context, message, Dank.moshi(), replyText);
                   })
                   .andThen(Dank.messagesNotifManager().markMessageNotifAsSeen(message))
@@ -164,7 +187,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
         break;
       }
 
-      case ACTION_MARK_AS_READ: {
+      case MARK_AS_READ: {
         // Offload work to a service (because Receivers are destroyed immediately) and refresh
         // the notifs so that the summary notif gets canceled if no more notifs are present.
         parseMessageArray(intent.getStringExtra(INTENT_KEY_MESSAGE_ARRAY_JSON))
@@ -177,7 +200,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
         break;
       }
 
-      case ACTION_MARK_ALL_AS_READ: {
+      case MARK_ALL_AS_READ: {
         List<String> messageIdsToMarkAsRead = intent.getStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST);
         Dank.messagesNotifManager()
             .markMessageNotifAsSeen(messageIdsToMarkAsRead)
@@ -187,25 +210,58 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
         break;
       }
 
-      case ACTION_MARK_AS_SEEN: {
+      // This action gets called only when all the notifs are dismissed, so we don't need to refresh the notif again.
+      case MARK_AS_SEEN: {
         List<String> messageIdsToMarkAsSeen = intent.getStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST);
         Dank.messagesNotifManager()
             .markMessageNotifAsSeen(messageIdsToMarkAsSeen)
             .subscribe();
-        // This action gets called only when all the notifs are dismissed, so we don't need to refresh the notif again.
         break;
       }
 
-      case ACTION_MARK_AS_SEEN_AND_OPEN_INBOX: {
+      // This action is also performed only when a notification is tapped,
+      // where it gets dismissed. So refreshing notifs isn't required.
+      case MARK_AS_SEEN_AND_OPEN_INBOX: {
         List<String> messageIdsToMarkAsSeen = intent.getStringArrayListExtra(INTENT_KEY_MESSAGE_ID_LIST);
         Dank.messagesNotifManager()
             .markMessageNotifAsSeen(messageIdsToMarkAsSeen)
             .subscribe(() -> {
-              Intent unreadInboxIntent = InboxActivity.createStartIntent(context, InboxFolder.UNREAD);
+              Intent unreadInboxIntent = InboxActivity.intent(context, InboxFolder.UNREAD);
               unreadInboxIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
               context.startActivity(unreadInboxIntent);
             });
-        // This action is also performed only when a notification is tapped, where it gets dismissed. So refreshing notifs isn't required.
+        break;
+      }
+
+      // This action is also performed only when a notification is tapped,
+      // where it gets dismissed. So refreshing notifs isn't required.
+      case MARK_AS_SEEN_AND_OPEN_MESSAGE: {
+        String messageJson = intent.getStringExtra(INTENT_KEY_MESSAGE_JSON);
+
+        parseMessage(messageJson)
+            .flatMap(message -> Dank.messagesNotifManager().markMessageNotifAsSeen(message.getId()).andThen(Single.just(message)))
+            .subscribe(message -> {
+              Intent openIntent;
+
+              if (message.isComment()) {
+                String messageUrlPath = JrawUtils.commentMessageContextUrl(((CommentMessage) message));
+                String messageUrl = "https://reddit.com" + messageUrlPath;
+                RedditSubmissionLink commentLink = (RedditSubmissionLink) urlParser.get().parse(messageUrl);
+                openIntent = urlRouter.get().forLink(commentLink)
+                    .expandFromBelowToolbar()
+                    .intent(context);
+
+                Timber.i("messageUrl: %s", messageUrl);
+                Timber.i("commentLink: %s", commentLink);
+
+              } else {
+                String secondPartyName = JrawUtils.secondPartyName(context.getResources(), message, userSessionRepository.get().loggedInUserName());
+                openIntent = PrivateMessageThreadActivity.intent(context, (PrivateMessage) message, secondPartyName, null);
+              }
+
+              openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+              context.startActivity(openIntent);
+            });
         break;
       }
 

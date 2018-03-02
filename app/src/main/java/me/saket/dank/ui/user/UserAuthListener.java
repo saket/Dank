@@ -51,6 +51,7 @@ public class UserAuthListener {
   private void runBackgroundJobs(Context context) {
     SubredditSubscriptionsSyncJob.syncImmediately(context);
     SubredditSubscriptionsSyncJob.schedule(context);
+
     CheckUnreadMessagesJobService.syncImmediately(context);
     CheckUnreadMessagesJobService.schedule(context, userPrefs);
   }

@@ -82,10 +82,10 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   private Relay<MessagesRefreshState> messagesRefreshStateStream = BehaviorRelay.create();
 
   public static void start(Context context) {
-    context.startActivity(createStartIntent(context, InboxFolder.UNREAD));
+    context.startActivity(intent(context, InboxFolder.UNREAD));
   }
 
-  public static Intent createStartIntent(Context context, InboxFolder initialFolder) {
+  public static Intent intent(Context context, InboxFolder initialFolder) {
     Intent intent = new Intent(context, InboxActivity.class);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, (Parcelable) null);
     intent.putExtra(KEY_INITIAL_FOLDER, initialFolder);

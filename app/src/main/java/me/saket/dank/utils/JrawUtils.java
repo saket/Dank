@@ -1,7 +1,6 @@
 package me.saket.dank.utils;
 
 import android.content.res.Resources;
-import android.support.annotation.Nullable;
 
 import com.fasterxml.jackson.databind.JsonNode;
 
@@ -44,11 +43,6 @@ public class JrawUtils {
         : Collections.emptyList();
   }
 
-  public static boolean hasMessageReplies(PrivateMessage message) {
-    JsonNode repliesNode = message.getDataNode().get("replies");
-    return repliesNode.isObject();
-  }
-
   public static String messageBodyHtml(Message message) {
     return message.getDataNode().get("body_html").asText(message.getBody());
   }
@@ -61,20 +55,24 @@ public class JrawUtils {
     return submission.getDataNode().get("selftext_html").asText(submission.getSelftext() /* defaultValue */);
   }
 
-  @Nullable
   public static String secondPartyName(Resources resources, Message message, String loggedInUserName) {
-    String secondPartyName;
     String destination = message.getDataNode().get("dest").asText();
+
     if (destination.startsWith("#")) {
-      secondPartyName = resources.getString(R.string.subreddit_name_r_prefix, message.getSubreddit());
+      return resources.getString(R.string.subreddit_name_r_prefix, message.getSubreddit());
+
     } else if (destination.equalsIgnoreCase(loggedInUserName)) {
-      secondPartyName = message.getAuthor() == null
+      return message.getAuthor() == null
           ? resources.getString(R.string.subreddit_name_r_prefix, message.getSubreddit())
           : message.getAuthor();
+
     } else {
-      secondPartyName = destination;
+      return destination;
     }
-    return secondPartyName;
+  }
+
+  public static String commentMessageContextUrl(CommentMessage message) {
+    return message.getDataNode().get("context").asText();
   }
 
   public static String permalink(Comment comment) {

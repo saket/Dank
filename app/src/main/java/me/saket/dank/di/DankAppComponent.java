@@ -12,6 +12,7 @@ import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.notifs.MediaDownloadService;
+import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.notifs.MessageNotifActionsJobService;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.PlaygroundActivity;
@@ -121,4 +122,6 @@ public interface DankAppComponent {
   void inject(LinkOptionsPopup target);
 
   void inject(PlaygroundActivity target);
+
+  void inject(MessageNotifActionReceiver taret);
 }

@@ -23,10 +23,10 @@ public class SubredditActivityWithTransparentWindowBackground extends SubredditA
   /**
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
    */
-  public static void start(Context context, RedditSubredditLink subredditLink, @Nullable Rect expandFromShape) {
+  public static Intent intent(Context context, RedditSubredditLink subredditLink, @Nullable Rect expandFromShape) {
     Intent intent = new Intent(context, SubredditActivityWithTransparentWindowBackground.class);
     addStartExtrasToIntent(subredditLink, expandFromShape, intent);
-    context.startActivity(intent);
+    return intent;
   }
 
   @Override

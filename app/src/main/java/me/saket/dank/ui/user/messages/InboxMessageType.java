@@ -23,9 +23,11 @@ public enum InboxMessageType {
       FullNameType fullNameType = FullNameType.parse(parentFullName);
       switch (fullNameType) {
         case COMMENT:
+          assertEquals("comment reply", message.getSubject());
           return InboxMessageType.COMMENT_REPLY;
 
         case SUBMISSION:
+          assertEquals("post reply", message.getSubject());
           return InboxMessageType.POST_REPLY;
 
         case MESSAGE:

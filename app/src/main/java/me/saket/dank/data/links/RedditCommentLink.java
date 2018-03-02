@@ -4,6 +4,9 @@ import android.os.Parcelable;
 
 import com.google.auto.value.AutoValue;
 
+/**
+ * Never used alone. Always with {@link RedditSubmissionLink}.
+ */
 @AutoValue
 public abstract class RedditCommentLink extends RedditLink implements Parcelable {
 

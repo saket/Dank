@@ -15,6 +15,7 @@ import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.text.TextUtils;
 import android.text.style.ForegroundColorSpan;
 import android.widget.EditText;
 import android.widget.TextView;
@@ -95,8 +96,14 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   public static Intent intent(Context context, PrivateMessage privateMessage, String threadSecondPartyName, @Nullable Rect expandFromShape) {
     String firstMessageFullName = privateMessage.getFirstMessage();
 
-    if (firstMessageFullName == null && JrawUtils.hasMessageReplies(privateMessage)) {
+    if (firstMessageFullName == null) {
+      // This message is the root message.
       firstMessageFullName = privateMessage.getFullName();
+    }
+
+    //noinspection ConstantConditions
+    if (TextUtils.isEmpty(threadSecondPartyName)) {
+      throw new AssertionError();
     }
 
     Intent intent = new Intent(context, PrivateMessageThreadActivity.class);
@@ -147,7 +154,6 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .withAddDuration(250));
 
     ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageFullName.getFullName());
-    Timber.i("privateMessageThread: %s", privateMessageThread);
 
     Observable<List<PendingSyncReply>> pendingSyncRepliesStream = replyRepository.streamPendingSyncReplies(privateMessageThread);
 

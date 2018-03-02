@@ -1,6 +1,7 @@
 package me.saket.dank.ui;
 
 import android.content.Context;
+import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -83,23 +84,23 @@ public class UrlRouter {
       return this;
     }
 
-    public void open(Context context) {
+    public Intent intent(Context context) {
       if (expandFromRect == null && expandFromPoint != null) {
         int deviceDisplayWidthPx = context.getResources().getDisplayMetrics().widthPixels;
         expandFromRect = new Rect(0, expandFromPoint.y, deviceDisplayWidthPx, expandFromPoint.y);
       }
 
       if (link instanceof RedditSubredditLink) {
-        SubredditActivityWithTransparentWindowBackground.start(context, (RedditSubredditLink) link, expandFromRect);
+        return SubredditActivityWithTransparentWindowBackground.intent(context, (RedditSubredditLink) link, expandFromRect);
 
       } else if (link instanceof RedditSubmissionLink) {
-        SubmissionPageLayoutActivity.start(context, (RedditSubmissionLink) link, expandFromRect);
+        return SubmissionPageLayoutActivity.intent(context, (RedditSubmissionLink) link, expandFromRect);
 
       } else if (link instanceof RedditUserLink) {
         throw new IllegalStateException("Use UserProfilePopup instead");
 
       } else if (link instanceof MediaLink) {
-        MediaAlbumViewerActivity.start(context, ((MediaLink) link), null, jacksonHelper);
+        return MediaAlbumViewerActivity.intent(context, ((MediaLink) link), null, jacksonHelper);
 
       } else if (link.isExternal()) {
         String url = link.unparsedUrl();
@@ -110,18 +111,22 @@ public class UrlRouter {
           if (packageNameForDeepLink != null && isPackageNameInstalled(context, packageNameForDeepLink)) {
             android.content.Intent openUrlIntent = Intents.createForOpeningUrl(url);
             openUrlIntent.setPackage(packageNameForDeepLink);
-            context.startActivity(openUrlIntent);
+            return openUrlIntent;
 
           } else {
-            context.startActivity(WebViewActivity.intent(context, url, expandFromRect));
+            return WebViewActivity.intent(context, url, expandFromRect);
           }
         } else {
-          context.startActivity(Intents.createForOpeningUrl(url));
+          return Intents.createForOpeningUrl(url);
         }
 
       } else {
         throw new UnsupportedOperationException("Unknown external link: " + link);
       }
+    }
+
+    public void open(Context context) {
+      context.startActivity(intent(context));
     }
   }
 
@@ -147,7 +152,7 @@ public class UrlRouter {
     }
 
     public void open(Context context) {
-      MediaAlbumViewerActivity.start(context, link, redditSuppliedImages, jacksonHelper);
+      context.startActivity(MediaAlbumViewerActivity.intent(context, link, redditSuppliedImages, jacksonHelper));
     }
   }
 
