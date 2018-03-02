@@ -6,6 +6,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import me.saket.dank.di.DankApi;
+import me.saket.dank.utils.Optional;
 
 /**
  * API response of {@link DankApi#streamableVideoDetails(String)}.
@@ -33,7 +34,7 @@ public abstract class StreamableVideoResponse {
     public abstract Video highQualityVideo();
 
     @Json(name = "mp4-mobile")
-    public abstract Video lowQualityVideo();
+    public abstract Optional<Video> lowQualityVideo();
 
     public static JsonAdapter<Files> jsonAdapter(Moshi moshi) {
       return new AutoValue_StreamableVideoResponse_Files.MoshiJsonAdapter(moshi);

@@ -4,23 +4,36 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Single;
+import me.saket.dank.data.StreamableVideoResponse;
 import me.saket.dank.data.links.StreamableLink;
-import me.saket.dank.di.Dank;
+import me.saket.dank.di.DankApi;
+import timber.log.Timber;
 
 @Singleton
 public class StreamableRepository {
 
+  private final DankApi dankApi;
+
   @Inject
-  public StreamableRepository() {
+  public StreamableRepository(DankApi dankApi) {
+    this.dankApi = dankApi;
   }
 
-  // TODO: 01/04/17 Cache.
   public Single<StreamableLink> video(String videoId) {
-    return Dank.api().streamableVideoDetails(videoId)
+    return dankApi.streamableVideoDetails(videoId)
         .map(response -> {
+          Timber.i("response: %s", response);
+
+          StreamableVideoResponse.Video highQualityVideo = response.files().highQualityVideo();
+          String highQualityVideoUrl = highQualityVideo.url();
+
+          // Low quality video is usually empty for new videos for which Streamable hasn't
+          // generated a lower quality yet.
+          String lowQualityVideoUrl = response.files().lowQualityVideo()
+              .orElse(highQualityVideo)
+              .url();
+
           String videoUrl = response.url();
-          String lowQualityVideoUrl = response.files().lowQualityVideo().url();
-          String highQualityVideoUrl = response.files().highQualityVideo().url();
           return StreamableLink.create(videoUrl, lowQualityVideoUrl, highQualityVideoUrl);
         });
   }

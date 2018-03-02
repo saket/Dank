@@ -65,16 +65,16 @@ import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.MoshiAccountAdapter;
 import me.saket.dank.utils.MoshiMessageAdapter;
+import me.saket.dank.utils.MoshiOptionalAdapterFactory;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
-import me.saket.dank.utils.StreamableRepository;
-import me.saket.dank.urlparser.UrlParser;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -182,6 +182,7 @@ public class DankAppModule {
         .add(new MoshiMessageAdapter(jacksonHelper))
         .add(new MoshiSubmissionAdapter(jacksonHelper))
         .add(new MoshiAccountAdapter(jacksonHelper))
+        .add(new MoshiOptionalAdapterFactory())
         .build();
   }
 
@@ -216,11 +217,6 @@ public class DankAppModule {
   @Singleton
   HttpProxyCacheServer provideHttpProxyCacheServer() {
     return new HttpProxyCacheServer(appContext);
-  }
-
-  @Provides
-  StreamableRepository provideStreamableRepository() {
-    return new StreamableRepository();
   }
 
   @Provides
