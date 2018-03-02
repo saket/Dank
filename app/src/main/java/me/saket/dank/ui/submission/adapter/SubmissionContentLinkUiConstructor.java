@@ -199,7 +199,6 @@ public class SubmissionContentLinkUiConstructor {
         throw new UnsupportedOperationException();
       }
       RedditSubmissionLink submissionLink = (RedditSubmissionLink) redditLink;
-      bylineStream = Observable.just(context.getString(R.string.submission_link_tap_to_open_submission));
       thumbnailStream = Observable.just(Optional.empty());
       faviconStream = Observable.fromCallable(() -> context.getDrawable(R.drawable.ic_submission_24dp));
       iconContentDescriptionStream = Observable.just(context.getString(R.string.submission_link_linked_submission));
@@ -230,6 +229,10 @@ public class SubmissionContentLinkUiConstructor {
             return submissionPageTitle;
           })
           .startWith(redditLink.unparsedUrl());
+
+      bylineStream = sharedLinkMetadataStream
+          .map(linkMetadata -> context.getString(R.string.subreddit_name_r_prefix, submissionLink.subredditName()))
+          .startWith(context.getString(R.string.submission_link_tap_to_open_submission));
 
     } else {
       throw new UnsupportedOperationException("Unknown reddit link: " + redditLink);
