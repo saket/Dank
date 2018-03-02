@@ -1,7 +1,5 @@
 package me.saket.dank.ui.user.messages;
 
-import static junit.framework.Assert.assertEquals;
-
 import android.content.Context;
 
 import net.dean.jraw.models.CommentMessage;
@@ -15,7 +13,6 @@ import javax.inject.Inject;
 import dagger.Lazy;
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.data.FullNameType;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
@@ -55,35 +52,7 @@ public class InboxFolderUiConstructor {
   }
 
   private InboxIndividualMessage.UiModel individualMessageUiModel(Context c, Message message, boolean isUnreadFolder) {
-    InboxMessageType messageType;
-
-    String parentFullName = message.getParentId();
-    if (parentFullName == null) {
-      messageType = InboxMessageType.SUBREDDIT_MESSAGE;
-    } else {
-      FullNameType fullNameType = FullNameType.parse(parentFullName);
-      switch (fullNameType) {
-        case COMMENT:
-          messageType = InboxMessageType.COMMENT_REPLY;
-          break;
-
-        case SUBMISSION:
-          messageType = InboxMessageType.POST_REPLY;
-          break;
-
-        case MESSAGE:
-          assertEquals(true, message instanceof PrivateMessage);
-          messageType = InboxMessageType.PRIVATE_MESSAGE;
-          break;
-
-        default:
-        case SUBREDDIT:
-        case AWARD:
-        case UNKNOWN:
-          messageType = InboxMessageType.UNKNOWN;
-          break;
-      }
-    }
+    InboxMessageType messageType = InboxMessageType.parse(message);
 
     String title;
     String byline;

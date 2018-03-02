@@ -264,8 +264,25 @@ public class MessagesNotificationManager {
 
         String markdownStrippedBody = markdown.get().stripMarkdown(JrawUtils.messageBodyHtml(unreadMessage));
 
+        String title;
+
+        InboxMessageType messageType = InboxMessageType.parse(unreadMessage);
+        switch (messageType) {
+          case COMMENT_REPLY:
+          case POST_REPLY:
+          case PRIVATE_MESSAGE:
+            title = unreadMessage.getAuthor();
+            break;
+
+          default:
+          case SUBREDDIT_MESSAGE:
+          case UNKNOWN:
+            title = context.getString(R.string.subreddit_name_r_prefix, unreadMessage.getSubreddit());
+            break;
+        }
+
         Notification bundledNotification = new NotificationCompat.Builder(context, context.getString(R.string.notification_channel_unread_messages_id))
-            .setContentTitle(unreadMessage.getAuthor())
+            .setContentTitle(title)
             .setContentText(markdownStrippedBody)
             .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
             .setShowWhen(true)
