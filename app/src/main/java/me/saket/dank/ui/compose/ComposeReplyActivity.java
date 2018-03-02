@@ -2,6 +2,7 @@ package me.saket.dank.ui.compose;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.Preconditions.checkNotNull;
 
 import android.app.Activity;
 import android.content.Context;
@@ -11,11 +12,9 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
-import android.widget.PopupMenu;
 import android.widget.ScrollView;
 
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -70,6 +69,8 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   private ComposeStartOptions startOptions;
   private RunDo runDo;
   private Relay<Object> successfulSendStream = PublishRelay.create();
+
+  private EmojiPopup emojiMenu;
 
   @CheckResult
   public static Intent intent(Context context, ComposeStartOptions startOptions) {
@@ -177,16 +178,18 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
       switch (markdownAction) {
         case INSERT_TEXT_EMOJI:
-          String[] unicodeEmojis = getResources().getStringArray(R.array.compose_reply_unicode_emojis);
-          PopupMenu emojiMenu = new PopupMenu(this, view, Gravity.TOP);
-          for (String unicodeEmoji : unicodeEmojis) {
-            emojiMenu.getMenu().add(unicodeEmoji);
-          }
+          emojiMenu = new EmojiPopup(this, view, R.array.compose_reply_unicode_emojis);
           emojiMenu.show();
-          emojiMenu.setOnMenuItemClickListener(item -> {
-            replyField.getText().replace(replyField.getSelectionStart(), replyField.getSelectionEnd(), item.getTitle());
-            return true;
-          });
+
+          lifecycle().onStop()
+              .take(1)
+              .subscribe(o -> emojiMenu.dismiss());
+
+          emojiMenu.streamEmojiSelections()
+              .takeUntil(lifecycle().onDestroy())
+              .subscribe(emoji -> {
+                replyField.getText().replace(replyField.getSelectionStart(), replyField.getSelectionEnd(), emoji);
+              });
           break;
 
         case INSERT_LINK:
@@ -209,6 +212,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
 
         case QUOTE:
         case HEADING:
+          checkNotNull(markdownBlock, "markdownBlock == null");
           insertQuoteOrHeadingMarkdownSyntax(markdownBlock);
           break;
 
@@ -300,6 +304,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   protected void onActivityResult(int requestCode, int resultCode, Intent data) {
     if (requestCode == REQUEST_CODE_PICK_IMAGE) {
       if (resultCode == Activity.RESULT_OK) {
+        //noinspection ConstantConditions
         lifecycle().onResume()
             .take(1)
             .takeUntil(lifecycle().onPause())

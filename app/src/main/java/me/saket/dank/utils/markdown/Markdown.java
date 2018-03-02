@@ -11,6 +11,7 @@ import net.dean.jraw.models.Submission;
 
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.regex.Matcher;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -27,6 +28,9 @@ import me.saket.dank.utils.JrawUtils;
 @SuppressWarnings({ "StatementWithEmptyBody", "deprecation" })
 public class Markdown {
 
+  private static final boolean ESCAPE_FORWARD_SLASHES = true;
+  private static final boolean IGNORE_ESCAPING_OF_FORWARD_SLASHES = false;
+
   private final DankHtmlTagHandler htmlTagHandler;
   private final Cache<String, CharSequence> cache;
 
@@ -36,17 +40,23 @@ public class Markdown {
     this.cache = markdownCache;
   }
 
-  private CharSequence parse(String textWithMarkdown) {
+  private CharSequence parse(String textWithMarkdown, boolean escapeForwardSlashes) {
     Callable<CharSequence> valueSeeder = () -> {
-      String source = Html.fromHtml(textWithMarkdown).toString();
+      String htmlEscapedSource = Html.fromHtml(textWithMarkdown).toString();
+      if (escapeForwardSlashes) {
+        // Forward slashes need to be escaped. I don't know a better way to do this.
+        // Converts ¯\\_(ツ)_/¯ -> ¯\_(ツ)_/¯.
+        htmlEscapedSource = htmlEscapedSource.replaceAll(Matcher.quoteReplacement("\\\\"), Matcher.quoteReplacement("\\"));
+      }
+
       try {
-        String sourceWithCustomTags = htmlTagHandler.overrideTags(source);
+        String sourceWithCustomTags = htmlTagHandler.overrideTags(htmlEscapedSource);
         Spanned spanned = Html.fromHtml(sourceWithCustomTags, null, htmlTagHandler);
         return trimTrailingWhitespace(spanned);
 
       } catch (Exception e) {
         e.printStackTrace();
-        return Html.fromHtml(source);
+        return Html.fromHtml(htmlEscapedSource);
       }
     };
     try {
@@ -58,19 +68,19 @@ public class Markdown {
   }
 
   public CharSequence parse(Message message) {
-    return parse(JrawUtils.messageBodyHtml(message));
+    return parse(JrawUtils.messageBodyHtml(message), IGNORE_ESCAPING_OF_FORWARD_SLASHES);
   }
 
   public CharSequence parse(Comment comment) {
-    return parse(JrawUtils.commentBodyHtml(comment));
+    return parse(JrawUtils.commentBodyHtml(comment), IGNORE_ESCAPING_OF_FORWARD_SLASHES);
   }
 
   public CharSequence parse(PendingSyncReply reply) {
-    return parse(reply.body());
+    return parse(reply.body(), ESCAPE_FORWARD_SLASHES);
   }
 
   public CharSequence parseSelfText(Submission submission) {
-    return parse(JrawUtils.selfPostHtml(submission));
+    return parse(JrawUtils.selfPostHtml(submission), IGNORE_ESCAPING_OF_FORWARD_SLASHES);
   }
 
   /**

@@ -72,11 +72,6 @@ public class TextFormatToolbarView extends HorizontalScrollView {
     actionClickListener.onClickAction(view, MarkdownAction.QUOTE, MarkdownBlock.QUOTE);
   }
 
-  //@OnClick(R.id.textformattoolbar_superscript)
-  //void onClickSuperscript(View view) {
-  //  actionClickListener.onClickAction(view, MarkdownAction.SUPERSCRIPT, MarkdownBlock.SUPERSCRIPT);
-  //}
-
   @OnClick(R.id.textformattoolbar_inline_code)
   void onClickInlineCode(View view) {
     actionClickListener.onClickAction(view, MarkdownAction.INLINE_CODE, MarkdownBlock.INLINE_CODE);

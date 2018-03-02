@@ -18,6 +18,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.TimeZone;
+import java.util.regex.Matcher;
 import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -93,8 +94,11 @@ public class ReplyRepository implements DraftStore {
    */
   @CheckResult
   public Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody) {
+    // Converts ¯\_(ツ)_/¯ -> ¯\\_(ツ)_/¯.
+    String replyWithSlashesEscaped = replyBody.replaceAll(Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
+
     long replyCreatedTimeMillis = System.currentTimeMillis();
-    return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
+    return sendReply(parentContribution, parentThread, replyWithSlashesEscaped, replyCreatedTimeMillis);
   }
 
   @CheckResult

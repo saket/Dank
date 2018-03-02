@@ -189,8 +189,7 @@ public class SubmissionRepository {
   private Observable<CachedSubmissionWithComments> getOrFetchSubmissionWithComments(DankSubmissionRequest submissionRequest) {
     if (submissionWithCommentsStore == null) {
       submissionWithCommentsStore = StoreBuilder.<DankSubmissionRequest, CachedSubmissionWithComments>key()
-          .fetcher(request -> dankRedditClient
-              .submission(request)
+          .fetcher(request -> dankRedditClient.submission(request)
               .doOnSuccess(subWithComments -> replyRepository
                   .removeSyncPendingPostedReplies(ParentThread.of(subWithComments))
                   .blockingAwait())
