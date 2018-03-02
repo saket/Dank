@@ -16,6 +16,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import io.reactivex.exceptions.Exceptions;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.utils.JrawUtils;
 
@@ -111,5 +112,12 @@ public class Markdown {
     while (--len >= 0 && Character.isWhitespace(source.charAt(len))) {
     }
     return source.subSequence(0, len + 1);
+  }
+
+  public void clearCache() {
+    if (!BuildConfig.DEBUG) {
+      throw new AssertionError();
+    }
+    cache.invalidateAll();
   }
 }

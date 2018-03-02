@@ -43,6 +43,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
@@ -267,6 +268,18 @@ public class SubmissionRepository {
             submission,
             System.currentTimeMillis()
         )));
+  }
+
+  public Completable clearCachedSubmissionWithComments() {
+    if (!BuildConfig.DEBUG) {
+      throw new AssertionError();
+    }
+    return Completable.fromAction(() -> {
+      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+        database.delete(CachedSubmissionWithComments.TABLE_NAME, null);
+        transaction.markSuccessful();
+      }
+    });
   }
 
 // ======== SUBMISSION LIST (W/O COMMENTS) ======== //

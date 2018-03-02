@@ -21,6 +21,7 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import dagger.Lazy;
 import io.reactivex.Completable;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
@@ -34,6 +35,7 @@ import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 @SuppressLint("SetTextI18n")
@@ -50,6 +52,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @Inject LinkMetadataRepository linkMetadataRepository;
   @Inject VotingManager votingManager;
   @Inject UrlParser urlParser;
+  @Inject Lazy<Markdown> markdown;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
@@ -91,8 +94,11 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           });
     });
 
-    addButton("Clear cached submission list", o -> {
-      submissionRepository.clearCachedSubmissionLists().subscribeOn(io()).subscribe();
+    addButton("Clear cached submission list and comments", o -> {
+      submissionRepository.clearCachedSubmissionLists()
+          .andThen(submissionRepository.clearCachedSubmissionWithComments())
+          .andThen(replyRepository.removeAllPendingSyncReplies())
+          .subscribeOn(io()).subscribe();
     });
 
     addButton("Clear subreddit subscriptions", o -> {
@@ -130,6 +136,10 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           .observeOn(mainThread())
           .andThen(Completable.fromAction(() -> Glide.get(this).clearMemory()))
           .subscribe();
+    });
+
+    addButton("Clear markdown cache", o-> {
+      markdown.get().clearCache();
     });
   }
 
