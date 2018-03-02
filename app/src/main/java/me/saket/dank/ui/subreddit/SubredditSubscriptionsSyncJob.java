@@ -88,7 +88,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
         .subscribe(
             () -> {
               if (params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB && BuildConfig.DEBUG) {
-                displayDebugNotification(0, "Subreddits synced");
+                displayDebugNotification("Subreddits synced");
               }
               jobFinished(params, false);
             },

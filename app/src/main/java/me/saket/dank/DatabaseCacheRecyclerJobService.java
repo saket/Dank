@@ -52,9 +52,9 @@ public class DatabaseCacheRecyclerJobService extends DankJobService {
             deletedRows -> {
               if (BuildConfig.DEBUG) {
                 displayDebugNotification(
-                    ID_RECYCLE_OLD_SUBMISSIONS,
                     "Recycled %s database rows older than %s days",
-                    deletedRows, durationTimeUnit.toDays(durationFromNow)
+                    deletedRows,
+                    durationTimeUnit.toDays(durationFromNow)
                 );
               }
             },
