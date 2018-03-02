@@ -118,6 +118,7 @@ import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
@@ -128,7 +129,6 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Trio;
-import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
@@ -1393,13 +1393,19 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       return upwardPagePull
           ? commentListParentSheet.canScrollUpwardsAnyFurther()
           : commentListParentSheet.canScrollDownwardsAnyFurther();
-    } else {
-      return touchLiesOn(contentImageView, downX, downY) && contentImageView.canPanFurtherVertically(upwardPagePull);
     }
+
+    //noinspection SimplifiableIfStatement
+    if (commentListParentSheet.hasSheetReachedTheTop() && touchLiesOn(toolbar, downX, downY)) {
+      return false;
+    }
+
+    return touchLiesOn(contentImageView, downX, downY) && contentImageView.canPanFurtherVertically(upwardPagePull);
   }
 
   @Override
   public void onPageAboutToExpand(long expandAnimDuration) {}
+
   @Override
   public void onPageExpanded() {}
 
