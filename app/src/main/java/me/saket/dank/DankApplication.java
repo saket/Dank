@@ -111,8 +111,9 @@ public class DankApplication extends Application {
       NotificationChannel debugNotificationChannel = new NotificationChannel(
           getString(R.string.notification_channel_debug_notifs_id),
           "Debug notifications",
-          NotificationManager.IMPORTANCE_LOW
+          NotificationManager.IMPORTANCE_DEFAULT
       );
+      debugNotificationChannel.enableVibration(false);
       debugNotificationChannel.enableLights(false);
       notifChannels.add(debugNotificationChannel);
     }
