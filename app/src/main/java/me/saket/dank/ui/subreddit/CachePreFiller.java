@@ -7,7 +7,6 @@ import android.support.annotation.Px;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.request.RequestOptions;
-import com.bumptech.glide.request.target.Target;
 import com.f2prateek.rx.preferences2.Preference;
 
 import net.dean.jraw.models.CommentSort;
@@ -216,8 +215,7 @@ public class CachePreFiller {
             .downloadOnly()
             .load(imageUrl)
             .apply(RequestOptions.priorityOf(Priority.LOW))
-            .submit(Target.SIZE_ORIGINAL, Target.SIZE_ORIGINAL)
-            .get();
+            .preload();
         //Timber.i("Image downloaded: %s, time: %sms", imageUrl, System.currentTimeMillis() - startTime);
       }
     });
