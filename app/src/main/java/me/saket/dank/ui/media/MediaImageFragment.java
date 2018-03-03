@@ -12,15 +12,20 @@ import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import com.alexvasilkov.gestures.GestureController;
 import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
+
+import net.dean.jraw.models.Thumbnails;
+
 import javax.inject.Inject;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
@@ -38,7 +43,6 @@ import me.saket.dank.widgets.ProgressWithFileSizeView;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
-import net.dean.jraw.models.Thumbnails;
 import timber.log.Timber;
 
 public class MediaImageFragment extends BaseMediaViewerFragment {
@@ -90,6 +94,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     ViewGroup layout = (ViewGroup) inflater.inflate(R.layout.fragment_album_viewer_page_image, container, false);
     ButterKnife.bind(this, layout);
 
+    //noinspection ConstantConditions
     MediaAlbumItem mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
     //noinspection ConstantConditions
     super.setMediaLink(mediaAlbumItem.mediaLink());
@@ -109,9 +114,11 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     setupFlickGestures(flickDismissViewGroup);
 
     // Toggle immersive when the user clicks anywhere.
+    //noinspection ConstantConditions
     imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).onClickMediaItem());
 
     // Show title and description above the Activity option buttons.
+    //noinspection ConstantConditions
     ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
         .takeUntil(lifecycle().onDestroy().ignoreElements())
         .subscribe(optionButtonsHeight -> {
@@ -225,6 +232,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   }
 
   private void setupFlickGestures(FlickDismissLayout imageContainerView) {
+    //noinspection ConstantConditions
     FlickGestureListener flickListener = super.createFlickGestureListener(((FlickGestureListener.GestureCallbacks) getActivity()));
     flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
       @Override
@@ -327,7 +335,6 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   }
 
   private static class ImageLoadProgressTarget<Z> extends GlideProgressTarget<String, Z> {
-
     private final ProgressWithFileSizeView progressWithFileSizeView;
 
     public ImageLoadProgressTarget(Target<Z> target, ProgressWithFileSizeView progressWithFileSizeView) {

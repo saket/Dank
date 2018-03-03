@@ -80,7 +80,6 @@ public class MediaHostRepository {
   }
 
   public static class MediaLinkStoreJsonParser implements StoreFilePersister.JsonParser<MediaLink, MediaLink> {
-
     private Moshi moshi;
 
     public MediaLinkStoreJsonParser(Moshi moshi) {
@@ -183,5 +182,12 @@ public class MediaHostRepository {
       throw new AssertionError();
     }
     giphyRepository.clear();
+  }
+
+  public void clearCache() {
+    if (!BuildConfig.DEBUG) {
+      throw new AssertionError();
+    }
+    cacheStore.clear();
   }
 }

@@ -30,6 +30,7 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
@@ -53,6 +54,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @Inject VotingManager votingManager;
   @Inject UrlParser urlParser;
   @Inject Lazy<Markdown> markdown;
+  @Inject Lazy<MediaHostRepository> mediaHostRepository;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
@@ -140,6 +142,10 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
     addButton("Clear markdown cache", o-> {
       markdown.get().clearCache();
+    });
+
+    addButton("Clear media-repo cache", o -> {
+      mediaHostRepository.get().clearCache();
     });
   }
 

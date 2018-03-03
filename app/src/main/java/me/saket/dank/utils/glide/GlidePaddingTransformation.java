@@ -51,9 +51,9 @@ public abstract class GlidePaddingTransformation extends BitmapTransformation {
     Bitmap bitmapWithPadding = bitmapPool.get(targetWidth, targetHeight, Bitmap.Config.ARGB_8888);
     Canvas canvas = new Canvas(bitmapWithPadding);
 
-    canvas.drawRect(0, 0, targetWidth, targetHeight, paint);              // Padding.
-    if (!toTransform.isRecycled()) {
-      canvas.drawBitmap(toTransform, horizontalPadding, verticalPadding, null);  // Original bitmap.
+    canvas.drawRect(0, 0, targetWidth, targetHeight, paint);
+    if (!toTransform.isRecycled()) {  // FIXME: checking of recycled shouldn't be required.
+      canvas.drawBitmap(toTransform, horizontalPadding, verticalPadding, null);
     }
     return bitmapWithPadding;
   }

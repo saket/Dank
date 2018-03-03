@@ -100,7 +100,7 @@ public class MediaDownloadService extends Service {
   enum Action {
     ENQUEUE_DOWNLOAD,
     CANCEL_DOWNLOAD,
-    CANCEL_NOTIFICATION,            // Canceled programmatically.
+    CANCEL_NOTIFICATION,  // Canceled programmatically.
   }
 
   public static void enqueueDownload(Context context, MediaLink mediaLink) {
