@@ -12,7 +12,7 @@
     android:animateLayoutChanges="true"
     android:fitsSystemWindows="true">
 
-    <me.saket.dank.widgets.ZoomableImageView
+    <me.saket.dank.widgets.ZoomableGestureImageView
       android:id="@+id/albumviewer_image_imageview"
       android:layout_width="match_parent"
       android:layout_height="match_parent"

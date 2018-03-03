@@ -1,163 +1,68 @@
 package me.saket.dank.widgets;
 
-import android.annotation.SuppressLint;
 import android.content.Context;
-import android.graphics.RectF;
-import android.util.AttributeSet;
-import android.view.GestureDetector;
-import android.view.MotionEvent;
+import android.graphics.drawable.Drawable;
+import android.view.View;
+import android.view.ViewPropertyAnimator;
+import android.widget.ImageView;
 
-import com.alexvasilkov.gestures.GestureController;
-import com.alexvasilkov.gestures.Settings;
-import com.alexvasilkov.gestures.State;
-import com.alexvasilkov.gestures.views.GestureImageView;
+public interface ZoomableImageView {
 
-/**
- * This wrapper exists so that we can easily change libraries in the future. It has happened once so far
- * and can happen again.
- * <p>
- * Does not support a foreground ripple, because it intercepts all touch events for handling scale and pan.
- */
-public class ZoomableImageView extends GestureImageView {
-
-  private static final float MAX_OVER_ZOOM = 4f;
-  private static final float MIN_OVER_ZOOM = 1f;
-  private final RectF IMAGE_MOVEMENT_RECT = new RectF();
-
-  private GestureDetector gestureDetector;
-
-  public ZoomableImageView(Context context, AttributeSet attrs) {
-    super(context, attrs);
-
-    getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
-    getController().getSettings().setFillViewport(true);
-    getController().getSettings().setFitMethod(Settings.Fit.HORIZONTAL);
-
-    getController().setOnGesturesListener(new GestureController.SimpleOnGestureListener() {
-      @Override
-      public boolean onSingleTapConfirmed(MotionEvent event) {
-        performClick();
-        return true;
-      }
-
-      @Override
-      public void onUpOrCancel(MotionEvent event) {
-        // Bug workaround: Image zoom stops working after first overzoom. Resetting it when the
-        // finger is lifted seems to solve the problem.
-        getController().getSettings().setOverzoomFactor(MAX_OVER_ZOOM);
-      }
-    });
-
-    // Bug workarounds: GestureImageView doesn't request parent ViewGroups to stop intercepting touch
-    // events when it starts consuming them to zoom.
-    gestureDetector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
-      @Override
-      public boolean onDoubleTapEvent(MotionEvent e) {
-        getParent().requestDisallowInterceptTouchEvent(true);
-        return super.onDoubleTapEvent(e);
-      }
-    });
+  interface OnPanChangeListener {
+    void onPanChange(float scrollY);
   }
 
-  public void setGravity(int gravity) {
-    getController().getSettings().setGravity(gravity);
+  interface OnZoomChangeListener {
+    void onZoomChange(float zoom);
   }
 
-  /**
-   * Calculate height of the image that is currently visible.
-   */
-  public float getVisibleZoomedImageHeight() {
-    float zoomedImageHeight = getZoomedImageHeight();
+  void setGravity(int gravity);
 
-    // Subtract the portion that has gone outside limits due to zooming in, because they are longer visible.
-    float heightNotVisible = getController().getState().getY();
-    if (heightNotVisible < 0) {
-      zoomedImageHeight += heightNotVisible;
-    }
+  float getVisibleZoomedImageHeight();
 
-    if (zoomedImageHeight > getHeight()) {
-      zoomedImageHeight = getHeight();
-    }
+  float getZoomedImageHeight();
 
-    return zoomedImageHeight;
+  float getZoom();
+
+  boolean canPanFurtherVertically(boolean downwardPan);
+
+  boolean canPanAnyFurtherHorizontally(int deltaX);
+
+  void resetState();
+
+  void addOnImagePanChangeListener(OnPanChangeListener listener);
+
+  void removeOnImagePanChangeListener(OnPanChangeListener listener);
+
+  void addOnImageZoomChangeListener(OnZoomChangeListener listener);
+
+  void removeOnImageZoomChangeListener(OnZoomChangeListener listener);
+
+  boolean hasImage();
+
+  int getImageHeight();
+
+// ======== IMAGEVIEW ======== //
+
+  default ImageView view() {
+    return (ImageView) this;
   }
 
-  private float getZoomedImageWidth() {
-    return (float) getController().getSettings().getImageW() * getZoom();
-  }
+  void setOnClickListener(View.OnClickListener listener);
 
-  public float getZoomedImageHeight() {
-    return (float) getController().getSettings().getImageH() * getZoom();
-  }
+  void setVisibility(int visibility);
 
-  public float getZoom() {
-    return getController().getState().getZoom();
-  }
+  boolean isLaidOut();
 
-  /**
-   * Whether the image can be panned anymore vertically, upwards or downwards depending upon <var>downwardPan</var>.
-   * downwardPan == upwards scroll.
-   */
-  public boolean canPanFurtherVertically(boolean downwardPan) {
-    State state = getController().getState();
-    getController().getStateController().getMovementArea(state, IMAGE_MOVEMENT_RECT);
+  int getHeight();
 
-    return (!downwardPan && State.compare(state.getY(), IMAGE_MOVEMENT_RECT.bottom) < 0f)
-        || (downwardPan && State.compare(state.getY(), IMAGE_MOVEMENT_RECT.top) > 0f);
-  }
+  void setTranslationY(float y);
 
-  public boolean canPanAnyFurtherHorizontally(int deltaX) {
-    float minZoom = getController().getStateController().getMinZoom(getController().getState());
-    float zoom = getController().getState().getZoom();
+  void setRotation(float r);
 
-    // if zoom factor == min zoom factor => just let the view pager handle the scroll
-    float eps = 0.001f;
-    if (Math.abs(minZoom - zoom) < eps) {
-      return false;
-    }
+  ViewPropertyAnimator animate();
 
-    getController().getStateController().getMovementArea(getController().getState(), IMAGE_MOVEMENT_RECT);
+  void setImageDrawable(Drawable drawable);
 
-    float stateX = getController().getState().getX();
-    float width = IMAGE_MOVEMENT_RECT.width();
-
-    // If user reached left edge && is swiping left => let the view pager handle the scroll
-    if (Math.abs(stateX) < eps && deltaX > 0) {
-      return false;
-    }
-
-    // If user reached right edge && is swiping right => let the view pager handle the scroll
-    return !(Math.abs(stateX + width) < eps && deltaX < 0);
-  }
-
-  public void setGestureRotationEnabled(boolean rotationEnabled) {
-    Settings settings = getController().getSettings();
-    settings.setRotationEnabled(rotationEnabled);
-    settings.setRestrictRotation(rotationEnabled);
-  }
-
-  /**
-   * Reset zoom, rotation, etc.
-   */
-  public void resetState() {
-    getController().resetState();
-  }
-
-  @Override
-  public boolean dispatchTouchEvent(MotionEvent event) {
-    return getDrawable() != null && super.dispatchTouchEvent(event);
-  }
-
-  @Override
-  @SuppressLint("ClickableViewAccessibility")
-  public boolean onTouchEvent(MotionEvent event) {
-    gestureDetector.onTouchEvent(event);
-
-    if (event.getActionMasked() == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() == 2) {
-      // Two-finger zoom is probably going to start. Disallow parent from intercepting this gesture.
-      getParent().requestDisallowInterceptTouchEvent(true);
-    }
-
-    return super.onTouchEvent(event);
-  }
+  Context getContext();
 }

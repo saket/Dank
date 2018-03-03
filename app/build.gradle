@@ -113,14 +113,9 @@ dependencies {
   implementation 'com.darwinsys:hirondelle-date4j:1.5.1'
   implementation 'com.jakewharton.threetenabp:threetenabp:1.0.5'
 
-  // Reddit API wrapper.
   implementation 'com.github.Saketme:JRAW:bd20b3e581'
-
-  // ImageViewer that supports pan, zoom gestures + can decode large images.
   implementation 'com.alexvasilkov:gesture-views:2.2.0'
-
-  // Videos!
-  compile 'com.github.saketme:exomedia:530dfac84c'
+  implementation 'com.github.saketme:exomedia:530dfac84c'
   implementation 'com.danikula:videocache:2.6.4'
 
   // Caching.

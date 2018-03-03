@@ -14,8 +14,6 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.ProgressBar;
 
-import com.alexvasilkov.gestures.GestureController;
-import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
@@ -63,7 +61,7 @@ public class SubmissionImageHolder {
   private final ProgressBar contentLoadProgressView;
   private final Relay<Drawable> imageStream = PublishRelay.create();
   private final GlidePaddingTransformation glidePaddingTransformation;
-  private GestureController.OnStateChangeListener imageScrollListener;
+  private ZoomableImageView.OnPanChangeListener imagePanListener;
 
   /**
    * God knows why (if he/she exists), ButterKnife is failing to bind <var>contentLoadProgressView</var>,
@@ -114,8 +112,8 @@ public class SubmissionImageHolder {
 
   private Consumer<Object> resetViews() {
     return o -> {
-      if (imageScrollListener != null) {
-        imageView.getController().removeOnStateChangeListener(imageScrollListener);
+      if (imagePanListener != null) {
+        imageView.removeOnImagePanChangeListener(imagePanListener);
       }
       imageScrollHintView.setVisibility(View.GONE);
     };
@@ -141,7 +139,7 @@ public class SubmissionImageHolder {
               : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplayWidth, defaultImageUrl);
 
           emitter.onSuccess(
-              Glide.with(imageView)
+              Glide.with(imageView.view())
                   .load(optimizedImageUrl)
                   .apply(new RequestOptions()
                       .priority(Priority.IMMEDIATE)
@@ -149,7 +147,7 @@ public class SubmissionImageHolder {
                   .submit()
                   .get()
           );
-          emitter.setCancellable(() -> Glide.with(imageView).clear(imageView));
+          emitter.setCancellable(() -> Glide.with(imageView.view()).clear(imageView.view()));
         })
         .subscribeOn(io())
         .observeOn(mainThread())
@@ -160,7 +158,7 @@ public class SubmissionImageHolder {
           }
         })
         .doOnSuccess(drawable -> contentLoadProgressView.setVisibility(View.GONE))
-        .flatMap(drawable -> Views.rxWaitTillMeasured(imageView).toSingleDefault(drawable))
+        .flatMap(drawable -> Views.rxWaitTillMeasured(imageView.view()).toSingleDefault(drawable))
         .doOnSuccess(drawable -> {
           float widthResizeFactor = deviceDisplayWidth / (float) drawable.getIntrinsicWidth();
           float imageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
@@ -224,16 +222,16 @@ public class SubmissionImageHolder {
     });
 
     // Hide the tooltip once the user starts scrolling the image.
-    imageScrollListener = new GestureController.OnStateChangeListener() {
+    imagePanListener = new ZoomableImageView.OnPanChangeListener() {
       private boolean hidden = false;
 
       @Override
-      public void onStateChanged(State state) {
+      public void onPanChange(float scrollY) {
         if (hidden) {
           return;
         }
 
-        float distanceScrolledY = Math.abs(state.getY());
+        float distanceScrolledY = Math.abs(scrollY);
         float distanceScrollableY = imageHeight - visibleImageHeight;
         float scrolledPercentage = distanceScrolledY / distanceScrollableY;
 
@@ -249,12 +247,8 @@ public class SubmissionImageHolder {
               .start();
         }
       }
-
-      @Override
-      public void onStateReset(State oldState, State newState) {
-      }
     };
-    imageView.getController().addOnStateChangeListener(imageScrollListener);
+    imageView.addOnImagePanChangeListener(imagePanListener);
   }
 
   private static Optional<Bitmap> bitmapFromDrawable(Drawable drawable) {

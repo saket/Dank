@@ -13,8 +13,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.alexvasilkov.gestures.GestureController;
-import com.alexvasilkov.gestures.State;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
@@ -171,7 +169,8 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
       imageUrl = imageWithMultipleVariants.findNearestFor(deviceDisplayWidth, mediaAlbumItemToShow.mediaLink().lowQualityUrl());
     }
 
-    ImageLoadProgressTarget<Drawable> targetWithProgress = new ImageLoadProgressTarget<>(new DrawableImageViewTarget(imageView), progressView);
+    DrawableImageViewTarget target = new DrawableImageViewTarget(imageView.view());
+    ImageLoadProgressTarget<Drawable> targetWithProgress = new ImageLoadProgressTarget<>(target, progressView);
     targetWithProgress.setModel(getActivity(), imageUrl);
 
     Glide.with(this)
@@ -243,10 +242,10 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
       @Override
       public int getContentHeightForCalculatingThreshold() {
         // A non-MATCH_PARENT height is important so that the user can easily dismiss the image if it's taking too long to load.
-        if (imageView.getDrawable() == null) {
+        if (!imageView.hasImage()) {
           return getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_height_when_empty);
         }
-        return imageView.getDrawable().getIntrinsicHeight();
+        return imageView.getImageHeight();
       }
     });
     flickListener.setOnGestureIntercepter((deltaY) -> {
@@ -295,16 +294,17 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     });
 
     // Hide the tooltip once the user starts scrolling the image.
-    GestureController.OnStateChangeListener imageScrollListener = new GestureController.OnStateChangeListener() {
+    imageView.addOnImagePanChangeListener(new ZoomableImageView.OnPanChangeListener() {
       private boolean hidden = false;
 
+      // FIXME: Remove the listener instead of maintaining state. And everyone knows using a boolean is hack anyway.
       @Override
-      public void onStateChanged(State state) {
+      public void onPanChange(float scrollY) {
         if (hidden) {
           return;
         }
 
-        float distanceScrolledY = Math.abs(state.getY());
+        float distanceScrolledY = Math.abs(scrollY);
         float distanceScrollableY = imageHeight - visibleImageHeight;
         float scrolledPercentage = distanceScrolledY / distanceScrollableY;
 
@@ -326,12 +326,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
               .start();
         }
       }
-
-      @Override
-      public void onStateReset(State oldState, State newState) {
-      }
-    };
-    imageView.getController().addOnStateChangeListener(imageScrollListener);
+    });
   }
 
   private static class ImageLoadProgressTarget<Z> extends GlideProgressTarget<String, Z> {

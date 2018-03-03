@@ -42,8 +42,6 @@ import android.view.Window;
 import android.widget.ImageButton;
 import android.widget.Toast;
 
-import com.alexvasilkov.gestures.GestureController;
-import com.alexvasilkov.gestures.State;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxbinding2.view.RxView;
@@ -877,7 +875,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
   }
 
   private void setupContentImageView(View fragmentLayout) {
-    Views.setMarginBottom(contentImageView, commentsSheetMinimumVisibleHeight);
+    Views.setMarginBottom(contentImageView.view(), commentsSheetMinimumVisibleHeight);
     contentImageViewHolder = new SubmissionImageHolder(
         lifecycle(),
         fragmentLayout,
@@ -887,7 +885,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     );
 
     // Open media in full-screen on click.
-    RxView.clicks(contentImageView)
+    RxView.clicks(contentImageView.view())
         .withLatestFrom(submissionContentStream, (o, contentLink) -> contentLink)
         .filter(contentLink -> contentLink.isImageOrGif())
         .cast(MediaLink.class)
@@ -956,17 +954,17 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       return (int) commentListParentSheet.getY() == (int) contentImageView.getVisibleZoomedImageHeight();
     };
 
-    contentImageView.getController().addOnStateChangeListener(new GestureController.OnStateChangeListener() {
+    contentImageView.addOnImageZoomChangeListener(new ZoomableImageView.OnZoomChangeListener() {
       float lastZoom = contentImageView.getZoom();
 
       @Override
-      public void onStateChanged(State state) {
-        if (contentImageView.getDrawable() == null) {
+      public void onZoomChange(float zoom) {
+        if (!contentImageView.hasImage()) {
           // Image isn't present yet. Ignore.
           return;
         }
-        boolean isZoomingOut = lastZoom > state.getZoom();
-        lastZoom = state.getZoom();
+        boolean isZoomingOut = lastZoom > zoom;
+        lastZoom = zoom;
 
         // Scroll the comment sheet along with the image if it's zoomed in. This ensures that the sheet always sticks to the bottom of the image.
         int minimumGapWithBottom = 0;
@@ -985,11 +983,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         }
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate();
       }
-
-      @Override
-      public void onStateReset(State oldState, State newState) {
-      }
     });
+
     commentListParentSheet.addOnSheetScrollChangeListener(newScrollY ->
         isCommentSheetBeneathImage = isCommentSheetBeneathImageFunc.calculate()
     );
@@ -1333,7 +1328,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
                   contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages)
                       .ambWith(lifecycle().onPageCollapseOrDestroy().take(1).ignoreElements())
                       .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
-                  contentImageView.setContentDescription(getResources().getString(
+                  contentImageView.view().setContentDescription(getResources().getString(
                       R.string.cd_submission_image,
                       submission.getTitle()
                   ));
@@ -1400,7 +1395,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       return false;
     }
 
-    return touchLiesOn(contentImageView, downX, downY) && contentImageView.canPanFurtherVertically(upwardPagePull);
+    return touchLiesOn(contentImageView.view(), downX, downY) && contentImageView.canPanFurtherVertically(upwardPagePull);
   }
 
   @Override

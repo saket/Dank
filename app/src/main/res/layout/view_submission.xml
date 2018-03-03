@@ -9,7 +9,7 @@
 
   <!-- For image/gif. This has a background to avoid leaking the
        background when image is zoomed out. -->
-  <me.saket.dank.widgets.ZoomableImageView
+  <me.saket.dank.widgets.ZoomableGestureImageView
     android:id="@+id/submission_image"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
