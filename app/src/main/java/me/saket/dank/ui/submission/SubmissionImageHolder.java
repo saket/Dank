@@ -16,6 +16,7 @@ import android.widget.ProgressBar;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.RequestOptions;
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -50,15 +51,16 @@ public class SubmissionImageHolder {
 
   // TO ensure that both CachePreFiller and SubmissionImageHolder are in sync.
   public static final boolean LOAD_LOW_QUALITY_IMAGES = true;
+  private final SubmissionPageLifecycleStreams lifecycleStreams;
 
   @BindView(R.id.submission_image_scroll_hint) View imageScrollHintView;
   @BindView(R.id.submission_image) ZoomableImageView imageView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
   @BindColor(R.color.submission_media_content_background_padding) int paddingColorForSmallImages;
 
-  private final int deviceDisplayWidth;
   private final ExpandablePageLayout submissionPageLayout;
   private final ProgressBar contentLoadProgressView;
+  private final Size deviceDisplaySize;
   private final Relay<Drawable> imageStream = PublishRelay.create();
   private final GlidePaddingTransformation glidePaddingTransformation;
   private ZoomableImageView.OnPanChangeListener imagePanListener;
@@ -72,12 +74,14 @@ public class SubmissionImageHolder {
       View submissionLayout,
       ProgressBar contentLoadProgressView,
       ExpandablePageLayout submissionPageLayout,
-      int deviceDisplayWidth)
+      Size deviceDisplaySize)
   {
-    ButterKnife.bind(this, submissionLayout);
+    this.lifecycleStreams = lifecycleStreams;
     this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
-    this.deviceDisplayWidth = deviceDisplayWidth;
+    this.deviceDisplaySize = deviceDisplaySize;
+
+    ButterKnife.bind(this, submissionLayout);
 
     imageView.setGravity(Gravity.TOP);
 
@@ -92,7 +96,7 @@ public class SubmissionImageHolder {
         float minDesiredImageHeight = commentListParentSheet.getTop() * 2;
 
         // Because ZoomableImageView will resize the image to fill space.
-        float widthResizeFactor = deviceDisplayWidth / (float) imageWidth;
+        float widthResizeFactor = deviceDisplaySize.getWidth() / (float) imageWidth;
         float resizedHeight = imageHeight * widthResizeFactor;
 
         if (resizedHeight < minDesiredImageHeight) {
@@ -120,9 +124,6 @@ public class SubmissionImageHolder {
     };
   }
 
-  /**
-   * Note: image loading is canceled in {@link #resetViews()}.
-   */
   @CheckResult
   public Completable load(MediaLink mediaLink, Thumbnails redditSuppliedThumbnails) {
     if (!LOAD_LOW_QUALITY_IMAGES) {
@@ -137,15 +138,17 @@ public class SubmissionImageHolder {
           String defaultImageUrl = mediaLink.lowQualityUrl();
           String optimizedImageUrl = mediaLink.isGif()
               ? defaultImageUrl
-              : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplayWidth, defaultImageUrl);
+              : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplaySize.getWidth(), defaultImageUrl);
 
           emitter.onSuccess(
               Glide.with(imageView.view())
                   .load(optimizedImageUrl)
                   .apply(new RequestOptions()
                       .priority(Priority.IMMEDIATE)
+                      .downsample(DownsampleStrategy.AT_MOST)
+                      //.skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE)
                       .transform(glidePaddingTransformation))
-                  .submit()
+                  .submit(deviceDisplaySize.getWidth() * 2, deviceDisplaySize.getHeight() * 2)
                   .get()
           );
           emitter.setCancellable(() -> Glide.with(imageView.view()).clear(imageView.view()));
@@ -161,7 +164,7 @@ public class SubmissionImageHolder {
         .doOnSuccess(drawable -> contentLoadProgressView.setVisibility(View.GONE))
         .flatMap(drawable -> Views.rxWaitTillMeasured(imageView.view()).toSingleDefault(drawable))
         .doOnSuccess(drawable -> {
-          float widthResizeFactor = deviceDisplayWidth / (float) drawable.getIntrinsicWidth();
+          float widthResizeFactor = deviceDisplaySize.getWidth() / (float) drawable.getIntrinsicWidth();
           float imageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
           float visibleImageHeight = Math.min(imageHeight, imageView.getHeight());
 

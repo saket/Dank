@@ -14,6 +14,8 @@ import android.view.View;
 import android.view.ViewGroup;
 
 import com.bumptech.glide.Glide;
+import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
@@ -34,7 +36,7 @@ import me.saket.dank.utils.FileSizeUnit;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;
-import me.saket.dank.utils.glide.GlideUtils;
+import me.saket.dank.utils.glide.GlideUtils.SimpleRequestListener;
 import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.ProgressWithFileSizeView;
@@ -157,10 +159,8 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     moveToScreenState(ScreenState.LOADING_IMAGE);
 
     String imageUrl;
-
     if (mediaAlbumItemToShow.highDefinitionEnabled()) {
       imageUrl = mediaAlbumItemToShow.mediaLink().highQualityUrl();
-
     } else {
       //noinspection ConstantConditions
       Thumbnails redditSuppliedImages = ((MediaFragmentCallbacks) getActivity()).getRedditSuppliedImages();
@@ -173,17 +173,23 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     ImageLoadProgressTarget<Drawable> targetWithProgress = new ImageLoadProgressTarget<>(target, progressView);
     targetWithProgress.setModel(getActivity(), imageUrl);
 
+    Size deviceDisplaySize = new Size(getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
+
     Glide.with(this)
         .load(imageUrl)
-        // Adding a 1px transparent border improves anti-aliasing.
-        .apply(RequestOptions.bitmapTransform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
-          @Override
-          public Size getPadding(int imageWidth, int imageHeight) {
-            return new Size(1, 1);
-          }
-        }))
+        .apply(new RequestOptions()
+            .priority(Priority.IMMEDIATE)
+            .downsample(DownsampleStrategy.AT_MOST)
+            .override((int) 2.5f * deviceDisplaySize.getWidth(), (int) 2.5f * deviceDisplaySize.getHeight())
+            .transform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
+              @Override
+              public Size getPadding(int imageWidth, int imageHeight) {
+                // Adding a 1px transparent border improves anti-aliasing when rotating image (flick-dismiss).
+                return new Size(1, 1);
+              }
+            }))
         //.apply(new RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
-        .listener(new GlideUtils.SimpleRequestListener<Drawable>() {
+        .listener(new SimpleRequestListener<Drawable>() {
           @Override
           public void onResourceReady(Drawable drawable) {
             moveToScreenState(ScreenState.IMAGE_READY);

@@ -33,6 +33,7 @@ import android.support.v7.widget.LinearSmoothScroller;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.util.AttributeSet;
+import android.util.Size;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -881,7 +882,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         fragmentLayout,
         contentLoadProgressView,
         submissionPageLayout,
-        deviceDisplayWidth
+        new Size(deviceDisplayWidth, deviceDisplayHeight)
     );
 
     // Open media in full-screen on click.
