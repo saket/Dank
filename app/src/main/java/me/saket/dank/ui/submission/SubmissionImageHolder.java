@@ -115,6 +115,7 @@ public class SubmissionImageHolder {
       if (imagePanListener != null) {
         imageView.removeOnImagePanChangeListener(imagePanListener);
       }
+      imageView.resetState();
       imageScrollHintView.setVisibility(View.GONE);
     };
   }
