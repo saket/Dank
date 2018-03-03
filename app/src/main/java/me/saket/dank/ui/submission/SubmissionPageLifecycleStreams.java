@@ -16,6 +16,7 @@ public class SubmissionPageLifecycleStreams extends LifecycleOwnerViews.Streams 
   private static final Object NOTHING = LifecycleStreams.NOTHING;
   private Relay<Object> pageCollapseStream = PublishRelay.create();
   private Relay<Object> pageAboutToCollapseStream = PublishRelay.create();
+  private Relay<Object> pageExpandStream = PublishRelay.create();
 
   public static SubmissionPageLifecycleStreams create(ExpandablePageLayout pageLayout, LifecycleOwnerActivity parent) {
     return new SubmissionPageLifecycleStreams(pageLayout, parent);
@@ -31,6 +32,7 @@ public class SubmissionPageLifecycleStreams extends LifecycleOwnerViews.Streams 
 
       @Override
       public void onPageExpanded() {
+        pageExpandStream.accept(NOTHING);
       }
 
       @Override
@@ -53,6 +55,11 @@ public class SubmissionPageLifecycleStreams extends LifecycleOwnerViews.Streams 
   @CheckResult
   public Observable<Object> onPageCollapse() {
     return pageCollapseStream;
+  }
+
+  @CheckResult
+  public Observable<Object> onPageExpand() {
+    return pageExpandStream;
   }
 
   @CheckResult

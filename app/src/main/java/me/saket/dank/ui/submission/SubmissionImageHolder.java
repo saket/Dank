@@ -171,8 +171,20 @@ public class SubmissionImageHolder {
             commentListParentSheet.setScrollingEnabled(true);
             commentListParentSheet.setMaxScrollY(imageHeightMinusToolbar);
 
-            if (submissionPageLayout.isExpanded()) {
-              commentListParentSheet.smoothScrollTo(imageHeightMinusToolbar);
+            boolean canShowExpandAnimationToUser = submissionPageLayout.isExpanded()
+                || submissionPageLayout.getTranslationY() <= submissionPageLayout.getHeight() * 0.2f;
+
+            if (canShowExpandAnimationToUser) {
+              if (submissionPageLayout.isExpanded()) {
+                commentListParentSheet.smoothScrollTo(imageHeightMinusToolbar);
+              } else {
+                lifecycleStreams.onPageExpand()
+                    .take(1)
+                    .takeUntil(lifecycleStreams.onPageCollapseOrDestroy())
+                    .subscribe(o -> {
+                      commentListParentSheet.smoothScrollTo(imageHeightMinusToolbar);
+                    });
+              }
             } else {
               commentListParentSheet.scrollTo(imageHeightMinusToolbar);
             }
