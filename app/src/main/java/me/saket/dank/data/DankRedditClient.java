@@ -227,6 +227,7 @@ public class DankRedditClient {
     return Completable.fromAction(() -> {
       redditClient.getOAuthHelper().revokeAccessToken(loggedInUserCredentials);
       userSessionRepository.removeLoggedInUsername();
+      Dank.subscriptions().resetDefaultSubreddit();
     });
   }
 
