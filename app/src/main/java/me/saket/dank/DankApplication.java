@@ -16,19 +16,19 @@ import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.TimeUnit;
 
-import io.reactivex.Observable;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
 import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserAuthListener;
-import me.saket.dank.ui.user.UserSession;
-import me.saket.dank.utils.Optional;
 import timber.log.Timber;
 
 public class DankApplication extends Application {
+
+  @SuppressWarnings("FieldCanBeLocal")
+  private UserAuthListener userAuthListener;
 
   @Override
   public void onCreate() {
@@ -57,21 +57,11 @@ public class DankApplication extends Application {
       createNotificationChannels();
     }
 
-    Observable<Optional<UserSession>> userSessions = Dank.dependencyInjector().userSession().streamUserSession().share();
-    UserAuthListener userAuthListener = Dank.dependencyInjector().userAuthListener();
-    userSessions
-        .take(1)  // Initial value is immediately emitted.
-        .filter(optionalSession -> optionalSession.isPresent())
-        .delay(2, TimeUnit.SECONDS)   // Avoid clogging the app's startup.
-        .subscribe(o -> userAuthListener.handleActiveSessionOnAppStartup(this));
-    userSessions
-        .skip(1)  // Don't want a log-in callback on app startup.
-        .filter(optionalSession -> optionalSession.isPresent())
-        .subscribe(o -> userAuthListener.handleLoggedIn(this));
-    userSessions
-        .skip(1)
-        .filter(optionalSession -> !optionalSession.isPresent())
-        .subscribe(o -> userAuthListener.handleLoggedOut());
+    // WARNING: userAuthListener needs to be a field variable to avoid GC.
+    userAuthListener = Dank.dependencyInjector().userAuthListener();
+    userAuthListener.doSomething(this)
+        .subscribeOn(Schedulers.io())
+        .subscribe();
   }
 
   @TargetApi(Build.VERSION_CODES.O)

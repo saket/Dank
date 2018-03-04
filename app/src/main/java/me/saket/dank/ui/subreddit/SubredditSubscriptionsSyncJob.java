@@ -79,12 +79,11 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
 
   @Override
   public boolean onStartJob(JobParameters params) {
-    // TODO: Run periodic job only if user is logged in.
-
-    unsubscribeOnDestroy(subscriptionManager.refreshSubscriptions()
+    subscriptionManager.refreshAndSaveSubscriptions()
         .andThen(subscriptionManager.executePendingSubscribesAndUnsubscribes())
         .compose(applySchedulersCompletable())
         .compose(doOnCompletableStartAndTerminate(ongoing -> progressSubject.accept(ongoing)))
+        .ambWith(lifecycleOnDestroy().ignoreElements())
         .subscribe(
             () -> {
               if (params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB && BuildConfig.DEBUG) {
@@ -102,7 +101,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
               boolean canRetry = isNotOurFault && params.getJobId() == ID_SUBSCRIPTIONS_RECURRING_JOB;
               jobFinished(params, canRetry);
             }
-        ));
+        );
 
     // Return true to indicate that the job is still being processed (in a background thread).
     return true;

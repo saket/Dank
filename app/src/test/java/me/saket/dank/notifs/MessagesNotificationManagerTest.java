@@ -24,6 +24,7 @@ public class MessagesNotificationManagerTest {
 
   @Before
   public void setUp() throws Exception {
+    //noinspection ConstantConditions
     SeenUnreadMessagesIdStore seenUnreadMessagesIdStore = new SeenUnreadMessagesIdStore(null) {
       private Set<String> seenMessageIds = Collections.emptySet();
 
@@ -38,7 +39,8 @@ public class MessagesNotificationManagerTest {
       }
     };
 
-    notificationManager = new MessagesNotificationManager(seenUnreadMessagesIdStore, null, null);
+    //noinspection ConstantConditions
+    notificationManager = new MessagesNotificationManager(seenUnreadMessagesIdStore, null, null, null);
   }
 
   @Test

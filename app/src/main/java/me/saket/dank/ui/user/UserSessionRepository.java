@@ -1,60 +1,56 @@
 package me.saket.dank.ui.user;
 
-import android.content.SharedPreferences;
 import android.support.annotation.CheckResult;
 
+import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 
-import java.util.Objects;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Preconditions;
+import timber.log.Timber;
 
 public class UserSessionRepository {
 
-  private static final String KEY_LOGGED_IN_USERNAME = "loggedInUsername";
-  private final RxSharedPreferences rxSharedPreferences;
-  private SharedPreferences sharedPrefs;
+  private static final String KEY_LOGGED_IN_USERNAME = "logged_in_username";
+  private static final String EMPTY = "";
+
+  private final Preference<String> loggedInUsername;
 
   @Inject
-  public UserSessionRepository(SharedPreferences sharedPrefs) {
-    this.sharedPrefs = sharedPrefs;
-    this.rxSharedPreferences = RxSharedPreferences.create(sharedPrefs);
+  public UserSessionRepository(RxSharedPreferences rxSharedPreferences) {
+    loggedInUsername = rxSharedPreferences.getString(KEY_LOGGED_IN_USERNAME, EMPTY);
   }
 
   public void setLoggedInUsername(String username) {
-    sharedPrefs.edit().putString(KEY_LOGGED_IN_USERNAME, Objects.requireNonNull(username, "username == null")).apply();
+    Preconditions.checkNotNull(username, "username == null");
+    loggedInUsername.set(username);
   }
 
   public void removeLoggedInUsername() {
-    sharedPrefs.edit().remove(KEY_LOGGED_IN_USERNAME).apply();
+    Timber.i("Setting username to EMPTY");
+    loggedInUsername.set(EMPTY);
   }
 
   public boolean isUserLoggedIn() {
-    return loggedInUserName() != null;
+    return loggedInUserName() != null && !loggedInUserName().equals(EMPTY);
   }
 
   public String loggedInUserName() {
-    return sharedPrefs.getString(KEY_LOGGED_IN_USERNAME, null);
+    return loggedInUsername.get();
   }
 
   /** Note: emits the current value immediately. */
   @CheckResult
-  public Observable<Optional<UserSession>> streamUserSession() {
-    return rxSharedPreferences.getString(KEY_LOGGED_IN_USERNAME, "")
-        .asObservable()
-        .map(username -> username.equals("")
+  public Observable<Optional<UserSession>> streamSessions() {
+    return loggedInUsername.asObservable()
+        .doOnNext(o -> Timber.i("poop"))
+        .doOnNext(o -> Timber.i("Logged in user: %s", o))
+        .map(username -> username.equals(EMPTY)
             ? Optional.empty()
             : Optional.of(UserSession.create(username))
         );
-  }
-
-  @CheckResult
-  public Observable<UserSession> streamFutureLogInEvents() {
-    return streamUserSession()
-        .skip(1) // Not interested in the current value.
-        .filter(optionalSession -> optionalSession.isPresent())
-        .map(optional -> optional.get());
   }
 }

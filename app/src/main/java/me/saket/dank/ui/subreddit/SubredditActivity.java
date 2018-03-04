@@ -51,7 +51,6 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
@@ -230,9 +229,16 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .takeUntil(lifecycle().onDestroy())
         .subscribe(isSubscribed -> subscribeButton.setVisibility(isSubscribed ? View.GONE : View.VISIBLE));
 
-    userSessionRepository.streamFutureLogInEvents()
+    userSessionRepository.streamSessions()
+        .skip(1)
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(session -> handleOnUserLogIn());
+        .subscribe(session -> {
+          if (session.isPresent()) {
+            handleOnUserLogIn();
+          } else {
+            handleOnUserLogOut();
+          }
+        });
   }
 
   @Override
@@ -755,10 +761,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   public void onBackPressed() {
     if (submissionPage.isExpandedOrExpanding()) {
       submissionList.collapse();
-
     } else if (!toolbarSheet.isCollapsed()) {
       toolbarSheet.collapse();
-
     } else {
       super.onBackPressed();
     }
@@ -769,13 +773,16 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     // submissions will change if the subscriptions change.
     subredditChangesStream
         .take(1)
-        .filter(subreddit -> subscriptionManager.isFrontpage(subreddit))
-        .observeOn(Schedulers.io())
-        .flatMapCompletable(subreddit -> submissionRepository.clearCachedSubmissionLists(subreddit))
-        .subscribe(() -> forceRefreshSubmissionsRequestStream.accept(Notification.INSTANCE));
+        .filter(subscriptionManager::isFrontpage)
+        .subscribe(o -> forceRefreshSubmissionsRequestStream.accept(Notification.INSTANCE));
 
     if (!submissionPage.isExpanded()) {
       showUserProfileSheet();
     }
+  }
+
+  private void handleOnUserLogOut() {
+    Timber.w("Reloading default subreddit");
+    subredditChangesStream.accept(subscriptionManager.defaultSubreddit());
   }
 }

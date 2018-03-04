@@ -57,8 +57,12 @@ public class SubredditSubscriptionManager {
   private UserSessionRepository userSessionRepository;
 
   @Inject
-  public SubredditSubscriptionManager(Application appContext, BriteDatabase database, DankRedditClient dankRedditClient,
-      UserPreferences userPreferences, UserSessionRepository userSessionRepository)
+  public SubredditSubscriptionManager(
+      Application appContext,
+      BriteDatabase database,
+      DankRedditClient dankRedditClient,
+      UserPreferences userPreferences,
+      UserSessionRepository userSessionRepository)
   {
     this.appContext = appContext;
     this.database = database;
@@ -87,14 +91,13 @@ public class SubredditSubscriptionManager {
         .map(toImmutable())
         .flatMap(filteredSubs -> {
           if (filteredSubs.isEmpty()) {
-            // Check if the database is empty and fetch fresh subscriptions from remote if needed.
-            return database
-                .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
+            // Fetch fresh subscriptions from remote if DB is empty.
+            return database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
                 .mapToList(SubredditSubscription.MAPPER)
                 .firstOrError()
                 .flatMapObservable(localSubs -> {
                   if (localSubs.isEmpty()) {
-                    return refreshSubscriptions(localSubs)
+                    return refreshAndSaveSubscriptions(localSubs)
                         // Don't let this stream emit anything. A change in the database will anyway trigger that.
                         .flatMapObservable(o -> Observable.never());
 
@@ -136,9 +139,6 @@ public class SubredditSubscriptionManager {
         });
   }
 
-  /**
-   * Get all subscribed subreddits, including the hidden ones.
-   */
   @CheckResult
   public Observable<List<SubredditSubscription>> getAllIncludingHidden() {
     return getAll("", true);
@@ -148,17 +148,16 @@ public class SubredditSubscriptionManager {
    * Get updated subscriptions from remote and save to DB.
    */
   @CheckResult
-  public Completable refreshSubscriptions() {
-    return database
-        .createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
+  public Completable refreshAndSaveSubscriptions() {
+    return database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
         .mapToList(SubredditSubscription.MAPPER)
         .firstOrError()
-        .flatMap(localSubscriptions -> refreshSubscriptions(localSubscriptions))
+        .flatMap(localSubscriptions -> refreshAndSaveSubscriptions(localSubscriptions))
         .toCompletable();
   }
 
   @CheckResult
-  private Single<List<SubredditSubscription>> refreshSubscriptions(List<SubredditSubscription> localSubs) {
+  private Single<List<SubredditSubscription>> refreshAndSaveSubscriptions(List<SubredditSubscription> localSubs) {
     return fetchRemoteSubscriptions(localSubs).doOnSuccess(saveSubscriptionsToDatabase());
   }
 
@@ -167,7 +166,7 @@ public class SubredditSubscriptionManager {
     return Dank.reddit().subscribeTo(subreddit)
         .andThen(Single.just(PendingState.NONE))
         .onErrorResumeNext(e -> {
-          e.printStackTrace();
+          Timber.e(e, "Couldn't subscribe to %s. Will try again later.", subreddit);
           return Single.just(PendingState.PENDING_SUBSCRIBE);
         })
         .doOnSuccess(pendingState -> {
@@ -183,14 +182,14 @@ public class SubredditSubscriptionManager {
         .andThen(Dank.reddit().findSubreddit(subscription.name()))
         .flatMapCompletable(subreddit -> Dank.reddit().unsubscribeFrom(subreddit))
         .onErrorResumeNext(e -> {
-          e.printStackTrace();
+          Timber.e(e, "Couldn't unsubscribe from %s. Will try again later.", subscription);
 
+          // 404 == subreddit isn't present on the server anymore.
           boolean is404 = e instanceof NetworkException && ((NetworkException) e).getResponse().getStatusCode() == 404;
           if (!is404) {
             SubredditSubscription updated = subscription.toBuilder().pendingState(PendingState.PENDING_UNSUBSCRIBE).build();
             database.insert(SubredditSubscription.TABLE_NAME, updated.toContentValues());
           }
-          // Else, subreddit isn't present on the server anymore.
           return Completable.complete();
         });
   }
@@ -208,9 +207,6 @@ public class SubredditSubscriptionManager {
     });
   }
 
-  /**
-   * Removes all subreddit subscriptions.
-   */
   @CheckResult
   public Completable removeAll() {
     return Completable.fromAction(() -> database.delete(SubredditSubscription.TABLE_NAME, null));
@@ -242,7 +238,8 @@ public class SubredditSubscriptionManager {
 
   @CheckResult
   public Observable<Boolean> isSubscribed(String subredditName) {
-    return getAllIncludingHidden()  // This ensures that the DB is never empty.
+    // This internally calls getAll(), which fetches new subscriptions in case the DB is empty.
+    return getAllIncludingHidden()
         .map(subscriptions -> {
           for (SubredditSubscription subscription : subscriptions) {
             if (subscription.name().equalsIgnoreCase(subredditName)) {
@@ -275,6 +272,7 @@ public class SubredditSubscriptionManager {
 
   @CheckResult
   private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
+    Timber.w("Fetching subscriptions");
     Single<List<String>> subredditsStream = userSessionRepository.isUserLoggedIn() ? loggedInUserSubreddits() : Single.just(loggedOutSubreddits());
     return subredditsStream
         .compose(applySchedulersSingle())
@@ -373,9 +371,11 @@ public class SubredditSubscriptionManager {
    */
   private Consumer<List<SubredditSubscription>> saveSubscriptionsToDatabase() {
     return newSubscriptions -> {
+      Timber.i("Saved %s subscriptions", newSubscriptions.size());
+
       List<ContentValues> newSubscriptionValuesList = new ArrayList<>(newSubscriptions.size());
       for (SubredditSubscription newSubscription : newSubscriptions) {
-       newSubscriptionValuesList.add(newSubscription.toContentValues());
+        newSubscriptionValuesList.add(newSubscription.toContentValues());
       }
 
       try (BriteDatabase.Transaction transaction = database.newTransaction()) {

@@ -147,8 +147,7 @@ public class UserProfileSheetView extends FrameLayout {
       logoutDisposable.dispose();
       logoutButton.setText(R.string.userprofile_logging_out);
 
-      logoutDisposable = Dank.reddit()
-          .logout()
+      logoutDisposable = Dank.reddit().logout()
           .compose(applySchedulersCompletable())
           .subscribe(
               () -> parentSheet.collapse(),
