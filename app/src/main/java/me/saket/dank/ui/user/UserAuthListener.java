@@ -4,24 +4,30 @@ import static io.reactivex.schedulers.Schedulers.io;
 
 import android.content.Context;
 
+import com.f2prateek.rx.preferences2.Preference;
+
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import me.saket.dank.data.SubredditSubscriptionManager;
-import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.subreddit.SubredditSubscriptionsSyncJob;
+import me.saket.dank.utils.TimeInterval;
 import timber.log.Timber;
 
 public class UserAuthListener {
 
-  private final UserPreferences userPrefs;
   private final SubredditSubscriptionManager subscriptionManager;
+  private final Preference<TimeInterval> unreadMessagesPollInterval;
 
   @Inject
-  public UserAuthListener(UserPreferences userPrefs, SubredditSubscriptionManager subscriptionManager) {
-    this.userPrefs = userPrefs;
+  public UserAuthListener(
+      SubredditSubscriptionManager subscriptionManager,
+      @Named("unread_messages") Preference<TimeInterval> unreadMessagesPollInterval)
+  {
     this.subscriptionManager = subscriptionManager;
+    this.unreadMessagesPollInterval = unreadMessagesPollInterval;
   }
 
   public void handleActiveSessionOnAppStartup(Context context) {
@@ -53,6 +59,6 @@ public class UserAuthListener {
     SubredditSubscriptionsSyncJob.schedule(context);
 
     CheckUnreadMessagesJobService.syncImmediately(context);
-    CheckUnreadMessagesJobService.schedule(context, userPrefs);
+    CheckUnreadMessagesJobService.schedule(context, unreadMessagesPollInterval);
   }
 }

@@ -10,12 +10,14 @@ import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.PersistableBundle;
-import android.text.format.DateUtils;
+
+import com.f2prateek.rx.preferences2.Preference;
 
 import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import io.reactivex.Completable;
@@ -23,11 +25,11 @@ import me.saket.dank.DankJobService;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.PersistableBundleUtils;
+import me.saket.dank.utils.TimeInterval;
 import timber.log.Timber;
 
 /**
@@ -47,29 +49,28 @@ public class CheckUnreadMessagesJobService extends DankJobService {
    * 1. One that is infrequent and uses user set time period. This runs on battery and metered connections.
    * 2. Another one that is more frequent, but runs only when the device is on an unmetered connection and charging.
    */
-  public static void schedule(Context context, UserPreferences userPrefs) {
-    long userSelectedTimeIntervalMillis = userPrefs.unreadMessagesCheckIntervalMillis();
+  public static void schedule(Context context, Preference<TimeInterval> pollInterval) {
     JobInfo userSetSyncJob = new JobInfo.Builder(ID_MESSAGES_FREQUENCY_USER_SET, new ComponentName(context, CheckUnreadMessagesJobService.class))
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)
-        .setPeriodic(userSelectedTimeIntervalMillis)
+        .setPeriodic(pollInterval.get().intervalMillis())
         .build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
     //noinspection ConstantConditions
     jobScheduler.schedule(userSetSyncJob);
 
-    long aggressiveTimeIntervalMillis = DateUtils.MINUTE_IN_MILLIS * 15;
+    TimeInterval aggressiveTimeInterval = TimeInterval.create(15, TimeUnit.MINUTES);
 
-    Timber.i("userSelectedTimeIntervalMillis: %s", userSelectedTimeIntervalMillis);
-    Timber.i("aggressiveTimeIntervalMillis: %s", aggressiveTimeIntervalMillis);
+    Timber.i("User selected interval: %s", pollInterval.get());
+    Timber.i("Aggressive time interval: %s", aggressiveTimeInterval);
 
-    if (userSelectedTimeIntervalMillis != aggressiveTimeIntervalMillis) {
+    if (!pollInterval.get().equals(aggressiveTimeInterval)) {
       JobInfo aggressiveSyncJob = new JobInfo.Builder(ID_MESSAGES_FREQUENCY_AGGRESSIVE, new ComponentName(context, CheckUnreadMessagesJobService.class))
           .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
           .setRequiresCharging(true)
           .setPersisted(true)
-          .setPeriodic(aggressiveTimeIntervalMillis)
+          .setPeriodic(aggressiveTimeInterval.intervalMillis())
           .build();
       Timber.i("Scheduling aggressive job");
       jobScheduler.schedule(aggressiveSyncJob);

@@ -54,7 +54,6 @@ import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.OnLoginRequireListener;
-import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.RedditUserLink;
@@ -75,6 +74,7 @@ import me.saket.dank.utils.MoshiOptionalAdapterFactory;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
+import me.saket.dank.utils.TimeInterval;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -368,7 +368,7 @@ public class DankAppModule {
       RxSharedPreferences rxPrefs,
       RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyTypeAdapter)
   {
-    return rxPrefs.getObject(UserPreferences.KEY_HIGH_RESOLUTION_MEDIA_NETWORK_STRATEGY, NetworkStrategy.WIFI_ONLY, networkStrategyTypeAdapter);
+    return rxPrefs.getObject("high_resolution_media_network_strategy", NetworkStrategy.WIFI_ONLY, networkStrategyTypeAdapter);
   }
 
   @Provides
@@ -423,5 +423,13 @@ public class DankAppModule {
     return CacheBuilder.newBuilder()
         .maximumSize(100)
         .build();
+  }
+
+  @Provides
+  @Named("unread_messages")
+  Preference<TimeInterval> unreadMessagesPollIntervalPref(RxSharedPreferences rxSharedPrefs, Moshi moshi) {
+    Preference.Converter<TimeInterval> timeUnitPrefConverter = new TimeInterval.TimeUnitPrefConverter(moshi);
+    TimeInterval defaultInterval = TimeInterval.create(30, TimeUnit.MINUTES);
+    return rxSharedPrefs.getObject("unread_messages_poll_interval", defaultInterval, timeUnitPrefConverter);
   }
 }
