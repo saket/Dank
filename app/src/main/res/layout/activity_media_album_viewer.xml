@@ -61,23 +61,26 @@
 
     <!-- Requires atleast 22dp of top-padding for the option button ripples
          (in their current size) to not get clipped. -->
+    <!-- WARNING: Make sure to update @style/DankPopupMenu.AlbumViewerOption
+         if padding is changed. -->
     <LinearLayout
       android:id="@+id/mediaalbumviewer_position_and_options_container"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_alignParentBottom="true"
-      android:layout_marginTop="@dimen/spacing20"
       android:background="@color/transparent"
       android:orientation="horizontal"
+      android:paddingBottom="@dimen/spacing16"
       android:paddingTop="@dimen/spacing24">
 
       <TextView
         android:id="@+id/mediaalbumviewer_media_position"
         android:layout_width="0dp"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_marginStart="@dimen/spacing20"
         android:layout_weight="1"
         android:fontFamily="sans-serif-medium"
+        android:gravity="center_vertical"
         android:text="@string/mediaalbumviewer_media_position"
         android:textColor="@color/color_accent"
         android:textSize="@dimen/textsize16"
@@ -87,9 +90,9 @@
       <!-- ContentDescription for these buttons are set programmatically -->
       <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_height="match_parent"
         android:layout_weight="1"
-        android:gravity="bottom">
+        android:gravity="center_vertical">
 
         <ImageButton
           android:id="@+id/mediaalbumviewer_share"

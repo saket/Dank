@@ -180,7 +180,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
     // Show the option buttons above the navigation bar.
     int navBarHeight = Views.getNavigationBarSize(this).y;
-    Views.setPaddingBottom(contentOptionButtonsContainerView, navBarHeight);
+    Views.setPaddingBottom(contentOptionButtonsContainerView, contentOptionButtonsContainerView.getPaddingBottom() + navBarHeight);
 
     rxPermissions = new RxPermissions(this);
     systemUiHelper = new SystemUiHelper(this, SystemUiHelper.LEVEL_IMMERSIVE, 0, systemUiVisible -> {
