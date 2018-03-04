@@ -194,30 +194,28 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
           public void onResourceReady(Drawable drawable) {
             moveToScreenState(ScreenState.IMAGE_READY);
 
-            if (!imageView.isLaidOut()) {
-              throw new AssertionError("ImageView needs to get laid.");
-            }
+            Views.executeOnMeasure(imageView.view(), () -> {
+              int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+              float widthResizeFactor = deviceDisplayWidth / (float) drawable.getMinimumWidth();
+              float resizedImageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
+              boolean isImageLongerThanWindow = resizedImageHeight > imageView.getHeight();
 
-            int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
-            float widthResizeFactor = deviceDisplayWidth / (float) drawable.getMinimumWidth();
-            float resizedImageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
-            boolean isImageLongerThanWindow = resizedImageHeight > imageView.getHeight();
+              if (isImageLongerThanWindow) {
+                imageView.setGravity(Gravity.TOP);
+                showImageScrollHint(drawable.getIntrinsicHeight(), imageView.getHeight());
+              }
 
-            if (isImageLongerThanWindow) {
-              imageView.setGravity(Gravity.TOP);
-              showImageScrollHint(drawable.getIntrinsicHeight(), imageView.getHeight());
-            }
-
-            if (isFirstLoad) {
-              // Entry transition.
-              imageView.setTranslationY(drawable.getIntrinsicHeight() / 20);
-              imageView.setRotation(-2);
-              imageView.animate()
-                  .translationY(0f)
-                  .rotation(0)
-                  .setInterpolator(Animations.INTERPOLATOR)
-                  .start();
-            }
+              if (isFirstLoad) {
+                // Entry transition.
+                imageView.setTranslationY(drawable.getIntrinsicHeight() / 20);
+                imageView.setRotation(-2);
+                imageView.animate()
+                    .translationY(0f)
+                    .rotation(0)
+                    .setInterpolator(Animations.INTERPOLATOR)
+                    .start();
+              }
+            });
           }
 
           @Override
