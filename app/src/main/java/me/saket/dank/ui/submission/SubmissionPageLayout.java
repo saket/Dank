@@ -941,13 +941,19 @@ public class SubmissionPageLayout extends ExpandablePageLayout
       );
     };
 
-    // and on submission title click.
     submissionContentStream
         .ofType(MediaLink.class)
         .filter(o -> commentListParentSheet.isAtMaxScrollY())
         .switchMap(o -> submissionCommentsAdapter.streamHeaderClicks())
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(v -> commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate()));
+        .subscribe(o -> {
+          if (submissionContentStream.getValue() instanceof MediaLink) {
+            commentListParentSheet.smoothScrollTo(mediaRevealDistanceFunc.calculate());
+          } else {
+            // FIXME: Investigate this.
+            Timber.e("Received a header click for a non-media link.");
+          }
+        });
 
     // Calculates if the top of the comment sheet is directly below the image.
     Function0<Boolean> isCommentSheetBeneathImageFunc = () -> {

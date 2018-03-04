@@ -30,7 +30,6 @@ public class UserSessionRepository {
   }
 
   public void removeLoggedInUsername() {
-    Timber.i("Setting username to EMPTY");
     loggedInUsername.set(EMPTY);
   }
 
@@ -46,8 +45,6 @@ public class UserSessionRepository {
   @CheckResult
   public Observable<Optional<UserSession>> streamSessions() {
     return loggedInUsername.asObservable()
-        .doOnNext(o -> Timber.i("poop"))
-        .doOnNext(o -> Timber.i("Logged in user: %s", o))
         .map(username -> username.equals(EMPTY)
             ? Optional.empty()
             : Optional.of(UserSession.create(username))
