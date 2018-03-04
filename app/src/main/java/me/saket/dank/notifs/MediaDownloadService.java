@@ -44,6 +44,7 @@ import io.reactivex.Observable;
 import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Function;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.di.Dank;
@@ -183,6 +184,7 @@ public class MediaDownloadService extends Service {
               }
 
               return downloadStream
+                  .unsubscribeOn(Schedulers.io())
                   .map(moveFileToUserSpaceOnDownload())
                   .doOnTerminate(() -> ongoingDownloadLinks.remove(linkToDownload))
                   .doOnError(e -> Timber.e(e, "Couldn't download media"))
@@ -439,7 +441,7 @@ public class MediaDownloadService extends Service {
     return Observable.create(emitter -> {
       Target<File> fileTarget = new SimpleTarget<File>() {
         @Override
-        public void onResourceReady(File downloadedFile, Transition<? super File> transition) {
+        public void onResourceReady(File downloadedFile, @Nullable Transition<? super File> transition) {
           long downloadCompleteTimeMillis = System.currentTimeMillis();
           emitter.onNext(MediaDownloadJob.createDownloaded(mediaLink, downloadedFile, downloadCompleteTimeMillis));
           emitter.onComplete();
