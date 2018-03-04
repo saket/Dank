@@ -278,7 +278,7 @@ public class UrlParserTest {
         "https://v.reddit.com/fjpqnd127wf01"
     };
     for (String videoUrl : videoUrls) {
-      String dashPlaylistUrl = "poop";
+      String dashPlaylistUrl = "https://v.redd.it/nwypmagtjvf01/DASHPlaylist.mpd";
       String submissionJson = "{\n" +
           "  \"secure_media\": {\n" +
           "    \"reddit_video\": {\n" +
@@ -311,7 +311,7 @@ public class UrlParserTest {
         "https://v.reddit.com/fjpqnd127wf01"
     };
     for (String videoUrl : videoUrls) {
-      String dashPlaylistUrl = "poop";
+      String dashPlaylistUrl = "https://v.redd.it/nwypmagtjvf01/DASHPlaylist.mpd";
       String submissionJson = "{\n" +
           "  \"secure_media\": null,\n" +
           "  \"crosspost_parent_list\": [\n" +

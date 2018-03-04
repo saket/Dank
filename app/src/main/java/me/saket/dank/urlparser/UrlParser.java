@@ -1,5 +1,7 @@
 package me.saket.dank.urlparser;
 
+import static junit.framework.Assert.assertEquals;
+
 import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.text.Html;
@@ -32,7 +34,9 @@ import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.data.links.StreamableUnresolvedLink;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Urls;
+import me.saket.dank.utils.VideoFormat;
 
 /**
  * Parses URLs found in the wilderness of Reddit and categorizes them into {@link Link} subclasses.
@@ -214,8 +218,12 @@ public class UrlParser {
   }
 
   private static RedditHostedVideoLink createRedditHostedVideoLink(String url, Submission submission) {
-    String dashPlaylistUrl = JrawUtils.redditVideoDashPlaylistUrl(submission);
-    return RedditHostedVideoLink.create(url, dashPlaylistUrl, dashPlaylistUrl);
+    Pair<String,String> pair = JrawUtils.redditVideoDashPlaylistUrl(submission);
+    String dashPlaylistUrl = pair.first();
+    String directVideoUrlWithoutAudio = pair.second();
+
+    assertEquals(true, VideoFormat.parse(dashPlaylistUrl) == VideoFormat.DASH);
+    return RedditHostedVideoLink.create(url, dashPlaylistUrl, dashPlaylistUrl, directVideoUrlWithoutAudio);
   }
 
   private static Link.Type getMediaUrlType(String urlPath) {

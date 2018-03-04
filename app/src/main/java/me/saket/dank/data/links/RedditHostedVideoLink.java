@@ -25,7 +25,14 @@ public abstract class RedditHostedVideoLink extends MediaLink implements Parcela
   @Override
   public abstract String lowQualityUrl();
 
-  public static RedditHostedVideoLink create(String unparsedUrl, String highQualityDashPlaylistUrl, String lowQualityUrl) {
-    return new AutoValue_RedditHostedVideoLink(unparsedUrl, highQualityDashPlaylistUrl, lowQualityUrl);
+  public abstract String directUrlWithoutAudio();
+
+  public static RedditHostedVideoLink create(
+      String unparsedUrl,
+      String highQualityDashPlaylistUrl,
+      String lowQualityUrl,
+      String directUrlWithoutAudio)
+  {
+    return new AutoValue_RedditHostedVideoLink(unparsedUrl, highQualityDashPlaylistUrl, lowQualityUrl, directUrlWithoutAudio);
   }
 }

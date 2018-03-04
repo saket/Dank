@@ -47,6 +47,7 @@ import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.data.links.RedditHostedVideoLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.media.MediaDownloadJob;
 import me.saket.dank.ui.media.MediaHostRepository;
@@ -55,6 +56,7 @@ import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Urls;
+import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.glide.GlideProgressTarget;
 import me.saket.dank.utils.okhttp.OkHttpResponseBodyWithProgress;
 import okhttp3.Call;
@@ -493,60 +495,74 @@ public class MediaDownloadService extends Service {
    */
   private Observable<MediaDownloadJob> downloadVideoAndStreamProgress(MediaLink linkToDownload) {
     return Observable.create(emitter -> {
-      String videoUrl = linkToDownload.highQualityUrl();
       long downloadStartTimeMillis = System.currentTimeMillis();
 
-      if (videoCacheServer.isCached(videoUrl)) {
-        String cachedVideoFileUrl = videoCacheServer.getProxyUrl(videoUrl);
+      String highQualityUrl = linkToDownload.highQualityUrl();
+      VideoFormat videoFormat = VideoFormat.parse(highQualityUrl);
+
+      if (videoFormat.canBeCached() && videoCacheServer.isCached(highQualityUrl)) {
+        String cachedVideoFileUrl = videoCacheServer.getProxyUrl(highQualityUrl);
         File cachedVideoFile = new File(Uri.parse(cachedVideoFileUrl).getPath());
         emitter.onNext(MediaDownloadJob.downloaded(linkToDownload, cachedVideoFile, System.currentTimeMillis()));
 
       } else {
-        // Proxy through VideoCacheServer so that the downloaded video also gets saved to cache.
-        String videoProxyUrl = videoCacheServer.getProxyUrl(videoUrl, false);
+        String videoUrlToDownload;
+        if (linkToDownload instanceof RedditHostedVideoLink) {
+          videoUrlToDownload = ((RedditHostedVideoLink) linkToDownload).directUrlWithoutAudio();
+        } else if (videoFormat.canBeCached()) {
+          // Proxy through VideoCacheServer so that the downloaded video also gets saved to cache.
+          videoUrlToDownload = videoCacheServer.getProxyUrl(highQualityUrl, false);
+        } else {
+          videoUrlToDownload = null;
+        }
 
-        emitter.onNext(MediaDownloadJob.connecting(linkToDownload, downloadStartTimeMillis));
+        if (videoUrlToDownload == null) {
+          emitter.onNext(MediaDownloadJob.failed(linkToDownload, System.currentTimeMillis()));
+        } else {
+          emitter.onNext(MediaDownloadJob.connecting(linkToDownload, downloadStartTimeMillis));
 
-        // Emit progress updates while reading the video's input stream.
-        Request downloadRequest = new Request.Builder()
-            .url(videoProxyUrl)
-            .get()
-            .build();
-        Call networkCall = okHttpClient.newCall(downloadRequest);
-        Response response = networkCall.execute();
-        Response responseWithProgressListener = response.newBuilder()
-            .body(OkHttpResponseBodyWithProgress.wrap(
-                downloadRequest,
-                response,
-                (url, bytesRead, expectedContentLength) -> {
-                  if (bytesRead < expectedContentLength) {
-                    int progress = (int) (100 * (float) bytesRead / expectedContentLength);
-                    emitter.onNext(MediaDownloadJob.progress(linkToDownload, progress, downloadStartTimeMillis));
+          // Emit progress updates while reading the video's input stream.
+          Request downloadRequest = new Request.Builder()
+              .url(videoUrlToDownload)
+              .get()
+              .build();
+          Call networkCall = okHttpClient.newCall(downloadRequest);
+          Response response = networkCall.execute();
+          Response responseWithProgressListener = response.newBuilder()
+              .body(OkHttpResponseBodyWithProgress.wrap(
+                  downloadRequest,
+                  response,
+                  (url, bytesRead, expectedContentLength) -> {
+                    if (bytesRead < expectedContentLength) {
+                      int progress = (int) (100 * (float) bytesRead / expectedContentLength);
+                      emitter.onNext(MediaDownloadJob.progress(linkToDownload, progress, downloadStartTimeMillis));
+                    }
                   }
-                }
-            ))
-            .build();
+              ))
+              .build();
 
-        if (!responseWithProgressListener.isSuccessful()) {
-          throw new IOException("Unexpected code: " + responseWithProgressListener);
+          if (!responseWithProgressListener.isSuccessful()) {
+            throw new IOException("Unexpected code: " + responseWithProgressListener);
+          }
+
+          // Write to a temporary file, that will later get replaced by moveFileToUserSpaceOnDownload().
+          File videoTempFile = new File(getCacheDir(), Urls.parseFileNameWithExtension(highQualityUrl));
+          //noinspection ConstantConditions
+          try (BufferedSource bufferedSource = responseWithProgressListener.body().source()) {
+            BufferedSink bufferedSink = Okio.buffer(Okio.sink(videoTempFile));
+            bufferedSink.writeAll(bufferedSource);
+            bufferedSink.close();
+          }
+
+          long downloadCompleteTimeMillis = System.currentTimeMillis();
+          emitter.onNext(MediaDownloadJob.downloaded(linkToDownload, videoTempFile, downloadCompleteTimeMillis));
+          emitter.onComplete();
+
+          emitter.setCancellable(() -> {
+            // Note: BufferedSink#writeAll() will also receive a thread interruption so file copy will stop.
+            networkCall.cancel();
+          });
         }
-
-        // Write to a temporary file, that will later get replaced by moveFileToUserSpaceOnDownload().
-        File videoTempFile = new File(getCacheDir(), Urls.parseFileNameWithExtension(videoUrl));
-        try (BufferedSource bufferedSource = responseWithProgressListener.body().source()) {
-          BufferedSink bufferedSink = Okio.buffer(Okio.sink(videoTempFile));
-          bufferedSink.writeAll(bufferedSource);
-          bufferedSink.close();
-        }
-
-        long downloadCompleteTimeMillis = System.currentTimeMillis();
-        emitter.onNext(MediaDownloadJob.downloaded(linkToDownload, videoTempFile, downloadCompleteTimeMillis));
-        emitter.onComplete();
-
-        emitter.setCancellable(() -> {
-          // Note: BufferedSink#writeAll() will also receive a thread interruption so file copy will stop.
-          networkCall.cancel();
-        });
       }
     });
   }

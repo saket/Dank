@@ -79,22 +79,32 @@ public class JrawUtils {
     return comment.getDataNode().get("permalink").asText();
   }
 
-  public static String redditVideoDashPlaylistUrl(Submission submission) {
+  // First: Playlist URL
+  // Second: Dash URL without audio.
+  public static Pair<String, String> redditVideoDashPlaylistUrl(Submission submission) {
+    String playlistUrl;
+    String videoWithoutAudioUrl;
+
     JsonNode redditVideoNode = submission.getDataNode().get("secure_media").get("reddit_video");
     if (redditVideoNode != null) {
-      return redditVideoNode.get("dash_url").asText();
-    }
+      playlistUrl = redditVideoNode.get("dash_url").asText();
+      videoWithoutAudioUrl = redditVideoNode.get("fallback_url").asText();
 
-    boolean hasCrossParent = submission.getDataNode().get("crosspost_parent_list") != null;
-    if (hasCrossParent) {
-      JsonNode crossPostParentListNode = submission.getDataNode().get("crosspost_parent_list");
-      if (crossPostParentListNode.size() > 1) {
-        throw new UnsupportedOperationException("Multiple cross-post parents! " + submission.getPermalink());
+    } else {
+      boolean hasCrossParent = submission.getDataNode().get("crosspost_parent_list") != null;
+      if (hasCrossParent) {
+        JsonNode crossPostParentListNode = submission.getDataNode().get("crosspost_parent_list");
+        if (crossPostParentListNode.size() > 1) {
+          throw new UnsupportedOperationException("Multiple cross-post parents! " + submission.getPermalink());
+        }
+        JsonNode crossPostParentVideoNode = crossPostParentListNode.get(0).get("secure_media").get("reddit_video");
+        playlistUrl = crossPostParentVideoNode.get("dash_url").asText();
+        videoWithoutAudioUrl = crossPostParentVideoNode.get("fallback_url").asText();
+
+      } else {
+        throw new UnsupportedOperationException("Couldn't find reddit video URL for sub: " + submission.getPermalink());
       }
-      JsonNode crossPostParentVideoNode = crossPostParentListNode.get(0).get("secure_media").get("reddit_video");
-      return crossPostParentVideoNode.get("dash_url").asText();
     }
-
-    throw new UnsupportedOperationException("Couldn't find reddit video URL for sub: " + submission.getPermalink());
+    return Pair.create(playlistUrl, videoWithoutAudioUrl);
   }
 }
