@@ -1,6 +1,5 @@
 package me.saket.dank.widgets.swipe;
 
-import android.graphics.Rect;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.GestureDetector;
@@ -8,6 +7,7 @@ import android.view.MotionEvent;
 import android.view.View;
 
 import me.saket.dank.utils.SimpleRecyclerViewOnChildAttachStateChangeListener;
+import timber.log.Timber;
 
 /**
  * Not using {@link ItemTouchHelper}, because it only supports "dismissing" items with swipe.
@@ -18,7 +18,6 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
   private final GestureDetector gestureDetector;
   private boolean isSwiping;
   private SwipeableLayout viewBeingSwiped;
-  private float viewTopOnSwipeStart;
 
   public RecyclerSwipeListener(RecyclerView recyclerView) {
     gestureDetector = createSwipeGestureDetector(recyclerView);
@@ -37,7 +36,8 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
 
   private GestureDetector createSwipeGestureDetector(RecyclerView recyclerView) {
     return new GestureDetector(recyclerView.getContext(), new GestureDetector.SimpleOnGestureListener() {
-      private Rect viewGlobalVisibleRect = new Rect();
+      private int[] viewLocationOnScreen = new int[2];
+      private float viewTopOnSwipeStart;
 
       @Override
       public boolean onDown(MotionEvent e) {
@@ -60,8 +60,8 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
         if (viewBeingSwiped != null) {
           // In SubmissionFragment, the comment list is contained in another scrolling layout.
           // So viewBeingSwiped.getTop() cannot be used as it'll be relative to its parent.
-          viewBeingSwiped.getGlobalVisibleRect(viewGlobalVisibleRect);
-          viewTopOnSwipeStart = viewGlobalVisibleRect.top;
+          viewBeingSwiped.getLocationOnScreen(viewLocationOnScreen);
+          viewTopOnSwipeStart = viewLocationOnScreen[1];
         } else {
           viewTopOnSwipeStart = -1;
         }
@@ -74,8 +74,8 @@ public class RecyclerSwipeListener extends RecyclerView.SimpleOnItemTouchListene
           return false;
         }
 
-        viewBeingSwiped.getGlobalVisibleRect(viewGlobalVisibleRect);
-        if (viewTopOnSwipeStart != viewGlobalVisibleRect.top) {
+        viewBeingSwiped.getLocationOnScreen(viewLocationOnScreen);
+        if (viewTopOnSwipeStart != viewLocationOnScreen[1]) {
           // List is being scrolled.
           return false;
         }
