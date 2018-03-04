@@ -68,6 +68,7 @@ import timber.log.Timber;
 
 /**
  * Downloads images and videos to disk.
+ * Move all logic to a separate testable class.
  */
 public class MediaDownloadService extends Service {
 
@@ -171,7 +172,7 @@ public class MediaDownloadService extends Service {
         downloadRequestStream
             .sample(MINIMUM_GAP_BETWEEN_NOTIFICATION_UPDATEs, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
             .doOnNext(linkToQueue -> {
-              MediaDownloadJob downloadJobToQueue = MediaDownloadJob.createQueued(linkToQueue, System.currentTimeMillis());
+              MediaDownloadJob downloadJobToQueue = MediaDownloadJob.queued(linkToQueue, System.currentTimeMillis());
               downloadJobsWithVisibleNotif.put(downloadJobToQueue.mediaLink(), downloadJobToQueue);
               updateIndividualProgressNotification(downloadJobToQueue, createNotificationIdFor(linkToQueue));
             })
@@ -188,7 +189,7 @@ public class MediaDownloadService extends Service {
                   .map(moveFileToUserSpaceOnDownload())
                   .doOnTerminate(() -> ongoingDownloadLinks.remove(linkToDownload))
                   .doOnError(e -> Timber.e(e, "Couldn't download media"))
-                  .onErrorReturnItem(MediaDownloadJob.createFailed(linkToDownload, System.currentTimeMillis()))
+                  .onErrorReturnItem(MediaDownloadJob.failed(linkToDownload, System.currentTimeMillis()))
                   .takeUntil(downloadCancellationStream.filter(linkToCancel -> linkToCancel.equals(linkToDownload)))
                   .sample(MINIMUM_GAP_BETWEEN_NOTIFICATION_UPDATEs, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread(), true);
             })
@@ -265,7 +266,7 @@ public class MediaDownloadService extends Service {
     boolean isQueued = mediaDownloadJob.progressState() == MediaDownloadJob.ProgressState.QUEUED;
     String notificationTitle = ellipsizeNotifTitleIfExceedsMaxLength(getString(
         isQueued ? R.string.mediadownloadnotification_queued_title : R.string.mediadownloadnotification_progress_title,
-        mediaDownloadJob.mediaLink()
+        mediaDownloadJob.mediaLink().unparsedUrl()
     ));
     boolean indeterminateProgress = mediaDownloadJob.progressState() == MediaDownloadJob.ProgressState.CONNECTING;
 
@@ -443,14 +444,14 @@ public class MediaDownloadService extends Service {
         @Override
         public void onResourceReady(File downloadedFile, @Nullable Transition<? super File> transition) {
           long downloadCompleteTimeMillis = System.currentTimeMillis();
-          emitter.onNext(MediaDownloadJob.createDownloaded(mediaLink, downloadedFile, downloadCompleteTimeMillis));
+          emitter.onNext(MediaDownloadJob.downloaded(mediaLink, downloadedFile, downloadCompleteTimeMillis));
           emitter.onComplete();
         }
 
         @Override
         public void onLoadFailed(@Nullable Drawable errorDrawable) {
           long downloadFailTimeMillis = System.currentTimeMillis();
-          emitter.onNext(MediaDownloadJob.createFailed(mediaLink, downloadFailTimeMillis));
+          emitter.onNext(MediaDownloadJob.failed(mediaLink, downloadFailTimeMillis));
           emitter.onComplete();
         }
       };
@@ -463,13 +464,13 @@ public class MediaDownloadService extends Service {
 
         @Override
         protected void onConnecting() {
-          emitter.onNext(MediaDownloadJob.createConnecting(mediaLink, downloadStartTimeMillis));
+          emitter.onNext(MediaDownloadJob.connecting(mediaLink, downloadStartTimeMillis));
         }
 
         @Override
         protected void onDownloading(long bytesRead, long expectedBytes) {
           int progress = (int) (100 * (float) bytesRead / expectedBytes);
-          emitter.onNext(MediaDownloadJob.createProgress(mediaLink, progress, downloadStartTimeMillis));
+          emitter.onNext(MediaDownloadJob.progress(mediaLink, progress, downloadStartTimeMillis));
         }
 
         @Override
@@ -498,13 +499,13 @@ public class MediaDownloadService extends Service {
       if (videoCacheServer.isCached(videoUrl)) {
         String cachedVideoFileUrl = videoCacheServer.getProxyUrl(videoUrl);
         File cachedVideoFile = new File(Uri.parse(cachedVideoFileUrl).getPath());
-        emitter.onNext(MediaDownloadJob.createDownloaded(linkToDownload, cachedVideoFile, System.currentTimeMillis()));
+        emitter.onNext(MediaDownloadJob.downloaded(linkToDownload, cachedVideoFile, System.currentTimeMillis()));
 
       } else {
         // Proxy through VideoCacheServer so that the downloaded video also gets saved to cache.
         String videoProxyUrl = videoCacheServer.getProxyUrl(videoUrl, false);
 
-        emitter.onNext(MediaDownloadJob.createConnecting(linkToDownload, downloadStartTimeMillis));
+        emitter.onNext(MediaDownloadJob.connecting(linkToDownload, downloadStartTimeMillis));
 
         // Emit progress updates while reading the video's input stream.
         Request downloadRequest = new Request.Builder()
@@ -520,7 +521,7 @@ public class MediaDownloadService extends Service {
                 (url, bytesRead, expectedContentLength) -> {
                   if (bytesRead < expectedContentLength) {
                     int progress = (int) (100 * (float) bytesRead / expectedContentLength);
-                    emitter.onNext(MediaDownloadJob.createProgress(linkToDownload, progress, downloadStartTimeMillis));
+                    emitter.onNext(MediaDownloadJob.progress(linkToDownload, progress, downloadStartTimeMillis));
                   }
                 }
             ))
@@ -539,7 +540,7 @@ public class MediaDownloadService extends Service {
         }
 
         long downloadCompleteTimeMillis = System.currentTimeMillis();
-        emitter.onNext(MediaDownloadJob.createDownloaded(linkToDownload, videoTempFile, downloadCompleteTimeMillis));
+        emitter.onNext(MediaDownloadJob.downloaded(linkToDownload, videoTempFile, downloadCompleteTimeMillis));
         emitter.onComplete();
 
         emitter.setCancellable(() -> {
@@ -563,7 +564,7 @@ public class MediaDownloadService extends Service {
         String mediaFileName = Urls.parseFileNameWithExtension(downloadedMediaLink.highQualityUrl());
         //noinspection LambdaParameterTypeCanBeSpecified
         File userAccessibleFile = Files2.copyFileToPicturesDirectory(getResources(), downloadJobUpdate.downloadedFile(), mediaFileName);
-        return MediaDownloadJob.createDownloaded(downloadedMediaLink, userAccessibleFile, downloadJobUpdate.timestamp());
+        return MediaDownloadJob.downloaded(downloadedMediaLink, userAccessibleFile, downloadJobUpdate.timestamp());
 
       } else {
         return downloadJobUpdate;

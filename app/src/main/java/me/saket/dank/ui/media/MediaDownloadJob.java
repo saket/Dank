@@ -36,23 +36,23 @@ public abstract class MediaDownloadJob implements Parcelable {
 
   public abstract long timestamp();
 
-  public static MediaDownloadJob createQueued(MediaLink mediaLink, long queueTimeMillis) {
+  public static MediaDownloadJob queued(MediaLink mediaLink, long queueTimeMillis) {
     return new AutoValue_MediaDownloadJob(mediaLink, ProgressState.QUEUED, 0, null, queueTimeMillis);
   }
 
-  public static MediaDownloadJob createConnecting(MediaLink mediaLink, long startTimeMillis) {
+  public static MediaDownloadJob connecting(MediaLink mediaLink, long startTimeMillis) {
     return new AutoValue_MediaDownloadJob(mediaLink, ProgressState.CONNECTING, 0, null, startTimeMillis);
   }
 
-  public static MediaDownloadJob createProgress(MediaLink mediaLink, @IntRange(from = 0, to = 100) int progress, long startTimeMillis) {
+  public static MediaDownloadJob progress(MediaLink mediaLink, @IntRange(from = 0, to = 100) int progress, long startTimeMillis) {
     return new AutoValue_MediaDownloadJob(mediaLink, ProgressState.IN_FLIGHT, progress, null, startTimeMillis);
   }
 
-  public static MediaDownloadJob createFailed(MediaLink mediaLink, long failTimeMillis) {
+  public static MediaDownloadJob failed(MediaLink mediaLink, long failTimeMillis) {
     return new AutoValue_MediaDownloadJob(mediaLink, ProgressState.FAILED, -1, null, failTimeMillis);
   }
 
-  public static MediaDownloadJob createDownloaded(MediaLink mediaLink, File downloadedFile, long completeTimeMillis) {
+  public static MediaDownloadJob downloaded(MediaLink mediaLink, File downloadedFile, long completeTimeMillis) {
     return new AutoValue_MediaDownloadJob(mediaLink, ProgressState.DOWNLOADED, 100, downloadedFile, completeTimeMillis);
   }
 }

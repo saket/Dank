@@ -642,8 +642,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
   @OnClick(R.id.mediaalbumviewer_download)
   void onClickDownloadMedia() {
-    rxPermissions
-        .request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+    rxPermissions.request(Manifest.permission.WRITE_EXTERNAL_STORAGE)
         .filter(permissionGranted -> permissionGranted)
         .subscribe(o -> {
           MediaAlbumItem activeMediaItem = mediaAlbumAdapter.getDataSet().get(mediaAlbumPager.getCurrentItem());
