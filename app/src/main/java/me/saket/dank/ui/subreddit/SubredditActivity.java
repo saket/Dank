@@ -454,7 +454,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
           String subredditName = pair.second(); // This will be different from submission.getSubredditName() in case of frontpage, etc.
           boolean showVisitSubredditOption = !subredditName.equals(swipeEvent.submission().getSubredditName());
 
-          SubmissionOptionsPopup optionsMenu = new SubmissionOptionsPopup(this, swipeEvent.submission(), showVisitSubredditOption);
+          SubmissionOptionsPopup optionsMenu = SubmissionOptionsPopup.builder(this, swipeEvent.submission())
+              .showVisitSubreddit(showVisitSubredditOption)
+              .build();
           optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, showLocation);
         });
 

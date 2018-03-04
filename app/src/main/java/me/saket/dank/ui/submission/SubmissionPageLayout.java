@@ -466,7 +466,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout
               .map(name -> !swipeEvent.submission().getSubredditName().equals(name))
               .orElse(true);
 
-          SubmissionOptionsPopup optionsMenu = new SubmissionOptionsPopup(getContext(), swipeEvent.submission(), showVisitSubredditOption);
+          SubmissionOptionsPopup optionsMenu = SubmissionOptionsPopup.builder(getContext(), swipeEvent.submission())
+              .showVisitSubreddit(showVisitSubredditOption)
+              .build();
           optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, menuLocation);
         });
 

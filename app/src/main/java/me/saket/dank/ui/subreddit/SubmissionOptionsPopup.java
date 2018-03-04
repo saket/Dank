@@ -6,6 +6,8 @@ import android.support.v4.content.ContextCompat;
 import android.text.style.ForegroundColorSpan;
 import android.widget.Toast;
 
+import com.google.auto.value.AutoValue;
+
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
@@ -31,14 +33,51 @@ public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
   private static final int ID_SHARE_CONTENT_LINK = 5;
   private static final int ID_COPY_REDDIT_COMMENTS_LINK = 6;
   private static final int ID_COPY_CONTENT_LINK = 7;
-  private final boolean showVisitSubredditOption;
 
   @Inject Lazy<UrlRouter> urlRouter;
+
+  private final StartOptions startOptions;
   private final Submission submission;
 
-  public SubmissionOptionsPopup(Context c, Submission submission, boolean showVisitSubredditOption) {
+  @AutoValue
+  public abstract static class StartOptions {
+
+    public abstract Context context();
+
+    public abstract Submission submission();
+
+    public abstract boolean showVisitSubreddit();
+
+    public static Builder builder() {
+      return new AutoValue_SubmissionOptionsPopup_StartOptions.Builder();
+    }
+
+    @AutoValue.Builder
+    public abstract static class Builder {
+      public abstract Builder context(Context context);
+
+      public abstract Builder submission(Submission submission);
+
+      public abstract Builder showVisitSubreddit(boolean show);
+
+      abstract StartOptions buildOptions();
+
+      public SubmissionOptionsPopup build() {
+        StartOptions startOptions = buildOptions();
+        return new SubmissionOptionsPopup(startOptions.context(), startOptions.submission(), startOptions);
+      }
+    }
+  }
+
+  public static StartOptions.Builder builder(Context context, Submission submission) {
+    return new AutoValue_SubmissionOptionsPopup_StartOptions.Builder()
+        .context(context)
+        .submission(submission);
+  }
+
+  public SubmissionOptionsPopup(Context c, Submission submission, StartOptions startOptions) {
     super(c);
-    this.showVisitSubredditOption = showVisitSubredditOption;
+    this.startOptions = startOptions;
     this.submission = submission;
 
     Dank.dependencyInjector().inject(this);
@@ -54,7 +93,7 @@ public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
         R.drawable.ic_user_profile_20dp
     ));
 
-    if (showVisitSubredditOption) {
+    if (startOptions.showVisitSubreddit()) {
       topLevelItems.add(MenuStructure.SingleLineItem.create(
           ID_SHOW_SUBREDDIT,
           c.getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()),
@@ -150,9 +189,9 @@ public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
   private static String stripSchemeAndWww(String url) {
     try {
       Uri URI = Uri.parse(url);
-      String schemeStripped = url.substring(URI.getScheme().length() + "://" .length());
+      String schemeStripped = url.substring(URI.getScheme().length() + "://".length());
       if (schemeStripped.startsWith("www.")) {
-        return schemeStripped.substring("www." .length());
+        return schemeStripped.substring("www.".length());
       } else {
         return schemeStripped;
       }
