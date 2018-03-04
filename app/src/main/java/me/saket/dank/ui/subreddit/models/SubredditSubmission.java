@@ -244,10 +244,10 @@ public interface SubredditSubmission {
           submissionClicks.accept(SubredditSubmissionClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.getItemId()))
       );
       holder.thumbnailView.setOnClickListener(o -> {
-        if (!holder.uiModel.isThumbnailClickable()) {
-          holder.itemView.performClick();
-        } else {
+        if (holder.uiModel.isThumbnailClickable()) {
           thumbnailClicks.accept(SubredditSubmissionThumbnailClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.thumbnailView));
+        } else {
+          holder.itemView.performClick();
         }
       });
 

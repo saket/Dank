@@ -28,7 +28,6 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.BookmarksRepository;
-import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.subreddit.NetworkCallStatus;
 import me.saket.dank.ui.subreddit.SubmissionThumbnailTypeMinusNsfw;
@@ -44,7 +43,6 @@ public class SubredditUiConstructor {
   private static final BiFunction<Boolean, Boolean, Boolean> OR_FUNCTION = (b1, b2) -> b1 || b2;
 
   private final VotingManager votingManager;
-  private final ReplyRepository replyRepository;
   private final Preference<Boolean> showCommentCountInByline;
   private final Preference<Boolean> showNsfwContent;
   private final ErrorResolver errorResolver;
@@ -53,14 +51,12 @@ public class SubredditUiConstructor {
   @Inject
   public SubredditUiConstructor(
       VotingManager votingManager,
-      ReplyRepository replyRepository,
       ErrorResolver errorResolver,
       Lazy<BookmarksRepository> bookmarksRepository,
       @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
       @Named("show_nsfw_content") Preference<Boolean> showNsfwContent)
   {
     this.votingManager = votingManager;
-    this.replyRepository = replyRepository;
     this.errorResolver = errorResolver;
     this.bookmarksRepository = bookmarksRepository;
     this.showCommentCountInByline = showCommentCountInByline;
@@ -271,8 +267,13 @@ public class SubredditUiConstructor {
             thumbnail = Optional.of(thumbnailForRemoteImage(c, submission.getThumbnails()));
             break;
 
+          //noinspection ConstantConditions
           case NONE:
             throw new AssertionError();
+
+          case UNKNOWN:
+            thumbnail = Optional.empty();
+            break;
 
           default:
             throw new UnsupportedOperationException("Unknown submission thumbnail type: " + thumbnailType);
@@ -280,9 +281,27 @@ public class SubredditUiConstructor {
       }
     }
 
-    // Don't want to display NSFW content if it's disabled on thumbnail click.
-    // Might get flagged by Play Store's automatic review thing.
-    boolean isThumbnailClickable = submission.isNsfw() ? showNsfwContent.get() : !submission.isSelfPost();
+    boolean isThumbnailClickable;
+    switch (thumbnailType) {
+      case SELF_POST:
+        isThumbnailClickable = false;
+        break;
+
+      case URL_STATIC_ICON:
+      case URL_REMOTE_THUMBNAIL:
+        // Don't want to display NSFW content if it's disabled on thumbnail click.
+        // Might get flagged by Play Store's automatic review thing.
+        isThumbnailClickable = !submission.isNsfw() || showNsfwContent.get();
+        break;
+
+      case UNKNOWN:
+      case NONE:
+        isThumbnailClickable = false;
+        break;
+
+      default:
+        throw new UnsupportedOperationException("Unknown submission thumbnail type: " + thumbnailType);
+    }
 
     // Just in case I forget again. This == row background, not thumbnail background.
     Optional<Integer> rowBackgroundResource = submission.isNsfw()

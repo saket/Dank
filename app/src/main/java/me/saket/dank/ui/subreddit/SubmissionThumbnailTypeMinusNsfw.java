@@ -7,7 +7,8 @@ public enum SubmissionThumbnailTypeMinusNsfw {
   URL_STATIC_ICON,
   URL_REMOTE_THUMBNAIL,
   SELF_POST,
-  NONE;
+  NONE,
+  UNKNOWN;
 
   /**
    * Like {@link Submission#getThumbnailType()}, but doesn't consider if a submission is NSFW, assuming that NSFW content is allowed.
@@ -50,7 +51,7 @@ public enum SubmissionThumbnailTypeMinusNsfw {
         return NONE;
 
       default:
-        throw new UnsupportedOperationException();
+        return UNKNOWN;
     }
   }
 }

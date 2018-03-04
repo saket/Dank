@@ -249,7 +249,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     subscribeButton.setVisibility(View.GONE);
 
     // Intentionally not unsubscribing from this API call on Activity destroy.
-    // We'll treat it as a fire-n-forget call and let them run even when this Activity exits.
+    // Treating this as a fire-n-forget call.
     Dank.reddit().findSubreddit(subredditName)
         .flatMapCompletable(subreddit -> subscriptionManager.subscribe(subreddit))
         .subscribeOn(io())
