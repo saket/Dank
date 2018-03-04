@@ -76,6 +76,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.Urls;
+import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.ScrollInterceptibleViewPager;
@@ -514,6 +515,8 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         .firstOrError();
   }
 
+// ======== SHARE ======== //
+
   /**
    * Menu items get inflated in {@link #onPostCreate(Bundle)} on page change depending upon the current media's type (image or video).
    */
@@ -558,16 +561,23 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         case R.id.action_share_video:
           Single.just(activeMediaItem.mediaLink())
               .map(mediaLink -> {
-                if (videoCacheServer.isCached(mediaLink.highQualityUrl())) {
-                  String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.highQualityUrl());
-                  return new File(Uri.parse(cachedVideoFileUrl).getPath());
+                String highQualityUrl = mediaLink.highQualityUrl();
+                VideoFormat videoFormat = VideoFormat.parse(highQualityUrl);
 
-                } else if (videoCacheServer.isCached(mediaLink.lowQualityUrl())) {
-                  String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.lowQualityUrl());
-                  return new File(Uri.parse(cachedVideoFileUrl).getPath());
+                if (videoFormat.canBeCached()) {
+                  if (videoCacheServer.isCached(highQualityUrl)) {
+                    String cachedVideoFileUrl = videoCacheServer.getProxyUrl(highQualityUrl);
+                    return new File(Uri.parse(cachedVideoFileUrl).getPath());
 
+                  } else if (videoCacheServer.isCached(mediaLink.lowQualityUrl())) {
+                    String cachedVideoFileUrl = videoCacheServer.getProxyUrl(mediaLink.lowQualityUrl());
+                    return new File(Uri.parse(cachedVideoFileUrl).getPath());
+
+                  } else {
+                    throw new VideoNotCachedYetException();
+                  }
                 } else {
-                  throw new NoSuchElementException();
+                  throw new AssertionError("Share-video option shouldn't be visible for non-mp4 videos.");
                 }
               })
               .takeUntil(lifecycle().onDestroyFlowable())
@@ -578,7 +588,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                     startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
                   },
                   error -> {
-                    if (error instanceof NoSuchElementException) {
+                    if (error instanceof VideoNotCachedYetException) {
                       Toast.makeText(this, R.string.mediaalbumviewer_share_video_not_loaded_yet, Toast.LENGTH_SHORT).show();
                     } else {
                       ResolvedError resolvedError = Dank.errors().resolve(error);
@@ -605,7 +615,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
       return true;
     });
-
     return sharePopupMenu;
   }
 
@@ -616,12 +625,20 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
     MenuItem shareAlbumMenuItem = sharePopupMenu.getMenu().findItem(R.id.action_share_album_url);
     shareAlbumMenuItem.setVisible(resolvedMediaLink.isMediaAlbum());
+
+    MenuItem shareVideoMenuItem = sharePopupMenu.getMenu().findItem(R.id.action_share_video);
+    if (shareVideoMenuItem != null) {
+      VideoFormat videoFormat = VideoFormat.parse(activeMediaItem.mediaLink().highQualityUrl());
+      shareVideoMenuItem.setEnabled(videoFormat.canBeCached());
+    }
   }
 
   @OnClick(R.id.mediaalbumviewer_share)
   void onClickShareMedia() {
     sharePopupMenu.show();
   }
+
+// ======== END SHARE ======== //
 
   @OnClick(R.id.mediaalbumviewer_download)
   void onClickDownloadMedia() {
