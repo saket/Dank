@@ -15,6 +15,7 @@ public class FlickGestureListener implements View.OnTouchListener {
 
   private static final Interpolator ANIM_INTERPOLATOR = new FastOutSlowInInterpolator();
   private static final boolean ROTATION_ENABLED = true;
+  public static final float DEFAULT_FLICK_THRESHOLD = 0.3f;
 
   @FloatRange(from = 0, to = 1) private float flickThresholdSlop;
 
@@ -162,7 +163,7 @@ public class FlickGestureListener implements View.OnTouchListener {
               animateViewFlick(view, wasSwipedDownwards, 100);
 
             } else {
-              // Distance moved wasn't enough to dismiss. Move back to original position.
+              // Distance moved wasn't enough to dismiss.
               animateViewBackToPosition(view);
             }
           }

@@ -360,7 +360,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
   private void setupFlickDismissForProgressView() {
     FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(this));
-    flickListener.setFlickThresholdSlop(.5f);    // Dismiss once the image is swiped 50% away.
+    flickListener.setFlickThresholdSlop(FlickGestureListener.DEFAULT_FLICK_THRESHOLD);
     flickListener.setGestureCallbacks(new FlickGestureListener.GestureCallbacks() {
       @Override
       public void onFlickDismissEnd(long flickAnimationDuration) {

@@ -96,7 +96,7 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
 
   public FlickGestureListener createFlickGestureListener(FlickGestureListener.GestureCallbacks wrappedGestureCallbacks) {
     FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(getContext()));
-    flickListener.setFlickThresholdSlop(.5f);    // Dismiss once the image is swiped 50% away.
+    flickListener.setFlickThresholdSlop(FlickGestureListener.DEFAULT_FLICK_THRESHOLD);
     flickListener.setGestureCallbacks(new FlickGestureListener.GestureCallbacks() {
       @Override
       public void onFlickDismissEnd(long flickAnimationDuration) {

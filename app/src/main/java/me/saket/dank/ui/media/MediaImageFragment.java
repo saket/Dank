@@ -249,7 +249,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
         if (!imageView.hasImage()) {
           return getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_height_when_empty);
         }
-        return imageView.getImageHeight();
+        return (int) imageView.getVisibleZoomedImageHeight();
       }
     });
     flickListener.setOnGestureIntercepter((deltaY) -> {

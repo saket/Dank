@@ -35,6 +35,7 @@ class SubmissionStatusBarTintProvider {
     this.statusBarTintProvider = new StatusBarTintProvider(this.defaultStatusBarColor, statusBarHeight, displayWidth);
   }
 
+  // TODO v2: This doesn't work with SubmissionPageLayoutActivity. Pull-to-collapse listener uses Activity's root page instead of submission page.
   @CheckResult
   public Observable<StatusBarTint> streamStatusBarTintColor(
       Observable<Optional<Bitmap>> contentBitmapStream,
