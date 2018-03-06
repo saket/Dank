@@ -351,6 +351,8 @@
 
   <!-- Media -->
   <style name="DankMediaAlbumViewerOption">
+    <item name="android:layout_marginStart">@dimen/spacing2</item>
+    <item name="android:layout_marginEnd">@dimen/spacing2</item>
     <item name="android:padding">@dimen/spacing16</item>
     <item name="android:layout_width">0dp</item>
     <item name="android:layout_weight">1</item>

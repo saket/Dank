@@ -59,8 +59,6 @@
       android:layout_gravity="bottom"
       android:background="@drawable/background_mediaalbumviewer_options_gradient" />
 
-    <!-- Requires atleast 22dp of top-padding for the option button ripples
-         (in their current size) to not get clipped. -->
     <!-- WARNING: Make sure to update @style/DankPopupMenu.AlbumViewerOption
          if padding is changed. -->
     <LinearLayout
@@ -68,30 +66,31 @@
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_alignParentBottom="true"
-      android:background="@color/transparent"
       android:orientation="horizontal"
-      android:paddingBottom="@dimen/spacing16"
-      android:paddingTop="@dimen/spacing24">
+      android:paddingBottom="@dimen/spacing16">
 
+      <!-- Visibility is always set to INVISIBLE and never GONE to maintain
+             consistency and support muscle memory. -->
       <TextView
         android:id="@+id/mediaalbumviewer_media_position"
         android:layout_width="0dp"
         android:layout_height="match_parent"
-        android:layout_marginStart="@dimen/spacing20"
+        android:layout_marginStart="@dimen/spacing24"
         android:layout_weight="1"
         android:fontFamily="sans-serif-medium"
         android:gravity="center_vertical"
+        android:paddingStart="@dimen/spacing4"
         android:text="@string/mediaalbumviewer_media_position"
         android:textColor="@color/color_accent"
         android:textSize="@dimen/textsize16"
         android:visibility="visible"
+        tools:ignore="RtlSymmetry"
         tools:text="3 of 24" />
 
       <!-- ContentDescription for these buttons are set programmatically -->
       <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="match_parent"
-        android:layout_weight="1"
+        android:layout_height="wrap_content"
         android:gravity="center_vertical">
 
         <ImageButton
@@ -112,6 +111,7 @@
         <ImageButton
           android:id="@+id/mediaalbumviewer_reload_in_hd"
           style="@style/DankMediaAlbumViewerOption"
+          android:layout_marginEnd="@dimen/spacing12"
           android:src="@drawable/ic_hd_24dp" />
       </LinearLayout>
     </LinearLayout>
