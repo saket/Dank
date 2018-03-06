@@ -5,6 +5,7 @@ import static io.reactivex.schedulers.Schedulers.io;
 
 import android.graphics.Bitmap;
 import android.support.annotation.CheckResult;
+import android.util.Size;
 import android.view.View;
 import android.widget.ProgressBar;
 
@@ -57,7 +58,7 @@ public class SubmissionVideoHolder {
   private ScrollingRecyclerViewSheet commentListParentSheet;
   private ExpandablePageLayout submissionPageLayout;
   private SubmissionPageLifecycleStreams lifecycle;
-  private int deviceDisplayHeight;
+  private Size deviceDisplaySize;
   private int statusBarHeight;
   private int minimumGapWithBottom;
   private ProgressBar contentLoadProgressView;
@@ -91,7 +92,7 @@ public class SubmissionVideoHolder {
       ProgressBar contentLoadProgressView,
       ExpandablePageLayout submissionPageLayout,
       SubmissionPageLifecycleStreams lifecycle,
-      int deviceDisplayHeight,
+      Size deviceDisplaySize,
       int statusBarHeight,
       int minimumGapWithBottom)
   {
@@ -101,7 +102,7 @@ public class SubmissionVideoHolder {
     this.contentLoadProgressView = contentLoadProgressView;
     this.submissionPageLayout = submissionPageLayout;
     this.lifecycle = lifecycle;
-    this.deviceDisplayHeight = deviceDisplayHeight;
+    this.deviceDisplaySize = deviceDisplaySize;
     this.statusBarHeight = statusBarHeight;
     this.minimumGapWithBottom = minimumGapWithBottom;
   }
@@ -180,30 +181,33 @@ public class SubmissionVideoHolder {
         contentVideoView.setControls(controlsView);
       }
 
-      exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) -> {
+      exoPlayerManager.setOnVideoSizeChangeListener((actualVideoWidth, actualVideoHeight) -> {
         //noinspection ConstantConditions
         int seekBarContainerHeight = ((SubmissionVideoControlsView) contentVideoView.getVideoControls()).heightOfControlButtons();
 
         //Timber.d("-------------------------------");
-        //Timber.i("resizedVideoHeight: %s", resizedVideoHeight);
+        //Timber.i("resizedHeight: %s", resizedHeight);
         //Timber.i("actualVideoHeight: %s", actualVideoHeight);
         //Timber.i("seekBarContainerHeight: %s", seekBarContainerHeight);
 
+        float widthResizeFactor = (float) deviceDisplaySize.getWidth() / actualVideoWidth;
+        int resizedHeight = (int) (widthResizeFactor * actualVideoHeight);
+
         // This height is independent of whether the content is resized by the keyboard.
-        int spaceAvailableIndependentOfKeyboard = deviceDisplayHeight - statusBarHeight - minimumGapWithBottom;
-        int videoHeightAdjustedToFitInSpace = Math.min(spaceAvailableIndependentOfKeyboard, resizedVideoHeight + seekBarContainerHeight);
-        Views.setHeight(contentVideoView, videoHeightAdjustedToFitInSpace);
+        int spaceAvailableIndependentOfKeyboard = deviceDisplaySize.getHeight() - statusBarHeight - minimumGapWithBottom;
+        int heightAdjustedToFitInSpace = Math.min(spaceAvailableIndependentOfKeyboard, resizedHeight + seekBarContainerHeight);
+        Views.setHeight(contentVideoView, heightAdjustedToFitInSpace);
 
         //Timber.i("spaceAvailableIndependentOfKeyboard: %s", spaceAvailableIndependentOfKeyboard);
-        //Timber.i("videoHeightAdjustedToFitInSpace: %s", videoHeightAdjustedToFitInSpace);
+        //Timber.i("heightAdjustedToFitInSpace: %s", heightAdjustedToFitInSpace);
 
         // Wait for the height change to happen and then reveal the video.
         Views.executeOnNextLayout(contentVideoView, () -> {
           contentLoadProgressView.setVisibility(View.GONE);
 
-          // Warning: Avoid getting the height from view instead of reusing videoHeightAdjustedToFitInSpace.
+          // Warning: Avoid getting the height from view instead of reusing heightAdjustedToFitInSpace.
           // I was seeing older values instead of the one passed to setHeight().
-          int videoHeightMinusToolbar = videoHeightAdjustedToFitInSpace - commentListParentSheet.getTop();
+          int videoHeightMinusToolbar = heightAdjustedToFitInSpace - commentListParentSheet.getTop();
           commentListParentSheet.setScrollingEnabled(true);
           commentListParentSheet.setMaxScrollY(videoHeightMinusToolbar);
 

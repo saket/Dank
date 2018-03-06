@@ -45,6 +45,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
   @Inject MediaHostRepository mediaHostRepository;
   @Inject ErrorResolver errorResolver;
   @Inject HttpProxyCacheServer httpProxyCacheServer;
+  private MediaViewerVideoControlsView videoControlsView;
 
   private enum ScreenState {
     LOADING_VIDEO_OR_READY,
@@ -114,9 +115,9 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
         });
 
     exoPlayerManager = ExoPlayerManager.newInstance(lifecycle(), videoView);
-    MediaVideoControlsView videoControlsView = new MediaVideoControlsView(getActivity());
+    videoControlsView = new MediaViewerVideoControlsView(getActivity());
     videoView.setControls(videoControlsView);
-    videoControlsView.showVideoState(MediaVideoControlsView.VideoState.PREPARING);
+    videoControlsView.showVideoState(MediaViewerVideoControlsView.VideoState.PREPARING);
 
     // The preview image takes time to be drawn. Fade the video in slowly.
     LayoutTransition layoutTransition = ((ViewGroup) videoView.getParent()).getLayoutTransition();
@@ -126,7 +127,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
     videoView.setOnPreparedListener(() -> {
       textureViewContainer.setVisibility(View.VISIBLE);
-      videoControlsView.showVideoState(MediaVideoControlsView.VideoState.PREPARED);
+      videoControlsView.showVideoState(MediaViewerVideoControlsView.VideoState.PREPARED);
 
       // Auto-play when this Fragment becomes visible.
       fragmentVisibleToUserStream
@@ -141,9 +142,27 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     });
 
     // VideoView internally sets its height to match-parent. Forcefully resize it to match the video height.
-    exoPlayerManager.setOnVideoSizeChangeListener((resizedVideoWidth, resizedVideoHeight, actualVideoWidth, actualVideoHeight) ->
-        Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar())
-    );
+    exoPlayerManager.setOnVideoSizeChangeListener((actualVideoWidth, actualVideoHeight) -> {
+      Timber.i("actualVideoWidth: %s", actualVideoWidth);
+      Timber.i("actualVideoHeight: %s", actualVideoHeight);
+      //Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar());
+
+      ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
+          .takeUntil(lifecycle().onDestroyCompletable())
+          .subscribe(optionButtonsHeight -> {
+            int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+            int deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels;
+
+            float widthResizeFactor = (float) deviceDisplayWidth / actualVideoWidth;
+            int resizedHeight = (int) (widthResizeFactor * actualVideoHeight);
+
+            int videoControlsHeight = videoControlsView.heightOfControlButtons();
+            int spaceAvailable = deviceDisplayHeight;
+            int heightAdjustedToFitInSpace = Math.min(spaceAvailable, resizedHeight + videoControlsHeight);
+
+            Views.setHeight(videoView, heightAdjustedToFitInSpace);
+          });
+    });
 
     loadVideo(mediaAlbumItem);
   }
@@ -220,7 +239,14 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     });
     flickListener.setOnTouchDownReturnValueProvider((MotionEvent event) -> {
       // Hackkyyy hacckkk. Ugh.
-      return !Views.touchLiesOn(loadErrorStateView.getRetryButton(), event.getRawX(), event.getRawY());
+      if (Views.touchLiesOn(videoControlsView.progressSeekBar, event.getRawX(), event.getRawY())) {
+        return false;
+      }
+      //noinspection RedundantIfStatement
+      if (Views.touchLiesOn(loadErrorStateView.getRetryButton(), event.getRawX(), event.getRawY())) {
+        return false;
+      }
+      return true;
     });
     flickDismissLayout.setFlickGestureListener(flickListener);
   }

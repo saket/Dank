@@ -269,6 +269,10 @@ public class FlickGestureListener implements View.OnTouchListener {
   }
 
   private boolean hasFingerMovedEnoughToFlick(float distanceYAbs) {
+    //Timber.d("hasFingerMovedEnoughToFlick()");
+    //Timber.i("Content h: %s", contentHeightProvider.getContentHeightForCalculatingThreshold());
+    //Timber.i("flickThresholdSlop: %s", flickThresholdSlop);
+    //Timber.i("distanceYAbs: %s", distanceYAbs);
     float thresholdDistanceY = contentHeightProvider.getContentHeightForCalculatingThreshold() * flickThresholdSlop;
     return distanceYAbs > thresholdDistanceY;
   }

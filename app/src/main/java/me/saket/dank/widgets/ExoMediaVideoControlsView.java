@@ -9,8 +9,6 @@ import android.widget.TextView;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoControls;
 
-import butterknife.BindView;
-import butterknife.ButterKnife;
 import me.saket.dank.R;
 
 /**
@@ -18,8 +16,8 @@ import me.saket.dank.R;
  */
 public abstract class ExoMediaVideoControlsView extends VideoControls {
 
-  @BindView(R.id.videocontrols_seek) public SeekBar progressSeekBar;
-  @BindView(R.id.videocontrols_video_loading) public ProgressWithFileSizeView loadingProgressBar;
+  public SeekBar progressSeekBar;
+  public ProgressWithFileSizeView loadingProgressBar;
 
   private boolean userInteractingWithSeek;
   private VideoProgressChangeListener progressChangeListener;
@@ -38,8 +36,8 @@ public abstract class ExoMediaVideoControlsView extends VideoControls {
 
   @Override
   protected void retrieveViews() {
-    ButterKnife.bind(this, this);
-
+    progressSeekBar = findViewById(R.id.videocontrols_seek);
+    loadingProgressBar = findViewById(R.id.videocontrols_video_loading);
     playPauseButton = findViewById(R.id.videocontrols_play_pause_btn);
     loadingProgressBar.setIndeterminate(true);
     loadingProgressBar.setProgressBarBackgroundFillEnabled(false);

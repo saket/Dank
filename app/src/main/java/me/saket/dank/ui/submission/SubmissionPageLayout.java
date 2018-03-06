@@ -909,7 +909,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout
         contentLoadProgressView,
         submissionPageLayout,
         lifecycle(),
-        deviceDisplayHeight,
+        new Size(deviceDisplayWidth, deviceDisplayHeight),
         Views.statusBarHeight(getResources()),
         commentsSheetMinimumVisibleHeight
     );

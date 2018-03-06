@@ -7,6 +7,7 @@ import android.support.annotation.Nullable;
 import android.view.View;
 
 import com.devbrackets.android.exomedia.core.video.exo.ExoTextureVideoView;
+import com.devbrackets.android.exomedia.listener.OnVideoSizeChangedListener;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.google.android.exoplayer2.source.ExtractorMediaSource;
 import com.google.android.exoplayer2.source.LoopingMediaSource;
@@ -34,13 +35,12 @@ public class ExoPlayerManager {
   private Bitmap cachedBitmapForFrameCapture;
 
   public interface OnVideoSizeChangeListener {
-    void onVideoSizeChange(int resizedVideoWidth, int resizedVideoHeight, int actualVideoWidth, int actualVideoHeight);
+    void onVideoSizeChange(int actualVideoWidth, int actualVideoHeight);
   }
 
   @SuppressWarnings("unchecked")
   public static ExoPlayerManager newInstance(LifecycleStreams lifecycleStreams, VideoView playerView) {
     ExoPlayerManager exoPlayerManager = new ExoPlayerManager(playerView);
-    exoPlayerManager.setupVideoView();
 
     lifecycleStreams.onDestroy().subscribe(o -> exoPlayerManager.releasePlayer());
     lifecycleStreams.onPause().subscribe(o -> {
@@ -62,23 +62,12 @@ public class ExoPlayerManager {
     this.textureVideoView = playerView.findViewById(R.id.exomedia_video_view);
   }
 
-  public void setOnVideoSizeChangeListener(@Nullable OnVideoSizeChangeListener listener) {
-    videoSizeChangeListener = listener;
+  public void setOnVideoSizeChangeListener(@Nullable OnVideoSizeChangedListener listener) {
+    playerView.setOnVideoSizedChangedListener(listener);
   }
 
   public View getTextureView() {
     return textureVideoView;
-  }
-
-  public void setupVideoView() {
-    playerView.setOnVideoSizedChangedListener((unscaledWidth, unscaledHeight) -> {
-      if (videoSizeChangeListener != null) {
-        float widthFactor = (float) playerView.getWidth() / unscaledWidth;
-        int videoWidthAfterResize = (int) (unscaledWidth * widthFactor);
-        int videoHeightAfterResize = (int) (unscaledHeight * widthFactor);
-        videoSizeChangeListener.onVideoSizeChange(videoWidthAfterResize, videoHeightAfterResize, unscaledWidth, unscaledHeight);
-      }
-    });
   }
 
   public void setVideoUriToPlayInLoop(String videoUrl, VideoFormat videoFormat) {
@@ -122,7 +111,7 @@ public class ExoPlayerManager {
   }
 
   public void resetPlayback() {
-    playerView.suspend();
+    playerView.stopPlayback();
     playerView.setVideoURI(null);
   }
 

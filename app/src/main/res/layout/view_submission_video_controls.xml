@@ -9,6 +9,9 @@
   tools:background="@color/window_background"
   tools:layout_height="240dp">
 
+  <!-- @id/videocontrols_seek, @id/videocontrols_video_loading,
+   @id/videocontrols_play_pause_btn are used by Exomedia -->
+
   <me.saket.dank.widgets.ProgressWithFileSizeView
     android:id="@+id/videocontrols_video_loading"
     style="@style/DankVideoProgressWithSize"
@@ -54,7 +57,7 @@
   </LinearLayout>
 
   <TextView
-    android:id="@+id/videocontrols_remaining_duration"
+    android:id="@+id/submission_videocontrols_remaining_duration"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:layout_alignBottom="@+id/videocontrols_seek"

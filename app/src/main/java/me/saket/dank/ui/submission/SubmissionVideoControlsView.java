@@ -2,6 +2,7 @@ package me.saket.dank.ui.submission;
 
 import android.content.Context;
 import android.graphics.drawable.AnimatedVectorDrawable;
+import android.support.annotation.Px;
 import android.text.format.DateUtils;
 import android.view.ViewGroup;
 import android.widget.RelativeLayout;
@@ -23,13 +24,14 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
   private static final Formatter TIME_DURATION_FORMATTER = new Formatter(TIME_DURATION_FORMAT_BUILDER, Locale.ENGLISH);
 
   private ReversibleAnimatedVectorDrawable playPauseIcon;
-  private ViewGroup buttonsContainer;
+  protected ViewGroup buttonsContainer;
   private TextView remainingDurationView;
 
   public SubmissionVideoControlsView(Context context) {
     super(context);
   }
 
+  @Px
   public int heightOfControlButtons() {
     return buttonsContainer.getHeight();
   }
@@ -43,7 +45,7 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
   protected void retrieveViews() {
     super.retrieveViews();
     buttonsContainer = findViewById(R.id.submission_videocontrols_buttons_container);
-    remainingDurationView = findViewById(R.id.videocontrols_remaining_duration);
+    remainingDurationView = findViewById(R.id.submission_videocontrols_remaining_duration);
     playPauseIcon = new ReversibleAnimatedVectorDrawable(((AnimatedVectorDrawable) playPauseButton.getDrawable()));
   }
 

@@ -85,6 +85,7 @@ import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 import timber.log.Timber;
 
+// TODO v2: Use RecyclerView instead of a ViewPager. ViewPager is shitty. Seems to be blocking touch movements until the movement is large enough.
 public class MediaAlbumViewerActivity extends DankActivity implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks {
 
   private static final String KEY_MEDIA_LINK_TO_SHOW = "mediaLinkToShow";
@@ -253,7 +254,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         return ((ZoomableImageView) view).canPanAnyFurtherHorizontally(deltaX);
       } else {
         // Avoid paging when a video's SeekBar is being used.
-        return view.getId() == R.id.videocontrols_seek || view.getId() == R.id.videocontrols_video_seek_container;
+        return view.getId() == R.id.videocontrols_seek;
       }
     });
   }
@@ -473,48 +474,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     }
   }
 
-  @CheckResult
-  private Single<File> findHighestResImageFileFromCache(MediaAlbumItem albumItem) {
-    Observable<File> highResImageFileStream = Observable.create(emitter -> {
-      FutureTarget<File> highResolutionImageTarget = Glide.with(this)
-          .download(albumItem.mediaLink().highQualityUrl())
-          .apply(new RequestOptions().onlyRetrieveFromCache(true))
-          .submit();
-
-      File highResImageFile = highResolutionImageTarget.get();
-
-      if (highResImageFile != null) {
-        emitter.onNext(highResImageFile);
-      } else {
-        emitter.onComplete();
-      }
-      emitter.setCancellable(() -> Glide.with(this).clear(highResolutionImageTarget));
-    });
-
-    Observable<File> optimizedResImageFileStream = Observable.create(emitter -> {
-      ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(getRedditSuppliedImages());
-      String optimizedQualityImageForDevice = imageVariants.findNearestFor(getDeviceDisplayWidth(), albumItem.mediaLink().lowQualityUrl());
-
-      FutureTarget<File> optimizedResolutionImageTarget = Glide.with(this)
-          .download(optimizedQualityImageForDevice)
-          .apply(new RequestOptions().onlyRetrieveFromCache(true))
-          .submit();
-      File optimizedResImageFile = optimizedResolutionImageTarget.get();
-
-      if (optimizedResImageFile != null) {
-        emitter.onNext(optimizedResImageFile);
-      } else {
-        emitter.onComplete();
-      }
-      emitter.setCancellable(() -> Glide.with(this).clear(optimizedResolutionImageTarget));
-    });
-
-    return highResImageFileStream
-        .onErrorResumeNext(Observable.empty())
-        .concatWith(optimizedResImageFileStream.onErrorResumeNext(Observable.empty()))
-        .firstOrError();
-  }
-
 // ======== SHARE ======== //
 
   /**
@@ -616,6 +575,48 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
       return true;
     });
     return sharePopupMenu;
+  }
+
+  @CheckResult
+  private Single<File> findHighestResImageFileFromCache(MediaAlbumItem albumItem) {
+    Observable<File> highResImageFileStream = Observable.create(emitter -> {
+      FutureTarget<File> highResolutionImageTarget = Glide.with(this)
+          .download(albumItem.mediaLink().highQualityUrl())
+          .apply(new RequestOptions().onlyRetrieveFromCache(true))
+          .submit();
+
+      File highResImageFile = highResolutionImageTarget.get();
+
+      if (highResImageFile != null) {
+        emitter.onNext(highResImageFile);
+      } else {
+        emitter.onComplete();
+      }
+      emitter.setCancellable(() -> Glide.with(this).clear(highResolutionImageTarget));
+    });
+
+    Observable<File> optimizedResImageFileStream = Observable.create(emitter -> {
+      ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(getRedditSuppliedImages());
+      String optimizedQualityImageForDevice = imageVariants.findNearestFor(getDeviceDisplayWidth(), albumItem.mediaLink().lowQualityUrl());
+
+      FutureTarget<File> optimizedResolutionImageTarget = Glide.with(this)
+          .download(optimizedQualityImageForDevice)
+          .apply(new RequestOptions().onlyRetrieveFromCache(true))
+          .submit();
+      File optimizedResImageFile = optimizedResolutionImageTarget.get();
+
+      if (optimizedResImageFile != null) {
+        emitter.onNext(optimizedResImageFile);
+      } else {
+        emitter.onComplete();
+      }
+      emitter.setCancellable(() -> Glide.with(this).clear(optimizedResolutionImageTarget));
+    });
+
+    return highResImageFileStream
+        .onErrorResumeNext(Observable.empty())
+        .concatWith(optimizedResImageFileStream.onErrorResumeNext(Observable.empty()))
+        .firstOrError();
   }
 
   private void updateShareMenuFor(MediaAlbumItem activeMediaItem) {
