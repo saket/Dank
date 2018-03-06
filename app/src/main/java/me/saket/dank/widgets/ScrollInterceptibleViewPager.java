@@ -41,7 +41,14 @@ public class ScrollInterceptibleViewPager extends ViewPager {
   @Override
   @SuppressLint("ClickableViewAccessibility")
   public boolean onTouchEvent(MotionEvent event) {
-    // Only handle one finger touches! otherwise, the user probably does want to scale/pan
+    // Only handle one finger touches! otherwise, the user is trying to scale/pan
     return event.getPointerCount() == 1 && super.onTouchEvent(event);
+  }
+
+  // Touch events on seek-bar get delayed if it's inside a scrollable container.
+  // This blocks that behavior.
+  @Override
+  public boolean shouldDelayChildPressedState() {
+    return false;
   }
 }
