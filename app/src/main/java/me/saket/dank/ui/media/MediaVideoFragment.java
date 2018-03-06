@@ -242,7 +242,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     });
     flickListener.setOnTouchDownReturnValueProvider((MotionEvent event) -> {
       // Hackkyyy hacckkk. Ugh.
-      if (Views.touchLiesOn(videoControlsView.progressSeekBar, event.getRawX(), event.getRawY())) {
+      if (Views.touchLiesOn(videoControlsView, event.getRawX(), event.getRawY())) {
         return false;
       }
       //noinspection RedundantIfStatement
