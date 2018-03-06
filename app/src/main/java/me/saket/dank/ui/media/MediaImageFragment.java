@@ -115,7 +115,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
     // Toggle immersive when the user clicks anywhere.
     //noinspection ConstantConditions
-    imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).onClickMediaItem());
+    imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).toggleImmersiveMode());
 
     // Show title and description above the Activity option buttons.
     //noinspection ConstantConditions

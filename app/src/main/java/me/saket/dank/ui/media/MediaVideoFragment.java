@@ -101,6 +101,10 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     // Make the video flick-dismissible.
     setupFlickGestures(flickDismissViewGroup);
 
+    // Toggle immersive when the user clicks anywhere.
+    //noinspection ConstantConditions
+    flickDismissViewGroup.setOnClickListener(o -> ((MediaFragmentCallbacks) getActivity()).toggleImmersiveMode());
+
     // Keep the video below the status bar and above the control buttons.
     //noinspection ConstantConditions
     ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()

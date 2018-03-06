@@ -9,7 +9,8 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 
 public interface MediaFragmentCallbacks {
-  void onClickMediaItem();
+
+  void toggleImmersiveMode();
 
   int getDeviceDisplayWidth();
 

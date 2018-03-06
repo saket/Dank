@@ -25,6 +25,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   private float downX, downY;
   private float lastTouchX;
   private float lastTouchY;
+  private int lastAction = -1;
   private boolean touchStartedOnLeftSide;
   private VelocityTracker velocityTracker;
   private boolean verticalScrollRegistered;
@@ -125,8 +126,15 @@ public class FlickGestureListener implements View.OnTouchListener {
     float deltaX = touchX - lastTouchX;
     float deltaY = touchY - lastTouchY;
 
+    // Since both intercept() and touch() call this listener, we get duplicate ACTION_DOWNs.
+    if (touchX == lastTouchX && touchY == lastTouchY && lastAction == event.getAction()) {
+      // Clear VelocityTracker if this condition is removed.
+      return false;
+    }
+
     lastTouchX = touchX;
     lastTouchY = touchY;
+    lastAction = event.getAction();
 
     switch (event.getAction()) {
       case MotionEvent.ACTION_DOWN:
@@ -135,11 +143,13 @@ public class FlickGestureListener implements View.OnTouchListener {
         touchStartedOnLeftSide = touchX < view.getWidth() / 2;
         if (velocityTracker == null) {
           velocityTracker = VelocityTracker.obtain();
-        } else {
-          // This is required because ACTION_DOWN is received twice.
-          velocityTracker.clear();
         }
+        //else {
+        // This is required because ACTION_DOWN is received twice.
+        //velocityTracker.clear();
+        //}
         velocityTracker.addMovement(event);
+
         return onTouchDownReturnValueProvider != null && onTouchDownReturnValueProvider.shouldReturnTrueOnTouchDown(event);
 
       case MotionEvent.ACTION_CANCEL:
@@ -167,6 +177,8 @@ public class FlickGestureListener implements View.OnTouchListener {
               animateViewBackToPosition(view);
             }
           }
+        } else {
+          view.performClick();
         }
 
         velocityTracker.recycle();

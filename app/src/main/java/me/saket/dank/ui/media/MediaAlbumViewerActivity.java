@@ -399,7 +399,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 // ======== MEDIA FRAGMENT ======== //
 
   @Override
-  public void onClickMediaItem() {
+  public void toggleImmersiveMode() {
     systemUiHelper.toggle();
   }
 

@@ -44,8 +44,8 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
   @Override
   protected void retrieveViews() {
     super.retrieveViews();
-    buttonsContainer = findViewById(R.id.submission_videocontrols_buttons_container);
-    remainingDurationView = findViewById(R.id.submission_videocontrols_remaining_duration);
+    buttonsContainer = findViewById(R.id.videocontrols_buttons_container);
+    remainingDurationView = findViewById(R.id.videocontrols_remaining_duration);
     playPauseIcon = new ReversibleAnimatedVectorDrawable(((AnimatedVectorDrawable) playPauseButton.getDrawable()));
   }
 
