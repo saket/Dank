@@ -17,7 +17,7 @@ import me.saket.dank.R;
 public abstract class ExoMediaVideoControlsView extends VideoControls {
 
   public SeekBar progressSeekBar;
-  public ProgressWithFileSizeView loadingProgressBar;
+  public ProgressWithFileSizeView loadingProgress;
 
   private boolean userInteractingWithSeek;
   private VideoProgressChangeListener progressChangeListener;
@@ -37,10 +37,10 @@ public abstract class ExoMediaVideoControlsView extends VideoControls {
   @Override
   protected void retrieveViews() {
     progressSeekBar = findViewById(R.id.videocontrols_seek);
-    loadingProgressBar = findViewById(R.id.videocontrols_video_loading);
+    loadingProgress = findViewById(R.id.videocontrols_video_loading);
     playPauseButton = findViewById(R.id.videocontrols_play_pause_btn);
-    loadingProgressBar.setIndeterminate(true);
-    loadingProgressBar.setProgressBarBackgroundFillEnabled(false);
+    loadingProgress.setIndeterminate(true);
+    loadingProgress.setProgressBarBackgroundFillEnabled(false);
 
     // Cannot remove these because ExoMedia expects them to be non-null.
     descriptionTextView = currentTimeTextView = endTimeTextView = titleTextView = subTitleTextView = new TextView(getContext());
@@ -93,12 +93,12 @@ public abstract class ExoMediaVideoControlsView extends VideoControls {
 
   @Override
   public void showLoading(boolean initialLoad) {
-    loadingProgressBar.setVisibility(VISIBLE);
+    loadingProgress.setVisibility(VISIBLE);
   }
 
   @Override
   public void finishLoading() {
-    loadingProgressBar.setVisibility(GONE);
+    loadingProgress.setVisibility(GONE);
   }
 
   @Override

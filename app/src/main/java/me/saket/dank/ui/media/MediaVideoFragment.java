@@ -142,25 +142,28 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     });
 
     // VideoView internally sets its height to match-parent. Forcefully resize it to match the video height.
-    exoPlayerManager.setOnVideoSizeChangeListener((actualVideoWidth, actualVideoHeight) -> {
-      Timber.i("actualVideoWidth: %s", actualVideoWidth);
-      Timber.i("actualVideoHeight: %s", actualVideoHeight);
-      //Views.setHeight(videoView, resizedVideoHeight + videoControlsView.getBottomExtraSpaceForProgressSeekBar());
-
+    exoPlayerManager.setOnVideoSizeChangeListener((videoWidth, videoHeight) -> {
       ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
           .takeUntil(lifecycle().onDestroyCompletable())
           .subscribe(optionButtonsHeight -> {
             int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
             int deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels;
 
-            float widthResizeFactor = (float) deviceDisplayWidth / actualVideoWidth;
-            int resizedHeight = (int) (widthResizeFactor * actualVideoHeight);
+            // Not sure why, but display height doesn't include the status bar's height :S
+            deviceDisplayHeight += Views.statusBarHeight(getResources());
 
             int videoControlsHeight = videoControlsView.heightOfControlButtons();
-            int spaceAvailable = deviceDisplayHeight;
-            int heightAdjustedToFitInSpace = Math.min(spaceAvailable, resizedHeight + videoControlsHeight);
+            boolean isPortraitVideo = (videoHeight + videoControlsHeight) > videoWidth;
 
-            Views.setHeight(videoView, heightAdjustedToFitInSpace);
+            if (isPortraitVideo) {
+              int verticalSpaceAvailable = deviceDisplayHeight - optionButtonsHeight;
+              Views.setHeight(videoView, verticalSpaceAvailable);
+
+            } else {
+              float resizeFactorToFillHorizontalSpace = (float) deviceDisplayWidth / videoWidth;
+              int resizedHeight = (int) (videoHeight * resizeFactorToFillHorizontalSpace) + videoControlsHeight;
+              Views.setDimensions(videoView, deviceDisplayWidth, resizedHeight);
+            }
           });
     });
 

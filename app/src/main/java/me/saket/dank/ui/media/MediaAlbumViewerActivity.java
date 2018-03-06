@@ -351,6 +351,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   private void updateMediaDisplayPosition() {
     int totalMediaItems = mediaAlbumAdapter.getCount();
     mediaPositionTextView.setVisibility(totalMediaItems > 1 ? View.VISIBLE : View.INVISIBLE);
+    // Always INVISIBLE and never GONE to maintain consistency and support muscle memory.
 
     if (totalMediaItems > 1) {
       // We're dealing with an album.
