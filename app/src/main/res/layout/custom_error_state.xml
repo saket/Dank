@@ -16,8 +16,10 @@
   <TextView
     android:id="@+id/errorstate_message"
     style="@style/ErrorStateMessage"
+    android:layout_marginEnd="@dimen/spacing24"
+    android:layout_marginStart="@dimen/spacing24"
     android:layout_marginTop="@dimen/spacing4"
-    tools:text="@string/inbox_empty_state_message_for_username_mentions" />
+    tools:text="@string/subreddit_error_private" />
 
   <Button
     android:id="@+id/errorstate_retry"
