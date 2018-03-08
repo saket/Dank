@@ -35,7 +35,7 @@
     android:thumb="@color/transparent"
     tools:progress="33" />
 
-  <LinearLayout
+  <FrameLayout
     android:id="@+id/videocontrols_buttons_container"
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
@@ -49,13 +49,13 @@
 
     <!-- Content description is set in code. -->
     <ImageButton
-      android:id="@+id/videocontrols_play_pause_btn"
+      android:id="@+id/videocontrols_play_pause"
       android:layout_width="48dp"
       android:layout_height="match_parent"
       android:background="?attr/selectableItemBackgroundBorderless"
       android:src="@drawable/avd_play_to_pause_white_24dp"
       tools:ignore="ContentDescription" />
-  </LinearLayout>
+  </FrameLayout>
 
   <TextView
     android:id="@+id/videocontrols_remaining_duration"

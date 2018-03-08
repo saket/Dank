@@ -25,7 +25,7 @@ public class SubmissionVideoControlsView extends ExoMediaVideoControlsView {
 
   private ReversibleAnimatedVectorDrawable playPauseIcon;
   protected ViewGroup buttonsContainer;
-  private TextView remainingDurationView;
+  protected TextView remainingDurationView;
 
   public SubmissionVideoControlsView(Context context) {
     super(context);

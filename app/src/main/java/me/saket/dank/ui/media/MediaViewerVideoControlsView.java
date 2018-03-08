@@ -61,11 +61,9 @@ public class MediaViewerVideoControlsView extends SubmissionVideoControlsView {
   }
 
   private void setVisibilityOfAllChildrenExceptProgress(int visibility) {
-    for (int i = 0; i < getChildCount(); i++) {
-      View child = getChildAt(i);
-      if (child.getId() != loadingProgress.getId()) {
-        setVisibility(visibility);
-      }
+    View[] children = { buttonsContainer, remainingDurationView};
+    for (View child : children) {
+      child.setVisibility(visibility);
     }
   }
 }

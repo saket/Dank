@@ -38,7 +38,7 @@ public abstract class ExoMediaVideoControlsView extends VideoControls {
   protected void retrieveViews() {
     progressSeekBar = findViewById(R.id.videocontrols_seek);
     loadingProgress = findViewById(R.id.videocontrols_video_loading);
-    playPauseButton = findViewById(R.id.videocontrols_play_pause_btn);
+    playPauseButton = findViewById(R.id.videocontrols_play_pause);
     loadingProgress.setIndeterminate(true);
     loadingProgress.setProgressBarBackgroundFillEnabled(false);
 
