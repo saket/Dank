@@ -9,7 +9,7 @@ import com.google.auto.value.AutoValue;
 import java.util.List;
 
 import me.saket.dank.data.EmptyState;
-import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.ErrorState;
 import me.saket.dank.utils.Optional;
 
 @AutoValue
@@ -36,7 +36,7 @@ public abstract class SubredditScreenUiModel {
 
   public abstract boolean fullscreenProgressVisible();
 
-  public abstract Optional<ResolvedError> fullscreenError();
+  public abstract Optional<ErrorState> fullscreenError();
 
   public abstract Optional<EmptyState> emptyState();
 
@@ -55,7 +55,7 @@ public abstract class SubredditScreenUiModel {
   public abstract static class Builder {
     public abstract Builder fullscreenProgressVisible(boolean visible);
 
-    public abstract Builder fullscreenError(Optional<ResolvedError> resolvedError);
+    public abstract Builder fullscreenError(Optional<ErrorState> resolvedError);
 
     public abstract Builder toolbarRefreshVisible(boolean visible);
 

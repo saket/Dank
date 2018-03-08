@@ -5,40 +5,42 @@ import android.support.annotation.Nullable;
 import com.google.auto.value.AutoValue;
 
 @AutoValue
-public abstract class NetworkCallStatus {
+public abstract class SubmissionPaginationResult {
 
-  public enum State {
+  public enum Type {
     IN_FLIGHT,
     IDLE,
     FAILED
   }
 
-  public abstract State state();
+  public abstract Type state();
 
   @Nullable
   public abstract Throwable error();
 
   public boolean isIdle() {
-    return state() == State.IDLE;
+    return state() == Type.IDLE;
   }
 
   public boolean isInFlight() {
-    return state() == State.IN_FLIGHT;
+    return state() == Type.IN_FLIGHT;
   }
 
   public boolean isFailed() {
-    return state() == State.FAILED;
+    return state() == Type.FAILED;
   }
 
-  public static NetworkCallStatus createInFlight() {
-    return new AutoValue_NetworkCallStatus(State.IN_FLIGHT, null);
+  public static SubmissionPaginationResult inFlight() {
+    return new AutoValue_SubmissionPaginationResult(Type.IN_FLIGHT, null);
   }
 
-  public static NetworkCallStatus createIdle() {
-    return new AutoValue_NetworkCallStatus(State.IDLE, null);
+  public static SubmissionPaginationResult idle() {
+    return new AutoValue_SubmissionPaginationResult(Type.IDLE, null);
   }
 
-  public static NetworkCallStatus createFailed(Throwable error) {
-    return new AutoValue_NetworkCallStatus(State.FAILED, error);
+  public static SubmissionPaginationResult failed(Throwable error) {
+    return new AutoValue_SubmissionPaginationResult(Type.FAILED, error);
   }
+
+
 }

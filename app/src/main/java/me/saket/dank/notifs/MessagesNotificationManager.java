@@ -80,9 +80,9 @@ public class MessagesNotificationManager {
             if (!seenMessageIds.contains(unfilteredMessage.getId())) {
               unseenMessages.add(unfilteredMessage);
             }
-            //else {
-            //  Timber.w("Already seen: %s", Strings.safeSubstring(unfilteredMessage.getBody(), 50));
-            //}
+            else {
+              Timber.w("Already seen: %s", Strings.substringWithBounds(unfilteredMessage.getBody(), 50));
+            }
           }
 
           return Collections.unmodifiableList(unseenMessages);

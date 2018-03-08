@@ -25,17 +25,20 @@ import io.reactivex.functions.BiFunction;
 import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.ErrorState;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.BookmarksRepository;
+import me.saket.dank.ui.submission.PrivateSubredditException;
+import me.saket.dank.ui.submission.SubredditNotFoundException;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
-import me.saket.dank.ui.subreddit.NetworkCallStatus;
+import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.ui.subreddit.SubmissionThumbnailTypeMinusNsfw;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Truss;
+import timber.log.Timber;
 
 public class SubredditUiConstructor {
 
@@ -67,7 +70,7 @@ public class SubredditUiConstructor {
   public Observable<SubredditScreenUiModel> stream(
       Context context,
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
-      Observable<NetworkCallStatus> paginationResults)
+      Observable<SubmissionPaginationResult> paginationResults)
   {
     Observable<?> userPrefChanges = Observable.merge(showCommentCountInByline.asObservable(), showNsfwContent.asObservable())
         .skip(1); // Skip initial values.
@@ -108,17 +111,17 @@ public class SubredditUiConstructor {
 
   private Observable<Boolean> fullscreenProgressVisibilities(
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
-      Observable<NetworkCallStatus> paginationResults)
+      Observable<SubmissionPaginationResult> paginationResults)
   {
     Observable<Boolean> fullscreenProgressForAppLaunch = Observable.combineLatest(
         cachedSubmissionLists.map(Optional::isEmpty),
-        paginationResults.map(NetworkCallStatus::isIdle),
+        paginationResults.map(SubmissionPaginationResult::isIdle),
         AND_FUNCTION
     );
 
     Observable<Boolean> fullscreenProgressForFolderChange = Observable.combineLatest(
         cachedSubmissionLists.map(Optional::isEmpty),
-        paginationResults.map(NetworkCallStatus::isInFlight),
+        paginationResults.map(SubmissionPaginationResult::isInFlight),
         AND_FUNCTION
     );
 
@@ -129,18 +132,27 @@ public class SubredditUiConstructor {
     );
   }
 
-  private Observable<Optional<ResolvedError>> fullscreenErrors(
+  private Observable<Optional<ErrorState>> fullscreenErrors(
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
-      Observable<NetworkCallStatus> paginationResults)
+      Observable<SubmissionPaginationResult> paginationResults)
   {
     return Observable.combineLatest(
         cachedSubmissionLists.map(optionalSubs -> optionalSubs.isEmpty() || optionalSubs.get().isEmpty()),
         paginationResults,
         (areSubsEmpty, paginationResult) -> {
           if (areSubsEmpty && paginationResult.isFailed()) {
-            return Optional.of(errorResolver.resolve(paginationResult.error()));
+            Timber.d("Showing error");
+            Throwable error = paginationResult.error();
+            if (error instanceof PrivateSubredditException) {
+              return Optional.of(ErrorState.create(R.string.subreddit_error_emoji, R.string.subreddit_error_private));
+            }
+            if (error instanceof SubredditNotFoundException) {
+              return Optional.of(ErrorState.create(R.string.subreddit_error_emoji, R.string.subreddit_error_not_found));
+            }
+
+            return Optional.of(ErrorState.from(errorResolver.resolve(error)));
           } else {
-            return Optional.<ResolvedError>empty();
+            return Optional.<ErrorState>empty();
           }
         }
     );
@@ -148,7 +160,7 @@ public class SubredditUiConstructor {
 
   private Observable<Optional<EmptyState>> fullscreenEmptyStates(
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
-      Observable<NetworkCallStatus> paginationResults)
+      Observable<SubmissionPaginationResult> paginationResults)
   {
     return Observable.combineLatest(
         cachedSubmissionLists.map(optionalSubs -> optionalSubs.isPresent() && optionalSubs.get().isEmpty()),
@@ -169,7 +181,7 @@ public class SubredditUiConstructor {
 
   private Observable<Optional<SubredditSubmissionPagination.UiModel>> paginationProgressUiModels(
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
-      Observable<NetworkCallStatus> paginationResults)
+      Observable<SubmissionPaginationResult> paginationResults)
   {
     return Observable.combineLatest(
         cachedSubmissionLists.map(optionalSubs -> optionalSubs.isPresent() && !optionalSubs.get().isEmpty()),

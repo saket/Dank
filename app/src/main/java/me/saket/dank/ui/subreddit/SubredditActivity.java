@@ -505,7 +505,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         CachedSubmissionFolder::create
     );
 
-    Relay<NetworkCallStatus> paginationResults = BehaviorRelay.createDefault(NetworkCallStatus.createIdle());
+    Relay<SubmissionPaginationResult> paginationResults = BehaviorRelay.createDefault(SubmissionPaginationResult.idle());
     Relay<Optional<List<Submission>>> cachedSubmissionStream = BehaviorRelay.createDefault(Optional.empty());
 
     // Pagination.

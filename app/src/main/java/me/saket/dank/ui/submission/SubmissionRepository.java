@@ -16,6 +16,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
+import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Listing;
@@ -50,7 +51,7 @@ import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
-import me.saket.dank.ui.subreddit.NetworkCallStatus;
+import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.utils.Commons;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Pair;
@@ -124,6 +125,7 @@ public class SubmissionRepository {
                 // leading to the comments never showing up.
                 .timeout(Observable.timer(300, TimeUnit.MILLISECONDS), o -> Observable.timer(100, TimeUnit.DAYS))
                 .retry(10, error -> {
+                  //noinspection RedundantIfStatement
                   if (error instanceof TimeoutException) {
                     //Timber.w("Retrying because memory store isn't responding.");
                     return true;
@@ -298,21 +300,23 @@ public class SubmissionRepository {
    * @return Operates on the main thread.
    */
   @CheckResult
-  public Observable<NetworkCallStatus> loadAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
+  public Observable<SubmissionPaginationResult> loadAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
     return lastPaginationAnchor(folder)
         //.doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
         .flatMapCompletable(anchor -> dankRedditClient
-            .withAuth(Completable.fromAction(() -> {
+            .withAuth(Single.fromCallable(() -> {
               List<Submission> distinctNewItems = new ArrayList<>();
               PaginationAnchor nextAnchor = anchor;
+              int savedSubmissionCount = 0;
 
               while (true) {
                 FetchResult fetchResult = fetchSubmissionsFromRemoteWithAnchor(folder, nextAnchor);
                 votingManager.removePendingVotesForFetchedSubmissions(fetchResult.fetchedSubmissions()).subscribe();
-                //Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
+                Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
 
                 SaveResult saveResult = saveSubmissions(folder, fetchResult.fetchedSubmissions());
                 distinctNewItems.addAll(saveResult.savedItems());
+                savedSubmissionCount += saveResult.savedItems().size();
 
                 if (!fetchResult.hasMoreItems() || distinctNewItems.size() > 10) {
                   //Timber.i("Breaking early");
@@ -324,7 +328,39 @@ public class SubmissionRepository {
                 nextAnchor = PaginationAnchor.create(lastFetchedSubmission.getFullName());
               }
               //Timber.i("Fetched %s submissions", distinctNewItems.size());
+              return savedSubmissionCount;
             }))
+            .flatMapCompletable(savedSubmissionCount -> {
+              if (savedSubmissionCount == 0 && anchor.isEmpty()) {
+                return dankRedditClient
+                    .findSubreddit2(folder.subredditName())
+                    .flatMapCompletable(searchResult -> {
+                      switch (searchResult.type()) {
+                        case SUCCESS:
+                          return Completable.<SubmissionPaginationResult>complete();
+
+                        case ERROR_PRIVATE:
+                          throw new AssertionError("Submission paginator throws an 403 for private subreddit. Should never reach here");
+
+                        case ERROR_NOT_FOUND:
+                          return Completable.error(new SubredditNotFoundException());
+
+                        default:
+                        case ERROR_UNKNOWN:
+                          return Completable.error(new RuntimeException("Unknown error getting submissions for " + folder));
+                      }
+                    });
+              } else {
+                return Completable.<SubmissionPaginationResult>complete();
+              }
+            })
+            .onErrorResumeNext(error -> {
+              if (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 403) {
+                return Completable.error(new PrivateSubredditException());
+              } else {
+                return Completable.error(error);
+              }
+            })
             .retryWhen(errors -> errors.flatMap(error -> {
               Throwable actualError = errorResolver.findActualCause(error);
 
@@ -333,18 +369,21 @@ public class SubmissionRepository {
                 //Timber.w("Retrying on thread interruption");
                 return Flowable.just((Object) Notification.INSTANCE);
               } else {
+                //error.printStackTrace();
                 return Flowable.error(error);
               }
             }))
         )
-        .toSingleDefault(NetworkCallStatus.createIdle())
+        .toSingleDefault(SubmissionPaginationResult.idle())
         .toObservable()
         .doOnError(e -> {
-          ResolvedError resolvedError = errorResolver.resolve(e);
-          resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't fetch submissions"));
+          if (!(e instanceof PrivateSubredditException || e instanceof SubredditNotFoundException)) {
+            ResolvedError resolvedError = errorResolver.resolve(e);
+            resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't fetch submissions"));
+          }
         })
-        .onErrorReturn(error -> NetworkCallStatus.createFailed(error))
-        .startWith(NetworkCallStatus.createInFlight());
+        .onErrorReturn(error -> SubmissionPaginationResult.failed(error))
+        .startWith(SubmissionPaginationResult.inFlight());
   }
 
   /**

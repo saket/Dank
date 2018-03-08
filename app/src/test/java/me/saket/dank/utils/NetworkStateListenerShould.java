@@ -44,6 +44,7 @@ public class NetworkStateListenerShould {
     doAnswer(invocation -> {
       ConnectivityManager.NetworkCallback callbacks = invocation.getArgumentAt(1, ConnectivityManager.NetworkCallback.class);
       callbacks.onAvailable(mock(Network.class));
+      //noinspection ReturnOfNull
       return null;
     }).when(connectivityManager).registerNetworkCallback(any(NetworkRequest.class), any(ConnectivityManager.NetworkCallback.class));
     doReturn(mock(NetworkRequest.class)).when(networkStateListener).createInternetCapableNetworkRequest();

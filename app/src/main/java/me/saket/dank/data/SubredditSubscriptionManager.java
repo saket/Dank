@@ -224,8 +224,7 @@ public class SubredditSubscriptionManager {
         .flatMap(pendingSubscription -> {
           if (pendingSubscription.isSubscribePending()) {
             Timber.i("Subscribing to %s", pendingSubscription.name());
-            return Dank.reddit()
-                .findSubreddit(pendingSubscription.name())
+            return Dank.reddit().findSubreddit(pendingSubscription.name())
                 .flatMapCompletable(subreddit -> subscribe(subreddit))
                 .toObservable();
           } else {
