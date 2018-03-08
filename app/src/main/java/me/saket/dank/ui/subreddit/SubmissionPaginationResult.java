@@ -7,14 +7,14 @@ import com.google.auto.value.AutoValue;
 @AutoValue
 public abstract class NetworkCallStatus {
 
-
-
   public enum State {
     IN_FLIGHT,
     IDLE,
-    FAILED;
+    FAILED
   }
+
   public abstract State state();
+
   @Nullable
   public abstract Throwable error();
 

@@ -41,6 +41,7 @@ import io.reactivex.Single;
 import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.user.UserProfile;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.UserSubreddit;
@@ -328,9 +329,29 @@ public class DankRedditClient {
     }));
   }
 
+  @Deprecated
   @CheckResult
   public Single<Subreddit> findSubreddit(String name) {
     return withAuth(Single.fromCallable(() -> redditClient.getSubreddit(name)));
+  }
+
+  @CheckResult
+  public Single<SubredditSearchResult> findSubreddit2(String name) {
+    return withAuth(Single.fromCallable(() -> redditClient.getSubreddit(name)))
+        .<SubredditSearchResult>map(subreddit -> SubredditSearchResult.success(subreddit))
+        .onErrorReturn(error -> {
+          if (error instanceof IllegalArgumentException && error.getMessage().contains("is private")) {
+            return SubredditSearchResult.privateError();
+
+          } else if (error instanceof IllegalArgumentException && error.getMessage().contains("does not exist")
+              || (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 404))
+          {
+            return SubredditSearchResult.notFound();
+
+          } else {
+            return SubredditSearchResult.unknownError();
+          }
+        });
   }
 
   public Completable subscribeTo(Subreddit subreddit) {
