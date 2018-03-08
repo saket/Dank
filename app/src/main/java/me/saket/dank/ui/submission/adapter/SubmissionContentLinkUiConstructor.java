@@ -381,7 +381,7 @@ public class SubmissionContentLinkUiConstructor {
           emitter.setCancellable(() -> Glide.with(context).clear(futureTarget));
         })
         .onErrorResumeNext(error -> {
-          Timber.e(error.getMessage(), "Couldn't load image using glide");
+          Timber.e(error, "Couldn't load image using glide");
           return Observable.empty();
         });
   }
