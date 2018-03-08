@@ -19,9 +19,11 @@ public abstract class ResolvedError {
 
   public abstract Type type();
 
+  // FIXME: rename to emojiRes().
   @StringRes
   public abstract int errorEmojiRes();
 
+  // FIXME: rename to messageRes().
   @StringRes
   public abstract int errorMessageRes();
 

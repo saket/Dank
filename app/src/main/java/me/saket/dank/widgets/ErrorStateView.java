@@ -19,6 +19,7 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.data.ErrorState;
 
 public class ErrorStateView extends LinearLayout {
 
@@ -53,6 +54,12 @@ public class ErrorStateView extends LinearLayout {
   public void applyFrom(ResolvedError error) {
     emojiView.setText(error.errorEmojiRes());
     messageView.setText(error.errorMessageRes());
+    retryButton.setText(R.string.common_error_retry);
+  }
+
+  public void applyFrom(ErrorState error) {
+    emojiView.setText(error.emojiRes());
+    messageView.setText(error.messageRes());
     retryButton.setText(R.string.common_error_retry);
   }
 
