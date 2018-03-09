@@ -174,10 +174,17 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
           });
     });
 
-    long startPositionMillis = 0;
+    long startPositionMillis;
     if (savedInstanceState != null) {
       startPositionMillis = savedInstanceState.getLong(KEY_SEEK_POSITION_MILLIS);
+    } else if (mediaAlbumItem.mediaLink() instanceof MediaLinkWithStartingPosition) {
+      startPositionMillis = ((MediaLinkWithStartingPosition) mediaAlbumItem.mediaLink()).startingPositionMillis();
+    } else {
+      startPositionMillis = 0;
     }
+
+    // Rewind by a small duration so that the user doesn't miss anything during a transition.
+    startPositionMillis = Math.max(0, startPositionMillis - 1_000);
 
     loadVideo(startPositionMillis);
   }

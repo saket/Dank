@@ -95,6 +95,7 @@ import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.media.MediaLinkWithStartingPosition;
 import me.saket.dank.ui.preferences.UserPreferenceGroup;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.adapter.CommentsItemDiffer;
@@ -916,12 +917,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
     // Open media in full-screen on click.
     contentVideoViewHolder.get().streamVideoClicks()
-        .withLatestFrom(submissionContentStream, (o, contentLink) -> contentLink)
-        .filter(contentLink -> contentLink.isVideo())
-        .cast(MediaLink.class)
-        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
+        .withLatestFrom(submissionContentStream.ofType(MediaLink.class), Pair::create)
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(pair -> urlRouter.forLink(pair.first()).open(getContext()));
+        .subscribe(pair -> {
+          SubmissionVideoClickEvent clickEvent = pair.first();
+          MediaLinkWithStartingPosition videoLink = MediaLinkWithStartingPosition.create(pair.second(), clickEvent.seekPosition());
+          urlRouter
+              .forLink(videoLink)
+              .open(getContext());
+        });
   }
 
   private void setupCommentsSheet() {
