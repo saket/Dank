@@ -30,13 +30,8 @@ public class ExoPlayerManager {
 
   private final VideoView playerView;
   private final ExoTextureVideoView textureVideoView;
-  private @Nullable OnVideoSizeChangeListener videoSizeChangeListener;
   private boolean wasPlayingUponPause;
   private Bitmap cachedBitmapForFrameCapture;
-
-  public interface OnVideoSizeChangeListener {
-    void onVideoSizeChange(int actualVideoWidth, int actualVideoHeight);
-  }
 
   @SuppressWarnings("unchecked")
   public static ExoPlayerManager newInstance(LifecycleStreams lifecycleStreams, VideoView playerView) {
@@ -122,6 +117,14 @@ public class ExoPlayerManager {
   public void pausePlayback() {
     wasPlayingUponPause = playerView.isPlaying();
     playerView.pause();
+  }
+
+  public void seekTo(long toMilliseconds) {
+    playerView.seekTo(toMilliseconds);
+  }
+
+  public long getCurrentSeekPosition() {
+    return playerView.getCurrentPosition();
   }
 
   public void setOnErrorListener(Consumer<Throwable> errorListener) {

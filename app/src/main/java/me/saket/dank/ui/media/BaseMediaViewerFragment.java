@@ -55,6 +55,14 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
   }
 
   @Override
+  public void onStart() {
+    super.onStart();
+    if (mediaLinkToShow == null) {
+      throw new AssertionError();
+    }
+  }
+
+  @Override
   public void onViewCreated(View view, @Nullable Bundle savedInstanceState) {
     super.onViewCreated(view, savedInstanceState);
 

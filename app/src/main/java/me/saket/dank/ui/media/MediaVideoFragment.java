@@ -3,6 +3,7 @@ package me.saket.dank.ui.media;
 import android.animation.LayoutTransition;
 import android.content.Context;
 import android.os.Bundle;
+import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
@@ -34,6 +35,7 @@ import timber.log.Timber;
 public class MediaVideoFragment extends BaseMediaViewerFragment {
 
   private static final String KEY_MEDIA_ITEM = "mediaItem";
+  private static final String KEY_SEEK_POSITION_MILLIS = "seekPositionMillis";
 
   @BindView(R.id.albumviewer_video_flickdismisslayout) FlickDismissLayout flickDismissViewGroup;
   @BindView(R.id.albumviewer_video_video) VideoView videoView;
@@ -84,6 +86,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
     //noinspection ConstantConditions
     mediaAlbumItem = getArguments().getParcelable(KEY_MEDIA_ITEM);
+
     //noinspection ConstantConditions
     super.setMediaLink(mediaAlbumItem.mediaLink());
     super.setTitleDescriptionView(titleDescriptionView);
@@ -171,7 +174,18 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
           });
     });
 
-    loadVideo(mediaAlbumItem);
+    long startPositionMillis = 0;
+    if (savedInstanceState != null) {
+      startPositionMillis = savedInstanceState.getLong(KEY_SEEK_POSITION_MILLIS);
+    }
+
+    loadVideo(startPositionMillis);
+  }
+
+  @Override
+  public void onSaveInstanceState(@NonNull Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putLong(KEY_SEEK_POSITION_MILLIS, exoPlayerManager.getCurrentSeekPosition());
   }
 
   private void moveToScreenState(ScreenState screenState) {
@@ -186,7 +200,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     }
   }
 
-  private void loadVideo(MediaAlbumItem mediaAlbumItem) {
+  private void loadVideo(long startPositionMillis) {
     moveToScreenState(ScreenState.LOADING_VIDEO_OR_READY);
 
     exoPlayerManager.setOnErrorListener(error -> {
@@ -194,7 +208,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
       ResolvedError resolvedError = errorResolver.resolve(error);
       loadErrorStateView.applyFrom(resolvedError);
-      loadErrorStateView.setOnRetryClickListener(o -> loadVideo(mediaAlbumItem));
+      loadErrorStateView.setOnRetryClickListener(o -> loadVideo(startPositionMillis));
 
       if (resolvedError.isUnknown()) {
         Timber.e(error, "Error while loading video: %s", mediaAlbumItem);
@@ -213,15 +227,14 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     } else {
       exoPlayerManager.setVideoUriToPlayInLoop(videoUrl, videoFormat);
     }
+    exoPlayerManager.seekTo(startPositionMillis);
   }
 
   @Override
   public void handleMediaItemUpdate(MediaAlbumItem updatedMediaAlbumItem) {
-    long positionBeforeReloadMillis = videoView.getCurrentPosition();
-
-    loadVideo(updatedMediaAlbumItem);
-
-    videoView.seekTo(positionBeforeReloadMillis);
+    mediaAlbumItem = updatedMediaAlbumItem;
+    long positionBeforeReloadMillis = exoPlayerManager.getCurrentSeekPosition();
+    loadVideo(positionBeforeReloadMillis);
   }
 
   @Override
