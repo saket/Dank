@@ -130,6 +130,9 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
     addButton("Clear UrlParser cache", o -> {
       urlParser.clearCache();
     });
+    addButton("Clear media-repo cache", o -> {
+      mediaHostRepository.get().clearCache();
+    });
 
     addButton("Clear Glide cache", o -> {
       Completable
@@ -142,10 +145,6 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
     addButton("Clear markdown cache", o-> {
       markdown.get().clearCache();
-    });
-
-    addButton("Clear media-repo cache", o -> {
-      mediaHostRepository.get().clearCache();
     });
   }
 

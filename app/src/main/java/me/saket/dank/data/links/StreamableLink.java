@@ -23,8 +23,8 @@ public abstract class StreamableLink extends MediaLink implements Parcelable {
   @Override
   public abstract String lowQualityUrl();
 
-  public static StreamableLink create(String unparsedUrl, String lowQualityVideoUrl, String highQualityVideoUrl) {
-    return new AutoValue_StreamableLink(unparsedUrl, lowQualityVideoUrl, highQualityVideoUrl);
+  public static StreamableLink create(String unparsedUrl, String highQualityVideoUrl, String lowQualityVideoUrl) {
+    return new AutoValue_StreamableLink(unparsedUrl, highQualityVideoUrl, lowQualityVideoUrl);
   }
 
   public static JsonAdapter<StreamableLink> jsonAdapter(Moshi moshi) {

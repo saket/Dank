@@ -7,7 +7,6 @@ import io.reactivex.Single;
 import me.saket.dank.data.StreamableVideoResponse;
 import me.saket.dank.data.links.StreamableLink;
 import me.saket.dank.di.DankApi;
-import timber.log.Timber;
 
 @Singleton
 public class StreamableRepository {
@@ -22,8 +21,6 @@ public class StreamableRepository {
   public Single<StreamableLink> video(String videoId) {
     return dankApi.streamableVideoDetails(videoId)
         .map(response -> {
-          Timber.i("response: %s", response);
-
           StreamableVideoResponse.Video highQualityVideo = response.files().highQualityVideo();
           String highQualityVideoUrl = highQualityVideo.url();
 
@@ -34,7 +31,7 @@ public class StreamableRepository {
               .url();
 
           String videoUrl = response.url();
-          return StreamableLink.create(videoUrl, lowQualityVideoUrl, highQualityVideoUrl);
+          return StreamableLink.create(videoUrl, highQualityVideoUrl, lowQualityVideoUrl);
         });
   }
 }
