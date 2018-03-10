@@ -29,7 +29,7 @@
   <me.saket.dank.widgets.prefs.UserPreferenceButton
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    app:prefbutton_summary="Left: options, save. Right: upvote and downvote."
+    app:prefbutton_summary="Options and save. Upvote and downvote."
     app:prefbutton_title="@string/userprefs_customize_submission_gestures" />
 
   <View style="@style/DankPreferencesSeparator" />

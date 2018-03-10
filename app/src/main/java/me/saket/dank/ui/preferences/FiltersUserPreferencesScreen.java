@@ -15,31 +15,23 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.utils.lifecycle.ActivityLifecycleStreams;
-import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
-import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.widgets.prefs.UserPreferenceSwitch;
 
-public class FiltersUserPreferencesLayout extends LinearLayout {
+public class FiltersUserPreferencesScreen extends LinearLayout {
 
   @Inject @Named("show_nsfw_content") Preference<Boolean> showNsfwContentPref;
 
   @BindView(R.id.filters_nsfw_thumbnails) UserPreferenceSwitch nsfwThumbnailsSwitch;
 
-  public FiltersUserPreferencesLayout(Context context, @Nullable AttributeSet attrs) {
+  public FiltersUserPreferencesScreen(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
     LayoutInflater.from(context).inflate(R.layout.view_user_preferences_filters, this, true);
     setOrientation(VERTICAL);
-
-    ActivityLifecycleStreams parentLifecycle = ((LifecycleOwnerActivity) getContext()).lifecycle();
-    LifecycleOwnerViews.Streams lifecycle = LifecycleOwnerViews.create(this, parentLifecycle);
-
-    lifecycle.viewAttaches()
-        .takeUntil(lifecycle.onDestroy())
-        .subscribe(o -> onViewFirstAttach());
   }
 
-  private void onViewFirstAttach() {
+  @Override
+  protected void onFinishInflate() {
+    super.onFinishInflate();
     ButterKnife.bind(this, this);
     Dank.dependencyInjector().inject(this);
 

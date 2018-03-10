@@ -7,7 +7,6 @@ import com.squareup.moshi.Moshi;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.SubredditSubscriptionManager;
-import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.utils.JacksonHelper;
 
@@ -28,10 +27,6 @@ public class Dank {
     return appComponent.dankRedditClient();
   }
 
-  public static DankApi api() {
-    return appComponent.api();
-  }
-
   public static SubredditSubscriptionManager subscriptions() {
     return appComponent.subredditSubscriptionManager();
   }
@@ -50,9 +45,5 @@ public class Dank {
 
   public static Moshi moshi() {
     return appComponent.moshi();
-  }
-
-  public static VotingManager voting() {
-    return appComponent.votingManager();
   }
 }

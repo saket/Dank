@@ -22,7 +22,6 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.utils.Views;
-import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
@@ -33,10 +32,9 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.userpreferences_root) IndependentExpandablePageLayout activityContentPage;
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.userpreferences_list) InboxRecyclerView preferenceList;
-  @BindView(R.id.userpreferences_preferences_page) ExpandablePageLayout preferencesPage;
+  @BindView(R.id.userpreferences_preference_groups_page) PreferenceGroupsScreen preferencesGroupsScreen;
   @BindView(R.id.userpreferences_hiddenoptions) Button hiddenOptionsButton;
 
-  private PreferencesFragment preferencesFragment;
   private List<UserPreferenceGroup> userPreferenceGroups;
   private PreferencesAdapter preferencesAdapter;
 
@@ -58,7 +56,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     findAndSetupToolbar();
 
     setupContentExpandablePage(activityContentPage);
-    activityContentPage.setNestedExpandablePage(preferencesPage);
+    activityContentPage.setNestedExpandablePage(preferencesGroupsScreen);
     expandFromBelowToolbar();
 
     activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
@@ -72,17 +70,19 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     super.onPostCreate(savedInstanceState);
 
     userPreferenceGroups = constructPreferenceGroups();
-
-    setupPreferencesFragment();
     setupPreferencesGroupList(savedInstanceState);
 
     if (getIntent().hasExtra(KEY_INITIAL_PREF_GROUP)) {
       UserPreferenceGroup initialPreferenceGroup = (UserPreferenceGroup) getIntent().getSerializableExtra(KEY_INITIAL_PREF_GROUP);
-      preferencesFragment.populatePreferences(initialPreferenceGroup);
+      preferencesGroupsScreen.populatePreferences(initialPreferenceGroup);
 
+      // The deep-linked screen is delayed. By not opening it immediately, the user can understand that
+      // an automatic navigation change is happening. This is important because opening this deep-linked
+      // screen takes only one click, but going back to the calling screen will take two (one for the
+      // linked screen and another for this Activity) -- and the user should understand this.
       Observable.timer(750, TimeUnit.MILLISECONDS, mainThread())
           .takeUntil(lifecycle().onDestroy())
-          .subscribe(o -> preferencesPage.post(() -> {
+          .subscribe(o -> preferencesGroupsScreen.post(() -> {
             int prefPosition = userPreferenceGroups.indexOf(initialPreferenceGroup);
             preferenceList.expandItem(prefPosition, preferencesAdapter.getItemId(prefPosition));
           }));
@@ -101,20 +101,9 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     preferenceList.collapse();
   }
 
-  private void setupPreferencesFragment() {
-    preferencesFragment = (PreferencesFragment) getSupportFragmentManager().findFragmentById(preferencesPage.getId());
-    if (preferencesFragment == null) {
-      preferencesFragment = PreferencesFragment.create();
-    }
-    getSupportFragmentManager()
-        .beginTransaction()
-        .replace(preferencesPage.getId(), preferencesFragment)
-        .commitNow();
-  }
-
   private void setupPreferencesGroupList(@Nullable Bundle savedInstanceState) {
     preferenceList.setLayoutManager(preferenceList.createLayoutManager());
-    preferenceList.setExpandablePage(preferencesPage, toolbar);
+    preferenceList.setExpandablePage(preferencesGroupsScreen, toolbar);
     preferenceList.setHasFixedSize(true);
     if (savedInstanceState != null) {
       preferenceList.handleOnRestoreInstanceState(savedInstanceState);
@@ -122,8 +111,8 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
 
     preferencesAdapter = new PreferencesAdapter(userPreferenceGroups);
     preferencesAdapter.setOnPreferenceGroupClickListener((preferenceGroup, itemView, groupId) -> {
-      preferencesFragment.populatePreferences(preferenceGroup);
-      preferencesPage.post(() -> preferenceList.expandItem(preferenceList.indexOfChild(itemView), groupId));
+      preferencesGroupsScreen.populatePreferences(preferenceGroup);
+      preferencesGroupsScreen.post(() -> preferenceList.expandItem(preferenceList.indexOfChild(itemView), groupId));
     });
     preferenceList.setAdapter(preferencesAdapter);
   }
@@ -145,7 +134,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
 
   @Override
   public void onBackPressed() {
-    if (preferencesPage.isExpandedOrExpanding()) {
+    if (preferencesGroupsScreen.isExpandedOrExpanding()) {
       preferenceList.collapse();
     } else {
       super.onBackPressed();

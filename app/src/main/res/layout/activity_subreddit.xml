@@ -17,7 +17,8 @@
     android:paddingTop="?android:attr/actionBarSize"
     android:scrollbarStyle="insideOverlay"
     android:scrollbars="vertical"
-    tools:visibility="gone" />
+    tools:listitem="@layout/list_item_submission"
+    tools:paddingTop="110dp" />
 
   <me.saket.dank.widgets.ErrorStateView
     android:id="@+id/subreddit_submission_errorState"

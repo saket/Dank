@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.prefs.UserPreferenceButton xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  tools:prefbutton_summary="Options and save. Upvote and downvote."
+  tools:prefbutton_title="@string/userprefs_customize_submission_gestures" />

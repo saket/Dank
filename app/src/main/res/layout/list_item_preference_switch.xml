@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.prefs.UserPreferenceSwitch xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  tools:prefswitch_summary="@string/userprefs_submission_thumbnail_summary_on"
+  tools:prefswitch_title="@string/userprefs_submission_thumbnails" />

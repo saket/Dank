@@ -24,8 +24,9 @@ import me.saket.dank.ui.media.BaseMediaViewerFragment;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
-import me.saket.dank.ui.preferences.FiltersUserPreferencesLayout;
+import me.saket.dank.ui.preferences.FiltersUserPreferencesScreen;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
+import me.saket.dank.ui.preferences.LookAndFeelPreferencesScreen;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
 import me.saket.dank.ui.submission.LinkOptionsPopup;
 import me.saket.dank.ui.submission.RetryReplyJobService;
@@ -37,7 +38,6 @@ import me.saket.dank.ui.subreddit.SubredditPickerSheetView;
 import me.saket.dank.ui.subreddit.SubredditSubscriptionsSyncJob;
 import me.saket.dank.ui.user.UserAuthListener;
 import me.saket.dank.ui.user.UserProfilePopup;
-import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.InboxFolderFragment;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
@@ -62,8 +62,6 @@ public interface DankAppComponent {
   Moshi moshi();
 
   VotingManager votingManager();
-
-  UserSessionRepository userSession();
 
   UserAuthListener userAuthListener();
 
@@ -113,7 +111,7 @@ public interface DankAppComponent {
 
   void inject(VoteJobService target);
 
-  void inject(FiltersUserPreferencesLayout target);
+  void inject(FiltersUserPreferencesScreen target);
 
   void inject(SubmissionOptionsPopup target);
 
@@ -124,4 +122,6 @@ public interface DankAppComponent {
   void inject(PlaygroundActivity target);
 
   void inject(MessageNotifActionReceiver taret);
+
+  void inject(LookAndFeelPreferencesScreen target);
 }
