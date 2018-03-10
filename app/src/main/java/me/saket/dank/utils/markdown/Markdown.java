@@ -68,6 +68,10 @@ public class Markdown {
     }
   }
 
+  public CharSequence parseAuthorFlair(String flair) {
+    return parse(flair, IGNORE_ESCAPING_OF_FORWARD_SLASHES);
+  }
+
   public CharSequence parse(Message message) {
     return parse(JrawUtils.messageBodyHtml(message), IGNORE_ESCAPING_OF_FORWARD_SLASHES);
   }

@@ -449,7 +449,7 @@ public class SubmissionCommentTreeUiConstructor {
         ? markdown.get().stripMarkdown(JrawUtils.commentBodyHtml(comment))
         : markdown.get().parse(comment);
 
-    return commentUiModelBuilder(context, commentNode.getComment().getFullName(), isCollapsed, isFocused, commentNode.getDepth())
+    return commentCommonUiModelBuilder(context, commentNode.getComment().getFullName(), isCollapsed, isFocused, commentNode.getDepth())
         .comment(comment)
         .optionalPendingSyncReply(Optional.empty())
         .byline(byline, commentScore)
@@ -513,7 +513,7 @@ public class SubmissionCommentTreeUiConstructor {
         ? markdown.get().stripMarkdown(pendingSyncReply.body())
         : markdown.get().parse(pendingSyncReply);
 
-    return commentUiModelBuilder(context, locallyPostedComment.getPostingStatusIndependentId(), isReplyCollapsed, isFocused, depth)
+    return commentCommonUiModelBuilder(context, locallyPostedComment.getPostingStatusIndependentId(), isReplyCollapsed, isFocused, depth)
         .comment(LocallyPostedComment.create(pendingSyncReply))
         .optionalPendingSyncReply(Optional.of(pendingSyncReply))
         .byline(byline, commentScore)
@@ -524,7 +524,7 @@ public class SubmissionCommentTreeUiConstructor {
   /**
    * Builds common properties for both comments and pending-sync-replies.
    */
-  private SubmissionComment.UiModel.Builder commentUiModelBuilder(
+  private SubmissionComment.UiModel.Builder commentCommonUiModelBuilder(
       Context context,
       String adapterId,
       boolean isCollapsed,
@@ -582,7 +582,7 @@ public class SubmissionCommentTreeUiConstructor {
       bylineBuilder.popSpan();
       optionalAuthorFlairText.ifPresent(flair -> {
         bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
-        bylineBuilder.append(flair);
+        bylineBuilder.append(markdown.get().parseAuthorFlair(flair));
       });
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
       bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, Commons.voteColor(voteDirection))));

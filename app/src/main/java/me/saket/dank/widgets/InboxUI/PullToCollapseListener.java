@@ -98,7 +98,7 @@ public class PullToCollapseListener implements View.OnTouchListener {
         }
 
         // When it's confirmed that the movement distance is > touchSlop and this is indeed a gesture,
-        // we must check for two things:
+        // we check for two things:
         // 1. Whether or not this is a horizontal swipe.
         // 2. Whether a registered intercepter wants to intercept this gesture.
         // These two checks should only happen once per gesture, just when the gesture starts. The
