@@ -7,7 +7,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 
@@ -25,13 +24,13 @@ import me.saket.dank.ui.ScreenSavedState;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesAdapter;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesConstructor;
 import me.saket.dank.ui.preferences.adapter.UserPrefsItemDiffer;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
-import timber.log.Timber;
 
 /**
  * Uses custom layouts for preference items because customizing them + having custom design & controls is easier.
@@ -46,7 +45,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
   @Inject Lazy<UserPreferencesConstructor> preferencesConstructor;
   @Inject Lazy<UserPreferencesAdapter> preferencesAdapter;
 
-  private BehaviorRelay<UserPreferenceGroup> groupChanges = BehaviorRelay.create();
+  private BehaviorRelay<Optional<UserPreferenceGroup>> groupChanges = BehaviorRelay.createDefault(Optional.empty());
   private LifecycleOwnerViews.Streams lifecycle;
 
   public PreferenceGroupsScreen(Context context, AttributeSet attrs) {
@@ -75,9 +74,8 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
   @Override
   protected Parcelable onSaveInstanceState() {
     Bundle values = new Bundle();
-    if (groupChanges.hasValue()) {
-      values.putSerializable(KEY_ACTIVE_PREFERENCE_GROUP, groupChanges.getValue());
-    }
+    Optional<UserPreferenceGroup> optionalGroup = groupChanges.getValue();
+    optionalGroup.ifPresent(group -> values.putSerializable(KEY_ACTIVE_PREFERENCE_GROUP, group));
     return ScreenSavedState.combine(super.onSaveInstanceState(), values);
   }
 
@@ -93,14 +91,13 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
   }
 
   public void populatePreferences(UserPreferenceGroup preferenceGroup) {
-    groupChanges.accept(preferenceGroup);
+    toolbar.setTitle(preferenceGroup.titleRes);
+    groupChanges.accept(Optional.of(preferenceGroup));
   }
 
   private void setupPreferenceList() {
     preferenceRecyclerView.setLayoutManager(preferenceRecyclerView.createLayoutManager());
-    DefaultItemAnimator animator = new DefaultItemAnimator();
-    animator.setSupportsChangeAnimations(false);
-    preferenceRecyclerView.setItemAnimator(animator);
+    preferenceRecyclerView.setItemAnimator(null);
 
     preferencesAdapter.get().dataChanges()
         .take(1)
@@ -114,7 +111,13 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
         .compose(RxDiffUtil.calculateDiff(UserPrefsItemDiffer::create))
         .observeOn(mainThread())
         .takeUntil(lifecycle.viewDetachesFlowable())
-        .doOnNext(o -> Timber.i("%s prefs", o.first().size()))
         .subscribe(preferencesAdapter.get());
+  }
+
+// ======== EXPANDABLE PAGE ======== //
+
+  @Override
+  protected void onPageCollapsed() {
+    groupChanges.accept(Optional.empty());
   }
 }

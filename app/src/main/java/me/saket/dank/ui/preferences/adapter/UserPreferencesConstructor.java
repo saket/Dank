@@ -13,6 +13,8 @@ import javax.inject.Named;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.ui.preferences.UserPreferenceGroup;
+import me.saket.dank.utils.Arrays2;
+import me.saket.dank.utils.Optional;
 
 public class UserPreferencesConstructor {
 
@@ -28,9 +30,14 @@ public class UserPreferencesConstructor {
     this.userPrefChanges = userPrefChanges;
   }
 
-  public Observable<List<UserPreferencesScreenUiModel>> stream(Context c, UserPreferenceGroup group) {
-    return userPrefChanges
-        .map(o -> construct(c, group));
+  public Observable<List<UserPreferencesScreenUiModel>> stream(Context c, Optional<UserPreferenceGroup> group) {
+    if (group.isEmpty()) {
+      return Observable.just(Collections.emptyList());
+    } else {
+      return userPrefChanges
+          .map(o -> construct(c, group.get()))
+          .as(Arrays2.immutable());
+    }
   }
 
   private List<UserPreferencesScreenUiModel> construct(Context c, UserPreferenceGroup group) {
