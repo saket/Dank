@@ -6,6 +6,7 @@ import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
 import android.os.Build;
+import android.os.Process;
 import android.os.StrictMode;
 
 import com.facebook.stetho.Stetho;
@@ -51,10 +52,13 @@ public class DankApplication extends Application {
 
     AndroidThreeTen.init(this);
     Dank.initDependencies(this);
-    RxJavaPlugins.setErrorHandler(createUndeliveredExceptionsHandler());
+    RxJavaPlugins.setErrorHandler(undeliveredExceptionsHandler());
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       createNotificationChannels();
+
+      // Android doesn't print stack-traces on Oreo anymore.
+      Thread.setDefaultUncaughtExceptionHandler(new LoggingUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler()));
     }
 
     // WARNING: userAuthListener needs to be a field variable to avoid GC.
@@ -111,7 +115,7 @@ public class DankApplication extends Application {
     notificationManager.createNotificationChannels(notifChannels);
   }
 
-  private Consumer<Throwable> createUndeliveredExceptionsHandler() {
+  private Consumer<Throwable> undeliveredExceptionsHandler() {
     return e -> {
       e = Dank.errors().findActualCause(e);
 
@@ -144,5 +148,29 @@ public class DankApplication extends Application {
 
       Timber.e(e, "Undeliverable exception received, not sure what to do.");
     };
+  }
+
+  @TargetApi(Build.VERSION_CODES.O)
+  static class LoggingUncaughtExceptionHandler implements Thread.UncaughtExceptionHandler {
+    private final Thread.UncaughtExceptionHandler defaultHandler;
+    private boolean crashing;
+
+    public LoggingUncaughtExceptionHandler(Thread.UncaughtExceptionHandler defaultHandler) {
+      this.defaultHandler = defaultHandler;
+    }
+
+    @Override
+    public void uncaughtException(Thread thread, Throwable e) {
+      try {
+        // Don't re-enter -- avoid infinite loops if crash-reporting crashes.
+        if (crashing) {
+          return;
+        }
+        crashing = true;
+        Timber.tag("Dank").e(e, "FATAL EXCEPTION: %s\nPID: %s", thread.getName(), Process.myPid());
+      } finally {
+        defaultHandler.uncaughtException(thread, e);
+      }
+    }
   }
 }
