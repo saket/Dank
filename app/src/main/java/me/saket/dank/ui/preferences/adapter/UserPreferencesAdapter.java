@@ -1,5 +1,6 @@
 package me.saket.dank.ui.preferences.adapter;
 
+import android.support.annotation.CheckResult;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
@@ -10,7 +11,9 @@ import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
+import me.saket.dank.ui.preferences.PrefClickEvent;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
@@ -20,6 +23,7 @@ public class UserPreferencesAdapter extends RecyclerViewArrayAdapter<UserPrefere
 
   private static final UserPreferencesScreenUiModel.Type[] VIEW_TYPES = UserPreferencesScreenUiModel.Type.values();
   private final Map<UserPreferencesScreenUiModel.Type, UserPreferencesScreenUiModel.ChildAdapter> childAdapters;
+  private final UserPreferenceButton.Adapter buttonAdapter;
 
   @Inject
   public UserPreferencesAdapter(
@@ -27,6 +31,8 @@ public class UserPreferencesAdapter extends RecyclerViewArrayAdapter<UserPrefere
       UserPreferenceSwitch.Adapter switchAdapter,
       UserPreferenceButton.Adapter buttonAdapter)
   {
+    this.buttonAdapter = buttonAdapter;
+
     childAdapters = new HashMap<>();
     childAdapters.put(UserPreferencesScreenUiModel.Type.SECTION_HEADER, headerAdapter);
     childAdapters.put(UserPreferencesScreenUiModel.Type.SWITCH, switchAdapter);
@@ -70,5 +76,10 @@ public class UserPreferencesAdapter extends RecyclerViewArrayAdapter<UserPrefere
   public void accept(Pair<List<UserPreferencesScreenUiModel>, DiffUtil.DiffResult> pair) throws Exception {
     updateData(pair.first());
     pair.second().dispatchUpdatesTo(this);
+  }
+
+  @CheckResult
+  public Observable<PrefClickEvent> streamButtonPreferenceClicks() {
+    return buttonAdapter.preferenceClicks;
   }
 }

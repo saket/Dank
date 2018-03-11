@@ -41,6 +41,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
 
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.userpreferences_preferences_recyclerview) InboxRecyclerView preferenceRecyclerView;
+  @BindView(R.id.userpreferences_nested_page) ExpandablePageLayout nestedPage;
 
   @Inject Lazy<UserPreferencesConstructor> preferencesConstructor;
   @Inject Lazy<UserPreferencesAdapter> preferencesAdapter;
@@ -68,6 +69,11 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
     lifecycle = LifecycleOwnerViews.create(this, ((LifecycleOwnerActivity) getContext()).lifecycle());
 
     setupPreferenceList();
+
+    // TODO: background items aren't expanding properly.
+    // TODO: close nested page on back press and toolbar up press.
+    preferenceRecyclerView.setExpandablePage(nestedPage, toolbar);
+    setNestedExpandablePage(nestedPage);
   }
 
   @Nullable
@@ -112,9 +118,18 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
         .observeOn(mainThread())
         .takeUntil(lifecycle.viewDetachesFlowable())
         .subscribe(preferencesAdapter.get());
+
+    preferencesAdapter.get().streamButtonPreferenceClicks()
+        .takeUntil(lifecycle.viewDetaches())
+        .subscribe(event -> preferenceRecyclerView.expandItem(event.itemPosition(), event.itemId()));
   }
 
 // ======== EXPANDABLE PAGE ======== //
+
+  @Override
+  protected void onPageAboutToExpand(long expandAnimDuration) {
+
+  }
 
   @Override
   protected void onPageCollapsed() {

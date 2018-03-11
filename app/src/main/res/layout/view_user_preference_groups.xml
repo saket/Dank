@@ -23,4 +23,14 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_below="@+id/toolbar" />
+
+  <me.saket.dank.widgets.InboxUI.ExpandablePageLayout
+    android:id="@+id/userpreferences_nested_page"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/window_background"
+    android:clickable="true"
+    android:elevation="@dimen/elevation_nested_expandable_sheet"
+    android:focusable="false"
+    android:visibility="invisible" />
 </me.saket.dank.ui.preferences.PreferenceGroupsScreen>

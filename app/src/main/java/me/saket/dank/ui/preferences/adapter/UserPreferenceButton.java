@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -14,6 +15,7 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.ui.preferences.PrefClickEvent;
 
 public interface UserPreferenceButton {
 
@@ -58,13 +60,17 @@ public interface UserPreferenceButton {
   }
 
   class Adapter implements UserPreferencesScreenUiModel.ChildAdapter<UiModel, ViewHolder> {
+    PublishRelay<PrefClickEvent> preferenceClicks = PublishRelay.create();
+
     @Inject
     public Adapter() {
     }
 
     @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
-      return new ViewHolder(inflater.inflate(R.layout.list_item_preference_button, parent, false));
+      ViewHolder holder = new ViewHolder(inflater.inflate(R.layout.list_item_preference_button, parent, false));
+      holder.itemView.setOnClickListener(o -> preferenceClicks.accept(PrefClickEvent.create(holder.getLayoutPosition(), holder.getItemId())));
+      return holder;
     }
 
     @Override
