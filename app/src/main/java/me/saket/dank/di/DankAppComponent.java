@@ -24,9 +24,7 @@ import me.saket.dank.ui.media.BaseMediaViewerFragment;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
-import me.saket.dank.ui.preferences.FiltersUserPreferencesScreen;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
-import me.saket.dank.ui.preferences.LookAndFeelPreferencesScreen;
 import me.saket.dank.ui.preferences.PreferenceGroupsScreen;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
 import me.saket.dank.ui.submission.LinkOptionsPopup;
@@ -112,8 +110,6 @@ public interface DankAppComponent {
 
   void inject(VoteJobService target);
 
-  void inject(FiltersUserPreferencesScreen target);
-
   void inject(SubmissionOptionsPopup target);
 
   void inject(CommentOptionsPopup target);
@@ -122,9 +118,7 @@ public interface DankAppComponent {
 
   void inject(PlaygroundActivity target);
 
-  void inject(MessageNotifActionReceiver taret);
-
-  void inject(LookAndFeelPreferencesScreen target);
+  void inject(MessageNotifActionReceiver target);
 
   void inject(PreferenceGroupsScreen target);
 }

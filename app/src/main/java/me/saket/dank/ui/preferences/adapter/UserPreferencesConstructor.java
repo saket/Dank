@@ -2,32 +2,41 @@ package me.saket.dank.ui.preferences.adapter;
 
 import android.content.Context;
 
-import com.f2prateek.rx.preferences2.Preference;
-
-import java.util.ArrayList;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import javax.inject.Inject;
 import javax.inject.Named;
 
 import io.reactivex.Observable;
-import me.saket.dank.R;
 import me.saket.dank.ui.preferences.UserPreferenceGroup;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.Optional;
 
 public class UserPreferencesConstructor {
 
-  private final Preference<Boolean> showSubmissionThumbnails;
+  interface ChildConstructor {
+    List<UserPreferencesScreenUiModel> construct(Context c);
+  }
+
   private final Observable<Object> userPrefChanges;
+  private final Map<UserPreferenceGroup, ChildConstructor> childConstructors;
 
   @Inject
   public UserPreferencesConstructor(
-      @Named("show_submission_thumbnails") Preference<Boolean> showSubmissionThumbnails,
+      LookAndFeelPreferencesConstructor lookAndFeel,
+      FiltersPreferencesConstructor filters,
       @Named("user_preferences") Observable<Object> userPrefChanges)
   {
-    this.showSubmissionThumbnails = showSubmissionThumbnails;
     this.userPrefChanges = userPrefChanges;
+
+    childConstructors = new HashMap<>();
+    childConstructors.put(UserPreferenceGroup.LOOK_AND_FEEL, lookAndFeel);
+    childConstructors.put(UserPreferenceGroup.FILTERS, filters);
+    childConstructors.put(UserPreferenceGroup.DATA_USAGE, c -> Collections.emptyList());
+    childConstructors.put(UserPreferenceGroup.MISCELLANEOUS, c -> Collections.emptyList());
+    childConstructors.put(UserPreferenceGroup.ABOUT_DANK, c -> Collections.emptyList());
   }
 
   public Observable<List<UserPreferencesScreenUiModel>> stream(Context c, Optional<UserPreferenceGroup> group) {
@@ -35,48 +44,8 @@ public class UserPreferencesConstructor {
       return Observable.just(Collections.emptyList());
     } else {
       return userPrefChanges
-          .map(o -> construct(c, group.get()))
+          .map(o -> childConstructors.get(group.get()).construct(c))
           .as(Arrays2.immutable());
     }
-  }
-
-  private List<UserPreferencesScreenUiModel> construct(Context c, UserPreferenceGroup group) {
-    switch (group) {
-      case LOOK_AND_FEEL:
-        return lookAndFeel(c);
-
-      case FILTERS:
-      case DATA_USAGE:
-      case MISCELLANEOUS:
-      case ABOUT_DANK:
-        return Collections.emptyList();
-
-      default:
-        throw new AssertionError();
-    }
-  }
-
-  private List<UserPreferencesScreenUiModel> lookAndFeel(Context c) {
-    List<UserPreferencesScreenUiModel> uiModels = new ArrayList<>();
-
-    uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_gestures)));
-
-    uiModels.add(UserPreferenceSwitch.UiModel.create(
-        c.getString(R.string.userprefs_submission_thumbnails),
-        c.getString(R.string.userprefs_submission_thumbnail_summary_on),
-        showSubmissionThumbnails
-    ));
-
-    uiModels.add(UserPreferenceButton.UiModel.create(
-        c.getString(R.string.userprefs_customize_submission_gestures),
-        "Options and save. Upvote and downvote."
-    ));
-
-    uiModels.add(UserPreferenceButton.UiModel.create(
-        c.getString(R.string.userprefs_customize_comment_gestures),
-        "Options and save. Upvote and downvote."
-    ));
-
-    return uiModels;
   }
 }

@@ -436,7 +436,7 @@
   </style>
 
   <style name="DankPreferencesSeparator" parent="DankSeparator.VerticalContent">
-    <item name="android:background">@color/gray_850</item>
+    <item name="android:background">@color/black_opacity_10</item>
     <item name="android:layout_marginTop">@dimen/spacing16</item>
   </style>
 

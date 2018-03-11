@@ -40,7 +40,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
   private static final String KEY_ACTIVE_PREFERENCE_GROUP = "activePreferenceGroup";
 
   @BindView(R.id.toolbar) Toolbar toolbar;
-  @BindView(R.id.userpreferences_preference_recyclerview) InboxRecyclerView preferenceRecyclerView;
+  @BindView(R.id.userpreferences_preferences_recyclerview) InboxRecyclerView preferenceRecyclerView;
 
   @Inject Lazy<UserPreferencesConstructor> preferencesConstructor;
   @Inject Lazy<UserPreferencesAdapter> preferencesAdapter;
