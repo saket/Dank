@@ -112,7 +112,11 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     userPreferenceGroupAdapter = new UserPreferenceGroupAdapter(userPreferenceGroups);
     userPreferenceGroupAdapter.setOnPreferenceGroupClickListener((preferenceGroup, itemView, groupId) -> {
       preferencesGroupsScreen.populatePreferences(preferenceGroup);
-      preferencesGroupsScreen.post(() -> preferenceList.expandItem(preferenceList.indexOfChild(itemView), groupId));
+
+      // A small delay allows the RecyclerView to inflate Views before the page fully expands.
+      preferencesGroupsScreen.postDelayed(
+          () -> preferenceList.expandItem(preferenceList.indexOfChild(itemView), groupId),
+          100);
     });
     preferenceList.setAdapter(userPreferenceGroupAdapter);
   }
