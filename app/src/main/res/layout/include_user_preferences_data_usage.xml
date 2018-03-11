@@ -14,7 +14,7 @@
     android:layout_height="wrap_content"
     android:text="@string/userprefs_group_messaging" />
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButton
+  <me.saket.dank.widgets.prefs.UserPreferenceButtonView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:prefbutton_summary="@string/userprefs_datausage_message_sync_period_and_connection"
@@ -45,7 +45,7 @@
     android:layout_height="wrap_content"
     android:text="@string/userprefs_group_caching_summary" />
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButton
+  <me.saket.dank.widgets.prefs.UserPreferenceButtonView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:prefbutton_summary="Only on WiFi"
@@ -53,7 +53,7 @@
 
   <View style="@style/DankPreferencesSeparator" />
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButton
+  <me.saket.dank.widgets.prefs.UserPreferenceButtonView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:prefbutton_summary="Only on WiFi"
@@ -61,7 +61,7 @@
 
   <View style="@style/DankPreferencesSeparator" />
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButton
+  <me.saket.dank.widgets.prefs.UserPreferenceButtonView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:prefbutton_summary="Only on WiFi"

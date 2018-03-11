@@ -21,7 +21,8 @@
   <me.saket.dank.widgets.InboxUI.InboxRecyclerView
     android:id="@+id/userpreferences_preference_recyclerview"
     android:layout_width="match_parent"
-    android:layout_height="match_parent" />
+    android:layout_height="match_parent"
+    android:layout_below="@+id/toolbar" />
 
   <!--<ScrollView-->
   <!--android:id="@+id/userpreferences_scrollview"-->

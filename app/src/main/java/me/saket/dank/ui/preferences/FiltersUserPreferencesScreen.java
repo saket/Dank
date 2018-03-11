@@ -15,13 +15,13 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.widgets.prefs.UserPreferenceSwitch;
+import me.saket.dank.widgets.prefs.UserPreferenceSwitchView;
 
 public class FiltersUserPreferencesScreen extends LinearLayout {
 
   @Inject @Named("show_nsfw_content") Preference<Boolean> showNsfwContentPref;
 
-  @BindView(R.id.filters_nsfw_thumbnails) UserPreferenceSwitch nsfwThumbnailsSwitch;
+  @BindView(R.id.filters_nsfw_thumbnails) UserPreferenceSwitchView nsfwThumbnailsSwitch;
 
   public FiltersUserPreferencesScreen(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);

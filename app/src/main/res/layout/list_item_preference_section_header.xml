@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout style="@style/DankPreferencesGroupTitle"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  android:orientation="vertical">
+
+  <TextView
+    android:id="@+id/item_preferences_sectionheader_label"
+    style="@style/DankPreferencesGroupTitle.WithTopSpacing"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginBottom="@dimen/spacing4"
+    android:textIsSelectable="false"
+    tools:text="@string/userprefs_group_caching" />
+
+  <TextView
+    android:id="@+id/item_preferences_sectionheader_description"
+    style="@style/DankPreferenceGroupSummary"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:textIsSelectable="false"
+    tools:text="@string/userprefs_group_caching_summary" />
+</LinearLayout>

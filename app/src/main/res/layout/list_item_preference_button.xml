@@ -1,7 +1,29 @@
 <?xml version="1.0" encoding="utf-8"?>
-<me.saket.dank.widgets.prefs.UserPreferenceButton xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout style="@style/DankUserPreferenceButton"
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  tools:prefbutton_summary="Options and save. Upvote and downvote."
-  tools:prefbutton_title="@string/userprefs_customize_submission_gestures" />
+  android:gravity="center_vertical"
+  android:orientation="vertical">
+
+  <TextView
+    android:id="@+id/item_preferences_button_title"
+    style="@style/DankPreferenceItemTitle"
+    android:layout_height="wrap_content"
+    android:layout_width="match_parent"
+    android:textSize="@dimen/textsize14"
+    tools:ignore="SelectableText"
+    tools:text="Check messages every" />
+
+  <TextView
+    android:id="@+id/item_preferences_button_summary"
+    style="@style/DankPreferenceItemDescription"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="2dp"
+    tools:ignore="SelectableText"
+    tools:text="30 minutes" />
+
+  <View style="@style/DankPreferencesSeparator" />
+</LinearLayout>

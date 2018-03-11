@@ -59,9 +59,7 @@ public abstract class RecyclerViewArrayAdapter<T, VH extends RecyclerView.ViewHo
   }
 
   @Override
-  public long getItemId(int position) {
-    return position;
-  }
+  public abstract long getItemId(int position);
 
   /**
    * Updates this adapter's data set and refreshes the RecyclerView.

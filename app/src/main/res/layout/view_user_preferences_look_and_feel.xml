@@ -14,7 +14,7 @@
     android:layout_marginTop="@dimen/spacing24"
     android:text="@string/userprefs_group_subreddit" />
 
-  <me.saket.dank.widgets.prefs.UserPreferenceSwitch
+  <me.saket.dank.widgets.prefs.UserPreferenceSwitchView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:prefswitch_summary="@string/userprefs_submission_thumbnail_summary_on"
@@ -26,7 +26,7 @@
     android:layout_height="wrap_content"
     android:text="@string/userprefs_group_gestures" />
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButton
+  <me.saket.dank.widgets.prefs.UserPreferenceButtonView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:prefbutton_summary="Options and save. Upvote and downvote."
@@ -34,7 +34,7 @@
 
   <View style="@style/DankPreferencesSeparator" />
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButton
+  <me.saket.dank.widgets.prefs.UserPreferenceButtonView
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     app:prefbutton_summary="Left: options, reply. Right: upvote and downvote."

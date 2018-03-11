@@ -18,20 +18,21 @@ import me.saket.dank.R;
 /**
  * A button that supports a title and a subtitle.
  */
-public class UserPreferenceSwitch extends LinearLayout {
+@Deprecated
+public class UserPreferenceSwitchView extends LinearLayout {
 
   @BindView(R.id.preferencebutton_title) Switch titleView;
   @BindView(R.id.preferencebutton_summary) TextView summaryView;
 
-  public UserPreferenceSwitch(Context context, AttributeSet attrs) {
+  public UserPreferenceSwitchView(Context context, AttributeSet attrs) {
     super(context, attrs, 0, R.style.DankUserPreferenceButton);
 
     LayoutInflater.from(getContext()).inflate(R.layout.custom_user_preferences_switch, this, true);
     ButterKnife.bind(this, this);
 
-    TypedArray properties = getContext().obtainStyledAttributes(attrs, R.styleable.UserPreferenceSwitch);
-    titleView.setText(properties.getString(R.styleable.UserPreferenceSwitch_prefswitch_title));
-    summaryView.setText(properties.getString(R.styleable.UserPreferenceSwitch_prefswitch_summary));
+    TypedArray properties = getContext().obtainStyledAttributes(attrs, R.styleable.UserPreferenceSwitchView);
+    titleView.setText(properties.getString(R.styleable.UserPreferenceSwitchView_prefswitch_title));
+    summaryView.setText(properties.getString(R.styleable.UserPreferenceSwitchView_prefswitch_summary));
     properties.recycle();
 
     if (summaryView.getText().length() == 0) {

@@ -15,7 +15,7 @@
   <!--android:layout_marginTop="@dimen/spacing24"-->
   <!--android:text="@string/userprefs_group_nsfw_filters" />-->
 
-  <me.saket.dank.widgets.prefs.UserPreferenceSwitch
+  <me.saket.dank.widgets.prefs.UserPreferenceSwitchView
     android:id="@+id/filters_nsfw_thumbnails"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"

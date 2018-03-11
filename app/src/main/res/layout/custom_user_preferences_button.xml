@@ -12,6 +12,7 @@
     style="@style/DankPreferenceItemTitle"
     android:layout_height="wrap_content"
     android:textSize="@dimen/textsize14"
+    tools:ignore="SelectableText"
     tools:text="Check messages every" />
 
   <TextView
@@ -20,5 +21,6 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="2dp"
+    tools:ignore="SelectableText"
     tools:text="30 minutes" />
 </merge>

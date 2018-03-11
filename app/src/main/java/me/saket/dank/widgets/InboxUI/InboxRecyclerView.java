@@ -36,6 +36,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
   private Drawable activityWindowOrigBackground;
   private boolean pendingItemsOutOfTheWindowAnimation;
   private boolean isFullyCoveredByPage;
+  private boolean layoutManagerCreated;
 
   public InboxRecyclerView(Context context) {
     super(context);
@@ -61,6 +62,7 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
   }
 
   public LayoutManager createLayoutManager() {
+    layoutManagerCreated = true;
     return new LinearLayoutManager(getContext()) {
       @Override
       public int scrollVerticallyBy(int dy, Recycler recycler, State state) {
@@ -146,6 +148,9 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
   public void expandItem(int itemViewPosition, long itemId) {
     if (page == null) {
       throw new IllegalAccessError("You must call InboxRecyclerView.setup(ExpandablePage, Toolbar)");
+    }
+    if (!layoutManagerCreated) {
+      throw new IllegalAccessError("LayoutManager isn't set. #Use createLayoutManager()");
     }
 
     // Ignore if already expanded.

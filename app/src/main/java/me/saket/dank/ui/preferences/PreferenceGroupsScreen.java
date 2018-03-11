@@ -1,19 +1,37 @@
 package me.saket.dank.ui.preferences;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
+
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.DefaultItemAnimator;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 
+import com.jakewharton.rxrelay2.BehaviorRelay;
+
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import dagger.Lazy;
+import io.reactivex.BackpressureStrategy;
 import me.saket.dank.R;
+import me.saket.dank.di.Dank;
 import me.saket.dank.ui.ScreenSavedState;
+import me.saket.dank.ui.preferences.adapter.UserPreferencesAdapter;
+import me.saket.dank.ui.preferences.adapter.UserPreferencesConstructor;
+import me.saket.dank.ui.preferences.adapter.UserPrefsItemDiffer;
+import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
+import timber.log.Timber;
 
 /**
  * Uses custom layouts for preference items because customizing them + having custom design & controls is easier.
@@ -25,7 +43,11 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.userpreferences_preference_recyclerview) InboxRecyclerView preferenceRecyclerView;
 
-  private UserPreferenceGroup activePreferenceGroup;
+  @Inject Lazy<UserPreferencesConstructor> preferencesConstructor;
+  @Inject Lazy<UserPreferencesAdapter> preferencesAdapter;
+
+  private BehaviorRelay<UserPreferenceGroup> groupChanges = BehaviorRelay.create();
+  private LifecycleOwnerViews.Streams lifecycle;
 
   public PreferenceGroupsScreen(Context context, AttributeSet attrs) {
     super(context, attrs);
@@ -35,6 +57,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
   protected void onFinishInflate() {
     super.onFinishInflate();
     ButterKnife.bind(this, this);
+    Dank.dependencyInjector().inject(this);
 
     //noinspection ConstantConditions
     toolbar.setNavigationOnClickListener(v -> ((UserPreferencesActivity) getContext()).onClickPreferencesToolbarUp());
@@ -42,13 +65,19 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
       //noinspection CodeBlock2Expr
       return Views.touchLiesOn(preferenceRecyclerView, downX, downY) && preferenceRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1);
     });
+
+    lifecycle = LifecycleOwnerViews.create(this, ((LifecycleOwnerActivity) getContext()).lifecycle());
+
+    setupPreferenceList();
   }
 
   @Nullable
   @Override
   protected Parcelable onSaveInstanceState() {
     Bundle values = new Bundle();
-    values.putSerializable(KEY_ACTIVE_PREFERENCE_GROUP, activePreferenceGroup);
+    if (groupChanges.hasValue()) {
+      values.putSerializable(KEY_ACTIVE_PREFERENCE_GROUP, groupChanges.getValue());
+    }
     return ScreenSavedState.combine(super.onSaveInstanceState(), values);
   }
 
@@ -64,32 +93,28 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
   }
 
   public void populatePreferences(UserPreferenceGroup preferenceGroup) {
-    activePreferenceGroup = preferenceGroup;
+    groupChanges.accept(preferenceGroup);
+  }
 
-//    @IdRes int groupLayoutRes;
-//    switch (preferenceGroup) {
-//      case LOOK_AND_FEEL:
-//        groupLayoutRes = R.id.userpreferences_container_look_and_feel;
-//        break;
-//
-//      case FILTERS:
-//        groupLayoutRes = R.id.userpreferences_container_filters;
-//        break;
-//
-//      case DATA_USAGE:
-//        groupLayoutRes = R.id.userpreferences_container_data_usage;
-//        break;
-//
-//      case MISCELLANEOUS:
-//        groupLayoutRes = R.id.userpreferences_container_misc;
-//        break;
-//
-//      case ABOUT_DANK:
-//        groupLayoutRes = R.id.userpreferences_container_empty;
-//        break;
-//
-//      default:
-//        throw new UnsupportedOperationException("Unknown preference" + preferenceGroup);
-//    }
+  private void setupPreferenceList() {
+    preferenceRecyclerView.setLayoutManager(preferenceRecyclerView.createLayoutManager());
+    DefaultItemAnimator animator = new DefaultItemAnimator();
+    animator.setSupportsChangeAnimations(false);
+    preferenceRecyclerView.setItemAnimator(animator);
+
+    preferencesAdapter.get().dataChanges()
+        .take(1)
+        .takeUntil(lifecycle.viewDetaches())
+        .subscribe(o -> preferenceRecyclerView.setAdapter(preferencesAdapter.get()));
+
+    groupChanges
+        .observeOn(io())
+        .switchMap(group -> preferencesConstructor.get().stream(getContext(), group))
+        .toFlowable(BackpressureStrategy.LATEST)
+        .compose(RxDiffUtil.calculateDiff(UserPrefsItemDiffer::create))
+        .observeOn(mainThread())
+        .takeUntil(lifecycle.viewDetachesFlowable())
+        .doOnNext(o -> Timber.i("%s prefs", o.first().size()))
+        .subscribe(preferencesAdapter.get());
   }
 }

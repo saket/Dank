@@ -145,7 +145,7 @@ public interface SubredditSubmission {
       return new ViewHolder(inflater.inflate(R.layout.list_item_submission, parent, false));
     }
 
-    public ViewHolder(View itemView) {
+    private ViewHolder(View itemView) {
       super(itemView);
       thumbnailView = itemView.findViewById(R.id.submission_item_icon);
       titleView = itemView.findViewById(R.id.submission_item_title);

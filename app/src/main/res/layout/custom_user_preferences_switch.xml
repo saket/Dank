@@ -22,5 +22,6 @@
     android:layout_height="wrap_content"
     android:layout_marginEnd="120dp"
     android:layout_marginTop="-6dp"
+    tools:ignore="SelectableText"
     tools:text="30 minutes" />
 </merge>

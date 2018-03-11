@@ -15,7 +15,7 @@ import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
-public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceGroup, PreferencesAdapter.PreferenceGroupViewHolder> {
+public class UserPreferenceGroupAdapter extends RecyclerViewArrayAdapter<UserPreferenceGroup, UserPreferenceGroupAdapter.PreferenceGroupViewHolder> {
 
   private OnClickPreferenceGroupListener clickListener;
 
@@ -23,7 +23,7 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceG
     void onClickPreferenceGroup(UserPreferenceGroup preferenceGroup, View itemView, long groupId);
   }
 
-  public PreferencesAdapter(@Nullable List<UserPreferenceGroup> items) {
+  public UserPreferenceGroupAdapter(@Nullable List<UserPreferenceGroup> items) {
     super(items);
     setHasStableIds(true);
   }
@@ -38,6 +38,11 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceG
   }
 
   @Override
+  public long getItemId(int position) {
+    return position;
+  }
+
+  @Override
   public void onBindViewHolder(PreferenceGroupViewHolder holder, int position) {
     UserPreferenceGroup preferenceGroup = getItem(position);
     holder.bind(preferenceGroup);
@@ -45,7 +50,6 @@ public class PreferencesAdapter extends RecyclerViewArrayAdapter<UserPreferenceG
   }
 
   static class PreferenceGroupViewHolder extends RecyclerView.ViewHolder {
-
     @BindView(R.id.item_preferencegroup_icon) ImageView iconView;
     @BindView(R.id.item_preferencegroup_title) TextView titleView;
     @BindView(R.id.item_preferencegroup_summary) TextView summaryView;

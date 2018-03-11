@@ -11,6 +11,7 @@ import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
 
 public class RxDiffUtil {
 
+  // FIXME rename to calculate().
   public static <T> FlowableTransformer<List<T>, Pair<List<T>, DiffUtil.DiffResult>> calculateDiff(
       BiFunction<List<T>, List<T>, SimpleDiffUtilsCallbacks<T>> diffCallbacks)
   {

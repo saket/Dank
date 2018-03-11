@@ -36,7 +36,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.userpreferences_hiddenoptions) Button hiddenOptionsButton;
 
   private List<UserPreferenceGroup> userPreferenceGroups;
-  private PreferencesAdapter preferencesAdapter;
+  private UserPreferenceGroupAdapter userPreferenceGroupAdapter;
 
   public static Intent intent(Context context) {
     return new Intent(context, UserPreferencesActivity.class);
@@ -84,7 +84,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
           .takeUntil(lifecycle().onDestroy())
           .subscribe(o -> preferencesGroupsScreen.post(() -> {
             int prefPosition = userPreferenceGroups.indexOf(initialPreferenceGroup);
-            preferenceList.expandItem(prefPosition, preferencesAdapter.getItemId(prefPosition));
+            preferenceList.expandItem(prefPosition, userPreferenceGroupAdapter.getItemId(prefPosition));
           }));
     }
 
@@ -109,12 +109,12 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
       preferenceList.handleOnRestoreInstanceState(savedInstanceState);
     }
 
-    preferencesAdapter = new PreferencesAdapter(userPreferenceGroups);
-    preferencesAdapter.setOnPreferenceGroupClickListener((preferenceGroup, itemView, groupId) -> {
+    userPreferenceGroupAdapter = new UserPreferenceGroupAdapter(userPreferenceGroups);
+    userPreferenceGroupAdapter.setOnPreferenceGroupClickListener((preferenceGroup, itemView, groupId) -> {
       preferencesGroupsScreen.populatePreferences(preferenceGroup);
       preferencesGroupsScreen.post(() -> preferenceList.expandItem(preferenceList.indexOfChild(itemView), groupId));
     });
-    preferenceList.setAdapter(preferencesAdapter);
+    preferenceList.setAdapter(userPreferenceGroupAdapter);
   }
 
   private List<UserPreferenceGroup> constructPreferenceGroups() {
@@ -140,5 +140,4 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
       super.onBackPressed();
     }
   }
-
 }

@@ -5,6 +5,8 @@ import android.view.View;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
+import io.reactivex.BackpressureStrategy;
+import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import me.saket.dank.data.ActivityResult;
 
@@ -87,6 +89,11 @@ public class LifecycleOwnerViews {
     @CheckResult
     public Observable<ViewLifecycleEvent> viewDetaches() {
       return events.filter(e -> e == ViewLifecycleEvent.DETACH);
+    }
+
+    @CheckResult
+    public Flowable<ViewLifecycleEvent> viewDetachesFlowable() {
+      return viewDetaches().toFlowable(BackpressureStrategy.LATEST);
     }
 
     @Override
