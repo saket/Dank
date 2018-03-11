@@ -143,9 +143,7 @@ import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class SubmissionPageLayout extends ExpandablePageLayout
-    implements ExpandablePageLayout.StateChangeCallbacks, ExpandablePageLayout.OnPullToCollapseIntercepter
-{
+public class SubmissionPageLayout extends ExpandablePageLayout implements ExpandablePageLayout.OnPullToCollapseIntercepter {
 
   private static final String KEY_SUPER_CLASS_STATE = "superClassState";
   private static final String KEY_WAS_PAGE_EXPANDED_OR_EXPANDING = "pageState";
@@ -242,7 +240,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
     toolbarCloseButton.setOnClickListener(v -> ((Callbacks) getContext()).onClickSubmissionToolbarUp());
 
     submissionPageLayout = this;
-    submissionPageLayout.addStateChangeCallbacks(this);
     submissionPageLayout.setPullToCollapseIntercepter(this);
 
     Keyboards.streamKeyboardVisibilityChanges(((Activity) getContext()), Views.statusBarHeight(getResources()))
@@ -1410,12 +1407,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout
 
     return touchLiesOn(contentImageView.view(), downX, downY) && contentImageView.canPanFurtherVertically(upwardPagePull);
   }
-
-  @Override
-  public void onPageAboutToExpand(long expandAnimDuration) {}
-
-  @Override
-  public void onPageExpanded() {}
 
   @Override
   public void onPageAboutToCollapse(long collapseAnimDuration) {

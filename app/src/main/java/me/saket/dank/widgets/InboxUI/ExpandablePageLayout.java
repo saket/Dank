@@ -630,6 +630,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         stateChangeCallbacks.get(i).onPageAboutToExpand(getAnimationDurationMillis());
       }
     }
+
+    onPageAboutToExpand(getAnimationDurationMillis());
   }
 
   @SuppressWarnings("Convert2streamapi")
@@ -677,6 +679,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         callback.onPageAboutToCollapse(getAnimationDurationMillis());
       }
     }
+
+    onPageAboutToCollapse(getAnimationDurationMillis());
   }
 
   private void dispatchOnPageCollapsedCallback() {
@@ -696,6 +700,22 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         callback.onPageCollapsed();
       }
     }
+    onPageCollapsed();
+  }
+
+  protected void onPageAboutToExpand(long expandAnimDuration) {
+    // For rent.
+  }
+
+  protected void onPageAboutToCollapse(long collapseAnimDuration) {
+    // For rent.
+  }
+
+  /**
+   * Page is totally invisible to the user when this is called.
+   */
+  protected void onPageCollapsed() {
+    // For rent.
   }
 
   /**
