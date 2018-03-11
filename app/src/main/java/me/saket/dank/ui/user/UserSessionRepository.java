@@ -6,11 +6,11 @@ import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import io.reactivex.Observable;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Preconditions;
-import timber.log.Timber;
 
 public class UserSessionRepository {
 
@@ -20,7 +20,7 @@ public class UserSessionRepository {
   private final Preference<String> loggedInUsername;
 
   @Inject
-  public UserSessionRepository(RxSharedPreferences rxSharedPreferences) {
+  public UserSessionRepository(@Named("user_session") RxSharedPreferences rxSharedPreferences) {
     loggedInUsername = rxSharedPreferences.getString(KEY_LOGGED_IN_USERNAME, EMPTY);
   }
 

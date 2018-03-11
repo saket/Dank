@@ -16,10 +16,8 @@ import android.preference.PreferenceManager;
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.danikula.videocache.HttpProxyCacheServer;
-import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nytimes.android.external.cache3.Cache;
 import com.nytimes.android.external.cache3.CacheBuilder;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
@@ -34,8 +32,6 @@ import net.dean.jraw.http.LoggingMode;
 import net.dean.jraw.http.UserAgent;
 
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
@@ -48,13 +44,10 @@ import io.reactivex.Scheduler;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
-import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.OnLoginRequireListener;
-import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
@@ -73,8 +66,6 @@ import me.saket.dank.utils.MoshiMessageAdapter;
 import me.saket.dank.utils.MoshiOptionalAdapterFactory;
 import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
-import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
-import me.saket.dank.utils.TimeInterval;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
 import retrofit2.Retrofit;
@@ -119,7 +110,7 @@ public class DankAppModule {
     return redditClient;
   }
 
-  // Already singleton.
+  // Already a singleton.
   @Provides
   AuthenticationManager provideRedditAuthManager() {
     return AuthenticationManager.get();
@@ -146,14 +137,26 @@ public class DankAppModule {
   }
 
   @Provides
-  @Singleton
   SharedPreferences provideSharedPrefs() {
     return PreferenceManager.getDefaultSharedPreferences(appContext);
   }
 
   @Provides
-  RxSharedPreferences provideRxSharedPrefs(SharedPreferences sharedPrefs) {
-    return RxSharedPreferences.create(sharedPrefs);
+  @Named("user_session")
+  RxSharedPreferences provideRxSharedPreferences(SharedPreferences sharedPreferences) {
+    return RxSharedPreferences.create(sharedPreferences);
+  }
+
+  @Provides
+  @Named("drafts")
+  SharedPreferences provideSharedPrefsForReplyDraftStore() {
+    return appContext.getSharedPreferences("drafts", Context.MODE_PRIVATE);
+  }
+
+  @Provides
+  @Named("votes")
+  SharedPreferences provideSharedPrefsForVotingManager() {
+    return appContext.getSharedPreferences("votes", Context.MODE_PRIVATE);
   }
 
   @Provides
@@ -204,12 +207,6 @@ public class DankAppModule {
     return retrofit.create(DankApi.class);
   }
 
-  @Provides
-  @Singleton
-  JacksonHelper provideJacksonHelper() {
-    return new JacksonHelper(new ObjectMapper());
-  }
-
   /**
    * Used for caching videos.
    */
@@ -232,15 +229,6 @@ public class DankAppModule {
     return briteDatabase;
   }
 
-//  @Singleton
-//  @Provides
-//  MemoryPolicy provideCachingPolicy() {
-//    return MemoryPolicy.builder()
-//        .setExpireAfter(1)
-//        .setExpireAfterTimeUnit(TimeUnit.DAYS)
-//        .build();
-//  }
-
   @Provides
   @Singleton
   FileSystem provideCacheFileSystem() {
@@ -260,18 +248,6 @@ public class DankAppModule {
   @Named("drafts_max_retain_days")
   int provideCommentDraftsMaxRetainDays() {
     return appContext.getResources().getInteger(R.integer.recycle_drafts_older_than_num_days);
-  }
-
-  @Provides
-  @Named(ReplyRepository.SHARED_PREFS_NAME)
-  SharedPreferences provideSharedPrefsForReplyDraftStore() {
-    return appContext.getSharedPreferences(ReplyRepository.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
-  }
-
-  @Provides
-  @Named(VotingManager.SHARED_PREFS_NAME)
-  SharedPreferences provideSharedPrefsForVotingManager() {
-    return appContext.getSharedPreferences(VotingManager.SHARED_PREFS_NAME, Context.MODE_PRIVATE);
   }
 
   @Provides
@@ -345,63 +321,6 @@ public class DankAppModule {
   }
 
   @Provides
-  @Named("comment_count_in_submission_list_byline")
-  Preference<Boolean> showCommentCountInBylinePref(RxSharedPreferences rxPrefs) {
-    return rxPrefs.getBoolean("comment_count_in_submission_list_byline", false);
-  }
-
-  @Provides
-  @Named("show_nsfw_content")
-  Preference<Boolean> showNsfwContentPref(RxSharedPreferences rxPrefs) {
-    return rxPrefs.getBoolean("show_nsfw_content", false);
-  }
-
-  @Provides
-  RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyRxPreferencesEnumTypeAdapter() {
-    return new RxPreferencesEnumTypeAdapter<>(NetworkStrategy.class);
-  }
-
-  @Provides
-  @Singleton
-  @Named("high_resolution_media_network_strategy")
-  Preference<NetworkStrategy> highResolutionMediaNetworkStrategyPref(
-      RxSharedPreferences rxPrefs,
-      RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyTypeAdapter)
-  {
-    return rxPrefs.getObject("high_resolution_media_network_strategy", NetworkStrategy.WIFI_ONLY, networkStrategyTypeAdapter);
-  }
-
-  @Provides
-  @Named("auto_play_videos_network_strategy")
-  Preference<NetworkStrategy> autoPlayVideosNetworkStrategyPref(
-      RxSharedPreferences rxPrefs,
-      RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyTypeAdapter)
-  {
-    return rxPrefs.getObject("auto_play_videos_network_strategy", NetworkStrategy.WIFI_ONLY, networkStrategyTypeAdapter);
-  }
-
-  @Provides
-  @Named("open_links_in_external_browser")
-  Preference<Boolean> openLinksInExternalBrowserPref(RxSharedPreferences rxPrefs) {
-    return rxPrefs.getBoolean("open_links_in_external_browser", false);
-  }
-
-  @Provides
-  @Named("cache_pre_filling_network_strategies")
-  Map<CachePreFillThing, Preference<NetworkStrategy>> cachePreFillingNetworkStrategies(
-      RxSharedPreferences rxPrefs,
-      RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyTypeAdapter)
-  {
-    Map<CachePreFillThing, Preference<NetworkStrategy>> strategies = new HashMap<>();
-    for (CachePreFillThing thing : CachePreFillThing.values()) {
-      strategies.put(
-          thing,
-          rxPrefs.getObject("cache_pre_filling_network_strategy_for_" + thing.name(), NetworkStrategy.WIFI_ONLY, networkStrategyTypeAdapter));
-    }
-    return strategies;
-  }
-
-  @Provides
   @Named("cache_pre_filling")
   Scheduler cachePreFillingScheduler() {
     return Schedulers.from(Executors.newCachedThreadPool());
@@ -423,13 +342,5 @@ public class DankAppModule {
     return CacheBuilder.newBuilder()
         .maximumSize(100)
         .build();
-  }
-
-  @Provides
-  @Named("unread_messages")
-  Preference<TimeInterval> unreadMessagesPollIntervalPref(RxSharedPreferences rxSharedPrefs, Moshi moshi) {
-    Preference.Converter<TimeInterval> timeUnitPrefConverter = new TimeInterval.TimeUnitPrefConverter(moshi);
-    TimeInterval defaultInterval = TimeInterval.create(30, TimeUnit.MINUTES);
-    return rxSharedPrefs.getObject("unread_messages_poll_interval", defaultInterval, timeUnitPrefConverter);
   }
 }

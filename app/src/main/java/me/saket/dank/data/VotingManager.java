@@ -34,7 +34,6 @@ import timber.log.Timber;
  */
 public class VotingManager {
 
-  public static final String SHARED_PREFS_NAME = "SharedPreferences.Votes";
   private static final Object NOTHING = LifecycleStreams.NOTHING;
   private static final String KEY_PENDING_VOTE_ = "pendingVote_";
 
@@ -50,7 +49,7 @@ public class VotingManager {
   public VotingManager(
       Application appContext,
       DankRedditClient dankRedditClient,
-      @Named(SHARED_PREFS_NAME) SharedPreferences sharedPrefs,
+      @Named("votes") SharedPreferences sharedPrefs,
       Moshi moshi)
   {
     this.appContext = appContext;

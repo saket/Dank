@@ -27,6 +27,7 @@ import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.preferences.FiltersUserPreferencesScreen;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.preferences.LookAndFeelPreferencesScreen;
+import me.saket.dank.ui.preferences.PreferenceGroupsScreen;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
 import me.saket.dank.ui.submission.LinkOptionsPopup;
 import me.saket.dank.ui.submission.RetryReplyJobService;
@@ -43,7 +44,7 @@ import me.saket.dank.ui.user.messages.InboxFolderFragment;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
 import me.saket.dank.utils.JacksonHelper;
 
-@Component(modules = DankAppModule.class)
+@Component(modules = { DankAppModule.class, UserPreferencesModule.class })
 @Singleton
 public interface DankAppComponent {
 
@@ -124,4 +125,6 @@ public interface DankAppComponent {
   void inject(MessageNotifActionReceiver taret);
 
   void inject(LookAndFeelPreferencesScreen target);
+
+  void inject(PreferenceGroupsScreen target);
 }

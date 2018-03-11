@@ -16,6 +16,7 @@ public class Dank {
   public static void initDependencies(Application application) {
     appComponent = DaggerDankAppComponent.builder()
         .dankAppModule(new DankAppModule(application))
+        .userPreferencesModule(new UserPreferencesModule())
         .build();
   }
 

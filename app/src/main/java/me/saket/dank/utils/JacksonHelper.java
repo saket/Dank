@@ -11,6 +11,9 @@ import net.dean.jraw.models.Thing;
 import java.io.IOException;
 import java.io.InputStream;
 
+import javax.inject.Inject;
+import javax.inject.Singleton;
+
 import io.reactivex.exceptions.Exceptions;
 import timber.log.Timber;
 
@@ -18,13 +21,15 @@ import timber.log.Timber;
  * Utility methods for dealing with JSON using Jackson. This class uses {@link JsonNode}
  * because every object in JRAW is a wrapper around a JsonNode.
  */
+@Singleton
 public class JacksonHelper {
 
   private final ObjectMapper objectMapper;
   private final ObjectWriter jsonPrinter;
 
-  public JacksonHelper(ObjectMapper objectMapper) {
-    this.objectMapper = objectMapper;
+  @Inject
+  public JacksonHelper() {
+    this.objectMapper = new ObjectMapper();
     this.jsonPrinter = objectMapper.writer().withDefaultPrettyPrinter();
   }
 
