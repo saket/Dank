@@ -24,6 +24,7 @@ import me.saket.dank.ui.ScreenSavedState;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesAdapter;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesConstructor;
 import me.saket.dank.ui.preferences.adapter.UserPrefsItemDiffer;
+import me.saket.dank.utils.BackPressCallback;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Views;
@@ -122,6 +123,15 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
     preferencesAdapter.get().streamButtonPreferenceClicks()
         .takeUntil(lifecycle.viewDetaches())
         .subscribe(event -> preferenceRecyclerView.expandItem(event.itemPosition(), event.itemId()));
+  }
+  
+  BackPressCallback onInterceptBackPress() {
+    if (nestedPage.isExpandedOrExpanding()) {
+      preferenceRecyclerView.collapse();
+      return BackPressCallback.asIntercepted();
+    }
+
+    return BackPressCallback.asIgnored();
   }
 
 // ======== EXPANDABLE PAGE ======== //
