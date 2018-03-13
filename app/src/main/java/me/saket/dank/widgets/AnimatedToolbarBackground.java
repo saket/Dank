@@ -53,6 +53,7 @@ public class AnimatedToolbarBackground extends View {
     syncScrollEnabled = enabled;
 
     if (!enabled) {
+      setTranslationY(0f);
       toggleFill(true);
     }
   }
