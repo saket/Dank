@@ -10,6 +10,7 @@ import android.widget.TextView;
 
 import com.f2prateek.rx.preferences2.Preference;
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
 
 import java.util.List;
 import javax.inject.Inject;
@@ -17,6 +18,7 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
+import me.saket.dank.ui.preferences.events.UserPreferenceSwitchToggleEvent;
 import me.saket.dank.utils.Optional;
 
 public interface UserPreferenceSwitch {
@@ -74,13 +76,20 @@ public interface UserPreferenceSwitch {
   }
 
   class Adapter implements UserPreferencesScreenUiModel.ChildAdapter<UiModel, ViewHolder> {
+    public PublishRelay<UserPreferenceSwitchToggleEvent> itemClicks = PublishRelay.create();
+
     @Inject
     public Adapter() {
     }
 
     @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
-      return new ViewHolder(inflater.inflate(R.layout.list_item_preference_switch, parent, false));
+      ViewHolder holder = new ViewHolder(inflater.inflate(R.layout.list_item_preference_switch, parent, false));
+      //noinspection CodeBlock2Expr
+      holder.titleSwitchView.setOnCheckedChangeListener((buttonView, isChecked) -> {
+        itemClicks.accept(UserPreferenceSwitchToggleEvent.create(holder.uiModel.preference(), isChecked));
+      });
+      return holder;
     }
 
     @Override

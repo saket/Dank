@@ -15,7 +15,7 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
-import me.saket.dank.ui.preferences.PrefClickEvent;
+import me.saket.dank.ui.preferences.events.UserPreferenceButtonClickEvent;
 
 public interface UserPreferenceButton {
 
@@ -33,8 +33,10 @@ public interface UserPreferenceButton {
 
     public abstract String summary();
 
-    public static UiModel create(String title, String summary) {
-      return new AutoValue_UserPreferenceButton_UiModel(title.hashCode(), title, summary);
+    public abstract String preferenceKey();
+
+    public static UiModel create(String title, String summary, String preferenceKey) {
+      return new AutoValue_UserPreferenceButton_UiModel(title.hashCode(), title, summary, preferenceKey);
     }
   }
 
@@ -60,7 +62,7 @@ public interface UserPreferenceButton {
   }
 
   class Adapter implements UserPreferencesScreenUiModel.ChildAdapter<UiModel, ViewHolder> {
-    PublishRelay<PrefClickEvent> preferenceClicks = PublishRelay.create();
+    PublishRelay<UserPreferenceButtonClickEvent> itemClicks = PublishRelay.create();
 
     @Inject
     public Adapter() {
@@ -69,7 +71,9 @@ public interface UserPreferenceButton {
     @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
       ViewHolder holder = new ViewHolder(inflater.inflate(R.layout.list_item_preference_button, parent, false));
-      holder.itemView.setOnClickListener(o -> preferenceClicks.accept(PrefClickEvent.create(holder.getLayoutPosition(), holder.getItemId())));
+      holder.itemView.setOnClickListener(o -> {
+        itemClicks.accept(UserPreferenceButtonClickEvent.create(holder.uiModel.preferenceKey(), holder.getLayoutPosition(), holder.getItemId()));
+      });
       return holder;
     }
 

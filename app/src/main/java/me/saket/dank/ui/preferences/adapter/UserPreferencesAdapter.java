@@ -13,7 +13,8 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
-import me.saket.dank.ui.preferences.PrefClickEvent;
+import me.saket.dank.ui.preferences.events.UserPreferenceButtonClickEvent;
+import me.saket.dank.ui.preferences.events.UserPreferenceSwitchToggleEvent;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
@@ -24,6 +25,7 @@ public class UserPreferencesAdapter extends RecyclerViewArrayAdapter<UserPrefere
   private static final UserPreferencesScreenUiModel.Type[] VIEW_TYPES = UserPreferencesScreenUiModel.Type.values();
   private final Map<UserPreferencesScreenUiModel.Type, UserPreferencesScreenUiModel.ChildAdapter> childAdapters;
   private final UserPreferenceButton.Adapter buttonAdapter;
+  private final UserPreferenceSwitch.Adapter switchAdapter;
 
   @Inject
   public UserPreferencesAdapter(
@@ -32,6 +34,7 @@ public class UserPreferencesAdapter extends RecyclerViewArrayAdapter<UserPrefere
       UserPreferenceButton.Adapter buttonAdapter)
   {
     this.buttonAdapter = buttonAdapter;
+    this.switchAdapter = switchAdapter;
 
     childAdapters = new HashMap<>();
     childAdapters.put(UserPreferencesScreenUiModel.Type.SECTION_HEADER, headerAdapter);
@@ -79,7 +82,12 @@ public class UserPreferencesAdapter extends RecyclerViewArrayAdapter<UserPrefere
   }
 
   @CheckResult
-  public Observable<PrefClickEvent> streamButtonPreferenceClicks() {
-    return buttonAdapter.preferenceClicks;
+  public Observable<UserPreferenceButtonClickEvent> streamButtonClicks() {
+    return buttonAdapter.itemClicks;
+  }
+
+  @CheckResult
+  public Observable<UserPreferenceSwitchToggleEvent> streamSwitchToggles() {
+    return switchAdapter.itemClicks;
   }
 }

@@ -24,6 +24,7 @@ import me.saket.dank.ui.ScreenSavedState;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesAdapter;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesConstructor;
 import me.saket.dank.ui.preferences.adapter.UserPrefsItemDiffer;
+import me.saket.dank.ui.preferences.events.UserPreferenceButtonClickEvent;
 import me.saket.dank.utils.BackPressCallback;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxDiffUtil;
@@ -71,8 +72,8 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
 
     setupPreferenceList();
 
-    // TODO: background items aren't expanding properly.
-    // TODO: close nested page on back press and toolbar up press.
+    // FIXME: background items aren't expanding properly.
+    // FIXME: close nested page on back press and toolbar up press.
     preferenceRecyclerView.setExpandablePage(nestedPage, toolbar);
     setNestedExpandablePage(nestedPage);
   }
@@ -120,11 +121,21 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
         .takeUntil(lifecycle.viewDetachesFlowable())
         .subscribe(preferencesAdapter.get());
 
-    preferencesAdapter.get().streamButtonPreferenceClicks()
+    // Button clicks.
+    preferencesAdapter.get().streamButtonClicks()
         .takeUntil(lifecycle.viewDetaches())
-        .subscribe(event -> preferenceRecyclerView.expandItem(event.itemPosition(), event.itemId()));
+        .subscribe(event -> handleButtonClicks(event));
+
+    // Switch clicks.
+    preferencesAdapter.get().streamSwitchToggles()
+        .takeUntil(lifecycle.viewDetaches())
+        .subscribe(event -> event.preference().set(event.isChecked()));
   }
-  
+
+  private void handleButtonClicks(UserPreferenceButtonClickEvent event) {
+    preferenceRecyclerView.expandItem(event.itemPosition(), event.itemId());
+  }
+
   BackPressCallback onInterceptBackPress() {
     if (nestedPage.isExpandedOrExpanding()) {
       preferenceRecyclerView.collapse();
