@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.ui.preferences.SubmissionGesturesPreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:orientation="vertical"
+  tools:background="@color/window_background">
+
+  <me.saket.dank.widgets.DankToolbar
+    style="@style/DankToolbar"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content" />
+
+  <android.support.v7.widget.RecyclerView
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" />
+</me.saket.dank.ui.preferences.SubmissionGesturesPreferenceScreen>

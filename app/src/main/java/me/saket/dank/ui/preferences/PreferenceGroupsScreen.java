@@ -9,6 +9,7 @@ import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
+import android.view.LayoutInflater;
 
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
@@ -72,8 +73,9 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
 
     setupPreferenceList();
 
-    // FIXME: background items aren't expanding properly.
-    // FIXME: close nested page on back press and toolbar up press.
+    // TODO: background items aren't expanding properly.
+    // TODO: close nested page on back press and toolbar up press.
+    // TODO: retain nested page's state.
     preferenceRecyclerView.setExpandablePage(nestedPage, toolbar);
     setNestedExpandablePage(nestedPage);
   }
@@ -124,7 +126,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
     // Button clicks.
     preferencesAdapter.get().streamButtonClicks()
         .takeUntil(lifecycle.viewDetaches())
-        .subscribe(event -> handleButtonClicks(event));
+        .subscribe(event -> handleButtonClick(event));
 
     // Switch clicks.
     preferencesAdapter.get().streamSwitchToggles()
@@ -132,8 +134,16 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
         .subscribe(event -> event.preference().set(event.isChecked()));
   }
 
-  private void handleButtonClicks(UserPreferenceButtonClickEvent event) {
-    preferenceRecyclerView.expandItem(event.itemPosition(), event.itemId());
+  private void handleButtonClick(UserPreferenceButtonClickEvent event) {
+    if (nestedPage.getChildCount() > 0) {
+      nestedPage.removeAllViews();
+    }
+
+    LayoutInflater.from(getContext()).inflate(event.preferenceScreenLayoutRes(), nestedPage, true);
+
+    nestedPage.post(() -> {
+      preferenceRecyclerView.expandItem(event.itemPosition(), event.itemId());
+    });
   }
 
   BackPressCallback onInterceptBackPress() {

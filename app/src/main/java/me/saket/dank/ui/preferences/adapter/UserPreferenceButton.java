@@ -1,5 +1,6 @@
 package me.saket.dank.ui.preferences.adapter;
 
+import android.support.annotation.LayoutRes;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -33,10 +34,11 @@ public interface UserPreferenceButton {
 
     public abstract String summary();
 
-    public abstract String preferenceKey();
+    @LayoutRes
+    public abstract int preferenceScreenLayoutRes();
 
-    public static UiModel create(String title, String summary, String preferenceKey) {
-      return new AutoValue_UserPreferenceButton_UiModel(title.hashCode(), title, summary, preferenceKey);
+    public static UiModel create(String title, String summary, @LayoutRes int preferenceScreenLayoutRes) {
+      return new AutoValue_UserPreferenceButton_UiModel(title.hashCode(), title, summary, preferenceScreenLayoutRes);
     }
   }
 
@@ -71,9 +73,10 @@ public interface UserPreferenceButton {
     @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
       ViewHolder holder = new ViewHolder(inflater.inflate(R.layout.list_item_preference_button, parent, false));
-      holder.itemView.setOnClickListener(o -> {
-        itemClicks.accept(UserPreferenceButtonClickEvent.create(holder.uiModel.preferenceKey(), holder.getLayoutPosition(), holder.getItemId()));
-      });
+      holder.itemView.setOnClickListener(o -> itemClicks.accept(UserPreferenceButtonClickEvent.create(
+          holder.uiModel.preferenceScreenLayoutRes(),
+          holder.getLayoutPosition(),
+          holder.getItemId())));
       return holder;
     }
 
