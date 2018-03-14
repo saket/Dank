@@ -1,6 +1,7 @@
 package me.saket.dank.ui.subreddit;
 
 import android.support.annotation.Nullable;
+import android.support.annotation.StringRes;
 
 import com.jakewharton.rxrelay2.PublishRelay;
 
@@ -29,17 +30,17 @@ import me.saket.dank.widgets.swipe.SwipeableLayout;
  */
 public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActionIconProvider {
 
-  private static final String ACTION_NAME_SAVE = "Save";
-  private static final String ACTION_NAME_UNSAVE = "UnSave";
-  private static final String ACTION_NAME_OPTIONS = "Options";
-  private static final String ACTION_NAME_UPVOTE = "Upvote";
-  private static final String ACTION_NAME_DOWNVOTE = "Downvote";
+  private static final @StringRes int ACTION_NAME_SAVE = R.string.subreddit_submission_swipe_action_save;
+  private static final @StringRes int ACTION_NAME_UNSAVE = R.string.subreddit_submission_swipe_action_unsave;
+  private static final @StringRes int ACTION_NAME_OPTIONS = R.string.subreddit_submission_swipe_action_options;
+  private static final @StringRes int ACTION_NAME_UPVOTE = R.string.subreddit_submission_swipe_action_upvote;
+  private static final @StringRes int ACTION_NAME_DOWNVOTE = R.string.subreddit_submission_swipe_action_downvote;
 
   private final Lazy<VotingManager> votingManager;
   private final Lazy<BookmarksRepository> bookmarksRepository;
   private final Lazy<UserSessionRepository> userSessionRepository;
   private final Lazy<OnLoginRequireListener> onLoginRequireListener;
-  private final SwipeActions swipeActionsWithUnsave;
+  private final SwipeActions swipeActionsWithUnSave;
   private final SwipeActions swipeActionsWithSave;
   public final PublishRelay<SubmissionOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
   public final PublishRelay<ContributionVoteSwipeEvent> voteSwipeActions = PublishRelay.create();
@@ -63,7 +64,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     SwipeAction upvoteSwipeAction = SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 0.3f);
 
     // Actions on both sides are aligned from left to right.
-    swipeActionsWithUnsave = SwipeActions.builder()
+    swipeActionsWithUnSave = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
             .add(moreOptionsSwipeAction)
             .add(unSaveSwipeAction)
@@ -88,12 +89,12 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
   public SwipeActions actionsFor(Submission submission) {
     boolean isSubmissionSaved = bookmarksRepository.get().isSaved(submission);
-    return isSubmissionSaved ? swipeActionsWithUnsave : swipeActionsWithSave;
+    return isSubmissionSaved ? swipeActionsWithUnSave : swipeActionsWithSave;
   }
 
   @Override
   public void showSwipeActionIcon(SwipeActionIconView imageView, @Nullable SwipeAction oldAction, SwipeAction newAction) {
-    switch (newAction.name()) {
+    switch (newAction.labelRes()) {
       case ACTION_NAME_OPTIONS:
         resetIconRotation(imageView);
         imageView.setImageResource(R.drawable.ic_more_horiz_24dp);
@@ -110,7 +111,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
         break;
 
       case ACTION_NAME_UPVOTE:
-        if (oldAction != null && ACTION_NAME_DOWNVOTE.equals(oldAction.name())) {
+        if (oldAction != null && ACTION_NAME_DOWNVOTE == oldAction.labelRes()) {
           imageView.setRotation(180);   // We want to play a circular animation if the user keeps switching between upvote and downvote.
           imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
         } else {
@@ -120,7 +121,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
         break;
 
       case ACTION_NAME_DOWNVOTE:
-        if (oldAction != null && ACTION_NAME_UPVOTE.equals(oldAction.name())) {
+        if (oldAction != null && ACTION_NAME_UPVOTE == oldAction.labelRes()) {
           imageView.setRotation(0);
           imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
         } else {
@@ -135,14 +136,14 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
-    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.get().isUserLoggedIn()) {
+    if (ACTION_NAME_OPTIONS != swipeAction.labelRes() && !userSessionRepository.get().isUserLoggedIn()) {
       onLoginRequireListener.get().onLoginRequired();
       return;
     }
 
     boolean isUndoAction;
 
-    switch (swipeAction.name()) {
+    switch (swipeAction.labelRes()) {
       case ACTION_NAME_OPTIONS:
         optionSwipeActions.accept(SubmissionOptionSwipeEvent.create(submission, swipeableLayout));
         isUndoAction = false;

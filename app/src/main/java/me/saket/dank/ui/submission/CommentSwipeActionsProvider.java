@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission;
 
 import android.graphics.Point;
+import android.support.annotation.StringRes;
 import android.view.Gravity;
 
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -31,10 +32,10 @@ import me.saket.dank.widgets.swipe.SwipeableLayout.SwipeActionIconProvider;
  */
 public class CommentSwipeActionsProvider {
 
-  private static final String ACTION_NAME_REPLY = "CommentReply";
-  private static final String ACTION_NAME_OPTIONS = "CommentOptions";
-  private static final String ACTION_NAME_UPVOTE = "CommentUpvote";
-  private static final String ACTION_NAME_DOWNVOTE = "CommentDownvote";
+  private static final @StringRes int ACTION_NAME_REPLY = R.string.submission_comment_swipe_action_reply;
+  private static final @StringRes int ACTION_NAME_OPTIONS = R.string.submission_comment_swipe_action_options;
+  private static final @StringRes int ACTION_NAME_UPVOTE = R.string.submission_comment_swipe_action_upvote;
+  private static final @StringRes int ACTION_NAME_DOWNVOTE = R.string.submission_comment_swipe_action_downvote;
 
   private final Lazy<VotingManager> votingManager;
   private final Lazy<UserSessionRepository> userSessionRepository;
@@ -80,7 +81,7 @@ public class CommentSwipeActionsProvider {
 
   public SwipeActionIconProvider createActionIconProvider() {
     return (imageView, oldAction, newAction) -> {
-      switch (newAction.name()) {
+      switch (newAction.labelRes()) {
         case ACTION_NAME_OPTIONS:
           resetIconRotation(imageView);
           imageView.setImageResource(R.drawable.ic_more_horiz_24dp);
@@ -92,7 +93,7 @@ public class CommentSwipeActionsProvider {
           break;
 
         case ACTION_NAME_UPVOTE:
-          if (oldAction != null && ACTION_NAME_DOWNVOTE.equals(oldAction.name())) {
+          if (oldAction != null && ACTION_NAME_DOWNVOTE == oldAction.labelRes()) {
             imageView.setRotation(180);
             imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
           } else {
@@ -102,7 +103,7 @@ public class CommentSwipeActionsProvider {
           break;
 
         case ACTION_NAME_DOWNVOTE:
-          if (oldAction != null && ACTION_NAME_UPVOTE.equals(oldAction.name())) {
+          if (oldAction != null && ACTION_NAME_UPVOTE == oldAction.labelRes()) {
             imageView.setRotation(0);
             imageView.animate().rotationBy(180).setInterpolator(Animations.INTERPOLATOR).setDuration(200).start();
           } else {
@@ -123,14 +124,14 @@ public class CommentSwipeActionsProvider {
   }
 
   public void performSwipeAction(SwipeAction swipeAction, Comment comment, SwipeableLayout swipeableLayout) {
-    if (!ACTION_NAME_OPTIONS.equals(swipeAction.name()) && !userSessionRepository.get().isUserLoggedIn()) {
+    if (ACTION_NAME_OPTIONS != swipeAction.labelRes() && !userSessionRepository.get().isUserLoggedIn()) {
       onLoginRequireListener.get().onLoginRequired();
       return;
     }
 
     boolean isUndoAction;
 
-    switch (swipeAction.name()) {
+    switch (swipeAction.labelRes()) {
       case ACTION_NAME_OPTIONS:
         Point sheetLocation = Views.locationOnScreen(swipeableLayout);
         Point menuLocation = new Point(0, sheetLocation.y);

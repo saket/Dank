@@ -54,24 +54,24 @@ public class CommentOptionsPopup extends NestedOptionsPopupMenu {
     if (bookmarksRepository.get().isSaved(comment)) {
       primaryItems.add(MenuStructure.SingleLineItem.create(
           ID_UNSAVE,
-          c.getString(R.string.comment_option_unsave),
+          c.getString(R.string.submission_comment_option_unsave),
           R.drawable.ic_unsave_24dp
       ));
     } else {
       primaryItems.add(MenuStructure.SingleLineItem.create(
           ID_SAVE,
-          c.getString(R.string.comment_option_save),
+          c.getString(R.string.submission_comment_option_save),
           R.drawable.ic_save_20dp
       ));
     }
     primaryItems.add(MenuStructure.SingleLineItem.create(
         ID_SHARE_PERMALINK,
-        c.getString(R.string.comment_option_share_link),
+        c.getString(R.string.submission_comment_option_share_link),
         R.drawable.ic_share_20dp
     ));
     primaryItems.add(MenuStructure.SingleLineItem.create(
         ID_COPY_PERMALINK,
-        c.getString(R.string.comment_option_copy_link),
+        c.getString(R.string.submission_comment_option_copy_link),
         R.drawable.ic_copy_20dp
     ));
     return MenuStructure.create(commentBody, primaryItems);
