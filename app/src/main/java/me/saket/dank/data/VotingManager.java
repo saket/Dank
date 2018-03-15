@@ -7,6 +7,7 @@ import android.support.annotation.CheckResult;
 
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.PublicContribution;
@@ -34,6 +35,7 @@ import timber.log.Timber;
  */
 public class VotingManager {
 
+  private static final int HTTP_CODE_CONTRIBUTION_DELETED = 404;
   private static final Object NOTHING = LifecycleStreams.NOTHING;
   private static final String KEY_PENDING_VOTE_ = "pendingVote_";
 
@@ -96,18 +98,21 @@ public class VotingManager {
 
     return vote(contributionToVote, voteDirection)
         .onErrorComplete(error -> {
+          boolean shouldComplete;
           // TODO: Reddit replies with 400 bad request for archived submissions.
 
           if (!Dank.errors().resolve(error).isUnknown()) {
-            Timber.i("Voting failed for %s. Will retry again later.", contributionToVote.getFullName());
-
             // For network/Reddit errors, swallow the error and attempt retries later.
+            Timber.i("Voting failed for %s. Will retry again later.", contributionToVote.getFullName());
             VoteJobService.scheduleRetry(appContext, contributionToVote, voteDirection, moshi);
-            return true;
+            shouldComplete = true;
 
           } else {
-            return false;
+            shouldComplete = error instanceof NetworkException
+                && ((NetworkException) error).getResponse().getStatusCode() == HTTP_CODE_CONTRIBUTION_DELETED;
           }
+
+          return shouldComplete;
         });
   }
 
