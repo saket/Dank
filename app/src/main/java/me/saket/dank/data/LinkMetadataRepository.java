@@ -6,10 +6,8 @@ import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
-import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import java.io.IOException;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -19,9 +17,9 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.di.DankApi;
+import me.saket.dank.utils.MoshiStoreJsonParser;
 import me.saket.dank.utils.StoreFilePersister;
 import me.saket.dank.utils.Urls;
-import okio.BufferedSource;
 
 @Singleton
 public class LinkMetadataRepository {
@@ -34,7 +32,7 @@ public class LinkMetadataRepository {
       String url = key.unparsedUrl();
       return Urls.parseDomainName(url) + "_" + Urls.parseFileNameWithExtension(url) + "_" + url.hashCode();
     };
-    StoreFilePersister.JsonParser<Link, LinkMetadata> jsonParser = new LinkMetadataStoreJsonParser(moshi);
+    StoreFilePersister.JsonParser<Link, LinkMetadata> jsonParser = new MoshiStoreJsonParser<>(moshi, LinkMetadata.class);
 
     linkMetadataStore = StoreBuilder.<Link, LinkMetadata>key()
         .fetcher(link -> unfurlLinkFromRemote(dankApi, link))
@@ -53,24 +51,6 @@ public class LinkMetadataRepository {
       throw new IllegalStateException();
     }
     return Completable.fromAction(() -> linkMetadataStore.clear());
-  }
-
-  private static class LinkMetadataStoreJsonParser implements StoreFilePersister.JsonParser<Link, LinkMetadata> {
-    private final JsonAdapter<LinkMetadata> jsonAdapter;
-
-    public LinkMetadataStoreJsonParser(Moshi moshi) {
-      this.jsonAdapter = moshi.adapter(LinkMetadata.class);
-    }
-
-    @Override
-    public LinkMetadata fromJson(BufferedSource jsonBufferedSource) throws IOException {
-      return jsonAdapter.fromJson(jsonBufferedSource);
-    }
-
-    @Override
-    public String toJson(LinkMetadata value) {
-      return jsonAdapter.toJson(value);
-    }
   }
 
   private Single<LinkMetadata> unfurlLinkFromRemote(DankApi dankApi, Link link) {
