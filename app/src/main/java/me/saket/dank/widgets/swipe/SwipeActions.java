@@ -21,5 +21,4 @@ public abstract class SwipeActions {
 
     public abstract SwipeActions build();
   }
-
 }

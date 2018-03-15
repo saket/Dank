@@ -4,8 +4,11 @@ import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.graphics.Rect;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.DrawableRes;
+import android.support.annotation.Nullable;
+import android.support.v4.content.ContextCompat;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
@@ -200,6 +203,15 @@ public class Views {
     ViewGroup.MarginLayoutParams params = (ViewGroup.MarginLayoutParams) view.getLayoutParams();
     params.bottomMargin = marginBottom;
     view.setLayoutParams(params);
+  }
+
+  public static void setCompoundDrawableStart(TextView textView, @Nullable Drawable icon) {
+    textView.setCompoundDrawablesRelativeWithIntrinsicBounds(
+        icon,
+        textView.getCompoundDrawables()[1],
+        textView.getCompoundDrawables()[2],
+        textView.getCompoundDrawables()[3]
+    );
   }
 
   public static void setCompoundDrawableEnd(TextView textView, @DrawableRes int iconResId) {

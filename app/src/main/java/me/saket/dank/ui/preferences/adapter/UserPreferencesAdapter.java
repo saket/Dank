@@ -60,16 +60,6 @@ public class UserPreferencesAdapter extends RecyclerViewArrayAdapter<UserPrefere
   }
 
   @Override
-  public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
-    if (payloads.isEmpty()) {
-      super.onBindViewHolder(holder, position, payloads);
-    } else {
-      //noinspection unchecked
-      childAdapters.get(VIEW_TYPES[holder.getItemViewType()]).onBindViewHolder(holder, getItem(position), payloads);
-    }
-  }
-
-  @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position) {
     //noinspection unchecked
     childAdapters.get(VIEW_TYPES[holder.getItemViewType()]).onBindViewHolder(holder, getItem(position));

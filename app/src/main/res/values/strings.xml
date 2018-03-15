@@ -328,6 +328,9 @@
   <string name="userprefs_customize_submission_gestures">Submission gesture actions</string>
   <string name="userprefs_customize_comment_gestures">Comment gesture actions</string>
 
+  <string name="userprefs_gestures_group_left">Left</string>
+  <string name="userprefs_gestures_group_right">Right</string>
+
   <string name="userprefs_group_messaging">Messaging</string>
   <string name="userprefs_datausage_check_for_new_messages">Check for new messages</string>
   <string name="userprefs_datausage_message_sync_period_and_connection">Every 30 minutes and only on WiFi</string>

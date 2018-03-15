@@ -97,10 +97,5 @@ public interface UserPreferenceSwitch {
       holder.set(uiModel);
       holder.render();
     }
-
-    @Override
-    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
-      throw new UnsupportedOperationException();
-    }
   }
 }

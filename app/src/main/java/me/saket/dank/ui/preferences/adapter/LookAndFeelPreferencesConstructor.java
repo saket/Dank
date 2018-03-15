@@ -46,7 +46,7 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_customize_comment_gestures),
         "Options and save. Upvote and downvote.",
-        R.layout.view_user_preferences_submission_gestures
+        R.layout.view_user_preferences_comment_gestures
     ));
 
     return uiModels;

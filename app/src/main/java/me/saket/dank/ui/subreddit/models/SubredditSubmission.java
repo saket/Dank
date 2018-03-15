@@ -1,6 +1,7 @@
 package me.saket.dank.ui.subreddit.models;
 
 import android.support.annotation.CheckResult;
+import android.support.annotation.LayoutRes;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -141,11 +142,7 @@ public interface SubredditSubmission {
     private final TextView bylineView;
     private UiModel uiModel;
 
-    public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-      return new ViewHolder(inflater.inflate(R.layout.list_item_submission, parent, false));
-    }
-
-    private ViewHolder(View itemView) {
+    protected ViewHolder(View itemView) {
       super(itemView);
       thumbnailView = itemView.findViewById(R.id.submission_item_icon);
       titleView = itemView.findViewById(R.id.submission_item_title);
@@ -239,7 +236,7 @@ public interface SubredditSubmission {
 
     @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
-      ViewHolder holder = ViewHolder.create(inflater, parent);
+      ViewHolder holder = new ViewHolder(inflater.inflate(itemLayoutRes(), parent, false));
       holder.itemView.setOnClickListener(o ->
           submissionClicks.accept(SubredditSubmissionClickEvent.create(holder.uiModel.submission(), holder.itemView, holder.getItemId()))
       );
@@ -257,6 +254,11 @@ public interface SubredditSubmission {
           swipeActionsProvider.performSwipeAction(action, holder.uiModel.submission(), swipeableLayout)
       );
       return holder;
+    }
+
+    @LayoutRes
+    protected int itemLayoutRes() {
+      return R.layout.list_item_submission;
     }
 
     @Override
