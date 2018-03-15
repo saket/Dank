@@ -88,7 +88,7 @@ public class LifecycleOwnerViews {
 
     @CheckResult
     public Observable<ViewLifecycleEvent> viewDetaches() {
-      return events.filter(e -> e == ViewLifecycleEvent.DETACH);
+      return events.filter(e -> e == ViewLifecycleEvent.DETACH).take(1);
     }
 
     @CheckResult

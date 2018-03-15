@@ -1,8 +1,10 @@
 package me.saket.dank.ui.subreddit;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 
 import android.content.Context;
 import android.view.View;
@@ -20,15 +22,19 @@ import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
-import me.saket.dank.data.InboxRepository;
+import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserProfileRepository;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
@@ -41,13 +47,14 @@ public class UserProfileSheetView extends FrameLayout {
   @BindColor(R.color.userprofile_no_messages) int noMessagesTextColor;
   @BindColor(R.color.userprofile_unread_messages) int unreadMessagesTextColor;
 
-  @Inject UserProfileRepository userProfileRepository;
-  @Inject InboxRepository inboxRepository;
+  @Inject Lazy<UserProfileRepository> userProfileRepository;
+  //@Inject Lazy<InboxRepository> inboxRepository;
+  @Inject Lazy<ErrorResolver> errorResolver;
 
   private Disposable confirmLogoutTimer = Disposables.disposed();
   private Disposable logoutDisposable = Disposables.empty();
-  private Disposable userInfoDisposable = Disposables.empty();
   private ToolbarExpandableSheet parentSheet;
+  private LifecycleOwnerViews.Streams lifecycle;
 
   public static UserProfileSheetView showIn(ToolbarExpandableSheet toolbarSheet) {
     UserProfileSheetView subredditPickerView = new UserProfileSheetView(toolbarSheet.getContext());
@@ -61,27 +68,44 @@ public class UserProfileSheetView extends FrameLayout {
     inflate(context, R.layout.view_user_profile_sheet, this);
     ButterKnife.bind(this, this);
     Dank.dependencyInjector().inject(this);
+
+    lifecycle = LifecycleOwnerViews.create(this, ((LifecycleOwnerActivity) getContext()).lifecycle());
   }
 
   @Override
   protected void onAttachedToWindow() {
     super.onAttachedToWindow();
 
-    // TODO: 02/03/17 Cache user account.
     // TODO: Get unread messages count from /messages/unread because that might be cached already when fetching new messages in background.
 
     karmaView.setText(R.string.userprofile_loading_karma);
 
-    userInfoDisposable = userProfileRepository.loggedInUserAccount()
-        .compose(applySchedulersSingle())
-        .subscribe(loggedInUser -> {
-          populateKarmaCount(loggedInUser);
-          populateUnreadMessageCount(loggedInUser);
+    userProfileRepository.get().loggedInUserAccounts()
+        .subscribeOn(io())
+        .observeOn(mainThread())
+        .takeUntil(lifecycle.viewDetaches())
+        .subscribe(
+            loggedInUser -> {
+              populateKarmaCount(loggedInUser);
+              populateUnreadMessageCount(loggedInUser);
+            },
+            error -> {
+              Timber.e(error, "Couldn't get logged in user info");
+              karmaView.setText(R.string.userprofile_error_user_karma_load);
+            });
 
-        }, error -> {
-          Timber.e(error, "Couldn't get logged in user info");
-          karmaView.setText(R.string.userprofile_error_user_karma_load);
-        });
+    // TODO: show progress indicator.
+    // This call is intentionally allowed to outlive this View's lifecycle.
+    // Additionally, NYT-Store blocks multiple calls so it's safe to refresh
+    // even if the previous get also triggered a network call.
+    userProfileRepository.get().refreshLoggedInUserAccount()
+        .subscribeOn(io())
+        .subscribe(
+            doNothingCompletable(),
+            error -> {
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't refresh user"));
+            });
   }
 
   private void populateKarmaCount(LoggedInAccount loggedInUser) {
@@ -114,7 +138,6 @@ public class UserProfileSheetView extends FrameLayout {
   protected void onDetachedFromWindow() {
     super.onDetachedFromWindow();
     logoutDisposable.dispose();
-    userInfoDisposable.dispose();
   }
 
   public void setParentSheet(ToolbarExpandableSheet parentSheet) {

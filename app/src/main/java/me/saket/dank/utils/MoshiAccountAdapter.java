@@ -5,9 +5,6 @@ import com.squareup.moshi.ToJson;
 
 import net.dean.jraw.models.Account;
 
-/**
- * Moshi JSON adapter for {@link Account}.
- */
 public class MoshiAccountAdapter {
 
   private JacksonHelper jacksonHelper;

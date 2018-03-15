@@ -3,10 +3,14 @@ package me.saket.dank.ui.user;
 import android.support.annotation.CheckResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.nytimes.android.external.fs3.PathResolver;
+import com.nytimes.android.external.fs3.filesystem.FileSystem;
+import com.nytimes.android.external.store.util.Result;
 import com.nytimes.android.external.store3.base.impl.MemoryPolicy;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
 import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Account;
 import net.dean.jraw.models.LoggedInAccount;
@@ -15,20 +19,27 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import io.reactivex.Completable;
+import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
+import me.saket.dank.utils.MoshiStoreJsonParser;
+import me.saket.dank.utils.StoreFilePersister;
 
 @Singleton
 public class UserProfileRepository {
 
-  private final Store<UserProfile, String> userProfileStore;
   private final DankRedditClient dankRedditClient;
+  private final Store<UserProfile, String> userProfileStore;
+  private final Store<LoggedInAccount, String> loggedInUserAccountStore;
+  private final UserSessionRepository userSessionRepository;
 
   @Inject
-  public UserProfileRepository(DankRedditClient client) {
-    dankRedditClient = client;
+  public UserProfileRepository(DankRedditClient client, FileSystem fileSystem, Moshi moshi, UserSessionRepository userSessionRepository) {
+    this.dankRedditClient = client;
+    this.userSessionRepository = userSessionRepository;
 
     userProfileStore = StoreBuilder.<String, UserProfile>key()
         .fetcher(username -> userProfile(username))
@@ -38,8 +49,19 @@ public class UserProfileRepository {
             .setExpireAfterTimeUnit(TimeUnit.HOURS)
             .build())
         .open();
-  }
 
+    PathResolver<String> pathResolver = (username) -> "logged_in_user_account_" + username;
+    MoshiStoreJsonParser<String, LoggedInAccount> parser = new MoshiStoreJsonParser<>(moshi, LoggedInAccount.class);
+
+    loggedInUserAccountStore = StoreBuilder.<String, LoggedInAccount>key()
+        .fetcher(o -> dankRedditClient.loggedInUserAccount())
+        .memoryPolicy(MemoryPolicy.builder()
+            .setExpireAfterWrite(6)
+            .setExpireAfterTimeUnit(TimeUnit.HOURS)
+            .build())
+        .persister(new StoreFilePersister<>(fileSystem, pathResolver, parser))
+        .open();
+  }
 
   public Single<UserProfile> userProfile(String username) {
     return dankRedditClient.withAuth(Single.fromCallable(() -> {
@@ -65,7 +87,19 @@ public class UserProfileRepository {
   }
 
   @CheckResult
-  public Single<LoggedInAccount> loggedInUserAccount() {
-    return dankRedditClient.loggedInUserAccount();
+  public Observable<LoggedInAccount> loggedInUserAccounts() {
+    String loggedInUserName = userSessionRepository.loggedInUserName();
+    return loggedInUserAccountStore.stream(loggedInUserName);
+  }
+
+  @CheckResult
+  public Completable refreshLoggedInUserAccount() {
+    String loggedInUserName = userSessionRepository.loggedInUserName();
+
+    return loggedInUserAccountStore
+        .getWithResult(loggedInUserName)
+        .filter(Result::isFromCache)
+        .flatMapSingle(o -> loggedInUserAccountStore.fetch(loggedInUserName))
+        .toCompletable();
   }
 }
