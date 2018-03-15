@@ -261,7 +261,6 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
 
       } else {
         final int positionOffset = i - anchorPosition;
-        // FIXME: Doesn't work very well with list items of varying heights
         moveY = above
             ? -view.getTop() + positionOffset * view.getHeight()
             : listHeight - view.getTop() + view.getHeight() * (positionOffset - 1);

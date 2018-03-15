@@ -83,6 +83,7 @@ public abstract class BaseExpandablePageLayout extends RelativeLayout {
     clippedDimensionRect.bottom = newClippedHeight;
 
     setClipBounds(new Rect(clippedDimensionRect.left, clippedDimensionRect.top, clippedDimensionRect.right, clippedDimensionRect.bottom));
+    invalidateOutline();
   }
 
   /**
