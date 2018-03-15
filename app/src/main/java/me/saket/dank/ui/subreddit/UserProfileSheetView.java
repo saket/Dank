@@ -14,6 +14,7 @@ import net.dean.jraw.models.LoggedInAccount;
 import net.dean.jraw.paginators.Paginator;
 
 import java.util.concurrent.TimeUnit;
+import javax.inject.Inject;
 
 import butterknife.BindColor;
 import butterknife.BindView;
@@ -23,7 +24,9 @@ import io.reactivex.Observable;
 import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.user.UserProfileRepository;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
@@ -37,6 +40,9 @@ public class UserProfileSheetView extends FrameLayout {
 
   @BindColor(R.color.userprofile_no_messages) int noMessagesTextColor;
   @BindColor(R.color.userprofile_unread_messages) int unreadMessagesTextColor;
+
+  @Inject UserProfileRepository userProfileRepository;
+  @Inject InboxRepository inboxRepository;
 
   private Disposable confirmLogoutTimer = Disposables.disposed();
   private Disposable logoutDisposable = Disposables.empty();
@@ -54,6 +60,7 @@ public class UserProfileSheetView extends FrameLayout {
     super(context);
     inflate(context, R.layout.view_user_profile_sheet, this);
     ButterKnife.bind(this, this);
+    Dank.dependencyInjector().inject(this);
   }
 
   @Override
@@ -65,7 +72,7 @@ public class UserProfileSheetView extends FrameLayout {
 
     karmaView.setText(R.string.userprofile_loading_karma);
 
-    userInfoDisposable = Dank.reddit().loggedInUserAccount()
+    userInfoDisposable = userProfileRepository.loggedInUserAccount()
         .compose(applySchedulersSingle())
         .subscribe(loggedInUser -> {
           populateKarmaCount(loggedInUser);

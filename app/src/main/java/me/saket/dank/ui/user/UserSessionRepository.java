@@ -12,6 +12,9 @@ import io.reactivex.Observable;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Preconditions;
 
+/**
+ * TODO: Merge with {@link UserProfileRepository}.
+ */
 public class UserSessionRepository {
 
   private static final String KEY_LOGGED_IN_USERNAME = "logged_in_username";

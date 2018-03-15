@@ -35,6 +35,7 @@ import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.subreddit.SubredditPickerSheetView;
 import me.saket.dank.ui.subreddit.SubredditSubscriptionsSyncJob;
+import me.saket.dank.ui.subreddit.UserProfileSheetView;
 import me.saket.dank.ui.user.UserAuthListener;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.user.messages.InboxActivity;
@@ -121,4 +122,6 @@ public interface DankAppComponent {
   void inject(MessageNotifActionReceiver target);
 
   void inject(PreferenceGroupsScreen target);
+
+  void inject(UserProfileSheetView target);
 }

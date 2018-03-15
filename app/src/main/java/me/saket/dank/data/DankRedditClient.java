@@ -3,9 +3,7 @@ package me.saket.dank.data;
 import android.content.Context;
 import android.support.annotation.CheckResult;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.jakewharton.rxrelay2.BehaviorRelay;
-import com.squareup.moshi.JsonAdapter;
 
 import net.dean.jraw.RedditClient;
 import net.dean.jraw.auth.AuthenticationManager;
@@ -42,9 +40,7 @@ import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddit.SubredditSearchResult;
-import me.saket.dank.ui.user.UserProfile;
 import me.saket.dank.ui.user.UserSessionRepository;
-import me.saket.dank.ui.user.UserSubreddit;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.AndroidTokenStore;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -297,25 +293,8 @@ public class DankRedditClient {
 
 // ======== OTHER USERS ======== //
 
-  /**
-   * For accessing information about other users.
-   */
-  public Single<UserProfile> userProfile(String username) {
-    return withAuth(Single.fromCallable(() -> {
-      Account userAccount = redditClient.getUser(username);
-
-      JsonNode subredditJsonNode = userAccount.getDataNode().get("subreddit");
-      if (subredditJsonNode.isNull()) {
-        // Old Reddit profile.
-        return UserProfile.create(userAccount, null);
-
-      } else {
-        // New profile with cover image and profile image.
-        JsonAdapter<UserSubreddit> userSubredditJsonAdapter = Dank.moshi().adapter(UserSubreddit.class);
-        UserSubreddit userSubreddit = userSubredditJsonAdapter.fromJson(Dank.jackson().toJson(subredditJsonNode));
-        return UserProfile.create(userAccount, userSubreddit);
-      }
-    }));
+  public Account userAccount(String username) {
+    return redditClient.getUser(username);
   }
 
 // ======== SUBREDDITS ======== //

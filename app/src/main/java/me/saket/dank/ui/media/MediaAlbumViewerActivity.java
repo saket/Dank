@@ -85,7 +85,6 @@ import me.saket.dank.widgets.binoculars.FlickDismissLayout;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
 import timber.log.Timber;
 
-// TODO v2: Use RecyclerView instead of a ViewPager. ViewPager is shitty. Seems to be blocking touch movements until the movement is large enough.
 public class MediaAlbumViewerActivity extends DankActivity implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks {
 
   private static final String KEY_MEDIA_LINK_TO_SHOW = "mediaLinkToShow";
@@ -543,6 +542,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
               .takeUntil(lifecycle().onDestroyFlowable())
               .subscribe(
                   videoFile -> {
+                    Timber.i("videoFile: %s", videoFile);
                     Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), videoFile);
                     Intent intent = Intents.createForSharingMedia(this, contentUri);
                     startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));

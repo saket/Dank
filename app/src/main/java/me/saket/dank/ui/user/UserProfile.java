@@ -16,7 +16,13 @@ public abstract class UserProfile {
   @Nullable
   public abstract UserSubreddit userSubreddit();
 
+  public static UserProfile create(Account data) {
+    //noinspection ConstantConditions
+    return new AutoValue_UserProfile(data, null);
+  }
+
   public static UserProfile create(Account data, @Nullable UserSubreddit userSubreddit) {
+    //noinspection ConstantConditions
     return new AutoValue_UserProfile(data, userSubreddit);
   }
 
