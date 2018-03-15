@@ -4,9 +4,11 @@ import static io.reactivex.schedulers.Schedulers.io;
 import static io.reactivex.schedulers.Schedulers.single;
 import static java.util.Arrays.asList;
 
+import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.support.annotation.ColorRes;
@@ -17,8 +19,11 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
+import com.bumptech.glide.request.target.Target;
 import com.google.auto.value.AutoValue;
 
+import java.util.HashMap;
+import java.util.Map;
 import javax.inject.Inject;
 
 import io.reactivex.Completable;
@@ -51,8 +56,10 @@ public class SubmissionContentLinkUiConstructor {
   private static final TintDetails DEFAULT_TINT_DETAILS = TintDetails.create(Optional.empty(), R.color.submission_link_title, R.color.submission_link_byline);
   private static final boolean PROGRESS_VISIBLE = true;
   private static final boolean PROGRESS_HIDDEN = false;
+
   private final LinkMetadataRepository linkMetadataRepository;
   private final BitmapPool bitmapPool;
+  private final Map<Target, BitmapDrawable> targetsToDispose = new HashMap<>(8);
 
   @Inject
   public SubmissionContentLinkUiConstructor(LinkMetadataRepository linkMetadataRepository, BitmapPool bitmapPool) {
@@ -86,6 +93,27 @@ public class SubmissionContentLinkUiConstructor {
 
     } else {
       throw new AssertionError("Unknown link: " + link);
+    }
+  }
+
+  /**
+   * Since ImageView targets cannot be passed to Glide, the custom targets
+   * are manually cleared so that the bitmaps get recycled.
+   */
+  public void clearGlideTargets(Context c) {
+    Map<Target, BitmapDrawable> targets = new HashMap<>(targetsToDispose);
+    targetsToDispose.clear();
+
+    for (Map.Entry<Target, BitmapDrawable> entry : targets.entrySet()) {
+      Target target = entry.getKey();
+      BitmapDrawable value = entry.getValue();
+
+      if (c instanceof Activity && ((Activity) c).isDestroyed()) {
+        // Glide.with() crashes if the Activity is destroyed.
+        bitmapPool.put(value.getBitmap());
+      } else {
+        Glide.with(c).clear(target);
+      }
     }
   }
 
@@ -350,7 +378,7 @@ public class SubmissionContentLinkUiConstructor {
           FutureTarget<Drawable> imageTarget = Glide.with(context)
               .load(imageUrl)
               .submit();
-          return loadImage(context, imageTarget);
+          return loadImage(imageTarget);
         })
         .map(image -> Optional.of(image))
         .startWith(Optional.empty());
@@ -367,18 +395,21 @@ public class SubmissionContentLinkUiConstructor {
               .load(faviconUrl)
               .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
               .submit();
-          return loadImage(context, iconTarget);
+          return loadImage(iconTarget);
         })
         .map(favicon -> Optional.of(favicon))
         .startWith(Optional.empty());
   }
 
-  private Observable<Drawable> loadImage(Context context, FutureTarget<Drawable> futureTarget) {
+  private Observable<Drawable> loadImage(FutureTarget<Drawable> futureTarget) {
     return Observable
         .<Drawable>create(emitter -> {
-          emitter.onNext(futureTarget.get());
+          Drawable drawable = futureTarget.get();
+          //noinspection ConstantConditions
+          targetsToDispose.put(futureTarget, (BitmapDrawable) drawable);
+
+          emitter.onNext(drawable);
           emitter.onComplete();
-          emitter.setCancellable(() -> Glide.with(context).clear(futureTarget));
         })
         .onErrorResumeNext(error -> {
           Timber.e(error, "Couldn't load image using glide");
@@ -444,7 +475,7 @@ public class SubmissionContentLinkUiConstructor {
         throw new AssertionError();
       }
 
-      Bitmap bitmap = bitmapPool.get(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.ARGB_8888);
+      Bitmap bitmap = bitmapPool.get(drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight(), Bitmap.Config.RGB_565);
       Canvas canvas = new Canvas(bitmap);
       drawable.setBounds(0, 0, drawable.getIntrinsicWidth(), drawable.getIntrinsicHeight());
       drawable.draw(canvas);

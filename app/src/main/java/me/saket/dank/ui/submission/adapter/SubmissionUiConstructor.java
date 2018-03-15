@@ -102,6 +102,7 @@ public class SubmissionUiConstructor {
           Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = Observable
               .combineLatest(contentLinks, submissions.observeOn(io()), Pair::create)
               .distinctUntilChanged()
+              .doOnDispose(() -> contentLinkUiModelConstructor.clearGlideTargets(context))
               .switchMap(pair -> {
                 Optional<Link> contentLink = pair.first();
                 if (!contentLink.isPresent()) {
