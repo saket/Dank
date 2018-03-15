@@ -69,7 +69,10 @@
       android:gravity="top"
       android:hint="@string/composereply_compose_field_hint"
       android:inputType="textCapSentences|textMultiLine"
-      android:textSize="@dimen/textsize16" />
+      android:textSize="@dimen/textsize16">
+
+      <requestFocus />
+    </EditText>
   </ScrollView>
 
   <LinearLayout
