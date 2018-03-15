@@ -74,7 +74,6 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
 
     setupPreferenceList();
 
-    // TODO: background items aren't expanding properly.
     // TODO: retain nested page's state.
     preferenceRecyclerView.setExpandablePage(nestedPage, toolbar);
     setNestedExpandablePage(nestedPage);

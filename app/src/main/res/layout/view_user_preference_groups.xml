@@ -15,14 +15,13 @@
   <me.saket.dank.widgets.DankToolbar
     android:id="@id/toolbar"
     style="@style/DankToolbar"
-    android:fitsSystemWindows="true"
     app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
   <me.saket.dank.widgets.InboxUI.InboxRecyclerView
     android:id="@+id/userpreferences_preferences_recyclerview"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_below="@+id/toolbar" />
+    android:paddingTop="?attr/actionBarSize" />
 
   <me.saket.dank.widgets.InboxUI.ExpandablePageLayout
     android:id="@+id/userpreferences_nested_page"
