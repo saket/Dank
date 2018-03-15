@@ -1,5 +1,6 @@
 package me.saket.dank.widgets.binoculars;
 
+import android.annotation.SuppressLint;
 import android.support.annotation.FloatRange;
 import android.support.v4.view.animation.FastOutSlowInInterpolator;
 import android.view.MotionEvent;
@@ -115,6 +116,7 @@ public class FlickGestureListener implements View.OnTouchListener {
   }
 
   @Override
+  @SuppressLint("ClickableViewAccessibility")
   public boolean onTouch(View view, MotionEvent event) {
     float touchX = event.getRawX();
     float touchY = event.getRawY();
@@ -177,8 +179,6 @@ public class FlickGestureListener implements View.OnTouchListener {
               animateViewBackToPosition(view);
             }
           }
-        } else {
-          view.performClick();
         }
 
         velocityTracker.recycle();

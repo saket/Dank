@@ -578,7 +578,7 @@ public class MediaDownloadService extends Service {
       if (downloadJobUpdate.progressState() == DOWNLOADED) {
         MediaLink downloadedMediaLink = downloadJobUpdate.mediaLink();
         String mediaFileName = Urls.parseFileNameWithExtension(downloadedMediaLink.highQualityUrl());
-        //noinspection LambdaParameterTypeCanBeSpecified
+        //noinspection LambdaParameterTypeCanBeSpecified,ConstantConditions
         File userAccessibleFile = Files2.copyFileToPicturesDirectory(getResources(), downloadJobUpdate.downloadedFile(), mediaFileName);
         return MediaDownloadJob.downloaded(downloadedMediaLink, userAccessibleFile, downloadJobUpdate.timestamp());
 
