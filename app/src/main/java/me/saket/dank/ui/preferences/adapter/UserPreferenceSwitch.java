@@ -12,7 +12,6 @@ import com.f2prateek.rx.preferences2.Preference;
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 
-import java.util.List;
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -38,14 +37,16 @@ public interface UserPreferenceSwitch {
 
     public abstract Optional<String> summary();
 
+    public abstract boolean isChecked();
+
     public abstract Preference<Boolean> preference();
 
-    public static UiModel create(String title, String summary, Preference<Boolean> preference) {
-      return new AutoValue_UserPreferenceSwitch_UiModel(preference.key().hashCode(), title, Optional.of(summary), preference);
+    public static UiModel create(String title, String summary, boolean isChecked, Preference<Boolean> preference) {
+      return new AutoValue_UserPreferenceSwitch_UiModel(preference.key().hashCode(), title, Optional.of(summary), isChecked, preference);
     }
 
-    public static UiModel create(String title, Preference<Boolean> preference) {
-      return new AutoValue_UserPreferenceSwitch_UiModel(preference.key().hashCode(), title, Optional.empty(), preference);
+    public static UiModel create(String title, boolean isChecked, Preference<Boolean> preference) {
+      return new AutoValue_UserPreferenceSwitch_UiModel(preference.key().hashCode(), title, Optional.empty(), isChecked, preference);
     }
   }
 
@@ -68,6 +69,7 @@ public interface UserPreferenceSwitch {
 
     public void render() {
       titleSwitchView.setText(uiModel.title());
+      titleSwitchView.setChecked(uiModel.isChecked());
       uiModel.summary().ifPresent(summary -> summaryView.setText(summary));
 
       titleSwitchView.setGravity(uiModel.summary().isPresent() ? Gravity.TOP : Gravity.CENTER_VERTICAL);

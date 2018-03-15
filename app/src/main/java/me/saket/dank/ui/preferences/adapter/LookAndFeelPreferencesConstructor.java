@@ -32,6 +32,7 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
         showSubmissionThumbnails.get()
             ? c.getString(R.string.userprefs_submission_thumbnail_summary_on)
             : c.getString(R.string.userprefs_submission_thumbnail_summary_off),
+        showSubmissionThumbnails.get(),
         showSubmissionThumbnails
     ));
 
