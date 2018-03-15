@@ -123,7 +123,8 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
                         .load(userProfile.userSubreddit().profileImageUrl())
                         .apply(new RequestOptions()
                             .centerCrop()
-                            .transform(new GlideCircularTransformation())
+                            .circleCrop()
+                            .transform(GlideCircularTransformation.INSTANCE)
                         )
                         .transition(DrawableTransitionOptions.withCrossFade())
                         .into(new ImageViewTarget<Drawable>(profileImageView) {

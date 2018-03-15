@@ -8,9 +8,13 @@ import android.graphics.Paint;
 
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
 import com.bumptech.glide.load.resource.bitmap.BitmapTransformation;
+import com.bumptech.glide.request.RequestOptions;
 
 import java.security.MessageDigest;
 
+/**
+ * @deprecated Use {@link RequestOptions#circleCropTransform()} ()} instead.
+ */
 public class GlideCircularTransformation extends BitmapTransformation {
 
   private static final String ID = "dank:GlideCircularTransformation";
