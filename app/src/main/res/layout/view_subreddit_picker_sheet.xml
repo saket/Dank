@@ -112,11 +112,12 @@
   <android.support.design.widget.FloatingActionButton
     android:id="@+id/subredditpicker_save_fab"
     style="@style/DankFAB"
+    android:visibility="gone"
     android:contentDescription="@string/cd_subredditpicker_save_changes"
     android:src="@drawable/ic_done_24dp"
     tools:ignore="RelativeOverlap" />
 
-  <me.saket.dank.widgets.SubmissionAnimatedProgressBar
+  <me.saket.dank.widgets.AnimatedProgressBar
     android:id="@+id/subredditpicker_refresh_progress"
     style="@style/DankProgressBar.Horizontal.BottomAligned"
     android:layout_alignParentBottom="true"

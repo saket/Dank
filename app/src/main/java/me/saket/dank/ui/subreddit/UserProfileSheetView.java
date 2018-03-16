@@ -4,12 +4,12 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 
 import android.content.Context;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.FrameLayout;
+import android.widget.ProgressBar;
 import android.widget.TextView;
 
 import net.dean.jraw.models.LoggedInAccount;
@@ -43,6 +43,7 @@ public class UserProfileSheetView extends FrameLayout {
 
   @BindView(R.id.userprofilesheet_karma) TextView karmaView;
   @BindView(R.id.userprofilesheet_messages) TextView messagesView;
+  @BindView(R.id.userprofilesheet_refresh_progress) ProgressBar refreshProgressView;
 
   @BindColor(R.color.userprofile_no_messages) int noMessagesTextColor;
   @BindColor(R.color.userprofile_unread_messages) int unreadMessagesTextColor;
@@ -94,18 +95,22 @@ public class UserProfileSheetView extends FrameLayout {
               karmaView.setText(R.string.userprofile_error_user_karma_load);
             });
 
-    // TODO: show progress indicator.
     // This call is intentionally allowed to outlive this View's lifecycle.
     // Additionally, NYT-Store blocks multiple calls so it's safe to refresh
     // even if the previous get also triggered a network call.
-    userProfileRepository.get().refreshLoggedInUserAccount()
+    userProfileRepository.get()
+        .refreshLoggedInUserAccount()
         .subscribeOn(io())
+        .andThen(Observable.just(GONE))
+        .startWith(VISIBLE)
+        .observeOn(mainThread())
         .subscribe(
-            doNothingCompletable(),
+            refreshProgressView::setVisibility,
             error -> {
               ResolvedError resolvedError = errorResolver.get().resolve(error);
               resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't refresh user"));
-            });
+            }
+        );
   }
 
   private void populateKarmaCount(LoggedInAccount loggedInUser) {

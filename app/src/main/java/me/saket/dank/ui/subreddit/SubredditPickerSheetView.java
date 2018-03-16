@@ -308,6 +308,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   @OnClick(R.id.subredditpicker_option_manage)
   void onClickEditSubreddits() {
     sheetState = SheetState.MANAGE_SUBS;
+
+    // FIXME: Refresh height with keyboard visibility changes.
     int height = activityRootLayout.getHeight() - getTop();
 
     animateAlpha(editButton, 0f)
