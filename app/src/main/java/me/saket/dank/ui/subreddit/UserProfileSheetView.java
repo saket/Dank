@@ -28,10 +28,12 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserProfileRepository;
 import me.saket.dank.ui.user.messages.InboxActivity;
+import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
@@ -49,7 +51,7 @@ public class UserProfileSheetView extends FrameLayout {
   @BindColor(R.color.userprofile_unread_messages) int unreadMessagesTextColor;
 
   @Inject Lazy<UserProfileRepository> userProfileRepository;
-  //@Inject Lazy<InboxRepository> inboxRepository;
+  @Inject Lazy<InboxRepository> inboxRepository;
   @Inject Lazy<ErrorResolver> errorResolver;
 
   private Disposable confirmLogoutTimer = Disposables.disposed();
@@ -77,23 +79,38 @@ public class UserProfileSheetView extends FrameLayout {
   protected void onAttachedToWindow() {
     super.onAttachedToWindow();
 
-    // TODO: Get unread messages count from /messages/unread because that might be cached already when fetching new messages in background.
-
-    karmaView.setText(R.string.userprofile_loading_karma);
-
-    userProfileRepository.get().loggedInUserAccounts()
+    Observable<LoggedInAccount> replayedUserAccount = userProfileRepository.get()
+        .loggedInUserAccounts()
         .subscribeOn(io())
+        .replay()
+        .refCount();
+
+    replayedUserAccount
         .observeOn(mainThread())
+        .doOnSubscribe(o -> karmaView.setText(R.string.userprofile_loading_karma))
         .takeUntil(lifecycle.viewDetaches())
         .subscribe(
-            loggedInUser -> {
-              populateKarmaCount(loggedInUser);
-              populateUnreadMessageCount(loggedInUser);
-            },
+            this::populateKarmaCount,
             error -> {
               Timber.e(error, "Couldn't get logged in user info");
               karmaView.setText(R.string.userprofile_error_user_karma_load);
             });
+
+    Observable<Integer> unreadCountFromInbox = inboxRepository.get()
+        .messages(InboxFolder.UNREAD)
+        .subscribeOn(io())
+        .map(unreads -> unreads.size());
+
+    Observable<Integer> unreadCountFromAccount = replayedUserAccount
+        .map(account -> account.getInboxCount());
+
+    unreadCountFromInbox
+        .takeUntil(unreadCountFromAccount)
+        .concatWith(unreadCountFromAccount)
+        .onErrorResumeNext(Observable.empty())
+        .observeOn(mainThread())
+        .takeUntil(lifecycle.viewDetaches())
+        .subscribe(this::populateUnreadMessageCount);
 
     // This call is intentionally allowed to outlive this View's lifecycle.
     // Additionally, NYT-Store blocks multiple calls so it's safe to refresh
@@ -109,8 +126,7 @@ public class UserProfileSheetView extends FrameLayout {
             error -> {
               ResolvedError resolvedError = errorResolver.get().resolve(error);
               resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't refresh user"));
-            }
-        );
+            });
   }
 
   private void populateKarmaCount(LoggedInAccount loggedInUser) {
@@ -122,21 +138,20 @@ public class UserProfileSheetView extends FrameLayout {
     karmaView.setText(getResources().getString(R.string.userprofile_karma_count, compactKarma));
   }
 
-  private void populateUnreadMessageCount(LoggedInAccount loggedInUser) {
-    int inboxCount = loggedInUser.getInboxCount();
-    if (inboxCount == 0) {
+  private void populateUnreadMessageCount(int unreadMessageCount) {
+    if (unreadMessageCount == 0) {
       messagesView.setText(R.string.userprofile_messages);
 
-    } else if (inboxCount == 1) {
-      messagesView.setText(getResources().getString(R.string.userprofile_unread_messages_count_single, inboxCount));
+    } else if (unreadMessageCount == 1) {
+      messagesView.setText(getResources().getString(R.string.userprofile_unread_messages_count_single, unreadMessageCount));
 
-    } else if (inboxCount < Paginator.RECOMMENDED_MAX_LIMIT) {
-      messagesView.setText(getResources().getString(R.string.userprofile_unread_messages_count_99_or_less, inboxCount));
+    } else if (unreadMessageCount < Paginator.RECOMMENDED_MAX_LIMIT) {
+      messagesView.setText(getResources().getString(R.string.userprofile_unread_messages_count_99_or_less, unreadMessageCount));
 
     } else {
       messagesView.setText(R.string.userprofile_unread_messages_count_99_plus);
     }
-    messagesView.setTextColor(inboxCount > 0 ? unreadMessagesTextColor : noMessagesTextColor);
+    messagesView.setTextColor(unreadMessageCount > 0 ? unreadMessagesTextColor : noMessagesTextColor);
   }
 
   @Override
