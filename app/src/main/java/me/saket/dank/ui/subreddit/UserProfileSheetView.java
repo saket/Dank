@@ -92,7 +92,7 @@ public class UserProfileSheetView extends FrameLayout {
         .subscribe(
             this::populateKarmaCount,
             error -> {
-              Timber.e(error, "Couldn't get logged in user info");
+              Timber.e(error, "Couldn't get logged in user's account");
               karmaView.setText(R.string.userprofile_error_user_karma_load);
             });
 
@@ -118,15 +118,15 @@ public class UserProfileSheetView extends FrameLayout {
     userProfileRepository.get()
         .refreshLoggedInUserAccount()
         .subscribeOn(io())
+        .doOnError(error -> {
+          ResolvedError resolvedError = errorResolver.get().resolve(error);
+          resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't refresh user"));
+        })
+        .onErrorComplete()
         .andThen(Observable.just(GONE))
         .startWith(VISIBLE)
         .observeOn(mainThread())
-        .subscribe(
-            refreshProgressView::setVisibility,
-            error -> {
-              ResolvedError resolvedError = errorResolver.get().resolve(error);
-              resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't refresh user"));
-            });
+        .subscribe(refreshProgressView::setVisibility);
   }
 
   private void populateKarmaCount(LoggedInAccount loggedInUser) {
