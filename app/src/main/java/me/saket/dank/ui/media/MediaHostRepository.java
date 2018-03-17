@@ -70,7 +70,7 @@ public class MediaHostRepository {
     this.giphyRepository = giphyRepository;
     this.urlParser = urlParser;
 
-    StoreFilePersister.JsonParser<MediaLink, MediaLink> jsonParser = new MediaLinkStoreJsonParser(moshi);
+    StoreFilePersister.JsonParser<MediaLink> jsonParser = new MediaLinkStoreJsonParser(moshi);
     PathResolver<MediaLink> pathResolver = key -> key.getClass().getSimpleName() + "_" + Urls.parseFileNameWithExtension(key.unparsedUrl());
 
     cacheStore = StoreBuilder.<MediaLink, MediaLink>key()
@@ -79,7 +79,7 @@ public class MediaHostRepository {
         .open();
   }
 
-  public static class MediaLinkStoreJsonParser implements StoreFilePersister.JsonParser<MediaLink, MediaLink> {
+  public static class MediaLinkStoreJsonParser implements StoreFilePersister.JsonParser<MediaLink> {
     private Moshi moshi;
 
     public MediaLinkStoreJsonParser(Moshi moshi) {

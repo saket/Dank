@@ -7,7 +7,7 @@ import java.io.IOException;
 
 import okio.BufferedSource;
 
-public class MoshiStoreJsonParser<KEY, VALUE> implements StoreFilePersister.JsonParser<KEY, VALUE> {
+public class MoshiStoreJsonParser<KEY, VALUE> implements StoreFilePersister.JsonParser<VALUE> {
   private final Moshi moshi;
   private final Class<VALUE> valueType;
 

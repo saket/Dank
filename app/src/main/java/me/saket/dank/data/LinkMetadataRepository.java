@@ -32,7 +32,7 @@ public class LinkMetadataRepository {
       String url = key.unparsedUrl();
       return Urls.parseDomainName(url) + "_" + Urls.parseFileNameWithExtension(url) + "_" + url.hashCode();
     };
-    StoreFilePersister.JsonParser<Link, LinkMetadata> jsonParser = new MoshiStoreJsonParser<>(moshi, LinkMetadata.class);
+    StoreFilePersister.JsonParser<LinkMetadata> jsonParser = new MoshiStoreJsonParser<>(moshi, LinkMetadata.class);
 
     linkMetadataStore = StoreBuilder.<Link, LinkMetadata>key()
         .fetcher(link -> unfurlLinkFromRemote(dankApi, link))

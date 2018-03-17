@@ -16,7 +16,7 @@ public class StoreStaleAwareFilePersister<Key, Value> extends StoreFilePersister
   private final long expirationDuration;
   private final TimeUnit expirationUnit;
 
-  public StoreStaleAwareFilePersister(FileSystem fileSystem, PathResolver<Key> pathResolver, JsonParser<Key, Value> jsonParser,
+  public StoreStaleAwareFilePersister(FileSystem fileSystem, PathResolver<Key> pathResolver, JsonParser<Value> jsonParser,
       long expirationDuration, TimeUnit expirationUnit)
   {
     super(fileSystem, pathResolver, jsonParser);

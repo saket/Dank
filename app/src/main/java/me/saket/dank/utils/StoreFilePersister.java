@@ -4,9 +4,11 @@ import android.support.annotation.NonNull;
 
 import com.nytimes.android.external.fs3.FSReader;
 import com.nytimes.android.external.fs3.FSWriter;
+import com.nytimes.android.external.fs3.FileSystemPersister;
 import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.store3.base.Clearable;
+import com.nytimes.android.external.store3.base.Parser;
 import com.nytimes.android.external.store3.base.Persister;
 import com.nytimes.android.external.store3.util.ParserException;
 import com.squareup.moshi.JsonAdapter;
@@ -26,21 +28,30 @@ import okio.BufferedSource;
 import okio.Okio;
 import timber.log.Timber;
 
-public class StoreFilePersister<Key, Value> implements Persister<Value, Key>, Clearable<Key> {
+/**
+ * Store provides {@link FileSystemPersister}, but it assumes that fetchers will return a {@link BufferedSource}
+ * which can be stored directly into the file-system.
+ * <p>
+ * For usecases where a fetcher returns parsed Objects instead of BufferedSource, this persister can be used.
+ */
+public class StoreFilePersister<KEY, VALUE> implements Persister<VALUE, KEY>, Clearable<KEY> {
 
-  private final FSReader<Key> fileReader;
-  private final FSWriter<Key> fileWriter;
+  private final FSReader<KEY> fileReader;
+  private final FSWriter<KEY> fileWriter;
   private final FileSystem fileSystem;
-  private final PathResolver<Key> pathResolver;
-  private final JsonParser<Key, Value> jsonParser;
+  private final PathResolver<KEY> pathResolver;
+  private final JsonParser<VALUE> jsonParser;
 
-  public interface JsonParser<Key, Value> {
-    Value fromJson(BufferedSource jsonBufferedSource) throws IOException;
+  /**
+   * This exists because {@link Parser} only provides reading from JSON and not writing.
+   */
+  public interface JsonParser<VALUE> {
+    VALUE fromJson(BufferedSource jsonBufferedSource) throws IOException;
 
-    String toJson(Value raw);
+    String toJson(VALUE raw);
   }
 
-  public StoreFilePersister(FileSystem fileSystem, PathResolver<Key> pathResolver, JsonParser<Key, Value> jsonParser) {
+  public StoreFilePersister(FileSystem fileSystem, PathResolver<KEY> pathResolver, JsonParser<VALUE> jsonParser) {
     this.fileSystem = fileSystem;
     this.pathResolver = pathResolver;
 
@@ -51,7 +62,7 @@ public class StoreFilePersister<Key, Value> implements Persister<Value, Key>, Cl
 
   @Nonnull
   @Override
-  public Maybe<Value> read(@Nonnull Key key) {
+  public Maybe<VALUE> read(@Nonnull KEY key) {
     return fileReader
         .read(key)
         .map(bufferedSource -> jsonParser.fromJson(bufferedSource));
@@ -59,7 +70,7 @@ public class StoreFilePersister<Key, Value> implements Persister<Value, Key>, Cl
 
   @Nonnull
   @Override
-  public Single<Boolean> write(@Nonnull Key key, @Nonnull Value value) {
+  public Single<Boolean> write(@Nonnull KEY key, @Nonnull VALUE value) {
     String rawJson = jsonParser.toJson(value);
     InputStream stream = new ByteArrayInputStream(rawJson.getBytes(StandardCharsets.UTF_8));
     BufferedSource jsonBufferedSource = Okio.buffer(Okio.source(stream));
@@ -68,7 +79,7 @@ public class StoreFilePersister<Key, Value> implements Persister<Value, Key>, Cl
   }
 
   @Override
-  public void clear(@Nonnull Key key) {
+  public void clear(@Nonnull KEY key) {
     try {
       fileSystem.delete(pathResolver.resolve(key));
     } catch (IOException e) {
