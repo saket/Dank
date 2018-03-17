@@ -9,6 +9,7 @@ import android.support.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxbinding2.internal.Notification;
+import com.nytimes.android.external.store3.base.Fetcher;
 import com.nytimes.android.external.store3.base.Persister;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
@@ -35,8 +36,10 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import javax.annotation.Nonnull;
 import javax.inject.Inject;
+import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import dagger.internal.SingleCheck;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Maybe;
@@ -67,8 +70,7 @@ public class SubmissionRepository {
   private final VotingManager votingManager;
   private final ErrorResolver errorResolver;
   private final SubredditSubscriptionManager subscriptionManager;
-  private final ReplyRepository replyRepository;
-  private Store<CachedSubmissionWithComments, DankSubmissionRequest> submissionWithCommentsStore;
+  private Provider<Store<CachedSubmissionWithComments, DankSubmissionRequest>> submissionWithCommentsStore;
 
   @Inject
   public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager,
@@ -80,7 +82,40 @@ public class SubmissionRepository {
     this.votingManager = votingManager;
     this.errorResolver = errorResolver;
     this.subscriptionManager = subscriptionManager;
-    this.replyRepository = replyRepository;
+
+    submissionWithCommentsStore = SingleCheck.provider(() -> {
+      Fetcher<CachedSubmissionWithComments, DankSubmissionRequest> fetcher = request -> dankRedditClient.submission(request)
+          .flatMap(subWithComments -> replyRepository
+              .removeSyncPendingPostedReplies(ParentThread.of(subWithComments))
+              .andThen(Single.just(subWithComments)))
+          .map(subWithComments -> CachedSubmissionWithComments.create(request, subWithComments, System.currentTimeMillis()));
+
+      Persister<CachedSubmissionWithComments, DankSubmissionRequest> persister = new Persister<CachedSubmissionWithComments, DankSubmissionRequest>() {
+        @Nonnull
+        @Override
+        public Maybe<CachedSubmissionWithComments> read(DankSubmissionRequest submissionRequest) {
+          String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(submissionRequest);
+
+          return database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
+              .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
+              .firstElement()
+              .flatMap(cachedSubmissions -> cachedSubmissions.isEmpty()
+                  ? Maybe.empty()
+                  : Maybe.just(cachedSubmissions.get(0)));
+        }
+
+        @Nonnull
+        @Override
+        public Single<Boolean> write(DankSubmissionRequest submissionRequest, CachedSubmissionWithComments cachedSubmission) {
+          return saveSubmissionWithAndWithoutComments(cachedSubmission).toSingleDefault(true);
+        }
+      };
+
+      return StoreBuilder.<DankSubmissionRequest, CachedSubmissionWithComments>key()
+          .fetcher(fetcher)
+          .persister(persister)
+          .open();
+    });
   }
 
 // ======== SUBMISSION WITH COMMENTS ======== //
@@ -113,7 +148,7 @@ public class SubmissionRepository {
                 .map(submissions -> Pair.create(newRequest, submissions))
                 .doAfterNext(o -> {
                   Timber.i("Clearing old memory cache key because of submission request mismatch.");
-                  submissionWithCommentsStore.clear(oldSubmissionRequest);
+                  submissionWithCommentsStore.get().clear(oldSubmissionRequest);
                 });
 
           } else {
@@ -178,7 +213,7 @@ public class SubmissionRepository {
                   database.insert(CachedSubmissionWithComments.TABLE_NAME, newCachedSub.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE)
               ))
               // This will trigger another emission from the cache store.
-              .andThen(Completable.fromAction(() -> submissionWithCommentsStore.clear(updatedSubmissionRequest)))
+              .andThen(Completable.fromAction(() -> submissionWithCommentsStore.get().clear(updatedSubmissionRequest)))
               .subscribeOn(Schedulers.io())
               .subscribe();
         }))
@@ -190,42 +225,7 @@ public class SubmissionRepository {
    */
   @CheckResult
   private Observable<CachedSubmissionWithComments> getOrFetchSubmissionWithComments(DankSubmissionRequest submissionRequest) {
-    if (submissionWithCommentsStore == null) {
-      submissionWithCommentsStore = StoreBuilder.<DankSubmissionRequest, CachedSubmissionWithComments>key()
-          .fetcher(request -> dankRedditClient.submission(request)
-              .doOnSuccess(subWithComments -> replyRepository
-                  .removeSyncPendingPostedReplies(ParentThread.of(subWithComments))
-                  .blockingAwait())
-              .map(subWithComments -> CachedSubmissionWithComments.create(request, subWithComments, System.currentTimeMillis()))
-          )
-          .persister(new Persister<CachedSubmissionWithComments, DankSubmissionRequest>() {
-            @Nonnull
-            @Override
-            public Maybe<CachedSubmissionWithComments> read(DankSubmissionRequest submissionRequest) {
-              String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(submissionRequest);
-
-              return database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
-                  .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
-                  .firstElement()
-                  .flatMap(cachedSubmissions -> {
-                    if (cachedSubmissions.isEmpty()) {
-                      return Maybe.empty();
-                    } else {
-                      return Maybe.just(cachedSubmissions.get(0));
-                    }
-                  });
-            }
-
-            @Nonnull
-            @Override
-            public Single<Boolean> write(DankSubmissionRequest submissionRequest, CachedSubmissionWithComments cachedSubmission) {
-              return saveSubmissionWithAndWithoutComments(cachedSubmission).toSingleDefault(true);
-            }
-          })
-          .open();
-    }
-
-    return submissionWithCommentsStore.getRefreshing(submissionRequest);
+    return submissionWithCommentsStore.get().getRefreshing(submissionRequest);
   }
 
   @CheckResult
