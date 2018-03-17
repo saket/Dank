@@ -9,19 +9,18 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.utils.JacksonHelper;
-import retrofit2.http.HEAD;
 
 public class Dank {
-  private static DankAppComponent appComponent;
+  private static RootComponent appComponent;
 
   public static void initDependencies(Application application) {
-    appComponent = DaggerDankAppComponent.builder()
+    appComponent = DaggerRootComponent.builder()
         .rootModule(new RootModule(application))
         .userPreferencesModule(new UserPreferencesModule())
         .build();
   }
 
-  public static DankAppComponent dependencyInjector() {
+  public static RootComponent dependencyInjector() {
     return appComponent;
   }
 

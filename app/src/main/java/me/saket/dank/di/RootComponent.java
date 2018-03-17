@@ -45,7 +45,7 @@ import me.saket.dank.utils.JacksonHelper;
 
 @Component(modules = { RootModule.class, UserPreferencesModule.class })
 @Singleton
-public interface DankAppComponent {
+public interface RootComponent {
 
   DankRedditClient dankRedditClient();
 
