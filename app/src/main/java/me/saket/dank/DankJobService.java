@@ -25,7 +25,8 @@ public abstract class DankJobService extends JobService {
   /**
    * IDs are stored here to prevent any accidental duplicate IDs.
    */
-  private static final int ID_DEBUG = -99;
+  protected static final int ID_GENERIC_DEBUG = -99;
+  protected static final int ID_DEBUG_RECYCLING = -98;
 
   protected static final int ID_SUBSCRIPTIONS_RECURRING_JOB = 0;
   protected static final int ID_SUBSCRIPTIONS_ONE_TIME_JOB = 1;
@@ -65,6 +66,10 @@ public abstract class DankJobService extends JobService {
   }
 
   protected void displayDebugNotification(String notifBody, Object... args) {
+    displayDebugNotification(ID_GENERIC_DEBUG, notifBody, args);
+  }
+
+  protected void displayDebugNotification(int id, String notifBody, Object... args) {
     if (!BuildConfig.DEBUG) {
       return;
     }
@@ -83,7 +88,7 @@ public abstract class DankJobService extends JobService {
 
     NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
     //noinspection ConstantConditions
-    notificationManager.notify(ID_DEBUG, builder.build());
+    notificationManager.notify(id, builder.build());
   }
 
   protected void removeDebugNotification() {
@@ -92,7 +97,7 @@ public abstract class DankJobService extends JobService {
     }
     NotificationManager notificationManager = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
     //noinspection ConstantConditions
-    notificationManager.cancel(ID_DEBUG);
+    notificationManager.cancel(ID_GENERIC_DEBUG);
   }
 
   public Observable<Object> lifecycleOnDestroy() {

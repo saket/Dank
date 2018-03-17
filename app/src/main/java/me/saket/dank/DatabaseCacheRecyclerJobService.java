@@ -5,7 +5,7 @@ import android.app.job.JobParameters;
 import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
-import android.text.format.DateUtils;
+import android.os.Build;
 
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -13,7 +13,7 @@ import javax.inject.Inject;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.submission.SubmissionRepository;
-import me.saket.dank.utils.RxUtils;
+import timber.log.Timber;
 
 /**
  * Runs every day, recycles DB rows older than 30 days (1 for debug variants).
@@ -23,16 +23,21 @@ public class DatabaseCacheRecyclerJobService extends DankJobService {
   @Inject SubmissionRepository submissionRepository;
 
   public static void schedule(Context context) {
-    JobInfo recycleJobInfo = new JobInfo.Builder(ID_RECYCLE_OLD_SUBMISSIONS, new ComponentName(context, DatabaseCacheRecyclerJobService.class))
+    JobInfo.Builder builder = new JobInfo.Builder(ID_RECYCLE_OLD_SUBMISSIONS, new ComponentName(context, DatabaseCacheRecyclerJobService.class))
         .setRequiresDeviceIdle(true)
         .setRequiresCharging(true)
         .setPersisted(true)
-        .setPeriodic(DateUtils.DAY_IN_MILLIS)
-        .build();
+        .setPeriodic(TimeUnit.DAYS.toMillis(1));
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+      builder = builder.setRequiresBatteryNotLow(true);
+    }
+
+    Timber.i("Scheduling recycling service");
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
     //noinspection ConstantConditions
-    jobScheduler.schedule(recycleJobInfo);
+    jobScheduler.schedule(builder.build());
   }
 
   @Override
@@ -46,19 +51,27 @@ public class DatabaseCacheRecyclerJobService extends DankJobService {
     int durationFromNow = BuildConfig.DEBUG ? 1 : 30;
     TimeUnit durationTimeUnit = TimeUnit.DAYS;
 
+    displayDebugNotification(
+        ID_DEBUG_RECYCLING,
+        "Recycling database rows older than %s days",
+        durationTimeUnit.toDays(durationFromNow));
+
     submissionRepository.recycleAllCachedBefore(durationFromNow, durationTimeUnit)
         .subscribeOn(Schedulers.io())
+        .takeUntil(lifecycleOnDestroy().ignoreElements())
         .subscribe(
             deletedRows -> {
-              if (BuildConfig.DEBUG) {
-                displayDebugNotification(
-                    "Recycled %s database rows older than %s days",
-                    deletedRows,
-                    durationTimeUnit.toDays(durationFromNow)
-                );
-              }
+              displayDebugNotification(
+                  ID_DEBUG_RECYCLING,
+                  "Recycled %s database rows older than %s days",
+                  deletedRows,
+                  durationTimeUnit.toDays(durationFromNow));
             },
-            RxUtils.logError("Couldn't recycle old submissions")
+            error -> {
+              displayDebugNotification(
+                  ID_DEBUG_RECYCLING,
+                  "Couldn't recycle database rows");
+            }
         );
 
     // Return true to indicate that the job is still being processed (in a background thread).

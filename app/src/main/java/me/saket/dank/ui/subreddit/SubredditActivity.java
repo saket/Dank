@@ -245,8 +245,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   public void onDestroy() {
     super.onDestroy();
 
-    // Recycle cached rows in DB.
-    DatabaseCacheRecyclerJobService.schedule(this);
+    if (isFinishing()) {
+      // Recycle cached rows in DB.
+      DatabaseCacheRecyclerJobService.schedule(this);
+    }
   }
 
   @OnClick(R.id.subreddit_subscribe)
