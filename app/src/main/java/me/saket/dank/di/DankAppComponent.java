@@ -43,7 +43,7 @@ import me.saket.dank.ui.user.messages.InboxFolderFragment;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
 import me.saket.dank.utils.JacksonHelper;
 
-@Component(modules = { DankAppModule.class, UserPreferencesModule.class })
+@Component(modules = { RootModule.class, UserPreferencesModule.class })
 @Singleton
 public interface DankAppComponent {
 

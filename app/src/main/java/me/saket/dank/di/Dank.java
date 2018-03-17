@@ -9,13 +9,14 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.utils.JacksonHelper;
+import retrofit2.http.HEAD;
 
 public class Dank {
   private static DankAppComponent appComponent;
 
   public static void initDependencies(Application application) {
     appComponent = DaggerDankAppComponent.builder()
-        .dankAppModule(new DankAppModule(application))
+        .rootModule(new RootModule(application))
         .userPreferencesModule(new UserPreferencesModule())
         .build();
   }

@@ -12,7 +12,7 @@ import com.bumptech.glide.module.LibraryGlideModule;
 import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
-import me.saket.dank.di.DankAppModule;
+import me.saket.dank.di.RootModule;
 import me.saket.dank.utils.okhttp.OkHttpResponseReadProgressListener;
 import me.saket.dank.utils.okhttp.OkHttpResponseBodyWithProgress;
 import okhttp3.Interceptor;
@@ -26,8 +26,8 @@ public class GlideOkHttpProgressModule extends LibraryGlideModule {
   @Override
   public void registerComponents(Context context, Glide glide, Registry registry) {
     OkHttpClient okHttpClient = new OkHttpClient.Builder()
-        .connectTimeout(DankAppModule.NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .readTimeout(DankAppModule.NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .connectTimeout(RootModule.NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+        .readTimeout(RootModule.NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .addNetworkInterceptor(createInterceptor(new OkHttpProgressListenersRepository()))
         .build();
 

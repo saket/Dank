@@ -75,13 +75,13 @@ import retrofit2.converter.moshi.MoshiConverterFactory;
 import timber.log.Timber;
 
 @Module
-public class DankAppModule {
+public class RootModule {
 
   public static final int NETWORK_CONNECT_TIMEOUT_SECONDS = 15;
   public static final int NETWORK_READ_TIMEOUT_SECONDS = 10;
   private Application appContext;
 
-  public DankAppModule(Application appContext) {
+  public RootModule(Application appContext) {
     this.appContext = appContext;
   }
 
