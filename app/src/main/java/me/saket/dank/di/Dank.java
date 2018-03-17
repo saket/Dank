@@ -17,6 +17,7 @@ public class Dank {
     appComponent = DaggerRootComponent.builder()
         .rootModule(new RootModule(application))
         .userPreferencesModule(new UserPreferencesModule())
+        .cacheModule(new CacheModule())
         .build();
   }
 

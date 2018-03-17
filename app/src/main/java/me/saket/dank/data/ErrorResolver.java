@@ -6,6 +6,8 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 
+import javax.inject.Inject;
+
 import io.reactivex.exceptions.CompositeException;
 import io.reactivex.exceptions.UndeliverableException;
 import me.saket.dank.R;
@@ -18,6 +20,10 @@ import retrofit2.HttpException;
  * title and message that can be shown by the View.
  */
 public class ErrorResolver {
+
+  @Inject
+  public ErrorResolver() {
+  }
 
   public ResolvedError resolve(@Nullable Throwable error) {
     error = findActualCause(error);
