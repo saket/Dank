@@ -51,7 +51,7 @@ public class StoreFilePersister<KEY, VALUE> implements Persister<VALUE, KEY>, Cl
     String toJson(VALUE raw);
   }
 
-  public StoreFilePersister(FileSystem fileSystem, PathResolver<KEY> pathResolver, JsonParser<VALUE> jsonParser) {
+  public StoreFilePersister(FileSystem fileSystem, DiskLruCachePathResolver<KEY> pathResolver, JsonParser<VALUE> jsonParser) {
     this.fileSystem = fileSystem;
     this.pathResolver = pathResolver;
 

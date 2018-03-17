@@ -4,7 +4,6 @@ import static java.util.Collections.unmodifiableList;
 
 import android.support.annotation.CheckResult;
 
-import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
@@ -39,6 +38,7 @@ import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyRepository;
 import me.saket.dank.urlparser.UrlParser;
+import me.saket.dank.utils.DiskLruCachePathResolver;
 import me.saket.dank.utils.StoreFilePersister;
 import me.saket.dank.utils.StreamableRepository;
 import me.saket.dank.utils.Urls;
@@ -71,7 +71,12 @@ public class MediaHostRepository {
     this.urlParser = urlParser;
 
     StoreFilePersister.JsonParser<MediaLink> jsonParser = new MediaLinkStoreJsonParser(moshi);
-    PathResolver<MediaLink> pathResolver = key -> key.getClass().getSimpleName() + "_" + Urls.parseFileNameWithExtension(key.unparsedUrl());
+    DiskLruCachePathResolver<MediaLink> pathResolver = new DiskLruCachePathResolver<MediaLink>() {
+      @Override
+      protected String resolveIn64Letters(MediaLink key) {
+        return key.getClass().getSimpleName() + "_" + Urls.parseFileNameWithExtension(key.unparsedUrl());
+      }
+    };
 
     cacheStore = StoreBuilder.<MediaLink, MediaLink>key()
         .fetcher(unresolvedMediaLink -> resolveFromRemote(unresolvedMediaLink))

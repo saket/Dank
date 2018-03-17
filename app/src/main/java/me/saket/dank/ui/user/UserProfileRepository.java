@@ -3,7 +3,6 @@ package me.saket.dank.ui.user;
 import android.support.annotation.CheckResult;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.store.util.Result;
 import com.nytimes.android.external.store3.base.impl.MemoryPolicy;
@@ -25,6 +24,7 @@ import io.reactivex.Single;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
+import me.saket.dank.utils.DiskLruCachePathResolver;
 import me.saket.dank.utils.MoshiStoreJsonParser;
 import me.saket.dank.utils.StoreFilePersister;
 
@@ -50,7 +50,12 @@ public class UserProfileRepository {
             .build())
         .open();
 
-    PathResolver<String> pathResolver = (username) -> "logged_in_user_account_" + username;
+    DiskLruCachePathResolver<String> pathResolver = new DiskLruCachePathResolver<String>() {
+      @Override
+      protected String resolveIn64Letters(String username) {
+        return "logged_in_user_" + username;
+      }
+    };
     MoshiStoreJsonParser<String, LoggedInAccount> parser = new MoshiStoreJsonParser<>(moshi, LoggedInAccount.class);
 
     loggedInUserAccountStore = StoreBuilder.<String, LoggedInAccount>key()

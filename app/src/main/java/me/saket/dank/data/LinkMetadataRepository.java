@@ -2,7 +2,6 @@ package me.saket.dank.data;
 
 import android.support.annotation.CheckResult;
 
-import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
@@ -17,9 +16,11 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.di.DankApi;
+import me.saket.dank.utils.DiskLruCachePathResolver;
 import me.saket.dank.utils.MoshiStoreJsonParser;
 import me.saket.dank.utils.StoreFilePersister;
 import me.saket.dank.utils.Urls;
+import timber.log.Timber;
 
 @Singleton
 public class LinkMetadataRepository {
@@ -28,9 +29,12 @@ public class LinkMetadataRepository {
 
   @Inject
   public LinkMetadataRepository(DankApi dankApi, FileSystem cacheFileSystem, Moshi moshi) {
-    PathResolver<Link> pathResolver = key -> {
-      String url = key.unparsedUrl();
-      return Urls.parseDomainName(url) + "_" + Urls.parseFileNameWithExtension(url) + "_" + url.hashCode();
+    DiskLruCachePathResolver<Link> pathResolver = new DiskLruCachePathResolver<Link>() {
+      @Override
+      protected String resolveIn64Letters(Link key) {
+        String url = key.unparsedUrl();
+        return url.hashCode() + "_" + Urls.parseDomainName(url) + "_" + Urls.parseFileNameWithExtension(url);
+      }
     };
     StoreFilePersister.JsonParser<LinkMetadata> jsonParser = new MoshiStoreJsonParser<>(moshi, LinkMetadata.class);
 
@@ -42,7 +46,7 @@ public class LinkMetadataRepository {
 
   @CheckResult
   public Single<LinkMetadata> unfurl(Link link) {
-    return linkMetadataStore.get(link);
+    return linkMetadataStore.get(link).doOnError(e -> Timber.e(e, "Couldn't unfurl link: %s", link));
   }
 
   @CheckResult

@@ -9,7 +9,6 @@ import com.jakewharton.disklrucache.DiskLruCache;
 import com.nytimes.android.external.cache3.Cache;
 import com.nytimes.android.external.cache3.CacheBuilder;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
-import com.nytimes.android.external.fs3.filesystem.FileSystemFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -27,17 +26,26 @@ import me.saket.dank.data.AppInfo;
 import me.saket.dank.data.FileSize;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.utils.FileSizeUnit;
+import me.saket.dank.utils.StoreLruFileSystem;
 
 @Module
 public class CacheModule {
 
   @Provides
   @Singleton
-  FileSystem provideCacheFileSystem(Application appContext) {
+  FileSystem provideCacheFileSystem(StoreLruFileSystem lruFileSystem) {
+    return lruFileSystem;
+  }
+
+  @Provides
+  DiskLruCache diskLruCache(Application appContext, AppInfo appInfo) {
+    FileSize maxCacheSize = FileSize.create(100, FileSizeUnit.MB);
+    File cacheDirectory = new File(appContext.getCacheDir(), "disk_lru_cache");
     try {
-      return FileSystemFactory.create(appContext.getCacheDir());
+      int valuesPerCacheEntry = 1;  // No idea what this means. Glide uses 1.
+      return DiskLruCache.open(cacheDirectory, appInfo.appVersionCode(), valuesPerCacheEntry, (long) maxCacheSize.bytes());
     } catch (IOException e) {
-      throw new RuntimeException("Couldn't create FileSystemFactory. Cache dir: " + appContext.getCacheDir());
+      throw Exceptions.propagate(e);
     }
   }
 
@@ -79,16 +87,5 @@ public class CacheModule {
     return CacheBuilder.newBuilder()
         .maximumSize(100)
         .build();
-  }
-
-  @Provides
-  DiskLruCache diskLruCache(Application appContext, AppInfo appInfo) {
-    FileSize maxCacheSize = FileSize.create(100, FileSizeUnit.MB);
-    File cacheDirectory = new File(appContext.getCacheDir(), "disk_lru_cache");
-    try {
-      return DiskLruCache.open(cacheDirectory, appInfo.appVersionCode(), 1, (long) maxCacheSize.bytes());
-    } catch (IOException e) {
-      throw Exceptions.propagate(e);
-    }
   }
 }

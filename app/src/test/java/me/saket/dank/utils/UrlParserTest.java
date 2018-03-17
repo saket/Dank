@@ -12,7 +12,6 @@ import android.text.Spannable;
 import android.text.TextUtils;
 import android.util.Patterns;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import com.nytimes.android.external.cache3.CacheBuilder;
 
 import net.dean.jraw.models.Submission;
@@ -294,7 +293,7 @@ public class UrlParserTest {
           "    }\n" +
           "  }\n" +
           "}\n";
-      JacksonHelper jacksonHelper = new JacksonHelper(new ObjectMapper());
+      JacksonHelper jacksonHelper = new JacksonHelper();
       Submission submission = new Submission(jacksonHelper.parseJsonNode(submissionJson));
 
       Link parsedLink = urlParser.parse(videoUrl, submission);
@@ -332,7 +331,7 @@ public class UrlParserTest {
           "    }\n" +
           "  ]\n" +
           "}\n";
-      JacksonHelper jacksonHelper = new JacksonHelper(new ObjectMapper());
+      JacksonHelper jacksonHelper = new JacksonHelper();
       Submission submission = new Submission(jacksonHelper.parseJsonNode(submissionJson));
 
       Link parsedLink = urlParser.parse(videoUrl, submission);

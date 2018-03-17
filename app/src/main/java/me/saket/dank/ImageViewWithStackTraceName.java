@@ -8,6 +8,8 @@ import android.util.AttributeSet;
 /**
  * For debugging:
  * RuntimeException: Canvas: trying to use a recycled bitmap android.graphics.Bitmap@54a85ba.
+ *
+ * @deprecated The issue is now solved, but keeping it around for a while just in case it shows up again.
  */
 public class ImageViewWithStackTraceName extends AppCompatImageView {
 

@@ -63,6 +63,7 @@ public class Strings {
     }
   }
 
+  // FIXME: rename to ellipsize().
   public static String substringWithBounds(String string, int endIndex) {
     int bound = Math.min(string.length(), endIndex);
     String substringWithBounds = string.substring(0, bound);
@@ -70,6 +71,11 @@ public class Strings {
       substringWithBounds += "...";
     }
     return substringWithBounds;
+  }
+
+  public static String substringWithBounds2(String string, int limit) {
+    int bound = Math.min(string.length(), limit);
+    return string.substring(0, bound);
   }
 
   public static boolean isNullOrEmpty(@Nullable CharSequence string) {
