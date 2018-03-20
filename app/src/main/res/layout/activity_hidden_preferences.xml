@@ -11,11 +11,17 @@
     style="@style/DankToolbar"
     app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
-  <LinearLayout
-    android:id="@+id/hiddenpreferences_content"
+  <ScrollView
+    android:id="@+id/hiddenpreferences_content_scrollview"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:layout_below="@id/toolbar"
-    android:orientation="vertical"
-    android:padding="@dimen/spacing16" />
+    android:layout_below="@id/toolbar">
+
+    <LinearLayout
+      android:id="@+id/hiddenpreferences_content"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:orientation="vertical"
+      android:padding="@dimen/spacing16" />
+  </ScrollView>
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

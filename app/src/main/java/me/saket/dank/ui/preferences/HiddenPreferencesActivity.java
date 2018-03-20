@@ -13,16 +13,20 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ScrollView;
 
 import com.bumptech.glide.Glide;
 import com.squareup.sqlbrite2.BriteDatabase;
 
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import dagger.Lazy;
 import io.reactivex.Completable;
+import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.SubredditSubscriptionManager;
@@ -36,14 +40,17 @@ import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.Views;
 import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
+import timber.log.Timber;
 
 @SuppressLint("SetTextI18n")
 public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
   @BindView(R.id.hiddenpreferences_root) IndependentExpandablePageLayout activityContentPage;
   @BindView(R.id.toolbar) Toolbar toolbar;
+  @BindView(R.id.hiddenpreferences_content_scrollview) ScrollView contentScrollView;
   @BindView(R.id.hiddenpreferences_content) ViewGroup contentContainer;
 
   @Inject BriteDatabase briteDatabase;
@@ -71,6 +78,11 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
     setupContentExpandablePage(activityContentPage);
     expandFromBelowToolbar();
+
+    activityContentPage.setPullToCollapseIntercepter((event, downX, downY, upwardPagePull) -> {
+      //noinspection CodeBlock2Expr
+      return Views.touchLiesOn(contentScrollView, downX, downY) && contentScrollView.canScrollVertically(upwardPagePull ? 1 : -1);
+    });
   }
 
   @Override
@@ -145,6 +157,23 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
     addButton("Clear markdown cache", o-> {
       markdown.get().clearCache();
+    });
+
+    addButton("Recycle old DB rows", o -> {
+      int durationFromNow = BuildConfig.DEBUG ? 1 : 30;
+      TimeUnit durationTimeUnit = TimeUnit.DAYS;
+
+      submissionRepository.recycleAllCachedBefore(durationFromNow, durationTimeUnit)
+          .subscribeOn(Schedulers.io())
+          .takeUntil(lifecycle().onDestroyCompletable())
+          .subscribe(
+              deletedRows -> {
+                Timber.i("Recycled %s database rows older than %s days", deletedRows, durationTimeUnit.toDays(durationFromNow));
+              },
+              error -> {
+                Timber.e(error, "Couldn't recycle database rows");
+              }
+          );
     });
   }
 
