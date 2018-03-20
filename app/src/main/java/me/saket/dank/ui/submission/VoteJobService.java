@@ -107,8 +107,7 @@ public class VoteJobService extends DankJobService {
   }
 
   @Override
-  public boolean onStopJob(JobParameters params) {
-    // Return true to indicate JobScheduler that the job should be rescheduled.
-    return true;
+  public JobStopCallback onStopJob2() {
+    return JobStopCallback.rescheduleRequired();
   }
 }

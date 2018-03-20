@@ -81,8 +81,7 @@ public class DatabaseCacheRecyclerJobService extends DankJobService {
   }
 
   @Override
-  public boolean onStopJob(JobParameters params) {
-    // False to drop this job.
-    return false;
+  public JobStopCallback onStopJob2() {
+    return JobStopCallback.drop();
   }
 }

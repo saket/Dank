@@ -51,12 +51,20 @@ public abstract class DankJobService extends JobService {
   private Relay<Object> onDestroyStream = PublishRelay.create();
 
   @Override
-  public boolean onStartJob(JobParameters params) {
+  public final boolean onStartJob(JobParameters params) {
     JobStartCallback callback = onStartJob2(params);
     return callback.isRunningInBackground();
   }
 
+  @Override
+  public final boolean onStopJob(JobParameters params) {
+    JobStopCallback callback = onStopJob2();
+    return callback.shouldReschedule();
+  }
+
   public abstract JobStartCallback onStartJob2(JobParameters params);
+
+  public abstract JobStopCallback onStopJob2();
 
   @Deprecated
   protected void unsubscribeOnDestroy(Disposable subscription) {
@@ -115,7 +123,7 @@ public abstract class DankJobService extends JobService {
   }
 
   @AutoValue
-  public static abstract class JobStartCallback {
+  public abstract static class JobStartCallback {
     public abstract boolean isRunningInBackground();
 
     public static JobStartCallback runningInBackground() {
@@ -124,6 +132,19 @@ public abstract class DankJobService extends JobService {
 
     public static JobStartCallback finished() {
       return new AutoValue_DankJobService_JobStartCallback(false);
+    }
+  }
+
+  @AutoValue
+  public abstract static class JobStopCallback {
+    public abstract boolean shouldReschedule();
+
+    public static JobStopCallback rescheduleRequired() {
+      return new AutoValue_DankJobService_JobStopCallback(true);
+    }
+
+    public static JobStopCallback drop() {
+      return new AutoValue_DankJobService_JobStopCallback(false);
     }
   }
 }
