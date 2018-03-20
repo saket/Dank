@@ -32,7 +32,7 @@ import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.user.UserSessionRepository;
-import me.saket.dank.utils.Commons;
+import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
@@ -195,7 +195,7 @@ public class SubmissionUiConstructor {
       Optional<SubmissionContentLinkUiModel> contentLinkUiModel)
   {
     VoteDirection pendingOrDefaultVote = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
-    int voteDirectionColor = Commons.voteColor(pendingOrDefaultVote);
+    int voteDirectionColor = Themes.voteColor(pendingOrDefaultVote);
     long adapterId = submission.getFullName().hashCode();
 
     Optional<CharSequence> selfTextOptional = submission.isSelfPost() && !submission.getSelftext().isEmpty()

@@ -6,13 +6,9 @@ import net.dean.jraw.models.VoteDirection;
 
 import me.saket.dank.R;
 
-/**
- * Utility methods that don't fit in anywhere.
- */
-public class Commons {
+public class Themes {
 
   @ColorRes
-  @Deprecated
   public static int voteColor(VoteDirection voteDirection) {
     switch (voteDirection) {
       case UPVOTE:

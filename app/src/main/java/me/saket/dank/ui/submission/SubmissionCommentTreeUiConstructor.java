@@ -34,7 +34,7 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsLoadMore;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.user.UserSessionRepository;
-import me.saket.dank.utils.Commons;
+import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
@@ -585,7 +585,7 @@ public class SubmissionCommentTreeUiConstructor {
         bylineBuilder.append(markdown.get().parseAuthorFlair(flair));
       });
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
-      bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, Commons.voteColor(voteDirection))));
+      bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, Themes.voteColor(voteDirection))));
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_score, Strings.abbreviateScore(commentScore)));
       bylineBuilder.popSpan();
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));

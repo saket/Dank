@@ -33,7 +33,7 @@ import me.saket.dank.ui.submission.SubredditNotFoundException;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.ui.subreddit.SubmissionThumbnailTypeMinusNsfw;
-import me.saket.dank.utils.Commons;
+import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
@@ -218,7 +218,7 @@ public class SubredditUiConstructor {
     int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
 
     Truss titleBuilder = new Truss();
-    titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(c, Commons.voteColor(voteDirection))));
+    titleBuilder.pushSpan(new ForegroundColorSpan(ContextCompat.getColor(c, Themes.voteColor(voteDirection))));
     titleBuilder.append(Strings.abbreviateScore(submissionScore));
     titleBuilder.popSpan();
     titleBuilder.append("  ");

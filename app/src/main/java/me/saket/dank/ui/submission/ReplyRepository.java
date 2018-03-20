@@ -1,7 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.utils.Commons.toImmutable;
-
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
