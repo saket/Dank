@@ -32,38 +32,38 @@
     <!--app:prefbutton_summary="Only on WiFi"-->
     <!--app:prefbutton_title="Load high resolution images and videos" />-->
 
-  <TextView
-    style="@style/DankPreferencesGroupTitle.WithTopSpacing"
-    android:layout_width="wrap_content"
-    android:layout_height="wrap_content"
-    android:layout_marginBottom="@dimen/spacing4"
-    android:text="@string/userprefs_group_caching" />
+  <!--<TextView-->
+    <!--style="@style/DankPreferencesGroupTitle.WithTopSpacing"-->
+    <!--android:layout_width="wrap_content"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:layout_marginBottom="@dimen/spacing4"-->
+    <!--android:text="@string/userprefs_group_caching" />-->
 
-  <TextView
-    style="@style/DankPreferenceGroupSummary"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:text="@string/userprefs_group_caching_summary" />
+  <!--<TextView-->
+    <!--style="@style/DankPreferenceGroupSummary"-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--android:text="@string/userprefs_group_caching_summary" />-->
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButtonView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    app:prefbutton_summary="Only on WiFi"
-    app:prefbutton_title="@string/userprefs_prefetch_images" />
+  <!--<me.saket.dank.widgets.prefs.UserPreferenceButtonView-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--app:prefbutton_summary="Only on WiFi"-->
+    <!--app:prefbutton_title="@string/userprefs_prefetch_images" />-->
 
-  <View style="@style/DankPreferencesSeparator" />
+  <!--<View style="@style/DankPreferencesSeparator" />-->
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButtonView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    app:prefbutton_summary="Only on WiFi"
-    app:prefbutton_title="@string/userprefs_prefetch_link_descriptions" />
+  <!--<me.saket.dank.widgets.prefs.UserPreferenceButtonView-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--app:prefbutton_summary="Only on WiFi"-->
+    <!--app:prefbutton_title="@string/userprefs_prefetch_link_descriptions" />-->
 
-  <View style="@style/DankPreferencesSeparator" />
+  <!--<View style="@style/DankPreferencesSeparator" />-->
 
-  <me.saket.dank.widgets.prefs.UserPreferenceButtonView
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    app:prefbutton_summary="Only on WiFi"
-    app:prefbutton_title="@string/userprefs_prefetch_comments" />
+  <!--<me.saket.dank.widgets.prefs.UserPreferenceButtonView-->
+    <!--android:layout_width="match_parent"-->
+    <!--android:layout_height="wrap_content"-->
+    <!--app:prefbutton_summary="Only on WiFi"-->
+    <!--app:prefbutton_title="@string/userprefs_prefetch_comments" />-->
 </LinearLayout>

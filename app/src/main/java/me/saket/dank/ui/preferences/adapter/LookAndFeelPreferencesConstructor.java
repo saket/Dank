@@ -33,22 +33,19 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
             ? c.getString(R.string.userprefs_submission_thumbnail_summary_on)
             : c.getString(R.string.userprefs_submission_thumbnail_summary_off),
         showSubmissionThumbnails.get(),
-        showSubmissionThumbnails
-    ));
+        showSubmissionThumbnails));
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_gestures)));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_customize_submission_gestures),
         "Options and save. Upvote and downvote.",
-        R.layout.view_user_preferences_submission_gestures
-    ));
+        R.layout.view_user_preferences_submission_gestures));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_customize_comment_gestures),
         "Options and save. Upvote and downvote.",
-        R.layout.view_user_preferences_comment_gestures
-    ));
+        R.layout.view_user_preferences_comment_gestures));
 
     return uiModels;
   }

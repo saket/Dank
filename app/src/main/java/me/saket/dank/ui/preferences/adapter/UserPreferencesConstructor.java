@@ -27,6 +27,7 @@ public class UserPreferencesConstructor {
   public UserPreferencesConstructor(
       LookAndFeelPreferencesConstructor lookAndFeel,
       FiltersPreferencesConstructor filters,
+      DataUsagePreferencesConstructor dataUsage,
       @Named("user_preferences") Observable<Object> userPrefChanges)
   {
     this.userPrefChanges = userPrefChanges;
@@ -34,7 +35,7 @@ public class UserPreferencesConstructor {
     childConstructors = new HashMap<>();
     childConstructors.put(UserPreferenceGroup.LOOK_AND_FEEL, lookAndFeel);
     childConstructors.put(UserPreferenceGroup.FILTERS, filters);
-    childConstructors.put(UserPreferenceGroup.DATA_USAGE, c -> Collections.emptyList());
+    childConstructors.put(UserPreferenceGroup.DATA_USAGE, dataUsage);
     childConstructors.put(UserPreferenceGroup.MISCELLANEOUS, c -> Collections.emptyList());
     childConstructors.put(UserPreferenceGroup.ABOUT_DANK, c -> Collections.emptyList());
   }

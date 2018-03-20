@@ -336,10 +336,13 @@
   <string name="userprefs_datausage_message_sync_period_and_connection">Every 30 minutes and only on WiFi</string>
 
   <string name="userprefs_group_caching">Caching</string>
-  <string name="userprefs_group_caching_summary">Dank can pre-fetch content for subscribed subreddits so that they\'re immediately available for consumption.</string>
+  <string name="userprefs_group_caching_summary">Dank can pre-fetch content for subscribed subreddits when you visit them.
+    This way they\'re immediately available for consumption.</string>
   <string name="userprefs_prefetch_images">Pre-fetch images</string>
   <string name="userprefs_prefetch_link_descriptions">Pre-fetch link descriptions</string>
   <string name="userprefs_prefetch_comments">Pre-fetch comments</string>
+
+  <string name="userprefs_caching_only_on_wifi">Only on WiFi</string>
 
   <string name="userprefes_group_link_handling">Link handling</string>
   <string name="userprefs_open_links_in_apps">Open links in known apps</string>

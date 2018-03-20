@@ -8,8 +8,6 @@ import android.widget.TextView;
 
 import com.google.auto.value.AutoValue;
 
-import java.util.List;
-
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -33,8 +31,8 @@ public interface UserPreferenceSectionHeader  {
 
     public abstract Optional<String> description();
 
-    public static UiModel create(String label, Optional<String> description) {
-      return new AutoValue_UserPreferenceSectionHeader_UiModel(label.hashCode(), label, description);
+    public static UiModel create(String label, String description) {
+      return new AutoValue_UserPreferenceSectionHeader_UiModel(label.hashCode(), label, Optional.of(description));
     }
 
     public static UiModel create(String label) {
