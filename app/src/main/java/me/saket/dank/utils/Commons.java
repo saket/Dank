@@ -4,21 +4,12 @@ import android.support.annotation.ColorRes;
 
 import net.dean.jraw.models.VoteDirection;
 
-import java.util.Collections;
-import java.util.List;
-
-import io.reactivex.functions.Function;
 import me.saket.dank.R;
 
 /**
  * Utility methods that don't fit in anywhere.
  */
 public class Commons {
-
-  @Deprecated
-  public static <T> Function<List<T>, List<T>> toImmutable() {
-    return list -> Collections.unmodifiableList(list);
-  }
 
   @ColorRes
   @Deprecated

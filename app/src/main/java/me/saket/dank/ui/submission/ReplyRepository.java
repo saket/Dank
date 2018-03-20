@@ -32,6 +32,7 @@ import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.FullNameType;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.Preconditions;
 import timber.log.Timber;
 
@@ -154,14 +155,14 @@ public class ReplyRepository implements DraftStore {
   public Observable<List<PendingSyncReply>> streamPendingSyncReplies(ParentThread parentThread) {
     return database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FOR_THREAD, parentThread.fullName())
         .mapToList(PendingSyncReply.MAPPER)
-        .map(toImmutable());
+        .as(Arrays2.immutable());
   }
 
   @CheckResult
   public Observable<List<PendingSyncReply>> streamFailedReplies() {
     return database.createQuery(PendingSyncReply.TABLE_NAME, PendingSyncReply.QUERY_GET_ALL_FAILED)
         .mapToList(PendingSyncReply.MAPPER)
-        .map(toImmutable());
+        .as(Arrays2.immutable());
   }
 
   /**

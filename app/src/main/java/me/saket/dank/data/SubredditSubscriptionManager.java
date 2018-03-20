@@ -1,6 +1,7 @@
 package me.saket.dank.data;
 
-import static me.saket.dank.utils.Commons.toImmutable;
+import static me.saket.dank.utils.Arrays2.immutable;
+import static me.saket.dank.utils.Arrays2.toImmutable;
 import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
 import android.app.Application;
@@ -88,7 +89,7 @@ public class SubredditSubscriptionManager {
 
     return database.createQuery(SubredditSubscription.TABLE_NAME, getQuery, "%" + filterTerm + "%")
         .mapToList(SubredditSubscription.MAPPER)
-        .map(toImmutable())
+        .as(immutable())
         .flatMap(filteredSubs -> {
           if (filteredSubs.isEmpty()) {
             // Fetch fresh subscriptions from remote if DB is empty.

@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission;
 
 import static junit.framework.Assert.assertEquals;
+import static me.saket.dank.utils.Arrays2.immutable;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -55,7 +56,7 @@ import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
-import me.saket.dank.utils.Commons;
+import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
@@ -293,7 +294,7 @@ public class SubmissionRepository {
 
     return database.createQuery(tablesToListen, sqlQuery)
         .mapToList(CachedSubmissionList.cursorMapper(moshi.adapter(Submission.class)))
-        .map(Commons.toImmutable());
+        .as(immutable());
   }
 
   /**

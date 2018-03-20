@@ -7,6 +7,7 @@ import java.util.List;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableConverter;
+import io.reactivex.functions.Function;
 
 /**
  * Utility methods for arrays.
@@ -28,6 +29,10 @@ public class Arrays2 {
 
   public static <T> ObservableConverter<List<T>, Observable<List<T>>> immutable() {
     return upstream -> upstream.map(items -> Collections.unmodifiableList(items));
+  }
+
+  public static <T> Function<List<T>, List<T>> toImmutable() {
+    return list -> Collections.unmodifiableList(list);
   }
 
   public static <T> Optional<T> optionallyFirst(List<T> items) {
