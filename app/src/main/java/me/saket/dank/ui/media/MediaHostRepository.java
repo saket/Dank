@@ -5,6 +5,7 @@ import static java.util.Collections.unmodifiableList;
 import android.support.annotation.CheckResult;
 
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
+import com.nytimes.android.external.store3.base.impl.MemoryPolicy;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
 import com.squareup.moshi.JsonDataException;
@@ -14,6 +15,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -21,6 +23,8 @@ import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
+import me.saket.dank.cache.DiskLruCachePathResolver;
+import me.saket.dank.cache.StoreFilePersister;
 import me.saket.dank.data.CachedResolvedLinkInfo;
 import me.saket.dank.data.FileUploadProgressEvent;
 import me.saket.dank.data.ImgurImage;
@@ -38,8 +42,6 @@ import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyRepository;
 import me.saket.dank.urlparser.UrlParser;
-import me.saket.dank.cache.DiskLruCachePathResolver;
-import me.saket.dank.cache.StoreFilePersister;
 import me.saket.dank.utils.StreamableRepository;
 import me.saket.dank.utils.Urls;
 import okio.BufferedSource;
@@ -80,6 +82,11 @@ public class MediaHostRepository {
 
     cacheStore = StoreBuilder.<MediaLink, MediaLink>key()
         .fetcher(unresolvedMediaLink -> resolveFromRemote(unresolvedMediaLink))
+        .memoryPolicy(MemoryPolicy.builder()
+            .setMemorySize(100)
+            .setExpireAfterWrite(24)
+            .setExpireAfterTimeUnit(TimeUnit.HOURS)
+            .build())
         .persister(new StoreFilePersister<>(cacheFileSystem, pathResolver, jsonParser))
         .open();
   }

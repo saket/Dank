@@ -21,12 +21,12 @@ import javax.inject.Singleton;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.links.RedditUserLink;
-import me.saket.dank.di.Dank;
 import me.saket.dank.cache.DiskLruCachePathResolver;
 import me.saket.dank.cache.MoshiStoreJsonParser;
 import me.saket.dank.cache.StoreFilePersister;
+import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.di.Dank;
 
 @Singleton
 public class UserProfileRepository {
@@ -45,8 +45,10 @@ public class UserProfileRepository {
         .fetcher(username -> userProfile(username))
         .memoryPolicy(MemoryPolicy.builder()
             // FIXME: Memory-only store doesn't support expire-after-access policy.
+            // FIXME: Expiry time isn't optional.
             .setExpireAfterWrite(6)
             .setExpireAfterTimeUnit(TimeUnit.HOURS)
+            .setMemorySize(30)
             .build())
         .open();
 
@@ -101,8 +103,7 @@ public class UserProfileRepository {
   public Completable refreshLoggedInUserAccount() {
     String loggedInUserName = userSessionRepository.loggedInUserName();
 
-    return loggedInUserAccountStore
-        .getWithResult(loggedInUserName)
+    return loggedInUserAccountStore.getWithResult(loggedInUserName)
         .filter(Result::isFromCache)
         .flatMapSingle(o -> loggedInUserAccountStore.fetch(loggedInUserName))
         .toCompletable();

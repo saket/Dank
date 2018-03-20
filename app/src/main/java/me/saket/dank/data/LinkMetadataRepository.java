@@ -3,22 +3,24 @@ package me.saket.dank.data;
 import android.support.annotation.CheckResult;
 
 import com.nytimes.android.external.fs3.filesystem.FileSystem;
+import com.nytimes.android.external.store3.base.impl.MemoryPolicy;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
 import com.squareup.moshi.Moshi;
 
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
-import me.saket.dank.data.links.Link;
-import me.saket.dank.data.links.LinkMetadata;
-import me.saket.dank.di.DankApi;
 import me.saket.dank.cache.DiskLruCachePathResolver;
 import me.saket.dank.cache.MoshiStoreJsonParser;
 import me.saket.dank.cache.StoreFilePersister;
+import me.saket.dank.data.links.Link;
+import me.saket.dank.data.links.LinkMetadata;
+import me.saket.dank.di.DankApi;
 import me.saket.dank.utils.Urls;
 import timber.log.Timber;
 
@@ -40,6 +42,11 @@ public class LinkMetadataRepository {
 
     linkMetadataStore = StoreBuilder.<Link, LinkMetadata>key()
         .fetcher(link -> unfurlLinkFromRemote(dankApi, link))
+        .memoryPolicy(MemoryPolicy.builder()
+            .setMemorySize(100)
+            .setExpireAfterWrite(24)
+            .setExpireAfterTimeUnit(TimeUnit.HOURS)
+            .build())
         .persister(new StoreFilePersister<>(cacheFileSystem, pathResolver, jsonParser))
         .open();
   }

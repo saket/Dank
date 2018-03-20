@@ -12,6 +12,7 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.nytimes.android.external.store3.base.Fetcher;
 import com.nytimes.android.external.store3.base.Persister;
+import com.nytimes.android.external.store3.base.impl.MemoryPolicy;
 import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
 import com.squareup.moshi.JsonAdapter;
@@ -113,6 +114,11 @@ public class SubmissionRepository {
 
       return StoreBuilder.<DankSubmissionRequest, CachedSubmissionWithComments>key()
           .fetcher(fetcher)
+          .memoryPolicy(MemoryPolicy.builder()
+              .setMemorySize(100)
+              .setExpireAfterWrite(24)
+              .setExpireAfterTimeUnit(TimeUnit.HOURS)
+              .build())
           .persister(persister)
           .open();
     });
