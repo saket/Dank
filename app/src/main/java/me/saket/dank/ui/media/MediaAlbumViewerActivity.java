@@ -503,8 +503,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
               .subscribe(
                   imageFile -> {
                     Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), imageFile);
-                    Intent intent = Intents.createForSharingMedia(this, contentUri);
-                    startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
+                    startActivity(Intents.createForSharingMedia(this, contentUri));
                   },
                   error -> {
                     if (error instanceof NoSuchElementException) {
@@ -544,8 +543,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                   videoFile -> {
                     Timber.i("videoFile: %s", videoFile);
                     Uri contentUri = FileProvider.getUriForFile(this, getString(R.string.file_provider_authority), videoFile);
-                    Intent intent = Intents.createForSharingMedia(this, contentUri);
-                    startActivity(Intent.createChooser(intent, getString(R.string.mediaalbumviewer_share_sheet_title)));
+                    startActivity(Intents.createForSharingMedia(this, contentUri));
                   },
                   error -> {
                     if (error instanceof VideoNotCachedYetException) {
@@ -559,14 +557,12 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
           break;
 
         case R.id.action_share_album_url:
-          Intent shareAlbumUrlIntent = Intents.createForSharingUrl(null, resolvedMediaLink.unparsedUrl());
-          startActivity(Intent.createChooser(shareAlbumUrlIntent, getString(R.string.webview_share_sheet_title)));
+          startActivity(Intents.createForSharingUrl(this, resolvedMediaLink.unparsedUrl()));
           break;
 
         case R.id.action_share_image_url:
         case R.id.action_share_video_url:
-          Intent shareMediaUrlIntent = Intents.createForSharingUrl(null, activeMediaItem.mediaLink().highQualityUrl());
-          startActivity(Intent.createChooser(shareMediaUrlIntent, getString(R.string.webview_share_sheet_title)));
+          startActivity(Intents.createForSharingUrl(this, activeMediaItem.mediaLink().highQualityUrl()));
           break;
 
         default:

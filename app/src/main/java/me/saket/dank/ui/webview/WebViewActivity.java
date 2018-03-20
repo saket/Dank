@@ -112,8 +112,7 @@ public class WebViewActivity extends DankPullCollapsibleActivity {
         return true;
 
       case R.id.action_share_webpage:
-        Intent shareIntent = Intents.createForSharingUrl(getTitle().toString(), webView.getUrl());
-        startActivity(Intent.createChooser(shareIntent, getString(R.string.webview_share_sheet_title)));
+        startActivity(Intents.createForSharingUrl(this, getTitle().toString(), webView.getUrl()));
         return true;
 
       case R.id.action_open_in_external_browser:

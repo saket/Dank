@@ -18,7 +18,7 @@
   <string name="notification_channel_media_downloads_description">Image and video downloads</string>
   <string name="notification_channel_debug_notifs_id">debug_notifs</string>
 
-  <!-- Common errors -->
+  <!-- Common -->
   <string name="common_error_retry">Retry</string>
   <string name="common_emptystate_reload">Reload</string>
 
@@ -34,6 +34,8 @@
   <string name="common_imgur_rate_limit_error_emoji">ಥ_ಥ</string>
   <string name="common_imgur_request_rate_limit_error_message">Dank has reached its monthly limit of downloading images from Imgur.</string>
   <string name="common_imgur_upload_rate_limit_error_message">Dank has reached its monthly limit of uploading images to Imgur.</string>
+
+  <string name="common_share_sheet_title">Share with</string>
 
   <!-- Login -->
   <string name="login">Login</string>
@@ -209,7 +211,6 @@
   <!-- WebView -->
   <string name="webview_open_in_browser">Open in browser</string>
   <string name="webview_share">Share…</string>
-  <string name="webview_share_sheet_title">Share with</string>
   <string name="webview_refresh">Refresh</string>
 
   <!-- Inbox -->
@@ -275,7 +276,6 @@
   <string name="mediaalbumviewer_share_video">Share video</string>
   <string name="mediaalbumviewer_share_image_link">Share image link</string>
   <string name="mediaalbumviewer_share_video_link">Share video link</string>
-  <string name="mediaalbumviewer_share_sheet_title">Share with</string>
   <string name="mediaalbumviewer_share_image_not_loaded_yet">Image hasn\'t been loaded yet</string>
   <string name="mediaalbumviewer_share_video_not_loaded_yet">Video hasn\'t been streamed fully yet. Try download instead?</string>
   <string name="mediaalbumviewer_share_album_link">Share album link</string>

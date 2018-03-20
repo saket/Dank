@@ -7,6 +7,8 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.v4.app.ShareCompat;
 
+import me.saket.dank.R;
+
 /**
  * Utility methods related to Intents.
  */
@@ -24,14 +26,22 @@ public class Intents {
    * For sharing an Url and its title. Not all apps support reading the title though.
    */
   @CheckResult
-  public static Intent createForSharingUrl(@Nullable String title, String url) {
-    Intent intent = new Intent(Intent.ACTION_SEND);
-    intent.setType("text/plain");
-    if (title != null && !title.isEmpty()) {
-      intent.putExtra(Intent.EXTRA_SUBJECT, title);
+  public static Intent createForSharingUrl(Context context, String url) {
+    return createForSharingUrl(context, null, url);
+  }
+
+  /**
+   * For sharing an Url and its subject. Not all apps support reading the subject though.
+   */
+  @CheckResult
+  public static Intent createForSharingUrl(Context context, @Nullable String subject, String url) {
+    Intent shareIntent = new Intent(Intent.ACTION_SEND);
+    shareIntent.setType("text/plain");
+    if (subject != null && !subject.isEmpty()) {
+      shareIntent.putExtra(Intent.EXTRA_SUBJECT, subject);
     }
-    intent.putExtra(Intent.EXTRA_TEXT, url);
-    return intent;
+    shareIntent.putExtra(Intent.EXTRA_TEXT, url);
+    return Intent.createChooser(shareIntent, context.getString(R.string.common_share_sheet_title));
   }
 
   @CheckResult

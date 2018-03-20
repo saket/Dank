@@ -55,7 +55,7 @@ public class LinkOptionsPopup extends NestedOptionsPopupMenu {
   protected void handleAction(Context c, int actionId) {
     switch (actionId) {
       case ID_SHARE:
-        c.startActivity(Intents.createForSharingUrl(null, link.unparsedUrl()));
+        c.startActivity(Intents.createForSharingUrl(c, link.unparsedUrl()));
         break;
 
       case ID_COPY:

@@ -159,11 +159,11 @@ public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
         break;
 
       case ID_SHARE_REDDIT_COMMENTS_LINK:
-        c.startActivity(Intents.createForSharingUrl(null, submissionPermalink(submission)));
+        c.startActivity(Intents.createForSharingUrl(c, submissionPermalink(submission)));
         break;
 
       case ID_SHARE_CONTENT_LINK:
-        c.startActivity(Intents.createForSharingUrl(null, submission.getUrl()));
+        c.startActivity(Intents.createForSharingUrl(c, submission.getUrl()));
         break;
 
       case ID_COPY_REDDIT_COMMENTS_LINK:

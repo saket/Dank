@@ -16,8 +16,8 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Clipboards;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.NestedOptionsPopupMenu;
+import me.saket.dank.utils.markdown.Markdown;
 import okhttp3.HttpUrl;
 
 public class CommentOptionsPopup extends NestedOptionsPopupMenu {
@@ -100,7 +100,7 @@ public class CommentOptionsPopup extends NestedOptionsPopupMenu {
         break;
 
       case ID_SHARE_PERMALINK:
-        c.startActivity(Intents.createForSharingUrl(null, permalinkWithContext));
+        c.startActivity(Intents.createForSharingUrl(c, permalinkWithContext));
         break;
 
       case ID_COPY_PERMALINK:
