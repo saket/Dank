@@ -1,4 +1,4 @@
-package me.saket.dank.utils;
+package me.saket.dank.cache;
 
 import com.jakewharton.disklrucache.DiskLruCache;
 import com.nytimes.android.external.fs3.filesystem.FileSystem;

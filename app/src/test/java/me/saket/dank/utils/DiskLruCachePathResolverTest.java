@@ -4,6 +4,8 @@ import static junit.framework.Assert.assertEquals;
 
 import org.junit.Test;
 
+import me.saket.dank.cache.DiskLruCachePathResolver;
+
 public class DiskLruCachePathResolverTest {
 
   /**

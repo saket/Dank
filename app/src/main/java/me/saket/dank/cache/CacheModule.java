@@ -1,4 +1,4 @@
-package me.saket.dank.di;
+package me.saket.dank.cache;
 
 import android.app.Application;
 
@@ -26,7 +26,6 @@ import me.saket.dank.data.AppInfo;
 import me.saket.dank.data.FileSize;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.utils.FileSizeUnit;
-import me.saket.dank.utils.StoreLruFileSystem;
 
 @Module
 public class CacheModule {

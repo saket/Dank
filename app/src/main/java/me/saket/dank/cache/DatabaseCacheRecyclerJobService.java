@@ -1,4 +1,4 @@
-package me.saket.dank;
+package me.saket.dank.cache;
 
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
@@ -11,6 +11,8 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.BuildConfig;
+import me.saket.dank.DankJobService;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import timber.log.Timber;

@@ -1,4 +1,4 @@
-package me.saket.dank.utils;
+package me.saket.dank.cache;
 
 import android.support.annotation.NonNull;
 

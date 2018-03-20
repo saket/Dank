@@ -1,4 +1,4 @@
-package me.saket.dank.utils;
+package me.saket.dank.cache;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;

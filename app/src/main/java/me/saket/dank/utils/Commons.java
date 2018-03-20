@@ -15,11 +15,13 @@ import me.saket.dank.R;
  */
 public class Commons {
 
+  @Deprecated
   public static <T> Function<List<T>, List<T>> toImmutable() {
     return list -> Collections.unmodifiableList(list);
   }
 
   @ColorRes
+  @Deprecated
   public static int voteColor(VoteDirection voteDirection) {
     switch (voteDirection) {
       case UPVOTE:

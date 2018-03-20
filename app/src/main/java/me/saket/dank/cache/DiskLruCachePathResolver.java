@@ -1,10 +1,12 @@
-package me.saket.dank.utils;
+package me.saket.dank.cache;
 
 import com.nytimes.android.external.fs3.PathResolver;
 import com.nytimes.android.external.fs3.Util;
 
 import java.util.Locale;
 import javax.annotation.Nonnull;
+
+import me.saket.dank.utils.Strings;
 
 public abstract class DiskLruCachePathResolver<KEY> implements PathResolver<KEY> {
 

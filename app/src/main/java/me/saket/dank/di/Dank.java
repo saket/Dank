@@ -4,6 +4,7 @@ import android.app.Application;
 
 import com.squareup.moshi.Moshi;
 
+import me.saket.dank.cache.CacheModule;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.SubredditSubscriptionManager;

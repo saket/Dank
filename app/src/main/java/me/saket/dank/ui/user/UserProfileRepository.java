@@ -24,9 +24,9 @@ import io.reactivex.Single;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.di.Dank;
-import me.saket.dank.utils.DiskLruCachePathResolver;
-import me.saket.dank.utils.MoshiStoreJsonParser;
-import me.saket.dank.utils.StoreFilePersister;
+import me.saket.dank.cache.DiskLruCachePathResolver;
+import me.saket.dank.cache.MoshiStoreJsonParser;
+import me.saket.dank.cache.StoreFilePersister;
 
 @Singleton
 public class UserProfileRepository {

@@ -123,7 +123,7 @@
       android:exported="false" />
 
     <service
-      android:name=".DatabaseCacheRecyclerJobService"
+      android:name=".cache.DatabaseCacheRecyclerJobService"
       android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 

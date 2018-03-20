@@ -16,9 +16,9 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.LinkMetadata;
 import me.saket.dank.di.DankApi;
-import me.saket.dank.utils.DiskLruCachePathResolver;
-import me.saket.dank.utils.MoshiStoreJsonParser;
-import me.saket.dank.utils.StoreFilePersister;
+import me.saket.dank.cache.DiskLruCachePathResolver;
+import me.saket.dank.cache.MoshiStoreJsonParser;
+import me.saket.dank.cache.StoreFilePersister;
 import me.saket.dank.utils.Urls;
 import timber.log.Timber;
 
