@@ -34,6 +34,7 @@ public interface LifecycleStreams<EVENT> {
   @CheckResult
   Observable<EVENT> onDestroy();
 
+  @Deprecated // Use onDestroyCompletable() instead.
   @CheckResult
   default Flowable<EVENT> onDestroyFlowable() {
     return onDestroy().toFlowable(BackpressureStrategy.LATEST);

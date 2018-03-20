@@ -43,7 +43,7 @@ public class RetryReplyJobService extends DankJobService {
   }
 
   @Override
-  public boolean onStartJob(JobParameters params) {
+  public JobStartCallback onStartJob2(JobParameters params) {
     unsubscribeOnDestroy(
         replyRepository.streamFailedReplies()
             .take(1)
@@ -74,8 +74,7 @@ public class RetryReplyJobService extends DankJobService {
             )
     );
 
-    // Return true to indicate that the job is still being processed (in a background thread).
-    return true;
+    return JobStartCallback.runningInBackground();
   }
 
   @Override

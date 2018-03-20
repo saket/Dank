@@ -116,7 +116,7 @@ public class MessageNotifActionsJobService extends DankJobService {
   }
 
   @Override
-  public boolean onStartJob(JobParameters params) {
+  public JobStartCallback onStartJob2(JobParameters params) {
     // Switching on the action because a new job is created for each message, each with an unique jobId.
     //noinspection ConstantConditions
     switch (params.getExtras().getString(KEY_ACTION)) {
@@ -137,8 +137,7 @@ public class MessageNotifActionsJobService extends DankJobService {
         throw new UnsupportedOperationException("Unknown job action: " + params.getExtras().getString(KEY_ACTION));
     }
 
-    // Return true to indicate that the job is still being processed (in a background thread).
-    return true;
+    return JobStartCallback.runningInBackground();
   }
 
   private void sendDirectMessageReply(JobParameters params, String replyText) {

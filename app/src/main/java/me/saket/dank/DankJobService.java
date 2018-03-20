@@ -3,11 +3,13 @@ package me.saket.dank;
 import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
+import android.app.job.JobParameters;
 import android.app.job.JobService;
 import android.content.Intent;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 
+import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
@@ -47,6 +49,14 @@ public abstract class DankJobService extends JobService {
 
   private CompositeDisposable onDestroyDisposables;
   private Relay<Object> onDestroyStream = PublishRelay.create();
+
+  @Override
+  public boolean onStartJob(JobParameters params) {
+    JobStartCallback callback = onStartJob2(params);
+    return callback.isRunningInBackground();
+  }
+
+  public abstract JobStartCallback onStartJob2(JobParameters params);
 
   @Deprecated
   protected void unsubscribeOnDestroy(Disposable subscription) {
@@ -102,5 +112,18 @@ public abstract class DankJobService extends JobService {
 
   public Observable<Object> lifecycleOnDestroy() {
     return onDestroyStream.take(1);
+  }
+
+  @AutoValue
+  public static abstract class JobStartCallback {
+    public abstract boolean isRunningInBackground();
+
+    public static JobStartCallback runningInBackground() {
+      return new AutoValue_DankJobService_JobStartCallback(true);
+    }
+
+    public static JobStartCallback finished() {
+      return new AutoValue_DankJobService_JobStartCallback(false);
+    }
   }
 }

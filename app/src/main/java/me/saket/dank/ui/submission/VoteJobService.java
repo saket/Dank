@@ -67,7 +67,7 @@ public class VoteJobService extends DankJobService {
   }
 
   @Override
-  public boolean onStartJob(JobParameters params) {
+  public JobStartCallback onStartJob2(JobParameters params) {
     VoteDirection voteDirection = VoteDirection.valueOf(params.getExtras().getString(KEY_VOTE_DIRECTION));
 
     JsonAdapter<VotableContributionFullNameWrapper> jsonAdapter = moshi.adapter(VotableContributionFullNameWrapper.class);
@@ -103,8 +103,7 @@ public class VoteJobService extends DankJobService {
             }
         );
 
-    // Return true to indicate that the job is still being processed (in a background thread).
-    return true;
+    return JobStartCallback.runningInBackground();
   }
 
   @Override

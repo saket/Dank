@@ -119,7 +119,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
   }
 
   @Override
-  public boolean onStartJob(JobParameters params) {
+  public JobStartCallback onStartJob2(JobParameters params) {
     displayDebugNotification("Checking for unread messages");
 
     //Timber.i("Fetching unread messages. JobID: %s", params.getJobId());
@@ -177,8 +177,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
             }
         );
 
-    // Return true to indicate that the job is still being processed (in a background thread).
-    return true;
+    return JobStartCallback.runningInBackground();
   }
 
   @Override

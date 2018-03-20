@@ -49,13 +49,13 @@ public class DatabaseCacheRecyclerJobService extends DankJobService {
   }
 
   @Override
-  public boolean onStartJob(JobParameters params) {
-    int durationFromNow = BuildConfig.DEBUG ? 1 : 30;
+  public JobStartCallback onStartJob2(JobParameters params) {
+    int durationFromNow = BuildConfig.DEBUG ? 0 : 30;
     TimeUnit durationTimeUnit = TimeUnit.DAYS;
 
     displayDebugNotification(
         ID_DEBUG_RECYCLING,
-        "Recycling database rows older than %s days",
+        "Recycling database rows older than %s day(s)",
         durationTimeUnit.toDays(durationFromNow));
 
     submissionRepository.recycleAllCachedBefore(durationFromNow, durationTimeUnit)
@@ -65,19 +65,19 @@ public class DatabaseCacheRecyclerJobService extends DankJobService {
             deletedRows -> {
               displayDebugNotification(
                   ID_DEBUG_RECYCLING,
-                  "Recycled %s database rows older than %s days",
+                  "Recycled %s database rows older than %s day(s)",
                   deletedRows,
                   durationTimeUnit.toDays(durationFromNow));
             },
             error -> {
+              Timber.e(error, "Couldn't recycle database rows");
               displayDebugNotification(
                   ID_DEBUG_RECYCLING,
                   "Couldn't recycle database rows");
             }
         );
 
-    // Return true to indicate that the job is still being processed (in a background thread).
-    return false;
+    return JobStartCallback.runningInBackground();
   }
 
   @Override

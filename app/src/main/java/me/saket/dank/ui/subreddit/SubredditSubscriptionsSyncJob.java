@@ -78,7 +78,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
   }
 
   @Override
-  public boolean onStartJob(JobParameters params) {
+  public JobStartCallback onStartJob2(JobParameters params) {
     subscriptionManager.refreshAndSaveSubscriptions()
         .andThen(subscriptionManager.executePendingSubscribesAndUnsubscribes())
         .compose(applySchedulersCompletable())
@@ -103,8 +103,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
             }
         );
 
-    // Return true to indicate that the job is still being processed (in a background thread).
-    return true;
+    return JobStartCallback.runningInBackground();
   }
 
   @Override
