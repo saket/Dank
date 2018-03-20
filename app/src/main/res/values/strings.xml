@@ -335,6 +335,10 @@
   <string name="userprefs_datausage_check_for_new_messages">Check for new messages</string>
   <string name="userprefs_datausage_message_sync_period_and_connection">Every 30 minutes and only on WiFi</string>
 
+  <string name="userprefs_group_media_quality">Media Quality</string>
+  <string name="userprefs_mediaquality_load_hq_images">Load high-quality images</string>
+  <string name="userprefs_mediaquality_load_hq_videos">Load high-quality videos</string>
+
   <string name="userprefs_group_caching">Caching</string>
   <string name="userprefs_group_caching_summary">Dank can pre-fetch content for subscribed subreddits when you visit them.
     This way they\'re immediately available for consumption.</string>
@@ -342,7 +346,7 @@
   <string name="userprefs_prefetch_link_descriptions">Pre-fetch link descriptions</string>
   <string name="userprefs_prefetch_comments">Pre-fetch comments</string>
 
-  <string name="userprefs_caching_only_on_wifi">Only on WiFi</string>
+  <string name="userprefs_only_on_wifi">Only on WiFi</string>
 
   <string name="userprefes_group_link_handling">Link handling</string>
   <string name="userprefs_open_links_in_apps">Open links in known apps</string>
@@ -355,6 +359,13 @@
   <string name="userprefs_show_nsfw_content">NSFW content</string>
   <string name="userprefs_show_nsfw_content_summary_on">Always show</string>
   <string name="userprefs_show_nsfw_content_summary_off">Keep hidden</string>
+
+  <string name="userprefs_group_external_links">External links</string>
+  <string name="userprefs_externallinks_default_web_browser">Default web-browser</string>
+  <string name="userprefs_externallinks_internal_browser">Dank\'s internal browser</string>
+
+  <string name="userprefs_externallinks_open_links_in_apps">Open links in apps</string>
+  <string name="userprefs_externallinks_open_links_in_apps_summary">Bypass the browser and open these links in their own apps</string>
 
   <!-- Compose -->
   <string name="composereply_compose_field_hint">Write a reply…</string>

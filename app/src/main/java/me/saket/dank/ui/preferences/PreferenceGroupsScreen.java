@@ -124,6 +124,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
 
     // Button clicks.
     preferencesAdapter.get().streamButtonClicks()
+        .filter(event -> event.preferenceScreenLayoutRes() != -1)
         .takeUntil(lifecycle.viewDetaches())
         .subscribe(event -> handleButtonClick(event));
 

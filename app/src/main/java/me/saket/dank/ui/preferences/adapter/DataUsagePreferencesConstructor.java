@@ -16,12 +16,6 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
 
   @Override
   public List<UserPreferencesScreenUiModel> construct(Context c) {
-    // - Show high-res media by default: never, always on wi-fi (hidden).
-    // - Message check frequency
-    // - Pre-fetch:
-    // - comments
-    //     - link metadata
-    //     - images
     List<UserPreferencesScreenUiModel> uiModels = new ArrayList<>();
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_messaging)));
@@ -31,9 +25,17 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
         c.getString(R.string.userprefs_datausage_message_sync_period_and_connection),
         -1));
 
-    uiModels.add(UserPreferenceSectionHeader.UiModel.create("Media quality"));
-    uiModels.add(UserPreferenceButton.UiModel.create("Load high-quality images", "Only on WiFi", -1));
-    uiModels.add(UserPreferenceButton.UiModel.create("Load high-quality videos", "Only on WiFi", -1));
+    uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_media_quality)));
+
+    uiModels.add(UserPreferenceButton.UiModel.create(
+        c.getString(R.string.userprefs_mediaquality_load_hq_images),
+        c.getString(R.string.userprefs_only_on_wifi),
+        -1));
+
+    uiModels.add(UserPreferenceButton.UiModel.create(
+        c.getString(R.string.userprefs_mediaquality_load_hq_videos),
+        c.getString(R.string.userprefs_only_on_wifi),
+        -1));
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(
         c.getString(R.string.userprefs_group_caching),
@@ -41,17 +43,17 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_prefetch_comments),
-        c.getString(R.string.userprefs_caching_only_on_wifi),
+        c.getString(R.string.userprefs_only_on_wifi),
         -1));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_prefetch_link_descriptions),
-        c.getString(R.string.userprefs_caching_only_on_wifi),
+        c.getString(R.string.userprefs_only_on_wifi),
         -1));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_prefetch_images),
-        c.getString(R.string.userprefs_caching_only_on_wifi),
+        c.getString(R.string.userprefs_only_on_wifi),
         -1));
 
     return uiModels;

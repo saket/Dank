@@ -28,6 +28,8 @@ public class UserPreferencesConstructor {
       LookAndFeelPreferencesConstructor lookAndFeel,
       FiltersPreferencesConstructor filters,
       DataUsagePreferencesConstructor dataUsage,
+      MiscellaneousPreferencesConstructor miscellaneous,
+      AboutDankPreferencesConstructor aboutDank,
       @Named("user_preferences") Observable<Object> userPrefChanges)
   {
     this.userPrefChanges = userPrefChanges;
@@ -36,8 +38,8 @@ public class UserPreferencesConstructor {
     childConstructors.put(UserPreferenceGroup.LOOK_AND_FEEL, lookAndFeel);
     childConstructors.put(UserPreferenceGroup.FILTERS, filters);
     childConstructors.put(UserPreferenceGroup.DATA_USAGE, dataUsage);
-    childConstructors.put(UserPreferenceGroup.MISCELLANEOUS, c -> Collections.emptyList());
-    childConstructors.put(UserPreferenceGroup.ABOUT_DANK, c -> Collections.emptyList());
+    childConstructors.put(UserPreferenceGroup.MISCELLANEOUS, miscellaneous);
+    childConstructors.put(UserPreferenceGroup.ABOUT_DANK, aboutDank);
   }
 
   public Observable<List<UserPreferencesScreenUiModel>> stream(Context c, Optional<UserPreferenceGroup> group) {
