@@ -56,7 +56,6 @@ import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
-import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
@@ -512,36 +511,54 @@ public class SubmissionRepository {
   }
 
   /**
-   * Recycle all items that were saved X millis before now. If <var>durationBeforeNow</var> is 7 and
+   * Recycle all items that were saved X millis before now. If <var>durationFromNow</var> is 7 and
    * timeUnit is DAYS, all items saved before 7 days ago will be removed.
    */
   @CheckResult
-  public Single<Integer> recycleAllCachedBefore(int durationBeforeNow, TimeUnit durationTimeUnit) {
-    return Single.fromCallable(() -> {
-      long daysBeforeNow = durationTimeUnit.toDays(durationBeforeNow);
+  public Single<Integer> recycleAllCachedBefore(int durationFromNow, TimeUnit durationTimeUnit) {
+    long daysBeforeNow = durationTimeUnit.toDays(durationFromNow);
+    LocalDateTime dateTimeBeforeNow = LocalDateTime.now(ZoneId.of("UTC")).minusDays(daysBeforeNow);
+    String millisBeforeNowString = String.valueOf(dateTimeBeforeNow.atZone(ZoneId.of("UTC")).toInstant().toEpochMilli());
 
-      LocalDateTime dateTimeBeforeNow = LocalDateTime.now(ZoneId.of("UTC")).minusDays(daysBeforeNow);
-      String millisBeforeNowString = String.valueOf(dateTimeBeforeNow.atZone(ZoneId.of("UTC")).toEpochSecond());
+    Completable logCompletable;
 
-      int totalDeletedRows = 0;
+    if (BuildConfig.DEBUG) {
+      logCompletable = Completable.fromAction(() -> {
+        List<CachedSubmissionWithComments> rowsToBeDeleted = database
+            .createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_WHERE_UPDATE_TIME_BEFORE, millisBeforeNowString)
+            .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
+            .blockingFirst();
 
-      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-        totalDeletedRows += database.delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SAVE_TIME_BEFORE, millisBeforeNowString);
-        totalDeletedRows += database.delete(
-            CachedSubmissionWithoutComments.TABLE_NAME,
-            CachedSubmissionWithoutComments.WHERE_SAVE_TIME_BEFORE,
-            millisBeforeNowString
-        );
-        totalDeletedRows += database.delete(
-            CachedSubmissionWithComments.TABLE_NAME,
-            CachedSubmissionWithComments.WHERE_UPDATE_TIME_BEFORE,
-            millisBeforeNowString
-        );
-        transaction.markSuccessful();
-      }
+        Timber.i("Now time: %s", System.currentTimeMillis());
 
-      return totalDeletedRows;
-    });
+        Timber.i("Recycling rows before %s (%s): %s", millisBeforeNowString, dateTimeBeforeNow, rowsToBeDeleted.size());
+        rowsToBeDeleted.forEach(row -> Timber.i("%s", row.submission().getTitle()));
+      });
+    } else {
+      logCompletable = Completable.complete();
+    }
+
+    return logCompletable
+        .andThen(Single.fromCallable(() -> {
+          int totalDeletedRows = 0;
+
+          try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+            totalDeletedRows += database.delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SAVE_TIME_BEFORE, millisBeforeNowString);
+            totalDeletedRows += database.delete(
+                CachedSubmissionWithoutComments.TABLE_NAME,
+                CachedSubmissionWithoutComments.WHERE_SAVE_TIME_BEFORE,
+                millisBeforeNowString
+            );
+            totalDeletedRows += database.delete(
+                CachedSubmissionWithComments.TABLE_NAME,
+                CachedSubmissionWithComments.WHERE_UPDATE_TIME_BEFORE,
+                millisBeforeNowString
+            );
+            transaction.markSuccessful();
+          }
+
+          return totalDeletedRows;
+        }));
   }
 
   @AutoValue
