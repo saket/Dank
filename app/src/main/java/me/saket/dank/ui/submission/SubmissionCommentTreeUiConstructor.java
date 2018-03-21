@@ -212,7 +212,7 @@ public class SubmissionCommentTreeUiConstructor {
             O.of("submission", submissions),
             O.of("pendingSyncRepliesMap", pendingSyncRepliesMaps),
             O.of("focusedComment", focusedComments),
-            O.of("row-visibility", rowVisibilityChanges.observeOn(scheduler)),                // observeOn() because the relays emit on the main thread)
+            O.of("row-visibility", rowVisibilityChanges.observeOn(scheduler)),   // observeOn() because the relays emit on the main thread)
             O.of("votes", voteChanges),
             (submission, pendingSyncRepliesMap, focusedComment, o, oo) -> {
               String submissionAuthor = submission.getAuthor();

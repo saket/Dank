@@ -143,12 +143,13 @@ public class SubmissionUiConstructor {
                   ? Optional.<SubmissionCommentsViewFullThread.UiModel>empty()
                   : Optional.of(SubmissionCommentsViewFullThread.UiModel.create(request)));
 
-          Observable<List<SubmissionScreenUiModel>> commentRowUiModels = submissionCommentTreeUiConstructor.stream(
-              context,
-              submissions.observeOn(io()),
-              submissionRequests,
-              io()
-          );
+          Observable<List<SubmissionScreenUiModel>> commentRowUiModels = submissionCommentTreeUiConstructor
+              .stream(
+                  context,
+                  submissions.observeOn(io()),
+                  submissionRequests,
+                  io())
+              .startWith(Collections.<SubmissionScreenUiModel>emptyList());
 
           Observable<Optional<SubmissionCommentsLoadProgress.UiModel>> commentsLoadProgressUiModels = Observable
               .combineLatest(submissions.observeOn(io()), commentsLoadErrors, Pair::create)
