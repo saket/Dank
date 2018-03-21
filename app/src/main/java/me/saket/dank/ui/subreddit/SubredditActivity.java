@@ -51,12 +51,12 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
+import io.reactivex.subjects.ReplaySubject;
 import me.saket.dank.R;
 import me.saket.dank.cache.CachePreFiller;
 import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
@@ -67,6 +67,7 @@ import me.saket.dank.data.links.RedditLink;
 import me.saket.dank.data.links.RedditSubredditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
@@ -77,12 +78,12 @@ import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
+import me.saket.dank.ui.subreddit.events.SubredditScreenCreateEvent;
 import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.subreddit.uimodels.SubmissionItemDiffer;
 import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel;
 import me.saket.dank.ui.subreddit.uimodels.SubredditUiConstructor;
 import me.saket.dank.ui.subscriptions.SubredditPickerSheetView;
-import me.saket.dank.ui.user.UserProfileRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Animations;
@@ -144,13 +145,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<VotingManager> votingManager;
   @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
-  @Inject Lazy<InboxRepository> InboxRepository;
-  @Inject Lazy<UserProfileRepository> userProfileRepository;
+  @Inject Lazy<SubredditController> subredditController;
 
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
   private PublishRelay<Object> forceRefreshSubmissionsRequestStream = PublishRelay.create();
   private BehaviorRelay<Boolean> toolbarRefreshVisibilityStream = BehaviorRelay.createDefault(true);
+  private ReplaySubject<UiEvent> uiEvents = ReplaySubject.create();
+  private BehaviorRelay<SubredditUserProfileIconType> userProfileIconTypeChanges = BehaviorRelay.create();
 
   protected static void addStartExtrasToIntent(RedditSubredditLink subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
@@ -187,6 +189,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   protected void onPostCreate(@Nullable Bundle savedState) {
     super.onPostCreate(savedState);
 
+    setupController();
     setupSubmissionRecyclerView(savedState);
     loadSubmissions();
     setupSubmissionPage();
@@ -290,6 +293,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   public void setTitle(CharSequence subredditName) {
     boolean isFrontpage = subscriptionManager.isFrontpage(subredditName.toString());
     toolbarTitleView.setText(isFrontpage ? getString(R.string.app_name) : subredditName);
+  }
+
+  private void setupController() {
+    uiEvents.onNext(SubredditScreenCreateEvent.create());
+
+    uiEvents.compose(subredditController.get())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(uiChange -> uiChange.render(this));
   }
 
   private void setupSubmissionPage() {
@@ -656,6 +667,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
         .takeUntil(lifecycle().onDestroy())
         .subscribe(refreshItem::setVisible);
 
+    MenuItem userProfileItem = menu.findItem(R.id.action_user_profile);
+    userProfileIconTypeChanges
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(iconType -> {
+          userProfileItem.setIcon(iconType.iconRes());
+        });
+
     return super.onCreateOptionsMenu(menu);
   }
 
@@ -759,6 +777,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
 // ======== USER PROFILE ======== //
+
+  void setToolbarUserProfileIcon(SubredditUserProfileIconType iconType) {
+    userProfileIconTypeChanges.accept(iconType);
+  }
 
   void showUserProfileSheet() {
     UserProfileSheetView pickerSheet = UserProfileSheetView.showIn(toolbarSheet);
