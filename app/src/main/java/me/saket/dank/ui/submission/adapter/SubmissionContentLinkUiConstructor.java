@@ -17,6 +17,7 @@ import android.support.v7.graphics.Palette;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.load.engine.bitmap_recycle.BitmapPool;
+import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.Target;
@@ -59,7 +60,7 @@ public class SubmissionContentLinkUiConstructor {
 
   private final LinkMetadataRepository linkMetadataRepository;
   private final BitmapPool bitmapPool;
-  private final Map<Target, BitmapDrawable> targetsToDispose = new HashMap<>(8);
+  private final Map<Target, Drawable> targetsToDispose = new HashMap<>(8);
 
   @Inject
   public SubmissionContentLinkUiConstructor(LinkMetadataRepository linkMetadataRepository, BitmapPool bitmapPool) {
@@ -101,16 +102,21 @@ public class SubmissionContentLinkUiConstructor {
    * are manually cleared so that the bitmaps get recycled.
    */
   public void clearGlideTargets(Context c) {
-    Map<Target, BitmapDrawable> targets = new HashMap<>(targetsToDispose);
+    Map<Target, Drawable> targets = new HashMap<>(targetsToDispose);
     targetsToDispose.clear();
 
-    for (Map.Entry<Target, BitmapDrawable> entry : targets.entrySet()) {
+    for (Map.Entry<Target, Drawable> entry : targets.entrySet()) {
       Target target = entry.getKey();
-      BitmapDrawable value = entry.getValue();
+      Drawable value = entry.getValue();
 
       if (c instanceof Activity && ((Activity) c).isDestroyed()) {
         // Glide.with() crashes if the Activity is destroyed.
-        bitmapPool.put(value.getBitmap());
+        if (value instanceof BitmapDrawable) {
+          bitmapPool.put(((BitmapDrawable) value).getBitmap());
+
+        } else if (value instanceof GifDrawable) {
+          // TODO.
+        }
       } else {
         Glide.with(c).clear(target);
       }
@@ -406,7 +412,7 @@ public class SubmissionContentLinkUiConstructor {
         .<Drawable>create(emitter -> {
           Drawable drawable = futureTarget.get();
           //noinspection ConstantConditions
-          targetsToDispose.put(futureTarget, (BitmapDrawable) drawable);
+          targetsToDispose.put(futureTarget, drawable);
 
           emitter.onNext(drawable);
           emitter.onComplete();

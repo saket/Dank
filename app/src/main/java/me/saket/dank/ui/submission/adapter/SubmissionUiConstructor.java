@@ -100,6 +100,7 @@ public class SubmissionUiConstructor {
               // after this chain receives an empty submission, so adding this extra takeWhile().
               .takeWhile(optionalSub -> optionalSub.isPresent())
               .map(submissionOptional -> submissionOptional.get())
+              .skip(1)
               .startWith(optional.get());
 
           Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = Observable
