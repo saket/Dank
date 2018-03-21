@@ -221,7 +221,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     subredditChangesStream
         .switchMap(subredditName -> subscriptionManager.isSubscribed(subredditName))
         .compose(applySchedulers())
-        .startWith(Boolean.FALSE)
+        .startWith(Boolean.TRUE)
         .onErrorResumeNext(error -> {
           logError("Couldn't get subscribed status for %s", subredditChangesStream.getValue()).accept(error);
           return Observable.just(false);
@@ -786,7 +786,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   }
 
   private void handleOnUserLogOut() {
-    Timber.w("Reloading default subreddit");
     subredditChangesStream.accept(subscriptionManager.defaultSubreddit());
   }
 }
