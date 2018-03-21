@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit;
+package me.saket.dank.cache;
 
 import android.app.Application;
 import android.support.annotation.CheckResult;

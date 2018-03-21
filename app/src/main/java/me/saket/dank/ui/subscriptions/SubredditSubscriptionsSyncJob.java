@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit;
+package me.saket.dank.ui.subscriptions;
 
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.doOnCompletableStartAndTerminate;

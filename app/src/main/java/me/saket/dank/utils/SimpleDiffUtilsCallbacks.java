@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit;
+package me.saket.dank.utils;
 
 import android.support.annotation.Nullable;
 import android.support.v7.util.DiffUtil;

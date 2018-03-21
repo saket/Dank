@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit;
+package me.saket.dank.ui.subscriptions;
 
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;

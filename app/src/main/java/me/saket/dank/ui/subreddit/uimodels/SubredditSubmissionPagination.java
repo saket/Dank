@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit.models;
+package me.saket.dank.ui.subreddit.uimodels;
 
 import android.support.annotation.CheckResult;
 import android.support.v7.widget.RecyclerView;

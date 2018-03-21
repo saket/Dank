@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit;
+package me.saket.dank.utils;
 
 public interface InfinitelyScrollableRecyclerViewAdapter {
 

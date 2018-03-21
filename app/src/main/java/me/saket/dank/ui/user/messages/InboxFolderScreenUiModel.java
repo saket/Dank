@@ -8,7 +8,7 @@ import net.dean.jraw.models.Message;
 
 import java.util.List;
 
-import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
+import me.saket.dank.utils.SimpleDiffUtilsCallbacks;
 
 public interface InboxFolderScreenUiModel {
 

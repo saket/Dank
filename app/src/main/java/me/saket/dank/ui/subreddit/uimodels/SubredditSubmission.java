@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit.models;
+package me.saket.dank.ui.subreddit.uimodels;
 
 import android.support.annotation.CheckResult;
 import android.support.annotation.LayoutRes;
@@ -27,6 +27,8 @@ import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
+import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
+import me.saket.dank.ui.subreddit.events.SubredditSubmissionThumbnailClickEvent;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.glide.GlideCircularTransformation;

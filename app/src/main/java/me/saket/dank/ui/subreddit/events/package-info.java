@@ -1,4 +1,4 @@
 @ParametersAreNonnullByDefault
-package me.saket.dank.ui.subreddit.models;
+package me.saket.dank.ui.subreddit.events;
 
 import javax.annotation.ParametersAreNonnullByDefault;

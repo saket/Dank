@@ -9,7 +9,7 @@ import com.squareup.moshi.Moshi;
 import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Thing;
 
-import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
+import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel;
 
 /**
  * See {@link ThingFullNameWrapper}.

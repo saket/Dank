@@ -51,10 +51,12 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
-import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.R;
+import me.saket.dank.cache.CachePreFiller;
+import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
@@ -75,14 +77,17 @@ import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
-import me.saket.dank.ui.subreddit.models.SubmissionItemDiffer;
-import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel;
-import me.saket.dank.ui.subreddit.models.SubredditSubmissionClickEvent;
-import me.saket.dank.ui.subreddit.models.SubredditUiConstructor;
+import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
+import me.saket.dank.ui.subreddit.uimodels.SubmissionItemDiffer;
+import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel;
+import me.saket.dank.ui.subreddit.uimodels.SubredditUiConstructor;
+import me.saket.dank.ui.subscriptions.SubredditPickerSheetView;
+import me.saket.dank.ui.user.UserProfileRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.InfiniteScroller;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -134,10 +139,13 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   @Inject UserSessionRepository userSessionRepository;
   @Inject SubredditUiConstructor uiConstructor;
   @Inject SubredditSubmissionsAdapter submissionsAdapter;
+
   @Inject Lazy<UrlRouter> urlRouter;
   @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<VotingManager> votingManager;
   @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
+  @Inject Lazy<InboxRepository> InboxRepository;
+  @Inject Lazy<UserProfileRepository> userProfileRepository;
 
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
@@ -750,7 +758,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
     return ((SubredditPickerSheetView) toolbarSheet.getChildAt(0));
   }
 
-// ======== USER PROFILE SHEET ======== //
+// ======== USER PROFILE ======== //
 
   void showUserProfileSheet() {
     UserProfileSheetView pickerSheet = UserProfileSheetView.showIn(toolbarSheet);

@@ -4,7 +4,7 @@ import android.support.v7.widget.RecyclerView;
 
 import java.util.List;
 
-import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
+import me.saket.dank.utils.SimpleDiffUtilsCallbacks;
 
 public class PrivateMessageItemDiffer extends SimpleDiffUtilsCallbacks<PrivateMessageUiModel> {
 

@@ -1,13 +1,12 @@
-package me.saket.dank.ui.subreddit.models;
+package me.saket.dank.ui.subreddit.uimodels;
 
 import android.support.annotation.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
-import me.saket.dank.ui.subreddit.models.SubredditScreenUiModel.SubmissionRowUiModel;
-import timber.log.Timber;
+import me.saket.dank.utils.SimpleDiffUtilsCallbacks;
+import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel.SubmissionRowUiModel;
 
 public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRowUiModel> {
 

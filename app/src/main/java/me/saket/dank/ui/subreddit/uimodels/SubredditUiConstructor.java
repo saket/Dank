@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit.models;
+package me.saket.dank.ui.subreddit.uimodels;
 
 import android.content.Context;
 import android.support.annotation.CheckResult;

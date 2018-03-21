@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit;
+package me.saket.dank.ui.subscriptions;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
@@ -59,6 +59,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
@@ -81,7 +82,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   private static final Interpolator ANIM_INTERPOLATOR = Animations.INTERPOLATOR;
 
   @BindView(R.id.subredditpicker_root) ViewGroup rootViewGroup;
-  @BindView(R.id.subredditpicker_search) EditText searchView;
+  @BindView(R.id.subredditpicker_search) public EditText searchView;
   @BindView(R.id.subredditpicker_subreddit_list) RecyclerView subredditList;
   @BindView(R.id.subredditpicker_load_progress) View subredditsLoadProgressView;
   @BindView(R.id.subredditpicker_refresh_progress) View subredditsRefreshProgressView;

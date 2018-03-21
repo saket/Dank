@@ -8,7 +8,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
-import me.saket.dank.ui.subreddit.models.SubredditSubmission;
+import me.saket.dank.ui.subreddit.uimodels.SubredditSubmission;
 
 public interface GesturePreferencesSubmissionPreview {
 

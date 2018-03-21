@@ -94,7 +94,7 @@
       android:theme="@style/DankTheme.DialogLikeActivity" />
 
     <service
-      android:name=".ui.subreddit.SubredditSubscriptionsSyncJob"
+      android:name=".ui.subscriptions.SubredditSubscriptionsSyncJob"
       android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 

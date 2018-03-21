@@ -2,7 +2,7 @@ package me.saket.dank.ui.giphy;
 
 import java.util.List;
 
-import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
+import me.saket.dank.utils.SimpleDiffUtilsCallbacks;
 
 public class GiphyGifDiffCallback extends SimpleDiffUtilsCallbacks<GiphyGif> {
 

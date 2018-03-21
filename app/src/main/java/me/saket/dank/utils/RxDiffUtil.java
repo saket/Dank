@@ -7,7 +7,6 @@ import java.util.List;
 
 import io.reactivex.FlowableTransformer;
 import io.reactivex.functions.BiFunction;
-import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
 
 public class RxDiffUtil {
 

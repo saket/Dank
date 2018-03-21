@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import me.saket.dank.ui.subreddit.SimpleDiffUtilsCallbacks;
+import me.saket.dank.utils.SimpleDiffUtilsCallbacks;
 import me.saket.dank.utils.Optional;
 
 public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScreenUiModel> {
