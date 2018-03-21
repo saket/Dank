@@ -32,15 +32,17 @@ import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.user.UserSessionRepository;
-import me.saket.dank.utils.Themes;
+import me.saket.dank.utils.CombineLatestWithLog;
+import me.saket.dank.utils.CombineLatestWithLog.O;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.span.RoundedBackgroundSpan;
 import timber.log.Timber;
 
@@ -123,11 +125,11 @@ public class SubmissionUiConstructor {
 
           Observable<Object> externalChanges = Observable.merge(votingManager.streamChanges(), bookmarksRepository.get().streamChanges());
 
-          Observable<SubmissionCommentsHeader.UiModel> headerUiModels = Observable.combineLatest(
-              externalChanges.observeOn(io()).map(o -> context),
-              submissions.observeOn(io()),
-              submissionPendingSyncReplyCounts,
-              contentLinkUiModels,
+          Observable<SubmissionCommentsHeader.UiModel> headerUiModels = CombineLatestWithLog.from(
+              O.of("ext-change", externalChanges.observeOn(io()).map(o -> context)),
+              O.of("submission", submissions.observeOn(io())),
+              O.of("pending-sync-reply-count", submissionPendingSyncReplyCounts),
+              O.of("content-link", contentLinkUiModels),
               this::headerUiModel
           );
 
@@ -161,13 +163,13 @@ public class SubmissionUiConstructor {
           Observable<Optional<SubmissionCommentsLoadError.UiModel>> commentsLoadErrorUiModels = commentsLoadErrors
               .map(optionalError -> optionalError.map(error -> SubmissionCommentsLoadError.UiModel.create(error)));
 
-          return Observable.combineLatest(
-              headerUiModels,
-              contentLoadErrorUiModels,
-              viewFullThreadUiModels,
-              commentsLoadProgressUiModels,
-              commentsLoadErrorUiModels,
-              commentRowUiModels,
+          return CombineLatestWithLog.from(
+              O.of("header", headerUiModels),
+              O.of("content-load-error", contentLoadErrorUiModels),
+              O.of("view-full-thread", viewFullThreadUiModels),
+              O.of("comments-load-progress", commentsLoadProgressUiModels),
+              O.of("comments-load-error", commentsLoadErrorUiModels),
+              O.of("comment-rows", commentRowUiModels),
               (header, optionalContentError, viewFullThread, optionalCommentsLoadProgress, optionalCommentsLoadError, commentRowModels) -> {
                 List<SubmissionScreenUiModel> allItems = new ArrayList<>(4 + commentRowModels.size());
                 allItems.add(header);

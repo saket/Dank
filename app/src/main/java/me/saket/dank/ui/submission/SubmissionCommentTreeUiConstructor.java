@@ -34,16 +34,18 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsLoadMore;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.user.UserSessionRepository;
-import me.saket.dank.utils.Themes;
+import me.saket.dank.utils.CombineLatestWithLog;
+import me.saket.dank.utils.CombineLatestWithLog.O;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
-import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Preconditions;
 import me.saket.dank.utils.RxHashSet;
 import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.utils.markdown.Markdown;
 import timber.log.Timber;
 
 /**
@@ -197,13 +199,13 @@ public class SubmissionCommentTreeUiConstructor {
         .map(optionalId -> optionalId.map(FocusedComment::create))
         .distinctUntilChanged();
 
-    return Observable
-        .combineLatest(
-            submissions,
-            pendingSyncRepliesMaps,
-            focusedComments,
-            rowVisibilityChanges.observeOn(scheduler),                // observeOn() because the relays emit on the main thread.
-            votingManager.get().streamChanges().observeOn(scheduler),
+    return CombineLatestWithLog
+        .from(
+            O.of("submission", submissions),
+            O.of("pendingSyncRepliesMap", pendingSyncRepliesMaps),
+            O.of("focusedComment", focusedComments),
+            O.of("row-visibility", rowVisibilityChanges.observeOn(scheduler)),                // observeOn() because the relays emit on the main thread)
+            O.of("votes", votingManager.get().streamChanges().observeOn(scheduler)),
             (submission, pendingSyncRepliesMap, focusedComment, o, oo) -> {
               String submissionAuthor = submission.getAuthor();
               List<SubmissionScreenUiModel> p = constructComments(context, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);
