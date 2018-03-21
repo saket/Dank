@@ -23,7 +23,6 @@ import io.reactivex.Observable;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.submission.VoteJobService;
-import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import timber.log.Timber;
 
 /**
@@ -36,7 +35,6 @@ import timber.log.Timber;
 public class VotingManager {
 
   private static final int HTTP_CODE_CONTRIBUTION_DELETED = 404;
-  private static final Object NOTHING = LifecycleStreams.NOTHING;
   private static final String KEY_PENDING_VOTE_ = "pendingVote_";
 
   private final Application appContext;
@@ -63,7 +61,7 @@ public class VotingManager {
   @CheckResult
   public Observable<Object> streamChanges() {
     return Observable.create(emitter -> {
-      SharedPreferences.OnSharedPreferenceChangeListener changeListener = (sharedPreferences, key) -> emitter.onNext(NOTHING);
+      SharedPreferences.OnSharedPreferenceChangeListener changeListener = (sharedPreferences, key) -> emitter.onNext(key);
       sharedPrefs.registerOnSharedPreferenceChangeListener(changeListener);
       emitter.setCancellable(() -> sharedPrefs.unregisterOnSharedPreferenceChangeListener(changeListener));
       changeListener.onSharedPreferenceChanged(sharedPrefs, "");    // Initial value.

@@ -45,6 +45,7 @@ import me.saket.dank.utils.RxHashSet;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.utils.markdown.Markdown;
 import timber.log.Timber;
 
@@ -55,6 +56,7 @@ import timber.log.Timber;
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class SubmissionCommentTreeUiConstructor {
 
+  private static final Object NOTHING = LifecycleStreams.NOTHING;
   private static final ActiveReplyIds ACTIVE_REPLY_IDS = new ActiveReplyIds();
   private static final CollapsedCommentIds COLLAPSED_COMMENT_IDS = new CollapsedCommentIds(50);
   private static final InFlightLoadMoreIds IN_FLIGHT_LOAD_MORE_IDS = new InFlightLoadMoreIds();
@@ -196,8 +198,14 @@ public class SubmissionCommentTreeUiConstructor {
 
     Observable<Optional<FocusedComment>> focusedComments = submissionRequests
         .map(submissionRequest -> Optional.ofNullable(submissionRequest.focusCommentId()))
+        .startWith(Optional.empty())  // submissionRequests stream sometimes takes too long to emit anything.
         .map(optionalId -> optionalId.map(FocusedComment::create))
         .distinctUntilChanged();
+
+    Observable<Object> voteChanges = votingManager.get().streamChanges();
+        //.observeOn(scheduler)
+        //.skip(1)
+        //.startWith(NOTHING);
 
     return CombineLatestWithLog
         .from(
@@ -205,7 +213,7 @@ public class SubmissionCommentTreeUiConstructor {
             O.of("pendingSyncRepliesMap", pendingSyncRepliesMaps),
             O.of("focusedComment", focusedComments),
             O.of("row-visibility", rowVisibilityChanges.observeOn(scheduler)),                // observeOn() because the relays emit on the main thread)
-            O.of("votes", votingManager.get().streamChanges().observeOn(scheduler)),
+            O.of("votes", voteChanges),
             (submission, pendingSyncRepliesMap, focusedComment, o, oo) -> {
               String submissionAuthor = submission.getAuthor();
               List<SubmissionScreenUiModel> p = constructComments(context, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);

@@ -99,7 +99,8 @@ public class SubmissionUiConstructor {
               // Not sure why, but the parent switchMap() on submission change gets triggered
               // after this chain receives an empty submission, so adding this extra takeWhile().
               .takeWhile(optionalSub -> optionalSub.isPresent())
-              .map(submissionOptional -> submissionOptional.get());
+              .map(submissionOptional -> submissionOptional.get())
+              .startWith(optional.get());
 
           Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = Observable
               .combineLatest(contentLinks, submissions.observeOn(io()), Pair::create)
