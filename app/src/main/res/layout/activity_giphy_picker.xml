@@ -28,7 +28,10 @@
       android:background="@null"
       android:hint="@string/giphypicker_search_gifs"
       android:imeOptions="flagNoFullscreen"
-      android:inputType="textCapSentences" />
+      android:inputType="textCapSentences">
+
+      <requestFocus />
+    </EditText>
 
     <ImageView
       android:id="@+id/giphypicker_giphy_attribution"
