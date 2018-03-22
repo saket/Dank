@@ -26,7 +26,8 @@
   <string name="common_unknown_error_message">Whoops! Something went wrong.</string>
 
   <string name="common_network_error_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
-  <string name="common_network_error_message">Uh oh, Reddit seems to be unreachable.</string>
+  <string name="common_network_error_with_reddit_message">Uh oh, Reddit seems to be unreachable.</string>
+  <string name="common_network_error_with_other_websites_message">Uh oh, the internet seems to be unreachable.</string>
 
   <string name="common_reddit_is_down_error_emoji" translatable="false">(ಥ_ಥ)</string>
   <string name="common_reddit_is_down_error_message">You broke Reddit! It\'s under heavy load right now.</string>

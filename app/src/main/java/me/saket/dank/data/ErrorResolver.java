@@ -32,11 +32,20 @@ public class ErrorResolver {
     error = findActualCause(error);
 
     if (isNetworkTimeoutError(error)) {
-      return ResolvedError.create(
-          ResolvedError.Type.NETWORK_ERROR,
-          R.string.common_network_error_emoji,
-          R.string.common_network_error_message
-      );
+      if (error instanceof UnknownHostException && error.getMessage().contains("reddit.com") || error.getMessage().contains("redditmedia.com")) {
+        return ResolvedError.create(
+            ResolvedError.Type.NETWORK_ERROR,
+            R.string.common_network_error_emoji,
+            R.string.common_network_error_with_reddit_message
+        );
+      } else {
+        error.printStackTrace();
+        return ResolvedError.create(
+            ResolvedError.Type.NETWORK_ERROR,
+            R.string.common_network_error_emoji,
+            R.string.common_network_error_with_other_websites_message
+        );
+      }
 
     } else if (error instanceof HttpException && ((HttpException) error).code() == 503) {
       return ResolvedError.create(
