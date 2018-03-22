@@ -2,9 +2,12 @@ package me.saket.dank.data;
 
 import android.support.annotation.Nullable;
 
+import com.bumptech.glide.load.engine.GlideException;
+
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.concurrent.ExecutionException;
 
 import javax.inject.Inject;
 
@@ -66,18 +69,24 @@ public class ErrorResolver {
   }
 
   public Throwable findActualCause(@Nullable Throwable error) {
+    if (error instanceof ExecutionException) {
+      error = findActualCause(error.getCause());
+    }
+    if (error instanceof GlideException && !((GlideException) error).getRootCauses().isEmpty()) {
+      error = ((GlideException) error).getRootCauses().get(0);
+    }
     if (error instanceof CompositeException) {
-      error = error.getCause();
+      error = findActualCause(error.getCause());
     }
     if (error instanceof UndeliverableException) {
-      error = error.getCause();
+      error = findActualCause(error.getCause());
     }
     if (error instanceof RuntimeException && error.getCause() != null && isNetworkTimeoutError(error.getCause())) {
       // Stupid JRAW wraps all HTTP exceptions with RuntimeException.
-      error = error.getCause();
+      error = findActualCause(error.getCause());
     }
     if (error instanceof IllegalStateException && error.getMessage() != null && error.getMessage().contains("Reached retry limit")) {
-      error = error.getCause();
+      error = findActualCause(error.getCause());
     }
     return error;
   }
