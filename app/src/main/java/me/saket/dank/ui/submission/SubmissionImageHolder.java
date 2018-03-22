@@ -42,7 +42,6 @@ import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
-import timber.log.Timber;
 
 /**
  * Manages showing of content image in {@link SubmissionPageLayout}. Only supports showing a single image right now.
@@ -199,7 +198,7 @@ public class SubmissionImageHolder {
           });
         })
         .doOnSuccess(imageStream)
-        .doOnError(e -> Timber.e(e, "Couldn't load image"))
+        //.doOnError(e -> Timber.e(e, "Couldn't load image"))
         .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE))
         .toCompletable();
   }

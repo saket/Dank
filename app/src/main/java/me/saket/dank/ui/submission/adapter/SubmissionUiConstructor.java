@@ -87,7 +87,7 @@ public class SubmissionUiConstructor {
       Observable<Optional<ResolvedError>> commentsLoadErrors)
   {
     return optionalSubmissions
-        .distinctUntilChanged()
+        .distinctUntilChanged() // Submission#equals() only compares IDs.
         .switchMap(optional -> {
           if (!optional.isPresent()) {
             return commentsLoadErrors.map(optionalError -> optionalError.isPresent()
@@ -100,7 +100,6 @@ public class SubmissionUiConstructor {
               // after this chain receives an empty submission, so adding this extra takeWhile().
               .takeWhile(optionalSub -> optionalSub.isPresent())
               .map(submissionOptional -> submissionOptional.get())
-              .skip(1)
               .startWith(optional.get());
 
           Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = Observable
@@ -129,7 +128,7 @@ public class SubmissionUiConstructor {
 
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = CombineLatestWithLog.from(
               O.of("ext-change", externalChanges.observeOn(io()).map(o -> context)),
-              O.of("submission", submissions.observeOn(io())),
+              O.of("submission 2", submissions.observeOn(io())),
               O.of("pending-sync-reply-count", submissionPendingSyncReplyCounts),
               O.of("content-link", contentLinkUiModels),
               this::headerUiModel

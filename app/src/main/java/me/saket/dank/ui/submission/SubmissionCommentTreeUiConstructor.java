@@ -203,9 +203,6 @@ public class SubmissionCommentTreeUiConstructor {
         .distinctUntilChanged();
 
     Observable<Object> voteChanges = votingManager.get().streamChanges();
-        //.observeOn(scheduler)
-        //.skip(1)
-        //.startWith(NOTHING);
 
     return CombineLatestWithLog
         .from(
@@ -216,8 +213,7 @@ public class SubmissionCommentTreeUiConstructor {
             O.of("votes", voteChanges),
             (submission, pendingSyncRepliesMap, focusedComment, o, oo) -> {
               String submissionAuthor = submission.getAuthor();
-              List<SubmissionScreenUiModel> p = constructComments(context, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);
-              return p;
+              return constructComments(context, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);
             })
         .as(immutable());
   }
