@@ -42,6 +42,8 @@ import java.util.Stack;
 /**
  * Copied from https://github.com/PrivacyApps/html-textview.
  * Some parts of this code are based on android.text.Html
+ *
+ * TODO: Can we use the library's tag-handler directly instead of maintaining this?
  */
 public abstract class HtmlTagHandler implements Html.TagHandler {
 

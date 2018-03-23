@@ -4,6 +4,10 @@ buildscript {
   }
 }
 
+repositories {
+  maven { url "https://s3.amazonaws.com/repo.commonsware.com" }
+}
+
 apply plugin: "com.android.application"
 
 repositories {
@@ -102,8 +106,9 @@ dependencies {
   implementation 'com.tbruyelle.rxpermissions2:rxpermissions:0.9.4@aar'
   implementation 'it.gilvegliach.android:transparent-text-textview:1.0.3'
   implementation 'com.f2prateek.rx.preferences2:rx-preferences:2.0.0-RC3'
-  implementation 'com.werdpressed.partisan:rundo:1.0.5' // TODO: TextView supports undo on API 23+. Remove this once we update minSdk.
+  implementation 'com.werdpressed.partisan:rundo:1.0.5' // TODO minSdkVersion 23: TextView supports undo on API 23+.
   implementation 'com.jakewharton:disklrucache:2.0.2'
+  implementation 'com.commonsware.cwac:anddown:0.4.0'
 
   // TODO: Replace all Date4J usages with ThreeTenAbp.
   implementation 'com.darwinsys:hirondelle-date4j:1.5.1'

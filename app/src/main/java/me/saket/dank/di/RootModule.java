@@ -13,6 +13,7 @@ import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.preference.PreferenceManager;
 
+import com.commonsware.cwac.anddown.AndDown;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.squareup.moshi.Moshi;
@@ -278,5 +279,10 @@ public class RootModule {
       loginIntent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
       appContext.startActivity(loginIntent);
     };
+  }
+
+  @Provides
+  static AndDown andDown() {
+    return new AndDown();
   }
 }

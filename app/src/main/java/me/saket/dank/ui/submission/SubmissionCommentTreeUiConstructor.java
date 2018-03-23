@@ -452,7 +452,7 @@ public class SubmissionCommentTreeUiConstructor {
     );
 
     CharSequence commentBody = isCollapsed
-        ? markdown.get().stripMarkdown(JrawUtils.commentBodyHtml(comment))
+        ? markdown.get().stripMarkdownFromHtml(JrawUtils.commentBodyHtml(comment))
         : markdown.get().parse(comment);
 
     return commentCommonUiModelBuilder(context, commentNode.getComment().getFullName(), isCollapsed, isFocused, commentNode.getDepth())
@@ -515,9 +515,10 @@ public class SubmissionCommentTreeUiConstructor {
       byline = bylineBuilder.build();
     }
 
+    CharSequence processedMarkdown = markdown.get().parse(pendingSyncReply);
     CharSequence commentBody = isReplyCollapsed
-        ? markdown.get().stripMarkdown(pendingSyncReply.body())
-        : markdown.get().parse(pendingSyncReply);
+        ? processedMarkdown.toString()  // toString() strips all spans.
+        : processedMarkdown;
 
     return commentCommonUiModelBuilder(context, locallyPostedComment.getPostingStatusIndependentId(), isReplyCollapsed, isFocused, depth)
         .comment(LocallyPostedComment.create(pendingSyncReply))
