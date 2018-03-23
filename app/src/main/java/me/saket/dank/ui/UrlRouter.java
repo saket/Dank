@@ -1,5 +1,6 @@
 package me.saket.dank.ui;
 
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -9,12 +10,14 @@ import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.util.Patterns;
 import android.view.View;
+import android.widget.Toast;
 
 import net.dean.jraw.models.Thumbnails;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import me.saket.dank.R;
 import me.saket.dank.data.links.Link;
 import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
@@ -25,9 +28,10 @@ import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.subreddit.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.webview.WebViewActivity;
+import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
-import me.saket.dank.urlparser.UrlParser;
+import me.saket.dank.utils.Optional;
 
 @Singleton
 public class UrlRouter {
@@ -126,7 +130,17 @@ public class UrlRouter {
     }
 
     public void open(Context context) {
-      context.startActivity(intent(context));
+      Intent intent = intent(context);
+      try {
+        context.startActivity(intent);
+
+      } catch (ActivityNotFoundException e) {
+        String toastMessage = Optional.ofNullable(intent.getData())
+            .map(data -> data.toString())
+            .map(uri -> context.getString(R.string.common_error_no_app_found_to_handle_url, uri))
+            .orElse(context.getString(R.string.common_error_no_app_found_to_handle_this_action));
+        Toast.makeText(context, toastMessage, Toast.LENGTH_SHORT).show();
+      }
     }
   }
 

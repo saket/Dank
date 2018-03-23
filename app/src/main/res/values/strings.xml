@@ -38,6 +38,9 @@
 
   <string name="common_share_sheet_title">Share with</string>
 
+  <string name="common_error_no_app_found_to_handle_url">No app found to handle url: %s</string>
+  <string name="common_error_no_app_found_to_handle_this_action">No app found to handle this action</string>
+
   <!-- Login -->
   <string name="login">Login</string>
   <string name="login_logout">Logout</string>
