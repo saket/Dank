@@ -55,6 +55,8 @@ public interface SubmissionCommentInlineReply {
 
     public abstract ContributionFullNameWrapper parentContributionFullname();
 
+    public abstract String parentContributionAuthor();
+
     public abstract int indentationDepth();
 
     @Override
@@ -62,11 +64,17 @@ public interface SubmissionCommentInlineReply {
       return SubmissionCommentRowType.INLINE_REPLY;
     }
 
-    public static UiModel create(long adapterId, CharSequence authorHint, ContributionFullNameWrapper parentContribution, int indentationDepth) {
+    public static UiModel create(
+        long adapterId,
+        CharSequence authorHint,
+        ContributionFullNameWrapper parentContribution,
+        String parentContributionAuthor,
+        int indentationDepth) {
       return new AutoValue_SubmissionCommentInlineReply_UiModel(
           adapterId,
           SpannableWithTextEquality.wrap(authorHint),
           parentContribution,
+          parentContributionAuthor,
           indentationDepth
       );
     }
@@ -125,7 +133,7 @@ public interface SubmissionCommentInlineReply {
 
       goFullscreenButton.setOnClickListener(o -> {
         CharSequence replyMessage = replyField.getText();
-        String authorNameIfComment = uiModel.authorHint().toString();
+        String authorNameIfComment = uiModel.parentContributionAuthor();
         ContributionFullNameWrapper parentContribution = uiModel.parentContributionFullname();
         replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, replyMessage, authorNameIfComment));
       });

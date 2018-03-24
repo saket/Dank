@@ -338,7 +338,7 @@ public class SubmissionCommentTreeUiConstructor {
     ArrayList<SubmissionScreenUiModel> flattenComments = new ArrayList<>(totalRowsSize);
     if (ACTIVE_REPLY_IDS.isActive(submission)) {
       String loggedInUserName = userSessionRepository.get().loggedInUserName();
-      flattenComments.add(inlineReplyUiModel(context, submission, loggedInUserName, 0));
+      flattenComments.add(inlineReplyUiModel(context, submission, submissionAuthor, loggedInUserName, 0));
     }
 
     if (rootCommentNode == null) {
@@ -382,7 +382,8 @@ public class SubmissionCommentTreeUiConstructor {
     boolean isSubmission = nextNode.getComment().getFullName().equals(submission.getFullName());
     if (!isSubmission && isReplyActive && !isCommentNodeCollapsed) {
       String loggedInUserName = userSessionRepository.get().loggedInUserName();
-      flattenComments.add(inlineReplyUiModel(context, nextNode.getComment(), loggedInUserName, nextNode.getDepth()));
+      String parentCommentAuthor = nextNode.getComment().getAuthor();
+      flattenComments.add(inlineReplyUiModel(context, nextNode.getComment(), parentCommentAuthor, loggedInUserName, nextNode.getDepth()));
     }
 
     // Pending-sync replies.
@@ -604,6 +605,7 @@ public class SubmissionCommentTreeUiConstructor {
   private SubmissionCommentInlineReply.UiModel inlineReplyUiModel(
       Context context,
       Contribution parentContribution,
+      String parentContributionReply,
       String loggedInUserName,
       int indentationDepth)
   {
@@ -613,6 +615,7 @@ public class SubmissionCommentTreeUiConstructor {
         adapterId,
         authorHint,
         ContributionFullNameWrapper.createFrom(parentContribution),
+        parentContributionReply,
         indentationDepth
     );
   }
