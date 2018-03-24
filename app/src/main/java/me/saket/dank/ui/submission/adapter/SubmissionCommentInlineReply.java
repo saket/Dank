@@ -192,14 +192,13 @@ public interface SubmissionCommentInlineReply {
       draftDisposable.dispose();
     }
 
-    public void handlePickedGiphyGif(GiphyGif giphyGif) {
+    public void handlePickedGiphyGif(String title, GiphyGif giphyGif) {
       int selectionStart = Math.min(replyField.getSelectionStart(), replyField.getSelectionEnd());
       int selectionEnd = Math.max(replyField.getSelectionStart(), replyField.getSelectionEnd());
 
-      String selectedText = replyField.getText().subSequence(selectionStart, selectionEnd).toString();
-      String linkMarkdown = selectedText.isEmpty()
+      String linkMarkdown = title.isEmpty()
           ? giphyGif.url()
-          : String.format("[%s](%s)", selectedText, giphyGif.url());
+          : String.format("[%s](%s)", title, giphyGif.url());
       replyField.getText().replace(selectionStart, selectionEnd, linkMarkdown);
 
       // Keyboard might have gotten dismissed while the GIF list was being scrolled.

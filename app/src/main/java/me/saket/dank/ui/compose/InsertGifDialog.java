@@ -6,7 +6,9 @@ import android.content.Context;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.view.LayoutInflater;
@@ -34,6 +36,7 @@ import timber.log.Timber;
 public class InsertGifDialog extends DankDialogFragment {
 
   private static final String KEY_GIPHY_GIF = "giphyGif";
+  private static final String KEY_PAYLOAD = "payload";
 
   @BindView(R.id.uploadimage_image) ImageView imageView;
   @BindView(R.id.uploadimage_file_size) TextView fileSizeView;
@@ -44,7 +47,11 @@ public class InsertGifDialog extends DankDialogFragment {
   @BindView(R.id.uploadimage_state_failed_tap_to_retry) TextView errorView;
   @BindView(R.id.uploadimage_insert) Button insertButton;
 
-  public static void show(FragmentManager fragmentManager, GiphyGif imageUrl) {
+  public interface OnGifInsertListener {
+    void onGifInsert(String title, GiphyGif gif, @Nullable Parcelable payload);
+  }
+
+  public static void showWithPayload(FragmentManager fragmentManager, GiphyGif imageUrl, @Nullable Parcelable payload) {
     String tag = InsertGifDialog.class.getSimpleName();
     InsertGifDialog dialog = (InsertGifDialog) fragmentManager.findFragmentByTag(tag);
 
@@ -56,15 +63,22 @@ public class InsertGifDialog extends DankDialogFragment {
 
     Bundle arguments = new Bundle();
     arguments.putParcelable(KEY_GIPHY_GIF, imageUrl);
+    if (payload != null) {
+      arguments.putParcelable(KEY_PAYLOAD, payload);
+    }
     dialog.setArguments(arguments);
     dialog.show(fragmentManager, tag);
+  }
+
+  public static void show(FragmentManager fragmentManager, GiphyGif imageUrl) {
+    showWithPayload(fragmentManager, imageUrl, null);
   }
 
   @Override
   public void onAttach(Context context) {
     super.onAttach(context);
 
-    if (!(getActivity() instanceof OnLinkInsertListener)) {
+    if (!(getHost() instanceof OnGifInsertListener)) {
       throw new AssertionError();
     }
   }
@@ -80,6 +94,7 @@ public class InsertGifDialog extends DankDialogFragment {
 
     //noinspection ConstantConditions
     GiphyGif giphyGif = getArguments().getParcelable(KEY_GIPHY_GIF);
+    Parcelable payload = getArguments().getParcelable(KEY_PAYLOAD);
 
     //noinspection ConstantConditions
     displayPickedImage(giphyGif.previewUrl());
@@ -89,7 +104,7 @@ public class InsertGifDialog extends DankDialogFragment {
     insertButton.setEnabled(true);
     insertButton.setOnClickListener(v -> {
       String title = titleField.getText().toString().trim();
-      ((OnLinkInsertListener) requireActivity()).onLinkInsert(title, giphyGif.url());
+      ((OnGifInsertListener) requireHost()).onGifInsert(title, giphyGif, payload);
       dismiss();
     });
 

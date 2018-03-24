@@ -89,9 +89,11 @@ import me.saket.dank.data.links.MediaLink;
 import me.saket.dank.data.links.RedditUserLink;
 import me.saket.dank.data.links.UnresolvedMediaLink;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.ComposeStartOptions;
+import me.saket.dank.ui.compose.InsertGifDialog;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
@@ -601,19 +603,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     // So when the activity result arrives, this Rx chain should be ready and listening.
     lifecycle().onActivityResults()
         .filter(result -> result.requestCode() == REQUEST_CODE_PICK_GIF && result.isResultOk())
+        .map(result -> result.data())
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(result -> {
-          //noinspection ConstantConditions
-          ReplyInsertGifClickEvent gifInsertClickEvent = GiphyPickerActivity.extractExtraPayload(result.data());
-          RecyclerView.ViewHolder holder = commentRecyclerView.findViewHolderForItemId(gifInsertClickEvent.replyRowItemId());
-          if (holder == null) {
-            Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after GIPHY activity result"));
-            return;
-          }
-
-          //noinspection ConstantConditions
-          GiphyGif pickedGiphyGif = GiphyPickerActivity.extractPickedGif(result.data());
-          ((SubmissionCommentInlineReply.ViewHolder) holder).handlePickedGiphyGif(pickedGiphyGif);
+        .subscribe(resultData -> {
+          ReplyInsertGifClickEvent gifInsertClickEvent = GiphyPickerActivity.extractExtraPayload(resultData);
+          GiphyGif pickedGiphyGif = GiphyPickerActivity.extractPickedGif(resultData);
+          InsertGifDialog.showWithPayload(((DankActivity) getContext()).getSupportFragmentManager(), pickedGiphyGif, gifInsertClickEvent);
         });
 
     // Reply fullscreen clicks.
@@ -810,6 +805,16 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           Optional<Submission> submissionWithoutComments = pair.second().map(sub -> new Submission(sub.getDataNode()));
           populateUi(submissionWithoutComments, submissionRequest, callingSubreddits.getValue());
         });
+  }
+
+  public void onGifInsert(String title, GiphyGif gif, Parcelable payload) {
+    ReplyInsertGifClickEvent gifInsertClickEvent = ((ReplyInsertGifClickEvent) payload);
+    RecyclerView.ViewHolder holder = commentRecyclerView.findViewHolderForItemId(gifInsertClickEvent.replyRowItemId());
+    if (holder == null) {
+      Timber.e(new IllegalStateException("Couldn't find InlineReplyViewHolder after GIPHY activity result"));
+      return;
+    }
+    ((SubmissionCommentInlineReply.ViewHolder) holder).handlePickedGiphyGif(title, gif);
   }
 
   /**

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
 import butterknife.BindView;
@@ -13,6 +14,8 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.links.RedditCommentLink;
 import me.saket.dank.data.links.RedditSubmissionLink;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.compose.InsertGifDialog;
+import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -27,7 +30,9 @@ import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
  * where pull-to-collapse will take the user back to the previous screen. This is unlike
  * {@link SubredditActivity}, which takes user back to the submission's subreddit.
  */
-public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity implements SubmissionPageLayout.Callbacks {
+public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
+    implements SubmissionPageLayout.Callbacks, InsertGifDialog.OnGifInsertListener
+{
 
   private static final String KEY_SUBMISSION_LINK = "submissionLink";
   private static final String KEY_SUBMISSION_REQUEST = "submission";
@@ -112,5 +117,11 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity im
   @Override
   public void onClickSubmissionToolbarUp() {
     finish();
+  }
+
+  @Override
+  public void onGifInsert(String title, GiphyGif gif, @Nullable Parcelable payload) {
+    assert payload != null;
+    submissionPageLayout.onGifInsert(title, gif, payload);
   }
 }

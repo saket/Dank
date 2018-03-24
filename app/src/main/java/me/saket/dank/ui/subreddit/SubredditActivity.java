@@ -16,6 +16,7 @@ import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.transition.TransitionManager;
 import android.support.transition.TransitionSet;
@@ -70,6 +71,8 @@ import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
+import me.saket.dank.ui.compose.InsertGifDialog;
+import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.ArchivedSubmissionDialogActivity;
 import me.saket.dank.ui.submission.CachedSubmissionFolder;
@@ -105,8 +108,8 @@ import me.saket.dank.widgets.ToolbarExpandableSheet;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
-public class SubredditActivity extends DankPullCollapsibleActivity implements SubmissionPageLayout.Callbacks,
-    NewSubredditSubscriptionDialog.Callback
+public class SubredditActivity extends DankPullCollapsibleActivity
+    implements SubmissionPageLayout.Callbacks, NewSubredditSubscriptionDialog.Callback, InsertGifDialog.OnGifInsertListener
 {
 
   protected static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
@@ -293,6 +296,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity implements Su
   public void setTitle(CharSequence subredditName) {
     boolean isFrontpage = subscriptionManager.isFrontpage(subredditName.toString());
     toolbarTitleView.setText(isFrontpage ? getString(R.string.app_name) : subredditName);
+  }
+
+  @Override
+  public void onGifInsert(String title, GiphyGif gif, @Nullable Parcelable payload) {
+    assert payload != null;
+    submissionPage.onGifInsert(title, gif, payload);
   }
 
   private void setupController() {

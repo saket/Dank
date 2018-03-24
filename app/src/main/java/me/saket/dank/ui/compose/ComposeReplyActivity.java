@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
@@ -47,7 +48,9 @@ import timber.log.Timber;
 /**
  * For composing comments and message replies. Handles saving and retaining drafts. Sends the composed message back to the caller.
  */
-public class ComposeReplyActivity extends DankPullCollapsibleActivity implements OnLinkInsertListener, RunDo.TextLink {
+public class ComposeReplyActivity extends DankPullCollapsibleActivity
+    implements OnLinkInsertListener, RunDo.TextLink, InsertGifDialog.OnGifInsertListener
+{
 
   private static final String KEY_START_OPTIONS = "startOptions";
   private static final String KEY_COMPOSE_RESULT = "composeResult";
@@ -277,8 +280,13 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     }
   }
 
-  private void onGifInsert(GiphyGif giphyGif) {
+  private void onGifSelect(GiphyGif giphyGif) {
     InsertGifDialog.show(getSupportFragmentManager(), giphyGif);
+  }
+
+  @Override
+  public void onGifInsert(String title, GiphyGif gif, @Nullable Parcelable payload) {
+    onLinkInsert(title, gif.url());
   }
 
   @Override
@@ -310,7 +318,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
     } else if (requestCode == REQUEST_CODE_PICK_GIF) {
       if (resultCode == Activity.RESULT_OK) {
         GiphyGif selectedGif = GiphyPickerActivity.extractPickedGif(data);
-        onGifInsert(selectedGif);
+        onGifSelect(selectedGif);
       }
 
     } else {
