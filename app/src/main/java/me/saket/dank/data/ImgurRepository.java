@@ -122,7 +122,7 @@ public class ImgurRepository {
       float progress = (float) bytesRead / totalBytes;
       uploadProgressStream.accept(progress);
     };
-    RequestBody requestBodyWithProgress = new OkHttpRequestBodyWithProgress(requestBody, uploadProgressListener);
+    RequestBody requestBodyWithProgress = OkHttpRequestBodyWithProgress.wrap(requestBody, uploadProgressListener);
     MultipartBody.Part multipartBodyPart = MultipartBody.Part.createFormData("image", imageFile.getName(), requestBodyWithProgress);
 
     Observable<FileUploadProgressEvent<ImgurUploadResponse>> uploadStream = dankApi.uploadToImgur(multipartBodyPart, "file")

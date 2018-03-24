@@ -39,9 +39,12 @@ public class OkHttpRequestBodyWithProgress extends RequestBody {
 
   @Override
   public void writeTo(BufferedSink sink) throws IOException {
-    try (BufferedSink bufferedSink = Okio.buffer(sinkWithProgress(sink))) {
-      requestBody.writeTo(bufferedSink);
-    }
+    // WARNING: Don't convert to try-with-resources. Closing the sink
+    // results in an exception because the content-length computed by
+    // OkHttp differs from the delegated RequestBody's file-length.
+    BufferedSink bufferedSink = Okio.buffer(sinkWithProgress(sink));
+    requestBody.writeTo(bufferedSink);
+    bufferedSink.flush();
   }
 
   private Sink sinkWithProgress(BufferedSink sink) {
