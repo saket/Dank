@@ -45,6 +45,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankDialogFragment;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.utils.FileSizeUnit;
+import me.saket.dank.utils.Keyboards;
 import me.saket.dank.widgets.AnimatedProgressBar;
 import okio.Okio;
 import retrofit2.HttpException;
@@ -170,6 +171,7 @@ public class UploadImageDialog extends DankDialogFragment {
   @CheckResult
   private Single<File> copyImageToTempFile(Uri imageContentUri) {
     return Single.fromCallable(() -> {
+      //noinspection ConstantConditions
       InputStream inputStream = getContext().getContentResolver().openInputStream(imageContentUri);
 
       // Copy image to a temporary location in case the original gets deleted before upload.
@@ -199,6 +201,7 @@ public class UploadImageDialog extends DankDialogFragment {
         urlView.setText(linkWithoutScheme);
 
         showUiState(UploadState.UPLOADED);
+        Keyboards.show(titleField);
         insertButton.setEnabled(true);
         insertButton.setOnClickListener(v -> {
           String title = titleField.getText().toString().trim();
