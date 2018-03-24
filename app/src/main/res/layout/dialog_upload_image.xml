@@ -99,6 +99,8 @@
         android:layout_height="wrap_content"
         android:layout_marginEnd="@dimen/spacing4"
         android:layout_marginStart="@dimen/spacing4"
+        android:ellipsize="end"
+        android:maxLines="1"
         android:textSize="@dimen/textsize18"
         tools:ignore="LabelFor,TextFields"
         tools:text="i.imgur.com/mPW5MRs.jpg" />
@@ -108,11 +110,11 @@
       android:id="@+id/uploadimage_state_failed_tap_to_retry"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
-      android:foreground="?attr/selectableItemBackground"
       android:focusable="true"
+      android:foreground="?attr/selectableItemBackground"
       android:padding="@dimen/spacing16"
-      tools:text="(╯°□°）╯︵ ┻━┻ \n\nFailed to upload image. Tap to retry."
-      android:textColor="@color/error_text_color" />
+      android:textColor="@color/error_text_color"
+      tools:text="(╯°□°）╯︵ ┻━┻ \n\nFailed to upload image. Tap to retry." />
   </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
 
   <LinearLayout
