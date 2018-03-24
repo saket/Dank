@@ -71,12 +71,18 @@ public class Markdown {
     }
   }
 
-  public CharSequence parseMarkdown(String textWithMarkdown, boolean escapeForwardSlashes) {
-    return parseHtml(andDown.markdownToHtml(textWithMarkdown), false, escapeForwardSlashes);
+  public CharSequence parseMarkdown(String textWithMarkdown) {
+    String markdownToHtml = andDown.markdownToHtml(
+        textWithMarkdown,
+        AndDown.HOEDOWN_EXT_FENCED_CODE | AndDown.HOEDOWN_EXT_STRIKETHROUGH | AndDown.HOEDOWN_EXT_UNDERLINE
+            | AndDown.HOEDOWN_EXT_HIGHLIGHT | AndDown.HOEDOWN_EXT_QUOTE | AndDown.HOEDOWN_EXT_SUPERSCRIPT | AndDown.HOEDOWN_EXT_MATH
+            | AndDown.HOEDOWN_EXT_SPACE_HEADERS,
+        0);
+    return parseHtml(markdownToHtml, false, true);
   }
 
   public CharSequence parse(PendingSyncReply reply) {
-    return parseMarkdown(reply.body(), true);
+    return parseMarkdown(reply.body());
   }
 
   public CharSequence parseAuthorFlair(String flair) {
