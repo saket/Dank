@@ -103,7 +103,7 @@ public class GiphyAdapter extends RecyclerViewArrayAdapter<GiphyGif, GiphyAdapte
       imageView.setContentDescription(giphyGif.title());
 
       Glide.with(imageView)
-          .load(giphyGif.fixedHeightUrl200px())
+          .load(giphyGif.previewUrl())
           .apply(RequestOptions.placeholderOf(randomPlaceholder))
           .transition(DrawableTransitionOptions.withCrossFade())
           .into(imageView);

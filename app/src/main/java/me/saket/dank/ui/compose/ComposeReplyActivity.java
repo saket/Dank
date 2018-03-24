@@ -278,15 +278,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
   }
 
   private void onGifInsert(GiphyGif giphyGif) {
-    int selectionStart = Math.min(replyField.getSelectionStart(), replyField.getSelectionEnd());
-    int selectionEnd = Math.max(replyField.getSelectionStart(), replyField.getSelectionEnd());
-
-    String selectedText = replyField.getText().subSequence(selectionStart, selectionEnd).toString();
-    onLinkInsert(selectedText, giphyGif.url());
-
-    // Keyboard might have gotten dismissed while the GIF list was being scrolled.
-    // Works only if called delayed. Posting to reply field's message queue works.
-    replyField.post(() -> Keyboards.show(replyField));
+    InsertGifDialog.show(getSupportFragmentManager(), giphyGif);
   }
 
   @Override
@@ -298,6 +290,10 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity implements
         ? url
         : String.format("[%s](%s)", title, url);
     replyField.getText().replace(selectionStart, selectionEnd, linkMarkdown);
+
+    // Keyboard might have gotten dismissed while the GIF list was being scrolled.
+    // Works only if called delayed. Posting to reply field's message queue works.
+    replyField.post(() -> Keyboards.show(replyField));
   }
 
   @Override
