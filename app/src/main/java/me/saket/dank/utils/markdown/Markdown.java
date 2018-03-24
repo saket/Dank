@@ -31,13 +31,20 @@ public class Markdown {
 
   private final DankHtmlTagHandler htmlTagHandler;
   private final AndDown andDown;
-  private final Cache<String, CharSequence> cache;
+  private final Cache<String, CharSequence> fromHtmlCache;
+  private final Cache<String, String> fromMarkdownCache;
 
   @Inject
-  public Markdown(DankHtmlTagHandler htmlTagHandler, AndDown andDown, @Named("markdown") Cache<String, CharSequence> markdownCache) {
+  public Markdown(
+      DankHtmlTagHandler htmlTagHandler,
+      AndDown andDown,
+      @Named("markdown_from_html") Cache<String, CharSequence> fromHtmlCache,
+      @Named("markdown_from_markdown") Cache<String, String> fromMarkdownCache)
+  {
     this.htmlTagHandler = htmlTagHandler;
     this.andDown = andDown;
-    this.cache = markdownCache;
+    this.fromHtmlCache = fromHtmlCache;
+    this.fromMarkdownCache = fromMarkdownCache;
   }
 
   private CharSequence parseHtml(String textWithHtml, boolean escapeHtml, boolean escapeForwardSlashes) {
@@ -64,25 +71,37 @@ public class Markdown {
       }
     };
     try {
-      return cache.get(textWithHtml, valueSeeder);
+      return fromHtmlCache.get(textWithHtml, valueSeeder);
     } catch (ExecutionException e) {
       // Should never happen.
       throw Exceptions.propagate(e);
     }
   }
 
-  public CharSequence parseMarkdown(String textWithMarkdown) {
-    String markdownToHtml = andDown.markdownToHtml(
+  private CharSequence parseMarkdown(String textWithMarkdown, boolean escapeHtml, boolean escapeForwardSlashes) {
+    Callable<String> valueSeeder = () -> andDown.markdownToHtml(
         textWithMarkdown,
-        AndDown.HOEDOWN_EXT_FENCED_CODE | AndDown.HOEDOWN_EXT_STRIKETHROUGH | AndDown.HOEDOWN_EXT_UNDERLINE
-            | AndDown.HOEDOWN_EXT_HIGHLIGHT | AndDown.HOEDOWN_EXT_QUOTE | AndDown.HOEDOWN_EXT_SUPERSCRIPT | AndDown.HOEDOWN_EXT_MATH
+        AndDown.HOEDOWN_EXT_FENCED_CODE
+            | AndDown.HOEDOWN_EXT_STRIKETHROUGH
+            | AndDown.HOEDOWN_EXT_UNDERLINE
+            | AndDown.HOEDOWN_EXT_HIGHLIGHT
+            | AndDown.HOEDOWN_EXT_QUOTE
+            | AndDown.HOEDOWN_EXT_SUPERSCRIPT
             | AndDown.HOEDOWN_EXT_SPACE_HEADERS,
         0);
-    return parseHtml(markdownToHtml, false, true);
+
+    try {
+      String markdownToHtml = fromMarkdownCache.get(textWithMarkdown, valueSeeder);
+      return parseHtml(markdownToHtml, escapeHtml, escapeForwardSlashes);
+
+    } catch (ExecutionException e) {
+      // Should never happen.
+      throw Exceptions.propagate(e);
+    }
   }
 
   public CharSequence parse(PendingSyncReply reply) {
-    return parseMarkdown(reply.body());
+    return parseMarkdown(reply.body(), false, true);
   }
 
   public CharSequence parseAuthorFlair(String flair) {
@@ -107,7 +126,6 @@ public class Markdown {
    * <p>
    * Convert "**Something**" -> "Something", without any styling.
    */
-  // TODO: cache.
   public String stripMarkdownFromHtml(String textWithHtml) {
     // Since all HTML styling is added using spans, converting the CharSequence to a String will remove all styling.
     String sourceWithoutHtml = Html.fromHtml(textWithHtml).toString();
@@ -136,6 +154,6 @@ public class Markdown {
     if (!BuildConfig.DEBUG) {
       throw new AssertionError();
     }
-    cache.invalidateAll();
+    fromHtmlCache.invalidateAll();
   }
 }

@@ -72,10 +72,19 @@ public class CacheModule {
 
   @Provides
   @Singleton
-  @Named("markdown")
-  Cache<String, CharSequence> provideMarkdownCache() {
+  @Named("markdown_from_html")
+  static Cache<String, CharSequence> markdownCache() {
     return CacheBuilder.newBuilder()
-        .expireAfterAccess(15, TimeUnit.MINUTES)
+        .expireAfterAccess(1, TimeUnit.HOURS)
+        .build();
+  }
+
+  @Provides
+  @Singleton
+  @Named("markdown_from_markdown")
+  static Cache<String, String> provideMarkdownCache() {
+    return CacheBuilder.newBuilder()
+        .expireAfterAccess(1, TimeUnit.HOURS)
         .build();
   }
 
