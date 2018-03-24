@@ -5,49 +5,32 @@
   android:orientation="vertical"
   android:paddingTop="@dimen/spacing12">
 
-  <android.support.design.widget.TextInputLayout
-    android:id="@+id/addlinkdialog_title_inputlayout"
+  <EditText
+    android:id="@+id/addlinkdialog_title"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginEnd="@dimen/spacing16"
     android:layout_marginStart="@dimen/spacing16"
-    android:layout_marginTop="@dimen/spacing4"
-    android:paddingEnd="@dimen/spacing4"
-    android:paddingStart="@dimen/spacing4">
+    android:hint="@string/composereply_addlink_title"
+    android:imeOptions="actionNext"
+    android:inputType="textCapSentences"
+    android:maxLines="1" />
 
-    <EditText
-      android:id="@+id/addlinkdialog_title"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:hint="@string/composereply_addlink_title"
-      android:imeOptions="actionNext"
-      android:inputType="textCapSentences"
-      android:maxLines="1" />
-  </android.support.design.widget.TextInputLayout>
-
-  <android.support.design.widget.TextInputLayout
-    android:id="@+id/addlinkdialog_url_inputlayout"
+  <EditText
+    android:id="@+id/addlinkdialog_url"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginEnd="@dimen/spacing16"
     android:layout_marginStart="@dimen/spacing16"
-    android:paddingEnd="@dimen/spacing4"
-    android:paddingStart="@dimen/spacing4">
-
-    <EditText
-      android:id="@+id/addlinkdialog_url"
-      android:layout_width="match_parent"
-      android:layout_height="wrap_content"
-      android:hint="@string/composereply_addlink_url"
-      android:inputType="textUri" />
-  </android.support.design.widget.TextInputLayout>
+    android:hint="@string/composereply_addlink_url"
+    android:inputType="textUri" />
 
   <TextView
     android:id="@+id/addlinkdialog_paste_from_clipboard_hint"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginEnd="@dimen/spacing24"
-    android:layout_marginStart="@dimen/spacing24"
+    android:layout_marginEnd="@dimen/spacing16"
+    android:layout_marginStart="@dimen/spacing16"
     android:background="@drawable/background_addlink_paste_from_clipboard_offer"
     android:clickable="true"
     android:ellipsize="middle"

@@ -114,6 +114,7 @@
       android:foreground="?attr/selectableItemBackground"
       android:padding="@dimen/spacing16"
       android:textColor="@color/error_text_color"
+      tools:ignore="SelectableText"
       tools:text="(╯°□°）╯︵ ┻━┻ \n\nFailed to upload image. Tap to retry." />
   </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
 

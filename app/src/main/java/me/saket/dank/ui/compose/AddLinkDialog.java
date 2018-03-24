@@ -7,7 +7,6 @@ import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
-import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.FragmentManager;
 import android.support.v7.app.AlertDialog;
 import android.util.Patterns;
@@ -31,9 +30,7 @@ public class AddLinkDialog extends DankDialogFragment {
 
   private static final String KEY_PRE_FILLED_TITLE = "preFilledTitle";
 
-  @BindView(R.id.addlinkdialog_title_inputlayout) TextInputLayout titleInputLayout;
   @BindView(R.id.addlinkdialog_title) EditText titleField;
-  @BindView(R.id.addlinkdialog_url_inputlayout) TextInputLayout urlInputLayout;
   @BindView(R.id.addlinkdialog_url) EditText urlField;
   @BindView(R.id.addlinkdialog_paste_from_clipboard_hint) TextView pasteUrlFromClipboardHintView;
 
@@ -141,12 +138,12 @@ public class AddLinkDialog extends DankDialogFragment {
     String title = titleField.getText().toString().trim();
     String url = urlField.getText().toString().trim();
 
-    titleInputLayout.setError(
+    titleField.setError(
         title.isEmpty()
             ? getString(R.string.composereply_addlink_error_empty_field)
             : null
     );
-    urlInputLayout.setError(
+    urlField.setError(
         url.isEmpty()
             ? getString(R.string.composereply_addlink_error_empty_field)
             : null
