@@ -133,18 +133,18 @@ public class SubmissionContentLinkUiConstructor {
         .subscribeOn(io())
         .toObservable()
         .onErrorResumeNext(Observable.empty())
-        .replay(1)
+        .replay()
         .refCount();
 
     Observable<String> sharedTitleStream = fetchTitle(link, sharedLinkMetadataStream)
-        .replay(1)
+        .replay()
         .refCount();
     Observable<Optional<Drawable>> sharedFaviconStream = fetchFavicon(context, sharedLinkMetadataStream)
-        .replay(1)
+        .replay()
         .refCount();
     Observable<Optional<String>> thumbnailUrlStream = sharedLinkMetadataStream.map(linkMetadata -> Optional.ofNullable(linkMetadata.imageUrl()));
     Observable<Optional<Drawable>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, thumbnailUrlStream)
-        .replay(1)
+        .replay()
         .refCount();
     Observable<TintDetails> tintDetailsStream = streamTintDetails(link, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
 
@@ -240,8 +240,8 @@ public class SubmissionContentLinkUiConstructor {
       Observable<LinkMetadata> sharedLinkMetadataStream = linkMetadataRepository.unfurl(submissionLink)
           .subscribeOn(io())
           .toObservable()
-          .replay(1)
           .onErrorResumeNext(Observable.empty())
+          .replay()
           .refCount();
 
       progressVisibleStream = sharedLinkMetadataStream
@@ -319,11 +319,11 @@ public class SubmissionContentLinkUiConstructor {
 
     Observable<Optional<String>> albumThumbnailStream = Observable.just(Optional.of(albumLink.coverImageUrl()));
     Observable<Optional<Drawable>> sharedThumbnailStream = fetchThumbnail(context, redditSuppliedThumbnails, albumThumbnailStream)
-        .replay(1)
+        .replay()
         .refCount();
     Observable<Optional<Drawable>> sharedFaviconStream = Observable.fromCallable(() -> context.getDrawable(R.drawable.ic_photo_library_24dp))
         .as(Optional.of())
-        .replay(1)
+        .replay()
         .refCount();
 
     Observable<TintDetails> tintDetailsStream = streamTintDetails(albumLink, windowBackgroundColor, sharedFaviconStream, sharedThumbnailStream);
