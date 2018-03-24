@@ -241,11 +241,13 @@ public class SubmissionContentLinkUiConstructor {
           .subscribeOn(io())
           .toObservable()
           .replay(1)
+          .onErrorResumeNext(Observable.empty())
           .refCount();
 
       progressVisibleStream = sharedLinkMetadataStream
-          .map(o -> false)
-          .onErrorReturnItem(false)
+          .ignoreElements()
+          .onErrorComplete()
+          .andThen(Observable.just(false))
           .startWith(true);
 
       titleStream = sharedLinkMetadataStream

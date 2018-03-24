@@ -46,7 +46,6 @@ import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.span.RoundedBackgroundSpan;
 import timber.log.Timber;
 
-// TODO: Build a subcomponent for SubredditActivity?
 public class SubmissionUiConstructor {
 
   private final SubmissionContentLinkUiConstructor contentLinkUiModelConstructor;
