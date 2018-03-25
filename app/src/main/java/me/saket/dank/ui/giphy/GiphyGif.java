@@ -16,11 +16,9 @@ public abstract class GiphyGif implements Parcelable {
 
   public abstract String url();
 
-  public abstract String downsizedUrlUnder2mb();
-
   public abstract String previewUrl();
 
-  public static GiphyGif create(String id, String title, String url, String downsizedUnder2mbUrl, String previewUrl) {
-    return new AutoValue_GiphyGif(id, title, url, downsizedUnder2mbUrl, previewUrl);
+  public static GiphyGif create(String id, String title, String url, String previewUrl) {
+    return new AutoValue_GiphyGif(id, title, url, previewUrl);
   }
 }

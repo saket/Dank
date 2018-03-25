@@ -129,10 +129,9 @@ public class GiphyRepository {
     List<GiphyGif> fetchedGifs = new ArrayList<>(giphyItems.size());
 
     for (GiphySearchResponse.GiphyItem giphyItem : giphyItems) {
-      GiphySearchResponse.GifVariants gifVariants = giphyItem.gifVariants();
-      String fullSizeUrl = gifVariants.downsizedUnder2mb().url();
-      String thumbnailsPreviewUrl = gifVariants.fixedHeight200px().url();
-      fetchedGifs.add(GiphyGif.create(giphyItem.id(), giphyItem.title(), giphyItem.url(), fullSizeUrl, thumbnailsPreviewUrl));
+      String under2mbUrl = giphyItem.gifVariants().downsizedUnder2mb().url();
+      String thumbnailsPreviewUrl = giphyItem.gifVariants().fixedHeight200px().url();
+      fetchedGifs.add(GiphyGif.create(giphyItem.id(), giphyItem.title(), under2mbUrl, thumbnailsPreviewUrl));
     }
     return fetchedGifs;
   }
