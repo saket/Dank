@@ -142,6 +142,7 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
+import me.saket.dank.widgets.swipe.SwipeableLayout;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -421,7 +422,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .takeUntil(lifecycle().onDestroy())
         .subscribe(
             focusedCommentPosition -> commentRecyclerView.post(() -> commentRecyclerView.smoothScrollToPosition(focusedCommentPosition)),
-            error -> Timber.w(error.getMessage())
+            error -> Timber.e(error, "Couldn't scroll to focused comment")
         );
 
     // When request changes, wait until adapter's data-set gets updated AND with comment rows.
@@ -447,7 +448,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
       }
     });
 
-    // Option swipe gesture.
+    // Option swipe gestures.
     submissionCommentsAdapter.streamSubmissionOptionSwipeActions()
         .withLatestFrom(callingSubreddits, Pair::create)
         .takeUntil(lifecycle().onDestroy())
@@ -470,6 +471,26 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               .showVisitSubreddit(showVisitSubredditOption)
               .build();
           optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, menuLocation);
+        });
+
+    submissionCommentsAdapter.streamCommentOptionSwipeActions()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(event -> {
+          SwipeableLayout commentLayout = event.itemView();
+          Point sheetLocation = Views.locationOnScreen(commentLayout);
+          Point popupLocation = new Point(0, sheetLocation.y);
+
+          // Align with comment body.
+          popupLocation.offset(
+              getResources().getDimensionPixelSize(R.dimen.submission_comment_horiz_padding),
+              getResources().getDimensionPixelSize(R.dimen.submission_comment_top_padding));
+
+          // Keep below toolbar.
+          int toolbarBottom = Views.locationOnScreen(toolbar).y + toolbar.getBottom() + getResources().getDimensionPixelSize(R.dimen.spacing16);
+          popupLocation.y = Math.max(popupLocation.y, toolbarBottom);
+
+          CommentOptionsPopup optionsPopup = new CommentOptionsPopup(commentLayout.getContext(), event.comment());
+          optionsPopup.showAtLocation(commentLayout, Gravity.TOP | Gravity.START, popupLocation);
         });
 
     // Reply swipe gestures.

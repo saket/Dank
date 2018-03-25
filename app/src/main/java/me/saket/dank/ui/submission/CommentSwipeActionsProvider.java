@@ -1,8 +1,6 @@
 package me.saket.dank.ui.submission;
 
-import android.graphics.Point;
 import android.support.annotation.StringRes;
-import android.view.Gravity;
 
 import com.jakewharton.rxrelay2.PublishRelay;
 
@@ -15,10 +13,10 @@ import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
@@ -45,6 +43,7 @@ public class CommentSwipeActionsProvider {
 
   public final PublishRelay<Comment> replySwipeActions = PublishRelay.create();
   public final PublishRelay<ContributionVoteSwipeEvent> voteSwipeActions = PublishRelay.create();
+  public final PublishRelay<CommentOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
 
   @Inject
   public CommentSwipeActionsProvider(
@@ -133,14 +132,7 @@ public class CommentSwipeActionsProvider {
 
     switch (swipeAction.labelRes()) {
       case ACTION_NAME_OPTIONS:
-        Point sheetLocation = Views.locationOnScreen(swipeableLayout);
-        Point menuLocation = new Point(0, sheetLocation.y);
-        menuLocation.offset(  // Align with comment body.
-            swipeableLayout.getResources().getDimensionPixelSize(R.dimen.submission_comment_horiz_padding),
-            swipeableLayout.getResources().getDimensionPixelSize(R.dimen.submission_comment_top_padding));
-
-        CommentOptionsPopup optionsPopup = new CommentOptionsPopup(swipeableLayout.getContext(), comment);
-        optionsPopup.showAtLocation(swipeableLayout, Gravity.TOP | Gravity.START, menuLocation);
+        optionSwipeActions.accept(CommentOptionSwipeEvent.create(comment, swipeableLayout));
         isUndoAction = false;
         break;
 

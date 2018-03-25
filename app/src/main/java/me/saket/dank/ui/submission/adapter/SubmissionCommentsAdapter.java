@@ -20,6 +20,7 @@ import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
+import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
@@ -183,6 +184,11 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @CheckResult
   public Observable<ContributionVoteSwipeEvent> streamCommentVoteSwipeActions() {
     return commentAdapter.voteSwipeActions().mergeWith(headerAdapter.voteSwipeActions());
+  }
+
+  @CheckResult
+  public Observable<CommentOptionSwipeEvent> streamCommentOptionSwipeActions() {
+    return commentAdapter.optionSwipeActions();
   }
 
   @CheckResult

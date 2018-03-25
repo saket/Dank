@@ -27,6 +27,7 @@ import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
+import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.utils.DankLinkMovementMethod;
@@ -266,6 +267,11 @@ public interface SubmissionComment {
     @CheckResult
     public PublishRelay<ContributionVoteSwipeEvent> voteSwipeActions() {
       return swipeActionsProvider.voteSwipeActions;
+    }
+
+    @CheckResult
+    public Observable<CommentOptionSwipeEvent> optionSwipeActions() {
+      return swipeActionsProvider.optionSwipeActions;
     }
   }
 }
