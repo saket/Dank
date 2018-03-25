@@ -188,8 +188,10 @@ public class ReplyRepository implements DraftStore {
   @Override
   public Completable saveDraft(Contribution contribution, String draftBody) {
     if (draftBody.isEmpty()) {
+      Timber.i("Removing draft: %s", draftBody);
       return removeDraft(contribution);
     }
+    Timber.i("Saving draft: %s", draftBody);
 
     return Completable.fromAction(() -> {
       long draftCreatedTimeMillis = System.currentTimeMillis();

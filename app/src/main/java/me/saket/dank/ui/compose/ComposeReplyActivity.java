@@ -38,7 +38,6 @@ import me.saket.dank.ui.giphy.GiphyPickerActivity;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.SimpleTextWatcher;
-import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
@@ -123,18 +122,13 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
     // Note: We'll have to remove MarkdownHintOptions from Dagger graph when we introduce a light theme.
     replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, markdownSpanPool));
 
-    // Retain pre-filled text or restore draft.
-    CharSequence preFilledText = startOptions.preFilledText();
-    if (Strings.isNullOrEmpty(preFilledText)) {
-      replyRepository.streamDrafts(startOptions.draftKey())
-          .firstElement()
-          .subscribeOn(io())
-          .observeOn(mainThread())
-          .subscribe(draft -> replyField.getText().replace(0, replyField.getText().length(), draft));
-
-    } else {
-      Views.setTextWithCursor(replyField, preFilledText);
-    }
+    // Callers never send any pre-filled text. Drafts are used as the single
+    // source of truth for both inline and full-screen replies.
+    replyRepository.streamDrafts(startOptions.draftKey())
+        .firstElement()
+        .subscribeOn(io())
+        .observeOn(mainThread())
+        .subscribe(draft -> replyField.getText().replace(0, replyField.getText().length(), draft));
 
     // Save draft before exiting, unless the message is being launched… into the space!
     lifecycle().onStop()
@@ -142,7 +136,6 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> {
           String draft = replyField.getText().toString();
-          Timber.i("Saving draft: %s", draft);
           replyRepository.saveDraft(startOptions.draftKey(), draft)
               .subscribeOn(io())
               .subscribe();

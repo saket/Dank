@@ -622,7 +622,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               .secondPartyName(fullscreenClickEvent.authorNameIfComment())
               .parentContribution(fullscreenClickEvent.parentContribution())
               .draftKey(fullscreenClickEvent.parentContribution())
-              .preFilledText(fullscreenClickEvent.replyMessage())
               .extras(extraPayload)
               .build();
           Activity activity = (Activity) getContext();

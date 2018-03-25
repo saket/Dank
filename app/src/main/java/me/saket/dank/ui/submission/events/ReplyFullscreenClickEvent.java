@@ -13,17 +13,10 @@ public abstract class ReplyFullscreenClickEvent {
 
   public abstract ContributionFullNameWrapper parentContribution();
 
-  public abstract CharSequence replyMessage();
-
   @Nullable
   public abstract String authorNameIfComment();
 
-  public static ReplyFullscreenClickEvent create(
-      long replyRowItemId,
-      ContributionFullNameWrapper parentContribution,
-      CharSequence replyMessage,
-      String authorNameIfComment)
-  {
-    return new AutoValue_ReplyFullscreenClickEvent(replyRowItemId, parentContribution, replyMessage, authorNameIfComment);
+  public static ReplyFullscreenClickEvent create(long replyRowItemId, ContributionFullNameWrapper parentContribution, String authorNameIfComment) {
+    return new AutoValue_ReplyFullscreenClickEvent(replyRowItemId, parentContribution, authorNameIfComment);
   }
 }

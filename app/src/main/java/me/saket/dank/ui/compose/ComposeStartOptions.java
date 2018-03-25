@@ -18,9 +18,6 @@ public abstract class ComposeStartOptions implements Parcelable {
   public abstract String secondPartyName();
 
   @Nullable
-  public abstract CharSequence preFilledText();
-
-  @Nullable
   abstract ContributionFullNameWrapper parentContribution();
 
   public Optional<ContributionFullNameWrapper> optionalParentContribution() {
@@ -43,8 +40,6 @@ public abstract class ComposeStartOptions implements Parcelable {
      * When null, {@link ComposeReplyActivity} just uses "Reply".
      */
     public abstract Builder secondPartyName(@Nullable String secondPartyName);
-
-    public abstract Builder preFilledText(CharSequence preFilledText);
 
     /**
      * The {@link Contribution} to which this reply is being made.

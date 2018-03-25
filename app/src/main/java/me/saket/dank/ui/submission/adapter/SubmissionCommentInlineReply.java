@@ -92,12 +92,13 @@ public interface SubmissionCommentInlineReply {
     private Disposable draftDisposable = Disposables.disposed();
     private boolean savingDraftsAllowed;
     private UiModel uiModel;
+    private DraftStore draftStore;
 
-    public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-      return new ViewHolder(inflater.inflate(R.layout.list_item_submission_comments_inline_reply, parent, false));
+    public static ViewHolder create(LayoutInflater inflater, ViewGroup parent, DraftStore draftStore) {
+      return new ViewHolder(inflater.inflate(R.layout.list_item_submission_comments_inline_reply, parent, false), draftStore);
     }
 
-    public ViewHolder(View itemView) {
+    public ViewHolder(View itemView, DraftStore draftStore) {
       super(itemView);
       indentedLayout = itemView.findViewById(R.id.item_comment_reply_indented_container);
       discardButton = itemView.findViewById(R.id.item_comment_reply_discard);
@@ -106,6 +107,8 @@ public interface SubmissionCommentInlineReply {
       sendButton = itemView.findViewById(R.id.item_comment_reply_send);
       authorHintView = itemView.findViewById(R.id.item_comment_reply_author_hint);
       replyField = itemView.findViewById(R.id.item_comment_reply_message);
+
+      this.draftStore = draftStore;
 
       sendButton.setEnabled(false);
       replyField.addTextChangedListener(new SimpleTextWatcher() {
@@ -132,10 +135,11 @@ public interface SubmissionCommentInlineReply {
       );
 
       goFullscreenButton.setOnClickListener(o -> {
-        CharSequence replyMessage = replyField.getText();
+        saveDraftAsynchronouslyIfAllowed();
+
         String authorNameIfComment = uiModel.parentContributionAuthor();
         ContributionFullNameWrapper parentContribution = uiModel.parentContributionFullname();
-        replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, replyMessage, authorNameIfComment));
+        replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, authorNameIfComment));
       });
 
       sendButton.setOnClickListener(o -> {
@@ -146,16 +150,22 @@ public interface SubmissionCommentInlineReply {
       });
     }
 
-    public void setupSavingOfDraftOnFocusLost(DraftStore draftStore) {
+    public void setupSavingOfDraftOnFocusLost() {
       replyField.setOnFocusChangeListener((v, hasFocus) -> {
-        if (!hasFocus && savingDraftsAllowed) {
-          // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
-          // WARNING: DON'T REFERENCE VH FIELDS IN THIS CHAIN TO AVOID LEAKING MEMORY.
-          draftStore.saveDraft(uiModel.parentContributionFullname(), replyField.getText().toString())
-              .subscribeOn(Schedulers.io())
-              .subscribe();
+        if (!hasFocus) {
+          saveDraftAsynchronouslyIfAllowed();
         }
       });
+    }
+
+    private void saveDraftAsynchronouslyIfAllowed() {
+      if (savingDraftsAllowed) {
+        // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
+        // WARNING: DON'T REFERENCE VH FIELDS IN THIS CHAIN TO AVOID LEAKING MEMORY.
+        draftStore.saveDraft(uiModel.parentContributionFullname(), replyField.getText().toString())
+            .subscribeOn(Schedulers.io())
+            .subscribe();
+      }
     }
 
     public void setupMarkdownHints(MarkdownHintOptions markdownHintOptions, MarkdownSpanPool markdownSpanPool) {
@@ -235,7 +245,7 @@ public interface SubmissionCommentInlineReply {
 
     @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
-      SubmissionCommentInlineReply.ViewHolder holder = SubmissionCommentInlineReply.ViewHolder.create(inflater, parent);
+      SubmissionCommentInlineReply.ViewHolder holder = SubmissionCommentInlineReply.ViewHolder.create(inflater, parent, draftStore);
       holder.setupClicks(
           replyGifClickStream,
           replyDiscardClickStream,
@@ -244,7 +254,7 @@ public interface SubmissionCommentInlineReply {
       );
       // Note: We'll have to remove MarkdownHintOptions from Dagger graph when we introduce a light theme.
       holder.setupMarkdownHints(markdownHintOptions, markdownSpanPool);
-      holder.setupSavingOfDraftOnFocusLost(draftStore);
+      holder.setupSavingOfDraftOnFocusLost();
       return holder;
     }
 

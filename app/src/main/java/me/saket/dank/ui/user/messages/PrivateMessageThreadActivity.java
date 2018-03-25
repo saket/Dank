@@ -283,7 +283,10 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   @Override
   protected void onStop() {
     super.onStop();
+    saveDraftAsynchronously();
+  }
 
+  private void saveDraftAsynchronously() {
     // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
     draftStore.saveDraft(privateMessageFullName, replyField.getText().toString())
         .subscribeOn(io())
@@ -292,8 +295,9 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
   @OnClick(R.id.privatemessagethread_fullscreen)
   void onClickFullscreen() {
+    saveDraftAsynchronously();
+
     ComposeStartOptions composeStartOptions = ComposeStartOptions.builder()
-        .preFilledText(replyField.getText())
         .secondPartyName(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME))
         .parentContribution(Optional.empty())
         .draftKey(privateMessageFullName)
@@ -301,8 +305,11 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     startActivityForResult(ComposeReplyActivity.intent(this, composeStartOptions), REQUEST_CODE_FULLSCREEN_REPLY);
   }
 
-  private List<PrivateMessageUiModel> constructUiModels(Message parentMessage, List<Message> threadedReplies,
-      List<PendingSyncReply> pendingSyncReplies, String loggedInUserName)
+  private List<PrivateMessageUiModel> constructUiModels(
+      Message parentMessage,
+      List<Message> threadedReplies,
+      List<PendingSyncReply> pendingSyncReplies,
+      String loggedInUserName)
   {
     List<PrivateMessageUiModel> uiModels = new ArrayList<>(1 + threadedReplies.size() + pendingSyncReplies.size());
 
