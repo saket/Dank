@@ -190,11 +190,14 @@ public class SubmissionCommentTreeUiConstructor {
         .startWith(Collections.<PendingSyncReply>emptyList())
         .map(replyList -> createPendingSyncReplyMap(replyList));
 
-    Observable<?> rowVisibilityChanges = Observable.merge(
-        ACTIVE_REPLY_IDS.changes(),
-        COLLAPSED_COMMENT_IDS.changes(),
-        IN_FLIGHT_LOAD_MORE_IDS.changes()
-    );
+    Observable<?> rowVisibilityChanges = Observable
+        .merge(
+            ACTIVE_REPLY_IDS.changes(),
+            COLLAPSED_COMMENT_IDS.changes(),
+            IN_FLIGHT_LOAD_MORE_IDS.changes()
+        )
+        .observeOn(scheduler)   // observeOn() because the relays emit on the main thread)
+        .startWith(0);          // Occasionally takes a while to emit something. I'm guessing the scheduler gets blocked.
 
     Observable<Optional<FocusedComment>> focusedComments = submissionRequests
         .map(submissionRequest -> Optional.ofNullable(submissionRequest.focusCommentId()))
@@ -209,7 +212,7 @@ public class SubmissionCommentTreeUiConstructor {
             O.of("submission", submissions),
             O.of("pendingSyncRepliesMap", pendingSyncRepliesMaps),
             O.of("focusedComment", focusedComments),
-            O.of("row-visibility", rowVisibilityChanges.observeOn(scheduler)),   // observeOn() because the relays emit on the main thread)
+            O.of("row-visibility", rowVisibilityChanges),
             O.of("votes", voteChanges),
             (submission, pendingSyncRepliesMap, focusedComment, o, oo) -> {
               String submissionAuthor = submission.getAuthor();
