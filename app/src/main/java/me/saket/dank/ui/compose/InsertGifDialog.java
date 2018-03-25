@@ -3,7 +3,6 @@ package me.saket.dank.ui.compose;
 import android.annotation.SuppressLint;
 import android.app.Dialog;
 import android.content.Context;
-import android.graphics.drawable.Drawable;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -29,9 +28,7 @@ import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankDialogFragment;
 import me.saket.dank.ui.giphy.GiphyGif;
-import me.saket.dank.utils.glide.GlideUtils;
 import me.saket.dank.widgets.AnimatedProgressBar;
-import timber.log.Timber;
 
 public class InsertGifDialog extends DankDialogFragment {
 
@@ -128,12 +125,6 @@ public class InsertGifDialog extends DankDialogFragment {
     Glide.with(this)
         .load(imageUrl)
         .transition(DrawableTransitionOptions.withCrossFade())
-        .listener(new GlideUtils.SimpleRequestListener<Drawable>() {
-          @Override
-          public void onResourceReady(Drawable resource) {
-            Timber.i("Image loaded: %s", resource);
-          }
-        })
         .into(imageView);
   }
 

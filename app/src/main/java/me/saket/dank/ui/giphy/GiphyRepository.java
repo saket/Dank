@@ -2,28 +2,26 @@ package me.saket.dank.ui.giphy;
 
 import android.support.annotation.CheckResult;
 
+import com.nytimes.android.external.store3.base.impl.MemoryPolicy;
+import com.nytimes.android.external.store3.base.impl.Store;
+import com.nytimes.android.external.store3.base.impl.StoreBuilder;
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import io.reactivex.Single;
 import me.saket.dank.di.DankApi;
-import me.saket.dank.ui.media.MediaHostRepository;
-import timber.log.Timber;
 
-/**
- * TODO: Ideally all of this should be accessed through {@link MediaHostRepository}.
- */
 @Singleton
 public class GiphyRepository {
 
   private static final int GIFS_TO_LOAD_PER_NETWORK_CALL = 30;
 
   private final DankApi dankApi;
-  private Map<String, List<GiphyGif>> cache = new HashMap<>();
+  private final Store<List<GiphyGif>, String> cache;
 
 //  private List<GiphyGif> trendingGifs = new ArrayList<>();
 //  private Map<String, List<GiphyGif>> searchGifs = new HashMap<>();
@@ -34,6 +32,18 @@ public class GiphyRepository {
   @Inject
   public GiphyRepository(DankApi dankApi) {
     this.dankApi = dankApi;
+
+    cache = StoreBuilder.<String, GiphySearchResponse, List<GiphyGif>>parsedWithKey()
+        .memoryPolicy(MemoryPolicy.builder()
+            .setMemorySize(30)
+            .setExpireAfterWrite(3)
+            .setExpireAfterTimeUnit(TimeUnit.HOURS)
+            .build())
+        .parser(response -> parseGiphyGifs(response))
+        .fetcher(query -> query.isEmpty()
+            ? dankApi.giphyTrending(DankApi.GIPHY_API_KEY, GIFS_TO_LOAD_PER_NETWORK_CALL, 0)
+            : dankApi.giphySearch(DankApi.GIPHY_API_KEY, query, GIFS_TO_LOAD_PER_NETWORK_CALL, 0))
+        .open();
   }
 
   public void clear() {
@@ -87,23 +97,9 @@ public class GiphyRepository {
 
   @CheckResult
   public Single<List<GiphyGif>> search(String searchQuery) {
-    if (cache.containsKey(searchQuery)) {
-      return Single.just(cache.get(searchQuery));
-    }
-
-    Single<GiphySearchResponse> networkStream = searchQuery.isEmpty()
-        ? dankApi.giphyTrending(DankApi.GIPHY_API_KEY, GIFS_TO_LOAD_PER_NETWORK_CALL, 0)
-        : dankApi.giphySearch(DankApi.GIPHY_API_KEY, searchQuery, GIFS_TO_LOAD_PER_NETWORK_CALL, 0);
-
-    return networkStream
-        .map(response -> {
-          List<GiphyGif> fetchedGifs = parseGiphyGifs(response);
-          Timber.i("Fetched %s gifs for %s", fetchedGifs.size(), searchQuery);
-          return fetchedGifs;
-        })
-        .doOnSuccess(giphyGifs -> cache.put(searchQuery, giphyGifs));
+    return cache.get(searchQuery);
   }
-//
+
 //  @CheckResult
 //  public Observable<NetworkCallStatus> searchAndSaveMoreGifs(String searchQuery) {
 //    // Separate stream for notifying status updates so that the caller can stay synchronous.
