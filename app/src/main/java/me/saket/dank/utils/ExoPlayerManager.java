@@ -106,8 +106,10 @@ public class ExoPlayerManager {
   }
 
   public void resetPlayback() {
-    playerView.stopPlayback();
-    playerView.setVideoURI(null);
+    if (playerView.isPlaying()) {
+      playerView.stopPlayback();
+      playerView.setVideoURI(null);
+    }
   }
 
   public void startPlayback() {

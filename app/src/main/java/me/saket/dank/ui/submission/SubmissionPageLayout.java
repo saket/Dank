@@ -82,12 +82,6 @@ import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
-import me.saket.dank.urlparser.ExternalLink;
-import me.saket.dank.urlparser.ImgurAlbumLink;
-import me.saket.dank.urlparser.Link;
-import me.saket.dank.urlparser.MediaLink;
-import me.saket.dank.urlparser.RedditUserLink;
-import me.saket.dank.urlparser.UnresolvedMediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.UrlRouter;
@@ -120,6 +114,12 @@ import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.urlparser.ExternalLink;
+import me.saket.dank.urlparser.ImgurAlbumLink;
+import me.saket.dank.urlparser.Link;
+import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.RedditUserLink;
+import me.saket.dank.urlparser.UnresolvedMediaLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -425,7 +425,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
             error -> Timber.e(error, "Couldn't scroll to focused comment")
         );
 
-    // When request changes, wait until adapter's data-set gets updated AND with comment rows.
     lifecycle().onPageCollapse()
         .startWith(LifecycleStreams.NOTHING)
         .takeUntil(lifecycle().onDestroy())
