@@ -45,7 +45,6 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
-import timber.log.Timber;
 
 /**
  * Pre-fetches submission content and comments.
@@ -121,7 +120,7 @@ public class CachePreFiller {
                 MediaLink mediaLink = (MediaLink) submissionAndLink.second();
                 return preFillImageOrAlbum(submission, mediaLink, deviceDisplayWidth, submissionAlbumLinkThumbnailWidth)
                     .subscribeOn(preFillingScheduler.get())
-                    .doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first().getTitle()))
+                    //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first().getTitle()))
                     .onErrorComplete()
                     .toObservable();
               });

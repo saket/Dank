@@ -21,7 +21,6 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Optional;
-import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.VideoFormat;
 
@@ -204,13 +203,18 @@ public class UrlParser {
     }
   }
 
-  private static RedditHostedVideoLink createRedditHostedVideoLink(String url, Submission submission) {
-    Pair<String, String> pair = JrawUtils.redditVideoDashPlaylistUrl(submission);
-    String dashPlaylistUrl = pair.first();
-    String directVideoUrlWithoutAudio = pair.second();
+  private static Link createRedditHostedVideoLink(String url, Submission submission) {
+    Optional<RedditHostedVideoDashPlaylist> playlist = JrawUtils.redditVideoDashPlaylistUrl(submission);
 
-    assertEquals(true, VideoFormat.parse(dashPlaylistUrl) == VideoFormat.DASH);
-    return RedditHostedVideoLink.create(url, dashPlaylistUrl, dashPlaylistUrl, directVideoUrlWithoutAudio);
+    if (playlist.isPresent()) {
+      assertEquals(true, VideoFormat.parse(playlist.get().dashUrl()) == VideoFormat.DASH);
+      return RedditHostedVideoLink.create(url, playlist.get());
+
+    } else {
+      // Probably just a "v.redd.it" link to a submission.
+      // TODO v2: treat this as an unresolved reddit video link.
+      return ExternalLink.create(url);
+    }
   }
 
   private static Link.Type getMediaUrlType(String urlPath) {

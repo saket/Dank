@@ -18,6 +18,8 @@ import java.util.Collections;
 import java.util.List;
 
 import me.saket.dank.R;
+import me.saket.dank.urlparser.RedditHostedVideoDashPlaylist;
+import timber.log.Timber;
 
 // TODO: Submit all these methods to JRAW.
 public class JrawUtils {
@@ -81,30 +83,32 @@ public class JrawUtils {
 
   // First: Playlist URL
   // Second: Dash URL without audio.
-  public static Pair<String, String> redditVideoDashPlaylistUrl(Submission submission) {
+  public static Optional<RedditHostedVideoDashPlaylist> redditVideoDashPlaylistUrl(Submission submission) {
     String playlistUrl;
     String videoWithoutAudioUrl;
 
-    JsonNode redditVideoNode = submission.getDataNode().get("secure_media").get("reddit_video");
-    if (redditVideoNode != null) {
+    JsonNode mediaNode = submission.getDataNode().get("secure_media");
+    if (!mediaNode.isNull()) {
+      JsonNode redditVideoNode = mediaNode.get("reddit_video");
       playlistUrl = redditVideoNode.get("dash_url").asText();
       videoWithoutAudioUrl = redditVideoNode.get("fallback_url").asText();
 
     } else {
-      boolean hasCrossParent = submission.getDataNode().get("crosspost_parent_list") != null;
+      JsonNode crosspostParentListNode = submission.getDataNode().get("crosspost_parent_list");
+      boolean hasCrossParent = crosspostParentListNode != null && !crosspostParentListNode.isNull();
       if (hasCrossParent) {
-        JsonNode crossPostParentListNode = submission.getDataNode().get("crosspost_parent_list");
-        if (crossPostParentListNode.size() > 1) {
+        if (crosspostParentListNode.size() > 1) {
           throw new UnsupportedOperationException("Multiple cross-post parents! " + submission.getPermalink());
         }
-        JsonNode crossPostParentVideoNode = crossPostParentListNode.get(0).get("secure_media").get("reddit_video");
+        JsonNode crossPostParentVideoNode = crosspostParentListNode.get(0).get("secure_media").get("reddit_video");
         playlistUrl = crossPostParentVideoNode.get("dash_url").asText();
         videoWithoutAudioUrl = crossPostParentVideoNode.get("fallback_url").asText();
 
       } else {
-        throw new UnsupportedOperationException("Couldn't find reddit video URL for sub: " + submission.getPermalink());
+        Timber.w(submission.getDataNode().toString());
+        return Optional.empty();
       }
     }
-    return Pair.create(playlistUrl, videoWithoutAudioUrl);
+    return Optional.of(RedditHostedVideoDashPlaylist.create(playlistUrl, videoWithoutAudioUrl));
   }
 }

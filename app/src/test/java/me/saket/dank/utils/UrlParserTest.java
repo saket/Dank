@@ -347,6 +347,25 @@ public class UrlParserTest {
   }
 
   @Test
+  public void parseUnresolvedRedditHostedVideos() {
+    String[] videoUrls = {
+        "https://v.redd.it/fjpqnd127wf01",
+        "https://v.reddit.com/fjpqnd127wf01"
+    };
+    for (String videoUrl : videoUrls) {
+      String submissionJson = "{\n" +
+          "  \"secure_media\": null,\n" +
+          "  \"crosspost_parent_list\": null" +
+          "}\n";
+      JacksonHelper jacksonHelper = new JacksonHelper();
+      Submission submission = new Submission(jacksonHelper.parseJsonNode(submissionJson));
+
+      Link parsedLink = urlParser.parse(videoUrl, submission);
+      assertEquals(true, parsedLink instanceof ExternalLink);
+    }
+  }
+
+  @Test
   public void parseImgurAlbumUrls() {
     for (String url : IMGUR_ALBUM_URLS) {
       try {
