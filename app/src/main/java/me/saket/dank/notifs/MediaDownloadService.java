@@ -1,6 +1,7 @@
 package me.saket.dank.notifs;
 
 import static me.saket.dank.ui.media.MediaDownloadJob.ProgressState.DOWNLOADED;
+import static me.saket.dank.ui.media.MediaDownloadJob.ProgressState.FAILED;
 
 import android.Manifest;
 import android.app.Notification;
@@ -147,20 +148,16 @@ public class MediaDownloadService extends Service {
     disposables.add(
         activeDownloadsProgressChangeStream
             .map(activeDownloadJobs -> {
-              boolean allDownloadsComplete = true;
+              boolean allDownloadsTerminated = true;
               for (MediaDownloadJob downloadJob : activeDownloadJobs) {
-                if (downloadJob.progressState() != DOWNLOADED) {
-                  allDownloadsComplete = false;
+                if (downloadJob.progressState() != DOWNLOADED && downloadJob.progressState() != FAILED) {
+                  allDownloadsTerminated = false;
                 }
               }
-              return allDownloadsComplete;
+              return allDownloadsTerminated;
             })
-            .distinctUntilChanged()
-            .subscribe(allDownloadsComplete -> {
-              if (allDownloadsComplete) {
-                stopSelf();
-              }
-            })
+            .filter(allDownloadsComplete -> allDownloadsComplete)
+            .subscribe(o -> stopSelf())
     );
 
     disposables.add(
