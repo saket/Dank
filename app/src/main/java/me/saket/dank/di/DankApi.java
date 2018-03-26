@@ -14,6 +14,7 @@ import me.saket.dank.ui.media.gfycat.GfycatResponse;
 import okhttp3.MultipartBody;
 import retrofit2.Response;
 import retrofit2.http.GET;
+import retrofit2.http.Header;
 import retrofit2.http.Headers;
 import retrofit2.http.Multipart;
 import retrofit2.http.POST;
@@ -111,6 +112,12 @@ public interface DankApi {
 
   @GET("https://api.gfycat.com/v1/gfycats/{gfyid}")
   Single<GfycatResponse> gfycat(
+      @Path("gfyid") String threeWordId
+  );
+
+  @GET("https://api.gfycat.com/v1/gfycats/{gfyid}")
+  Single<GfycatResponse> gfycat(
+      @Header("Authorization") String authHeader,
       @Path("gfyid") String threeWordId
   );
 }

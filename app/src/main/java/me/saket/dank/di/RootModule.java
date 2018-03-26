@@ -38,8 +38,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.OnLoginRequireListener;
-import me.saket.dank.urlparser.Link;
-import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.UrlRouter;
@@ -47,6 +45,8 @@ import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.urlparser.Link;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import me.saket.dank.utils.DankLinkMovementMethod;
@@ -284,5 +284,11 @@ public class RootModule {
   @Provides
   static AndDown andDown() {
     return new AndDown();
+  }
+
+  @Provides
+  @Named("gfycat_repository")
+  RxSharedPreferences gfyCatRepositoryKvStore(Application appContext) {
+    return RxSharedPreferences.create(appContext.getSharedPreferences("gfycat_repository", Context.MODE_PRIVATE));
   }
 }

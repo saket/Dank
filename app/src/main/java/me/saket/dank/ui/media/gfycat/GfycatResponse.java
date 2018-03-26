@@ -5,8 +5,6 @@ import com.squareup.moshi.Json;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import me.saket.dank.urlparser.GfycatLink;
-
 @AutoValue
 public abstract class GfycatResponse {
 
@@ -15,6 +13,10 @@ public abstract class GfycatResponse {
 
   public static JsonAdapter<GfycatResponse> jsonAdapter(Moshi moshi) {
     return new AutoValue_GfycatResponse.MoshiJsonAdapter(moshi);
+  }
+
+  public static GfycatResponse create(Data data) {
+    return new AutoValue_GfycatResponse(data);
   }
 
   @AutoValue
@@ -31,6 +33,10 @@ public abstract class GfycatResponse {
 
     public static JsonAdapter<Data> jsonAdapter(Moshi moshi) {
       return new AutoValue_GfycatResponse_Data.MoshiJsonAdapter(moshi);
+    }
+
+    public static Data create(String threeWordId, String highQualityUrl, String lowQualityUrl) {
+      return new AutoValue_GfycatResponse_Data(threeWordId, highQualityUrl, lowQualityUrl);
     }
   }
 }

@@ -17,4 +17,8 @@ public abstract class GfycatOauthResponse {
   public static JsonAdapter<GfycatOauthResponse> jsonAdapter(Moshi moshi) {
     return new AutoValue_GfycatOauthResponse.MoshiJsonAdapter(moshi);
   }
+
+  public static GfycatOauthResponse create(long expiresInMillis, String accessToken) {
+    return new AutoValue_GfycatOauthResponse(expiresInMillis, accessToken);
+  }
 }
