@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.media;
 
 import com.google.auto.value.AutoValue;
 import com.google.auto.value.extension.memoized.Memoized;

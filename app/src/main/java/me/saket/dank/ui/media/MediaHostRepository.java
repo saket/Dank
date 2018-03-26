@@ -27,9 +27,6 @@ import me.saket.dank.cache.DiskLruCachePathResolver;
 import me.saket.dank.cache.StoreFilePersister;
 import me.saket.dank.data.CachedResolvedLinkInfo;
 import me.saket.dank.data.FileUploadProgressEvent;
-import me.saket.dank.data.ImgurImage;
-import me.saket.dank.data.ImgurRepository;
-import me.saket.dank.data.ImgurUploadResponse;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
 import me.saket.dank.urlparser.GfycatLink;
@@ -43,7 +40,6 @@ import me.saket.dank.urlparser.UnresolvedMediaLink;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyRepository;
 import me.saket.dank.urlparser.UrlParser;
-import me.saket.dank.utils.StreamableRepository;
 import me.saket.dank.utils.Urls;
 import okio.BufferedSource;
 

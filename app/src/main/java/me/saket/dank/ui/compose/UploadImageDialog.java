@@ -39,7 +39,7 @@ import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.FileUploadProgressEvent;
-import me.saket.dank.data.ImgurUploadResponse;
+import me.saket.dank.ui.media.ImgurUploadResponse;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankDialogFragment;

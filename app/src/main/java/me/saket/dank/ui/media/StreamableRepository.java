@@ -1,4 +1,4 @@
-package me.saket.dank.utils;
+package me.saket.dank.ui.media;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;

@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.media;
 
 import java.util.List;
 

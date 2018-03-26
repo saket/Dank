@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.media;
 
 import static java.lang.Integer.parseInt;
 
@@ -20,6 +20,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
+import me.saket.dank.data.FileUploadProgressEvent;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
 import me.saket.dank.data.exceptions.InvalidImgurAlbumException;

@@ -3,9 +3,9 @@ package me.saket.dank.di;
 import android.support.annotation.CheckResult;
 
 import io.reactivex.Single;
-import me.saket.dank.data.ImgurAlbumResponse;
-import me.saket.dank.data.ImgurImageResponse;
-import me.saket.dank.data.ImgurUploadResponse;
+import me.saket.dank.ui.media.ImgurAlbumResponse;
+import me.saket.dank.ui.media.ImgurImageResponse;
+import me.saket.dank.ui.media.ImgurUploadResponse;
 import me.saket.dank.data.StreamableVideoResponse;
 import me.saket.dank.data.UnfurlLinkResponse;
 import me.saket.dank.ui.giphy.GiphySearchResponse;

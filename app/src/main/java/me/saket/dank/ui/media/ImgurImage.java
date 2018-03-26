@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.media;
 
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
@@ -57,6 +57,6 @@ public abstract class ImgurImage implements Parcelable {
   }
 
   public static JsonAdapter<ImgurImage> jsonAdapter(Moshi moshi) {
-    return new AutoValue_ImgurImage.MoshiJsonAdapter(moshi);
+    return new $AutoValue_ImgurImage.MoshiJsonAdapter(moshi);
   }
 }
