@@ -32,6 +32,7 @@ public class ExoPlayerManager {
   private final VideoView playerView;
   private final ExoTextureVideoView textureVideoView;
   private Bitmap cachedBitmapForFrameCapture;
+  private boolean audioFocusHandlingDisabled;
 
   @SuppressWarnings("unchecked")
   public static ExoPlayerManager newInstance(VideoView playerView) {
@@ -68,6 +69,11 @@ public class ExoPlayerManager {
   }
 
   public void setVideoUriToPlayInLoop(String videoUrl, VideoFormat videoFormat) {
+    if (!audioFocusHandlingDisabled) {
+      playerView.setHandleAudioFocus(false);
+      audioFocusHandlingDisabled = true;
+    }
+
     Uri videoURI = Uri.parse(videoUrl);
     MediaSource source = createMediaSource(videoURI, videoFormat);
     MediaSource loopingSource = new LoopingMediaSource(source);
