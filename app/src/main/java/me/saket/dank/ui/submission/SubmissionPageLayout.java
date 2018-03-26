@@ -1440,9 +1440,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
   @Override
   public void onPageCollapsed() {
-    if (contentVideoViewContainer.getVisibility() == VISIBLE) {
-      contentVideoViewHolder.get().resetPlayback();
-    }
+    contentVideoViewHolder.get().resetPlayback();
 
     commentListParentSheet.scrollTo(0);
     commentListParentSheet.setScrollingEnabled(false);
