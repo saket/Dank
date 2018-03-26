@@ -156,21 +156,20 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
           .takeUntil(lifecycle().onDestroyCompletable())
           .subscribe(optionButtonsHeight -> {
             int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
-            int deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels;
-
-            // Not sure why, but display height doesn't include the status bar's height :S
-            deviceDisplayHeight += Views.statusBarHeight(getResources());
+            int deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels
+                // Not sure why, but display height doesn't include the status bar's height :S
+                + Views.statusBarHeight(getResources());
 
             int videoControlsHeight = videoControlsView.heightOfControlButtons();
             boolean isPortraitVideo = (videoHeight + videoControlsHeight) > videoWidth;
 
+            float resizeFactorToFillHorizontalSpace = (float) deviceDisplayWidth / videoWidth;
+            int resizedHeight = (int) (videoHeight * resizeFactorToFillHorizontalSpace) + videoControlsHeight;
+
             if (isPortraitVideo) {
               int verticalSpaceAvailable = deviceDisplayHeight - optionButtonsHeight;
-              Views.setHeight(videoView, verticalSpaceAvailable);
-
+              Views.setDimensions(videoView, deviceDisplayWidth, Math.min(resizedHeight, verticalSpaceAvailable));
             } else {
-              float resizeFactorToFillHorizontalSpace = (float) deviceDisplayWidth / videoWidth;
-              int resizedHeight = (int) (videoHeight * resizeFactorToFillHorizontalSpace) + videoControlsHeight;
               Views.setDimensions(videoView, deviceDisplayWidth, resizedHeight);
             }
           });
