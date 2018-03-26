@@ -31,20 +31,21 @@ import io.reactivex.functions.Predicate;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.NetworkStrategy;
-import me.saket.dank.urlparser.ImgurAlbumLink;
-import me.saket.dank.urlparser.Link;
-import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionImageHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionContentLinkUiConstructor;
+import me.saket.dank.urlparser.ImgurAlbumLink;
+import me.saket.dank.urlparser.Link;
+import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
+import timber.log.Timber;
 
 /**
  * Pre-fetches submission content and comments.
@@ -98,8 +99,6 @@ public class CachePreFiller {
           return Pair.create(submission, contentLink);
         });
 
-    //Timber.d("Pre-filling cache for %s submissions", submissions.size());
-
     // Images and GIFs that couldn't be converted to videos.
     Observable imageCachePreFillStream = preFillingNetworkStrategies.get().get(CachePreFillThing.IMAGES).asObservable()
         .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
@@ -109,8 +108,11 @@ public class CachePreFiller {
             // Cannot use filter() instead here so that switchMap() gets called and cancels the previous call.
             // Observable.empty() is also important so that the stream completes and the network state change
             // listener is freed.
-            return Observable.empty();
+            //Timber.w("Cannot pre-fill images");
+            return Observable.never();
           }
+
+          //Timber.d("Pre-filling images for %s submissions", submissions.size());
 
           return submissionAndContentLinkStream
               .filter(submissionContentAreStaticImages())
@@ -119,7 +121,7 @@ public class CachePreFiller {
                 MediaLink mediaLink = (MediaLink) submissionAndLink.second();
                 return preFillImageOrAlbum(submission, mediaLink, deviceDisplayWidth, submissionAlbumLinkThumbnailWidth)
                     .subscribeOn(preFillingScheduler.get())
-                    //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first().getTitle()))
+                    .doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first().getTitle()))
                     .onErrorComplete()
                     .toObservable();
               });
@@ -130,8 +132,11 @@ public class CachePreFiller {
         .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
         .switchMap(canPreFill -> {
           if (!canPreFill) {
-            return Observable.empty();
+            //Timber.w("Cannot pre-fill links");
+            return Observable.never();
           }
+
+          //Timber.d("Pre-filling links for %s submissions", submissions.size());
 
           return submissionAndContentLinkStream
               .filter(submissionContentIsExternalLink())
@@ -149,12 +154,15 @@ public class CachePreFiller {
         .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
         .switchMap(canPreFill -> {
           if (!canPreFill) {
-            return Observable.empty();
+            //Timber.w("Cannot pre-fill comments");
+            return Observable.never();
           }
+
+          //Timber.d("Pre-filling comments for %s submissions", submissions.size());
 
           return submissionAndContentLinkStream.concatMap(submissionAndLink -> preFillComment(submissionAndLink.first())
               .subscribeOn(preFillingScheduler.get())
-              //.doOnSubscribe(d -> Timber.i("Caching comments: %s", submissionAndLink.first.getTitle()))
+              //.doOnSubscribe(d -> Timber.i("Caching comments: %s", submissionAndLink.first().getTitle()))
               .toObservable())
               .onErrorResumeNext(Observable.empty());
         });
@@ -200,6 +208,7 @@ public class CachePreFiller {
               throw new AssertionError();
           }
         })
+        //.doOnSubscribe(imageUrls -> Timber.i("Caching images: %s", imageUrls))
         .flatMapCompletable(imageUrls -> downloadImages(imageUrls))
         //.doOnComplete(() -> Timber.i("Image done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.IMAGES));

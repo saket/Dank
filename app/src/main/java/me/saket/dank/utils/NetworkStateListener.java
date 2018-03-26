@@ -49,8 +49,8 @@ public class NetworkStateListener {
   @CheckResult
   public Observable<Boolean> streamNetworkInternetCapability(NetworkStrategy strategy, Optional<Scheduler> scheduler) {
     Observable<Boolean> capabilities = streamInternetCapableNetworkStateChanges()
-        .distinctUntilChanged()
-        .map(networkState -> satisfiesNetworkRequirement(strategy, networkState));
+        .map(networkState -> satisfiesNetworkRequirement(strategy, networkState))
+        .distinctUntilChanged();
 
     return scheduler.isPresent()
         ? capabilities.observeOn(scheduler.get())
@@ -99,10 +99,12 @@ public class NetworkStateListener {
       return false;
     }
 
-    //Timber.d("--------------------------------");
+    // Note: emulator regularly reports mobile-data as wifi.
+
     boolean isConnectedToWifi = networkState.networkType() == ConnectivityManager.TYPE_WIFI;
     boolean isConnectedToMobileData = networkState.networkType() == ConnectivityManager.TYPE_MOBILE;
-    //Timber.i("preference: %s", preference);
+    //Timber.d("--------------------------------");
+    //Timber.i("preference: %s", networkStrategy);
     //Timber.i("isConnectedToWifi: %s", isConnectedToWifi);
     //Timber.i("isConnectedToMobileData: %s", isConnectedToMobileData);
 
