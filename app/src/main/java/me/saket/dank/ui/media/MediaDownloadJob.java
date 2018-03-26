@@ -8,7 +8,7 @@ import com.google.auto.value.AutoValue;
 
 import java.io.File;
 
-import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.urlparser.MediaLink;
 
 @AutoValue
 public abstract class MediaDownloadJob implements Parcelable {

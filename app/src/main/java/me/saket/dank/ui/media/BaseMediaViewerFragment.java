@@ -10,8 +10,8 @@ import android.view.ViewGroup;
 
 import javax.inject.Inject;
 
-import me.saket.dank.data.links.ImgurLink;
-import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.urlparser.ImgurLink;
+import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
 import me.saket.dank.utils.DankLinkMovementMethod;

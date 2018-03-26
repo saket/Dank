@@ -32,7 +32,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Optional;

@@ -7,7 +7,7 @@ import android.os.Bundle;
 import android.support.annotation.Nullable;
 
 import me.saket.dank.R;
-import me.saket.dank.data.links.RedditSubredditLink;
+import me.saket.dank.urlparser.RedditSubredditLink;
 
 /**
  * Android doesn't like activities that have transparent background, especially if it's the launcher activity.

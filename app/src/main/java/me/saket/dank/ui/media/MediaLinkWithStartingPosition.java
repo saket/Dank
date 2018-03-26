@@ -2,7 +2,7 @@ package me.saket.dank.ui.media;
 
 import com.google.auto.value.AutoValue;
 
-import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.urlparser.MediaLink;
 
 @AutoValue
 public abstract class MediaLinkWithStartingPosition extends MediaLink {

@@ -5,7 +5,7 @@ import javax.inject.Singleton;
 
 import io.reactivex.Single;
 import me.saket.dank.data.StreamableVideoResponse;
-import me.saket.dank.data.links.StreamableLink;
+import me.saket.dank.urlparser.StreamableLink;
 import me.saket.dank.di.DankApi;
 
 @Singleton

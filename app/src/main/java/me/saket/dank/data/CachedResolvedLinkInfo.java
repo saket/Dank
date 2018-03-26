@@ -6,11 +6,11 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import me.saket.dank.data.links.ImgurAlbumLink;
-import me.saket.dank.data.links.ImgurLink;
-import me.saket.dank.data.links.MediaLink;
-import me.saket.dank.data.links.StreamableLink;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.urlparser.ImgurAlbumLink;
+import me.saket.dank.urlparser.ImgurLink;
+import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.StreamableLink;
 
 /**
  * Used by {@link MediaHostRepository} to figure out the wrapped class type for deserializing the actual resolved link.

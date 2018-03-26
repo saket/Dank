@@ -1,4 +1,4 @@
-package me.saket.dank.data.links;
+package me.saket.dank.urlparser;
 
 /**
  * Implemented by {@link Link} classes whose actual data is unknown. For an Imgur album, this will be true

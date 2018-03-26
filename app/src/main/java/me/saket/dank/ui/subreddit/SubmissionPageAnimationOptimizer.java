@@ -7,7 +7,7 @@ import javax.inject.Inject;
 import dagger.Lazy;
 import io.reactivex.Single;
 import io.reactivex.schedulers.Schedulers;
-import me.saket.dank.data.links.Link;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.urlparser.UrlParser;
 

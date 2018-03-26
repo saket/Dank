@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
-import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.urlparser.UrlParser;

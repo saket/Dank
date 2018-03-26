@@ -18,11 +18,11 @@ import javax.inject.Inject;
 import javax.inject.Singleton;
 
 import me.saket.dank.R;
-import me.saket.dank.data.links.Link;
-import me.saket.dank.data.links.MediaLink;
-import me.saket.dank.data.links.RedditSubmissionLink;
-import me.saket.dank.data.links.RedditSubredditLink;
-import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.urlparser.Link;
+import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.RedditSubmissionLink;
+import me.saket.dank.urlparser.RedditSubredditLink;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.subreddit.SubredditActivityWithTransparentWindowBackground;

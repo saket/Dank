@@ -24,7 +24,7 @@ import io.reactivex.exceptions.Exceptions;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.data.AppInfo;
 import me.saket.dank.data.FileSize;
-import me.saket.dank.data.links.Link;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.utils.FileSizeUnit;
 
 @Module

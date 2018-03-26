@@ -25,21 +25,26 @@ import org.powermock.modules.junit4.PowerMockRunner;
 
 import java.io.IOException;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
-import me.saket.dank.data.links.ExternalLink;
-import me.saket.dank.data.links.GfycatLink;
-import me.saket.dank.data.links.GiphyLink;
-import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
-import me.saket.dank.data.links.ImgurLink;
-import me.saket.dank.data.links.Link;
-import me.saket.dank.data.links.MediaLink;
-import me.saket.dank.data.links.RedditHostedVideoLink;
-import me.saket.dank.data.links.RedditSubmissionLink;
-import me.saket.dank.data.links.RedditSubredditLink;
-import me.saket.dank.data.links.RedditUserLink;
-import me.saket.dank.data.links.StreamableUnresolvedLink;
+import me.saket.dank.urlparser.ExternalLink;
+import me.saket.dank.urlparser.GfycatLink;
+import me.saket.dank.urlparser.GfycatUnresolvedLink;
+import me.saket.dank.urlparser.GiphyLink;
+import me.saket.dank.urlparser.ImgurAlbumUnresolvedLink;
+import me.saket.dank.urlparser.ImgurLink;
+import me.saket.dank.urlparser.Link;
+import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.RedditHostedVideoLink;
+import me.saket.dank.urlparser.RedditSubmissionLink;
+import me.saket.dank.urlparser.RedditSubredditLink;
+import me.saket.dank.urlparser.RedditUserLink;
+import me.saket.dank.urlparser.StreamableUnresolvedLink;
+import me.saket.dank.urlparser.UnresolvedMediaLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.urlparser.UrlParserConfig;
 
@@ -417,6 +422,23 @@ public class UrlParserTest {
 
       assertEquals(parsedLink instanceof GfycatLink, true);
       assertEquals(parsedLink.type(), Link.Type.SINGLE_VIDEO);
+    });
+
+    List<String> urlsWithoutCapitalWords = gfycatUrlMap.keySet()
+        .stream()
+        .map(url -> url.toLowerCase(Locale.ENGLISH))
+        .collect(Collectors.toList());
+
+    urlsWithoutCapitalWords.forEach(url -> {
+      Link parsedLink = urlParser.parse(url);
+
+      assertEquals(true, parsedLink instanceof GfycatUnresolvedLink);
+      assertEquals(true, parsedLink instanceof UnresolvedMediaLink);
+
+      String path = Uri.parse(url).getPath().substring(1);
+
+      //noinspection ConstantConditions
+      assertEquals(true, path.startsWith(((GfycatUnresolvedLink) parsedLink).threeWordId()));
     });
   }
 

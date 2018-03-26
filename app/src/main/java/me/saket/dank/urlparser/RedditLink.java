@@ -1,4 +1,4 @@
-package me.saket.dank.data.links;
+package me.saket.dank.urlparser;
 
 /**
  * A reddit.com link.

@@ -17,7 +17,7 @@ import javax.inject.Inject;
 
 import dagger.Lazy;
 import me.saket.dank.R;
-import me.saket.dank.data.links.RedditSubredditLink;
+import me.saket.dank.urlparser.RedditSubredditLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.utils.Clipboards;

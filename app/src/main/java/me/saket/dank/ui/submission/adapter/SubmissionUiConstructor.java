@@ -25,7 +25,7 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
-import me.saket.dank.data.links.Link;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.ReplyRepository;

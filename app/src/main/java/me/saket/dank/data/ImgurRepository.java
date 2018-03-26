@@ -23,7 +23,7 @@ import io.reactivex.functions.Function;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
 import me.saket.dank.data.exceptions.InvalidImgurAlbumException;
-import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
+import me.saket.dank.urlparser.ImgurAlbumUnresolvedLink;
 import me.saket.dank.di.DankApi;
 import me.saket.dank.utils.okhttp.OkHttpRequestBodyWithProgress;
 import me.saket.dank.utils.okhttp.OkHttpRequestWriteProgressListener;

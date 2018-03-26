@@ -24,7 +24,7 @@ import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
-import me.saket.dank.data.links.RedditSubmissionLink;
+import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.user.UserSessionRepository;

@@ -41,7 +41,7 @@ import io.reactivex.disposables.CompositeDisposable;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RxUtils;

@@ -6,7 +6,7 @@ import android.support.annotation.ColorRes;
 import com.google.auto.value.AutoValue;
 
 import me.saket.dank.data.SpannableWithTextEquality;
-import me.saket.dank.data.links.Link;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.utils.Optional;
 
 @AutoValue

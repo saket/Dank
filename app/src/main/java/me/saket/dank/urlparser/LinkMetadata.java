@@ -1,7 +1,8 @@
-package me.saket.dank.data.links;
+package me.saket.dank.urlparser;
 
 import android.support.annotation.Nullable;
 import android.text.TextUtils;
+
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;

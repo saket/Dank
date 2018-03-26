@@ -25,7 +25,7 @@ import me.saket.dank.cache.DiskLruCachePathResolver;
 import me.saket.dank.cache.MoshiStoreJsonParser;
 import me.saket.dank.cache.StoreFilePersister;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.links.RedditUserLink;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.di.Dank;
 
 @Singleton

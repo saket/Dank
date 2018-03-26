@@ -35,7 +35,7 @@ import me.saket.dank.cache.CachePreFiller;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.NetworkStrategy;
-import me.saket.dank.data.links.LinkMetadata;
+import me.saket.dank.urlparser.LinkMetadata;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.urlparser.UrlParser;

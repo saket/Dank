@@ -43,7 +43,7 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.InboxRepository;
-import me.saket.dank.data.links.Link;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.notifs.MessagesNotificationManager;

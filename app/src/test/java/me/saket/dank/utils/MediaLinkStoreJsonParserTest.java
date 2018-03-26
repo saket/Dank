@@ -11,10 +11,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import me.saket.dank.data.links.Link;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.ui.media.MediaHostRepository;
-import me.saket.dank.data.links.ImgurLink;
-import me.saket.dank.data.links.MediaLink;
+import me.saket.dank.urlparser.ImgurLink;
+import me.saket.dank.urlparser.MediaLink;
 import okio.Okio;
 
 public class MediaLinkStoreJsonParserTest {

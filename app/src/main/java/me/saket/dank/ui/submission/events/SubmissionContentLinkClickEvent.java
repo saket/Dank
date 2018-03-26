@@ -4,7 +4,7 @@ import android.view.View;
 
 import com.google.auto.value.AutoValue;
 
-import me.saket.dank.data.links.Link;
+import me.saket.dank.urlparser.Link;
 
 @AutoValue
 public abstract class SubmissionContentLinkClickEvent {

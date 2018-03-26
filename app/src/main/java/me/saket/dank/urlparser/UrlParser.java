@@ -19,19 +19,6 @@ import javax.inject.Named;
 import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.links.ExternalLink;
-import me.saket.dank.data.links.GenericMediaLink;
-import me.saket.dank.data.links.GfycatLink;
-import me.saket.dank.data.links.GiphyLink;
-import me.saket.dank.data.links.ImgurAlbumUnresolvedLink;
-import me.saket.dank.data.links.ImgurLink;
-import me.saket.dank.data.links.Link;
-import me.saket.dank.data.links.RedditCommentLink;
-import me.saket.dank.data.links.RedditHostedVideoLink;
-import me.saket.dank.data.links.RedditSubmissionLink;
-import me.saket.dank.data.links.RedditSubredditLink;
-import me.saket.dank.data.links.RedditUserLink;
-import me.saket.dank.data.links.StreamableUnresolvedLink;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -218,7 +205,7 @@ public class UrlParser {
   }
 
   private static RedditHostedVideoLink createRedditHostedVideoLink(String url, Submission submission) {
-    Pair<String,String> pair = JrawUtils.redditVideoDashPlaylistUrl(submission);
+    Pair<String, String> pair = JrawUtils.redditVideoDashPlaylistUrl(submission);
     String dashPlaylistUrl = pair.first();
     String directVideoUrlWithoutAudio = pair.second();
 
@@ -271,15 +258,30 @@ public class UrlParser {
    * as this:
    * <p>
    * https://gfycat.com/MessySpryAfricancivet
+   * <p>
+   * Links not containing three capital letters are converted to {@link GfycatUnresolvedLink}.
    */
   private Link createGfycatLink(Uri gfycatURI) {
     Matcher matcher = config.gfycatIdPattern().matcher(gfycatURI.getPath());
     if (matcher.matches()) {
-      String gfycatThreeWordId = matcher.group(1);
-      String url = config.gfycatUnparsedUrl(gfycatThreeWordId);
-      String highQualityVideoUrl = config.gfycatHighQualityUrlPlaceholder(gfycatThreeWordId);
-      String lowQualityVideoUrl = config.gfycatLowQualityUrlPlaceholder(gfycatThreeWordId);
-      return GfycatLink.create(url, highQualityVideoUrl, lowQualityVideoUrl);
+      String threeWordId = matcher.group(1);
+      String url = config.gfycatUnparsedUrl(threeWordId);
+
+      int capitalLetterCount = 0;
+      for (int i = 0; i < threeWordId.length(); i++) {
+        if (Character.isUpperCase(threeWordId.charAt(i))) {
+          ++capitalLetterCount;
+        }
+      }
+
+      if (capitalLetterCount == 3) {
+        String highQualityVideoUrl = config.gfycatHighQualityUrlPlaceholder(threeWordId);
+        String lowQualityVideoUrl = config.gfycatLowQualityUrlPlaceholder(threeWordId);
+        return GfycatLink.create(url, highQualityVideoUrl, lowQualityVideoUrl);
+
+      } else {
+        return GfycatUnresolvedLink.create(url, threeWordId);
+      }
 
     } else {
       // Fallback.

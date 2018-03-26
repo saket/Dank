@@ -11,7 +11,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import me.saket.dank.R;
-import me.saket.dank.data.links.Link;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.di.Dank;
 import me.saket.dank.utils.Clipboards;
 import me.saket.dank.utils.Intents;
