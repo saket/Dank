@@ -7,7 +7,7 @@ import me.saket.dank.urlparser.MediaLink;
 @AutoValue
 public abstract class MediaLinkWithStartingPosition extends MediaLink {
 
-  abstract MediaLink delegate();
+  public abstract MediaLink delegate();
 
   abstract long startingPositionMillis();
 

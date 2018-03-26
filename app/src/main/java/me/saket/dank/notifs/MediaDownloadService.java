@@ -47,11 +47,12 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Function;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
-import me.saket.dank.urlparser.MediaLink;
-import me.saket.dank.urlparser.RedditHostedVideoLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.media.MediaDownloadJob;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.media.MediaLinkWithStartingPosition;
+import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.RedditHostedVideoLink;
 import me.saket.dank.utils.Files2;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.RxUtils;
@@ -71,7 +72,8 @@ import timber.log.Timber;
 
 /**
  * Downloads images and videos to disk.
- * Move all logic to a separate testable class.
+ * FIXME: Move all logic to a separate testable class.
+ * FIXME: Use a single source of truth for notifications.
  */
 public class MediaDownloadService extends Service {
 
@@ -109,13 +111,17 @@ public class MediaDownloadService extends Service {
   }
 
   public static void enqueueDownload(Context context, MediaLink mediaLink) {
+    if (mediaLink instanceof MediaLinkWithStartingPosition) {
+      mediaLink = ((MediaLinkWithStartingPosition) mediaLink).delegate();
+    }
+
     Intent intent = new Intent(context, MediaDownloadService.class);
     intent.putExtra(KEY_MEDIA_LINK_TO_DOWNLOAD, mediaLink);
     intent.putExtra(KEY_ACTION, Action.ENQUEUE_DOWNLOAD);
     context.startService(intent);
   }
 
-  public static Intent createCancelDownloadIntent(Context context, MediaLink mediaLink) {
+  private static Intent cancelDownloadIntent(Context context, MediaLink mediaLink) {
     Intent intent = new Intent(context, MediaDownloadService.class);
     intent.putExtra(KEY_MEDIA_LINK_TO_CANCEL_DOWNLOAD, mediaLink);
     intent.putExtra(KEY_ACTION, Action.CANCEL_DOWNLOAD);
@@ -125,7 +131,7 @@ public class MediaDownloadService extends Service {
   /**
    * Called when a notification is canceled internally by the app.
    */
-  public static void cancelNotification(Context context, MediaLink mediaLink) {
+  static void cancelNotification(Context context, MediaLink mediaLink) {
     Intent intent = new Intent(context, MediaDownloadService.class);
     intent.putExtra(KEY_MEDIA_LINK_TO_CANCEL_NOTIF, mediaLink);
     intent.putExtra(KEY_ACTION, Action.CANCEL_NOTIFICATION);
@@ -170,12 +176,15 @@ public class MediaDownloadService extends Service {
     disposables.add(
         downloadRequestStream
             .sample(MINIMUM_GAP_BETWEEN_NOTIFICATION_UPDATEs, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+            .doOnNext(link -> Timber.i("Recvd request for %s", link))
             .doOnNext(linkToQueue -> {
+              Timber.i("Showing queued notif");
               MediaDownloadJob downloadJobToQueue = MediaDownloadJob.queued(linkToQueue, System.currentTimeMillis());
               downloadJobsWithVisibleNotif.put(downloadJobToQueue.mediaLink(), downloadJobToQueue);
               updateIndividualProgressNotification(downloadJobToQueue, createNotificationIdFor(linkToQueue));
             })
             .concatMap(linkToDownload -> {
+              Timber.i("Downloading %s", linkToDownload);
               Observable<MediaDownloadJob> downloadStream;
               if (linkToDownload.isVideo()) {
                 downloadStream = downloadVideoAndStreamProgress(linkToDownload).compose(RxUtils.applySchedulers());
@@ -226,6 +235,7 @@ public class MediaDownloadService extends Service {
 
   @Override
   public void onDestroy() {
+    Timber.i("Stopping service");
     disposables.clear();
     super.onDestroy();
   }
@@ -238,6 +248,7 @@ public class MediaDownloadService extends Service {
         MediaLink mediaLinkToDownload = intent.getParcelableExtra(KEY_MEDIA_LINK_TO_DOWNLOAD);
         boolean isDownloadAlreadyOngoing = ongoingDownloadLinks.contains(mediaLinkToDownload);
         if (!isDownloadAlreadyOngoing) {
+          Timber.i("Enqueuing %s", mediaLinkToDownload);
           ongoingDownloadLinks.add(mediaLinkToDownload);
           downloadRequestStream.accept(mediaLinkToDownload);
         } else {
@@ -273,7 +284,7 @@ public class MediaDownloadService extends Service {
         getString(R.string.mediadownloadnotification_cancel),
         PendingIntent.getService(this,
             createPendingIntentRequestId(REQUESTCODE_CANCEL_DOWNLOAD_PREFIX_, notificationId),
-            createCancelDownloadIntent(this, mediaDownloadJob.mediaLink()),
+            cancelDownloadIntent(this, mediaDownloadJob.mediaLink()),
             PendingIntent.FLAG_UPDATE_CURRENT
         )
     );
@@ -510,7 +521,7 @@ public class MediaDownloadService extends Service {
           // Proxy through VideoCacheServer so that the downloaded video also gets saved to cache.
           videoUrlToDownload = videoCacheServer.getProxyUrl(highQualityUrl, false);
         } else {
-          videoUrlToDownload = null;
+          throw new UnsupportedOperationException("Couldn't figure out the video url for " + linkToDownload);
         }
 
         if (videoUrlToDownload == null) {
