@@ -161,17 +161,23 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     String imageUrl;
     if (mediaAlbumItemToShow.highDefinitionEnabled()) {
       imageUrl = mediaAlbumItemToShow.mediaLink().highQualityUrl();
+
     } else {
-      //noinspection ConstantConditions
-      Thumbnails redditSuppliedImages = ((MediaFragmentCallbacks) getActivity()).getRedditSuppliedImages();
-      int deviceDisplayWidth = ((MediaFragmentCallbacks) getActivity()).getDeviceDisplayWidth();
-      ImageWithMultipleVariants imageWithMultipleVariants = ImageWithMultipleVariants.of(redditSuppliedImages);
-      imageUrl = imageWithMultipleVariants.findNearestFor(deviceDisplayWidth, mediaAlbumItemToShow.mediaLink().lowQualityUrl());
+      String lowQualityUrl = mediaAlbumItemToShow.mediaLink().lowQualityUrl();
+      if (mediaAlbumItemToShow.mediaLink().isGif()) {
+        imageUrl = lowQualityUrl;
+
+      } else {
+        Thumbnails redditSuppliedImages = ((MediaFragmentCallbacks) requireActivity()).getRedditSuppliedImages();
+        int deviceDisplayWidth = ((MediaFragmentCallbacks) requireActivity()).getDeviceDisplayWidth();
+        ImageWithMultipleVariants imageWithMultipleVariants = ImageWithMultipleVariants.of(redditSuppliedImages);
+        imageUrl = imageWithMultipleVariants.findNearestFor(deviceDisplayWidth, lowQualityUrl);
+      }
     }
 
     DrawableImageViewTarget target = new DrawableImageViewTarget(imageView.view());
     ImageLoadProgressTarget<Drawable> targetWithProgress = new ImageLoadProgressTarget<>(target, progressView);
-    targetWithProgress.setModel(getActivity(), imageUrl);
+    targetWithProgress.setModel(requireActivity(), imageUrl);
 
     Size deviceDisplaySize = new Size(getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
 
@@ -181,7 +187,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
             .priority(Priority.IMMEDIATE)
             .downsample(DownsampleStrategy.AT_MOST)
             .override((int) 2.5f * deviceDisplaySize.getWidth(), (int) 2.5f * deviceDisplaySize.getHeight())
-            .transform(new GlidePaddingTransformation(getActivity(), Color.TRANSPARENT) {
+            .transform(new GlidePaddingTransformation(requireActivity(), Color.TRANSPARENT) {
               @Override
               public Size getPadding(int imageWidth, int imageHeight) {
                 // Adding a 1px transparent border improves anti-aliasing when rotating image (flick-dismiss).

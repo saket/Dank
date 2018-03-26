@@ -133,7 +133,6 @@ public class SubmissionUiConstructor {
               this::headerUiModel
           );
 
-          // FIXME: The error message says "Reddit" even for imgur, and other services.
           Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModels = mediaContentLoadErrors
               .map(optionalError -> optionalError.map(error -> error.uiModel(context)));
 
