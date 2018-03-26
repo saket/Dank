@@ -90,7 +90,7 @@ public class UrlParserConfig {
     return DEFAULT_GFYCAT_ID_PATTERN_2;
   }
 
-  String gfycatUnparsedUrl(String videoId) {
+  public String gfycatUnparsedUrlPlaceholder(String videoId) {
     return String.format("https://gfycat.com/%s", videoId);
   }
 

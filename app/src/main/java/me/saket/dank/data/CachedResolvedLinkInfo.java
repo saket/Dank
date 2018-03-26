@@ -7,6 +7,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.urlparser.GfycatLink;
 import me.saket.dank.urlparser.ImgurAlbumLink;
 import me.saket.dank.urlparser.ImgurLink;
 import me.saket.dank.urlparser.MediaLink;
@@ -19,24 +20,31 @@ import me.saket.dank.urlparser.StreamableLink;
 public abstract class CachedResolvedLinkInfo {
 
   @Nullable
-  public abstract StreamableLink cachedStreamableLink();
+  public abstract StreamableLink streamableLink();
 
   @Nullable
-  public abstract ImgurLink cachedImgurLink();
+  public abstract ImgurLink imgurLink();
 
   @Nullable
-  public abstract ImgurAlbumLink cachedImgurAlbumLink();
+  public abstract ImgurAlbumLink imgurAlbumLink();
+
+  @Nullable
+  public abstract GfycatLink gfycatLink();
 
   public static CachedResolvedLinkInfo create(StreamableLink streamableLink) {
-    return new AutoValue_CachedResolvedLinkInfo(streamableLink, null, null);
+    return new AutoValue_CachedResolvedLinkInfo(streamableLink, null, null, null);
   }
 
   public static CachedResolvedLinkInfo create(ImgurLink imgurLink) {
-    return new AutoValue_CachedResolvedLinkInfo(null, imgurLink, null);
+    return new AutoValue_CachedResolvedLinkInfo(null, imgurLink, null, null);
   }
 
   public static CachedResolvedLinkInfo create(ImgurAlbumLink imgurAlbumLink) {
-    return new AutoValue_CachedResolvedLinkInfo(null, null, imgurAlbumLink);
+    return new AutoValue_CachedResolvedLinkInfo(null, null, imgurAlbumLink, null);
+  }
+
+  public static CachedResolvedLinkInfo create(GfycatLink gfycatLink) {
+    return new AutoValue_CachedResolvedLinkInfo(null, null, null, gfycatLink);
   }
 
   public static CachedResolvedLinkInfo create(MediaLink ignored) {

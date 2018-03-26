@@ -265,7 +265,7 @@ public class UrlParser {
     Matcher matcher = config.gfycatIdPattern().matcher(gfycatURI.getPath());
     if (matcher.matches()) {
       String threeWordId = matcher.group(1);
-      String url = config.gfycatUnparsedUrl(threeWordId);
+      String url = config.gfycatUnparsedUrlPlaceholder(threeWordId);
 
       int capitalLetterCount = 0;
       for (int i = 0; i < threeWordId.length(); i++) {

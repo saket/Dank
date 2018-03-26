@@ -29,7 +29,11 @@ import me.saket.dank.data.CachedResolvedLinkInfo;
 import me.saket.dank.data.FileUploadProgressEvent;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
+import me.saket.dank.ui.giphy.GiphyGif;
+import me.saket.dank.ui.giphy.GiphyRepository;
+import me.saket.dank.ui.media.gfycat.GfycatRepository;
 import me.saket.dank.urlparser.GfycatLink;
+import me.saket.dank.urlparser.GfycatUnresolvedLink;
 import me.saket.dank.urlparser.ImgurAlbumLink;
 import me.saket.dank.urlparser.ImgurAlbumUnresolvedLink;
 import me.saket.dank.urlparser.ImgurLink;
@@ -37,8 +41,6 @@ import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.urlparser.StreamableLink;
 import me.saket.dank.urlparser.StreamableUnresolvedLink;
 import me.saket.dank.urlparser.UnresolvedMediaLink;
-import me.saket.dank.ui.giphy.GiphyGif;
-import me.saket.dank.ui.giphy.GiphyRepository;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Urls;
 import okio.BufferedSource;
@@ -54,6 +56,7 @@ public class MediaHostRepository {
   private final GiphyRepository giphyRepository;
   private final Store<MediaLink, MediaLink> cacheStore;
   private final Lazy<UrlParser> urlParser;
+  private final Lazy<GfycatRepository> gfycatRepository;
 
   @Inject
   public MediaHostRepository(
@@ -62,12 +65,14 @@ public class MediaHostRepository {
       FileSystem cacheFileSystem,
       Moshi moshi,
       GiphyRepository giphyRepository,
-      Lazy<UrlParser> urlParser)
+      Lazy<UrlParser> urlParser,
+      Lazy<GfycatRepository> gfycatRepository)
   {
     this.streamableRepository = streamableRepository;
     this.imgurRepository = imgurRepository;
     this.giphyRepository = giphyRepository;
     this.urlParser = urlParser;
+    this.gfycatRepository = gfycatRepository;
 
     StoreFilePersister.JsonParser<MediaLink> jsonParser = new MediaLinkStoreJsonParser(moshi);
     DiskLruCachePathResolver<MediaLink> pathResolver = new DiskLruCachePathResolver<MediaLink>() {
@@ -99,14 +104,17 @@ public class MediaHostRepository {
     public MediaLink fromJson(BufferedSource jsonBufferedSource) throws IOException {
       CachedResolvedLinkInfo cachedResolvedLinkInfo = moshi.adapter(CachedResolvedLinkInfo.class).fromJson(jsonBufferedSource);
       //noinspection ConstantConditions
-      if (cachedResolvedLinkInfo.cachedStreamableLink() != null) {
-        return cachedResolvedLinkInfo.cachedStreamableLink();
+      if (cachedResolvedLinkInfo.streamableLink() != null) {
+        return cachedResolvedLinkInfo.streamableLink();
 
-      } else if (cachedResolvedLinkInfo.cachedImgurAlbumLink() != null) {
-        return cachedResolvedLinkInfo.cachedImgurAlbumLink();
+      } else if (cachedResolvedLinkInfo.imgurAlbumLink() != null) {
+        return cachedResolvedLinkInfo.imgurAlbumLink();
 
-      } else if (cachedResolvedLinkInfo.cachedImgurLink() != null) {
-        return cachedResolvedLinkInfo.cachedImgurLink();
+      } else if (cachedResolvedLinkInfo.imgurLink() != null) {
+        return cachedResolvedLinkInfo.imgurLink();
+
+      } else if (cachedResolvedLinkInfo.gfycatLink() != null) {
+        return cachedResolvedLinkInfo.gfycatLink();
 
       } else {
         throw new JsonDataException("Unknown type: " + cachedResolvedLinkInfo);
@@ -123,6 +131,8 @@ public class MediaHostRepository {
         cachedResolvedLinkInfo = CachedResolvedLinkInfo.create(((ImgurAlbumLink) value));
       } else if (value instanceof ImgurLink) {
         cachedResolvedLinkInfo = CachedResolvedLinkInfo.create(((ImgurLink) value));
+      } else if (value instanceof GfycatLink) {
+        cachedResolvedLinkInfo = CachedResolvedLinkInfo.create(((GfycatLink) value));
       } else {
         throw new JsonDataException("Unknown type: " + value);
       }
@@ -144,7 +154,9 @@ public class MediaHostRepository {
 
   private Single<MediaLink> resolveFromRemote(MediaLink unresolvedLink) {
     if (unresolvedLink instanceof StreamableUnresolvedLink) {
-      return streamableRepository.video(((StreamableUnresolvedLink) unresolvedLink).videoId()).cast(MediaLink.class);
+      return streamableRepository
+          .video(((StreamableUnresolvedLink) unresolvedLink).videoId())
+          .cast(MediaLink.class);
 
     } else if (unresolvedLink instanceof ImgurAlbumUnresolvedLink) {
       return imgurRepository.gallery(((ImgurAlbumUnresolvedLink) unresolvedLink))
@@ -159,6 +171,11 @@ public class MediaHostRepository {
               return ((MediaLink) urlParser.get().parse(imgurResponse.images().get(0).url()));
             }
           });
+
+    } else if (unresolvedLink instanceof GfycatUnresolvedLink) {
+      return gfycatRepository.get()
+          .gif(((GfycatUnresolvedLink) unresolvedLink).threeWordId())
+          .cast(MediaLink.class);
 
     } else {
       return Single.just(unresolvedLink);
