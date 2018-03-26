@@ -25,13 +25,13 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotingManager;
-import me.saket.dank.urlparser.Link;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.utils.CombineLatestWithLog;
 import me.saket.dank.utils.CombineLatestWithLog.O;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -139,7 +139,8 @@ public class SubmissionUiConstructor {
           Observable<Optional<SubmissionCommentsViewFullThread.UiModel>> viewFullThreadUiModels = submissionRequests
               .map(request -> request.focusCommentId() == null
                   ? Optional.<SubmissionCommentsViewFullThread.UiModel>empty()
-                  : Optional.of(SubmissionCommentsViewFullThread.UiModel.create(request)));
+                  : Optional.of(SubmissionCommentsViewFullThread.UiModel.create(request)))
+              .startWith(Optional.empty());  // submissionRequests stream sometimes takes too long to emit anything.
 
           Observable<List<SubmissionScreenUiModel>> commentRowUiModels = submissionCommentTreeUiConstructor
               .stream(
