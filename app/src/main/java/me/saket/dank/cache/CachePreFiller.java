@@ -142,7 +142,7 @@ public class CachePreFiller {
               .filter(submissionContentIsExternalLink())
               .concatMap(
                   submissionAndLink -> preFillLinkMetadata(submissionAndLink.first(), submissionAndLink.second(), submissionAlbumLinkThumbnailWidth)
-                      //.subscribeOn(preFillingScheduler.get())
+                      .subscribeOn(preFillingScheduler.get())
                       //.doOnSubscribe(d -> Timber.i("Caching link: %s", submissionAndLink.first().getTitle()))
                       .toObservable()
                       .onErrorResumeNext(Observable.empty())
