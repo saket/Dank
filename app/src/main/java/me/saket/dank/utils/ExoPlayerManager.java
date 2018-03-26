@@ -21,6 +21,7 @@ import com.google.android.exoplayer2.upstream.DataSource;
 import com.google.android.exoplayer2.upstream.DefaultDataSourceFactory;
 import com.google.android.exoplayer2.util.Util;
 
+import io.reactivex.Completable;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
@@ -30,31 +31,32 @@ public class ExoPlayerManager {
 
   private final VideoView playerView;
   private final ExoTextureVideoView textureVideoView;
-  private boolean wasPlayingUponPause;
   private Bitmap cachedBitmapForFrameCapture;
 
   @SuppressWarnings("unchecked")
-  public static ExoPlayerManager newInstance(LifecycleStreams lifecycleStreams, VideoView playerView) {
-    ExoPlayerManager exoPlayerManager = new ExoPlayerManager(playerView);
-
-    lifecycleStreams.onDestroy().subscribe(o -> exoPlayerManager.releasePlayer());
-    lifecycleStreams.onPause().subscribe(o -> {
-      if (exoPlayerManager.playerView.isPlaying()) {
-        exoPlayerManager.pausePlayback();
-      }
-    });
-    lifecycleStreams.onResume().subscribe(o -> {
-      if (exoPlayerManager.wasPlayingUponPause) {
-        exoPlayerManager.startPlayback();
-      }
-    });
-
-    return exoPlayerManager;
+  public static ExoPlayerManager newInstance(VideoView playerView) {
+    return new ExoPlayerManager(playerView);
   }
 
   public ExoPlayerManager(VideoView playerView) {
     this.playerView = playerView;
     this.textureVideoView = playerView.findViewById(R.id.exomedia_video_view);
+  }
+
+  @SuppressWarnings("unchecked")
+  public Completable manageLifecycle(LifecycleStreams lifecycle) {
+    Completable release = Completable.create(emitter -> emitter.setCancellable(() -> releasePlayer()));
+
+    Completable autoPauseAndResume = lifecycle.onPause()
+        .filter(o -> playerView.isPlaying())
+        .flatMapCompletable(o -> Completable.fromAction(() -> pausePlayback())
+            .andThen(lifecycle.onResume()
+                .take(1)
+                .ignoreElements())
+            .andThen(Completable.fromAction(() -> startPlayback())));
+
+    return release
+        .mergeWith(autoPauseAndResume);
   }
 
   public void setOnVideoSizeChangeListener(@Nullable OnVideoSizeChangedListener listener) {
@@ -106,6 +108,7 @@ public class ExoPlayerManager {
   }
 
   public void resetPlayback() {
+    //Timber.w("reset");
     if (playerView.isPlaying()) {
       playerView.stopPlayback();
       playerView.setVideoURI(null);
@@ -113,11 +116,12 @@ public class ExoPlayerManager {
   }
 
   public void startPlayback() {
+    //Timber.w("playing");
     playerView.start();
   }
 
   public void pausePlayback() {
-    wasPlayingUponPause = playerView.isPlaying();
+    //Timber.w("pause");
     playerView.pause();
   }
 
@@ -142,6 +146,7 @@ public class ExoPlayerManager {
   }
 
   private void releasePlayer() {
+    //Timber.w("Releasing player");
     playerView.release();
   }
 

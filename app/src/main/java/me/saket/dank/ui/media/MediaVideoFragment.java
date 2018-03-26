@@ -117,7 +117,11 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
           );
         });
 
-    exoPlayerManager = ExoPlayerManager.newInstance(lifecycle(), videoView);
+    exoPlayerManager = ExoPlayerManager.newInstance(videoView);
+    exoPlayerManager.manageLifecycle(lifecycle())
+        .ambWith(lifecycle().onDestroyCompletable())
+        .subscribe();
+
     videoControlsView = new MediaViewerVideoControlsView(getActivity());
     videoView.setControls(videoControlsView);
     videoControlsView.showVideoState(MediaViewerVideoControlsView.VideoState.PREPARING);
@@ -140,6 +144,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
 
       // Auto-play when this Fragment becomes visible.
       fragmentVisibleToUserStream
+          .take(1)    // TODO
           .takeUntil(lifecycle().onDestroy())
           .subscribe(visibleToUser -> {
             if (!visibleToUser) {

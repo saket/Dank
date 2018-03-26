@@ -924,8 +924,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   }
 
   private void setupContentVideoView() {
+    ExoPlayerManager exoPlayerManager = ExoPlayerManager.newInstance(contentVideoView);
+    exoPlayerManager.manageLifecycle(lifecycle())
+        .ambWith(lifecycle().onDestroyCompletable())
+        .subscribe();
+
     contentVideoViewHolder.get().setup(
-        ExoPlayerManager.newInstance(lifecycle(), contentVideoView),
+        exoPlayerManager,
         contentVideoView,
         commentListParentSheet,
         contentLoadProgressView,
