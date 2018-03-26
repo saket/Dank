@@ -336,7 +336,8 @@ public class UrlParser {
   }
 
   public static boolean isGifUrl(String url) {
-    return isGifPath(Uri.parse(url).getPath());
+    String path = Uri.parse(url).getPath();
+    return path != null && isGifPath(path);
   }
 
   private static boolean isVideoPath(String urlPath) {

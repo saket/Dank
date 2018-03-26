@@ -7,10 +7,8 @@ import net.dean.jraw.models.Thumbnails;
 
 import java.util.NoSuchElementException;
 
-import me.saket.dank.BuildConfig;
-import me.saket.dank.utils.Optional;
 import me.saket.dank.urlparser.UrlParser;
-import timber.log.Timber;
+import me.saket.dank.utils.Optional;
 
 public class ImageWithMultipleVariants {
 
@@ -59,9 +57,8 @@ public class ImageWithMultipleVariants {
   }
 
   public String findNearestFor(int preferredWidth, String defaultValue) {
-    if (BuildConfig.DEBUG && UrlParser.isGifUrl(defaultValue)) {
-      Timber.w("Optimizing GIFs is an error: %s", defaultValue);
-      new Exception().printStackTrace();
+    if (UrlParser.isGifUrl(defaultValue)) {
+      throw new AssertionError("Optimizing GIFs is an error: " + defaultValue);
     }
 
     if (optionalRedditSuppliedImages.isPresent()) {
