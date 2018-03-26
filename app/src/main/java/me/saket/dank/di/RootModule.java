@@ -189,7 +189,7 @@ public class RootModule {
         .addConverterFactory(MoshiConverterFactory.create(moshi))
         .baseUrl("http://saket.me/" /* This isn't used anywhere, but this value is not nullable. */)
         .client(okHttpClient)
-        .validateEagerly(true)
+        .validateEagerly(BuildConfig.DEBUG)
         .build();
   }
 
