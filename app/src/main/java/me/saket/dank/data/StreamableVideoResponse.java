@@ -50,8 +50,10 @@ public abstract class StreamableVideoResponse {
     @Json(name = "url")
     abstract String schemeLessUrl();
 
-    public String url() {
-      return "https:" + schemeLessUrl();
+    public Optional<String> url() {
+      return schemeLessUrl().isEmpty()
+          ? Optional.empty()
+          : Optional.of("https:" + schemeLessUrl());
     }
 
     public static JsonAdapter<Video> jsonAdapter(Moshi moshi) {
