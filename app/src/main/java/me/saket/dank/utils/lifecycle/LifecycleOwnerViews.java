@@ -6,6 +6,7 @@ import android.view.View;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import io.reactivex.BackpressureStrategy;
+import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import me.saket.dank.data.ActivityResult;
@@ -94,6 +95,11 @@ public class LifecycleOwnerViews {
     @CheckResult
     public Flowable<ViewLifecycleEvent> viewDetachesFlowable() {
       return viewDetaches().toFlowable(BackpressureStrategy.LATEST);
+    }
+
+    @CheckResult
+    public Completable viewDetachesCompletable() {
+      return viewDetaches().ignoreElements();
     }
 
     @Override

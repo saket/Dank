@@ -405,11 +405,19 @@ public class SubscriptionRepository {
 
 // ======== VISIT FREQUENCY ======== //
 
-  private Completable incrementVisitCount(SubredditSubscription subscription) {
-    return Completable.complete();
+  @CheckResult
+  public Completable incrementVisitCount(SubredditSubscription subscription) {
+    return Completable.fromAction(() -> {
+      SubredditSubscription updatedSubscription = subscription.toBuilder()
+          .visitCount(subscription.visitCount() + 1)
+          .build();
+      database.get().insert(SubredditSubscription.TABLE_NAME, updatedSubscription.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
+    });
   }
 
-  private Observable<List<SubredditSubscription>> frequents() {
+  @CheckResult
+  public Observable<List<SubredditSubscription>> frequents() {
+    // TODO.
     return Observable.empty();
   }
 }

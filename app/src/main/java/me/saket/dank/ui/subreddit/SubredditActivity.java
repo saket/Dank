@@ -758,7 +758,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
       }
 
       @Override
-      public void onSubredditsChanged() {
+      public void onSubredditsChange() {
         // Refresh the submissions if the frontpage was active.
         if (subscriptionRepository.isFrontpage(subredditChangesStream.getValue())) {
           subredditChangesStream.accept(subredditChangesStream.getValue());

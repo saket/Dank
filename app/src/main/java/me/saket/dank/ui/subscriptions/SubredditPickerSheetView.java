@@ -62,6 +62,8 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideLeftAlphaAnimator;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
+import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
 
@@ -104,6 +106,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   private BehaviorRelay<Boolean> showHiddenSubredditsSubject;
   private Runnable pendingOnWindowDetachedRunnable;
   private SlideLeftAlphaAnimator itemAnimator;
+  private final LifecycleOwnerViews.Streams lifecycle;
 
   enum SheetState {
     BROWSE_SUBS,
@@ -118,7 +121,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     /**
      * Called when the sheet is collapsing and the subscriptions were changed (added or removed).
      */
-    void onSubredditsChanged();
+    void onSubredditsChange();
   }
 
   public void showIn(ToolbarExpandableSheet toolbarSheet, ViewGroup activityRootLayout) {
@@ -132,6 +135,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     inflate(context, R.layout.view_subreddit_picker_sheet, this);
     ButterKnife.bind(this, this);
     Dank.dependencyInjector().inject(this);
+
+    lifecycle = LifecycleOwnerViews.create(this, ((LifecycleOwnerActivity) context).lifecycle());
 
     saveButton.setVisibility(INVISIBLE);
     sheetState = SheetState.BROWSE_SUBS;
@@ -167,7 +172,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         .getAllIncludingHidden()
         .scan((oldSubscriptions, newSubscriptions) -> {
           if (oldSubscriptions.size() != newSubscriptions.size()) {
-            pendingOnWindowDetachedRunnable = () -> callbacks.onSubredditsChanged();
+            pendingOnWindowDetachedRunnable = () -> callbacks.onSubredditsChange();
           }
           return newSubscriptions;
         })
@@ -204,6 +209,12 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   public void onClickSubreddit(SubredditSubscription subscription, View subredditItemView) {
     if (sheetState == SheetState.BROWSE_SUBS) {
       callbacks.onSelectSubreddit(subscription.name());
+
+      // Fire-n-forget.
+      subscriptionRepository
+          .incrementVisitCount(subscription)
+          .subscribe();
+
     } else {
       showSubredditOptionsMenu(subscription, subredditItemView);
     }
