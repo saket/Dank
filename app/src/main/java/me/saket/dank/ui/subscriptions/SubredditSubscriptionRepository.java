@@ -6,7 +6,6 @@ import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
 
 import android.app.Application;
 import android.content.ContentValues;
-import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 import android.support.annotation.VisibleForTesting;
@@ -29,6 +28,7 @@ import java.util.Set;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -52,19 +52,19 @@ import timber.log.Timber;
 @Singleton
 public class SubredditSubscriptionRepository {
 
-  private Context appContext;
-  private BriteDatabase database;
-  private DankRedditClient dankRedditClient;
-  private UserPreferences userPreferences;
-  private UserSessionRepository userSessionRepository;
+  private Lazy<Application> appContext;
+  private Lazy<BriteDatabase> database;
+  private Lazy<DankRedditClient> dankRedditClient;
+  private Lazy<UserPreferences> userPreferences;
+  private Lazy<UserSessionRepository> userSessionRepository;
 
   @Inject
   public SubredditSubscriptionRepository(
-      Application appContext,
-      BriteDatabase database,
-      DankRedditClient dankRedditClient,
-      UserPreferences userPreferences,
-      UserSessionRepository userSessionRepository)
+      Lazy<Application> appContext,
+      Lazy<BriteDatabase> database,
+      Lazy<DankRedditClient> dankRedditClient,
+      Lazy<UserPreferences> userPreferences,
+      Lazy<UserSessionRepository> userSessionRepository)
   {
     this.appContext = appContext;
     this.database = database;
@@ -74,7 +74,7 @@ public class SubredditSubscriptionRepository {
   }
 
   public boolean isFrontpage(String subredditName) {
-    return appContext.getString(R.string.frontpage_subreddit_name).equals(subredditName);
+    return appContext.get().getString(R.string.frontpage_subreddit_name).equals(subredditName);
   }
 
   /**
@@ -88,13 +88,13 @@ public class SubredditSubscriptionRepository {
         ? SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_INCLUDING_HIDDEN
         : SubredditSubscription.QUERY_SEARCH_ALL_SUBSCRIBED_EXCLUDING_HIDDEN;
 
-    return database.createQuery(SubredditSubscription.TABLE_NAME, getQuery, "%" + filterTerm + "%")
+    return database.get().createQuery(SubredditSubscription.TABLE_NAME, getQuery, "%" + filterTerm + "%")
         .mapToList(SubredditSubscription.MAPPER)
         .as(immutable())
         .flatMap(filteredSubs -> {
           if (filteredSubs.isEmpty()) {
             // Fetch fresh subscriptions from remote if DB is empty.
-            return database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
+            return database.get().createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
                 .mapToList(SubredditSubscription.MAPPER)
                 .firstOrError()
                 .flatMapObservable(localSubs -> {
@@ -113,8 +113,8 @@ public class SubredditSubscriptionRepository {
         })
         .map(filteredSubs -> {
           // Move Frontpage and Popular to the top.
-          String frontpageSubName = appContext.getString(R.string.frontpage_subreddit_name);
-          String popularSubName = appContext.getString(R.string.popular_subreddit_name);
+          String frontpageSubName = appContext.get().getString(R.string.frontpage_subreddit_name);
+          String popularSubName = appContext.get().getString(R.string.popular_subreddit_name);
 
           SubredditSubscription frontpageSub = null;
           SubredditSubscription popularSub = null;
@@ -151,7 +151,7 @@ public class SubredditSubscriptionRepository {
    */
   @CheckResult
   public Completable refreshAndSaveSubscriptions() {
-    return database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
+    return database.get().createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL)
         .mapToList(SubredditSubscription.MAPPER)
         .firstOrError()
         .flatMap(localSubscriptions -> refreshAndSaveSubscriptions(localSubscriptions))
@@ -173,14 +173,14 @@ public class SubredditSubscriptionRepository {
         })
         .doOnSuccess(pendingState -> {
           SubredditSubscription subscription = SubredditSubscription.create(subreddit.getDisplayName(), pendingState, false);
-          database.insert(SubredditSubscription.TABLE_NAME, subscription.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
+          database.get().insert(SubredditSubscription.TABLE_NAME, subscription.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
         })
         .toCompletable();
   }
 
   @CheckResult
   public Completable unsubscribe(SubredditSubscription subscription) {
-    return Completable.fromAction(() -> database.delete(SubredditSubscription.TABLE_NAME, SubredditSubscription.WHERE_NAME, subscription.name()))
+    return Completable.fromAction(() -> database.get().delete(SubredditSubscription.TABLE_NAME, SubredditSubscription.WHERE_NAME, subscription.name()))
         .andThen(Dank.reddit().findSubreddit(subscription.name()))
         .flatMapCompletable(subreddit -> Dank.reddit().unsubscribeFrom(subreddit))
         .onErrorResumeNext(e -> {
@@ -190,7 +190,7 @@ public class SubredditSubscriptionRepository {
           boolean is404 = e instanceof NetworkException && ((NetworkException) e).getResponse().getStatusCode() == 404;
           if (!is404) {
             SubredditSubscription updated = subscription.toBuilder().pendingState(SubredditSubscription.PendingState.PENDING_UNSUBSCRIBE).build();
-            database.insert(SubredditSubscription.TABLE_NAME, updated.toContentValues());
+            database.get().insert(SubredditSubscription.TABLE_NAME, updated.toContentValues());
           }
           return Completable.complete();
         });
@@ -205,13 +205,13 @@ public class SubredditSubscriptionRepository {
       }
 
       SubredditSubscription updated = SubredditSubscription.create(subscription.name(), subscription.pendingState(), hidden);
-      database.update(SubredditSubscription.TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
+      database.get().update(SubredditSubscription.TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
     });
   }
 
   @CheckResult
   public Completable removeAll() {
-    return Completable.fromAction(() -> database.delete(SubredditSubscription.TABLE_NAME, null));
+    return Completable.fromAction(() -> database.get().delete(SubredditSubscription.TABLE_NAME, null));
   }
 
   /**
@@ -219,7 +219,7 @@ public class SubredditSubscriptionRepository {
    */
   @CheckResult
   public Completable executePendingSubscribesAndUnsubscribes() {
-    return database.createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL_PENDING)
+    return database.get().createQuery(SubredditSubscription.TABLE_NAME, SubredditSubscription.QUERY_GET_ALL_PENDING)
         .mapToList(SubredditSubscription.MAPPER)
         .take(1)
         .flatMapIterable(subscriptions -> subscriptions)
@@ -254,15 +254,15 @@ public class SubredditSubscriptionRepository {
 // ======== DEFAULT SUBREDDIT ======== //
 
   public String defaultSubreddit() {
-    return userPreferences.defaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));
+    return userPreferences.get().defaultSubreddit(appContext.get().getString(R.string.frontpage_subreddit_name));
   }
 
   public void setAsDefault(SubredditSubscription subscription) {
-    userPreferences.setDefaultSubreddit(subscription.name());
+    userPreferences.get().setDefaultSubreddit(subscription.name());
   }
 
   public void resetDefaultSubreddit() {
-    userPreferences.setDefaultSubreddit(appContext.getString(R.string.frontpage_subreddit_name));
+    userPreferences.get().setDefaultSubreddit(appContext.get().getString(R.string.frontpage_subreddit_name));
   }
 
   public boolean isDefault(SubredditSubscription subscription) {
@@ -274,7 +274,9 @@ public class SubredditSubscriptionRepository {
   @CheckResult
   private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
     Timber.w("Fetching subscriptions");
-    Single<List<String>> subredditsStream = userSessionRepository.isUserLoggedIn() ? loggedInUserSubreddits() : Single.just(loggedOutSubreddits());
+    Single<List<String>> subredditsStream = userSessionRepository.get().isUserLoggedIn()
+        ? loggedInUserSubreddits()
+        : Single.just(loggedOutSubreddits());
     return subredditsStream
         .compose(applySchedulersSingle())
         .map(mergeRemoteSubscriptionsWithLocal(localSubs));
@@ -342,7 +344,7 @@ public class SubredditSubscriptionRepository {
   }
 
   private Single<List<String>> loggedInUserSubreddits() {
-    return dankRedditClient.userSubreddits()
+    return dankRedditClient.get().userSubreddits()
         .map(remoteSubs -> {
           List<String> remoteSubNames = new ArrayList<>(remoteSubs.size());
           for (Subreddit subreddit : remoteSubs) {
@@ -350,10 +352,10 @@ public class SubredditSubscriptionRepository {
           }
 
           // Add frontpage and /r/popular.
-          String frontpageSub = appContext.getString(R.string.frontpage_subreddit_name);
+          String frontpageSub = appContext.get().getString(R.string.frontpage_subreddit_name);
           remoteSubNames.add(0, frontpageSub);
 
-          String popularSub = appContext.getString(R.string.popular_subreddit_name);
+          String popularSub = appContext.get().getString(R.string.popular_subreddit_name);
           if (!remoteSubNames.contains(popularSub) && !remoteSubNames.contains(popularSub.toLowerCase(Locale.ENGLISH))) {
             remoteSubNames.add(1, popularSub);
           }
@@ -364,7 +366,7 @@ public class SubredditSubscriptionRepository {
   }
 
   private List<String> loggedOutSubreddits() {
-    return Arrays.asList(appContext.getResources().getStringArray(R.array.default_subreddits));
+    return Arrays.asList(appContext.get().getResources().getStringArray(R.array.default_subreddits));
   }
 
   /**
@@ -379,10 +381,10 @@ public class SubredditSubscriptionRepository {
         newSubscriptionValuesList.add(newSubscription.toContentValues());
       }
 
-      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-        database.delete(SubredditSubscription.TABLE_NAME, null);
+      try (BriteDatabase.Transaction transaction = database.get().newTransaction()) {
+        database.get().delete(SubredditSubscription.TABLE_NAME, null);
         for (ContentValues newSubscriptionValues : newSubscriptionValuesList) {
-          database.insert(SubredditSubscription.TABLE_NAME, newSubscriptionValues);
+          database.get().insert(SubredditSubscription.TABLE_NAME, newSubscriptionValues);
         }
         transaction.markSuccessful();
       }
