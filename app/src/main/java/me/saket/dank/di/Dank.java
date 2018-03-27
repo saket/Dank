@@ -7,7 +7,7 @@ import com.squareup.moshi.Moshi;
 import me.saket.dank.cache.CacheModule;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
+import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.utils.JacksonHelper;
 
@@ -30,8 +30,8 @@ public class Dank {
     return appComponent.dankRedditClient();
   }
 
-  public static SubredditSubscriptionManager subscriptions() {
-    return appComponent.subredditSubscriptionManager();
+  public static SubredditSubscriptionRepository subscriptions() {
+    return appComponent.subredditSubscriptionRepository();
   }
 
   public static JacksonHelper jackson() {

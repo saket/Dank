@@ -59,7 +59,7 @@ import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
+import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.urlparser.Link;
@@ -138,7 +138,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Inject SubmissionRepository submissionRepository;
   @Inject ErrorResolver errorResolver;
   @Inject CachePreFiller cachePreFiller;
-  @Inject SubredditSubscriptionManager subscriptionManager;
+  @Inject SubredditSubscriptionRepository subscriptionRepository;
   @Inject UserPreferences userPrefs;
   @Inject UserSessionRepository userSessionRepository;
   @Inject SubredditUiConstructor uiConstructor;
@@ -233,7 +233,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
     // Toggle the subscribe button's visibility.
     subredditChangesStream
-        .switchMap(subredditName -> subscriptionManager.isSubscribed(subredditName))
+        .switchMap(subredditName -> subscriptionRepository.isSubscribed(subredditName))
         .compose(applySchedulers())
         .startWith(Boolean.TRUE)
         .onErrorResumeNext(error -> {
@@ -273,7 +273,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     // Intentionally not unsubscribing from this API call on Activity destroy.
     // Treating this as a fire-n-forget call.
     Dank.reddit().findSubreddit(subredditName)
-        .flatMapCompletable(subreddit -> subscriptionManager.subscribe(subreddit))
+        .flatMapCompletable(subreddit -> subscriptionRepository.subscribe(subreddit))
         .subscribeOn(io())
         .subscribe(doNothingCompletable(), logError("Couldn't subscribe to %s", subredditName));
   }
@@ -294,7 +294,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
   @Override
   public void setTitle(CharSequence subredditName) {
-    boolean isFrontpage = subscriptionManager.isFrontpage(subredditName.toString());
+    boolean isFrontpage = subscriptionRepository.isFrontpage(subredditName.toString());
     toolbarTitleView.setText(isFrontpage ? getString(R.string.app_name) : subredditName);
   }
 
@@ -520,7 +520,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
       String requestedSub = ((RedditSubredditLink) getIntent().getParcelableExtra(KEY_INITIAL_SUBREDDIT_LINK)).name();
       subredditChangesStream.accept(requestedSub);
     } else {
-      subredditChangesStream.accept(subscriptionManager.defaultSubreddit());
+      subredditChangesStream.accept(subscriptionRepository.defaultSubreddit());
     }
 
     if (savedState != null) {
@@ -627,7 +627,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
     submissionFolderStream
         .observeOn(single())
-        .switchMap(folder -> subscriptionManager.isSubscribed(folder.subredditName()))
+        .switchMap(folder -> subscriptionRepository.isSubscribed(folder.subredditName()))
         .filter(isSubscribed -> isSubscribed)
         .switchMap(o -> cachedSubmissionStream
             .filter(Optional::isPresent)
@@ -760,7 +760,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
       @Override
       public void onSubredditsChanged() {
         // Refresh the submissions if the frontpage was active.
-        if (subscriptionManager.isFrontpage(subredditChangesStream.getValue())) {
+        if (subscriptionRepository.isFrontpage(subredditChangesStream.getValue())) {
           subredditChangesStream.accept(subredditChangesStream.getValue());
         }
       }
@@ -816,7 +816,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     // submissions will change if the subscriptions change.
     subredditChangesStream
         .take(1)
-        .filter(subscriptionManager::isFrontpage)
+        .filter(subscriptionRepository::isFrontpage)
         .subscribe(o -> forceRefreshSubmissionsRequestStream.accept(Notification.INSTANCE));
 
     if (!submissionPage.isExpanded()) {
@@ -825,6 +825,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   }
 
   private void handleOnUserLogOut() {
-    subredditChangesStream.accept(subscriptionManager.defaultSubreddit());
+    subredditChangesStream.accept(subscriptionRepository.defaultSubreddit());
   }
 }

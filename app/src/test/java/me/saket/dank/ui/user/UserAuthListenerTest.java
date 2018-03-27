@@ -20,7 +20,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.ImmediateSchedulersRule;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
+import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.TimeInterval;
 
@@ -29,7 +29,7 @@ public class UserAuthListenerTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
   @Rule public ImmediateSchedulersRule schedulersRule = ImmediateSchedulersRule.create();
 
-  @Mock SubredditSubscriptionManager subscriptionManager;
+  @Mock SubredditSubscriptionRepository subscriptionRepository;
   @Mock UserSessionRepository userSessionRepository;
   @Mock Preference<TimeInterval> unreadMessagesPollInterval;
 
@@ -37,7 +37,7 @@ public class UserAuthListenerTest {
 
   @Before
   public void setUp() throws Exception {
-    userAuthListener = spy(new UserAuthListener(subscriptionManager, userSessionRepository, unreadMessagesPollInterval));
+    userAuthListener = spy(new UserAuthListener(subscriptionRepository, userSessionRepository, unreadMessagesPollInterval));
   }
 
   @Test
@@ -56,8 +56,8 @@ public class UserAuthListenerTest {
   public void login() {
     Optional<UserSession> user = Optional.of(UserSession.create("saketme"));
     when(userSessionRepository.streamSessions()).thenReturn(Observable.just(Optional.empty(), user));
-    when(subscriptionManager.removeAll()).thenReturn(Completable.complete());
-    when(subscriptionManager.refreshAndSaveSubscriptions()).thenReturn(Completable.complete());
+    when(subscriptionRepository.removeAll()).thenReturn(Completable.complete());
+    when(subscriptionRepository.refreshAndSaveSubscriptions()).thenReturn(Completable.complete());
 
     //noinspection ConstantConditions
     userAuthListener.doSomething(null)
@@ -65,14 +65,14 @@ public class UserAuthListenerTest {
         .assertError(predicateForJobSchedulerErrors());
 
     verify(userAuthListener).handleLoggedIn(any());
-    verify(subscriptionManager).removeAll();
-    verify(subscriptionManager).refreshAndSaveSubscriptions();
+    verify(subscriptionRepository).removeAll();
+    verify(subscriptionRepository).refreshAndSaveSubscriptions();
   }
 
   @Test
   public void logout() {
     when(userSessionRepository.streamSessions()).thenReturn(Observable.just(Optional.empty(), Optional.empty()));
-    when(subscriptionManager.removeAll()).thenReturn(Completable.complete());
+    when(subscriptionRepository.removeAll()).thenReturn(Completable.complete());
 
     //noinspection ConstantConditions
     userAuthListener.doSomething(null)
@@ -81,8 +81,8 @@ public class UserAuthListenerTest {
         .assertNoErrors();
 
     verify(userAuthListener).handleLoggedOut();
-    verify(subscriptionManager).removeAll();
-    verify(subscriptionManager).resetDefaultSubreddit();
+    verify(subscriptionRepository).removeAll();
+    verify(subscriptionRepository).resetDefaultSubreddit();
   }
 
   @NonNull

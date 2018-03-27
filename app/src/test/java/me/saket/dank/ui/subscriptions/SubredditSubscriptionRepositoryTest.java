@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.subscriptions;
 
 import junit.framework.Assert;
 
@@ -8,16 +8,19 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-import me.saket.dank.ui.subscriptions.SubredditSubscription;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
+public class SubredditSubscriptionRepositoryTest {
 
-public class SubredditSubscriptionManagerTest {
-
-  private SubredditSubscriptionManager subscriptionManager;
+  private SubredditSubscriptionRepository subscriptionRepository;
 
   @Before
   public void setUp() throws Exception {
-    subscriptionManager = new SubredditSubscriptionManager(null, null, null, null, null);
+    //noinspection ConstantConditions
+    subscriptionRepository = new SubredditSubscriptionRepository(
+        null,
+        null,
+        null,
+        null,
+        null);
   }
 
   @Test
@@ -45,7 +48,7 @@ public class SubredditSubscriptionManagerTest {
     expectedMergedList.add(SubredditSubscription.create("G", SubredditSubscription.PendingState.NONE, false));
     expectedMergedList.add(SubredditSubscription.create("H", SubredditSubscription.PendingState.NONE, false));
 
-    List<SubredditSubscription> mergedList = subscriptionManager.mergeRemoteSubscriptionsWithLocal(localSubs).apply(remoteSubNames);
+    List<SubredditSubscription> mergedList = subscriptionRepository.mergeRemoteSubscriptionsWithLocal(localSubs).apply(remoteSubNames);
     Assert.assertEquals(expectedMergedList, mergedList);
   }
 }

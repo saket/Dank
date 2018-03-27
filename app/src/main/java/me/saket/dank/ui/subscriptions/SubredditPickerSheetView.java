@@ -93,7 +93,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   @BindDimen(R.dimen.subreddit_picker_sheet_bottom_margin) int parentSheetBottomMarginForShadows;
   @BindColor(R.color.subredditpicker_subreddit_button_tint_selected) int focusedSubredditButtonTintColor;
 
-  @Inject SubredditSubscriptionManager subscriptionManager;
+  @Inject SubredditSubscriptionRepository subscriptionRepository;
 
   private ViewGroup activityRootLayout;
   private ToolbarExpandableSheet parentSheet;
@@ -163,7 +163,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     setupSubredditsSearch();
 
     // Track changes in subscriptions and send a callback if needed when this sheet collapses.
-    subscriptions.add(subscriptionManager
+    subscriptions.add(subscriptionRepository
         .getAllIncludingHidden()
         .scan((oldSubscriptions, newSubscriptions) -> {
           if (oldSubscriptions.size() != newSubscriptions.size()) {
@@ -230,7 +230,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         })
         .flatMap(o -> showHiddenSubredditsSubject)
         .observeOn(io())
-        .switchMap(showHidden -> subscriptionManager.getAll(searchView.getText().toString(), showHidden))
+        .switchMap(showHidden -> subscriptionRepository.getAll(searchView.getText().toString(), showHidden))
         .map(filteredSubs -> {
           if (sheetState == SheetState.BROWSE_SUBS) {
             // If search is active, show user's search term in the results unless an exact match was found.
@@ -431,8 +431,8 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     PopupMenu popupMenu = new PopupMenu(getContext(), subredditItemView, Gravity.BOTTOM, 0, R.style.DankPopupMenu_SubredditOptions);
     popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
 
-    popupMenu.getMenu().findItem(R.id.action_set_subreddit_as_default).setVisible(!subscriptionManager.isDefault(subscription));
-    popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit).setVisible(!subscriptionManager.isFrontpage(subscription.name()));
+    popupMenu.getMenu().findItem(R.id.action_set_subreddit_as_default).setVisible(!subscriptionRepository.isDefault(subscription));
+    popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit).setVisible(!subscriptionRepository.isFrontpage(subscription.name()));
     popupMenu.getMenu().findItem(R.id.action_hide_subreddit).setVisible(!subscription.isHidden());
     popupMenu.getMenu().findItem(R.id.action_unhide_subreddit).setVisible(subscription.isHidden());
 
@@ -442,33 +442,33 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     popupMenu.setOnMenuItemClickListener(item -> {
       switch (item.getItemId()) {
         case R.id.action_set_subreddit_as_default:
-          subscriptionManager.setAsDefault(subscription);
+          subscriptionRepository.setAsDefault(subscription);
           return true;
 
         case R.id.action_unsubscribe_subreddit:
-          if (subscriptionManager.isDefault(subscription)) {
-            subscriptionManager.resetDefaultSubreddit();
+          if (subscriptionRepository.isDefault(subscription)) {
+            subscriptionRepository.resetDefaultSubreddit();
           }
 
-          subscriptionManager
+          subscriptionRepository
               .unsubscribe(subscription)
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), logError("Couldn't unsubscribe: %s", subscription));
           return true;
 
         case R.id.action_hide_subreddit:
-          if (subscriptionManager.isDefault(subscription)) {
-            subscriptionManager.resetDefaultSubreddit();
+          if (subscriptionRepository.isDefault(subscription)) {
+            subscriptionRepository.resetDefaultSubreddit();
           }
 
-          subscriptionManager
+          subscriptionRepository
               .setHidden(subscription, true)
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), logError("Couldn't hide: %s", subscription));
           return true;
 
         case R.id.action_unhide_subreddit:
-          subscriptionManager
+          subscriptionRepository
               .setHidden(subscription, false)
               .compose(applySchedulersCompletable())
               .subscribe(doNothingCompletable(), logError("Couldn't unhide: %s", subscription));
@@ -516,7 +516,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     // Enable item change animation, until the user starts searching.
     subredditList.setItemAnimator(itemAnimator);
 
-    subscriptions.add(subscriptionManager.subscribe(newSubreddit)
+    subscriptions.add(subscriptionRepository.subscribe(newSubreddit)
         .andThen(Completable.fromAction(findAndHighlightSubredditAction))
         .compose(applySchedulersCompletable())
         .subscribe(doNothingCompletable(), doNothing())

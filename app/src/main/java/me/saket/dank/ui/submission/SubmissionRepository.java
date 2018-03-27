@@ -54,7 +54,7 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
+import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -70,19 +70,19 @@ public class SubmissionRepository {
   private final DankRedditClient dankRedditClient;
   private final VotingManager votingManager;
   private final ErrorResolver errorResolver;
-  private final SubredditSubscriptionManager subscriptionManager;
+  private final SubredditSubscriptionRepository subscriptionRepository;
   private Provider<Store<CachedSubmissionWithComments, DankSubmissionRequest>> submissionWithCommentsStore;
 
   @Inject
   public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager,
-      ErrorResolver errorResolver, SubredditSubscriptionManager subscriptionManager, ReplyRepository replyRepository)
+      ErrorResolver errorResolver, SubredditSubscriptionRepository subscriptionRepository, ReplyRepository replyRepository)
   {
     this.database = briteDatabase;
     this.moshi = moshi;
     this.dankRedditClient = dankRedditClient;
     this.votingManager = votingManager;
     this.errorResolver = errorResolver;
-    this.subscriptionManager = subscriptionManager;
+    this.subscriptionRepository = subscriptionRepository;
 
     submissionWithCommentsStore = SingleCheck.provider(() -> {
       Fetcher<CachedSubmissionWithComments, DankSubmissionRequest> fetcher = request -> dankRedditClient.submission(request)
@@ -414,7 +414,7 @@ public class SubmissionRepository {
 
   @CheckResult
   private FetchResult fetchSubmissionsFromRemoteWithAnchor(CachedSubmissionFolder folder, PaginationAnchor anchor) {
-    boolean isFrontpage = subscriptionManager.isFrontpage(folder.subredditName());
+    boolean isFrontpage = subscriptionRepository.isFrontpage(folder.subredditName());
     SubredditPaginator subredditPaginator = dankRedditClient.subredditPaginator(folder.subredditName(), isFrontpage);
     if (!anchor.isEmpty()) {
       subredditPaginator.setStartAfterThing(anchor.fullName());

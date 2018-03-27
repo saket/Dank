@@ -15,7 +15,7 @@ import javax.inject.Singleton;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
+import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.subscriptions.SubredditSubscriptionsSyncJob;
 import me.saket.dank.utils.Optional;
@@ -26,17 +26,17 @@ import timber.log.Timber;
 public class UserAuthListener {
 
   private final Preference<TimeInterval> unreadMessagesPollInterval;
-  private final SubredditSubscriptionManager subscriptionManager;
+  private final SubredditSubscriptionRepository subscriptionRepository;
   private final UserSessionRepository userSessionRepository;
 
   @Inject
   public UserAuthListener(
-      SubredditSubscriptionManager subscriptionManager,
+      SubredditSubscriptionRepository subscriptionRepository,
       UserSessionRepository userSessionRepository,
       @Named("unread_messages") Preference<TimeInterval> unreadMessagesPollInterval)
   {
     this.unreadMessagesPollInterval = unreadMessagesPollInterval;
-    this.subscriptionManager = subscriptionManager;
+    this.subscriptionRepository = subscriptionRepository;
     this.userSessionRepository = userSessionRepository;
   }
 
@@ -85,8 +85,8 @@ public class UserAuthListener {
 
     // Reload subreddit subscriptions. Not implementing onError() is intentional.
     // This code is not supposed to fail :/
-    subscriptionManager.removeAll()
-        .andThen(subscriptionManager.refreshAndSaveSubscriptions())
+    subscriptionRepository.removeAll()
+        .andThen(subscriptionRepository.refreshAndSaveSubscriptions())
         .subscribeOn(io())
         .subscribe();
 
@@ -97,10 +97,10 @@ public class UserAuthListener {
   void handleLoggedOut() {
     //Timber.d("User logged out. Doing things.");
 
-    subscriptionManager.removeAll()
+    subscriptionRepository.removeAll()
         .subscribeOn(io())
         .subscribe(() -> {
-          Timber.i("Default sub set to: %s", subscriptionManager.defaultSubreddit());
+          Timber.i("Default sub set to: %s", subscriptionRepository.defaultSubreddit());
         });
   }
 

@@ -50,7 +50,7 @@ import timber.log.Timber;
  * - Hiding subscriptions.
  */
 @Singleton
-public class SubredditSubscriptionManager {
+public class SubredditSubscriptionRepository {
 
   private Context appContext;
   private BriteDatabase database;
@@ -59,7 +59,7 @@ public class SubredditSubscriptionManager {
   private UserSessionRepository userSessionRepository;
 
   @Inject
-  public SubredditSubscriptionManager(
+  public SubredditSubscriptionRepository(
       Application appContext,
       BriteDatabase database,
       DankRedditClient dankRedditClient,

@@ -32,7 +32,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
    */
   private static final BehaviorRelay<Boolean> progressSubject = BehaviorRelay.create();
 
-  @Inject SubredditSubscriptionManager subscriptionManager;
+  @Inject SubredditSubscriptionRepository subscriptionRepository;
 
   /**
    * Sync subscriptions every ~6 hours when the device is idle, charging and on an unmetered connection.
@@ -78,8 +78,8 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
 
   @Override
   public JobStartCallback onStartJob2(JobParameters params) {
-    subscriptionManager.refreshAndSaveSubscriptions()
-        .andThen(subscriptionManager.executePendingSubscribesAndUnsubscribes())
+    subscriptionRepository.refreshAndSaveSubscriptions()
+        .andThen(subscriptionRepository.executePendingSubscribesAndUnsubscribes())
         .compose(applySchedulersCompletable())
         .compose(doOnCompletableStartAndTerminate(ongoing -> progressSubject.accept(ongoing)))
         .ambWith(lifecycleOnDestroy().ignoreElements())
