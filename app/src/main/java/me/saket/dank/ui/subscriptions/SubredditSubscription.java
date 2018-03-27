@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.subscriptions;
 
 import android.content.ContentValues;
 import android.database.Cursor;
@@ -23,7 +23,7 @@ public abstract class SubredditSubscription implements Parcelable {
   static final String HIDDEN = "1";
   static final String NOT_HIDDEN = "0";
 
-  static final String QUERY_CREATE_TABLE =
+  public static final String QUERY_CREATE_TABLE =
       "CREATE TABLE " + TABLE_NAME + " ("
           + COLUMN_NAME + " TEXT NOT NULL PRIMARY KEY, "
           + COLUMN_PENDING_ACTION + " TEXT NOT NULL, "

@@ -15,7 +15,7 @@ import javax.inject.Singleton;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import me.saket.dank.data.SubredditSubscriptionManager;
+import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.subscriptions.SubredditSubscriptionsSyncJob;
 import me.saket.dank.utils.Optional;

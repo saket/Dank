@@ -15,7 +15,6 @@ import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import me.saket.dank.R;
-import me.saket.dank.data.SubredditSubscription;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
 /**

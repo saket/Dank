@@ -17,7 +17,6 @@ import javax.inject.Inject;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.di.Dank;
 import timber.log.Timber;
 

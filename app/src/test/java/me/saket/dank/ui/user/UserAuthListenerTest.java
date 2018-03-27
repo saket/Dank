@@ -20,7 +20,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.ImmediateSchedulersRule;
-import me.saket.dank.data.SubredditSubscriptionManager;
+import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.TimeInterval;
 

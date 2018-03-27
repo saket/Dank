@@ -8,6 +8,9 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
+import me.saket.dank.ui.subscriptions.SubredditSubscription;
+import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
+
 public class SubredditSubscriptionManagerTest {
 
   private SubredditSubscriptionManager subscriptionManager;

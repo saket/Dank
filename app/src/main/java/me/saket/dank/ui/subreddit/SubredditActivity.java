@@ -59,7 +59,7 @@ import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.data.SubredditSubscriptionManager;
+import me.saket.dank.ui.subscriptions.SubredditSubscriptionManager;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.urlparser.Link;

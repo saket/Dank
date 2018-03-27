@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.subscriptions;
 
 import static me.saket.dank.utils.Arrays2.immutable;
 import static me.saket.dank.utils.Arrays2.toImmutable;
@@ -35,7 +35,8 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import me.saket.dank.R;
-import me.saket.dank.data.SubredditSubscription.PendingState;
+import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserSessionRepository;
 import timber.log.Timber;
@@ -165,10 +166,10 @@ public class SubredditSubscriptionManager {
   @CheckResult
   public Completable subscribe(Subreddit subreddit) {
     return Dank.reddit().subscribeTo(subreddit)
-        .andThen(Single.just(PendingState.NONE))
+        .andThen(Single.just(SubredditSubscription.PendingState.NONE))
         .onErrorResumeNext(e -> {
           Timber.e(e, "Couldn't subscribe to %s. Will try again later.", subreddit);
-          return Single.just(PendingState.PENDING_SUBSCRIBE);
+          return Single.just(SubredditSubscription.PendingState.PENDING_SUBSCRIBE);
         })
         .doOnSuccess(pendingState -> {
           SubredditSubscription subscription = SubredditSubscription.create(subreddit.getDisplayName(), pendingState, false);
@@ -188,7 +189,7 @@ public class SubredditSubscriptionManager {
           // 404 == subreddit isn't present on the server anymore.
           boolean is404 = e instanceof NetworkException && ((NetworkException) e).getResponse().getStatusCode() == 404;
           if (!is404) {
-            SubredditSubscription updated = subscription.toBuilder().pendingState(PendingState.PENDING_UNSUBSCRIBE).build();
+            SubredditSubscription updated = subscription.toBuilder().pendingState(SubredditSubscription.PendingState.PENDING_UNSUBSCRIBE).build();
             database.insert(SubredditSubscription.TABLE_NAME, updated.toContentValues());
           }
           return Completable.complete();
@@ -198,7 +199,7 @@ public class SubredditSubscriptionManager {
   @CheckResult
   public Completable setHidden(SubredditSubscription subscription, boolean hidden) {
     return Completable.fromAction(() -> {
-      if (subscription.pendingState() == PendingState.PENDING_UNSUBSCRIBE) {
+      if (subscription.pendingState() == SubredditSubscription.PendingState.PENDING_UNSUBSCRIBE) {
         // When a subreddit gets marked for removal, the user should have not been able to toggle its hidden status.
         throw new IllegalStateException("Subreddit is marked for removal. Should have not reached here: " + subscription);
       }
@@ -304,7 +305,7 @@ public class SubredditSubscriptionManager {
           } else if (localSub.isSubscribePending()) {
             // A pending subscribed sub has already been subscribed on remote. Great.
             //noinspection ResultOfMethodCallIgnored
-            syncedListBuilder.add(localSub.toBuilder().pendingState(PendingState.NONE).build());
+            syncedListBuilder.add(localSub.toBuilder().pendingState(SubredditSubscription.PendingState.NONE).build());
 
           } else {
             // Both local and remote have the same sub. All cool.
@@ -332,7 +333,7 @@ public class SubredditSubscriptionManager {
         if (!localSubsMap.containsKey(remoteSubName)) {
           // New sub found.
           //noinspection ResultOfMethodCallIgnored
-          syncedListBuilder.add(SubredditSubscription.create(remoteSubName, PendingState.NONE, false));
+          syncedListBuilder.add(SubredditSubscription.create(remoteSubName, SubredditSubscription.PendingState.NONE, false));
         }
       }
 

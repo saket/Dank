@@ -56,8 +56,6 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.data.SubredditSubscription;
-import me.saket.dank.data.SubredditSubscriptionManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.utils.Animations;
