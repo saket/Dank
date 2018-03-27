@@ -328,7 +328,7 @@ public class DankRedditClient {
             return SubredditSearchResult.notFound();
 
           } else {
-            return SubredditSearchResult.unknownError();
+            return SubredditSearchResult.unknownError(error);
           }
         });
   }

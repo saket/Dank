@@ -27,13 +27,13 @@ public interface SubredditSearchResult {
     return new AutoValue_SubredditSearchResult_NotFound();
   }
 
-  static UnknownError unknownError() {
-    return new AutoValue_SubredditSearchResult_UnknownError();
+  static UnknownError unknownError(Throwable error) {
+    return new AutoValue_SubredditSearchResult_UnknownError(error);
   }
 
   @AutoValue
   abstract class Success implements SubredditSearchResult {
-    abstract Subreddit subreddit();
+    public abstract Subreddit subreddit();
 
     @Override
     public Type type() {
@@ -61,6 +61,7 @@ public interface SubredditSearchResult {
 
   @AutoValue
   abstract class UnknownError implements SubredditSearchResult {
+    public abstract Throwable error();
 
     @Override
     public Type type() {

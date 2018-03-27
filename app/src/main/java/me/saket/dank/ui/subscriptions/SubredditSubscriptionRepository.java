@@ -13,7 +13,6 @@ import android.support.annotation.VisibleForTesting;
 import com.google.common.collect.ImmutableList;
 import com.squareup.sqlbrite2.BriteDatabase;
 
-import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Subreddit;
 
 import java.util.ArrayList;
@@ -38,6 +37,8 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.subreddit.SubredditSearchResult;
+import me.saket.dank.ui.subreddit.SubredditSearchResult.Success;
 import me.saket.dank.ui.user.UserSessionRepository;
 import timber.log.Timber;
 
@@ -181,18 +182,27 @@ public class SubredditSubscriptionRepository {
   @CheckResult
   public Completable unsubscribe(SubredditSubscription subscription) {
     return Completable.fromAction(() -> database.get().delete(SubredditSubscription.TABLE_NAME, SubredditSubscription.WHERE_NAME, subscription.name()))
-        .andThen(Dank.reddit().findSubreddit(subscription.name()))
-        .flatMapCompletable(subreddit -> Dank.reddit().unsubscribeFrom(subreddit))
-        .onErrorResumeNext(e -> {
-          Timber.e(e, "Couldn't unsubscribe from %s. Will try again later.", subscription);
+        .andThen(Dank.reddit().findSubreddit2(subscription.name()))
+        .flatMapCompletable(findResult -> {
+          switch (findResult.type()) {
+            case SUCCESS:
+              return Dank.reddit().unsubscribeFrom(((Success) findResult).subreddit());
 
-          // 404 == subreddit isn't present on the server anymore.
-          boolean is404 = e instanceof NetworkException && ((NetworkException) e).getResponse().getStatusCode() == 404;
-          if (!is404) {
-            SubredditSubscription updated = subscription.toBuilder().pendingState(SubredditSubscription.PendingState.PENDING_UNSUBSCRIBE).build();
-            database.get().insert(SubredditSubscription.TABLE_NAME, updated.toContentValues());
+            case ERROR_PRIVATE:
+              return Completable.error(new AssertionError("Couldn't unsubscribe from a private subreddit :O"));
+
+            case ERROR_UNKNOWN:
+              Throwable error = ((SubredditSearchResult.UnknownError) findResult).error();
+              Timber.e(error, "Couldn't unsubscribe from %s. Will try again later.", subscription);
+              SubredditSubscription updated = subscription.toBuilder().pendingState(SubredditSubscription.PendingState.PENDING_UNSUBSCRIBE).build();
+              database.get().insert(SubredditSubscription.TABLE_NAME, updated.toContentValues());
+              return Completable.complete();
+
+            default:
+            case ERROR_NOT_FOUND:
+              // 404 == subreddit isn't present on the server anymore.
+              return Completable.complete();
           }
-          return Completable.complete();
         });
   }
 

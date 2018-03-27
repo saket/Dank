@@ -54,6 +54,7 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
@@ -351,9 +352,11 @@ public class SubmissionRepository {
                         case ERROR_NOT_FOUND:
                           return Completable.error(new SubredditNotFoundException());
 
-                        default:
                         case ERROR_UNKNOWN:
-                          return Completable.error(new RuntimeException("Unknown error getting submissions for " + folder));
+                          return Completable.error(((SubredditSearchResult.UnknownError) searchResult).error());
+
+                        default:
+                          return Completable.error(new AssertionError("Unknown error getting submissions for " + folder));
                       }
                     });
               } else {
