@@ -36,6 +36,7 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableConverter;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.functions.Consumer;
+import io.reactivex.functions.Function;
 
 /**
  * Copied from {@link java.util.Optional} because Java 8.
@@ -203,6 +204,37 @@ public abstract class Optional<T> {
       }
     }
   }
+
+  /**
+   * If a value is present, apply the provided {@code Optional}-bearing
+   * mapping function to it, return that result, otherwise return an empty
+   * {@code Optional}.  This method is similar to {@link #map(Function)},
+   * but the provided mapper is one whose result is already an {@code Optional},
+   * and if invoked, {@code flatMap} does not wrap it with an additional
+   * {@code Optional}.
+   *
+   * @param <U> The type parameter to the {@code Optional} returned by
+   * @param mapper a mapping function to apply to the value, if present
+   *           the mapping function
+   * @return the result of applying an {@code Optional}-bearing mapping
+   * function to the value of this {@code Optional}, if a value is present,
+   * otherwise an empty {@code Optional}
+   * @throws NullPointerException if the mapping function is null or returns
+   * a null result
+   */
+  public<U> Optional<U> flatMap(io.reactivex.functions.Function<? super T, Optional<U>> mapper) {
+    Objects.requireNonNull(mapper);
+    if (!isPresent())
+      return empty();
+    else {
+      try {
+        return Objects.requireNonNull(mapper.apply(value()));
+      } catch (Exception e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
 
   /**
    * Indicates whether some other object is "equal to" this Optional. The
