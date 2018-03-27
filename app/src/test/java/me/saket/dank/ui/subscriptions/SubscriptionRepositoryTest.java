@@ -8,14 +8,14 @@ import org.junit.Test;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SubredditSubscriptionRepositoryTest {
+public class SubscriptionRepositoryTest {
 
-  private SubredditSubscriptionRepository subscriptionRepository;
+  private SubscriptionRepository subscriptionRepository;
 
   @Before
   public void setUp() throws Exception {
     //noinspection ConstantConditions
-    subscriptionRepository = new SubredditSubscriptionRepository(
+    subscriptionRepository = new SubscriptionRepository(
         null,
         null,
         null,

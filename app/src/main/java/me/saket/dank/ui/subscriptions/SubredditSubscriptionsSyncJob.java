@@ -32,7 +32,7 @@ public class SubredditSubscriptionsSyncJob extends DankJobService {
    */
   private static final BehaviorRelay<Boolean> progressSubject = BehaviorRelay.create();
 
-  @Inject SubredditSubscriptionRepository subscriptionRepository;
+  @Inject SubscriptionRepository subscriptionRepository;
 
   /**
    * Sync subscriptions every ~6 hours when the device is idle, charging and on an unmetered connection.

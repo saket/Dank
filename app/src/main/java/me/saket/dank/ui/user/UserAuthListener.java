@@ -15,7 +15,7 @@ import javax.inject.Singleton;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.subscriptions.SubredditSubscriptionsSyncJob;
 import me.saket.dank.utils.Optional;
@@ -26,12 +26,12 @@ import timber.log.Timber;
 public class UserAuthListener {
 
   private final Preference<TimeInterval> unreadMessagesPollInterval;
-  private final SubredditSubscriptionRepository subscriptionRepository;
+  private final SubscriptionRepository subscriptionRepository;
   private final UserSessionRepository userSessionRepository;
 
   @Inject
   public UserAuthListener(
-      SubredditSubscriptionRepository subscriptionRepository,
+      SubscriptionRepository subscriptionRepository,
       UserSessionRepository userSessionRepository,
       @Named("unread_messages") Preference<TimeInterval> unreadMessagesPollInterval)
   {

@@ -20,7 +20,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.ImmediateSchedulersRule;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.TimeInterval;
 
@@ -29,7 +29,7 @@ public class UserAuthListenerTest {
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
   @Rule public ImmediateSchedulersRule schedulersRule = ImmediateSchedulersRule.create();
 
-  @Mock SubredditSubscriptionRepository subscriptionRepository;
+  @Mock SubscriptionRepository subscriptionRepository;
   @Mock UserSessionRepository userSessionRepository;
   @Mock Preference<TimeInterval> unreadMessagesPollInterval;
 

@@ -59,7 +59,7 @@ import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.urlparser.Link;
@@ -138,7 +138,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Inject SubmissionRepository submissionRepository;
   @Inject ErrorResolver errorResolver;
   @Inject CachePreFiller cachePreFiller;
-  @Inject SubredditSubscriptionRepository subscriptionRepository;
+  @Inject SubscriptionRepository subscriptionRepository;
   @Inject UserPreferences userPrefs;
   @Inject UserSessionRepository userSessionRepository;
   @Inject SubredditUiConstructor uiConstructor;

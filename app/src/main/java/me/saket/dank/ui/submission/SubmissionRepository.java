@@ -55,7 +55,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.ui.subreddit.SubredditSearchResult;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.utils.DankSubmissionRequest;
@@ -71,12 +71,12 @@ public class SubmissionRepository {
   private final DankRedditClient dankRedditClient;
   private final VotingManager votingManager;
   private final ErrorResolver errorResolver;
-  private final SubredditSubscriptionRepository subscriptionRepository;
+  private final SubscriptionRepository subscriptionRepository;
   private Provider<Store<CachedSubmissionWithComments, DankSubmissionRequest>> submissionWithCommentsStore;
 
   @Inject
   public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager,
-      ErrorResolver errorResolver, SubredditSubscriptionRepository subscriptionRepository, ReplyRepository replyRepository)
+      ErrorResolver errorResolver, SubscriptionRepository subscriptionRepository, ReplyRepository replyRepository)
   {
     this.database = briteDatabase;
     this.moshi = moshi;

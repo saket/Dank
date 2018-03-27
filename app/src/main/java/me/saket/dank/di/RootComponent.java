@@ -9,7 +9,7 @@ import me.saket.dank.cache.CacheModule;
 import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.notifs.MediaDownloadService;
@@ -52,7 +52,7 @@ public interface RootComponent {
 
   DankApi api();
 
-  SubredditSubscriptionRepository subredditSubscriptionRepository();
+  SubscriptionRepository subredditSubscriptionRepository();
 
   JacksonHelper jacksonHelper();
 

@@ -29,7 +29,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
-import me.saket.dank.ui.subscriptions.SubredditSubscriptionRepository;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
@@ -55,7 +55,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
   @Inject BriteDatabase briteDatabase;
   @Inject SubmissionRepository submissionRepository;
-  @Inject SubredditSubscriptionRepository subscriptionRepository;
+  @Inject SubscriptionRepository subscriptionRepository;
   @Inject ReplyRepository replyRepository;
   @Inject LinkMetadataRepository linkMetadataRepository;
   @Inject VotingManager votingManager;

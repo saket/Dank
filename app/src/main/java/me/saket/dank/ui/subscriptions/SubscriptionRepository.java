@@ -51,7 +51,7 @@ import timber.log.Timber;
  * - Hiding subscriptions.
  */
 @Singleton
-public class SubredditSubscriptionRepository {
+public class SubscriptionRepository {
 
   private Lazy<Application> appContext;
   private Lazy<BriteDatabase> database;
@@ -60,7 +60,7 @@ public class SubredditSubscriptionRepository {
   private Lazy<UserSessionRepository> userSessionRepository;
 
   @Inject
-  public SubredditSubscriptionRepository(
+  public SubscriptionRepository(
       Lazy<Application> appContext,
       Lazy<BriteDatabase> database,
       Lazy<DankRedditClient> dankRedditClient,

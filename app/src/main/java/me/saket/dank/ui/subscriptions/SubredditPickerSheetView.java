@@ -93,7 +93,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   @BindDimen(R.dimen.subreddit_picker_sheet_bottom_margin) int parentSheetBottomMarginForShadows;
   @BindColor(R.color.subredditpicker_subreddit_button_tint_selected) int focusedSubredditButtonTintColor;
 
-  @Inject SubredditSubscriptionRepository subscriptionRepository;
+  @Inject SubscriptionRepository subscriptionRepository;
 
   private ViewGroup activityRootLayout;
   private ToolbarExpandableSheet parentSheet;
