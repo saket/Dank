@@ -214,7 +214,9 @@ public class SubscriptionRepository {
         throw new IllegalStateException("Subreddit is marked for removal. Should have not reached here: " + subscription);
       }
 
-      SubredditSubscription updated = SubredditSubscription.create(subscription.name(), subscription.pendingState(), hidden);
+      SubredditSubscription updated = subscription.toBuilder()
+          .isHidden(hidden)
+          .build();
       database.get().update(SubredditSubscription.TABLE_NAME, updated.toContentValues(), SubredditSubscription.WHERE_NAME, subscription.name());
     });
   }
@@ -399,5 +401,15 @@ public class SubscriptionRepository {
         transaction.markSuccessful();
       }
     };
+  }
+
+// ======== VISIT FREQUENCY ======== //
+
+  private Completable incrementVisitCount(SubredditSubscription subscription) {
+    return Completable.complete();
+  }
+
+  private Observable<List<SubredditSubscription>> frequents() {
+    return Observable.empty();
   }
 }

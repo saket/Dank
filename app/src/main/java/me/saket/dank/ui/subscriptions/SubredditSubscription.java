@@ -18,6 +18,7 @@ public abstract class SubredditSubscription implements Parcelable {
   static final String TABLE_NAME = "SubredditSubscription";
   static final String COLUMN_NAME = "name";
   static final String COLUMN_PENDING_ACTION = "pending_action";
+  static final String COLUMN_VISIT_COUNT = "visit_count";
 
   static final String COLUMN_IS_HIDDEN = "is_hidden";
   static final String HIDDEN = "1";
@@ -27,13 +28,14 @@ public abstract class SubredditSubscription implements Parcelable {
       "CREATE TABLE " + TABLE_NAME + " ("
           + COLUMN_NAME + " TEXT NOT NULL PRIMARY KEY, "
           + COLUMN_PENDING_ACTION + " TEXT NOT NULL, "
+          + COLUMN_VISIT_COUNT + " TEXT NOT NULL, "
           + COLUMN_IS_HIDDEN + " INTEGER NOT NULL)";
 
   static final String QUERY_GET_ALL =
       "SELECT * FROM " + TABLE_NAME + " ORDER BY " + COLUMN_NAME + " ASC";
 
-  static final String QUERY_GET_SINGLE =
-      "SELECT * FROM " + TABLE_NAME + " WHERE " + COLUMN_NAME + " == ?";
+  static final String QUERY_GET_ALL_ORDERED_BY_VISIT_FREQUENCY =
+      "SELECT * FROM " + TABLE_NAME + " ORDER BY " + COLUMN_VISIT_COUNT + " DESC";
 
   static final String QUERY_GET_ALL_PENDING =
       "SELECT * FROM " + TABLE_NAME
@@ -69,6 +71,8 @@ public abstract class SubredditSubscription implements Parcelable {
 
   public abstract PendingState pendingState();
 
+  public abstract int visitCount();
+
   /**
    * This is not a state because a pending-subscribe subreddit can also be hidden.
    */
@@ -85,22 +89,28 @@ public abstract class SubredditSubscription implements Parcelable {
   public abstract Builder toBuilder();
 
   public ContentValues toContentValues() {
-    ContentValues values = new ContentValues(3);
+    ContentValues values = new ContentValues(4);
     values.put(COLUMN_NAME, name());
     values.put(COLUMN_PENDING_ACTION, pendingState().toString());
+    values.put(COLUMN_VISIT_COUNT, visitCount());
     values.put(COLUMN_IS_HIDDEN, isHidden() ? HIDDEN : NOT_HIDDEN);
     return values;
   }
 
-  public static final Function<Cursor, SubredditSubscription> MAPPER = cursor -> {
-    String subredditName = Cursors.string(cursor, COLUMN_NAME);
-    PendingState pendingState = PendingState.valueOf(Cursors.string(cursor, COLUMN_PENDING_ACTION));
-    boolean isHidden = HIDDEN.equals(Cursors.string(cursor, COLUMN_IS_HIDDEN));
-    return create(subredditName, pendingState, isHidden);
-  };
+  public static final Function<Cursor, SubredditSubscription> MAPPER =
+      cursor -> builder()
+          .name(Cursors.string(cursor, COLUMN_NAME))
+          .pendingState(PendingState.valueOf(Cursors.string(cursor, COLUMN_PENDING_ACTION)))
+          .visitCount(Cursors.intt(cursor, COLUMN_VISIT_COUNT))
+          .isHidden(HIDDEN.equals(Cursors.string(cursor, COLUMN_IS_HIDDEN)))
+          .build();
 
   public static SubredditSubscription create(String name, PendingState pendingState, boolean isHidden) {
-    return new AutoValue_SubredditSubscription(name, pendingState, isHidden);
+    return new AutoValue_SubredditSubscription(name, pendingState, 0, isHidden);
+  }
+
+  public static Builder builder() {
+    return new AutoValue_SubredditSubscription.Builder();
   }
 
   @AutoValue.Builder
@@ -108,6 +118,8 @@ public abstract class SubredditSubscription implements Parcelable {
     public abstract Builder name(String name);
 
     public abstract Builder pendingState(PendingState pendingState);
+
+    public abstract Builder visitCount(int visitCount);
 
     public abstract Builder isHidden(boolean hidden);
 
