@@ -27,6 +27,7 @@ import me.saket.dank.cache.StoreFilePersister;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.di.Dank;
+import me.saket.dank.utils.Preconditions;
 
 @Singleton
 public class UserProfileRepository {
@@ -96,6 +97,7 @@ public class UserProfileRepository {
   @CheckResult
   public Observable<LoggedInAccount> loggedInUserAccounts() {
     String loggedInUserName = userSessionRepository.loggedInUserName();
+    Preconditions.checkNotNull(loggedInUserName, "loggedInUserName == null");
     return loggedInUserAccountStore.stream(loggedInUserName);
   }
 

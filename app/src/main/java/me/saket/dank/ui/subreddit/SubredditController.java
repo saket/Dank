@@ -14,20 +14,24 @@ import me.saket.dank.ui.UiChange;
 import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.subreddit.events.SubredditScreenCreateEvent;
 import me.saket.dank.ui.user.UserProfileRepository;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxFolder;
 
 public class SubredditController implements ObservableTransformer<UiEvent, UiChange<SubredditActivity>> {
 
   private final Lazy<InboxRepository> inboxRepository;
   private final Lazy<UserProfileRepository> userProfileRepository;
+  private final Lazy<UserSessionRepository> userSessionRepository;
 
   @Inject
   public SubredditController(
       Lazy<InboxRepository> inboxRepository,
-      Lazy<UserProfileRepository> userProfileRepository)
+      Lazy<UserProfileRepository> userProfileRepository,
+      Lazy<UserSessionRepository> userSessionRepository)
   {
     this.inboxRepository = inboxRepository;
     this.userProfileRepository = userProfileRepository;
+    this.userSessionRepository = userSessionRepository;
   }
 
   @Override
@@ -40,7 +44,9 @@ public class SubredditController implements ObservableTransformer<UiEvent, UiCha
   private Observable<UiChange<SubredditActivity>> unreadMessageIconChanges(Observable<UiEvent> events) {
     return events
         .ofType(SubredditScreenCreateEvent.class)
-        .switchMap(oo -> {
+        .switchMap(o -> userSessionRepository.get().streamSessions())
+        .filter(session -> session.isPresent())
+        .switchMap(session -> {
           Observable<Integer> unreadCountsFromAccount = userProfileRepository.get()
               .loggedInUserAccounts()
               .map(account -> account.getInboxCount());
