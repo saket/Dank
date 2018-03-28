@@ -45,7 +45,7 @@ public class UserAuthListenerTest {
     when(userSessionRepository.streamSessions()).thenReturn(Observable.just(Optional.of(UserSession.create("saketme"))));
 
     //noinspection ConstantConditions
-    userAuthListener.doSomething(null)
+    userAuthListener.startListening(null)
         .test()
         .assertError(predicateForJobSchedulerErrors());
 
@@ -60,7 +60,7 @@ public class UserAuthListenerTest {
     when(subscriptionRepository.refreshAndSaveSubscriptions()).thenReturn(Completable.complete());
 
     //noinspection ConstantConditions
-    userAuthListener.doSomething(null)
+    userAuthListener.startListening(null)
         .test()
         .assertError(predicateForJobSchedulerErrors());
 
@@ -75,7 +75,7 @@ public class UserAuthListenerTest {
     when(subscriptionRepository.removeAll()).thenReturn(Completable.complete());
 
     //noinspection ConstantConditions
-    userAuthListener.doSomething(null)
+    userAuthListener.startListening(null)
         .test()
         .assertComplete()
         .assertNoErrors();

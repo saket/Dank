@@ -40,14 +40,8 @@ public class UserAuthListener {
     this.userSessionRepository = userSessionRepository;
   }
 
-  @Override
-  protected void finalize() throws Throwable {
-    Timber.i("GCCCCCC");
-    super.finalize();
-  }
-
   @CheckResult
-  public Completable doSomething(Context context) {
+  public Completable startListening(Context context) {
     Observable<Optional<UserSession>> userSessions = userSessionRepository.streamSessions()
         .delay(5, TimeUnit.SECONDS)
         .replay(1)

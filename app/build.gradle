@@ -111,7 +111,8 @@ dependencies {
 
   // TODO: Replace all Date4J usages with ThreeTenAbp.
   implementation 'com.darwinsys:hirondelle-date4j:1.5.1'
-  implementation 'com.jakewharton.threetenabp:threetenabp:1.0.5'
+  implementation "org.threeten:threetenbp:1.3.6:no-tzdb"
+  implementation "com.gabrielittner.threetenbp:lazythreetenbp:0.3.0"
 
   implementation 'com.github.Saketme:JRAW:bd20b3e581'
   implementation 'com.alexvasilkov:gesture-views:2.2.0'

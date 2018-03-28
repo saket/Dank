@@ -10,14 +10,16 @@ import android.os.Process;
 import android.os.StrictMode;
 
 import com.facebook.stetho.Stetho;
-import com.jakewharton.threetenabp.AndroidThreeTen;
+import com.gabrielittner.threetenbp.LazyThreeTen;
 import com.tspoon.traceur.Traceur;
 
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
+import io.reactivex.Observable;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
 import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
@@ -50,7 +52,6 @@ public class DankApplication extends Application {
           .build());
     }
 
-    AndroidThreeTen.init(this);
     Dank.initDependencies(this);
     RxJavaPlugins.setErrorHandler(undeliveredExceptionsHandler());
 
@@ -63,9 +64,13 @@ public class DankApplication extends Application {
 
     // WARNING: userAuthListener needs to be a field variable to avoid GC.
     userAuthListener = Dank.dependencyInjector().userAuthListener();
-    userAuthListener.doSomething(this)
+    userAuthListener.startListening(this)
         .subscribeOn(Schedulers.io())
         .subscribe();
+
+    LazyThreeTen.init(this);
+    Observable.timer(5, TimeUnit.SECONDS, Schedulers.io())
+        .subscribe(o -> LazyThreeTen.cacheZones());
   }
 
   @TargetApi(Build.VERSION_CODES.O)
