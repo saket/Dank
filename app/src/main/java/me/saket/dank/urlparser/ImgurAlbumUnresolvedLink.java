@@ -29,6 +29,11 @@ public abstract class ImgurAlbumUnresolvedLink extends MediaLink implements Parc
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public String cacheKey() {
+    return cacheKeyWithClassName(albumId());
+  }
+
   public static ImgurAlbumUnresolvedLink create(String unresolvedUrl, String albumId) {
     return new AutoValue_ImgurAlbumUnresolvedLink(unresolvedUrl, unresolvedUrl, albumId);
   }

@@ -6,6 +6,8 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
+import me.saket.dank.utils.Urls;
+
 @AutoValue
 public abstract class StreamableLink extends MediaLink implements Parcelable {
 
@@ -22,6 +24,11 @@ public abstract class StreamableLink extends MediaLink implements Parcelable {
 
   @Override
   public abstract String lowQualityUrl();
+
+  @Override
+  public String cacheKey() {
+    return cacheKeyWithClassName(Urls.parseFileNameWithExtension(highQualityUrl()));
+  }
 
   public static StreamableLink create(String unparsedUrl, String highQualityVideoUrl, String lowQualityVideoUrl) {
     return new AutoValue_StreamableLink(unparsedUrl, highQualityVideoUrl, lowQualityVideoUrl);

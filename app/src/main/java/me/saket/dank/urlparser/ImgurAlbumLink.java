@@ -9,11 +9,15 @@ import com.squareup.moshi.Moshi;
 
 import java.util.List;
 
+import me.saket.dank.utils.Urls;
+
 @AutoValue
 public abstract class ImgurAlbumLink extends MediaLink implements Parcelable {
 
   @Override
   public abstract String unparsedUrl();
+
+  public abstract String albumId();
 
   public abstract String albumUrl();
 
@@ -44,12 +48,17 @@ public abstract class ImgurAlbumLink extends MediaLink implements Parcelable {
     throw new UnsupportedOperationException();
   }
 
-  public ImgurAlbumLink withCoverImageUrl(String newCoverImageUrl) {
-    return create(albumUrl(), albumTitle(), newCoverImageUrl, images());
+  @Override
+  public String cacheKey() {
+    return cacheKeyWithClassName(albumId());
   }
 
-  public static ImgurAlbumLink create(String albumUrl, @Nullable String albumTitle, String coverImageUrl, List<ImgurLink> images) {
-    return new AutoValue_ImgurAlbumLink(albumUrl /* unparsedUrl */, albumUrl, albumTitle, coverImageUrl, images);
+  public ImgurAlbumLink withCoverImageUrl(String newCoverImageUrl) {
+    return create(albumId(), albumUrl(), albumTitle(), newCoverImageUrl, images());
+  }
+
+  public static ImgurAlbumLink create(String albumId, String albumUrl, @Nullable String albumTitle, String coverImageUrl, List<ImgurLink> images) {
+    return new AutoValue_ImgurAlbumLink(albumId, albumUrl /* unparsedUrl */, albumUrl, albumTitle, coverImageUrl, images);
   }
 
   public static JsonAdapter<ImgurAlbumLink> jsonAdapter(Moshi moshi) {

@@ -6,6 +6,8 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
+import me.saket.dank.utils.Urls;
+
 /**
  * Direct link to a media hosted by an unknown/unsupported-yet website.
  */
@@ -26,6 +28,11 @@ public abstract class GenericMediaLink extends MediaLink implements Parcelable {
   @Override
   public String lowQualityUrl() {
     return unparsedUrl();
+  }
+
+  @Override
+  public String cacheKey() {
+    return cacheKeyWithClassName(Urls.parseFileNameWithExtension(unparsedUrl()));
   }
 
   public static GenericMediaLink create(String unparsedUrl, Link.Type type) {

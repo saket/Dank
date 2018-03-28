@@ -22,6 +22,11 @@ public abstract class MediaLinkWithStartingPosition extends MediaLink {
   }
 
   @Override
+  public String cacheKey() {
+    return delegate().cacheKey();
+  }
+
+  @Override
   public String unparsedUrl() {
     return delegate().unparsedUrl();
   }

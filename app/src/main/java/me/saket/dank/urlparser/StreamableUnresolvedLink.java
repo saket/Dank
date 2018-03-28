@@ -32,6 +32,11 @@ public abstract class StreamableUnresolvedLink extends MediaLink implements Parc
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public String cacheKey() {
+    return cacheKeyWithClassName(videoId());
+  }
+
   public static StreamableUnresolvedLink create(String unparsedUrl, String videoId) {
     return new AutoValue_StreamableUnresolvedLink(unparsedUrl, videoId);
   }

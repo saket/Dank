@@ -42,7 +42,6 @@ import me.saket.dank.urlparser.StreamableLink;
 import me.saket.dank.urlparser.StreamableUnresolvedLink;
 import me.saket.dank.urlparser.UnresolvedMediaLink;
 import me.saket.dank.urlparser.UrlParser;
-import me.saket.dank.utils.Urls;
 import okio.BufferedSource;
 
 /**
@@ -78,7 +77,7 @@ public class MediaHostRepository {
     DiskLruCachePathResolver<MediaLink> pathResolver = new DiskLruCachePathResolver<MediaLink>() {
       @Override
       protected String resolveIn64Letters(MediaLink key) {
-        return key.getClass().getSimpleName() + "_" + Urls.parseFileNameWithExtension(key.unparsedUrl());
+        return key.cacheKey();
       }
     };
 
@@ -163,8 +162,9 @@ public class MediaHostRepository {
           .map(imgurResponse -> {
             if (imgurResponse.isAlbum()) {
               String albumUrl = ((ImgurAlbumUnresolvedLink) unresolvedLink).albumUrl();
+              String albumId = imgurResponse.id();
               List<ImgurLink> images = unmodifiableList(convertImgurImagesToImgurMediaLinks(imgurResponse.images()));
-              return ImgurAlbumLink.create(albumUrl, imgurResponse.albumTitle(), imgurResponse.albumCoverImageUrl(), images);
+              return ImgurAlbumLink.create(albumId, albumUrl, imgurResponse.albumTitle(), imgurResponse.albumCoverImageUrl(), images);
 
             } else {
               // Single image.

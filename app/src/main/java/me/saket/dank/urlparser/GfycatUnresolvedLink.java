@@ -30,6 +30,11 @@ public abstract class GfycatUnresolvedLink extends MediaLink implements Parcelab
     throw new UnsupportedOperationException();
   }
 
+  @Override
+  public String cacheKey() {
+    return cacheKeyWithClassName(threeWordId());
+  }
+
   public static GfycatUnresolvedLink create(String unparsedUrl, String threeWordId) {
     return new AutoValue_GfycatUnresolvedLink(unparsedUrl, threeWordId);
   }

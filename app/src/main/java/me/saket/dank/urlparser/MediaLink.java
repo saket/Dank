@@ -9,7 +9,17 @@ public abstract class MediaLink extends Link {
 
   public abstract String lowQualityUrl();
 
+  public abstract String cacheKey();
+
   public boolean isGif() {
     return UrlParser.isGifUrl(unparsedUrl());
+  }
+
+  public String cacheKeyWithClassName(String key) {
+    String name = getClass().getSimpleName();
+    String nameWithoutAutoValue = name.startsWith("AutoValue_")
+        ? name.substring("AutoValue_".length())
+        : name;
+    return nameWithoutAutoValue + "_" + key;
   }
 }

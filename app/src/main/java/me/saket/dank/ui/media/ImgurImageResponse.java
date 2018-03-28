@@ -21,6 +21,10 @@ public abstract class ImgurImageResponse implements ImgurResponse {
   abstract ImgurImage image();
 
   @Override
+  @Json(name = "id")
+  public abstract String id();
+
+  @Override
   @Json(name = "success")
   public abstract boolean hasImages();
 
@@ -31,6 +35,7 @@ public abstract class ImgurImageResponse implements ImgurResponse {
 
   @Memoized
   @Override
+  @Json(name = "images")
   public List<ImgurImage> images() {
     return Collections.singletonList(image());
   }

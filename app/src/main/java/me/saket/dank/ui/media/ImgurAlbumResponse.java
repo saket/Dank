@@ -22,6 +22,11 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
   abstract Data data();
 
   @Override
+  public String id() {
+    return data().id();
+  }
+
+  @Override
   public boolean hasImages() {
     return data().imageCount() > 0;
   }
@@ -32,6 +37,7 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
   }
 
   @Override
+  @Json(name = "images")
   public List<ImgurImage> images() {
     return data().images();
   }
@@ -55,6 +61,11 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
   public static ImgurAlbumResponse createEmpty() {
     return new AutoValue_ImgurAlbumResponse(new Data() {
       @Override
+      public String id() {
+        return "-1";
+      }
+
+      @Override
       int imageCount() {
         return 0;
       }
@@ -66,7 +77,7 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
 
       @Override
       public String albumTitle() {
-        return null;
+        return "";
       }
 
       @Nullable
@@ -80,6 +91,8 @@ public abstract class ImgurAlbumResponse implements ImgurResponse {
   @AutoValue
   public abstract static class Data {
     // Fields that aren't present in the free AJAX API are marked as nullable.
+    @Json(name = "id")
+    public abstract String id();
 
     @Json(name = "images_count")
     abstract int imageCount();

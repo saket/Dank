@@ -6,6 +6,8 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
+import me.saket.dank.utils.Urls;
+
 /**
  * Gfycat.com for GIFs (converted to MP4).
  */
@@ -20,6 +22,11 @@ public abstract class GfycatLink extends MediaLink implements Parcelable {
 
   @Override
   public abstract String lowQualityUrl();
+
+  @Override
+  public String cacheKey() {
+    return cacheKeyWithClassName(Urls.parseFileNameWithExtension(highQualityUrl()));
+  }
 
   @Override
   public Link.Type type() {
