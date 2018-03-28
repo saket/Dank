@@ -36,6 +36,9 @@
   <string name="common_imgur_request_rate_limit_error_message">Dank has reached its monthly limit of downloading images from Imgur.</string>
   <string name="common_imgur_upload_rate_limit_error_message">Dank has reached its monthly limit of uploading images to Imgur.</string>
 
+  <string name="common_error_cancelation_emoji">( ͡° ͜ʖ ͡°)</string>
+  <string name="common_error_cancelation_message">Something was intentionally canceled. The user should never see this.</string>
+
   <string name="common_share_sheet_title">Share with</string>
 
   <string name="common_error_no_app_found_to_handle_url">No app found to handle url: %s</string>

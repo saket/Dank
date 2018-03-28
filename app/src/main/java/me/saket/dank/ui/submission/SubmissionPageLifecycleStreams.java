@@ -5,6 +5,7 @@ import android.support.annotation.CheckResult;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
@@ -50,6 +51,13 @@ public class SubmissionPageLifecycleStreams extends LifecycleOwnerViews.Streams 
   @CheckResult
   public Observable<Object> onPageCollapseOrDestroy() {
     return pageCollapseStream.mergeWith(onDestroy());
+  }
+
+  @CheckResult
+  public Completable onPageCollapseOrDestroyCompletable() {
+    return pageCollapseStream.mergeWith(onDestroy())
+        .take(1)
+        .ignoreElements();
   }
 
   @CheckResult

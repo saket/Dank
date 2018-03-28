@@ -3,6 +3,7 @@ package me.saket.dank.ui.submission;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
+import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
@@ -1255,7 +1256,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               .filter(nsfwEnabled -> nsfwEnabled)
               .flatMap(oo -> submissionStream.map(Optional::get))
               .firstOrError()
-              .takeUntil(lifecycle().onPageCollapseOrDestroy().ignoreElements())
+              .takeUntil(lifecycle().onPageCollapseOrDestroyCompletable())
               .subscribe(submission -> {
                 mediaContentLoadErrors.accept(Optional.empty());
                 loadSubmissionContent(submission);
@@ -1353,7 +1354,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           boolean transparentToolbar = resolvedLink.isImageOrGif() || resolvedLink.isVideo();
           toolbarBackground.setSyncScrollEnabled(transparentToolbar);
         })
-        .takeUntil(lifecycle().onPageCollapseOrDestroy().ignoreElements())
+        .takeUntil(lifecycle().onPageCollapseOrDestroyCompletable())
         .subscribe(
             resolvedLink -> {
               submissionContentStream.accept(resolvedLink);
@@ -1365,7 +1366,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
                   // Threading is handled internally by SubmissionImageHolder#load().
                   contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages)
-                      .ambWith(lifecycle().onPageCollapseOrDestroy().take(1).ignoreElements())
+                      .ambWith(lifecycle().onPageCollapseOrDestroyCompletable())
                       .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
                   contentImageView.view().setContentDescription(getResources().getString(
                       R.string.cd_submission_image,
@@ -1388,8 +1389,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
                 case SINGLE_VIDEO:
                   contentVideoViewHolder.get().load((MediaLink) resolvedLink)
-                      .ambWith(lifecycle().onPageCollapseOrDestroy().take(1).ignoreElements())
-                      .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
+                      .toObservable()
+                      .takeUntil(lifecycle().onPageCollapseOrDestroy())
+                      .subscribe(doNothing(), error -> handleMediaLoadError(error));
                   break;
 
                 default:
@@ -1399,7 +1401,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
             }, error -> {
               ResolvedError resolvedError = errorResolver.resolve(error);
               resolvedError.ifUnknown(() -> Timber.e(error, "Error while loading content"));
-
               // TODO: Rename SubmissionMediaContentLoadError to SubmissionContentLoadError.
             }
         );

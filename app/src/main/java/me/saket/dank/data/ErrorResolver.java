@@ -7,8 +7,8 @@ import com.bumptech.glide.load.engine.GlideException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
-
 import javax.inject.Inject;
 
 import io.reactivex.exceptions.CompositeException;
@@ -36,44 +36,45 @@ public class ErrorResolver {
         return ResolvedError.create(
             ResolvedError.Type.NETWORK_ERROR,
             R.string.common_network_error_emoji,
-            R.string.common_network_error_with_reddit_message
-        );
+            R.string.common_network_error_with_reddit_message);
+
       } else {
         error.printStackTrace();
         return ResolvedError.create(
             ResolvedError.Type.NETWORK_ERROR,
             R.string.common_network_error_emoji,
-            R.string.common_network_error_with_other_websites_message
-        );
+            R.string.common_network_error_with_other_websites_message);
       }
 
     } else if (error instanceof HttpException && ((HttpException) error).code() == 503) {
       return ResolvedError.create(
           ResolvedError.Type.REDDIT_IS_DOWN,
           R.string.common_reddit_is_down_error_emoji,
-          R.string.common_reddit_is_down_error_message
-      );
+          R.string.common_reddit_is_down_error_message);
 
     } else if (error instanceof ImgurApiRequestRateLimitReachedException) {
       return ResolvedError.create(
           ResolvedError.Type.IMGUR_RATE_LIMIT_REACHED,
           R.string.common_imgur_rate_limit_error_emoji,
-          R.string.common_imgur_request_rate_limit_error_message
-      );
+          R.string.common_imgur_request_rate_limit_error_message);
 
     } else if (error instanceof ImgurApiUploadRateLimitReachedException) {
       return ResolvedError.create(
           ResolvedError.Type.IMGUR_RATE_LIMIT_REACHED,
           R.string.common_imgur_rate_limit_error_emoji,
-          R.string.common_imgur_upload_rate_limit_error_message
-      );
+          R.string.common_imgur_upload_rate_limit_error_message);
+
+    } else if (error instanceof CancellationException) {
+      return ResolvedError.create(
+          ResolvedError.Type.CANCELATION,
+          R.string.common_error_cancelation_emoji,
+          R.string.common_error_cancelation_message);
 
     } else {
       return ResolvedError.create(
           ResolvedError.Type.UNKNOWN,
           R.string.common_unknown_error_emoji,
-          R.string.common_unknown_error_message
-      );
+          R.string.common_unknown_error_message);
     }
   }
 

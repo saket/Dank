@@ -14,7 +14,8 @@ public abstract class ResolvedError {
     UNKNOWN,
     NETWORK_ERROR,
     REDDIT_IS_DOWN,
-    IMGUR_RATE_LIMIT_REACHED
+    IMGUR_RATE_LIMIT_REACHED,
+    CANCELATION,
   }
 
   public abstract Type type();
