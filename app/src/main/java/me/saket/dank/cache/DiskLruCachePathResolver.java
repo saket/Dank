@@ -7,6 +7,7 @@ import java.util.Locale;
 import javax.annotation.Nonnull;
 
 import me.saket.dank.utils.Strings;
+import timber.log.Timber;
 
 public abstract class DiskLruCachePathResolver<KEY> implements PathResolver<KEY> {
 
@@ -15,7 +16,13 @@ public abstract class DiskLruCachePathResolver<KEY> implements PathResolver<KEY>
   @Nonnull
   @Override
   public String resolve(@Nonnull KEY key) {
-    String resolvedPath = Strings.substringWithBounds2(resolveIn64Letters(key), 64);
+    String path = resolveIn64Letters(key);
+
+    if (path.length() > 64) {
+      Timber.w("Path will be truncated: %s", key);
+    }
+
+    String resolvedPath = Strings.substringWithBounds2(path, 64);
     return makeCompatibleWithDiskLruCache(resolvedPath);
   }
 
@@ -30,6 +37,7 @@ public abstract class DiskLruCachePathResolver<KEY> implements PathResolver<KEY>
     // Reddit only allows '_' and '-' in user-names.
     return simplifiedPath
         .toLowerCase(Locale.ENGLISH)
+        .replaceAll("/", "--")
         .replaceAll("\\.", "_");
   }
 
