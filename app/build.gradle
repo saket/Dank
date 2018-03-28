@@ -20,7 +20,6 @@ repositories {
 
 android {
   compileSdkVersion versions.compileSdk
-  buildToolsVersion "26.0.2"
 
   defaultConfig {
     applicationId "me.saket.dank"
