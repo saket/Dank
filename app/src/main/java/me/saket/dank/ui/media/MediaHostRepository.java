@@ -93,7 +93,7 @@ public class MediaHostRepository {
         .open();
   }
 
-  public static class MediaLinkStoreJsonParser implements StoreFilePersister.JsonParser<MediaLink> {
+  static class MediaLinkStoreJsonParser implements StoreFilePersister.JsonParser<MediaLink> {
     private Moshi moshi;
 
     public MediaLinkStoreJsonParser(Moshi moshi) {

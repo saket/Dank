@@ -1,4 +1,4 @@
-package me.saket.dank.utils;
+package me.saket.dank.ui.media;
 
 import static junit.framework.TestCase.assertEquals;
 
@@ -11,10 +11,10 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 
-import me.saket.dank.urlparser.Link;
-import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.urlparser.ImgurLink;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import okio.Okio;
 
 public class MediaLinkStoreJsonParserTest {
