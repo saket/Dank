@@ -4,7 +4,7 @@ buildscript {
         minSdk        : 21,
         compileSdk    : 26,
         androidTools  : '26.0.2',
-        supportLib    : '27.0.2', // 27.1.0 suffers from a "Error:Program type already present" error.
+        supportLib    : '27.1.0',
         glide         : '4.6.1',
         autoValue     : '1.4',
         autoValueMoshi: '0.4.3',

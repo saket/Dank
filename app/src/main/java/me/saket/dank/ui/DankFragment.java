@@ -1,9 +1,5 @@
 package me.saket.dank.ui;
 
-import android.app.Activity;
-import android.content.Context;
-import android.support.annotation.NonNull;
-
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerFragment;
@@ -15,31 +11,6 @@ public class DankFragment extends LifecycleOwnerFragment {
 
   private CompositeDisposable onStopDisposables;
   private CompositeDisposable onDestroyDisposables;
-
-  // TODO: Remove once we update support library to v27.1.0.
-  @NonNull
-  public Activity requireActivity() {
-    if (getActivity() == null) {
-      throw new AssertionError();
-    }
-    return getActivity();
-  }
-
-  @NonNull
-  public Object requireHost() {
-    if (getHost() == null) {
-      throw new AssertionError();
-    }
-    return getHost();
-  }
-
-  @NonNull
-  public Context requireContext() {
-    if (getContext() == null) {
-      throw new AssertionError();
-    }
-    return getContext();
-  }
 
   @Override
   public void onStop() {
