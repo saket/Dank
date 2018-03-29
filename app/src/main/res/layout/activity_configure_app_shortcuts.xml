@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout android:id="@+id/configureappshortcuts_root"
+  style="@style/DankPullCollapsibleActivityPage"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:app="http://schemas.android.com/apk/res-auto"
+  android:fitsSystemWindows="true">
+
+  <me.saket.dank.widgets.DankToolbar
+    android:id="@id/toolbar"
+    style="@style/DankToolbar"
+    app:navigationIcon="@drawable/ic_toolbar_close_24dp"
+    app:title="App shortcuts" />
+</me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

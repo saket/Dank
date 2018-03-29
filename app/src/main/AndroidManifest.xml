@@ -93,7 +93,9 @@
       android:name=".ui.submission.LockedSubmissionDialogActivity"
       android:theme="@style/DankTheme.DialogLikeActivity" />
 
-    <activity android:name=".ui.appshortcuts.ConfigureAppShortcutsActivity" />
+    <activity
+      android:name=".ui.appshortcuts.ConfigureAppShortcutsActivity"
+      android:theme="@style/DankTheme.TransparentBackground.Fullscreen" />
 
     <activity
       android:name=".deeplinks.DeepLinkActivity"

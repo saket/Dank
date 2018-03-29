@@ -19,7 +19,7 @@ public abstract class DiskLruCachePathResolver<KEY> implements PathResolver<KEY>
     String path = resolveIn64Letters(key);
 
     if (path.length() > 64) {
-      Timber.w("Path will be truncated: %s", key);
+      Timber.w("Path will be truncated: %s", path);
     }
 
     String resolvedPath = Strings.substringWithBounds2(path, 64);

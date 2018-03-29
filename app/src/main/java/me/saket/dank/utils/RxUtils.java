@@ -3,6 +3,7 @@ package me.saket.dank.utils;
 import android.annotation.SuppressLint;
 import android.os.Build;
 import android.os.Looper;
+import android.support.annotation.CheckResult;
 
 import io.reactivex.CompletableTransformer;
 import io.reactivex.Observable;
@@ -126,6 +127,7 @@ public class RxUtils {
     return upstream -> upstream.flatMap(item -> stream.map(o -> item).startWith(item));
   }
 
+  @CheckResult
   public static <T> Consumer<T> errorIfMainThread() {
     return o -> {
       boolean isMainThread = Build.VERSION.SDK_INT >= Build.VERSION_CODES.M
