@@ -93,6 +93,21 @@
       android:name=".ui.submission.LockedSubmissionDialogActivity"
       android:theme="@style/DankTheme.DialogLikeActivity" />
 
+    <activity android:name=".ui.appshortcuts.ConfigureAppShortcutsActivity" />
+
+    <activity
+      android:name=".deeplinks.DeepLinkActivity"
+      android:theme="@android:style/Theme.NoDisplay">
+      <intent-filter>
+        <action android:name="android.intent.action.VIEW" />
+
+        <category android:name="android.intent.category.DEFAULT" />
+        <category android:name="android.intent.category.BROWSABLE" />
+
+        <data android:scheme="dank" />
+      </intent-filter>
+    </activity>
+
     <service
       android:name=".ui.subscriptions.SubredditSubscriptionsSyncJob"
       android:exported="true"

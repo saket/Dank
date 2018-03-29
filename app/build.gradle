@@ -108,6 +108,8 @@ dependencies {
   implementation 'com.werdpressed.partisan:rundo:1.0.5' // TODO minSdkVersion 23: TextView supports undo on API 23+.
   implementation 'com.jakewharton:disklrucache:2.0.2'
   implementation 'com.commonsware.cwac:anddown:0.4.0'
+  implementation "com.airbnb:deeplinkdispatch:$versions.deeplinkDispatch"
+  annotationProcessor "com.airbnb:deeplinkdispatch-processor:$versions.deeplinkDispatch"
 
   // TODO: Replace all Date4J usages with ThreeTenAbp.
   implementation 'com.darwinsys:hirondelle-date4j:1.5.1'
