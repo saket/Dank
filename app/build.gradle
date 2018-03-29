@@ -55,6 +55,13 @@ android {
     preDexLibraries true
     maxProcessCount 8
   }
+
+  lintOptions {
+    disable 'CheckResult'
+    quiet true
+    abortOnError false
+    ignoreWarnings true
+  }
 }
 
 dependencies {
