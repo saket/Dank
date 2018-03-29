@@ -8,6 +8,7 @@ import android.animation.TimeInterpolator;
 import android.animation.TypeEvaluator;
 import android.content.Context;
 import android.graphics.Rect;
+import android.os.Build;
 import android.transition.TransitionValues;
 import android.transition.Visibility;
 import android.util.AttributeSet;
@@ -249,10 +250,24 @@ public class EpicenterTranslateClipReveal extends Visibility {
       mTargetDimension = targetDimension;
     }
 
+    private boolean getClipBounds(View object, Rect tempRect) {
+      if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
+        return object.getClipBounds(tempRect);
+      } else {
+        Rect bounds = object.getClipBounds();
+        if (bounds != null) {
+          tempRect.set(bounds);
+          return true;
+        } else {
+          return false;
+        }
+      }
+    }
+
     @Override
     public State get(View object) {
       final Rect tempRect = mTempRect;
-      if (!object.getClipBounds(tempRect)) {
+      if (!getClipBounds(object, tempRect)) {
         tempRect.setEmpty();
       }
       final State tempState = mTempState;
@@ -271,7 +286,7 @@ public class EpicenterTranslateClipReveal extends Visibility {
     @Override
     public void set(View object, State value) {
       final Rect tempRect = mTempRect;
-      if (object.getClipBounds(tempRect)) {
+      if (getClipBounds(object, tempRect)) {
         if (mTargetDimension == TARGET_X) {
           tempRect.left = value.lower - (int) value.trans;
           tempRect.right = value.upper - (int) value.trans;
