@@ -90,7 +90,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
     Dank.dependencyInjector().inject(this);
     setPullToCollapseEnabled(true);
     super.onCreate(savedInstanceState);
-    setContentView(R.layout.compose_reply);
+    setContentView(R.layout.activity_compose_reply);
     ButterKnife.bind(this);
     findAndSetupToolbar();
 
