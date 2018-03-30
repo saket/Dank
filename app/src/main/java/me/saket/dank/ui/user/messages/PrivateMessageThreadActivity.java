@@ -147,11 +147,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     messagesAdapter = new ThreadedMessagesAdapter(linkMovementMethod);
     messageRecyclerView.setAdapter(messagesAdapter);
-
-    messageRecyclerView.setItemAnimator(new SlideUpAlphaAnimator()
-        .withInterpolator(Animations.INTERPOLATOR)
-        .withRemoveDuration(250)
-        .withAddDuration(250));
+    messageRecyclerView.setItemAnimator(SlideUpAlphaAnimator.create());
 
     ParentThread privateMessageThread = ParentThread.createPrivateMessage(privateMessageFullName.getFullName());
 
