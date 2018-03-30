@@ -96,7 +96,7 @@
     <activity
       android:name=".ui.appshortcuts.ConfigureAppShortcutsActivity"
       android:launchMode="singleTask"
-      android:theme="@style/DankTheme.TransparentBackground.Fullscreen" />
+      android:theme="@style/DankTheme.DialogLikeActivity" />
 
     <activity
       android:name=".deeplinks.DeepLinkActivity"

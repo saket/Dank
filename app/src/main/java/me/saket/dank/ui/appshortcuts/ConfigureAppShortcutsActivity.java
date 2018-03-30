@@ -10,6 +10,7 @@ import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
+import android.view.ViewGroup;
 import android.widget.Button;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
@@ -24,19 +25,17 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.DankActivity;
 import me.saket.dank.utils.RxDiffUtil;
-import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
-import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 
 @DeepLink(ConfigureAppShortcutsActivity.DEEP_LINK)
 @TargetApi(Build.VERSION_CODES.N_MR1)
-public class ConfigureAppShortcutsActivity extends DankPullCollapsibleActivity {
+public class ConfigureAppShortcutsActivity extends DankActivity {
 
   public static final String DEEP_LINK = "dank://configureAppShortcuts";
 
-  @BindView(R.id.configureappshortcuts_root) IndependentExpandablePageLayout pageLayout;
+  @BindView(R.id.appshortcuts_content_container) ViewGroup contentViewGroup;
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.appshortcuts_recyclerview) RecyclerView recyclerView;
   @BindView(R.id.appshortcuts_add) Button addButton;
@@ -47,21 +46,12 @@ public class ConfigureAppShortcutsActivity extends DankPullCollapsibleActivity {
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     Dank.dependencyInjector().inject(this);
-    setPullToCollapseEnabled(false);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_configure_app_shortcuts);
     ButterKnife.bind(this);
     findAndSetupToolbar();
 
-    // This will disable the entry animation.
-    setPullToCollapseEnabled(true);
-
-    setupContentExpandablePage(pageLayout);
-    expandFromBelowToolbar();
-    pageLayout.setOnApplyWindowInsetsListener((o, insets) -> {
-      Views.setPaddingTop(toolbar, insets.getSystemWindowInsetTop());
-      return insets.consumeSystemWindowInsets();
-    });
+    contentViewGroup.setClipToOutline(true);
   }
 
   @Override
