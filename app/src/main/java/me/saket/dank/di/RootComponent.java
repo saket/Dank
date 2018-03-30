@@ -9,6 +9,7 @@ import me.saket.dank.cache.CacheModule;
 import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
@@ -125,4 +126,6 @@ public interface RootComponent {
   void inject(PreferenceGroupsScreen target);
 
   void inject(UserProfileSheetView target);
+
+  void inject(ConfigureAppShortcutsActivity target);
 }

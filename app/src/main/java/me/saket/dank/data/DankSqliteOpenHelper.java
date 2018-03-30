@@ -4,6 +4,7 @@ import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
 
+import me.saket.dank.ui.appshortcuts.AppShortcut;
 import me.saket.dank.ui.submission.CachedSubmissionId;
 import me.saket.dank.ui.submission.CachedSubmissionWithComments;
 import me.saket.dank.ui.submission.CachedSubmissionWithoutComments;
@@ -28,6 +29,7 @@ public class DankSqliteOpenHelper extends SQLiteOpenHelper {
     db.execSQL(CachedSubmissionWithComments.QUERY_CREATE_TABLE);
     db.execSQL(CachedSubmissionId.QUERY_CREATE_TABLE);
     db.execSQL(CachedSubmissionWithoutComments.QUERY_CREATE_TABLE);
+    db.execSQL(AppShortcut.QUERY_CREATE_TABLE);
   }
 
   @Override

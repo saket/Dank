@@ -3,6 +3,7 @@
   style="@style/DankPullCollapsibleActivityPage"
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
+  xmlns:tools="http://schemas.android.com/tools"
   android:fitsSystemWindows="true">
 
   <me.saket.dank.widgets.DankToolbar
@@ -10,4 +11,22 @@
     style="@style/DankToolbar"
     app:navigationIcon="@drawable/ic_toolbar_close_24dp"
     app:title="App shortcuts" />
+
+  <me.saket.dank.widgets.TintableCompoundDrawableButton
+    android:id="@+id/appshortcuts_add"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_below="@+id/toolbar"
+    android:layout_margin="@dimen/spacing12"
+    android:drawablePadding="@dimen/spacing16"
+    android:drawableStart="@drawable/ic_add_circle_24dp"
+    android:text="@string/appshortcuts_add_new_shortcut" />
+
+  <android.support.v7.widget.RecyclerView
+    android:id="@+id/appshortcuts_recyclerview"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:layout_below="@id/appshortcuts_add"
+    tools:itemCount="4"
+    tools:listitem="@layout/list_item_app_shortcut" />
 </me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout>

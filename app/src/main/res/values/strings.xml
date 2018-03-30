@@ -421,4 +421,9 @@
   <string name="cd_giphypicker_giphy_attribution">Powered by GIPHY</string>
   <string name="giphypicker_empty_state_emoji">( ͡° ͜ʖ ͡°)</string>
   <string name="giphypicker_empty_state_message">Nothing found.\nYour GIF desires are… unconventional.</string>
+
+  <!-- Launcher app shortcuts -->
+  <string name="appshortcuts_cd_reorder_shortcut">Re-order app shortcut</string>
+  <string name="appshortcuts_cd_delete_shortcut">Delete app shortcut</string>
+  <string name="appshortcuts_add_new_shortcut">Add shortcut</string>
 </resources>
