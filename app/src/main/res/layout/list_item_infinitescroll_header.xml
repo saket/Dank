@@ -44,6 +44,6 @@
     android:id="@+id/infinitescroll_header_custom_event"
     style="@style/DankInfiniteScrollHeaderFooterTextWithIcon"
     android:text="Items ready"
-    android:textColor="@color/color_accent_secondary"
+    android:textColor="@color/color_accent_light"
     android:visibility="visible" />
 </FrameLayout>

@@ -5,11 +5,6 @@ import android.app.Application;
 import android.app.NotificationChannel;
 import android.app.NotificationManager;
 import android.content.Context;
-import android.content.Intent;
-import android.content.pm.ShortcutInfo;
-import android.content.pm.ShortcutManager;
-import android.graphics.drawable.Icon;
-import android.net.Uri;
 import android.os.Build;
 import android.os.Process;
 import android.os.StrictMode;
@@ -21,7 +16,6 @@ import com.tspoon.traceur.Traceur;
 import java.io.IOException;
 import java.io.InterruptedIOException;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -31,7 +25,6 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.user.UserAuthListener;
 import timber.log.Timber;
 
@@ -85,20 +78,8 @@ public class DankApplication extends Application {
 
     initialDelayStream
         .filter(o -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1)
-        .subscribe(o -> installAppShortcuts());
-  }
-
-  @TargetApi(Build.VERSION_CODES.N_MR1)
-  private void installAppShortcuts() {
-    ShortcutManager shortcutManager = getSystemService(ShortcutManager.class);
-    assert shortcutManager != null;
-
-    ShortcutInfo addShortcuts = new ShortcutInfo.Builder(this, "add_shortcuts")
-        .setShortLabel(getString(R.string.add_launcher_app_shortcuts_label))
-        .setIcon(Icon.createWithResource(this, R.drawable.ic_configure_app_shortcuts))
-        .setIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(ConfigureAppShortcutsActivity.DEEP_LINK)))
-        .build();
-    shortcutManager.setDynamicShortcuts(Collections.singletonList(addShortcuts));
+        .map(o -> Dank.dependencyInjector().shortcutRepository())
+        .subscribe(repository -> repository.updateInstalledShortcuts());
   }
 
   @TargetApi(Build.VERSION_CODES.O)

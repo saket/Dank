@@ -307,7 +307,7 @@
     <item name="android:layout_margin">@dimen/spacing16</item>
     <item name="fabSize">normal</item>
     <item name="android:tint">@color/teal_900</item>
-    <item name="rippleColor">@color/color_accent_secondary</item>
+    <item name="rippleColor">@color/color_accent_light</item>
   </style>
 
   <style name="DankButton.SortingMode">

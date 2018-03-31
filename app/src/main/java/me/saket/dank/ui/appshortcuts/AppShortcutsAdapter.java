@@ -89,7 +89,8 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
   @Override
   public void onBindViewHolder(@NonNull RecyclerView.ViewHolder holder, int position) {
     if (holder instanceof AppShortcutViewHolder) {
-      ((AppShortcutViewHolder) holder).render((AppShortcut) getItem(position));
+      ((AppShortcutViewHolder) holder).set((AppShortcut) getItem(position));
+      ((AppShortcutViewHolder) holder).render();
     }
   }
 
@@ -117,9 +118,12 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
       return new AppShortcutViewHolder(inflater.inflate(R.layout.list_item_app_shortcut, parent, false));
     }
 
-    public void render(AppShortcut shortcut) {
+    public void set(AppShortcut shortcut) {
       this.shortcut = shortcut;
-      labelView.setText(this.shortcut.label());
+    }
+
+    public void render() {
+      labelView.setText(labelView.getResources().getString(R.string.subreddit_name_r_prefix, shortcut.label()));
     }
   }
 

@@ -17,6 +17,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.EditText;
 import android.widget.ImageButton;
+import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
@@ -49,6 +50,7 @@ import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
+import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
 import timber.log.Timber;
 
@@ -100,6 +102,9 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   @Override
   protected void onPostCreate(@Nullable Bundle savedState) {
     super.onPostCreate(savedState);
+
+    // TODO: hide keyboard when list starts scrolling.
+    // TODO: Add 'done' button.
 
     screenChanges.accept(Optional.ofNullable(savedState)
         .map(state -> (Screen) state.getSerializable(KEY_VISIBLE_SCREEN))
@@ -192,9 +197,12 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
           List<AppShortcut> shortcuts = pair.second();
 
           shortcutsRepository.get()
-              .add(AppShortcut.create(shortcuts.size(), getString(R.string.subreddit_name_r_prefix, subreddit.name())))
+              .add(AppShortcut.create(shortcuts.size(), subreddit.name()))
               .subscribeOn(io())
-              .subscribe();
+              .observeOn(mainThread())
+              .subscribe(
+                  RxUtils.doNothingCompletable(),
+                  error -> Toast.makeText(this, "That failed (╯°□°）╯︵ ┻━┻", Toast.LENGTH_SHORT).show());
         });
 
     // Delete.
@@ -236,8 +244,8 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
             .subscribeOn(io())
             .observeOn(mainThread())
             .doOnNext(o -> subredditsLoadProgressView.setVisibility(View.GONE))
-            .startWith(Collections.<SubredditSubscription>emptyList())
             .map(filteredSubs -> Pair.create(filteredSubs, searchTerm)))
+        .startWith(Pair.create(Collections.emptyList(), ""))
         .map(pair -> addSearchTermIfMatchNotFound(pair))
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())

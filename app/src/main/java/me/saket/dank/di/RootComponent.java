@@ -9,6 +9,7 @@ import me.saket.dank.cache.CacheModule;
 import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
 import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.VotingManager;
@@ -66,6 +67,8 @@ public interface RootComponent {
   VotingManager votingManager();
 
   UserAuthListener userAuthListener();
+
+  AppShortcutRepository shortcutRepository();
 
   void inject(MediaAlbumViewerActivity target);
 

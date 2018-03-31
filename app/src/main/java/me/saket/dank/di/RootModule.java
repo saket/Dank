@@ -2,15 +2,18 @@ package me.saket.dank.di;
 
 import static me.saket.dank.utils.Units.dpToPx;
 
+import android.annotation.TargetApi;
 import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
+import android.content.pm.ShortcutManager;
 import android.graphics.Color;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
+import android.os.Build;
 import android.preference.PreferenceManager;
 
 import com.commonsware.cwac.anddown.AndDown;
@@ -290,5 +293,11 @@ public class RootModule {
   @Named("gfycat_repository")
   RxSharedPreferences gfyCatRepositoryKvStore(Application appContext) {
     return RxSharedPreferences.create(appContext.getSharedPreferences("gfycat_repository", Context.MODE_PRIVATE));
+  }
+
+  @Provides
+  @TargetApi(Build.VERSION_CODES.N_MR1)
+  static ShortcutManager shortcutManager(Application appContext) {
+    return appContext.getSystemService(ShortcutManager.class);
   }
 }
