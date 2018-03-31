@@ -229,44 +229,45 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         // CharSequence is mutable.
         .map(searchTerm -> searchTerm.toString().trim())
         .switchMap(searchTerm -> subscriptionRepository.get().getAll(searchTerm, true)
+            .doOnError(error -> Timber.e(error, "Error in fetching subreddits"))
+            .onErrorReturnItem(Collections.emptyList())
             .subscribeOn(io())
             .observeOn(mainThread())
             .doOnNext(o -> subredditsLoadProgressView.setVisibility(View.GONE))
             .startWith(Collections.<SubredditSubscription>emptyList())
             .map(filteredSubs -> Pair.create(filteredSubs, searchTerm)))
-        .map(pair -> {
-          // Show user's search term in the results unless an exact match was found.
-          List<SubredditSubscription> filteredSubs = pair.first();
-          String searchTerm = pair.second();
-
-          if (!searchTerm.isEmpty()) {
-            boolean exactSearchFound = false;
-            for (SubredditSubscription filteredSub : filteredSubs) {
-              if (filteredSub.name().equalsIgnoreCase(searchTerm)) {
-                exactSearchFound = true;
-                break;
-              }
-            }
-
-            if (!exactSearchFound) {
-              return ImmutableList.<SubredditSubscription>builder()
-                  .addAll(filteredSubs)
-                  .add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false))
-                  .build();
-            }
-          }
-          return filteredSubs;
-        })
-        .onErrorResumeNext(error -> {
-          // Don't let an error terminate the stream.
-          Timber.e(error, "Error in fetching subreddits");
-          return Observable.just(Collections.emptyList());
-        })
+        .map(pair -> addSearchTermIfMatchNotFound(pair))
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(subreddits -> subredditAdapter.get().updateDataAndNotifyDatasetChanged(subreddits));
 
     subredditsLoadProgressView.setVisibility(View.VISIBLE);
+  }
+
+  /**
+   * Show user's search term in the results unless an exact match was found.
+   */
+  private List<SubredditSubscription> addSearchTermIfMatchNotFound(Pair<List<SubredditSubscription>, String> pair) {
+    List<SubredditSubscription> filteredSubs = pair.first();
+    String searchTerm = pair.second();
+
+    if (!searchTerm.isEmpty()) {
+      boolean exactSearchFound = false;
+      for (SubredditSubscription filteredSub : filteredSubs) {
+        if (filteredSub.name().equalsIgnoreCase(searchTerm)) {
+          exactSearchFound = true;
+          break;
+        }
+      }
+
+      if (!exactSearchFound) {
+        return ImmutableList.<SubredditSubscription>builder()
+            .addAll(filteredSubs)
+            .add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false))
+            .build();
+      }
+    }
+    return filteredSubs;
   }
 
   private Animation animationWithInterpolator(@AnimRes int animRes) {
