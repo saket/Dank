@@ -5,6 +5,7 @@ import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
+import static me.saket.dank.utils.RxUtils.doOnceAfterNext;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.RxUtils.onStartAndFirstEvent;
 import static me.saket.dank.utils.Views.setHeight;
@@ -55,7 +56,6 @@ import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideLeftAlphaAnimator;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
@@ -226,8 +226,9 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
           subredditList.setItemAnimator(null);
         })
         .flatMap(o -> showHiddenSubredditsSubject)
-        .observeOn(io())
-        .switchMap(showHidden -> subscriptionRepository.getAll(searchView.getText().toString(), showHidden))
+        .switchMap(showHidden -> subscriptionRepository
+            .getAll(searchView.getText().toString(), showHidden)
+            .subscribeOn(io()))
         .map(filteredSubs -> {
           if (sheetState == SheetState.BROWSE_SUBS) {
             // If search is active, show user's search term in the results unless an exact match was found.
@@ -260,7 +261,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
         })
         .observeOn(mainThread())
         .compose(onStartAndFirstEvent(setSubredditLoadProgressVisible()))
-        .compose(RxUtils.doOnceAfterNext(o -> listenToBackgroundRefreshes()))
+        .compose(doOnceAfterNext(o -> listenToBackgroundRefreshes()))
         .doOnNext(o -> optionsContainer.setVisibility(VISIBLE))
         .subscribe(subreddits -> subredditAdapter.updateDataAndNotifyDatasetChanged(subreddits))
     );
