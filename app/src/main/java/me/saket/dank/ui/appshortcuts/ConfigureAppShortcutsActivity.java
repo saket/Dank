@@ -46,6 +46,7 @@ import me.saket.dank.ui.subscriptions.SubredditSubscription;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Keyboards;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
@@ -72,7 +73,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   @Inject Lazy<AppShortcutsAdapter> shortcutsAdapter;
   @Inject Lazy<SubredditAdapter> subredditAdapter;
 
-  private final BehaviorRelay<Screen> screenChanges = BehaviorRelay.createDefault(Screen.SHORTCUTS);
+  private final BehaviorRelay<Screen> screenChanges = BehaviorRelay.create();
   private final Relay<SubredditSubscription> subredditSelections = PublishRelay.create();
 
   private enum Screen {
@@ -100,15 +101,22 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   protected void onPostCreate(@Nullable Bundle savedState) {
     super.onPostCreate(savedState);
 
+    screenChanges.accept(Optional.ofNullable(savedState)
+        .map(state -> (Screen) state.getSerializable(KEY_VISIBLE_SCREEN))
+        .orElse(Screen.SHORTCUTS));
+
+    setupScreenChanges();
     setupShortcutList();
     setupSearchScreen();
+  }
 
-    if (savedState != null) {
-      //noinspection ConstantConditions
-      screenChanges.accept(((Screen) savedState.getSerializable(KEY_VISIBLE_SCREEN)));
-    }
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putSerializable(KEY_VISIBLE_SCREEN, screenChanges.getValue());
+  }
 
-    // Screen changes.
+  private void setupScreenChanges() {
     //noinspection RedundantTypeArguments
     screenChanges
         .map(screen -> contentViewFlipper.<View>findViewById(screen.viewId))
@@ -140,12 +148,6 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
             Keyboards.hide(searchEditText);
           }
         });
-  }
-
-  @Override
-  protected void onSaveInstanceState(Bundle outState) {
-    super.onSaveInstanceState(outState);
-    outState.putSerializable(KEY_VISIBLE_SCREEN, screenChanges.getValue());
   }
 
   private void setupShortcutList() {
