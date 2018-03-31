@@ -1,10 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
-<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<FrameLayout android:id="@+id/appshortcuts_root"
+  xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
-  android:elevation="@dimen/elevation_nested_expandable_sheet"
   android:fitsSystemWindows="true">
 
   <LinearLayout
@@ -14,20 +14,21 @@
     android:layout_gravity="center_vertical"
     android:layout_margin="@dimen/spacing48"
     android:background="@drawable/background_popup_window"
+    android:elevation="@dimen/elevation_nested_expandable_sheet"
     android:orientation="vertical"
+    android:translationZ="60dp"
     tools:ignore="UselessParent">
 
     <me.saket.dank.widgets.DankToolbar
       android:id="@id/toolbar"
       style="@style/DankToolbar"
       android:background="@null"
-      app:navigationIcon="@drawable/ic_toolbar_close_24dp"
       app:title="App shortcuts" />
 
     <android.support.v7.widget.RecyclerView
       android:id="@+id/appshortcuts_recyclerview"
       android:layout_width="match_parent"
-      android:layout_height="280dp"
+      android:layout_height="240dp"
       tools:itemCount="4"
       tools:listitem="@layout/list_item_app_shortcut" />
 

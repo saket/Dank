@@ -35,6 +35,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
 
   public static final String DEEP_LINK = "dank://configureAppShortcuts";
 
+  @BindView(R.id.appshortcuts_root) ViewGroup rootViewGroup;
   @BindView(R.id.appshortcuts_content_container) ViewGroup contentViewGroup;
   @BindView(R.id.toolbar) Toolbar toolbar;
   @BindView(R.id.appshortcuts_recyclerview) RecyclerView recyclerView;
@@ -99,5 +100,8 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         .flatMapCompletable(shortcutToDelete -> repository.delete(shortcutToDelete))
         .ambWith(lifecycle().onDestroyCompletable())
         .subscribe();
+
+    // Dismiss on outside click.
+    rootViewGroup.setOnClickListener(o -> finish());
   }
 }
