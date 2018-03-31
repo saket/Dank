@@ -29,6 +29,7 @@ import com.jakewharton.rxrelay2.Relay;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -215,6 +216,12 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
     // Subreddit clicks.
     subredditAdapter.get().setOnSubredditClickListener((subscription, subredditItemView) -> {
       subredditSelections.accept(subscription);
+
+      // Reset the search field. Wait till the screen has changed. The subreddit
+      // list getting updated while it's going away doesn't look nice.
+      Observable.timer(300, TimeUnit.MILLISECONDS, mainThread())
+          .takeUntil(lifecycle().onDestroy())
+          .subscribe(o -> searchEditText.setText(null));
     });
 
     // TODO: reset search field on subreddit selection.
@@ -259,6 +266,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         .takeUntil(lifecycle().onDestroy())
         .subscribe(subreddits -> subredditAdapter.get().updateDataAndNotifyDatasetChanged(subreddits));
 
+    // Progress indicator.
     subredditAdapter.get().dataChanges()
         .take(1)
         .map(o -> View.GONE)
