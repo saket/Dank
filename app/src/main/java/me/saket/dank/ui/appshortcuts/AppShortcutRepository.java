@@ -92,7 +92,7 @@ public class AppShortcutRepository {
               shortcutInfos.add(new ShortcutInfo.Builder(appContext, shortcut.label())
                   .setShortLabel(shortcut.label())
                   .setRank(androidRank)
-                  .setIcon(Icon.createWithResource(appContext, R.drawable.ic_app_shortcut_default))
+                  .setIcon(Icon.createWithResource(appContext, R.drawable.ic_shortcut_subreddit))
                   .setIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(ConfigureAppShortcutsActivity.DEEP_LINK)))
                   .build());
             }

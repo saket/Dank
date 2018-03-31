@@ -84,4 +84,7 @@
 
   <!-- Media -->
   <color name="videoplayer_buffer">@color/gray_800</color>
+
+  <!-- App shortcuts -->
+  <color name="app_shortcut_background">@color/blue_gray_50</color>
 </resources>
