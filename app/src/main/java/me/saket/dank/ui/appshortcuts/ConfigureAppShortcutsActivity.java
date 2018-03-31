@@ -20,43 +20,58 @@ import android.widget.ImageButton;
 import android.widget.ViewFlipper;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
+import com.google.common.collect.ImmutableList;
+import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.ui.subscriptions.SubredditAdapter;
+import me.saket.dank.ui.subscriptions.SubredditFlexboxLayoutManager;
+import me.saket.dank.ui.subscriptions.SubredditSubscription;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Keyboards;
+import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
+import timber.log.Timber;
 
 @DeepLink(ConfigureAppShortcutsActivity.DEEP_LINK)
 @TargetApi(Build.VERSION_CODES.N_MR1)
 public class ConfigureAppShortcutsActivity extends DankActivity {
 
   private static final int MAX_SHORTCUT_COUNT = 4;
+  private static final String KEY_VISIBLE_SCREEN = "visibleScreen";
   public static final String DEEP_LINK = "dank://configureAppShortcuts";
 
   @BindView(R.id.appshortcuts_root) ViewGroup rootViewGroup;
   @BindView(R.id.appshortcuts_content_flipper) ViewFlipper contentViewFlipper;
-
   @BindView(R.id.appshortcuts_shortcuts_recyclerview) RecyclerView shortcutsRecyclerView;
-
   @BindView(R.id.appshrotcuts_addnew_up) ImageButton addNewSubredditUpButton;
   @BindView(R.id.appshortcuts_addnew_search_field) EditText searchEditText;
+  @BindView(R.id.appshortcuts_subreddits_recyclerview) RecyclerView subredditRecyclerView;
 
-  @Inject AppShortcutRepository shortcutsRepository;
-  @Inject AppShortcutsAdapter shortcutsAdapter;
+  @Inject Lazy<SubscriptionRepository> subscriptionRepository;
+  @Inject Lazy<AppShortcutRepository> shortcutsRepository;
+  @Inject Lazy<AppShortcutsAdapter> shortcutsAdapter;
+  @Inject Lazy<SubredditAdapter> subredditAdapter;
 
-  private BehaviorRelay<Screen> screenChanges = BehaviorRelay.createDefault(Screen.SHORTCUTS);
+  private final BehaviorRelay<Screen> screenChanges = BehaviorRelay.createDefault(Screen.SHORTCUTS);
+  private final Relay<SubredditSubscription> subredditSelections = PublishRelay.create();
 
   private enum Screen {
     SHORTCUTS(R.id.appshortcuts_flipper_shortcuts_screen),
@@ -80,11 +95,16 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   }
 
   @Override
-  protected void onPostCreate(@Nullable Bundle savedInstanceState) {
-    super.onPostCreate(savedInstanceState);
+  protected void onPostCreate(@Nullable Bundle savedState) {
+    super.onPostCreate(savedState);
 
     setupShortcutList();
     setupSearchScreen();
+
+    if (savedState != null) {
+      //noinspection ConstantConditions
+      screenChanges.accept(((Screen) savedState.getSerializable(KEY_VISIBLE_SCREEN)));
+    }
 
     // Screen changes.
     //noinspection RedundantTypeArguments
@@ -120,12 +140,18 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         });
   }
 
+  @Override
+  protected void onSaveInstanceState(Bundle outState) {
+    super.onSaveInstanceState(outState);
+    outState.putSerializable(KEY_VISIBLE_SCREEN, screenChanges.getValue());
+  }
+
   private void setupShortcutList() {
     shortcutsRecyclerView.setItemAnimator(SlideUpAlphaAnimator.create());
     shortcutsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
-    shortcutsRecyclerView.setAdapter(shortcutsAdapter);
+    shortcutsRecyclerView.setAdapter(shortcutsAdapter.get());
 
-    Observable<List<AppShortcut>> replayedShortcuts = shortcutsRepository.shortcuts()
+    Observable<List<AppShortcut>> replayedShortcuts = shortcutsRepository.get().shortcuts()
         .subscribeOn(io())
         .replay()
         .refCount();
@@ -145,17 +171,32 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         .compose(RxDiffUtil.calculateDiff(AppShortcutsUiModelDiffer::create))
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroyFlowable())
-        .subscribe(shortcutsAdapter);
+        .subscribe(shortcutsAdapter.get());
 
     // Add new.
-    shortcutsAdapter.streamAddClicks()
+    shortcutsAdapter.get().streamAddClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> screenChanges.accept(Screen.ADD_NEW_SUBREDDIT));
 
+    // New subreddit selections.
+    subredditSelections
+        .doOnNext(o -> screenChanges.accept(Screen.SHORTCUTS))
+        .withLatestFrom(replayedShortcuts, Pair::create)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(pair -> {
+          SubredditSubscription subreddit = pair.first();
+          List<AppShortcut> shortcuts = pair.second();
+
+          shortcutsRepository.get()
+              .add(AppShortcut.create(shortcuts.size(), getString(R.string.subreddit_name_r_prefix, subreddit.name())))
+              .subscribeOn(io())
+              .subscribe();
+        });
+
     // Delete.
-    shortcutsAdapter.streamDeleteClicks()
+    shortcutsAdapter.get().streamDeleteClicks()
         .observeOn(io())
-        .flatMapCompletable(shortcutToDelete -> shortcutsRepository.delete(shortcutToDelete))
+        .flatMapCompletable(shortcutToDelete -> shortcutsRepository.get().delete(shortcutToDelete))
         .ambWith(lifecycle().onDestroyCompletable())
         .subscribe();
 
@@ -165,6 +206,55 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
 
   private void setupSearchScreen() {
     addNewSubredditUpButton.setOnClickListener(o -> screenChanges.accept(Screen.SHORTCUTS));
+
+    subredditRecyclerView.setAdapter(subredditAdapter.get());
+    subredditRecyclerView.setLayoutManager(new SubredditFlexboxLayoutManager(this));
+    subredditRecyclerView.setItemAnimator(null);
+
+    // Subreddit clicks.
+    subredditAdapter.get().setOnSubredditClickListener((subscription, subredditItemView) -> {
+      subredditSelections.accept(subscription);
+    });
+
+    // TODO: show progress.
+    // Search.
+    RxTextView.textChanges(searchEditText)
+        // CharSequence is mutable.
+        .map(searchTerm -> searchTerm.toString().trim())
+        .observeOn(io())
+        .switchMap(searchTerm -> subscriptionRepository.get().getAll(searchTerm, true))
+        .map(filteredSubs -> {
+          // If search is active, show user's search term in the results unless an exact match was found.
+          String searchTerm = searchEditText.getText().toString();
+
+          if (!searchTerm.isEmpty()) {
+            boolean exactSearchFound = false;
+            for (SubredditSubscription filteredSub : filteredSubs) {
+              if (filteredSub.name().equalsIgnoreCase(searchTerm)) {
+                exactSearchFound = true;
+                break;
+              }
+            }
+
+            if (!exactSearchFound) {
+              return ImmutableList.<SubredditSubscription>builder()
+                  .addAll(filteredSubs)
+                  .add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false))
+                  .build();
+            }
+          }
+          return filteredSubs;
+        })
+        .onErrorResumeNext(error -> {
+          // Don't let an error terminate the stream.
+          Timber.e(error, "Error in fetching subreddits");
+          return Observable.just(Collections.emptyList());
+        })
+        .observeOn(mainThread())
+        //.compose(onStartAndFirstEvent(setSubredditLoadProgressVisible()))
+        //.compose(RxUtils.doOnceAfterNext(o -> listenToBackgroundRefreshes()))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(subreddits -> subredditAdapter.get().updateDataAndNotifyDatasetChanged(subreddits));
   }
 
   private Animation animationWithInterpolator(@AnimRes int animRes) {

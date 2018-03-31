@@ -77,11 +77,16 @@
       </LinearLayout>
 
       <android.support.v7.widget.RecyclerView
-        android:id="@+id/appshortcuts_subscriptions_recyclerview"
+        android:id="@+id/appshortcuts_subreddits_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="340dp"
+        android:clipToPadding="false"
+        android:paddingEnd="@dimen/spacing12"
+        android:paddingStart="@dimen/spacing12"
         android:scrollbarStyle="outsideOverlay"
-        android:scrollbars="vertical" />
+        android:scrollbars="vertical"
+        tools:layoutManager="com.google.android.flexbox.FlexboxLayoutManager"
+        tools:listitem="@layout/list_item_subreddit" />
     </LinearLayout>
   </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
 </FrameLayout>

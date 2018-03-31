@@ -30,10 +30,6 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 
-import com.google.android.flexbox.AlignItems;
-import com.google.android.flexbox.FlexDirection;
-import com.google.android.flexbox.FlexWrap;
-import com.google.android.flexbox.FlexboxLayoutManager;
 import com.google.common.collect.ImmutableList;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -62,8 +58,6 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideLeftAlphaAnimator;
-import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
-import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.widgets.ToolbarExpandableSheet;
 import timber.log.Timber;
 
@@ -106,7 +100,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   private BehaviorRelay<Boolean> showHiddenSubredditsSubject;
   private Runnable pendingOnWindowDetachedRunnable;
   private SlideLeftAlphaAnimator itemAnimator;
-  private final LifecycleOwnerViews.Streams lifecycle;
 
   enum SheetState {
     BROWSE_SUBS,
@@ -136,8 +129,6 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     ButterKnife.bind(this, this);
     Dank.dependencyInjector().inject(this);
 
-    lifecycle = LifecycleOwnerViews.create(this, ((LifecycleOwnerActivity) context).lifecycle());
-
     saveButton.setVisibility(INVISIBLE);
     sheetState = SheetState.BROWSE_SUBS;
     subscriptions = new CompositeDisposable();
@@ -155,15 +146,10 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   protected void onAttachedToWindow() {
     super.onAttachedToWindow();
 
-    FlexboxLayoutManager flexboxLayoutManager = new FlexboxLayoutManager(getContext());
-    flexboxLayoutManager.setFlexDirection(FlexDirection.ROW);
-    flexboxLayoutManager.setFlexWrap(FlexWrap.WRAP);
-    flexboxLayoutManager.setAlignItems(AlignItems.STRETCH);
-    subredditList.setLayoutManager(flexboxLayoutManager);
-
     subredditAdapter = new SubredditAdapter();
     subredditAdapter.setOnSubredditClickListener(this);
     subredditList.setAdapter(subredditAdapter);
+    subredditList.setLayoutManager(new SubredditFlexboxLayoutManager(getContext()));
 
     setupSubredditsSearch();
 

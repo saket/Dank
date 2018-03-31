@@ -3,6 +3,7 @@ package me.saket.dank.ui.subscriptions;
 import android.animation.Animator;
 import android.animation.AnimatorListenerAdapter;
 import android.animation.ObjectAnimator;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +11,8 @@ import android.view.ViewGroup;
 import android.widget.Button;
 
 import java.lang.ref.WeakReference;
+
+import javax.inject.Inject;
 
 import butterknife.BindColor;
 import butterknife.BindView;
@@ -23,13 +26,14 @@ import me.saket.dank.utils.RecyclerViewArrayAdapter;
 public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscription, SubredditAdapter.SubredditViewHolder> {
 
   private OnSubredditClickListener clickListener;
-  private SubredditSubscription highlightedSubscription;
+  private @Nullable SubredditSubscription highlightedSubscription;
   private Runnable onHighlightAnimEndRunnable = () -> highlightedSubscription = null;
 
-  interface OnSubredditClickListener {
+  public interface OnSubredditClickListener {
     void onClickSubreddit(SubredditSubscription subscription, View subredditItemView);
   }
 
+  @Inject
   public SubredditAdapter() {
     setHasStableIds(true);
     temporarilyHighlight(null);
@@ -39,7 +43,7 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
     clickListener = listener;
   }
 
-  public void temporarilyHighlight(SubredditSubscription subscription) {
+  public void temporarilyHighlight(@Nullable SubredditSubscription subscription) {
     highlightedSubscription = subscription;
   }
 
@@ -117,5 +121,4 @@ public class SubredditAdapter extends RecyclerViewArrayAdapter<SubredditSubscrip
       highlightAnimator.start();
     }
   }
-
 }
