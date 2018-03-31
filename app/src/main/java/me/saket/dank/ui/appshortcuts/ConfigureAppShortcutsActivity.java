@@ -36,6 +36,7 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import butterknife.OnClick;
 import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
@@ -59,7 +60,7 @@ import timber.log.Timber;
 @TargetApi(Build.VERSION_CODES.N_MR1)
 public class ConfigureAppShortcutsActivity extends DankActivity {
 
-  private static final int MAX_SHORTCUT_COUNT = 4;
+  private static final int MAX_SHORTCUT_COUNT = AppShortcutRepository.MAX_SHORTCUT_COUNT;
   private static final String KEY_VISIBLE_SCREEN = "visibleScreen";
   public static final String DEEP_LINK = "dank://configureAppShortcuts";
 
@@ -104,8 +105,6 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   protected void onPostCreate(@Nullable Bundle savedState) {
     super.onPostCreate(savedState);
 
-    // TODO: Add 'done' button.
-
     screenChanges.accept(Optional.ofNullable(savedState)
         .map(state -> (Screen) state.getSerializable(KEY_VISIBLE_SCREEN))
         .orElse(Screen.SHORTCUTS));
@@ -119,6 +118,12 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   protected void onSaveInstanceState(Bundle outState) {
     super.onSaveInstanceState(outState);
     outState.putSerializable(KEY_VISIBLE_SCREEN, screenChanges.getValue());
+  }
+
+  @Override
+  @OnClick(R.id.appshortcuts_shortcuts_done)
+  public void finish() {
+    super.finish();
   }
 
   private void setupScreenChanges() {

@@ -19,13 +19,13 @@
     android:elevation="@dimen/elevation_nested_expandable_sheet"
     android:focusable="true"
     android:translationZ="60dp"
-    app:debug_displayedChild="1"
+    app:debug_displayedChild="0"
     tools:ignore="UselessParent">
 
     <LinearLayout
       android:id="@+id/appshortcuts_flipper_shortcuts_screen"
       android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      android:layout_height="match_parent"
       android:orientation="vertical">
 
       <me.saket.dank.widgets.DankToolbar
@@ -36,9 +36,19 @@
       <android.support.v7.widget.RecyclerView
         android:id="@+id/appshortcuts_shortcuts_recyclerview"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1"
         tools:itemCount="4"
         tools:listitem="@layout/list_item_app_shortcut" />
+
+      <Button
+        android:id="@+id/appshortcuts_shortcuts_done"
+        style="?attr/buttonBarPositiveButtonStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end"
+        android:layout_margin="@dimen/spacing8"
+        android:text="@string/appshortcuts_done" />
     </LinearLayout>
 
     <RelativeLayout
