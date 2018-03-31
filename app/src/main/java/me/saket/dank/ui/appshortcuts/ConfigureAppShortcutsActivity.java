@@ -22,6 +22,7 @@ import android.widget.ViewFlipper;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
 import com.google.common.collect.ImmutableList;
+import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -103,7 +104,6 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   protected void onPostCreate(@Nullable Bundle savedState) {
     super.onPostCreate(savedState);
 
-    // TODO: hide keyboard when list starts scrolling.
     // TODO: Add 'done' button.
 
     screenChanges.accept(Optional.ofNullable(savedState)
@@ -222,6 +222,12 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
     subredditRecyclerView.setAdapter(subredditAdapter.get());
     subredditRecyclerView.setLayoutManager(new SubredditFlexboxLayoutManager(this));
     subredditRecyclerView.setItemAnimator(null);
+
+    // Hide keyboard on scroll.
+    RxRecyclerView.scrollEvents(subredditRecyclerView)
+        .filter(scrollEvent -> Math.abs(scrollEvent.dy()) > 0)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(scrollEvent -> Keyboards.hide(searchEditText));
 
     // Subreddit clicks.
     subredditAdapter.get().setOnSubredditClickListener((subscription, subredditItemView) -> {
