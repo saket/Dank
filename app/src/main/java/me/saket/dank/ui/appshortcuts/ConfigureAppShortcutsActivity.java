@@ -224,15 +224,15 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
           .subscribe(o -> searchEditText.setText(null));
     });
 
-    // TODO: reset search field on subreddit selection.
-    // TODO: separate subreddit stream and custom subreddit streams.
-
     // Search.
     RxTextView.textChanges(searchEditText)
         // CharSequence is mutable.
         .map(searchTerm -> searchTerm.toString().trim())
         .switchMap(searchTerm -> subscriptionRepository.get().getAll(searchTerm, true)
             .subscribeOn(io())
+            .observeOn(mainThread())
+            .doOnNext(o -> subredditsLoadProgressView.setVisibility(View.GONE))
+            .startWith(Collections.<SubredditSubscription>emptyList())
             .map(filteredSubs -> Pair.create(filteredSubs, searchTerm)))
         .map(pair -> {
           // Show user's search term in the results unless an exact match was found.
@@ -266,13 +266,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         .takeUntil(lifecycle().onDestroy())
         .subscribe(subreddits -> subredditAdapter.get().updateDataAndNotifyDatasetChanged(subreddits));
 
-    // Progress indicator.
-    subredditAdapter.get().dataChanges()
-        .take(1)
-        .map(o -> View.GONE)
-        .startWith(View.VISIBLE)
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(progressVisibility -> subredditsLoadProgressView.setVisibility(progressVisibility));
+    subredditsLoadProgressView.setVisibility(View.VISIBLE);
   }
 
   private Animation animationWithInterpolator(@AnimRes int animRes) {
