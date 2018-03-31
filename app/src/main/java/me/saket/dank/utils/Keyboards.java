@@ -30,7 +30,14 @@ public class Keyboards {
    * Hide the keyboard.
    */
   public static void hide(Context context, View anyViewInLayout) {
-    InputMethodManager inputManager = (InputMethodManager) context.getSystemService(Context.INPUT_METHOD_SERVICE);
+    hide(anyViewInLayout);
+  }
+
+  /**
+   * Hide the keyboard.
+   */
+  public static void hide(View anyViewInLayout) {
+    InputMethodManager inputManager = (InputMethodManager) anyViewInLayout.getContext().getSystemService(Context.INPUT_METHOD_SERVICE);
     //noinspection ConstantConditions
     inputManager.hideSoftInputFromWindow(anyViewInLayout.getWindowToken(), 0);
   }

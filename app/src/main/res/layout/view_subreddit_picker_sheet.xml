@@ -91,7 +91,9 @@
     android:paddingEnd="@dimen/spacing12"
     android:paddingStart="@dimen/spacing12"
     android:scrollbarStyle="outsideOverlay"
-    android:scrollbars="vertical" />
+    android:scrollbars="vertical"
+    tools:layoutManager="com.google.android.flexbox.FlexboxLayoutManager"
+    tools:listitem="@layout/list_item_subreddit" />
 
   <FrameLayout
     android:id="@+id/subredditpicker_load_progress"
@@ -112,9 +114,9 @@
   <android.support.design.widget.FloatingActionButton
     android:id="@+id/subredditpicker_save_fab"
     style="@style/DankFAB"
-    android:visibility="gone"
     android:contentDescription="@string/cd_subredditpicker_save_changes"
     android:src="@drawable/ic_done_24dp"
+    android:visibility="gone"
     tools:ignore="RelativeOverlap" />
 
   <me.saket.dank.widgets.AnimatedProgressBar

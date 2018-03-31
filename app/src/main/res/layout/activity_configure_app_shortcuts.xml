@@ -5,40 +5,83 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="match_parent"
+  android:animateLayoutChanges="true"
   android:fitsSystemWindows="true">
 
-  <LinearLayout
-    android:id="@+id/appshortcuts_content_container"
+  <me.saket.dank.widgets.ViewFlipperWithDebugPreview
+    android:id="@+id/appshortcuts_content_flipper"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_gravity="center_vertical"
     android:layout_margin="@dimen/spacing48"
     android:background="@drawable/background_popup_window"
+    android:clickable="true"
     android:elevation="@dimen/elevation_nested_expandable_sheet"
-    android:orientation="vertical"
+    android:focusable="true"
     android:translationZ="60dp"
+    app:debug_displayedChild="1"
     tools:ignore="UselessParent">
 
-    <me.saket.dank.widgets.DankToolbar
-      android:id="@id/toolbar"
-      style="@style/DankToolbar"
-      android:background="@null"
-      app:title="App shortcuts" />
-
-    <android.support.v7.widget.RecyclerView
-      android:id="@+id/appshortcuts_recyclerview"
-      android:layout_width="match_parent"
-      android:layout_height="240dp"
-      tools:itemCount="4"
-      tools:listitem="@layout/list_item_app_shortcut" />
-
-    <me.saket.dank.widgets.TintableCompoundDrawableButton
-      android:id="@+id/appshortcuts_add"
+    <LinearLayout
+      android:id="@+id/appshortcuts_flipper_shortcuts_screen"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
-      android:background="@color/gray_800"
-      android:drawablePadding="@dimen/spacing16"
-      android:foreground="?attr/selectableItemBackgroundBorderless"
-      android:text="@string/appshortcuts_add_new_shortcut" />
-  </LinearLayout>
+      android:orientation="vertical">
+
+      <me.saket.dank.widgets.DankToolbar
+        style="@style/DankToolbar"
+        android:background="@null"
+        app:title="@string/activity_app_shortcuts" />
+
+      <android.support.v7.widget.RecyclerView
+        android:id="@+id/appshortcuts_shortcuts_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:itemCount="4"
+        tools:listitem="@layout/list_item_app_shortcut" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:id="@+id/appshortcuts_flipper_add_new_screen"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:background="@color/window_background"
+      android:elevation="40dp"
+      android:orientation="vertical">
+
+      <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="?attr/actionBarSize"
+        android:orientation="horizontal">
+
+        <ImageButton
+          android:id="@+id/appshrotcuts_addnew_up"
+          android:layout_width="wrap_content"
+          android:layout_height="match_parent"
+          android:layout_marginStart="@dimen/spacing8"
+          android:background="?attr/selectableItemBackgroundBorderless"
+          android:contentDescription="@string/appshortcuts_cd_add_new_up_button"
+          android:padding="@dimen/spacing8"
+          android:src="@drawable/ic_arrow_back_20dp" />
+
+        <EditText
+          android:id="@+id/appshortcuts_addnew_search_field"
+          android:layout_width="match_parent"
+          android:layout_height="match_parent"
+          android:layout_marginEnd="@dimen/spacing16"
+          android:layout_marginStart="@dimen/spacing16"
+          android:background="@null"
+          android:hint="@string/appshortcuts_add_new_search_hint"
+          android:inputType="text"
+          android:textColor="@color/color_accent" />
+      </LinearLayout>
+
+      <android.support.v7.widget.RecyclerView
+        android:id="@+id/appshortcuts_subscriptions_recyclerview"
+        android:layout_width="match_parent"
+        android:layout_height="340dp"
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbars="vertical" />
+    </LinearLayout>
+  </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
 </FrameLayout>

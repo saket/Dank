@@ -9,7 +9,7 @@ import io.reactivex.functions.Function;
 import me.saket.dank.utils.Cursors;
 
 @AutoValue
-public abstract class AppShortcut {
+public abstract class AppShortcut implements AppShortcutScreenUiModel {
 
   static final String TABLE_NAME = "AppShortcut";
   static final String COLUMN_RANK = "rank";
@@ -39,6 +39,11 @@ public abstract class AppShortcut {
   public abstract int rank();
 
   public abstract String label();
+
+  @Override
+  public long adapterId() {
+    return label().hashCode();
+  }
 
   public ContentValues toValues() {
     ContentValues values = new ContentValues(2);
