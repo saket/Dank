@@ -64,6 +64,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   @BindView(R.id.appshrotcuts_addnew_up) ImageButton addNewSubredditUpButton;
   @BindView(R.id.appshortcuts_addnew_search_field) EditText searchEditText;
   @BindView(R.id.appshortcuts_subreddits_recyclerview) RecyclerView subredditRecyclerView;
+  @BindView(R.id.appshortcuts_subreddits_load_progress) View subredditsLoadProgressView;
 
   @Inject Lazy<SubscriptionRepository> subscriptionRepository;
   @Inject Lazy<AppShortcutRepository> shortcutsRepository;
@@ -216,16 +217,20 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
       subredditSelections.accept(subscription);
     });
 
-    // TODO: show progress.
+    // TODO: reset search field on subreddit selection.
+    // TODO: separate subreddit stream and custom subreddit streams.
+
     // Search.
     RxTextView.textChanges(searchEditText)
         // CharSequence is mutable.
         .map(searchTerm -> searchTerm.toString().trim())
-        .observeOn(io())
-        .switchMap(searchTerm -> subscriptionRepository.get().getAll(searchTerm, true))
-        .map(filteredSubs -> {
-          // If search is active, show user's search term in the results unless an exact match was found.
-          String searchTerm = searchEditText.getText().toString();
+        .switchMap(searchTerm -> subscriptionRepository.get().getAll(searchTerm, true)
+            .subscribeOn(io())
+            .map(filteredSubs -> Pair.create(filteredSubs, searchTerm)))
+        .map(pair -> {
+          // Show user's search term in the results unless an exact match was found.
+          List<SubredditSubscription> filteredSubs = pair.first();
+          String searchTerm = pair.second();
 
           if (!searchTerm.isEmpty()) {
             boolean exactSearchFound = false;
@@ -251,10 +256,15 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
           return Observable.just(Collections.emptyList());
         })
         .observeOn(mainThread())
-        //.compose(onStartAndFirstEvent(setSubredditLoadProgressVisible()))
-        //.compose(RxUtils.doOnceAfterNext(o -> listenToBackgroundRefreshes()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(subreddits -> subredditAdapter.get().updateDataAndNotifyDatasetChanged(subreddits));
+
+    subredditAdapter.get().dataChanges()
+        .take(1)
+        .map(o -> View.GONE)
+        .startWith(View.VISIBLE)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(progressVisibility -> subredditsLoadProgressView.setVisibility(progressVisibility));
   }
 
   private Animation animationWithInterpolator(@AnimRes int animRes) {

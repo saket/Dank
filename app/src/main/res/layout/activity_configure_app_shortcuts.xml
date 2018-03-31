@@ -41,7 +41,7 @@
         tools:listitem="@layout/list_item_app_shortcut" />
     </LinearLayout>
 
-    <LinearLayout
+    <RelativeLayout
       android:id="@+id/appshortcuts_flipper_add_new_screen"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -49,44 +49,49 @@
       android:elevation="40dp"
       android:orientation="vertical">
 
-      <LinearLayout
+      <ImageButton
+        android:id="@+id/appshrotcuts_addnew_up"
+        android:layout_width="wrap_content"
+        android:layout_height="?attr/actionBarSize"
+        android:layout_marginStart="@dimen/spacing8"
+        android:background="?attr/selectableItemBackgroundBorderless"
+        android:contentDescription="@string/appshortcuts_cd_add_new_up_button"
+        android:padding="@dimen/spacing8"
+        android:src="@drawable/ic_arrow_back_20dp" />
+
+      <EditText
+        android:id="@+id/appshortcuts_addnew_search_field"
         android:layout_width="match_parent"
         android:layout_height="?attr/actionBarSize"
-        android:orientation="horizontal">
-
-        <ImageButton
-          android:id="@+id/appshrotcuts_addnew_up"
-          android:layout_width="wrap_content"
-          android:layout_height="match_parent"
-          android:layout_marginStart="@dimen/spacing8"
-          android:background="?attr/selectableItemBackgroundBorderless"
-          android:contentDescription="@string/appshortcuts_cd_add_new_up_button"
-          android:padding="@dimen/spacing8"
-          android:src="@drawable/ic_arrow_back_20dp" />
-
-        <EditText
-          android:id="@+id/appshortcuts_addnew_search_field"
-          android:layout_width="match_parent"
-          android:layout_height="match_parent"
-          android:layout_marginEnd="@dimen/spacing16"
-          android:layout_marginStart="@dimen/spacing16"
-          android:background="@null"
-          android:hint="@string/appshortcuts_add_new_search_hint"
-          android:inputType="text"
-          android:textColor="@color/color_accent" />
-      </LinearLayout>
+        android:layout_marginEnd="@dimen/spacing16"
+        android:layout_marginStart="@dimen/spacing16"
+        android:layout_toEndOf="@+id/appshrotcuts_addnew_up"
+        android:background="@null"
+        android:hint="@string/appshortcuts_add_new_search_hint"
+        android:imeOptions="flagNoFullscreen"
+        android:inputType="text"
+        android:textColor="@color/color_accent" />
 
       <android.support.v7.widget.RecyclerView
         android:id="@+id/appshortcuts_subreddits_recyclerview"
         android:layout_width="match_parent"
         android:layout_height="340dp"
+        android:layout_below="@+id/appshortcuts_addnew_search_field"
         android:clipToPadding="false"
+        android:paddingBottom="@dimen/spacing12"
         android:paddingEnd="@dimen/spacing12"
         android:paddingStart="@dimen/spacing12"
         android:scrollbarStyle="outsideOverlay"
         android:scrollbars="vertical"
         tools:layoutManager="com.google.android.flexbox.FlexboxLayoutManager"
         tools:listitem="@layout/list_item_subreddit" />
-    </LinearLayout>
+
+      <me.saket.dank.widgets.AnimatedProgressBar
+        android:id="@+id/appshortcuts_subreddits_load_progress"
+        style="@style/DankProgressBar.Horizontal.TopAligned"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/appshortcuts_addnew_search_field" />
+    </RelativeLayout>
   </me.saket.dank.widgets.ViewFlipperWithDebugPreview>
 </FrameLayout>
