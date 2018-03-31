@@ -13,9 +13,9 @@ import android.support.annotation.CheckResult;
 
 import com.squareup.sqlbrite2.BriteDatabase;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 import javax.inject.Inject;
 
 import dagger.Lazy;
@@ -26,6 +26,8 @@ import timber.log.Timber;
 
 @TargetApi(Build.VERSION_CODES.N_MR1)
 public class AppShortcutRepository {
+
+  public static final int MAX_SHORTCUT_COUNT = 4;
 
   private final Application appContext;
   private final Lazy<BriteDatabase> database;
@@ -79,15 +81,21 @@ public class AppShortcutRepository {
 
           } else {
             // TODO: Open SubredditActivity.
-            shortcutInfos = shortcuts
-                .stream()
-                .map(shortcut -> new ShortcutInfo.Builder(appContext, shortcut.label())
-                    .setShortLabel(shortcut.label())
-                    .setRank(shortcut.rank())
-                    .setIcon(Icon.createWithResource(appContext, R.drawable.ic_app_shortcut_default))
-                    .setIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(ConfigureAppShortcutsActivity.DEEP_LINK)))
-                    .build())
-                .collect(Collectors.toList());
+            shortcutInfos = new ArrayList<>(MAX_SHORTCUT_COUNT);
+
+            for (int i = 0; i < shortcuts.size(); i++) {
+              // Android displays shortcuts in descending rank, but our UI for configuring
+              // them uses ascending. So I'm manually reversing it agian here.
+              int androidRank = shortcuts.size() - i;
+
+              AppShortcut shortcut = shortcuts.get(i);
+              shortcutInfos.add(new ShortcutInfo.Builder(appContext, shortcut.label())
+                  .setShortLabel(shortcut.label())
+                  .setRank(androidRank)
+                  .setIcon(Icon.createWithResource(appContext, R.drawable.ic_app_shortcut_default))
+                  .setIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(ConfigureAppShortcutsActivity.DEEP_LINK)))
+                  .build());
+            }
           }
 
           shortcutManager.get().setDynamicShortcuts(shortcutInfos);
