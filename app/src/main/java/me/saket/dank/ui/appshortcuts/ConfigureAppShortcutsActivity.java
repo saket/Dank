@@ -51,12 +51,12 @@ import me.saket.dank.ui.subscriptions.SubredditFlexboxLayoutManager;
 import me.saket.dank.ui.subscriptions.SubredditSubscription;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.ItemTouchHelperDragAndDropCallback;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.RxUtils;
-import me.saket.dank.utils.SimpleItemTouchHelperCallback;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
@@ -227,7 +227,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         .subscribe();
 
     // Drags.
-    ItemTouchHelper dragHelper = createDragTouchListener();
+    ItemTouchHelper dragHelper = new ItemTouchHelper(createDragAndDropCallbacks());
     dragHelper.attachToRecyclerView(shortcutsRecyclerView);
     shortcutsAdapter.get().streamDragStarts()
         .takeUntil(lifecycle().onDestroy())
@@ -237,8 +237,8 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
     rootViewGroup.setOnClickListener(o -> finish());
   }
 
-  private ItemTouchHelper createDragTouchListener() {
-    return new ItemTouchHelper(new SimpleItemTouchHelperCallback() {
+  private ItemTouchHelperDragAndDropCallback createDragAndDropCallbacks() {
+    return new ItemTouchHelperDragAndDropCallback() {
       @Override
       protected void onItemMove(ViewHolder source, ViewHolder target) {
         AppShortcutViewHolder sourceViewHolder = (AppShortcutViewHolder) source;
@@ -270,12 +270,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
               .subscribe();
         }
       }
-
-      @Override
-      public boolean isItemViewSwipeEnabled() {
-        return false;
-      }
-    });
+    };
   }
 
   private void setupSearchScreen() {

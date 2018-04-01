@@ -27,7 +27,7 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
-import me.saket.dank.utils.SimpleItemTouchHelperCallback;
+import me.saket.dank.utils.ItemTouchHelperDragAndDropCallback;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
@@ -119,7 +119,7 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
   }
 
   static class AppShortcutViewHolder extends RecyclerView.ViewHolder
-      implements ViewHolderWithSwipeActions, SimpleItemTouchHelperCallback.DraggableViewHolder
+      implements ViewHolderWithSwipeActions, ItemTouchHelperDragAndDropCallback.DraggableViewHolder
   {
     @BindView(R.id.appshortcut_item_swipeable_layout) SwipeableLayout swipeableLayout;
     @BindView(R.id.appshortcut_item_label) TextView labelView;
