@@ -66,6 +66,7 @@
       android:background="@null"
       android:gravity="top"
       android:hint="@string/composereply_compose_field_hint"
+      android:imeOptions="flagNoFullscreen"
       android:inputType="textCapSentences|textMultiLine"
       android:textSize="@dimen/textsize16">
 
