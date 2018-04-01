@@ -54,6 +54,7 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
+import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
 @DeepLink(ConfigureAppShortcutsActivity.DEEP_LINK)
@@ -164,6 +165,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
     shortcutsRecyclerView.setItemAnimator(SlideUpAlphaAnimator.create());
     shortcutsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     shortcutsRecyclerView.setAdapter(shortcutsAdapter.get());
+    shortcutsRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(shortcutsRecyclerView));
 
     Observable<List<AppShortcut>> replayedShortcuts = shortcutsRepository.get().shortcuts()
         .subscribeOn(io())

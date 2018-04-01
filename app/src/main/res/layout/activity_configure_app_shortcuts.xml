@@ -30,16 +30,16 @@
       <me.saket.dank.widgets.DankToolbar
         style="@style/DankToolbar"
         android:background="@null"
-        app:title="@string/activity_app_shortcuts" />
+        app:title="@string/appshortcuts_title" />
 
       <TextView
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:lineSpacingExtra="@dimen/spacing2"
+        android:paddingBottom="@dimen/spacing4"
         android:paddingEnd="@dimen/spacing24"
         android:paddingStart="@dimen/spacing16"
-        android:paddingBottom="@dimen/spacing16"
-        android:text="@string/appshortcuts_customize_later_hint"
+        android:text="@string/appshortcuts_message"
         android:textColor="@color/white_opacity_50"
         android:textIsSelectable="false" />
 
@@ -48,6 +48,8 @@
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
+        android:scrollbarStyle="outsideOverlay"
+        android:scrollbars="vertical"
         tools:itemCount="4"
         tools:listitem="@layout/list_item_app_shortcut" />
 
@@ -57,14 +59,14 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="end"
-        android:layout_margin="@dimen/spacing8"
+        android:layout_marginBottom="@dimen/spacing8"
         android:text="@string/appshortcuts_done" />
     </LinearLayout>
 
     <RelativeLayout
       android:id="@+id/appshortcuts_flipper_add_new_screen"
       android:layout_width="match_parent"
-      android:layout_height="wrap_content"
+      android:layout_height="match_parent"
       android:background="@color/dialog_background"
       android:elevation="40dp"
       android:orientation="vertical">
@@ -98,7 +100,7 @@
         android:layout_height="340dp"
         android:layout_below="@+id/appshortcuts_addnew_search_field"
         android:clipToPadding="false"
-        android:paddingBottom="@dimen/spacing12"
+        android:paddingBottom="@dimen/spacing8"
         android:paddingEnd="@dimen/spacing12"
         android:paddingStart="@dimen/spacing12"
         android:scrollbarStyle="outsideOverlay"

@@ -8,7 +8,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
-import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -19,12 +18,15 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
+import me.saket.dank.widgets.swipe.SwipeableLayout;
+import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
 public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScreenUiModel, RecyclerView.ViewHolder>
     implements Consumer<Pair<List<AppShortcutScreenUiModel>, DiffUtil.DiffResult>>
@@ -35,24 +37,25 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
   private static final int VIEW_TYPE_APP_SHORTCUT = 0;
   private static final int VIEW_TYPE_PLACEHOLDER = 1;
 
-  private final Relay<AppShortcut> deleteClicks = PublishRelay.create();
+  private final Lazy<AppShortcutSwipeActionsProvider> swipeActionsProvider;
   private final Relay<Object> addClicks = PublishRelay.create();
 
   @Inject
-  public AppShortcutsAdapter() {
+  public AppShortcutsAdapter(Lazy<AppShortcutSwipeActionsProvider> swipeActionsProvider) {
+    this.swipeActionsProvider = swipeActionsProvider;
     setHasStableIds(true);
   }
 
   @CheckResult
   public Observable<AppShortcut> streamDeleteClicks() {
-    return deleteClicks;
+    return swipeActionsProvider.get().deleteSwipeActions;
   }
 
   @Override
   protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
     if (viewType == VIEW_TYPE_APP_SHORTCUT) {
       AppShortcutViewHolder holder = AppShortcutViewHolder.create(inflater, parent);
-      holder.deleteButton.setOnClickListener(o -> deleteClicks.accept(holder.shortcut));
+      holder.setupGestures(swipeActionsProvider.get());
       return holder;
 
     } else if (viewType == VIEW_TYPE_PLACEHOLDER) {
@@ -104,9 +107,9 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
     return addClicks;
   }
 
-  static class AppShortcutViewHolder extends RecyclerView.ViewHolder {
-    @BindView(R.id.appshortcut_label) TextView labelView;
-    @BindView(R.id.appshortcut_delete) ImageButton deleteButton;
+  static class AppShortcutViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
+    @BindView(R.id.appshortcut_item_swipeable_layout) SwipeableLayout swipeableLayout;
+    @BindView(R.id.appshortcut_item_label) TextView labelView;
     private AppShortcut shortcut;
 
     public AppShortcutViewHolder(View itemView) {
@@ -116,6 +119,19 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
 
     public static AppShortcutViewHolder create(LayoutInflater inflater, ViewGroup parent) {
       return new AppShortcutViewHolder(inflater.inflate(R.layout.list_item_app_shortcut, parent, false));
+    }
+
+    @Override
+    public SwipeableLayout getSwipeableLayout() {
+      return swipeableLayout;
+    }
+
+    public void setupGestures(AppShortcutSwipeActionsProvider swipeActionsProvider) {
+      swipeableLayout.setSwipeActionIconProvider(swipeActionsProvider.iconProvider());
+      swipeableLayout.setSwipeActions(swipeActionsProvider.actions());
+      swipeableLayout.setOnPerformSwipeActionListener(action ->
+          swipeActionsProvider.performSwipeAction(action, shortcut, swipeableLayout)
+      );
     }
 
     public void set(AppShortcut shortcut) {

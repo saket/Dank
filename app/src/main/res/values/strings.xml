@@ -423,12 +423,11 @@
   <string name="giphypicker_empty_state_message">Nothing found.\nYour GIF desires are… unconventional.</string>
 
   <!-- Launcher app shortcuts -->
-  <string name="activity_app_shortcuts">App shortcuts</string>
-  <string name="appshortcuts_cd_reorder_shortcut">Re-order app shortcut</string>
-  <string name="appshortcuts_cd_delete_shortcut">Delete app shortcut</string>
+  <string name="appshortcuts_title">App shortcuts</string>
+  <string name="appshortcuts_message">Swipe shortcuts to delete them. This dialog can later be accessed again through Settings > Misc.</string>
   <string name="appshortcuts_add_new_shortcut">Add subreddit</string>
   <string name="appshortcuts_cd_add_new_up_button">Go back to shortcuts</string>
   <string name="appshortcuts_add_new_search_hint">Search subreddit…</string>
   <string name="appshortcuts_done">Done</string>
-  <string name="appshortcuts_customize_later_hint">These shortcuts can later be customized again through Settings > Look &amp; Feel</string>
+  <string name="appshrotcuts_swipe_action_delete">Delete</string>
 </resources>
