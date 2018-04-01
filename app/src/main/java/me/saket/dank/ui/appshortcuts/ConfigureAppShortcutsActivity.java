@@ -165,7 +165,6 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         });
   }
 
-  // TODO: Elevate item during drag
   private void setupShortcutList() {
     SlideUpAlphaAnimator animator = SlideUpAlphaAnimator.create();
     animator.setSupportsChangeAnimations(false);

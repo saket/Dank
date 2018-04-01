@@ -42,11 +42,14 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.span.RoundedBackgroundSpan;
 import timber.log.Timber;
 
 public class SubmissionUiConstructor {
+
+  private static final Object NOTHING = LifecycleStreams.NOTHING;
 
   private final SubmissionContentLinkUiConstructor contentLinkUiModelConstructor;
   private final ReplyRepository replyRepository;
@@ -123,10 +126,13 @@ public class SubmissionUiConstructor {
               .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
               .map(pendingSyncReplies -> pendingSyncReplies.size());
 
-          Observable<Object> externalChanges = Observable.merge(votingManager.streamChanges(), bookmarksRepository.get().streamChanges());
+          Observable<Object> externalChanges = Observable
+              .merge(votingManager.streamChanges(), bookmarksRepository.get().streamChanges())
+              .observeOn(io())
+              .startWith(NOTHING);
 
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = CombineLatestWithLog.from(
-              O.of("ext-change", externalChanges.observeOn(io()).map(o -> context)),
+              O.of("ext-change", externalChanges.map(o -> context)),
               O.of("submission 2", submissions.observeOn(io())),
               O.of("pending-sync-reply-count", submissionPendingSyncReplyCounts),
               O.of("content-link", contentLinkUiModels),
