@@ -18,7 +18,7 @@
     android:layout_height="match_parent"
     android:layout_margin="@dimen/spacing24"
     android:animateLayoutChanges="true"
-    android:background="@color/window_background"
+    android:background="@drawable/background_popup_window"
     android:elevation="120dp"
     tools:ignore="UselessParent">
 
