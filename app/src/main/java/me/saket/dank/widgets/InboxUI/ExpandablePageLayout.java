@@ -164,9 +164,9 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
   protected void setup(View parentActivityToolbar) {
     activityToolbar = parentActivityToolbar;
 
-    Views.executeOnMeasure(activityToolbar, () -> {
-      setPullToCollapseDistanceThreshold(parentActivityToolbar.getHeight());
-    });
+    // NOTE: if I'm still seeing a problem where the toolbar's height is reported
+    // as way too high, use a lambda instead of evaluating the toolbar's height before-hand.
+    activityToolbar.post(() -> setPullToCollapseDistanceThreshold(parentActivityToolbar.getHeight()));
   }
 
   /**
