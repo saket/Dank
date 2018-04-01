@@ -3,7 +3,8 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="wrap_content">
+  android:layout_height="wrap_content"
+  android:background="@color/dialog_background">
 
   <me.saket.dank.widgets.swipe.SwipeActionIconView
     style="@style/DankSwipeableLayoutIcon"
@@ -15,7 +16,7 @@
     android:layout_height="wrap_content"
     android:orientation="vertical">
 
-    <TextView
+    <me.saket.dank.widgets.TintableCompoundDrawableTextView
       android:id="@+id/appshortcut_item_label"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -25,7 +26,7 @@
       android:ellipsize="end"
       android:maxLines="1"
       android:padding="@dimen/spacing16"
-      android:textColor="@color/white_opacity_80"
+      android:textColor="@color/white_opacity_90"
       tools:ignore="SelectableText"
       tools:text="r/Android" />
 

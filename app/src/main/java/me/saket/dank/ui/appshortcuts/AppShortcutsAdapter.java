@@ -24,6 +24,7 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
+import me.saket.dank.utils.SimpleItemTouchHelperCallback;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
@@ -107,7 +108,9 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
     return addClicks;
   }
 
-  static class AppShortcutViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
+  static class AppShortcutViewHolder extends RecyclerView.ViewHolder
+      implements ViewHolderWithSwipeActions, SimpleItemTouchHelperCallback.DraggableViewHolder
+  {
     @BindView(R.id.appshortcut_item_swipeable_layout) SwipeableLayout swipeableLayout;
     @BindView(R.id.appshortcut_item_label) TextView labelView;
     private AppShortcut shortcut;
@@ -140,6 +143,18 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
 
     public void render() {
       labelView.setText(labelView.getResources().getString(R.string.subreddit_name_r_prefix, shortcut.label()));
+    }
+
+    @Override
+    public void onDragStart() {
+      // TODO.
+      swipeableLayout.setElevation(10f);
+    }
+
+    @Override
+    public void onDragEnd() {
+      // TODO.
+      swipeableLayout.setElevation(0f);
     }
   }
 

@@ -424,7 +424,7 @@
 
   <!-- Launcher app shortcuts -->
   <string name="appshortcuts_title">App shortcuts</string>
-  <string name="appshortcuts_message">Swipe shortcuts to delete them. This dialog can later be accessed again through Settings > Misc.</string>
+  <string name="appshortcuts_message">Swipe shortcuts to delete them. This can later be customized again through Settings > Misc.</string>
   <string name="appshortcuts_add_new_shortcut">Add subreddit</string>
   <string name="appshortcuts_cd_add_new_up_button">Go back to shortcuts</string>
   <string name="appshortcuts_add_new_search_hint">Search subreddit…</string>

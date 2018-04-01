@@ -40,6 +40,10 @@ public abstract class AppShortcut implements AppShortcutScreenUiModel {
 
   public abstract String label();
 
+  public AppShortcut withRank(int newRank) {
+    return create(newRank, label());
+  }
+
   @Override
   public long adapterId() {
     return label().hashCode();

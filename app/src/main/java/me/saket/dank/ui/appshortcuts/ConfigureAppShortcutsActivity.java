@@ -11,6 +11,8 @@ import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
+import android.support.v7.widget.RecyclerView.ViewHolder;
+import android.support.v7.widget.helper.ItemTouchHelper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.Animation;
@@ -43,6 +45,7 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.ui.appshortcuts.AppShortcutsAdapter.AppShortcutViewHolder;
 import me.saket.dank.ui.subscriptions.SubredditAdapter;
 import me.saket.dank.ui.subscriptions.SubredditFlexboxLayoutManager;
 import me.saket.dank.ui.subscriptions.SubredditSubscription;
@@ -53,6 +56,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.SimpleItemTouchHelperCallback;
 import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
@@ -161,8 +165,14 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         });
   }
 
+  // TODO: Start drag immediately when drag handle is tapped.
+  // TODO: Limit horizontal movement during drag.
+  // TODO: Update database
+  // TODO: Elevate item during drag
   private void setupShortcutList() {
-    shortcutsRecyclerView.setItemAnimator(SlideUpAlphaAnimator.create());
+    SlideUpAlphaAnimator animator = SlideUpAlphaAnimator.create();
+    animator.setSupportsChangeAnimations(false);
+    shortcutsRecyclerView.setItemAnimator(animator);
     shortcutsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     shortcutsRecyclerView.setAdapter(shortcutsAdapter.get());
     shortcutsRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(shortcutsRecyclerView));
@@ -219,8 +229,53 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         .ambWith(lifecycle().onDestroyCompletable())
         .subscribe();
 
+    // Drags.
+    ItemTouchHelper dragHelper = createDragTouchListener();
+    dragHelper.attachToRecyclerView(shortcutsRecyclerView);
+
     // Dismiss on outside click.
     rootViewGroup.setOnClickListener(o -> finish());
+  }
+
+  private ItemTouchHelper createDragTouchListener() {
+    return new ItemTouchHelper(new SimpleItemTouchHelperCallback() {
+      @Override
+      protected void onItemMove(ViewHolder source, ViewHolder target) {
+        AppShortcutViewHolder sourceViewHolder = (AppShortcutViewHolder) source;
+        AppShortcutViewHolder targetViewHolder = (AppShortcutViewHolder) target;
+
+        int fromPosition = sourceViewHolder.getAdapterPosition();
+        int toPosition = targetViewHolder.getAdapterPosition();
+
+        //noinspection ConstantConditions
+        List<AppShortcut> appShortcuts = Observable.fromIterable(shortcutsAdapter.get().getData())
+            .ofType(AppShortcut.class)
+            .toList()
+            .blockingGet();
+
+        if (fromPosition < toPosition) {
+          for (int i = fromPosition; i < toPosition; i++) {
+            Collections.swap(appShortcuts, i, i + 1);
+          }
+        } else {
+          for (int i = fromPosition; i > toPosition; i--) {
+            Collections.swap(appShortcuts, i, i - 1);
+          }
+        }
+
+        for (int i = 0; i < appShortcuts.size(); i++) {
+          AppShortcut shortcut = appShortcuts.get(i);
+          shortcutsRepository.get().add(shortcut.withRank(i))
+              .subscribeOn(io())
+              .subscribe();
+        }
+      }
+
+      @Override
+      public boolean isItemViewSwipeEnabled() {
+        return false;
+      }
+    });
   }
 
   private void setupSearchScreen() {
