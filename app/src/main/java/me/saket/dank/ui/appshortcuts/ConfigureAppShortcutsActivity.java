@@ -172,7 +172,6 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
     shortcutsRecyclerView.setItemAnimator(animator);
     shortcutsRecyclerView.setLayoutManager(new LinearLayoutManager(this));
     shortcutsRecyclerView.setAdapter(shortcutsAdapter.get());
-    shortcutsRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(shortcutsRecyclerView));
 
     Observable<List<AppShortcut>> replayedShortcuts = shortcutsRepository.get().shortcuts()
         .subscribeOn(io())
@@ -219,19 +218,22 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
                   error -> Toast.makeText(this, "That failed (╯°□°）╯︵ ┻━┻", Toast.LENGTH_SHORT).show());
         });
 
-    // Delete.
-    shortcutsAdapter.get().streamDeleteClicks()
-        .observeOn(io())
-        .flatMapCompletable(shortcutToDelete -> shortcutsRepository.get().delete(shortcutToDelete))
-        .ambWith(lifecycle().onDestroyCompletable())
-        .subscribe();
-
     // Drags.
     ItemTouchHelper dragHelper = new ItemTouchHelper(createDragAndDropCallbacks());
     dragHelper.attachToRecyclerView(shortcutsRecyclerView);
     shortcutsAdapter.get().streamDragStarts()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(viewHolder -> dragHelper.startDrag(viewHolder));
+
+    // Deletes.
+    // WARNING: THIS TOUCH LISTENER FOR SWIPE SHOULD BE REGISTERED AFTER DRAG-DROP LISTENER.
+    // Drag-n-drop's long-press listener does not get canceled if a row is being swiped.
+    shortcutsRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(shortcutsRecyclerView));
+    shortcutsAdapter.get().streamDeleteClicks()
+        .observeOn(io())
+        .flatMapCompletable(shortcutToDelete -> shortcutsRepository.get().delete(shortcutToDelete))
+        .ambWith(lifecycle().onDestroyCompletable())
+        .subscribe();
 
     // Dismiss on outside click.
     rootViewGroup.setOnClickListener(o -> finish());
