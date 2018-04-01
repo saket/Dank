@@ -13,6 +13,7 @@
     android:background="@color/black_opacity_20" />
 
   <RelativeLayout
+    android:id="@+id/login_content_container"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:layout_margin="@dimen/spacing24"

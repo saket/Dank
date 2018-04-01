@@ -7,16 +7,20 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.support.annotation.CheckResult;
+import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.CookieManager;
 import android.webkit.WebChromeClient;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.Toast;
+
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
@@ -27,6 +31,7 @@ import timber.log.Timber;
 public class LoginActivity extends DankActivity {
 
   @BindView(R.id.toolbar) Toolbar toolbar;
+  @BindView(R.id.login_content_container) ViewGroup contentViewGroup;
   @BindView(R.id.login_webview) WebView webView;
   @BindView(R.id.login_progress) View progressView;
 
@@ -45,7 +50,7 @@ public class LoginActivity extends DankActivity {
   }
 
   @Override
-  protected void onCreate(Bundle savedInstanceState) {
+  protected void onCreate(@Nullable Bundle savedInstanceState) {
     Dank.dependencyInjector().inject(this);
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_login);
@@ -54,6 +59,7 @@ public class LoginActivity extends DankActivity {
 
     toolbar.setBackground(null);
     toolbar.setTitle(R.string.login);
+    contentViewGroup.setClipToOutline(true);
 
     // Setup WebView.
     CookieManager.getInstance().removeAllCookies(null);
