@@ -430,4 +430,5 @@
   <string name="appshortcuts_cd_add_new_up_button">Go back to shortcuts</string>
   <string name="appshortcuts_add_new_search_hint">Search subreddit…</string>
   <string name="appshortcuts_done">Done</string>
+  <string name="appshortcuts_customize_later_hint">These shortcuts can later be customized again through Settings > Look &amp; Feel</string>
 </resources>

@@ -32,6 +32,17 @@
         android:background="@null"
         app:title="@string/activity_app_shortcuts" />
 
+      <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:lineSpacingExtra="@dimen/spacing2"
+        android:paddingEnd="@dimen/spacing24"
+        android:paddingStart="@dimen/spacing16"
+        android:paddingBottom="@dimen/spacing16"
+        android:text="@string/appshortcuts_customize_later_hint"
+        android:textColor="@color/white_opacity_50"
+        android:textIsSelectable="false" />
+
       <android.support.v7.widget.RecyclerView
         android:id="@+id/appshortcuts_shortcuts_recyclerview"
         android:layout_width="match_parent"
