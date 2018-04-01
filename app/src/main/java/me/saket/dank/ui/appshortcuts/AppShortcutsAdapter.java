@@ -169,14 +169,18 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
 
     @Override
     public void onDragStart() {
-      // TODO.
-      swipeableLayout.setElevation(10f);
+      swipeableLayout.animate()
+          .translationZ(swipeableLayout.getResources().getDimensionPixelSize(R.dimen.elevation_recyclerview_row_drag_n_drop))
+          .setDuration(100)
+          .start();
     }
 
     @Override
     public void onDragEnd() {
-      // TODO.
-      swipeableLayout.setElevation(0f);
+      swipeableLayout.animate()
+          .translationZ(0)
+          .setDuration(50)
+          .start();
     }
   }
 

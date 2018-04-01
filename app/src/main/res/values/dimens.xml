@@ -56,4 +56,7 @@
   <!-- Compose -->
   <dimen name="giphypicker_searchfield_top_spacing">@dimen/spacing16</dimen>
   <dimen name="elevation_fab">6dp</dimen>
+
+  <!-- App shortcuts -->
+  <dimen name="elevation_recyclerview_row_drag_n_drop">4dp</dimen>
 </resources>

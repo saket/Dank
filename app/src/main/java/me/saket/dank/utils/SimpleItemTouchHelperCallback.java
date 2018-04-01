@@ -89,7 +89,7 @@ public abstract class SimpleItemTouchHelperCallback extends ItemTouchHelper.Call
       viewHolder.itemView.setAlpha(alpha);
       viewHolder.itemView.setTranslationX(dX);
     } else {
-      super.onChildDraw(c, recyclerView, viewHolder, dX, dY, actionState, isCurrentlyActive);
+      viewHolder.itemView.setTranslationY(dY);
     }
   }
 
@@ -103,14 +103,10 @@ public abstract class SimpleItemTouchHelperCallback extends ItemTouchHelper.Call
         itemViewHolder.onDragStart();
       }
     }
-
-    super.onSelectedChanged(viewHolder, actionState);
   }
 
   @Override
   public void clearView(RecyclerView recyclerView, RecyclerView.ViewHolder viewHolder) {
-    super.clearView(recyclerView, viewHolder);
-
     viewHolder.itemView.setAlpha(ALPHA_FULL);
 
     if (viewHolder instanceof DraggableViewHolder) {
