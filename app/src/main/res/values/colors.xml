@@ -25,7 +25,7 @@
   <color name="color_accent_light">@color/teal_A100</color>
   <color name="color_accent_dark">@color/teal_A700</color>
   <color name="window_background">#292929</color>
-  <color name="dialog_background">@color/gray_800</color>
+  <color name="dialog_background">#393a3c</color>
   <color name="dialog_like_activity_window_background">@color/black_opacity_40</color>
 
   <color name="toolbar">@color/gray_900</color>
