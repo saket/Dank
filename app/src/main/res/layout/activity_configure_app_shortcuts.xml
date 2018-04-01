@@ -60,6 +60,7 @@
         android:layout_height="wrap_content"
         android:layout_gravity="end"
         android:layout_marginBottom="@dimen/spacing8"
+        android:layout_marginEnd="@dimen/spacing8"
         android:text="@string/appshortcuts_done" />
     </LinearLayout>
 
