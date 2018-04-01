@@ -1,13 +1,16 @@
 package me.saket.dank.ui.appshortcuts;
 
+import android.annotation.SuppressLint;
 import android.support.annotation.CheckResult;
 import android.support.annotation.NonNull;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
+import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -40,6 +43,7 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
 
   private final Lazy<AppShortcutSwipeActionsProvider> swipeActionsProvider;
   private final Relay<Object> addClicks = PublishRelay.create();
+  private final Relay<AppShortcutViewHolder> dragStarts = PublishRelay.create();
 
   @Inject
   public AppShortcutsAdapter(Lazy<AppShortcutSwipeActionsProvider> swipeActionsProvider) {
@@ -52,11 +56,17 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
     return swipeActionsProvider.get().deleteSwipeActions;
   }
 
+  @CheckResult
+  public Observable<AppShortcutViewHolder> streamDragStarts() {
+    return dragStarts;
+  }
+
   @Override
   protected RecyclerView.ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent, int viewType) {
     if (viewType == VIEW_TYPE_APP_SHORTCUT) {
       AppShortcutViewHolder holder = AppShortcutViewHolder.create(inflater, parent);
-      holder.setupGestures(swipeActionsProvider.get());
+      holder.setupDeleteGesture(swipeActionsProvider.get());
+      holder.setupDragGesture(dragStarts);
       return holder;
 
     } else if (viewType == VIEW_TYPE_PLACEHOLDER) {
@@ -113,6 +123,8 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
   {
     @BindView(R.id.appshortcut_item_swipeable_layout) SwipeableLayout swipeableLayout;
     @BindView(R.id.appshortcut_item_label) TextView labelView;
+    @BindView(R.id.appshortcut_item_drag) ImageButton dragButton;
+
     private AppShortcut shortcut;
 
     public AppShortcutViewHolder(View itemView) {
@@ -129,12 +141,22 @@ public class AppShortcutsAdapter extends RecyclerViewArrayAdapter<AppShortcutScr
       return swipeableLayout;
     }
 
-    public void setupGestures(AppShortcutSwipeActionsProvider swipeActionsProvider) {
+    public void setupDeleteGesture(AppShortcutSwipeActionsProvider swipeActionsProvider) {
       swipeableLayout.setSwipeActionIconProvider(swipeActionsProvider.iconProvider());
       swipeableLayout.setSwipeActions(swipeActionsProvider.actions());
       swipeableLayout.setOnPerformSwipeActionListener(action ->
           swipeActionsProvider.performSwipeAction(action, shortcut, swipeableLayout)
       );
+    }
+
+    @SuppressLint("ClickableViewAccessibility")
+    public void setupDragGesture(Relay<AppShortcutViewHolder> dragStarts) {
+      dragButton.setOnTouchListener((v, touchEvent) -> {
+        if (touchEvent.getAction() == MotionEvent.ACTION_DOWN) {
+          dragStarts.accept(this);
+        }
+        return dragButton.onTouchEvent(touchEvent);
+      });
     }
 
     public void set(AppShortcut shortcut) {

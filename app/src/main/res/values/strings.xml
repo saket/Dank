@@ -430,4 +430,5 @@
   <string name="appshortcuts_add_new_search_hint">Search subreddit…</string>
   <string name="appshortcuts_done">Done</string>
   <string name="appshrotcuts_swipe_action_delete">Delete</string>
+  <string name="appshortcuts_cd_reorder_shortcut">Re-order app shortcut</string>
 </resources>

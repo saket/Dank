@@ -165,9 +165,6 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         });
   }
 
-  // TODO: Start drag immediately when drag handle is tapped.
-  // TODO: Limit horizontal movement during drag.
-  // TODO: Update database
   // TODO: Elevate item during drag
   private void setupShortcutList() {
     SlideUpAlphaAnimator animator = SlideUpAlphaAnimator.create();
@@ -232,6 +229,9 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
     // Drags.
     ItemTouchHelper dragHelper = createDragTouchListener();
     dragHelper.attachToRecyclerView(shortcutsRecyclerView);
+    shortcutsAdapter.get().streamDragStarts()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(viewHolder -> dragHelper.startDrag(viewHolder));
 
     // Dismiss on outside click.
     rootViewGroup.setOnClickListener(o -> finish());
