@@ -36,8 +36,9 @@
     <item name="android:windowTranslucentNavigation">true</item>
   </style>
 
-  <style name="DankDialogTheme" parent="Theme.AppCompat.Dialog.Alert">
+  <style name="DankDialogTheme" parent="@style/Theme.AppCompat.Dialog.Alert">
     <item name="android:windowTitleStyle">@style/DankDialogTitleStyle</item>
+    <item name="android:windowBackground">@drawable/background_dialog</item>
   </style>
 
   <style name="DankTheme.DialogLikeActivity" parent="DankTheme.TransparentBackground">
