@@ -29,14 +29,16 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
-import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
+import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
+import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.RxUtils;
@@ -62,6 +64,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @Inject UrlParser urlParser;
   @Inject Lazy<Markdown> markdown;
   @Inject Lazy<MediaHostRepository> mediaHostRepository;
+  @Inject Lazy<AppShortcutRepository> appShortcutRepository;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
@@ -155,7 +158,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           .subscribe();
     });
 
-    addButton("Clear markdown cache", o-> {
+    addButton("Clear markdown cache", o -> {
       markdown.get().clearCache();
     });
 
@@ -174,6 +177,10 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
                 Timber.e(error, "Couldn't recycle database rows");
               }
           );
+    });
+
+    addButton("Configure app shortcuts", o -> {
+      startActivity(ConfigureAppShortcutsActivity.intent(this));
     });
   }
 

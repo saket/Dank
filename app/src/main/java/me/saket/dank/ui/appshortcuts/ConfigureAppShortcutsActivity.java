@@ -4,6 +4,8 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 
 import android.annotation.TargetApi;
+import android.content.Context;
+import android.content.Intent;
 import android.os.Build;
 import android.os.Bundle;
 import android.support.annotation.AnimRes;
@@ -94,6 +96,10 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
     Screen(@IdRes int viewId) {
       this.viewId = viewId;
     }
+  }
+
+  public static Intent intent(Context context) {
+    return new Intent(context, ConfigureAppShortcutsActivity.class);
   }
 
   @Override
