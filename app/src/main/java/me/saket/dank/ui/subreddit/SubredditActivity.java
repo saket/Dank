@@ -159,8 +159,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   private BehaviorRelay<SubredditUserProfileIconType> userProfileIconTypeChanges = BehaviorRelay.create();
 
   public static Intent intent(Context context, RedditSubredditLink subredditLink) {
-    return new Intent(context, SubredditActivity.class)
-        .putExtra(KEY_SUBREDDIT_LINK, subredditLink);
+    return intent(context).putExtra(KEY_SUBREDDIT_LINK, subredditLink);
+  }
+
+  public static Intent intent(Context context) {
+    return new Intent(context, SubredditActivity.class);
   }
 
   protected static void addStartExtrasToIntent(RedditSubredditLink subredditLink, @Nullable Rect expandFromShape, Intent intent) {

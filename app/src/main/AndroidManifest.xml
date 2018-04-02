@@ -22,15 +22,20 @@
     android:theme="@style/DankTheme.TransparentBackground">
 
     <activity
-      android:name=".ui.subreddit.SubredditActivity"
-      android:launchMode="singleTask"
-      android:theme="@style/DankTheme"
-      android:windowSoftInputMode="adjustResize">
+      android:name=".ui.splash.SplashActivity"
+      android:theme="@style/DankTheme.Splash">
+
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
     </activity>
+
+    <activity
+      android:name=".ui.subreddit.SubredditActivity"
+      android:launchMode="singleTask"
+      android:theme="@style/DankTheme"
+      android:windowSoftInputMode="adjustResize" />
 
     <activity android:name=".ui.subreddit.SubredditActivityWithTransparentWindowBackground" />
 
@@ -102,6 +107,7 @@
     <activity
       android:name=".deeplinks.DeepLinkHandlingActivity"
       android:theme="@android:style/Theme.NoDisplay">
+
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
 

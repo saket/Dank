@@ -25,6 +25,10 @@
     <item name="textAppearancePopupMenuHeader">@style/DankPopupMenuHeaderTextAppearance</item>
   </style>
 
+  <style name="DankTheme.Splash">
+    <item name="android:windowBackground">@drawable/background_splash</item>
+  </style>
+
   <style name="DankTheme.TransparentBackground">
     <item name="android:windowIsTranslucent">true</item>
     <item name="android:windowBackground">@android:color/transparent</item>
