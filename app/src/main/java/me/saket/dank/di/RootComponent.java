@@ -12,6 +12,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.deeplinks.DeepLinkHandlingActivity;
 import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
 import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
+import me.saket.dank.ui.subreddit.NewSubredditSubscriptionDialog;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
@@ -134,4 +135,6 @@ public interface RootComponent {
   void inject(ConfigureAppShortcutsActivity target);
 
   void inject(DeepLinkHandlingActivity target);
+
+  void inject(NewSubredditSubscriptionDialog target);
 }

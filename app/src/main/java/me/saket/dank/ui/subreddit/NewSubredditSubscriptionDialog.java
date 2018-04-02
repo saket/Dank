@@ -1,6 +1,7 @@
 package me.saket.dank.ui.subreddit;
 
-import static me.saket.dank.utils.RxUtils.applySchedulersSingle;
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
@@ -18,14 +19,18 @@ import android.widget.EditText;
 
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
-import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Subreddit;
+
+import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
+import dagger.Lazy;
 import me.saket.dank.R;
+import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankDialogFragment;
 import me.saket.dank.utils.Keyboards;
@@ -40,13 +45,12 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
   @BindView(R.id.newsubredditdialog_subreddit_inputlayout) TextInputLayout subredditViewInputLayout;
   @BindView(R.id.newsubredditdialog_progress) View progressView;
 
+  @Inject Lazy<ErrorResolver> errorResolver;
+
   public interface Callback {
     void onEnterNewSubredditForSubscription(Subreddit newSubreddit);
   }
 
-  /**
-   * Show this dialog.
-   */
   public static void show(FragmentManager fragmentManager) {
     String tag = NewSubredditSubscriptionDialog.class.getSimpleName();
     NewSubredditSubscriptionDialog dialog = (NewSubredditSubscriptionDialog) fragmentManager.findFragmentByTag(tag);
@@ -68,11 +72,11 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
     }
   }
 
-
   @NonNull
   @Override
   @SuppressLint("InflateParams")
   public Dialog onCreateDialog(Bundle savedInstanceState) {
+    Dank.dependencyInjector().inject(this);
     View dialogLayout = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_subscribe_to_new_subreddit, null);
     ButterKnife.bind(this, dialogLayout);
 
@@ -126,32 +130,40 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
     //noinspection ConstantConditions
     Keyboards.hide(getContext(), subredditView);
 
-    Dank.reddit().findSubreddit(subredditName)
-        .compose(applySchedulersSingle())
-        .takeUntil(lifecycle().onDestroyFlowable())
-        .subscribe(subreddit -> {
-          //noinspection ConstantConditions
-          ((Callback) getActivity()).onEnterNewSubredditForSubscription(subreddit);
-          dismissWithKeyboardDismissDelay();
+    Dank.reddit().findSubreddit2(subredditName)
+        .subscribeOn(io())
+        .observeOn(mainThread())
+        .takeUntil(lifecycle().onDestroyCompletable())
+        .subscribe(searchResult -> {
+          switch (searchResult.type()) {
+            case SUCCESS:
+              ((Callback) requireActivity()).onEnterNewSubredditForSubscription(((SubredditSearchResult.Success) searchResult).subreddit());
+              dismissWithKeyboardDismissDelay();
+              break;
 
-        }, error -> {
-          // TODO: 17/04/17 Network error?
-          progressView.setVisibility(View.GONE);
+            case ERROR_PRIVATE:
+              subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_private_subreddit));
+              break;
 
-          if (error instanceof IllegalArgumentException && error.getMessage().contains("is private")) {
-            subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_private_subreddit));
+            case ERROR_NOT_FOUND:
+              subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_subreddit_doesnt_exist));
+              break;
 
-          } else if (error instanceof IllegalArgumentException && error.getMessage().contains("does not exist")
-              || (error instanceof NetworkException && ((NetworkException) error).getResponse().getStatusCode() == 404))
-          {
-            subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_subreddit_doesnt_exist));
+            case ERROR_UNKNOWN:
+              subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_unknown));
 
-          } else {
-            Timber.e(error, "Couldn't subscribe");
-            subredditViewInputLayout.setError(getString(R.string.newsubredditdialog_error_unknown));
+              Throwable error = ((SubredditSearchResult.UnknownError) searchResult).error();
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't subscribe"));
+              break;
+
+            default:
+              throw new AssertionError("Unknown result: " + searchResult);
           }
 
-          Timber.e(error, "Couldn't subscribe");
+          if (!(searchResult instanceof SubredditSearchResult.Success)) {
+            progressView.setVisibility(View.GONE);
+          }
         });
   }
 
@@ -159,8 +171,7 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
    * Assuming that the keyboard was visible, we dismiss the dialog after dismissing the keyboard.
    */
   private void dismissWithKeyboardDismissDelay() {
-    Keyboards.hide(getContext(), subredditView);
+    Keyboards.hide(requireContext(), subredditView);
     subredditView.postDelayed(() -> dismiss(), 150);
   }
-
 }
