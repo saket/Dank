@@ -1,8 +1,12 @@
 package me.saket.dank.urlparser;
 
+import static junit.framework.Assert.assertEquals;
+
 import android.os.Parcelable;
 
 import com.google.auto.value.AutoValue;
+
+import me.saket.dank.utils.VideoFormat;
 
 /**
  * Reddit uses DASH for its videos, which automatically switches between video qualities
@@ -37,6 +41,7 @@ public abstract class RedditHostedVideoLink extends MediaLink implements Parcela
   public static Link create(String unparsedUrl, RedditHostedVideoDashPlaylist playlist) {
     String dashPlaylistUrl = playlist.dashUrl();
     String directVideoUrlWithoutAudio = playlist.directUrlWithoutAudio();
+    assertEquals(true, VideoFormat.parse(dashPlaylistUrl) == VideoFormat.DASH);
     return new AutoValue_RedditHostedVideoLink(unparsedUrl, dashPlaylistUrl, directVideoUrlWithoutAudio);
   }
 }

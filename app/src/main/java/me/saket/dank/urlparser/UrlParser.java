@@ -1,7 +1,5 @@
 package me.saket.dank.urlparser;
 
-import static junit.framework.Assert.assertEquals;
-
 import android.net.Uri;
 import android.support.annotation.Nullable;
 import android.text.Html;
@@ -22,7 +20,6 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Urls;
-import me.saket.dank.utils.VideoFormat;
 
 /**
  * Parses URLs found in the wilderness of Reddit and categorizes them into {@link Link} subclasses.
@@ -117,7 +114,7 @@ public class UrlParser {
           Optional<String> urlSubdomain = Urls.subdomain(linkURI);
           if (urlSubdomain.isPresent() && urlSubdomain.get().equals("v")) {
             // TODO: When submission optional isn't present, treat it as an unresolved reddit video link.
-            parsedLink = createRedditHostedVideoLink(url, submission.get());
+            parsedLink = createRedditHostedVideoLink(url, submission);
           } else {
             parsedLink = ExternalLink.create(url);
           }
@@ -126,7 +123,7 @@ public class UrlParser {
       } else if (urlDomain.endsWith("redd.it")) {
         Optional<String> urlSubdomain = Urls.subdomain(linkURI);
         if (urlSubdomain.isPresent() && urlSubdomain.get().equals("v")) {
-          parsedLink = createRedditHostedVideoLink(url, submission.get());
+          parsedLink = createRedditHostedVideoLink(url, submission);
 
         } else if ((urlSubdomain.isEmpty() || urlSubdomain.get().equals("i")) // i.redd.it
             && (!isImageOrGifUrlPath(urlPath) && !isVideoPath(urlPath)))
@@ -204,18 +201,13 @@ public class UrlParser {
     }
   }
 
-  private static Link createRedditHostedVideoLink(String url, Submission submission) {
-    Optional<RedditHostedVideoDashPlaylist> playlist = JrawUtils.redditVideoDashPlaylistUrl(submission);
-
-    if (playlist.isPresent()) {
-      assertEquals(true, VideoFormat.parse(playlist.get().dashUrl()) == VideoFormat.DASH);
-      return RedditHostedVideoLink.create(url, playlist.get());
-
-    } else {
-      // Probably just a "v.redd.it" link to a submission.
-      // TODO v2: treat this as an unresolved reddit video link.
-      return ExternalLink.create(url);
-    }
+  private static Link createRedditHostedVideoLink(String url, Optional<Submission> optionalSubmission) {
+    return optionalSubmission
+        .flatMap(submission -> JrawUtils.redditVideoDashPlaylistUrl(submission))
+        .map(playlist -> RedditHostedVideoLink.create(url, playlist))
+        // Or else, probably just a "v.redd.it" link to a submission.
+        // TODO v2: treat this as an unresolved reddit video link.
+        .orElse(ExternalLink.create(url));
   }
 
   private static Link.Type getMediaUrlType(String urlPath) {
