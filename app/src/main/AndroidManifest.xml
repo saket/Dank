@@ -21,15 +21,19 @@
     android:supportsRtl="true"
     android:theme="@style/DankTheme.TransparentBackground">
 
-    <activity
-      android:name=".ui.splash.SplashActivity"
-      android:theme="@style/DankTheme.Splash">
+    <activity-alias
+      android:name=".Launcher"
+      android:targetActivity=".ui.splash.SplashActivity">
 
       <intent-filter>
         <action android:name="android.intent.action.MAIN" />
         <category android:name="android.intent.category.LAUNCHER" />
       </intent-filter>
-    </activity>
+    </activity-alias>
+
+    <activity
+      android:name=".ui.splash.SplashActivity"
+      android:theme="@style/DankTheme.Splash" />
 
     <activity
       android:name=".ui.subreddit.SubredditActivity"
