@@ -23,7 +23,6 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.deeplinks.DeepLinkHandlingActivity;
-import me.saket.dank.urlparser.RedditSubredditLink;
 import timber.log.Timber;
 
 @TargetApi(Build.VERSION_CODES.N_MR1)
@@ -90,13 +89,11 @@ public class AppShortcutRepository {
               int androidRank = shortcuts.size() - i;
               AppShortcut shortcut = shortcuts.get(i);
 
-              RedditSubredditLink subredditLink = RedditSubredditLink.create(shortcut.label());
-
-              shortcutInfos.add(new ShortcutInfo.Builder(appContext, shortcut.label())
+              shortcutInfos.add(new ShortcutInfo.Builder(appContext, shortcut.id())
                   .setShortLabel(shortcut.label())
                   .setRank(androidRank)
                   .setIcon(Icon.createWithResource(appContext, R.drawable.ic_shortcut_subreddit))
-                  .setIntent(DeepLinkHandlingActivity.appShortcutIntent(appContext, subredditLink))
+                  .setIntent(DeepLinkHandlingActivity.appShortcutIntent(appContext, shortcut))
                   .build());
             }
           }

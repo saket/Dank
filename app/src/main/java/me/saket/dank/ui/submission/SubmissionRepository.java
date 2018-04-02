@@ -319,7 +319,7 @@ public class SubmissionRepository {
               while (true) {
                 FetchResult fetchResult = fetchSubmissionsFromRemoteWithAnchor(folder, nextAnchor);
                 votingManager.removePendingVotesForFetchedSubmissions(fetchResult.fetchedSubmissions()).subscribe();
-                Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
+                //Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
 
                 SaveResult saveResult = saveSubmissions(folder, fetchResult.fetchedSubmissions());
                 distinctNewItems.addAll(saveResult.savedItems());
