@@ -3,7 +3,6 @@ package me.saket.dank.ui.subreddit;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static io.reactivex.schedulers.Schedulers.single;
-import static me.saket.dank.utils.RxUtils.applySchedulers;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.executeOnMeasure;
@@ -142,7 +141,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Inject CachePreFiller cachePreFiller;
   @Inject SubscriptionRepository subscriptionRepository;
   @Inject UserPreferences userPrefs;
-  @Inject UserSessionRepository userSessionRepository;
   @Inject SubredditUiConstructor uiConstructor;
   @Inject SubredditSubmissionsAdapter submissionsAdapter;
 
@@ -151,6 +149,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Inject Lazy<VotingManager> votingManager;
   @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
   @Inject Lazy<SubredditController> subredditController;
+  @Inject Lazy<UserSessionRepository> userSessionRepository;
 
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
@@ -243,19 +242,26 @@ public class SubredditActivity extends DankPullCollapsibleActivity
           }
         });
 
-    // Toggle the subscribe button's visibility.
-    subredditChangesStream
-        .switchMap(subredditName -> subscriptionRepository.isSubscribed(subredditName))
-        .compose(applySchedulers())
-        .startWith(Boolean.TRUE)
-        .onErrorResumeNext(error -> {
-          logError("Couldn't get subscribed status for %s", subredditChangesStream.getValue()).accept(error);
-          return Observable.just(false);
+    // Subscribe button.
+    userSessionRepository.get()
+        .streamSessions()
+        .switchMap(session -> {
+          if (session.isEmpty()) {
+            return Observable.just(View.GONE);
+          }
+          return subredditChangesStream
+              .switchMap(subredditName -> subscriptionRepository.isSubscribed(subredditName)
+                  .subscribeOn(io())
+                  .observeOn(mainThread())
+                  .map(isSubscribed -> isSubscribed ? View.GONE : View.VISIBLE))
+              .startWith(View.GONE)
+              .doOnError(e -> Timber.e(e, "Couldn't get subscribed status for %s", subredditChangesStream.getValue()))
+              .onErrorResumeNext(Observable.just(View.GONE));
         })
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(isSubscribed -> subscribeButton.setVisibility(isSubscribed ? View.GONE : View.VISIBLE));
+        .subscribe(subscribeVisibility -> subscribeButton.setVisibility(subscribeVisibility));
 
-    userSessionRepository.streamSessions()
+    userSessionRepository.get().streamSessions()
         .skip(1)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(session -> {
@@ -363,7 +369,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
             invalidateOptionsMenu();
 
           } else if (isUserProfileSheetVisible()) {
-            setTitle(getString(R.string.user_name_u_prefix, userSessionRepository.loggedInUserName()));
+            setTitle(getString(R.string.user_name_u_prefix, userSessionRepository.get().loggedInUserName()));
           }
 
           toolbarTitleArrowView.setState(ExpandIconView.LESS, true);
@@ -716,7 +722,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         return true;
 
       case R.id.action_user_profile:
-        if (userSessionRepository.isUserLoggedIn()) {
+        if (userSessionRepository.get().isUserLoggedIn()) {
           showUserProfileSheet();
         } else {
           startActivity(LoginActivity.intent(this));
