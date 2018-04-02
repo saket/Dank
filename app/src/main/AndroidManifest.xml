@@ -100,7 +100,7 @@
       android:windowSoftInputMode="adjustNothing" />
 
     <activity
-      android:name=".deeplinks.DeepLinkActivity"
+      android:name=".deeplinks.DeepLinkHandlingActivity"
       android:theme="@android:style/Theme.NoDisplay">
       <intent-filter>
         <action android:name="android.intent.action.VIEW" />
@@ -109,6 +109,30 @@
         <category android:name="android.intent.category.BROWSABLE" />
 
         <data android:scheme="dank" />
+        <data
+          android:host="*reddit.com"
+          android:pathPattern=".*"
+          android:scheme="https" />
+        <data
+          android:host="*reddit.com"
+          android:pathPattern=".*"
+          android:scheme="http" />
+        <data
+          android:host="redd.it"
+          android:pathPattern=".*"
+          android:scheme="https" />
+        <data
+          android:host="redd.it"
+          android:pathPattern=".*"
+          android:scheme="http" />
+        <data
+          android:host="amp.reddit.com"
+          android:pathPattern=".*"
+          android:scheme="https" />
+        <data
+          android:host="www.google.com"
+          android:pathPrefix="/amp/s/amp.reddit.com"
+          android:scheme="https" />
       </intent-filter>
     </activity>
 

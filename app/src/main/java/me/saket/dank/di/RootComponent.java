@@ -9,6 +9,7 @@ import me.saket.dank.cache.CacheModule;
 import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.deeplinks.DeepLinkHandlingActivity;
 import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
 import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
@@ -131,4 +132,6 @@ public interface RootComponent {
   void inject(UserProfileSheetView target);
 
   void inject(ConfigureAppShortcutsActivity target);
+
+  void inject(DeepLinkHandlingActivity target);
 }

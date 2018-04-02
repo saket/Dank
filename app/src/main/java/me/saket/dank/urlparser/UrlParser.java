@@ -116,6 +116,7 @@ public class UrlParser {
         } else {
           Optional<String> urlSubdomain = Urls.subdomain(linkURI);
           if (urlSubdomain.isPresent() && urlSubdomain.get().equals("v")) {
+            // TODO: When submission optional isn't present, treat it as an unresolved reddit video link.
             parsedLink = createRedditHostedVideoLink(url, submission.get());
           } else {
             parsedLink = ExternalLink.create(url);
