@@ -20,18 +20,21 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 import io.reactivex.Observable;
+import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
 import io.reactivex.functions.Consumer;
 import io.reactivex.plugins.RxJavaPlugins;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.user.UserAuthListener;
 import timber.log.Timber;
 
 public class DankApplication extends Application {
 
+  /**
+   * Holds explicit references to observers that could get cleaned up by GC.
+   */
   @SuppressWarnings("FieldCanBeLocal")
-  private UserAuthListener userAuthListener;
+  private final CompositeDisposable referenceHolders = new CompositeDisposable();
 
   @Override
   public void onCreate() {
@@ -66,20 +69,23 @@ public class DankApplication extends Application {
         .replay()
         .refCount();
 
-    // WARNING: userAuthListener needs to be a field variable to avoid GC.
-    userAuthListener = Dank.dependencyInjector().userAuthListener();
-    userAuthListener.startListening(this)
-        .subscribeOn(Schedulers.io())
-        .startWith(initialDelayStream)
-        .subscribe();
+    referenceHolders.add(
+        Dank.dependencyInjector().userAuthListener()
+            .startListening(this)
+            .subscribeOn(Schedulers.io())
+            .startWith(initialDelayStream)
+            .subscribe());
 
     LazyThreeTen.init(this);
-    initialDelayStream.subscribe(o -> LazyThreeTen.cacheZones());
+    referenceHolders.add(
+        initialDelayStream.subscribe(o -> LazyThreeTen.cacheZones()));
 
-    initialDelayStream
-        .filter(o -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1)
-        .map(o -> Dank.dependencyInjector().shortcutRepository())
-        .subscribe(repository -> repository.updateInstalledShortcuts());
+    referenceHolders.add(
+        initialDelayStream
+            .filter(o -> Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1)
+            .map(o -> Dank.dependencyInjector().shortcutRepository())
+            .flatMapCompletable(repository -> repository.updateInstalledShortcuts())
+            .subscribe());
   }
 
   @TargetApi(Build.VERSION_CODES.O)
