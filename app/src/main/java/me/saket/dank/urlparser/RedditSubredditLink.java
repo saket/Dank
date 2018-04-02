@@ -20,4 +20,8 @@ public abstract class RedditSubredditLink extends RedditLink implements Parcelab
   public static RedditSubredditLink create(String unparsedUrl, String subredditName) {
     return new AutoValue_RedditSubredditLink(unparsedUrl, subredditName);
   }
+
+  public static RedditSubredditLink create(String subredditName) {
+    return new AutoValue_RedditSubredditLink("https://reddit.com/r/" + subredditName, subredditName);
+  }
 }

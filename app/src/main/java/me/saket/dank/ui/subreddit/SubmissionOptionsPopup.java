@@ -153,7 +153,7 @@ public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
       case ID_SHOW_SUBREDDIT:
         String subredditName = submission.getSubredditName();
         urlRouter.get()
-            .forLink(RedditSubredditLink.create("https://reddit.com/r/" + subredditName, subredditName))
+            .forLink(RedditSubredditLink.create(subredditName))
             .expandFromBelowToolbar()
             .open(c);
         break;

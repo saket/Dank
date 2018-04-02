@@ -12,6 +12,7 @@ import static me.saket.dank.utils.Views.setPaddingTop;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
 import android.animation.LayoutTransition;
+import android.content.Context;
 import android.content.Intent;
 import android.graphics.Point;
 import android.graphics.Rect;
@@ -117,6 +118,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   private static final String KEY_IS_SUBREDDIT_PICKER_SHEET_VISIBLE = "isSubredditPickerVisible";
   private static final String KEY_IS_USER_PROFILE_SHEET_VISIBLE = "isUserProfileSheetVisible";
   private static final String KEY_SORTING_AND_TIME_PERIOD = "sortingAndTimePeriod";
+  private static final String KEY_SUBREDDIT_LINK = "subredditLink";
 
   @BindView(R.id.subreddit_root) IndependentExpandablePageLayout contentPage;
   @BindView(R.id.subreddit_submission_page) SubmissionPageLayout submissionPage;
@@ -156,6 +158,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   private BehaviorRelay<Boolean> toolbarRefreshVisibilityStream = BehaviorRelay.createDefault(true);
   private ReplaySubject<UiEvent> uiEvents = ReplaySubject.create();
   private BehaviorRelay<SubredditUserProfileIconType> userProfileIconTypeChanges = BehaviorRelay.create();
+
+  public static Intent intent(Context context, RedditSubredditLink subredditLink) {
+    return new Intent(context, SubredditActivity.class)
+        .putExtra(KEY_SUBREDDIT_LINK, subredditLink);
+  }
 
   protected static void addStartExtrasToIntent(RedditSubredditLink subredditLink, @Nullable Rect expandFromShape, Intent intent) {
     intent.putExtra(KEY_INITIAL_SUBREDDIT_LINK, subredditLink);
@@ -207,6 +214,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity
       }
     }
 
+    if (getIntent().hasExtra(KEY_SUBREDDIT_LINK)) {
+      RedditSubredditLink initialSubreddit = getIntent().getParcelableExtra(KEY_SUBREDDIT_LINK);
+      subredditChangesStream.accept(initialSubreddit.name());
+    }
+
     // Animate changes in sorting button's width on text change.
     LayoutTransition layoutTransition = sortingModeContainer.getLayoutTransition();
     layoutTransition.enableTransitionType(LayoutTransition.CHANGING);
@@ -256,11 +268,21 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   }
 
   @Override
+  protected void onNewIntent(Intent intent) {
+    super.onNewIntent(intent);
+    setIntent(intent);
+
+    if (intent.hasExtra(KEY_SUBREDDIT_LINK)) {
+      RedditSubredditLink subredditLink = intent.getParcelableExtra(KEY_SUBREDDIT_LINK);
+      subredditChangesStream.accept(subredditLink.name());
+    }
+  }
+
+  @Override
   public void onDestroy() {
     super.onDestroy();
 
     if (isFinishing()) {
-      // Recycle cached rows in DB.
       DatabaseCacheRecyclerJobService.schedule(this);
     }
   }

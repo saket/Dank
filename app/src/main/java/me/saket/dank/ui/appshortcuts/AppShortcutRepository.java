@@ -22,6 +22,8 @@ import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import me.saket.dank.R;
+import me.saket.dank.deeplinks.DeepLinkHandlingActivity;
+import me.saket.dank.urlparser.RedditSubredditLink;
 import timber.log.Timber;
 
 @TargetApi(Build.VERSION_CODES.N_MR1)
@@ -67,8 +69,8 @@ public class AppShortcutRepository {
   @CheckResult
   public Completable updateInstalledShortcuts() {
     return shortcuts()
-        .take(1)
-        .flatMapCompletable(shortcuts -> Completable.fromAction(() -> {
+        .firstOrError()
+        .map(shortcuts -> {
           List<ShortcutInfo> shortcutInfos;
 
           if (shortcuts.isEmpty()) {
@@ -80,25 +82,28 @@ public class AppShortcutRepository {
             shortcutInfos = Collections.singletonList(configureShortcut);
 
           } else {
-            // TODO: Open SubredditActivity.
             shortcutInfos = new ArrayList<>(MAX_SHORTCUT_COUNT);
 
             for (int i = 0; i < shortcuts.size(); i++) {
               // Android displays shortcuts in descending rank, but our UI for configuring
-              // them uses ascending. So I'm manually reversing it agian here.
+              // them uses ascending. So I'm manually reversing it again here.
               int androidRank = shortcuts.size() - i;
-
               AppShortcut shortcut = shortcuts.get(i);
+
+              RedditSubredditLink subredditLink = RedditSubredditLink.create(shortcut.label());
+
               shortcutInfos.add(new ShortcutInfo.Builder(appContext, shortcut.label())
                   .setShortLabel(shortcut.label())
                   .setRank(androidRank)
                   .setIcon(Icon.createWithResource(appContext, R.drawable.ic_shortcut_subreddit))
-                  .setIntent(new Intent(Intent.ACTION_VIEW, Uri.parse(ConfigureAppShortcutsActivity.DEEP_LINK)))
+                  .setIntent(DeepLinkHandlingActivity.appShortcutIntent(appContext, subredditLink))
                   .build());
             }
           }
-
-          shortcutManager.get().setDynamicShortcuts(shortcutInfos);
-        }));
+          return shortcutInfos;
+        })
+        .flatMapCompletable(shortcutInfos -> Completable.fromAction(() ->
+            shortcutManager.get().setDynamicShortcuts(shortcutInfos))
+        );
   }
 }
