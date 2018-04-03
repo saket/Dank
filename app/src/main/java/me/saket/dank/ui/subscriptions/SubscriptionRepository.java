@@ -418,7 +418,12 @@ public class SubscriptionRepository {
       SubredditSubscription updatedSubscription = subscription.toBuilder()
           .visitCount(subscription.visitCount() + 1)
           .build();
-      database.get().insert(SubredditSubscription.TABLE_NAME, updatedSubscription.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
+
+      database.get().update(
+          SubredditSubscription.TABLE_NAME,
+          updatedSubscription.toContentValues(),
+          SubredditSubscription.WHERE_NAME,
+          subscription.name());
     });
   }
 

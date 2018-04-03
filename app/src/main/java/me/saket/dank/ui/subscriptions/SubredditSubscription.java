@@ -56,10 +56,8 @@ public abstract class SubredditSubscription implements Parcelable {
           + " AND " + COLUMN_IS_HIDDEN + " != '" + HIDDEN + "'"
           + " ORDER BY " + COLUMN_NAME + " COLLATE NOCASE";
 
-  static final String WHERE_NAME = String.format(
-      "%s = ?",
-      COLUMN_NAME
-  );
+  static final String WHERE_NAME
+      = COLUMN_NAME + " = ?";
 
   public enum PendingState {
     NONE,
