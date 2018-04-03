@@ -22,6 +22,7 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.v7.widget.PopupMenu;
 import android.support.v7.widget.RecyclerView;
 import android.view.Gravity;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.ViewPropertyAnimator;
@@ -44,15 +45,17 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import butterknife.OnEditorAction;
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.subreddit.Subscribeable;
 import me.saket.dank.ui.subreddit.SubredditActivity;
+import me.saket.dank.ui.subreddit.Subscribeable;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideLeftAlphaAnimator;
@@ -88,6 +91,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   @BindColor(R.color.subredditpicker_subreddit_button_tint_selected) int focusedSubredditButtonTintColor;
 
   @Inject SubscriptionRepository subscriptionRepository;
+  @Inject Lazy<DankRedditClient> dankRedditClient;
 
   private ViewGroup activityRootLayout;
   private ToolbarExpandableSheet parentSheet;
@@ -428,9 +432,13 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     popupMenu.inflate(R.menu.menu_subredditpicker_subreddit_options);
 
     popupMenu.getMenu().findItem(R.id.action_set_subreddit_as_default).setVisible(!subscriptionRepository.isDefault(subscription));
-    popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit).setVisible(!subscriptionRepository.isFrontpage(subscription.name()));
     popupMenu.getMenu().findItem(R.id.action_hide_subreddit).setVisible(!subscription.isHidden());
     popupMenu.getMenu().findItem(R.id.action_unhide_subreddit).setVisible(subscription.isHidden());
+
+    MenuItem unsubscribeItem = popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit);
+    boolean needsRemoteSubscription = dankRedditClient.get().needsRemoteSubscription(subscription.name());
+    unsubscribeItem.setVisible(!subscriptionRepository.isFrontpage(subscription.name()));
+    unsubscribeItem.setTitle(needsRemoteSubscription ? R.string.subredditpicker_unsubscribe : R.string.subredditpicker_remove);
 
     // Enable item change animation, until the user starts searching.
     subredditList.setItemAnimator(itemAnimator);

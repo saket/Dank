@@ -1,18 +1,18 @@
 <?xml version="1.0" encoding="utf-8"?>
 <menu xmlns:android="http://schemas.android.com/apk/res/android">
-    <item
-        android:id="@+id/action_set_subreddit_as_default"
-        android:title="@string/subredditpicker_set_as_default" />
+  <item
+    android:id="@+id/action_set_subreddit_as_default"
+    android:title="@string/subredditpicker_set_as_default" />
 
-    <item
-        android:id="@+id/action_unsubscribe_subreddit"
-        android:title="@string/subredditpicker_unsubscribe" />
+  <item
+    android:id="@+id/action_unsubscribe_subreddit"
+    android:title="@string/subredditpicker_unsubscribe" />
 
-    <item
-        android:id="@+id/action_hide_subreddit"
-        android:title="@string/subredditpicker_hide" />
+  <item
+    android:id="@+id/action_hide_subreddit"
+    android:title="@string/subredditpicker_hide" />
 
-    <item
-        android:id="@+id/action_unhide_subreddit"
-        android:title="@string/subredditpicker_unhide" />
+  <item
+    android:id="@+id/action_unhide_subreddit"
+    android:title="@string/subredditpicker_unhide" />
 </menu>
