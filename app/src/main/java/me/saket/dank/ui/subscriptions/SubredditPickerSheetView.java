@@ -56,6 +56,7 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.subreddit.Subscribeable;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SlideLeftAlphaAnimator;
@@ -92,6 +93,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
 
   @Inject Lazy<SubscriptionRepository> subscriptionRepository;
   @Inject Lazy<DankRedditClient> dankRedditClient;
+  @Inject Lazy<UserSessionRepository> userSessionRepository;
 
   private ViewGroup activityRootLayout;
   private ToolbarExpandableSheet parentSheet;
@@ -436,9 +438,14 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     popupMenu.getMenu().findItem(R.id.action_unhide_subreddit).setVisible(subscription.isHidden());
 
     MenuItem unsubscribeItem = popupMenu.getMenu().findItem(R.id.action_unsubscribe_subreddit);
-    boolean needsRemoteSubscription = dankRedditClient.get().needsRemoteSubscription(subscription.name());
     unsubscribeItem.setVisible(!subscriptionRepository.get().isFrontpage(subscription.name()));
-    unsubscribeItem.setTitle(needsRemoteSubscription ? R.string.subredditpicker_unsubscribe : R.string.subredditpicker_remove);
+
+    if (userSessionRepository.get().isUserLoggedIn()) {
+      boolean needsRemoteSubscription = dankRedditClient.get().needsRemoteSubscription(subscription.name());
+      unsubscribeItem.setTitle(needsRemoteSubscription ? R.string.subredditpicker_unsubscribe : R.string.subredditpicker_remove);
+    } else {
+      unsubscribeItem.setTitle(R.string.subredditpicker_remove);
+    }
 
     // Enable item change animation, until the user starts searching.
     subredditList.setItemAnimator(itemAnimator);
