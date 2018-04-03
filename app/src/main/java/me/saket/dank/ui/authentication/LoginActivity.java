@@ -40,10 +40,6 @@ public class LoginActivity extends DankActivity {
   private DankRedditClient.UserLoginHelper userLoginHelper;
   private boolean loggedIn;
 
-  public static void start(Context context) {
-    context.startActivity(new Intent(context, LoginActivity.class));
-  }
-
   @CheckResult
   public static Intent intent(Context context) {
     return new Intent(context, LoginActivity.class);

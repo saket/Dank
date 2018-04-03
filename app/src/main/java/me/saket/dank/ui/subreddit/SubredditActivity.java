@@ -57,6 +57,7 @@ import me.saket.dank.cache.CachePreFiller;
 import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.data.VotingManager;
@@ -149,6 +150,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
   @Inject Lazy<SubredditController> subredditController;
   @Inject Lazy<UserSessionRepository> userSessionRepository;
+  @Inject Lazy<OnLoginRequireListener> loginRequireListener;
 
   private BehaviorRelay<String> subredditChangesStream = BehaviorRelay.create();
   private BehaviorRelay<SortingAndTimePeriod> sortingChangesStream = BehaviorRelay.create();
@@ -244,22 +246,15 @@ public class SubredditActivity extends DankPullCollapsibleActivity
           }
         });
 
-    // Subscribe button
-    userSessionRepository.get()
-        .streamSessions()
-        .switchMap(session -> {
-          if (session.isEmpty()) {
-            return Observable.just(View.GONE);
-          }
-          return subredditChangesStream
-              .switchMap(subredditName -> subscriptionRepository.isSubscribed(subredditName)
-                  .subscribeOn(io())
-                  .observeOn(mainThread())
-                  .map(isSubscribed -> isSubscribed ? View.GONE : View.VISIBLE))
-              .startWith(View.GONE)
-              .doOnError(e -> Timber.e(e, "Couldn't get subscribed status for %s", subredditChangesStream.getValue()))
-              .onErrorResumeNext(Observable.just(View.GONE));
-        })
+    // Subscribe button.
+    subredditChangesStream
+        .switchMap(subredditName -> subscriptionRepository.isSubscribed(subredditName)
+            .subscribeOn(io())
+            .observeOn(mainThread())
+            .map(isSubscribed -> isSubscribed ? View.GONE : View.VISIBLE))
+        .startWith(View.GONE)
+        .doOnError(e -> Timber.e(e, "Couldn't get subscribed status for %s", subredditChangesStream.getValue()))
+        .onErrorResumeNext(Observable.just(View.GONE))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(subscribeVisibility -> subscribeButton.setVisibility(subscribeVisibility));
 
@@ -297,6 +292,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
   @OnClick(R.id.subreddit_subscribe)
   public void onClickSubscribeToSubreddit() {
+    if (!userSessionRepository.get().isUserLoggedIn()) {
+      loginRequireListener.get().onLoginRequired();
+      return;
+    }
+
     String subredditName = subredditChangesStream.getValue();
     subscribeButton.setVisibility(View.GONE);
 
