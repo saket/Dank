@@ -12,15 +12,16 @@ import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.cache.DiskLruCachePathResolver;
 import me.saket.dank.cache.MoshiStoreJsonParser;
 import me.saket.dank.cache.StoreFilePersister;
+import me.saket.dank.di.DankApi;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.LinkMetadata;
-import me.saket.dank.di.DankApi;
 import me.saket.dank.utils.Urls;
 import timber.log.Timber;
 
@@ -28,9 +29,12 @@ import timber.log.Timber;
 public class LinkMetadataRepository {
 
   private final Store<LinkMetadata, Link> linkMetadataStore;
+  private final Lazy<ErrorResolver> errorResolver;
 
   @Inject
-  public LinkMetadataRepository(DankApi dankApi, FileSystem cacheFileSystem, Moshi moshi) {
+  public LinkMetadataRepository(Lazy<DankApi> dankApi, FileSystem cacheFileSystem, Moshi moshi, Lazy<ErrorResolver> errorResolver) {
+    this.errorResolver = errorResolver;
+
     DiskLruCachePathResolver<Link> pathResolver = new DiskLruCachePathResolver<Link>() {
       @Override
       protected String resolveIn64Letters(Link key) {
@@ -41,7 +45,7 @@ public class LinkMetadataRepository {
     StoreFilePersister.JsonParser<LinkMetadata> jsonParser = new MoshiStoreJsonParser<>(moshi, LinkMetadata.class);
 
     linkMetadataStore = StoreBuilder.<Link, LinkMetadata>key()
-        .fetcher(link -> unfurlLinkFromRemote(dankApi, link))
+        .fetcher(link -> unfurlLinkFromRemote(dankApi.get(), link))
         .memoryPolicy(MemoryPolicy.builder()
             .setMemorySize(100)
             .setExpireAfterWrite(24)
@@ -53,7 +57,11 @@ public class LinkMetadataRepository {
 
   @CheckResult
   public Single<LinkMetadata> unfurl(Link link) {
-    return linkMetadataStore.get(link).doOnError(e -> Timber.e(e, "Couldn't unfurl link: %s", link));
+    return linkMetadataStore.get(link)
+        .doOnError(e -> {
+          ResolvedError resolvedError = errorResolver.get().resolve(e);
+          resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't unfurl link: %s", link));
+        });
   }
 
   @CheckResult
