@@ -3,7 +3,6 @@ package me.saket.dank.ui.subscriptions;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
-import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.doNothingCompletable;
 import static me.saket.dank.utils.RxUtils.doOnceAfterNext;
 import static me.saket.dank.utils.RxUtils.logError;
@@ -35,8 +34,6 @@ import com.google.common.collect.ImmutableList;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
-import net.dean.jraw.models.Subreddit;
-
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
@@ -54,6 +51,7 @@ import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.subreddit.Subscribeable;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Views;
@@ -490,16 +488,14 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     callbacks.onClickAddNewSubreddit();
   }
 
-  /**
-   * Finds the View for <var>newSubreddit</var> in the list and highlights it temporarily.
-   */
-  public void subscribeTo(Subreddit newSubreddit) {
+  public void subscribeTo(Subscribeable subscribeable) {
     Action findAndHighlightSubredditAction = () -> Views.executeOnNextLayout(subredditList, () -> {
       List<SubredditSubscription> subscriptions = subredditAdapter.getData();
 
+      //noinspection ConstantConditions
       for (int position = 0; position < subscriptions.size(); position++) {
         SubredditSubscription subscription = subscriptions.get(position);
-        if (subscription.name().equalsIgnoreCase(newSubreddit.getDisplayName())) {
+        if (subscription.name().equalsIgnoreCase(subscribeable.displayName())) {
           subredditAdapter.temporarilyHighlight(subscription);
           subredditAdapter.notifyItemChanged(position);
 
@@ -511,13 +507,13 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
       }
     });
 
-    // Enable item change animation, until the user starts searching.
+    // Enable item change animation, until the user starts searching again.
     subredditList.setItemAnimator(itemAnimator);
 
-    subscriptions.add(subscriptionRepository.subscribe(newSubreddit)
+    subscriptions.add(subscriptionRepository.subscribe(subscribeable)
         .andThen(Completable.fromAction(findAndHighlightSubredditAction))
         .compose(applySchedulersCompletable())
-        .subscribe(doNothingCompletable(), doNothing())
+        .subscribe(doNothingCompletable())
     );
   }
 }

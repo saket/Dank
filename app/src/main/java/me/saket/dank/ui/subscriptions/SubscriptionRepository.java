@@ -39,6 +39,7 @@ import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subreddit.SubredditSearchResult.Success;
+import me.saket.dank.ui.subreddit.Subscribeable;
 import me.saket.dank.ui.user.UserSessionRepository;
 import timber.log.Timber;
 
@@ -165,45 +166,52 @@ public class SubscriptionRepository {
   }
 
   @CheckResult
-  public Completable subscribe(Subreddit subreddit) {
-    return Dank.reddit().subscribeTo(subreddit)
+  public Completable subscribe(Subscribeable subscribeable) {
+    return subscribeable.subscribe(Dank.reddit())
         .andThen(Single.just(SubredditSubscription.PendingState.NONE))
         .onErrorResumeNext(e -> {
-          Timber.e(e, "Couldn't subscribe to %s. Will try again later.", subreddit);
+          Timber.e(e, "Couldn't subscribe to %s. Will try again later.", subscribeable);
           return Single.just(SubredditSubscription.PendingState.PENDING_SUBSCRIBE);
         })
-        .doOnSuccess(pendingState -> {
-          SubredditSubscription subscription = SubredditSubscription.create(subreddit.getDisplayName(), pendingState, false);
+        .flatMapCompletable(pendingState -> Completable.fromAction(() -> {
+          SubredditSubscription subscription = SubredditSubscription.create(subscribeable.displayName(), pendingState, false);
           database.get().insert(SubredditSubscription.TABLE_NAME, subscription.toContentValues(), SQLiteDatabase.CONFLICT_REPLACE);
-        })
-        .toCompletable();
+        }));
   }
 
   @CheckResult
   public Completable unsubscribe(SubredditSubscription subscription) {
-    return Completable.fromAction(() -> database.get().delete(SubredditSubscription.TABLE_NAME, SubredditSubscription.WHERE_NAME, subscription.name()))
-        .andThen(Dank.reddit().findSubreddit2(subscription.name()))
-        .flatMapCompletable(findResult -> {
-          switch (findResult.type()) {
-            case SUCCESS:
-              return Dank.reddit().unsubscribeFrom(((Success) findResult).subreddit());
+    Completable deleteCompletable = Completable.fromAction(() ->
+        database.get().delete(SubredditSubscription.TABLE_NAME, SubredditSubscription.WHERE_NAME, subscription.name()));
 
-            case ERROR_PRIVATE:
-              return Completable.error(new AssertionError("Couldn't unsubscribe from a private subreddit :O"));
+    if (Dank.reddit().needsRemoteSubscription(subscription.name())) {
+      return deleteCompletable
+          .andThen(Dank.reddit().findSubreddit2(subscription.name()))
+          .flatMapCompletable(findResult -> {
+            switch (findResult.type()) {
+              case SUCCESS:
+                return ((Success) findResult).subscribeable().unsubscribe(Dank.reddit());
 
-            case ERROR_UNKNOWN:
-              Throwable error = ((SubredditSearchResult.UnknownError) findResult).error();
-              Timber.e(error, "Couldn't unsubscribe from %s. Will try again later.", subscription);
-              SubredditSubscription updated = subscription.toBuilder().pendingState(SubredditSubscription.PendingState.PENDING_UNSUBSCRIBE).build();
-              database.get().insert(SubredditSubscription.TABLE_NAME, updated.toContentValues());
-              return Completable.complete();
+              case ERROR_PRIVATE:
+                return Completable.error(new AssertionError("Couldn't unsubscribe from a private subreddit :O"));
 
-            default:
-            case ERROR_NOT_FOUND:
-              // 404 == subreddit isn't present on the server anymore.
-              return Completable.complete();
-          }
-        });
+              case ERROR_UNKNOWN:
+                Throwable error = ((SubredditSearchResult.UnknownError) findResult).error();
+                Timber.e(error, "Couldn't unsubscribe from %s. Will try again later.", subscription);
+                SubredditSubscription updated = subscription.toBuilder().pendingState(SubredditSubscription.PendingState.PENDING_UNSUBSCRIBE).build();
+                database.get().insert(SubredditSubscription.TABLE_NAME, updated.toContentValues());
+                return Completable.complete();
+
+              default:
+              case ERROR_NOT_FOUND:
+                // 404 == subreddit isn't present on the server anymore.
+                return Completable.complete();
+            }
+          });
+
+    } else {
+      return deleteCompletable;
+    }
   }
 
   @CheckResult
@@ -235,18 +243,17 @@ public class SubscriptionRepository {
         .mapToList(SubredditSubscription.MAPPER)
         .take(1)
         .flatMapIterable(subscriptions -> subscriptions)
-        .flatMap(pendingSubscription -> {
+        .flatMapCompletable(pendingSubscription -> {
           if (pendingSubscription.isSubscribePending()) {
             Timber.i("Subscribing to %s", pendingSubscription.name());
-            return Dank.reddit().findSubreddit(pendingSubscription.name())
-                .flatMapCompletable(subreddit -> subscribe(subreddit))
-                .toObservable();
+            return Dank.reddit()
+                .findSubreddit(pendingSubscription.name())
+                .flatMapCompletable(subreddit -> subscribe(subreddit));
           } else {
             Timber.i("Unsubscribing from %s", pendingSubscription.name());
-            return unsubscribe(pendingSubscription).toObservable();
+            return unsubscribe(pendingSubscription);
           }
-        })
-        .ignoreElements();
+        });
   }
 
   @CheckResult

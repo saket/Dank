@@ -19,8 +19,6 @@ import android.widget.EditText;
 
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
-import net.dean.jraw.models.Subreddit;
-
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -48,7 +46,7 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
   @Inject Lazy<ErrorResolver> errorResolver;
 
   public interface Callback {
-    void onEnterNewSubredditForSubscription(Subreddit newSubreddit);
+    void onEnterNewSubredditForSubscription(Subscribeable newSubreddit);
   }
 
   public static void show(FragmentManager fragmentManager) {
@@ -137,7 +135,8 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
         .subscribe(searchResult -> {
           switch (searchResult.type()) {
             case SUCCESS:
-              ((Callback) requireActivity()).onEnterNewSubredditForSubscription(((SubredditSearchResult.Success) searchResult).subreddit());
+              Subscribeable subreddit = ((SubredditSearchResult.Success) searchResult).subscribeable();
+              ((Callback) requireActivity()).onEnterNewSubredditForSubscription(subreddit);
               dismissWithKeyboardDismissDelay();
               break;
 

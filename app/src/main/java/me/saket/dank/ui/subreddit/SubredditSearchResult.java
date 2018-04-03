@@ -2,8 +2,6 @@ package me.saket.dank.ui.subreddit;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.Subreddit;
-
 public interface SubredditSearchResult {
 
   enum Type {
@@ -15,25 +13,25 @@ public interface SubredditSearchResult {
 
   Type type();
 
-  static Success success(Subreddit subreddit) {
+  static SubredditSearchResult success(Subscribeable subreddit) {
     return new AutoValue_SubredditSearchResult_Success(subreddit);
   }
 
-  static Private privateError() {
+  static SubredditSearchResult privateError() {
     return new AutoValue_SubredditSearchResult_Private();
   }
 
-  static NotFound notFound() {
+  static SubredditSearchResult notFound() {
     return new AutoValue_SubredditSearchResult_NotFound();
   }
 
-  static UnknownError unknownError(Throwable error) {
+  static SubredditSearchResult unknownError(Throwable error) {
     return new AutoValue_SubredditSearchResult_UnknownError(error);
   }
 
   @AutoValue
   abstract class Success implements SubredditSearchResult {
-    public abstract Subreddit subreddit();
+    public abstract Subscribeable subscribeable();
 
     @Override
     public Type type() {

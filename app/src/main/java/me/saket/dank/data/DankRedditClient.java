@@ -40,6 +40,7 @@ import io.reactivex.functions.Function;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.subreddit.SubredditSearchResult;
+import me.saket.dank.ui.subreddit.Subscribeable;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.AndroidTokenStore;
@@ -310,14 +311,30 @@ public class DankRedditClient {
 
   @Deprecated
   @CheckResult
-  public Single<Subreddit> findSubreddit(String name) {
-    return withAuth(Single.fromCallable(() -> redditClient.getSubreddit(name)));
+  public Single<Subscribeable> findSubreddit(String name) {
+    if (name.equalsIgnoreCase("frontpage")) {
+      return Single.just(Subscribeable.local("Frontpage"));
+    }
+    if (name.equalsIgnoreCase("popular")) {
+      return Single.just(Subscribeable.local("Popular"));
+    }
+
+    return withAuth(Single.fromCallable(() -> redditClient.getSubreddit(name)))
+        .map(subreddit -> Subscribeable.create(subreddit));
   }
 
   @CheckResult
   public Single<SubredditSearchResult> findSubreddit2(String name) {
+    if (name.equalsIgnoreCase("frontpage")) {
+      return Single.just(SubredditSearchResult.success(Subscribeable.local("Frontpage")));
+    }
+    if (name.equalsIgnoreCase("popular")) {
+      return Single.just(SubredditSearchResult.success(Subscribeable.local("Popular")));
+    }
+
     return withAuth(Single.fromCallable(() -> redditClient.getSubreddit(name)))
-        .<SubredditSearchResult>map(subreddit -> SubredditSearchResult.success(subreddit))
+        .map(subreddit -> Subscribeable.create(subreddit))
+        .map(dankSubreddit -> SubredditSearchResult.success(dankSubreddit))
         .onErrorReturn(error -> {
           if (error instanceof IllegalArgumentException && error.getMessage().contains("is private")) {
             return SubredditSearchResult.privateError();
@@ -333,6 +350,10 @@ public class DankRedditClient {
         });
   }
 
+  public boolean needsRemoteSubscription(String subredditName) {
+    return !subredditName.equalsIgnoreCase("frontpage") && !subredditName.equalsIgnoreCase("popular");
+  }
+
   public Completable subscribeTo(Subreddit subreddit) {
     return withAuth(Completable.fromAction(() -> userAccountManager().subscribe(subreddit)));
   }
@@ -340,5 +361,4 @@ public class DankRedditClient {
   public Completable unsubscribeFrom(Subreddit subreddit) {
     return Completable.fromAction(() -> userAccountManager().unsubscribe(subreddit));
   }
-
 }

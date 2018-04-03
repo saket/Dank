@@ -36,7 +36,6 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Subreddit;
 import net.dean.jraw.paginators.Sorting;
 
 import java.util.List;
@@ -245,7 +244,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
           }
         });
 
-    // Subscribe button.
+    // Subscribe button
     userSessionRepository.get()
         .streamSessions()
         .switchMap(session -> {
@@ -799,9 +798,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   }
 
   @Override
-  public void onEnterNewSubredditForSubscription(Subreddit newSubreddit) {
+  public void onEnterNewSubredditForSubscription(Subscribeable newSubscribeable) {
     if (isSubredditPickerVisible()) {
-      findSubredditPickerSheet().subscribeTo(newSubreddit);
+      findSubredditPickerSheet().subscribeTo(newSubscribeable);
     }
   }
 
