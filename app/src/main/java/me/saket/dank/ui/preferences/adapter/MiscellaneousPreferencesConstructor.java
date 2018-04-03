@@ -7,6 +7,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import me.saket.dank.R;
+import me.saket.dank.ui.preferences.adapter.UserPreferenceButton.UiModel;
 
 public class MiscellaneousPreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
 
@@ -23,18 +24,19 @@ public class MiscellaneousPreferencesConstructor implements UserPreferencesConst
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_external_links)));
 
-    uiModels.add(UserPreferenceButton.UiModel.create(
+    uiModels.add(UiModel.create(
         c.getString(R.string.userprefs_externallinks_default_web_browser),
         c.getString(R.string.userprefs_externallinks_internal_browser),
-        -1
-    ));
+        (screen1, event1) -> {
+        }));
 
     // TODO: This should probably be enabled only if Dank's internal web-browser is enabled.
     // TODO: Improve this text. Copy CatchUp's text.
-    uiModels.add(UserPreferenceButton.UiModel.create(
+    uiModels.add(UiModel.create(
         c.getString(R.string.userprefs_externallinks_open_links_in_apps),
         c.getString(R.string.userprefs_externallinks_open_links_in_apps_summary),
-        -1));
+        (clickHandler, event) -> {
+        }));
 
     return uiModels;
   }

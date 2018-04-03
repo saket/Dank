@@ -6,27 +6,24 @@ import static io.reactivex.schedulers.Schedulers.io;
 import android.content.Context;
 import android.os.Bundle;
 import android.os.Parcelable;
+import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 import android.view.LayoutInflater;
 import android.view.View;
-
-import com.jakewharton.rxrelay2.BehaviorRelay;
-
-import javax.inject.Inject;
-
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import com.jakewharton.rxrelay2.BehaviorRelay;
 import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
+import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.ScreenSavedState;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesAdapter;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesConstructor;
 import me.saket.dank.ui.preferences.adapter.UserPrefsItemDiffer;
-import me.saket.dank.ui.preferences.events.UserPreferenceButtonClickEvent;
 import me.saket.dank.utils.BackPressCallback;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxDiffUtil;
@@ -39,7 +36,7 @@ import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
 /**
  * Uses custom layouts for preference items because customizing them + having custom design & controls is easier.
  */
-public class PreferenceGroupsScreen extends ExpandablePageLayout {
+public class PreferenceGroupsScreen extends ExpandablePageLayout implements PreferenceButtonClickHandler {
 
   private static final String KEY_ACTIVE_PREFERENCE_GROUP = "activePreferenceGroup";
 
@@ -124,27 +121,13 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
 
     // Button clicks.
     preferencesAdapter.get().streamButtonClicks()
-        .filter(event -> event.preferenceScreenLayoutRes() != -1)
         .takeUntil(lifecycle.viewDetaches())
-        .subscribe(event -> handleButtonClick(event));
+        .subscribe(event -> event.clickListener().onClick(this, event));
 
     // Switch clicks.
     preferencesAdapter.get().streamSwitchToggles()
         .takeUntil(lifecycle.viewDetaches())
         .subscribe(event -> event.preference().set(event.isChecked()));
-  }
-
-  private void handleButtonClick(UserPreferenceButtonClickEvent event) {
-    if (nestedPage.getChildCount() > 0) {
-      nestedPage.removeAllViews();
-    }
-
-    View nestedPageScreen = LayoutInflater.from(getContext()).inflate(event.preferenceScreenLayoutRes(), nestedPage, false);
-    ((UserPreferenceNestedScreen) nestedPageScreen).setNavigationOnClickListener(o -> preferenceRecyclerView.collapse());
-    nestedPage.addView(nestedPageScreen);
-    nestedPage.post(() ->
-        preferenceRecyclerView.expandItem(event.itemPosition(), event.itemId())
-    );
   }
 
   BackPressCallback onInterceptBackPress() {
@@ -159,8 +142,21 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout {
 // ======== EXPANDABLE PAGE ======== //
 
   @Override
-  protected void onPageAboutToExpand(long expandAnimDuration) {
+  public void expandNestedPage(@LayoutRes int nestedLayoutRes, int positionOfItemToExpand, long idOfItemToExpand) {
+    if (nestedPage.getChildCount() > 0) {
+      nestedPage.removeAllViews();
+    }
 
+    View nestedPageScreen = LayoutInflater.from(getContext()).inflate(nestedLayoutRes, nestedPage, false);
+    ((UserPreferenceNestedScreen) nestedPageScreen).setNavigationOnClickListener(o -> preferenceRecyclerView.collapse());
+    nestedPage.addView(nestedPageScreen);
+    nestedPage.post(() ->
+        preferenceRecyclerView.expandItem(positionOfItemToExpand, idOfItemToExpand)
+    );
+  }
+
+  @Override
+  protected void onPageAboutToExpand(long expandAnimDuration) {
   }
 
   @Override

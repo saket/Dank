@@ -1,14 +1,11 @@
 package me.saket.dank.ui.preferences.adapter;
 
 import android.content.Context;
-
 import com.f2prateek.rx.preferences2.Preference;
-
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
-
 import me.saket.dank.R;
 
 public class LookAndFeelPreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
@@ -40,12 +37,18 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_customize_submission_gestures),
         "Options and save. Upvote and downvote.",
-        R.layout.view_user_preferences_submission_gestures));
+        (clickHandler, event) -> clickHandler.expandNestedPage(
+            R.layout.view_user_preferences_submission_gestures,
+            event.itemPosition(),
+            event.itemId())));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_customize_comment_gestures),
         "Options and save. Upvote and downvote.",
-        R.layout.view_user_preferences_comment_gestures));
+        (clickHandler, event) -> clickHandler.expandNestedPage(
+            R.layout.view_user_preferences_submission_gestures,
+            event.itemPosition(),
+            event.itemId())));
 
     return uiModels;
   }
