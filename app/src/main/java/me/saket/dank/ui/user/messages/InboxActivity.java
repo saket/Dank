@@ -43,13 +43,13 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.InboxRepository;
-import me.saket.dank.urlparser.Link;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.user.UserSessionRepository;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.JrawUtils;
@@ -213,11 +213,8 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   @Override
   public void finish() {
-    boolean isExiting = !isChangingConfigurations();
-    if (isExiting) {
-      markSeenMessagesAsRead();
-    }
     super.finish();
+    markSeenMessagesAsRead();
   }
 
   @Override
