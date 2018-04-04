@@ -158,6 +158,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .replay(1)
         .refCount();
 
+    // Subject and latest message stream.
     messageThread
         .subscribeOn(io())
         .observeOn(mainThread())

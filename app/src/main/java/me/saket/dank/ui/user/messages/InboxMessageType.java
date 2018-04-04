@@ -15,6 +15,10 @@ public enum InboxMessageType {
   UNKNOWN;
 
   public static InboxMessageType parse(Message message) {
+    if (message instanceof PrivateMessage) {
+      return InboxMessageType.PRIVATE_MESSAGE;
+    }
+
     String parentFullName = message.getParentId();
     if (parentFullName == null) {
       return InboxMessageType.SUBREDDIT_MESSAGE;
@@ -31,8 +35,7 @@ public enum InboxMessageType {
           return InboxMessageType.POST_REPLY;
 
         case MESSAGE:
-          assertEquals(true, message instanceof PrivateMessage);
-          return InboxMessageType.PRIVATE_MESSAGE;
+          throw new AssertionError("Shouldn't reach here.");
 
         default:
         case SUBREDDIT:

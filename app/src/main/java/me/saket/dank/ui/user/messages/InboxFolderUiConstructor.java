@@ -51,6 +51,9 @@ public class InboxFolderUiConstructor {
         });
   }
 
+  /**
+   * IMPORTANT: Keep the identification of these details like title, author, etc., in sync with MessagesNotificationManager.
+   */
   private InboxIndividualMessage.UiModel individualMessageUiModel(Context c, Message message, boolean isUnreadFolder) {
     InboxMessageType messageType = InboxMessageType.parse(message);
 
