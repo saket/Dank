@@ -31,13 +31,6 @@
     android:layout_centerInParent="true"
     android:visibility="gone" />
 
-  <me.saket.dank.widgets.ErrorStateView
-    android:id="@+id/privatemessagethread_error_state"
-    android:layout_width="match_parent"
-    android:layout_height="wrap_content"
-    android:layout_centerInParent="true"
-    android:visibility="gone" />
-
   <android.support.v7.widget.RecyclerView
     android:id="@+id/privatemessagethread_message_list"
     style="@style/DankRecyclerView"
@@ -47,6 +40,13 @@
     android:layout_below="@id/privatemessagethread_subject"
     android:clipToPadding="false"
     tools:listitem="@layout/list_item_threaded_message_start_aligned" />
+
+  <me.saket.dank.widgets.ErrorStateView
+    android:id="@+id/privatemessagethread_error_state"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:visibility="gone" />
 
   <View
     style="@style/DankSeparator.VerticalContent"

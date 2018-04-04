@@ -10,7 +10,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
 import android.os.Bundle;
-import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.LinearLayoutManager;
@@ -171,9 +170,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .map(Optional::get)
         .cast(PrivateMessage.class);
 
-    downloadPrivateMessageIfNeeded(dbThread)
-        .ambWith(lifecycle().onDestroyCompletable())
-        .subscribe();
+    downloadPrivateMessageIfNeeded(dbThread);
 
     // Subject and latest message stream.
     messageThread
@@ -298,20 +295,14 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     saveDraftAsynchronously();
   }
 
-  @CheckResult
-  private Completable downloadPrivateMessageIfNeeded(Observable<Optional<Message>> dbThread) {
-    // TODO: retry.
-    Observable<Object> retryClicks = firstLoadErrorStateView.retryClicks();
-
+  private void downloadPrivateMessageIfNeeded(Observable<Optional<Message>> dbThread) {
     Completable downloadCompletable = dbThread
         .takeWhile(optional -> optional.isEmpty())
         .distinctUntilChanged()
-        .switchMap(o -> inboxRepository.get().fetchAndSaveMoreMessages(InboxFolder.PRIVATE_MESSAGES)
+        .switchMap(oo -> inboxRepository.get().fetchAndSaveMoreMessagesWithResult(InboxFolder.PRIVATE_MESSAGES)
             .toObservable()
-            .doOnError(e -> Timber.e("1" + e.getMessage()))
             .subscribeOn(io()))
         .ignoreElements()
-        .doOnError(e -> Timber.e("2" + e.getMessage()))
         .cache();
 
     Completable progressVisibilities = downloadCompletable
@@ -330,8 +321,13 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
           optionalError.ifPresent(error -> firstLoadErrorStateView.applyFrom(error));
         }));
 
-    return Completable.mergeArrayDelayError(downloadCompletable, progressVisibilities, errorStateVisibilities)
-        .onErrorComplete();
+    Completable.mergeArrayDelayError(downloadCompletable.onErrorComplete(), progressVisibilities, errorStateVisibilities)
+        .ambWith(lifecycle().onDestroyCompletable())
+        .subscribe();
+
+    firstLoadErrorStateView.retryClicks()
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> downloadPrivateMessageIfNeeded(dbThread));
   }
 
   private void saveDraftAsynchronously() {
@@ -437,7 +433,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     // Finally, sort the messages so that pending-sync replies are at the correct positions.
     Collections.sort(uiModels, (first, second) -> {
-      // Wow such stupid. How about you just do subtraction?!?.
+      // FIXME Wow such stupid. How about you just do subtraction?!?.
       if (first.sentTimeMillis() < second.sentTimeMillis()) {
         return -1;
       } else if (first.sentTimeMillis() > second.sentTimeMillis()) {

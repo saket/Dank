@@ -6,6 +6,7 @@ import android.content.ContentValues;
 import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
+import com.google.auto.value.AutoValue;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
@@ -15,8 +16,10 @@ import net.dean.jraw.models.PrivateMessage;
 import net.dean.jraw.paginators.InboxPaginator;
 import net.dean.jraw.paginators.Paginator;
 
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -88,6 +91,16 @@ public class InboxRepository {
         .flatMap(anchor -> fetchMessagesFromAnchor(folder, anchor))
         .doOnSuccess(saveMessages(folder, false))
         .map(fetchedMessages -> unmodifiableList(fetchedMessages));
+  }
+
+  /**
+   * Fetch messages after the oldest message we locally have in <var>folder</var>.
+   */
+  @CheckResult
+  public Single<FetchAndSaveResult> fetchAndSaveMoreMessagesWithResult(InboxFolder folder) {
+    return fetchAndSaveMoreMessages(folder)
+        .map(FetchAndSaveResult::success)
+        .onErrorReturn(FetchAndSaveResult::error);
   }
 
   /**
@@ -258,5 +271,26 @@ public class InboxRepository {
   public Completable setAllRead() {
     return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setAllRead())
         .andThen(removeAllMessages(InboxFolder.UNREAD));
+  }
+
+  public interface FetchAndSaveResult {
+
+    static FetchAndSaveResult success(List<Message> fetchedMessages) {
+      return new AutoValue_InboxRepository_FetchAndSaveResult_Success(fetchedMessages);
+    }
+
+    static FetchAndSaveResult error(Throwable error) {
+      return new AutoValue_InboxRepository_FetchAndSaveResult_GenericError(error);
+    }
+
+    @AutoValue
+    abstract class Success implements FetchAndSaveResult {
+      public abstract List<Message> fetchedMessages();
+    }
+
+    @AutoValue
+    abstract class GenericError implements FetchAndSaveResult {
+      public abstract Throwable error();
+    }
   }
 }
