@@ -3,20 +3,17 @@ package me.saket.dank.di;
 import android.app.Application;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
-
 import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.squareup.moshi.Moshi;
-
+import dagger.Module;
+import dagger.Provides;
+import io.reactivex.Observable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
-
-import dagger.Module;
-import dagger.Provides;
-import io.reactivex.Observable;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
@@ -116,5 +113,14 @@ public class UserPreferencesModule {
   @Named("show_submission_thumbnails")
   Preference<Boolean> showSubmissionThumbnailsPref(@Named("user_prefs") RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("show_submission_thumbnails", true);
+  }
+
+  @Provides
+  @Named("hq_images")
+  Preference<NetworkStrategy> hqImagesStrategyPref(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
+  {
+    return rxPrefs.getObject("hq_images_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
   }
 }

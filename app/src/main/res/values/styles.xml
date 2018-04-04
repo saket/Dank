@@ -135,7 +135,9 @@
     <item name="android:fontFamily">@string/dank_default_font_family</item>
   </style>
 
-  <style name="DankPopupMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow" />
+  <style name="DankPopupMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow">
+    <item name="overlapAnchor">true</item>
+  </style>
 
   <style name="DankPopupWindow">
     <item name="android:popupElevation">@dimen/spacing16</item>

@@ -39,16 +39,14 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
         "Options and save. Upvote and downvote.",
         (clickHandler, event) -> clickHandler.expandNestedPage(
             R.layout.view_user_preferences_submission_gestures,
-            event.itemPosition(),
-            event.itemId())));
+            event.itemViewHolder())));
 
     uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_customize_comment_gestures),
         "Options and save. Upvote and downvote.",
         (clickHandler, event) -> clickHandler.expandNestedPage(
             R.layout.view_user_preferences_submission_gestures,
-            event.itemPosition(),
-            event.itemId())));
+            event.itemViewHolder())));
 
     return uiModels;
   }

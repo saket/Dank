@@ -360,7 +360,9 @@
   <string name="userprefs_prefetch_link_descriptions">Pre-fetch link descriptions</string>
   <string name="userprefs_prefetch_comments">Pre-fetch comments</string>
 
-  <string name="userprefs_only_on_wifi">Only on WiFi</string>
+  <string name="userprefs_networkstrategy_only_on_wifi">Only on WiFi</string>
+  <string name="userprefs_networkstrategy_wifi_or_mobile_data">WiFi or mobile data</string>
+  <string name="userprefs_networkstrategy_never">Never</string>
 
   <string name="userprefes_group_link_handling">Link handling</string>
   <string name="userprefs_open_links_in_apps">Open links in known apps</string>

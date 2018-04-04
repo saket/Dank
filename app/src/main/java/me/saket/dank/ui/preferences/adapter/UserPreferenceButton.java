@@ -11,13 +11,14 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import javax.inject.Inject;
 import me.saket.dank.R;
-import me.saket.dank.ui.preferences.events.UserPreferenceClickListener;
 import me.saket.dank.ui.preferences.events.UserPreferenceButtonClickEvent;
+import me.saket.dank.ui.preferences.events.UserPreferenceClickListener;
 
 public interface UserPreferenceButton {
 
   @AutoValue
   abstract class UiModel implements UserPreferencesScreenUiModel {
+
     @Override
     public abstract long adapterId();
 
@@ -38,6 +39,7 @@ public interface UserPreferenceButton {
   }
 
   class ViewHolder extends RecyclerView.ViewHolder {
+
     @BindView(R.id.item_preferences_button_title) TextView titleView;
     @BindView(R.id.item_preferences_button_summary) TextView summaryView;
 
@@ -59,6 +61,7 @@ public interface UserPreferenceButton {
   }
 
   class Adapter implements UserPreferencesScreenUiModel.ChildAdapter<UiModel, ViewHolder> {
+
     PublishRelay<UserPreferenceButtonClickEvent> itemClicks = PublishRelay.create();
 
     @Inject
@@ -70,8 +73,7 @@ public interface UserPreferenceButton {
       ViewHolder holder = new ViewHolder(inflater.inflate(R.layout.list_item_preference_button, parent, false));
       holder.itemView.setOnClickListener(o -> itemClicks.accept(UserPreferenceButtonClickEvent.create(
           holder.uiModel.clickListener(),
-          holder.getLayoutPosition(),
-          holder.getItemId())));
+          holder)));
       return holder;
     }
 

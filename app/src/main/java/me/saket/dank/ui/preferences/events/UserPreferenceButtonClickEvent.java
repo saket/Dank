@@ -1,17 +1,16 @@
 package me.saket.dank.ui.preferences.events;
 
 import com.google.auto.value.AutoValue;
+import me.saket.dank.ui.preferences.adapter.UserPreferenceButton.ViewHolder;
 
 @AutoValue
 public abstract class UserPreferenceButtonClickEvent {
 
   public abstract UserPreferenceClickListener clickListener();
 
-  public abstract int itemPosition();
+  public abstract ViewHolder itemViewHolder();
 
-  public abstract long itemId();
-
-  public static UserPreferenceButtonClickEvent create(UserPreferenceClickListener clickListener, int itemPosition, long itemId) {
-    return new AutoValue_UserPreferenceButtonClickEvent(clickListener, itemPosition, itemId);
+  public static UserPreferenceButtonClickEvent create(UserPreferenceClickListener clickListener, ViewHolder holder) {
+    return new AutoValue_UserPreferenceButtonClickEvent(clickListener, holder);
   }
 }

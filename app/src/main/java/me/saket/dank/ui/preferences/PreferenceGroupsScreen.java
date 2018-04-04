@@ -4,12 +4,14 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 
 import android.content.Context;
+import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.annotation.LayoutRes;
 import android.support.annotation.Nullable;
+import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import butterknife.BindView;
@@ -19,8 +21,10 @@ import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import javax.inject.Inject;
 import me.saket.dank.R;
+import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.ScreenSavedState;
+import me.saket.dank.ui.preferences.PreferenceMultiOptionPopup.Builder;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesAdapter;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesConstructor;
 import me.saket.dank.ui.preferences.adapter.UserPrefsItemDiffer;
@@ -139,10 +143,19 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
     return BackPressCallback.asIgnored();
   }
 
+  @Override
+  public void show(Builder<NetworkStrategy> popupBuilder, RecyclerView.ViewHolder viewHolder) {
+    Point showLocation = new Point(0, viewHolder.itemView.getTop() + Views.statusBarHeight(getResources()));
+
+    popupBuilder
+        .build(getContext())
+        .showAtLocation(viewHolder.itemView, Gravity.NO_GRAVITY, showLocation);
+  }
+
 // ======== EXPANDABLE PAGE ======== //
 
   @Override
-  public void expandNestedPage(@LayoutRes int nestedLayoutRes, int positionOfItemToExpand, long idOfItemToExpand) {
+  public void expandNestedPage(int nestedLayoutRes, RecyclerView.ViewHolder viewHolderToExpand) {
     if (nestedPage.getChildCount() > 0) {
       nestedPage.removeAllViews();
     }
@@ -151,7 +164,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
     ((UserPreferenceNestedScreen) nestedPageScreen).setNavigationOnClickListener(o -> preferenceRecyclerView.collapse());
     nestedPage.addView(nestedPageScreen);
     nestedPage.post(() ->
-        preferenceRecyclerView.expandItem(positionOfItemToExpand, idOfItemToExpand)
+        preferenceRecyclerView.expandItem(viewHolderToExpand.getAdapterPosition(), viewHolderToExpand.getItemId())
     );
   }
 

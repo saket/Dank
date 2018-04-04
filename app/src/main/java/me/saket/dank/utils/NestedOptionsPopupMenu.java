@@ -23,11 +23,8 @@ import android.view.animation.AnimationUtils;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ViewFlipper;
-
 import com.google.auto.value.AutoValue;
-
 import java.util.List;
-
 import me.saket.dank.R;
 import me.saket.dank.ui.user.PopupWindowWithMaterialTransition;
 import me.saket.dank.widgets.TintableCompoundDrawableTextView;
@@ -199,6 +196,10 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
    */
   @Override
   protected Rect calculateTransitionEpicenter(View anchor, ViewGroup popupDecorView, Point showLocation) {
+    return transitionEpicenter(anchor, popupDecorView);
+  }
+
+  public static Rect transitionEpicenter(View anchor, ViewGroup popupDecorView) {
     int[] anchorLocation = new int[2];
     int[] popupLocation = new int[2];
     anchor.getLocationOnScreen(anchorLocation);
