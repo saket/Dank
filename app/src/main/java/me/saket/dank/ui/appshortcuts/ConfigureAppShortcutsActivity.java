@@ -38,6 +38,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
+import butterknife.BindInt;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -83,6 +84,8 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   @Inject Lazy<AppShortcutRepository> shortcutsRepository;
   @Inject Lazy<AppShortcutsAdapter> shortcutsAdapter;
   @Inject Lazy<SubredditAdapter> subredditAdapter;
+
+  @BindInt(R.integer.submissionoptions_animation_duration) int pageChangeAnimDuration;
 
   private final BehaviorRelay<Screen> screenChanges = BehaviorRelay.create();
   private final Relay<SubredditSubscription> subredditSelections = PublishRelay.create();
@@ -161,6 +164,8 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
     // Keyboard.
     screenChanges
         .map(screen -> screen == Screen.ADD_NEW_SUBREDDIT)
+        // Delay because showing of keyboard interferes with page change animation.
+        .delay(needsKeyboard -> Observable.timer(needsKeyboard ? pageChangeAnimDuration / 2 : 0, TimeUnit.MILLISECONDS, mainThread()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(needsKeyboard -> {
           if (needsKeyboard) {
