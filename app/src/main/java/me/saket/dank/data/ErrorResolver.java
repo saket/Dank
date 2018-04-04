@@ -39,7 +39,6 @@ public class ErrorResolver {
             R.string.common_network_error_with_reddit_message);
 
       } else {
-        error.printStackTrace();
         return ResolvedError.create(
             ResolvedError.Type.NETWORK_ERROR,
             R.string.common_network_error_emoji,

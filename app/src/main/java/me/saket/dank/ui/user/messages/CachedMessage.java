@@ -15,6 +15,7 @@ import java.io.IOException;
 
 import io.reactivex.functions.Function;
 import me.saket.dank.utils.Cursors;
+import me.saket.dank.utils.Optional;
 
 /**
  * {@link Message} stored in the DB.
@@ -80,16 +81,20 @@ public abstract class CachedMessage {
     return values;
   }
 
-  public static Function<Cursor, CachedMessage> mapFromCursor(Moshi moshi) {
+  public static Function<Cursor, CachedMessage> fromCursor(Moshi moshi) {
     return cursor -> {
-      Message message = mapMessageFromCursor(moshi).apply(cursor);
+      Message message = messageFromCursor(moshi).apply(cursor);
       long latestMessageTimestamp = Cursors.longg(cursor, COLUMN_LATEST_MESSAGE_TIME);
       InboxFolder folder = InboxFolder.valueOf(Cursors.string(cursor, COLUMN_FOLDER));
       return create(message.getFullName(), message, latestMessageTimestamp, folder);
     };
   }
 
-  public static Function<Cursor, Message> mapMessageFromCursor(Moshi moshi) {
+  public static Function<Cursor, Optional<Message>> optionalMessageFromCursor(Moshi moshi) {
+    return cursor -> Optional.of(messageFromCursor(moshi).apply(cursor));
+  }
+
+  public static Function<Cursor, Message> messageFromCursor(Moshi moshi) {
     return cursor -> {
       JsonAdapter<Message> adapter = moshi.adapter(Message.class);
       try {

@@ -30,6 +30,7 @@ import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.Optional;
 
 @Singleton
 public class InboxRepository {
@@ -59,29 +60,30 @@ public class InboxRepository {
   public Observable<List<Message>> messages(InboxFolder folder) {
     return briteDatabase
         .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
-        .mapToList(CachedMessage.mapMessageFromCursor(moshi))
+        .mapToList(CachedMessage.messageFromCursor(moshi))
         .as(Arrays2.immutable());
   }
 
   /**
-   * Get a message and its child replies.
+   * Stream of message and its child replies. The type is optional because messages in unread might have not
+   * been downloaded yet in private-messages folder.
    * <p>
    * Both fullname and folder are required because {@link CachedMessage} uses a composite key of the fullname
    * and the folder. This is because it's possible for the same message to be present in Unread as well as
    * Private Message folder.
    */
   @CheckResult
-  public Observable<Message> message(String fullname, InboxFolder folder) {
+  public Observable<Optional<Message>> messages(String fullname, InboxFolder folder) {
     return briteDatabase
         .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_SINGLE, fullname, folder.name())
-        .mapToOne(CachedMessage.mapMessageFromCursor(moshi));
+        .mapToOneOrDefault(CachedMessage.optionalMessageFromCursor(moshi), Optional.empty());
   }
 
   /**
    * Fetch messages after the oldest message we locally have in <var>folder</var>.
    */
   @CheckResult
-  public Single<List<Message>> fetchMoreMessages(InboxFolder folder) {
+  public Single<List<Message>> fetchAndSaveMoreMessages(InboxFolder folder) {
     return getPaginationAnchor(folder)
         .flatMap(anchor -> fetchMessagesFromAnchor(folder, anchor))
         .doOnSuccess(saveMessages(folder, false))
@@ -89,7 +91,7 @@ public class InboxRepository {
   }
 
   /**
-   * Fetch most recent messages. Unlike {@link #fetchMoreMessages(InboxFolder)},
+   * Fetch most recent messages. Unlike {@link #fetchAndSaveMoreMessages(InboxFolder)},
    * this does not use the oldest message as the anchor.
    */
   @CheckResult
@@ -167,7 +169,7 @@ public class InboxRepository {
     CachedMessage dummyDefaultValue = CachedMessage.create("-1", dummyPrivateMessage, 0, InboxFolder.PRIVATE_MESSAGES);
 
     return briteDatabase.createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
-        .mapToOneOrDefault(CachedMessage.mapFromCursor(moshi), dummyDefaultValue)
+        .mapToOneOrDefault(CachedMessage.fromCursor(moshi), dummyDefaultValue)
         .firstOrError()
         .map(lastStoredMessage -> {
           if (lastStoredMessage == dummyDefaultValue) {

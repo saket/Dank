@@ -289,7 +289,7 @@ public class InboxFolderFragment extends DankFragment {
     scrollListener.setEmitInitialEvent(isRetrying);
 
     scrollListener.emitWhenLoadNeeded()
-        .flatMapSingle(o -> inboxRepository.fetchMoreMessages(folder)
+        .flatMapSingle(o -> inboxRepository.fetchAndSaveMoreMessages(folder)
             .compose(applySchedulersSingle())
             .compose(handleProgressAndErrorForLoadMore())
             .compose(doOnSingleStartAndTerminate(ongoing -> scrollListener.setLoadOngoing(ongoing)))

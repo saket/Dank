@@ -5,7 +5,8 @@
   xmlns:app="http://schemas.android.com/apk/res-auto"
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
-  android:layout_height="match_parent">
+  android:layout_height="match_parent"
+  android:animateLayoutChanges="true">
 
   <me.saket.dank.widgets.DankToolbar
     android:id="@id/toolbar"
@@ -19,8 +20,23 @@
     android:layout_below="@id/toolbar"
     android:padding="@dimen/spacing16"
     android:textColor="@color/gray_200"
+    android:textIsSelectable="true"
     android:textSize="@dimen/textsize18"
     tools:text="regarding sikkim" />
+
+  <ProgressBar
+    android:id="@+id/privatemessagethread_progress"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:visibility="gone" />
+
+  <me.saket.dank.widgets.ErrorStateView
+    android:id="@+id/privatemessagethread_error_state"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:visibility="gone" />
 
   <android.support.v7.widget.RecyclerView
     android:id="@+id/privatemessagethread_message_list"
@@ -29,7 +45,8 @@
     android:layout_height="match_parent"
     android:layout_above="@+id/privatemessagethread_reply_container"
     android:layout_below="@id/privatemessagethread_subject"
-    android:clipToPadding="false" />
+    android:clipToPadding="false"
+    tools:listitem="@layout/list_item_threaded_message_start_aligned" />
 
   <View
     style="@style/DankSeparator.VerticalContent"
