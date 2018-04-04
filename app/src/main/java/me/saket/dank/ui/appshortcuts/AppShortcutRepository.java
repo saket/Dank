@@ -90,7 +90,8 @@ public class AppShortcutRepository {
               AppShortcut shortcut = shortcuts.get(i);
 
               shortcutInfos.add(new ShortcutInfo.Builder(appContext, shortcut.id())
-                  .setShortLabel(shortcut.label())
+                  .setShortLabel(appContext.getString(R.string.subreddit_name_r_prefix, shortcut.label()))    // Used by pinned shortcuts.
+                  .setLongLabel(shortcut.label())           // Shown in shortcuts popup.
                   .setRank(androidRank)
                   .setIcon(Icon.createWithResource(appContext, R.drawable.ic_shortcut_subreddit))
                   .setIntent(DeepLinkHandlingActivity.appShortcutIntent(appContext, shortcut))
