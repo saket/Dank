@@ -48,6 +48,7 @@ import butterknife.OnClick;
 import butterknife.OnLongClick;
 import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.android.schedulers.AndroidSchedulers;
@@ -130,7 +131,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @BindView(R.id.subreddit_sorting_mode_container) ViewGroup sortingModeContainer;
   @BindView(R.id.subreddit_sorting_mode) Button sortingModeButton;
   @BindView(R.id.subreddit_subscribe) Button subscribeButton;
-  @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionList;
+  @BindView(R.id.subreddit_submission_list) InboxRecyclerView submissionRecyclerView;
   @BindView(R.id.subreddit_toolbar_expandable_sheet) ToolbarExpandableSheet toolbarSheet;
   @BindView(R.id.subreddit_progress) View fullscreenProgressView;
   @BindView(R.id.subreddit_submission_errorState) ErrorStateView fullscreenErrorStateView;
@@ -185,7 +186,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
     // Add top-margin to make room for the status bar.
     executeOnMeasure(toolbar, () -> setMarginTop(sortingModeContainer, toolbar.getHeight()));
-    executeOnMeasure(sortingModeContainer, () -> setPaddingTop(submissionList, sortingModeContainer.getHeight() + toolbar.getHeight()));
+    executeOnMeasure(sortingModeContainer, () -> setPaddingTop(submissionRecyclerView, sortingModeContainer.getHeight() + toolbar.getHeight()));
 
     findAndSetupToolbar();
     getSupportActionBar().setDisplayShowTitleEnabled(false);
@@ -276,8 +277,19 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     setIntent(intent);
 
     if (intent.hasExtra(KEY_SUBREDDIT_LINK)) {
-      RedditSubredditLink subredditLink = intent.getParcelableExtra(KEY_SUBREDDIT_LINK);
-      subredditChangesStream.accept(subredditLink.name());
+      Single.just(submissionPage.isExpandedOrExpanding())
+          .flatMapCompletable(isExpanded -> {
+            // The user should see the submission page collapse. Wait till the app is in foreground.
+            int appRestoreAnimDuration = isExpanded ? 300 : 0;
+            return Completable.timer(appRestoreAnimDuration, TimeUnit.MILLISECONDS, mainThread())
+                .andThen(Completable.fromAction(() -> submissionRecyclerView.collapse()))
+                .andThen(Completable.timer(isExpanded ? submissionPage.getAnimationDurationMillis() : 0, TimeUnit.MILLISECONDS, mainThread()));
+          })
+          .ambWith(lifecycle().onDestroyCompletable())
+          .subscribe(() -> {
+            RedditSubredditLink subredditLink = intent.getParcelableExtra(KEY_SUBREDDIT_LINK);
+            subredditChangesStream.accept(subredditLink.name());
+          });
     }
   }
 
@@ -310,7 +322,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
   @Override
   protected void onSaveInstanceState(Bundle outState) {
-    submissionList.handleOnSaveInstance(outState);
+    submissionRecyclerView.handleOnSaveInstance(outState);
     if (subredditChangesStream.hasValue()) {
       outState.putString(KEY_ACTIVE_SUBREDDIT, subredditChangesStream.getValue());
     }
@@ -354,15 +366,15 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         return false;
       }
       //noinspection SimplifiableIfStatement
-      if (touchLiesOn(submissionList, downX, downY)) {
-        return submissionList.canScrollVertically(upwardPagePull ? 1 : -1);
+      if (touchLiesOn(submissionRecyclerView, downX, downY)) {
+        return submissionRecyclerView.canScrollVertically(upwardPagePull ? 1 : -1);
       }
       return false;
     });
   }
 
   private void setupToolbarSheet() {
-    toolbarSheet.hideOnOutsideClick(submissionList);
+    toolbarSheet.hideOnOutsideClick(submissionRecyclerView);
     toolbarSheet.setStateChangeListener(state -> {
       switch (state) {
         case EXPANDING:
@@ -402,17 +414,17 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 // ======== SUBMISSION LIST ======== //
 
   private void setupSubmissionRecyclerView(@Nullable Bundle savedState) {
-    submissionList.setLayoutManager(submissionList.createLayoutManager());
-    submissionList.setItemAnimator(new SubmissionCommentsItemAnimator(0)
+    submissionRecyclerView.setLayoutManager(submissionRecyclerView.createLayoutManager());
+    submissionRecyclerView.setItemAnimator(new SubmissionCommentsItemAnimator(0)
         .withInterpolator(Animations.INTERPOLATOR)
         .withRemoveDuration(250)
         .withAddDuration(250));
-    submissionList.setExpandablePage(submissionPage, toolbarContainer);
-    submissionList.addOnItemTouchListener(new RecyclerSwipeListener(submissionList));
+    submissionRecyclerView.setExpandablePage(submissionPage, toolbarContainer);
+    submissionRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(submissionRecyclerView));
 
     // Note to self: if adding support for preserving data across orientation changes
     // is being considered, make sure to also preserve scroll position.
-    submissionList.setAdapter(submissionsAdapter);
+    submissionRecyclerView.setAdapter(submissionsAdapter);
 
     // Row clicks.
     submissionsAdapter.submissionClicks()
@@ -441,7 +453,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
           submissionPage.post(() ->
               Observable.timer(100 + delay / 2, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
                   .takeUntil(lifecycle().onDestroy())
-                  .subscribe(o -> submissionList.expandItem(submissionList.indexOfChild(clickEvent.itemView()), clickEvent.itemId()))
+                  .subscribe(o -> submissionRecyclerView.expandItem(submissionRecyclerView.indexOfChild(clickEvent.itemView()), clickEvent.itemId()))
           );
         });
 
@@ -554,7 +566,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     }
 
     if (savedState != null) {
-      submissionList.handleOnRestoreInstanceState(savedState);
+      submissionRecyclerView.handleOnRestoreInstanceState(savedState);
     }
   }
 
@@ -572,7 +584,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     submissionFolderStream
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroy())
-        .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionList)
+        .switchMap(folder -> InfiniteScroller.streamPagingRequests(submissionRecyclerView)
             .mergeWith(submissionsAdapter.paginationFailureRetryClicks())
             .mergeWith(fullscreenErrorStateView.retryClicks())
             .observeOn(io())
@@ -694,7 +706,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
   @Override
   public void onClickSubmissionToolbarUp() {
-    submissionList.collapse();
+    submissionRecyclerView.collapse();
   }
 
   @Override
@@ -833,7 +845,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Override
   public void onBackPressed() {
     if (submissionPage.isExpandedOrExpanding()) {
-      submissionList.collapse();
+      submissionRecyclerView.collapse();
     } else if (!toolbarSheet.isCollapsed()) {
       toolbarSheet.collapse();
     } else {
