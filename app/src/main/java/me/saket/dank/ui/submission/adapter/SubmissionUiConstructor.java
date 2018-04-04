@@ -124,7 +124,8 @@ public class SubmissionUiConstructor {
               .observeOn(io())
               .take(1)  // replace flatMap -> switchMap if we expect more than 1 emissions.
               .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
-              .map(pendingSyncReplies -> pendingSyncReplies.size());
+              .map(pendingSyncReplies -> pendingSyncReplies.size())
+              .startWith(0);  // Stream sometimes takes too long to emit anything.
 
           Observable<Object> externalChanges = Observable
               .merge(votingManager.streamChanges(), bookmarksRepository.get().streamChanges())
