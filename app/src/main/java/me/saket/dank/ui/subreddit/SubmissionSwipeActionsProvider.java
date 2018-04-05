@@ -64,15 +64,17 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     SwipeAction upvoteSwipeAction = SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 0.3f);
 
     // Actions on both sides are aligned from left to right.
+    SwipeActionsHolder endActions = SwipeActionsHolder.builder()
+        .add(upvoteSwipeAction)
+        .add(downvoteSwipeAction)
+        .build();
+
     swipeActionsWithUnSave = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
             .add(moreOptionsSwipeAction)
             .add(unSaveSwipeAction)
             .build())
-        .endActions(SwipeActionsHolder.builder()
-            .add(downvoteSwipeAction)
-            .add(upvoteSwipeAction)
-            .build())
+        .endActions(endActions)
         .build();
 
     swipeActionsWithSave = SwipeActions.builder()
@@ -80,10 +82,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
             .add(moreOptionsSwipeAction)
             .add(saveSwipeAction)
             .build())
-        .endActions(SwipeActionsHolder.builder()
-            .add(upvoteSwipeAction)
-            .add(downvoteSwipeAction)
-            .build())
+        .endActions(endActions)
         .build();
   }
 
