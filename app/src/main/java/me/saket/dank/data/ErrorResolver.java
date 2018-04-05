@@ -32,7 +32,10 @@ public class ErrorResolver {
     error = findActualCause(error);
 
     if (isNetworkTimeoutError(error)) {
-      if (error instanceof UnknownHostException && error.getMessage().contains("reddit.com") || error.getMessage().contains("redditmedia.com")) {
+      if (error instanceof UnknownHostException
+          && error.getMessage() != null
+          && (error.getMessage().contains("reddit.com") || error.getMessage().contains("redditmedia.com")))
+      {
         return ResolvedError.create(
             ResolvedError.Type.NETWORK_ERROR,
             R.string.common_network_error_emoji,
