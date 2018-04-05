@@ -17,7 +17,6 @@ import java.util.List;
 
 import io.reactivex.Observable;
 import me.saket.dank.utils.Animations;
-import timber.log.Timber;
 
 /**
  * A scrollable sheet that can wrap a RecyclerView and scroll together (not in parallel) in a nested manner.
@@ -173,16 +172,6 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
 
     childRecyclerView = (RecyclerView) child;
     childRecyclerView.setOverScrollMode(OVER_SCROLL_NEVER);
-
-    childRecyclerView.addOnScrollListener(new RecyclerView.OnScrollListener() {
-      @Override
-      public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
-        if (dy > 0 && !hasSheetReachedTheTop()) {
-          Timber.w("RV scrolled %s without notifying us", dy);
-          post(() -> attemptToConsumeScrollY(dy * 2));
-        }
-      }
-    });
   }
 
   public boolean hasSheetReachedTheTop() {
@@ -234,9 +223,7 @@ public class ScrollingRecyclerViewSheet extends FrameLayout implements NestedScr
   }
 
   private void adjustOffsetBy(float dy) {
-    Timber.i("adjusting offset by %s", dy);
     float translationY = currentScrollY() - dy;
-    Timber.i("translationY: %s", translationY);
     setTranslationY(translationY);
 
     // Send a callback if the state changed.

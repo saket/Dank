@@ -55,7 +55,7 @@
 
     <!-- WARNING: descendantFocusability="beforeDescendants" is important
          or else RV will scroll to selectable text as they can receive focus. -->
-    <android.support.v7.widget.RecyclerView
+    <me.saket.dank.ui.submission.RecyclerViewWithNestedProgrammaticScrolling
       android:id="@+id/submission_comment_list"
       android:layout_width="match_parent"
       android:layout_height="match_parent"
