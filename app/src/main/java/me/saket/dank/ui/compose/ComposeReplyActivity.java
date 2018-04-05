@@ -27,6 +27,7 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
@@ -64,9 +65,9 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
   @BindView(R.id.composereply_undo) ImageButtonWithDisabledTint undoButton;
   @BindView(R.id.composereply_redo) ImageButtonWithDisabledTint redoButton;
 
-  @Inject ReplyRepository replyRepository;
-  @Inject MarkdownSpanPool markdownSpanPool;
-  @Inject MarkdownHintOptions markdownHintOptions;
+  @Inject Lazy<ReplyRepository> replyRepository;
+  @Inject Lazy<MarkdownSpanPool> markdownSpanPool;
+  @Inject Lazy<MarkdownHintOptions> markdownHintOptions;
 
   private ComposeStartOptions startOptions;
   private RunDo runDo;
@@ -96,14 +97,6 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
 
     startOptions = getIntent().getParcelableExtra(KEY_START_OPTIONS);
 
-//    if (BuildConfig.DEBUG && startOptions == null) {
-//      startOptions = ComposeStartOptions.builder()
-//          .secondPartyName("Poop")
-//          .draftKey(Pos)
-//          .preFilledText("Waddup homie")
-//          .build();
-//    }
-
     if (startOptions.secondPartyName() != null) {
       setTitle(getString(R.string.composereply_title_reply_to, startOptions.secondPartyName()));
     } else {
@@ -117,14 +110,19 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
       //noinspection CodeBlock2Expr
       return Views.touchLiesOn(replyScrollView, downX, downY) && replyScrollView.canScrollVertically(upwardPagePull ? 1 : -1);
     });
+  }
+
+  @Override
+  public void onPostCreate(@Nullable Bundle savedInstanceState) {
+    super.onPostCreate(savedInstanceState);
 
     // Highlight markdown syntax.
     // Note: We'll have to remove MarkdownHintOptions from Dagger graph when we introduce a light theme.
-    replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions, markdownSpanPool));
+    replyField.addTextChangedListener(new MarkdownHints(replyField, markdownHintOptions.get(), markdownSpanPool.get()));
 
     // Callers never send any pre-filled text. Drafts are used as the single
     // source of truth for both inline and full-screen replies.
-    replyRepository.streamDrafts(startOptions.draftKey())
+    replyRepository.get().streamDrafts(startOptions.draftKey())
         .firstElement()
         .subscribeOn(io())
         .observeOn(mainThread())
@@ -136,15 +134,10 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> {
           String draft = replyField.getText().toString();
-          replyRepository.saveDraft(startOptions.draftKey(), draft)
+          replyRepository.get().saveDraft(startOptions.draftKey(), draft)
               .subscribeOn(io())
               .subscribe();
         });
-  }
-
-  @Override
-  public void onPostCreate(@Nullable Bundle savedInstanceState) {
-    super.onPostCreate(savedInstanceState);
 
     // Undo and redo.
     runDo = RunDo.Factory.getInstance(getSupportFragmentManager());
