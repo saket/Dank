@@ -110,6 +110,7 @@ import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
+import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
@@ -786,14 +787,22 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     // Content link clicks.
     submissionCommentsAdapter.streamContentLinkClicks()
+        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(event -> {
+        .subscribe(pair -> {
+          SubmissionContentLinkClickEvent event = pair.first();
           if (event.link() instanceof RedditUserLink) {
             // TODO: Open fullscreen user profile.
             Point expandFromPoint = new Point(event.contentLinkView().getLeft(), event.contentLinkView().getBottom());
             urlRouter.forLink(((RedditUserLink) event.link()))
                 .expandFrom(expandFromPoint)
                 .open(event.contentLinkView());
+
+          } else if (event.link() instanceof MediaLink) {
+            Submission submission = pair.second();
+            urlRouter.forLink(((MediaLink) event.link()))
+                .withRedditSuppliedImages(submission.getThumbnails())
+                .open(getContext());
 
           } else {
             urlRouter.forLink(event.link())
