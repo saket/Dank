@@ -16,6 +16,10 @@ public interface ZoomableImageView {
     void onZoomChange(float zoom);
   }
 
+  interface OnImageTooLargeExceptionListener {
+    void onImageTooLargeException(Throwable e);
+  }
+
   void setGravity(int gravity);
 
   float getVisibleZoomedImageHeight();
@@ -41,6 +45,8 @@ public interface ZoomableImageView {
   boolean hasImage();
 
   int getImageHeight();
+
+  void setOnImageTooLargeExceptionListener(OnImageTooLargeExceptionListener listener);
 
 // ======== IMAGEVIEW ======== //
 

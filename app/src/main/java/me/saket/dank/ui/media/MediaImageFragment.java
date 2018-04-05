@@ -101,7 +101,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     super.setTitleDescriptionView(titleDescriptionView);
     super.setImageDimmingView(titleDescriptionBackgroundDimmingView);
 
-    loadImage(mediaAlbumItem, true);
+    calculateUrlAndLoadImage(mediaAlbumItem, true);
 
     return layout;
   }
@@ -144,7 +144,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
   @Override
   public void handleMediaItemUpdate(MediaAlbumItem updatedMediaAlbumItem) {
-    loadImage(updatedMediaAlbumItem, false);
+    calculateUrlAndLoadImage(updatedMediaAlbumItem, false);
   }
 
   private void moveToScreenState(ScreenState screenState) {
@@ -155,7 +155,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     imageView.setVisibility(screenState == ScreenState.IMAGE_READY ? View.VISIBLE : View.INVISIBLE);
   }
 
-  private void loadImage(MediaAlbumItem mediaAlbumItemToShow, boolean isFirstLoad) {
+  private void calculateUrlAndLoadImage(MediaAlbumItem mediaAlbumItemToShow, boolean isFirstLoad) {
     moveToScreenState(ScreenState.LOADING_IMAGE);
 
     String imageUrl;
@@ -175,26 +175,47 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
       }
     }
 
+    loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, false);
+    imageView.setOnImageTooLargeExceptionListener(e -> {
+      Timber.e("Failed to draw image: %s, url: %s", e.getMessage(), imageUrl);
+      loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, true);
+    });
+  }
+
+  private void loadImage(MediaAlbumItem mediaAlbumItemToShow, boolean isFirstLoad, String imageUrl, boolean downSampleToFixError) {
     DrawableImageViewTarget target = new DrawableImageViewTarget(imageView.view());
     ImageLoadProgressTarget<Drawable> targetWithProgress = new ImageLoadProgressTarget<>(target, progressView);
     targetWithProgress.setModel(requireActivity(), imageUrl);
 
     Size deviceDisplaySize = new Size(getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
 
+    RequestOptions options = new RequestOptions()
+        .priority(Priority.IMMEDIATE)
+        .transform(new GlidePaddingTransformation(requireActivity(), Color.TRANSPARENT) {
+          @Override
+          public Size getPadding(int imageWidth, int imageHeight) {
+            Timber.i("Image: %s,%s", imageWidth, imageHeight);
+
+            // Adding a 1px transparent border improves anti-aliasing when rotating image (flick-dismiss).
+            return new Size(1, 1);
+          }
+        });
+    //.apply(new RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
+
+    // Glide sometimes fails to load even tiny images with a "Failed to draw image: Canvas:
+    // trying to draw too large(118103056bytes) bitmap."
+    RequestOptions downscaledOptions;
+    if (downSampleToFixError) {
+      downscaledOptions = options
+          .downsample(DownsampleStrategy.AT_LEAST)
+          .override(deviceDisplaySize.getWidth(), deviceDisplaySize.getHeight());
+    } else {
+      downscaledOptions = options;
+    }
+
     Glide.with(this)
         .load(imageUrl)
-        .apply(new RequestOptions()
-            .priority(Priority.IMMEDIATE)
-            .downsample(DownsampleStrategy.AT_MOST)
-            .override((int) 2.5f * deviceDisplaySize.getWidth(), (int) 2.5f * deviceDisplaySize.getHeight())
-            .transform(new GlidePaddingTransformation(requireActivity(), Color.TRANSPARENT) {
-              @Override
-              public Size getPadding(int imageWidth, int imageHeight) {
-                // Adding a 1px transparent border improves anti-aliasing when rotating image (flick-dismiss).
-                return new Size(1, 1);
-              }
-            }))
-        //.apply(new RequestOptions().skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE))
+        .apply(downscaledOptions)
         .listener(new SimpleRequestListener<Drawable>() {
           @Override
           public void onResourceReady(Drawable drawable) {
@@ -230,7 +251,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
             ResolvedError resolvedError = errorResolver.resolve(e);
             loadErrorStateView.applyFrom(resolvedError);
-            loadErrorStateView.setOnRetryClickListener(o -> loadImage(mediaAlbumItemToShow, isFirstLoad));
+            loadErrorStateView.setOnRetryClickListener(o -> calculateUrlAndLoadImage(mediaAlbumItemToShow, isFirstLoad));
 
             if (resolvedError.isUnknown()) {
               Timber.e(e, "Error while loading image: %s", imageUrl);

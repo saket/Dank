@@ -36,6 +36,7 @@ public class ZoomableGestureImageView extends GestureImageView implements Zoomab
   private final Map<OnPanChangeListener, GestureController.OnStateChangeListener> onPanChangeListeners = new HashMap<>(2);
   private final Map<OnZoomChangeListener, GestureController.OnStateChangeListener> onZoomChangeListeners = new HashMap<>(2);
   private GestureDetector gestureDetector;
+  private OnImageTooLargeExceptionListener imageTooLargeExceptionListener;
 
   public ZoomableGestureImageView(Context context, AttributeSet attrs) {
     super(context, attrs);
@@ -76,7 +77,7 @@ public class ZoomableGestureImageView extends GestureImageView implements Zoomab
       super.draw(canvas);
     } catch (RuntimeException e) {
       if (e.getMessage().contains("trying to draw too large")) {
-        Timber.e("Failed to draw image: %s", e.getMessage());
+        imageTooLargeExceptionListener.onImageTooLargeException(e);
       } else {
         throw e;
       }
@@ -235,5 +236,10 @@ public class ZoomableGestureImageView extends GestureImageView implements Zoomab
   @Override
   public int getImageHeight() {
     return getDrawable().getIntrinsicHeight();
+  }
+
+  @Override
+  public void setOnImageTooLargeExceptionListener(OnImageTooLargeExceptionListener listener) {
+    this.imageTooLargeExceptionListener = listener;
   }
 }
