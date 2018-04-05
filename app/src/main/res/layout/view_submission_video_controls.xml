@@ -15,7 +15,10 @@
 
   <me.saket.dank.widgets.ProgressWithFileSizeView
     android:id="@+id/videocontrols_video_loading"
-    style="@style/DankVideoProgressWithSize"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_centerInParent="true"
+    android:paddingTop="@dimen/spacing48"
     android:visibility="gone"
     app:progressBarSize="74dp"
     tools:visibility="visible" />
