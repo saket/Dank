@@ -8,6 +8,7 @@ import android.graphics.Point;
 import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.IdRes;
+import android.support.annotation.Nullable;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -37,16 +38,16 @@ import javax.inject.Inject;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
+import dagger.Lazy;
 import io.reactivex.disposables.CompositeDisposable;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.di.Dank;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Strings;
-import me.saket.dank.utils.glide.GlideCircularTransformation;
 import timber.log.Timber;
 
 public class UserProfilePopup extends PopupWindowWithMaterialTransition {
@@ -63,8 +64,8 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
 
   private CompositeDisposable onDismissDisposables = new CompositeDisposable();
 
-  @Inject ErrorResolver errorResolver;
-  @Inject UserProfileRepository userProfileRepository;
+  @Inject Lazy<ErrorResolver> errorResolver;
+  @Inject Lazy<UserProfileRepository> userProfileRepository;
 
   private enum StatsLoadState {
     IN_FLIGHT,
@@ -100,7 +101,7 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
     showStatsLoadState(StatsLoadState.IN_FLIGHT);
 
     onDismissDisposables.add(
-        userProfileRepository.profile(userLink)
+        userProfileRepository.get().profile(userLink)
             .compose(RxUtils.applySchedulersSingle())
             .subscribe(
                 userProfile -> {
@@ -124,12 +125,11 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
                         .apply(new RequestOptions()
                             .centerCrop()
                             .circleCrop()
-                            .transform(GlideCircularTransformation.INSTANCE)
                         )
                         .transition(DrawableTransitionOptions.withCrossFade())
                         .into(new ImageViewTarget<Drawable>(profileImageView) {
                           @Override
-                          protected void setResource(Drawable resource) {
+                          protected void setResource(@Nullable Drawable resource) {
                             profileImageView.setImageDrawable(resource);
 
                             profileImageView.setScaleX(0);
@@ -154,7 +154,7 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
                     viewFullProfileButton.setEnabled(false);
 
                   } else {
-                    ResolvedError resolvedError = errorResolver.resolve(error);
+                    ResolvedError resolvedError = errorResolver.get().resolve(error);
                     if (resolvedError.isUnknown()) {
                       Timber.e(error, "Couldn't fetch profile for: %s", userLink.unparsedUrl());
                     }
@@ -217,7 +217,7 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
         throw new AssertionError("Unknown state: " + loadState);
     }
 
-    statsViewFlipper.setDisplayedChild(statsViewFlipper.indexOfChild(ButterKnife.findById(statsViewFlipper, stateViewIdRes)));
+    statsViewFlipper.setDisplayedChild(statsViewFlipper.indexOfChild(statsViewFlipper.findViewById(stateViewIdRes)));
   }
 
   @OnClick(R.id.userprofilepopup_send_private_message)
