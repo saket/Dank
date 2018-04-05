@@ -17,21 +17,23 @@ import net.dean.jraw.models.Thumbnails;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
-import me.saket.dank.urlparser.Link;
-import me.saket.dank.urlparser.MediaLink;
-import me.saket.dank.urlparser.RedditSubmissionLink;
-import me.saket.dank.urlparser.RedditSubredditLink;
-import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.subreddit.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.webview.WebViewActivity;
+import me.saket.dank.urlparser.Link;
+import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.RedditSubmissionLink;
+import me.saket.dank.urlparser.RedditSubredditLink;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.Optional;
+import timber.log.Timber;
 
 @Singleton
 public class UrlRouter {
@@ -56,6 +58,10 @@ public class UrlRouter {
   public IntentRouter forLink(Link link) {
     if (link instanceof RedditUserLink) {
       throw new UnsupportedOperationException("Use forLink(RedditUserLink) instead.");
+    }
+    if (link instanceof MediaLink && BuildConfig.DEBUG) {
+      Timber.w("Consider using forLink(MediaLink) instead");
+      new Exception().printStackTrace();
     }
     return new IntentRouter(link);
   }

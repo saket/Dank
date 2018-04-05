@@ -62,12 +62,12 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.UserPreferences;
-import me.saket.dank.urlparser.ImgurAlbumLink;
-import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
+import me.saket.dank.urlparser.ImgurAlbumLink;
+import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
@@ -409,12 +409,18 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
   @Nullable
   @Override
-  public Thumbnails getRedditSuppliedImages() {
+  public Optional<Thumbnails> getRedditSuppliedImages() {
+    if (resolvedMediaLink instanceof ImgurAlbumLink || mediaAlbumAdapter.getCount() > 1) {
+      // Child pages do not know if they're part of an album. Don't let
+      // them replace imgur images with reddit-supplied album-cover image.
+      return Optional.empty();
+    }
+
     if (getIntent().hasExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON)) {
       String redditSuppliedImagesJson = getIntent().getStringExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON);
-      return new Thumbnails(jacksonHelper.parseJsonNode(redditSuppliedImagesJson));
+      return Optional.of(new Thumbnails(jacksonHelper.parseJsonNode(redditSuppliedImagesJson)));
     } else {
-      return null;
+      return Optional.empty();
     }
   }
 

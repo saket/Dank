@@ -32,6 +32,7 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.FileSizeUnit;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;
@@ -163,8 +164,8 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
         imageUrl = lowQualityUrl;
 
       } else {
-        Thumbnails redditSuppliedImages = ((MediaFragmentCallbacks) requireActivity()).getRedditSuppliedImages();
         int deviceDisplayWidth = ((MediaFragmentCallbacks) requireActivity()).getDeviceDisplayWidth();
+        Optional<Thumbnails> redditSuppliedImages = ((MediaFragmentCallbacks) requireActivity()).getRedditSuppliedImages();
         ImageWithMultipleVariants imageWithMultipleVariants = ImageWithMultipleVariants.of(redditSuppliedImages);
         imageUrl = imageWithMultipleVariants.findNearestFor(deviceDisplayWidth, lowQualityUrl);
       }

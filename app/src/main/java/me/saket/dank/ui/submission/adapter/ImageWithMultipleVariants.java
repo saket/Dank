@@ -15,11 +15,15 @@ public class ImageWithMultipleVariants {
   private Optional<Thumbnails> optionalRedditSuppliedImages;
 
   public static ImageWithMultipleVariants of(@Nullable Thumbnails redditSuppliedImages) {
+    return new ImageWithMultipleVariants(Optional.ofNullable(redditSuppliedImages));
+  }
+
+  public static ImageWithMultipleVariants of(Optional<Thumbnails> redditSuppliedImages) {
     return new ImageWithMultipleVariants(redditSuppliedImages);
   }
 
-  private ImageWithMultipleVariants(@Nullable Thumbnails redditSuppliedImages) {
-    this.optionalRedditSuppliedImages = Optional.ofNullable(redditSuppliedImages);
+  private ImageWithMultipleVariants(Optional<Thumbnails> redditSuppliedImages) {
+    this.optionalRedditSuppliedImages = redditSuppliedImages;
   }
 
   public boolean isNonEmpty() {
