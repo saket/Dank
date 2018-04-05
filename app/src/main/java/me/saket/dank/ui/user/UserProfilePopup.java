@@ -179,7 +179,7 @@ public class UserProfilePopup extends PopupWindowWithMaterialTransition {
   }
 
   public void showAtLocation(View anchorView, Point location) {
-    super.showAtLocation(anchorView, Gravity.BOTTOM | Gravity.START, location);
+    super.showAtLocation(anchorView, Gravity.NO_GRAVITY, location);
   }
 
   private String constructAccountAge(Date acctCreationDate) {
