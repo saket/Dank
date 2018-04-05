@@ -79,6 +79,7 @@ import me.saket.dank.utils.Urls;
 import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ErrorStateView;
+import me.saket.dank.widgets.ProgressWithFileSizeView;
 import me.saket.dank.widgets.ScrollInterceptibleViewPager;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.binoculars.FlickDismissLayout;
@@ -101,7 +102,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @BindView(R.id.mediaalbumviewer_options_background_gradient) View contentInfoBackgroundGradientView;
   @BindView(R.id.mediaalbumviewer_flick_dismiss_layout) FlickDismissLayout flickDismissLayout;
   @BindView(R.id.mediaalbumviewer_media_position) TextView mediaPositionTextView;
-  @BindView(R.id.mediaalbumviewer_progress) View resolveProgressView;
+  @BindView(R.id.mediaalbumviewer_progress) ProgressWithFileSizeView resolveProgressView;
   @BindView(R.id.mediaalbumviewer_error_container) ViewGroup resolveErrorViewContainer;
   @BindView(R.id.mediaalbumviewer_error) ErrorStateView resolveErrorView;
 
@@ -206,6 +207,9 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     mediaAlbumAdapter = new MediaAlbumPagerAdapter(getSupportFragmentManager());
     mediaAlbumPager.setAdapter(mediaAlbumAdapter);
     hdEnabledMediaLinksStream.accept(hdEnabledMediaLinks);  // Initial value.
+
+    resolveProgressView.setIndeterminate(true);
+    resolveProgressView.setProgressBarBackgroundFillEnabled(false);
 
     // Since only the image/video is flick-dismissible and not the entire Activity, we
     // have another flick-dismiss container for the initial progress View.

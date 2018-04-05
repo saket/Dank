@@ -20,7 +20,7 @@
     android:layout_centerInParent="true"
     android:paddingTop="@dimen/spacing48"
     android:visibility="gone"
-    app:progressBarSize="74dp"
+    app:progressBarSize="@dimen/media_progress_bar_size"
     tools:visibility="visible" />
 
   <!-- NOTE: Negative margin-start needs to be in sync with padding-start of buttons-container VIewGroup. -->
