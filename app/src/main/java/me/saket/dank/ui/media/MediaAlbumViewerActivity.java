@@ -377,10 +377,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         // Intentionally ignored to avoid resetting dimming when images/videos eventually load.
       }
     });
-    flickListener.setOnTouchDownReturnValueProvider(motionEvent -> {
-      // Hackkyyy hacckkk. Ugh.
-      return !Views.touchLiesOn(resolveErrorView.getRetryButton(), motionEvent.getRawX(), motionEvent.getRawY());
-    });
     flickListener.setContentHeightProvider(new FlickGestureListener.ContentHeightProvider() {
       @Override
       public int getContentHeightForDismissAnimation() {

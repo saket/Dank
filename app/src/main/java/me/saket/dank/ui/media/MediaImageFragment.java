@@ -9,7 +9,6 @@ import android.support.annotation.Nullable;
 import android.util.Size;
 import android.view.Gravity;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 
@@ -60,8 +59,6 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
   @Inject MediaHostRepository mediaHostRepository;
   @Inject ErrorResolver errorResolver;
-
-  private ScreenState currentScreenState;
 
   private enum ScreenState {
     LOADING_IMAGE,
@@ -148,8 +145,6 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   }
 
   private void moveToScreenState(ScreenState screenState) {
-    currentScreenState = screenState;
-
     loadErrorContainerView.setVisibility(screenState == ScreenState.FAILED ? View.VISIBLE : View.GONE);
     progressView.setVisibility(screenState == ScreenState.LOADING_IMAGE ? View.VISIBLE : View.GONE);
     imageView.setVisibility(screenState == ScreenState.IMAGE_READY ? View.VISIBLE : View.INVISIBLE);
@@ -194,8 +189,6 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
         .transform(new GlidePaddingTransformation(requireActivity(), Color.TRANSPARENT) {
           @Override
           public Size getPadding(int imageWidth, int imageHeight) {
-            Timber.i("Image: %s,%s", imageWidth, imageHeight);
-
             // Adding a 1px transparent border improves anti-aliasing when rotating image (flick-dismiss).
             return new Size(1, 1);
           }
@@ -246,7 +239,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
           }
 
           @Override
-          public void onLoadFailed(Exception e) {
+          public void onLoadFailed(@Nullable Exception e) {
             moveToScreenState(ScreenState.FAILED);
 
             ResolvedError resolvedError = errorResolver.resolve(e);
@@ -284,25 +277,6 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
       boolean isScrollingUpwards = deltaY < 0;
       return imageView.canPanFurtherVertically(isScrollingUpwards);
     });
-    flickListener.setOnTouchDownReturnValueProvider((MotionEvent event) -> {
-      switch (currentScreenState) {
-        case LOADING_IMAGE:
-          // Bug workaround: ViewPager is not calling its canScroll() method when an image is
-          // being loaded, no idea why. As a result, flick-to-dismiss does not work until the
-          // image is loaded.
-          return progressView.getProgress() < 100;
-
-        case IMAGE_READY:
-          return false;
-
-        case FAILED:
-          // Hackkyyy hacckkk. Ugh.
-          return !Views.touchLiesOn(loadErrorStateView.getRetryButton(), event.getRawX(), event.getRawY());
-
-        default:
-          throw new UnsupportedOperationException("Unknown screen state");
-      }
-    });
     imageContainerView.setFlickGestureListener(flickListener);
   }
 
@@ -328,7 +302,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     imageView.addOnImagePanChangeListener(new ZoomableImageView.OnPanChangeListener() {
       private boolean hidden = false;
 
-      // FIXME: Remove the listener instead of maintaining state. And everyone knows using a boolean is hack anyway.
+      // FIXME: Unregister the listener instead of maintaining state. And everyone knows using a boolean is hack anyway.
       @Override
       public void onPanChange(float scrollY) {
         if (hidden) {

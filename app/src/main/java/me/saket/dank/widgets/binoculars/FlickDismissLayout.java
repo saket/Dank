@@ -31,8 +31,10 @@ public class FlickDismissLayout extends FrameLayout {
   @Override
   @SuppressLint("ClickableViewAccessibility")
   public boolean onTouchEvent(MotionEvent event) {
-    boolean handled = flickGestureListener.onTouch(this, event);
-    return handled || super.onTouchEvent(event);
+    flickGestureListener.onTouch(this, event);
+    // Defaulting to true to avoid letting
+    // parent ViewGroup receive any touch events.
+    return true;
   }
 
   @Override

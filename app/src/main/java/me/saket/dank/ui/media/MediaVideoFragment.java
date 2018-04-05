@@ -6,7 +6,6 @@ import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.view.LayoutInflater;
-import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ViewFlipper;
@@ -231,7 +230,6 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     String videoUrl = mediaAlbumItem.highDefinitionEnabled()
         ? mediaAlbumItem.mediaLink().highQualityUrl()
         : mediaAlbumItem.mediaLink().lowQualityUrl();
-
     VideoFormat videoFormat = VideoFormat.parse(videoUrl);
 
     if (videoFormat.canBeCached()) {
@@ -269,17 +267,6 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
       public int getContentHeightForCalculatingThreshold() {
         return videoView.getHeight();
       }
-    });
-    flickListener.setOnTouchDownReturnValueProvider((MotionEvent event) -> {
-      // Hackkyyy hacckkk. Ugh.
-      if (Views.touchLiesOn(videoControlsView, event.getRawX(), event.getRawY())) {
-        return false;
-      }
-      //noinspection RedundantIfStatement
-      if (Views.touchLiesOn(loadErrorStateView.getRetryButton(), event.getRawX(), event.getRawY())) {
-        return false;
-      }
-      return true;
     });
     flickDismissLayout.setFlickGestureListener(flickListener);
   }
