@@ -427,7 +427,8 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @Override
   public Single<Integer> optionButtonsHeight() {
     return Single.create(emitter ->
-        Views.executeOnMeasure(contentOptionButtonsContainerView,
+        Views.executeOnMeasure(
+            contentOptionButtonsContainerView,
             () -> emitter.onSuccess(contentOptionButtonsContainerView.getHeight())
         )
     );

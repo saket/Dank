@@ -16,6 +16,9 @@
   <dimen name="spacing48">48dp</dimen>
 
   <dimen name="elevation_toolbar">4dp</dimen>
+  <dimen name="elevation_fab">6dp</dimen>
+  <dimen name="elevation_nested_expandable_sheet">10dp</dimen>
+
   <dimen name="card_corner_radius">8dp</dimen>
   <dimen name="popupwindow_width">284dp</dimen>
 
@@ -45,9 +48,6 @@
 
   <dimen name="one_line_progress_indicator_size">24dp</dimen>
 
-  <!-- Messages -->
-  <dimen name="elevation_nested_expandable_sheet">10dp</dimen>
-
   <!-- Media -->
   <dimen name="mediaalbumviewer_image_scroll_hint_bottom_margin">@dimen/spacing24</dimen>
   <dimen name="mediaalbumviewer_image_height_when_empty">240dp</dimen>
@@ -55,7 +55,6 @@
 
   <!-- Compose -->
   <dimen name="giphypicker_searchfield_top_spacing">@dimen/spacing16</dimen>
-  <dimen name="elevation_fab">6dp</dimen>
 
   <!-- App shortcuts -->
   <dimen name="elevation_recyclerview_row_drag_n_drop">4dp</dimen>
