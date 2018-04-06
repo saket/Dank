@@ -2,6 +2,7 @@ package me.saket.dank.markdownhints;
 
 import android.support.annotation.ColorInt;
 import android.support.annotation.Px;
+
 import com.google.auto.value.AutoValue;
 
 /**
@@ -52,8 +53,10 @@ public abstract class MarkdownHintOptions {
 
     public abstract Builder blockQuoteTextColor(@ColorInt int color);
 
+    /** See {@link #textBlockIndentationMargin()} */
     public abstract Builder textBlockIndentationMargin(@Px int margin);
 
+    /** See {@link #blockQuoteVerticalRuleStrokeWidth() */
     public abstract Builder blockQuoteVerticalRuleStrokeWidth(@Px int width);
 
     public abstract Builder linkUrlColor(@ColorInt int color);

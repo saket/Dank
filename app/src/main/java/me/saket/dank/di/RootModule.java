@@ -4,17 +4,18 @@ import static me.saket.dank.utils.Units.dpToPx;
 
 import android.annotation.TargetApi;
 import android.app.Application;
+import android.arch.core.util.Function;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.pm.PackageManager;
 import android.content.pm.ShortcutManager;
-import android.graphics.Color;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
+import android.support.v4.content.ContextCompat;
 
 import com.commonsware.cwac.anddown.AndDown;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
@@ -234,16 +235,18 @@ public class RootModule {
 
   @Provides
   MarkdownHintOptions provideMarkdownHintOptions(Application appContext) {
+    Function<Integer, Integer> colors = resId -> ContextCompat.getColor(appContext, resId);
+    Function<Integer, Integer> dimens = resId -> appContext.getResources().getDimensionPixelSize(resId);
+
     return MarkdownHintOptions.builder()
-        .syntaxColor(Color.CYAN)
-        .blockQuoteIndentationRuleColor(Color.CYAN)
-        .linkUrlColor(Color.GRAY)
-        .blockQuoteTextColor(Color.LTGRAY)
-        .textBlockIndentationMargin(dpToPx(8, appContext))
-        .blockQuoteVerticalRuleStrokeWidth(dpToPx(4, appContext))
-        .linkUrlColor(Color.LTGRAY)
-        .horizontalRuleColor(Color.LTGRAY)
-        .horizontalRuleStrokeWidth(dpToPx(1.5f, appContext))
+        .syntaxColor(colors.apply(R.color.markdown_syntax))
+        .blockQuoteIndentationRuleColor(colors.apply(R.color.markdown_blockquote_indentation_rule))
+        .blockQuoteTextColor(colors.apply(R.color.markdown_blockquote_text))
+        .blockQuoteVerticalRuleStrokeWidth(dimens.apply(R.dimen.markdown_blockquote_vertical_rule_stroke_width))
+        .linkUrlColor(colors.apply(R.color.markdown_link_url))
+        .textBlockIndentationMargin(dimens.apply(R.dimen.markdown_text_block_indentation_margin))
+        .horizontalRuleColor(colors.apply(R.color.markdown_horizontal_rule))
+        .horizontalRuleStrokeWidth(dimens.apply(R.dimen.markdown_horizontal_rule_stroke_width))
         .build();
   }
 
