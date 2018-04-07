@@ -12,6 +12,7 @@ public abstract class MarkdownBlock {
   public static final MarkdownBlock SUPERSCRIPT = MarkdownBlock.create("^");
   public static final MarkdownBlock INLINE_CODE = MarkdownBlock.create("`", "`");
   public static final MarkdownBlock HEADING = MarkdownBlock.create("# ");
+  public static final MarkdownBlock SPOILER = MarkdownBlock.create("[spoiler](/s \"", "\")");
 
   public abstract String prefix();
 

@@ -12,4 +12,5 @@ public enum MarkdownAction {
   SUPERSCRIPT,
   INLINE_CODE,
   HEADING,
+  SPOILER
 }

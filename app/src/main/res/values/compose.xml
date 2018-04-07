@@ -13,8 +13,9 @@
   <string name="cd_textformat_strikethrough">Strikethrough</string>
   <string name="cd_textformat_quote">Quote</string>
   <string name="cd_textformat_superscript">Superscript</string>
-  <string name="cd_textformat_code">Preformatted code</string>
+  <string name="cd_textformat_code">Pre-formatted code</string>
   <string name="cd_textformat_header">Header</string>
+  <string name="cd_textformat_spoiler">Spoiler</string>
   <string name="composereply_redo">Redo</string>
   <string name="composereply_undo">Undo</string>
   <string name="cd_composereply_undo">Undo last change</string>

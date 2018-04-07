@@ -43,7 +43,6 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
-import timber.log.Timber;
 
 /**
  * For composing comments and message replies. Handles saving and retaining drafts. Sends the composed message back to the caller.
@@ -205,6 +204,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
           insertQuoteOrHeadingMarkdownSyntax(markdownBlock);
           break;
 
+        case SPOILER:
         default:
           if (markdownBlock == null) {
             throw new AssertionError();
@@ -252,8 +252,8 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
       int selectionStart = replyField.getSelectionStart();
       int selectionEnd = replyField.getSelectionEnd();
 
-      Timber.i("selectionStart: %s", selectionStart);
-      Timber.i("selectionEnd: %s", selectionEnd);
+      //Timber.i("selectionStart: %s", selectionStart);
+      //Timber.i("selectionEnd: %s", selectionEnd);
 
       replyField.getText().insert(selectionStart, markdownBlock.prefix());
       replyField.getText().insert(selectionEnd + markdownBlock.prefix().length(), markdownBlock.suffix());
