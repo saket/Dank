@@ -87,7 +87,8 @@ public class Markdown {
             | AndDown.HOEDOWN_EXT_HIGHLIGHT
             | AndDown.HOEDOWN_EXT_QUOTE
             | AndDown.HOEDOWN_EXT_SUPERSCRIPT
-            | AndDown.HOEDOWN_EXT_SPACE_HEADERS,
+            | AndDown.HOEDOWN_EXT_SPACE_HEADERS
+            | AndDown.HOEDOWN_EXT_TABLES,
         0);
 
     try {
