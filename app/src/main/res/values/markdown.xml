@@ -5,6 +5,7 @@
   <color name="markdown_blockquote_text">@color/gray_500</color>
   <color name="markdown_link_text">@color/color_accent</color>
   <color name="markdown_link_url">@color/gray_500</color>
+  <color name="markdown_spoiler_text">@color/error_text_color</color>
   <color name="markdown_horizontal_rule">@color/gray_700</color>
   <color name="markdown_inline_code_background">@color/gray_900</color>
   <color name="markdown_indented_code_background">@color/gray_900</color>

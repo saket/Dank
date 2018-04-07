@@ -38,6 +38,9 @@ public class MarkdownNodeTreeVisitor {
       1.5f, 1.4f, 1.3f, 1.2f, 1.1f, 1f,
   };
   private static final BasedSequence FOUR_ASTERISKS_HORIZONTAL_RULE = SubSequence.of("****");
+  private static final CharSequence SPOILER_TAG = "spoiler";
+  private static final CharSequence SPOILER_TAG_WITH_BRACKETS = "[spoiler]";
+  private static final CharSequence SPOILER_URL = "/s";
 
   private final MarkdownSpanPool spanPool;
   private final MarkdownHintOptions options;
@@ -107,7 +110,12 @@ public class MarkdownNodeTreeVisitor {
         }
 
       } else if (node instanceof Link) {
-        highlightLink(((Link) node));
+        Link linkNode = (Link) node;
+        if (linkNode.getText().equalsIgnoreCase(SPOILER_TAG) && linkNode.getUrl().equalsIgnoreCase(SPOILER_URL)) {
+          highlightSpoiler(linkNode);
+        } else {
+          highlightLink(linkNode);
+        }
 
       } else if (node instanceof Code) {
         highlightCode((Code) node);
@@ -324,12 +332,28 @@ public class MarkdownNodeTreeVisitor {
   }
 
   public void highlightLink(Link link) {
-    // Link text.
+    // Text.
     writer.pushSpan(spanPool.foregroundColor(options.linkTextColor()), link.getStartOffset(), link.getEndOffset());
 
-    // Link URL.
-    int linkTextClosingMarkerPosition = link.getStartOffset() + link.getText().length() + 1;
-    int linkUrlOpeningMarkerPosition = linkTextClosingMarkerPosition + 1;
-    writer.pushSpan(spanPool.foregroundColor(linkUrlColor), linkUrlOpeningMarkerPosition, link.getEndOffset());
+    // Url.
+    int textClosingPosition = link.getStartOffset() + link.getText().length() + 1;
+    int urlOpeningPosition = textClosingPosition + 1;
+    writer.pushSpan(spanPool.foregroundColor(linkUrlColor), urlOpeningPosition, link.getEndOffset());
+  }
+
+  public void highlightSpoiler(Link spoilerLink) {
+    // Text.
+    int textClosingPosition = spoilerLink.getStartOffset() + SPOILER_TAG_WITH_BRACKETS.length();
+    writer.pushSpan(spanPool.foregroundColor(options.spoilerTextColor()), spoilerLink.getStartOffset(), textClosingPosition);
+
+    // Url.
+    int urlOpeningBracketLength = 1;
+    int urlClosingPosition = textClosingPosition + urlOpeningBracketLength + SPOILER_URL.length();
+    writer.pushSpan(spanPool.foregroundColor(syntaxColor), textClosingPosition, urlClosingPosition);
+    writer.pushSpan(spanPool.foregroundColor(syntaxColor), spoilerLink.getEndOffset() - 1, spoilerLink.getEndOffset());
+
+    // Content.
+    int contentClosingPosition = spoilerLink.getEndOffset() - 1;
+    writer.pushSpan(spanPool.foregroundColor(linkUrlColor), urlClosingPosition, contentClosingPosition);
   }
 }

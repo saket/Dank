@@ -45,6 +45,9 @@ public abstract class MarkdownHintOptions {
   public abstract int linkTextColor();
 
   @ColorInt
+  public abstract int spoilerTextColor();
+
+  @ColorInt
   public abstract int horizontalRuleColor();
 
   @Px
@@ -83,6 +86,8 @@ public abstract class MarkdownHintOptions {
     public abstract Builder linkUrlColor(@ColorInt int color);
 
     public abstract Builder linkTextColor(@ColorInt int color);
+
+    public abstract Builder spoilerTextColor(@ColorInt int color);
 
     public abstract Builder horizontalRuleColor(@ColorInt int color);
 

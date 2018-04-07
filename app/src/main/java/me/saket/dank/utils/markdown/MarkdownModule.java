@@ -35,6 +35,7 @@ public class MarkdownModule {
 
         .linkUrlColor(colors.apply(R.color.markdown_link_url))
         .linkTextColor(colors.apply(R.color.markdown_link_text))
+        .spoilerTextColor(colors.apply(R.color.markdown_spoiler_text))
 
         .textBlockIndentationMargin(dimens.apply(R.dimen.markdown_text_block_indentation_margin))
         .listMarginBetweenListIndicatorAndText(dimens.apply(R.dimen.markdown_list_margin_with_list_indicator))
