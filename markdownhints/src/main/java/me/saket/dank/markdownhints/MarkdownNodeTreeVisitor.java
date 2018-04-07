@@ -1,6 +1,5 @@
 package me.saket.dank.markdownhints;
 
-import android.graphics.Color;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Px;
 
@@ -41,6 +40,7 @@ public class MarkdownNodeTreeVisitor {
   private static final BasedSequence FOUR_ASTERISKS_HORIZONTAL_RULE = SubSequence.of("****");
 
   private final MarkdownSpanPool spanPool;
+  private final MarkdownHintOptions options;
   private final @ColorInt int syntaxColor;
   private final @ColorInt int blockQuoteIndentationRuleColor;
   private final @ColorInt int blockQuoteTextColor;
@@ -51,16 +51,17 @@ public class MarkdownNodeTreeVisitor {
   private final @Px int textBlockIndentationMargin;
   private MarkdownHintsSpanWriter writer;
 
-  public MarkdownNodeTreeVisitor(MarkdownSpanPool spanPool, MarkdownHintOptions markdownHintOptions) {
+  public MarkdownNodeTreeVisitor(MarkdownSpanPool spanPool, MarkdownHintOptions options) {
     this.spanPool = spanPool;
-    syntaxColor = markdownHintOptions.syntaxColor();
-    blockQuoteIndentationRuleColor = markdownHintOptions.blockQuoteIndentationRuleColor();
-    blockQuoteTextColor = markdownHintOptions.blockQuoteTextColor();
-    textBlockIndentationMargin = markdownHintOptions.textBlockIndentationMargin();
-    blockQuoteVerticalRuleStrokeWidth = markdownHintOptions.blockQuoteVerticalRuleStrokeWidth();
-    linkUrlColor = markdownHintOptions.linkUrlColor();
-    horizontalRuleColor = markdownHintOptions.horizontalRuleColor();
-    horizontalRuleStrokeWidth = markdownHintOptions.horizontalRuleStrokeWidth();
+    this.options = options;
+    syntaxColor = options.syntaxColor();
+    blockQuoteIndentationRuleColor = options.blockQuoteIndentationRuleColor();
+    blockQuoteTextColor = options.blockQuoteTextColor();
+    textBlockIndentationMargin = options.textBlockIndentationMargin();
+    blockQuoteVerticalRuleStrokeWidth = options.blockQuoteVerticalRuleStrokeWidth();
+    linkUrlColor = options.linkUrlColor();
+    horizontalRuleColor = options.horizontalRuleColor();
+    horizontalRuleStrokeWidth = options.horizontalRuleStrokeWidth();
   }
 
   public void visit(Node markdownRootNode, MarkdownHintsSpanWriter hintsWriter) {
@@ -172,7 +173,7 @@ public class MarkdownNodeTreeVisitor {
   }
 
   public void highlightCode(Code code) {
-    writer.pushSpan(spanPool.backgroundColor(Color.BLACK), code.getStartOffset(), code.getEndOffset());
+    writer.pushSpan(spanPool.backgroundColor(options.indentedCodeBlockBackgroundColor()), code.getStartOffset(), code.getEndOffset());
     writer.pushSpan(spanPool.monospaceTypeface(), code.getStartOffset(), code.getEndOffset());
     highlightMarkdownSyntax(code);
   }
@@ -182,7 +183,11 @@ public class MarkdownNodeTreeVisitor {
     int lineStartOffset = indentedCodeBlock.getStartOffset() - 4;
     int startLineNumber = indentedCodeBlock.getLineNumber();
     int endLineNumber = startLineNumber + 1 + indentedCodeBlock.getLineCount();
-    RoundedBackgroundColorSpan span = spanPool.roundedBackgroundColor(Color.BLACK, 10, startLineNumber, endLineNumber);
+    RoundedBackgroundColorSpan span = spanPool.roundedBackgroundColor(
+        options.indentedCodeBlockBackgroundColor(),
+        options.indentedCodeBlockBackgroundRadius(),
+        startLineNumber,
+        endLineNumber);
 
     writer.pushSpan(span, lineStartOffset, indentedCodeBlock.getEndOffset());
     writer.pushSpan(spanPool.monospaceTypeface(), indentedCodeBlock.getStartOffset(), indentedCodeBlock.getEndOffset());

@@ -28,13 +28,21 @@ public class MarkdownModule {
 
     return MarkdownHintOptions.builder()
         .syntaxColor(colors.apply(R.color.markdown_syntax))
+
         .blockQuoteIndentationRuleColor(colors.apply(R.color.markdown_blockquote_indentation_rule))
         .blockQuoteTextColor(colors.apply(R.color.markdown_blockquote_text))
         .blockQuoteVerticalRuleStrokeWidth(dimens.apply(R.dimen.markdown_blockquote_vertical_rule_stroke_width))
+
         .linkUrlColor(colors.apply(R.color.markdown_link_url))
         .textBlockIndentationMargin(dimens.apply(R.dimen.markdown_text_block_indentation_margin))
+
         .horizontalRuleColor(colors.apply(R.color.markdown_horizontal_rule))
         .horizontalRuleStrokeWidth(dimens.apply(R.dimen.markdown_horizontal_rule_stroke_width))
+
+        .inlineCodeBackgroundColor(colors.apply(R.color.markdown_inline_code_background))
+        .indentedCodeBlockBackgroundColor(colors.apply(R.color.markdown_indented_code_background))
+        .indentedCodeBlockBackgroundRadius(dimens.apply(R.dimen.markdown_indented_code_background_radius))
+
         .build();
   }
 }

@@ -5,8 +5,11 @@
   <color name="markdown_blockquote_text">@color/gray_500</color>
   <color name="markdown_link_url">@color/gray_500</color>
   <color name="markdown_horizontal_rule">@color/gray_700</color>
+  <color name="markdown_inline_code_background">@color/gray_850</color>
+  <color name="markdown_indented_code_background">@color/gray_850</color>
 
   <dimen name="markdown_text_block_indentation_margin">8dp</dimen>
   <dimen name="markdown_blockquote_vertical_rule_stroke_width">4dp</dimen>
   <dimen name="markdown_horizontal_rule_stroke_width">2dp</dimen>
+  <dimen name="markdown_indented_code_background_radius">@dimen/card_corner_radius</dimen>
 </resources>

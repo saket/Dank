@@ -41,6 +41,15 @@ public abstract class MarkdownHintOptions {
   @Px
   public abstract int horizontalRuleStrokeWidth();
 
+  @ColorInt
+  public abstract int inlineCodeBackgroundColor();
+
+  @ColorInt
+  public abstract int indentedCodeBlockBackgroundColor();
+
+  @Px
+  public abstract int indentedCodeBlockBackgroundRadius();
+
   public static Builder builder() {
     return new AutoValue_MarkdownHintOptions.Builder();
   }
@@ -64,6 +73,12 @@ public abstract class MarkdownHintOptions {
     public abstract Builder horizontalRuleColor(@ColorInt int color);
 
     public abstract Builder horizontalRuleStrokeWidth(@Px int width);
+
+    public abstract Builder inlineCodeBackgroundColor(@ColorInt int color);
+
+    public abstract Builder indentedCodeBlockBackgroundColor(@ColorInt int color);
+
+    public abstract Builder indentedCodeBlockBackgroundRadius(@Px int radius);
 
     public abstract MarkdownHintOptions build();
   }
