@@ -54,7 +54,7 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
     public HtmlTagHandler() {
     }
 
-    protected abstract NumberSpan createNumberSpan(int number);
+    protected abstract NumberSpan numberSpan(int number);
 
   /**
      * Newer versions of the Android SDK's {@link Html.TagHandler} handles &lt;ul&gt; and &lt;li&gt;
@@ -235,7 +235,7 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
                             // Same as in ordered lists: counter the effect of nested Spans
                             numberMargin -= (lists.size() - 2) * listItemIndent;
                         }
-                        NumberSpan numberSpan = createNumberSpan(olNextIndex.lastElement() - 1);
+                        NumberSpan numberSpan = numberSpan(olNextIndex.lastElement() - 1);
                         end(output, Ol.class, false,
                                 new LeadingMarginSpan.Standard(numberMargin),
                                 numberSpan);

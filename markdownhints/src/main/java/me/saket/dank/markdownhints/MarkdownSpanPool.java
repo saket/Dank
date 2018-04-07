@@ -74,11 +74,11 @@ public class MarkdownSpanPool {
         : superscriptSpans.pop();
   }
 
-  public CustomQuoteSpan quote(@ColorInt int verticalRuleColor, @Px int indentationMargin, @Px int verticalRuleStrokeWidth) {
-    String key = verticalRuleColor + "_" + indentationMargin + "_" + verticalRuleStrokeWidth;
+  public CustomQuoteSpan quote(@ColorInt int indentationRuleColor, @Px int indentationMargin, @Px int verticalRuleStrokeWidth) {
+    String key = indentationRuleColor + "_" + indentationMargin + "_" + verticalRuleStrokeWidth;
     return quoteSpans.containsKey(key)
         ? quoteSpans.remove(key)
-        : new CustomQuoteSpan(verticalRuleColor, indentationMargin, verticalRuleStrokeWidth);
+        : new CustomQuoteSpan(indentationRuleColor, indentationMargin, verticalRuleStrokeWidth);
   }
 
   public LeadingMarginSpan.Standard leadingMargin(int margin) {
@@ -166,7 +166,7 @@ public class MarkdownSpanPool {
   }
 
   public void recycle(CustomQuoteSpan span) {
-    String key = span.getVerticalRuleColor() + "_" + span.getIndentationMargin() + "_" + span.getVerticalRuleStrokeWidth();
+    String key = span.getIndentationRuleColor() + "_" + span.getIndentationMargin() + "_" + span.getVerticalRuleStrokeWidth();
     quoteSpans.put(key, span);
   }
 

@@ -29,12 +29,12 @@ import android.text.style.QuoteSpan;
  */
 public class CustomQuoteSpan implements LeadingMarginSpan {
 
-  private final @ColorInt int verticalRuleColor;
+  private final @ColorInt int indentationRuleColor;
   private final @Px int indentationMargin;
   private final @Px int verticalRuleStrokeWidth;
 
-  public CustomQuoteSpan(@ColorInt int verticalRuleColor, int indentationMargin, int verticalRuleStrokeWidth) {
-    this.verticalRuleColor = verticalRuleColor;
+  public CustomQuoteSpan(@ColorInt int indentationRuleColor, @Px int indentationMargin, @Px int verticalRuleStrokeWidth) {
+    this.indentationRuleColor = indentationRuleColor;
     this.indentationMargin = indentationMargin;
     this.verticalRuleStrokeWidth = verticalRuleStrokeWidth;
   }
@@ -52,7 +52,7 @@ public class CustomQuoteSpan implements LeadingMarginSpan {
     int color = p.getColor();
 
     p.setStyle(Paint.Style.FILL);
-    p.setColor(this.verticalRuleColor);
+    p.setColor(this.indentationRuleColor);
 
     c.drawRect(x, top, x + dir * verticalRuleStrokeWidth, bottom, p);
 
@@ -61,8 +61,8 @@ public class CustomQuoteSpan implements LeadingMarginSpan {
   }
 
   @ColorInt
-  public int getVerticalRuleColor() {
-    return verticalRuleColor;
+  public int getIndentationRuleColor() {
+    return indentationRuleColor;
   }
 
   @Px

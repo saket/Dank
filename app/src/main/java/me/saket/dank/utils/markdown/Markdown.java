@@ -1,6 +1,7 @@
 package me.saket.dank.utils.markdown;
 
 import android.text.Html;
+import android.text.Spannable;
 import android.text.Spanned;
 
 import com.commonsware.cwac.anddown.AndDown;
@@ -62,8 +63,9 @@ public class Markdown {
 
       try {
         String sourceWithCustomTags = htmlTagHandler.overrideTags(source);
-        Spanned spanned = Html.fromHtml(sourceWithCustomTags, null, htmlTagHandler);
-        return trimTrailingWhitespace(spanned);
+        Spannable spannable = (Spannable) Html.fromHtml(sourceWithCustomTags, null, htmlTagHandler);
+        spannable = htmlTagHandler.replaceBlockQuoteSpans(spannable);
+        return trimTrailingWhitespace(spannable);
 
       } catch (Exception e) {
         e.printStackTrace();

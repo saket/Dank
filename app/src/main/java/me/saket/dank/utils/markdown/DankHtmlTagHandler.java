@@ -1,9 +1,11 @@
 package me.saket.dank.utils.markdown;
 
-import android.graphics.Color;
 import android.support.annotation.Nullable;
 import android.support.annotation.VisibleForTesting;
 import android.text.Editable;
+import android.text.Spannable;
+import android.text.Spanned;
+import android.text.style.QuoteSpan;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -16,20 +18,24 @@ import java.util.List;
 import javax.inject.Inject;
 
 import me.saket.dank.markdownhints.MarkdownHintOptions;
-import me.saket.dank.widgets.span.HorizontalRuleSpan;
+import me.saket.dank.markdownhints.MarkdownSpanPool;
+import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
+import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
 import timber.log.Timber;
 
 public class DankHtmlTagHandler extends HtmlTagHandler {
 
   private final MarkdownHintOptions options;
+  private final MarkdownSpanPool spanPool;
 
   @Inject
-  public DankHtmlTagHandler(MarkdownHintOptions options) {
+  public DankHtmlTagHandler(MarkdownHintOptions options, MarkdownSpanPool spanPool) {
     this.options = options;
+    this.spanPool = spanPool;
   }
 
   @Override
-  protected NumberSpan createNumberSpan(int number) {
+  protected NumberSpan numberSpan(int number) {
     return new NumberSpan(number, options.textBlockIndentationMargin());
   }
 
@@ -71,6 +77,23 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
         ;
   }
 
+  public Spannable replaceBlockQuoteSpans(Spannable spannable) {
+    QuoteSpan[] quoteSpans = spannable.getSpans(0, spannable.length(), QuoteSpan.class);
+    for (QuoteSpan quoteSpan : quoteSpans) {
+      CustomQuoteSpan customQuoteSpan = spanPool.quote(
+          options.blockQuoteIndentationRuleColor(),
+          options.textBlockIndentationMargin(),
+          options.blockQuoteVerticalRuleStrokeWidth());
+
+      int start = spannable.getSpanStart(quoteSpan);
+      int end = spannable.getSpanEnd(quoteSpan);
+      spannable.setSpan(customQuoteSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+
+      spannable.removeSpan(quoteSpan);
+    }
+    return spannable;
+  }
+
   @Override
   public void handleTag(boolean opening, String tag, Editable output, XMLReader xmlReader) {
     if (tag.equals("hr") && !opening) {
@@ -82,8 +105,16 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
 
   private void handleHRTag(Editable output) {
     int start = output.length();
-    output.append(" \n");   // Paragraph styles like LineBackgroundSpan need to end with a new line.
-    output.setSpan(new HorizontalRuleSpan(Color.DKGRAY, 4f), start, output.length(), 0);
+
+    // Paragraph styles like LineBackgroundSpan need to end with a new line.
+    output.append(" \n");
+
+    HorizontalRuleSpan hrSpan = spanPool.horizontalRule(
+        "",
+        options.horizontalRuleColor(),
+        options.horizontalRuleStrokeWidth(),
+        HorizontalRuleSpan.Mode.HYPHENS);
+    output.setSpan(hrSpan, start, output.length(), 0);
   }
 
   @VisibleForTesting
