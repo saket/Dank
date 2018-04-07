@@ -37,8 +37,8 @@ public abstract class DiskLruCachePathResolver<KEY> implements PathResolver<KEY>
     // Reddit only allows '_' and '-' in user-names.
     return simplifiedPath
         .toLowerCase(Locale.ENGLISH)
-        .replaceAll("/", "--")
-        .replaceAll("\\.", "_");
+        .replace("/", "--")
+        .replace(".", "_");
   }
 
   /**
