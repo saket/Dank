@@ -5,7 +5,9 @@ import android.support.annotation.VisibleForTesting;
 import android.text.Editable;
 import android.text.Spannable;
 import android.text.Spanned;
+import android.text.style.ForegroundColorSpan;
 import android.text.style.QuoteSpan;
+import android.text.style.TypefaceSpan;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
@@ -39,8 +41,28 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
     return new NumberSpan(number, options.textBlockIndentationMargin());
   }
 
+  @Override
+  protected Object[] inlineCodeSpans() {
+    return new Object[] {
+        new TypefaceSpan("monospace"),
+        spanPool.backgroundColor(options.indentedCodeBlockBackgroundColor())
+    };
+  }
+
+  @Override
+  protected Object[] codeBlockSpans() {
+    return new Object[] {
+        new TypefaceSpan("monospace"),
+        spanPool.roundedBackgroundColor(
+            options.indentedCodeBlockBackgroundColor(),
+            options.indentedCodeBlockBackgroundRadius(),
+            -1,
+            -1)
+    };
+  }
+
   /**
-   * See {@link HtmlTagHandler#overrideTags(String)}. This exists because that method is not public.
+   * This exists because {@link HtmlTagHandler#overrideTags(String)} is not public.
    */
   String overrideTags(@Nullable String html) {
     //noinspection ConstantConditions
@@ -68,12 +90,14 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
         .replace("</sup>", "</small></sup>")
 
         // WARNING: THESE SHOULD BE AT THE LAST.
-        .replace("<ul", "<" + HtmlTagHandler.UNORDERED_LIST)
-        .replace("</ul>", "</" + HtmlTagHandler.UNORDERED_LIST + ">")
-        .replace("<ol", "<" + HtmlTagHandler.ORDERED_LIST)
-        .replace("</ol>", "</" + HtmlTagHandler.ORDERED_LIST + ">")
-        .replace("<li", "<" + HtmlTagHandler.LIST_ITEM)
-        .replace("</li>", "</" + HtmlTagHandler.LIST_ITEM + ">")
+        .replace("<ul", "<" + UNORDERED_LIST)
+        .replace("</ul>", "</" + UNORDERED_LIST + ">")
+        .replace("<ol", "<" + ORDERED_LIST)
+        .replace("</ol>", "</" + ORDERED_LIST + ">")
+        .replace("<li", "<" + LIST_ITEM)
+        .replace("</li>", "</" + LIST_ITEM + ">")
+        .replace("<pre><code>", "<" + PRE_CODE_BLOCK + ">")
+        .replace("</code></pre>", "</" + PRE_CODE_BLOCK + ">")
         ;
   }
 
@@ -84,10 +108,12 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
           options.blockQuoteIndentationRuleColor(),
           options.textBlockIndentationMargin(),
           options.blockQuoteVerticalRuleStrokeWidth());
+      ForegroundColorSpan colorSpan = spanPool.foregroundColor(options.blockQuoteTextColor());
 
       int start = spannable.getSpanStart(quoteSpan);
       int end = spannable.getSpanEnd(quoteSpan);
       spannable.setSpan(customQuoteSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
+      spannable.setSpan(colorSpan, start, end, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
 
       spannable.removeSpan(quoteSpan);
     }
@@ -146,7 +172,7 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
   }
 
   static String escapeSingleQuotes(String s) {
-    return s.replaceAll("'", "&#39;");
+    return s.replace("'", "&#39;");
   }
 
   /**

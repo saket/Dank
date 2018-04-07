@@ -238,15 +238,16 @@ public class MarkdownNodeTreeVisitor {
       parent = parent.getParent();
     }
 
+    // Quote's vertical rule.
     CustomQuoteSpan quoteSpan = spanPool.quote(blockQuoteIndentationRuleColor, textBlockIndentationMargin, blockQuoteVerticalRuleStrokeWidth);
     writer.pushSpan(quoteSpan, blockQuote.getStartOffset() - nestedParents, blockQuote.getEndOffset());
-
-    // Quote's vertical rule.
-    writer.pushSpan(spanPool.foregroundColor(blockQuoteTextColor), blockQuote.getStartOffset() - nestedParents, blockQuote.getEndOffset());
 
     // Quote markers ('>').
     int markerStartOffset = blockQuote.getStartOffset() - nestedParents;
     writer.pushSpan(spanPool.foregroundColor(syntaxColor), markerStartOffset, blockQuote.getStartOffset() + 1);
+
+    // Text color.
+    writer.pushSpan(spanPool.foregroundColor(blockQuoteTextColor), blockQuote.getStartOffset() - nestedParents, blockQuote.getEndOffset());
   }
 
   public void highlightHeading(Heading heading) {

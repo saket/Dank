@@ -29,7 +29,6 @@ import android.text.style.AlignmentSpan;
 import android.text.style.BulletSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.StrikethroughSpan;
-import android.text.style.TypefaceSpan;
 import android.util.Log;
 
 import org.sufficientlysecure.htmltextview.ClickableTableSpan;
@@ -50,11 +49,16 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
     public static final String UNORDERED_LIST = "HTML_TEXTVIEW_ESCAPED_UL_TAG";
     public static final String ORDERED_LIST = "HTML_TEXTVIEW_ESCAPED_OL_TAG";
     public static final String LIST_ITEM = "HTML_TEXTVIEW_ESCAPED_LI_TAG";
+    public static final String PRE_CODE_BLOCK = "HTML_TEXTVIEW_ESCAPED_PRE_CODE_TAG";
 
     public HtmlTagHandler() {
     }
 
     protected abstract NumberSpan numberSpan(int number);
+
+    protected abstract Object[] inlineCodeSpans();
+    
+    protected abstract Object[] codeBlockSpans();
 
   /**
      * Newer versions of the Android SDK's {@link Html.TagHandler} handles &lt;ul&gt; and &lt;li&gt;
@@ -128,6 +132,9 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
     private static class Code {
     }
 
+    private static class CodeBlock {
+    }
+
     private static class Center {
     }
 
@@ -174,6 +181,8 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
                 }
             } else if (tag.equalsIgnoreCase("code")) {
                 start(output, new Code());
+            } else if(tag.equalsIgnoreCase(PRE_CODE_BLOCK)) {
+                start(output, new CodeBlock());
             } else if (tag.equalsIgnoreCase("center")) {
                 start(output, new Center());
             } else if (tag.equalsIgnoreCase("s") || tag.equalsIgnoreCase("strike")) {
@@ -242,7 +251,9 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
                     }
                 }
             } else if (tag.equalsIgnoreCase("code")) {
-                end(output, Code.class, false, new TypefaceSpan("monospace"));
+                end(output, Code.class, false, inlineCodeSpans());
+            } else if(tag.equalsIgnoreCase(PRE_CODE_BLOCK)) {
+                end(output, CodeBlock.class, true, codeBlockSpans());
             } else if (tag.equalsIgnoreCase("center")) {
                 end(output, Center.class, true, new AlignmentSpan.Standard(Layout.Alignment.ALIGN_CENTER));
             } else if (tag.equalsIgnoreCase("s") || tag.equalsIgnoreCase("strike")) {
