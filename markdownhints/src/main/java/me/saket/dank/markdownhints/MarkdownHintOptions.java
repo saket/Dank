@@ -42,6 +42,9 @@ public abstract class MarkdownHintOptions {
   public abstract int linkUrlColor();
 
   @ColorInt
+  public abstract int linkTextColor();
+
+  @ColorInt
   public abstract int horizontalRuleColor();
 
   @Px
@@ -78,6 +81,8 @@ public abstract class MarkdownHintOptions {
     public abstract Builder blockQuoteVerticalRuleStrokeWidth(@Px int width);
 
     public abstract Builder linkUrlColor(@ColorInt int color);
+
+    public abstract Builder linkTextColor(@ColorInt int color);
 
     public abstract Builder horizontalRuleColor(@ColorInt int color);
 

@@ -3,6 +3,7 @@
   <color name="markdown_syntax">@color/blue_gray_400</color>
   <color name="markdown_blockquote_indentation_rule">@color/markdown_syntax</color>
   <color name="markdown_blockquote_text">@color/gray_500</color>
+  <color name="markdown_link_text">@color/color_accent</color>
   <color name="markdown_link_url">@color/gray_500</color>
   <color name="markdown_horizontal_rule">@color/gray_700</color>
   <color name="markdown_inline_code_background">@color/gray_900</color>

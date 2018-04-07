@@ -324,12 +324,11 @@ public class MarkdownNodeTreeVisitor {
   }
 
   public void highlightLink(Link link) {
-    // First, link text.
-    writer.pushSpan(spanPool.foregroundColor(syntaxColor), link.getStartOffset(), link.getStartOffset() + 1);
-    int linkTextClosingMarkerPosition = link.getStartOffset() + link.getText().length() + 1;
-    writer.pushSpan(spanPool.foregroundColor(syntaxColor), linkTextClosingMarkerPosition, linkTextClosingMarkerPosition + 1);
+    // Link text.
+    writer.pushSpan(spanPool.foregroundColor(options.linkTextColor()), link.getStartOffset(), link.getEndOffset());
 
-    // Next, link URL.
+    // Link URL.
+    int linkTextClosingMarkerPosition = link.getStartOffset() + link.getText().length() + 1;
     int linkUrlOpeningMarkerPosition = linkTextClosingMarkerPosition + 1;
     writer.pushSpan(spanPool.foregroundColor(linkUrlColor), linkUrlOpeningMarkerPosition, link.getEndOffset());
   }

@@ -34,6 +34,8 @@ public class MarkdownModule {
         .blockQuoteVerticalRuleStrokeWidth(dimens.apply(R.dimen.markdown_blockquote_vertical_rule_stroke_width))
 
         .linkUrlColor(colors.apply(R.color.markdown_link_url))
+        .linkTextColor(colors.apply(R.color.markdown_link_text))
+
         .textBlockIndentationMargin(dimens.apply(R.dimen.markdown_text_block_indentation_margin))
         .listMarginBetweenListIndicatorAndText(dimens.apply(R.dimen.markdown_list_margin_with_list_indicator))
 
