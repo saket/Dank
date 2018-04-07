@@ -9,18 +9,16 @@ import me.saket.dank.cache.CacheModule;
 import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.deeplinks.DeepLinkHandlingActivity;
-import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
-import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
-import me.saket.dank.ui.subreddit.NewSubredditSubscriptionDialog;
-import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.VotingManager;
+import me.saket.dank.deeplinks.DeepLinkHandlingActivity;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.notifs.MessageNotifActionsJobService;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.PlaygroundActivity;
+import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
+import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.UploadImageDialog;
@@ -36,19 +34,22 @@ import me.saket.dank.ui.submission.LinkOptionsPopup;
 import me.saket.dank.ui.submission.RetryReplyJobService;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.VoteJobService;
+import me.saket.dank.ui.subreddit.NewSubredditSubscriptionDialog;
 import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubredditActivity;
+import me.saket.dank.ui.subreddit.UserProfileSheetView;
 import me.saket.dank.ui.subscriptions.SubredditPickerSheetView;
 import me.saket.dank.ui.subscriptions.SubredditSubscriptionsSyncJob;
-import me.saket.dank.ui.subreddit.UserProfileSheetView;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.ui.user.UserAuthListener;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.InboxFolderFragment;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
 import me.saket.dank.utils.JacksonHelper;
+import me.saket.dank.utils.markdown.MarkdownModule;
 
-@Component(modules = { RootModule.class, UserPreferencesModule.class, CacheModule.class })
+@Component(modules = { RootModule.class, UserPreferencesModule.class, CacheModule.class, MarkdownModule.class })
 @Singleton
 public interface RootComponent {
 
