@@ -3,7 +3,6 @@ package me.saket.dank.markdownhints;
 import android.graphics.Color;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Px;
-import android.text.style.BackgroundColorSpan;
 
 import com.vladsch.flexmark.ast.BlockQuote;
 import com.vladsch.flexmark.ast.Code;
@@ -27,6 +26,7 @@ import com.vladsch.flexmark.util.sequence.SubSequence;
 
 import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
+import me.saket.dank.markdownhints.spans.RoundedBackgroundColorSpan;
 import timber.log.Timber;
 
 /**
@@ -178,6 +178,13 @@ public class MarkdownNodeTreeVisitor {
   }
 
   public void highlightIndentedCodeBlock(IndentedCodeBlock indentedCodeBlock) {
+    // LineBackgroundSpan needs to start at the starting of the line.
+    int lineStartOffset = indentedCodeBlock.getStartOffset() - 4;
+    int startLineNumber = indentedCodeBlock.getLineNumber();
+    int endLineNumber = startLineNumber + 1 + indentedCodeBlock.getLineCount();
+    RoundedBackgroundColorSpan span = spanPool.roundedBackgroundColor(Color.BLACK, 10, startLineNumber, endLineNumber);
+
+    writer.pushSpan(span, lineStartOffset, indentedCodeBlock.getEndOffset());
     writer.pushSpan(spanPool.monospaceTypeface(), indentedCodeBlock.getStartOffset(), indentedCodeBlock.getEndOffset());
   }
 

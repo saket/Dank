@@ -19,6 +19,7 @@ import java.util.Stack;
 
 import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
+import me.saket.dank.markdownhints.spans.RoundedBackgroundColorSpan;
 
 /**
  * For avoiding creation of new spans on every text change.
@@ -32,6 +33,7 @@ public class MarkdownSpanPool {
   private final Stack<TypefaceSpan> monospaceTypefaceSpans = new Stack<>();
   private final Map<Integer, ForegroundColorSpan> foregroundColorSpans = new HashMap<>();
   private final Map<Integer, BackgroundColorSpan> backgroundColorSpans = new HashMap<>();
+  private final Map<String, RoundedBackgroundColorSpan> roundedBackgroundColorSpans = new HashMap<>();
   private final Map<Float, RelativeSizeSpan> relativeSizeSpans = new HashMap<>();
   private final Stack<SuperscriptSpan> superscriptSpans = new Stack<>();
   private final Map<String, CustomQuoteSpan> quoteSpans = new HashMap<>();
@@ -58,6 +60,13 @@ public class MarkdownSpanPool {
     return backgroundColorSpans.containsKey(color)
         ? backgroundColorSpans.remove(color)
         : new BackgroundColorSpan(color);
+  }
+
+  public RoundedBackgroundColorSpan roundedBackgroundColor(@ColorInt int color, @Px int radius, int startLineNumber, int endLineNumber) {
+    String key = color + "_" + radius + "_" + startLineNumber + "_" + endLineNumber;
+    return roundedBackgroundColorSpans.containsKey(key)
+        ? roundedBackgroundColorSpans.remove(key)
+        : new RoundedBackgroundColorSpan(color, radius, startLineNumber, endLineNumber);
   }
 
   public StrikethroughSpan strikethrough() {
@@ -133,6 +142,9 @@ public class MarkdownSpanPool {
     } else if (span instanceof HorizontalRuleSpan) {
       recycle(((HorizontalRuleSpan) span));
 
+    } else if (span instanceof RoundedBackgroundColorSpan) {
+      recycle(((RoundedBackgroundColorSpan) span));
+
     } else if (span instanceof BackgroundColorSpan) {
       recycle(((BackgroundColorSpan) span));
 
@@ -156,6 +168,11 @@ public class MarkdownSpanPool {
   public void recycle(ForegroundColorSpan span) {
     int key = span.getForegroundColor();
     foregroundColorSpans.put(key, span);
+  }
+
+  public void recycle(RoundedBackgroundColorSpan span) {
+    String key = span.backgroundColor() + "_" + span.radius() + "_" + span.startLineNumber() + "_" + span.endLineNumber();
+    roundedBackgroundColorSpans.put(key, span);
   }
 
   public void recycle(BackgroundColorSpan span) {

@@ -23,6 +23,7 @@ import java.util.Set;
 
 import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
+import me.saket.dank.markdownhints.spans.RoundedBackgroundColorSpan;
 import timber.log.Timber;
 
 /**
@@ -42,6 +43,7 @@ public class MarkdownHints extends SimpleTextWatcher {
     SUPPORTED_MARKDOWN_SPANS.add(CustomQuoteSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(LeadingMarginSpan.Standard.class);
     SUPPORTED_MARKDOWN_SPANS.add(HorizontalRuleSpan.class);
+    SUPPORTED_MARKDOWN_SPANS.add(RoundedBackgroundColorSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(BackgroundColorSpan.class);
   }
 
