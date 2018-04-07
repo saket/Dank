@@ -1,7 +1,9 @@
 package me.saket.dank.markdownhints;
 
+import android.graphics.Color;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Px;
+import android.text.style.BackgroundColorSpan;
 
 import com.vladsch.flexmark.ast.BlockQuote;
 import com.vladsch.flexmark.ast.Code;
@@ -170,6 +172,7 @@ public class MarkdownNodeTreeVisitor {
   }
 
   public void highlightCode(Code code) {
+    writer.pushSpan(spanPool.backgroundColor(Color.BLACK), code.getStartOffset(), code.getEndOffset());
     writer.pushSpan(spanPool.monospaceTypeface(), code.getStartOffset(), code.getEndOffset());
     highlightMarkdownSyntax(code);
   }

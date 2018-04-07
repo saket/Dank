@@ -2,6 +2,7 @@ package me.saket.dank.markdownhints;
 
 import android.text.Editable;
 import android.text.Spannable;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.RelativeSizeSpan;
@@ -10,13 +11,16 @@ import android.text.style.StyleSpan;
 import android.text.style.SuperscriptSpan;
 import android.text.style.TypefaceSpan;
 import android.widget.EditText;
+
 import com.vladsch.flexmark.ast.Node;
 import com.vladsch.flexmark.ext.gfm.strikethrough.StrikethroughExtension;
 import com.vladsch.flexmark.parser.Parser;
 import com.vladsch.flexmark.util.sequence.SubSequence;
+
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
+
 import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
 import timber.log.Timber;
@@ -38,6 +42,7 @@ public class MarkdownHints extends SimpleTextWatcher {
     SUPPORTED_MARKDOWN_SPANS.add(CustomQuoteSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(LeadingMarginSpan.Standard.class);
     SUPPORTED_MARKDOWN_SPANS.add(HorizontalRuleSpan.class);
+    SUPPORTED_MARKDOWN_SPANS.add(BackgroundColorSpan.class);
   }
 
   private final EditText editText;

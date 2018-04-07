@@ -4,6 +4,7 @@ import android.annotation.SuppressLint;
 import android.graphics.Typeface;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Px;
+import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.RelativeSizeSpan;
@@ -11,9 +12,11 @@ import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.SuperscriptSpan;
 import android.text.style.TypefaceSpan;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
+
 import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
 
@@ -28,6 +31,7 @@ public class MarkdownSpanPool {
   private final Stack<StrikethroughSpan> strikethroughSpans = new Stack<>();
   private final Stack<TypefaceSpan> monospaceTypefaceSpans = new Stack<>();
   private final Map<Integer, ForegroundColorSpan> foregroundColorSpans = new HashMap<>();
+  private final Map<Integer, BackgroundColorSpan> backgroundColorSpans = new HashMap<>();
   private final Map<Float, RelativeSizeSpan> relativeSizeSpans = new HashMap<>();
   private final Stack<SuperscriptSpan> superscriptSpans = new Stack<>();
   private final Map<String, CustomQuoteSpan> quoteSpans = new HashMap<>();
@@ -48,6 +52,12 @@ public class MarkdownSpanPool {
     return foregroundColorSpans.containsKey(color)
         ? foregroundColorSpans.remove(color)
         : new ForegroundColorSpan(color);
+  }
+
+  public BackgroundColorSpan backgroundColor(@ColorInt int color) {
+    return backgroundColorSpans.containsKey(color)
+        ? backgroundColorSpans.remove(color)
+        : new BackgroundColorSpan(color);
   }
 
   public StrikethroughSpan strikethrough() {
@@ -123,6 +133,9 @@ public class MarkdownSpanPool {
     } else if (span instanceof HorizontalRuleSpan) {
       recycle(((HorizontalRuleSpan) span));
 
+    } else if (span instanceof BackgroundColorSpan) {
+      recycle(((BackgroundColorSpan) span));
+
     } else {
       throw new UnsupportedOperationException("Unknown span: " + span.getClass().getSimpleName());
     }
@@ -143,6 +156,11 @@ public class MarkdownSpanPool {
   public void recycle(ForegroundColorSpan span) {
     int key = span.getForegroundColor();
     foregroundColorSpans.put(key, span);
+  }
+
+  public void recycle(BackgroundColorSpan span) {
+    int key = span.getBackgroundColor();
+    backgroundColorSpans.put(key, span);
   }
 
   public void recycle(StrikethroughSpan span) {
