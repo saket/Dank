@@ -38,7 +38,7 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
 
   @Override
   protected NumberSpan numberSpan(int number) {
-    return new NumberSpan(number, options.textBlockIndentationMargin());
+    return new NumberSpan(number, options.listMarginBetweenListIndicatorAndText());
   }
 
   @Override

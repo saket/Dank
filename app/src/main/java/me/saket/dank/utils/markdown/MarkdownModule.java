@@ -35,6 +35,7 @@ public class MarkdownModule {
 
         .linkUrlColor(colors.apply(R.color.markdown_link_url))
         .textBlockIndentationMargin(dimens.apply(R.dimen.markdown_text_block_indentation_margin))
+        .listMarginBetweenListIndicatorAndText(dimens.apply(R.dimen.markdown_list_margin_with_list_indicator))
 
         .horizontalRuleColor(colors.apply(R.color.markdown_horizontal_rule))
         .horizontalRuleStrokeWidth(dimens.apply(R.dimen.markdown_horizontal_rule_stroke_width))

@@ -57,7 +57,7 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
     protected abstract NumberSpan numberSpan(int number);
 
     protected abstract Object[] inlineCodeSpans();
-    
+
     protected abstract Object[] codeBlockSpans();
 
   /**

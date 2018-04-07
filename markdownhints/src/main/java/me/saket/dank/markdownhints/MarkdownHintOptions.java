@@ -27,6 +27,12 @@ public abstract class MarkdownHintOptions {
   public abstract int textBlockIndentationMargin();
 
   /**
+   * Spacing between "1." or "-" and the followed text.
+   */
+  @Px
+  public abstract int listMarginBetweenListIndicatorAndText();
+
+  /**
    * Width of a block-quote's vertical line/stripe/rule.
    */
   @Px
@@ -62,10 +68,13 @@ public abstract class MarkdownHintOptions {
 
     public abstract Builder blockQuoteTextColor(@ColorInt int color);
 
-    /** See {@link #textBlockIndentationMargin()} */
+    /** See {@link #textBlockIndentationMargin()}. */
     public abstract Builder textBlockIndentationMargin(@Px int margin);
 
-    /** See {@link #blockQuoteVerticalRuleStrokeWidth() */
+    /** See {@link #listMarginBetweenListIndicatorAndText()}. */
+    public abstract Builder listMarginBetweenListIndicatorAndText(@Px int margin);
+
+    /** See {@link #blockQuoteVerticalRuleStrokeWidth(). */
     public abstract Builder blockQuoteVerticalRuleStrokeWidth(@Px int width);
 
     public abstract Builder linkUrlColor(@ColorInt int color);
