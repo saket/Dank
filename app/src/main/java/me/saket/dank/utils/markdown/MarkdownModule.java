@@ -91,4 +91,9 @@ public class MarkdownModule {
             | AndDown.HOEDOWN_EXT_TABLES,
         0);
   }
+
+  @Provides
+  static HtmlToSpansParser htmlToSpansParser(AndroidBasedHtmlToSpansParser androidBasedParser) {
+    return androidBasedParser;
+  }
 }
