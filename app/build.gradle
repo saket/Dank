@@ -118,6 +118,7 @@ dependencies {
   implementation 'com.commonsware.cwac:anddown:0.4.0'
   implementation "com.airbnb:deeplinkdispatch:$versions.deeplinkDispatch"
   annotationProcessor "com.airbnb:deeplinkdispatch-processor:$versions.deeplinkDispatch"
+  implementation 'ru.noties:markwon:1.0.4'
 
   // TODO: Replace all Date4J usages with ThreeTenAbp.
   implementation 'com.darwinsys:hirondelle-date4j:1.5.1'

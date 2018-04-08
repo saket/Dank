@@ -47,7 +47,7 @@
       tools:text="Reply from kn0thing via r/Android"
       android:layout_height="wrap_content" />
 
-    <TextView
+    <me.saket.dank.utils.markdown.markwon.MarkdownTextView
       android:id="@+id/individualmessage_reply_body"
       style="@style/DankMessageBody"
       tools:text="How many did you see out of interest? I mean as of the recall, only 92 of the 2.5 million have actually been said to have had issues..." />

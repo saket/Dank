@@ -43,7 +43,7 @@ public class CommentOptionsPopup extends NestedOptionsPopupMenu {
 
   private MenuStructure menuStructure(Context c) {
     //noinspection AccessStaticViaInstance
-    String commentBody = markdown.get().stripMarkdownFromHtml(JrawUtils.commentBodyHtml(comment));
+    String commentBody = markdown.get().stripMarkdown(comment);
 
     List<MenuStructure.SingleLineItem> primaryItems = new ArrayList<>(3);
     primaryItems.add(MenuStructure.SingleLineItem.create(

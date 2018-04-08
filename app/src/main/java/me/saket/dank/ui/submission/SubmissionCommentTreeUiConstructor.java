@@ -456,7 +456,7 @@ public class SubmissionCommentTreeUiConstructor {
     );
 
     CharSequence commentBody = isCollapsed
-        ? markdown.get().stripMarkdownFromHtml(JrawUtils.commentBodyHtml(comment))
+        ? markdown.get().stripMarkdown(comment)
         : markdown.get().parse(comment);
 
     return commentCommonUiModelBuilder(context, commentNode.getComment().getFullName(), isCollapsed, isFocused, commentNode.getDepth())

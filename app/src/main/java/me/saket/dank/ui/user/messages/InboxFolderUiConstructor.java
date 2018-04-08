@@ -120,8 +120,7 @@ public class InboxFolderUiConstructor {
         latestMessageInThread,
         loggedInUserName));
 
-    String snippetWithEscapedHtml = JrawUtils.messageBodyHtml(latestMessageInThread);
-    String snippet = markdown.get().stripMarkdownFromHtml(snippetWithEscapedHtml).replace("\n", " ");
+    String snippet = markdown.get().stripMarkdown(latestMessageInThread).replace("\n", " ");
 
     boolean wasLastMessageBySelf = loggedInUserName.equalsIgnoreCase(latestMessageInThread.getAuthor());  // Author can be null.
     snippet = wasLastMessageBySelf

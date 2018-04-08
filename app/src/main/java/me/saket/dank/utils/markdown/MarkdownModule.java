@@ -3,7 +3,6 @@ package me.saket.dank.utils.markdown;
 import android.app.Application;
 import android.support.v4.content.ContextCompat;
 
-import com.commonsware.cwac.anddown.AndDown;
 import com.nytimes.android.external.cache3.Cache;
 import com.nytimes.android.external.cache3.CacheBuilder;
 
@@ -17,9 +16,17 @@ import me.saket.dank.R;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.utils.SafeFunction;
+import me.saket.dank.utils.markdown.markwon.MarkwonBasedMarkdownRenderer;
+import ru.noties.markwon.SpannableConfiguration;
+import ru.noties.markwon.spans.SpannableTheme;
 
 @Module
 public class MarkdownModule {
+
+  @Provides
+  Markdown markdown(MarkwonBasedMarkdownRenderer renderer) {
+    return renderer;
+  }
 
   @Provides
   @Singleton
@@ -53,12 +60,14 @@ public class MarkdownModule {
         .indentedCodeBlockBackgroundColor(colors.apply(R.color.markdown_indented_code_background))
         .indentedCodeBlockBackgroundRadius(dimens.apply(R.dimen.markdown_indented_code_background_radius))
 
+        .tableBorderColor(colors.apply(R.color.markdown_table_border))
+
         .build();
   }
 
   @Provides
   @Singleton
-  @Named("markdown_from_html")
+  @Named("markwon_spans_renderer")
   static Cache<String, CharSequence> markdownCache() {
     return CacheBuilder.newBuilder()
         .expireAfterAccess(1, TimeUnit.HOURS)
@@ -66,34 +75,16 @@ public class MarkdownModule {
   }
 
   @Provides
-  @Singleton
-  @Named("markdown_from_markdown")
-  static Cache<String, String> provideMarkdownCache() {
-    return CacheBuilder.newBuilder()
-        .expireAfterAccess(1, TimeUnit.HOURS)
+  static SpannableConfiguration spannableConfiguration(Application appContext, MarkdownHintOptions options) {
+    return SpannableConfiguration.builder(appContext)
+        .theme(SpannableTheme.builderWithDefaults(appContext)
+            .headingBreakHeight(0)
+            .linkColor(ContextCompat.getColor(appContext, R.color.color_accent))
+            .blockQuoteColor(options.blockQuoteIndentationRuleColor())
+            .blockQuoteWidth(options.blockQuoteVerticalRuleStrokeWidth())
+            .codeBackgroundColor(options.inlineCodeBackgroundColor())
+            .tableBorderColor(options.tableBorderColor())
+            .build())
         .build();
-  }
-
-  @Provides
-  @Singleton
-  @Named("markdown_to_html")
-  static SafeFunction<String, String> markdownToHtmlParser() {
-    AndDown andDown = new AndDown();
-    return textWithMarkdown -> andDown.markdownToHtml(
-        textWithMarkdown,
-        AndDown.HOEDOWN_EXT_FENCED_CODE
-            | AndDown.HOEDOWN_EXT_STRIKETHROUGH
-            | AndDown.HOEDOWN_EXT_UNDERLINE
-            | AndDown.HOEDOWN_EXT_HIGHLIGHT
-            | AndDown.HOEDOWN_EXT_QUOTE
-            | AndDown.HOEDOWN_EXT_SUPERSCRIPT
-            | AndDown.HOEDOWN_EXT_SPACE_HEADERS
-            | AndDown.HOEDOWN_EXT_TABLES,
-        0);
-  }
-
-  @Provides
-  static HtmlToSpansParser htmlToSpansParser(AndroidBasedHtmlToSpansParser androidBasedParser) {
-    return androidBasedParser;
   }
 }

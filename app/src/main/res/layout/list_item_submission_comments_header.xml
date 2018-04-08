@@ -58,8 +58,7 @@
       tools:ignore="SelectableText"
       tools:text="/r/pics" />
 
-    <TextView
-      android:id="@+id/submission_selfpost_text"
+    <FrameLayout
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_marginBottom="@dimen/spacing16"
@@ -69,9 +68,16 @@
       android:paddingBottom="@dimen/spacing12"
       android:paddingEnd="@dimen/spacing16"
       android:paddingStart="@dimen/spacing16"
-      android:paddingTop="@dimen/spacing12"
-      android:textColor="@color/white_opacity_75"
-      android:textIsSelectable="true" />
+      android:paddingTop="@dimen/spacing12">
+
+      <me.saket.dank.utils.markdown.markwon.MarkdownTextView
+        android:id="@+id/submission_selfpost_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:focusable="false"
+        android:textColor="@color/white_opacity_75"
+        android:textIsSelectable="true" />
+    </FrameLayout>
 
     <include layout="@layout/list_item_submission_comments_header_link" />
   </LinearLayout>

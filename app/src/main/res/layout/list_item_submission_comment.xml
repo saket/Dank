@@ -17,7 +17,7 @@
     android:orientation="vertical"
     android:paddingTop="@dimen/submission_comment_top_padding">
 
-    <TextView
+    <me.saket.dank.utils.markdown.markwon.MarkdownTextView
       android:id="@+id/item_comment_byline"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
@@ -31,7 +31,7 @@
       android:textSize="@dimen/textsize12"
       tools:text="nuckingfuts73 \u00b7 516 \u00b7 2 hr. ago" />
 
-    <TextView
+    <me.saket.dank.utils.markdown.markwon.MarkdownTextView
       android:id="@+id/item_comment_body"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"

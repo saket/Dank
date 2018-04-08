@@ -62,6 +62,9 @@ public abstract class MarkdownHintOptions {
   @Px
   public abstract int indentedCodeBlockBackgroundRadius();
 
+  @ColorInt
+  public abstract int tableBorderColor();
+
   public static Builder builder() {
     return new AutoValue_MarkdownHintOptions.Builder();
   }
@@ -98,6 +101,8 @@ public abstract class MarkdownHintOptions {
     public abstract Builder indentedCodeBlockBackgroundColor(@ColorInt int color);
 
     public abstract Builder indentedCodeBlockBackgroundRadius(@Px int radius);
+
+    public abstract Builder tableBorderColor(@ColorInt int color);
 
     public abstract MarkdownHintOptions build();
   }

@@ -3,7 +3,7 @@
   xmlns:android="http://schemas.android.com/apk/res/android"
   xmlns:tools="http://schemas.android.com/tools">
 
-  <TextView
+  <me.saket.dank.utils.markdown.markwon.MarkdownTextView
     android:id="@+id/threadedmessage_item_body"
     style="@style/DankMessageBody.Threaded"
     android:layout_gravity="end"
