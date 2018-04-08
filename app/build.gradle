@@ -117,7 +117,9 @@ dependencies {
   implementation 'com.jakewharton:disklrucache:2.0.2'
   implementation "com.airbnb:deeplinkdispatch:$versions.deeplinkDispatch"
   annotationProcessor "com.airbnb:deeplinkdispatch-processor:$versions.deeplinkDispatch"
+
   implementation 'ru.noties:markwon:1.0.4'
+  implementation 'com.atlassian.commonmark:commonmark-ext-autolink:0.11.0'
 
   // TODO: Replace all Date4J usages with ThreeTenAbp.
   implementation 'com.darwinsys:hirondelle-date4j:1.5.1'

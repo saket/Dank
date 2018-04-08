@@ -6,9 +6,13 @@ import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
 
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.node.Node;
 import org.commonmark.parser.Parser;
 
+import java.util.Arrays;
 import java.util.Stack;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
@@ -19,9 +23,9 @@ import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.utils.markdown.Markdown;
-import ru.noties.markwon.Markwon;
 import ru.noties.markwon.SpannableConfiguration;
 import ru.noties.markwon.renderer.SpannableRenderer;
+import ru.noties.markwon.tasklist.TaskListExtension;
 
 public class MarkwonBasedMarkdownRenderer implements Markdown {
 
@@ -32,8 +36,16 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   @Inject
   public MarkwonBasedMarkdownRenderer(SpannableConfiguration configuration, @Named("markwon_spans_renderer") Cache<String, CharSequence> cache) {
     this.cache = cache;
-    this.parser = Markwon.createParser();
     this.configuration = configuration;
+
+    this.parser = new Parser.Builder()
+        .extensions(Arrays.asList(
+            StrikethroughExtension.create(),
+            TablesExtension.create(),
+            TaskListExtension.create(),
+            AutolinkExtension.create()
+        ))
+        .build();
   }
 
   private CharSequence parseMarkdown(String markdown) {
