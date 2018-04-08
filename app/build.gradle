@@ -28,6 +28,7 @@ android {
     versionCode 2
     versionName "0.2"
     multiDexEnabled true
+    testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
   }
 
   buildTypes {
@@ -135,4 +136,8 @@ dependencies {
   implementation "com.nytimes.android:filesystem3:$versions.nytStore"
   implementation "com.facebook.stetho:stetho:$versions.stetho"
   implementation "com.facebook.stetho:stetho-okhttp3:$versions.stetho"
+
+  androidTestImplementation "com.android.support:support-annotations:$versions.supportLib"
+  androidTestImplementation 'com.android.support.test:runner:1.0.1'
+  androidTestImplementation 'com.android.support.test:rules:1.0.1'
 }
