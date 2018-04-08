@@ -2,7 +2,6 @@ package me.saket.dank.di;
 
 import android.annotation.TargetApi;
 import android.app.Application;
-import android.arch.core.util.Function;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -13,9 +12,7 @@ import android.graphics.Point;
 import android.net.ConnectivityManager;
 import android.os.Build;
 import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
 
-import com.commonsware.cwac.anddown.AndDown;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.facebook.stetho.okhttp3.StethoInterceptor;
 import com.squareup.moshi.Moshi;
@@ -40,8 +37,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.OnLoginRequireListener;
-import me.saket.dank.markdownhints.MarkdownHintOptions;
-import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.DraftStore;
