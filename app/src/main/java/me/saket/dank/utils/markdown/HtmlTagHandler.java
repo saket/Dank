@@ -50,6 +50,9 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
     public static final String ORDERED_LIST = "HTML_TEXTVIEW_ESCAPED_OL_TAG";
     public static final String LIST_ITEM = "HTML_TEXTVIEW_ESCAPED_LI_TAG";
     public static final String PRE_CODE_BLOCK = "HTML_TEXTVIEW_ESCAPED_PRE_CODE_TAG";
+    public static final String SPOILER_TAG = "spoiler";
+    public static final String SPOILER_CONTENT_TAG = "spoiler-content";
+    private static final boolean CAN_DEBUG = false;
 
     public HtmlTagHandler() {
     }
@@ -60,7 +63,11 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
 
     protected abstract Object[] codeBlockSpans();
 
-  /**
+    protected abstract Object spoilerSpan();
+
+    protected abstract Object spoilerContentSpan();
+
+    /**
      * Newer versions of the Android SDK's {@link Html.TagHandler} handles &lt;ul&gt; and &lt;li&gt;
      * tags itself which means they never get delegated to this class. We want to handle the tags
      * ourselves so before passing the string html into Html.fromHtml(), we can use this method to
@@ -153,11 +160,16 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
     private static class Td {
     }
 
+    private static class Spoiler {
+    }
+    private static class SpoilerContent {
+    }
+
     @Override
     public void handleTag(final boolean opening, final String tag, Editable output, final XMLReader xmlReader) {
         if (opening) {
             // opening tag
-            if (HtmlTextView.DEBUG) {
+            if (CAN_DEBUG) {
                 Log.d(HtmlTextView.TAG, "opening, output: " + output.toString());
             }
 
@@ -203,10 +215,14 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
                 start(output, new Th());
             } else if (tag.equalsIgnoreCase("td")) {
                 start(output, new Td());
+            } else if (tag.equalsIgnoreCase(SPOILER_TAG)) {
+                start(output, new Spoiler());
+            } else if (tag.equalsIgnoreCase(SPOILER_CONTENT_TAG)) {
+                start(output, new SpoilerContent());
             }
         } else {
             // closing tag
-            if (HtmlTextView.DEBUG) {
+            if (CAN_DEBUG) {
                 Log.d(HtmlTextView.TAG, "closing, output: " + output.toString());
             }
 
@@ -286,6 +302,10 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
                 end(output, Th.class, false);
             } else if (tag.equalsIgnoreCase("td")) {
                 end(output, Td.class, false);
+            } else if (tag.equalsIgnoreCase(SPOILER_TAG)) {
+                end(output, Spoiler.class, false, spoilerSpan());
+            } else if (tag.equalsIgnoreCase(SPOILER_CONTENT_TAG)) {
+                end(output, SpoilerContent.class, false, spoilerContentSpan());
             }
         }
 
@@ -315,7 +335,7 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
         int len = output.length();
         output.setSpan(mark, len, len, Spannable.SPAN_MARK_MARK);
 
-        if (HtmlTextView.DEBUG) {
+        if (CAN_DEBUG) {
             Log.d(HtmlTextView.TAG, "len: " + len);
         }
     }
@@ -349,7 +369,7 @@ public abstract class HtmlTagHandler implements Html.TagHandler {
                 output.setSpan(replace, where, thisLen, Spanned.SPAN_EXCLUSIVE_EXCLUSIVE);
             }
 
-            if (HtmlTextView.DEBUG) {
+            if (CAN_DEBUG) {
                 Log.d(HtmlTextView.TAG, "where: " + where);
                 Log.d(HtmlTextView.TAG, "thisLen: " + thisLen);
             }

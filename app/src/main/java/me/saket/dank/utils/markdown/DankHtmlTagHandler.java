@@ -1,6 +1,7 @@
 package me.saket.dank.utils.markdown;
 
-import android.support.annotation.Nullable;
+import android.app.Application;
+import android.graphics.Color;
 import android.support.annotation.VisibleForTesting;
 import android.text.Editable;
 import android.text.Spannable;
@@ -17,8 +18,11 @@ import org.xml.sax.XMLReader;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 
+import me.saket.dank.R;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
@@ -27,11 +31,15 @@ import timber.log.Timber;
 
 public class DankHtmlTagHandler extends HtmlTagHandler {
 
+  private static final Pattern SPOILER_PATTERN = Pattern.compile("<a[^>]*title=\"([^\"]*)\"[^>]*>([^<]*)</a>");
+
+  private final Application appContext;
   private final MarkdownHintOptions options;
   private final MarkdownSpanPool spanPool;
 
   @Inject
-  public DankHtmlTagHandler(MarkdownHintOptions options, MarkdownSpanPool spanPool) {
+  public DankHtmlTagHandler(Application appContext, MarkdownHintOptions options, MarkdownSpanPool spanPool) {
+    this.appContext = appContext;
     this.options = options;
     this.spanPool = spanPool;
   }
@@ -61,12 +69,22 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
     };
   }
 
+  @Override
+  protected Object spoilerSpan() {
+    return spanPool.foregroundColor(Color.MAGENTA);
+  }
+
+  @Override
+  protected Object spoilerContentSpan() {
+    return spanPool.foregroundColor(Color.BLACK);
+  }
+
   /**
    * This exists because {@link HtmlTagHandler#overrideTags(String)} is not public.
    */
-  String overrideTags(@Nullable String html) {
+  String overrideTags(String html) {
     //noinspection ConstantConditions
-    String htmlWithoutParagraphsInList = html
+    html = html
         // Reddit sends paragraphs inside <li> items, which doesn't make sense?
         .replace("<p>", "<div>")
         .replace("</p>", "</div>")
@@ -78,14 +96,19 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
     if (html.contains("<blockquote>")) {
       // Not sure if it's Android or Dank's HTML parser, but lists
       // inside block-quotes aren't rendered very nicely.
-      htmlWithoutParagraphsInList = normalizeListsInsideBlockQuotes(htmlWithoutParagraphsInList);
+      html = normalizeListsInsideBlockQuotes(html);
     }
 
-    return htmlWithoutParagraphsInList
+    if (html.contains("<a href=\"/s\"")) {
+      Timber.i("Spoiler tags found");
+      html = parseSpoilerTags(html);
+    }
+
+    return html
         // Wrap within a division to add spacing around the HR.
         .replace("<hr/>", "<div><hr/></div>")
 
-        // Progressive reduction of text
+        // Progressive reduction of super-script text.
         .replace("<sup>", "<sup><small>")
         .replace("</sup>", "</small></sup>")
 
@@ -118,6 +141,34 @@ public class DankHtmlTagHandler extends HtmlTagHandler {
       spannable.removeSpan(quoteSpan);
     }
     return spannable;
+  }
+
+  private String parseSpoilerTags(String html) {
+    Matcher matcher = SPOILER_PATTERN.matcher(html);
+
+    String spoilerText = appContext.getString(R.string.markdown_spoiler_text);
+
+    while (matcher.find()) {
+      String htmlTag = matcher.group(0);
+      String spoilerContent = matcher.group(1);
+
+      // Replace the tags with "<spoiler>...</spoiler>.
+      if (!htmlTag.contains("<a href=\"http")) {
+        String replacement = String.format(
+            "<%s>%s <%s>%s</%s></%s>",
+            SPOILER_TAG,
+            spoilerText,
+            SPOILER_CONTENT_TAG,
+            spoilerContent,
+            SPOILER_CONTENT_TAG,
+            SPOILER_TAG);
+
+        Timber.i("spoiler: %s", replacement);
+        html = html.replace(htmlTag, replacement);
+      }
+    }
+
+    return html;
   }
 
   @Override
