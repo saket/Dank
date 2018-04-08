@@ -263,11 +263,6 @@ public class RootModule {
   }
 
   @Provides
-  static AndDown andDown() {
-    return new AndDown();
-  }
-
-  @Provides
   @Named("gfycat_repository")
   RxSharedPreferences gfyCatRepositoryKvStore(Application appContext) {
     return RxSharedPreferences.create(appContext.getSharedPreferences("gfycat_repository", Context.MODE_PRIVATE));

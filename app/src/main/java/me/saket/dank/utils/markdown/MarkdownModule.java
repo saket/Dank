@@ -1,9 +1,14 @@
 package me.saket.dank.utils.markdown;
 
 import android.app.Application;
-import android.arch.core.util.Function;
 import android.support.v4.content.ContextCompat;
 
+import com.commonsware.cwac.anddown.AndDown;
+import com.nytimes.android.external.cache3.Cache;
+import com.nytimes.android.external.cache3.CacheBuilder;
+
+import java.util.concurrent.TimeUnit;
+import javax.inject.Named;
 import javax.inject.Singleton;
 
 import dagger.Module;
@@ -11,6 +16,7 @@ import dagger.Provides;
 import me.saket.dank.R;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownSpanPool;
+import me.saket.dank.utils.SafeFunction;
 
 @Module
 public class MarkdownModule {
@@ -23,8 +29,8 @@ public class MarkdownModule {
 
   @Provides
   static MarkdownHintOptions provideMarkdownHintOptions(Application appContext) {
-    Function<Integer, Integer> colors = resId -> ContextCompat.getColor(appContext, resId);
-    Function<Integer, Integer> dimens = resId -> appContext.getResources().getDimensionPixelSize(resId);
+    SafeFunction<Integer, Integer> colors = resId -> ContextCompat.getColor(appContext, resId);
+    SafeFunction<Integer, Integer> dimens = resId -> appContext.getResources().getDimensionPixelSize(resId);
 
     return MarkdownHintOptions.builder()
         .syntaxColor(colors.apply(R.color.markdown_syntax))
@@ -48,5 +54,41 @@ public class MarkdownModule {
         .indentedCodeBlockBackgroundRadius(dimens.apply(R.dimen.markdown_indented_code_background_radius))
 
         .build();
+  }
+
+  @Provides
+  @Singleton
+  @Named("markdown_from_html")
+  static Cache<String, CharSequence> markdownCache() {
+    return CacheBuilder.newBuilder()
+        .expireAfterAccess(1, TimeUnit.HOURS)
+        .build();
+  }
+
+  @Provides
+  @Singleton
+  @Named("markdown_from_markdown")
+  static Cache<String, String> provideMarkdownCache() {
+    return CacheBuilder.newBuilder()
+        .expireAfterAccess(1, TimeUnit.HOURS)
+        .build();
+  }
+
+  @Provides
+  @Singleton
+  @Named("markdown_to_html")
+  static SafeFunction<String, String> markdownToHtmlParser() {
+    AndDown andDown = new AndDown();
+    return textWithMarkdown -> andDown.markdownToHtml(
+        textWithMarkdown,
+        AndDown.HOEDOWN_EXT_FENCED_CODE
+            | AndDown.HOEDOWN_EXT_STRIKETHROUGH
+            | AndDown.HOEDOWN_EXT_UNDERLINE
+            | AndDown.HOEDOWN_EXT_HIGHLIGHT
+            | AndDown.HOEDOWN_EXT_QUOTE
+            | AndDown.HOEDOWN_EXT_SUPERSCRIPT
+            | AndDown.HOEDOWN_EXT_SPACE_HEADERS
+            | AndDown.HOEDOWN_EXT_TABLES,
+        0);
   }
 }

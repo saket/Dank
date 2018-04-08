@@ -72,8 +72,7 @@ public class MarkdownHints extends SimpleTextWatcher {
   public void afterTextChanged(Editable editable) {
     editText.removeTextChangedListener(this);
 
-    // Remove all spans inserted in the previous text
-    // change call or else we'll see stale styling.
+    // We'll see stale styling if previous spans aren't removed.
     removeHintSpans(editable);
 
     Node markdownRootNode = parser.parse(SubSequence.of(editable));

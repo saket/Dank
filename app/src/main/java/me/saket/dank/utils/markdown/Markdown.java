@@ -1,10 +1,10 @@
 package me.saket.dank.utils.markdown;
 
+import android.support.annotation.VisibleForTesting;
 import android.text.Html;
 import android.text.Spannable;
 import android.text.Spanned;
 
-import com.commonsware.cwac.anddown.AndDown;
 import com.nytimes.android.external.cache3.Cache;
 
 import net.dean.jraw.models.Comment;
@@ -21,6 +21,7 @@ import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.SafeFunction;
 
 /**
  * Handles converting Reddit's markdown into Spans that can be rendered by TextView.
@@ -31,19 +32,19 @@ import me.saket.dank.utils.JrawUtils;
 public class Markdown {
 
   private final DankHtmlTagHandler htmlTagHandler;
-  private final AndDown andDown;
+  private final SafeFunction<String, String> markdownToHtmlParser;
   private final Cache<String, CharSequence> fromHtmlCache;
   private final Cache<String, String> fromMarkdownCache;
 
   @Inject
   public Markdown(
       DankHtmlTagHandler htmlTagHandler,
-      AndDown andDown,
+      @Named("markdown_to_html") SafeFunction<String, String> markdownToHtmlParser,
       @Named("markdown_from_html") Cache<String, CharSequence> fromHtmlCache,
       @Named("markdown_from_markdown") Cache<String, String> fromMarkdownCache)
   {
     this.htmlTagHandler = htmlTagHandler;
-    this.andDown = andDown;
+    this.markdownToHtmlParser = markdownToHtmlParser;
     this.fromHtmlCache = fromHtmlCache;
     this.fromMarkdownCache = fromMarkdownCache;
   }
@@ -80,19 +81,9 @@ public class Markdown {
     }
   }
 
-  private CharSequence parseMarkdown(String textWithMarkdown, boolean escapeHtml, boolean escapeForwardSlashes) {
-    Callable<String> valueSeeder = () -> andDown.markdownToHtml(
-        textWithMarkdown,
-        AndDown.HOEDOWN_EXT_FENCED_CODE
-            | AndDown.HOEDOWN_EXT_STRIKETHROUGH
-            | AndDown.HOEDOWN_EXT_UNDERLINE
-            | AndDown.HOEDOWN_EXT_HIGHLIGHT
-            | AndDown.HOEDOWN_EXT_QUOTE
-            | AndDown.HOEDOWN_EXT_SUPERSCRIPT
-            | AndDown.HOEDOWN_EXT_SPACE_HEADERS
-            | AndDown.HOEDOWN_EXT_TABLES,
-        0);
-
+  @VisibleForTesting
+  CharSequence parseMarkdown(String textWithMarkdown, boolean escapeHtml, boolean escapeForwardSlashes) {
+    Callable<String> valueSeeder = () -> markdownToHtmlParser.apply(textWithMarkdown);
     try {
       String markdownToHtml = fromMarkdownCache.get(textWithMarkdown, valueSeeder);
       return parseHtml(markdownToHtml, escapeHtml, escapeForwardSlashes);

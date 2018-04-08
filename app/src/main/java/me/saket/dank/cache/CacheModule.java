@@ -13,7 +13,6 @@ import com.nytimes.android.external.fs3.filesystem.FileSystem;
 import java.io.File;
 import java.io.IOException;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
@@ -68,24 +67,6 @@ public class CacheModule {
     // Not adding Glide to the dagger graph intentionally. Glide objects
     // should be created in Activity, Fragment and View contexts instead.
     return Glide.get(appContext).getBitmapPool();
-  }
-
-  @Provides
-  @Singleton
-  @Named("markdown_from_html")
-  static Cache<String, CharSequence> markdownCache() {
-    return CacheBuilder.newBuilder()
-        .expireAfterAccess(1, TimeUnit.HOURS)
-        .build();
-  }
-
-  @Provides
-  @Singleton
-  @Named("markdown_from_markdown")
-  static Cache<String, String> provideMarkdownCache() {
-    return CacheBuilder.newBuilder()
-        .expireAfterAccess(1, TimeUnit.HOURS)
-        .build();
   }
 
   @Provides
