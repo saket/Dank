@@ -63,6 +63,7 @@
       android:descendantFocusability="beforeDescendants"
       android:scrollbarStyle="insideOverlay"
       android:scrollbars="vertical"
+      tools:listitem="@layout/list_item_submission_comment"
       tools:paddingStart="@dimen/spacing16"
       tools:paddingTop="60dp" />
   </me.saket.dank.widgets.ScrollingRecyclerViewSheet>
