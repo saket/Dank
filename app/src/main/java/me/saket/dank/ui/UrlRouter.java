@@ -30,6 +30,7 @@ import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.urlparser.RedditSubredditLink;
 import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
+import me.saket.dank.utils.DeviceInfo;
 import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.Optional;
@@ -39,10 +40,12 @@ import timber.log.Timber;
 public class UrlRouter {
 
   private final JacksonHelper jacksonHelper;
+  private final DeviceInfo deviceInfo;
 
   @Inject
-  protected UrlRouter(JacksonHelper jacksonHelper) {
+  protected UrlRouter(JacksonHelper jacksonHelper, DeviceInfo deviceInfo) {
     this.jacksonHelper = jacksonHelper;
+    this.deviceInfo = deviceInfo;
   }
 
   public UserProfilePopupRouter forLink(RedditUserLink redditUserLink) {
@@ -64,19 +67,21 @@ public class UrlRouter {
       Timber.w("Consider using forLink(MediaLink) instead");
       new Exception().printStackTrace();
     }
-    return new IntentRouter(link, jacksonHelper);
+    return new IntentRouter(link, jacksonHelper, deviceInfo);
   }
 
   public static class IntentRouter {
     private final Link link;
     private final JacksonHelper jacksonHelper;
+    private final DeviceInfo deviceInfo;
 
     @Nullable private Point expandFromPoint;
     @Nullable private Rect expandFromRect;
 
-    private IntentRouter(Link link, JacksonHelper jacksonHelper) {
+    private IntentRouter(Link link, JacksonHelper jacksonHelper, DeviceInfo deviceInfo) {
       this.link = link;
       this.jacksonHelper = jacksonHelper;
+      this.deviceInfo = deviceInfo;
     }
 
     /**
@@ -127,7 +132,12 @@ public class UrlRouter {
             return openUrlIntent;
 
           } else {
-            return WebViewActivity.intent(context, url, expandFromRect);
+            if (BuildConfig.DEBUG && deviceInfo.isRunningOnEmulator()) {
+              // Opening WebView crashes the emulator.
+              return Intents.createForOpeningUrl(url);
+            } else {
+              return WebViewActivity.intent(context, url, expandFromRect);
+            }
           }
         } else {
           return Intents.createForOpeningUrl(url);
