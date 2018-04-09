@@ -59,6 +59,7 @@
       tools:text="/r/pics" />
 
     <FrameLayout
+      android:id="@+id/submission_selfpost_container"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
       android:layout_marginBottom="@dimen/spacing16"

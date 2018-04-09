@@ -140,6 +140,7 @@ public interface SubmissionCommentsHeader {
     private final TextView titleView;
     public final TextView bylineView;
     private final TextView selfTextView;
+    private final ViewGroup selfTextViewContainer;
     private final ViewGroup contentLinkView;
     private final ImageView contentLinkIconView;
     private final ImageView contentLinkThumbnailView;
@@ -167,6 +168,7 @@ public interface SubmissionCommentsHeader {
       titleView = itemView.findViewById(R.id.submission_title);
       bylineView = itemView.findViewById(R.id.submission_byline);
       selfTextView = itemView.findViewById(R.id.submission_selfpost_text);
+      selfTextViewContainer = itemView.findViewById(R.id.submission_selfpost_container);
       contentLinkView = itemView.findViewById(R.id.submission_link_container);
       contentLinkIconView = itemView.findViewById(R.id.submission_link_icon);
       contentLinkThumbnailView = itemView.findViewById(R.id.submission_link_thumbnail);
@@ -209,7 +211,7 @@ public interface SubmissionCommentsHeader {
       setContentLink(uiModel, false);
 
       uiModel.optionalSelfText().ifPresent(selfText -> selfTextView.setText(selfText));
-      selfTextView.setVisibility(uiModel.optionalSelfText().isPresent() ? View.VISIBLE : View.GONE);
+      selfTextViewContainer.setVisibility(uiModel.optionalSelfText().isPresent() ? View.VISIBLE : View.GONE);
       selfTextView.setMovementMethod(movementMethod);
     }
 
