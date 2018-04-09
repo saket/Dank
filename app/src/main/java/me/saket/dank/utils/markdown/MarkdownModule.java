@@ -79,7 +79,6 @@ public class MarkdownModule {
     return SpannableConfiguration.builder(appContext)
         .theme(SpannableTheme.builderWithDefaults(appContext)
             .headingBreakHeight(0)
-            .linkColor(ContextCompat.getColor(appContext, R.color.color_accent))
             .blockQuoteColor(options.blockQuoteIndentationRuleColor())
             .blockQuoteWidth(options.blockQuoteVerticalRuleStrokeWidth())
             .codeBackgroundColor(options.inlineCodeBackgroundColor())
