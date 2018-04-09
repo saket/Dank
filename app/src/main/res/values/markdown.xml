@@ -9,7 +9,7 @@
   <color name="markdown_horizontal_rule">@color/gray_700</color>
   <color name="markdown_inline_code_background">@color/gray_800</color>
   <color name="markdown_indented_code_background">@color/markdown_inline_code_background</color>
-  <color name="markdown_table_border">@color/gray_800</color>
+  <color name="markdown_table_border">@color/gray_600</color>
 
   <dimen name="markdown_text_block_indentation_margin">8dp</dimen>
   <dimen name="markdown_list_margin_with_list_indicator">16dp</dimen>
