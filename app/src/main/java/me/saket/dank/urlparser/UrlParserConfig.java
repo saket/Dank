@@ -10,12 +10,16 @@ public class UrlParserConfig {
   /**
    * /r/$subreddit.
    */
-  private static final Pattern DEFAULT_SUBREDDIT_PATTERN = Pattern.compile("^/r/([a-zA-Z0-9-_.]+)(/)*$");
+  private static final String SUBREDDIT_PATTERN = "/?r/([a-zA-Z0-9-_.]+)(/)*";
+  private static final Pattern DEFAULT_BOUNDED_SUBREDDIT_PATTERN = Pattern.compile("^" + SUBREDDIT_PATTERN + "$");
+  private static final Pattern DEFAULT_UNBOUNDED_SUBREDDIT_PATTERN = Pattern.compile(SUBREDDIT_PATTERN);
 
   /**
    * /u/$user.
    */
-  private static final Pattern DEFAULT_USER_PATTERN = Pattern.compile("^/u(?:ser)?/([a-zA-Z0-9-_.]+)(?:/)*$");
+  private static final String USER_PATTERN = "/?u(?:ser)?/([a-zA-Z0-9-_.]+)(?:/)*";
+  private static final Pattern DEFAULT_BOUNDED_USER_PATTERN = Pattern.compile("^" + USER_PATTERN + "$");
+  private static final Pattern DEFAULT_UNBOUNDED_USER_PATTERN = Pattern.compile(USER_PATTERN);
 
   /**
    * Submission: /r/$subreddit/comments/$post_id/post_title.
@@ -70,8 +74,12 @@ public class UrlParserConfig {
   public UrlParserConfig() {
   }
 
-  Pattern userPattern() {
-    return DEFAULT_USER_PATTERN;
+  public Pattern userPattern() {
+    return DEFAULT_BOUNDED_USER_PATTERN;
+  }
+
+  public Pattern unboundedUserPattern() {
+    return DEFAULT_UNBOUNDED_USER_PATTERN;
   }
 
   Pattern submissionOrCommentPattern() {
@@ -82,8 +90,12 @@ public class UrlParserConfig {
     return DEFAULT_LIVE_THREAD_PATTERN;
   }
 
-  Pattern subredditPattern() {
-    return DEFAULT_SUBREDDIT_PATTERN;
+  public Pattern subredditPattern() {
+    return DEFAULT_BOUNDED_SUBREDDIT_PATTERN;
+  }
+
+  public Pattern unboundedSubredditPattern() {
+    return DEFAULT_UNBOUNDED_SUBREDDIT_PATTERN;
   }
 
   Pattern gfycatIdPattern() {

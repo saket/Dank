@@ -1,5 +1,7 @@
 package me.saket.dank.utils.markdown.markwon;
 
+import android.support.annotation.VisibleForTesting;
+
 import com.nytimes.android.external.cache3.Cache;
 
 import net.dean.jraw.models.Comment;
@@ -34,7 +36,11 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   private final SpannableConfiguration configuration;
 
   @Inject
-  public MarkwonBasedMarkdownRenderer(SpannableConfiguration configuration, @Named("markwon_spans_renderer") Cache<String, CharSequence> cache) {
+  public MarkwonBasedMarkdownRenderer(
+      SpannableConfiguration configuration,
+      AutoRedditLinkExtension autoRedditLinkExtension,
+      @Named("markwon_spans_renderer") Cache<String, CharSequence> cache)
+  {
     this.cache = cache;
     this.configuration = configuration;
 
@@ -43,7 +49,8 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
             StrikethroughExtension.create(),
             TablesExtension.create(),
             TaskListExtension.create(),
-            AutolinkExtension.create()
+            AutolinkExtension.create(),
+            autoRedditLinkExtension
         ))
         .build();
   }
@@ -52,8 +59,8 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
     // Convert '&lgt;' to '<', etc.
     markdown = org.jsoup.parser.Parser.unescapeEntities(markdown, true);
 
-    markdown = fixTables(markdown);
-    markdown = new SuperscriptFixer().fix(markdown);
+    markdown = fixInvalidTables(markdown);
+    markdown = new SuperscriptMarkdownToHtml().convert(markdown);
 
     // It's better **not** to re-use this class between multiple calls.
     SpannableRenderer renderer = new SpannableRenderer();
@@ -130,7 +137,8 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   /**
    * Markwon needs at-least three dashes for table headers.
    */
-  private String fixTables(String markdown) {
+  @VisibleForTesting
+  String fixInvalidTables(String markdown) {
     return markdown
         .replace(":--|", ":---|")
         .replace("|:--:|", "|:---:|")
@@ -142,8 +150,9 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   /**
    * commonmark-java does not recognize '^'. This replaces all '^' with {@code <sup>} tags.
    */
-  private static class SuperscriptFixer {
-    public String fix(String html) {
+  @VisibleForTesting
+  static class SuperscriptMarkdownToHtml {
+    public String convert(String html) {
       Stack<Character> stack = new Stack<>();
       StringBuilder builder = new StringBuilder(html.length());
 
