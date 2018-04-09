@@ -18,6 +18,7 @@ import java.util.Arrays;
 import java.util.Stack;
 import java.util.concurrent.Callable;
 import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import javax.inject.Inject;
 import javax.inject.Named;
 
@@ -30,6 +31,8 @@ import ru.noties.markwon.renderer.SpannableRenderer;
 import ru.noties.markwon.tasklist.TaskListExtension;
 
 public class MarkwonBasedMarkdownRenderer implements Markdown {
+
+  private static final Pattern LINK_MARKDOWN_PATTERN = Pattern.compile("\\[(.*)\\]\\((.*)\\)");
 
   private final Cache<String, CharSequence> cache;
   private final Parser parser;
@@ -58,8 +61,10 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   private CharSequence parseMarkdown(String markdown) {
     // Convert '&lgt;' to '<', etc.
     markdown = org.jsoup.parser.Parser.unescapeEntities(markdown, true);
-
     markdown = fixInvalidTables(markdown);
+    markdown = escapeSpacesInLinkUrls(markdown);
+
+    // WARNING: this should be at the end.
     markdown = new SuperscriptMarkdownToHtml().convert(markdown);
 
     // It's better **not** to re-use this class between multiple calls.
@@ -145,6 +150,23 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
         .replace("|:--", "|:---")
         .replace("|--:", "|---:")
         .replace("|-:", "|---:");
+  }
+
+  @VisibleForTesting
+  String escapeSpacesInLinkUrls(String markdown) {
+    Matcher matcher = LINK_MARKDOWN_PATTERN.matcher(markdown);
+
+    while (matcher.find()) {
+      String linkText = matcher.group(1);
+      String linkUrl = matcher.group(2).replaceAll("\\s", "%20");
+
+      markdown = markdown.substring(0, matcher.start())
+          + String.format("[%s](%s)", linkText, linkUrl)
+          + markdown.substring(matcher.end(), markdown.length());
+      //markdown = markdown.replace(matcher.group(0), String.format("[%s](%s)", linkText, linkUrl));
+    }
+
+    return markdown;
   }
 
   /**
