@@ -852,7 +852,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @CheckResult
   private Completable scrollToNewlyAddedReplyIfHidden(Contribution parentContribution) {
     return submissionCommentsAdapter.dataChanges()
-        .take(1)
         .map(newItems -> {
           for (int i = 0; i < newItems.size(); i++) {
             // Find the reply item's position.
@@ -864,8 +863,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               return i;
             }
           }
-          throw new AssertionError("Couldn't find inline reply's parent");
+          //throw new AssertionError("Couldn't find inline reply's parent");
+          return RecyclerView.NO_POSITION;
         })
+        .filter(replyPosition -> replyPosition != RecyclerView.NO_POSITION)
+        .take(1)
         .flatMapCompletable(replyPosition -> Completable.fromAction(() -> {
           RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition - 1);
           if (parentContributionItemVH == null && submissionStream.getValue().get().getFullName().equals(parentContribution.getFullName())) {
