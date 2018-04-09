@@ -257,7 +257,7 @@
   <style name="DankSubmissionCommentItem">
     <item name="android:layout_width">match_parent</item>
     <item name="android:layout_height">wrap_content</item>
-    <item name="android:background">?android:selectableItemBackground</item>
+    <item name="android:background">?attr/selectableItemBackground</item>
     <item name="indentationLineColor">@color/gray_850</item>
     <item name="indentationLineWidth">1dp</item>
     <item name="spacePerDepth">@dimen/spacing12</item>
@@ -284,6 +284,7 @@
     <item name="android:background">@drawable/background_message_content</item>
     <item name="android:padding">@dimen/spacing12</item>
     <item name="android:textColor">@color/gray_400</item>
+    <item name="android:textIsSelectable">true</item>
   </style>
 
   <style name="DankMessageByline.Threaded">
