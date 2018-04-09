@@ -38,10 +38,11 @@ import timber.log.Timber;
 @Singleton
 public class UrlRouter {
 
-  @Inject JacksonHelper jacksonHelper;
+  private final JacksonHelper jacksonHelper;
 
   @Inject
-  protected UrlRouter() {
+  protected UrlRouter(JacksonHelper jacksonHelper) {
+    this.jacksonHelper = jacksonHelper;
   }
 
   public UserProfilePopupRouter forLink(RedditUserLink redditUserLink) {
@@ -63,17 +64,19 @@ public class UrlRouter {
       Timber.w("Consider using forLink(MediaLink) instead");
       new Exception().printStackTrace();
     }
-    return new IntentRouter(link);
+    return new IntentRouter(link, jacksonHelper);
   }
 
-  public static class IntentRouter extends UrlRouter {
-    private Link link;
+  public static class IntentRouter {
+    private final Link link;
+    private final JacksonHelper jacksonHelper;
 
     @Nullable private Point expandFromPoint;
     @Nullable private Rect expandFromRect;
 
-    public IntentRouter(Link link) {
+    private IntentRouter(Link link, JacksonHelper jacksonHelper) {
       this.link = link;
+      this.jacksonHelper = jacksonHelper;
     }
 
     /**
@@ -150,13 +153,13 @@ public class UrlRouter {
     }
   }
 
-  public static class MediaIntentRouter extends UrlRouter {
+  public static class MediaIntentRouter {
 
     @Nullable private Thumbnails redditSuppliedImages;
     private final MediaLink link;
     private final JacksonHelper jacksonHelper;
 
-    public MediaIntentRouter(MediaLink link, JacksonHelper jacksonHelper) {
+    private MediaIntentRouter(MediaLink link, JacksonHelper jacksonHelper) {
       this.link = link;
       this.jacksonHelper = jacksonHelper;
     }
@@ -176,11 +179,11 @@ public class UrlRouter {
     }
   }
 
-  public static class UserProfilePopupRouter extends UrlRouter {
+  public static class UserProfilePopupRouter {
     private RedditUserLink link;
     private Point expandFromPoint;
 
-    public UserProfilePopupRouter(RedditUserLink link) {
+    private UserProfilePopupRouter(RedditUserLink link) {
       this.link = link;
     }
 
@@ -200,7 +203,7 @@ public class UrlRouter {
    * I'd ideally like to send a deeplink intent if any app can open a URL, but I also don't
    * want web browsers to open a link because Dank already has an internal web browser. So
    * we're selectively checking if we want to let an app take over the URL.
-   *
+   * <p>
    * TODO: Add Twitter, Instagram, Spotify, Netflix, Medium, Nytimes, Wikipedia, Sound cloud, Google photos,
    */
   @Nullable
