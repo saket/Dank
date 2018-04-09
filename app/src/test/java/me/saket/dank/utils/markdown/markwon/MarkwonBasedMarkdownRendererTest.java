@@ -33,4 +33,28 @@ public class MarkwonBasedMarkdownRendererTest {
     String parsed = renderer.escapeSpacesInLinkUrls(invalid);
     assertEquals(expected, parsed);
   }
+
+  @Test
+  public void fixInvalidHeadings() {
+    String invalid = "#hello This is Markdown Live Preview\\n\n" +
+        "----\n" +
+        "\\n\n" +
+        "*****\n" +
+        "\\n\n" +
+        "___\n" +
+        "\\n##what is Markdown?\n" +
+        "\\n\\n### what is Markdown\\n";
+
+    String expected = "# hello This is Markdown Live Preview\\n\n" +
+        "----\n" +
+        "\\n\n" +
+        "*****\n" +
+        "\\n\n" +
+        "___\n" +
+        "\\n## what is Markdown?\n" +
+        "\\n\\n### what is Markdown\\n";
+
+    String parsed = renderer.fixInvalidHeadings(invalid);
+    assertEquals(expected, parsed);
+  }
 }

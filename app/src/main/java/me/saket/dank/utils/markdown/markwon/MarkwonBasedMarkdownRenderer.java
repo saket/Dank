@@ -33,6 +33,7 @@ import ru.noties.markwon.tasklist.TaskListExtension;
 public class MarkwonBasedMarkdownRenderer implements Markdown {
 
   private static final Pattern LINK_MARKDOWN_PATTERN = Pattern.compile("\\[(.*)\\]\\((.*)\\)");
+  private static final Pattern HEADING_MARKDOWN_PATTERN = Pattern.compile("(#{1,6})\\s{0}([\\w\\s]*)");
 
   private final Cache<String, CharSequence> cache;
   private final Parser parser;
@@ -63,6 +64,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
     markdown = org.jsoup.parser.Parser.unescapeEntities(markdown, true);
     markdown = fixInvalidTables(markdown);
     markdown = escapeSpacesInLinkUrls(markdown);
+    markdown = fixInvalidHeadings(markdown);
 
     // WARNING: this should be at the end.
     markdown = new SuperscriptMarkdownToHtml().convert(markdown);
@@ -77,6 +79,10 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
     Callable<CharSequence> valueSeeder = () -> parseMarkdown(markdown);
 
     try {
+      // TODO: remove.
+      if (BuildConfig.DEBUG) {
+        return valueSeeder.call();
+      }
       return cache.get(markdown, valueSeeder);
     } catch (Exception e) {
       // Should never happen.
@@ -164,6 +170,22 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
           + String.format("[%s](%s)", linkText, linkUrl)
           + markdown.substring(matcher.end(), markdown.length());
       //markdown = markdown.replace(matcher.group(0), String.format("[%s](%s)", linkText, linkUrl));
+    }
+
+    return markdown;
+  }
+
+  /**
+   * Ensures a space between '#' and heading text.
+   */
+  @VisibleForTesting
+  String fixInvalidHeadings(String markdown) {
+    Matcher matcher = HEADING_MARKDOWN_PATTERN.matcher(markdown);
+    while (matcher.find()) {
+      String heading = matcher.group(0);
+      String hashes = matcher.group(1);
+      String content = matcher.group(2).trim();
+      markdown = markdown.replace(heading, String.format("%s %s", hashes, content));
     }
 
     return markdown;
