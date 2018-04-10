@@ -92,13 +92,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
 
   @Override
   public CharSequence parse(PendingSyncReply reply) {
-    String markdown = reply.body();
-
-    // Forward slashes need to be escaped. I don't know a better way to do this.
-    // Converts ¯\\_(ツ)_/¯ -> ¯\_(ツ)_/¯.
-    markdown = markdown.replaceAll(Matcher.quoteReplacement("\\\\"), Matcher.quoteReplacement("\\"));
-
-    return getOrParse(markdown);
+    return getOrParse(reply.body());
   }
 
   @Override
