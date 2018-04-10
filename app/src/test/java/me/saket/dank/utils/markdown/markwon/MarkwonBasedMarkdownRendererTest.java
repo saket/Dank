@@ -27,8 +27,23 @@ public class MarkwonBasedMarkdownRendererTest {
 
   @Test
   public void escapeSpacesInLinkUrls() {
-    String invalid = "[^Send ^feedback](https://www.reddit.com/message/compose/?to=poochi&amp;amp;subject=New bot feedback)\\n";
-    String expected = "[^Send ^feedback](https://www.reddit.com/message/compose/?to=poochi&amp;amp;subject=New%20bot%20feedback)\\n";
+    String invalid = "see [Wikipedia](http://en.wikipedia.org/wiki/Markdown)\n\n[Spoiler](/s \"text inside quotes\") [Spoiler](/s \"\") " +
+        "[Spoiler](/s)\n\n*****\n\nSub: /r/pics r/pics\n\nUser: /u/Saketme/ u/saketme/\n\n*****\n\n[^Send ^feedback](https://www.reddit.com" +
+        "/message/compose/?to=poochi&amp;amp;subject=New bot feedback)\n\n";
+    String expected = "see [Wikipedia](http://en.wikipedia.org/wiki/Markdown)\n" +
+        "\n" +
+        "[Spoiler](/s \"text inside quotes\") [Spoiler](/s \"\") [Spoiler](/s)\n" +
+        "\n" +
+        "*****\n" +
+        "\n" +
+        "Sub: /r/pics r/pics\n" +
+        "\n" +
+        "User: /u/Saketme/ u/saketme/\n" +
+        "\n" +
+        "*****\n" +
+        "\n" +
+        "[^Send ^feedback](https://www.reddit.com/message/compose/?to=poochi&amp;amp;subject=New%20bot%20feedback)\n" +
+        "\n";
 
     String parsed = renderer.escapeSpacesInLinkUrls(invalid);
     assertEquals(expected, parsed);

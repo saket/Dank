@@ -32,7 +32,7 @@ import ru.noties.markwon.tasklist.TaskListExtension;
 
 public class MarkwonBasedMarkdownRenderer implements Markdown {
 
-  private static final Pattern LINK_MARKDOWN_PATTERN = Pattern.compile("\\[(.*)\\]\\((.*)\\)");
+  private static final Pattern LINK_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\]\\(([^)\"]*)\\)");
   private static final Pattern HEADING_MARKDOWN_PATTERN = Pattern.compile("(#{1,6})\\s{0}([\\w\\s]*)");
 
   private final Cache<String, CharSequence> cache;
