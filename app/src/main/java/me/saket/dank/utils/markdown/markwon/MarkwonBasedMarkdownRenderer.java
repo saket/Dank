@@ -30,6 +30,7 @@ import me.saket.dank.utils.markdown.Markdown;
 import ru.noties.markwon.SpannableBuilder;
 import ru.noties.markwon.SpannableConfiguration;
 import ru.noties.markwon.tasklist.TaskListExtension;
+import timber.log.Timber;
 
 public class MarkwonBasedMarkdownRenderer implements Markdown {
 
@@ -61,11 +62,18 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   }
 
   private CharSequence parseMarkdown(String markdown) {
-    // Convert '&lgt;' to '<', etc.
-    markdown = org.jsoup.parser.Parser.unescapeEntities(markdown, true);
-    markdown = fixInvalidTables(markdown);
-    markdown = escapeSpacesInLinkUrls(markdown);
-    markdown = fixInvalidHeadings(markdown);
+    try {
+      // Convert '&lgt;' to '<', etc.
+      markdown = org.jsoup.parser.Parser.unescapeEntities(markdown, true);
+      markdown = fixInvalidTables(markdown);
+      markdown = escapeSpacesInLinkUrls(markdown);
+      markdown = fixInvalidHeadings(markdown);
+
+      // WARNING: this should be at the end.
+      markdown = new SuperscriptMarkdownToHtml().convert(markdown);
+    } catch (Throwable e) {
+      Timber.e(e, "couldn't fix markdown syntax");
+    }
 
     // It's better **not** to re-use the visitor between multiple calls.
     SpannableBuilder builder = new SpannableBuilder();
