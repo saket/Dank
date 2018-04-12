@@ -66,20 +66,16 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   // TODO: it's important to call these typo-fixing methods in correct order.
   // Write a test to ensure that. Ensure ordering and integration of all.
   private CharSequence parseMarkdown(String markdown) {
-    try {
-      // Convert '&lgt;' to '<', etc.
-      markdown = org.jsoup.parser.Parser.unescapeEntities(markdown, true);
-      markdown = fixInvalidTables(markdown);
-      markdown = fixInvalidHeadings(markdown);
-      markdown = fixInvalidLinks(markdown);
-      markdown = escapeSpacesInLinkUrls(markdown);
-      markdown = fixInvalidSpoilers(markdown);
+    // Convert '&lgt;' to '<', etc.
+    markdown = org.jsoup.parser.Parser.unescapeEntities(markdown, true);
+    markdown = fixInvalidTables(markdown);
+    markdown = fixInvalidHeadings(markdown);
+    markdown = removeSpaceBetweenLinkLabelAndUrl(markdown);
+    markdown = escapeSpacesInLinkUrls(markdown);
+    markdown = fixInvalidSpoilers(markdown);
 
-      // WARNING: this should be at the end.
-      markdown = new SuperscriptMarkdownToHtml().convert(markdown);
-    } catch (Throwable e) {
-      Timber.e(e, "couldn't fix markdown syntax in: %s", markdown);
-    }
+    // WARNING: this should be at the end.
+    markdown = new SuperscriptMarkdownToHtml().convert(markdown);
 
     // It's better **not** to re-use the visitor between multiple calls.
     SpannableBuilder builder = new SpannableBuilder();
@@ -159,12 +155,17 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
    */
   @VisibleForTesting
   String fixInvalidTables(String markdown) {
-    return markdown
-        .replace(":--|", ":---|")
-        .replace("|:--:|", "|:---:|")
-        .replace("|:--", "|:---")
-        .replace("|--:", "|---:")
-        .replace("|-:", "|---:");
+    try {
+      markdown = markdown
+          .replace(":--|", ":---|")
+          .replace("|:--:|", "|:---:|")
+          .replace("|:--", "|:---")
+          .replace("|--:", "|---:")
+          .replace("|-:", "|---:");
+    } catch (Throwable e) {
+      Timber.e(e, "Couldn't fix table syntax in: %s", markdown);
+    }
+    return markdown;
   }
 
   /**
@@ -172,29 +173,37 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
    */
   @VisibleForTesting
   String fixInvalidHeadings(String markdown) {
-    Matcher matcher = HEADING_MARKDOWN_PATTERN.matcher(markdown);
-    while (matcher.find()) {
-      String heading = matcher.group(0);
-      String hashes = matcher.group(1);
-      String content = matcher.group(2).trim();
-      markdown = markdown.replace(heading, String.format("%s %s", hashes, content));
+    try {
+      Matcher matcher = HEADING_MARKDOWN_PATTERN.matcher(markdown);
+      while (matcher.find()) {
+        String heading = matcher.group(0);
+        String hashes = matcher.group(1);
+        String content = matcher.group(2).trim();
+        markdown = markdown.replace(heading, String.format("%s %s", hashes, content));
+      }
+    } catch (Throwable e) {
+      Timber.e(e, "Couldn't fix invalid headers in: %s", markdown);
     }
 
     return markdown;
   }
 
   @VisibleForTesting
-  String fixInvalidLinks(String markdown) {
-    Matcher matcher = LINK_WITH_SPACE_MARKDOWN_PATTERN.matcher(markdown);
+  String removeSpaceBetweenLinkLabelAndUrl(String markdown) {
+    try {
+      Matcher matcher = LINK_WITH_SPACE_MARKDOWN_PATTERN.matcher(markdown);
 
-    while (matcher.find()) {
-      String linkText = matcher.group(1);
-      String linkUrl = matcher.group(2);
+      while (matcher.find()) {
+        String linkText = matcher.group(1);
+        String linkUrl = matcher.group(2);
 
-      markdown = markdown.substring(0, matcher.start())
-          + String.format("[%s](%s)", linkText, linkUrl)
-          + markdown.substring(matcher.end(), markdown.length());
-      //markdown = markdown.replace(matcher.group(0), String.format("[%s](%s)", linkText, linkUrl));
+        markdown = markdown.substring(0, matcher.start())
+            + String.format("[%s](%s)", linkText, linkUrl)
+            + markdown.substring(matcher.end(), markdown.length());
+        //markdown = markdown.replace(matcher.group(0), String.format("[%s](%s)", linkText, linkUrl));
+      }
+    } catch (Throwable e) {
+      Timber.e(e, "Couldn't remove spaces between link and url in: %s", markdown);
     }
 
     return markdown;
@@ -202,16 +211,20 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
 
   @VisibleForTesting
   String escapeSpacesInLinkUrls(String markdown) {
-    Matcher matcher = LINK_MARKDOWN_PATTERN.matcher(markdown);
+    try {
+      Matcher matcher = LINK_MARKDOWN_PATTERN.matcher(markdown);
 
-    while (matcher.find()) {
-      String linkText = matcher.group(1);
-      String linkUrl = matcher.group(2).replaceAll("\\s", "%20");
+      while (matcher.find()) {
+        String linkText = matcher.group(1);
+        String linkUrl = matcher.group(2).replaceAll("\\s", "%20");
 
-      markdown = markdown.substring(0, matcher.start())
-          + String.format("[%s](%s)", linkText, linkUrl)
-          + markdown.substring(matcher.end(), markdown.length());
-      //markdown = markdown.replace(matcher.group(0), String.format("[%s](%s)", linkText, linkUrl));
+        markdown = markdown.substring(0, matcher.start())
+            + String.format("[%s](%s)", linkText, linkUrl)
+            + markdown.substring(matcher.end(), markdown.length());
+        //markdown = markdown.replace(matcher.group(0), String.format("[%s](%s)", linkText, linkUrl));
+      }
+    } catch (Throwable e) {
+      Timber.e(e, "Couldn't escape spaces in link url in: %s", markdown);
     }
 
     return markdown;
@@ -219,18 +232,17 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
 
   @VisibleForTesting
   String fixInvalidSpoilers(String markdown) {
-    Matcher matcher = POTENTIALLY_INVALID_SPOILER_MARKDOWN_PATTERN.matcher(markdown);
+    try {
+      Matcher matcher = POTENTIALLY_INVALID_SPOILER_MARKDOWN_PATTERN.matcher(markdown);
 
-    while (matcher.find()) {
-      String fullMatch = matcher.group(0);
-      String spoilerLabel = matcher.group(1);
-      String spoilerContent = matcher.group(3);
-
-//      markdown = markdown.substring(0, matcher.start())
-//          + String.format("[%s](/s \"%s\")", spoilerLabel, spoilerContent)
-//          + markdown.substring(matcher.end(), markdown.length());
-
-      markdown = markdown.replace(fullMatch, String.format("[%s](/s \"%s\")", spoilerLabel, spoilerContent));
+      while (matcher.find()) {
+        String fullMatch = matcher.group(0);
+        String spoilerLabel = matcher.group(1);
+        String spoilerContent = matcher.group(3);
+        markdown = markdown.replace(fullMatch, String.format("[%s](/s \"%s\")", spoilerLabel, spoilerContent));
+      }
+    } catch (Throwable e) {
+      Timber.e(e, "Couldn't fix invalid spoilers in: %s", markdown);
     }
 
     return markdown;
@@ -241,27 +253,33 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
    */
   @VisibleForTesting
   static class SuperscriptMarkdownToHtml {
-    public String convert(String html) {
-      Stack<Character> stack = new Stack<>();
-      StringBuilder builder = new StringBuilder(html.length());
+    public String convert(String markdown) {
+      try {
+        Stack<Character> stack = new Stack<>();
+        StringBuilder builder = new StringBuilder(markdown.length());
 
-      for (int i = 0; i < html.length(); i++) {
-        char c = html.charAt(i);
-        char nextC = (i + 1) < html.length() ? html.charAt(i + 1) : Character.MIN_VALUE;
+        for (int i = 0; i < markdown.length(); i++) {
+          char c = markdown.charAt(i);
+          char nextC = (i + 1) < markdown.length() ? markdown.charAt(i + 1) : Character.MIN_VALUE;
 
-        if (c == '^') {
-          stack.add(c);
-          builder.append("<sup>");
-        } else {
-          if (Character.isWhitespace(c) || (c == '\\' && nextC == 'n')) {
-            flush(stack, builder);
+          if (c == '^') {
+            stack.add(c);
+            builder.append("<sup>");
+          } else {
+            if (Character.isWhitespace(c) || (c == '\\' && nextC == 'n')) {
+              flush(stack, builder);
+            }
+            builder.append(c);
           }
-          builder.append(c);
         }
-      }
 
-      flush(stack, builder);
-      return builder.toString();
+        flush(stack, builder);
+        return builder.toString();
+
+      } catch (Throwable e) {
+        Timber.e(e, "Couldn't convert superscript markdown to html in: %s", markdown);
+        return markdown;
+      }
     }
 
     private void flush(Stack<Character> stack, StringBuilder builder) {

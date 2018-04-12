@@ -80,7 +80,7 @@ public class MarkwonBasedMarkdownRendererTest {
     String invalid = "[title] (url)";
     String expected = "[title](url)";
 
-    String parsed = renderer.fixInvalidLinks(invalid);
+    String parsed = renderer.removeSpaceBetweenLinkLabelAndUrl(invalid);
     assertEquals(expected, parsed);
   }
 
