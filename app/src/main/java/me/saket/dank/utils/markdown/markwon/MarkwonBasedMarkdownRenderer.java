@@ -12,6 +12,7 @@ import org.commonmark.ext.autolink.AutolinkExtension;
 import org.commonmark.ext.gfm.strikethrough.StrikethroughExtension;
 import org.commonmark.ext.gfm.tables.TablesExtension;
 import org.commonmark.node.Node;
+import org.commonmark.node.Visitor;
 import org.commonmark.parser.Parser;
 
 import java.util.Arrays;
@@ -26,8 +27,8 @@ import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.utils.markdown.Markdown;
+import ru.noties.markwon.SpannableBuilder;
 import ru.noties.markwon.SpannableConfiguration;
-import ru.noties.markwon.renderer.SpannableRenderer;
 import ru.noties.markwon.tasklist.TaskListExtension;
 
 public class MarkwonBasedMarkdownRenderer implements Markdown {
@@ -66,13 +67,13 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
     markdown = escapeSpacesInLinkUrls(markdown);
     markdown = fixInvalidHeadings(markdown);
 
-    // WARNING: this should be at the end.
-    markdown = new SuperscriptMarkdownToHtml().convert(markdown);
+    // It's better **not** to re-use the visitor between multiple calls.
+    SpannableBuilder builder = new SpannableBuilder();
+    Visitor visitor = new RedditSpoilerLinkVisitor(configuration, builder);
 
-    // It's better **not** to re-use this class between multiple calls.
-    SpannableRenderer renderer = new SpannableRenderer();
     Node node = parser.parse(markdown);
-    return renderer.render(configuration, node);
+    node.accept(visitor);
+    return builder.text();
   }
 
   CharSequence getOrParse(String markdown) {

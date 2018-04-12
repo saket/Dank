@@ -112,6 +112,8 @@ public class AutoRedditLinkExtension implements Parser.ParserExtension {
     }
 
     private class AutoRedditLinkVisitor extends AbstractVisitor {
+      // This counter is used to ignore
+      // visit() calls for the text of a link.
       int inLink = 0;
 
       @Override
