@@ -134,7 +134,9 @@ public class UrlRouter {
           } else {
             if (BuildConfig.DEBUG && deviceInfo.isRunningOnEmulator()) {
               // Opening WebView crashes the emulator.
-              return Intents.createForOpeningUrl(url);
+              Intent browserIntent = Intents.createForOpeningUrl(url);
+              browserIntent.setPackage("com.android.chrome");
+              return browserIntent;
             } else {
               return WebViewActivity.intent(context, url, expandFromRect);
             }
