@@ -35,7 +35,9 @@ import timber.log.Timber;
 public class MarkwonBasedMarkdownRenderer implements Markdown {
 
   private static final Pattern LINK_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\]\\(([^)\"]*)\\)");
+  private static final Pattern LINK_WITH_SPACE_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\]\\s+\\(([^)\"]*)\\)");
   private static final Pattern HEADING_MARKDOWN_PATTERN = Pattern.compile("(#{1,6})\\s{0}([\\w\\s]*)");
+  private static final Pattern POTENTIALLY_INVALID_SPOILER_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\](.*?)\"+(.*?(?<!\\\\))\"+\\)");
 
   private final Cache<String, CharSequence> cache;
   private final Parser parser;
@@ -61,18 +63,22 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
         .build();
   }
 
+  // TODO: it's important to call these typo-fixing methods in correct order.
+  // Write a test to ensure that. Ensure ordering and integration of all.
   private CharSequence parseMarkdown(String markdown) {
     try {
       // Convert '&lgt;' to '<', etc.
       markdown = org.jsoup.parser.Parser.unescapeEntities(markdown, true);
       markdown = fixInvalidTables(markdown);
-      markdown = escapeSpacesInLinkUrls(markdown);
       markdown = fixInvalidHeadings(markdown);
+      markdown = fixInvalidLinks(markdown);
+      markdown = escapeSpacesInLinkUrls(markdown);
+      markdown = fixInvalidSpoilers(markdown);
 
       // WARNING: this should be at the end.
       markdown = new SuperscriptMarkdownToHtml().convert(markdown);
     } catch (Throwable e) {
-      Timber.e(e, "couldn't fix markdown syntax");
+      Timber.e(e, "couldn't fix markdown syntax in: %s", markdown);
     }
 
     // It's better **not** to re-use the visitor between multiple calls.
@@ -161,6 +167,39 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
         .replace("|-:", "|---:");
   }
 
+  /**
+   * Ensures a space between '#' and heading text.
+   */
+  @VisibleForTesting
+  String fixInvalidHeadings(String markdown) {
+    Matcher matcher = HEADING_MARKDOWN_PATTERN.matcher(markdown);
+    while (matcher.find()) {
+      String heading = matcher.group(0);
+      String hashes = matcher.group(1);
+      String content = matcher.group(2).trim();
+      markdown = markdown.replace(heading, String.format("%s %s", hashes, content));
+    }
+
+    return markdown;
+  }
+
+  @VisibleForTesting
+  String fixInvalidLinks(String markdown) {
+    Matcher matcher = LINK_WITH_SPACE_MARKDOWN_PATTERN.matcher(markdown);
+
+    while (matcher.find()) {
+      String linkText = matcher.group(1);
+      String linkUrl = matcher.group(2);
+
+      markdown = markdown.substring(0, matcher.start())
+          + String.format("[%s](%s)", linkText, linkUrl)
+          + markdown.substring(matcher.end(), markdown.length());
+      //markdown = markdown.replace(matcher.group(0), String.format("[%s](%s)", linkText, linkUrl));
+    }
+
+    return markdown;
+  }
+
   @VisibleForTesting
   String escapeSpacesInLinkUrls(String markdown) {
     Matcher matcher = LINK_MARKDOWN_PATTERN.matcher(markdown);
@@ -178,17 +217,20 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
     return markdown;
   }
 
-  /**
-   * Ensures a space between '#' and heading text.
-   */
   @VisibleForTesting
-  String fixInvalidHeadings(String markdown) {
-    Matcher matcher = HEADING_MARKDOWN_PATTERN.matcher(markdown);
+  String fixInvalidSpoilers(String markdown) {
+    Matcher matcher = POTENTIALLY_INVALID_SPOILER_MARKDOWN_PATTERN.matcher(markdown);
+
     while (matcher.find()) {
-      String heading = matcher.group(0);
-      String hashes = matcher.group(1);
-      String content = matcher.group(2).trim();
-      markdown = markdown.replace(heading, String.format("%s %s", hashes, content));
+      String fullMatch = matcher.group(0);
+      String spoilerLabel = matcher.group(1);
+      String spoilerContent = matcher.group(3);
+
+//      markdown = markdown.substring(0, matcher.start())
+//          + String.format("[%s](/s \"%s\")", spoilerLabel, spoilerContent)
+//          + markdown.substring(matcher.end(), markdown.length());
+
+      markdown = markdown.replace(fullMatch, String.format("[%s](/s \"%s\")", spoilerLabel, spoilerContent));
     }
 
     return markdown;
