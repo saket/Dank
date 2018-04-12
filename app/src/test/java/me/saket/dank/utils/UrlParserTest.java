@@ -244,6 +244,14 @@ public class UrlParserTest {
     }
   }
 
+  @Test
+  public void parseRedditUrlWithoutDomain() {
+    String url = "/gold";
+    Link parsedLink = urlParser.parse(url);
+    assertEquals(true, parsedLink instanceof ExternalLink);
+    assertEquals(parsedLink.unparsedUrl(), "https://reddit.com/gold");
+  }
+
 // ======== MEDIA URLs ======== //
 
   @Test

@@ -143,6 +143,9 @@ public class UrlParser {
           String nonAmpUrl = "https://" + url.substring(url.indexOf("/amp/s/") + "/amp/s/".length());
           parsedLink = parse(nonAmpUrl);
 
+        } else if (urlDomain.isEmpty() && url.startsWith("/") && !url.contains("@")) {
+          return parseInternal("https://reddit.com" + url, submission);
+
         } else {
           parsedLink = parseNonRedditUrl(url);
         }
