@@ -12,9 +12,8 @@
   <color name="markdown_table_border">@color/gray_600</color>
 
   <dimen name="markdown_text_block_indentation_margin">24dp</dimen>
-  <!--<dimen name="markdown_list_margin_with_list_indicator">16dp</dimen>-->
   <dimen name="markdown_blockquote_vertical_rule_stroke_width">4dp</dimen>
-  <dimen name="markdown_horizontal_rule_stroke_width">2dp</dimen>
+  <dimen name="markdown_horizontal_rule_stroke_width">4dp</dimen>
 
   <string name="markdown_spoiler_text">SPOILER</string>
 </resources>
