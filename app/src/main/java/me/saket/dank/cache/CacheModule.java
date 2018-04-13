@@ -21,9 +21,11 @@ import dagger.Provides;
 import io.reactivex.Scheduler;
 import io.reactivex.exceptions.Exceptions;
 import io.reactivex.schedulers.Schedulers;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.data.AppInfo;
 import me.saket.dank.data.FileSize;
 import me.saket.dank.urlparser.Link;
+import me.saket.dank.utils.DeviceInfo;
 import me.saket.dank.utils.FileSizeUnit;
 
 @Module
@@ -72,7 +74,12 @@ public class CacheModule {
   @Provides
   @Singleton
   @Named("url_parser")
-  Cache<String, Link> provideUrlParserCache() {
+  Cache<String, Link> provideUrlParserCache(DeviceInfo deviceInfo) {
+    if (BuildConfig.DEBUG && deviceInfo.isRunningOnEmulator()) {
+      return CacheBuilder.newBuilder()
+          .maximumSize(0)
+          .build();
+    }
     return CacheBuilder.newBuilder()
         .maximumSize(100)
         .build();
