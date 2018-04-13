@@ -45,7 +45,10 @@ public abstract class MarkdownHintOptions {
   public abstract int linkTextColor();
 
   @ColorInt
-  public abstract int spoilerTextColor();
+  public abstract int spoilerSyntaxHintColor();
+
+  @ColorInt
+  public abstract int spoilerHiddenContentOverlayColor();
 
   @ColorInt
   public abstract int horizontalRuleColor();
@@ -90,7 +93,9 @@ public abstract class MarkdownHintOptions {
 
     public abstract Builder linkTextColor(@ColorInt int color);
 
-    public abstract Builder spoilerTextColor(@ColorInt int color);
+    public abstract Builder spoilerSyntaxHintColor(@ColorInt int color);
+
+    public abstract Builder spoilerHiddenContentOverlayColor(@ColorInt int color);
 
     public abstract Builder horizontalRuleColor(@ColorInt int color);
 

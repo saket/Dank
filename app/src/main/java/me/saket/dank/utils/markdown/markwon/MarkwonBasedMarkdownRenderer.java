@@ -25,6 +25,7 @@ import javax.inject.Named;
 
 import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
+import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.ui.submission.PendingSyncReply;
 import me.saket.dank.utils.markdown.Markdown;
 import ru.noties.markwon.SpannableBuilder;
@@ -39,6 +40,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   private static final Pattern HEADING_MARKDOWN_PATTERN = Pattern.compile("(#{1,6})\\s{0}([\\w\\s]*)");
   private static final Pattern POTENTIALLY_INVALID_SPOILER_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\](.*?)\"+(.*?(?<!\\\\))\"+\\)");
 
+  private final MarkdownHintOptions markdownOptions;
   private final Cache<String, CharSequence> cache;
   private final Parser parser;
   private final SpannableConfiguration configuration;
@@ -47,8 +49,10 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   public MarkwonBasedMarkdownRenderer(
       SpannableConfiguration configuration,
       AutoRedditLinkExtension autoRedditLinkExtension,
+      MarkdownHintOptions markdownOptions,
       @Named("markwon_spans_renderer") Cache<String, CharSequence> cache)
   {
+    this.markdownOptions = markdownOptions;
     this.cache = cache;
     this.configuration = configuration;
 
@@ -79,7 +83,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
 
     // It's better **not** to re-use the visitor between multiple calls.
     SpannableBuilder builder = new SpannableBuilder();
-    Visitor visitor = new RedditSpoilerLinkVisitor(configuration, builder);
+    Visitor visitor = new RedditSpoilerLinkVisitor(configuration, markdownOptions, builder);
 
     Node node = parser.parse(markdown);
     node.accept(visitor);

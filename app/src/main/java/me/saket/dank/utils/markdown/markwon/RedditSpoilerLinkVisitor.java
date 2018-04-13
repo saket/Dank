@@ -1,6 +1,5 @@
 package me.saket.dank.utils.markdown.markwon;
 
-import android.graphics.Color;
 import android.text.Spanned;
 
 import org.commonmark.node.Link;
@@ -8,16 +7,19 @@ import org.commonmark.node.Text;
 
 import java.util.Locale;
 
+import me.saket.dank.markdownhints.MarkdownHintOptions;
 import ru.noties.markwon.SpannableBuilder;
 import ru.noties.markwon.SpannableConfiguration;
 import ru.noties.markwon.renderer.SpannableMarkdownVisitor;
 
 class RedditSpoilerLinkVisitor extends SpannableMarkdownVisitor {
 
+  private final MarkdownHintOptions markdownOptions;
   private final SpannableBuilder builder;
 
-  public RedditSpoilerLinkVisitor(SpannableConfiguration configuration, SpannableBuilder builder) {
+  public RedditSpoilerLinkVisitor(SpannableConfiguration configuration, MarkdownHintOptions markdownOptions, SpannableBuilder builder) {
     super(configuration, builder);
+    this.markdownOptions = markdownOptions;
     this.builder = builder;
   }
 
@@ -46,7 +48,7 @@ class RedditSpoilerLinkVisitor extends SpannableMarkdownVisitor {
       visitChildren(link);
       builder.append(padding);
 
-      int spoilerBackgroundColor = Color.parseColor("#37474F");
+      int spoilerBackgroundColor = markdownOptions.spoilerHiddenContentOverlayColor();
 
       SpoilerLabelSpan labelSpan = new SpoilerLabelSpan(spoilerBackgroundColor);
       setSpan(labelStart, labelEnd, labelSpan);

@@ -344,7 +344,7 @@ public class MarkdownNodeTreeVisitor {
   public void highlightSpoiler(Link spoilerLink) {
     // Text.
     int textClosingPosition = spoilerLink.getStartOffset() + SPOILER_TAG_WITH_BRACKETS.length();
-    writer.pushSpan(spanPool.foregroundColor(options.spoilerTextColor()), spoilerLink.getStartOffset(), textClosingPosition);
+    writer.pushSpan(spanPool.foregroundColor(options.spoilerSyntaxHintColor()), spoilerLink.getStartOffset(), textClosingPosition);
 
     // Url.
     int urlOpeningBracketLength = 1;
