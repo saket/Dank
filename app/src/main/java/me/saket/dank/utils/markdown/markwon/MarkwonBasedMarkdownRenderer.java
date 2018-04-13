@@ -1,6 +1,7 @@
 package me.saket.dank.utils.markdown.markwon;
 
 import android.support.annotation.VisibleForTesting;
+import android.text.SpannableStringBuilder;
 
 import com.nytimes.android.external.cache3.Cache;
 
@@ -69,7 +70,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
 
   // TODO: it's important to call these typo-fixing methods in correct order.
   // Write a test to ensure that. Ensure ordering and integration of all.
-  private CharSequence parseMarkdown(String markdown) {
+  private SpannableStringBuilder parseMarkdown(String markdown) {
     // Convert '&lgt;' to '<', etc.
     markdown = org.jsoup.parser.Parser.unescapeEntities(markdown, true);
     markdown = fixInvalidTables(markdown);
@@ -87,7 +88,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
 
     Node node = parser.parse(markdown);
     node.accept(visitor);
-    return builder.text();
+    return (SpannableStringBuilder) builder.text();
   }
 
   CharSequence getOrParse(String markdown) {
@@ -130,12 +131,26 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
     return getOrParse(submission.getSelftext());
   }
 
+  private String stripMarkdown(String markdown) {
+    SpannableStringBuilder markdownWithStyling = (SpannableStringBuilder) getOrParse(markdown);
+
+    SpoilerContentSpan[] spans = markdownWithStyling.getSpans(0, markdownWithStyling.length(), SpoilerContentSpan.class);
+    for (SpoilerContentSpan spoilerSpan : spans) {
+      markdownWithStyling = markdownWithStyling.replace(
+          markdownWithStyling.getSpanStart(spoilerSpan),
+          markdownWithStyling.getSpanEnd(spoilerSpan),
+          "");
+    }
+
+    return markdownWithStyling.toString();
+  }
+
   /**
    * {@inheritDoc}.
    */
   @Override
   public String stripMarkdown(Comment comment) {
-    return parse(comment).toString();
+    return stripMarkdown(comment.getBody());
   }
 
   /**
@@ -143,7 +158,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
    */
   @Override
   public String stripMarkdown(Message message) {
-    return parse(message).toString();
+    return stripMarkdown(message.getBody());
   }
 
   @Override
