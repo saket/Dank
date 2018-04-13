@@ -29,12 +29,6 @@ public class MarkdownModule {
   }
 
   @Provides
-  @Singleton
-  static MarkdownSpanPool provideMarkdownSpanPool() {
-    return new MarkdownSpanPool();
-  }
-
-  @Provides
   static MarkdownHintOptions provideMarkdownHintOptions(Application appContext) {
     SafeFunction<Integer, Integer> colors = resId -> ContextCompat.getColor(appContext, resId);
     SafeFunction<Integer, Integer> dimens = resId -> appContext.getResources().getDimensionPixelSize(resId);
@@ -51,15 +45,12 @@ public class MarkdownModule {
         .spoilerSyntaxHintColor(colors.apply(R.color.markdown_spoiler_syntax_hint_for_editor))
         .spoilerHiddenContentOverlayColor(colors.apply(R.color.markdown_spoiler_hidden_content_overlay))
 
-        .textBlockIndentationMargin(dimens.apply(R.dimen.markdown_text_block_indentation_margin))
-        .listMarginBetweenListIndicatorAndText(dimens.apply(R.dimen.markdown_list_margin_with_list_indicator))
+        .listBlockIndentationMargin(dimens.apply(R.dimen.markdown_text_block_indentation_margin))
 
         .horizontalRuleColor(colors.apply(R.color.markdown_horizontal_rule))
         .horizontalRuleStrokeWidth(dimens.apply(R.dimen.markdown_horizontal_rule_stroke_width))
 
         .inlineCodeBackgroundColor(colors.apply(R.color.markdown_inline_code_background))
-        .indentedCodeBlockBackgroundColor(colors.apply(R.color.markdown_indented_code_background))
-        .indentedCodeBlockBackgroundRadius(dimens.apply(R.dimen.markdown_indented_code_background_radius))
 
         .tableBorderColor(colors.apply(R.color.markdown_table_border))
 
@@ -78,13 +69,25 @@ public class MarkdownModule {
   @Provides
   static SpannableConfiguration spannableConfiguration(Application appContext, MarkdownHintOptions options) {
     return SpannableConfiguration.builder(appContext)
-        .theme(SpannableTheme.builderWithDefaults(appContext)
-            .headingBreakHeight(0)
-            .blockQuoteColor(options.blockQuoteIndentationRuleColor())
-            .blockQuoteWidth(options.blockQuoteVerticalRuleStrokeWidth())
-            .codeBackgroundColor(options.inlineCodeBackgroundColor())
-            .tableBorderColor(options.tableBorderColor())
-            .build())
+        .theme(markdownSpansTheme(appContext, options))
         .build();
+  }
+
+  @Provides
+  static SpannableTheme markdownSpansTheme(Application appContext, MarkdownHintOptions options) {
+    return SpannableTheme.builderWithDefaults(appContext)
+        .headingBreakHeight(0)
+        .blockQuoteColor(options.blockQuoteIndentationRuleColor())
+        .blockQuoteWidth(options.blockQuoteVerticalRuleStrokeWidth())
+        .blockMargin(options.listBlockIndentationMargin())
+        .codeBackgroundColor(options.inlineCodeBackgroundColor())
+        .tableBorderColor(options.tableBorderColor())
+        .build();
+  }
+
+  @Provides
+  @Singleton
+  static MarkdownSpanPool provideMarkdownSpanPool(SpannableTheme spannableTheme) {
+    return new MarkdownSpanPool(spannableTheme);
   }
 }

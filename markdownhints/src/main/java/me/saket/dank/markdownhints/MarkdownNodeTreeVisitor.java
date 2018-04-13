@@ -23,9 +23,8 @@ import com.vladsch.flexmark.ext.gfm.strikethrough.Strikethrough;
 import com.vladsch.flexmark.util.sequence.BasedSequence;
 import com.vladsch.flexmark.util.sequence.SubSequence;
 
-import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
-import me.saket.dank.markdownhints.spans.RoundedBackgroundColorSpan;
+import ru.noties.markwon.spans.BlockQuoteSpan;
 import timber.log.Timber;
 
 /**
@@ -45,23 +44,19 @@ public class MarkdownNodeTreeVisitor {
   private final MarkdownSpanPool spanPool;
   private final MarkdownHintOptions options;
   private final @ColorInt int syntaxColor;
-  private final @ColorInt int blockQuoteIndentationRuleColor;
   private final @ColorInt int blockQuoteTextColor;
   private final @ColorInt int linkUrlColor;
   private final @ColorInt int horizontalRuleColor;
   private final @Px int horizontalRuleStrokeWidth;
-  private final @Px int blockQuoteVerticalRuleStrokeWidth;
-  private final @Px int textBlockIndentationMargin;
+  private final @Px int listBlockIndentationMargin;
   private MarkdownHintsSpanWriter writer;
 
   public MarkdownNodeTreeVisitor(MarkdownSpanPool spanPool, MarkdownHintOptions options) {
     this.spanPool = spanPool;
     this.options = options;
     syntaxColor = options.syntaxColor();
-    blockQuoteIndentationRuleColor = options.blockQuoteIndentationRuleColor();
     blockQuoteTextColor = options.blockQuoteTextColor();
-    textBlockIndentationMargin = options.textBlockIndentationMargin();
-    blockQuoteVerticalRuleStrokeWidth = options.blockQuoteVerticalRuleStrokeWidth();
+    listBlockIndentationMargin = options.listBlockIndentationMargin();
     linkUrlColor = options.linkUrlColor();
     horizontalRuleColor = options.horizontalRuleColor();
     horizontalRuleStrokeWidth = options.horizontalRuleStrokeWidth();
@@ -118,7 +113,7 @@ public class MarkdownNodeTreeVisitor {
         }
 
       } else if (node instanceof Code) {
-        highlightCode((Code) node);
+        highlightInlineCode((Code) node);
 
       } else if (node instanceof IndentedCodeBlock) {
         highlightIndentedCodeBlock(((IndentedCodeBlock) node));
@@ -180,24 +175,17 @@ public class MarkdownNodeTreeVisitor {
     highlightMarkdownSyntax(strongEmphasis);
   }
 
-  public void highlightCode(Code code) {
-    writer.pushSpan(spanPool.backgroundColor(options.indentedCodeBlockBackgroundColor()), code.getStartOffset(), code.getEndOffset());
+  public void highlightInlineCode(Code code) {
+    writer.pushSpan(spanPool.inlineCode(), code.getStartOffset(), code.getEndOffset());
     writer.pushSpan(spanPool.monospaceTypeface(), code.getStartOffset(), code.getEndOffset());
     highlightMarkdownSyntax(code);
   }
 
   public void highlightIndentedCodeBlock(IndentedCodeBlock indentedCodeBlock) {
-    // LineBackgroundSpan needs to start at the starting of the line.
+    // A LineBackgroundSpan needs to start at the starting of the line.
     int lineStartOffset = indentedCodeBlock.getStartOffset() - 4;
-    int startLineNumber = indentedCodeBlock.getLineNumber();
-    int endLineNumber = startLineNumber + 1 + indentedCodeBlock.getLineCount();
-    RoundedBackgroundColorSpan span = spanPool.roundedBackgroundColor(
-        options.indentedCodeBlockBackgroundColor(),
-        options.indentedCodeBlockBackgroundRadius(),
-        startLineNumber,
-        endLineNumber);
 
-    writer.pushSpan(span, lineStartOffset, indentedCodeBlock.getEndOffset());
+    writer.pushSpan(spanPool.indentedCodeBlock(), lineStartOffset, indentedCodeBlock.getEndOffset());
     writer.pushSpan(spanPool.monospaceTypeface(), indentedCodeBlock.getStartOffset(), indentedCodeBlock.getEndOffset());
   }
 
@@ -247,7 +235,7 @@ public class MarkdownNodeTreeVisitor {
     }
 
     // Quote's vertical rule.
-    CustomQuoteSpan quoteSpan = spanPool.quote(blockQuoteIndentationRuleColor, textBlockIndentationMargin, blockQuoteVerticalRuleStrokeWidth);
+    BlockQuoteSpan quoteSpan = spanPool.quote();
     writer.pushSpan(quoteSpan, blockQuote.getStartOffset() - nestedParents, blockQuote.getEndOffset());
 
     // Quote markers ('>').
@@ -269,7 +257,7 @@ public class MarkdownNodeTreeVisitor {
   }
 
   public void highlightListBlock(ListBlock listBlock) {
-    writer.pushSpan(spanPool.leadingMargin(textBlockIndentationMargin), listBlock.getStartOffset(), listBlock.getEndOffset());
+    writer.pushSpan(spanPool.leadingMargin(listBlockIndentationMargin), listBlock.getStartOffset(), listBlock.getEndOffset());
   }
 
   public void highlightListItem(ListItem listItem) {

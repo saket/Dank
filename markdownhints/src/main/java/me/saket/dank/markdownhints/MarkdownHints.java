@@ -2,7 +2,6 @@ package me.saket.dank.markdownhints;
 
 import android.text.Editable;
 import android.text.Spannable;
-import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.RelativeSizeSpan;
@@ -21,9 +20,10 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
-import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
-import me.saket.dank.markdownhints.spans.RoundedBackgroundColorSpan;
+import me.saket.dank.markdownhints.spans.IndentedCodeBlockSpan;
+import me.saket.dank.markdownhints.spans.InlineCodeSpan;
+import ru.noties.markwon.spans.BlockQuoteSpan;
 import timber.log.Timber;
 
 /**
@@ -40,11 +40,11 @@ public class MarkdownHints extends SimpleTextWatcher {
     SUPPORTED_MARKDOWN_SPANS.add(TypefaceSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(RelativeSizeSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(SuperscriptSpan.class);
-    SUPPORTED_MARKDOWN_SPANS.add(CustomQuoteSpan.class);
+    SUPPORTED_MARKDOWN_SPANS.add(BlockQuoteSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(LeadingMarginSpan.Standard.class);
     SUPPORTED_MARKDOWN_SPANS.add(HorizontalRuleSpan.class);
-    SUPPORTED_MARKDOWN_SPANS.add(RoundedBackgroundColorSpan.class);
-    SUPPORTED_MARKDOWN_SPANS.add(BackgroundColorSpan.class);
+    SUPPORTED_MARKDOWN_SPANS.add(InlineCodeSpan.class);
+    SUPPORTED_MARKDOWN_SPANS.add(IndentedCodeBlockSpan.class);
   }
 
   private final EditText editText;

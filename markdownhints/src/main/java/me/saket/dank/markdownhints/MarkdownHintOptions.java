@@ -21,16 +21,10 @@ public abstract class MarkdownHintOptions {
   public abstract int blockQuoteTextColor();
 
   /**
-   * Gap before a block of indented text e.g., block-quote, ordered/unordered list, etc.
+   * Gap before a block of ordered/unordered list.
    */
   @Px
-  public abstract int textBlockIndentationMargin();
-
-  /**
-   * Spacing between "1." or "-" and the followed text.
-   */
-  @Px
-  public abstract int listMarginBetweenListIndicatorAndText();
+  public abstract int listBlockIndentationMargin();
 
   /**
    * Width of a block-quote's vertical line/stripe/rule.
@@ -60,12 +54,6 @@ public abstract class MarkdownHintOptions {
   public abstract int inlineCodeBackgroundColor();
 
   @ColorInt
-  public abstract int indentedCodeBlockBackgroundColor();
-
-  @Px
-  public abstract int indentedCodeBlockBackgroundRadius();
-
-  @ColorInt
   public abstract int tableBorderColor();
 
   public static Builder builder() {
@@ -80,11 +68,8 @@ public abstract class MarkdownHintOptions {
 
     public abstract Builder blockQuoteTextColor(@ColorInt int color);
 
-    /** See {@link #textBlockIndentationMargin()}. */
-    public abstract Builder textBlockIndentationMargin(@Px int margin);
-
-    /** See {@link #listMarginBetweenListIndicatorAndText()}. */
-    public abstract Builder listMarginBetweenListIndicatorAndText(@Px int margin);
+    /** See {@link #listBlockIndentationMargin()}. */
+    public abstract Builder listBlockIndentationMargin(@Px int margin);
 
     /** See {@link #blockQuoteVerticalRuleStrokeWidth(). */
     public abstract Builder blockQuoteVerticalRuleStrokeWidth(@Px int width);
@@ -102,10 +87,6 @@ public abstract class MarkdownHintOptions {
     public abstract Builder horizontalRuleStrokeWidth(@Px int width);
 
     public abstract Builder inlineCodeBackgroundColor(@ColorInt int color);
-
-    public abstract Builder indentedCodeBlockBackgroundColor(@ColorInt int color);
-
-    public abstract Builder indentedCodeBlockBackgroundRadius(@Px int radius);
 
     public abstract Builder tableBorderColor(@ColorInt int color);
 

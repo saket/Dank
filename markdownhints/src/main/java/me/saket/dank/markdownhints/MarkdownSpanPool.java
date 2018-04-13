@@ -4,7 +4,6 @@ import android.annotation.SuppressLint;
 import android.graphics.Typeface;
 import android.support.annotation.ColorInt;
 import android.support.annotation.Px;
-import android.text.style.BackgroundColorSpan;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.LeadingMarginSpan;
 import android.text.style.RelativeSizeSpan;
@@ -17,9 +16,11 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
-import me.saket.dank.markdownhints.spans.CustomQuoteSpan;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
-import me.saket.dank.markdownhints.spans.RoundedBackgroundColorSpan;
+import me.saket.dank.markdownhints.spans.IndentedCodeBlockSpan;
+import me.saket.dank.markdownhints.spans.InlineCodeSpan;
+import ru.noties.markwon.spans.BlockQuoteSpan;
+import ru.noties.markwon.spans.SpannableTheme;
 
 /**
  * For avoiding creation of new spans on every text change.
@@ -32,13 +33,19 @@ public class MarkdownSpanPool {
   private final Stack<StrikethroughSpan> strikethroughSpans = new Stack<>();
   private final Stack<TypefaceSpan> monospaceTypefaceSpans = new Stack<>();
   private final Map<Integer, ForegroundColorSpan> foregroundColorSpans = new HashMap<>();
-  private final Map<Integer, BackgroundColorSpan> backgroundColorSpans = new HashMap<>();
-  private final Map<String, RoundedBackgroundColorSpan> roundedBackgroundColorSpans = new HashMap<>();
+  private final Stack<InlineCodeSpan> inlineCodeSpans = new Stack<>();
+  private final Stack<IndentedCodeBlockSpan> indentedCodeSpans = new Stack<>();
   private final Map<Float, RelativeSizeSpan> relativeSizeSpans = new HashMap<>();
   private final Stack<SuperscriptSpan> superscriptSpans = new Stack<>();
-  private final Map<String, CustomQuoteSpan> quoteSpans = new HashMap<>();
+  private final Stack<BlockQuoteSpan> quoteSpans = new Stack<>();
   private final Map<Integer, LeadingMarginSpan.Standard> leadingMarginSpans = new HashMap<>();
   private final Map<String, HorizontalRuleSpan> horizontalRuleSpans = new HashMap<>();
+
+  private final SpannableTheme spannableTheme;
+
+  public MarkdownSpanPool(SpannableTheme spannableTheme) {
+    this.spannableTheme = spannableTheme;
+  }
 
   public StyleSpan italics() {
     return italicsSpans.empty() ? new StyleSpan(Typeface.ITALIC) : italicsSpans.pop();
@@ -56,17 +63,16 @@ public class MarkdownSpanPool {
         : new ForegroundColorSpan(color);
   }
 
-  public BackgroundColorSpan backgroundColor(@ColorInt int color) {
-    return backgroundColorSpans.containsKey(color)
-        ? backgroundColorSpans.remove(color)
-        : new BackgroundColorSpan(color);
+  public InlineCodeSpan inlineCode() {
+    return inlineCodeSpans.empty()
+        ? new InlineCodeSpan(spannableTheme)
+        : inlineCodeSpans.pop();
   }
 
-  public RoundedBackgroundColorSpan roundedBackgroundColor(@ColorInt int color, @Px int radius, int startLineNumber, int endLineNumber) {
-    String key = color + "_" + radius + "_" + startLineNumber + "_" + endLineNumber;
-    return roundedBackgroundColorSpans.containsKey(key)
-        ? roundedBackgroundColorSpans.remove(key)
-        : new RoundedBackgroundColorSpan(color, radius, startLineNumber, endLineNumber);
+  public IndentedCodeBlockSpan indentedCodeBlock() {
+    return indentedCodeSpans.empty()
+        ? new IndentedCodeBlockSpan(spannableTheme)
+        : indentedCodeSpans.pop();
   }
 
   public StrikethroughSpan strikethrough() {
@@ -93,11 +99,10 @@ public class MarkdownSpanPool {
         : superscriptSpans.pop();
   }
 
-  public CustomQuoteSpan quote(@ColorInt int indentationRuleColor, @Px int indentationMargin, @Px int verticalRuleStrokeWidth) {
-    String key = indentationRuleColor + "_" + indentationMargin + "_" + verticalRuleStrokeWidth;
-    return quoteSpans.containsKey(key)
-        ? quoteSpans.remove(key)
-        : new CustomQuoteSpan(indentationRuleColor, indentationMargin, verticalRuleStrokeWidth);
+  public BlockQuoteSpan quote() {
+    return quoteSpans.empty()
+        ? new BlockQuoteSpan(spannableTheme)
+        : quoteSpans.pop();
   }
 
   public LeadingMarginSpan.Standard leadingMargin(int margin) {
@@ -133,8 +138,8 @@ public class MarkdownSpanPool {
     } else if (span instanceof SuperscriptSpan) {
       recycle(((SuperscriptSpan) span));
 
-    } else if (span instanceof CustomQuoteSpan) {
-      recycle(((CustomQuoteSpan) span));
+    } else if (span instanceof BlockQuoteSpan) {
+      recycle(((BlockQuoteSpan) span));
 
     } else if (span instanceof LeadingMarginSpan.Standard) {
       recycle(((LeadingMarginSpan.Standard) span));
@@ -142,11 +147,11 @@ public class MarkdownSpanPool {
     } else if (span instanceof HorizontalRuleSpan) {
       recycle(((HorizontalRuleSpan) span));
 
-    } else if (span instanceof RoundedBackgroundColorSpan) {
-      recycle(((RoundedBackgroundColorSpan) span));
+    } else if (span instanceof IndentedCodeBlockSpan) {
+      recycle(((IndentedCodeBlockSpan) span));
 
-    } else if (span instanceof BackgroundColorSpan) {
-      recycle(((BackgroundColorSpan) span));
+    } else if (span instanceof InlineCodeSpan) {
+      recycle(((InlineCodeSpan) span));
 
     } else {
       throw new UnsupportedOperationException("Unknown span: " + span.getClass().getSimpleName());
@@ -170,14 +175,12 @@ public class MarkdownSpanPool {
     foregroundColorSpans.put(key, span);
   }
 
-  public void recycle(RoundedBackgroundColorSpan span) {
-    String key = span.backgroundColor() + "_" + span.radius() + "_" + span.startLineNumber() + "_" + span.endLineNumber();
-    roundedBackgroundColorSpans.put(key, span);
+  public void recycle(InlineCodeSpan span) {
+    inlineCodeSpans.push(span);
   }
 
-  public void recycle(BackgroundColorSpan span) {
-    int key = span.getBackgroundColor();
-    backgroundColorSpans.put(key, span);
+  public void recycle(IndentedCodeBlockSpan span) {
+    indentedCodeSpans.push(span);
   }
 
   public void recycle(StrikethroughSpan span) {
@@ -200,9 +203,8 @@ public class MarkdownSpanPool {
     superscriptSpans.push(span);
   }
 
-  public void recycle(CustomQuoteSpan span) {
-    String key = span.getIndentationRuleColor() + "_" + span.getIndentationMargin() + "_" + span.getVerticalRuleStrokeWidth();
-    quoteSpans.put(key, span);
+  public void recycle(BlockQuoteSpan span) {
+    quoteSpans.push(span);
   }
 
   public void recycle(LeadingMarginSpan.Standard span) {
