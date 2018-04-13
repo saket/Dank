@@ -14,6 +14,7 @@ import com.squareup.moshi.Moshi;
 import net.dean.jraw.models.Account;
 import net.dean.jraw.models.LoggedInAccount;
 
+import java.util.Locale;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -91,7 +92,7 @@ public class UserProfileRepository {
 
   @CheckResult
   public Single<UserProfile> profile(RedditUserLink userLink) {
-    return userProfileStore.get(userLink.name());
+    return userProfileStore.get(userLink.name().toLowerCase(Locale.ENGLISH));
   }
 
   @CheckResult
