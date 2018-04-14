@@ -8,6 +8,7 @@ import com.nytimes.android.external.cache3.Cache;
 import org.junit.Before;
 import org.junit.Test;
 
+import me.saket.dank.markdownhints.MarkdownHintOptions;
 import ru.noties.markwon.SpannableConfiguration;
 
 public class MarkwonBasedMarkdownRendererTest {
@@ -17,7 +18,11 @@ public class MarkwonBasedMarkdownRendererTest {
   @Before
   public void setUp() {
     //noinspection unchecked
-    renderer = new MarkwonBasedMarkdownRenderer(mock(SpannableConfiguration.class), mock(AutoRedditLinkExtension.class), mock(Cache.class));
+    renderer = new MarkwonBasedMarkdownRenderer(
+        mock(SpannableConfiguration.class),
+        mock(AutoRedditLinkExtension.class),
+        mock(MarkdownHintOptions.class),
+        mock(Cache.class));
   }
 
   @Test
