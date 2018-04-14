@@ -40,6 +40,7 @@ import net.dean.jraw.paginators.Sorting;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -205,7 +206,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
     setupController();
     setupSubmissionRecyclerView(savedState);
-    loadSubmissions();
+    loadSubmissions(savedState == null);
     setupSubmissionPage();
     setupToolbarSheet();
 
@@ -422,8 +423,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     submissionRecyclerView.setExpandablePage(submissionPage, toolbarContainer);
     submissionRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(submissionRecyclerView));
 
-    // Note to self: if adding support for preserving data across orientation changes
-    // is being considered, make sure to also preserve scroll position.
     submissionRecyclerView.setAdapter(submissionsAdapter);
 
     // Row clicks.
@@ -570,7 +569,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     }
   }
 
-  private void loadSubmissions() {
+  private void loadSubmissions(boolean isActivityFirstCreate) {
     Observable<CachedSubmissionFolder> submissionFolderStream = Observable.combineLatest(
         subredditChangesStream,
         sortingChangesStream,
@@ -592,18 +591,47 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         )
         .subscribe(paginationResults);
 
+    // The DB stream and the network stream were previously independent, but were later merged together.
+    // This was done because the submissions used to show up for a second before getting cleared off.
+
+    AtomicBoolean shouldRefreshSubmissions = new AtomicBoolean(isActivityFirstCreate);
+
     // Folder change.
     submissionFolderStream
         .compose(RxUtils.replayLastItemWhen(forceRefreshSubmissionsRequestStream))
-        .switchMap(folder -> submissionRepository
-            .clearCachedSubmissionLists(folder.subredditName())
-            .andThen(submissionRepository.loadAndSaveMoreSubmissions(folder).doOnNext(paginationResults).ignoreElements())
-            .subscribeOn(io())
-            .observeOn(mainThread())
-            .andThen(submissionRepository.submissions(folder))
-            .map(Optional::of)
-            .startWith(Optional.empty())
-        )
+        .switchMap(folder -> {
+          // The DB stream and the network stream were previously independent, but were later merged together.
+          // This was done because the submissions used to show up for a second before getting cleared off.
+
+          boolean shouldRefresh = shouldRefreshSubmissions.getAndSet(true);
+
+          Completable refreshCacheIfNeeded;
+          if (shouldRefresh) {
+            refreshCacheIfNeeded = submissionRepository.clearCachedSubmissionLists(folder.subredditName())
+                .andThen(submissionRepository.loadAndSaveMoreSubmissions(folder)
+                    .doOnNext(paginationResults)
+                    .ignoreElements());
+          } else {
+            refreshCacheIfNeeded = submissionRepository.submissions(folder)
+                .take(1)
+                .flatMapCompletable(submissions -> {
+                  if (submissions.isEmpty()) {
+                    return submissionRepository.loadAndSaveMoreSubmissions(folder)
+                        .doOnNext(paginationResults)
+                        .ignoreElements();
+                  } else {
+                    return Completable.complete();
+                  }
+                });
+          }
+
+          return refreshCacheIfNeeded
+              .subscribeOn(io())
+              .observeOn(mainThread())
+              .andThen(submissionRepository.submissions(folder))
+              .map(Optional::of)
+              .startWith(Optional.empty());
+        })
         .takeUntil(lifecycle().onDestroy())
         .subscribe(cachedSubmissionStream);
 
