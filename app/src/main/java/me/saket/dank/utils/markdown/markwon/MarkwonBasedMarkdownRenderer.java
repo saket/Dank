@@ -38,7 +38,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
 
   private static final Pattern LINK_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\]\\(([^)\"]*)\\)");
   private static final Pattern LINK_WITH_SPACE_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\]\\s+\\(([^)\"]*)\\)");
-  private static final Pattern HEADING_MARKDOWN_PATTERN = Pattern.compile("(#{1,6})\\s{0}([\\w\\s]*)");
+  private static final Pattern HEADING_WITHOUT_SPACE_MARKDOWN_PATTERN = Pattern.compile("(#{1,6})\\s{0}((?:(?!\\\\n).)*)");
   private static final Pattern POTENTIALLY_INVALID_SPOILER_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\](.*?)\"+(.*?(?<!\\\\))\"+\\)");
 
   private final MarkdownHintOptions markdownOptions;
@@ -193,7 +193,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   @VisibleForTesting
   String fixInvalidHeadings(String markdown) {
     try {
-      Matcher matcher = HEADING_MARKDOWN_PATTERN.matcher(markdown);
+      Matcher matcher = HEADING_WITHOUT_SPACE_MARKDOWN_PATTERN.matcher(markdown);
       while (matcher.find()) {
         String heading = matcher.group(0);
         String hashes = matcher.group(1);

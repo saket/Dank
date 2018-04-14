@@ -58,23 +58,8 @@ public class MarkwonBasedMarkdownRendererTest {
 
   @Test
   public void fixInvalidHeadings() {
-    String invalid = "#hello This is Markdown Live Preview\\n\n" +
-        "----\n" +
-        "\\n\n" +
-        "*****\n" +
-        "\\n\n" +
-        "___\n" +
-        "\\n##what is Markdown?\n" +
-        "\\n\\n### what is Markdown\\n";
-
-    String expected = "# hello This is Markdown Live Preview\\n\n" +
-        "----\n" +
-        "\\n\n" +
-        "*****\n" +
-        "\\n\n" +
-        "___\n" +
-        "\\n## what is Markdown?\n" +
-        "\\n\\n### what is Markdown\\n";
+    String invalid = "#Heading 1\n\n##Heading 2\n\n### Heading 3\n\n#### Heading 4\n\n#####Heading 5\n\n######Heading 6\n\nSome normal text with a # in between.";
+    String expected = "# Heading 1\n\n## Heading 2\n\n### Heading 3\n\n#### Heading 4\n\n##### Heading 5\n\n###### Heading 6\n\nSome normal text with a # in between.";
 
     String parsed = renderer.fixInvalidHeadings(invalid);
     assertEquals(expected, parsed);
