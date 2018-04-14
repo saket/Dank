@@ -1,4 +1,3 @@
-
 <resources>
   <string name="app_name">Dank</string>
   <string name="subreddit_name_r_prefix">r/%s</string>
@@ -44,6 +43,9 @@
 
   <string name="common_error_no_app_found_to_handle_url">No app found to handle url: %s</string>
   <string name="common_error_no_app_found_to_handle_this_action">No app found to handle this action</string>
+
+  <string name="common_error_known_jraw_emoji" translatable="false">(╯°□°）╯︵ ┻━┻</string>
+  <string name="common_error_known_jraw_message">Please force-kill and restart Dank.\nThis is a known issue and will be fixed soon.</string>
 
   <string name="add_launcher_app_shortcuts_label">Add shortcuts</string>
 

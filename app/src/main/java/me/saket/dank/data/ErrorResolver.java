@@ -16,6 +16,7 @@ import io.reactivex.exceptions.UndeliverableException;
 import me.saket.dank.R;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.data.exceptions.ImgurApiUploadRateLimitReachedException;
+import me.saket.dank.utils.Optional;
 import retrofit2.HttpException;
 
 /**
@@ -71,6 +72,14 @@ public class ErrorResolver {
           ResolvedError.Type.CANCELATION,
           R.string.common_error_cancelation_emoji,
           R.string.common_error_cancelation_message);
+
+    } else if (error instanceof IllegalStateException
+        && Optional.ofNullable(error.getMessage()).map(m -> m.contains("no active user context")).orElse(false))
+    {
+      return ResolvedError.create(
+          ResolvedError.Type.UNKNOWN,
+          R.string.common_error_known_jraw_emoji,
+          R.string.common_error_known_jraw_message);
 
     } else {
       return ResolvedError.create(
