@@ -13,7 +13,6 @@ import static me.saket.dank.utils.Views.touchLiesOn;
 import android.animation.LayoutTransition;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Point;
 import android.graphics.Rect;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -21,7 +20,6 @@ import android.support.annotation.Nullable;
 import android.support.transition.TransitionManager;
 import android.support.transition.TransitionSet;
 import android.support.v7.util.DiffUtil;
-import android.view.Gravity;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -96,7 +94,6 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.RxUtils;
-import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.ErrorStateView;
@@ -464,19 +461,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
           SubmissionOptionSwipeEvent swipeEvent = pair.first();
-          Point showLocation = new Point(0, swipeEvent.itemView().getTop() + Views.statusBarHeight(getResources()));
-
-          // Align with submission body.
-          int padding = getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
-          showLocation.offset(padding, padding);
-
-          String subredditName = pair.second(); // This will be different from submission.getSubredditName() in case of frontpage, etc.
-          boolean showVisitSubredditOption = !subredditName.equals(swipeEvent.submission().getSubredditName());
-
-          SubmissionOptionsPopup optionsMenu = SubmissionOptionsPopup.builder(this, swipeEvent.submission())
-              .showVisitSubreddit(showVisitSubredditOption)
-              .build();
-          optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, showLocation);
+          String subredditName = pair.second();
+          swipeEvent.showPopup(this, subredditName);
         });
 
     // Vote swipe gestures.

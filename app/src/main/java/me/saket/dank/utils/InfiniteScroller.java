@@ -24,10 +24,6 @@ public class InfiniteScroller {
   }
 
   private InfiniteScroller(RecyclerView recyclerView, float scrollThreshold) {
-    if (!(recyclerView.getAdapter() instanceof InfinitelyScrollableRecyclerViewAdapter)) {
-      throw new AssertionError("RecyclerView adapter must implement InfinitelyScrollableRecyclerViewAdapter");
-    }
-
     this.recyclerView = recyclerView;
     this.scrollThreshold = scrollThreshold;
   }
@@ -40,11 +36,18 @@ public class InfiniteScroller {
 
       final RecyclerView.OnScrollListener sl = new RecyclerView.OnScrollListener() {
         @Override
-        public void onScrolled(RecyclerView recyclerView11, int dx, int dy) {
-          int position = getLastVisibleItemPosition(recyclerView11);
+        public void onScrolled(RecyclerView rv, int dx, int dy) {
+          if (recyclerView.getAdapter() == null) {
+            return;
+          }
+          if (!(recyclerView.getAdapter() instanceof InfinitelyScrollableRecyclerViewAdapter)) {
+            throw new AssertionError("RecyclerView adapter must implement InfinitelyScrollableRecyclerViewAdapter");
+          }
+
+          int position = getLastVisibleItemPosition(recyclerView);
           // This stream has a distinctUntilChanged() applied to it. The item count has to be stable
           // even when more items are being fetched or else another request will get triggered.
-          int adapterDatasetCount = ((InfinitelyScrollableRecyclerViewAdapter) recyclerView11.getAdapter()).getItemCountMinusDecorators();
+          int adapterDatasetCount = ((InfinitelyScrollableRecyclerViewAdapter) recyclerView.getAdapter()).getItemCountMinusDecorators();
           int updatePosition = (int) ((adapterDatasetCount - 1) * scrollThreshold);
 
           if (position >= updatePosition && updatePosition != 0) {
