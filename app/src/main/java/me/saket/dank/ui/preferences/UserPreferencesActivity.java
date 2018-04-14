@@ -94,7 +94,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
-    preferenceList.handleOnSaveInstance(outState);
+    preferenceList.saveExpandableState(outState);
     super.onSaveInstanceState(outState);
   }
 
@@ -107,7 +107,7 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     preferenceList.setExpandablePage(preferencesGroupsPage, toolbar);
     preferenceList.setHasFixedSize(true);
     if (savedInstanceState != null) {
-      preferenceList.handleOnRestoreInstanceState(savedInstanceState);
+      preferenceList.restoreExpandableState(savedInstanceState);
     }
 
     userPreferenceGroupAdapter = new UserPreferenceGroupAdapter(userPreferenceGroups);

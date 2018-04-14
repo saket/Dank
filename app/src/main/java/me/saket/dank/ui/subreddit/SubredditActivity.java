@@ -317,7 +317,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
   @Override
   protected void onSaveInstanceState(Bundle outState) {
-    submissionRecyclerView.handleOnSaveInstance(outState);
+    submissionRecyclerView.saveExpandableState(outState);
     if (subredditChangesStream.hasValue()) {
       outState.putString(KEY_ACTIVE_SUBREDDIT, subredditChangesStream.getValue());
     }
@@ -499,7 +499,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     }
 
     if (savedState != null) {
-      submissionRecyclerView.handleOnRestoreInstanceState(savedState);
+      submissionRecyclerView.restoreExpandableState(savedState);
     }
   }
 

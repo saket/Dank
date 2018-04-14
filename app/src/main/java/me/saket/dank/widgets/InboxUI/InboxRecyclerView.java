@@ -71,14 +71,14 @@ public class InboxRecyclerView extends RecyclerView implements ExpandablePageLay
     };
   }
 
-  public void handleOnSaveInstance(Bundle outState) {
+  public void saveExpandableState(Bundle outState) {
     if (page != null) {
       outState.putBoolean(KEY_IS_EXPANDED, page.isExpanded());
     }
   }
 
   /** Letting Activities handle restoration manually so that the setup can happen before onRestore gets called. */
-  public void handleOnRestoreInstanceState(Bundle savedInstance) {
+  public void restoreExpandableState(Bundle savedInstance) {
     boolean wasExpanded = savedInstance.getBoolean(KEY_IS_EXPANDED);
     if (wasExpanded) {
       if (page == null) {
