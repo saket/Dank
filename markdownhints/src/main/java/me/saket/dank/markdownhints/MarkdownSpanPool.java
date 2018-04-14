@@ -6,7 +6,6 @@ import android.support.annotation.ColorInt;
 import android.support.annotation.Px;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.LeadingMarginSpan;
-import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.SuperscriptSpan;
@@ -16,6 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import me.saket.dank.markdownhints.spans.HeadingSpanWithLevel;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
 import me.saket.dank.markdownhints.spans.IndentedCodeBlockSpan;
 import me.saket.dank.markdownhints.spans.InlineCodeSpan;
@@ -35,7 +35,7 @@ public class MarkdownSpanPool {
   private final Map<Integer, ForegroundColorSpan> foregroundColorSpans = new HashMap<>();
   private final Stack<InlineCodeSpan> inlineCodeSpans = new Stack<>();
   private final Stack<IndentedCodeBlockSpan> indentedCodeSpans = new Stack<>();
-  private final Map<Float, RelativeSizeSpan> relativeSizeSpans = new HashMap<>();
+  private final Map<Integer, HeadingSpanWithLevel> headingSpans = new HashMap<>();
   private final Stack<SuperscriptSpan> superscriptSpans = new Stack<>();
   private final Stack<BlockQuoteSpan> quoteSpans = new Stack<>();
   private final Map<Integer, LeadingMarginSpan.Standard> leadingMarginSpans = new HashMap<>();
@@ -87,10 +87,10 @@ public class MarkdownSpanPool {
         : monospaceTypefaceSpans.pop();
   }
 
-  public RelativeSizeSpan relativeSize(float proportion) {
-    return relativeSizeSpans.containsKey(proportion)
-        ? relativeSizeSpans.remove(proportion)
-        : new RelativeSizeSpan(proportion);
+  public HeadingSpanWithLevel heading(int level) {
+    return headingSpans.containsKey(level)
+        ? headingSpans.remove(level)
+        : new HeadingSpanWithLevel(spannableTheme, level);
   }
 
   public SuperscriptSpan superscript() {
@@ -132,8 +132,8 @@ public class MarkdownSpanPool {
     } else if (span instanceof TypefaceSpan) {
       recycle(((TypefaceSpan) span));
 
-    } else if (span instanceof RelativeSizeSpan) {
-      recycle(((RelativeSizeSpan) span));
+    } else if (span instanceof HeadingSpanWithLevel) {
+      recycle(((HeadingSpanWithLevel) span));
 
     } else if (span instanceof SuperscriptSpan) {
       recycle(((SuperscriptSpan) span));
@@ -194,9 +194,8 @@ public class MarkdownSpanPool {
     monospaceTypefaceSpans.push(span);
   }
 
-  public void recycle(RelativeSizeSpan span) {
-    float key = span.getSizeChange();
-    relativeSizeSpans.put(key, span);
+  public void recycle(HeadingSpanWithLevel span) {
+    headingSpans.put(span.level(), span);
   }
 
   public void recycle(SuperscriptSpan span) {

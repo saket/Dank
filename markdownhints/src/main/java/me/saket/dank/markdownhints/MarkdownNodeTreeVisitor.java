@@ -33,9 +33,6 @@ import timber.log.Timber;
  */
 public class MarkdownNodeTreeVisitor {
 
-  private static final float[] HEADING_SIZES = {
-      1.5f, 1.4f, 1.3f, 1.2f, 1.1f, 1f,
-  };
   private static final BasedSequence FOUR_ASTERISKS_HORIZONTAL_RULE = SubSequence.of("****");
   private static final CharSequence SPOILER_TAG = "spoiler";
   private static final CharSequence SPOILER_TAG_WITH_BRACKETS = "[spoiler]";
@@ -247,8 +244,7 @@ public class MarkdownNodeTreeVisitor {
   }
 
   public void highlightHeading(Heading heading) {
-    writer.pushSpan(spanPool.relativeSize(HEADING_SIZES[heading.getLevel() - 1]), heading.getStartOffset(), heading.getEndOffset());
-    writer.pushSpan(spanPool.bold(), heading.getStartOffset(), heading.getEndOffset());
+    writer.pushSpan(spanPool.heading(heading.getLevel()), heading.getStartOffset(), heading.getEndOffset());
     writer.pushSpan(
         spanPool.foregroundColor(syntaxColor),
         heading.getStartOffset(),

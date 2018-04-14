@@ -4,7 +4,6 @@ import android.text.Editable;
 import android.text.Spannable;
 import android.text.style.ForegroundColorSpan;
 import android.text.style.LeadingMarginSpan;
-import android.text.style.RelativeSizeSpan;
 import android.text.style.StrikethroughSpan;
 import android.text.style.StyleSpan;
 import android.text.style.SuperscriptSpan;
@@ -20,6 +19,7 @@ import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
 
+import me.saket.dank.markdownhints.spans.HeadingSpanWithLevel;
 import me.saket.dank.markdownhints.spans.HorizontalRuleSpan;
 import me.saket.dank.markdownhints.spans.IndentedCodeBlockSpan;
 import me.saket.dank.markdownhints.spans.InlineCodeSpan;
@@ -38,7 +38,7 @@ public class MarkdownHints extends SimpleTextWatcher {
     SUPPORTED_MARKDOWN_SPANS.add(ForegroundColorSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(StrikethroughSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(TypefaceSpan.class);
-    SUPPORTED_MARKDOWN_SPANS.add(RelativeSizeSpan.class);
+    SUPPORTED_MARKDOWN_SPANS.add(HeadingSpanWithLevel.class);
     SUPPORTED_MARKDOWN_SPANS.add(SuperscriptSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(BlockQuoteSpan.class);
     SUPPORTED_MARKDOWN_SPANS.add(LeadingMarginSpan.Standard.class);
