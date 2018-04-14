@@ -192,6 +192,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity
       toolbarCloseButton.setOnClickListener(o -> finish());
     }
     contentPage.setNestedExpandablePage(submissionPage);
+
+    // LayoutManager needs to be set before onRestore() of RV gets called to restore scroll position.
+    submissionRecyclerView.setLayoutManager(submissionRecyclerView.createLayoutManager());
   }
 
   @Override
@@ -409,7 +412,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 // ======== SUBMISSION LIST ======== //
 
   private void setupSubmissionRecyclerView(@Nullable Bundle savedState) {
-    submissionRecyclerView.setLayoutManager(submissionRecyclerView.createLayoutManager());
     submissionRecyclerView.setItemAnimator(new SubmissionCommentsItemAnimator(0)
         .withInterpolator(Animations.INTERPOLATOR)
         .withRemoveDuration(250)
@@ -417,7 +419,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     submissionRecyclerView.setExpandablePage(submissionPage, toolbarContainer);
     submissionRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(submissionRecyclerView));
 
-    submissionRecyclerView.setAdapter(submissionsAdapter);
+    // RV restores scroll position if the adapter data-set is the same.
+    submissionsAdapter.dataChanges()
+        .filter(uiModels -> !uiModels.isEmpty())
+        .take(1)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> submissionRecyclerView.setAdapter(submissionsAdapter));
 
     // Row clicks.
     submissionsAdapter.submissionClicks()
