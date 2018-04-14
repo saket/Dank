@@ -28,7 +28,7 @@ public class StoreLruFileSystem implements FileSystem {
 
   @Nonnull
   @Override
-  public BufferedSource read(String path) throws FileNotFoundException {
+  public BufferedSource read(String path) {
     try {
       DiskLruCache.Snapshot snapshot = lruCache.get(path);
       if (snapshot == null) {

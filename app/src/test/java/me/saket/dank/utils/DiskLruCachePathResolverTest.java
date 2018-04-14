@@ -1,10 +1,13 @@
 package me.saket.dank.utils;
 
 import static junit.framework.Assert.assertEquals;
+import static junit.framework.Assert.assertTrue;
+import static org.mockito.Mockito.mock;
 
 import org.junit.Test;
 
 import me.saket.dank.cache.DiskLruCachePathResolver;
+import me.saket.dank.urlparser.Link;
 
 public class DiskLruCachePathResolverTest {
 
@@ -14,7 +17,7 @@ public class DiskLruCachePathResolverTest {
    * if the input is its own output.
    */
   @Test
-  public void resolve() throws Exception {
+  public void testDeterministic() {
     DiskLruCachePathResolver<String> pathResolver = new DiskLruCachePathResolver<String>() {
       @Override
       protected String resolveIn64Letters(String o) {
@@ -27,6 +30,19 @@ public class DiskLruCachePathResolverTest {
     String resolved = pathResolver.resolve(null);
     String resolvedAgain = pathResolver.resolve(resolved);
     assertEquals(resolvedAgain, resolved);
+  }
+
+  @Test
+  public void testConversionOfInvalidCharacters() {
+    DiskLruCachePathResolver<Link> pathResolver = new DiskLruCachePathResolver<Link>() {
+      @Override
+      protected String resolveIn64Letters(Link key) {
+        return "wikipedia.org/wiki/The_Lord_of_the_Rings_(film_series)";
+      }
+    };
+
+    String resolvedPath = pathResolver.resolve(mock(Link.class));
+    assertTrue(resolvedPath.matches("[a-z0-9_-]{1,64}"));
   }
 
   @Test

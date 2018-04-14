@@ -38,6 +38,8 @@ public abstract class DiskLruCachePathResolver<KEY> implements PathResolver<KEY>
     return simplifiedPath
         .toLowerCase(Locale.ENGLISH)
         .replace("/", "--")
+        .replace("(", "--")
+        .replace(")", "--")
         .replace(".", "_");
   }
 
