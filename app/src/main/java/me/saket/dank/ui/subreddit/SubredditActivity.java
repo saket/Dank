@@ -86,9 +86,6 @@ import me.saket.dank.ui.subreddit.uimodels.SubredditUiConstructor;
 import me.saket.dank.ui.subscriptions.SubredditPickerSheetView;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
-import me.saket.dank.urlparser.Link;
-import me.saket.dank.urlparser.MediaLink;
-import me.saket.dank.urlparser.RedditLink;
 import me.saket.dank.urlparser.RedditSubredditLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Animations;
@@ -458,57 +455,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
     // Thumbnail clicks.
     submissionsAdapter.thumbnailClicks()
-        .doOnNext(event -> {
-          if (event.submission().isSelfPost()) {
-            throw new AssertionError("Shouldn't happen");
-          }
-        })
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(event -> {
-          Submission submission = event.submission();
-          Link contentLink = urlParser.get().parse(submission.getUrl(), submission);
-
-          switch (contentLink.type()) {
-            case SINGLE_IMAGE:
-            case SINGLE_GIF:
-            case SINGLE_VIDEO:
-            case MEDIA_ALBUM:
-              urlRouter.get()
-                  .forLink(((MediaLink) contentLink))
-                  .withRedditSuppliedImages(submission.getThumbnails())
-                  .open(this);
-              break;
-
-            case REDDIT_PAGE:
-              switch (((RedditLink) contentLink).redditLinkType()) {
-                case COMMENT:
-                case SUBMISSION:
-                case SUBREDDIT:
-                  urlRouter.get()
-                      .forLink(contentLink)
-                      .expandFrom(new Point(0, event.itemView().getBottom()))
-                      .open(this);
-                  break;
-
-                case USER:
-                  throw new AssertionError("Did not expect Reddit to create a thumbnail for user links");
-
-                default:
-                  throw new AssertionError();
-              }
-              break;
-
-            case EXTERNAL:
-              urlRouter.get()
-                  .forLink(contentLink)
-                  .expandFrom(new Point(0, event.itemView().getBottom()))
-                  .open(this);
-              break;
-
-            default:
-              throw new AssertionError();
-          }
-        });
+        .subscribe(event -> event.openContent(urlParser.get(), urlRouter.get()));
 
     // Option swipe gestures.
     submissionsAdapter.optionSwipeActions()
