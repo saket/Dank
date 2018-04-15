@@ -43,6 +43,7 @@
   <color name="list_item_swipe_downvote">@color/downvote</color>
   <color name="list_item_swipe_save">@color/green_400</color>
   <color name="list_item_swipe_more_options">@color/blue_gray_400</color>
+  <color name="list_item_swipe_new_tab">@color/teal_400</color>
   <color name="list_item_swipe_reply">@color/yellow_700</color>
 
   <color name="vote_direction_none">@color/gray_500</color>

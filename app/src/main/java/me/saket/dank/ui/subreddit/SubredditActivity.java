@@ -76,6 +76,7 @@ import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
+import me.saket.dank.ui.subreddit.events.SubmissionOpenInNewTabSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubredditScreenCreateEvent;
 import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
@@ -473,6 +474,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity
           String subredditName = pair.second();
           swipeEvent.showPopupForSubredditScreen(subredditName);
         });
+
+    // Open in new tab gestures.
+    submissionsAdapter.swipeEvents()
+        .ofType(SubmissionOpenInNewTabSwipeEvent.class)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(event -> event.openInNewTab(urlRouter.get(), urlParser.get()));
 
     // Vote swipe gestures.
     Observable<ContributionVoteSwipeEvent> sharedVoteSwipeActions = submissionsAdapter.swipeEvents()

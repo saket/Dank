@@ -171,7 +171,7 @@ public class UserProfileSheetView extends FrameLayout {
     // Hide this sheet once it gets fully covered.
     postDelayed(
         () -> parentSheet.collapse(),
-        (long) (IndependentExpandablePageLayout.ANIMATION_DURATION * 1.6f)
+        (long) (IndependentExpandablePageLayout.ANIMATION_DURATION_MILLIS * 1.6f)
     );
   }
 

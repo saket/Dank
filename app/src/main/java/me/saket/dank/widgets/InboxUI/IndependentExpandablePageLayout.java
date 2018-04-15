@@ -9,7 +9,7 @@ import android.util.AttributeSet;
  */
 public class IndependentExpandablePageLayout extends ExpandablePageLayout {
 
-  public static final long ANIMATION_DURATION = 300;
+  public static final long ANIMATION_DURATION_MILLIS = 300;
 
   public interface Callbacks {
     /**
@@ -28,7 +28,7 @@ public class IndependentExpandablePageLayout extends ExpandablePageLayout {
   public IndependentExpandablePageLayout(Context context, AttributeSet attrs) {
     super(context, attrs);
     setCollapsedAlpha(1f);
-    setAnimationDuration(ANIMATION_DURATION);
+    setAnimationDuration(ANIMATION_DURATION_MILLIS);
   }
 
   @Override

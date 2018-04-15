@@ -1,5 +1,7 @@
 package me.saket.dank.ui.submission;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Rect;
@@ -7,17 +9,20 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
+import java.util.concurrent.TimeUnit;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.urlparser.RedditCommentLink;
-import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.compose.InsertGifDialog;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddit.SubredditActivity;
+import me.saket.dank.urlparser.RedditCommentLink;
+import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
@@ -34,6 +39,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
     implements SubmissionPageLayout.Callbacks, InsertGifDialog.OnGifInsertListener
 {
 
+  public static final String KEY_NEW_TAB = "createdInNewTab";
   private static final String KEY_SUBMISSION_LINK = "submissionLink";
   private static final String KEY_SUBMISSION_REQUEST = "submission";
 
@@ -62,6 +68,9 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
+    boolean openedInNewTab = getIntent().getBooleanExtra(KEY_NEW_TAB, false);
+    setEntryAnimationEnabled(!openedInNewTab);
+
     super.onCreate(savedInstanceState);
     setContentView(R.layout.activity_submission_fragment);
     ButterKnife.bind(this);
@@ -82,6 +91,17 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
         throw new AssertionError();
       }
       submissionPageLayout.populateUi(Optional.empty(), submissionRequest, Optional.empty());
+    }
+  }
+
+  @Override
+  public void finish() {
+    super.finish();
+
+    if (getIntent().getBooleanExtra(KEY_NEW_TAB, false)) {
+      Observable.timer(IndependentExpandablePageLayout.ANIMATION_DURATION_MILLIS, TimeUnit.MILLISECONDS, mainThread())
+          .takeUntil(lifecycle().onDestroy())
+          .subscribe(o -> startActivity(SubredditActivity.intent(this)));
     }
   }
 

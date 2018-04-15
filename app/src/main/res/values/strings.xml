@@ -130,6 +130,7 @@
   <string name="subreddit_submission_swipe_action_save">Save</string>
   <string name="subreddit_submission_swipe_action_unsave">Unsave</string>
   <string name="subreddit_submission_swipe_action_options">Options</string>
+  <string name="subreddit_submission_swipe_action_new_tab">New tab</string>
   <string name="subreddit_submission_swipe_action_upvote">Upvote</string>
   <string name="subreddit_submission_swipe_action_downvote">Downvote</string>
 

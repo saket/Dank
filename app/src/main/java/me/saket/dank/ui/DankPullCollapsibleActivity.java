@@ -26,20 +26,25 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
   private Rect expandedFromRect;
   private int activityParentToolbarHeight;
   private boolean pullCollapsibleEnabled = true;
-  private boolean entryAnimationEnabled;
+  private boolean wasActivityRecreated;
+  private boolean entryAnimationEanbled = true;
 
   @Override
   protected void onCreate(@Nullable Bundle savedInstanceState) {
     super.onCreate(savedInstanceState);
-    if (pullCollapsibleEnabled) {
+    wasActivityRecreated = savedInstanceState == null;
+
+    if (entryAnimationEanbled && pullCollapsibleEnabled) {
       overridePendingTransition(0, 0);
     }
 
     TypedArray typedArray = obtainStyledAttributes(new int[] { android.R.attr.actionBarSize });
     activityParentToolbarHeight = typedArray.getDimensionPixelSize(0, 0);
     typedArray.recycle();
+  }
 
-    entryAnimationEnabled = savedInstanceState == null;
+  public void setEntryAnimationEnabled(boolean entryAnimationEnabled) {
+    this.entryAnimationEanbled = entryAnimationEnabled;
   }
 
   /**
@@ -97,7 +102,7 @@ public abstract class DankPullCollapsibleActivity extends DankActivity {
 
     expandedFromRect = fromRect;
     executeOnMeasure(activityPageLayout, () -> {
-      if (entryAnimationEnabled) {
+      if (wasActivityRecreated) {
         activityPageLayout.expandFrom(fromRect);
       } else {
         activityPageLayout.expandImmediately();

@@ -13,10 +13,11 @@ import javax.inject.Inject;
 import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
+import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
-import me.saket.dank.data.SwipeEvent;
+import me.saket.dank.ui.subreddit.events.SubmissionOpenInNewTabSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
@@ -32,9 +33,10 @@ import me.saket.dank.widgets.swipe.SwipeableLayout;
  */
 public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActionIconProvider {
 
+  private static final @StringRes int ACTION_NAME_OPTIONS = R.string.subreddit_submission_swipe_action_options;
+  private static final @StringRes int ACTION_NAME_NEW_TAB = R.string.subreddit_submission_swipe_action_new_tab;
   private static final @StringRes int ACTION_NAME_SAVE = R.string.subreddit_submission_swipe_action_save;
   private static final @StringRes int ACTION_NAME_UNSAVE = R.string.subreddit_submission_swipe_action_unsave;
-  private static final @StringRes int ACTION_NAME_OPTIONS = R.string.subreddit_submission_swipe_action_options;
   private static final @StringRes int ACTION_NAME_UPVOTE = R.string.subreddit_submission_swipe_action_upvote;
   private static final @StringRes int ACTION_NAME_DOWNVOTE = R.string.subreddit_submission_swipe_action_downvote;
 
@@ -59,8 +61,9 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     this.onLoginRequireListener = onLoginRequireListener;
 
     SwipeAction moreOptionsSwipeAction = SwipeAction.create(ACTION_NAME_OPTIONS, R.color.list_item_swipe_more_options, 0.3f);
-    SwipeAction saveSwipeAction = SwipeAction.create(ACTION_NAME_SAVE, R.color.list_item_swipe_save, 0.7f);
-    SwipeAction unSaveSwipeAction = SwipeAction.create(ACTION_NAME_UNSAVE, R.color.list_item_swipe_save, 0.7f);
+    SwipeAction newTabSwipeAction = SwipeAction.create(ACTION_NAME_NEW_TAB, R.color.list_item_swipe_new_tab, 0.3f);
+    SwipeAction saveSwipeAction = SwipeAction.create(ACTION_NAME_SAVE, R.color.list_item_swipe_save, 0.4f);
+    SwipeAction unSaveSwipeAction = SwipeAction.create(ACTION_NAME_UNSAVE, R.color.list_item_swipe_save, 0.4f);
     SwipeAction downvoteSwipeAction = SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 0.7f);
     SwipeAction upvoteSwipeAction = SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 0.3f);
 
@@ -72,6 +75,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
     swipeActionsWithUnSave = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
+            .add(newTabSwipeAction)
             .add(moreOptionsSwipeAction)
             .add(unSaveSwipeAction)
             .build())
@@ -80,6 +84,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
     swipeActionsWithSave = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
+            .add(newTabSwipeAction)
             .add(moreOptionsSwipeAction)
             .add(saveSwipeAction)
             .build())
@@ -98,6 +103,11 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
       case ACTION_NAME_OPTIONS:
         resetIconRotation(imageView);
         imageView.setImageResource(R.drawable.ic_more_horiz_24dp);
+        break;
+
+      case ACTION_NAME_NEW_TAB:
+        resetIconRotation(imageView);
+        imageView.setImageResource(R.drawable.ic_open_in_new_tab_24dp);
         break;
 
       case ACTION_NAME_SAVE:
@@ -146,6 +156,11 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     switch (swipeAction.labelRes()) {
       case ACTION_NAME_OPTIONS:
         swipeEvents.accept(SubmissionOptionSwipeEvent.create(submission, swipeableLayout));
+        isUndoAction = false;
+        break;
+
+      case ACTION_NAME_NEW_TAB:
+        swipeEvents.accept(SubmissionOpenInNewTabSwipeEvent.create(submission, swipeableLayout));
         isUndoAction = false;
         break;
 
