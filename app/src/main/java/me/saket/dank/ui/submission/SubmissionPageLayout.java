@@ -460,23 +460,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     submissionCommentsAdapter.streamCommentOptionSwipeActions()
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(event -> {
-          SwipeableLayout commentLayout = event.itemView();
-          Point sheetLocation = Views.locationOnScreen(commentLayout);
-          Point popupLocation = new Point(0, sheetLocation.y);
-
-          // Align with comment body.
-          popupLocation.offset(
-              getResources().getDimensionPixelSize(R.dimen.submission_comment_horiz_padding),
-              getResources().getDimensionPixelSize(R.dimen.submission_comment_top_padding));
-
-          // Keep below toolbar.
-          int toolbarBottom = Views.locationOnScreen(toolbar).y + toolbar.getBottom() + getResources().getDimensionPixelSize(R.dimen.spacing16);
-          popupLocation.y = Math.max(popupLocation.y, toolbarBottom);
-
-          CommentOptionsPopup optionsPopup = new CommentOptionsPopup(commentLayout.getContext(), event.comment());
-          optionsPopup.showAtLocation(commentLayout, Gravity.TOP | Gravity.START, popupLocation);
-        });
+        .subscribe(event -> event.showPopup(toolbar));
 
     // Reply swipe gestures.
     submissionCommentsAdapter.streamCommentReplySwipeActions()
