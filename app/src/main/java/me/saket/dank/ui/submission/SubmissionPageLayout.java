@@ -19,7 +19,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.Point;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -34,7 +33,6 @@ import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.SimpleItemAnimator;
 import android.util.AttributeSet;
 import android.util.Size;
-import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.MotionEvent;
 import android.view.View;
@@ -87,7 +85,6 @@ import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.ScreenSavedState;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
-import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.compose.InsertGifDialog;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
@@ -112,7 +109,6 @@ import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
-import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -143,7 +139,6 @@ import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.SubmissionAnimatedProgressBar;
 import me.saket.dank.widgets.ZoomableImageView;
 import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
-import me.saket.dank.widgets.swipe.SwipeableLayout;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
@@ -154,6 +149,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
   private static final String KEY_INLINE_REPLY_ROW_ID = "inlineReplyRowId";
   private static final String KEY_CALLING_SUBREDDIT = "immediateParentSubreddit";
+  private static final String KEY_COMMENT_ROW_COUNT = "commentRowCount";
   private static final long COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION = ExpandablePageLayout.DEFAULT_ANIM_DURATION;
   private static final long ACTIVITY_CONTENT_RESIZE_ANIM_DURATION = 300;
   private static final int REQUEST_CODE_PICK_GIF = 98;
@@ -211,6 +207,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
   private SubmissionPageLifecycleStreams lifecycleStreams;
+  private int commentRowCountBeforeActivityDestroy = -1;
 
   public interface Callbacks {
     // TODO: remove this now?
@@ -296,6 +293,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
       }
     }
 
+    Integer uiModelsSize = Optional.ofNullable(submissionCommentsAdapter.getData())
+        .map(data -> data.size())
+        .orElse(0);
+    outState.putInt(KEY_COMMENT_ROW_COUNT, uiModelsSize);
+
     //noinspection CodeBlock2Expr
     callingSubreddits.getValue().ifPresent(subredditName -> {
       outState.putString(KEY_CALLING_SUBREDDIT, subredditName);
@@ -312,6 +314,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     Bundle restoredValues = savedState.values();
     boolean willPageExpandAgain = restoredValues.getBoolean(KEY_WAS_PAGE_EXPANDED_OR_EXPANDING, false);
     Optional<String> callingSubreddit = Optional.ofNullable(restoredValues.getString(KEY_CALLING_SUBREDDIT));
+
+    commentRowCountBeforeActivityDestroy = restoredValues.getInt(KEY_COMMENT_ROW_COUNT);
 
     if (willPageExpandAgain && restoredValues.containsKey(KEY_SUBMISSION_REQUEST)) {
       DankSubmissionRequest retainedRequest = restoredValues.getParcelable(KEY_SUBMISSION_REQUEST);
@@ -350,6 +354,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     // adapter contents are the same once the adapter is set. So we set the adapter
     // only once its dataset is available.
     submissionCommentsAdapter.dataChanges()
+        .filter(uiModels -> uiModels.size() >= commentRowCountBeforeActivityDestroy)
         .take(1)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> commentRecyclerView.setAdapter(submissionCommentsAdapter));
