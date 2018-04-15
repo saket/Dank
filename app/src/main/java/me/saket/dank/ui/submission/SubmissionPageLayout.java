@@ -453,24 +453,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .withLatestFrom(callingSubreddits, Pair::create)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
-          Point sheetLocation = Views.locationOnScreen(commentListParentSheet);
-          Point menuLocation = new Point(0, sheetLocation.y);
-
-          // Align with submission title.
-          int headerPadding = getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
-          menuLocation.offset(headerPadding, headerPadding);
-
           SubmissionOptionSwipeEvent swipeEvent = pair.first();
           Optional<String> optionalCallingSubreddit = pair.second();
-
-          boolean showVisitSubredditOption = optionalCallingSubreddit
-              .map(name -> !swipeEvent.submission().getSubredditName().equals(name))
-              .orElse(true);
-
-          SubmissionOptionsPopup optionsMenu = SubmissionOptionsPopup.builder(getContext(), swipeEvent.submission())
-              .showVisitSubreddit(showVisitSubredditOption)
-              .build();
-          optionsMenu.showAtLocation(swipeEvent.itemView(), Gravity.NO_GRAVITY, menuLocation);
+          swipeEvent.showPopupForSubmissionScreen(optionalCallingSubreddit, commentListParentSheet);
         });
 
     submissionCommentsAdapter.streamCommentOptionSwipeActions()

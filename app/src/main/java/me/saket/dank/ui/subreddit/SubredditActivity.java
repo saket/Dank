@@ -469,7 +469,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .subscribe(pair -> {
           SubmissionOptionSwipeEvent swipeEvent = pair.first();
           String subredditName = pair.second();
-          swipeEvent.showPopup(this, subredditName);
+          swipeEvent.showPopupForSubredditScreen(subredditName);
         });
 
     // Vote swipe gestures.

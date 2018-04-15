@@ -1,6 +1,5 @@
 package me.saket.dank.ui.subreddit;
 
-import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.Point;
 import android.view.Gravity;
@@ -10,7 +9,9 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.Submission;
 
 import me.saket.dank.R;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
+import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 
 @AutoValue
@@ -24,17 +25,34 @@ public abstract class SubmissionOptionSwipeEvent {
     return new AutoValue_SubmissionOptionSwipeEvent(submission, itemView);
   }
 
-  public void showPopup(Context context, String subredditName) {
-    Resources resources = context.getResources();
+  public void showPopupForSubredditScreen(String callingSubreddit) {
+    Resources resources = itemView().getContext().getResources();
     Point showLocation = new Point(0, itemView().getTop() + Views.statusBarHeight(resources));
 
     // Align with submission body.
     int padding = resources.getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
     showLocation.offset(padding, padding);
 
-    boolean showVisitSubredditOption = !subredditName.equals(submission().getSubredditName());
+    showPopup(Optional.of(callingSubreddit), showLocation);
+  }
 
-    SubmissionOptionsPopup optionsMenu = SubmissionOptionsPopup.builder(context, submission())
+  public void showPopupForSubmissionScreen(Optional<String> callingSubreddit, ScrollingRecyclerViewSheet commentListParentSheet) {
+    Point sheetLocation = Views.locationOnScreen(commentListParentSheet);
+    Point menuLocation = new Point(0, sheetLocation.y);
+
+    // Align with submission title.
+    int headerPadding = itemView().getResources().getDimensionPixelSize(R.dimen.subreddit_submission_start_padding);
+    menuLocation.offset(headerPadding, headerPadding);
+
+    showPopup(callingSubreddit, menuLocation);
+  }
+
+  private void showPopup(Optional<String> optionalCallingSubreddit, Point showLocation) {
+    boolean showVisitSubredditOption = optionalCallingSubreddit
+        .map(name -> !submission().getSubredditName().equals(name))
+        .orElse(true);
+
+    SubmissionOptionsPopup optionsMenu = SubmissionOptionsPopup.builder(itemView().getContext(), submission())
         .showVisitSubreddit(showVisitSubredditOption)
         .build();
     optionsMenu.showAtLocation(itemView(), Gravity.NO_GRAVITY, showLocation);
