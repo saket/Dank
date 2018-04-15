@@ -1,4 +1,4 @@
-package me.saket.dank.ui.subreddit;
+package me.saket.dank.ui.subreddit.events;
 
 import android.content.res.Resources;
 import android.graphics.Point;
@@ -10,6 +10,7 @@ import net.dean.jraw.models.Submission;
 
 import me.saket.dank.R;
 import me.saket.dank.data.SwipeEvent;
+import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
