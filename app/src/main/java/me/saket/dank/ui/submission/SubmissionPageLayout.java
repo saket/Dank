@@ -793,11 +793,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     // Content link long clicks.
     submissionCommentsAdapter.streamContentLinkLongClicks()
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(event -> {
-          Point linkViewLocation = Views.locationOnScreen(event.contentLinkView());
-          LinkOptionsPopup linkOptionsPopup = new LinkOptionsPopup(getContext(), event.link());
-          linkOptionsPopup.showAtLocation(event.contentLinkView(), Gravity.TOP | Gravity.START, linkViewLocation);
-        });
+        .subscribe(event -> event.showOptionsPopup());
 
     // View full thread.
     submissionCommentsAdapter.streamViewAllCommentsClicks()
