@@ -457,7 +457,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           Optional<String> optionalCallingSubreddit = pair.second();
           swipeEvent.showPopupForSubmissionScreen(optionalCallingSubreddit, commentListParentSheet);
         });
-
     submissionCommentsAdapter.streamCommentOptionSwipeActions()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(event -> event.showPopup(toolbar));
@@ -604,18 +603,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     // Reply fullscreen clicks.
     submissionCommentsAdapter.streamReplyFullscreenClicks()
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(fullscreenClickEvent -> {
-          Bundle extraPayload = new Bundle();
-          extraPayload.putLong(KEY_INLINE_REPLY_ROW_ID, fullscreenClickEvent.replyRowItemId());
-
-          ComposeStartOptions startOptions = ComposeStartOptions.builder()
-              .secondPartyName(fullscreenClickEvent.authorNameIfComment())
-              .parentContribution(fullscreenClickEvent.parentContribution())
-              .draftKey(fullscreenClickEvent.parentContribution())
-              .extras(extraPayload)
-              .build();
-          Activity activity = (Activity) getContext();
-          activity.startActivityForResult(ComposeReplyActivity.intent(getContext(), startOptions), REQUEST_CODE_FULLSCREEN_REPLY);
+        .subscribe(event -> {
+          Bundle payload = new Bundle();
+          payload.putLong(KEY_INLINE_REPLY_ROW_ID, event.replyRowItemId());
+          event.openComposeForResult((Activity) getContext(), payload, REQUEST_CODE_FULLSCREEN_REPLY);
         });
 
     // Fullscreen reply results.
