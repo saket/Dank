@@ -15,6 +15,8 @@ import me.saket.dank.urlparser.UrlParser;
  * Animating {@link SubmissionPageLayout}'s entry while loading data at the same time is expensive.
  * It's UI is complex and causes stutters. This class delays the loading of data in some cases to
  * workaround this issue.
+ *
+ * @deprecated Looks like this isn't needed anymore. RecyclerView is good at optimizing performance.
  */
 public class SubmissionPageAnimationOptimizer {
 

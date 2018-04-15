@@ -215,6 +215,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private SubmissionPageLifecycleStreams lifecycleStreams;
 
   public interface Callbacks {
+    // TODO: remove this now?
     SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer();
 
     void onClickSubmissionToolbarUp();
@@ -748,12 +749,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
           LoadMoreCommentsClickEvent loadMoreClickEvent = pair.first();
-          DankSubmissionRequest continueThreadRequest = pair.second().toBuilder()
-              .focusCommentId(loadMoreClickEvent.parentComment().getId())
-              .build();
-          Rect expandFromShape = Views.globalVisibleRect(loadMoreClickEvent.loadMoreItemView());
-          expandFromShape.top = expandFromShape.bottom;   // Because only expanding from a line is supported so far.
-          SubmissionPageLayoutActivity.start(getContext(), continueThreadRequest, expandFromShape);
+          DankSubmissionRequest currentSubmissionRequest = pair.second();
+          loadMoreClickEvent.openThreadContinuation(currentSubmissionRequest);
         });
 
     // Load-more-comment clicks.
