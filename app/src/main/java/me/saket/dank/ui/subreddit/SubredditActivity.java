@@ -463,7 +463,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .subscribe(event -> event.openContent(urlParser.get(), urlRouter.get()));
 
     // Option swipe gestures.
-    submissionsAdapter.optionSwipeActions()
+    submissionsAdapter.swipeEvents()
+        .ofType(SubmissionOptionSwipeEvent.class)
         .withLatestFrom(subredditChangesStream, Pair::create)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
@@ -473,7 +474,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         });
 
     // Vote swipe gestures.
-    Observable<ContributionVoteSwipeEvent> sharedVoteSwipeActions = submissionsAdapter.voteSwipeActions().share();
+    Observable<ContributionVoteSwipeEvent> sharedVoteSwipeActions = submissionsAdapter.swipeEvents()
+        .ofType(ContributionVoteSwipeEvent.class)
+        .share();
 
     sharedVoteSwipeActions
         .filter(voteEvent -> !voteEvent.contribution().isArchived())

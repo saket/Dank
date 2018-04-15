@@ -4,8 +4,10 @@ import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Contribution;
 
+import me.saket.dank.data.SwipeEvent;
+
 @AutoValue
-public abstract class InlineReplyRequestEvent {
+public abstract class InlineReplyRequestEvent implements SwipeEvent {
 
   public abstract Contribution parentContribution();
 

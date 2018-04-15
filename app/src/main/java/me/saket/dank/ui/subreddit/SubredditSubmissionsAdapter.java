@@ -13,13 +13,13 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
-import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
+import me.saket.dank.data.SwipeEvent;
+import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
+import me.saket.dank.ui.subreddit.events.SubredditSubmissionThumbnailClickEvent;
 import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel;
 import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel.SubmissionRowUiModel;
 import me.saket.dank.ui.subreddit.uimodels.SubredditSubmission;
-import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.subreddit.uimodels.SubredditSubmissionPagination;
-import me.saket.dank.ui.subreddit.events.SubredditSubmissionThumbnailClickEvent;
 import me.saket.dank.utils.InfinitelyScrollableRecyclerViewAdapter;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
@@ -57,13 +57,8 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   }
 
   @CheckResult
-  public Observable<SubmissionOptionSwipeEvent> optionSwipeActions() {
-    return submissionAdapter.optionSwipeActions();
-  }
-
-  @CheckResult
-  public Observable<ContributionVoteSwipeEvent> voteSwipeActions() {
-    return submissionAdapter.voteSwipeActions();
+  public Observable<SwipeEvent> swipeEvents() {
+    return submissionAdapter.swipeEvents();
   }
 
   @CheckResult
@@ -112,7 +107,7 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   }
 
   @Override
-  public void accept(Pair<List<SubmissionRowUiModel>, DiffUtil.DiffResult> pair) throws Exception {
+  public void accept(Pair<List<SubmissionRowUiModel>, DiffUtil.DiffResult> pair) {
     updateData(pair.first());
     pair.second().dispatchUpdatesTo(this);
   }

@@ -10,12 +10,13 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.Comment;
 
 import me.saket.dank.R;
+import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 
 @AutoValue
-public abstract class CommentOptionSwipeEvent {
+public abstract class CommentOptionSwipeEvent implements SwipeEvent {
 
   public abstract Comment comment();
 

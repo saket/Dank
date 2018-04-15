@@ -12,9 +12,11 @@ import javax.inject.Inject;
 import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
+import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
+import me.saket.dank.ui.submission.events.InlineReplyRequestEvent;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.widgets.swipe.SwipeAction;
@@ -41,9 +43,10 @@ public class CommentSwipeActionsProvider {
   private final SwipeActions commentSwipeActions;
   private final SwipeActionIconProvider swipeActionIconProvider;
 
-  public final PublishRelay<Comment> replySwipeActions = PublishRelay.create();
+  //  public final PublishRelay<Comment> replySwipeActions = PublishRelay.create();
   public final PublishRelay<ContributionVoteSwipeEvent> voteSwipeActions = PublishRelay.create();
-  public final PublishRelay<CommentOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
+//  public final PublishRelay<CommentOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
+  public final PublishRelay<SwipeEvent> swipeEvents = PublishRelay.create();
 
   @Inject
   public CommentSwipeActionsProvider(
@@ -132,19 +135,19 @@ public class CommentSwipeActionsProvider {
 
     switch (swipeAction.labelRes()) {
       case ACTION_NAME_OPTIONS:
-        optionSwipeActions.accept(CommentOptionSwipeEvent.create(comment, swipeableLayout));
+        swipeEvents.accept(CommentOptionSwipeEvent.create(comment, swipeableLayout));
         isUndoAction = false;
         break;
 
       case ACTION_NAME_REPLY:
-        replySwipeActions.accept(comment);
+        swipeEvents.accept(InlineReplyRequestEvent.create(comment));
         isUndoAction = false;
         break;
 
       case ACTION_NAME_UPVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
-        voteSwipeActions.accept(ContributionVoteSwipeEvent.create(comment, newVoteDirection));
+        swipeEvents.accept(ContributionVoteSwipeEvent.create(comment, newVoteDirection));
         isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
         break;
       }
@@ -152,7 +155,7 @@ public class CommentSwipeActionsProvider {
       case ACTION_NAME_DOWNVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
         VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
-        voteSwipeActions.accept(ContributionVoteSwipeEvent.create(comment, newVoteDirection));
+        swipeEvents.accept(ContributionVoteSwipeEvent.create(comment, newVoteDirection));
         isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
         break;
       }

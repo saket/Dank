@@ -26,9 +26,8 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.SpannableWithTextEquality;
-import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
+import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
-import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Colors;
@@ -425,13 +424,8 @@ public interface SubmissionCommentsHeader {
     }
 
     @CheckResult
-    public Observable<SubmissionOptionSwipeEvent> optionSwipeActions() {
-      return swipeActionsProvider.optionSwipeActions;
-    }
-
-    @CheckResult
-    public Observable<ContributionVoteSwipeEvent> voteSwipeActions() {
-      return swipeActionsProvider.voteSwipeActions;
+    public Observable<SwipeEvent> swipeEvents() {
+      return swipeActionsProvider.swipeEvents;
     }
   }
 }

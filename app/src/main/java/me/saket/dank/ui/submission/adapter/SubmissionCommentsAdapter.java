@@ -9,8 +9,6 @@ import android.view.ViewGroup;
 
 import com.jakewharton.rxrelay2.Relay;
 
-import net.dean.jraw.models.Comment;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -18,10 +16,9 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
+import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
-import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
-import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
 import me.saket.dank.ui.submission.events.ReplyFullscreenClickEvent;
@@ -30,7 +27,6 @@ import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
-import me.saket.dank.ui.subreddit.SubmissionOptionSwipeEvent;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -91,7 +87,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @Override
-  public void accept(Pair<List<SubmissionScreenUiModel>, DiffUtil.DiffResult> pair) throws Exception {
+  public void accept(Pair<List<SubmissionScreenUiModel>, DiffUtil.DiffResult> pair) {
     updateData(pair.first());
     pair.second().dispatchUpdatesTo(this);
   }
@@ -177,23 +173,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
-  public Observable<Comment> streamCommentReplySwipeActions() {
-    return commentAdapter.replySwipeActions();
-  }
-
-  @CheckResult
-  public Observable<ContributionVoteSwipeEvent> streamCommentVoteSwipeActions() {
-    return commentAdapter.voteSwipeActions().mergeWith(headerAdapter.voteSwipeActions());
-  }
-
-  @CheckResult
-  public Observable<CommentOptionSwipeEvent> streamCommentOptionSwipeActions() {
-    return commentAdapter.optionSwipeActions();
-  }
-
-  @CheckResult
-  public Observable<SubmissionOptionSwipeEvent> streamSubmissionOptionSwipeActions() {
-    return headerAdapter.optionSwipeActions();
+  public Observable<SwipeEvent> swipeEvents() {
+    return commentAdapter.swipeEvents().mergeWith(headerAdapter.swipeEvents());
   }
 
   @CheckResult

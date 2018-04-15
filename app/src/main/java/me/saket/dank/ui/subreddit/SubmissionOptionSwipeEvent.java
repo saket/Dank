@@ -9,13 +9,14 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.Submission;
 
 import me.saket.dank.R;
+import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 
 @AutoValue
-public abstract class SubmissionOptionSwipeEvent {
+public abstract class SubmissionOptionSwipeEvent implements SwipeEvent {
 
   public abstract Submission submission();
 

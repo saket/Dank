@@ -5,8 +5,10 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.VoteDirection;
 
+import me.saket.dank.data.SwipeEvent;
+
 @AutoValue
-public abstract class ContributionVoteSwipeEvent {
+public abstract class ContributionVoteSwipeEvent implements SwipeEvent {
 
   public abstract PublicContribution contribution();
 

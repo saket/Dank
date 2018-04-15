@@ -101,6 +101,7 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.submission.adapter.SubmissionUiConstructor;
+import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.InlineReplyRequestEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
@@ -455,7 +456,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
 
     // Option swipe gestures.
-    submissionCommentsAdapter.streamSubmissionOptionSwipeActions()
+    submissionCommentsAdapter.swipeEvents()
+        .ofType(SubmissionOptionSwipeEvent.class)
         .withLatestFrom(callingSubreddits, Pair::create)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
@@ -463,14 +465,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           Optional<String> optionalCallingSubreddit = pair.second();
           swipeEvent.showPopupForSubmissionScreen(optionalCallingSubreddit, commentListParentSheet);
         });
-    submissionCommentsAdapter.streamCommentOptionSwipeActions()
+    submissionCommentsAdapter.swipeEvents()
+        .ofType(CommentOptionSwipeEvent.class)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(event -> event.showPopup(toolbar));
 
     // Reply swipe gestures.
-    submissionCommentsAdapter.streamCommentReplySwipeActions()
+    submissionCommentsAdapter.swipeEvents()
+        .ofType(InlineReplyRequestEvent.class)
         .takeUntil(lifecycle().onDestroy())
-        .map(comment -> InlineReplyRequestEvent.create(comment))
         .subscribe(inlineReplyRequestStream);
 
     inlineReplyRequestStream
@@ -545,8 +548,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         });
 
     // Vote swipe gesture.
-    Observable<Pair<ContributionVoteSwipeEvent, Submission>> sharedVoteActions = submissionCommentsAdapter
-        .streamCommentVoteSwipeActions()
+    Observable<Pair<ContributionVoteSwipeEvent, Submission>> sharedVoteActions = submissionCommentsAdapter.swipeEvents()
+        .ofType(ContributionVoteSwipeEvent.class)
         .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
         .share();
 
