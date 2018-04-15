@@ -21,6 +21,7 @@ public class MarkwonBasedMarkdownRendererTest {
     renderer = new MarkwonBasedMarkdownRenderer(
         mock(SpannableConfiguration.class),
         mock(AutoRedditLinkExtension.class),
+        mock(EmptyListItemHandlerExtension.class),
         mock(MarkdownHintOptions.class),
         mock(Cache.class));
   }

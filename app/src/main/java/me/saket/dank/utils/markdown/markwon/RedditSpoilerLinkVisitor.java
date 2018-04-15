@@ -24,10 +24,14 @@ class RedditSpoilerLinkVisitor extends SpannableMarkdownVisitor {
     this.builder = builder;
   }
 
+  public static boolean isValidSpoilerUrl(String url) {
+    return url.length() <= 3 && url.endsWith("s");
+  }
+
   @Override
   public void visit(Link link) {
     String spoilerContent = link.getTitle();
-    if (spoilerContent != null) {
+    if (spoilerContent != null && isValidSpoilerUrl(link.getDestination())) {
       try {
         Text linkText = (Text) link.getFirstChild();
         String spoilerLabel = linkText.getLiteral().toUpperCase(Locale.ENGLISH);

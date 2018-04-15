@@ -39,7 +39,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   private static final Pattern LINK_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\]\\(([^)\"]*)\\)");
   private static final Pattern LINK_WITH_SPACE_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\]\\s+\\(([^)\"]*)\\)");
   private static final Pattern HEADING_WITHOUT_SPACE_MARKDOWN_PATTERN = Pattern.compile("(#{1,6})\\s{0}((?:(?!\\\\n).)*)");
-  private static final Pattern POTENTIALLY_INVALID_SPOILER_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\](.*?)\"+(.*?(?<!\\\\))\"+\\)");
+  private static final Pattern POTENTIALLY_INVALID_SPOILER_MARKDOWN_PATTERN = Pattern.compile("\\[([^\\]]*)\\]\\((.*?)\"+(.*?(?<!\\\\))\"+\\)");
 
   private final MarkdownHintOptions markdownOptions;
   private final Cache<String, CharSequence> cache;
@@ -259,7 +259,14 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
       while (matcher.find()) {
         String fullMatch = matcher.group(0);
         String spoilerLabel = matcher.group(1);
+        String spoilerUrl = matcher.group(2).trim();
         String spoilerContent = matcher.group(3);
+
+        if (!RedditSpoilerLinkVisitor.isValidSpoilerUrl(spoilerUrl)) {
+          // This will only match "/s", "#s", "# s ", "/ s ", /s ", and similar variations.
+          continue;
+        }
+
         markdown = markdown.replace(fullMatch, String.format("[%s](/s \"%s\")", spoilerLabel, spoilerContent));
       }
     } catch (Throwable e) {
