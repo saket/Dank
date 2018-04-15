@@ -236,6 +236,21 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .take(1)
         .takeUntil(lifecycle().viewDetaches())
         .subscribe(o -> onViewFirstAttach());
+
+    // LayoutManager needs to be set before onRestore() gets called to retain scroll position.
+    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()) {
+      @Override
+      public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
+        // Bug workaround: when smooth-scrolling to a position, if the target View is already visible,
+        // RecyclerView ends up snapping to the bottom of the child. This is not what is needed in any
+        // case so I'm defaulting to SNAP_TO_START.
+        LinearSmoothScroller linearSmoothScroller = new LinearSmoothScrollerWithVerticalSnapPref(getContext(), LinearSmoothScroller.SNAP_TO_START);
+        linearSmoothScroller.setTargetPosition(position);
+        startSmoothScroll(linearSmoothScroller);
+      }
+    });
+  }
+
   }
 
   public void onViewFirstAttach() {
@@ -436,17 +451,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         });
 
     commentRecyclerView.addOnItemTouchListener(new RecyclerSwipeListener(commentRecyclerView));
-    commentRecyclerView.setLayoutManager(new LinearLayoutManager(getContext()) {
-      @Override
-      public void smoothScrollToPosition(RecyclerView recyclerView, RecyclerView.State state, int position) {
-        // Bug workaround: when smooth-scrolling to a position, if the target View is already visible,
-        // RecyclerView ends up snapping to the bottom of the child. This is not what is needed in any
-        // case so I'm defaulting to SNAP_TO_START.
-        LinearSmoothScroller linearSmoothScroller = new LinearSmoothScrollerWithVerticalSnapPref(getContext(), LinearSmoothScroller.SNAP_TO_START);
-        linearSmoothScroller.setTargetPosition(position);
-        startSmoothScroll(linearSmoothScroller);
-      }
-    });
 
     // Option swipe gestures.
     submissionCommentsAdapter.streamSubmissionOptionSwipeActions()

@@ -92,9 +92,10 @@ public class SubmissionUiConstructor {
         .distinctUntilChanged() // Submission#equals() only compares IDs.
         .switchMap(optional -> {
           if (!optional.isPresent()) {
-            return commentsLoadErrors.map(optionalError -> optionalError.isPresent()
-                ? Collections.singletonList(SubmissionCommentsLoadError.UiModel.create(optionalError.get()))
-                : Collections.emptyList());
+            return commentsLoadErrors
+                .map(optionalError -> optionalError.isPresent()
+                    ? Collections.singletonList(SubmissionCommentsLoadError.UiModel.create(optionalError.get()))
+                    : Collections.emptyList());
           }
 
           Observable<Submission> submissions = optionalSubmissions
