@@ -11,6 +11,7 @@ import me.saket.dank.markdownhints.MarkdownHintOptions;
 import ru.noties.markwon.SpannableBuilder;
 import ru.noties.markwon.SpannableConfiguration;
 import ru.noties.markwon.renderer.SpannableMarkdownVisitor;
+import timber.log.Timber;
 
 class RedditSpoilerLinkVisitor extends SpannableMarkdownVisitor {
 
@@ -27,36 +28,42 @@ class RedditSpoilerLinkVisitor extends SpannableMarkdownVisitor {
   public void visit(Link link) {
     String spoilerContent = link.getTitle();
     if (spoilerContent != null) {
-      Text linkText = (Text) link.getFirstChild();
-      String spoilerLabel = linkText.getLiteral().toUpperCase(Locale.ENGLISH);
+      try {
+        Text linkText = (Text) link.getFirstChild();
+        String spoilerLabel = linkText.getLiteral().toUpperCase(Locale.ENGLISH);
 
-      String spoilerLabelAndContent = spoilerContent.isEmpty()
-          ? spoilerLabel
-          : spoilerLabel + " " + spoilerContent;
-      linkText.setLiteral(spoilerLabelAndContent);
+        String spoilerLabelAndContent = spoilerContent.isEmpty()
+            ? spoilerLabel
+            : spoilerLabel + " " + spoilerContent;
+        linkText.setLiteral(spoilerLabelAndContent);
 
-      // Some padding around the text looks good.
-      String padding = "\u00a0\u00a0";
+        // Some padding around the text looks good.
+        String padding = "\u00a0\u00a0";
 
-      int labelStart = builder.length();
-      int labelEnd = labelStart + spoilerLabel.length() + padding.length();
-      //noinspection UnnecessaryLocalVariable
-      int contentStart = labelEnd;
-      int contentEnd = labelStart + linkText.getLiteral().length() + padding.length() * 2;
+        int labelStart = builder.length();
+        int labelEnd = labelStart + spoilerLabel.length() + padding.length();
+        //noinspection UnnecessaryLocalVariable
+        int contentStart = labelEnd;
+        int contentEnd = labelStart + linkText.getLiteral().length() + padding.length() * 2;
 
-      builder.append(padding);
-      visitChildren(link);
-      builder.append(padding);
+        builder.append(padding);
+        visitChildren(link);
+        builder.append(padding);
 
-      int spoilerBackgroundColor = markdownOptions.spoilerHiddenContentOverlayColor();
+        int spoilerBackgroundColor = markdownOptions.spoilerHiddenContentOverlayColor();
 
-      SpoilerLabelSpan labelSpan = new SpoilerLabelSpan(spoilerBackgroundColor);
-      setSpan(labelStart, labelEnd, labelSpan);
+        SpoilerLabelSpan labelSpan = new SpoilerLabelSpan(spoilerBackgroundColor);
+        setSpan(labelStart, labelEnd, labelSpan);
 
-      SpoilerContentSpan contentSpan = new SpoilerContentSpan(spoilerBackgroundColor, spoilerContent);
-      setSpan(contentStart, contentEnd, contentSpan);
+        SpoilerContentSpan contentSpan = new SpoilerContentSpan(spoilerBackgroundColor, spoilerContent);
+        setSpan(contentStart, contentEnd, contentSpan);
 
-      setSpan(labelStart, contentEnd, new SpoilerRevealClickListenerSpan(labelSpan, contentSpan));
+        setSpan(labelStart, contentEnd, new SpoilerRevealClickListenerSpan(labelSpan, contentSpan));
+
+      } catch (Exception e) {
+        Timber.e(e, "Couldn't parse spoiler link: " + link);
+        super.visit(link);
+      }
 
     } else {
       super.visit(link);

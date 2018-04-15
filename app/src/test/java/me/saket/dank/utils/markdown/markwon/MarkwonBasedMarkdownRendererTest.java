@@ -89,4 +89,12 @@ public class MarkwonBasedMarkdownRendererTest {
     String parsed = renderer.fixInvalidSpoilers(invalid);
     assertEquals(expected, parsed);
   }
+
+  @Test
+  public void avoidFixingValidSpoilers() {
+    String valid = "[FAQ](http://np.reddit.com/r/autotldr/comments/31b9fm/faq_autotldr_bot/ \"Version 2.00, ~310541 tl;drs so far.\")\n\n" +
+        "[Feedback](http://np.reddit.com/message/compose?to=%23autotldr \"PM's and comments are monitored, constructive feedback is welcome.\")";
+    String parsed = renderer.fixInvalidSpoilers(valid);
+    assertEquals(valid, parsed);
+  }
 }
