@@ -20,7 +20,6 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.Point;
-import android.graphics.Rect;
 import android.graphics.drawable.Drawable;
 import android.os.Build;
 import android.os.Bundle;
@@ -120,7 +119,6 @@ import me.saket.dank.urlparser.ExternalLink;
 import me.saket.dank.urlparser.ImgurAlbumLink;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.MediaLink;
-import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UnresolvedMediaLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Animations;
@@ -788,24 +786,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
           SubmissionContentLinkClickEvent event = pair.first();
-          if (event.link() instanceof RedditUserLink) {
-            // TODO: Open fullscreen user profile.
-            Point expandFromPoint = new Point(event.contentLinkView().getLeft(), event.contentLinkView().getBottom());
-            urlRouter.forLink(((RedditUserLink) event.link()))
-                .expandFrom(expandFromPoint)
-                .open(event.contentLinkView());
-
-          } else if (event.link() instanceof MediaLink) {
-            Submission submission = pair.second();
-            urlRouter.forLink(((MediaLink) event.link()))
-                .withRedditSuppliedImages(submission.getThumbnails())
-                .open(getContext());
-
-          } else {
-            urlRouter.forLink(event.link())
-                .expandFromBelowToolbar()
-                .open(getContext());
-          }
+          Submission submission = pair.second();
+          event.openContent(submission, urlRouter);
         });
 
     // Content link long clicks.
