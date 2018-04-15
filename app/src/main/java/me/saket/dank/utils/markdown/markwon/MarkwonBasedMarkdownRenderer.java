@@ -50,6 +50,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   public MarkwonBasedMarkdownRenderer(
       SpannableConfiguration configuration,
       AutoRedditLinkExtension autoRedditLinkExtension,
+      EmptyListItemHandlerExtension emptyListItemHandlerExtension,
       MarkdownHintOptions markdownOptions,
       @Named("markwon_spans_renderer") Cache<String, CharSequence> cache)
   {
@@ -63,6 +64,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
             TablesExtension.create(),
             TaskListExtension.create(),
             AutolinkExtension.create(),
+            emptyListItemHandlerExtension,
             autoRedditLinkExtension
         ))
         .build();
