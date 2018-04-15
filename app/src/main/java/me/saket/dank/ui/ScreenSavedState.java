@@ -6,7 +6,6 @@ import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 
-// TODO use in SubmissionPageLayout.
 @AutoValue
 public abstract class ScreenSavedState implements Parcelable {
 

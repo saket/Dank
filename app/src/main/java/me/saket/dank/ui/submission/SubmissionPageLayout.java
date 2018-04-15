@@ -84,6 +84,7 @@ import me.saket.dank.data.VotingManager;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.ui.ScreenSavedState;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.ComposeStartOptions;
@@ -148,7 +149,6 @@ import timber.log.Timber;
 @SuppressLint("SetJavaScriptEnabled")
 public class SubmissionPageLayout extends ExpandablePageLayout implements ExpandablePageLayout.OnPullToCollapseIntercepter {
 
-  private static final String KEY_SUPER_CLASS_STATE = "superClassState";
   private static final String KEY_WAS_PAGE_EXPANDED_OR_EXPANDING = "pageState";
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
@@ -251,8 +251,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     });
   }
 
-  }
-
   public void onViewFirstAttach() {
     executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight()));
     //noinspection ConstantConditions
@@ -303,27 +301,26 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
       outState.putString(KEY_CALLING_SUBREDDIT, subredditName);
     });
     outState.putBoolean(KEY_WAS_PAGE_EXPANDED_OR_EXPANDING, isExpandedOrExpanding());
-    outState.putParcelable(KEY_SUPER_CLASS_STATE, super.onSaveInstanceState());
-    return outState;
+    return ScreenSavedState.combine(super.onSaveInstanceState(), outState);
   }
 
   @Override
   protected void onRestoreInstanceState(Parcelable state) {
-    Bundle savedState = (Bundle) state;
-    Parcelable superState = savedState.getParcelable(KEY_SUPER_CLASS_STATE);
-    super.onRestoreInstanceState(superState);
+    ScreenSavedState savedState = (ScreenSavedState) state;
+    super.onRestoreInstanceState(savedState.superSavedState());
 
-    boolean willPageExpandAgain = savedState.getBoolean(KEY_WAS_PAGE_EXPANDED_OR_EXPANDING, false);
-    Optional<String> callingSubreddit = Optional.ofNullable(savedState.getString(KEY_CALLING_SUBREDDIT));
+    Bundle restoredValues = savedState.values();
+    boolean willPageExpandAgain = restoredValues.getBoolean(KEY_WAS_PAGE_EXPANDED_OR_EXPANDING, false);
+    Optional<String> callingSubreddit = Optional.ofNullable(restoredValues.getString(KEY_CALLING_SUBREDDIT));
 
-    if (willPageExpandAgain && savedState.containsKey(KEY_SUBMISSION_REQUEST)) {
-      DankSubmissionRequest retainedRequest = savedState.getParcelable(KEY_SUBMISSION_REQUEST);
+    if (willPageExpandAgain && restoredValues.containsKey(KEY_SUBMISSION_REQUEST)) {
+      DankSubmissionRequest retainedRequest = restoredValues.getParcelable(KEY_SUBMISSION_REQUEST);
       Single
           .fromCallable(() -> {
-            boolean manualRestorationNeeded = savedState.containsKey(KEY_SUBMISSION_JSON);
+            boolean manualRestorationNeeded = restoredValues.containsKey(KEY_SUBMISSION_JSON);
             //noinspection ConstantConditions
             return manualRestorationNeeded
-                ? Optional.of(moshi.adapter(Submission.class).fromJson(savedState.getString(KEY_SUBMISSION_JSON)))
+                ? Optional.of(moshi.adapter(Submission.class).fromJson(restoredValues.getString(KEY_SUBMISSION_JSON)))
                 : Optional.<Submission>empty();
           })
           .subscribeOn(io())
