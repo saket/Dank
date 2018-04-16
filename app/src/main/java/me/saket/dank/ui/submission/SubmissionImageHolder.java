@@ -144,10 +144,10 @@ public class SubmissionImageHolder {
                   .load(optimizedImageUrl)
                   .apply(new RequestOptions()
                       .priority(Priority.IMMEDIATE)
-                      .downsample(DownsampleStrategy.AT_MOST)
-                      //.skipMemoryCache(true).diskCacheStrategy(DiskCacheStrategy.NONE)
+                      // NOTE: probably keep this in sync with MediaImageFragment.
+                      .downsample(DownsampleStrategy.AT_LEAST)
                       .transform(glidePaddingTransformation))
-                  .submit(deviceDisplaySize.getWidth() * 2, deviceDisplaySize.getHeight() * 2)
+                  .submit(deviceDisplaySize.getWidth(), deviceDisplaySize.getHeight())
                   .get()
           );
           emitter.setCancellable(() -> Glide.with(imageView.view()).clear(imageView.view()));
