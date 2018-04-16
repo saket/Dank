@@ -40,4 +40,8 @@
       <enum name="height" value="1" />
     </attr>
   </declare-styleable>
+
+  <declare-styleable name="AnimatedToolbarBackground">
+    <attr name="clickableWhenFilled" format="boolean" />
+  </declare-styleable>
 </resources>

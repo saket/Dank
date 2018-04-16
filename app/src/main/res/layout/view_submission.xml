@@ -81,7 +81,8 @@
     android:layout_width="match_parent"
     android:layout_height="?attr/actionBarSize"
     android:background="@color/toolbar"
-    android:translationZ="5dp" />
+    android:translationZ="5dp"
+    app:clickableWhenFilled="true" />
 
   <!-- TODO: this can be merged with AnimatedToolbarBackground -->
   <!-- Note: the elevation to this toolbar is set on

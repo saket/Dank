@@ -2,11 +2,13 @@ package me.saket.dank.widgets;
 
 import android.animation.ValueAnimator;
 import android.content.Context;
+import android.content.res.TypedArray;
 import android.graphics.Canvas;
 import android.support.annotation.FloatRange;
 import android.util.AttributeSet;
 import android.view.View;
 
+import me.saket.dank.R;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.utils.Animations;
 
@@ -18,6 +20,7 @@ import me.saket.dank.utils.Animations;
  */
 public class AnimatedToolbarBackground extends View {
 
+  private final boolean clickableWhenFilled;
   private ValueAnimator backgroundFillAnimator;
   private Boolean isToolbarFilled;
   private Float currentFillFactor = 0f;
@@ -29,6 +32,10 @@ public class AnimatedToolbarBackground extends View {
     onVisibleTranslationZ = getTranslationZ();
     setTranslationZ(0f);
     toggleFill(true);
+
+    TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.AnimatedToolbarBackground);
+    clickableWhenFilled = attributes.getBoolean(R.styleable.AnimatedToolbarBackground_clickableWhenFilled, false);
+    attributes.recycle();
   }
 
   /**
@@ -66,6 +73,10 @@ public class AnimatedToolbarBackground extends View {
       return;
     }
     isToolbarFilled = fill;
+
+    if (clickableWhenFilled) {
+      setClickable(isToolbarFilled);
+    }
 
     Float targetFillFactor = fill ? 1f : 0f;
     if (isLaidOut()) {
