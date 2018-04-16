@@ -19,8 +19,6 @@ import com.bumptech.glide.request.RequestOptions;
 import com.bumptech.glide.request.target.DrawableImageViewTarget;
 import com.bumptech.glide.request.target.Target;
 
-import net.dean.jraw.models.Thumbnails;
-
 import javax.inject.Inject;
 
 import butterknife.BindView;
@@ -32,7 +30,6 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.FileSizeUnit;
-import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.glide.GlideProgressTarget;
@@ -154,28 +151,32 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   private void calculateUrlAndLoadImage(MediaAlbumItem mediaAlbumItemToShow, boolean isFirstLoad) {
     moveToScreenState(ScreenState.LOADING_IMAGE);
 
-    String imageUrl;
-    if (mediaAlbumItemToShow.highDefinitionEnabled()) {
-      imageUrl = mediaAlbumItemToShow.mediaLink().highQualityUrl();
+    ((MediaFragmentCallbacks) requireActivity()).getRedditSuppliedImages()
+        .takeUntil(lifecycle().onDestroyCompletable())
+        .subscribe(redditImages -> {
+          String imageUrl;
+          if (mediaAlbumItemToShow.highDefinitionEnabled()) {
+            imageUrl = mediaAlbumItemToShow.mediaLink().highQualityUrl();
 
-    } else {
-      String lowQualityUrl = mediaAlbumItemToShow.mediaLink().lowQualityUrl();
-      if (mediaAlbumItemToShow.mediaLink().isGif()) {
-        imageUrl = lowQualityUrl;
+          } else {
+            String lowQualityUrl = mediaAlbumItemToShow.mediaLink().lowQualityUrl();
+            if (mediaAlbumItemToShow.mediaLink().isGif()) {
+              imageUrl = lowQualityUrl;
 
-      } else {
-        int deviceDisplayWidth = ((MediaFragmentCallbacks) requireActivity()).getDeviceDisplayWidth();
-        Optional<Thumbnails> redditSuppliedImages = ((MediaFragmentCallbacks) requireActivity()).getRedditSuppliedImages();
-        ImageWithMultipleVariants imageWithMultipleVariants = ImageWithMultipleVariants.of(redditSuppliedImages);
-        imageUrl = imageWithMultipleVariants.findNearestFor(deviceDisplayWidth, lowQualityUrl);
-      }
-    }
 
-    loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, false);
-    imageView.setOnImageTooLargeExceptionListener(e -> {
-      Timber.e("Failed to draw image: %s, url: %s", e.getMessage(), imageUrl);
-      loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, true);
-    });
+            } else {
+              int deviceDisplayWidth = ((MediaFragmentCallbacks) requireActivity()).getDeviceDisplayWidth();
+              ImageWithMultipleVariants imageWithMultipleVariants = ImageWithMultipleVariants.of(redditImages);
+              imageUrl = imageWithMultipleVariants.findNearestFor(deviceDisplayWidth, lowQualityUrl);
+            }
+          }
+
+          loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, false);
+          imageView.setOnImageTooLargeExceptionListener(e -> {
+            Timber.e("Failed to draw image: %s, url: %s", e.getMessage(), imageUrl);
+            loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, true);
+          });
+        });
   }
 
   private void loadImage(MediaAlbumItem mediaAlbumItemToShow, boolean isFirstLoad, String imageUrl, boolean downSampleToFixError) {

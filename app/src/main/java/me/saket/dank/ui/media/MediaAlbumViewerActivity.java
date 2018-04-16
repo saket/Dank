@@ -1,5 +1,8 @@
 package me.saket.dank.ui.media;
 
+import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
+import static io.reactivex.schedulers.Schedulers.io;
+
 import android.Manifest;
 import android.animation.ObjectAnimator;
 import android.animation.TimeInterpolator;
@@ -55,6 +58,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
 import dagger.Lazy;
+import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.R;
@@ -73,6 +77,7 @@ import me.saket.dank.utils.Intents;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.SystemUiHelper;
 import me.saket.dank.utils.Urls;
@@ -231,15 +236,19 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     // TODO: Simplify this Rx chain. Concat-mapping with hdEnabledMediaLinksStream doesn't make sense.
     viewpagerPageChangeStream
         .concatMap(activeMediaItem -> hdEnabledMediaLinksStream.map(o -> activeMediaItem))
+        .flatMapSingle(activeMediaItem -> getRedditSuppliedImages().map(redditImages -> Pair.create(activeMediaItem, redditImages)))
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(activeMediaItem -> {
+        .subscribe(pair -> {
+          MediaAlbumItem activeMediaItem = pair.first();
+          Optional<Thumbnails> redditSuppliedImages = pair.second();
+
           String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
           String optimizedQualityUrl;
 
           if (activeMediaItem.mediaLink().isGif()) {
             optimizedQualityUrl = activeMediaItem.mediaLink().lowQualityUrl();
           } else {
-            ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(getRedditSuppliedImages());
+            ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(redditSuppliedImages);
             optimizedQualityUrl = imageVariants.findNearestFor(
                 getResources().getDisplayMetrics().widthPixels,
                 activeMediaItem.mediaLink().lowQualityUrl() /* defaultValue */
@@ -407,21 +416,36 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     return getResources().getDisplayMetrics().widthPixels;
   }
 
-  @Nullable
   @Override
-  public Optional<Thumbnails> getRedditSuppliedImages() {
-    if (resolvedMediaLink instanceof ImgurAlbumLink || mediaAlbumAdapter.getCount() > 1) {
-      // Child pages do not know if they're part of an album. Don't let
-      // them replace imgur images with reddit-supplied album-cover image.
-      return Optional.empty();
+  public Single<Optional<Thumbnails>> getRedditSuppliedImages() {
+    Completable waitTillOnPostCreate;
+    if (resolvedMediaLink == null || mediaAlbumAdapter == null) {
+      // Bug workaround: Fragments are restored before onPostCreate() executes.
+      waitTillOnPostCreate = lifecycle()
+          .onResume()
+          .take(1)
+          .ignoreElements();
+    } else {
+      waitTillOnPostCreate = Completable.complete();
     }
 
-    if (getIntent().hasExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON)) {
-      String redditSuppliedImagesJson = getIntent().getStringExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON);
-      return Optional.of(new Thumbnails(jacksonHelper.parseJsonNode(redditSuppliedImagesJson)));
-    } else {
-      return Optional.empty();
-    }
+    return waitTillOnPostCreate
+        .observeOn(io())
+        .andThen(Single.fromCallable(() -> {
+          if (resolvedMediaLink instanceof ImgurAlbumLink || mediaAlbumAdapter.getCount() > 1) {
+            // Child pages do not know if they're part of an album. Don't let
+            // them replace imgur images with reddit-supplied album-cover image.
+            return Optional.<Thumbnails>empty();
+          }
+
+          if (getIntent().hasExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON)) {
+            String redditSuppliedImagesJson = getIntent().getStringExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON);
+            return Optional.of(new Thumbnails(jacksonHelper.parseJsonNode(redditSuppliedImagesJson)));
+          } else {
+            return Optional.<Thumbnails>empty();
+          }
+        }))
+        .observeOn(mainThread());
   }
 
   @Override
@@ -599,23 +623,24 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
       emitter.setCancellable(() -> Glide.with(this).clear(highResolutionImageTarget));
     });
 
-    Observable<File> optimizedResImageFileStream = Observable.create(emitter -> {
-      ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(getRedditSuppliedImages());
-      String optimizedQualityImageForDevice = imageVariants.findNearestFor(getDeviceDisplayWidth(), albumItem.mediaLink().lowQualityUrl());
+    Observable<File> optimizedResImageFileStream = getRedditSuppliedImages()
+        .flatMapObservable(redditImages -> Observable.create(emitter -> {
+          ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(redditImages);
+          String optimizedQualityImageForDevice = imageVariants.findNearestFor(getDeviceDisplayWidth(), albumItem.mediaLink().lowQualityUrl());
 
-      FutureTarget<File> optimizedResolutionImageTarget = Glide.with(this)
-          .download(optimizedQualityImageForDevice)
-          .apply(new RequestOptions().onlyRetrieveFromCache(true))
-          .submit();
-      File optimizedResImageFile = optimizedResolutionImageTarget.get();
+          FutureTarget<File> optimizedResolutionImageTarget = Glide.with(this)
+              .download(optimizedQualityImageForDevice)
+              .apply(new RequestOptions().onlyRetrieveFromCache(true))
+              .submit();
+          File optimizedResImageFile = optimizedResolutionImageTarget.get();
 
-      if (optimizedResImageFile != null) {
-        emitter.onNext(optimizedResImageFile);
-      } else {
-        emitter.onComplete();
-      }
-      emitter.setCancellable(() -> Glide.with(this).clear(optimizedResolutionImageTarget));
-    });
+          if (optimizedResImageFile != null) {
+            emitter.onNext(optimizedResImageFile);
+          } else {
+            emitter.onComplete();
+          }
+          emitter.setCancellable(() -> Glide.with(this).clear(optimizedResolutionImageTarget));
+        }));
 
     return highResImageFileStream
         .onErrorResumeNext(Observable.empty())

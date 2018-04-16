@@ -14,7 +14,7 @@ public interface MediaFragmentCallbacks {
 
   int getDeviceDisplayWidth();
 
-  Optional<Thumbnails> getRedditSuppliedImages();
+  Single<Optional<Thumbnails>> getRedditSuppliedImages();
 
   @CheckResult
   Single<Integer> optionButtonsHeight();
