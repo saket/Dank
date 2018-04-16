@@ -16,7 +16,6 @@ import android.widget.ProgressBar;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
-import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.RequestOptions;
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -32,8 +31,8 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
+import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
@@ -144,10 +143,8 @@ public class SubmissionImageHolder {
                   .load(optimizedImageUrl)
                   .apply(new RequestOptions()
                       .priority(Priority.IMMEDIATE)
-                      // NOTE: probably keep this in sync with MediaImageFragment.
-                      .downsample(DownsampleStrategy.AT_LEAST)
                       .transform(glidePaddingTransformation))
-                  .submit(deviceDisplaySize.getWidth(), deviceDisplaySize.getHeight())
+                  .submit()
                   .get()
           );
           emitter.setCancellable(() -> Glide.with(imageView.view()).clear(imageView.view()));
