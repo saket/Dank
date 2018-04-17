@@ -6,6 +6,6 @@
   <item>
     <bitmap
       android:gravity="center"
-      android:src="@drawable/ic_launcher_160" />
+      android:src="@drawable/ic_launcher_180" />
   </item>
 </layer-list>
