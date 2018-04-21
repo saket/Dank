@@ -65,7 +65,7 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
         (clickHandler, event) -> clickHandler.show(networkStrategyPopup(hdMediaInGalleryNetworkStrategyPref), event.itemViewHolder())));
 
     uiModels.add(UiModel.create(
-        c.getString(R.string.userprefs_mediaquality_load_hq_media_in_gallery),
+        c.getString(R.string.userprefs_mediaquality_autoplay_videos),
         c.getString(autoPlayVideosNetworkStrategyPref.get().displayNameRes),
         (clickHandler, event) -> clickHandler.show(networkStrategyPopup(autoPlayVideosNetworkStrategyPref), event.itemViewHolder())));
 

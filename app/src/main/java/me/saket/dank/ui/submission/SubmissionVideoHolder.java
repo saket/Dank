@@ -11,6 +11,7 @@ import android.widget.ProgressBar;
 
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
+import com.devbrackets.android.exomedia.ui.widget.VideoControls;
 import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -35,9 +36,9 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.lifecycle.ViewLifecycleEvent;
+import me.saket.dank.widgets.ExoMediaVideoControlsView;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
-import timber.log.Timber;
 
 /**
  * Manages loading of video in {@link SubmissionPageLayout}.
@@ -152,7 +153,7 @@ public class SubmissionVideoHolder {
           private boolean firstDelayDone;
 
           @Override
-          public ObservableSource<Integer> apply(Integer videoWidth) throws Exception {
+          public ObservableSource<Integer> apply(Integer videoWidth) {
             if (firstDelayDone) {
               return Observable.just(videoWidth);
             } else {
@@ -180,6 +181,8 @@ public class SubmissionVideoHolder {
         });
         contentVideoView.setControls(controlsView);
       }
+
+      resetPlayIcon();
 
       exoPlayerManager.setOnVideoSizeChangeListener((actualVideoWidth, actualVideoHeight) -> {
         //noinspection ConstantConditions
@@ -236,10 +239,13 @@ public class SubmissionVideoHolder {
       });
       exoPlayerManager.setOnErrorListener(e -> emitter.onError(e));
 
-      emitter.setCancellable(() -> {
-        exoPlayerManager.setOnVideoSizeChangeListener(null);
-      });
+      emitter.setCancellable(() -> exoPlayerManager.setOnVideoSizeChangeListener(null));
     });
+  }
+
+  private void resetPlayIcon() {
+    VideoControls controlsView = contentVideoView.getVideoControls();
+    controlsView.updatePlayPauseImage(false);
   }
 
   public void resetPlayback() {
