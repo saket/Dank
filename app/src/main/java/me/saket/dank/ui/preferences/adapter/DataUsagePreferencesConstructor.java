@@ -18,6 +18,7 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
 
   private final Preference<NetworkStrategy> hdMediaInSubmissionsNetworkStrategyPref;
   private final Preference<NetworkStrategy> hdMediaInGalleryNetworkStrategyPref;
+  private final Preference<NetworkStrategy> autoPlayVideosNetworkStrategyPref;
   private final Preference<NetworkStrategy> commentsPreFetchNetworkStrategyPref;
   private final Preference<NetworkStrategy> linksPreFetchNetworkStrategyPref;
   private final Preference<NetworkStrategy> imagesPreFetchNetworkStrategyPref;
@@ -26,12 +27,14 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
   public DataUsagePreferencesConstructor(
       @Named("hd_media_in_submissions") Preference<NetworkStrategy> hdMediaInSubmissionsNetworkStrategyPref,
       @Named("hd_media_in_gallery") Preference<NetworkStrategy> hdMediaInGalleryNetworkStrategyPref,
+      @Named("auto_play_videos") Preference<NetworkStrategy> autoPlayVideosNetworkStrategyPref,
       @Named("comments_prefetch") Preference<NetworkStrategy> commentsPreFetchNetworkStrategyPref,
       @Named("links_prefetch") Preference<NetworkStrategy> linksPreFetchNetworkStrategyPref,
       @Named("images_prefetch") Preference<NetworkStrategy> imagesPreFetchNetworkStrategyPref)
   {
     this.hdMediaInSubmissionsNetworkStrategyPref = hdMediaInSubmissionsNetworkStrategyPref;
     this.hdMediaInGalleryNetworkStrategyPref = hdMediaInGalleryNetworkStrategyPref;
+    this.autoPlayVideosNetworkStrategyPref = autoPlayVideosNetworkStrategyPref;
     this.commentsPreFetchNetworkStrategyPref = commentsPreFetchNetworkStrategyPref;
     this.linksPreFetchNetworkStrategyPref = linksPreFetchNetworkStrategyPref;
     this.imagesPreFetchNetworkStrategyPref = imagesPreFetchNetworkStrategyPref;
@@ -60,6 +63,11 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
         c.getString(R.string.userprefs_mediaquality_load_hq_media_in_gallery),
         c.getString(hdMediaInGalleryNetworkStrategyPref.get().displayNameRes),
         (clickHandler, event) -> clickHandler.show(networkStrategyPopup(hdMediaInGalleryNetworkStrategyPref), event.itemViewHolder())));
+
+    uiModels.add(UiModel.create(
+        c.getString(R.string.userprefs_mediaquality_load_hq_media_in_gallery),
+        c.getString(autoPlayVideosNetworkStrategyPref.get().displayNameRes),
+        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(autoPlayVideosNetworkStrategyPref), event.itemViewHolder())));
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(
         c.getString(R.string.userprefs_group_caching),

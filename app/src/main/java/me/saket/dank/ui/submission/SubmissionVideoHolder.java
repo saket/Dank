@@ -69,7 +69,7 @@ public class SubmissionVideoHolder {
       Lazy<HttpProxyCacheServer> httpProxyCacheServer,
       Lazy<NetworkStateListener> networkStateListener,
       @Named("hd_media_in_submissions") Lazy<Preference<NetworkStrategy>> hdMediaNetworkStrategy,
-      @Named("auto_play_videos_network_strategy") Lazy<Preference<NetworkStrategy>> autoPlayVideosNetworkStrategy)
+      @Named("auto_play_videos") Lazy<Preference<NetworkStrategy>> autoPlayVideosNetworkStrategy)
   {
     this.mediaHostRepository = mediaHostRepository;
     this.httpProxyCacheServer = httpProxyCacheServer;

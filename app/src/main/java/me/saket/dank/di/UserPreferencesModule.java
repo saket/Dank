@@ -57,7 +57,7 @@ public class UserPreferencesModule {
   }
 
   @Provides
-  @Named("auto_play_videos_network_strategy")
+  @Named("auto_play_videos")
   Preference<NetworkStrategy> autoPlayVideosNetworkStrategyPref(
       @Named("user_prefs") RxSharedPreferences rxPrefs,
       RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyTypeAdapter)
