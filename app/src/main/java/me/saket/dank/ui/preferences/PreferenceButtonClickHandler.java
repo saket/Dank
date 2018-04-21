@@ -7,5 +7,5 @@ public interface PreferenceButtonClickHandler {
 
   void expandNestedPage(@LayoutRes int nestedLayoutRes, RecyclerView.ViewHolder viewHolderToExpand);
 
-  void show(PreferenceMultiOptionPopup.Builder<NetworkStrategy> popupBuilder, RecyclerView.ViewHolder viewHolder);
+  void show(PreferenceMultiOptionPopup.Builder popupBuilder, RecyclerView.ViewHolder viewHolder);
 }

@@ -13,6 +13,9 @@ public class SlideUpAlphaAnimator extends SlideAlphaAnimator<SlideUpAlphaAnimato
         .withRemoveDuration(250);
   }
 
+  /**
+   * @deprecated Use {@link #create()} instead.
+   */
   public SlideUpAlphaAnimator() {
     super(0);
   }

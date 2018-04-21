@@ -377,10 +377,11 @@
   <string name="userprefs_show_nsfw_content_summary_off">Keep hidden</string>
 
   <string name="userprefs_group_external_links">External links</string>
-  <string name="userprefs_externallinks_default_web_browser">Default web-browser</string>
+  <string name="userprefs_externallinks_default_web_browser">Device\'s default browser</string>
   <string name="userprefs_externallinks_internal_browser">Dank\'s internal browser</string>
+  <string name="userprefs_externallinks_chrome_custom_tabs">Chrome custom tabs</string>
 
-  <string name="userprefs_externallinks_open_links_in_apps">Open links in apps</string>
+  <string name="userprefs_externallinks_open_links_in_apps">Open known links in apps</string>
   <string name="userprefs_externallinks_open_links_in_apps_summary">Bypass the browser and open these links in their own apps</string>
 
   <!-- GIPHY picker -->

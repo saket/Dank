@@ -18,6 +18,7 @@ import dagger.Module;
 import dagger.Provides;
 import io.reactivex.Observable;
 import me.saket.dank.data.CachePreFillThing;
+import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
 import me.saket.dank.utils.TimeInterval;
@@ -51,7 +52,7 @@ public class UserPreferencesModule {
   }
 
   @Provides
-  RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyRxPreferencesEnumTypeAdapter() {
+  RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyEnumTypeAdapter() {
     return new RxPreferencesEnumTypeAdapter<>(NetworkStrategy.class);
   }
 
@@ -163,5 +164,20 @@ public class UserPreferencesModule {
       RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
   {
     return rxPrefs.getObject("images_prefetch_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
+  }
+
+// ======== MISC ======== //
+
+  @Provides
+  RxPreferencesEnumTypeAdapter<DefaultWebBrowser> defaultBrowserEnumTypeAdapter() {
+    return new RxPreferencesEnumTypeAdapter<>(DefaultWebBrowser.class);
+  }
+
+  @Provides
+  Preference<DefaultWebBrowser> defaultWebBrowserPref(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<DefaultWebBrowser> enumAdapter)
+  {
+    return rxPrefs.getObject("default_web_browser", DefaultWebBrowser.DANK_INTERNAL_BROWSER, enumAdapter);
   }
 }

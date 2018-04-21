@@ -26,7 +26,6 @@ import io.reactivex.BackpressureStrategy;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.ScreenSavedState;
-import me.saket.dank.ui.preferences.PreferenceMultiOptionPopup.Builder;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesAdapter;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesConstructor;
 import me.saket.dank.ui.preferences.adapter.UserPrefsItemDiffer;
@@ -34,6 +33,7 @@ import me.saket.dank.utils.BackPressCallback;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.itemanimators.SlideUpAlphaAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerViews;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
@@ -108,8 +108,10 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
   }
 
   private void setupPreferenceList() {
+    SlideUpAlphaAnimator itemAnimator = SlideUpAlphaAnimator.create();
+    itemAnimator.setSupportsChangeAnimations(false);
+    preferenceRecyclerView.setItemAnimator(itemAnimator);
     preferenceRecyclerView.setLayoutManager(preferenceRecyclerView.createLayoutManager());
-    preferenceRecyclerView.setItemAnimator(null);
 
     preferencesAdapter.get().dataChanges()
         .take(1)
@@ -146,7 +148,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
   }
 
   @Override
-  public void show(Builder<NetworkStrategy> popupBuilder, RecyclerView.ViewHolder viewHolder) {
+  public void show(PreferenceMultiOptionPopup.Builder popupBuilder, RecyclerView.ViewHolder viewHolder) {
     Point showLocation = new Point(0, viewHolder.itemView.getTop() + Views.statusBarHeight(getResources()));
 
     // Align with padding.
