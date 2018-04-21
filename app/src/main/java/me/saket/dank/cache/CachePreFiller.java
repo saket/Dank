@@ -30,7 +30,7 @@ import io.reactivex.Scheduler;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
-import me.saket.dank.data.NetworkStrategy;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionImageHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;

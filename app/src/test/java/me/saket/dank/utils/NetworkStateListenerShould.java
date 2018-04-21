@@ -19,7 +19,7 @@ import org.mockito.Mockito;
 import org.mockito.junit.MockitoJUnit;
 import org.mockito.junit.MockitoRule;
 
-import me.saket.dank.data.NetworkStrategy;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 
 public class NetworkStateListenerShould {
 

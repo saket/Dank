@@ -14,7 +14,7 @@ import javax.inject.Inject;
 
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
-import me.saket.dank.data.NetworkStrategy;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 
 public class NetworkStateListener {
 

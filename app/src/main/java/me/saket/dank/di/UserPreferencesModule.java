@@ -18,7 +18,7 @@ import dagger.Module;
 import dagger.Provides;
 import io.reactivex.Observable;
 import me.saket.dank.data.CachePreFillThing;
-import me.saket.dank.data.NetworkStrategy;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
 import me.saket.dank.utils.TimeInterval;
 

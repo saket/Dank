@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.ui.preferences;
 
 import android.support.annotation.StringRes;
 

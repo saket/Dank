@@ -26,7 +26,7 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
-import me.saket.dank.data.NetworkStrategy;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.ExoPlayerManager;

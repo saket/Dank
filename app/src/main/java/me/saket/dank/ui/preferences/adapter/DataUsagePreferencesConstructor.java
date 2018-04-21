@@ -10,7 +10,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import me.saket.dank.R;
-import me.saket.dank.data.NetworkStrategy;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.preferences.PreferenceMultiOptionPopup;
 import me.saket.dank.ui.preferences.adapter.UserPreferenceButton.UiModel;
 

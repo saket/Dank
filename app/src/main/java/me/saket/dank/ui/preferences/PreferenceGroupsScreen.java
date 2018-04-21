@@ -24,7 +24,6 @@ import butterknife.ButterKnife;
 import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import me.saket.dank.R;
-import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.ScreenSavedState;
 import me.saket.dank.ui.preferences.PreferenceMultiOptionPopup.Builder;

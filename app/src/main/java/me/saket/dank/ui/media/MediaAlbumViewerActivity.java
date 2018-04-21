@@ -63,7 +63,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.data.NetworkStrategy;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
