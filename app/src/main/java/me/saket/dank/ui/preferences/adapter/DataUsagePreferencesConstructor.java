@@ -1,11 +1,14 @@
 package me.saket.dank.ui.preferences.adapter;
 
 import android.content.Context;
+
 import com.f2prateek.rx.preferences2.Preference;
+
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
+
 import me.saket.dank.R;
 import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.ui.preferences.PreferenceMultiOptionPopup;
@@ -41,9 +44,9 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
         c.getString(hqImagesNetworkStrategyPref.get().displayNameRes),
         (clickHandler, event) -> {
           PreferenceMultiOptionPopup.Builder<NetworkStrategy> popupBuilder = PreferenceMultiOptionPopup.builder(hqImagesNetworkStrategyPref)
-              .addOption(NetworkStrategy.WIFI_ONLY, NetworkStrategy.WIFI_ONLY.displayNameRes)
-              .addOption(NetworkStrategy.WIFI_OR_MOBILE_DATA, NetworkStrategy.WIFI_OR_MOBILE_DATA.displayNameRes)
-              .addOption(NetworkStrategy.NEVER, NetworkStrategy.NEVER.displayNameRes);
+              .addOption(NetworkStrategy.WIFI_ONLY, NetworkStrategy.WIFI_ONLY.displayNameRes, R.drawable.ic_network_wifi_24dp)
+              .addOption(NetworkStrategy.WIFI_OR_MOBILE_DATA, NetworkStrategy.WIFI_OR_MOBILE_DATA.displayNameRes, R.drawable.ic_network_cell_24dp)
+              .addOption(NetworkStrategy.NEVER, NetworkStrategy.NEVER.displayNameRes, R.drawable.ic_block_24dp);
           clickHandler.show(popupBuilder, event.itemViewHolder());
         }));
 

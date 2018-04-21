@@ -1,6 +1,7 @@
 package me.saket.dank.data;
 
 import android.support.annotation.StringRes;
+
 import me.saket.dank.R;
 
 public enum NetworkStrategy {
@@ -9,6 +10,7 @@ public enum NetworkStrategy {
   NEVER(R.string.userprefs_networkstrategy_never),
   ;
 
+  @StringRes
   public final int displayNameRes;
 
   NetworkStrategy(@StringRes int displayNameRes) {

@@ -409,46 +409,6 @@
     <item name="android:textAllCaps">true</item>
   </style>
 
-  <!-- User Preferences -->
-  <style name="DankPreferencesGroupTitle">
-    <item name="android:layout_marginBottom">@dimen/spacing12</item>
-    <item name="android:layout_marginEnd">@dimen/spacing16</item>
-    <item name="android:layout_marginStart">@dimen/spacing16</item>
-    <item name="android:textAllCaps">true</item>
-    <item name="android:textSize">@dimen/textsize12</item>
-  </style>
-
-  <style name="DankPreferencesGroupTitle.WithTopSpacing">
-    <item name="android:layout_marginTop">@dimen/spacing24</item>
-  </style>
-
-  <style name="DankPreferenceItemDescription">
-    <item name="android:textColor">@color/gray_500</item>
-    <item name="android:textSize">@dimen/textsize14</item>
-    <item name="android:layout_marginStart">@dimen/spacing16</item>
-    <item name="android:layout_marginEnd">@dimen/spacing16</item>
-  </style>
-
-  <style name="DankPreferenceItemTitle">
-    <item name="android:textColor">@color/gray_200</item>
-    <item name="android:textSize">@dimen/textsize14</item>
-    <item name="android:layout_marginStart">@dimen/spacing16</item>
-    <item name="android:layout_marginEnd">@dimen/spacing16</item>
-  </style>
-
-  <style name="DankPreferencesSeparator" parent="DankSeparator.VerticalContent">
-    <item name="android:background">@color/black_opacity_10</item>
-    <item name="android:layout_marginTop">@dimen/spacing16</item>
-  </style>
-
-  <style name="DankPreferenceGroupSummary">
-    <item name="android:layout_marginBottom">@dimen/spacing12</item>
-    <item name="android:layout_marginEnd">@dimen/spacing24</item>
-    <item name="android:layout_marginStart">@dimen/spacing16</item>
-    <item name="android:lineSpacingExtra">2dp</item>
-    <item name="android:textColor">@color/white_opacity_50</item>
-  </style>
-
   <!-- Compose -->
   <style name="DankTextFormatToolbarButton">
     <item name="android:layout_width">wrap_content</item>

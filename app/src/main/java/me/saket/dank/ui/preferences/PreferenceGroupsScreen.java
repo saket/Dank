@@ -14,12 +14,15 @@ import android.util.AttributeSet;
 import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
+
+import com.jakewharton.rxrelay2.BehaviorRelay;
+
+import javax.inject.Inject;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
-import com.jakewharton.rxrelay2.BehaviorRelay;
 import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
-import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.di.Dank;
@@ -146,6 +149,10 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
   @Override
   public void show(Builder<NetworkStrategy> popupBuilder, RecyclerView.ViewHolder viewHolder) {
     Point showLocation = new Point(0, viewHolder.itemView.getTop() + Views.statusBarHeight(getResources()));
+
+    // Align with padding.
+    int paddding = getResources().getDimensionPixelSize(R.dimen.userprefs_item_padding);
+    showLocation.offset(paddding, paddding);
 
     popupBuilder
         .build(getContext())

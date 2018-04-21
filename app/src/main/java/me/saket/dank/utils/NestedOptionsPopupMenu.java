@@ -23,8 +23,11 @@ import android.view.animation.AnimationUtils;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
 import android.widget.ViewFlipper;
+
 import com.google.auto.value.AutoValue;
+
 import java.util.List;
+
 import me.saket.dank.R;
 import me.saket.dank.ui.user.PopupWindowWithMaterialTransition;
 import me.saket.dank.widgets.TintableCompoundDrawableTextView;
@@ -33,12 +36,16 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
 
   @AutoValue
   public abstract static class MenuStructure {
-    public abstract CharSequence title();
+    public abstract Optional<CharSequence> optionalTitle();
 
     public abstract List<SingleLineItem> items();
 
-    public static MenuStructure create(CharSequence title, List<SingleLineItem> items) {
+    public static MenuStructure create(Optional<CharSequence> title, List<SingleLineItem> items) {
       return new AutoValue_NestedOptionsPopupMenu_MenuStructure(title, items);
+    }
+
+    public static MenuStructure create(CharSequence title, List<SingleLineItem> items) {
+      return new AutoValue_NestedOptionsPopupMenu_MenuStructure(Optional.of(title), items);
     }
 
     @AutoValue
@@ -100,13 +107,15 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
     mainMenuContainer.setOrientation(LinearLayout.VERTICAL);
     viewFlipper.addView(mainMenuContainer, viewFlipperParams.width, LayoutParams.WRAP_CONTENT);
 
-    AppCompatTextView mainMenuTitle = new AppCompatTextView(c);
-    mainMenuTitle.setBackgroundColor(ContextCompat.getColor(c, R.color.black_opacity_10));
-    mainMenuTitle.setSingleLine();
-    mainMenuTitle.setEllipsize(TextUtils.TruncateAt.END);
-    mainMenuTitle.setPadding(spacing16, spacing16, spacing16, spacing16);
-    mainMenuTitle.setText(menuStructure.title());
-    mainMenuContainer.addView(mainMenuTitle, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+    menuStructure.optionalTitle().ifPresent(title -> {
+      AppCompatTextView mainMenuTitle = new AppCompatTextView(c);
+      mainMenuTitle.setBackgroundColor(ContextCompat.getColor(c, R.color.black_opacity_10));
+      mainMenuTitle.setSingleLine();
+      mainMenuTitle.setEllipsize(TextUtils.TruncateAt.END);
+      mainMenuTitle.setPadding(spacing16, spacing16, spacing16, spacing16);
+      mainMenuTitle.setText(title);
+      mainMenuContainer.addView(mainMenuTitle, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
+    });
 
     for (MenuStructure.SingleLineItem singleLineItem : menuStructure.items()) {
       TintableCompoundDrawableTextView menuButton = new TintableCompoundDrawableTextView(c);
