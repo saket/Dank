@@ -18,22 +18,29 @@ import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.RequestOptions;
+import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.Thumbnails;
+
+import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
@@ -49,25 +56,37 @@ public class SubmissionImageHolder {
 
   // TO ensure that both CachePreFiller and SubmissionImageHolder are in sync.
   public static final boolean LOAD_LOW_QUALITY_IMAGES = true;
-  private final SubmissionPageLifecycleStreams lifecycleStreams;
 
   @BindView(R.id.submission_image_scroll_hint) View imageScrollHintView;
   @BindView(R.id.submission_image) ZoomableImageView imageView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
   @BindColor(R.color.submission_media_content_background_padding) int paddingColorForSmallImages;
 
-  private final ExpandablePageLayout submissionPageLayout;
-  private final ProgressBar contentLoadProgressView;
-  private final Size deviceDisplaySize;
-  private final Relay<Drawable> imageStream = PublishRelay.create();
-  private final GlidePaddingTransformation glidePaddingTransformation;
+  private final Preference<NetworkStrategy> hdMediaNetworkStrategyPref;
+  private final NetworkStateListener networkStateListener;
+
+  private SubmissionPageLifecycleStreams lifecycleStreams;
+  private ExpandablePageLayout submissionPageLayout;
+  private ProgressBar contentLoadProgressView;
+  private Size deviceDisplaySize;
+  private Relay<Drawable> imageStream = PublishRelay.create();
+  private GlidePaddingTransformation glidePaddingTransformation;
   private ZoomableImageView.OnPanChangeListener imagePanListener;
 
-  /**
-   * God knows why (if he/she exists), ButterKnife is failing to bind <var>contentLoadProgressView</var>,
-   * so we're supplying it manually from the fragment.
-   */
+  @Inject
   public SubmissionImageHolder(
+      @Named("hd_media_in_submissions") Preference<NetworkStrategy> hdMediaNetworkStrategyPref,
+      NetworkStateListener networkStateListener)
+  {
+    this.hdMediaNetworkStrategyPref = hdMediaNetworkStrategyPref;
+    this.networkStateListener = networkStateListener;
+  }
+
+  /**
+   * God knows why (if he/she exists), ButterKnife is failing to bind
+   * <var>contentLoadProgressView</var>, so it's being manually supplied.
+   */
+  public void setup(
       SubmissionPageLifecycleStreams lifecycleStreams,
       View submissionLayout,
       ProgressBar contentLoadProgressView,
@@ -130,26 +149,14 @@ public class SubmissionImageHolder {
 
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    return Single
-        .<Drawable>create(emitter -> {
-          // Images supplied by Reddit are static, so cannot optimize for GIFs.
-          String defaultImageUrl = mediaLink.lowQualityUrl();
-          String optimizedImageUrl = mediaLink.isGif()
-              ? defaultImageUrl
-              : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplaySize.getWidth(), defaultImageUrl);
+    Scheduler scheduler = io();
 
-          emitter.onSuccess(
-              Glide.with(imageView.view())
-                  .load(optimizedImageUrl)
-                  .apply(new RequestOptions()
-                      .priority(Priority.IMMEDIATE)
-                      .transform(glidePaddingTransformation))
-                  .submit()
-                  .get()
-          );
-          emitter.setCancellable(() -> Glide.with(imageView.view()).clear(imageView.view()));
-        })
-        .subscribeOn(io())
+    return hdMediaNetworkStrategyPref
+        .asObservable()
+        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.of(scheduler)))
+        .firstOrError()
+        .map(canLoadHighDef -> decideImageUrl(mediaLink, redditSuppliedThumbnails, canLoadHighDef))
+        .flatMap(imageUrl -> loadImageUsingGlide(imageUrl))
         .observeOn(mainThread())
         .doOnSuccess(drawable -> {
           imageView.setImageDrawable(drawable);
@@ -198,6 +205,33 @@ public class SubmissionImageHolder {
         //.doOnError(e -> Timber.e(e, "Couldn't load image"))
         .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE))
         .toCompletable();
+  }
+
+  private String decideImageUrl(MediaLink mediaLink, Thumbnails redditSuppliedThumbnails, Boolean canLoadHighDef) {
+    if (canLoadHighDef) {
+      return mediaLink.highQualityUrl();
+    } else {
+      // Images supplied by Reddit are static, so cannot optimize for GIFs.
+      String defaultImageUrl = mediaLink.lowQualityUrl();
+      return mediaLink.isGif()
+          ? defaultImageUrl
+          : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplaySize.getWidth(), defaultImageUrl);
+    }
+  }
+
+  private Single<Drawable> loadImageUsingGlide(String imageUrl) {
+    return Single.create(emitter -> {
+      emitter.onSuccess(
+          Glide.with(imageView.view())
+              .load(imageUrl)
+              .apply(new RequestOptions()
+                  .priority(Priority.IMMEDIATE)
+                  .transform(glidePaddingTransformation))
+              .submit()
+              .get()
+      );
+      emitter.setCancellable(() -> Glide.with(imageView.view()).clear(imageView.view()));
+    });
   }
 
   /**

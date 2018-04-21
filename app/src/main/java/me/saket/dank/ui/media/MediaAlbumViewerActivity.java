@@ -118,7 +118,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   @Inject UserPreferences userPreferences;
   @Inject NetworkStateListener networkStateListener;
 
-  @Inject @Named("high_resolution_media_network_strategy")
+  @Inject @Named("hd_media_in_gallery")
   Lazy<Preference<NetworkStrategy>> highResolutionMediaNetworkStrategyPref;
 
   private SystemUiHelper systemUiHelper;

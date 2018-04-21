@@ -350,8 +350,8 @@
   <string name="userprefs_datausage_message_sync_period_and_connection">Every 30 minutes and only on WiFi</string>
 
   <string name="userprefs_group_media_quality">Media Quality</string>
-  <string name="userprefs_mediaquality_load_hq_images">Load high-quality images</string>
-  <string name="userprefs_mediaquality_load_hq_videos">Load high-quality videos</string>
+  <string name="userprefs_mediaquality_load_hq_media_in_submissions">Prefer loading HD media in submissions</string>
+  <string name="userprefs_mediaquality_load_hq_media_in_gallery">Prefer loading HD media in Gallery</string>
 
   <string name="userprefs_group_caching">Caching</string>
   <string name="userprefs_group_caching_summary">Dank can pre-fetch content for subscribed subreddits when you visit them.

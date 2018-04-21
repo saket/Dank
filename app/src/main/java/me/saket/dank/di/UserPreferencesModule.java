@@ -57,16 +57,6 @@ public class UserPreferencesModule {
   }
 
   @Provides
-  @Singleton
-  @Named("high_resolution_media_network_strategy")
-  Preference<NetworkStrategy> highResolutionMediaNetworkStrategyPref(
-      @Named("user_prefs") RxSharedPreferences rxPrefs,
-      RxPreferencesEnumTypeAdapter<NetworkStrategy> networkStrategyTypeAdapter)
-  {
-    return rxPrefs.getObject("high_resolution_media_network_strategy", NetworkStrategy.WIFI_ONLY, networkStrategyTypeAdapter);
-  }
-
-  @Provides
   @Named("auto_play_videos_network_strategy")
   Preference<NetworkStrategy> autoPlayVideosNetworkStrategyPref(
       @Named("user_prefs") RxSharedPreferences rxPrefs,
@@ -122,21 +112,21 @@ public class UserPreferencesModule {
 // ======== DATA USAGE ======== //
 
   @Provides
-  @Named("hq_images")
+  @Named("hd_media_in_submissions")
   Preference<NetworkStrategy> hqImagesStrategyPref(
       @Named("user_prefs") RxSharedPreferences rxPrefs,
       RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
   {
-    return rxPrefs.getObject("hq_images_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
+    return rxPrefs.getObject("hd_media_in_submissions_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
   }
 
   @Provides
-  @Named("hq_videos")
+  @Named("hd_media_in_gallery")
   Preference<NetworkStrategy> hqVideosStrategyPref(
       @Named("user_prefs") RxSharedPreferences rxPrefs,
       RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
   {
-    return rxPrefs.getObject("hq_videos_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
+    return rxPrefs.getObject("hd_media_in_gallery_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
   }
 
   @Provides

@@ -26,8 +26,8 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
-import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.NetworkStateListener;
@@ -37,6 +37,7 @@ import me.saket.dank.utils.Views;
 import me.saket.dank.utils.lifecycle.ViewLifecycleEvent;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
+import timber.log.Timber;
 
 /**
  * Manages loading of video in {@link SubmissionPageLayout}.
@@ -49,7 +50,7 @@ public class SubmissionVideoHolder {
   private final Lazy<MediaHostRepository> mediaHostRepository;
   private final Lazy<HttpProxyCacheServer> httpProxyCacheServer;
   private final Lazy<NetworkStateListener> networkStateListener;
-  private final Lazy<Preference<NetworkStrategy>> highResolutionMediaNetworkStrategy;
+  private final Lazy<Preference<NetworkStrategy>> hdMediaNetworkStrategy;
   private final Lazy<Preference<NetworkStrategy>> autoPlayVideosNetworkStrategy;
 
   private ExoPlayerManager exoPlayerManager;
@@ -67,13 +68,13 @@ public class SubmissionVideoHolder {
       Lazy<MediaHostRepository> mediaHostRepository,
       Lazy<HttpProxyCacheServer> httpProxyCacheServer,
       Lazy<NetworkStateListener> networkStateListener,
-      @Named("high_resolution_media_network_strategy") Lazy<Preference<NetworkStrategy>> highResolutionMediaNetworkStrategy,
+      @Named("hd_media_in_submissions") Lazy<Preference<NetworkStrategy>> hdMediaNetworkStrategy,
       @Named("auto_play_videos_network_strategy") Lazy<Preference<NetworkStrategy>> autoPlayVideosNetworkStrategy)
   {
     this.mediaHostRepository = mediaHostRepository;
     this.httpProxyCacheServer = httpProxyCacheServer;
     this.networkStateListener = networkStateListener;
-    this.highResolutionMediaNetworkStrategy = highResolutionMediaNetworkStrategy;
+    this.hdMediaNetworkStrategy = hdMediaNetworkStrategy;
     this.autoPlayVideosNetworkStrategy = autoPlayVideosNetworkStrategy;
   }
 
@@ -111,7 +112,7 @@ public class SubmissionVideoHolder {
     // Later hidden inside loadVideo(), when the video's height becomes available.
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    Single<Boolean> loadHighQualityVideoPredicate = highResolutionMediaNetworkStrategy.get()
+    Single<Boolean> loadHighQualityVideoPredicate = hdMediaNetworkStrategy.get()
         .asObservable()
         .flatMap(strategy -> networkStateListener.get().streamNetworkInternetCapability(strategy, Optional.empty()))
         .firstOrError();

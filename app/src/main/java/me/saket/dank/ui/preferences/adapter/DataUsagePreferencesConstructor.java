@@ -16,22 +16,22 @@ import me.saket.dank.ui.preferences.adapter.UserPreferenceButton.UiModel;
 
 public class DataUsagePreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
 
-  private final Preference<NetworkStrategy> hqImagesLoadNetworkStrategyPref;
-  private final Preference<NetworkStrategy> hqVideosLoadNetworkStrategyPref;
+  private final Preference<NetworkStrategy> hdMediaInSubmissionsNetworkStrategyPref;
+  private final Preference<NetworkStrategy> hdMediaInGalleryNetworkStrategyPref;
   private final Preference<NetworkStrategy> commentsPreFetchNetworkStrategyPref;
   private final Preference<NetworkStrategy> linksPreFetchNetworkStrategyPref;
   private final Preference<NetworkStrategy> imagesPreFetchNetworkStrategyPref;
 
   @Inject
   public DataUsagePreferencesConstructor(
-      @Named("hq_images") Preference<NetworkStrategy> hqImagesNetworkStrategyPref,
-      @Named("hq_videos") Preference<NetworkStrategy> hqVideosLoadNetworkStrategyPref,
+      @Named("hd_media_in_submissions") Preference<NetworkStrategy> hdMediaInSubmissionsNetworkStrategyPref,
+      @Named("hd_media_in_gallery") Preference<NetworkStrategy> hdMediaInGalleryNetworkStrategyPref,
       @Named("comments_prefetch") Preference<NetworkStrategy> commentsPreFetchNetworkStrategyPref,
       @Named("links_prefetch") Preference<NetworkStrategy> linksPreFetchNetworkStrategyPref,
       @Named("images_prefetch") Preference<NetworkStrategy> imagesPreFetchNetworkStrategyPref)
   {
-    this.hqImagesLoadNetworkStrategyPref = hqImagesNetworkStrategyPref;
-    this.hqVideosLoadNetworkStrategyPref = hqVideosLoadNetworkStrategyPref;
+    this.hdMediaInSubmissionsNetworkStrategyPref = hdMediaInSubmissionsNetworkStrategyPref;
+    this.hdMediaInGalleryNetworkStrategyPref = hdMediaInGalleryNetworkStrategyPref;
     this.commentsPreFetchNetworkStrategyPref = commentsPreFetchNetworkStrategyPref;
     this.linksPreFetchNetworkStrategyPref = linksPreFetchNetworkStrategyPref;
     this.imagesPreFetchNetworkStrategyPref = imagesPreFetchNetworkStrategyPref;
@@ -52,14 +52,14 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_media_quality)));
 
     uiModels.add(UiModel.create(
-        c.getString(R.string.userprefs_mediaquality_load_hq_images),
-        c.getString(hqImagesLoadNetworkStrategyPref.get().displayNameRes),
-        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(hqImagesLoadNetworkStrategyPref), event.itemViewHolder())));
+        c.getString(R.string.userprefs_mediaquality_load_hq_media_in_submissions),
+        c.getString(hdMediaInSubmissionsNetworkStrategyPref.get().displayNameRes),
+        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(hdMediaInSubmissionsNetworkStrategyPref), event.itemViewHolder())));
 
     uiModels.add(UiModel.create(
-        c.getString(R.string.userprefs_mediaquality_load_hq_videos),
-        c.getString(hqVideosLoadNetworkStrategyPref.get().displayNameRes),
-        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(hqVideosLoadNetworkStrategyPref), event.itemViewHolder())));
+        c.getString(R.string.userprefs_mediaquality_load_hq_media_in_gallery),
+        c.getString(hdMediaInGalleryNetworkStrategyPref.get().displayNameRes),
+        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(hdMediaInGalleryNetworkStrategyPref), event.itemViewHolder())));
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(
         c.getString(R.string.userprefs_group_caching),

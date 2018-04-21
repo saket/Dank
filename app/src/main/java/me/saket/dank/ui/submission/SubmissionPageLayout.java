@@ -186,11 +186,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @Inject SubmissionCommentTreeUiConstructor commentTreeUiConstructor;
 
   @Inject @Named("show_nsfw_content") Lazy<Preference<Boolean>> showNsfwContentPreference;
-  @Inject Lazy<SubmissionVideoHolder> contentVideoViewHolder;
   @Inject Lazy<OnLoginRequireListener> onLoginRequireListener;
   @Inject Lazy<VotingManager> votingManager;
   @Inject Lazy<UserSessionRepository> userSessionRepository;
   @Inject Lazy<UrlParser> urlParser;
+  @Inject Lazy<SubmissionVideoHolder> contentVideoViewHolder;
+  @Inject Lazy<SubmissionImageHolder> contentImageViewHolder;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
@@ -205,7 +206,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private BehaviorRelay<Optional<String>> callingSubreddits = BehaviorRelay.createDefault(Optional.empty());
 
   private ExpandablePageLayout submissionPageLayout;
-  private SubmissionImageHolder contentImageViewHolder;
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
   private SubmissionPageLifecycleStreams lifecycleStreams;
@@ -864,7 +864,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
   private void setupContentImageView(View fragmentLayout) {
     Views.setMarginBottom(contentImageView.view(), commentsSheetMinimumVisibleHeight);
-    contentImageViewHolder = new SubmissionImageHolder(
+    contentImageViewHolder.get().setup(
         lifecycle(),
         fragmentLayout,
         contentLoadProgressView,
@@ -970,7 +970,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
         // Scroll the comment sheet along with the image if it's zoomed in. This ensures that the sheet always sticks to the bottom of the image.
         int minimumGapWithBottom = 0;
-        int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - Views.statusBarHeight(contentVideoView.getResources());
+        int contentHeightWithoutKeyboard = deviceDisplayHeight - minimumGapWithBottom - Views.statusBarHeight(getResources());
 
         int boundedVisibleImageHeight = (int) Math.min(contentHeightWithoutKeyboard, contentImageView.getVisibleZoomedImageHeight());
         int boundedVisibleImageHeightMinusToolbar = boundedVisibleImageHeight - commentListParentSheet.getTop();
@@ -1112,7 +1112,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     //noinspection ConstantConditions
     int defaultStatusBarColor = ContextCompat.getColor(getContext(), R.color.color_primary_dark);
     Observable<Optional<Bitmap>> contentBitmapStream = Observable.merge(
-        contentImageViewHolder.streamImageBitmaps(),
+        contentImageViewHolder.get().streamImageBitmaps(),
         contentVideoViewHolder.get().streamVideoFirstFrameBitmaps().map(Optional::of)
     );
 
@@ -1327,7 +1327,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                   Thumbnails redditSuppliedImages = submission.getThumbnails();
 
                   // Threading is handled internally by SubmissionImageHolder#load().
-                  contentImageViewHolder.load((MediaLink) resolvedLink, redditSuppliedImages)
+                  contentImageViewHolder.get().load((MediaLink) resolvedLink, redditSuppliedImages)
                       .ambWith(lifecycle().onPageCollapseOrDestroyCompletable())
                       .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
                   contentImageView.view().setContentDescription(getResources().getString(
