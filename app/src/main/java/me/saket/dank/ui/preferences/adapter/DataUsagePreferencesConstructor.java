@@ -16,13 +16,25 @@ import me.saket.dank.ui.preferences.adapter.UserPreferenceButton.UiModel;
 
 public class DataUsagePreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
 
-  private final Preference<NetworkStrategy> hqImagesNetworkStrategyPref;
+  private final Preference<NetworkStrategy> hqImagesLoadNetworkStrategyPref;
+  private final Preference<NetworkStrategy> hqVideosLoadNetworkStrategyPref;
+  private final Preference<NetworkStrategy> commentsPreFetchNetworkStrategyPref;
+  private final Preference<NetworkStrategy> linksPreFetchNetworkStrategyPref;
+  private final Preference<NetworkStrategy> imagesPreFetchNetworkStrategyPref;
 
   @Inject
   public DataUsagePreferencesConstructor(
-      @Named("hq_images") Preference<NetworkStrategy> hqImagesNetworkStrategyPref)
+      @Named("hq_images") Preference<NetworkStrategy> hqImagesNetworkStrategyPref,
+      @Named("hq_videos") Preference<NetworkStrategy> hqVideosLoadNetworkStrategyPref,
+      @Named("comments_prefetch") Preference<NetworkStrategy> commentsPreFetchNetworkStrategyPref,
+      @Named("links_prefetch") Preference<NetworkStrategy> linksPreFetchNetworkStrategyPref,
+      @Named("images_prefetch") Preference<NetworkStrategy> imagesPreFetchNetworkStrategyPref)
   {
-    this.hqImagesNetworkStrategyPref = hqImagesNetworkStrategyPref;
+    this.hqImagesLoadNetworkStrategyPref = hqImagesNetworkStrategyPref;
+    this.hqVideosLoadNetworkStrategyPref = hqVideosLoadNetworkStrategyPref;
+    this.commentsPreFetchNetworkStrategyPref = commentsPreFetchNetworkStrategyPref;
+    this.linksPreFetchNetworkStrategyPref = linksPreFetchNetworkStrategyPref;
+    this.imagesPreFetchNetworkStrategyPref = imagesPreFetchNetworkStrategyPref;
   }
 
   @Override
@@ -41,20 +53,13 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
 
     uiModels.add(UiModel.create(
         c.getString(R.string.userprefs_mediaquality_load_hq_images),
-        c.getString(hqImagesNetworkStrategyPref.get().displayNameRes),
-        (clickHandler, event) -> {
-          PreferenceMultiOptionPopup.Builder<NetworkStrategy> popupBuilder = PreferenceMultiOptionPopup.builder(hqImagesNetworkStrategyPref)
-              .addOption(NetworkStrategy.WIFI_ONLY, NetworkStrategy.WIFI_ONLY.displayNameRes, R.drawable.ic_network_wifi_24dp)
-              .addOption(NetworkStrategy.WIFI_OR_MOBILE_DATA, NetworkStrategy.WIFI_OR_MOBILE_DATA.displayNameRes, R.drawable.ic_network_cell_24dp)
-              .addOption(NetworkStrategy.NEVER, NetworkStrategy.NEVER.displayNameRes, R.drawable.ic_block_24dp);
-          clickHandler.show(popupBuilder, event.itemViewHolder());
-        }));
+        c.getString(hqImagesLoadNetworkStrategyPref.get().displayNameRes),
+        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(hqImagesLoadNetworkStrategyPref), event.itemViewHolder())));
 
     uiModels.add(UiModel.create(
         c.getString(R.string.userprefs_mediaquality_load_hq_videos),
-        c.getString(R.string.userprefs_networkstrategy_only_on_wifi),
-        (clickHandler, event) -> {
-        }));
+        c.getString(hqVideosLoadNetworkStrategyPref.get().displayNameRes),
+        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(hqVideosLoadNetworkStrategyPref), event.itemViewHolder())));
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(
         c.getString(R.string.userprefs_group_caching),
@@ -62,22 +67,26 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
 
     uiModels.add(UiModel.create(
         c.getString(R.string.userprefs_prefetch_comments),
-        c.getString(R.string.userprefs_networkstrategy_only_on_wifi),
-        (clickHandler, event) -> {
-        }));
+        c.getString(commentsPreFetchNetworkStrategyPref.get().displayNameRes),
+        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(commentsPreFetchNetworkStrategyPref), event.itemViewHolder())));
 
     uiModels.add(UiModel.create(
         c.getString(R.string.userprefs_prefetch_link_descriptions),
-        c.getString(R.string.userprefs_networkstrategy_only_on_wifi),
-        (clickHandler, event) -> {
-        }));
+        c.getString(linksPreFetchNetworkStrategyPref.get().displayNameRes),
+       (clickHandler, event) -> clickHandler.show(networkStrategyPopup(linksPreFetchNetworkStrategyPref), event.itemViewHolder())));
 
     uiModels.add(UiModel.create(
         c.getString(R.string.userprefs_prefetch_images),
-        c.getString(R.string.userprefs_networkstrategy_only_on_wifi),
-        (clickHandler, event) -> {
-        }));
+        c.getString(imagesPreFetchNetworkStrategyPref.get().displayNameRes),
+       (clickHandler, event) -> clickHandler.show(networkStrategyPopup(imagesPreFetchNetworkStrategyPref), event.itemViewHolder())));
 
     return uiModels;
+  }
+
+  private PreferenceMultiOptionPopup.Builder<NetworkStrategy> networkStrategyPopup(Preference<NetworkStrategy> preference) {
+    return PreferenceMultiOptionPopup.builder(preference)
+        .addOption(NetworkStrategy.WIFI_ONLY, NetworkStrategy.WIFI_ONLY.displayNameRes, R.drawable.ic_network_wifi_24dp)
+        .addOption(NetworkStrategy.WIFI_OR_MOBILE_DATA, NetworkStrategy.WIFI_OR_MOBILE_DATA.displayNameRes, R.drawable.ic_network_cell_24dp)
+        .addOption(NetworkStrategy.NEVER, NetworkStrategy.NEVER.displayNameRes, R.drawable.ic_block_24dp);
   }
 }

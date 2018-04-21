@@ -3,17 +3,20 @@ package me.saket.dank.di;
 import android.app.Application;
 import android.content.SharedPreferences;
 import android.preference.PreferenceManager;
+
 import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import com.squareup.moshi.Moshi;
-import dagger.Module;
-import dagger.Provides;
-import io.reactivex.Observable;
+
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
+
+import dagger.Module;
+import dagger.Provides;
+import io.reactivex.Observable;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.NetworkStrategy;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
@@ -115,6 +118,8 @@ public class UserPreferencesModule {
     return rxPrefs.getBoolean("show_submission_thumbnails", true);
   }
 
+// ======== DATA USAGE ======== //
+
   @Provides
   @Named("hq_images")
   Preference<NetworkStrategy> hqImagesStrategyPref(
@@ -122,5 +127,41 @@ public class UserPreferencesModule {
       RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
   {
     return rxPrefs.getObject("hq_images_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
+  }
+
+  @Provides
+  @Named("hq_videos")
+  Preference<NetworkStrategy> hqVideosStrategyPref(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
+  {
+    return rxPrefs.getObject("hq_videos_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
+  }
+
+  @Provides
+  @Named("comments_prefetch")
+  Preference<NetworkStrategy> commentsPreFetchStrategyPref(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
+  {
+    return rxPrefs.getObject("comments_prefetch_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
+  }
+
+  @Provides
+  @Named("links_prefetch")
+  Preference<NetworkStrategy> linksPreFetchStrategyPref(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
+  {
+    return rxPrefs.getObject("links_prefetch_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
+  }
+
+  @Provides
+  @Named("images_prefetch")
+  Preference<NetworkStrategy> imagesPreFetchStrategyPref(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
+  {
+    return rxPrefs.getObject("images_prefetch_network_strategy", NetworkStrategy.WIFI_ONLY, strategyTypeAdapter);
   }
 }
