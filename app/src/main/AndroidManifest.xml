@@ -57,6 +57,10 @@
 
     <activity android:name=".ui.webview.WebViewActivity" />
 
+    <activity
+      android:name=".ui.webview.ChromeCustomTabsForwardingActivity"
+      android:theme="@android:style/Theme.NoDisplay" />
+
     <activity android:name=".ui.submission.SubmissionPageLayoutActivity" />
 
     <activity

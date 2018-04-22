@@ -12,6 +12,8 @@ import android.util.Patterns;
 import android.view.View;
 import android.widget.Toast;
 
+import com.f2prateek.rx.preferences2.Preference;
+
 import net.dean.jraw.models.Thumbnails;
 
 import javax.inject.Inject;
@@ -20,10 +22,10 @@ import javax.inject.Singleton;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.ui.media.MediaAlbumViewerActivity;
+import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.subreddit.SubredditActivityWithTransparentWindowBackground;
 import me.saket.dank.ui.user.UserProfilePopup;
-import me.saket.dank.ui.webview.WebViewActivity;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.urlparser.RedditSubmissionLink;
@@ -41,11 +43,13 @@ public class UrlRouter {
 
   private final JacksonHelper jacksonHelper;
   private final DeviceInfo deviceInfo;
+  private final Preference<DefaultWebBrowser> defaultWebBrowserPref;
 
   @Inject
-  protected UrlRouter(JacksonHelper jacksonHelper, DeviceInfo deviceInfo) {
+  protected UrlRouter(JacksonHelper jacksonHelper, DeviceInfo deviceInfo, Preference<DefaultWebBrowser> defaultWebBrowserPref) {
     this.jacksonHelper = jacksonHelper;
     this.deviceInfo = deviceInfo;
+    this.defaultWebBrowserPref = defaultWebBrowserPref;
   }
 
   public UserProfilePopupRouter forLink(RedditUserLink redditUserLink) {
@@ -67,21 +71,23 @@ public class UrlRouter {
       Timber.w("Consider using forLink(MediaLink) instead");
       new Exception().printStackTrace();
     }
-    return new IntentRouter(link, jacksonHelper, deviceInfo);
+    return new IntentRouter(link, jacksonHelper, deviceInfo, defaultWebBrowserPref);
   }
 
   public static class IntentRouter {
     private final Link link;
     private final JacksonHelper jacksonHelper;
     private final DeviceInfo deviceInfo;
+    private final Preference<DefaultWebBrowser> defaultWebBrowserPref;
 
     @Nullable private Point expandFromPoint;
     @Nullable private Rect expandFromRect;
 
-    private IntentRouter(Link link, JacksonHelper jacksonHelper, DeviceInfo deviceInfo) {
+    private IntentRouter(Link link, JacksonHelper jacksonHelper, DeviceInfo deviceInfo, Preference<DefaultWebBrowser> defaultWebBrowserPref) {
       this.link = link;
       this.jacksonHelper = jacksonHelper;
       this.deviceInfo = deviceInfo;
+      this.defaultWebBrowserPref = defaultWebBrowserPref;
     }
 
     /**
@@ -125,22 +131,17 @@ public class UrlRouter {
         boolean isWebUrl = Patterns.WEB_URL.matcher(url).matches();
 
         if (isWebUrl) {
-          String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
-          if (packageNameForDeepLink != null && isPackageNameInstalled(context, packageNameForDeepLink)) {
-            android.content.Intent openUrlIntent = Intents.createForOpeningUrl(url);
-            openUrlIntent.setPackage(packageNameForDeepLink);
-            return openUrlIntent;
+          DefaultWebBrowser defaultWebBrowser = defaultWebBrowserPref.get();
 
-          } else {
-            if (BuildConfig.DEBUG && deviceInfo.isRunningOnEmulator()) {
-              // Opening WebView crashes the emulator.
-              Intent browserIntent = Intents.createForOpeningUrl(url);
-              browserIntent.setPackage("com.android.chrome");
-              return browserIntent;
-            } else {
-              return WebViewActivity.intent(context, url, expandFromRect);
+          // Smart linking.
+          if (defaultWebBrowser == DefaultWebBrowser.DANK_INTERNAL_BROWSER) {
+            String packageNameForDeepLink = findAllowedPackageNameForDeepLink(url);
+            if (packageNameForDeepLink != null && isPackageNameInstalled(context, packageNameForDeepLink)) {
+              return Intents.createForOpeningUrl(url).setPackage(packageNameForDeepLink);
             }
           }
+          return defaultWebBrowser.intentForUrl(context, url, expandFromRect);
+
         } else {
           return Intents.createForOpeningUrl(url);
         }

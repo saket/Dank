@@ -17,9 +17,11 @@ import javax.inject.Singleton;
 import dagger.Module;
 import dagger.Provides;
 import io.reactivex.Observable;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.preferences.NetworkStrategy;
+import me.saket.dank.utils.DeviceInfo;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
 import me.saket.dank.utils.TimeInterval;
 
@@ -166,8 +168,12 @@ public class UserPreferencesModule {
   @Provides
   Preference<DefaultWebBrowser> defaultWebBrowserPref(
       @Named("user_prefs") RxSharedPreferences rxPrefs,
-      RxPreferencesEnumTypeAdapter<DefaultWebBrowser> enumAdapter)
+      RxPreferencesEnumTypeAdapter<DefaultWebBrowser> enumAdapter,
+      DeviceInfo deviceInfo)
   {
-    return rxPrefs.getObject("default_web_browser", DefaultWebBrowser.DANK_INTERNAL_BROWSER, enumAdapter);
+    DefaultWebBrowser defaultValue = BuildConfig.DEBUG && deviceInfo.isRunningOnEmulator()
+        ? DefaultWebBrowser.CHROME_CUSTOM_TABS
+        : DefaultWebBrowser.DANK_INTERNAL_BROWSER;
+    return rxPrefs.getObject("default_web_browser", defaultValue, enumAdapter);
   }
 }
