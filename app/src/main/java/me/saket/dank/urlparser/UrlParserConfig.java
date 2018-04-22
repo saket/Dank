@@ -78,7 +78,7 @@ public class UrlParserConfig {
     return DEFAULT_BOUNDED_USER_PATTERN;
   }
 
-  public Pattern unboundedUserPattern() {
+  public Pattern autoLinkUserPattern() {
     return DEFAULT_UNBOUNDED_USER_PATTERN;
   }
 
@@ -94,7 +94,7 @@ public class UrlParserConfig {
     return DEFAULT_BOUNDED_SUBREDDIT_PATTERN;
   }
 
-  public Pattern unboundedSubredditPattern() {
+  public Pattern autoLinkSubredditPattern() {
     return DEFAULT_UNBOUNDED_SUBREDDIT_PATTERN;
   }
 

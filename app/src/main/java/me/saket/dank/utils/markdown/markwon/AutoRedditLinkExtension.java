@@ -17,6 +17,7 @@ import javax.inject.Inject;
 
 import me.saket.dank.urlparser.UrlParserConfig;
 import me.saket.dank.utils.Optional;
+import timber.log.Timber;
 
 /**
  * Extension for automatically turning "r/subreddit" and "u/user" URLs into links.
@@ -76,7 +77,7 @@ public class AutoRedditLinkExtension implements Parser.ParserExtension {
     List<RedditLinkSpan> extractLinks(String literal) {
       Optional<List<RedditLinkSpan>> linkSpans = Optional.empty();
 
-      Matcher subredditMatcher = urlParserConfig.unboundedSubredditPattern().matcher(literal);
+      Matcher subredditMatcher = urlParserConfig.autoLinkSubredditPattern().matcher(literal);
       while (subredditMatcher.find()) {
         int linkStartIndex = subredditMatcher.start(0);
         int linkEndIndex = subredditMatcher.end(0);
@@ -89,7 +90,7 @@ public class AutoRedditLinkExtension implements Parser.ParserExtension {
         linkSpans.get().add(RedditLinkSpan.create(url, linkStartIndex, linkEndIndex));
       }
 
-      Matcher userMatcher = urlParserConfig.unboundedUserPattern().matcher(literal);
+      Matcher userMatcher = urlParserConfig.autoLinkUserPattern().matcher(literal);
       while (userMatcher.find()) {
         int linkStartIndex = userMatcher.start(0);
         int linkEndIndex = userMatcher.end(0);
@@ -126,7 +127,11 @@ public class AutoRedditLinkExtension implements Parser.ParserExtension {
       @Override
       public void visit(Text text) {
         if (inLink == 0) {
-          linkify(text);
+          try {
+            linkify(text);
+          } catch (Exception e) {
+            Timber.e(e, "Couldn't auto-linkify reddit link: %s", text);
+          }
         }
       }
     }
