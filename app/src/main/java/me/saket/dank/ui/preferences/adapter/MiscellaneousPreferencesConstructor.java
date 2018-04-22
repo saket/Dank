@@ -12,7 +12,7 @@ import javax.inject.Inject;
 import me.saket.dank.R;
 import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.preferences.DefaultWebBrowser;
-import me.saket.dank.ui.preferences.PreferenceMultiOptionPopup;
+import me.saket.dank.ui.preferences.MultiOptionPreferencePopup;
 import me.saket.dank.utils.DeviceInfo;
 
 public class MiscellaneousPreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
@@ -59,8 +59,8 @@ public class MiscellaneousPreferencesConstructor implements UserPreferencesConst
     return uiModels;
   }
 
-  private PreferenceMultiOptionPopup.Builder<DefaultWebBrowser> defaultBrowserPopup() {
-    return PreferenceMultiOptionPopup.builder(defaultBrowserPref)
+  private MultiOptionPreferencePopup.Builder<DefaultWebBrowser> defaultBrowserPopup() {
+    return MultiOptionPreferencePopup.builder(defaultBrowserPref)
         .addOption(DefaultWebBrowser.DANK_INTERNAL_BROWSER, DefaultWebBrowser.DANK_INTERNAL_BROWSER.displayName, R.drawable.ic_app_icon_24dp)
         .addOption(DefaultWebBrowser.CHROME_CUSTOM_TABS, DefaultWebBrowser.CHROME_CUSTOM_TABS.displayName, R.drawable.ic_google_chrome)
         .addOption(DefaultWebBrowser.DEVICE_DEFAULT, DefaultWebBrowser.DEVICE_DEFAULT.displayName, R.drawable.ic_smartphone_24dp);

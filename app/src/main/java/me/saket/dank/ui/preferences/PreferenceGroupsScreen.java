@@ -149,7 +149,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
   }
 
   @Override
-  public void show(PreferenceMultiOptionPopup.Builder popupBuilder, RecyclerView.ViewHolder viewHolder) {
+  public void show(MultiOptionPreferencePopup.Builder popupBuilder, RecyclerView.ViewHolder viewHolder) {
     Point showLocation = new Point(0, viewHolder.itemView.getTop() + Views.statusBarHeight(getResources()));
 
     // Align with padding.

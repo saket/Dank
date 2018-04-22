@@ -13,9 +13,7 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
   private final Preference<Boolean> showSubmissionThumbnails;
 
   @Inject
-  public LookAndFeelPreferencesConstructor(
-      @Named("show_submission_thumbnails") Preference<Boolean> showSubmissionThumbnails)
-  {
+  public LookAndFeelPreferencesConstructor(@Named("show_submission_thumbnails") Preference<Boolean> showSubmissionThumbnails) {
     this.showSubmissionThumbnails = showSubmissionThumbnails;
   }
 

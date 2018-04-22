@@ -11,7 +11,7 @@ import javax.inject.Named;
 
 import me.saket.dank.R;
 import me.saket.dank.ui.preferences.NetworkStrategy;
-import me.saket.dank.ui.preferences.PreferenceMultiOptionPopup;
+import me.saket.dank.ui.preferences.MultiOptionPreferencePopup;
 import me.saket.dank.ui.preferences.adapter.UserPreferenceButton.UiModel;
 
 public class DataUsagePreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
@@ -91,8 +91,8 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
     return uiModels;
   }
 
-  private PreferenceMultiOptionPopup.Builder<NetworkStrategy> networkStrategyPopup(Preference<NetworkStrategy> preference) {
-    return PreferenceMultiOptionPopup.builder(preference)
+  private MultiOptionPreferencePopup.Builder<NetworkStrategy> networkStrategyPopup(Preference<NetworkStrategy> preference) {
+    return MultiOptionPreferencePopup.builder(preference)
         .addOption(NetworkStrategy.WIFI_ONLY, NetworkStrategy.WIFI_ONLY.displayNameRes, R.drawable.ic_network_wifi_24dp)
         .addOption(NetworkStrategy.WIFI_OR_MOBILE_DATA, NetworkStrategy.WIFI_OR_MOBILE_DATA.displayNameRes, R.drawable.ic_network_cell_24dp)
         .addOption(NetworkStrategy.NEVER, NetworkStrategy.NEVER.displayNameRes, R.drawable.ic_block_24dp);

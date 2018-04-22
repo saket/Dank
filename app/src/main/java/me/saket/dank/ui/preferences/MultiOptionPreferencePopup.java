@@ -17,7 +17,7 @@ import java.util.List;
 import me.saket.dank.utils.NestedOptionsPopupMenu;
 import me.saket.dank.utils.Optional;
 
-public class PreferenceMultiOptionPopup<T> extends NestedOptionsPopupMenu {
+public class MultiOptionPreferencePopup<T> extends NestedOptionsPopupMenu {
 
   private Preference<T> preference;
   private List<Option<T>> options;
@@ -26,7 +26,7 @@ public class PreferenceMultiOptionPopup<T> extends NestedOptionsPopupMenu {
     return new Builder<>(preference);
   }
 
-  public PreferenceMultiOptionPopup(Context context, Preference<T> preference, List<Option<T>> options) {
+  public MultiOptionPreferencePopup(Context context, Preference<T> preference, List<Option<T>> options) {
     super(context);
     this.preference = preference;
     this.options = options;
@@ -64,7 +64,7 @@ public class PreferenceMultiOptionPopup<T> extends NestedOptionsPopupMenu {
     public abstract int iconRes();
 
     public static <T> Option<T> create(T preferenceValue, @StringRes int titleRes, @DrawableRes int iconRes) {
-      return new AutoValue_PreferenceMultiOptionPopup_Option<>(preferenceValue, titleRes, iconRes);
+      return new AutoValue_MultiOptionPreferencePopup_Option<>(preferenceValue, titleRes, iconRes);
     }
   }
 
@@ -85,8 +85,8 @@ public class PreferenceMultiOptionPopup<T> extends NestedOptionsPopupMenu {
       return this;
     }
 
-    public PreferenceMultiOptionPopup<T> build(Context context) {
-      return new PreferenceMultiOptionPopup<>(context, preference, options);
+    public MultiOptionPreferencePopup<T> build(Context context) {
+      return new MultiOptionPreferencePopup<>(context, preference, options);
     }
   }
 }
