@@ -109,7 +109,6 @@ import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
-import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.subreddit.events.SubmissionOpenInNewTabSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubmissionOptionSwipeEvent;
@@ -213,7 +212,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
   public interface Callbacks {
     // TODO: remove this now?
-    SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer();
+//    SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer();
 
     void onClickSubmissionToolbarUp();
   }

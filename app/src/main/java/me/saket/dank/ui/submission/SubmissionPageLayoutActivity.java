@@ -19,7 +19,6 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.compose.InsertGifDialog;
 import me.saket.dank.ui.giphy.GiphyGif;
-import me.saket.dank.ui.subreddit.SubmissionPageAnimationOptimizer;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.urlparser.RedditCommentLink;
 import me.saket.dank.urlparser.RedditSubmissionLink;
@@ -122,17 +121,17 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
     return submissionReqBuilder.build();
   }
 
-  @Override
-  public SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer() {
-    // Should never get used.
-    //noinspection ConstantConditions
-    return new SubmissionPageAnimationOptimizer(null) {
-      @Override
-      public boolean isOptimizationPending() {
-        throw new AssertionError();
-      }
-    };
-  }
+//  @Override
+//  public SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer() {
+//    // Should never get used.
+//    //noinspection ConstantConditions
+//    return new SubmissionPageAnimationOptimizer(null) {
+//      @Override
+//      public boolean isOptimizationPending() {
+//        throw new AssertionError();
+//      }
+//    };
+//  }
 
   @Override
   public void onClickSubmissionToolbarUp() {

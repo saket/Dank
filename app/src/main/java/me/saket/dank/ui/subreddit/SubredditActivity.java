@@ -145,7 +145,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Inject Lazy<UrlRouter> urlRouter;
   @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<VotingManager> votingManager;
-  @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
+//  @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
   @Inject Lazy<SubredditController> subredditController;
   @Inject Lazy<UserSessionRepository> userSessionRepository;
   @Inject Lazy<OnLoginRequireListener> loginRequireListener;
@@ -441,19 +441,19 @@ public class SubredditActivity extends DankPullCollapsibleActivity
               .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : DankRedditClient.DEFAULT_COMMENT_SORT)
               .build();
 
-          long delay = submissionPageAnimationOptimizer.get().shouldDelayLoad(submission)
-              ? submissionPage.getAnimationDurationMillis()
-              : 0;
+//          long delay = submissionPageAnimationOptimizer.get().shouldDelayLoad(submission)
+//              ? submissionPage.getAnimationDurationMillis()
+//              : 0;
 
-          Single.timer(delay, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
-              .takeUntil(lifecycle().onDestroy().ignoreElements())
-              .subscribe(o -> {
+//          Single.timer(delay, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+//              .takeUntil(lifecycle().onDestroy().ignoreElements())
+//              .subscribe(o -> {
                 submissionPage.populateUi(Optional.of(submission), submissionRequest, Optional.of(currentSubredditName));
-                submissionPageAnimationOptimizer.get().trackSubmissionOpened(submission);
-              });
+//                submissionPageAnimationOptimizer.get().trackSubmissionOpened(submission);
+//              });
 
           submissionPage.post(() ->
-              Observable.timer(100 + delay / 2, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
+              Observable.timer(100, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
                   .takeUntil(lifecycle().onDestroy())
                   .subscribe(o -> submissionRecyclerView.expandItem(submissionRecyclerView.indexOfChild(clickEvent.itemView()), clickEvent.itemId()))
           );
@@ -667,10 +667,10 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .subscribe();
   }
 
-  @Override
-  public SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer() {
-    return submissionPageAnimationOptimizer.get();
-  }
+//  @Override
+//  public SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer() {
+//    return submissionPageAnimationOptimizer.get();
+//  }
 
 // ======== SORTING MODE ======== //
 
