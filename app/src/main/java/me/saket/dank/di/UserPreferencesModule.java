@@ -105,6 +105,8 @@ public class UserPreferencesModule {
     });
   }
 
+// ======== LOOK & FEEL ======== //
+
   @Provides
   @Named("show_submission_thumbnails")
   Preference<Boolean> showSubmissionThumbnailsPref(@Named("user_prefs") RxSharedPreferences rxPrefs) {

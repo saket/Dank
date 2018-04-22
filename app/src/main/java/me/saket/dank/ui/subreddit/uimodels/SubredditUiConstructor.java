@@ -33,10 +33,10 @@ import me.saket.dank.ui.submission.SubredditNotFoundException;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.ui.subreddit.SubmissionThumbnailTypeMinusNsfw;
-import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
+import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
 import timber.log.Timber;
 
@@ -48,6 +48,7 @@ public class SubredditUiConstructor {
   private final VotingManager votingManager;
   private final Preference<Boolean> showCommentCountInByline;
   private final Preference<Boolean> showNsfwContent;
+  private final Preference<Boolean> showThumbnailsPref;
   private final ErrorResolver errorResolver;
   private final Lazy<BookmarksRepository> bookmarksRepository;
 
@@ -57,13 +58,15 @@ public class SubredditUiConstructor {
       ErrorResolver errorResolver,
       Lazy<BookmarksRepository> bookmarksRepository,
       @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
-      @Named("show_nsfw_content") Preference<Boolean> showNsfwContent)
+      @Named("show_nsfw_content") Preference<Boolean> showNsfwContent,
+      @Named("show_submission_thumbnails") Preference<Boolean> showThumbnailsPref)
   {
     this.votingManager = votingManager;
     this.errorResolver = errorResolver;
     this.bookmarksRepository = bookmarksRepository;
     this.showCommentCountInByline = showCommentCountInByline;
     this.showNsfwContent = showNsfwContent;
+    this.showThumbnailsPref = showThumbnailsPref;
   }
 
   @CheckResult
@@ -72,7 +75,8 @@ public class SubredditUiConstructor {
       Observable<Optional<List<Submission>>> cachedSubmissionLists,
       Observable<SubmissionPaginationResult> paginationResults)
   {
-    Observable<?> userPrefChanges = Observable.merge(showCommentCountInByline.asObservable(), showNsfwContent.asObservable())
+    Observable<?> userPrefChanges = Observable
+        .merge(showCommentCountInByline.asObservable(), showNsfwContent.asObservable(), showThumbnailsPref.asObservable())
         .skip(1); // Skip initial values.
     Observable<Object> externalChanges = Observable.merge(userPrefChanges, votingManager.streamChanges(), bookmarksRepository.get().streamChanges());
 
@@ -246,7 +250,10 @@ public class SubredditUiConstructor {
     SubmissionThumbnailTypeMinusNsfw thumbnailType = SubmissionThumbnailTypeMinusNsfw.parse(submission);
     Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
 
-    if (thumbnailType == SubmissionThumbnailTypeMinusNsfw.NONE) {
+    if (!showThumbnailsPref.get()) {
+      thumbnail = Optional.empty();
+
+    } else if (thumbnailType == SubmissionThumbnailTypeMinusNsfw.NONE) {
       thumbnail = Optional.empty();
 
     } else {
