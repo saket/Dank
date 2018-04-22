@@ -474,6 +474,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     // Open in new tab gestures.
     submissionCommentsAdapter.swipeEvents()
         .ofType(SubmissionOpenInNewTabSwipeEvent.class)
+        .delay(SubmissionOpenInNewTabSwipeEvent.TAB_OPEN_DELAY_MILLIS, TimeUnit.MILLISECONDS)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(event -> event.openInNewTab(urlRouter, urlParser.get()));
 

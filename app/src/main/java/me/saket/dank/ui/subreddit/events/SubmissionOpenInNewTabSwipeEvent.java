@@ -17,6 +17,12 @@ import me.saket.dank.widgets.swipe.SwipeableLayout;
 @AutoValue
 public abstract class SubmissionOpenInNewTabSwipeEvent implements SwipeEvent {
 
+  /**
+   * Opening an Activity in a new document seems to be expensive
+   * and interferes with SwipeableLayout's ripple animation.
+   */
+  public static final int TAB_OPEN_DELAY_MILLIS = 250;
+
   public abstract Submission submission();
 
   public abstract SwipeableLayout itemView();

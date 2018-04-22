@@ -478,6 +478,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
     // Open in new tab gestures.
     submissionsAdapter.swipeEvents()
         .ofType(SubmissionOpenInNewTabSwipeEvent.class)
+        .delay(SubmissionOpenInNewTabSwipeEvent.TAB_OPEN_DELAY_MILLIS, TimeUnit.MILLISECONDS)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(event -> event.openInNewTab(urlRouter.get(), urlParser.get()));
 
