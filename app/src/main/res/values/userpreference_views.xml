@@ -1,5 +1,70 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <string name="activity_userpreferences">Preferences</string>
+  <string name="userpreferences_look_and_feel">Look &amp; feel</string>
+  <string name="userpreferences_look_and_feel_description">Customize appearance and gestures</string>
+  <string name="userpreferences_data_usage">Data usage</string>
+  <string name="userpreferences_data_usage_description">Balance data consumption and quality</string>
+  <string name="userpreferences_filters">Filters</string>
+  <string name="userpreferences_filters_description">NSFW and other content filters</string>
+  <string name="userpreferences_misc">Miscellaneous</string>
+  <string name="userpreferences_misc_description">Options that don\'t fit elsewhere</string>
+  <string name="userpreferences_about">About Dank</string>
+  <string name="userpreferences_about_description">The team behind</string>
+
+  <string name="userprefs_group_subreddit">Subreddit</string>
+  <string name="userprefs_submission_thumbnails">Submission thumbnails</string>
+  <string name="userprefs_submission_thumbnail_summary_on">Show if available</string>
+  <string name="userprefs_submission_thumbnail_summary_off">Always hidden</string>
+  <string name="userprefs_group_gestures">Gestures</string>
+  <string name="userprefs_customize_submission_gestures">Submission gesture actions</string>
+  <string name="userprefs_customize_comment_gestures">Comment gesture actions</string>
+
+  <string name="userprefs_gestures_group_left">Left</string>
+  <string name="userprefs_gestures_group_right">Right</string>
+
+  <string name="userprefs_group_messaging">Messaging</string>
+  <string name="userprefs_datausage_check_for_new_messages">Check for new messages</string>
+  <string name="userprefs_datausage_message_sync_period_and_connection">Every 30 minutes and only on WiFi</string>
+
+  <string name="userprefs_group_media_quality">Media Quality</string>
+  <string name="userprefs_mediaquality_load_hq_media_in_submissions">Prefer loading HD media in submissions</string>
+  <string name="userprefs_mediaquality_load_hq_media_in_gallery">Prefer loading HD media in Gallery</string>
+  <string name="userprefs_mediaquality_autoplay_videos">Auto-play videos</string>
+
+  <string name="userprefs_group_caching">Caching</string>
+  <string name="userprefs_group_caching_summary">Dank can pre-fetch content for subscribed subreddits when you visit them.
+    This way they\'re immediately available for consumption.</string>
+  <string name="userprefs_prefetch_images">Pre-fetch images</string>
+  <string name="userprefs_prefetch_link_descriptions">Pre-fetch link descriptions</string>
+  <string name="userprefs_prefetch_comments">Pre-fetch comments</string>
+
+  <string name="userprefs_networkstrategy_only_on_wifi">Only on WiFi</string>
+  <string name="userprefs_networkstrategy_wifi_or_mobile_data">WiFi or mobile data</string>
+  <string name="userprefs_networkstrategy_never">Never</string>
+
+  <string name="userprefes_group_link_handling">Link handling</string>
+  <string name="userprefs_open_links_in_apps">Open links in known apps</string>
+  <string name="userprefs_open_links_in_apps_summary">Open links in their dedicated apps if they exist, bypassing the browser.</string>
+  <string name="userprefs_use_chrome_custom_tabs">Use Chrome custom tabs</string>
+  <string name="userprefs_use_chrome_custom_tabs_description">Note: pull-to-collapse is only supported in the internal browser.</string>
+  <string name="userprefs_group_media">Media</string>
+
+  <string name="userprefs_show_nsfw_content">NSFW content</string>
+  <string name="userprefs_show_nsfw_content_summary_on">Always show</string>
+  <string name="userprefs_show_nsfw_content_summary_off">Keep hidden</string>
+
+  <string name="userprefs_group_external_links">External links</string>
+  <string name="userprefs_externallinks_default_web_browser">Device\'s default browser</string>
+  <string name="userprefs_externallinks_internal_browser">Dank\'s internal browser</string>
+  <string name="userprefs_externallinks_chrome_custom_tabs">Chrome custom tabs</string>
+
+  <string name="userprefs_group_launcher">Launcher</string>
+  <string name="userprefs_launcher_app_shortcuts">Customize launcher app shortcuts</string>
+  <string name="userprefs_launcher_app_shortcuts_summary">Jump to your favorite subreddits by long-pressing Dank\'s launcher icon. This will only work with launchers that support app shortcuts.</string>
+
+  <string name="userprefs_externallinks_open_links_in_apps">Open known links in apps</string>
+  <string name="userprefs_externallinks_open_links_in_apps_summary">Bypass the browser and open these links in their own apps</string>
 
   <style name="DankPreferencesGroupTitle">
     <item name="android:layout_marginBottom">@dimen/spacing12</item>
