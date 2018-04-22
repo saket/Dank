@@ -146,8 +146,8 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
-    if (ACTION_NAME_OPTIONS != swipeAction.labelRes() && !userSessionRepository.get().isUserLoggedIn()) {
-      onLoginRequireListener.get().onLoginRequired();
+    boolean loginShown = showLoginIfNeeded(swipeAction);
+    if (loginShown) {
       return;
     }
 
@@ -195,6 +195,27 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     }
 
     swipeableLayout.playRippleAnimation(swipeAction, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
+  }
+
+  private boolean showLoginIfNeeded(SwipeAction swipeAction) {
+    switch (swipeAction.labelRes()) {
+      case ACTION_NAME_OPTIONS:
+      case ACTION_NAME_NEW_TAB:
+        return false;
+
+      case ACTION_NAME_SAVE:
+      case ACTION_NAME_UNSAVE:
+      case ACTION_NAME_UPVOTE:
+      case ACTION_NAME_DOWNVOTE:
+        if (!userSessionRepository.get().isUserLoggedIn()) {
+          onLoginRequireListener.get().onLoginRequired();
+          return true;
+        }
+        return false;
+
+      default:
+        throw new UnsupportedOperationException("Unknown swipe action: " + swipeAction);
+    }
   }
 
   private void resetIconRotation(SwipeActionIconView imageView) {
