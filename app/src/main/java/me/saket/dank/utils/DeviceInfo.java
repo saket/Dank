@@ -13,4 +13,8 @@ public class DeviceInfo {
   public boolean isRunningOnEmulator() {
     return Build.FINGERPRINT.contains("generic");
   }
+
+  public boolean isNougatMrOneOrAbove() {
+    return Build.VERSION.SDK_INT >= Build.VERSION_CODES.N_MR1;
+  }
 }

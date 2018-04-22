@@ -4,6 +4,7 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 
 import android.content.Context;
+import android.content.Intent;
 import android.graphics.Point;
 import android.os.Bundle;
 import android.os.Parcelable;
@@ -158,6 +159,11 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
     popupBuilder
         .build(getContext())
         .showAtLocation(viewHolder.itemView, Gravity.NO_GRAVITY, showLocation);
+  }
+
+  @Override
+  public void openIntent(Intent intent) {
+    getContext().startActivity(intent);
   }
 
 // ======== EXPANDABLE PAGE ======== //

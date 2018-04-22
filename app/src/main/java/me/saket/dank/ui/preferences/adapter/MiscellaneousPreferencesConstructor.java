@@ -10,17 +10,20 @@ import java.util.List;
 import javax.inject.Inject;
 
 import me.saket.dank.R;
+import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.preferences.PreferenceMultiOptionPopup;
-import me.saket.dank.ui.preferences.adapter.UserPreferenceButton.UiModel;
+import me.saket.dank.utils.DeviceInfo;
 
 public class MiscellaneousPreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
 
   private final Preference<DefaultWebBrowser> defaultBrowserPref;
+  private final DeviceInfo deviceInfo;
 
   @Inject
-  public MiscellaneousPreferencesConstructor(Preference<DefaultWebBrowser> defaultBrowserPref) {
+  public MiscellaneousPreferencesConstructor(Preference<DefaultWebBrowser> defaultBrowserPref, DeviceInfo deviceInfo) {
     this.defaultBrowserPref = defaultBrowserPref;
+    this.deviceInfo = deviceInfo;
   }
 
   @Override
@@ -32,16 +35,25 @@ public class MiscellaneousPreferencesConstructor implements UserPreferencesConst
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_external_links)));
 
-    uiModels.add(UiModel.create(
+    uiModels.add(UserPreferenceButton.UiModel.create(
         c.getString(R.string.userprefs_externallinks_default_web_browser),
         c.getString(defaultBrowserPref.get().displayName),
         (clickHandler, event) -> clickHandler.show(defaultBrowserPopup(), event.itemViewHolder())));
 
     if (defaultBrowserPref.get() == DefaultWebBrowser.DANK_INTERNAL_BROWSER) {
-      uiModels.add(UiModel.create(
+      uiModels.add(UserPreferenceButton.UiModel.create(
           c.getString(R.string.userprefs_externallinks_open_links_in_apps),
           c.getString(R.string.userprefs_externallinks_open_links_in_apps_summary),
           (clickHandler, event) -> Toast.makeText(c, R.string.work_in_progress, Toast.LENGTH_SHORT).show()));
+    }
+
+    if (deviceInfo.isNougatMrOneOrAbove()) {
+      uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_launcher)));
+
+      uiModels.add(UserPreferenceButton.UiModel.create(
+          c.getString(R.string.userprefs_launcher_app_shortcuts),
+          c.getString(R.string.userprefs_launcher_app_shortcuts_summary),
+          (clickHandler, event) -> clickHandler.openIntent(ConfigureAppShortcutsActivity.intent(c))));
     }
 
     return uiModels;

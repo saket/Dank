@@ -5,14 +5,18 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
-import butterknife.BindView;
-import butterknife.ButterKnife;
+
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
+
 import javax.inject.Inject;
+
+import butterknife.BindView;
+import butterknife.ButterKnife;
 import me.saket.dank.R;
 import me.saket.dank.ui.preferences.events.UserPreferenceButtonClickEvent;
 import me.saket.dank.ui.preferences.events.UserPreferenceClickListener;
+import me.saket.dank.utils.Optional;
 
 public interface UserPreferenceButton {
 

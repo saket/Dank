@@ -3,7 +3,6 @@ package me.saket.dank.ui.appshortcuts;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 
-import android.annotation.TargetApi;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Build;
@@ -11,6 +10,7 @@ import android.os.Bundle;
 import android.support.annotation.AnimRes;
 import android.support.annotation.IdRes;
 import android.support.annotation.Nullable;
+import android.support.annotation.RequiresApi;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.v7.widget.RecyclerView.ViewHolder;
@@ -65,7 +65,7 @@ import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
 @DeepLink(ConfigureAppShortcutsActivity.DEEP_LINK)
-@TargetApi(Build.VERSION_CODES.N_MR1)
+@RequiresApi(Build.VERSION_CODES.N_MR1)
 public class ConfigureAppShortcutsActivity extends DankActivity {
 
   private static final int MAX_SHORTCUT_COUNT = AppShortcutRepository.MAX_SHORTCUT_COUNT;
