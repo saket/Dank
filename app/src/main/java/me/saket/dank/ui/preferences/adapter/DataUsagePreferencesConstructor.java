@@ -1,6 +1,8 @@
 package me.saket.dank.ui.preferences.adapter;
 
 import android.content.Context;
+import android.graphics.Point;
+import android.view.Gravity;
 
 import com.f2prateek.rx.preferences2.Preference;
 
@@ -10,9 +12,11 @@ import javax.inject.Inject;
 import javax.inject.Named;
 
 import me.saket.dank.R;
-import me.saket.dank.ui.preferences.NetworkStrategy;
+import me.saket.dank.ui.preferences.MessageCheckFrequencyPreferencePopup;
 import me.saket.dank.ui.preferences.MultiOptionPreferencePopup;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.preferences.adapter.UserPreferenceButton.UiModel;
+import me.saket.dank.utils.Views;
 
 public class DataUsagePreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
 
@@ -50,6 +54,14 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
         c.getString(R.string.userprefs_datausage_check_for_new_messages),
         c.getString(R.string.userprefs_datausage_message_sync_period_and_connection),
         (clickHandler, event) -> {
+          Point showLocation = new Point(0, event.itemViewHolder().itemView.getTop() + Views.statusBarHeight(c.getResources()));
+
+          // Align with padding.
+          int padding = c.getResources().getDimensionPixelSize(R.dimen.userprefs_item_padding);
+          showLocation.offset(padding, padding);
+
+          MessageCheckFrequencyPreferencePopup popup = new MessageCheckFrequencyPreferencePopup(c);
+          popup.showAtLocation(event.itemViewHolder().itemView, Gravity.NO_GRAVITY, showLocation);
         }));
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_media_quality)));
@@ -81,12 +93,12 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
     uiModels.add(UiModel.create(
         c.getString(R.string.userprefs_prefetch_link_descriptions),
         c.getString(linksPreFetchNetworkStrategyPref.get().displayNameRes),
-       (clickHandler, event) -> clickHandler.show(networkStrategyPopup(linksPreFetchNetworkStrategyPref), event.itemViewHolder())));
+        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(linksPreFetchNetworkStrategyPref), event.itemViewHolder())));
 
     uiModels.add(UiModel.create(
         c.getString(R.string.userprefs_prefetch_images),
         c.getString(imagesPreFetchNetworkStrategyPref.get().displayNameRes),
-       (clickHandler, event) -> clickHandler.show(networkStrategyPopup(imagesPreFetchNetworkStrategyPref), event.itemViewHolder())));
+        (clickHandler, event) -> clickHandler.show(networkStrategyPopup(imagesPreFetchNetworkStrategyPref), event.itemViewHolder())));
 
     return uiModels;
   }

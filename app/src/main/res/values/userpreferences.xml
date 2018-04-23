@@ -24,8 +24,18 @@
   <string name="userprefs_gestures_group_right">Right</string>
 
   <string name="userprefs_group_messaging">Messaging</string>
-  <string name="userprefs_datausage_check_for_new_messages">Check for new messages</string>
+  <string name="userprefs_datausage_check_for_new_messages">Poll for new messages</string>
   <string name="userprefs_datausage_message_sync_period_and_connection">Every 30 minutes and only on WiFi</string>
+  <string name="userprefs_checkfornewmessages_poll_interval">Poll interval</string>
+  <string name="userprefs_checkfornewmessages_network_type">Network type</string>
+  <string name="userprefs_checkfornewmessages_disable">Disable</string>
+
+  <string name="userprefs_checkfornewmessages_15_mins">15 minutes</string>
+  <string name="userprefs_checkfornewmessages_30_mins">30 minutes</string>
+  <string name="userprefs_checkfornewmessages_1_hour">1 hour</string>
+  <string name="userprefs_checkfornewmessages_3_hours">3 hours</string>
+  <string name="userprefs_checkfornewmessages_6_hours">6 hours</string>
+  <string name="userprefs_checkfornewmessages_24_hours">Daily</string>
 
   <string name="userprefs_group_media_quality">Media Quality</string>
   <string name="userprefs_mediaquality_load_hq_media_in_submissions">Prefer loading HD media in submissions</string>

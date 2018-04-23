@@ -153,8 +153,8 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
     Point showLocation = new Point(0, viewHolder.itemView.getTop() + Views.statusBarHeight(getResources()));
 
     // Align with padding.
-    int paddding = getResources().getDimensionPixelSize(R.dimen.userprefs_item_padding);
-    showLocation.offset(paddding, paddding);
+    int padding = getResources().getDimensionPixelSize(R.dimen.userprefs_item_padding);
+    showLocation.offset(padding, padding);
 
     popupBuilder
         .build(getContext())

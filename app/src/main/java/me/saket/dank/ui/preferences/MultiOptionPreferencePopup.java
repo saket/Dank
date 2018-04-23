@@ -1,12 +1,8 @@
 package me.saket.dank.ui.preferences;
 
 import android.content.Context;
-import android.graphics.Point;
-import android.graphics.Rect;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.StringRes;
-import android.view.View;
-import android.view.ViewGroup;
 
 import com.f2prateek.rx.preferences2.Preference;
 import com.google.auto.value.AutoValue;
@@ -45,11 +41,6 @@ public class MultiOptionPreferencePopup<T> extends NestedOptionsPopupMenu {
     Option<T> clickedOption = options.get(index);
     preference.set(clickedOption.preferenceValue());
     dismiss();
-  }
-
-  @Override
-  protected Rect calculateTransitionEpicenter(View anchor, ViewGroup popupDecorView, Point showLocation) {
-    return NestedOptionsPopupMenu.transitionEpicenter(anchor, popupDecorView);
   }
 
   @AutoValue

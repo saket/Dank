@@ -28,6 +28,7 @@ import me.saket.dank.ui.media.MediaAlbumViewerActivity;
 import me.saket.dank.ui.media.MediaImageFragment;
 import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
+import me.saket.dank.ui.preferences.MessageCheckFrequencyPreferencePopup;
 import me.saket.dank.ui.preferences.PreferenceGroupsScreen;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
 import me.saket.dank.ui.submission.LinkOptionsPopup;
@@ -138,4 +139,6 @@ public interface RootComponent {
   void inject(DeepLinkHandlingActivity target);
 
   void inject(NewSubredditSubscriptionDialog target);
+
+  void inject(MessageCheckFrequencyPreferencePopup target);
 }

@@ -87,14 +87,6 @@ public class UserPreferencesModule {
   }
 
   @Provides
-  @Named("unread_messages")
-  Preference<TimeInterval> unreadMessagesPollIntervalPref(@Named("user_prefs") RxSharedPreferences rxPrefs, Moshi moshi) {
-    Preference.Converter<TimeInterval> timeUnitPrefConverter = new TimeInterval.TimeUnitPrefConverter(moshi);
-    TimeInterval defaultInterval = TimeInterval.create(30, TimeUnit.MINUTES);
-    return rxPrefs.getObject("unread_messages_poll_interval", defaultInterval, timeUnitPrefConverter);
-  }
-
-  @Provides
   @Named("user_preferences")
   Observable<Object> provideUserPrefChanges(@Named("user_prefs") SharedPreferences sharedPrefs) {
     return Observable.create(emitter -> {
@@ -114,6 +106,23 @@ public class UserPreferencesModule {
   }
 
 // ======== DATA USAGE ======== //
+
+  @Provides
+  @Named("unread_messages")
+  Preference<TimeInterval> unreadMessagesPollIntervalPref(@Named("user_prefs") RxSharedPreferences rxPrefs, Moshi moshi) {
+    Preference.Converter<TimeInterval> timeUnitPrefConverter = new TimeInterval.TimeUnitPrefConverter(moshi);
+    TimeInterval defaultInterval = TimeInterval.create(30, TimeUnit.MINUTES);
+    return rxPrefs.getObject("unread_messages_poll_interval", defaultInterval, timeUnitPrefConverter);
+  }
+
+  @Provides
+  @Named("unread_messages")
+  Preference<NetworkStrategy> unreadMessagesPollNetworkStrategy(
+      @Named("user_prefs") RxSharedPreferences rxPrefs,
+      RxPreferencesEnumTypeAdapter<NetworkStrategy> strategyTypeAdapter)
+  {
+    return rxPrefs.getObject("unread_messages_poll_network_strategy", NetworkStrategy.WIFI_OR_MOBILE_DATA, strategyTypeAdapter);
+  }
 
   @Provides
   @Named("hd_media_in_submissions")

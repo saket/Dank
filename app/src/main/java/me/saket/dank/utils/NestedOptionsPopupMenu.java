@@ -10,7 +10,6 @@ import android.graphics.drawable.LayerDrawable;
 import android.support.annotation.AnimRes;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
-import android.support.annotation.StringRes;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.AppCompatTextView;
 import android.text.TextUtils;
@@ -34,6 +33,8 @@ import me.saket.dank.widgets.TintableCompoundDrawableTextView;
 
 public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTransition {
 
+  private ViewFlipper viewFlipper;
+
   @AutoValue
   public abstract static class MenuStructure {
     public abstract Optional<CharSequence> optionalTitle();
@@ -54,18 +55,32 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
 
       public abstract String label();
 
+      /**
+       * 20dp is recommended.
+       */
       @DrawableRes
       public abstract int iconRes();
 
       @Nullable
       public abstract List<ThreeLineItem> subItems();
 
+      /**
+       * @param iconRes 20dp is recommended.
+       */
       public static SingleLineItem create(int id, String label, @DrawableRes int iconRes) {
         return new AutoValue_NestedOptionsPopupMenu_MenuStructure_SingleLineItem(id, label, iconRes, null);
       }
 
+      /**
+       * @param iconRes 20dp is recommended.
+       * @deprecated
+       */
       public static SingleLineItem create(int id, String label, @DrawableRes int iconRes, @Nullable List<ThreeLineItem> subItems) {
         return new AutoValue_NestedOptionsPopupMenu_MenuStructure_SingleLineItem(id, label, iconRes, subItems);
+      }
+
+      public static SingleLineItem create(String label, @DrawableRes int iconRes, @Nullable List<ThreeLineItem> subItems) {
+        return new AutoValue_NestedOptionsPopupMenu_MenuStructure_SingleLineItem(-1, label, iconRes, subItems);
       }
     }
 
@@ -75,11 +90,21 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
 
       public abstract CharSequence label();
 
-      @StringRes
-      public abstract int contentDescriptionRes();
+      /**
+       * Useful when the content-description should be different
+       * from {@link #label()} on this item's button.
+       */
+      public abstract Optional<Integer> contentDescriptionRes();
 
-      public static ThreeLineItem create(int id, CharSequence label, @StringRes int contentDescriptionRes) {
-        return new AutoValue_NestedOptionsPopupMenu_MenuStructure_ThreeLineItem(id, label, contentDescriptionRes);
+      /**
+       * @param contentDescriptionRes See {@link #contentDescriptionRes()}.
+       */
+      public static ThreeLineItem create(int id, CharSequence label, Integer contentDescriptionRes) {
+        return new AutoValue_NestedOptionsPopupMenu_MenuStructure_ThreeLineItem(id, label, Optional.of(contentDescriptionRes));
+      }
+
+      public static ThreeLineItem create(int id, CharSequence label) {
+        return new AutoValue_NestedOptionsPopupMenu_MenuStructure_ThreeLineItem(id, label, Optional.empty());
       }
     }
   }
@@ -96,7 +121,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
     int spacing12 = c.getResources().getDimensionPixelSize(R.dimen.spacing12);
     int spacing24 = c.getResources().getDimensionPixelSize(R.dimen.spacing24);
 
-    ViewFlipper viewFlipper = new ViewFlipper(c);
+    viewFlipper = new ViewFlipper(c);
     viewFlipper.setBackground(c.getDrawable(R.drawable.background_popup_window));
     LayoutParams viewFlipperParams = new LayoutParams(c.getResources().getDimensionPixelSize(R.dimen.popupwindow_width), LayoutParams.WRAP_CONTENT);
     viewFlipper.setLayoutParams(viewFlipperParams);
@@ -136,7 +161,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
 
         int subMenuIndexInParent = viewFlipper.getChildCount() - 1;
         menuButton.setOnClickListener(o -> {
-          setupSubMenuEnterAnimation(c, viewFlipper);
+          setupSubMenuEnterAnimation(viewFlipper);
           viewFlipper.setDisplayedChild(subMenuIndexInParent);
         });
 
@@ -152,7 +177,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
         subMenuTitle.setGravity(Gravity.CENTER_VERTICAL);
         subMenuTitle.setPadding(spacing16, spacing16, spacing16, spacing16);
         subMenuTitle.setOnClickListener(o -> {
-          setupSubMenuExitAnimation(c, viewFlipper);
+          setupSubMenuExitAnimation(viewFlipper);
           viewFlipper.setDisplayedChild(0);
         });
         subMenuContainer.addView(subMenuTitle, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
@@ -168,13 +193,20 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
           subMenuButton.setMaxLines(3);
           subMenuButton.setEllipsize(TextUtils.TruncateAt.END);
           subMenuButton.setLineSpacing(spacing2, 1);
-          subMenuButton.setContentDescription(c.getString(subItem.contentDescriptionRes()));
+          subItem.contentDescriptionRes().ifPresent(contentDescriptionRes ->
+              subMenuButton.setContentDescription(c.getString(contentDescriptionRes))
+          );
           subMenuContainer.addView(subMenuButton, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
         }
       } else {
         menuButton.setOnClickListener(o -> handleAction(c, singleLineItem.id()));
       }
     }
+  }
+
+  protected void gotoPrimaryPage() {
+    setupSubMenuExitAnimation(viewFlipper);
+    viewFlipper.setDisplayedChild(0);
   }
 
   private Drawable getSelectableItemBackground(Context c) {
@@ -184,14 +216,14 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
     return selectableItemBackgroundDrawable;
   }
 
-  private void setupSubMenuEnterAnimation(Context c, ViewFlipper viewFlipper) {
-    viewFlipper.setInAnimation(animationWithInterpolator(c, R.anim.submission_options_viewflipper_submenu_enter));
-    viewFlipper.setOutAnimation(animationWithInterpolator(c, R.anim.submission_options_viewflipper_mainmenu_exit));
+  private void setupSubMenuEnterAnimation(ViewFlipper viewFlipper) {
+    viewFlipper.setInAnimation(animationWithInterpolator(viewFlipper.getContext(), R.anim.submission_options_viewflipper_submenu_enter));
+    viewFlipper.setOutAnimation(animationWithInterpolator(viewFlipper.getContext(), R.anim.submission_options_viewflipper_mainmenu_exit));
   }
 
-  private void setupSubMenuExitAnimation(Context c, ViewFlipper viewFlipper) {
-    viewFlipper.setInAnimation(animationWithInterpolator(c, R.anim.submission_options_viewflipper_mainmenu_enter));
-    viewFlipper.setOutAnimation(animationWithInterpolator(c, R.anim.submission_options_viewflipper_submenu_exit));
+  private void setupSubMenuExitAnimation(ViewFlipper viewFlipper) {
+    viewFlipper.setInAnimation(animationWithInterpolator(viewFlipper.getContext(), R.anim.submission_options_viewflipper_mainmenu_enter));
+    viewFlipper.setOutAnimation(animationWithInterpolator(viewFlipper.getContext(), R.anim.submission_options_viewflipper_submenu_exit));
   }
 
   private Animation animationWithInterpolator(Context c, @AnimRes int animRes) {
@@ -205,10 +237,6 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
    */
   @Override
   protected Rect calculateTransitionEpicenter(View anchor, ViewGroup popupDecorView, Point showLocation) {
-    return transitionEpicenter(anchor, popupDecorView);
-  }
-
-  public static Rect transitionEpicenter(View anchor, ViewGroup popupDecorView) {
     int[] anchorLocation = new int[2];
     int[] popupLocation = new int[2];
     anchor.getLocationOnScreen(anchorLocation);
