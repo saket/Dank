@@ -157,6 +157,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
         LinearLayout subMenuContainer = new LinearLayout(c);
         subMenuContainer.setOrientation(LinearLayout.VERTICAL);
         subMenuContainer.setBackground(viewFlipper.getBackground());
+        subMenuContainer.setElevation(c.getResources().getDimensionPixelSize(R.dimen.elevation_nested_options_popup_menu));
         viewFlipper.addView(subMenuContainer, viewFlipperParams.width, LayoutParams.MATCH_PARENT);
 
         int subMenuIndexInParent = viewFlipper.getChildCount() - 1;

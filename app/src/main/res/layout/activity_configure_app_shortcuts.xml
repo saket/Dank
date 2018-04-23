@@ -69,7 +69,7 @@
       android:layout_width="match_parent"
       android:layout_height="match_parent"
       android:background="@color/dialog_background"
-      android:elevation="40dp"
+      android:elevation="@dimen/elevation_nested_options_popup_menu"
       android:orientation="vertical">
 
       <ImageButton

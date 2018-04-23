@@ -18,6 +18,7 @@
   <dimen name="elevation_toolbar">4dp</dimen>
   <dimen name="elevation_fab">6dp</dimen>
   <dimen name="elevation_nested_expandable_sheet">10dp</dimen>
+  <dimen name="elevation_nested_options_popup_menu">40dp</dimen>
 
   <dimen name="card_corner_radius">8dp</dimen>
   <dimen name="popupwindow_width">284dp</dimen>
