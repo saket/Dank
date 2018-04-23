@@ -76,7 +76,7 @@ public class UserAuthListenerTest {
   }
 
   @Test
-  public void logout() {
+  public void on_logout_should_remove_all_user_subscriptions() {
     when(userSessionRepository.streamSessions()).thenReturn(Observable.just(Optional.empty(), Optional.empty()));
     when(subscriptionRepository.removeAll()).thenReturn(Completable.complete());
 
@@ -88,7 +88,6 @@ public class UserAuthListenerTest {
 
     verify(userAuthListener).handleLoggedOut();
     verify(subscriptionRepository).removeAll();
-    verify(subscriptionRepository).resetDefaultSubreddit();
   }
 
   @NonNull
