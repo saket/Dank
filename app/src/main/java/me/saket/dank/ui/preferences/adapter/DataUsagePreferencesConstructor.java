@@ -93,8 +93,8 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
 
   private MultiOptionPreferencePopup.Builder<NetworkStrategy> networkStrategyPopup(Preference<NetworkStrategy> preference) {
     return MultiOptionPreferencePopup.builder(preference)
-        .addOption(NetworkStrategy.WIFI_ONLY, NetworkStrategy.WIFI_ONLY.displayNameRes, R.drawable.ic_network_wifi_24dp)
-        .addOption(NetworkStrategy.WIFI_OR_MOBILE_DATA, NetworkStrategy.WIFI_OR_MOBILE_DATA.displayNameRes, R.drawable.ic_network_cell_24dp)
-        .addOption(NetworkStrategy.NEVER, NetworkStrategy.NEVER.displayNameRes, R.drawable.ic_block_24dp);
+        .addOption(NetworkStrategy.WIFI_ONLY, NetworkStrategy.WIFI_ONLY.displayNameRes, R.drawable.ic_network_wifi_20dp)
+        .addOption(NetworkStrategy.WIFI_OR_MOBILE_DATA, NetworkStrategy.WIFI_OR_MOBILE_DATA.displayNameRes, R.drawable.ic_network_cell_20dp)
+        .addOption(NetworkStrategy.NEVER, NetworkStrategy.NEVER.displayNameRes, R.drawable.ic_block_20dp);
   }
 }

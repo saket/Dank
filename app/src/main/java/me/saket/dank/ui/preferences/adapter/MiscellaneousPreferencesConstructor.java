@@ -1,5 +1,7 @@
 package me.saket.dank.ui.preferences.adapter;
 
+import static me.saket.dank.ui.preferences.DefaultWebBrowser.*;
+
 import android.content.Context;
 import android.widget.Toast;
 
@@ -40,7 +42,7 @@ public class MiscellaneousPreferencesConstructor implements UserPreferencesConst
         c.getString(defaultBrowserPref.get().displayName),
         (clickHandler, event) -> clickHandler.show(defaultBrowserPopup(), event.itemViewHolder())));
 
-    if (defaultBrowserPref.get() == DefaultWebBrowser.DANK_INTERNAL_BROWSER) {
+    if (defaultBrowserPref.get() == DANK_INTERNAL_BROWSER) {
       uiModels.add(UserPreferenceButton.UiModel.create(
           c.getString(R.string.userprefs_externallinks_open_links_in_apps),
           c.getString(R.string.userprefs_externallinks_open_links_in_apps_summary),
@@ -61,8 +63,8 @@ public class MiscellaneousPreferencesConstructor implements UserPreferencesConst
 
   private MultiOptionPreferencePopup.Builder<DefaultWebBrowser> defaultBrowserPopup() {
     return MultiOptionPreferencePopup.builder(defaultBrowserPref)
-        .addOption(DefaultWebBrowser.DANK_INTERNAL_BROWSER, DefaultWebBrowser.DANK_INTERNAL_BROWSER.displayName, R.drawable.ic_app_icon_24dp)
-        .addOption(DefaultWebBrowser.CHROME_CUSTOM_TABS, DefaultWebBrowser.CHROME_CUSTOM_TABS.displayName, R.drawable.ic_google_chrome)
-        .addOption(DefaultWebBrowser.DEVICE_DEFAULT, DefaultWebBrowser.DEVICE_DEFAULT.displayName, R.drawable.ic_smartphone_24dp);
+        .addOption(DefaultWebBrowser.DANK_INTERNAL_BROWSER, DefaultWebBrowser.DANK_INTERNAL_BROWSER.displayName, R.drawable.ic_app_icon_20dp)
+        .addOption(DefaultWebBrowser.CHROME_CUSTOM_TABS, DefaultWebBrowser.CHROME_CUSTOM_TABS.displayName, R.drawable.ic_google_chrome_20dp)
+        .addOption(DefaultWebBrowser.DEVICE_DEFAULT, DefaultWebBrowser.DEVICE_DEFAULT.displayName, R.drawable.ic_smartphone_20dp);
   }
 }

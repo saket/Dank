@@ -30,6 +30,7 @@ public enum DefaultWebBrowser {
     }
   };
 
+  @StringRes
   public final int displayName;
 
   DefaultWebBrowser(@StringRes int displayName) {
