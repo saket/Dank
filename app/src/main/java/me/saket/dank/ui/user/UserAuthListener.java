@@ -16,10 +16,10 @@ import javax.inject.Singleton;
 import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import me.saket.dank.ui.preferences.NetworkStrategy;
-import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.subscriptions.SubredditSubscriptionsSyncJob;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.TimeInterval;
 import timber.log.Timber;
@@ -29,6 +29,7 @@ public class UserAuthListener {
 
   private final Lazy<SubscriptionRepository> subscriptionRepository;
   private final Lazy<UserSessionRepository> userSessionRepository;
+  private final Lazy<Preference<Boolean>> unreadMessagesPollEnabledPref;
   private final Lazy<Preference<TimeInterval>> unreadMessagesPollInterval;
   private final Lazy<Preference<NetworkStrategy>> unreadMessagesPollNetworkStrategy;
 
@@ -36,9 +37,12 @@ public class UserAuthListener {
   public UserAuthListener(
       Lazy<SubscriptionRepository> subscriptionRepository,
       Lazy<UserSessionRepository> userSessionRepository,
+      @Named("unread_messages") Lazy<Preference<Boolean>> unreadMessagesPollEnabledPref,
       @Named("unread_messages") Lazy<Preference<TimeInterval>> unreadMessagesPollInterval,
-      @Named("unread_messages") Lazy<Preference<NetworkStrategy>> unreadMessagesPollNetworkStrategy)
+      @Named("unread_messages") Lazy<Preference<NetworkStrategy>> unreadMessagesPollNetworkStrategy
+  )
   {
+    this.unreadMessagesPollEnabledPref = unreadMessagesPollEnabledPref;
     this.unreadMessagesPollInterval = unreadMessagesPollInterval;
     this.subscriptionRepository = subscriptionRepository;
     this.userSessionRepository = userSessionRepository;
@@ -102,12 +106,16 @@ public class UserAuthListener {
         });
   }
 
-  @VisibleForTesting
   void runBackgroundJobs(Context context) {
     SubredditSubscriptionsSyncJob.syncImmediately(context);
     SubredditSubscriptionsSyncJob.schedule(context);
 
-    CheckUnreadMessagesJobService.syncImmediately(context);
-    CheckUnreadMessagesJobService.schedule(context, unreadMessagesPollInterval.get(), unreadMessagesPollNetworkStrategy.get());
+    Boolean isMessagePollingEnabled = unreadMessagesPollEnabledPref.get().get();
+    if (isMessagePollingEnabled) {
+      CheckUnreadMessagesJobService.syncImmediately(context);
+      CheckUnreadMessagesJobService.schedule(context, unreadMessagesPollInterval.get(), unreadMessagesPollNetworkStrategy.get());
+    } else {
+      CheckUnreadMessagesJobService.unSchedule(context);
+    }
   }
 }

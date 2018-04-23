@@ -125,6 +125,12 @@ public class UserPreferencesModule {
   }
 
   @Provides
+  @Named("unread_messages")
+  Preference<Boolean> unreadMessagesPollEnabled(@Named("user_prefs") RxSharedPreferences rxPrefs) {
+    return rxPrefs.getBoolean("unread_messages_poll_enabled", true);
+  }
+
+  @Provides
   @Named("hd_media_in_submissions")
   Preference<NetworkStrategy> hqImagesStrategyPref(
       @Named("user_prefs") RxSharedPreferences rxPrefs,

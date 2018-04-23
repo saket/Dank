@@ -107,6 +107,15 @@ public class CheckUnreadMessagesJobService extends DankJobService {
     jobScheduler.schedule(syncJob);
   }
 
+  public static void unSchedule(Context context) {
+    Timber.i("Disabling message polling");
+    JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
+    //noinspection ConstantConditions
+    jobScheduler.cancel(ID_MESSAGES_USER_SCHEDULED);
+    jobScheduler.cancel(ID_MESSAGES_AGGRESSIVE);
+    jobScheduler.cancel(ID_MESSAGES_IMMEDIATELY);
+  }
+
   /**
    * Refresh notifications from the DB. Doesn't hit the network.
    */

@@ -32,6 +32,7 @@ public class UserAuthListenerTest {
 
   @Mock SubscriptionRepository subscriptionRepository;
   @Mock UserSessionRepository userSessionRepository;
+  @Mock Preference<Boolean> unreadMessagesPollEnabled;
   @Mock Preference<TimeInterval> unreadMessagesPollInterval;
   @Mock Preference<NetworkStrategy> unreadMessagesPollNetworkStrategy;
 
@@ -42,6 +43,7 @@ public class UserAuthListenerTest {
     userAuthListener = spy(new UserAuthListener(
         () -> subscriptionRepository,
         () -> userSessionRepository,
+        () -> unreadMessagesPollEnabled,
         () -> unreadMessagesPollInterval,
         () -> unreadMessagesPollNetworkStrategy));
   }

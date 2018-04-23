@@ -18,7 +18,6 @@ import me.saket.dank.utils.NestedOptionsPopupMenu;
 import me.saket.dank.utils.NestedOptionsPopupMenu.MenuStructure.SingleLineItem;
 import me.saket.dank.utils.NestedOptionsPopupMenu.MenuStructure.ThreeLineItem;
 import me.saket.dank.utils.TimeInterval;
-import timber.log.Timber;
 
 public class MessageCheckFrequencyPreferencePopup extends NestedOptionsPopupMenu {
 
@@ -34,13 +33,11 @@ public class MessageCheckFrequencyPreferencePopup extends NestedOptionsPopupMenu
   private static final int ID_NETWORK_WIFI_ONLY = 30;
   private static final int ID_NETWORK_WIFI_OR_MOBILE = 31;
 
-  @Inject
-  @Named("unread_messages")
-  Lazy<Preference<TimeInterval>> frequencyPref;
+  @Inject @Named("unread_messages") Lazy<Preference<TimeInterval>> frequencyPref;
+  @Inject @Named("unread_messages") Lazy<Preference<NetworkStrategy>> networkStrategyPref;
+  @Inject @Named("unread_messages") Lazy<Preference<Boolean>> enabledPref;
 
-  @Inject
-  @Named("unread_messages")
-  Lazy<Preference<NetworkStrategy>> networkStrategyPref;
+  private boolean preferencesChanged;
 
   public MessageCheckFrequencyPreferencePopup(Context c) {
     super(c);
@@ -48,16 +45,13 @@ public class MessageCheckFrequencyPreferencePopup extends NestedOptionsPopupMenu
 
     createMenuLayout(c, menuStructure(c));
 
-    TimeInterval originalTimeInterval = frequencyPref.get().get();
-    NetworkStrategy originalNetworkStrategy = networkStrategyPref.get().get();
-
     setOnDismissListener(() -> {
-      boolean preferencesChanged = !originalTimeInterval.equals(frequencyPref.get().get())
-          || !originalNetworkStrategy.equals(networkStrategyPref.get().get());
-
       if (preferencesChanged) {
-        Timber.i("Re-scheduling");
-        CheckUnreadMessagesJobService.schedule(c, frequencyPref.get(), networkStrategyPref.get());
+        if (enabledPref.get().get()) {
+          CheckUnreadMessagesJobService.schedule(c, frequencyPref.get(), networkStrategyPref.get());
+        } else {
+          CheckUnreadMessagesJobService.unSchedule(c);
+        }
       }
     });
   }
@@ -95,11 +89,10 @@ public class MessageCheckFrequencyPreferencePopup extends NestedOptionsPopupMenu
 
   @Override
   protected void handleAction(Context c, int actionId) {
+    preferencesChanged = true;
+
     switch (actionId) {
       case ID_DISABLE:
-        // Avoid using Long.MAX_VALUE. When converted to millis,
-        // it trips up JobScheduler and the job starts running in a loop.
-        frequencyPref.get().set(TimeInterval.create(3650, TimeUnit.DAYS));
         break;
 
       case ID_15_MINS:
@@ -137,6 +130,8 @@ public class MessageCheckFrequencyPreferencePopup extends NestedOptionsPopupMenu
       default:
         throw new UnsupportedOperationException("Unknown actionId: " + actionId);
     }
+
+    enabledPref.get().set(actionId != ID_DISABLE);
 
     if (actionId == ID_DISABLE) {
       dismiss();
