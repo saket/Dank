@@ -24,8 +24,25 @@
   <string name="userprefs_gestures_group_right">Right</string>
 
   <string name="userprefs_group_messaging">Messaging</string>
-  <string name="userprefs_datausage_check_for_new_messages">Poll for new messages</string>
-  <string name="userprefs_datausage_message_sync_period_and_connection">Every 30 minutes and only on WiFi</string>
+  <string name="userprefs_check_for_new_messages">Poll for new messages</string>
+  <string name="userprefs_messages_poll_interval_on_wifi">Every %s only on WiFi</string>
+  <string name="userprefs_messages_poll_interval_on_wifi_or_mobile">Every %s on any network</string>
+
+  <plurals name="userprefs_message_poll_interval_days">
+    <item quantity="one">day</item>
+    <item quantity="other">%d days</item>
+  </plurals>
+
+  <plurals name="userprefs_message_poll_interval_minutes">
+    <item quantity="one">minute</item>
+    <item quantity="other">%d minutes</item>
+  </plurals>
+
+  <plurals name="userprefs_message_poll_interval_hours">
+    <item quantity="one">hour</item>
+    <item quantity="other">%d hours</item>
+  </plurals>
+
   <string name="userprefs_checkfornewmessages_poll_interval">Poll interval</string>
   <string name="userprefs_checkfornewmessages_network_type">Network type</string>
   <string name="userprefs_checkfornewmessages_disable">Disable</string>

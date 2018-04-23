@@ -84,7 +84,7 @@ public class MessageCheckFrequencyPreferencePopup extends NestedOptionsPopupMenu
         c.getString(R.string.userprefs_checkfornewmessages_disable),
         R.drawable.ic_sync_disabled_20dp));
 
-    return MenuStructure.create(c.getString(R.string.userprefs_datausage_check_for_new_messages), firstPageItems);
+    return MenuStructure.create(c.getString(R.string.userprefs_check_for_new_messages), firstPageItems);
   }
 
   @Override
