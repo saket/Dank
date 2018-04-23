@@ -13,8 +13,10 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.subscriptions.SubredditSubscriptionsSyncJob;
@@ -25,24 +27,27 @@ import timber.log.Timber;
 @Singleton
 public class UserAuthListener {
 
-  private final Preference<TimeInterval> unreadMessagesPollInterval;
-  private final SubscriptionRepository subscriptionRepository;
-  private final UserSessionRepository userSessionRepository;
+  private final Lazy<SubscriptionRepository> subscriptionRepository;
+  private final Lazy<UserSessionRepository> userSessionRepository;
+  private final Lazy<Preference<TimeInterval>> unreadMessagesPollInterval;
+  private final Lazy<Preference<NetworkStrategy>> unreadMessagesPollNetworkStrategy;
 
   @Inject
   public UserAuthListener(
-      SubscriptionRepository subscriptionRepository,
-      UserSessionRepository userSessionRepository,
-      @Named("unread_messages") Preference<TimeInterval> unreadMessagesPollInterval)
+      Lazy<SubscriptionRepository> subscriptionRepository,
+      Lazy<UserSessionRepository> userSessionRepository,
+      @Named("unread_messages") Lazy<Preference<TimeInterval>> unreadMessagesPollInterval,
+      @Named("unread_messages") Lazy<Preference<NetworkStrategy>> unreadMessagesPollNetworkStrategy)
   {
     this.unreadMessagesPollInterval = unreadMessagesPollInterval;
     this.subscriptionRepository = subscriptionRepository;
     this.userSessionRepository = userSessionRepository;
+    this.unreadMessagesPollNetworkStrategy = unreadMessagesPollNetworkStrategy;
   }
 
   @CheckResult
   public Completable startListening(Context context) {
-    Observable<Optional<UserSession>> userSessions = userSessionRepository.streamSessions()
+    Observable<Optional<UserSession>> userSessions = userSessionRepository.get().streamSessions()
         .replay(1)
         .refCount();
 
@@ -78,8 +83,8 @@ public class UserAuthListener {
 
     // Reload subreddit subscriptions. Not implementing onError() is intentional.
     // This code is not supposed to fail :/
-    subscriptionRepository.removeAll()
-        .andThen(subscriptionRepository.refreshAndSaveSubscriptions())
+    subscriptionRepository.get().removeAll()
+        .andThen(subscriptionRepository.get().refreshAndSaveSubscriptions())
         .subscribeOn(io())
         .subscribe();
 
@@ -90,10 +95,10 @@ public class UserAuthListener {
   void handleLoggedOut() {
     //Timber.d("User logged out. Doing things.");
 
-    subscriptionRepository.removeAll()
+    subscriptionRepository.get().removeAll()
         .subscribeOn(io())
         .subscribe(() -> {
-          Timber.i("Default sub set to: %s", subscriptionRepository.defaultSubreddit());
+          Timber.i("Default sub set to: %s", subscriptionRepository.get().defaultSubreddit());
         });
   }
 
@@ -103,6 +108,6 @@ public class UserAuthListener {
     SubredditSubscriptionsSyncJob.schedule(context);
 
     CheckUnreadMessagesJobService.syncImmediately(context);
-    CheckUnreadMessagesJobService.schedule(context, unreadMessagesPollInterval);
+    CheckUnreadMessagesJobService.schedule(context, unreadMessagesPollInterval.get(), unreadMessagesPollNetworkStrategy.get());
   }
 }

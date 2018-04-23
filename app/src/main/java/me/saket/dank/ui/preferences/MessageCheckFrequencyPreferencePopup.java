@@ -1,7 +1,6 @@
 package me.saket.dank.ui.preferences;
 
 import android.content.Context;
-import android.support.annotation.NonNull;
 
 import com.f2prateek.rx.preferences2.Preference;
 
@@ -14,10 +13,12 @@ import javax.inject.Named;
 import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
+import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.utils.NestedOptionsPopupMenu;
 import me.saket.dank.utils.NestedOptionsPopupMenu.MenuStructure.SingleLineItem;
 import me.saket.dank.utils.NestedOptionsPopupMenu.MenuStructure.ThreeLineItem;
 import me.saket.dank.utils.TimeInterval;
+import timber.log.Timber;
 
 public class MessageCheckFrequencyPreferencePopup extends NestedOptionsPopupMenu {
 
@@ -47,12 +48,20 @@ public class MessageCheckFrequencyPreferencePopup extends NestedOptionsPopupMenu
 
     createMenuLayout(c, menuStructure(c));
 
+    TimeInterval originalTimeInterval = frequencyPref.get().get();
+    NetworkStrategy originalNetworkStrategy = networkStrategyPref.get().get();
+
     setOnDismissListener(() -> {
-      // TODO: Re-schedule CheckUnreadMessagesJobService.
+      boolean preferencesChanged = !originalTimeInterval.equals(frequencyPref.get().get())
+          || !originalNetworkStrategy.equals(networkStrategyPref.get().get());
+
+      if (preferencesChanged) {
+        Timber.i("Re-scheduling");
+        CheckUnreadMessagesJobService.schedule(c, frequencyPref.get(), networkStrategyPref.get());
+      }
     });
   }
 
-  @NonNull
   private MenuStructure menuStructure(Context c) {
     List<SingleLineItem> firstPageItems = new ArrayList<>(3);
 
@@ -88,7 +97,9 @@ public class MessageCheckFrequencyPreferencePopup extends NestedOptionsPopupMenu
   protected void handleAction(Context c, int actionId) {
     switch (actionId) {
       case ID_DISABLE:
-        frequencyPref.get().set(TimeInterval.create(Long.MAX_VALUE, TimeUnit.DAYS));
+        // Avoid using Long.MAX_VALUE. When converted to millis,
+        // it trips up JobScheduler and the job starts running in a loop.
+        frequencyPref.get().set(TimeInterval.create(3650, TimeUnit.DAYS));
         break;
 
       case ID_15_MINS:

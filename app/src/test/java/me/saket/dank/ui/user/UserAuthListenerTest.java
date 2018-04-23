@@ -20,6 +20,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.ImmediateSchedulersRule;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.TimeInterval;
@@ -32,16 +33,21 @@ public class UserAuthListenerTest {
   @Mock SubscriptionRepository subscriptionRepository;
   @Mock UserSessionRepository userSessionRepository;
   @Mock Preference<TimeInterval> unreadMessagesPollInterval;
+  @Mock Preference<NetworkStrategy> unreadMessagesPollNetworkStrategy;
 
   private UserAuthListener userAuthListener;
 
   @Before
-  public void setUp() throws Exception {
-    userAuthListener = spy(new UserAuthListener(subscriptionRepository, userSessionRepository, unreadMessagesPollInterval));
+  public void setUp() {
+    userAuthListener = spy(new UserAuthListener(
+        () -> subscriptionRepository,
+        () -> userSessionRepository,
+        () -> unreadMessagesPollInterval,
+        () -> unreadMessagesPollNetworkStrategy));
   }
 
   @Test
-  public void startup() throws Exception {
+  public void startup() {
     when(userSessionRepository.streamSessions()).thenReturn(Observable.just(Optional.of(UserSession.create("saketme"))));
 
     //noinspection ConstantConditions

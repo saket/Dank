@@ -26,6 +26,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.PersistableBundleUtils;
@@ -49,12 +50,13 @@ public class CheckUnreadMessagesJobService extends DankJobService {
    * 1. One that is infrequent and uses user set time period. This runs on battery and metered connections.
    * 2. Another one that is more frequent, but runs only when the device is on an unmetered connection and charging.
    */
-  public static void schedule(Context context, Preference<TimeInterval> pollInterval) {
-    JobInfo userSetSyncJob = new JobInfo.Builder(ID_MESSAGES_FREQUENCY_USER_SET, new ComponentName(context, CheckUnreadMessagesJobService.class))
-        .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
+  public static void schedule(Context context, Preference<TimeInterval> pollInterval, Preference<NetworkStrategy> pollNetworkStrategy) {
+    JobInfo.Builder userJobBuilder = new JobInfo.Builder(ID_MESSAGES_USER_SCHEDULED, new ComponentName(context, CheckUnreadMessagesJobService.class))
         .setPersisted(true)
-        .setPeriodic(pollInterval.get().intervalMillis())
-        .build();
+        .setPeriodic(pollInterval.get().intervalMillis());
+
+    userJobBuilder = pollNetworkStrategy.get().setNetworkRequirement(userJobBuilder);
+    JobInfo userSetSyncJob = userJobBuilder.build();
 
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
     //noinspection ConstantConditions
@@ -66,7 +68,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
     Timber.i("Aggressive time interval: %s", aggressiveTimeInterval);
 
     if (!pollInterval.get().equals(aggressiveTimeInterval)) {
-      JobInfo aggressiveSyncJob = new JobInfo.Builder(ID_MESSAGES_FREQUENCY_AGGRESSIVE, new ComponentName(context, CheckUnreadMessagesJobService.class))
+      JobInfo aggressiveSyncJob = new JobInfo.Builder(ID_MESSAGES_AGGRESSIVE, new ComponentName(context, CheckUnreadMessagesJobService.class))
           .setRequiredNetworkType(JobInfo.NETWORK_TYPE_UNMETERED)
           .setRequiresCharging(true)
           .setPersisted(true)

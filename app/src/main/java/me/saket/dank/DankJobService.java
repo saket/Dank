@@ -33,8 +33,8 @@ public abstract class DankJobService extends JobService {
   protected static final int ID_SUBSCRIPTIONS_RECURRING_JOB = 0;
   protected static final int ID_SUBSCRIPTIONS_ONE_TIME_JOB = 1;
 
-  protected static final int ID_MESSAGES_FREQUENCY_USER_SET = 2;
-  protected static final int ID_MESSAGES_FREQUENCY_AGGRESSIVE = 3;
+  protected static final int ID_MESSAGES_USER_SCHEDULED = 2;
+  protected static final int ID_MESSAGES_AGGRESSIVE = 3;
   protected static final int ID_MESSAGES_IMMEDIATELY = 4;
 
   protected static final int ID_MARK_MESSAGE_AS_READ = 5;
