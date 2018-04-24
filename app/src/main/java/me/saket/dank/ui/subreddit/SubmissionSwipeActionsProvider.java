@@ -2,6 +2,7 @@ package me.saket.dank.ui.subreddit;
 
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
+import android.view.View;
 
 import com.jakewharton.rxrelay2.PublishRelay;
 
@@ -146,7 +147,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
-    boolean loginShown = showLoginIfNeeded(swipeAction);
+    boolean loginShown = showLoginIfNeeded(swipeAction, swipeableLayout);
     if (loginShown) {
       return;
     }
@@ -197,7 +198,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     swipeableLayout.playRippleAnimation(swipeAction, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
   }
 
-  private boolean showLoginIfNeeded(SwipeAction swipeAction) {
+  private boolean showLoginIfNeeded(SwipeAction swipeAction, View anyView) {
     switch (swipeAction.labelRes()) {
       case ACTION_NAME_OPTIONS:
       case ACTION_NAME_NEW_TAB:
@@ -208,7 +209,10 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
       case ACTION_NAME_UPVOTE:
       case ACTION_NAME_DOWNVOTE:
         if (!userSessionRepository.get().isUserLoggedIn()) {
-          onLoginRequireListener.get().onLoginRequired();
+          // Delay because showing LoginActivity for the first time stutters SwipeableLayout's reset animation.
+          anyView.postDelayed(
+              () -> onLoginRequireListener.get().onLoginRequired(),
+              SwipeableLayout.ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION);
           return true;
         }
         return false;

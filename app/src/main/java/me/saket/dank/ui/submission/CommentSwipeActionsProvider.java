@@ -45,7 +45,7 @@ public class CommentSwipeActionsProvider {
 
   //  public final PublishRelay<Comment> replySwipeActions = PublishRelay.create();
   public final PublishRelay<ContributionVoteSwipeEvent> voteSwipeActions = PublishRelay.create();
-//  public final PublishRelay<CommentOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
+  //  public final PublishRelay<CommentOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
   public final PublishRelay<SwipeEvent> swipeEvents = PublishRelay.create();
 
   @Inject
@@ -127,7 +127,10 @@ public class CommentSwipeActionsProvider {
 
   public void performSwipeAction(SwipeAction swipeAction, Comment comment, SwipeableLayout swipeableLayout) {
     if (ACTION_NAME_OPTIONS != swipeAction.labelRes() && !userSessionRepository.get().isUserLoggedIn()) {
-      onLoginRequireListener.get().onLoginRequired();
+      // Delay because showing LoginActivity for the first time stutters SwipeableLayout's reset animation.
+      swipeableLayout.postDelayed(
+          () -> onLoginRequireListener.get().onLoginRequired(),
+          SwipeableLayout.ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION);
       return;
     }
 
