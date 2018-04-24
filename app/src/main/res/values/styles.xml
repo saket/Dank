@@ -10,7 +10,7 @@
     <item name="android:textViewStyle">@style/DankDefaultTextViewStyle</item>
     <item name="editTextStyle">@style/DankDefaultEditTextStyle</item>
     <item name="android:buttonStyle">@style/DankButton</item>
-    <item name="android:switchStyle">@style/DankDefaultSwitchStyle</item>
+    <item name="android:switchTextAppearance">@style/DankSwitchTextAppearance</item>
 
     <item name="android:windowBackground">@color/window_background</item>
     <item name="android:windowDrawsSystemBarBackgrounds">true</item>
@@ -18,7 +18,7 @@
     <item name="android:navigationBarColor">@color/navigation_bar</item>
     <item name="android:backgroundDimEnabled">false</item>
 
-    <item name="dank_font_family">@font/roboto_family</item>
+    <item name="dank_font_family">@font/ibmplexsans_condensed_regular</item>
 
     <!-- Popups -->
     <item name="alertDialogTheme">@style/DankDialogTheme</item>
@@ -135,10 +135,6 @@
 
   <style name="DankDefaultEditTextStyle" parent="@android:style/Widget.EditText">
     <item name="fontFamily">?attr/dank_font_family</item>
-  </style>
-
-  <style name="DankDefaultSwitchStyle" parent="@style/Widget.AppCompat.CompoundButton.Switch">
-    <item name="android:textAppearance">@style/DankSwitchTextAppearance</item>
   </style>
 
   <style name="DankSwitchTextAppearance" parent="@android:style/TextAppearance.Holo.DialogWindowTitle">

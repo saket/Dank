@@ -1,46 +1,51 @@
 <?xml version="1.0" encoding="utf-8"?>
-<font-family xmlns:android="http://schemas.android.com/apk/res/android"
-  xmlns:app="http://schemas.android.com/apk/res-auto"
-  xmlns:tools="http://schemas.android.com/tools"
+<font-family xmlns:tools="http://schemas.android.com/tools"
   tools:targetApi="o">
 
-  <font
-    android:font="@font/roboto_thin"
-    app:font="@font/roboto_thin" />
+  <!--<font-->
+  <!--android:font="@font/roboto_thin"-->
+  <!--android:fontStyle="normal"-->
+  <!--android:fontWeight="100"-->
+  <!--app:font="@font/roboto_thin" />-->
 
-  <font
-    android:font="@font/roboto_thin_italic"
-    app:font="@font/roboto_thin_italic" />
+  <!--<font-->
+  <!--android:font="@font/roboto_thin_italic"-->
+  <!--android:fontStyle="italic"-->
+  <!--android:fontWeight="100"-->
+  <!--app:font="@font/roboto_thin_italic" />-->
 
-  <font
-    android:font="@font/roboto_light"
-    app:font="@font/roboto_light" />
+  <!--<font-->
+  <!--android:font="@font/roboto_light"-->
+  <!--android:fontStyle="normal"-->
+  <!--android:fontWeight="200"-->
+  <!--app:font="@font/roboto_light" />-->
 
-  <font
-    android:font="@font/roboto_light_italic"
-    app:font="@font/roboto_light_italic" />
+  <!--<font-->
+  <!--android:font="@font/roboto_light_italic"-->
+  <!--android:fontStyle="italic"-->
+  <!--android:fontWeight="200"-->
+  <!--app:font="@font/roboto_light_italic" />-->
 
-  <font
-    android:font="@font/roboto_regular"
-    app:font="@font/roboto_regular" />
+  <!--<font-->
+  <!--android:font="@font/roboto_regular"-->
+  <!--android:fontStyle="normal"-->
+  <!--android:fontWeight="400"-->
+  <!--app:font="@font/roboto_regular" />-->
 
-  <font
-    android:font="@font/roboto_italic"
-    app:font="@font/roboto_italic" />
+  <!--<font-->
+  <!--android:font="@font/roboto_italic"-->
+  <!--android:fontStyle="italic"-->
+  <!--android:fontWeight="400"-->
+  <!--app:font="@font/roboto_italic" />-->
 
-  <font
-    android:font="@font/roboto_medium"
-    app:font="@font/roboto_medium" />
+  <!--<font-->
+  <!--android:font="@font/ibmplexsans_condensed_medium"-->
+  <!--app:font="@font/ibmplexsans_condensed_medium" />-->
 
-  <font
-    android:font="@font/roboto_medium_italic"
-    app:font="@font/roboto_medium_italic" />
+  <!--<font-->
+  <!--android:font="@font/apercu_light"-->
+  <!--android:fontStyle="italic"-->
+  <!--android:fontWeight="500"-->
+  <!--app:font="@font/apercu_light" />-->
 
-  <font
-    android:font="@font/roboto_bold"
-    app:font="@font/roboto_bold" />
-
-  <font
-    android:font="@font/roboto_bold_italic"
-    app:font="@font/roboto_bold_italic" />
 </font-family>
