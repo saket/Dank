@@ -11,7 +11,6 @@
     style="@style/DankPreferenceItemTitle"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:fontFamily="@string/dank_default_font_family"
     android:gravity="top"
     tools:text="Check messages every" />
 

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+  <attr name="dank_font_family" format="reference" />
+
   <declare-styleable name="DankToolbar">
     <attr name="navigationIcon" format="reference" />
     <attr name="navigationIconTint" format="color" />

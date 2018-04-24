@@ -13,6 +13,7 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:textSize="@dimen/textsize14"
+    android:textStyle="italic"
     tools:ignore="SelectableText"
     tools:text="Check messages every" />
 
