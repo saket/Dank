@@ -70,7 +70,7 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
           Point showLocation = new Point(0, event.itemViewHolder().itemView.getTop() + Views.statusBarHeight(c.getResources()));
 
           // Align with padding.
-          int padding = c.getResources().getDimensionPixelSize(R.dimen.userprefs_item_padding);
+          int padding = c.getResources().getDimensionPixelSize(R.dimen.userprefs_item_padding_for_preference_popups);
           showLocation.offset(padding, padding);
 
           MessageCheckFrequencyPreferencePopup popup = new MessageCheckFrequencyPreferencePopup(c);

@@ -12,6 +12,9 @@
   <string name="userpreferences_about">About Dank</string>
   <string name="userpreferences_about_description">The team behind</string>
 
+  <string name="userprefs_typeface_roboto">Roboto regular</string>
+  <string name="userprefs_typeface_bifocals">Bifocals</string>
+
   <string name="userprefs_group_subreddit">Subreddit</string>
   <string name="userprefs_submission_thumbnails">Submission thumbnails</string>
   <string name="userprefs_submission_thumbnail_summary_on">Show if available</string>
@@ -141,6 +144,7 @@
   </style>
 
   <dimen name="userprefs_item_padding">@dimen/spacing16</dimen>
+  <dimen name="userprefs_item_padding_for_preference_popups">@dimen/spacing12</dimen>
 
   <declare-styleable name="UserPreferenceButtonView">
     <attr name="prefbutton_title" format="string" />

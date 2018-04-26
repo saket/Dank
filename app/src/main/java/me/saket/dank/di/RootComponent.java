@@ -30,6 +30,7 @@ import me.saket.dank.ui.media.MediaVideoFragment;
 import me.saket.dank.ui.preferences.HiddenPreferencesActivity;
 import me.saket.dank.ui.preferences.MessageCheckFrequencyPreferencePopup;
 import me.saket.dank.ui.preferences.PreferenceGroupsScreen;
+import me.saket.dank.ui.preferences.TypefaceInflationInterceptor;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
 import me.saket.dank.ui.submission.LinkOptionsPopup;
 import me.saket.dank.ui.submission.RetryReplyJobService;
@@ -48,6 +49,7 @@ import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.InboxFolderFragment;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
 import me.saket.dank.utils.JacksonHelper;
+import me.saket.dank.utils.NestedOptionsPopupMenu;
 import me.saket.dank.utils.markdown.MarkdownModule;
 import me.saket.dank.walkthrough.WalkthroughModule;
 
@@ -74,6 +76,8 @@ public interface RootComponent {
   UserAuthListener userAuthListener();
 
   AppShortcutRepository shortcutRepository();
+
+  TypefaceInflationInterceptor typefaceInflationInterceptor();
 
   void inject(MediaAlbumViewerActivity target);
 
@@ -142,4 +146,6 @@ public interface RootComponent {
   void inject(NewSubredditSubscriptionDialog target);
 
   void inject(MessageCheckFrequencyPreferencePopup target);
+
+  void inject(NestedOptionsPopupMenu target);
 }

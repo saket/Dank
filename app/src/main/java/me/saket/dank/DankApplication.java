@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
+import io.github.inflationx.viewpump.ViewPump;
 import io.reactivex.Observable;
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.exceptions.OnErrorNotImplementedException;
@@ -58,10 +59,16 @@ public class DankApplication extends Application {
     Dank.initDependencies(this);
     RxJavaPlugins.setErrorHandler(undeliveredExceptionsHandler());
 
+    if (BuildConfig.DEBUG) {
+      ViewPump.init(ViewPump.builder()
+          .addInterceptor(Dank.dependencyInjector().typefaceInflationInterceptor())
+          .build());
+    }
+
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       registerNotificationChannels();
 
-      // Android doesn't print stack-traces on Oreo anymore.
+      // Android doesn't print stack-traces on Oreo anymore if a custom exception handler is set.
       Thread.setDefaultUncaughtExceptionHandler(new LoggingUncaughtExceptionHandler(Thread.getDefaultUncaughtExceptionHandler()));
     }
 

@@ -18,7 +18,7 @@
     <item name="android:navigationBarColor">@color/navigation_bar</item>
     <item name="android:backgroundDimEnabled">false</item>
 
-    <item name="dank_font_family">@font/ibmplexsans_condensed_regular</item>
+    <item name="dank_font_family">@font/bifocals</item>
 
     <!-- Popups -->
     <item name="alertDialogTheme">@style/DankDialogTheme</item>
@@ -63,11 +63,11 @@
   </style>
 
   <style name="DankDialogTitleStyle" parent="@android:style/TextAppearance.Material.WindowTitle">
-    <item name="fontFamily">?attr/dank_font_family</item>
+    <!--<item name="fontFamily">?attr/dank_font_family</item>-->
   </style>
 
   <style name="DankToolbarTitleAppearance" parent="TextAppearance.Widget.AppCompat.Toolbar.Title">
-    <item name="fontFamily">?attr/dank_font_family</item>
+    <!--<item name="fontFamily">?attr/dank_font_family</item>-->
     <item name="android:textSize">20sp</item>
     <item name="android:textColor">@color/color_accent</item>
   </style>
@@ -87,15 +87,15 @@
   </style>
 
   <style name="DankButton" parent="Widget.AppCompat.Button">
-    <item name="fontFamily">?attr/dank_font_family</item>
+    <!--<item name="fontFamily">?attr/dank_font_family</item>-->
   </style>
 
   <style name="DankButton.Borderless" parent="@style/Widget.AppCompat.Button.Borderless">
-    <item name="fontFamily">?attr/dank_font_family</item>
+    <!--<item name="fontFamily">?attr/dank_font_family</item>-->
   </style>
 
   <style name="DankButton.Borderless.Colored" parent="@style/Widget.AppCompat.Button.Borderless.Colored">
-    <item name="fontFamily">?attr/dank_font_family</item>
+    <!--<item name="fontFamily">?attr/dank_font_family</item>-->
   </style>
 
   <style name="DankToolbarIcon">
@@ -130,15 +130,15 @@
   </style>
 
   <style name="DankDefaultTextViewStyle" parent="@android:style/Widget.TextView">
-    <item name="fontFamily">?attr/dank_font_family</item>
+    <!--<item name="fontFamily">?attr/dank_font_family</item>-->
   </style>
 
   <style name="DankDefaultEditTextStyle" parent="@android:style/Widget.EditText">
-    <item name="fontFamily">?attr/dank_font_family</item>
+    <!--<item name="fontFamily">?attr/dank_font_family</item>-->
   </style>
 
   <style name="DankSwitchTextAppearance" parent="@android:style/TextAppearance.Holo.DialogWindowTitle">
-    <item name="fontFamily">?attr/dank_font_family</item>
+    <!--<item name="fontFamily">?attr/dank_font_family</item>-->
   </style>
 
   <style name="DankPopupMenu" parent="Base.Widget.AppCompat.PopupMenu.Overflow">

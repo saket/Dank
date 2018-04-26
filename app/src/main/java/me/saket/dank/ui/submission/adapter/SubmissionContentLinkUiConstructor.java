@@ -8,6 +8,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Canvas;
+import android.graphics.Color;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
@@ -54,7 +55,7 @@ import timber.log.Timber;
 public class SubmissionContentLinkUiConstructor {
 
   public static final boolean UNFURL_REDDIT_PAGES_AS_EXTERNAL_LINKS = true;
-  private static final TintDetails DEFAULT_TINT_DETAILS = TintDetails.create(Optional.empty(), R.color.submission_link_title, R.color.submission_link_byline);
+  private static final TintDetails DEFAULT_TINT_DETAILS = TintDetails.create(Optional.of(Color.DKGRAY), R.color.submission_link_title, R.color.submission_link_byline);
   private static final boolean PROGRESS_VISIBLE = true;
   private static final boolean PROGRESS_HIDDEN = false;
 

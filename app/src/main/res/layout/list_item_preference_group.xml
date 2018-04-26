@@ -25,6 +25,7 @@
     android:layout_marginTop="@dimen/spacing12"
     android:layout_toEndOf="@+id/item_preferencegroup_icon"
     android:textColor="@color/gray_100"
+    android:textIsSelectable="false"
     tools:text="@string/userpreferences_look_and_feel" />
 
   <TextView
@@ -35,6 +36,7 @@
     android:layout_below="@+id/item_preferencegroup_title"
     android:layout_marginBottom="@dimen/spacing12"
     android:textColor="@color/gray_600"
+    android:textIsSelectable="false"
     tools:text="@string/userpreferences_look_and_feel_description" />
 
   <View

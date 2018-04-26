@@ -33,6 +33,7 @@ public abstract class TimeInterval {
 
   public static class TimeUnitPrefConverter implements Preference.Converter<TimeInterval> {
     private final Moshi moshi;
+    private JsonAdapter<TimeInterval> adapter;
 
     public TimeUnitPrefConverter(Moshi moshi) {
       this.moshi = moshi;
@@ -41,8 +42,8 @@ public abstract class TimeInterval {
     @NonNull
     @Override
     public TimeInterval deserialize(@NonNull String serialized) {
+      JsonAdapter<TimeInterval> adapter = adapter();
       try {
-        JsonAdapter<TimeInterval> adapter = moshi.adapter(TimeInterval.class);
         //noinspection ConstantConditions
         return adapter.fromJson(serialized);
       } catch (IOException e) {
@@ -53,8 +54,16 @@ public abstract class TimeInterval {
     @NonNull
     @Override
     public String serialize(@NonNull TimeInterval value) {
-      JsonAdapter<TimeInterval> adapter = moshi.adapter(TimeInterval.class);
+      JsonAdapter<TimeInterval> adapter = adapter();
+      //noinspection ConstantConditions
       return adapter.toJson(value);
+    }
+
+    private JsonAdapter<TimeInterval> adapter() {
+      if (adapter == null) {
+        adapter = moshi.adapter(TimeInterval.class);
+      }
+      return adapter;
     }
   }
 }

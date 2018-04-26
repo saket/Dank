@@ -1,24 +1,53 @@
 package me.saket.dank.ui.preferences.adapter;
 
 import android.content.Context;
+
 import com.f2prateek.rx.preferences2.Preference;
+
 import java.util.ArrayList;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
+import me.saket.dank.ui.preferences.MultiOptionPreferencePopup;
+import me.saket.dank.ui.preferences.TypefaceResource;
 
 public class LookAndFeelPreferencesConstructor implements UserPreferencesConstructor.ChildConstructor {
 
+  private final Preference<TypefaceResource> typefacePref;
   private final Preference<Boolean> showSubmissionThumbnails;
 
   @Inject
-  public LookAndFeelPreferencesConstructor(@Named("show_submission_thumbnails") Preference<Boolean> showSubmissionThumbnails) {
+  public LookAndFeelPreferencesConstructor(
+      Preference<TypefaceResource> typefacePref,
+      @Named("show_submission_thumbnails") Preference<Boolean> showSubmissionThumbnails)
+  {
+    this.typefacePref = typefacePref;
     this.showSubmissionThumbnails = showSubmissionThumbnails;
   }
 
   public List<UserPreferencesScreenUiModel> construct(Context c) {
     List<UserPreferencesScreenUiModel> uiModels = new ArrayList<>();
+
+    if (BuildConfig.DEBUG) {
+      TypefaceResource typefaceResource = typefacePref.get();
+
+      uiModels.add(UserPreferenceSectionHeader.UiModel.create("Text"));
+      uiModels.add(UserPreferenceButton.UiModel.create(
+          "Typeface",
+          typefaceResource.name(),
+          (clickHandler, event) -> {
+            MultiOptionPreferencePopup.Builder<TypefaceResource> popupBuilder = MultiOptionPreferencePopup.builder(typefacePref)
+                .addOption(TypefaceResource.DEFAULT, R.string.userprefs_typeface_roboto, R.drawable.ic_text_fields_20dp)
+                .addOption(
+                    TypefaceResource.create("Bifocals", R.font.bifocals, "bifocals.otf"),
+                    R.string.userprefs_typeface_bifocals,
+                    R.drawable.ic_text_fields_20dp);
+            clickHandler.show(popupBuilder, event.itemViewHolder());
+          }));
+    }
 
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_subreddit)));
 

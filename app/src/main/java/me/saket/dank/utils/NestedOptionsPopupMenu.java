@@ -26,12 +26,18 @@ import android.widget.ViewFlipper;
 import com.google.auto.value.AutoValue;
 
 import java.util.List;
+import javax.inject.Inject;
 
+import dagger.Lazy;
 import me.saket.dank.R;
+import me.saket.dank.di.Dank;
+import me.saket.dank.ui.preferences.TypefaceInflationInterceptor;
 import me.saket.dank.ui.user.PopupWindowWithMaterialTransition;
 import me.saket.dank.widgets.TintableCompoundDrawableTextView;
 
 public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTransition {
+
+  @Inject Lazy<TypefaceInflationInterceptor> typefaceInflationInterceptor;
 
   private ViewFlipper viewFlipper;
 
@@ -111,6 +117,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
 
   public NestedOptionsPopupMenu(Context c) {
     super(c);
+    Dank.dependencyInjector().inject(this);
   }
 
   protected abstract void handleAction(Context c, int actionId);
@@ -139,6 +146,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
       mainMenuTitle.setEllipsize(TextUtils.TruncateAt.END);
       mainMenuTitle.setPadding(spacing16, spacing16, spacing16, spacing16);
       mainMenuTitle.setText(title);
+      typefaceInflationInterceptor.get().applyTypefaceChanges(mainMenuTitle);
       mainMenuContainer.addView(mainMenuTitle, LayoutParams.MATCH_PARENT, LayoutParams.MATCH_PARENT);
     });
 
@@ -150,6 +158,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
       menuButton.setPadding(spacing16, spacing12, spacing16, spacing12);
       menuButton.setBackground(getSelectableItemBackground(c));
       menuButton.setTextColor(ContextCompat.getColor(c, R.color.gray_200));
+      typefaceInflationInterceptor.get().applyTypefaceChanges(menuButton);
       mainMenuContainer.addView(menuButton, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 
       List<MenuStructure.ThreeLineItem> subMenuItems = singleLineItem.subItems();
@@ -181,6 +190,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
           setupSubMenuExitAnimation(viewFlipper);
           viewFlipper.setDisplayedChild(0);
         });
+        typefaceInflationInterceptor.get().applyTypefaceChanges(subMenuTitle);
         subMenuContainer.addView(subMenuTitle, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
 
         for (int i = 0; i < subMenuItems.size(); i++) {
@@ -198,6 +208,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
               subMenuButton.setContentDescription(c.getString(contentDescriptionRes))
           );
           subMenuContainer.addView(subMenuButton, LayoutParams.MATCH_PARENT, LayoutParams.WRAP_CONTENT);
+          typefaceInflationInterceptor.get().applyTypefaceChanges(subMenuButton);
         }
       } else {
         menuButton.setOnClickListener(o -> handleAction(c, singleLineItem.id()));

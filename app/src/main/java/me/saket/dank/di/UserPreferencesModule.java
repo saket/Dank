@@ -21,6 +21,7 @@ import me.saket.dank.BuildConfig;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.ui.preferences.DefaultWebBrowser;
 import me.saket.dank.ui.preferences.NetworkStrategy;
+import me.saket.dank.ui.preferences.TypefaceResource;
 import me.saket.dank.utils.DeviceInfo;
 import me.saket.dank.utils.RxPreferencesEnumTypeAdapter;
 import me.saket.dank.utils.TimeInterval;
@@ -103,6 +104,11 @@ public class UserPreferencesModule {
   @Named("show_submission_thumbnails")
   Preference<Boolean> showSubmissionThumbnailsPref(@Named("user_prefs") RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("show_submission_thumbnails", true);
+  }
+
+  @Provides
+  Preference<TypefaceResource> typefacePref(@Named("user_prefs") RxSharedPreferences rxPrefs, Moshi moshi) {
+    return rxPrefs.getObject("typeface_res", TypefaceResource.DEFAULT, new TypefaceResource.Converter(moshi));
   }
 
 // ======== DATA USAGE ======== //
