@@ -2,7 +2,6 @@ package me.saket.dank.urlparser;
 
 import android.net.Uri;
 import android.support.annotation.Nullable;
-import android.text.Html;
 import android.text.TextUtils;
 
 import com.nytimes.android.external.cache3.Cache;
@@ -190,10 +189,10 @@ public class UrlParser {
     } else if (urlDomain.contains("streamable.com")) {
       return createUnresolvedStreamableLink(linkURI);
 
-    } else if ((urlDomain.contains("reddituploads.com"))) {
+    } else if (urlDomain.contains("reddituploads.com") || urlDomain.contains("redditmedia.com")) {
       // Reddit sends HTML-escaped URLs for reddituploads.com. Decode them again.
       //noinspection deprecation
-      String htmlUnescapedUrl = Html.fromHtml(url).toString();
+      String htmlUnescapedUrl = org.jsoup.parser.Parser.unescapeEntities(url, true);
       return GenericMediaLink.create(htmlUnescapedUrl, Link.Type.SINGLE_IMAGE);
 
     } else if (isImageOrGifUrlPath(urlPath) || isVideoPath(urlPath)) {

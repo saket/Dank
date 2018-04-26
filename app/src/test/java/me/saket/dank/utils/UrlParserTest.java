@@ -284,6 +284,26 @@ public class UrlParserTest {
   }
 
   @Test
+  public void escapeRedditHostedMediaUrls() {
+    String[] imageUrls = {
+        "https://i.reddituploads.com/df0af5450dd14902a3056ec73db8fa64?fit=max&h=1536&w=1536&amp;s=8fa077352b28b8a3e94fcd845cf7ca83",
+        "https://i.redditmedia.com/H672N4aueEuGzTypOO3Gqzlf3xw3P61tVssYu2ObxDM.jpg?w=640&amp;s=76edfb936f168c9c4dd3bc45a0c45509"
+    };
+    String[] expecteds = {
+        "https://i.reddituploads.com/df0af5450dd14902a3056ec73db8fa64?fit=max&h=1536&w=1536&s=8fa077352b28b8a3e94fcd845cf7ca83",
+        "https://i.redditmedia.com/H672N4aueEuGzTypOO3Gqzlf3xw3P61tVssYu2ObxDM.jpg?w=640&s=76edfb936f168c9c4dd3bc45a0c45509"
+    };
+
+    for (int i = 0; i < imageUrls.length; i++) {
+      String imageUrl = imageUrls[i];
+      Link parsedLink = urlParser.parse(imageUrl);
+      assertEquals(true, parsedLink instanceof MediaLink);
+      //noinspection ConstantConditions
+      assertEquals(((MediaLink) parsedLink).highQualityUrl(), expecteds[i]);
+    }
+  }
+
+  @Test
   public void parseRedditHostedVideos() throws IOException {
     String[] videoUrls = {
         "https://v.redd.it/fjpqnd127wf01",
