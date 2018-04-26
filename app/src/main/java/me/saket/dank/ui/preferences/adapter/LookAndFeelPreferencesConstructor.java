@@ -39,41 +39,16 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
           "Typeface",
           typefaceResource.name(),
           (clickHandler, event) -> {
-            MultiOptionPreferencePopup.Builder<TypefaceResource> popupBuilder = MultiOptionPreferencePopup.builder(typefacePref)
-                .addOption(TypefaceResource.DEFAULT, R.string.userprefs_typeface_roboto, R.drawable.ic_text_fields_20dp)
-                .addOption(
-                    TypefaceResource.create("Bifocals", R.font.bifocals, "bifocals.otf"),
-                    R.string.userprefs_typeface_bifocals,
-                    R.drawable.ic_text_fields_20dp)
-                .addOption(
-                    TypefaceResource.create("Avenir book", -1, "avenir_book.ttf"),
-                    R.string.userprefs_typeface_avenir_book,
-                    R.drawable.ic_text_fields_20dp)
-                .addOption(
-                    TypefaceResource.create("Avenir light", -1, "avenir_light.ttf"),
-                    R.string.userprefs_typeface_avenir_light,
-                    R.drawable.ic_text_fields_20dp)
-                .addOption(
-                    TypefaceResource.create("Avenir medium", -1, "avenir_medium.ttf"),
-                    R.string.userprefs_typeface_avenir_medium,
-                    R.drawable.ic_text_fields_20dp)
-                .addOption(
-                    TypefaceResource.create("Avenir roman", -1, "avenir_roman.ttf"),
-                    R.string.userprefs_typeface_avenir_roman,
-                    R.drawable.ic_text_fields_20dp)
-                .addOption(
-                    TypefaceResource.create("Avenir next regular", -1, "avenir_next_regular.ttf"),
-                    R.string.userprefs_typeface_avenir_next,
-                    R.drawable.ic_text_fields_20dp)
-                .addOption(
-                    TypefaceResource.create("Avenir condensed regular", -1, "AvenirNextCondensed-Regular.ttf"),
-                    R.string.userprefs_typeface_avenir_condensed_regular,
-                    R.drawable.ic_text_fields_20dp)
-                .addOption(
-                    TypefaceResource.create("Avenir condensed medium", -1, "AvenirNextCondensed-Medium.ttf"),
-                    R.string.userprefs_typeface_avenir_condensed_medium,
-                    R.drawable.ic_text_fields_20dp)
-                ;
+            MultiOptionPreferencePopup.Builder<TypefaceResource> popupBuilder = MultiOptionPreferencePopup.builder(typefacePref);
+            add(popupBuilder, TypefaceResource.create("Bifocals", "bifocals.otf"));
+            add(popupBuilder, TypefaceResource.create("Avenir book", "avenir_book.ttf"));
+            add(popupBuilder, TypefaceResource.create("Avenir light", "avenir_light.ttf"));
+            add(popupBuilder, TypefaceResource.create("Avenir medium", "avenir_medium.ttf"));
+            add(popupBuilder, TypefaceResource.create("Avenir roman", "avenir_roman.ttf"));
+            add(popupBuilder, TypefaceResource.create("Avenir next regular", "avenir_next_regular.ttf"));
+            add(popupBuilder, TypefaceResource.create("Avenir condensed regular", "AvenirNextCondensed-Regular.ttf"));
+            add(popupBuilder, TypefaceResource.create("Avenir condensed medium", "AvenirNextCondensed-Medium.ttf"));
+
             clickHandler.show(popupBuilder, event.itemViewHolder());
           }));
     }
@@ -105,5 +80,9 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
             event.itemViewHolder())));
 
     return uiModels;
+  }
+
+  private void add(MultiOptionPreferencePopup.Builder<TypefaceResource> builder, TypefaceResource resource) {
+    builder.addOption(resource, resource.name(), R.drawable.ic_text_fields_20dp);
   }
 }

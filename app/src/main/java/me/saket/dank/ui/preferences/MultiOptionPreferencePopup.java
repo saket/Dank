@@ -12,6 +12,7 @@ import java.util.List;
 
 import me.saket.dank.utils.NestedOptionsPopupMenu;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.StringOrResource;
 
 public class MultiOptionPreferencePopup<T> extends NestedOptionsPopupMenu {
 
@@ -30,7 +31,7 @@ public class MultiOptionPreferencePopup<T> extends NestedOptionsPopupMenu {
     ArrayList<MenuStructure.SingleLineItem> menuOptions = new ArrayList<>();
     for (int index = 0; index < options.size(); index++) {
       Option<T> option = options.get(index);
-      menuOptions.add(MenuStructure.SingleLineItem.create(index, context.getString(option.titleRes()), option.iconRes()));
+      menuOptions.add(MenuStructure.SingleLineItem.create(index, option.title().get(context.getResources()), option.iconRes()));
     }
     MenuStructure menuStructure = MenuStructure.create(Optional.empty(), menuOptions);
     createMenuLayout(context, menuStructure);
@@ -48,14 +49,13 @@ public class MultiOptionPreferencePopup<T> extends NestedOptionsPopupMenu {
 
     public abstract T preferenceValue();
 
-    @StringRes
-    public abstract int titleRes();
+    public abstract StringOrResource title();
 
     @DrawableRes
     public abstract int iconRes();
 
-    public static <T> Option<T> create(T preferenceValue, @StringRes int titleRes, @DrawableRes int iconRes) {
-      return new AutoValue_MultiOptionPreferencePopup_Option<>(preferenceValue, titleRes, iconRes);
+    public static <T> Option<T> create(T preferenceValue, StringOrResource title, @DrawableRes int iconRes) {
+      return new AutoValue_MultiOptionPreferencePopup_Option<>(preferenceValue, title, iconRes);
     }
   }
 
@@ -68,12 +68,20 @@ public class MultiOptionPreferencePopup<T> extends NestedOptionsPopupMenu {
       this.preference = preference;
     }
 
-    public Builder<T> addOption(T preferenceValue, @StringRes int titleRes, @DrawableRes int iconRes) {
+    public Builder<T> addOption(T preferenceValue, StringOrResource title, @DrawableRes int iconRes) {
       if (options == null) {
         options = new ArrayList<>();
       }
-      options.add(Option.create(preferenceValue, titleRes, iconRes));
+      options.add(Option.create(preferenceValue, title, iconRes));
       return this;
+    }
+
+    public Builder<T> addOption(T preferenceValue, @StringRes int titleRes, @DrawableRes int iconRes) {
+      return addOption(preferenceValue, StringOrResource.of(titleRes), iconRes);
+    }
+
+    public Builder<T> addOption(T preferenceValue, String title, @DrawableRes int iconRes) {
+      return addOption(preferenceValue, StringOrResource.of(title), iconRes);
     }
 
     public MultiOptionPreferencePopup<T> build(Context context) {

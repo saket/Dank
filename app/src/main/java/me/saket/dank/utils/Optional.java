@@ -31,6 +31,7 @@ import com.google.auto.value.AutoValue;
 
 import java.util.NoSuchElementException;
 import java.util.Objects;
+import javax.inject.Provider;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableConverter;
@@ -162,6 +163,30 @@ public abstract class Optional<T> {
    */
   public T orElse(@Nullable T other) {
     return value() != null ? value() : other;
+  }
+
+  /**
+   * Return the contained value, if present, otherwise throw an exception
+   * to be created by the provided supplier.
+   *
+   * @apiNote A method reference to the exception constructor with an empty
+   * argument list can be used as the supplier. For example,
+   * {@code IllegalStateException::new}
+   *
+   * @param <X> Type of the exception to be thrown
+   * @param exceptionSupplier The supplier which will return the exception to
+   * be thrown
+   * @return the present value
+   * @throws X if there is no value present
+   * @throws NullPointerException if no value is present and
+   * {@code exceptionSupplier} is null
+   */
+  public <X extends Throwable> T orElseThrow(Provider<? extends X> exceptionSupplier) throws X {
+    if (value() != null) {
+      return value();
+    } else {
+      throw exceptionSupplier.get();
+    }
   }
 
   /**
