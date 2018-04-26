@@ -37,11 +37,11 @@ public abstract class TypefaceResource {
   public abstract String compatFileName();
 
   public Typeface get(Resources resources) {
-    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-      return resources.getFont(id());
-    } else {
-      return Typeface.createFromAsset(resources.getAssets(), compatFileName());
-    }
+//    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+//      return resources.getFont(id());
+//    } else {
+    return Typeface.createFromAsset(resources.getAssets(), compatFileName());
+//    }
   }
 
   public static TypefaceResource create(String name, @FontRes int typefaceRes, String compatFileName) {

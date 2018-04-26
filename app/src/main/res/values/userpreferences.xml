@@ -14,6 +14,13 @@
 
   <string name="userprefs_typeface_roboto">Roboto regular</string>
   <string name="userprefs_typeface_bifocals">Bifocals</string>
+  <string name="userprefs_typeface_avenir_book">Avenir book</string>
+  <string name="userprefs_typeface_avenir_light">Avenir light</string>
+  <string name="userprefs_typeface_avenir_medium">Avenir medium</string>
+  <string name="userprefs_typeface_avenir_roman">Avenir roman</string>
+  <string name="userprefs_typeface_avenir_next">Avenir next</string>
+  <string name="userprefs_typeface_avenir_condensed_regular">Avenir condensed regular</string>
+  <string name="userprefs_typeface_avenir_condensed_medium">Avenir condensed medium</string>
 
   <string name="userprefs_group_subreddit">Subreddit</string>
   <string name="userprefs_submission_thumbnails">Submission thumbnails</string>
