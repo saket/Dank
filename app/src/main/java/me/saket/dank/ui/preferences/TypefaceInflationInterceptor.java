@@ -12,6 +12,7 @@ import javax.inject.Singleton;
 
 import io.github.inflationx.viewpump.InflateResult;
 import io.reactivex.Observable;
+import me.saket.dank.widgets.ToolbarWithCustomTypeface;
 
 @Singleton
 public class TypefaceInflationInterceptor implements io.github.inflationx.viewpump.Interceptor {
@@ -32,6 +33,11 @@ public class TypefaceInflationInterceptor implements io.github.inflationx.viewpu
 
     if (view instanceof TextView) {
       applyTypefaceChanges((TextView) view);
+    }
+    if (view instanceof ToolbarWithCustomTypeface) {
+      ((ToolbarWithCustomTypeface) view).titleView()
+          .takeUntil(RxView.detaches(view))
+          .subscribe(this::applyTypefaceChanges);
     }
 
     return result;

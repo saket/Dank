@@ -5,7 +5,6 @@ import android.content.res.TypedArray;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.Nullable;
-import android.support.v7.widget.Toolbar;
 import android.util.AttributeSet;
 
 import me.saket.dank.R;
@@ -16,7 +15,7 @@ import me.saket.dank.R;
  * <p>
  * Also, not sure why, but padding only works if there's a navigation icon set.
  */
-public class DankToolbar extends Toolbar {
+public class DankToolbar extends ToolbarWithCustomTypeface {
 
   public DankToolbar(Context context, @Nullable AttributeSet attrs) {
     super(context, attrs);
