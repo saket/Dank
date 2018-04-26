@@ -21,6 +21,7 @@ import android.view.animation.Animation;
 import android.view.animation.AnimationUtils;
 import android.widget.LinearLayout;
 import android.widget.PopupWindow;
+import android.widget.ScrollView;
 import android.widget.ViewFlipper;
 
 import com.google.auto.value.AutoValue;
@@ -127,6 +128,7 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
     int spacing16 = c.getResources().getDimensionPixelSize(R.dimen.spacing16);
     int spacing12 = c.getResources().getDimensionPixelSize(R.dimen.spacing12);
     int spacing24 = c.getResources().getDimensionPixelSize(R.dimen.spacing24);
+    int deviceDisplayHeight = c.getResources().getDisplayMetrics().heightPixels;
 
     viewFlipper = new ViewFlipper(c);
     viewFlipper.setBackground(c.getDrawable(R.drawable.background_popup_window));
@@ -135,9 +137,19 @@ public abstract class NestedOptionsPopupMenu extends PopupWindowWithMaterialTran
     viewFlipper.setClipToOutline(true);
     setContentView(viewFlipper);
 
+    ScrollView mainMenuScrollableContainer = new ScrollView(c);
+    viewFlipper.addView(mainMenuScrollableContainer, viewFlipperParams.width, LayoutParams.WRAP_CONTENT);
+    Views.executeOnMeasure(mainMenuScrollableContainer, () -> {
+      int height = mainMenuScrollableContainer.getHeight();
+      int maxHeight = deviceDisplayHeight / 2;
+      if (height > maxHeight) {
+        Views.setHeight(mainMenuScrollableContainer, maxHeight);
+      }
+    });
+
     LinearLayout mainMenuContainer = new LinearLayout(c);
     mainMenuContainer.setOrientation(LinearLayout.VERTICAL);
-    viewFlipper.addView(mainMenuContainer, viewFlipperParams.width, LayoutParams.WRAP_CONTENT);
+    mainMenuScrollableContainer.addView(mainMenuContainer, viewFlipperParams.width, LayoutParams.WRAP_CONTENT);
 
     menuStructure.optionalTitle().ifPresent(title -> {
       AppCompatTextView mainMenuTitle = new AppCompatTextView(c);
