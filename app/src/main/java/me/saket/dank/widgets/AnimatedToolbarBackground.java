@@ -32,6 +32,7 @@ public class AnimatedToolbarBackground extends View {
     onVisibleTranslationZ = getTranslationZ();
     setTranslationZ(0f);
     toggleFill(true);
+    setClickable(true);
 
     TypedArray attributes = context.obtainStyledAttributes(attrs, R.styleable.AnimatedToolbarBackground);
     clickableWhenFilled = attributes.getBoolean(R.styleable.AnimatedToolbarBackground_clickableWhenFilled, false);
