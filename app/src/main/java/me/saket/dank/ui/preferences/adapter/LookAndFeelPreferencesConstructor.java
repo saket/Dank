@@ -43,18 +43,10 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
             add(builder, TypefaceResource.create("Roboto", "roboto_regular.ttf"));
             add(builder, TypefaceResource.create("Roboto condensed", "RobotoCondensed-Regular.ttf"));
             add(builder, TypefaceResource.create("Bifocals", "bifocals.otf"));
-            add(builder, TypefaceResource.create("Avenir book", "avenir_book.ttf"));
-            add(builder, TypefaceResource.create("Avenir medium", "avenir_medium.ttf"));
-            add(builder, TypefaceResource.create("Avenir roman", "avenir_roman.ttf"));
-            add(builder, TypefaceResource.create("Avenir next regular", "avenir_next_regular.ttf"));
-            add(builder, TypefaceResource.create("Avenir condensed regular", "AvenirNextCondensed-Regular.ttf"));
-            add(builder, TypefaceResource.create("Avenir condensed medium", "AvenirNextCondensed-Medium.ttf"));
 
             add(builder, TypefaceResource.create("Transcript regular", "TranscriptTrial-Regular.otf"));
             add(builder, TypefaceResource.create("Transcript mono", "TranscriptMonoTrial-Regular.otf"));
 
-            add(builder, TypefaceResource.create("Basis mono", "basis-grotesque-trial-mono.otf"));
-            add(builder, TypefaceResource.create("Basis off-white", "basis-grotesque-trial-off-white.otf"));
             add(builder, TypefaceResource.create("Basis regular", "basis-grotesque-trial-regular.otf"));
             add(builder, TypefaceResource.create("Basis medium", "basis-grotesque-trial-medium.otf"));
 

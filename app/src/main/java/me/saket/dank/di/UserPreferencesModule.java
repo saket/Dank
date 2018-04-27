@@ -108,7 +108,7 @@ public class UserPreferencesModule {
 
   @Provides
   Preference<TypefaceResource> typefacePref(@Named("user_prefs") RxSharedPreferences rxPrefs, Moshi moshi) {
-    return rxPrefs.getObject("typeface_res", TypefaceResource.DEFAULT, new TypefaceResource.Converter(moshi));
+    return rxPrefs.getObject("typeface", TypefaceResource.DEFAULT, new TypefaceResource.Converter(moshi));
   }
 
 // ======== DATA USAGE ======== //
