@@ -5,14 +5,12 @@ import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-
+import io.reactivex.Observable;
+import io.reactivex.functions.Consumer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
-
-import io.reactivex.Observable;
-import io.reactivex.functions.Consumer;
 import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.subreddit.events.SubredditSubmissionThumbnailClickEvent;
@@ -23,12 +21,14 @@ import me.saket.dank.ui.subreddit.uimodels.SubredditSubmissionPagination;
 import me.saket.dank.utils.InfinitelyScrollableRecyclerViewAdapter;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
+import me.saket.dank.walkthrough.SubmissionGesturesWalkthrough;
 
 public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<SubmissionRowUiModel, RecyclerView.ViewHolder>
     implements Consumer<Pair<List<SubmissionRowUiModel>, DiffUtil.DiffResult>>, InfinitelyScrollableRecyclerViewAdapter
 {
 
   public static final int ADAPTER_ID_PAGINATION_FOOTER = -99;
+  public static final long ADAPTER_ID_GESTURES_WALKTHROUGH = -98;
   private static final SubmissionRowUiModel.Type[] VIEW_TYPES = SubmissionRowUiModel.Type.values();
 
   private final Map<SubmissionRowUiModel.Type, SubredditScreenUiModel.SubmissionRowUiChildAdapter> childAdapters;
@@ -36,8 +36,13 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   private final SubredditSubmissionPagination.Adapter paginationAdapter;
 
   @Inject
-  public SubredditSubmissionsAdapter(SubredditSubmission.Adapter submissionAdapter, SubredditSubmissionPagination.Adapter paginationAdapter) {
-    childAdapters = new HashMap<>(3);
+  public SubredditSubmissionsAdapter(
+      SubmissionGesturesWalkthrough.Adapter gestureWalkthroughAdapter,
+      SubredditSubmission.Adapter submissionAdapter,
+      SubredditSubmissionPagination.Adapter paginationAdapter)
+  {
+    childAdapters = new HashMap<>(4);
+    childAdapters.put(SubmissionRowUiModel.Type.GESTURES_WALKTHROUGH, gestureWalkthroughAdapter);
     childAdapters.put(SubmissionRowUiModel.Type.SUBMISSION, submissionAdapter);
     childAdapters.put(SubmissionRowUiModel.Type.PAGINATION_FOOTER, paginationAdapter);
 

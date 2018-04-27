@@ -17,6 +17,7 @@ public abstract class SubredditScreenUiModel {
 
   public interface SubmissionRowUiModel {
     enum Type {
+      GESTURES_WALKTHROUGH,
       SUBMISSION,
       PAGINATION_FOOTER
     }

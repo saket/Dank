@@ -39,6 +39,9 @@ public abstract class StreamableVideoResponse {
     public static JsonAdapter<Files> jsonAdapter(Moshi moshi) {
       return new AutoValue_StreamableVideoResponse_Files.MoshiJsonAdapter(moshi);
     }
+    public static JsonAdapter<Files> jsonAdapter(Moshi moshi) {
+      return new AutoValue_me.saket.dank.data.StreamableVideoResponse.Files.MoshiJsonAdapter(moshi);
+    }
   }
 
   @AutoValue

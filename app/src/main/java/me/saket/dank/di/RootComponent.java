@@ -49,8 +49,9 @@ import me.saket.dank.ui.user.messages.InboxFolderFragment;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
 import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.markdown.MarkdownModule;
+import me.saket.dank.walkthrough.WalkthroughModule;
 
-@Component(modules = { RootModule.class, UserPreferencesModule.class, CacheModule.class, MarkdownModule.class })
+@Component(modules = { RootModule.class, UserPreferencesModule.class, CacheModule.class, MarkdownModule.class, WalkthroughModule.class})
 @Singleton
 public interface RootComponent {
 

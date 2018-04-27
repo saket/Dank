@@ -98,6 +98,10 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     return isSubmissionSaved ? swipeActionsWithUnSave : swipeActionsWithSave;
   }
 
+  public SwipeActions actionsWithSave() {
+    return swipeActionsWithSave;
+  }
+
   @Override
   public void showSwipeActionIcon(SwipeActionIconView imageView, @Nullable SwipeAction oldAction, SwipeAction newAction) {
     switch (newAction.labelRes()) {

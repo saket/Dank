@@ -6,22 +6,15 @@ import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
 import android.widget.ImageView;
-
 import com.f2prateek.rx.preferences2.Preference;
-
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
-import net.dean.jraw.models.VoteDirection;
-
+import dagger.Lazy;
+import io.reactivex.Observable;
+import io.reactivex.functions.BiFunction;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Named;
-
-import dagger.Lazy;
-import io.reactivex.Observable;
-import io.reactivex.functions.BiFunction;
 import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
@@ -38,6 +31,10 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.walkthrough.SubmissionGesturesWalkthrough;
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.VoteDirection;
 import timber.log.Timber;
 
 public class SubredditUiConstructor {
@@ -46,6 +43,7 @@ public class SubredditUiConstructor {
   private static final BiFunction<Boolean, Boolean, Boolean> OR_FUNCTION = (b1, b2) -> b1 || b2;
 
   private final VotingManager votingManager;
+  private final Lazy<SubmissionGesturesWalkthrough> gesturesWalkthrough;
   private final Preference<Boolean> showCommentCountInByline;
   private final Preference<Boolean> showNsfwContent;
   private final Preference<Boolean> showThumbnailsPref;
@@ -57,6 +55,7 @@ public class SubredditUiConstructor {
       VotingManager votingManager,
       ErrorResolver errorResolver,
       Lazy<BookmarksRepository> bookmarksRepository,
+      Lazy<SubmissionGesturesWalkthrough> gesturesWalkthrough,
       @Named("comment_count_in_submission_list_byline") Preference<Boolean> showCommentCountInByline,
       @Named("show_nsfw_content") Preference<Boolean> showNsfwContent,
       @Named("show_submission_thumbnails") Preference<Boolean> showThumbnailsPref)
@@ -64,6 +63,7 @@ public class SubredditUiConstructor {
     this.votingManager = votingManager;
     this.errorResolver = errorResolver;
     this.bookmarksRepository = bookmarksRepository;
+    this.gesturesWalkthrough = gesturesWalkthrough;
     this.showCommentCountInByline = showCommentCountInByline;
     this.showNsfwContent = showNsfwContent;
     this.showThumbnailsPref = showThumbnailsPref;
@@ -78,9 +78,14 @@ public class SubredditUiConstructor {
     Observable<?> userPrefChanges = Observable
         .merge(showCommentCountInByline.asObservable(), showNsfwContent.asObservable(), showThumbnailsPref.asObservable())
         .skip(1); // Skip initial values.
-    Observable<Object> externalChanges = Observable.merge(userPrefChanges, votingManager.streamChanges(), bookmarksRepository.get().streamChanges());
 
-    Observable<Boolean> sharedFullscreenProgressVisibilities = fullscreenProgressVisibilities(cachedSubmissionLists, paginationResults).share();
+    Observable<Object> externalChanges = Observable.merge(
+        userPrefChanges,
+        votingManager.streamChanges(),
+        bookmarksRepository.get().streamChanges());
+
+    Observable<Boolean> sharedFullscreenProgressVisibilities = fullscreenProgressVisibilities(cachedSubmissionLists, paginationResults)
+        .share();
 
     return Observable.combineLatest(
         sharedFullscreenProgressVisibilities.distinctUntilChanged(),
@@ -88,12 +93,24 @@ public class SubredditUiConstructor {
         fullscreenEmptyStates(cachedSubmissionLists, paginationResults).distinctUntilChanged(),
         toolbarRefreshVisibilities(sharedFullscreenProgressVisibilities).distinctUntilChanged(),
         paginationProgressUiModels(cachedSubmissionLists, paginationResults).distinctUntilChanged(),
+        gesturesWalkthrough.get().walkthroughRows(),
         cachedSubmissionLists,
         externalChanges,
-        (fullscreenProgressVisible, optFullscreenError, optEmptyState, toolbarRefreshVisible, optPagination, optCachedSubs, o) ->
+        (fullscreenProgressVisible,
+            optFullscreenError,
+            optEmptyState,
+            toolbarRefreshVisible,
+            optPagination,
+            optWalkthroughRow,
+            optCachedSubs,
+            o) ->
         {
           int rowCount = optPagination.map(p -> 1).orElse(0) + optCachedSubs.map(subs -> subs.size()).orElse(0);
           List<SubredditScreenUiModel.SubmissionRowUiModel> rowUiModels = new ArrayList<>(rowCount);
+
+          optWalkthroughRow.ifPresent(walkthroughUiModel -> {
+            rowUiModels.add(walkthroughUiModel);
+          });
 
           optCachedSubs.ifPresent(cachedSubs -> {
             for (Submission submission : cachedSubs) {
