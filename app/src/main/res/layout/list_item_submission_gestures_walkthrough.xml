@@ -54,7 +54,7 @@
         android:ellipsize="end"
         android:lineSpacingExtra="@dimen/spacing2"
         android:textColor="@color/gray_500"
-        android:textSize="@dimen/textsize14"
+        android:textSize="@dimen/textsize16"
         tools:text="Let me show you how to navigate around. Swipe here horizontally to reveal actions like upvote, options, etc." />
 
       <ImageView
