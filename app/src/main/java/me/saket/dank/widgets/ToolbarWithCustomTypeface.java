@@ -13,7 +13,7 @@ import com.jakewharton.rxrelay2.Relay;
 
 public class ToolbarWithCustomTypeface extends Toolbar {
 
-  private Relay<TextView> titleView = BehaviorRelay.create();
+  private Relay<TextView> titleView;
   private boolean titleFound;
 
   public ToolbarWithCustomTypeface(Context context, @Nullable AttributeSet attrs) {
@@ -26,7 +26,7 @@ public class ToolbarWithCustomTypeface extends Toolbar {
       View view = getChildAt(i);
       if (view != null && view instanceof TextView) {
         if (((TextView) view).getText().equals(getTitle())) {
-          titleView.accept(((TextView) view));
+          titleView().accept(((TextView) view));
           titleFound = true;
           return;
         }
@@ -50,6 +50,9 @@ public class ToolbarWithCustomTypeface extends Toolbar {
   }
 
   public Relay<TextView> titleView() {
+    if (titleView == null) {
+      titleView = BehaviorRelay.create();
+    }
     return titleView;
   }
 }
