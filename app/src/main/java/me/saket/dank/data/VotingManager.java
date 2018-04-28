@@ -35,6 +35,7 @@ import timber.log.Timber;
 public class VotingManager {
 
   private static final int HTTP_CODE_CONTRIBUTION_DELETED = 404;
+  private static final int HTTP_CODE_TOO_MANY_REQUESTS = 429;
   private static final String KEY_PENDING_VOTE_ = "pendingVote_";
 
   private final Application appContext;
@@ -99,8 +100,11 @@ public class VotingManager {
           boolean shouldComplete;
           // TODO: Reddit replies with 400 bad request for archived submissions.
 
-          if (!Dank.errors().resolve(error).isUnknown()) {
-            // For network/Reddit errors, swallow the error and attempt retries later.
+          boolean tooManyRequestsError = error instanceof NetworkException
+              && ((NetworkException) error).getResponse().getStatusCode() == HTTP_CODE_TOO_MANY_REQUESTS;
+
+          if (tooManyRequestsError || !Dank.errors().resolve(error).isUnknown()) {
+            // If unknown, this will most probably be network/Reddit errors. Swallow the error and attempt retries later.
             Timber.i("Voting failed for %s. Will retry again later.", contributionToVote.getFullName());
             VoteJobService.scheduleRetry(appContext, contributionToVote, voteDirection, moshi);
             shouldComplete = true;
