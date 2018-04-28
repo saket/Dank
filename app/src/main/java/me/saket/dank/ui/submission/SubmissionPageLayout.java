@@ -219,6 +219,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
   public SubmissionPageLayout(Context context, AttributeSet attrs) {
     super(context, attrs);
+    if (isInEditMode()) {
+      return;
+    }
+
     Dank.dependencyInjector().inject(this);
     LayoutInflater.from(context).inflate(R.layout.view_submission, this, true);
     ButterKnife.bind(this, this);

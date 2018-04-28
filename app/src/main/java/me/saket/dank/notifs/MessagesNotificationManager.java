@@ -296,7 +296,7 @@ public class MessagesNotificationManager {
             .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
             .setShowWhen(true)
             .setWhen(JrawUtils.createdTimeUtc(unreadMessage))
-            .setSmallIcon(R.mipmap.ic_launcher)
+            .setSmallIcon(R.drawable.ic_status_bar)
             .setGroup(NotificationConstants.UNREAD_MESSAGE_BUNDLE_NOTIFS_GROUP_KEY)
             .setAutoCancel(true)
             .setColor(ContextCompat.getColor(context, R.color.color_accent))
@@ -331,7 +331,7 @@ public class MessagesNotificationManager {
         .setStyle(new NotificationCompat.BigTextStyle()
             .bigText(markdownStrippedBody)
             .setSummaryText(loggedInUserName))
-        .setSmallIcon(R.mipmap.ic_launcher)
+        .setSmallIcon(R.drawable.ic_status_bar)
         .setDeleteIntent(deletePendingIntent)
         .addAction(markAsReadAction);
   }
@@ -404,7 +404,7 @@ public class MessagesNotificationManager {
     return new NotificationCompat.Builder(context, context.getString(R.string.notification_channel_unread_messages_id))
         .setContentTitle(notificationTitle)
         .setContentText(notifBody)
-        .setSmallIcon(R.mipmap.ic_launcher)
+        .setSmallIcon(R.drawable.ic_status_bar)
         .setStyle(messagingStyleBuilder)
         .setDeleteIntent(summaryDeletePendingIntent)
         .addAction(markAllReadAction);
