@@ -64,6 +64,8 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
             add(builder, TypefaceResource.create("Inter", "Inter-UI-Regular.otf"));
             add(builder, TypefaceResource.create("Inter medium", "Inter-UI-Medium.otf"));
 
+            add(builder, TypefaceResource.create("Visuelt", "visuelttrial-regular.otf"));
+
             clickHandler.show(builder, event.itemViewHolder());
           }));
     }
