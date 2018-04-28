@@ -276,6 +276,7 @@ public class MessagesNotificationManager {
 
         InboxMessageType messageType = InboxMessageType.parse(unreadMessage);
         switch (messageType) {
+          case USERNAME_MENTION:
           case COMMENT_REPLY:
           case POST_REPLY:
           case PRIVATE_MESSAGE:

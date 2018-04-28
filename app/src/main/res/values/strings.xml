@@ -249,6 +249,9 @@
   <string name="inbox_message_byline_for_unread_folder_comment_reply">Comment reply \u00b7 %s</string>
   <string name="inbox_message_sender_info_for_comment_reply">From %s via %s</string> <!-- From kn0thing via r/Android -->
 
+  <string name="inbox_message_byline_for_unread_folder_username_mention">Username mention \u00b7 %s</string>
+  <string name="inbox_message_sender_info_for_username_mention">by %s via %s</string> <!-- From kn0thing via r/Android -->
+
   <string name="inbox_message_byline_for_unread_folder_post_reply">Post reply \u00b7 %s</string>
   <string name="inbox_message_sender_info_for_post_reply">From %s via %s</string>
 
