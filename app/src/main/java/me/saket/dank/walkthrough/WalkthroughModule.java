@@ -2,6 +2,7 @@ package me.saket.dank.walkthrough;
 
 import android.app.Application;
 import android.content.Context;
+import android.content.SharedPreferences;
 
 import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
@@ -16,21 +17,27 @@ import dagger.Provides;
 public class WalkthroughModule {
 
   @Provides
+  @Named("walkthroughs")
+  static SharedPreferences provideSharedPrefsForUserPrefs(Application appContext) {
+    return appContext.getSharedPreferences("walkthroughs", Context.MODE_PRIVATE);
+  }
+
+  @Provides
   @Singleton
   @Named("walkthroughs")
-  static RxSharedPreferences provideSharedPrefsForUserPrefs(Application appContext) {
-    return RxSharedPreferences.create(appContext.getSharedPreferences("walkthroughs", Context.MODE_PRIVATE));
+  static RxSharedPreferences provideRxSharedPrefsForUserPrefs(@Named("walkthroughs") SharedPreferences sharedPrefs) {
+    return RxSharedPreferences.create(sharedPrefs);
   }
 
   @Provides
   @Named("user_learned_submission_gestures")
-  static Preference<Boolean> hasUserLearnedPref(@Named("user_prefs") RxSharedPreferences rxPrefs) {
-    return rxPrefs.getBoolean("user_learned_submission_gestures", false);
+  static Preference<Boolean> hasUserLearnedPref(@Named("walkthroughs") RxSharedPreferences rxPrefs) {
+    return rxPrefs.getBoolean("submission_gestures_learned", false);
   }
 
   @Provides
   @Named("welcome_text_shown")
-  static Preference<Boolean> welcomePref(@Named("user_prefs") RxSharedPreferences rxPrefs) {
+  static Preference<Boolean> welcomePref(@Named("walkthroughs") RxSharedPreferences rxPrefs) {
     return rxPrefs.getBoolean("welcome_text_shown", false);
   }
 }
