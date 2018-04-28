@@ -72,6 +72,14 @@ public class InboxFolderUiConstructor {
         senderInformation = c.getString(R.string.inbox_message_sender_info_for_comment_reply, message.getAuthor(), subredditName);
         break;
 
+      case USERNAME_MENTION:
+        title = ((CommentMessage) message).getLinkTitle();
+        byline = isUnreadFolder
+            ? c.getString(R.string.inbox_message_byline_for_unread_folder_username_mention, timestamp)
+            : timestamp;
+        senderInformation = c.getString(R.string.inbox_message_sender_info_for_username_mention, message.getAuthor(), subredditName);
+        break;
+
       case POST_REPLY:
         title = message.getSubject();
         byline = isUnreadFolder

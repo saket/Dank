@@ -9,6 +9,7 @@ import me.saket.dank.data.FullNameType;
 
 public enum InboxMessageType {
   COMMENT_REPLY,
+  USERNAME_MENTION,
   POST_REPLY,
   SUBREDDIT_MESSAGE,
   PRIVATE_MESSAGE,
@@ -22,6 +23,9 @@ public enum InboxMessageType {
     String parentFullName = message.getParentId();
     if (parentFullName == null) {
       return InboxMessageType.SUBREDDIT_MESSAGE;
+
+    } else if (message.getSubject().equalsIgnoreCase("username mention")) {
+      return USERNAME_MENTION;
 
     } else {
       FullNameType fullNameType = FullNameType.parse(parentFullName);
