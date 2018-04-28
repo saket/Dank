@@ -42,13 +42,24 @@ public class LookAndFeelPreferencesConstructor implements UserPreferencesConstru
             MultiOptionPreferencePopup.Builder<TypefaceResource> builder = MultiOptionPreferencePopup.builder(typefacePref);
             add(builder, TypefaceResource.create("Roboto", "roboto_regular.ttf"));
             add(builder, TypefaceResource.create("Roboto condensed", "RobotoCondensed-Regular.ttf"));
+
             add(builder, TypefaceResource.create("Bifocals", "bifocals.otf"));
 
             add(builder, TypefaceResource.create("Transcript regular", "TranscriptTrial-Regular.otf"));
-            add(builder, TypefaceResource.create("Transcript mono", "TranscriptMonoTrial-Regular.otf"));
 
-            add(builder, TypefaceResource.create("Basis regular", "basis-grotesque-trial-regular.otf"));
+            add(builder, TypefaceResource.create("Basis", "basis-grotesque-trial-regular.otf"));
             add(builder, TypefaceResource.create("Basis medium", "basis-grotesque-trial-medium.otf"));
+
+            add(builder, TypefaceResource.create("Relative book", "relativetrial-book.otf"));
+            add(builder, TypefaceResource.create("Relative faux", "relativetrial-faux.otf"));
+            add(builder, TypefaceResource.create("Relative medium", "relativetrial-medium.otf"));
+            add(builder, TypefaceResource.create("Relative mono 12", "relativetrial-mono12pitch.otf"));
+
+            add(builder, TypefaceResource.create("LaFabrique", "LaFabriqueTrial-Regular.otf"));
+            add(builder, TypefaceResource.create("LaFabrique SemiBold", "LaFabriqueTrial-SemiBold.otf"));
+
+            add(builder, TypefaceResource.create("Reader", "readertrial-regular.otf"));
+            add(builder, TypefaceResource.create("Reader medium", "readertrial-medium.otf"));
 
             clickHandler.show(builder, event.itemViewHolder());
           }));
