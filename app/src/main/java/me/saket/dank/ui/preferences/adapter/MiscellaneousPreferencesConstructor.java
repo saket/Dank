@@ -63,7 +63,7 @@ public class MiscellaneousPreferencesConstructor implements UserPreferencesConst
 
   private MultiOptionPreferencePopup.Builder<DefaultWebBrowser> defaultBrowserPopup() {
     return MultiOptionPreferencePopup.builder(defaultBrowserPref)
-        .addOption(DefaultWebBrowser.DANK_INTERNAL_BROWSER, DefaultWebBrowser.DANK_INTERNAL_BROWSER.displayName, R.drawable.ic_app_icon_20dp)
+        .addOption(DefaultWebBrowser.DANK_INTERNAL_BROWSER, DefaultWebBrowser.DANK_INTERNAL_BROWSER.displayName, R.drawable.ic_status_bar_20dp)
         .addOption(DefaultWebBrowser.CHROME_CUSTOM_TABS, DefaultWebBrowser.CHROME_CUSTOM_TABS.displayName, R.drawable.ic_google_chrome_20dp)
         .addOption(DefaultWebBrowser.DEVICE_DEFAULT, DefaultWebBrowser.DEVICE_DEFAULT.displayName, R.drawable.ic_smartphone_20dp);
   }
