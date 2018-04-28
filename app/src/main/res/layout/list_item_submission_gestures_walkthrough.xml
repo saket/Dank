@@ -1,0 +1,79 @@
+<?xml version="1.0" encoding="utf-8"?>
+<me.saket.dank.widgets.swipe.SwipeableLayout android:id="@+id/submission_item_root"
+  xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="match_parent"
+  android:layout_height="wrap_content"
+  tools:background="@color/window_background">
+
+  <me.saket.dank.widgets.swipe.SwipeActionIconView style="@style/DankSwipeableLayoutIcon" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/white_opacity_02_5"
+    android:elevation="2dp"
+    android:foreground="?attr/selectableItemBackground"
+    android:orientation="vertical">
+
+    <!-- TODO: remove these useless separators. -->
+    <View
+      android:id="@+id/submissiongestureswalkthrough_item_separator2"
+      style="@style/DankSeparator.VerticalContent"
+      android:layout_height="0dp"
+      android:layout_marginBottom="@dimen/spacing12" />
+
+    <RelativeLayout
+      android:id="@+id/submissiongestureswalkthrough_item_content_container"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content">
+
+      <TextView
+        android:id="@+id/submissiongestureswalkthrough_item_title"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginEnd="@dimen/spacing24"
+        android:layout_marginStart="@dimen/subreddit_submission_start_padding"
+        android:layout_toStartOf="@+id/submissiongestureswalkthrough_item_icon"
+        android:lineSpacingExtra="@dimen/spacing2"
+        android:textColor="@color/amber_200"
+        android:textIsSelectable="false"
+        android:textSize="@dimen/textsize16"
+        tools:ignore="RtlHardcoded"
+        tools:text="Welcome" />
+
+      <me.saket.dank.widgets.TintableCompoundDrawableTextView
+        android:id="@+id/submissiongestureswalkthrough_item_message"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignEnd="@+id/submissiongestureswalkthrough_item_title"
+        android:layout_alignStart="@+id/submissiongestureswalkthrough_item_title"
+        android:layout_below="@+id/submissiongestureswalkthrough_item_title"
+        android:layout_marginBottom="@dimen/spacing16"
+        android:layout_marginTop="@dimen/spacing4"
+        android:ellipsize="end"
+        android:lineSpacingExtra="@dimen/spacing2"
+        android:textColor="@color/gray_500"
+        android:textSize="@dimen/textsize14"
+        tools:text="Let me show you how to navigate around. Swipe here horizontally to reveal actions like upvote, options, etc." />
+
+      <ImageView
+        android:id="@+id/submissiongestureswalkthrough_item_icon"
+        android:layout_width="@dimen/subreddit_submission_thumbnail"
+        android:layout_height="@dimen/subreddit_submission_thumbnail"
+        android:layout_alignParentEnd="true"
+        android:layout_marginBottom="@dimen/spacing16"
+        android:layout_marginEnd="@dimen/spacing16"
+        android:layout_marginTop="6dp"
+        android:padding="@dimen/spacing8"
+        android:src="@drawable/emoji_waving_hand"
+        tools:ignore="ContentDescription"
+        tools:scaleType="centerInside" />
+    </RelativeLayout>
+
+    <View
+      android:id="@+id/submissiongestureswalkthrough_item_separator"
+      style="@style/DankSeparator.VerticalContent"
+      android:layout_height="0dp" />
+  </LinearLayout>
+</me.saket.dank.widgets.swipe.SwipeableLayout>

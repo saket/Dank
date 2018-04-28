@@ -135,6 +135,11 @@
   <string name="subreddit_submission_swipe_action_upvote">Upvote</string>
   <string name="subreddit_submission_swipe_action_downvote">Downvote</string>
 
+  <string name="subreddit_gestureswalkthrough_title">Hey there</string>
+  <string name="subreddit_gestureswalkthrough_message">Dank is driven by gestures. Let\'s learn how to navigate around. Swipe here horizontally to reveal actions.</string>
+  <string name="subreddit_gestureswalkthrough_message_after_first_swipe_action">Good job. There are multiple gesture actions on both left and right sides. You can access them by making longer swipes.</string>
+  <string name="subreddit_gestureswalkthrough_message_after_second_swipe_action">You\'re now ready. Keep in mind that comments can also be swiped in a similar manner. Tap here to dismiss this.</string>
+
   <!-- Logged in user profile -->
   <string name="userprofile_comments">Comments</string>
   <string name="userprofile_submissions">Submissions</string>
