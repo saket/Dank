@@ -53,6 +53,7 @@
     <Button
       android:id="@+id/subreddit_sorting_mode"
       style="@style/DankButton.SortingMode"
+      android:textAllCaps="false"
       tools:text="Top (Month)" />
 
     <!--<View-->
@@ -77,6 +78,7 @@
       android:paddingStart="@dimen/spacing12"
       android:paddingTop="@dimen/spacing12"
       android:text="@string/subreddit_subscribe"
+      android:textAllCaps="false"
       android:textColor="@color/subreddit_subscribe" />
   </LinearLayout>
 
