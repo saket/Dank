@@ -6,15 +6,22 @@ import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
 import android.widget.ImageView;
+
 import com.f2prateek.rx.preferences2.Preference;
-import dagger.Lazy;
-import io.reactivex.Observable;
-import io.reactivex.functions.BiFunction;
+
+import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.VoteDirection;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import javax.inject.Inject;
 import javax.inject.Named;
+
+import dagger.Lazy;
+import io.reactivex.Observable;
+import io.reactivex.functions.BiFunction;
 import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
@@ -32,9 +39,6 @@ import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.walkthrough.SubmissionGesturesWalkthrough;
-import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
-import net.dean.jraw.models.VoteDirection;
 import timber.log.Timber;
 
 public class SubredditUiConstructor {
@@ -108,11 +112,11 @@ public class SubredditUiConstructor {
           int rowCount = optPagination.map(p -> 1).orElse(0) + optCachedSubs.map(subs -> subs.size()).orElse(0);
           List<SubredditScreenUiModel.SubmissionRowUiModel> rowUiModels = new ArrayList<>(rowCount);
 
-          optWalkthroughRow.ifPresent(walkthroughUiModel -> {
-            rowUiModels.add(walkthroughUiModel);
-          });
-
           optCachedSubs.ifPresent(cachedSubs -> {
+            optWalkthroughRow.ifPresent(walkthroughUiModel -> {
+              rowUiModels.add(walkthroughUiModel);
+            });
+
             for (Submission submission : cachedSubs) {
               int pendingSyncReplyCount = 0;  // TODO v2:  Get this from database.
               rowUiModels.add(submissionUiModel(context, submission, pendingSyncReplyCount));
