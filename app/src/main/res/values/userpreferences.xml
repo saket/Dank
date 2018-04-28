@@ -10,7 +10,7 @@
   <string name="userpreferences_misc">Miscellaneous</string>
   <string name="userpreferences_misc_description">Options that don\'t fit elsewhere</string>
   <string name="userpreferences_about">About Dank</string>
-  <string name="userpreferences_about_description">Request support, send feedback, etc.</string>
+  <string name="userpreferences_about_description">Learn about OP, send feedback, etc.</string>
 
   <string name="userprefs_group_subreddit">Subreddit</string>
   <string name="userprefs_submission_thumbnails">Submission thumbnails</string>
