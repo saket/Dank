@@ -6,6 +6,7 @@ import static io.reactivex.schedulers.Schedulers.io;
 import android.annotation.SuppressLint;
 import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.design.widget.Snackbar;
@@ -20,6 +21,7 @@ import com.squareup.sqlbrite2.BriteDatabase;
 
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -34,7 +36,6 @@ import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
-import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
@@ -65,6 +66,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
   @Inject Lazy<Markdown> markdown;
   @Inject Lazy<MediaHostRepository> mediaHostRepository;
   @Inject Lazy<AppShortcutRepository> appShortcutRepository;
+  @Inject @Named("walkthroughs") Lazy<SharedPreferences> sharedPreferences;
 
   public static void start(Context context) {
     context.startActivity(new Intent(context, HiddenPreferencesActivity.class));
@@ -179,8 +181,10 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           );
     });
 
-    addButton("Configure app shortcuts", o -> {
-      startActivity(ConfigureAppShortcutsActivity.intent(this));
+    addButton("Reset walkthroughs", o -> {
+      sharedPreferences.get().edit()
+          .clear()
+          .apply();
     });
   }
 
