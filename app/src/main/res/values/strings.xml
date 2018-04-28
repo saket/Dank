@@ -7,6 +7,7 @@
   <string name="timestamp_just_now">Just now</string>
   <string name="work_in_progress">Work in progress</string>
   <string name="copy_to_clipboard_confirmation">Ready to be pasted</string>
+  <string name="dank_welcome">This is\nyour next\nReddit app</string>
 
   <!-- Notification channels -->
   <string name="notification_channel_unread_messages">Unread messages</string>

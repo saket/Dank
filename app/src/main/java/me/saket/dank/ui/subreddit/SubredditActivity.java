@@ -27,6 +27,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.f2prateek.rx.preferences2.Preference;
 import com.github.zagum.expandicon.ExpandIconView;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -40,6 +41,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import javax.inject.Inject;
+import javax.inject.Named;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
@@ -141,11 +143,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Inject UserPreferences userPrefs;
   @Inject SubredditUiConstructor uiConstructor;
   @Inject SubredditSubmissionsAdapter submissionsAdapter;
+  @Inject @Named("welcome_text_shown") Preference<Boolean> welcomeTextShownPref;
 
   @Inject Lazy<UrlRouter> urlRouter;
   @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<VotingManager> votingManager;
-//  @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
+  //  @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
   @Inject Lazy<SubredditController> subredditController;
   @Inject Lazy<UserSessionRepository> userSessionRepository;
   @Inject Lazy<OnLoginRequireListener> loginRequireListener;
@@ -197,6 +200,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
     // LayoutManager needs to be set before onRestore() of RV gets called to restore scroll position.
     submissionRecyclerView.setLayoutManager(submissionRecyclerView.createLayoutManager());
+
+    if (!welcomeTextShownPref.get()) {
+      WelcomeToDankView welcomeTextView = new WelcomeToDankView(this);
+      contentPage.addView(welcomeTextView, welcomeTextView.layoutParamsForRelativeLayout());
+      welcomeTextView.showAnimation()
+          .ambWith(lifecycle().onDestroyCompletable())
+          .subscribe(() -> welcomeTextShownPref.set(true));
+    }
   }
 
   @Override
