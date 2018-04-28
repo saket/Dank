@@ -10,7 +10,7 @@
   <string name="userpreferences_misc">Miscellaneous</string>
   <string name="userpreferences_misc_description">Options that don\'t fit elsewhere</string>
   <string name="userpreferences_about">About Dank</string>
-  <string name="userpreferences_about_description">The team behind</string>
+  <string name="userpreferences_about_description">Request support, send feedback, etc.</string>
 
   <string name="userprefs_group_subreddit">Subreddit</string>
   <string name="userprefs_submission_thumbnails">Submission thumbnails</string>
@@ -82,7 +82,7 @@
   <string name="userprefs_show_nsfw_content_summary_off">Keep hidden</string>
 
   <string name="userprefs_group_external_links">External links</string>
-  <string name="userprefs_externallinks_default_web_browser">Device\'s default browser</string>
+  <string name="userprefs_externallinks_default_web_browser">Default browser</string>
   <string name="userprefs_externallinks_internal_browser">Dank\'s internal browser</string>
   <string name="userprefs_externallinks_chrome_custom_tabs">Chrome custom tabs</string>
 
