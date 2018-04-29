@@ -41,8 +41,16 @@ public class DankApplication extends Application {
   public void onCreate() {
     super.onCreate();
 
+    Dank.initDependencies(this);
+    RxJavaPlugins.setErrorHandler(undeliveredExceptionsHandler());
+
     if (BuildConfig.DEBUG) {
       Timber.plant(new Timber.DebugTree());
+    } else {
+      Timber.plant(Dank.dependencyInjector().crashReporter().timberTree());
+    }
+
+    if (BuildConfig.DEBUG) {
       Stetho.initializeWithDefaults(this);
       Traceur.enableLogging();  // Throws an exception in every operator, so better enable only on debug builds
 
@@ -55,9 +63,6 @@ public class DankApplication extends Application {
           .penaltyDeath()
           .build());
     }
-
-    Dank.initDependencies(this);
-    RxJavaPlugins.setErrorHandler(undeliveredExceptionsHandler());
 
     if (BuildConfig.DEBUG) {
       ViewPump.init(ViewPump.builder()
