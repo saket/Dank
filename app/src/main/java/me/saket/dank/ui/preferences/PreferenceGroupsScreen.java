@@ -27,9 +27,13 @@ import io.reactivex.BackpressureStrategy;
 import me.saket.dank.R;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.ScreenSavedState;
+import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesAdapter;
 import me.saket.dank.ui.preferences.adapter.UserPreferencesConstructor;
 import me.saket.dank.ui.preferences.adapter.UserPrefsItemDiffer;
+import me.saket.dank.urlparser.Link;
+import me.saket.dank.urlparser.MediaLink;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.utils.BackPressCallback;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.RxDiffUtil;
@@ -53,6 +57,7 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
 
   @Inject Lazy<UserPreferencesConstructor> preferencesConstructor;
   @Inject Lazy<UserPreferencesAdapter> preferencesAdapter;
+  @Inject Lazy<UrlRouter> urlRouter;
 
   private BehaviorRelay<Optional<UserPreferenceGroup>> groupChanges = BehaviorRelay.createDefault(Optional.empty());
   private LifecycleOwnerViews.Streams lifecycle;
@@ -164,6 +169,17 @@ public class PreferenceGroupsScreen extends ExpandablePageLayout implements Pref
   @Override
   public void openIntent(Intent intent) {
     getContext().startActivity(intent);
+  }
+
+  @Override
+  public void openLink(Link link) {
+    if (link instanceof RedditUserLink || link instanceof MediaLink) {
+      throw new UnsupportedOperationException("Use other variants of forLink() instead.");
+    }
+
+    urlRouter.get().forLink(link)
+        .expandFromBelowToolbar()
+        .open(getContext());
   }
 
 // ======== EXPANDABLE PAGE ======== //

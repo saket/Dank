@@ -31,6 +31,13 @@ public class Intents {
   }
 
   /**
+   * False if no apps are installed that can handle this.
+   */
+  public static boolean hasAppToHandleIntent(Context context, Intent intent) {
+    return intent.resolveActivity(context.getPackageManager()) != null;
+  }
+
+  /**
    * For sharing an Url and its subject. Not all apps support reading the subject though.
    */
   @CheckResult
@@ -62,5 +69,18 @@ public class Intents {
         .putExtra(Intent.EXTRA_STREAM, mediaContentUri)
         .setType(context.getContentResolver().getType(mediaContentUri))
         .addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION);
+  }
+
+  public static Intent createForPlayStoreListing(Context context, String packageName) {
+    Intent playStoreIntent = new Intent(Intent.ACTION_VIEW).setData(Uri.parse("market://details?id=" + packageName));
+    if (Intents.hasAppToHandleIntent(context, playStoreIntent)) {
+      return playStoreIntent;
+    } else {
+      return Intents.createForOpeningUrl("https://play.google.com/store/apps/details?id=" + context.getPackageName());
+    }
+  }
+
+  public static Intent createForEmail(String emailAddress) {
+    return new Intent(Intent.ACTION_SENDTO, Uri.parse("mailto:" + emailAddress));
   }
 }

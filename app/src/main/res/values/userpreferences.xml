@@ -93,6 +93,18 @@
   <string name="userprefs_externallinks_open_links_in_apps">Open known links in apps</string>
   <string name="userprefs_externallinks_open_links_in_apps_summary">Bypass the browser and open these links in their own apps</string>
 
+  <string name="userprefs_about_join_subreddit">Join r/GetDank</string>
+  <string name="userprefs_about_join_subreddit_summary">Request features or discuss Dank with fellow users</string>
+
+  <string name="userprefs_about_rate_on_play_store">Rate on Play Store</string>
+  <string name="userprefs_about_attributions">Attributions &amp; licenses</string>
+  <string name="userprefs_about_group_contact">Contact</string>
+  <string name="userprefs_about_follow_on_twitter_summary">Follow on Twitter</string>
+  <string name="userprefs_about_send_email_summary">Send an email</string>
+  <string name="userprefs_about_error_no_email_app_found">No email app found</string>
+
+  <!-- STYLES -->
+
   <style name="DankPreferencesGroupTitle">
     <item name="android:layout_marginBottom">@dimen/spacing12</item>
     <item name="android:layout_marginEnd">@dimen/spacing16</item>
@@ -140,8 +152,12 @@
     <item name="android:paddingTop">@dimen/userprefs_item_padding</item>
   </style>
 
+  <!-- DIMENS -->
+
   <dimen name="userprefs_item_padding">@dimen/spacing16</dimen>
   <dimen name="userprefs_item_padding_for_preference_popups">@dimen/spacing12</dimen>
+
+  <!-- ATTRS -->
 
   <declare-styleable name="UserPreferenceButtonView">
     <attr name="prefbutton_title" format="string" />
