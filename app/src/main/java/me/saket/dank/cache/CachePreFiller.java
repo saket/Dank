@@ -30,8 +30,8 @@ import io.reactivex.Scheduler;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
-import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.submission.SubmissionImageHolder;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
@@ -45,6 +45,7 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
+import timber.log.Timber;
 
 /**
  * Pre-fetches submission content and comments.
@@ -88,8 +89,14 @@ public class CachePreFiller {
     this.preFillingScheduler = preFillingScheduler;
   }
 
+  private void log(String message, Object... args) {
+    Timber.d(message, args);
+  }
+
   @CheckResult
   public Completable preFillInParallelThreads(List<Submission> submissions, @Px int deviceDisplayWidth, @Px int submissionAlbumLinkThumbnailWidth) {
+    log("Pre-filling");
+
     // WARNING: this Observable is intentionally not shared to allow parallel execution of its subscribers.
     Observable<Pair<Submission, Link>> submissionAndContentLinkStream = Observable.fromIterable(submissions)
         .take(SUBMISSION_LIMIT_PER_SUBREDDIT)
@@ -111,7 +118,7 @@ public class CachePreFiller {
             return Observable.never();
           }
 
-          //Timber.d("Pre-filling images for %s submissions", submissions.size());
+          log("Pre-filling images for %s submissions", submissions.size());
 
           return submissionAndContentLinkStream
               .filter(submissionContentAreStaticImages())
@@ -135,7 +142,7 @@ public class CachePreFiller {
             return Observable.never();
           }
 
-          //Timber.d("Pre-filling links for %s submissions", submissions.size());
+          log("Pre-filling links for %s submissions", submissions.size());
 
           return submissionAndContentLinkStream
               .filter(submissionContentIsExternalLink())
@@ -157,7 +164,7 @@ public class CachePreFiller {
             return Observable.never();
           }
 
-          //Timber.d("Pre-filling comments for %s submissions", submissions.size());
+          log("Pre-filling comments for %s submissions", submissions.size());
 
           return submissionAndContentLinkStream.concatMap(submissionAndLink -> preFillComment(submissionAndLink.first())
               .subscribeOn(preFillingScheduler.get())
@@ -207,7 +214,7 @@ public class CachePreFiller {
               throw new AssertionError();
           }
         })
-        //.doOnSubscribe(imageUrls -> Timber.i("Caching images: %s", imageUrls))
+        .doOnSubscribe(imageUrls -> log("Caching images: %s", imageUrls))
         .flatMapCompletable(imageUrls -> downloadImages(imageUrls))
         //.doOnComplete(() -> Timber.i("Image done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.IMAGES));
