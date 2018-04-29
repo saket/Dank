@@ -4,6 +4,7 @@ import android.support.annotation.Nullable;
 
 import com.bumptech.glide.load.engine.GlideException;
 
+import java.io.InterruptedIOException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
@@ -67,7 +68,7 @@ public class ErrorResolver {
           R.string.common_imgur_rate_limit_error_emoji,
           R.string.common_imgur_upload_rate_limit_error_message);
 
-    } else if (error instanceof CancellationException) {
+    } else if (error instanceof CancellationException || error instanceof InterruptedIOException) {
       return ResolvedError.create(
           ResolvedError.Type.CANCELATION,
           R.string.common_error_cancelation_emoji,
