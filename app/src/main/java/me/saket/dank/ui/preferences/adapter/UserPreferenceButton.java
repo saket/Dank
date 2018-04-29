@@ -33,12 +33,16 @@ public interface UserPreferenceButton {
 
     public abstract String title();
 
-    public abstract String summary();
+    public abstract Optional<String> summary();
 
     public abstract UserPreferenceClickListener clickListener();
 
     public static UiModel create(String title, String summary, UserPreferenceClickListener clickListener) {
-      return new AutoValue_UserPreferenceButton_UiModel(title.hashCode(), title, summary, clickListener);
+      return new AutoValue_UserPreferenceButton_UiModel(title.hashCode(), title, Optional.of(summary), clickListener);
+    }
+
+    public static UiModel create(String title, UserPreferenceClickListener clickListener) {
+      return new AutoValue_UserPreferenceButton_UiModel(title.hashCode(), title, Optional.empty(), clickListener);
     }
   }
 
@@ -60,7 +64,11 @@ public interface UserPreferenceButton {
 
     public void render() {
       titleView.setText(uiModel.title());
-      summaryView.setText(uiModel.summary());
+
+      summaryView.setVisibility(uiModel.summary()
+          .map(o -> View.VISIBLE)
+          .orElse(View.GONE));
+      uiModel.summary().ifPresent(summary -> summaryView.setText(summary));
     }
   }
 
