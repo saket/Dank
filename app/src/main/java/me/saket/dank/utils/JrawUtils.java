@@ -105,7 +105,7 @@ public class JrawUtils {
         videoWithoutAudioUrl = crossPostParentVideoNode.get("fallback_url").asText();
 
       } else {
-        Timber.w(submission.getDataNode().toString());
+        Timber.w("Couldn't find reddit video: %s", submission.getDataNode().toString());
         return Optional.empty();
       }
     }
