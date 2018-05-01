@@ -16,6 +16,7 @@ import android.widget.ProgressBar;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
+import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.RequestOptions;
 import com.f2prateek.rx.preferences2.Preference;
@@ -221,16 +222,17 @@ public class SubmissionImageHolder {
 
   private Single<Drawable> loadImageUsingGlide(String imageUrl) {
     return Single.create(emitter -> {
-      emitter.onSuccess(
-          Glide.with(imageView.view())
-              .load(imageUrl)
-              .apply(new RequestOptions()
-                  .priority(Priority.IMMEDIATE)
-                  .transform(glidePaddingTransformation))
-              .submit()
-              .get()
-      );
       emitter.setCancellable(() -> Glide.with(imageView.view()).clear(imageView.view()));
+      Drawable image = Glide.with(imageView.view())
+          .load(imageUrl)
+          .apply(new RequestOptions()
+              .priority(Priority.IMMEDIATE)
+              // NOTE: Keep this strategy in sync with MediaImageFragment.
+              .downsample(DownsampleStrategy.AT_LEAST)
+              .transform(glidePaddingTransformation))
+          .submit(deviceDisplaySize.getWidth(), deviceDisplaySize.getHeight())
+          .get();
+      emitter.onSuccess(image);
     });
   }
 
