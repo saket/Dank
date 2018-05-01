@@ -39,7 +39,7 @@ public interface SubredditSubmission {
   enum PartialChange {
     TITLE,
     BYLINE,
-    BACKGROUND,
+    THUMBNAIL,
     SAVE_STATUS
   }
 
@@ -157,10 +157,9 @@ public interface SubredditSubmission {
     public void render() {
       titleView.setText(uiModel.title());
       bylineView.setText(uiModel.byline());
-      thumbnailView.setVisibility(uiModel.thumbnail().isPresent() ? View.VISIBLE : View.GONE);
 
       Glide.with(thumbnailView).clear(thumbnailView);
-      uiModel.thumbnail().ifPresent(thumb -> setThumbnail(thumb));
+      setThumbnail(uiModel.thumbnail());
 
       if (uiModel.backgroundDrawableRes().isPresent()) {
         itemView.setBackgroundResource(uiModel.backgroundDrawableRes().get());
@@ -182,8 +181,8 @@ public interface SubredditSubmission {
               bylineView.setText(uiModel.byline());
               break;
 
-            case BACKGROUND:
-              setThumbnail(uiModel.thumbnail().get());
+            case THUMBNAIL:
+              setThumbnail(uiModel.thumbnail());
               break;
 
             case SAVE_STATUS:
@@ -197,26 +196,30 @@ public interface SubredditSubmission {
       }
     }
 
-    private void setThumbnail(UiModel.Thumbnail thumbnailUiModel) {
-      thumbnailView.setBackgroundResource(thumbnailUiModel.backgroundRes().orElse(0));
-      thumbnailView.setScaleType(thumbnailUiModel.scaleType());
-      thumbnailView.setContentDescription(thumbnailUiModel.contentDescription());
+    private void setThumbnail(Optional<UiModel.Thumbnail> optionalThumbnail) {
+      thumbnailView.setVisibility(uiModel.thumbnail().isPresent() ? View.VISIBLE : View.GONE);
 
-      if (thumbnailUiModel.tintColor().isPresent()) {
-        thumbnailView.setColorFilter(thumbnailUiModel.tintColor().get());
-      } else {
-        thumbnailView.setColorFilter(null);
-      }
+      optionalThumbnail.ifPresent(thumb -> {
+        thumbnailView.setBackgroundResource(thumb.backgroundRes().orElse(0));
+        thumbnailView.setScaleType(thumb.scaleType());
+        thumbnailView.setContentDescription(thumb.contentDescription());
 
-      if (thumbnailUiModel.staticRes().isPresent()) {
-        thumbnailView.setImageResource(thumbnailUiModel.staticRes().get());
-      } else {
-        Glide.with(itemView)
-            .load(thumbnailUiModel.remoteUrl().get())
-            .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
-            .transition(DrawableTransitionOptions.withCrossFade())
-            .into(thumbnailView);
-      }
+        if (thumb.tintColor().isPresent()) {
+          thumbnailView.setColorFilter(thumb.tintColor().get());
+        } else {
+          thumbnailView.setColorFilter(null);
+        }
+
+        if (thumb.staticRes().isPresent()) {
+          thumbnailView.setImageResource(thumb.staticRes().get());
+        } else {
+          Glide.with(itemView)
+              .load(thumb.remoteUrl().get())
+              .apply(RequestOptions.bitmapTransform(GlideCircularTransformation.INSTANCE))
+              .transition(DrawableTransitionOptions.withCrossFade())
+              .into(thumbnailView);
+        }
+      });
     }
 
     @Override
