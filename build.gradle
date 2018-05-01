@@ -18,7 +18,8 @@ buildscript {
         flexmark        : '0.27.0',
         timber          : '4.6.0',
         junit           : '4.12',
-        deeplinkDispatch: '3.1.1'
+        deeplinkDispatch: '3.1.1',
+        hyperion        : '0.9.22'
     ]
   }
 

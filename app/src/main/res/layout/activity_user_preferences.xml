@@ -14,17 +14,33 @@
     android:scrollbarStyle="insideOverlay"
     android:scrollbars="vertical" />
 
-  <Button
-    android:id="@+id/userpreferences_hiddenoptions"
-    style="@style/DankButton.Borderless.Colored"
+  <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_alignParentBottom="true"
-    android:layout_centerHorizontal="true"
-    android:elevation="0dp"
-    android:text=""
-    android:visibility="gone"
-    tools:ignore="HardcodedText" />
+    android:layout_alignParentBottom="true">
+
+    <Button
+      android:id="@+id/userpreferences_hiddenoptions"
+      style="@style/DankButton.Borderless.Colored"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:elevation="0dp"
+      android:text=""
+      android:visibility="gone"
+      tools:ignore="HardcodedText" />
+
+    <Button
+      android:id="@+id/userpreferences_hyperion"
+      style="@style/DankButton.Borderless.Colored"
+      android:layout_width="0dp"
+      android:layout_height="wrap_content"
+      android:layout_weight="1"
+      android:elevation="0dp"
+      android:text=""
+      android:visibility="gone"
+      tools:ignore="HardcodedText" />
+  </LinearLayout>
 
   <me.saket.dank.widgets.DankToolbar
     android:id="@id/toolbar"
