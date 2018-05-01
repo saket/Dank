@@ -37,7 +37,7 @@ public class DiskLruCachePathResolverTest {
     DiskLruCachePathResolver<Link> pathResolver = new DiskLruCachePathResolver<Link>() {
       @Override
       protected String resolveIn64Letters(Link key) {
-        return "wikipedia.org/wiki/The_Lord_of_the_Rings_(film_series)";
+        return "wikipedia.org/wiki/The_Lord_Üof_the_Rings_(film_series)";
       }
     };
 
@@ -60,6 +60,6 @@ public class DiskLruCachePathResolverTest {
     //noinspection ConstantConditions
     String path = pathResolver.resolve(null);
     assertEquals(true, path.length() <= 64);
-    assertEquals("no, no, no_ a vigilante is just a man lost in scramble for his o", path);
+    assertEquals("6f5d650d34567ee21995d1e75f1ca880", path);
   }
 }
