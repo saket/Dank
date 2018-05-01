@@ -45,7 +45,6 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
-import timber.log.Timber;
 
 /**
  * Pre-fetches submission content and comments.
@@ -90,7 +89,7 @@ public class CachePreFiller {
   }
 
   private void log(String message, Object... args) {
-    Timber.d(message, args);
+    //Timber.d(message, args);
   }
 
   @CheckResult
