@@ -12,7 +12,7 @@ buildscript {
         okHttp          : '3.6.0',
         retrofit        : '2.2.0',
         rxBindings      : '2.0.0',
-        dagger          : '2.10',
+        dagger          : '2.15',
         butterKnife     : '8.8.1',
         commonmark      : '0.10.0',
         flexmark        : '0.27.0',
