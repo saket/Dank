@@ -16,7 +16,6 @@ import io.reactivex.exceptions.Exceptions;
 import okio.BufferedSink;
 import okio.BufferedSource;
 import okio.Okio;
-import timber.log.Timber;
 
 public class StoreLruFileSystem implements FileSystem {
 
@@ -47,7 +46,6 @@ public class StoreLruFileSystem implements FileSystem {
     DiskLruCache.Editor editor = lruCache.edit(path);
     try {
       if (editor == null) {
-        Timber.w("Already editing %s", path);
         // Another edit to the same key is already in progress.
         return;
       }
