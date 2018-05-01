@@ -44,17 +44,20 @@ public class StoreLruFileSystem implements FileSystem {
   @Override
   public void write(String path, BufferedSource source) throws IOException {
     DiskLruCache.Editor editor = lruCache.edit(path);
+    try {
+      if (editor == null) {
+        // Another edit to the same key is already in progress.
+        return;
+      }
 
-    if (editor == null) {
-      // Another edit to the same key is already in progress.
-      return;
+      OutputStream outputStream = editor.newOutputStream(0);
+      try (BufferedSink sink = Okio.buffer(Okio.sink(outputStream))) {
+        sink.writeAll(source);
+      }
+      editor.commit();
+    } catch (Exception e) {
+      editor.abortUnlessCommitted();
     }
-
-    OutputStream outputStream = editor.newOutputStream(0);
-    try (BufferedSink sink = Okio.buffer(Okio.sink(outputStream))) {
-      sink.writeAll(source);
-    }
-    editor.commit();
   }
 
   @Override
