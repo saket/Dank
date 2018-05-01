@@ -214,7 +214,7 @@ public class CachePreFiller {
               throw new AssertionError();
           }
         })
-        .doOnSubscribe(imageUrls -> log("Caching images: %s", imageUrls))
+        //.doOnSubscribe(o -> log("Caching images: %s", mediaLink.unparsedUrl()))
         .flatMapCompletable(imageUrls -> downloadImages(imageUrls))
         //.doOnComplete(() -> Timber.i("Image done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.IMAGES));
