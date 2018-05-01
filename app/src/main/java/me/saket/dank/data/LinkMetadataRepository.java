@@ -8,6 +8,7 @@ import com.nytimes.android.external.store3.base.impl.Store;
 import com.nytimes.android.external.store3.base.impl.StoreBuilder;
 import com.squareup.moshi.Moshi;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -59,8 +60,12 @@ public class LinkMetadataRepository {
   public Single<LinkMetadata> unfurl(Link link) {
     return linkMetadataStore.get(link)
         .doOnError(e -> {
-          ResolvedError resolvedError = errorResolver.get().resolve(e);
-          resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't unfurl link: %s", link));
+          if (e instanceof NoSuchElementException) {
+            Timber.e("'MaybeSource is empty' for %s", link);
+          } else {
+            ResolvedError resolvedError = errorResolver.get().resolve(e);
+            resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't unfurl link: %s", link));
+          }
         });
   }
 
