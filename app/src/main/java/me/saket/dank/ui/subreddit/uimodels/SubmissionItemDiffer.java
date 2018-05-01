@@ -44,7 +44,7 @@ public class SubmissionItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionRow
           partialChanges.add(SubredditSubmission.PartialChange.BYLINE);
         }
         if (!oldSubmission.thumbnail().equals(newSubmission.thumbnail())) {
-          partialChanges.add(SubredditSubmission.PartialChange.BACKGROUND);
+          partialChanges.add(SubredditSubmission.PartialChange.THUMBNAIL);
         }
         if (oldSubmission.isSaved() != newSubmission.isSaved()) {
           partialChanges.add(SubredditSubmission.PartialChange.SAVE_STATUS);
