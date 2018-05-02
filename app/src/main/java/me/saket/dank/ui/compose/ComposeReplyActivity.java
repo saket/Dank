@@ -13,6 +13,7 @@ import android.support.annotation.CheckResult;
 import android.support.annotation.Nullable;
 import android.support.v7.widget.Toolbar;
 import android.text.Editable;
+import android.text.Layout;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
@@ -227,9 +228,11 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
     char syntax = markdownBlock.prefix().charAt(0);   // '>' or '#'.
 
     // To keep things simple, we'll always insert the quote at the beginning.
-    int currentLineIndex = replyField.getLayout().getLineForOffset(replyField.getSelectionStart());
-    int currentLineStartIndex = replyField.getLayout().getLineStart(currentLineIndex);
-    boolean isNestingQuotes = replyField.getText().length() > 0 && replyField.getText().charAt(currentLineStartIndex) == syntax;
+    Layout layout = replyField.getLayout();
+    Editable text = replyField.getText();
+    int currentLineIndex = layout.getLineForOffset(replyField.getSelectionStart());
+    int currentLineStartIndex = layout.getLineStart(currentLineIndex);
+    boolean isNestingQuotes = text.length() > 0 && text.charAt(currentLineStartIndex) == syntax;
 
     int selectionStartCopy = replyField.getSelectionStart();
     int selectionEndCopy = replyField.getSelectionEnd();
@@ -242,12 +245,13 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
 
     // Next, delete extra spaces between nested quotes.
     if (isNestingQuotes) {
-      replyField.getText().delete(currentLineStartIndex + 1, currentLineStartIndex + 2);
+      text.delete(currentLineStartIndex + 1, currentLineStartIndex + 2);
     }
   }
 
   private void insertMarkdownSyntax(MarkdownBlock markdownBlock) {
     boolean isSomeTextSelected = replyField.getSelectionStart() != replyField.getSelectionEnd();
+    Editable text = replyField.getText();
     if (isSomeTextSelected) {
       int selectionStart = replyField.getSelectionStart();
       int selectionEnd = replyField.getSelectionEnd();
@@ -255,13 +259,13 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
       //Timber.i("selectionStart: %s", selectionStart);
       //Timber.i("selectionEnd: %s", selectionEnd);
 
-      replyField.getText().insert(selectionStart, markdownBlock.prefix());
-      replyField.getText().insert(selectionEnd + markdownBlock.prefix().length(), markdownBlock.suffix());
+      text.insert(selectionStart, markdownBlock.prefix());
+      text.insert(selectionEnd + markdownBlock.prefix().length(), markdownBlock.suffix());
       replyField.setSelection(selectionStart + markdownBlock.prefix().length(), selectionEnd + markdownBlock.prefix().length());
 
     } else {
       //noinspection ConstantConditions
-      replyField.getText().insert(replyField.getSelectionStart(), markdownBlock.prefix() + markdownBlock.suffix());
+      text.insert(replyField.getSelectionStart(), markdownBlock.prefix() + markdownBlock.suffix());
       replyField.setSelection(replyField.getSelectionStart() - markdownBlock.suffix().length());
     }
   }
