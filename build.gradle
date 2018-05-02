@@ -1,27 +1,25 @@
 buildscript {
-  buildscript {
-    ext.versions = [
-        minSdk          : 21,
-        compileSdk      : 26,
-        supportLib      : '27.1.0',
-        glide           : '4.6.1',
-        autoValue       : '1.4',
-        autoValueMoshi  : '0.4.3',
-        stetho          : '1.5.0',
-        nytStore        : '3.0.0-beta',
-        okHttp          : '3.6.0',
-        retrofit        : '2.2.0',
-        rxBindings      : '2.0.0',
-        dagger          : '2.15',
-        butterKnife     : '8.8.1',
-        commonmark      : '0.10.0',
-        flexmark        : '0.27.0',
-        timber          : '4.6.0',
-        junit           : '4.12',
-        deeplinkDispatch: '3.1.1',
-        hyperion        : '0.9.22'
-    ]
-  }
+  ext.versions = [
+      minSdk          : 21,
+      compileSdk      : 26,
+      supportLib      : '27.1.0',
+      glide           : '4.6.1',
+      autoValue       : '1.4',
+      autoValueMoshi  : '0.4.3',
+      stetho          : '1.5.0',
+      nytStore        : '3.0.0-beta',
+      okHttp          : '3.6.0',
+      retrofit        : '2.2.0',
+      rxBindings      : '2.0.0',
+      dagger          : '2.15',
+      butterKnife     : '8.8.1',
+      commonmark      : '0.10.0',
+      flexmark        : '0.27.0',
+      timber          : '4.6.0',
+      junit           : '4.12',
+      deeplinkDispatch: '3.1.1',
+      hyperion        : '0.9.22'
+  ]
 
   repositories {
     jcenter()
