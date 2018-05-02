@@ -1,6 +1,8 @@
 package me.saket.dank.data;
 
 import com.google.auto.value.AutoValue;
+import com.squareup.moshi.JsonAdapter;
+import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.VoteDirection;
@@ -23,5 +25,9 @@ public abstract class VotableContributionFullNameWrapper extends StubPublicContr
 
   public static VotableContributionFullNameWrapper createFrom(PublicContribution contribution) {
     return new AutoValue_VotableContributionFullNameWrapper(contribution.getFullName(), contribution.getScore(), contribution.getVote());
+  }
+
+  public static JsonAdapter<VotableContributionFullNameWrapper> jsonAdapter(Moshi moshi) {
+    return new AutoValue_VotableContributionFullNameWrapper.MoshiJsonAdapter(moshi);
   }
 }
