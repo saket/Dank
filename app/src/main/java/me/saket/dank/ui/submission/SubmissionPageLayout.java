@@ -177,7 +177,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @Inject Moshi moshi;
   @Inject LinkMetadataRepository linkMetadataRepository;
   @Inject ReplyRepository replyRepository;
-  @Inject ErrorResolver errorResolver;
   @Inject UserPreferences userPreferences;
 
   @Inject SubmissionUiConstructor submissionUiConstructor;
@@ -191,6 +190,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<SubmissionVideoHolder> contentVideoViewHolder;
   @Inject Lazy<SubmissionImageHolder> contentImageViewHolder;
+  @Inject Lazy<ErrorResolver> errorResolver;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
@@ -391,7 +391,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
             .takeUntil(lifecycle().onPageAboutToCollapse())
             .doOnNext(o -> commentsLoadProgressVisibleStream.accept(false))
             .onErrorResumeNext(error -> {
-              ResolvedError resolvedError = errorResolver.resolve(error);
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
               resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't fetch comments"));
               commentsLoadErrors.accept(Optional.of(resolvedError));
               return Observable.never();
@@ -659,7 +659,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
       // For non-network errors, it's important to have an initial delay because the only criteria
       // for auto-retry is to have network. For non-network errors, the user will see an immediate
       // retry which will probably also fail.
-      ResolvedError resolvedError = errorResolver.resolve(error);
+      ResolvedError resolvedError = errorResolver.get().resolve(error);
       boolean shouldDelayAutoRetry = !resolvedError.isNetworkError() && !resolvedError.isRedditServerError();
       long initialDelay = shouldDelayAutoRetry ? 5 : 0;
 
@@ -750,7 +750,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                   .subscribeOn(Schedulers.io());
             })
             .doOnError(e -> {
-              ResolvedError resolvedError = errorResolver.resolve(e);
+              ResolvedError resolvedError = errorResolver.get().resolve(e);
               resolvedError.ifUnknown(() -> Timber.e(e, "Failed to load more comments"));
               Toast.makeText(getContext(), R.string.submission_error_failed_to_load_more_comments, Toast.LENGTH_SHORT).show();
             })
@@ -1223,10 +1223,14 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               .flatMap(oo -> submissionStream.map(Optional::get))
               .firstOrError()
               .takeUntil(lifecycle().onPageCollapseOrDestroyCompletable())
-              .subscribe(submission -> {
-                mediaContentLoadErrors.accept(Optional.empty());
-                loadSubmissionContent(submission);
-              });
+              .subscribe(
+                  submission -> {
+                    mediaContentLoadErrors.accept(Optional.empty());
+                    loadSubmissionContent(submission);
+                  }, error -> {
+                    ResolvedError resolvedError = errorResolver.get().resolve(error);
+                    resolvedError.ifUnknown(() -> Timber.e(error, "Error while waiting for user to return from preferences"));
+                  });
         });
   }
 
@@ -1365,7 +1369,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               }
 
             }, error -> {
-              ResolvedError resolvedError = errorResolver.resolve(error);
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
               resolvedError.ifUnknown(() -> Timber.e(error, "Error while loading content"));
               // TODO: Rename SubmissionMediaContentLoadError to SubmissionContentLoadError.
             }
@@ -1375,7 +1379,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private void handleMediaLoadError(Throwable error) {
     contentLoadProgressView.hide();
 
-    ResolvedError resolvedError = errorResolver.resolve(error);
+    ResolvedError resolvedError = errorResolver.get().resolve(error);
     resolvedError.ifUnknown(() ->
         Timber.e(error, "Media content load error. Submission: %s", submissionStream.getValue().get().getPermalink())
     );

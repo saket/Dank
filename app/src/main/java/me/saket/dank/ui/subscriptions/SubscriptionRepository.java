@@ -292,7 +292,7 @@ public class SubscriptionRepository {
 
   @CheckResult
   private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
-    Timber.w("Fetching subscriptions");
+    //Timber.w("Fetching subscriptions");
     Single<List<String>> subredditsStream = userSessionRepository.get().isUserLoggedIn()
         ? loggedInUserSubreddits()
         : Single.just(loggedOutSubreddits());
