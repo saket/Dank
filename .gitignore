@@ -40,3 +40,6 @@ gen-external-apklibs
 .DS_Store
 *~
 *.swp
+
+# Generated for release builds
+output.json
