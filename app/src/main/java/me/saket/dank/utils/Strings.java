@@ -73,11 +73,6 @@ public class Strings {
     return substringWithBounds;
   }
 
-  public static String substringWithBounds2(String string, int limit) {
-    int bound = Math.min(string.length(), limit);
-    return string.substring(0, bound);
-  }
-
   public static boolean isNullOrEmpty(@Nullable CharSequence string) {
     return string == null || string.length() == 0;
   }

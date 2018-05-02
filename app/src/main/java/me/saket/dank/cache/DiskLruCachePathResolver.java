@@ -9,8 +9,6 @@ import java.security.NoSuchAlgorithmException;
 import javax.annotation.Nonnull;
 
 import io.reactivex.exceptions.Exceptions;
-import me.saket.dank.utils.Strings;
-import timber.log.Timber;
 
 public abstract class DiskLruCachePathResolver<KEY> implements PathResolver<KEY> {
 
@@ -19,14 +17,9 @@ public abstract class DiskLruCachePathResolver<KEY> implements PathResolver<KEY>
   @Nonnull
   @Override
   public String resolve(@Nonnull KEY key) {
+    // FIXME: now that there's no limit of 64 letters, use composition instead.
     String path = resolveIn64Letters(key);
-
-    if (path.length() > 64) {
-      Timber.w("Path will be truncated: %s", path);
-    }
-
-    String resolvedPath = Strings.substringWithBounds2(path, 64);
-    return makeCompatibleWithDiskLruCache(resolvedPath);
+    return makeCompatibleWithDiskLruCache(path);
   }
 
   private String makeCompatibleWithDiskLruCache(String resolvedPath) {
