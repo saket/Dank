@@ -105,7 +105,7 @@ public class VotingManager {
 
           if (tooManyRequestsError || !Dank.errors().resolve(error).isUnknown()) {
             // If unknown, this will most probably be network/Reddit errors. Swallow the error and attempt retries later.
-            Timber.i("Voting failed for %s. Will retry again later.", contributionToVote.getFullName());
+            Timber.i("Voting failed for %s. Will retry again later. Error: %s", contributionToVote.getFullName(), error.getMessage());
             VoteJobService.scheduleRetry(appContext, contributionToVote, voteDirection, moshi);
             shouldComplete = true;
 
