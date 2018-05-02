@@ -24,6 +24,7 @@ import me.saket.dank.di.DankApi;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.LinkMetadata;
 import me.saket.dank.utils.Urls;
+import retrofit2.HttpException;
 import timber.log.Timber;
 
 @Singleton
@@ -62,6 +63,8 @@ public class LinkMetadataRepository {
         .doOnError(e -> {
           if (e instanceof NoSuchElementException) {
             Timber.e("'MaybeSource is empty' for %s", link);
+          } else if (e instanceof HttpException && ((HttpException) e).code() == 500) {
+            Timber.e("Wholesome server returned 500 error");
           } else {
             ResolvedError resolvedError = errorResolver.get().resolve(e);
             resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't unfurl link: %s", link));
