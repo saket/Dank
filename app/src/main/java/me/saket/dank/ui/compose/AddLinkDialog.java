@@ -16,7 +16,6 @@ import android.view.WindowManager.LayoutParams;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import com.google.common.base.Optional;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
 import butterknife.BindView;
@@ -24,6 +23,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankDialogFragment;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 
 public class AddLinkDialog extends DankDialogFragment {
@@ -125,7 +125,7 @@ public class AddLinkDialog extends DankDialogFragment {
     //noinspection ConstantConditions
     String textInClipboard = clipboardManager.getPrimaryClip().getItemAt(0).coerceToText(getContext()).toString();
     boolean hasUrlInClipboard = Patterns.WEB_URL.matcher(textInClipboard).matches();
-    return hasUrlInClipboard ? Optional.of(textInClipboard) : Optional.absent();
+    return hasUrlInClipboard ? Optional.of(textInClipboard) : Optional.empty();
   }
 
   @OnClick(R.id.addlinkdialog_cancel)
