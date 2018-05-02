@@ -222,7 +222,7 @@ public class SubmissionImageHolder {
 
   private Single<Drawable> loadImageUsingGlide(String imageUrl) {
     return Single.create(emitter -> {
-      emitter.setCancellable(() -> Glide.with(imageView.view()).clear(imageView.view()));
+      emitter.setCancellable(() -> Glide.with(imageView.view().getContext().getApplicationContext()).clear(imageView.view()));
       Drawable image = Glide.with(imageView.view())
           .load(imageUrl)
           .apply(new RequestOptions()
