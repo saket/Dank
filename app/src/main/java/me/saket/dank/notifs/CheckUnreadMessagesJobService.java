@@ -64,8 +64,8 @@ public class CheckUnreadMessagesJobService extends DankJobService {
 
     TimeInterval aggressiveTimeInterval = TimeInterval.create(15, TimeUnit.MINUTES);
 
-    Timber.i("User selected interval: %s", pollInterval.get());
-    Timber.i("Aggressive time interval: %s", aggressiveTimeInterval);
+    //Timber.i("User selected interval: %s", pollInterval.get());
+    //Timber.i("Aggressive time interval: %s", aggressiveTimeInterval);
 
     if (!pollInterval.get().equals(aggressiveTimeInterval)) {
       JobInfo aggressiveSyncJob = new JobInfo.Builder(ID_MESSAGES_AGGRESSIVE, new ComponentName(context, CheckUnreadMessagesJobService.class))
@@ -74,7 +74,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
           .setPersisted(true)
           .setPeriodic(aggressiveTimeInterval.intervalMillis())
           .build();
-      Timber.i("Scheduling aggressive job");
+      //Timber.i("Scheduling aggressive job");
       jobScheduler.schedule(aggressiveSyncJob);
     }
   }
@@ -108,7 +108,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
   }
 
   public static void unSchedule(Context context) {
-    Timber.i("Disabling message polling");
+    //Timber.i("Disabling message polling");
     JobScheduler jobScheduler = (JobScheduler) context.getSystemService(Context.JOB_SCHEDULER_SERVICE);
     //noinspection ConstantConditions
     jobScheduler.cancel(ID_MESSAGES_USER_SCHEDULED);
@@ -136,11 +136,11 @@ public class CheckUnreadMessagesJobService extends DankJobService {
     //Timber.i("Fetching unread messages. JobID: %s", params.getJobId());
     boolean shouldRefreshMessages = PersistableBundleUtils.getBoolean(params.getExtras(), KEY_REFRESH_MESSAGES);
 
-    Timber.i("Checking for unread messages");
+    //Timber.i("Checking for unread messages");
 
     Completable refreshCompletable;
     if (shouldRefreshMessages) {
-      Timber.i("Refreshing msgs");
+      //Timber.i("Refreshing msgs");
       refreshCompletable = inboxRepository.messages(InboxFolder.UNREAD)
           .firstOrError()
           .flatMapCompletable(existingUnreads -> inboxRepository.refreshMessages(InboxFolder.UNREAD, false)
@@ -172,7 +172,7 @@ public class CheckUnreadMessagesJobService extends DankJobService {
         .andThen(inboxRepository.messages(InboxFolder.UNREAD).firstOrError())
         .subscribeOn(io())
         .observeOn(mainThread())
-        .doOnSuccess(unreads -> Timber.i("Found %s unreads", unreads.size()))
+        //.doOnSuccess(unreads -> Timber.i("Found %s unreads", unreads.size()))
         .flatMapCompletable(unreads -> notifyUnreadMessages(unreads))
         .ambWith(lifecycleOnDestroy().ignoreElements())
         .subscribe(
