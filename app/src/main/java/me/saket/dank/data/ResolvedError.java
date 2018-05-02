@@ -12,6 +12,7 @@ public abstract class ResolvedError {
 
   public enum Type {
     UNKNOWN,
+    KNOWN_BUT_IGNORED,
     NETWORK_ERROR,
     REDDIT_IS_DOWN,
     IMGUR_RATE_LIMIT_REACHED,
