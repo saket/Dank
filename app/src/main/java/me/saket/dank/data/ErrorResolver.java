@@ -78,7 +78,7 @@ public class ErrorResolver {
         && Optional.ofNullable(error.getMessage()).map(m -> m.contains("no active user context")).orElse(false))
     {
       return ResolvedError.create(
-          ResolvedError.Type.UNKNOWN,
+          ResolvedError.Type.KNOWN_BUT_IGNORED,
           R.string.common_error_known_jraw_emoji,
           R.string.common_error_known_jraw_message);
 
