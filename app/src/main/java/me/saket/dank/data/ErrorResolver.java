@@ -92,6 +92,7 @@ public class ErrorResolver {
 
   public Throwable findActualCause(@Nullable Throwable error) {
     if (error instanceof ExecutionException) {
+      // AFAIK, thrown by Glide in situations like socket-timeout.
       error = findActualCause(error.getCause());
     }
     if (error instanceof GlideException && !((GlideException) error).getRootCauses().isEmpty()) {

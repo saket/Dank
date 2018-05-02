@@ -52,7 +52,7 @@ public class ReplyRepositoryShould {
   @SuppressLint("CommitPrefEdits")
   public void setUp() throws Exception {
     Moshi moshi = new Moshi.Builder().add(AutoValueMoshiAdapterFactory.create()).build();
-    replyRepository = spy(new ReplyRepository(null, null, null, sharedPrefs, moshi, RECYCLE_DRAFTS_IN_DAYS));
+    replyRepository = spy(new ReplyRepository(null, null, null, sharedPrefs, moshi, RECYCLE_DRAFTS_IN_DAYS, errorResolver));
     replyDraftJsonAdapter = moshi.adapter(ReplyDraft.class);
 
     when(sharedPrefs.edit()).thenReturn(sharedPrefsEditor);

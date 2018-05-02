@@ -46,6 +46,8 @@ import dagger.Lazy;
 import io.reactivex.BackpressureStrategy;
 import io.reactivex.Observable;
 import me.saket.dank.R;
+import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.appshortcuts.AppShortcutsAdapter.AppShortcutViewHolder;
@@ -84,6 +86,7 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
   @Inject Lazy<AppShortcutRepository> shortcutsRepository;
   @Inject Lazy<AppShortcutsAdapter> shortcutsAdapter;
   @Inject Lazy<SubredditAdapter> subredditAdapter;
+  @Inject Lazy<ErrorResolver> errorResolver;
 
   @BindInt(R.integer.submissionoptions_animation_duration) int pageChangeAnimDuration;
 
@@ -314,7 +317,10 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
         // CharSequence is mutable.
         .map(searchTerm -> searchTerm.toString().trim())
         .switchMap(searchTerm -> subscriptionRepository.get().getAll(searchTerm, true)
-            .doOnError(error -> Timber.e(error, "Error in fetching subreddits"))
+            .doOnError(error -> {
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Error in fetching subreddits"));
+            })
             .onErrorReturnItem(Collections.emptyList())
             .subscribeOn(io())
             .observeOn(mainThread())

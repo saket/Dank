@@ -92,7 +92,9 @@ public class UserProfileSheetView extends FrameLayout {
         .subscribe(
             this::populateKarmaCount,
             error -> {
-              Timber.e(error, "Couldn't get logged in user's account");
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't get logged in user's account"));
+
               karmaView.setText(R.string.userprofile_error_user_karma_load);
             });
 
@@ -203,7 +205,9 @@ public class UserProfileSheetView extends FrameLayout {
               () -> parentSheet.collapse(),
               error -> {
                 logoutButton.setText(R.string.login_logout);
-                Timber.e(error, "Logout failure");
+
+                ResolvedError resolvedError = errorResolver.get().resolve(error);
+                resolvedError.ifUnknown(() -> Timber.e(error, "Logout failure"));
               }
           );
     }

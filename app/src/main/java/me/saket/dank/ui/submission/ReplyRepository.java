@@ -21,6 +21,7 @@ import javax.inject.Inject;
 import javax.inject.Named;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import hirondelle.date4j.DateTime;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -28,7 +29,9 @@ import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.FullNameType;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.Preconditions;
@@ -47,11 +50,17 @@ public class ReplyRepository implements DraftStore {
   private final int recycleDraftsOlderThanNumDays;
   private final SharedPreferences sharedPrefs;
   private final RxSharedPreferences rxSharedPrefs;
+  private final Lazy<ErrorResolver> errorResolver;
 
   @Inject
-  public ReplyRepository(DankRedditClient dankRedditClient, BriteDatabase database, UserSessionRepository userSessionRepository,
-      @Named("drafts") SharedPreferences sharedPrefs, Moshi moshi,
-      @Named("drafts_max_retain_days") int recycleDraftsOlderThanNumDays)
+  public ReplyRepository(
+      DankRedditClient dankRedditClient,
+      BriteDatabase database,
+      UserSessionRepository userSessionRepository,
+      @Named("drafts") SharedPreferences sharedPrefs,
+      Moshi moshi,
+      @Named("drafts_max_retain_days") int recycleDraftsOlderThanNumDays,
+      Lazy<ErrorResolver> errorResolver)
   {
     this.dankRedditClient = dankRedditClient;
     this.database = database;
@@ -60,6 +69,7 @@ public class ReplyRepository implements DraftStore {
     this.rxSharedPrefs = RxSharedPreferences.create(sharedPrefs);
     this.moshi = moshi;
     this.recycleDraftsOlderThanNumDays = recycleDraftsOlderThanNumDays;
+    this.errorResolver = errorResolver;
   }
 
 // ======== INLINE_REPLY ======== //
@@ -135,7 +145,8 @@ public class ReplyRepository implements DraftStore {
           database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
         }))
         .onErrorResumeNext(error -> {
-          Timber.e(error, "Couldn't send reply");
+          ResolvedError resolvedError = errorResolver.get().resolve(error);
+          resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't send reply"));
 
           PendingSyncReply updatedPendingSyncReply = pendingSyncReply.toBuilder()
               .state(PendingSyncReply.State.FAILED)
