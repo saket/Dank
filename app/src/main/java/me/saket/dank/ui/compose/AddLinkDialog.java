@@ -18,6 +18,8 @@ import android.widget.TextView;
 
 import com.jakewharton.rxbinding2.widget.RxTextView;
 
+import java.util.regex.Matcher;
+
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import butterknife.OnClick;
@@ -120,12 +122,22 @@ public class AddLinkDialog extends DankDialogFragment {
   }
 
   private Optional<String> getUrlInClipboard() {
-    //noinspection ConstantConditions
-    ClipboardManager clipboardManager = (ClipboardManager) getContext().getSystemService(Context.CLIPBOARD_SERVICE);
-    //noinspection ConstantConditions
-    String textInClipboard = clipboardManager.getPrimaryClip().getItemAt(0).coerceToText(getContext()).toString();
-    boolean hasUrlInClipboard = Patterns.WEB_URL.matcher(textInClipboard).matches();
-    return hasUrlInClipboard ? Optional.of(textInClipboard) : Optional.empty();
+    ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
+    assert clipboard != null;
+
+    Optional<String> textInClipboard = Optional.ofNullable(clipboard.getPrimaryClip())
+        .map(clip -> clip.getItemAt(0))
+        .map(item -> item.coerceToText(getContext()))
+        .map(CharSequence::toString);
+
+    boolean hasUrlInClipboard = textInClipboard
+        .map(text -> Patterns.WEB_URL.matcher(text))
+        .map(Matcher::matches)
+        .orElse(false);
+
+    return hasUrlInClipboard
+        ? textInClipboard
+        : Optional.empty();
   }
 
   @OnClick(R.id.addlinkdialog_cancel)
