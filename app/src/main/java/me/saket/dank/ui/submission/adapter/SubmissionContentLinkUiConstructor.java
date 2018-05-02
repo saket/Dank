@@ -28,11 +28,14 @@ import java.util.HashMap;
 import java.util.Map;
 import javax.inject.Inject;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.R;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.LinkMetadataRepository;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.urlparser.ExternalLink;
 import me.saket.dank.urlparser.ImgurAlbumLink;
 import me.saket.dank.urlparser.Link;
@@ -61,12 +64,14 @@ public class SubmissionContentLinkUiConstructor {
 
   private final LinkMetadataRepository linkMetadataRepository;
   private final BitmapPool bitmapPool;
+  private final Lazy<ErrorResolver> errorResolver;
   private final Map<Target, Drawable> targetsToDispose = new HashMap<>(8);
 
   @Inject
-  public SubmissionContentLinkUiConstructor(LinkMetadataRepository linkMetadataRepository, BitmapPool bitmapPool) {
+  public SubmissionContentLinkUiConstructor(LinkMetadataRepository linkMetadataRepository, BitmapPool bitmapPool, Lazy<ErrorResolver> errorResolver) {
     this.linkMetadataRepository = linkMetadataRepository;
     this.bitmapPool = bitmapPool;
+    this.errorResolver = errorResolver;
   }
 
   /**
@@ -421,7 +426,8 @@ public class SubmissionContentLinkUiConstructor {
           emitter.onComplete();
         })
         .onErrorResumeNext(error -> {
-          Timber.e(error, "Couldn't load image using glide");
+          ResolvedError resolvedError = errorResolver.get().resolve(error);
+          resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't load image using glide"));
           return Observable.empty();
         });
   }
