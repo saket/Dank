@@ -11,4 +11,14 @@ public class Clipboards {
     //noinspection ConstantConditions
     clipboardManager.setPrimaryClip(ClipData.newPlainText(plainText, plainText));
   }
+
+  public static Optional<String> currentPlainText(Context context) {
+    ClipboardManager clipboard = (ClipboardManager) context.getSystemService(Context.CLIPBOARD_SERVICE);
+    assert clipboard != null;
+
+    return Optional.ofNullable(clipboard.getPrimaryClip())
+        .map(clip -> clip.getItemAt(0))
+        .map(item -> item.coerceToText(context))
+        .map(CharSequence::toString);
+  }
 }

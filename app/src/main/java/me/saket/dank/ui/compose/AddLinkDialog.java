@@ -2,7 +2,6 @@ package me.saket.dank.ui.compose;
 
 import android.annotation.SuppressLint;
 import android.app.Dialog;
-import android.content.ClipboardManager;
 import android.content.Context;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
@@ -25,6 +24,7 @@ import butterknife.ButterKnife;
 import butterknife.OnClick;
 import me.saket.dank.R;
 import me.saket.dank.ui.DankDialogFragment;
+import me.saket.dank.utils.Clipboards;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 
@@ -122,13 +122,7 @@ public class AddLinkDialog extends DankDialogFragment {
   }
 
   private Optional<String> getUrlInClipboard() {
-    ClipboardManager clipboard = (ClipboardManager) requireContext().getSystemService(Context.CLIPBOARD_SERVICE);
-    assert clipboard != null;
-
-    Optional<String> textInClipboard = Optional.ofNullable(clipboard.getPrimaryClip())
-        .map(clip -> clip.getItemAt(0))
-        .map(item -> item.coerceToText(getContext()))
-        .map(CharSequence::toString);
+    Optional<String> textInClipboard = Clipboards.currentPlainText(requireContext());
 
     boolean hasUrlInClipboard = textInClipboard
         .map(text -> Patterns.WEB_URL.matcher(text))
