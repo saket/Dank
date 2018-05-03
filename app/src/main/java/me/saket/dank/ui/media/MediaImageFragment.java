@@ -109,8 +109,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     setupFlickGestures(flickDismissViewGroup);
 
     // Toggle immersive when the user clicks anywhere.
-    //noinspection ConstantConditions
-    imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) getActivity()).toggleImmersiveMode());
+    imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) requireActivity()).toggleImmersiveMode());
 
     // Show title and description above the Activity option buttons.
     //noinspection ConstantConditions
