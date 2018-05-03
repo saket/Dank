@@ -97,7 +97,7 @@ public class UploadImageDialog extends DankDialogFragment {
   public void onAttach(Context context) {
     super.onAttach(context);
 
-    if (!(getActivity() instanceof OnLinkInsertListener)) {
+    if (!(requireActivity() instanceof OnLinkInsertListener)) {
       throw new AssertionError();
     }
   }
@@ -109,14 +109,14 @@ public class UploadImageDialog extends DankDialogFragment {
     super.onCreateDialog(savedInstanceState);
     Dank.dependencyInjector().inject(this);
 
-    View dialogLayout = LayoutInflater.from(getContext()).inflate(R.layout.dialog_upload_image, null);
+    View dialogLayout = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_upload_image, null);
     ButterKnife.bind(this, dialogLayout);
 
     displayPickedImage();
     uploadImage();
     setCancelable(false);
 
-    return new AlertDialog.Builder(getContext())
+    return new AlertDialog.Builder(requireContext())
         .setView(dialogLayout)
         .create();
   }
@@ -131,8 +131,7 @@ public class UploadImageDialog extends DankDialogFragment {
   private void uploadImage() {
     Uri imageContentUri = getArguments().getParcelable(KEY_IMAGE_URI);
     final long startTime = System.currentTimeMillis();
-    //noinspection ConstantConditions
-    String imageMimeType = getContext().getContentResolver().getType(imageContentUri);
+    String imageMimeType = requireContext().getContentResolver().getType(imageContentUri);
     Timber.i("Mime-type in: %sms", System.currentTimeMillis() - startTime);
 
     Single<File> imageFileStream = copyImageToTempFile(imageContentUri)
@@ -171,13 +170,12 @@ public class UploadImageDialog extends DankDialogFragment {
   @CheckResult
   private Single<File> copyImageToTempFile(Uri imageContentUri) {
     return Single.fromCallable(() -> {
-      //noinspection ConstantConditions
-      InputStream inputStream = getContext().getContentResolver().openInputStream(imageContentUri);
+      InputStream inputStream = requireContext().getContentResolver().openInputStream(imageContentUri);
 
       // Copy image to a temporary location in case the original gets deleted before upload.
       // For instance, I have a habit of accidentally deleting screenshots from notification
       // as soon as they're shared, but before the upload is complete.
-      File temporaryFile = new File(getContext().getFilesDir(), "Temp-image-" + System.currentTimeMillis());
+      File temporaryFile = new File(requireContext().getFilesDir(), "Temp-image-" + System.currentTimeMillis());
 
       //noinspection ConstantConditions
       Okio.buffer(Okio.source(inputStream)).readAll(Okio.sink(temporaryFile));
@@ -206,7 +204,7 @@ public class UploadImageDialog extends DankDialogFragment {
         insertButton.setOnClickListener(v -> {
           String title = titleField.getText().toString().trim();
           String url = uploadResponse.data().link();
-          ((OnLinkInsertListener) getActivity()).onLinkInsert(title, url);
+          ((OnLinkInsertListener) requireActivity()).onLinkInsert(title, url);
           dismiss();
         });
       }

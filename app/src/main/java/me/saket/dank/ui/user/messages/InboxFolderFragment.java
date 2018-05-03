@@ -35,7 +35,6 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
 import me.saket.dank.data.InboxRepository;
-import me.saket.dank.data.InboxRepository.FetchAndSaveResult;
 import me.saket.dank.data.InfiniteScrollHeaderFooter;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
@@ -193,7 +192,7 @@ public class InboxFolderFragment extends DankFragment {
     boolean constructThreads = folder == InboxFolder.PRIVATE_MESSAGES;
     boolean isUnreadFolder = folder == InboxFolder.UNREAD;
     //noinspection ConstantConditions
-    uiConstructor.get().stream(getContext(), sharedMessageStream, constructThreads, isUnreadFolder)
+    uiConstructor.get().stream(requireContext(), sharedMessageStream, constructThreads, isUnreadFolder)
         .toFlowable(BackpressureStrategy.LATEST)
         .compose(RxDiffUtil.calculateDiff(InboxFolderScreenUiModel.ItemDiffer::new))
         .observeOn(mainThread())

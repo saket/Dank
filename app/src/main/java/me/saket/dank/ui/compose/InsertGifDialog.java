@@ -86,7 +86,7 @@ public class InsertGifDialog extends DankDialogFragment {
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     super.onCreateDialog(savedInstanceState);
 
-    View dialogLayout = LayoutInflater.from(getContext()).inflate(R.layout.dialog_upload_image, null);
+    View dialogLayout = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_upload_image, null);
     ButterKnife.bind(this, dialogLayout);
 
     //noinspection ConstantConditions

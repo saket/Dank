@@ -61,7 +61,7 @@ public class AddLinkDialog extends DankDialogFragment {
   public void onAttach(Context context) {
     super.onAttach(context);
 
-    if (!(getActivity() instanceof OnLinkInsertListener)) {
+    if (!(requireActivity() instanceof OnLinkInsertListener)) {
       throw new AssertionError();
     }
   }
@@ -72,7 +72,7 @@ public class AddLinkDialog extends DankDialogFragment {
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     super.onCreateDialog(savedInstanceState);
 
-    View dialogLayout = LayoutInflater.from(getContext()).inflate(R.layout.dialog_add_link, null);
+    View dialogLayout = LayoutInflater.from(requireContext()).inflate(R.layout.dialog_add_link, null);
     ButterKnife.bind(this, dialogLayout);
 
     //noinspection ConstantConditions
@@ -82,8 +82,7 @@ public class AddLinkDialog extends DankDialogFragment {
       Views.setTextWithCursor(titleField, preFilledTitle);
     }
 
-    //noinspection ConstantConditions
-    AlertDialog dialog = new AlertDialog.Builder(getContext())
+    AlertDialog dialog = new AlertDialog.Builder(requireContext())
         .setView(dialogLayout)
         .create();
     // Show keyboard automatically on start. Doesn't happen on its own.
@@ -156,8 +155,7 @@ public class AddLinkDialog extends DankDialogFragment {
     );
 
     if (!title.isEmpty() && !url.isEmpty()) {
-      //noinspection ConstantConditions
-      ((OnLinkInsertListener) getActivity()).onLinkInsert(title, url);
+      ((OnLinkInsertListener) requireActivity()).onLinkInsert(title, url);
       dismiss();
     }
   }
