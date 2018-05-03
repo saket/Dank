@@ -1,5 +1,8 @@
 package me.saket.dank.ui;
 
+import android.content.Context;
+import android.support.annotation.Nullable;
+
 import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.disposables.Disposable;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerFragment;
@@ -11,6 +14,12 @@ public class DankFragment extends LifecycleOwnerFragment {
 
   private CompositeDisposable onStopDisposables;
   private CompositeDisposable onDestroyDisposables;
+
+  @Nullable
+  @Override
+  public Context getContext() {
+    throw new AssertionError("Use requireContext() instead");
+  }
 
   @Override
   public void onStop() {

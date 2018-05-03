@@ -104,7 +104,7 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
   }
 
   public FlickGestureListener createFlickGestureListener(FlickGestureListener.GestureCallbacks wrappedGestureCallbacks) {
-    FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(getContext()));
+    FlickGestureListener flickListener = new FlickGestureListener(ViewConfiguration.get(requireContext()));
     flickListener.setFlickThresholdSlop(FlickGestureListener.DEFAULT_FLICK_THRESHOLD);
     flickListener.setGestureCallbacks(new FlickGestureListener.GestureCallbacks() {
       @Override

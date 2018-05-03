@@ -65,7 +65,7 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
   public void onAttach(Context context) {
     super.onAttach(context);
 
-    if (!(getActivity() instanceof Callback)) {
+    if (!(requireActivity() instanceof Callback)) {
       throw new AssertionError();
     }
   }
@@ -75,11 +75,10 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
   @SuppressLint("InflateParams")
   public Dialog onCreateDialog(Bundle savedInstanceState) {
     Dank.dependencyInjector().inject(this);
-    View dialogLayout = LayoutInflater.from(getActivity()).inflate(R.layout.dialog_subscribe_to_new_subreddit, null);
+    View dialogLayout = LayoutInflater.from(requireActivity()).inflate(R.layout.dialog_subscribe_to_new_subreddit, null);
     ButterKnife.bind(this, dialogLayout);
 
-    //noinspection ConstantConditions
-    AlertDialog dialog = new AlertDialog.Builder(getActivity())
+    AlertDialog dialog = new AlertDialog.Builder(requireActivity())
         .setView(dialogLayout)
         .setTitle(R.string.newsubredditdialog_title)
         .create();
@@ -126,7 +125,7 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
 
     progressView.setVisibility(View.VISIBLE);
     //noinspection ConstantConditions
-    Keyboards.hide(getContext(), subredditView);
+    Keyboards.hide(requireContext(), subredditView);
 
     Dank.reddit().findSubreddit2(subredditName)
         .subscribeOn(io())
