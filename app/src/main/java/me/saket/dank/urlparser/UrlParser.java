@@ -276,7 +276,7 @@ public class UrlParser {
       if (capitalLetterCount == 3) {
         String highQualityVideoUrl = config.gfycatHighQualityUrlPlaceholder(threeWordId);
         String lowQualityVideoUrl = config.gfycatLowQualityUrlPlaceholder(threeWordId);
-        return GfycatLink.create(url, highQualityVideoUrl, lowQualityVideoUrl);
+        return GfycatLink.create(url, threeWordId, highQualityVideoUrl, lowQualityVideoUrl);
 
       } else {
         return GfycatUnresolvedLink.create(url, threeWordId);

@@ -190,6 +190,7 @@ public class CachePreFiller {
     //  Timber.i("Pre-filling image/album %s", submission.getTitle());
     //}
     return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
+        .take(1)
         .map(resolvedLink -> {
           ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
           switch (resolvedLink.type()) {

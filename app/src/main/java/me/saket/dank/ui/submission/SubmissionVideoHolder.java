@@ -113,7 +113,7 @@ public class SubmissionVideoHolder {
     // Later hidden inside loadVideo(), when the video's height becomes available.
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    Single<Boolean> loadHighQualityVideoPredicate = hdMediaNetworkStrategy.get()
+    Single<Boolean> canLoadHighQualityVideos = hdMediaNetworkStrategy.get()
         .asObservable()
         .flatMap(strategy -> networkStateListener.get().streamNetworkInternetCapability(strategy, Optional.empty()))
         .firstOrError();
@@ -127,9 +127,10 @@ public class SubmissionVideoHolder {
             ? Completable.fromAction(() -> exoPlayerManager.startPlayback())
             : Completable.complete());
 
+    // FIXME: SubmissionPageLayout is already resolving actual link. Why do it again here?
     return mediaHostRepository.get().resolveActualLinkIfNeeded(mediaLink)
         .subscribeOn(io())
-        .flatMap(resolvedLink -> loadHighQualityVideoPredicate
+        .flatMapSingle(resolvedLink -> canLoadHighQualityVideos
             .map(loadHQ -> loadHQ ? resolvedLink.highQualityUrl() : resolvedLink.lowQualityUrl()))
         .observeOn(mainThread())
         .flatMapCompletable(videoUrl -> loadVideo(videoUrl))

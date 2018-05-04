@@ -12,12 +12,15 @@ import android.widget.ViewFlipper;
 
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
 import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
@@ -43,9 +46,10 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
   @BindView(R.id.albumviewer_video_error) ErrorStateView loadErrorStateView;
   @BindView(R.id.albumviewer_video_content_flipper) ViewFlipper contentViewFlipper;
 
-  @Inject MediaHostRepository mediaHostRepository;
+  @Inject Lazy<MediaHostRepository> mediaHostRepository;
   @Inject ErrorResolver errorResolver;
   @Inject HttpProxyCacheServer httpProxyCacheServer;
+
   private MediaViewerVideoControlsView videoControlsView;
 
   private enum ScreenState {
@@ -216,14 +220,20 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     moveToScreenState(ScreenState.LOADING_VIDEO_OR_READY);
 
     exoPlayerManager.setOnErrorListener(error -> {
-      moveToScreenState(ScreenState.FAILED);
+      if (error instanceof ExoPlaybackException && error.getCause() instanceof HttpDataSource.HttpDataSourceException) {
+        // Flagging this link will trigger another emission from media repository, so no need to do anything else.
+        mediaHostRepository.get().flagLocalUrlParsingAsIncorrect(mediaAlbumItem.mediaLink());
 
-      ResolvedError resolvedError = errorResolver.resolve(error);
-      loadErrorStateView.applyFrom(resolvedError);
-      loadErrorStateView.setOnRetryClickListener(o -> loadVideo(startPositionMillis));
+      } else {
+        moveToScreenState(ScreenState.FAILED);
 
-      if (resolvedError.isUnknown()) {
-        Timber.e(error, "Error while loading video: %s", mediaAlbumItem);
+        ResolvedError resolvedError = errorResolver.resolve(error);
+        loadErrorStateView.applyFrom(resolvedError);
+        loadErrorStateView.setOnRetryClickListener(o -> loadVideo(startPositionMillis));
+
+        if (resolvedError.isUnknown()) {
+          Timber.e(error, "Error while loading video: %s", mediaAlbumItem);
+        }
       }
     });
 

@@ -43,6 +43,8 @@ import android.widget.Toast;
 
 import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.f2prateek.rx.preferences2.Preference;
+import com.google.android.exoplayer2.ExoPlaybackException;
+import com.google.android.exoplayer2.upstream.HttpDataSource;
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -172,7 +174,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
   // TODO: Convert all to lazy injections.
   @Inject SubmissionRepository submissionRepository;
-  @Inject MediaHostRepository mediaHostRepository;
   @Inject UrlRouter urlRouter;
   @Inject Moshi moshi;
   @Inject LinkMetadataRepository linkMetadataRepository;
@@ -191,6 +192,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @Inject Lazy<SubmissionVideoHolder> contentVideoViewHolder;
   @Inject Lazy<SubmissionImageHolder> contentImageViewHolder;
   @Inject Lazy<ErrorResolver> errorResolver;
+  @Inject Lazy<MediaHostRepository> mediaHostRepository;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
   private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
@@ -1270,12 +1272,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     Single.fromCallable(() -> urlParser.get().parse(submission.getUrl(), submission))
         .subscribeOn(io())
         .observeOn(mainThread())
-        .flatMap(parsedLink -> {
-          if (!(parsedLink instanceof UnresolvedMediaLink)) {
-            return Single.just(parsedLink);
+        .flatMapObservable(parsedLink -> {
+          if (!(parsedLink instanceof MediaLink)) {
+            return Observable.just(parsedLink);
           }
 
-          return mediaHostRepository.resolveActualLinkIfNeeded(((MediaLink) parsedLink))
+          return mediaHostRepository.get().resolveActualLinkIfNeeded(((MediaLink) parsedLink))
               .subscribeOn(io())
               .doOnSubscribe(o -> {
                 // Progress bar is later hidden in the subscribe() block.
@@ -1298,14 +1300,14 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               .onErrorResumeNext(error -> {
                 // Open this album in browser if Imgur rate limits have reached.
                 if (error instanceof ImgurApiRequestRateLimitReachedException) {
-                  return Single.just(ExternalLink.create(parsedLink.unparsedUrl()));
+                  return Observable.just(ExternalLink.create(parsedLink.unparsedUrl()));
                 } else {
-                  handleMediaLoadError(error);
-                  return Single.never();
+                  showMediaLoadError(error);
+                  return Observable.never();
                 }
               });
         })
-        .flatMap(link -> {
+        .flatMapSingle(link -> {
           if (!showNsfwContentPreference.get().get() && link instanceof MediaLink && submission.isNsfw()) {
             contentLoadProgressView.hide();
             mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.NsfwContentDisabled.create()));
@@ -1316,7 +1318,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           }
         })
         .observeOn(mainThread())
-        .doOnSuccess(resolvedLink -> {
+        .doOnNext(resolvedLink -> {
           contentImageView.setVisibility(resolvedLink.isImageOrGif() ? View.VISIBLE : View.GONE);
           contentVideoViewContainer.setVisibility(resolvedLink.isVideo() ? View.VISIBLE : View.GONE);
 
@@ -1324,7 +1326,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           boolean transparentToolbar = resolvedLink.isImageOrGif() || resolvedLink.isVideo();
           toolbarBackground.setSyncScrollEnabled(transparentToolbar);
         })
-        .takeUntil(lifecycle().onPageCollapseOrDestroyCompletable())
+        .takeUntil(lifecycle().onPageCollapseOrDestroy())
         .subscribe(
             resolvedLink -> {
               submissionContentStream.accept(resolvedLink);
@@ -1337,7 +1339,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                   // Threading is handled internally by SubmissionImageHolder#load().
                   contentImageViewHolder.get().load((MediaLink) resolvedLink, redditSuppliedImages)
                       .ambWith(lifecycle().onPageCollapseOrDestroyCompletable())
-                      .subscribe(doNothingCompletable(), error -> handleMediaLoadError(error));
+                      .subscribe(doNothingCompletable(), error -> tryRecoveringOrShowMediaLoadError(error, resolvedLink));
+
                   contentImageView.view().setContentDescription(getResources().getString(
                       R.string.cd_submission_image,
                       submission.getTitle()
@@ -1361,7 +1364,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                   contentVideoViewHolder.get().load((MediaLink) resolvedLink)
                       .toObservable()
                       .takeUntil(lifecycle().onPageCollapseOrDestroy())
-                      .subscribe(doNothing(), error -> handleMediaLoadError(error));
+                      .subscribe(doNothing(), error -> tryRecoveringOrShowMediaLoadError(error, resolvedLink));
                   break;
 
                 default:
@@ -1376,13 +1379,21 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         );
   }
 
-  private void handleMediaLoadError(Throwable error) {
-    contentLoadProgressView.hide();
+  private void tryRecoveringOrShowMediaLoadError(Throwable error, Link resolvedContentLink) {
+    if (error instanceof ExoPlaybackException && error.getCause() instanceof HttpDataSource.HttpDataSourceException) {
+      // Flagging this link will trigger another emission from media repository, so no need to do anything else.
+      mediaHostRepository.get().flagLocalUrlParsingAsIncorrect(resolvedContentLink);
 
+    } else {
+      showMediaLoadError(error);
+    }
+  }
+
+  private void showMediaLoadError(Throwable error) {
     ResolvedError resolvedError = errorResolver.get().resolve(error);
-    resolvedError.ifUnknown(() ->
-        Timber.e(error, "Media content load error. Submission: %s", submissionStream.getValue().get().getPermalink())
-    );
+    resolvedError.ifUnknown(() -> Timber.e(error, "Media content load error: %s", submissionStream.getValue().get().getPermalink()));
+
+    contentLoadProgressView.hide();
     mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.LoadFailure.create(resolvedError)));
   }
 

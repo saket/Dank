@@ -22,6 +22,7 @@ import javax.inject.Singleton;
 import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.cache.DiskLruCachePathResolver;
 import me.saket.dank.cache.StoreFilePersister;
@@ -37,12 +38,14 @@ import me.saket.dank.urlparser.GfycatUnresolvedLink;
 import me.saket.dank.urlparser.ImgurAlbumLink;
 import me.saket.dank.urlparser.ImgurAlbumUnresolvedLink;
 import me.saket.dank.urlparser.ImgurLink;
+import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.urlparser.StreamableLink;
 import me.saket.dank.urlparser.StreamableUnresolvedLink;
 import me.saket.dank.urlparser.UnresolvedMediaLink;
 import me.saket.dank.urlparser.UrlParser;
 import okio.BufferedSource;
+import timber.log.Timber;
 
 /**
  * Entry point for accessing all media services.
@@ -56,6 +59,7 @@ public class MediaHostRepository {
   private final Store<MediaLink, MediaLink> cacheStore;
   private final Lazy<UrlParser> urlParser;
   private final Lazy<GfycatRepository> gfycatRepository;
+  private final Lazy<IncorrectMediaUrlParsingData> incorrectMediaUrlParsingData;
 
   @Inject
   public MediaHostRepository(
@@ -65,13 +69,15 @@ public class MediaHostRepository {
       Moshi moshi,
       GiphyRepository giphyRepository,
       Lazy<UrlParser> urlParser,
-      Lazy<GfycatRepository> gfycatRepository)
+      Lazy<GfycatRepository> gfycatRepository,
+      Lazy<IncorrectMediaUrlParsingData> incorrectMediaUrlParsingData)
   {
     this.streamableRepository = streamableRepository;
     this.imgurRepository = imgurRepository;
     this.giphyRepository = giphyRepository;
     this.urlParser = urlParser;
     this.gfycatRepository = gfycatRepository;
+    this.incorrectMediaUrlParsingData = incorrectMediaUrlParsingData;
 
     StoreFilePersister.JsonParser<MediaLink> jsonParser = new MediaLinkStoreJsonParser(moshi);
     DiskLruCachePathResolver<MediaLink> pathResolver = new DiskLruCachePathResolver<MediaLink>() {
@@ -140,17 +146,29 @@ public class MediaHostRepository {
     }
   }
 
+  public void flagLocalUrlParsingAsIncorrect(Link link) {
+    Timber.w("Flagging link as incorrectly parsed: %s", link);
+    incorrectMediaUrlParsingData.get().flag(link)
+        .subscribeOn(Schedulers.io())
+        .subscribe();
+  }
+
   /**
    * Remember to handle {@link ImgurApiRequestRateLimitReachedException}.
    */
-  public Single<MediaLink> resolveActualLinkIfNeeded(MediaLink unresolvedLink) {
-    if (unresolvedLink instanceof UnresolvedMediaLink) {
-      return cacheStore.get(unresolvedLink);
-    } else {
-      return Single.just(unresolvedLink);
-    }
+  public Observable<MediaLink> resolveActualLinkIfNeeded(MediaLink unresolvedLink) {
+    return incorrectMediaUrlParsingData.get()
+        .isFlagged(unresolvedLink)
+        .flatMapSingle(flagged -> {
+          if (flagged || unresolvedLink instanceof UnresolvedMediaLink) {
+            return cacheStore.get(unresolvedLink);
+          } else {
+            return Single.just(unresolvedLink);
+          }
+        });
   }
 
+  // NOTE: If you see any "MaybeSource is empty" error, it means that the data couldn't be saved or read from cache store.
   private Single<MediaLink> resolveFromRemote(MediaLink unresolvedLink) {
     if (unresolvedLink instanceof StreamableUnresolvedLink) {
       return streamableRepository
@@ -176,9 +194,13 @@ public class MediaHostRepository {
       return gfycatRepository.get()
           .gif(((GfycatUnresolvedLink) unresolvedLink).threeWordId())
           .cast(MediaLink.class);
+    } else if (unresolvedLink instanceof GfycatLink) {
+      return gfycatRepository.get()
+          .gif(((GfycatLink) unresolvedLink).threeWordId())
+          .cast(MediaLink.class);
 
     } else {
-      return Single.just(unresolvedLink);
+      return Single.error(new AssertionError("Trying to resolve an already resolved link"));
     }
   }
 
@@ -214,6 +236,7 @@ public class MediaHostRepository {
     if (!BuildConfig.DEBUG) {
       throw new AssertionError();
     }
+    incorrectMediaUrlParsingData.get().clear();
     cacheStore.clear();
   }
 }

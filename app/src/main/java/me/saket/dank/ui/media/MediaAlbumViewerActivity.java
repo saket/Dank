@@ -63,12 +63,12 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.ui.DankActivity;
+import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.urlparser.ImgurAlbumLink;
 import me.saket.dank.urlparser.MediaLink;
@@ -274,7 +274,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   private void resolveMediaLinkAndDisplayContent(MediaLink mediaLinkToDisplay) {
     mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
         // TODO: Handle Imgur rate limit reached.
-        .doOnSuccess(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
+        .doOnNext(resolvedMediaLink -> this.resolvedMediaLink = resolvedMediaLink)
         .map(resolvedMediaLink -> {
           // Find all child images under an album.
           if (resolvedMediaLink.isMediaAlbum()) {
@@ -284,7 +284,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
           }
         })
         // Toggle HD for all images with the default value.
-        .flatMap(mediaLinks -> highResolutionMediaNetworkStrategyPref.get().asObservable()
+        .flatMapSingle(mediaLinks -> highResolutionMediaNetworkStrategyPref.get().asObservable()
             .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
             .firstOrError()
             .doOnSuccess(canLoadHighResolutionMedia -> {
@@ -295,8 +295,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
             })
             .map(o -> mediaLinks)
         )
-        .compose(RxUtils.applySchedulersSingle())
-        .flatMapObservable(mediaLinks -> {
+        .flatMap(mediaLinks -> {
           // Enable HD flag if it's turned on.
           return hdEnabledMediaLinksStream
               .map(hdEnabledMediaLinks -> {
@@ -308,6 +307,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                 return mediaAlbumItems;
               });
         })
+        .compose(RxUtils.applySchedulers())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(
             mediaAlbumItems -> {
