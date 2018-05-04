@@ -42,10 +42,6 @@ public class CommentSwipeActionsProvider {
   private final Lazy<OnLoginRequireListener> onLoginRequireListener;
   private final SwipeActions commentSwipeActions;
   private final SwipeActionIconProvider swipeActionIconProvider;
-
-  //  public final PublishRelay<Comment> replySwipeActions = PublishRelay.create();
-  public final PublishRelay<ContributionVoteSwipeEvent> voteSwipeActions = PublishRelay.create();
-  //  public final PublishRelay<CommentOptionSwipeEvent> optionSwipeActions = PublishRelay.create();
   public final PublishRelay<SwipeEvent> swipeEvents = PublishRelay.create();
 
   @Inject
@@ -61,12 +57,12 @@ public class CommentSwipeActionsProvider {
     // Actions on both sides are aligned from left to right.
     commentSwipeActions = SwipeActions.builder()
         .startActions(SwipeActionsHolder.builder()
-            .add(SwipeAction.create(ACTION_NAME_REPLY, R.color.list_item_swipe_reply, 0.3f))
-            .add(SwipeAction.create(ACTION_NAME_OPTIONS, R.color.list_item_swipe_more_options, 0.7f))
+            .add(SwipeAction.create(ACTION_NAME_REPLY, R.color.list_item_swipe_reply, 0.5f))
+            .add(SwipeAction.create(ACTION_NAME_OPTIONS, R.color.list_item_swipe_more_options, 0.5f))
             .build())
         .endActions(SwipeActionsHolder.builder()
-            .add(SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 0.3f))
-            .add(SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 0.7f))
+            .add(SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 0.5f))
+            .add(SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 0.5f))
             .build())
         .build();
 
