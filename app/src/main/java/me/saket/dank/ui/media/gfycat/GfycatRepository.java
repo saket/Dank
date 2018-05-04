@@ -48,7 +48,7 @@ public class GfycatRepository {
         })
         .map(response -> {
           String unparsedUrl = urlParserConfig.get().gfycatUnparsedUrlPlaceholder(response.data().threeWordId());
-          return GfycatLink.create(unparsedUrl, response.data().highQualityUrl(), response.data().lowQualityUrl());
+          return GfycatLink.create(unparsedUrl, response.data().threeWordId(), response.data().highQualityUrl(), response.data().lowQualityUrl());
         });
   }
 

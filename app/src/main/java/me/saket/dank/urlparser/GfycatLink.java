@@ -17,6 +17,8 @@ public abstract class GfycatLink extends MediaLink implements Parcelable {
   @Override
   public abstract String unparsedUrl();
 
+  public abstract String threeWordId();
+
   @Override
   public abstract String highQualityUrl();
 
@@ -33,8 +35,8 @@ public abstract class GfycatLink extends MediaLink implements Parcelable {
     return Link.Type.SINGLE_VIDEO;
   }
 
-  public static GfycatLink create(String unparsedUrl, String highQualityVideoUrl, String lowQualityVideoUrl) {
-    return new AutoValue_GfycatLink(unparsedUrl, highQualityVideoUrl, lowQualityVideoUrl);
+  public static GfycatLink create(String unparsedUrl, String threeWordId, String highQualityVideoUrl, String lowQualityVideoUrl) {
+    return new AutoValue_GfycatLink(unparsedUrl, threeWordId, highQualityVideoUrl, lowQualityVideoUrl);
   }
 
   public static JsonAdapter<GfycatLink> jsonAdapter(Moshi moshi) {

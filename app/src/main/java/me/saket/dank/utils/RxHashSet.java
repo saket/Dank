@@ -51,4 +51,10 @@ public class RxHashSet<T> extends HashSet<T> {
     changeEvents.accept(size());
     return result;
   }
+
+  @Override
+  public void clear() {
+    super.clear();
+    changeEvents.accept(size());
+  }
 }

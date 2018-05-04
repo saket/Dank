@@ -29,6 +29,13 @@ public class GfycatRepositoryTest {
   private static final String RESOLVED_ID = "ThreeWordId";
   private static final String AUTH_TOKEN = "authToken";
 
+  private static final GfycatResponse.Data GFYCAT_RESPONSE = GfycatResponse.Data.create(RESOLVED_ID, "high", "low");
+  private static final GfycatLink GFYCAT_RESOLVED_LINK = GfycatLink.create(
+      "https://gfycat.com/" + RESOLVED_ID,
+      RESOLVED_ID,
+      "high",
+      "low");
+
   @Rule public MockitoRule mockitoRule = MockitoJUnit.rule();
   @Mock GfycatRepositoryData data;
   @Mock DankApi dankApi;
@@ -46,14 +53,14 @@ public class GfycatRepositoryTest {
   public void when_auth_token_is_not_required() throws Exception {
     when(data.isAccessTokenRequired()).thenReturn(false);
 
-    GfycatResponse response = GfycatResponse.create(GfycatResponse.Data.create(RESOLVED_ID, "high", "low"));
+    GfycatResponse response = GfycatResponse.create(GFYCAT_RESPONSE);
     when(dankApi.gfycat(UNRESOLVED_ID)).thenReturn(Single.just(response));
 
     gfycatRepository.gif(UNRESOLVED_ID)
         .test()
         .assertNoErrors()
         .assertComplete()
-        .assertValue(GfycatLink.create("https://gfycat.com/" + RESOLVED_ID, "high", "low"));
+        .assertValue(GFYCAT_RESOLVED_LINK);
   }
 
   @Test
@@ -63,14 +70,14 @@ public class GfycatRepositoryTest {
     when(data.tokenExpiryTimeMillis()).thenReturn(Single.just(thirtyMinutesFromNow));
     when(data.accessToken()).thenReturn(Single.just(AUTH_TOKEN));
 
-    GfycatResponse response = GfycatResponse.create(GfycatResponse.Data.create(RESOLVED_ID, "high", "low"));
+    GfycatResponse response = GfycatResponse.create(GFYCAT_RESPONSE);
     when(dankApi.gfycat(AUTH_TOKEN, UNRESOLVED_ID)).thenReturn(Single.just(response));
 
     gfycatRepository.gif(UNRESOLVED_ID)
         .test()
         .assertNoErrors()
         .assertComplete()
-        .assertValue(GfycatLink.create("https://gfycat.com/" + RESOLVED_ID, "high", "low"));
+        .assertValue(GFYCAT_RESOLVED_LINK);
   }
 
   @Test
@@ -80,7 +87,7 @@ public class GfycatRepositoryTest {
     when(data.tokenExpiryTimeMillis()).thenReturn(Single.just(thirtyMinutesBeforeNow));
     when(data.accessToken()).thenReturn(Single.just(AUTH_TOKEN));
 
-    GfycatResponse response = GfycatResponse.create(GfycatResponse.Data.create(RESOLVED_ID, "high", "low"));
+    GfycatResponse response = GfycatResponse.create(GFYCAT_RESPONSE);
     when(dankApi.gfycat(AUTH_TOKEN, UNRESOLVED_ID)).thenReturn(Single.just(response));
 
     GfycatOauthResponse oAuthResponse = GfycatOauthResponse.create(3600, AUTH_TOKEN);
@@ -91,7 +98,7 @@ public class GfycatRepositoryTest {
         .test()
         .assertNoErrors()
         .assertComplete()
-        .assertValue(GfycatLink.create("https://gfycat.com/" + RESOLVED_ID, "high", "low"));
+        .assertValue(GFYCAT_RESOLVED_LINK);
 
     verify(dankApi).gfycatOAuth(anyString(), anyString());
     verify(data).saveOAuthResponse(oAuthResponse);
@@ -117,7 +124,7 @@ public class GfycatRepositoryTest {
     when(dankApi.gfycatOAuth(anyString(), anyString())).thenReturn(Single.just(oAuthResponse));
     when(data.saveOAuthResponse(oAuthResponse)).thenReturn(Completable.complete());
 
-    GfycatResponse response = GfycatResponse.create(GfycatResponse.Data.create(RESOLVED_ID, "high", "low"));
+    GfycatResponse response = GfycatResponse.create(GFYCAT_RESPONSE);
     when(dankApi.gfycat(AUTH_TOKEN, UNRESOLVED_ID)).thenReturn(Single.just(response));
     when(data.accessToken()).thenReturn(Single.just(AUTH_TOKEN));
 
@@ -125,7 +132,7 @@ public class GfycatRepositoryTest {
         .test()
         .assertNoErrors()
         .assertComplete()
-        .assertValue(GfycatLink.create("https://gfycat.com/" + RESOLVED_ID, "high", "low"));
+        .assertValue(GFYCAT_RESOLVED_LINK);
 
     verify(data).setAccessTokenRequired(true);
     verify(dankApi).gfycatOAuth(anyString(), anyString());
