@@ -1,12 +1,18 @@
 package me.saket.dank.walkthrough;
 
 import android.content.Context;
+import android.content.res.Resources;
 import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.RecyclerView;
+import android.text.TextUtils;
+import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.animation.Animation;
+import android.view.animation.AnimationUtils;
+import android.widget.TextSwitcher;
 import android.widget.TextView;
 
 import com.f2prateek.rx.preferences2.Preference;
@@ -65,16 +71,45 @@ public class SubmissionGesturesWalkthrough {
   }
 
   public static class ViewHolder extends RecyclerView.ViewHolder implements ViewHolderWithSwipeActions {
-    private final TextView titleView;
-    private final TextView messageView;
+    private final TextSwitcher titleSwitcherView;
+    private final TextSwitcher messageSwitcherView;
 
     protected ViewHolder(View itemView) {
       super(itemView);
-      titleView = itemView.findViewById(R.id.submissiongestureswalkthrough_item_title);
-      messageView = itemView.findViewById(R.id.submissiongestureswalkthrough_item_message);
+      titleSwitcherView = itemView.findViewById(R.id.submissiongestureswalkthrough_item_title_switcher);
+      messageSwitcherView = itemView.findViewById(R.id.submissiongestureswalkthrough_item_message_switcher);
 
-      titleView.setText(R.string.subreddit_gestureswalkthrough_title);
-      messageView.setText(R.string.subreddit_gestureswalkthrough_message);
+      Context context = itemView.getContext();
+      Resources res = itemView.getResources();
+
+      titleSwitcherView.setFactory(() -> {
+        TextView titleView = new TextView(context);
+        titleView.setLineSpacing(res.getDimensionPixelSize(R.dimen.spacing2), 1f);
+        titleView.setTextColor(ContextCompat.getColor(context, R.color.amber_200));
+        titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        return titleView;
+      });
+
+      messageSwitcherView.setFactory(() -> {
+        TextView messageView = new TextView(context);
+        messageView.setEllipsize(TextUtils.TruncateAt.END);
+        messageView.setLineSpacing(res.getDimensionPixelSize(R.dimen.spacing2), 1f);
+        messageView.setTextColor(ContextCompat.getColor(context, R.color.gray_500));
+        messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        return messageView;
+      });
+
+      Animation inAnimation = AnimationUtils.loadAnimation(context, R.anim.gesture_walkthroughs_slide_and_fade_in_from_bottom);
+      Animation outAnimation = AnimationUtils.loadAnimation(context, R.anim.gesture_walkthroughs_slide_and_fade_out_to_top);
+
+      for (TextSwitcher switcher : new TextSwitcher[] { titleSwitcherView, messageSwitcherView }) {
+        switcher.setInAnimation(inAnimation);
+        switcher.setOutAnimation(outAnimation);
+        switcher.setAnimateFirstView(false);
+      }
+
+      titleSwitcherView.setText(res.getString(R.string.subreddit_gestureswalkthrough_title));
+      messageSwitcherView.setText(res.getString(R.string.subreddit_gestureswalkthrough_message));
     }
 
     public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
@@ -110,13 +145,10 @@ public class SubmissionGesturesWalkthrough {
     }
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {
-    }
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel) {}
 
     @Override
-    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
-
-    }
+    public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {}
   }
 
   public static class WalkthroughSwipeActionsProvider implements SwipeActionIconProvider {
@@ -148,17 +180,19 @@ public class SubmissionGesturesWalkthrough {
       ++discoveryCount;
 
       Context context = swipeableLayout.getContext();
-      holder.titleView.setText(String.format("'%s'", context.getString(action.labelRes())));
-      holder.titleView.setTextColor(ContextCompat.getColor(context, action.backgroundColorRes()));
+      holder.titleSwitcherView.setText(String.format("'%s'", context.getString(action.labelRes())));
+
+      TextView titleView = (TextView) holder.titleSwitcherView.getChildAt(holder.titleSwitcherView.getDisplayedChild());
+      titleView.setTextColor(ContextCompat.getColor(context, action.backgroundColorRes()));
 
       switch (discoveryCount) {
         case 1:
-          holder.messageView.setText(R.string.subreddit_gestureswalkthrough_message_after_first_swipe_action);
+          holder.messageSwitcherView.setText(context.getString(R.string.subreddit_gestureswalkthrough_message_after_first_swipe_action));
           break;
 
         default:
         case 2:
-          holder.messageView.setText(R.string.subreddit_gestureswalkthrough_message_after_second_swipe_action);
+          holder.messageSwitcherView.setText(context.getString(R.string.subreddit_gestureswalkthrough_message_after_second_swipe_action));
           holder.itemView.setOnClickListener(o -> hasUserLearnedPref.set(true));
           break;
       }
