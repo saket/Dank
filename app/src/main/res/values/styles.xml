@@ -387,10 +387,10 @@
     <item name="android:drawableStart">@drawable/ic_arrow_downward_18dp</item>
     <item name="android:elevation">@dimen/elevation_toolbar</item>
     <item name="android:foreground">?attr/selectableItemBackgroundBorderless</item>
-    <item name="android:paddingBottom">@dimen/spacing4</item>
-    <item name="android:paddingEnd">@dimen/spacing8</item>
-    <item name="android:paddingStart">@dimen/spacing8</item>
-    <item name="android:paddingTop">@dimen/spacing4</item>
+    <item name="android:paddingBottom">@dimen/spacing8</item>
+    <item name="android:paddingEnd">@dimen/spacing12</item>
+    <item name="android:paddingStart">@dimen/spacing12</item>
+    <item name="android:paddingTop">@dimen/spacing8</item>
     <item name="android:textColor">@color/black</item>
   </style>
 
