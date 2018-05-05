@@ -31,8 +31,8 @@ public class WalkthroughModule {
 
   @Provides
   @Named("user_learned_submission_gestures")
-  static Preference<Boolean> hasUserLearnedPref(@Named("walkthroughs") RxSharedPreferences rxPrefs) {
-    return rxPrefs.getBoolean("submission_gestures_learned", false);
+  static Preference<Boolean> hasUserLearnedSubmissionGesturesPref(@Named("walkthroughs") RxSharedPreferences rxPrefs) {
+    return rxPrefs.getBoolean("submission_gestures_learned_2", false);
   }
 
   @Provides
