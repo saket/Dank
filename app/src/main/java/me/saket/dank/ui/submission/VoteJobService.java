@@ -52,6 +52,7 @@ public class VoteJobService extends DankJobService {
     extras.putString(KEY_VOTABLE_CONTRIBUTION_JSON, contributionJson);
 
     JobInfo retryJobInfo = new JobInfo.Builder(ID_VOTE + votableContribution.hashCode(), new ComponentName(context, VoteJobService.class))
+        .setMinimumLatency(5 * DateUtils.MINUTE_IN_MILLIS)
         .setRequiredNetworkType(JobInfo.NETWORK_TYPE_ANY)
         .setPersisted(true)
         .setExtras(extras)
@@ -105,9 +106,9 @@ public class VoteJobService extends DankJobService {
               } else {
                 ResolvedError resolvedError = Dank.errors().resolve(error);
                 needsReschedule = resolvedError.isNetworkError() || resolvedError.isRedditServerError() || resolvedError.isUnknown();
+                Timber.i("Retry failed: %s", error.getMessage());
               }
 
-              Timber.i("Retry failed: %s", error.getMessage());
               Timber.i("needsReschedule: %s", needsReschedule);
               jobFinished(params, needsReschedule);
             }
