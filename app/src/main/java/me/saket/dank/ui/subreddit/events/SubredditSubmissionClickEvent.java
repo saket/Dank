@@ -6,8 +6,10 @@ import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Submission;
 
+import me.saket.dank.ui.UiEvent;
+
 @AutoValue
-public abstract class SubredditSubmissionClickEvent {
+public abstract class SubredditSubmissionClickEvent implements UiEvent {
 
   public abstract Submission submission();
 

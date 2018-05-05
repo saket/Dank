@@ -52,12 +52,10 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.subjects.ReplaySubject;
 import me.saket.dank.R;
 import me.saket.dank.cache.CachePreFiller;
 import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.ResolvedError;
@@ -81,7 +79,6 @@ import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubmissionOpenInNewTabSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubredditScreenCreateEvent;
-import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.subreddit.uimodels.SubmissionItemDiffer;
 import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel;
 import me.saket.dank.ui.subreddit.uimodels.SubredditUiConstructor;
@@ -109,7 +106,7 @@ import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
 public class SubredditActivity extends DankPullCollapsibleActivity
-    implements SubmissionPageLayout.Callbacks, NewSubredditSubscriptionDialog.Callback, InsertGifDialog.OnGifInsertListener
+    implements SubredditUi, SubmissionPageLayout.Callbacks, NewSubredditSubscriptionDialog.Callback, InsertGifDialog.OnGifInsertListener
 {
 
   protected static final String KEY_INITIAL_SUBREDDIT_LINK = "initialSubredditLink";
@@ -148,7 +145,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Inject Lazy<UrlRouter> urlRouter;
   @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<VotingManager> votingManager;
-  //  @Inject Lazy<SubmissionPageAnimationOptimizer> submissionPageAnimationOptimizer;
   @Inject Lazy<SubredditController> subredditController;
   @Inject Lazy<UserSessionRepository> userSessionRepository;
   @Inject Lazy<OnLoginRequireListener> loginRequireListener;
@@ -360,7 +356,14 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   private void setupController() {
     uiEvents.onNext(SubredditScreenCreateEvent.create());
 
-    uiEvents.compose(subredditController.get())
+    subredditChangesStream
+        .map(name -> SubredditChangeEvent.create(name))
+        .doOnNext(o -> Timber.i(o.toString()))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(uiEvents);
+
+    uiEvents
+        .compose(subredditController.get())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(uiChange -> uiChange.render(this));
   }
@@ -441,34 +444,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
     // Row clicks.
     submissionsAdapter.submissionClicks()
-        .withLatestFrom(subredditChangesStream, Pair::create)
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(pair -> {
-          SubredditSubmissionClickEvent clickEvent = pair.first();
-          String currentSubredditName = pair.second();
-          Submission submission = clickEvent.submission();
-
-          DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
-              .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : DankRedditClient.DEFAULT_COMMENT_SORT)
-              .build();
-
-//          long delay = submissionPageAnimationOptimizer.get().shouldDelayLoad(submission)
-//              ? submissionPage.getAnimationDurationMillis()
-//              : 0;
-
-//          Single.timer(delay, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
-//              .takeUntil(lifecycle().onDestroy().ignoreElements())
-//              .subscribe(o -> {
-                submissionPage.populateUi(Optional.of(submission), submissionRequest, Optional.of(currentSubredditName));
-//                submissionPageAnimationOptimizer.get().trackSubmissionOpened(submission);
-//              });
-
-          submissionPage.post(() ->
-              Observable.timer(100, TimeUnit.MILLISECONDS, AndroidSchedulers.mainThread())
-                  .takeUntil(lifecycle().onDestroy())
-                  .subscribe(o -> submissionRecyclerView.expandItem(submissionRecyclerView.indexOfChild(clickEvent.itemView()), clickEvent.itemId()))
-          );
-        });
+        .subscribe(uiEvents);
 
     // Thumbnail clicks.
     submissionsAdapter.thumbnailClicks()
@@ -678,10 +655,15 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .subscribe();
   }
 
-//  @Override
-//  public SubmissionPageAnimationOptimizer submissionPageAnimationOptimizer() {
-//    return submissionPageAnimationOptimizer.get();
-//  }
+  @Override
+  public void populateSubmission(Submission submission, DankSubmissionRequest submissionRequest, String currentSubredditName) {
+    submissionPage.populateUi(Optional.of(submission), submissionRequest, Optional.of(currentSubredditName));
+  }
+
+  @Override
+  public void expandSubmissionRow(View submissionRowView, long submissionRowId) {
+    submissionRecyclerView.expandItem(submissionRecyclerView.indexOfChild(submissionRowView), submissionRowId);
+  }
 
 // ======== SORTING MODE ======== //
 
@@ -821,7 +803,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
 // ======== USER PROFILE ======== //
 
-  void setToolbarUserProfileIcon(SubredditUserProfileIconType iconType) {
+  @Override
+  public void setToolbarUserProfileIcon(SubredditUserProfileIconType iconType) {
     userProfileIconTypeChanges.accept(iconType);
   }
 
