@@ -31,7 +31,7 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
-import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable;
+import me.saket.dank.widgets.swipe.SwipeTriggerRippleDrawable.RippleType;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout.SwipeActionIconProvider;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
@@ -155,6 +155,7 @@ public class SubmissionGesturesWalkthrough {
     private final SubmissionSwipeActionsProvider submissionSwipeActionsProvider;
     private final Preference<Boolean> hasUserLearnedPref;
     private int discoveryCount = 0;
+    private SwipeAction lastPerformedAction;
 
     @Inject
     public WalkthroughSwipeActionsProvider(
@@ -175,15 +176,23 @@ public class SubmissionGesturesWalkthrough {
     }
 
     public void perform(SwipeAction action, ViewHolder holder, SwipeableLayout swipeableLayout) {
-      swipeableLayout.playRippleAnimation(action, SwipeTriggerRippleDrawable.RippleType.REGISTER);
+      Context context = swipeableLayout.getContext();
+      holder.titleSwitcherView.setText(String.format("'%s'", context.getString(action.labelRes())));
+      TextView titleView = (TextView) holder.titleSwitcherView.getChildAt(holder.titleSwitcherView.getDisplayedChild());
+      titleView.setTextColor(ContextCompat.getColor(context, action.backgroundColorRes()));
 
       ++discoveryCount;
 
-      Context context = swipeableLayout.getContext();
-      holder.titleSwitcherView.setText(String.format("'%s'", context.getString(action.labelRes())));
+      boolean isUndoAction = action.equals(lastPerformedAction);
+      if (isUndoAction) {
+        // Setting it to null so that this swipe action
+        // can be registered when it's performed again.
+        lastPerformedAction = null;
+      } else {
+        lastPerformedAction = action;
+      }
 
-      TextView titleView = (TextView) holder.titleSwitcherView.getChildAt(holder.titleSwitcherView.getDisplayedChild());
-      titleView.setTextColor(ContextCompat.getColor(context, action.backgroundColorRes()));
+      swipeableLayout.playRippleAnimation(action, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
 
       switch (discoveryCount) {
         case 1:
