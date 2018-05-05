@@ -6,10 +6,12 @@ import android.app.job.JobScheduler;
 import android.content.ComponentName;
 import android.content.Context;
 import android.os.PersistableBundle;
+import android.text.format.DateUtils;
 
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
+import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.VoteDirection;
 
@@ -94,8 +96,16 @@ public class VoteJobService extends DankJobService {
               jobFinished(params, false);
             },
             error -> {
-              ResolvedError resolvedError = Dank.errors().resolve(error);
-              boolean needsReschedule = resolvedError.isNetworkError() || resolvedError.isRedditServerError();
+              boolean needsReschedule;
+
+              if (isTooManyRequestsHttpError(error)) {
+                Timber.i("Received 429-too-many-requests. Will retry vote later.");
+                needsReschedule = true;
+
+              } else {
+                ResolvedError resolvedError = Dank.errors().resolve(error);
+                needsReschedule = resolvedError.isNetworkError() || resolvedError.isRedditServerError() || resolvedError.isUnknown();
+              }
 
               Timber.i("Retry failed: %s", error.getMessage());
               Timber.i("needsReschedule: %s", needsReschedule);
@@ -104,6 +114,11 @@ public class VoteJobService extends DankJobService {
         );
 
     return JobStartCallback.runningInBackground();
+  }
+
+  private boolean isTooManyRequestsHttpError(Throwable error) {
+    return error instanceof NetworkException
+        && ((NetworkException) error).getResponse().getStatusCode() == VotingManager.HTTP_CODE_TOO_MANY_REQUESTS;
   }
 
   @Override

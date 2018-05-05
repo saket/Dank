@@ -35,7 +35,7 @@ import timber.log.Timber;
 public class VotingManager {
 
   private static final int HTTP_CODE_CONTRIBUTION_DELETED = 404;
-  private static final int HTTP_CODE_TOO_MANY_REQUESTS = 429;
+  public static final int HTTP_CODE_TOO_MANY_REQUESTS = 429;
   private static final String KEY_PENDING_VOTE_ = "pendingVote_";
 
   private final Application appContext;
