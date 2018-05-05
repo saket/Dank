@@ -120,17 +120,6 @@ dependencies {
   implementation 'io.github.inflationx:viewpump:1.0.0'
   implementation 'com.bugsnag:bugsnag-android:4.3.3'
 
-  debugImplementation "com.willowtreeapps.hyperion:hyperion-core:$versions.hyperion"
-  debugImplementation "com.willowtreeapps.hyperion:hyperion-timber:$versions.hyperion"
-  debugImplementation "com.willowtreeapps.hyperion:hyperion-shared-preferences:$versions.hyperion"
-  debugImplementation "com.willowtreeapps.hyperion:hyperion-geiger-counter:$versions.hyperion"
-  debugImplementation "com.willowtreeapps.hyperion:hyperion-crash:$versions.hyperion"
-  debugImplementation "com.willowtreeapps.hyperion:hyperion-recorder:$versions.hyperion"
-  debugImplementation "com.willowtreeapps.hyperion:hyperion-attr:$versions.hyperion"
-  debugImplementation "com.willowtreeapps.hyperion:hyperion-measurement:$versions.hyperion"
-  debugImplementation "com.willowtreeapps.hyperion:hyperion-disk:$versions.hyperion"
-  releaseImplementation "com.willowtreeapps.hyperion:hyperion-core-no-op:$versions.hyperion"
-
   implementation 'com.github.saketme:markwon:b68d3058ca'
   implementation 'com.atlassian.commonmark:commonmark-ext-autolink:0.11.0'
 

@@ -10,8 +10,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.View;
 import android.widget.Button;
 
-import com.willowtreeapps.hyperion.core.Hyperion;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -37,7 +35,6 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
   @BindView(R.id.userpreferences_list) InboxRecyclerView preferenceList;
   @BindView(R.id.userpreferences_preference_groups_page) PreferenceGroupsScreen preferencesGroupsPage;
   @BindView(R.id.userpreferences_hiddenoptions) Button hiddenOptionsButton;
-  @BindView(R.id.userpreferences_hyperion) Button hyperionButton;
 
   private List<UserPreferenceGroup> userPreferenceGroups;
   private UserPreferenceGroupAdapter userPreferenceGroupAdapter;
@@ -93,7 +90,6 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
     }
 
     hiddenOptionsButton.setVisibility(BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
-    hyperionButton.setVisibility(BuildConfig.DEBUG ? View.VISIBLE : View.GONE);
   }
 
   @Override
@@ -139,11 +135,6 @@ public class UserPreferencesActivity extends DankPullCollapsibleActivity {
   @OnClick(R.id.userpreferences_hiddenoptions)
   void onClickHiddenOptions() {
     HiddenPreferencesActivity.start(this);
-  }
-
-  @OnClick(R.id.userpreferences_hyperion)
-  void onClickHyperion() {
-    Hyperion.open(this);
   }
 
   @Override
