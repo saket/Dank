@@ -130,7 +130,7 @@ public class AutoRedditLinkExtension implements Parser.ParserExtension {
           try {
             linkify(text);
           } catch (Exception e) {
-            Timber.e(e, "Couldn't auto-linkify reddit link: %s", text);
+            Timber.e("Couldn't auto-linkify reddit link: %s", text);
           }
         }
       }
