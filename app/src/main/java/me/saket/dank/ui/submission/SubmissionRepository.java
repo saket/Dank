@@ -284,6 +284,8 @@ public class SubmissionRepository {
       throw new AssertionError();
     }
     return Completable.fromAction(() -> {
+      submissionWithCommentsStore.get().clear();
+
       try (BriteDatabase.Transaction transaction = database.newTransaction()) {
         database.delete(CachedSubmissionWithComments.TABLE_NAME, null);
         transaction.markSuccessful();
