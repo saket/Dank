@@ -288,6 +288,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @Override
   protected Parcelable onSaveInstanceState() {
     Bundle outState = new Bundle();
+
     if (submissionRequestStream.getValue() != null) {
       outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
 
@@ -372,13 +373,13 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .doOnNext(o -> commentsLoadProgressVisibleStream.accept(true))
         //.doOnNext(o -> Timber.d("------------------"))
         .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
-            //.compose(RxUtils.doOnceOnNext(o -> Timber.i("Submission received")))
+            //.compose(RxUtils.doOnceOnNext(o -> Timber.d("Submission received")))
             .flatMap(pair -> {
               // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
               // In that case, trigger another request with the correct sort. Doing this because we need to store
               // and retain this request in case the Activity gets recreated.
               DankSubmissionRequest updatedRequest = pair.first();
-              if (updatedRequest != submissionRequest) {
+              if (!updatedRequest.equals(submissionRequest)) {
                 //Timber.i("Triggering another request");
                 //noinspection ConstantConditions
                 submissionRequestStream.accept(updatedRequest);
