@@ -55,6 +55,7 @@
         android:background="?attr/selectableItemBackgroundBorderless"
         android:contentDescription="@string/cd_submission_comment_reply_insert_gif"
         android:padding="@dimen/spacing8"
+        android:layout_marginTop="-1dp"
         android:src="@drawable/ic_gif_32dp"
         android:tint="@color/gray_400" />
 
