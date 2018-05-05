@@ -5,12 +5,14 @@ import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.ViewGroup;
-import io.reactivex.Observable;
-import io.reactivex.functions.Consumer;
+
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
+
+import io.reactivex.Observable;
+import io.reactivex.functions.Consumer;
 import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.subreddit.events.SubredditSubmissionThumbnailClickEvent;
@@ -21,6 +23,7 @@ import me.saket.dank.ui.subreddit.uimodels.SubredditSubmissionPagination;
 import me.saket.dank.utils.InfinitelyScrollableRecyclerViewAdapter;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
+import me.saket.dank.walkthrough.SubmissionGestureWalkthroughProceedEvent;
 import me.saket.dank.walkthrough.SubmissionGesturesWalkthrough;
 
 public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<SubmissionRowUiModel, RecyclerView.ViewHolder>
@@ -34,6 +37,7 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   private final Map<SubmissionRowUiModel.Type, SubredditScreenUiModel.SubmissionRowUiChildAdapter> childAdapters;
   private final SubredditSubmission.Adapter submissionAdapter;
   private final SubredditSubmissionPagination.Adapter paginationAdapter;
+  private final SubmissionGesturesWalkthrough.Adapter gestureWalkthroughAdapter;
 
   @Inject
   public SubredditSubmissionsAdapter(
@@ -46,6 +50,7 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
     childAdapters.put(SubmissionRowUiModel.Type.SUBMISSION, submissionAdapter);
     childAdapters.put(SubmissionRowUiModel.Type.PAGINATION_FOOTER, paginationAdapter);
 
+    this.gestureWalkthroughAdapter = gestureWalkthroughAdapter;
     this.paginationAdapter = paginationAdapter;
     this.submissionAdapter = submissionAdapter;
     setHasStableIds(true);
@@ -54,6 +59,11 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
   @CheckResult
   public Observable<SubredditSubmissionClickEvent> submissionClicks() {
     return submissionAdapter.submissionClicks();
+  }
+
+  @CheckResult
+  public Observable<SubmissionGestureWalkthroughProceedEvent> gestureWalkthroughProceedClicks() {
+    return gestureWalkthroughAdapter.proceedClicks();
   }
 
   @CheckResult

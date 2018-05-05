@@ -13,6 +13,8 @@ import java.io.IOException;
 import java.lang.reflect.Field;
 import java.util.List;
 
+import me.saket.dank.data.DankRedditClient;
+
 /**
  * Moshi adapter for {@link Submission}.
  */
@@ -33,7 +35,14 @@ public class MoshiSubmissionAdapter {
 
     } else {
       JsonNode jsonNode = jacksonHelper.parseJsonNode(json);
-      CommentSort commentSort = CommentSort.valueOf(jsonNode.get(2).get("dank_comments_sort").asText());
+
+      CommentSort commentSort;
+      if (jsonNode.has(2)) {
+        commentSort = CommentSort.valueOf(jsonNode.get(2).get("dank_comments_sort").asText());
+      } else {
+        commentSort = DankRedditClient.DEFAULT_COMMENT_SORT;
+      }
+
       return SubmissionSerializer.withComments(jsonNode, commentSort);
     }
   }
@@ -50,7 +59,7 @@ public class MoshiSubmissionAdapter {
   /**
    * Constructs a JSON equivalent to what Reddit produces so that {@link SubmissionSerializer#withComments(JsonNode, CommentSort)} can be used.
    */
-  public String writeSubmissionWithCommentsToJson(Submission submission) throws IOException, NoSuchFieldException, IllegalAccessException {
+  public String writeSubmissionWithCommentsToJson(Submission submission) throws NoSuchFieldException, IllegalAccessException {
     StringBuilder jsonBuilder = new StringBuilder();
     jsonBuilder.append("[");
 
