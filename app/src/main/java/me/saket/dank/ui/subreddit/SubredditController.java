@@ -12,10 +12,12 @@ import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.ObservableTransformer;
+import io.reactivex.Single;
 import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.ui.UiChange;
 import me.saket.dank.ui.UiEvent;
+import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.subreddit.events.SubredditScreenCreateEvent;
 import me.saket.dank.ui.subreddit.events.SubredditSubmissionClickEvent;
 import me.saket.dank.ui.user.UserProfileRepository;
@@ -23,12 +25,14 @@ import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Pair;
+import me.saket.dank.walkthrough.SubmissionGestureWalkthroughProceedEvent;
 
 public class SubredditController implements ObservableTransformer<UiEvent, UiChange<SubredditUi>> {
 
   private final Lazy<InboxRepository> inboxRepository;
   private final Lazy<UserProfileRepository> userProfileRepository;
   private final Lazy<UserSessionRepository> userSessionRepository;
+  private final Lazy<SubmissionRepository> submissionRepository;
 
   private boolean applied;
 
@@ -36,8 +40,10 @@ public class SubredditController implements ObservableTransformer<UiEvent, UiCha
   public SubredditController(
       Lazy<InboxRepository> inboxRepository,
       Lazy<UserProfileRepository> userProfileRepository,
-      Lazy<UserSessionRepository> userSessionRepository)
+      Lazy<UserSessionRepository> userSessionRepository,
+      Lazy<SubmissionRepository> submissionRepository)
   {
+    this.submissionRepository = submissionRepository;
     this.inboxRepository = inboxRepository;
     this.userProfileRepository = userProfileRepository;
     this.userSessionRepository = userSessionRepository;
@@ -52,10 +58,28 @@ public class SubredditController implements ObservableTransformer<UiEvent, UiCha
 
     Observable<UiEvent> replayedEvents = upstream.replay().refCount();
 
+    Observable<UiEvent> transformedEvents = replayedEvents
+        .mergeWith(syntheticSubmissionsForGesturesWalkthrough(replayedEvents));
+
     //noinspection unchecked
     return Observable.mergeArray(
-        unreadMessageIconChanges(replayedEvents),
-        submissionExpansions(replayedEvents));
+        unreadMessageIconChanges(transformedEvents),
+        submissionExpansions(transformedEvents));
+  }
+
+  private Observable<? extends UiEvent> syntheticSubmissionsForGesturesWalkthrough(Observable<UiEvent> events) {
+    return events
+        .ofType(SubmissionGestureWalkthroughProceedEvent.class)
+        .flatMapSingle(event -> submissionRepository.get()
+            .syntheticSubmissionForGesturesWalkthrough()
+            .subscribeOn(io())
+            .observeOn(mainThread())
+            .map(submission -> event.toSubmissionClickEvent(submission))
+            .onErrorResumeNext(e -> {
+              e.printStackTrace();
+              return Single.never();
+            })
+        );
   }
 
   private Observable<UiChange<SubredditUi>> unreadMessageIconChanges(Observable<UiEvent> events) {

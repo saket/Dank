@@ -54,18 +54,20 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.ui.subreddit.SubredditSearchResult;
-import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.data.VotingManager;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
+import me.saket.dank.ui.subreddit.SubredditSearchResult;
+import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
+import me.saket.dank.walkthrough.SyntheticData;
 import timber.log.Timber;
 
 @Singleton
 public class SubmissionRepository {
 
+  // TODO: convert all to lazy dependencies.
   private final BriteDatabase database;
   private final Moshi moshi;
   private final DankRedditClient dankRedditClient;
@@ -75,8 +77,14 @@ public class SubmissionRepository {
   private Provider<Store<CachedSubmissionWithComments, DankSubmissionRequest>> submissionWithCommentsStore;
 
   @Inject
-  public SubmissionRepository(BriteDatabase briteDatabase, Moshi moshi, DankRedditClient dankRedditClient, VotingManager votingManager,
-      ErrorResolver errorResolver, SubscriptionRepository subscriptionRepository, ReplyRepository replyRepository)
+  public SubmissionRepository(
+      BriteDatabase briteDatabase,
+      Moshi moshi,
+      DankRedditClient dankRedditClient,
+      VotingManager votingManager,
+      ErrorResolver errorResolver,
+      SubscriptionRepository subscriptionRepository,
+      ReplyRepository replyRepository)
   {
     this.database = briteDatabase;
     this.moshi = moshi;
@@ -136,6 +144,14 @@ public class SubmissionRepository {
   @CheckResult
   public Observable<Pair<DankSubmissionRequest, Submission>> submissionWithComments(DankSubmissionRequest oldSubmissionRequest) {
     //Timber.i("Getting comments");
+    if (oldSubmissionRequest.id().equalsIgnoreCase(SyntheticData.ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH)) {
+      return syntheticSubmissionForGesturesWalkthrough()
+          .map(syntheticSubmission -> {
+            DankSubmissionRequest updatedRequest = oldSubmissionRequest.withCommentSort(syntheticSubmission.getSuggestedSort());
+            return Pair.create(updatedRequest, syntheticSubmission);
+          })
+          .toObservable();
+    }
 
     Observable<Pair<DankSubmissionRequest, CachedSubmissionWithComments>> stream = getOrFetchSubmissionWithComments(oldSubmissionRequest)
         .take(1)
@@ -279,6 +295,7 @@ public class SubmissionRepository {
         )));
   }
 
+  @CheckResult
   public Completable clearCachedSubmissionWithComments() {
     if (!BuildConfig.DEBUG) {
       throw new AssertionError();
@@ -290,6 +307,14 @@ public class SubmissionRepository {
         database.delete(CachedSubmissionWithComments.TABLE_NAME, null);
         transaction.markSuccessful();
       }
+    });
+  }
+
+  @CheckResult
+  public Single<Submission> syntheticSubmissionForGesturesWalkthrough() {
+    return Single.fromCallable(() -> {
+      JsonAdapter<Submission> adapter = moshi.adapter(Submission.class);
+      return adapter.fromJson(SyntheticData.submissionForGesturesWalkthroughJson());
     });
   }
 

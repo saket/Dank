@@ -17,13 +17,17 @@ import android.widget.TextView;
 
 import com.f2prateek.rx.preferences2.Preference;
 import com.google.auto.value.AutoValue;
+import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import dagger.Lazy;
 import io.reactivex.Observable;
 import me.saket.dank.R;
+import me.saket.dank.ui.preferences.TypefaceInflationInterceptor;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.ui.subreddit.SubredditSubmissionsAdapter;
 import me.saket.dank.ui.subreddit.uimodels.SubredditScreenUiModel;
@@ -74,7 +78,7 @@ public class SubmissionGesturesWalkthrough {
     private final TextSwitcher titleSwitcherView;
     private final TextSwitcher messageSwitcherView;
 
-    protected ViewHolder(View itemView) {
+    protected ViewHolder(View itemView, TypefaceInflationInterceptor typefaceInflationInterceptor) {
       super(itemView);
       titleSwitcherView = itemView.findViewById(R.id.submissiongestureswalkthrough_item_title_switcher);
       messageSwitcherView = itemView.findViewById(R.id.submissiongestureswalkthrough_item_message_switcher);
@@ -87,6 +91,7 @@ public class SubmissionGesturesWalkthrough {
         titleView.setLineSpacing(res.getDimensionPixelSize(R.dimen.spacing2), 1f);
         titleView.setTextColor(ContextCompat.getColor(context, R.color.amber_200));
         titleView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        typefaceInflationInterceptor.applyTypefaceChanges(titleView);
         return titleView;
       });
 
@@ -96,6 +101,7 @@ public class SubmissionGesturesWalkthrough {
         messageView.setLineSpacing(res.getDimensionPixelSize(R.dimen.spacing2), 1f);
         messageView.setTextColor(ContextCompat.getColor(context, R.color.gray_500));
         messageView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 16);
+        typefaceInflationInterceptor.applyTypefaceChanges(messageView);
         return messageView;
       });
 
@@ -112,11 +118,6 @@ public class SubmissionGesturesWalkthrough {
       messageSwitcherView.setText(res.getString(R.string.subreddit_gestureswalkthrough_message));
     }
 
-    public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
-      View itemView = inflater.inflate(R.layout.list_item_submission_gestures_walkthrough, parent, false);
-      return new ViewHolder(itemView);
-    }
-
     @Override
     public SwipeableLayout getSwipeableLayout() {
       return ((SwipeableLayout) itemView);
@@ -124,23 +125,31 @@ public class SubmissionGesturesWalkthrough {
   }
 
   public static class Adapter implements SubredditScreenUiModel.SubmissionRowUiChildAdapter<UiModel, ViewHolder> {
-
     private final WalkthroughSwipeActionsProvider swipeActionsProvider;
+    private final Relay<SubmissionGestureWalkthroughProceedEvent> clickStream = PublishRelay.create();
+    private final Lazy<TypefaceInflationInterceptor> typefaceInflationInterceptor;
 
     @Inject
-    public Adapter(WalkthroughSwipeActionsProvider swipeActionsProvider) {
+    public Adapter(WalkthroughSwipeActionsProvider swipeActionsProvider, Lazy<TypefaceInflationInterceptor> typefaceInflationInterceptor) {
       this.swipeActionsProvider = swipeActionsProvider;
+      this.typefaceInflationInterceptor = typefaceInflationInterceptor;
     }
 
     @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
-      ViewHolder holder = ViewHolder.create(inflater, parent);
+      View itemView = inflater.inflate(R.layout.list_item_submission_gestures_walkthrough, parent, false);
+      ViewHolder holder = new ViewHolder(itemView, typefaceInflationInterceptor.get());
       SwipeableLayout swipeableLayout = holder.getSwipeableLayout();
       swipeableLayout.setSwipeActions(swipeActionsProvider.actions());
       swipeableLayout.setSwipeActionIconProvider(swipeActionsProvider);
       swipeableLayout.setOnPerformSwipeActionListener(action ->
           swipeActionsProvider.perform(action, holder, swipeableLayout)
       );
+
+      holder.itemView.setOnClickListener(o ->
+          clickStream.accept(SubmissionGestureWalkthroughProceedEvent.create(holder.itemView, holder.getItemId()))
+      );
+
       return holder;
     }
 
@@ -149,21 +158,21 @@ public class SubmissionGesturesWalkthrough {
 
     @Override
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {}
+
+    public Observable<SubmissionGestureWalkthroughProceedEvent> proceedClicks() {
+      return clickStream;
+    }
   }
 
   public static class WalkthroughSwipeActionsProvider implements SwipeActionIconProvider {
     private final SubmissionSwipeActionsProvider submissionSwipeActionsProvider;
-    private final Preference<Boolean> hasUserLearnedPref;
+
     private int discoveryCount = 0;
     private SwipeAction lastPerformedAction;
 
     @Inject
-    public WalkthroughSwipeActionsProvider(
-        SubmissionSwipeActionsProvider submissionSwipeActionsProvider,
-        @Named("user_learned_submission_gestures") Preference<Boolean> hasUserLearnedPref)
-    {
+    public WalkthroughSwipeActionsProvider(SubmissionSwipeActionsProvider submissionSwipeActionsProvider) {
       this.submissionSwipeActionsProvider = submissionSwipeActionsProvider;
-      this.hasUserLearnedPref = hasUserLearnedPref;
     }
 
     public SwipeActions actions() {
@@ -202,7 +211,6 @@ public class SubmissionGesturesWalkthrough {
         default:
         case 2:
           holder.messageSwitcherView.setText(context.getString(R.string.subreddit_gestureswalkthrough_message_after_second_swipe_action));
-          holder.itemView.setOnClickListener(o -> hasUserLearnedPref.set(true));
           break;
       }
     }

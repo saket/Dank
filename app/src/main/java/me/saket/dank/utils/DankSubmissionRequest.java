@@ -39,6 +39,10 @@ public abstract class DankSubmissionRequest implements Parcelable {
 
   public abstract Builder toBuilder();
 
+  public DankSubmissionRequest withCommentSort(CommentSort newSort) {
+    return toBuilder().commentSort(newSort).build();
+  }
+
   @AutoValue.Builder
   public abstract static class Builder {
     @SuppressWarnings("unused")

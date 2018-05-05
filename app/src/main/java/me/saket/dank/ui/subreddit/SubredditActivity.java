@@ -443,7 +443,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .subscribe(o -> submissionRecyclerView.setAdapter(submissionsAdapter));
 
     // Row clicks.
-    submissionsAdapter.submissionClicks()
+    Observable.merge(submissionsAdapter.submissionClicks(), submissionsAdapter.gestureWalkthroughProceedClicks())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(uiEvents);
 
