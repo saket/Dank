@@ -201,7 +201,12 @@
 
   <string name="submission_byline">r/%1$s \u00b7 %2$s \u00b7 %3$s \u00b7 %4$s comments</string> <!-- r/subreddit * author * timestamp * comments count -->
   <string name="submission_comment_byline_item_separator">\u0020\u00b7\u0020</string>
-  <string name="submission_comment_byline_item_score">%s points</string>
+
+  <plurals name="submission_comment_byline_item_score">
+    <item quantity="one">%s point</item>
+    <item quantity="other">%s points</item>
+  </plurals>
+
   <string name="submission_comment_reply_hint">Type a reply…</string>
   <string name="cd_submission_comment_reply_send">Send reply</string>
   <string name="cd_submission_comment_reply_go_fullscreen">Compose reply in the fullscreen editor</string>

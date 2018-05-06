@@ -597,7 +597,10 @@ public class SubmissionCommentTreeUiConstructor {
       });
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
       bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, Themes.voteColor(voteDirection))));
-      bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_score, Strings.abbreviateScore(commentScore)));
+      bylineBuilder.append(context.getResources().getQuantityString(
+          R.plurals.submission_comment_byline_item_score,
+          commentScore,
+          Strings.abbreviateScore(commentScore)));
       bylineBuilder.popSpan();
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
       bylineBuilder.append(Dates.createTimestamp(context.getResources(), createdTimeMillis));
