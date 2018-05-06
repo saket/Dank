@@ -17,7 +17,7 @@
     android:name=".DankApplication"
     android:allowBackup="true"
     android:icon="@mipmap/ic_launcher"
-    android:label="@string/app_name"
+    android:label="@string/app_launcher_label"
     android:supportsRtl="true"
     android:theme="@style/DankTheme.TransparentBackground">
 
