@@ -143,13 +143,8 @@ public class SubmissionGesturesWalkthrough {
       swipeableLayout.setSwipeActions(swipeActionsProvider.actions());
       swipeableLayout.setSwipeActionIconProvider(swipeActionsProvider);
       swipeableLayout.setOnPerformSwipeActionListener(action ->
-          swipeActionsProvider.perform(action, holder, swipeableLayout)
+          swipeActionsProvider.perform(action, holder, swipeableLayout, clickStream)
       );
-
-      holder.itemView.setOnClickListener(o ->
-          clickStream.accept(SubmissionGestureWalkthroughProceedEvent.create(holder.itemView, holder.getItemId()))
-      );
-
       return holder;
     }
 
@@ -166,7 +161,6 @@ public class SubmissionGesturesWalkthrough {
 
   public static class WalkthroughSwipeActionsProvider implements SwipeActionIconProvider {
     private final SubmissionSwipeActionsProvider submissionSwipeActionsProvider;
-
     private int discoveryCount = 0;
     private SwipeAction lastPerformedAction;
 
@@ -184,8 +178,8 @@ public class SubmissionGesturesWalkthrough {
       submissionSwipeActionsProvider.showSwipeActionIcon(imageView, oldAction, newAction);
     }
 
-    public void perform(SwipeAction action, ViewHolder holder, SwipeableLayout swipeableLayout) {
-      Context context = swipeableLayout.getContext();
+    public void perform(SwipeAction action, ViewHolder holder, SwipeableLayout layout, Relay<SubmissionGestureWalkthroughProceedEvent> clickStream) {
+      Context context = layout.getContext();
       holder.titleSwitcherView.setText(String.format("'%s'", context.getString(action.labelRes())));
       TextView titleView = (TextView) holder.titleSwitcherView.getChildAt(holder.titleSwitcherView.getDisplayedChild());
       titleView.setTextColor(ContextCompat.getColor(context, action.backgroundColorRes()));
@@ -201,7 +195,7 @@ public class SubmissionGesturesWalkthrough {
         lastPerformedAction = action;
       }
 
-      swipeableLayout.playRippleAnimation(action, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
+      layout.playRippleAnimation(action, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
 
       switch (discoveryCount) {
         case 1:
@@ -211,6 +205,9 @@ public class SubmissionGesturesWalkthrough {
         default:
         case 2:
           holder.messageSwitcherView.setText(context.getString(R.string.subreddit_gestureswalkthrough_message_after_second_swipe_action));
+          holder.itemView.setOnClickListener(o ->
+              clickStream.accept(SubmissionGestureWalkthroughProceedEvent.create(holder.itemView, holder.getItemId()))
+          );
           break;
       }
     }
