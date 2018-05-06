@@ -73,7 +73,7 @@ public class CachePreFillerShould {
         linkMetadataRepo,
         () -> urlParser,
         () -> Schedulers.computation(),
-        () -> networkStrategies);
+        () -> networkStrategies, submissionImageLoader);
 
     PowerMockito.mockStatic(RxUtils.class);
     PowerMockito.when(RxUtils.errorIfMainThread()).thenReturn(o -> {
@@ -95,7 +95,7 @@ public class CachePreFillerShould {
     submissions.add(PowerMockito.mock(Submission.class));
 
     //noinspection ConstantConditions
-    cachePreFiller.preFillInParallelThreads(submissions, DISPLAY_SIZE, 160, null)
+    cachePreFiller.preFillInParallelThreads(submissions, 160)
         .test()
         .assertSubscribed()
         .assertNoValues()
@@ -129,7 +129,7 @@ public class CachePreFillerShould {
     when(linkMetadataRepo.unfurl(any())).thenReturn(Single.just(mock(LinkMetadata.class)));
 
     //noinspection ConstantConditions
-    cachePreFiller.preFillInParallelThreads(submissions, DISPLAY_SIZE, 160, null)
+    cachePreFiller.preFillInParallelThreads(submissions, 160)
         .test()
         .assertNoErrors()
         .assertComplete();

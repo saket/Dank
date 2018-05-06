@@ -46,6 +46,7 @@
   <dimen name="submission_comment_elevation">1dp</dimen>
   <dimen name="submission_comment_top_padding">@dimen/spacing8</dimen>
   <dimen name="submission_comment_horiz_padding">@dimen/spacing16</dimen>
+  <dimen name="submission_minimum_image_height">112dp</dimen>
 
   <dimen name="one_line_progress_indicator_size">24dp</dimen>
 

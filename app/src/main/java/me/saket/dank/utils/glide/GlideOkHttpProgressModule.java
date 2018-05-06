@@ -13,8 +13,8 @@ import java.io.InputStream;
 import java.util.concurrent.TimeUnit;
 
 import me.saket.dank.di.RootModule;
-import me.saket.dank.utils.okhttp.OkHttpResponseReadProgressListener;
 import me.saket.dank.utils.okhttp.OkHttpResponseBodyWithProgress;
+import me.saket.dank.utils.okhttp.OkHttpResponseReadProgressListener;
 import okhttp3.Interceptor;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
@@ -25,11 +25,18 @@ public class GlideOkHttpProgressModule extends LibraryGlideModule {
 
   @Override
   public void registerComponents(Context context, Glide glide, Registry registry) {
-    OkHttpClient okHttpClient = new OkHttpClient.Builder()
+    OkHttpClient.Builder builder = new OkHttpClient.Builder()
         .connectTimeout(RootModule.NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
         .readTimeout(RootModule.NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-        .addNetworkInterceptor(createInterceptor(new OkHttpProgressListenersRepository()))
-        .build();
+        .addNetworkInterceptor(createInterceptor(new OkHttpProgressListenersRepository()));
+
+    //if (BuildConfig.DEBUG) {
+    //  HttpLoggingInterceptor logging = new HttpLoggingInterceptor(message -> Timber.tag("Glide").d(message));
+    //  logging.setLevel(HttpLoggingInterceptor.Level.BASIC);
+    //  builder.addInterceptor(logging);
+    //}
+
+    OkHttpClient okHttpClient = builder.build();
 
     registry.replace(GlideUrl.class, InputStream.class, new OkHttpUrlLoader.Factory(okHttpClient));
   }

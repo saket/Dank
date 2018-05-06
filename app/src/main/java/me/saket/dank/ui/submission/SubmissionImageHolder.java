@@ -14,39 +14,28 @@ import android.view.Gravity;
 import android.view.View;
 import android.widget.ProgressBar;
 
-import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
-import com.bumptech.glide.load.resource.bitmap.DownsampleStrategy;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
 import com.bumptech.glide.request.RequestOptions;
-import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.Thumbnails;
 
 import javax.inject.Inject;
-import javax.inject.Named;
 
-import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
 import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.Scheduler;
-import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.ui.preferences.NetworkStrategy;
-import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.Animations;
-import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
-import me.saket.dank.walkthrough.SyntheticData;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
@@ -56,17 +45,11 @@ import me.saket.dank.widgets.ZoomableImageView;
  */
 public class SubmissionImageHolder {
 
-  // TO ensure that both CachePreFiller and SubmissionImageHolder are in sync.
-  public static final boolean LOAD_LOW_QUALITY_IMAGES = true;
-
   @BindView(R.id.submission_image_scroll_hint) View imageScrollHintView;
   @BindView(R.id.submission_image) ZoomableImageView imageView;
   @BindView(R.id.submission_comment_list_parent_sheet) ScrollingRecyclerViewSheet commentListParentSheet;
-  @BindColor(R.color.submission_media_content_background_padding) int paddingColorForSmallImages;
 
-  private final Preference<NetworkStrategy> hdMediaNetworkStrategyPref;
-  private final NetworkStateListener networkStateListener;
-  private final Lazy<SyntheticData> syntheticData;
+  private final Lazy<SubmissionImageLoader> imageLoader;
 
   private SubmissionPageLifecycleStreams lifecycle;
   private SubmissionPageLayout submissionPageLayout;
@@ -77,14 +60,8 @@ public class SubmissionImageHolder {
   private ZoomableImageView.OnPanChangeListener imagePanListener;
 
   @Inject
-  public SubmissionImageHolder(
-      @Named("hd_media_in_submissions") Preference<NetworkStrategy> hdMediaNetworkStrategyPref,
-      NetworkStateListener networkStateListener,
-      Lazy<SyntheticData> syntheticData)
-  {
-    this.hdMediaNetworkStrategyPref = hdMediaNetworkStrategyPref;
-    this.networkStateListener = networkStateListener;
-    this.syntheticData = syntheticData;
+  public SubmissionImageHolder(Lazy<SubmissionImageLoader> imageLoader) {
+    this.imageLoader = imageLoader;
   }
 
   /**
@@ -110,25 +87,6 @@ public class SubmissionImageHolder {
     // Reset everything when the page is collapsed.
     lifecycleStreams.onPageCollapseOrDestroy()
         .subscribe(resetViews());
-
-    // This transformation adds padding to images that are way too small (presently < 2 x toolbar height).
-    glidePaddingTransformation = new GlidePaddingTransformation(imageView.getContext(), paddingColorForSmallImages) {
-      @Override
-      public Size getPadding(int imageWidth, int imageHeight) {
-        float minDesiredImageHeight = commentListParentSheet.getTop() * 2;
-
-        // Because ZoomableImageView will resize the image to fill space.
-        float widthResizeFactor = deviceDisplaySize.getWidth() / (float) imageWidth;
-        float resizedHeight = imageHeight * widthResizeFactor;
-
-        if (resizedHeight < minDesiredImageHeight) {
-          // Image is too small to be displayed.
-          return new Size(0, (int) ((minDesiredImageHeight - resizedHeight) / 2));
-        } else {
-          return new Size(0, 0);
-        }
-      }
-    };
   }
 
   @CheckResult
@@ -148,20 +106,11 @@ public class SubmissionImageHolder {
 
   @CheckResult
   public Completable load(MediaLink mediaLink, Thumbnails redditSuppliedThumbnails) {
-    if (!LOAD_LOW_QUALITY_IMAGES) {
-      throw new AssertionError();
-    }
-
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
-    Scheduler scheduler = io();
+    RequestOptions imageLoadOptions = RequestOptions.priorityOf(Priority.IMMEDIATE);
 
-    return hdMediaNetworkStrategyPref
-        .asObservable()
-        .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.of(scheduler)))
-        .firstOrError()
-        .map(canLoadHighDef -> decideImageUrl(mediaLink, redditSuppliedThumbnails, canLoadHighDef))
-        .flatMap(imageUrl -> loadImage(imageUrl))
+    return imageLoader.get().load(imageView.getContext(), mediaLink, redditSuppliedThumbnails, io(), imageLoadOptions)
         .observeOn(mainThread())
         .doOnSuccess(drawable -> {
           imageView.setImageDrawable(drawable);
@@ -188,9 +137,7 @@ public class SubmissionImageHolder {
                 lifecycle.onPageExpand()
                     .take(1)
                     .takeUntil(lifecycle.onPageCollapseOrDestroy())
-                    .subscribe(o -> {
-                      commentListParentSheet.smoothScrollTo(imageHeightMinusToolbar);
-                    });
+                    .subscribe(o -> commentListParentSheet.smoothScrollTo(imageHeightMinusToolbar));
               }
             } else {
               commentListParentSheet.scrollTo(imageHeightMinusToolbar);
@@ -206,43 +153,6 @@ public class SubmissionImageHolder {
         //.doOnError(e -> Timber.e(e, "Couldn't load image"))
         .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE))
         .toCompletable();
-  }
-
-  private String decideImageUrl(MediaLink mediaLink, Thumbnails redditSuppliedThumbnails, Boolean canLoadHighDef) {
-    if (canLoadHighDef) {
-      return mediaLink.highQualityUrl();
-    } else {
-      // Images supplied by Reddit are static, so cannot optimize for GIFs.
-      String defaultImageUrl = mediaLink.lowQualityUrl();
-      return mediaLink.isGif()
-          ? defaultImageUrl
-          : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplaySize.getWidth(), defaultImageUrl);
-    }
-  }
-
-  private Single<Drawable> loadImage(String imageUrl) {
-    if (syntheticData.get().SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH.equalsIgnoreCase(imageUrl)) {
-      //noinspection ConstantConditions
-      return Single.just(imageView.getContext().getDrawable(R.drawable.dank_cat));
-    }
-
-    return Single.create(emitter -> {
-      emitter.setCancellable(() -> Glide.with(imageView.view().getContext().getApplicationContext()).clear(imageView.view()));
-      Drawable image = Glide.with(imageView.getContext())
-          .load(imageUrl)
-          .apply(glideRequestOptions(deviceDisplaySize, glidePaddingTransformation).priority(Priority.IMMEDIATE))
-          .submit()
-          .get();
-      emitter.onSuccess(image);
-    });
-  }
-
-  public static RequestOptions glideRequestOptions(Size deviceDisplaySize, GlidePaddingTransformation paddingTransformation) {
-    return new RequestOptions()
-        // NOTE: Keep this strategy in sync with MediaImageFragment.
-        .downsample(DownsampleStrategy.AT_LEAST)
-        .transform(paddingTransformation)
-        .override(deviceDisplaySize.getWidth(), deviceDisplaySize.getHeight());
   }
 
   /**

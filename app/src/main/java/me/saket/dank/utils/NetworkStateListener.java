@@ -16,6 +16,7 @@ import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import me.saket.dank.ui.preferences.NetworkStrategy;
 
+// TODO: share observable instead of creating a new one every time.
 public class NetworkStateListener {
 
   private ConnectivityManager connectivityManager;
@@ -64,7 +65,7 @@ public class NetworkStateListener {
     return Observable.create(emitter -> {
       ConnectivityManager.NetworkCallback networkCallbacks = new ConnectivityManager.NetworkCallback() {
         @Override
-        public void onAvailable(Network network) {
+        public void onAvailable(Network ignored) {
           //Timber.d("Network changed");
 
           NetworkInfo activeNetworkInfo = connectivityManager.getActiveNetworkInfo();
@@ -80,7 +81,11 @@ public class NetworkStateListener {
         }
       };
 
-      // Note: ConnectivityManager gives a callback with the default value right away.
+      // ConnectivityManager gives a callback with the default value right away,
+      // but it isn't working in some cases so I'm triggering a manual emission.
+      // Duplicate emissions will get filtered later anyway.
+      networkCallbacks.onAvailable(null);
+
       connectivityManager.registerNetworkCallback(createInternetCapableNetworkRequest(), networkCallbacks);
       emitter.setCancellable(() -> connectivityManager.unregisterNetworkCallback(networkCallbacks));
     });

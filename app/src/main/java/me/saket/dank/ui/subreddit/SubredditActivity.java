@@ -647,9 +647,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity
             .switchMap(cachedSubmissions -> cachePreFiller
                 .preFillInParallelThreads(
                     cachedSubmissions,
-                    displaySize,
-                    submissionAlbumLinkThumbnailWidth,
-                    submissionPage.imagePaddingTransformation())
+                    submissionAlbumLinkThumbnailWidth
+                )
                 .doOnError(error -> {
                   ResolvedError resolvedError = errorResolver.resolve(error);
                   resolvedError.ifUnknown(() -> Timber.e(error, "Unknown error while pre-filling cache."));

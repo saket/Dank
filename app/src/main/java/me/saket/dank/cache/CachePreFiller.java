@@ -1,9 +1,9 @@
 package me.saket.dank.cache;
 
 import android.app.Application;
+import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.Px;
-import android.util.Size;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
@@ -14,8 +14,6 @@ import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -28,16 +26,18 @@ import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
+import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.preferences.NetworkStrategy;
-import me.saket.dank.ui.submission.SubmissionImageHolder;
+import me.saket.dank.ui.submission.SubmissionImageLoader;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionContentLinkUiConstructor;
 import me.saket.dank.urlparser.ImgurAlbumLink;
+import me.saket.dank.urlparser.ImgurLink;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.urlparser.UrlParser;
@@ -46,7 +46,6 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
-import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import timber.log.Timber;
 
 /**
@@ -56,7 +55,6 @@ import timber.log.Timber;
 public class CachePreFiller {
 
   private static final int SUBMISSION_LIMIT_PER_SUBREDDIT = 30;
-  private static final RequestOptions EMPTY_REQUEST_OPTIONS = new RequestOptions();
 
   private final Application appContext;
   private final SubmissionRepository submissionRepository;
@@ -67,6 +65,7 @@ public class CachePreFiller {
   private final Lazy<Scheduler> preFillingScheduler;
   private final Lazy<Map<CachePreFillThing, Preference<NetworkStrategy>>> preFillingNetworkStrategies;
   private final Lazy<UrlParser> urlParser;
+  private final Lazy<SubmissionImageLoader> submissionImageLoader;
 
   // Key: <submission-fullname>_<CachePreFillThing>.
   private Set<String> completedPreFills = new HashSet<>(50);
@@ -79,6 +78,7 @@ public class CachePreFiller {
       MediaHostRepository mediaHostRepository,
       LinkMetadataRepository linkMetadataRepository,
       Lazy<UrlParser> urlParser,
+      Lazy<SubmissionImageLoader> submissionImageLoader,
       @Named("cache_pre_filling") Lazy<Scheduler> preFillingScheduler,
       @Named("cache_pre_filling_network_strategies") Lazy<Map<CachePreFillThing, Preference<NetworkStrategy>>> preFillingNetworkStrategies)
   {
@@ -88,21 +88,17 @@ public class CachePreFiller {
     this.mediaHostRepository = mediaHostRepository;
     this.linkMetadataRepository = linkMetadataRepository;
     this.urlParser = urlParser;
+    this.submissionImageLoader = submissionImageLoader;
     this.preFillingNetworkStrategies = preFillingNetworkStrategies;
     this.preFillingScheduler = preFillingScheduler;
   }
 
   private void log(String message, Object... args) {
-    Timber.d(message, args);
+    //Timber.d(message, args);
   }
 
   @CheckResult
-  public Completable preFillInParallelThreads(
-      List<Submission> submissions,
-      Size deviceDisplaySize,
-      @Px int submissionAlbumLinkThumbnailWidth,
-      GlidePaddingTransformation paddingTransformation)
-  {
+  public Completable preFillInParallelThreads(List<Submission> submissions, @Px int submissionAlbumLinkThumbnailWidth) {
     log("Pre-filling");
 
     // WARNING: this Observable is intentionally not shared to allow parallel execution of its subscribers.
@@ -135,7 +131,7 @@ public class CachePreFiller {
               .concatMap(submissionAndLink -> {
                 Submission submission = submissionAndLink.first();
                 MediaLink mediaLink = (MediaLink) submissionAndLink.second();
-                return preFillImageOrAlbum(submission, mediaLink, deviceDisplaySize, submissionAlbumLinkThumbnailWidth, paddingTransformation)
+                return preFillImageOrAlbum(submission, mediaLink, submissionAlbumLinkThumbnailWidth)
                     .subscribeOn(preFillingScheduler.get())
                     //.doOnSubscribe(d -> log("Caching image: %s", submissionAndLink.first().getTitle()))
                     //.doOnComplete(() -> log("Cached image: %s", submissionAndLink.first().getTitle()))
@@ -192,74 +188,53 @@ public class CachePreFiller {
     return submissionAndLink -> submissionAndLink.second().isImage() || submissionAndLink.second().isMediaAlbum();
   }
 
-  private Completable preFillImageOrAlbum(
-      Submission submission,
-      MediaLink mediaLink,
-      Size deviceDisplaySize,
-      int submissionAlbumLinkThumbnailWidth,
-      GlidePaddingTransformation paddingTransformation)
-  {
+  private Completable preFillImageOrAlbum(Submission submission, MediaLink mediaLink, int submissionAlbumLinkThumbnailWidth) {
     if (isThingAlreadyPreFilled(submission, CachePreFillThing.IMAGES)) {
       log("Image skipping: %s", submission.getTitle());
       return Completable.complete();
     }
 
-    RequestOptions glideRequestOptions = SubmissionImageHolder
-        .glideRequestOptions(deviceDisplaySize, paddingTransformation)
-        .priority(Priority.LOW);
-
-    //if (mediaLink instanceof ImgurAlbumLink) {
-    //  Timber.i("Pre-filling image/album %s", submission.getTitle());
-    //}
-    return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
+    // I considered using a Single here, but Single#filter() returns a Maybe, which isn't desired.
+    Observable<MediaLink> replayedResolvedLinks = mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .take(1)
-        .map(resolvedLink -> {
-          //Timber.i("resolvedLink: %s", resolvedLink);
-          ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
-          switch (resolvedLink.type()) {
-            case SINGLE_IMAGE:
-              String imageUrl = redditSuppliedImages.findNearestFor(deviceDisplaySize.getWidth(), resolvedLink.lowQualityUrl());
-              return Collections.singletonList(imageUrl);
+        .replay()
+        .refCount();
 
-            // We cannot cache the entire album, but we can make the first image available right away.
-            case MEDIA_ALBUM:
-              if (!(resolvedLink instanceof ImgurAlbumLink) || !SubmissionImageHolder.LOAD_LOW_QUALITY_IMAGES) {
-                throw new UnsupportedOperationException();
-              }
-              String firstImageUrl = ((ImgurAlbumLink) resolvedLink).images().get(0).lowQualityUrl();
-              String albumCoverImageUrl = redditSuppliedImages.findNearestFor(
-                  submissionAlbumLinkThumbnailWidth,
-                  ((ImgurAlbumLink) resolvedLink).coverImageUrl()
-              );
-              return Arrays.asList(albumCoverImageUrl, firstImageUrl);
-
-            default:
-              throw new AssertionError();
+    Observable<Object> checks = replayedResolvedLinks
+        .flatMap(resolvedLink -> {
+          if (resolvedLink.isImageOrGif() || resolvedLink.isMediaAlbum()) {
+            return Observable.empty();
+          } else {
+            return Observable.error(new AssertionError("Unsupported link for image caching: " + resolvedLink));
           }
-        })
-        //.doOnSubscribe(o -> log("Caching images: %s", mediaLink.unparsedUrl()))
-        .flatMapCompletable(imageUrls -> downloadImages(imageUrls, glideRequestOptions, submission.getTitle()))
-        //.doOnComplete(() -> Timber.i("Image done: %s", submission.getTitle()))
+        });
+
+    RequestOptions imageLoadOptions = RequestOptions.priorityOf(Priority.LOW);
+
+    Observable<Drawable> singleImageLoad = replayedResolvedLinks
+        .filter(resolvedLink -> resolvedLink.isImageOrGif())
+        .flatMapSingle(resolvedLink -> submissionImageLoader.get().load(appContext, resolvedLink, submission.getThumbnails(), imageLoadOptions));
+
+    Observable<Drawable> albumImagesLoad = replayedResolvedLinks
+        .filter(resolvedLink -> resolvedLink.isMediaAlbum())
+        .cast(ImgurAlbumLink.class)
+        .flatMap(albumLink -> {
+          ImgurLink firstImage = albumLink.images().get(0);
+          Single<Drawable> firstImageLoad = submissionImageLoader.get().load(appContext, firstImage, imageLoadOptions);
+
+          ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
+          String optimizedCoverImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, albumLink.coverImageUrl());
+          Single<Drawable> coverImageLoad = submissionImageLoader.get().loadImage(appContext, optimizedCoverImageUrl, imageLoadOptions);
+
+          return coverImageLoad
+              .mergeWith(firstImageLoad)
+              .toObservable();
+        });
+
+    return Observable.merge(checks, singleImageLoad, albumImagesLoad)
+        .ignoreElements()
+        .doOnComplete(() -> log("Image done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.IMAGES));
-  }
-
-  private Completable downloadImages(List<String> imageUrls, RequestOptions glideRequestOptions, String tag) {
-    return Completable.fromAction(() -> {
-      for (String imageUrl : imageUrls) {
-        // Glide internally also maintains a queue, but we want to load them sequentially
-        // ourselves so that this Rx chain can be canceled later when the subreddit changes.
-        //final long startTime = System.currentTimeMillis();
-        //Timber.i("Downloading %s", imageUrls);
-
-        Glide.with(appContext)
-            .load(imageUrl)
-            .apply(glideRequestOptions)
-            .submit()
-            .get();
-
-        //Timber.i("Image downloaded: %s, time: %sms (%s)", imageUrl, System.currentTimeMillis() - startTime, tag);
-      }
-    });
   }
 
   private Predicate<Pair<Submission, Link>> submissionContentIsExternalLink() {
@@ -280,7 +255,7 @@ public class CachePreFiller {
     }
 
     return linkMetadataRepository.unfurl(contentLink)
-        .flatMapCompletable(linkMetadata -> {
+        .map(linkMetadata -> {
           List<String> imagesToDownload = new ArrayList<>(2);
           if (linkMetadata.hasFavicon()) {
             imagesToDownload.add(linkMetadata.faviconUrl());
@@ -292,9 +267,19 @@ public class CachePreFiller {
             String thumbnailImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, linkMetadata.imageUrl());
             imagesToDownload.add(thumbnailImageUrl);
           }
-          return downloadImages(imagesToDownload, EMPTY_REQUEST_OPTIONS, "link: " + submission.getTitle());
+          return imagesToDownload;
         })
-        //.doOnComplete(() -> Timber.i("Link done: %s", submission.getTitle()))
+        .flatMapCompletable(imageUrls -> Completable.fromAction(() -> {
+          for (String imageUrl : imageUrls) {
+            // Glide internally also maintains a queue, but we want to load them sequentially
+            // ourselves so that this Rx chain can be canceled later when the subreddit changes.
+            Glide.with(appContext)
+                .load(imageUrl)
+                .submit()
+                .get();
+          }
+        }))
+        .doOnComplete(() -> Timber.i("Link done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.LINK_METADATA));
   }
 
