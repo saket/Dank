@@ -65,8 +65,8 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     //SwipeAction newTabSwipeAction = SwipeAction.create(ACTION_NAME_NEW_TAB, R.color.list_item_swipe_new_tab, 0.5f);
     SwipeAction saveSwipeAction = SwipeAction.create(ACTION_NAME_SAVE, R.color.list_item_swipe_save, 0.5f);
     SwipeAction unSaveSwipeAction = SwipeAction.create(ACTION_NAME_UNSAVE, R.color.list_item_swipe_save, 0.5f);
-    SwipeAction downvoteSwipeAction = SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 0.5f);
-    SwipeAction upvoteSwipeAction = SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 0.5f);
+    SwipeAction downvoteSwipeAction = SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 0.4f);
+    SwipeAction upvoteSwipeAction = SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 0.6f);
 
     // Actions on both sides are aligned from left to right.
     SwipeActionsHolder endActions = SwipeActionsHolder.builder()

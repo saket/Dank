@@ -61,8 +61,8 @@ public class CommentSwipeActionsProvider {
             .add(SwipeAction.create(ACTION_NAME_OPTIONS, R.color.list_item_swipe_more_options, 0.5f))
             .build())
         .endActions(SwipeActionsHolder.builder()
-            .add(SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 0.5f))
-            .add(SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 0.5f))
+            .add(SwipeAction.create(ACTION_NAME_UPVOTE, R.color.list_item_swipe_upvote, 0.4f))
+            .add(SwipeAction.create(ACTION_NAME_DOWNVOTE, R.color.list_item_swipe_downvote, 0.6f))
             .build())
         .build();
 
