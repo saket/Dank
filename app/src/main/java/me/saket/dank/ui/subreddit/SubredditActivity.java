@@ -358,7 +358,6 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
     subredditChangesStream
         .map(name -> SubredditChangeEvent.create(name))
-        .doOnNext(o -> Timber.i(o.toString()))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(uiEvents);
 

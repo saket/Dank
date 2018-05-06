@@ -206,7 +206,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private BehaviorRelay<Optional<ResolvedError>> commentsLoadErrors = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Optional<String>> callingSubreddits = BehaviorRelay.createDefault(Optional.empty());
 
-  private ExpandablePageLayout submissionPageLayout;
+  private SubmissionPageLayout submissionPageLayout;
   private int deviceDisplayWidth, deviceDisplayHeight;
   private boolean isCommentSheetBeneathImage;
   private SubmissionPageLifecycleStreams lifecycleStreams;
@@ -1418,6 +1418,23 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     }
 
     return touchLiesOn(contentImageView.view(), downX, downY) && contentImageView.canPanFurtherVertically(upwardPagePull);
+  }
+
+  protected boolean shouldExpandMediaSmoothly() {
+    switch (submissionPageLayout.getCurrentState()) {
+      case COLLAPSED:
+        return false;
+
+      case EXPANDING:
+        return submissionPageLayout.getTranslationY() >= submissionPageLayout.getHeight() * 0.2f;
+
+      case COLLAPSING:
+      case EXPANDED:
+        return true;
+
+      default:
+        throw new AssertionError("Unknown page state: " + submissionPageLayout.getCurrentState());
+    }
   }
 
   @Override

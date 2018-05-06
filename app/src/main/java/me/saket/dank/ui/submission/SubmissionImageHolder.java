@@ -31,6 +31,7 @@ import javax.inject.Named;
 import butterknife.BindColor;
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
@@ -45,7 +46,7 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
-import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
+import me.saket.dank.walkthrough.SyntheticData;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
@@ -65,9 +66,10 @@ public class SubmissionImageHolder {
 
   private final Preference<NetworkStrategy> hdMediaNetworkStrategyPref;
   private final NetworkStateListener networkStateListener;
+  private final Lazy<SyntheticData> syntheticData;
 
-  private SubmissionPageLifecycleStreams lifecycleStreams;
-  private ExpandablePageLayout submissionPageLayout;
+  private SubmissionPageLifecycleStreams lifecycle;
+  private SubmissionPageLayout submissionPageLayout;
   private ProgressBar contentLoadProgressView;
   private Size deviceDisplaySize;
   private Relay<Drawable> imageStream = PublishRelay.create();
@@ -77,10 +79,12 @@ public class SubmissionImageHolder {
   @Inject
   public SubmissionImageHolder(
       @Named("hd_media_in_submissions") Preference<NetworkStrategy> hdMediaNetworkStrategyPref,
-      NetworkStateListener networkStateListener)
+      NetworkStateListener networkStateListener,
+      Lazy<SyntheticData> syntheticData)
   {
     this.hdMediaNetworkStrategyPref = hdMediaNetworkStrategyPref;
     this.networkStateListener = networkStateListener;
+    this.syntheticData = syntheticData;
   }
 
   /**
@@ -91,10 +95,10 @@ public class SubmissionImageHolder {
       SubmissionPageLifecycleStreams lifecycleStreams,
       View submissionLayout,
       ProgressBar contentLoadProgressView,
-      ExpandablePageLayout submissionPageLayout,
+      SubmissionPageLayout submissionPageLayout,
       Size deviceDisplaySize)
   {
-    this.lifecycleStreams = lifecycleStreams;
+    this.lifecycle = lifecycleStreams;
     this.submissionPageLayout = submissionPageLayout;
     this.contentLoadProgressView = contentLoadProgressView;
     this.deviceDisplaySize = deviceDisplaySize;
@@ -172,22 +176,18 @@ public class SubmissionImageHolder {
           float imageHeight = drawable.getIntrinsicHeight() * widthResizeFactor;
           float visibleImageHeight = Math.min(imageHeight, imageView.getHeight());
 
-          // Reveal the image smoothly if the page is already expanded or right away if it's not.
           commentListParentSheet.post(() -> {
             int imageHeightMinusToolbar = (int) (visibleImageHeight - commentListParentSheet.getTop());
             commentListParentSheet.setScrollingEnabled(true);
             commentListParentSheet.setMaxScrollY(imageHeightMinusToolbar);
 
-            boolean canShowExpandAnimationToUser = submissionPageLayout.isExpanded()
-                || submissionPageLayout.getTranslationY() <= submissionPageLayout.getHeight() * 0.2f;
-
-            if (canShowExpandAnimationToUser) {
+            if (submissionPageLayout.shouldExpandMediaSmoothly()) {
               if (submissionPageLayout.isExpanded()) {
                 commentListParentSheet.smoothScrollTo(imageHeightMinusToolbar);
               } else {
-                lifecycleStreams.onPageExpand()
+                lifecycle.onPageExpand()
                     .take(1)
-                    .takeUntil(lifecycleStreams.onPageCollapseOrDestroy())
+                    .takeUntil(lifecycle.onPageCollapseOrDestroy())
                     .subscribe(o -> {
                       commentListParentSheet.smoothScrollTo(imageHeightMinusToolbar);
                     });
@@ -221,8 +221,14 @@ public class SubmissionImageHolder {
   }
 
   private Single<Drawable> loadImageUsingGlide(String imageUrl) {
+    if (syntheticData.get().SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH.equalsIgnoreCase(imageUrl)) {
+      //noinspection ConstantConditions
+      return Single.just(imageView.getContext().getDrawable(R.drawable.dank_cat));
+    }
+
     return Single.create(emitter -> {
       emitter.setCancellable(() -> Glide.with(imageView.view().getContext().getApplicationContext()).clear(imageView.view()));
+
       Drawable image = Glide.with(imageView.view())
           .load(imageUrl)
           .apply(new RequestOptions()

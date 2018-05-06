@@ -2,14 +2,20 @@ package me.saket.dank.walkthrough;
 
 import java.util.Locale;
 
+import javax.inject.Inject;
+
 import me.saket.dank.data.DankRedditClient;
 
 public class SyntheticData {
 
-  public static final String ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH = "syntheticsubmissionforgesturewalkthrough";
-  public static final String SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH = "https://imgur.com/a/w75KypU";
+  public final String ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH = "syntheticsubmissionforgesturewalkthrough";
+  public final String SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH = "https://i.imgur.com/NaWfFWR.jpg";
 
-  public static String submissionForGesturesWalkthroughJson() {
+  @Inject
+  public SyntheticData() {
+  }
+
+  public String submissionForGesturesWalkthroughJson() {
     String defaultSortStringUppercase = DankRedditClient.DEFAULT_COMMENT_SORT.name();
     String defaultSortStringLowercase = DankRedditClient.DEFAULT_COMMENT_SORT.name().toLowerCase(Locale.ENGLISH);
     String subredditName = "GetDank";
