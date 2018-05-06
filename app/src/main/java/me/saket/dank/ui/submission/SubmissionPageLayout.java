@@ -1426,12 +1426,17 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   }
 
   protected boolean shouldExpandMediaSmoothly() {
+    Timber.i("--------------------");
+    Timber.i("Page: %s", submissionPageLayout.getCurrentState());
     switch (submissionPageLayout.getCurrentState()) {
       case COLLAPSED:
         return false;
 
       case EXPANDING:
-        return submissionPageLayout.getTranslationY() >= submissionPageLayout.getHeight() * 0.2f;
+        Timber.i("Page ty: %s", submissionPageLayout.getTranslationY());
+        Timber.i("Page h: %s", submissionPageLayout.getHeight());
+        // It's better if translation-Y is closer to 0, because that's the distance left for the page to fully expand.
+        return submissionPageLayout.getTranslationY() <= submissionPageLayout.getHeight() * 0.2f;
 
       case COLLAPSING:
       case EXPANDED:
@@ -1440,6 +1445,16 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
       default:
         throw new AssertionError("Unknown page state: " + submissionPageLayout.getCurrentState());
     }
+  }
+
+  @Override
+  protected void onPageAboutToExpand(long expandAnimDuration) {
+    Timber.i("Page about to expand (%s)", System.currentTimeMillis());
+  }
+
+  @Override
+  protected void onPageExpanded() {
+    Timber.i("Page expanded (%s)", System.currentTimeMillis());
   }
 
   @Override
