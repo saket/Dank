@@ -129,7 +129,6 @@ import me.saket.dank.utils.LinearSmoothScrollerWithVerticalSnapPref;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.glide.GlidePaddingTransformation;
@@ -186,6 +185,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @Inject SubmissionCommentTreeUiConstructor commentTreeUiConstructor;
 
   @Inject @Named("show_nsfw_content") Lazy<Preference<Boolean>> showNsfwContentPreference;
+  @Inject @Named("user_learned_submission_gestures") Lazy<Preference<Boolean>> hasUserLearnedGesturesPref;
+
   @Inject Lazy<OnLoginRequireListener> onLoginRequireListener;
   @Inject Lazy<VotingManager> votingManager;
   @Inject Lazy<UserSessionRepository> userSessionRepository;
@@ -1426,15 +1427,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   }
 
   protected boolean shouldExpandMediaSmoothly() {
-    Timber.i("--------------------");
-    Timber.i("Page: %s", submissionPageLayout.getCurrentState());
+    //Timber.i("--------------------");
+    //Timber.i("Page: %s", submissionPageLayout.getCurrentState());
     switch (submissionPageLayout.getCurrentState()) {
       case COLLAPSED:
         return false;
 
       case EXPANDING:
-        Timber.i("Page ty: %s", submissionPageLayout.getTranslationY());
-        Timber.i("Page h: %s", submissionPageLayout.getHeight());
+        //Timber.i("Page ty: %s", submissionPageLayout.getTranslationY());
+        //Timber.i("Page h: %s", submissionPageLayout.getHeight());
         // It's better if translation-Y is closer to 0, because that's the distance left for the page to fully expand.
         return submissionPageLayout.getTranslationY() <= submissionPageLayout.getHeight() * 0.2f;
 
@@ -1448,18 +1449,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   }
 
   @Override
-  protected void onPageAboutToExpand(long expandAnimDuration) {
-    Timber.i("Page about to expand (%s)", System.currentTimeMillis());
-  }
-
-  @Override
-  protected void onPageExpanded() {
-    Timber.i("Page expanded (%s)", System.currentTimeMillis());
-  }
-
-  @Override
   public void onPageAboutToCollapse(long collapseAnimDuration) {
     Keyboards.hide(getContext(), commentRecyclerView);
+    hasUserLearnedGesturesPref.get().set(true);
   }
 
   @Override
