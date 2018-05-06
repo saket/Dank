@@ -132,6 +132,7 @@ import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.Views;
+import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
@@ -1396,6 +1397,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     contentLoadProgressView.hide();
     mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.LoadFailure.create(resolvedError)));
+  }
+
+  public GlidePaddingTransformation imagePaddingTransformation() {
+    return contentImageViewHolder.get().glidePaddingTransformation;
   }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //

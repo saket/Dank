@@ -3,6 +3,7 @@ package me.saket.dank.cache;
 import android.app.Application;
 import android.support.annotation.CheckResult;
 import android.support.annotation.Px;
+import android.util.Size;
 
 import com.bumptech.glide.Glide;
 import com.bumptech.glide.Priority;
@@ -45,6 +46,8 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
+import me.saket.dank.utils.glide.GlidePaddingTransformation;
+import timber.log.Timber;
 
 /**
  * Pre-fetches submission content and comments.
@@ -53,6 +56,7 @@ import me.saket.dank.utils.RxUtils;
 public class CachePreFiller {
 
   private static final int SUBMISSION_LIMIT_PER_SUBREDDIT = 30;
+  private static final RequestOptions EMPTY_REQUEST_OPTIONS = new RequestOptions();
 
   private final Application appContext;
   private final SubmissionRepository submissionRepository;
@@ -89,11 +93,16 @@ public class CachePreFiller {
   }
 
   private void log(String message, Object... args) {
-    //Timber.d(message, args);
+    Timber.d(message, args);
   }
 
   @CheckResult
-  public Completable preFillInParallelThreads(List<Submission> submissions, @Px int deviceDisplayWidth, @Px int submissionAlbumLinkThumbnailWidth) {
+  public Completable preFillInParallelThreads(
+      List<Submission> submissions,
+      Size deviceDisplaySize,
+      @Px int submissionAlbumLinkThumbnailWidth,
+      GlidePaddingTransformation paddingTransformation)
+  {
     log("Pre-filling");
 
     // WARNING: this Observable is intentionally not shared to allow parallel execution of its subscribers.
@@ -106,7 +115,9 @@ public class CachePreFiller {
 
     // Images and GIFs that couldn't be converted to videos.
     Observable imageCachePreFillStream = preFillingNetworkStrategies.get().get(CachePreFillThing.IMAGES).asObservable()
+        //.doOnNext(strategy -> Timber.i("Caching images strategy: %s", strategy))
         .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.empty()))
+        //.doOnNext(canPreFill -> Timber.i("canPreFill: %s", canPreFill))
         .doOnNext(RxUtils.errorIfMainThread())
         .switchMap(canPreFill -> {
           if (!canPreFill) {
@@ -124,9 +135,10 @@ public class CachePreFiller {
               .concatMap(submissionAndLink -> {
                 Submission submission = submissionAndLink.first();
                 MediaLink mediaLink = (MediaLink) submissionAndLink.second();
-                return preFillImageOrAlbum(submission, mediaLink, deviceDisplayWidth, submissionAlbumLinkThumbnailWidth)
+                return preFillImageOrAlbum(submission, mediaLink, deviceDisplaySize, submissionAlbumLinkThumbnailWidth, paddingTransformation)
                     .subscribeOn(preFillingScheduler.get())
-                    //.doOnSubscribe(d -> Timber.i("Caching image: %s", submissionAndLink.first().getTitle()))
+                    //.doOnSubscribe(d -> log("Caching image: %s", submissionAndLink.first().getTitle()))
+                    //.doOnComplete(() -> log("Cached image: %s", submissionAndLink.first().getTitle()))
                     .onErrorComplete()
                     .toObservable();
               });
@@ -141,7 +153,7 @@ public class CachePreFiller {
             return Observable.never();
           }
 
-          log("Pre-filling links for %s submissions", submissions.size());
+          //log("Pre-filling links for %s submissions", submissions.size());
 
           return submissionAndContentLinkStream
               .filter(submissionContentIsExternalLink())
@@ -163,7 +175,7 @@ public class CachePreFiller {
             return Observable.never();
           }
 
-          log("Pre-filling comments for %s submissions", submissions.size());
+          //log("Pre-filling comments for %s submissions", submissions.size());
 
           return submissionAndContentLinkStream.concatMap(submissionAndLink -> preFillComment(submissionAndLink.first())
               .subscribeOn(preFillingScheduler.get())
@@ -180,11 +192,21 @@ public class CachePreFiller {
     return submissionAndLink -> submissionAndLink.second().isImage() || submissionAndLink.second().isMediaAlbum();
   }
 
-  private Completable preFillImageOrAlbum(Submission submission, MediaLink mediaLink, int deviceDisplayWidth, int submissionAlbumLinkThumbnailWidth) {
+  private Completable preFillImageOrAlbum(
+      Submission submission,
+      MediaLink mediaLink,
+      Size deviceDisplaySize,
+      int submissionAlbumLinkThumbnailWidth,
+      GlidePaddingTransformation paddingTransformation)
+  {
     if (isThingAlreadyPreFilled(submission, CachePreFillThing.IMAGES)) {
-      //Timber.i("Image skipping: %s", submission.getTitle());
+      log("Image skipping: %s", submission.getTitle());
       return Completable.complete();
     }
+
+    RequestOptions glideRequestOptions = SubmissionImageHolder
+        .glideRequestOptions(deviceDisplaySize, paddingTransformation)
+        .priority(Priority.LOW);
 
     //if (mediaLink instanceof ImgurAlbumLink) {
     //  Timber.i("Pre-filling image/album %s", submission.getTitle());
@@ -192,10 +214,11 @@ public class CachePreFiller {
     return mediaHostRepository.resolveActualLinkIfNeeded(mediaLink)
         .take(1)
         .map(resolvedLink -> {
+          //Timber.i("resolvedLink: %s", resolvedLink);
           ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
           switch (resolvedLink.type()) {
             case SINGLE_IMAGE:
-              String imageUrl = redditSuppliedImages.findNearestFor(deviceDisplayWidth, resolvedLink.lowQualityUrl());
+              String imageUrl = redditSuppliedImages.findNearestFor(deviceDisplaySize.getWidth(), resolvedLink.lowQualityUrl());
               return Collections.singletonList(imageUrl);
 
             // We cannot cache the entire album, but we can make the first image available right away.
@@ -215,23 +238,26 @@ public class CachePreFiller {
           }
         })
         //.doOnSubscribe(o -> log("Caching images: %s", mediaLink.unparsedUrl()))
-        .flatMapCompletable(imageUrls -> downloadImages(imageUrls))
+        .flatMapCompletable(imageUrls -> downloadImages(imageUrls, glideRequestOptions, submission.getTitle()))
         //.doOnComplete(() -> Timber.i("Image done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.IMAGES));
   }
 
-  private Completable downloadImages(List<String> imageUrls) {
+  private Completable downloadImages(List<String> imageUrls, RequestOptions glideRequestOptions, String tag) {
     return Completable.fromAction(() -> {
       for (String imageUrl : imageUrls) {
         // Glide internally also maintains a queue, but we want to load them sequentially
         // ourselves so that this Rx chain can be canceled later when the subreddit changes.
         //final long startTime = System.currentTimeMillis();
+        //Timber.i("Downloading %s", imageUrls);
+
         Glide.with(appContext)
-            .downloadOnly()
             .load(imageUrl)
-            .apply(RequestOptions.priorityOf(Priority.LOW))
-            .preload();
-        //Timber.i("Image downloaded: %s, time: %sms", imageUrl, System.currentTimeMillis() - startTime);
+            .apply(glideRequestOptions)
+            .submit()
+            .get();
+
+        //Timber.i("Image downloaded: %s, time: %sms (%s)", imageUrl, System.currentTimeMillis() - startTime, tag);
       }
     });
   }
@@ -266,7 +292,7 @@ public class CachePreFiller {
             String thumbnailImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, linkMetadata.imageUrl());
             imagesToDownload.add(thumbnailImageUrl);
           }
-          return downloadImages(imagesToDownload);
+          return downloadImages(imagesToDownload, EMPTY_REQUEST_OPTIONS, "link: " + submission.getTitle());
         })
         //.doOnComplete(() -> Timber.i("Link done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.LINK_METADATA));

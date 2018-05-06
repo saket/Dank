@@ -49,6 +49,7 @@ public class NetworkStateListener {
   @CheckResult
   public Observable<Boolean> streamNetworkInternetCapability(NetworkStrategy strategy, Optional<Scheduler> scheduler) {
     Observable<Boolean> capabilities = streamInternetCapableNetworkStateChanges()
+        //.doOnNext(networkState -> Timber.i("Network: %s", networkState))
         .map(networkState -> satisfiesNetworkRequirement(strategy, networkState))
         .distinctUntilChanged();
 
