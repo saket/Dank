@@ -160,7 +160,7 @@ public class SyntheticData {
         "  \\\"removal_reason\\\" : null,\\n" +
         "  \\\"link_id\\\" : \\\"" + commentSubmissionId + "\\\",\\n" +
         "  \\\"author_flair_template_id\\\" : null,\\n" +
-        "  \\\"likes\\\" : true,\\n" +
+        "  \\\"likes\\\" : null,\\n" +
         "  \\\"no_follow\\\" : false,\\n" +
         "  \\\"replies\\\" : {\\n" +
         "    \\\"kind\\\" : \\\"Listing\\\",\\n" +
@@ -179,7 +179,7 @@ public class SyntheticData {
         "          \\\"removal_reason\\\" : null,\\n" +
         "          \\\"link_id\\\" : \\\"" + commentSubmissionId + "\\\",\\n" +
         "          \\\"author_flair_template_id\\\" : null,\\n" +
-        "          \\\"likes\\\" : true,\\n" +
+        "          \\\"likes\\\" : null,\\n" +
         "          \\\"no_follow\\\" : false,\\n" +
         "          \\\"replies\\\" : \\\"\\\",\\n" +
         "          \\\"user_reports\\\" : [ ],\\n" +
@@ -292,7 +292,7 @@ public class SyntheticData {
         "  \\\"removal_reason\\\" : null,\\n" +
         "  \\\"link_id\\\" : \\\"" + commentSubmissionId + "\\\",\\n" +
         "  \\\"author_flair_template_id\\\" : null,\\n" +
-        "  \\\"likes\\\" : true,\\n" +
+        "  \\\"likes\\\" : null,\\n" +
         "  \\\"no_follow\\\" : false,\\n" +
         "  \\\"replies\\\" : \\\"\\\",\\n" +
         "  \\\"user_reports\\\" : [ ],\\n" +
