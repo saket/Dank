@@ -73,7 +73,7 @@ public class SubmissionImageHolder {
   private ProgressBar contentLoadProgressView;
   private Size deviceDisplaySize;
   private Relay<Drawable> imageStream = PublishRelay.create();
-  private GlidePaddingTransformation glidePaddingTransformation;
+  GlidePaddingTransformation glidePaddingTransformation;
   private ZoomableImageView.OnPanChangeListener imagePanListener;
 
   @Inject
@@ -161,7 +161,7 @@ public class SubmissionImageHolder {
         .flatMap(strategy -> networkStateListener.streamNetworkInternetCapability(strategy, Optional.of(scheduler)))
         .firstOrError()
         .map(canLoadHighDef -> decideImageUrl(mediaLink, redditSuppliedThumbnails, canLoadHighDef))
-        .flatMap(imageUrl -> loadImageUsingGlide(imageUrl))
+        .flatMap(imageUrl -> loadImage(imageUrl))
         .observeOn(mainThread())
         .doOnSuccess(drawable -> {
           imageView.setImageDrawable(drawable);
@@ -220,7 +220,7 @@ public class SubmissionImageHolder {
     }
   }
 
-  private Single<Drawable> loadImageUsingGlide(String imageUrl) {
+  private Single<Drawable> loadImage(String imageUrl) {
     if (syntheticData.get().SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH.equalsIgnoreCase(imageUrl)) {
       //noinspection ConstantConditions
       return Single.just(imageView.getContext().getDrawable(R.drawable.dank_cat));
@@ -228,18 +228,21 @@ public class SubmissionImageHolder {
 
     return Single.create(emitter -> {
       emitter.setCancellable(() -> Glide.with(imageView.view().getContext().getApplicationContext()).clear(imageView.view()));
-
-      Drawable image = Glide.with(imageView.view())
+      Drawable image = Glide.with(imageView.getContext())
           .load(imageUrl)
-          .apply(new RequestOptions()
-              .priority(Priority.IMMEDIATE)
-              // NOTE: Keep this strategy in sync with MediaImageFragment.
-              .downsample(DownsampleStrategy.AT_LEAST)
-              .transform(glidePaddingTransformation))
-          .submit(deviceDisplaySize.getWidth(), deviceDisplaySize.getHeight())
+          .apply(glideRequestOptions(deviceDisplaySize, glidePaddingTransformation).priority(Priority.IMMEDIATE))
+          .submit()
           .get();
       emitter.onSuccess(image);
     });
+  }
+
+  public static RequestOptions glideRequestOptions(Size deviceDisplaySize, GlidePaddingTransformation paddingTransformation) {
+    return new RequestOptions()
+        // NOTE: Keep this strategy in sync with MediaImageFragment.
+        .downsample(DownsampleStrategy.AT_LEAST)
+        .transform(paddingTransformation)
+        .override(deviceDisplaySize.getWidth(), deviceDisplaySize.getHeight());
   }
 
   /**

@@ -8,6 +8,7 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 import android.net.Uri;
+import android.util.Size;
 
 import com.f2prateek.rx.preferences2.Preference;
 
@@ -58,6 +59,7 @@ public class CachePreFillerShould {
   @Mock HashMap<CachePreFillThing, Preference<NetworkStrategy>> networkStrategies;
 
   private CachePreFiller cachePreFiller;
+  private static final Size DISPLAY_SIZE = new Size(1280, 1920);
 
   @Before
   public void setUp() throws Exception {
@@ -92,7 +94,8 @@ public class CachePreFillerShould {
     submissions.add(PowerMockito.mock(Submission.class));
     submissions.add(PowerMockito.mock(Submission.class));
 
-    cachePreFiller.preFillInParallelThreads(submissions, 720, 160)
+    //noinspection ConstantConditions
+    cachePreFiller.preFillInParallelThreads(submissions, DISPLAY_SIZE, 160, null)
         .test()
         .assertSubscribed()
         .assertNoValues()
@@ -125,7 +128,8 @@ public class CachePreFillerShould {
 
     when(linkMetadataRepo.unfurl(any())).thenReturn(Single.just(mock(LinkMetadata.class)));
 
-    cachePreFiller.preFillInParallelThreads(submissions, 720, 160)
+    //noinspection ConstantConditions
+    cachePreFiller.preFillInParallelThreads(submissions, DISPLAY_SIZE, 160, null)
         .test()
         .assertNoErrors()
         .assertComplete();

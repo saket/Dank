@@ -20,6 +20,7 @@ import android.support.annotation.Nullable;
 import android.support.transition.TransitionManager;
 import android.support.transition.TransitionSet;
 import android.support.v7.util.DiffUtil;
+import android.util.Size;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -633,8 +634,9 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .subscribe(toolbarRefreshVisibilityStream);
 
     // Cache pre-fill.
-    int displayWidth = getResources().getDisplayMetrics().widthPixels;
+    Size displaySize = new Size(getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
     int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
+
     submissionFolderStream
         .observeOn(single())
         .switchMap(folder -> subscriptionRepository.isSubscribed(folder.subredditName()))
@@ -643,7 +645,11 @@ public class SubredditActivity extends DankPullCollapsibleActivity
             .filter(Optional::isPresent)
             .map(Optional::get)
             .switchMap(cachedSubmissions -> cachePreFiller
-                .preFillInParallelThreads(cachedSubmissions, displayWidth, submissionAlbumLinkThumbnailWidth)
+                .preFillInParallelThreads(
+                    cachedSubmissions,
+                    displaySize,
+                    submissionAlbumLinkThumbnailWidth,
+                    submissionPage.imagePaddingTransformation())
                 .doOnError(error -> {
                   ResolvedError resolvedError = errorResolver.resolve(error);
                   resolvedError.ifUnknown(() -> Timber.e(error, "Unknown error while pre-filling cache."));
