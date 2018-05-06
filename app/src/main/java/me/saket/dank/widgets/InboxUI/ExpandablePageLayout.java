@@ -645,6 +645,8 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
         stateChangeCallbacks.get(i).onPageExpanded();
       }
     }
+
+    onPageExpanded();
   }
 
   /**
@@ -701,6 +703,10 @@ public class ExpandablePageLayout extends BaseExpandablePageLayout implements Pu
       }
     }
     onPageCollapsed();
+  }
+
+  protected void onPageExpanded() {
+    // For rent.
   }
 
   protected void onPageAboutToExpand(long expandAnimDuration) {

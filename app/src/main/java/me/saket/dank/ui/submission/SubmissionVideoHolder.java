@@ -57,7 +57,7 @@ public class SubmissionVideoHolder {
   private ExoPlayerManager exoPlayerManager;
   private VideoView contentVideoView;
   private ScrollingRecyclerViewSheet commentListParentSheet;
-  private ExpandablePageLayout submissionPageLayout;
+  private SubmissionPageLayout submissionPageLayout;
   private SubmissionPageLifecycleStreams lifecycle;
   private Size deviceDisplaySize;
   private int statusBarHeight;
@@ -91,7 +91,7 @@ public class SubmissionVideoHolder {
       VideoView contentVideoView,
       ScrollingRecyclerViewSheet commentListParentSheet,
       ProgressBar contentLoadProgressView,
-      ExpandablePageLayout submissionPageLayout,
+      SubmissionPageLayout submissionPageLayout,
       SubmissionPageLifecycleStreams lifecycle,
       Size deviceDisplaySize,
       int statusBarHeight,
@@ -215,8 +215,17 @@ public class SubmissionVideoHolder {
           commentListParentSheet.setScrollingEnabled(true);
           commentListParentSheet.setMaxScrollY(videoHeightMinusToolbar);
 
-          if (submissionPageLayout.isExpanded()) {
-            commentListParentSheet.smoothScrollTo(videoHeightMinusToolbar);
+          if (submissionPageLayout.shouldExpandMediaSmoothly()) {
+            if (submissionPageLayout.isExpanded()) {
+              commentListParentSheet.smoothScrollTo(videoHeightMinusToolbar);
+            } else {
+              lifecycle.onPageExpand()
+                  .take(1)
+                  .takeUntil(lifecycle.onPageCollapseOrDestroy())
+                  .subscribe(o -> {
+                    commentListParentSheet.smoothScrollTo(videoHeightMinusToolbar);
+                  });
+            }
           } else {
             commentListParentSheet.scrollTo(videoHeightMinusToolbar);
           }

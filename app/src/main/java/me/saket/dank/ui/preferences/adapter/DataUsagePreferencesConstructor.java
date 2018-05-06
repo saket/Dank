@@ -59,8 +59,6 @@ public class DataUsagePreferencesConstructor implements UserPreferencesConstruct
   public List<UserPreferencesScreenUiModel> construct(Context c) {
     List<UserPreferencesScreenUiModel> uiModels = new ArrayList<>();
 
-    System.out.println(messagePollIntervalAndNetworkTypeSummary(c));
-
     uiModels.add(UserPreferenceSectionHeader.UiModel.create(c.getString(R.string.userprefs_group_messaging)));
 
     uiModels.add(UiModel.create(

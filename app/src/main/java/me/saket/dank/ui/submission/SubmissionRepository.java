@@ -41,6 +41,7 @@ import javax.inject.Inject;
 import javax.inject.Provider;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import dagger.internal.SingleCheck;
 import io.reactivex.Completable;
 import io.reactivex.Flowable;
@@ -74,6 +75,7 @@ public class SubmissionRepository {
   private final VotingManager votingManager;
   private final ErrorResolver errorResolver;
   private final SubscriptionRepository subscriptionRepository;
+  private final Lazy<SyntheticData> syntheticData;
   private Provider<Store<CachedSubmissionWithComments, DankSubmissionRequest>> submissionWithCommentsStore;
 
   @Inject
@@ -84,6 +86,7 @@ public class SubmissionRepository {
       VotingManager votingManager,
       ErrorResolver errorResolver,
       SubscriptionRepository subscriptionRepository,
+      Lazy<SyntheticData> syntheticData,
       ReplyRepository replyRepository)
   {
     this.database = briteDatabase;
@@ -92,6 +95,7 @@ public class SubmissionRepository {
     this.votingManager = votingManager;
     this.errorResolver = errorResolver;
     this.subscriptionRepository = subscriptionRepository;
+    this.syntheticData = syntheticData;
 
     submissionWithCommentsStore = SingleCheck.provider(() -> {
       Fetcher<CachedSubmissionWithComments, DankSubmissionRequest> fetcher = request -> dankRedditClient.submission(request)
@@ -144,7 +148,7 @@ public class SubmissionRepository {
   @CheckResult
   public Observable<Pair<DankSubmissionRequest, Submission>> submissionWithComments(DankSubmissionRequest oldSubmissionRequest) {
     //Timber.i("Getting comments");
-    if (oldSubmissionRequest.id().equalsIgnoreCase(SyntheticData.ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH)) {
+    if (oldSubmissionRequest.id().equalsIgnoreCase(syntheticData.get().ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH)) {
       return syntheticSubmissionForGesturesWalkthrough()
           .map(syntheticSubmission -> {
             DankSubmissionRequest updatedRequest = oldSubmissionRequest.withCommentSort(syntheticSubmission.getSuggestedSort());
@@ -314,7 +318,7 @@ public class SubmissionRepository {
   public Single<Submission> syntheticSubmissionForGesturesWalkthrough() {
     return Single.fromCallable(() -> {
       JsonAdapter<Submission> adapter = moshi.adapter(Submission.class);
-      return adapter.fromJson(SyntheticData.submissionForGesturesWalkthroughJson());
+      return adapter.fromJson(syntheticData.get().submissionForGesturesWalkthroughJson());
     });
   }
 
