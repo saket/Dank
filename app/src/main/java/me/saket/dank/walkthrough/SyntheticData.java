@@ -17,10 +17,15 @@ public class SyntheticData {
     String submissionPermalink = "/r/" + subredditName;
     long createdTimeUtc = System.currentTimeMillis();
 
+    String submissionTitle = "Here's a heart-warming photo to start your journey";
+
     String commentSubredditId = "t5_3kfea";
     String commentSubmissionId = "t3_8h801w";
     String commentAuthorName = "Dank";
     long commentCreatedTimeUtc = System.currentTimeMillis();
+
+    String comment1 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc.";
+    String comment1Html = comment1;
 
     String comment2 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc.";
     String comment2Html = comment2;
@@ -40,7 +45,7 @@ public class SyntheticData {
         "  \\\"mod_reason_title\\\" : null,\\n" +
         "  \\\"gilded\\\" : 0,\\n" +
         "  \\\"clicked\\\" : false,\\n" +
-        "  \\\"title\\\" : \\\"Hey there\\\",\\n" +
+        "  \\\"title\\\" : \\\"" + submissionTitle + "\\\",\\n" +
         "  \\\"link_flair_richtext\\\" : [ ],\\n" +
         "  \\\"subreddit_name_prefixed\\\" : \\\"r/" + subredditName + "\\\",\\n" +
         "  \\\"hidden\\\" : false,\\n" +
@@ -173,69 +178,6 @@ public class SyntheticData {
         "          \\\"replies\\\" : \\\"\\\",\\n" +
         "          \\\"user_reports\\\" : [ ],\\n" +
         "          \\\"saved\\\" : false,\\n" +
-        "          \\\"id\\\" : \\\"dyhfzr9\\\",\\n" +
-        "          \\\"banned_at_utc\\\" : null,\\n" +
-        "          \\\"mod_reason_title\\\" : null,\\n" +
-        "          \\\"gilded\\\" : 0,\\n" +
-        "          \\\"archived\\\" : false,\\n" +
-        "          \\\"report_reasons\\\" : [ ],\\n" +
-        "          \\\"author\\\" : \\\"" + commentAuthorName + "\\\",\\n" +
-        "          \\\"can_mod_post\\\" : true,\\n" +
-        "          \\\"send_replies\\\" : true,\\n" +
-        "          \\\"parent_id\\\" : \\\"t1_dyhfxah\\\",\\n" +
-        "          \\\"score\\\" : 1,\\n" +
-        "          \\\"approved_by\\\" : null,\\n" +
-        "          \\\"ignore_reports\\\" : false,\\n" +
-        "          \\\"downs\\\" : 0,\\n" +
-        "          \\\"body\\\" : \\\"" + comment2 + "\\\",\\n" +
-        "          \\\"edited\\\" : false,\\n" +
-        "          \\\"author_flair_css_class\\\" : null,\\n" +
-        "          \\\"collapsed\\\" : false,\\n" +
-        "          \\\"author_flair_richtext\\\" : null,\\n" +
-        "          \\\"is_submitter\\\" : true,\\n" +
-        "          \\\"collapsed_reason\\\" : null,\\n" +
-        "          \\\"body_html\\\" : \\\"" + comment2Html + "\\\",\\n" +
-        "          \\\"spam\\\" : false,\\n" +
-        "          \\\"stickied\\\" : false,\\n" +
-        "          \\\"subreddit_type\\\" : \\\"private\\\",\\n" +
-        "          \\\"can_gild\\\" : false,\\n" +
-        "          \\\"removed\\\" : false,\\n" +
-        "          \\\"approved\\\" : false,\\n" +
-        "          \\\"author_flair_text_color\\\" : \\\"dark\\\",\\n" +
-        "          \\\"score_hidden\\\" : false,\\n" +
-        "          \\\"permalink\\\" : \\\"" + submissionPermalink + "\\\",\\n" +
-        "          \\\"num_reports\\\" : 0,\\n" +
-        "          \\\"name\\\" : \\\"t1_dyhfzr9\\\",\\n" +
-        "          \\\"created\\\" : 1.525544322E9,\\n" +
-        "          \\\"subreddit\\\" : \\\"" + subredditName + "\\\",\\n" +
-        "          \\\"author_flair_text\\\" : null,\\n" +
-        "          \\\"rte_mode\\\" : \\\"markdown\\\",\\n" +
-        "          \\\"created_utc\\\" : " + commentCreatedTimeUtc + ",\\n" +
-        "          \\\"subreddit_name_prefixed\\\" : \\\"r/" + subredditName + "\\\",\\n" +
-        "          \\\"controversiality\\\" : 0,\\n" +
-        "          \\\"depth\\\" : 1,\\n" +
-        "          \\\"author_flair_background_color\\\" : \\\"\\\",\\n" +
-        "          \\\"mod_reports\\\" : [ ],\\n" +
-        "          \\\"mod_note\\\" : null,\\n" +
-        "          \\\"distinguished\\\" : null\\n" +
-        "        }\\n" +
-        "      }, {\\n" +
-        "        \\\"kind\\\" : \\\"t1\\\",\\n" +
-        "        \\\"data\\\" : {\\n" +
-        "          \\\"subreddit_id\\\" : \\\"" + commentSubredditId + "\\\",\\n" +
-        "          \\\"approved_at_utc\\\" : null,\\n" +
-        "          \\\"ups\\\" : 1,\\n" +
-        "          \\\"mod_reason_by\\\" : null,\\n" +
-        "          \\\"banned_by\\\" : null,\\n" +
-        "          \\\"author_flair_type\\\" : \\\"richtext\\\",\\n" +
-        "          \\\"removal_reason\\\" : null,\\n" +
-        "          \\\"link_id\\\" : \\\"" + commentSubmissionId + "\\\",\\n" +
-        "          \\\"author_flair_template_id\\\" : null,\\n" +
-        "          \\\"likes\\\" : true,\\n" +
-        "          \\\"no_follow\\\" : false,\\n" +
-        "          \\\"replies\\\" : \\\"\\\",\\n" +
-        "          \\\"user_reports\\\" : [ ],\\n" +
-        "          \\\"saved\\\" : false,\\n" +
         "          \\\"id\\\" : \\\"dyhg7y2\\\",\\n" +
         "          \\\"banned_at_utc\\\" : null,\\n" +
         "          \\\"mod_reason_title\\\" : null,\\n" +
@@ -303,15 +245,14 @@ public class SyntheticData {
         "  \\\"approved_by\\\" : null,\\n" +
         "  \\\"ignore_reports\\\" : false,\\n" +
         "  \\\"downs\\\" : 0,\\n" +
-        "  \\\"body\\\" : \\\"Here's a heart-warming photo of a cat to start your journey with Dank. \\\",\\n" +
+        "  \\\"body\\\" : \\\"" + comment1 + "\\\",\\n" +
         "  \\\"edited\\\" : false,\\n" +
         "  \\\"author_flair_css_class\\\" : null,\\n" +
         "  \\\"collapsed\\\" : false,\\n" +
         "  \\\"author_flair_richtext\\\" : null,\\n" +
         "  \\\"is_submitter\\\" : true,\\n" +
         "  \\\"collapsed_reason\\\" : null,\\n" +
-        "  \\\"body_html\\\" : \\\"&lt;div class=\\\\\\\"md\\\\\\\"&gt;&lt;p&gt;Here&amp;#39;s a heart-warming photo of a cat to start your journey with Dank. &lt;/p&gt;\\\\n" +
-        "&lt;/div&gt;\\\",\\n" +
+        "  \\\"body_html\\\" : \\\"" + comment1Html + "\\\",\\n" +
         "  \\\"spam\\\" : false,\\n" +
         "  \\\"stickied\\\" : false,\\n" +
         "  \\\"subreddit_type\\\" : \\\"private\\\",\\n" +

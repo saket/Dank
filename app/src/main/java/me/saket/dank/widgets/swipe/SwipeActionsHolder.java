@@ -10,7 +10,7 @@ import java.util.List;
  */
 public class SwipeActionsHolder {
 
-  private List<SwipeAction> actions = new ArrayList<>(8);
+  private final List<SwipeAction> actions;
 
   public SwipeActionsHolder(List<SwipeAction> actions) {
     this.actions = actions;
