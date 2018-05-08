@@ -8,7 +8,7 @@ import me.saket.dank.data.DankRedditClient;
 
 public class SyntheticData {
 
-  public final String ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH = "syntheticsubmissionforgesturewalkthrough";
+  public static final String ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH = "syntheticsubmissionforgesturewalkthrough";
   public final String SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH = "https://i.imgur.com/NaWfFWR.jpg";
 
   @Inject

@@ -12,9 +12,9 @@ public abstract class ReplySendClickEvent {
 
   public abstract ContributionFullNameWrapper parentContribution();
 
-  public abstract String replyMessage();
+  public abstract String replyBody();
 
-  public static ReplySendClickEvent create(ContributionFullNameWrapper parentContribution, String replyMessage) {
-    return new AutoValue_ReplySendClickEvent(parentContribution, replyMessage);
+  public static ReplySendClickEvent create(ContributionFullNameWrapper parentContribution, String replyBody) {
+    return new AutoValue_ReplySendClickEvent(parentContribution, replyBody);
   }
 }
