@@ -675,7 +675,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     // Reply sends.
     submissionCommentsAdapter.streamReplySendClicks()
         .mergeWith(fullscreenReplySendStream)
-        .filter(sendClickEvent -> !sendClickEvent.replyMessage().isEmpty())
+        .filter(sendClickEvent -> !sendClickEvent.replyBody().isEmpty())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(sendClickEvent -> {
           // Posting to RecyclerView's message queue, because onActivityResult() gets called before
@@ -694,11 +694,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                 Reply reply = Reply.create(
                     sendClickEvent.parentContribution(),
                     ParentThread.of(submission),
-                    sendClickEvent.replyMessage(),
+                    sendClickEvent.replyBody(),
                     createdTimeMillis);
 
                 return replyRepository.removeDraft(sendClickEvent.parentContribution())
-                    //.doOnComplete(() -> Timber.i("Sending reply: %s", sendClickEvent.replyMessage()))
+                    .doOnComplete(() -> Timber.i("Sending reply: %s", reply))
                     .andThen(replyRepository.sendReply(reply));
               })
               .compose(applySchedulersCompletable())
