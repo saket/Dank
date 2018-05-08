@@ -114,7 +114,7 @@ public class ReplyRepository implements DraftStore {
     return sendReply(Reply.create(parentContribution, parentThread, replyBody, replyCreatedTimeMillis));
   }
 
-  public Completable sendReply(Reply reply) {
+  Completable sendReply(Reply reply) {
     long sentTimeMillis = System.currentTimeMillis();
     PendingSyncReply pendingSyncReply = reply.toPendingSync(userSessionRepository, sentTimeMillis);
 

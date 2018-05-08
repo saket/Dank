@@ -84,7 +84,7 @@ public class VoteJobService extends DankJobService {
             return Completable.complete();
 
           } else {
-            return votingManager.vote(votableContribution, voteDirection);
+            return votingManager.saveAndSend(Vote.create(votableContribution, voteDirection));
           }
         })
         .ambWith(lifecycleOnDestroy().ignoreElements())

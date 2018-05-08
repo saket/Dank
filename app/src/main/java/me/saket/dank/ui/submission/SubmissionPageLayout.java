@@ -570,8 +570,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     sharedVoteActions
         .filter(pair -> !pair.second().isArchived())
         .map(pair -> pair.first())
-        .flatMapCompletable(voteEvent -> votingManager.get()
-            .voteWithAutoRetry(voteEvent.contribution(), voteEvent.newVoteDirection())
+        .flatMapCompletable(voteEvent -> voteEvent.toVote().saveAndSend(votingManager.get())
             .subscribeOn(io()))
         .ambWith(lifecycle().onDestroyCompletable())
         .subscribe();

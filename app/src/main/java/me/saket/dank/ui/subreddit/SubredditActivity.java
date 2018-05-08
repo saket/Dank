@@ -61,7 +61,6 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.UserPreferences;
-import me.saket.dank.vote.VotingManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UiEvent;
@@ -97,6 +96,7 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
+import me.saket.dank.vote.VotingManager;
 import me.saket.dank.widgets.DankToolbar;
 import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.InboxUI.InboxRecyclerView;
@@ -477,8 +477,8 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
     sharedVoteSwipeActions
         .filter(voteEvent -> !voteEvent.contribution().isArchived())
-        .flatMapCompletable(voteEvent -> votingManager.get()
-            .voteWithAutoRetry(voteEvent.contribution(), voteEvent.newVoteDirection())
+        .flatMapCompletable(voteEvent -> voteEvent.toVote()
+            .saveAndSend(votingManager.get())
             .subscribeOn(io()))
         .ambWith(lifecycle().onDestroyCompletable())
         .subscribe();
