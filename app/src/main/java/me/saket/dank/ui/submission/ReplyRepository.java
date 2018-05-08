@@ -25,7 +25,6 @@ import dagger.Lazy;
 import hirondelle.date4j.DateTime;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
-import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
@@ -101,41 +100,24 @@ public class ReplyRepository implements DraftStore {
    */
   @CheckResult
   public Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody) {
-    // Converts ¯\_(ツ)_/¯ -> ¯\\_(ツ)_/¯.
+    // Converts ¯\_(ツ)_/¯ to ¯\\_(ツ)_/¯.
     String replyWithSlashesEscaped = replyBody.replaceAll(Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
 
     long replyCreatedTimeMillis = System.currentTimeMillis();
-    return sendReply(parentContribution, parentThread, replyWithSlashesEscaped, replyCreatedTimeMillis);
+    return sendReply(Reply.create(parentContribution, parentThread, replyWithSlashesEscaped, replyCreatedTimeMillis));
   }
 
   @CheckResult
-  private Completable sendReply(
-      Contribution parentContribution,
-      ParentThread parentThread,
-      String replyBody,
-      long replyCreatedTimeMillis)
-  {
-    long sentTimeMillis = System.currentTimeMillis();
+  private Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody, long replyCreatedTimeMillis) {
+    return sendReply(Reply.create(parentContribution, parentThread, replyBody, replyCreatedTimeMillis));
+  }
 
-    //noinspection ConstantConditions
-    PendingSyncReply pendingSyncReply = PendingSyncReply.create(
-        replyBody,
-        PendingSyncReply.State.POSTING,
-        parentThread.fullName(),
-        parentContribution.getFullName(),
-        userSessionRepository.loggedInUserName(),
-        replyCreatedTimeMillis,
-        sentTimeMillis
-    );
+  public Completable sendReply(Reply reply) {
+    long sentTimeMillis = System.currentTimeMillis();
+    PendingSyncReply pendingSyncReply = reply.toPendingSync(userSessionRepository, sentTimeMillis);
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
-        .andThen(dankRedditClient.withAuth(Single.fromCallable(() -> {
-          //noinspection ConstantConditions
-          String postedReplyId = dankRedditClient.userAccountManager().reply(parentContribution, replyBody);
-          String postedFullName = parentThread.type().fullNamePrefix() + postedReplyId;
-          Timber.i("Posted full-name: %s", postedFullName);
-          return postedFullName;   // full-name.
-        })))
+        .andThen(reply.send(dankRedditClient))
         .flatMapCompletable(postedReplyFullName -> Completable.fromAction(() -> {
           PendingSyncReply updatedPendingSyncReply = pendingSyncReply
               .toBuilder()
