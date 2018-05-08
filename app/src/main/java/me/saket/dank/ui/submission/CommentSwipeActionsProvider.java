@@ -13,7 +13,7 @@ import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.SwipeEvent;
-import me.saket.dank.data.VotingManager;
+import me.saket.dank.vote.VotingManager;
 import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.InlineReplyRequestEvent;

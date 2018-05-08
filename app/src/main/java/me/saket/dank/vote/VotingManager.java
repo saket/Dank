@@ -1,4 +1,4 @@
-package me.saket.dank.data;
+package me.saket.dank.vote;
 
 import android.app.Application;
 import android.content.SharedPreferences;
@@ -21,8 +21,9 @@ import javax.inject.Named;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import me.saket.dank.BuildConfig;
+import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.VotableContributionFullNameWrapper;
 import me.saket.dank.di.Dank;
-import me.saket.dank.ui.submission.VoteJobService;
 import timber.log.Timber;
 
 /**

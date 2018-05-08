@@ -182,7 +182,7 @@
       android:permission="android.permission.BIND_JOB_SERVICE" />
 
     <service
-      android:name=".ui.submission.VoteJobService"
+      android:name=".vote.VoteJobService"
       android:exported="true"
       android:permission="android.permission.BIND_JOB_SERVICE" />
 

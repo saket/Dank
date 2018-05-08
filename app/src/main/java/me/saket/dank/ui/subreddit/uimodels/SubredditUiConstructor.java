@@ -26,7 +26,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ErrorState;
-import me.saket.dank.data.VotingManager;
+import me.saket.dank.vote.VotingManager;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.PrivateSubredditException;
 import me.saket.dank.ui.submission.SubredditNotFoundException;
