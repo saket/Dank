@@ -26,7 +26,7 @@ import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.ui.submission.ParentThread;
-import me.saket.dank.ui.submission.ReplyRepository;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Arrays2;

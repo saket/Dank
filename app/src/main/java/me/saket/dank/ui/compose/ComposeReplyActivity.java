@@ -37,7 +37,7 @@ import me.saket.dank.markdownhints.MarkdownSpanPool;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.giphy.GiphyGif;
 import me.saket.dank.ui.giphy.GiphyPickerActivity;
-import me.saket.dank.ui.submission.ReplyRepository;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.SimpleTextWatcher;
 import me.saket.dank.utils.Views;

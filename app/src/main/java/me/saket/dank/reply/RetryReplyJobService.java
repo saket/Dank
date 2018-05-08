@@ -1,4 +1,4 @@
-package me.saket.dank.ui.submission;
+package me.saket.dank.reply;
 
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;

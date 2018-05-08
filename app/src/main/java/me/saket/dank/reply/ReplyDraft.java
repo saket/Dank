@@ -1,4 +1,4 @@
-package me.saket.dank.ui.submission;
+package me.saket.dank.reply;
 
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;

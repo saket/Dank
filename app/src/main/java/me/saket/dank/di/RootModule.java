@@ -40,7 +40,7 @@ import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.DraftStore;
-import me.saket.dank.ui.submission.ReplyRepository;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.RedditUserLink;

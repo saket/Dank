@@ -32,6 +32,8 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import hirondelle.date4j.DateTime;
+import me.saket.dank.reply.ReplyDraft;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 
 public class ReplyRepositoryShould {

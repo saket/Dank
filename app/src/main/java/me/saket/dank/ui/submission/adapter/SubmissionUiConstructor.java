@@ -27,7 +27,7 @@ import me.saket.dank.data.ResolvedError;
 import me.saket.dank.vote.VotingManager;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.ParentThread;
-import me.saket.dank.ui.submission.ReplyRepository;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.user.UserSessionRepository;
