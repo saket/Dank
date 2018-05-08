@@ -689,10 +689,18 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           submissionStream
               .map(Optional::get)
               .take(1)
-              .flatMapCompletable(submission -> replyRepository.removeDraft(sendClickEvent.parentContribution())
-                  //.doOnComplete(() -> Timber.i("Sending reply: %s", sendClickEvent.replyMessage()))
-                  .andThen(replyRepository.sendReply(sendClickEvent.parentContribution(), ParentThread.of(submission), sendClickEvent.replyMessage()))
-              )
+              .flatMapCompletable(submission -> {
+                long createdTimeMillis = System.currentTimeMillis();
+                Reply reply = Reply.create(
+                    sendClickEvent.parentContribution(),
+                    ParentThread.of(submission),
+                    sendClickEvent.replyMessage(),
+                    createdTimeMillis);
+
+                return replyRepository.removeDraft(sendClickEvent.parentContribution())
+                    //.doOnComplete(() -> Timber.i("Sending reply: %s", sendClickEvent.replyMessage()))
+                    .andThen(replyRepository.sendReply(reply));
+              })
               .compose(applySchedulersCompletable())
               .doOnError(e -> Timber.e(e, "Reply send error"))
               .onErrorComplete(scheduleAutoRetry)
