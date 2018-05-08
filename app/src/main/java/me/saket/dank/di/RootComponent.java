@@ -35,7 +35,7 @@ import me.saket.dank.ui.preferences.PreferenceGroupsScreen;
 import me.saket.dank.ui.preferences.TypefaceInflationInterceptor;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
 import me.saket.dank.ui.submission.LinkOptionsPopup;
-import me.saket.dank.ui.submission.RetryReplyJobService;
+import me.saket.dank.reply.RetryReplyJobService;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
 import me.saket.dank.vote.VoteJobService;
 import me.saket.dank.ui.subreddit.NewSubredditSubscriptionDialog;

@@ -2,7 +2,7 @@ package me.saket.dank.ui.submission.events;
 
 import com.google.auto.value.AutoValue;
 
-import me.saket.dank.ui.submission.PendingSyncReply;
+import me.saket.dank.reply.PendingSyncReply;
 
 @AutoValue
 public abstract class ReplyRetrySendClickEvent {

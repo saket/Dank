@@ -4,7 +4,7 @@ import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
 
-import me.saket.dank.ui.submission.PendingSyncReply;
+import me.saket.dank.reply.PendingSyncReply;
 
 /**
  * Handles converting Reddit's markdown into Spans that can be rendered by TextView.

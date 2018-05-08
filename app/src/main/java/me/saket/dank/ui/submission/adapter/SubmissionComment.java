@@ -25,7 +25,7 @@ import me.saket.dank.data.LocallyPostedComment;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
-import me.saket.dank.ui.submission.PendingSyncReply;
+import me.saket.dank.reply.PendingSyncReply;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.utils.DankLinkMovementMethod;

@@ -1,4 +1,4 @@
-package me.saket.dank.ui.submission;
+package me.saket.dank.reply;
 
 import android.content.SharedPreferences;
 import android.database.sqlite.SQLiteDatabase;
@@ -31,6 +31,8 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.FullNameType;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.ui.submission.DraftStore;
+import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.Preconditions;

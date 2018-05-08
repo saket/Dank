@@ -27,7 +27,7 @@ import javax.inject.Named;
 import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
-import me.saket.dank.ui.submission.PendingSyncReply;
+import me.saket.dank.reply.PendingSyncReply;
 import me.saket.dank.utils.markdown.Markdown;
 import ru.noties.markwon.SpannableBuilder;
 import ru.noties.markwon.SpannableConfiguration;

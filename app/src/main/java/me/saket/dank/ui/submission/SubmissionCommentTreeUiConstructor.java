@@ -28,6 +28,8 @@ import io.reactivex.Scheduler;
 import me.saket.dank.R;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.LocallyPostedComment;
+import me.saket.dank.reply.PendingSyncReply;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.vote.VotingManager;
 import me.saket.dank.ui.submission.adapter.SubmissionComment;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;

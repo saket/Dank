@@ -8,7 +8,7 @@ import me.saket.dank.ui.appshortcuts.AppShortcut;
 import me.saket.dank.ui.submission.CachedSubmissionId;
 import me.saket.dank.ui.submission.CachedSubmissionWithComments;
 import me.saket.dank.ui.submission.CachedSubmissionWithoutComments;
-import me.saket.dank.ui.submission.PendingSyncReply;
+import me.saket.dank.reply.PendingSyncReply;
 import me.saket.dank.ui.subscriptions.SubredditSubscription;
 import me.saket.dank.ui.user.messages.CachedMessage;
 

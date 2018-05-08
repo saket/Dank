@@ -4,7 +4,7 @@ import android.support.annotation.Nullable;
 
 import net.dean.jraw.models.Comment;
 
-import me.saket.dank.ui.submission.PendingSyncReply;
+import me.saket.dank.reply.PendingSyncReply;
 
 public class LocallyPostedComment extends Comment {
 
