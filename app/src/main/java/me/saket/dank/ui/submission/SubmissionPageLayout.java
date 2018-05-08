@@ -80,7 +80,7 @@ import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.UserPreferences;
-import me.saket.dank.data.VotingManager;
+import me.saket.dank.vote.VotingManager;
 import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;

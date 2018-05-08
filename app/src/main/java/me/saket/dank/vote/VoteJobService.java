@@ -1,4 +1,4 @@
-package me.saket.dank.ui.submission;
+package me.saket.dank.vote;
 
 import android.app.job.JobInfo;
 import android.app.job.JobParameters;
@@ -24,7 +24,6 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.VotableContributionFullNameWrapper;
-import me.saket.dank.data.VotingManager;
 import me.saket.dank.di.Dank;
 import timber.log.Timber;
 
