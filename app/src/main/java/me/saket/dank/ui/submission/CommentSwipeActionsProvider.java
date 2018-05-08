@@ -13,12 +13,13 @@ import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.SwipeEvent;
-import me.saket.dank.vote.VotingManager;
 import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.InlineReplyRequestEvent;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.vote.VotingManager;
+import me.saket.dank.walkthrough.SyntheticData;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
@@ -122,7 +123,7 @@ public class CommentSwipeActionsProvider {
   }
 
   public void performSwipeAction(SwipeAction swipeAction, Comment comment, SwipeableLayout swipeableLayout) {
-    if (ACTION_NAME_OPTIONS != swipeAction.labelRes() && !userSessionRepository.get().isUserLoggedIn()) {
+    if (needsLogin(swipeAction, comment)) {
       // Delay because showing LoginActivity for the first time stutters SwipeableLayout's reset animation.
       swipeableLayout.postDelayed(
           () -> onLoginRequireListener.get().onLoginRequired(),
@@ -164,5 +165,24 @@ public class CommentSwipeActionsProvider {
     }
 
     swipeableLayout.playRippleAnimation(swipeAction, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
+  }
+
+  private boolean needsLogin(SwipeAction swipeAction, Comment comment) {
+    if (comment.getSubmissionId().equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
+      return false;
+    }
+
+    switch (swipeAction.labelRes()) {
+      case ACTION_NAME_OPTIONS:
+        return false;
+
+      case ACTION_NAME_REPLY:
+      case ACTION_NAME_UPVOTE:
+      case ACTION_NAME_DOWNVOTE:
+        return !userSessionRepository.get().isUserLoggedIn();
+
+      default:
+        throw new UnsupportedOperationException("Unknown swipe action: " + swipeAction);
+    }
   }
 }

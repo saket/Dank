@@ -18,6 +18,7 @@ public class BookmarksRepository {
   }
 
   public void markAsSaved(PublicContribution contribution) {
+    // TODO: ignore SyntheticData.ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH.
     savedFullNames.add(contribution.getFullName());
   }
 

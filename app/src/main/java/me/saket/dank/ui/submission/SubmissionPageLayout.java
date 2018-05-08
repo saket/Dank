@@ -80,12 +80,11 @@ import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.StatusBarTint;
 import me.saket.dank.data.UserPreferences;
+import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
+import me.saket.dank.di.Dank;
 import me.saket.dank.reply.Reply;
 import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.reply.RetryReplyJobService;
-import me.saket.dank.vote.VotingManager;
-import me.saket.dank.data.exceptions.ImgurApiRequestRateLimitReachedException;
-import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.ScreenSavedState;
 import me.saket.dank.ui.UrlRouter;
@@ -138,6 +137,7 @@ import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
+import me.saket.dank.vote.VotingManager;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.KeyboardVisibilityDetector.KeyboardVisibilityChangeEvent;
@@ -495,15 +495,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .takeUntil(lifecycle().onDestroy())
         .subscribe(inlineReplyRequestStream);
 
-    inlineReplyRequestStream
-        .filter(o -> !userSessionRepository.get().isUserLoggedIn())
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> onLoginRequireListener.get().onLoginRequired());
-
     Observable<Boolean> isUserASubredditMod = Observable.just(false);  // TODO v2.
 
     inlineReplyRequestStream
-        .filter(o -> userSessionRepository.get().isUserLoggedIn())
         .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
         .withLatestFrom(isUserASubredditMod, Trio::create)
         .takeUntil(lifecycle().onDestroy())
@@ -701,8 +695,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                     createdTimeMillis);
 
                 return replyRepository.removeDraft(sendClickEvent.parentContribution())
-                    .doOnComplete(() -> Timber.i("Sending reply: %s", reply))
-                    .andThen(replyRepository.sendReply(reply));
+                    //.doOnComplete(() -> Timber.i("Sending reply: %s", reply))
+                    .andThen(reply.saveAndSend(replyRepository));
               })
               .compose(applySchedulersCompletable())
               .doOnError(e -> Timber.e(e, "Reply send error"))
