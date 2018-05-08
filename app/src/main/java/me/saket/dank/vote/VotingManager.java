@@ -22,7 +22,6 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.VotableContributionFullNameWrapper;
 import me.saket.dank.di.Dank;
 import timber.log.Timber;
 
@@ -71,17 +70,15 @@ public class VotingManager {
   }
 
   @CheckResult
-  public Completable vote(PublicContribution contributionToVote, VoteDirection voteDirection) {
-    if (contributionToVote.getFullName() == null) {
+  public Completable saveAndSend(Vote vote) {
+    if (vote.contributionToVote().getFullName() == null) {
       throw new AssertionError();
     }
 
     // Mark the vote as pending immediately so that getPendingVote() can be used immediately after calling vote().
-    markVoteAsPending(contributionToVote, voteDirection);
+    markVoteAsPending(vote.contributionToVote(), vote.direction());
 
-    //noinspection ConstantConditions
-    VotableContributionFullNameWrapper votableThing = VotableContributionFullNameWrapper.createFrom(contributionToVote);
-    return dankRedditClient.withAuth(Completable.fromAction(() -> dankRedditClient.userAccountManager().vote(votableThing, voteDirection)))
+    return vote.sendToRemote(dankRedditClient)
 //        .doOnSubscribe(o -> Timber.i("Voting for %s…", contributionToVote.fullName()()))
 //        .doOnComplete(() -> Timber.i("Voting done for %s", contributionToVote.fullName()()))
         ;
@@ -93,10 +90,8 @@ public class VotingManager {
    * before the API call returns and we're able to retry.
    */
   @CheckResult
-  public Completable voteWithAutoRetry(PublicContribution contributionToVote, VoteDirection voteDirection) {
-    //Timber.i("Voting for %s with %s", contributionToVote.getFullName(), voteDirection);
-
-    return vote(contributionToVote, voteDirection)
+  public Completable voteWithAutoRetry(Vote vote) {
+    return saveAndSend(vote)
         .onErrorComplete(error -> {
           boolean shouldComplete;
           // TODO: Reddit replies with 400 bad request for archived submissions.
@@ -106,8 +101,8 @@ public class VotingManager {
 
           if (tooManyRequestsError || !Dank.errors().resolve(error).isUnknown()) {
             // If unknown, this will most probably be network/Reddit errors. Swallow the error and attempt retries later.
-            Timber.i("Voting failed for %s. Will retry again later. Error: %s", contributionToVote.getFullName(), error.getMessage());
-            VoteJobService.scheduleRetry(appContext, contributionToVote, voteDirection, moshi);
+            Timber.i("Voting failed for %s. Will retry again later. Error: %s", vote.contributionToVote().getFullName(), error.getMessage());
+            VoteJobService.scheduleRetry(appContext, vote.contributionToVote(), vote.direction(), moshi);
             shouldComplete = true;
 
           } else {

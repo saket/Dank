@@ -22,12 +22,12 @@ public interface Reply {
 
   long createdTimeMillis();
 
+  Completable saveAndSend(ReplyRepository replyRepository);
+
   /**
    * @return Fullname of the posted reply.
    */
   Single<String> sendToRemote(DankRedditClient dankRedditClient);
-
-  Completable saveAndSend(ReplyRepository replyRepository);
 
   default PendingSyncReply toPendingSync(UserSessionRepository userSessionRepository, long sentTimeMillis) {
     return PendingSyncReply.create(
@@ -50,6 +50,7 @@ public interface Reply {
 
   @AutoValue
   abstract class RealReply implements Reply {
+
     @Override
     public Completable saveAndSend(ReplyRepository replyRepository) {
       return replyRepository.sendReply(this);
@@ -67,9 +68,10 @@ public interface Reply {
 
   @AutoValue
   abstract class NoOpReply implements Reply {
+
     @Override
     public Completable saveAndSend(ReplyRepository replyRepository) {
-      Timber.i("Ignoring reply sent to synthetic-submission-for-gesture-walkthrough");
+      Timber.i("Ignoring sending reply to synthetic-submission-for-gesture-walkthrough");
       return Completable.complete();
     }
 

@@ -35,6 +35,12 @@ public class LocallyPostedComment extends Comment {
     return pendingSyncReply.body();
   }
 
+  @Override
+  public String getSubmissionId() {
+    String prefix = FullNameType.SUBMISSION.prefix();
+    return pendingSyncReply.parentThreadFullName().substring(prefix.length());
+  }
+
   public String getPostingStatusIndependentId() {
     return pendingSyncReply.parentContributionFullName() + "_reply_" + pendingSyncReply.createdTimeMillis();
   }

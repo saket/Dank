@@ -69,7 +69,8 @@ public interface SubmissionCommentInlineReply {
         CharSequence authorHint,
         ContributionFullNameWrapper parentContribution,
         String parentContributionAuthor,
-        int indentationDepth) {
+        int indentationDepth)
+    {
       return new AutoValue_SubmissionCommentInlineReply_UiModel(
           adapterId,
           SpannableWithTextEquality.wrap(authorHint),
