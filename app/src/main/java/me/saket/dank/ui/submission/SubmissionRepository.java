@@ -149,7 +149,7 @@ public class SubmissionRepository {
   @CheckResult
   public Observable<Pair<DankSubmissionRequest, Submission>> submissionWithComments(DankSubmissionRequest oldSubmissionRequest) {
     //Timber.i("Getting comments");
-    if (oldSubmissionRequest.id().equalsIgnoreCase(syntheticData.get().ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH)) {
+    if (oldSubmissionRequest.id().equalsIgnoreCase(syntheticData.get().SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
       return syntheticSubmissionForGesturesWalkthrough()
           .map(syntheticSubmission -> {
             DankSubmissionRequest updatedRequest = oldSubmissionRequest.withCommentSort(syntheticSubmission.getSuggestedSort());

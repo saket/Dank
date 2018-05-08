@@ -2,7 +2,6 @@ package me.saket.dank.ui.subreddit;
 
 import android.support.annotation.Nullable;
 import android.support.annotation.StringRes;
-import android.view.View;
 
 import com.jakewharton.rxrelay2.PublishRelay;
 
@@ -15,13 +14,14 @@ import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.SwipeEvent;
-import me.saket.dank.vote.VotingManager;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubmissionOpenInNewTabSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubmissionOptionSwipeEvent;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.vote.VotingManager;
+import me.saket.dank.walkthrough.SyntheticData;
 import me.saket.dank.widgets.swipe.SwipeAction;
 import me.saket.dank.widgets.swipe.SwipeActionIconView;
 import me.saket.dank.widgets.swipe.SwipeActions;
@@ -151,8 +151,11 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   public void performSwipeAction(SwipeAction swipeAction, Submission submission, SwipeableLayout swipeableLayout) {
-    boolean loginShown = showLoginIfNeeded(swipeAction, swipeableLayout);
-    if (loginShown) {
+    if (needsLogin(swipeAction, submission)) {
+      // Delay because showing LoginActivity for the first time stutters SwipeableLayout's reset animation.
+      swipeableLayout.postDelayed(
+          () -> onLoginRequireListener.get().onLoginRequired(),
+          SwipeableLayout.ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION);
       return;
     }
 
@@ -202,7 +205,11 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
     swipeableLayout.playRippleAnimation(swipeAction, isUndoAction ? RippleType.UNDO : RippleType.REGISTER);
   }
 
-  private boolean showLoginIfNeeded(SwipeAction swipeAction, View anyView) {
+  private boolean needsLogin(SwipeAction swipeAction, Submission submission) {
+    if (submission.getId().equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
+      return false;
+    }
+
     switch (swipeAction.labelRes()) {
       case ACTION_NAME_OPTIONS:
       case ACTION_NAME_NEW_TAB:
@@ -212,14 +219,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
       case ACTION_NAME_UNSAVE:
       case ACTION_NAME_UPVOTE:
       case ACTION_NAME_DOWNVOTE:
-        if (!userSessionRepository.get().isUserLoggedIn()) {
-          // Delay because showing LoginActivity for the first time stutters SwipeableLayout's reset animation.
-          anyView.postDelayed(
-              () -> onLoginRequireListener.get().onLoginRequired(),
-              SwipeableLayout.ANIMATION_DURATION_FOR_SETTLING_BACK_TO_POSITION);
-          return true;
-        }
-        return false;
+        return !userSessionRepository.get().isUserLoggedIn();
 
       default:
         throw new UnsupportedOperationException("Unknown swipe action: " + swipeAction);

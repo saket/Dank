@@ -119,7 +119,7 @@ public class ReplyRepository implements DraftStore {
     PendingSyncReply pendingSyncReply = reply.toPendingSync(userSessionRepository, sentTimeMillis);
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
-        .andThen(reply.send(dankRedditClient))
+        .andThen(reply.sendToRemote(dankRedditClient))
         .flatMapCompletable(postedReplyFullName -> Completable.fromAction(() -> {
           PendingSyncReply updatedPendingSyncReply = pendingSyncReply
               .toBuilder()

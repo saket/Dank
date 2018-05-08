@@ -1,14 +1,15 @@
 package me.saket.dank.walkthrough;
 
 import java.util.Locale;
-
 import javax.inject.Inject;
 
 import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.FullNameType;
 
 public class SyntheticData {
 
-  public static final String ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH = "syntheticsubmissionforgesturewalkthrough";
+  public static final String SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH = "syntheticsubmissionforgesturewalkthrough";
+  public static final String SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH = FullNameType.SUBMISSION.prefix() + "syntheticsubmissionforgesturewalkthrough";
   public final String SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH = "https://i.imgur.com/NaWfFWR.jpg";
 
   @Inject
@@ -26,15 +27,15 @@ public class SyntheticData {
     String submissionTitle = "Here's a heart-warming photo to start your journey";
 
     String commentSubredditId = "t5_3kfea";
-    String commentSubmissionId = "t3_8h801w";
+    String commentSubmissionId = SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH;
     String commentAuthorName = "Dank";
     long commentCreatedTimeUtc = System.currentTimeMillis();
 
     String comment1 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc.";
     String comment1Html = comment1;
 
-    String comment2 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc.";
-    String comment2Html = comment2;
+    //String comment2 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc.";
+    //String comment2Html = comment2;
 
     String comment3 = "Comments (and their replies) can be collapsed by tapping on them.";
     String comment3Html = comment3;
@@ -61,7 +62,7 @@ public class SyntheticData {
         "  \\\"thumbnail_height\\\" : 140,\\n" +
         "  \\\"parent_whitelist_status\\\" : null,\\n" +
         "  \\\"hide_score\\\" : false,\\n" +
-        "  \\\"name\\\" : \\\"t3_" + ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH + "\\\",\\n" +
+        "  \\\"name\\\" : \\\"t3_" + SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH + "\\\",\\n" +
         "  \\\"quarantine\\\" : false,\\n" +
         "  \\\"link_flair_text_color\\\" : \\\"dark\\\",\\n" +
         "  \\\"ignore_reports\\\" : false,\\n" +
@@ -130,7 +131,7 @@ public class SyntheticData {
         "  \\\"subreddit_id\\\" : \\\"t5_32wow\\\",\\n" +
         "  \\\"mod_reason_by\\\" : null,\\n" +
         "  \\\"removal_reason\\\" : null,\\n" +
-        "  \\\"id\\\" : \\\"" + ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH + "\\\",\\n" +
+        "  \\\"id\\\" : \\\"" + SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH + "\\\",\\n" +
         "  \\\"report_reasons\\\" : [ ],\\n" +
         "  \\\"author\\\" : \\\"" + submissionAuthorName + "\\\",\\n" +
         "  \\\"num_crossposts\\\" : 0,\\n" +
