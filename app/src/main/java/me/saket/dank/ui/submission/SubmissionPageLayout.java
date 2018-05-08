@@ -138,6 +138,7 @@ import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.vote.VotingManager;
+import me.saket.dank.walkthrough.SyntheticData;
 import me.saket.dank.widgets.AnimatedToolbarBackground;
 import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.KeyboardVisibilityDetector.KeyboardVisibilityChangeEvent;
@@ -1454,9 +1455,20 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   }
 
   @Override
+  protected void onPageExpanded() {
+    lifecycle().onPageCollapse()
+        .take(1)
+        .withLatestFrom(submissionStream, (o, submission) -> submission)
+        .filter(optionalSubmission -> optionalSubmission
+            .map(subm -> subm.getFullName().equalsIgnoreCase(SyntheticData.SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH))
+            .orElse(false))
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(o -> hasUserLearnedGesturesPref.get().set(true));
+  }
+
+  @Override
   public void onPageAboutToCollapse(long collapseAnimDuration) {
     Keyboards.hide(getContext(), commentRecyclerView);
-    hasUserLearnedGesturesPref.get().set(true);
   }
 
   @Override
