@@ -1,7 +1,6 @@
 package me.saket.dank.ui.submission;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
-import static io.reactivex.schedulers.Schedulers.io;
 
 import android.graphics.Bitmap;
 import android.support.annotation.CheckResult;
@@ -10,8 +9,8 @@ import android.view.View;
 import android.widget.ProgressBar;
 
 import com.danikula.videocache.HttpProxyCacheServer;
-import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.devbrackets.android.exomedia.ui.widget.VideoControls;
+import com.devbrackets.android.exomedia.ui.widget.VideoView;
 import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -36,8 +35,6 @@ import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.VideoFormat;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.lifecycle.ViewLifecycleEvent;
-import me.saket.dank.widgets.ExoMediaVideoControlsView;
-import me.saket.dank.widgets.InboxUI.ExpandablePageLayout;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 
 /**
@@ -128,10 +125,8 @@ public class SubmissionVideoHolder {
             : Completable.complete());
 
     // FIXME: SubmissionPageLayout is already resolving actual link. Why do it again here?
-    return mediaHostRepository.get().resolveActualLinkIfNeeded(mediaLink)
-        .subscribeOn(io())
-        .flatMapSingle(resolvedLink -> canLoadHighQualityVideos
-            .map(loadHQ -> loadHQ ? resolvedLink.highQualityUrl() : resolvedLink.lowQualityUrl()))
+    return canLoadHighQualityVideos
+        .map(loadHQ -> loadHQ ? mediaLink.highQualityUrl() : mediaLink.lowQualityUrl())
         .observeOn(mainThread())
         .flatMapCompletable(videoUrl -> loadVideo(videoUrl))
         .andThen(autoPlayVideoIfAllowed);
