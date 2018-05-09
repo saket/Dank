@@ -22,22 +22,24 @@ public interface Vote {
   Completable saveAndSend(VotingManager votingManager);
 
   static Vote create(PublicContribution contributionToVote, VoteDirection direction) {
-    String submissionId;
+    boolean isRealVote;
 
     if (contributionToVote instanceof Comment) {
-      submissionId = ((Comment) contributionToVote).getSubmissionId();
+      String submissionId = ((Comment) contributionToVote).getSubmissionId();
+      isRealVote = submissionId.equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH);
 
     } else if (contributionToVote instanceof Submission) {
-      submissionId = contributionToVote.getId();
+      String submissionId = contributionToVote.getId();
+      isRealVote = submissionId.equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH);
 
     } else {
-      throw new AssertionError("Unknown contribution to vote for");
+      isRealVote = true;
     }
 
-    if (submissionId.equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
-      return new AutoValue_Vote_NoOpVote(contributionToVote, direction);
+    if (isRealVote) {
+      return new AutoValue_Vote_RealVote(contributionToVote, direction);
     }
-    return new AutoValue_Vote_RealVote(contributionToVote, direction);
+    return new AutoValue_Vote_NoOpVote(contributionToVote, direction);
   }
 
   Completable sendToRemote(DankRedditClient dankRedditClient);
