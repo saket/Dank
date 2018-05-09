@@ -230,10 +230,8 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
                 // Entry transition.
                 imageView.setTranslationY(drawable.getIntrinsicHeight() / 20);
                 imageView.setRotation(-2);
-
                 imageView.animate()
                     .translationY(0f)
-                    .setStartDelay(300)
                     .rotation(0)
                     .setInterpolator(Animations.INTERPOLATOR)
                     .start();
