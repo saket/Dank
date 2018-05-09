@@ -64,11 +64,9 @@ public class DankApplication extends Application {
           .build());
     }
 
-    if (BuildConfig.DEBUG) {
-      ViewPump.init(ViewPump.builder()
-          .addInterceptor(Dank.dependencyInjector().typefaceInflationInterceptor())
-          .build());
-    }
+    ViewPump.init(ViewPump.builder()
+        .addInterceptor(Dank.dependencyInjector().typefaceInflationInterceptor())
+        .build());
 
     if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
       registerNotificationChannels();
