@@ -420,7 +420,7 @@ public class SubmissionRepository {
         .doOnError(e -> {
           if (!(e instanceof PrivateSubredditException || e instanceof SubredditNotFoundException)) {
             ResolvedError resolvedError = errorResolver.resolve(e);
-            resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't fetch submissions"));
+            resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't fetch submissions for %s", folder));
           }
         })
         .onErrorReturn(error -> SubmissionPaginationResult.failed(error))
