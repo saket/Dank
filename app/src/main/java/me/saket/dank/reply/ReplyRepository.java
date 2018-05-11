@@ -25,6 +25,7 @@ import dagger.Lazy;
 import hirondelle.date4j.DateTime;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.DankRedditClient;
@@ -180,31 +181,36 @@ public class ReplyRepository implements DraftStore {
 
 // ======== DRAFTS ======== //
 
+  /**
+   * @return True if the draft was saved. False otherwise.
+   */
   @Override
-  public Completable saveDraft(Contribution contribution, String draftBody) {
+  public Single<DraftSaveResult> saveDraft(Contribution contribution, String draftBody) {
     if (draftBody.isEmpty()) {
-      return removeDraft(contribution);
+      return removeDraft(contribution).toSingleDefault(DraftSaveResult.REMOVED);
     }
 
-    return Completable.fromAction(() -> {
-      long draftCreatedTimeMillis = System.currentTimeMillis();
-      ReplyDraft replyDraft = ReplyDraft.create(draftBody, draftCreatedTimeMillis);
-      JsonAdapter<ReplyDraft> jsonAdapter = moshi.adapter(ReplyDraft.class);
-      String replyDraftJson = jsonAdapter.toJson(replyDraft);
-      rxSharedPrefs.getString(keyForDraft(contribution)).set(replyDraftJson);
-      //Timber.i("Draft saved: %s", draftBody);
+    return Completable
+        .fromAction(() -> {
+          long draftCreatedTimeMillis = System.currentTimeMillis();
+          ReplyDraft replyDraft = ReplyDraft.create(draftBody, draftCreatedTimeMillis);
+          JsonAdapter<ReplyDraft> jsonAdapter = moshi.adapter(ReplyDraft.class);
+          String replyDraftJson = jsonAdapter.toJson(replyDraft);
+          rxSharedPrefs.getString(keyForDraft(contribution)).set(replyDraftJson);
+          //Timber.i("Draft saved: %s", draftBody);
 
-      // Recycle old drafts.
-      Map<String, ?> allDraftJsons = new HashMap<>(sharedPrefs.getAll());
-      Map<String, ReplyDraft> allDrafts = new HashMap<>(allDraftJsons.size());
-      for (Map.Entry<String, ?> entry : allDraftJsons.entrySet()) {
-        String draftEntryJson = (String) entry.getValue();
-        //Timber.i("Existing draft: %s", draftEntryJson);
-        ReplyDraft draftEntry = jsonAdapter.fromJson(draftEntryJson);
-        allDrafts.put(entry.getKey(), draftEntry);
-      }
-      recycleOldDrafts(allDrafts);
-    });
+          // Recycle old drafts.
+          Map<String, ?> allDraftJsons = new HashMap<>(sharedPrefs.getAll());
+          Map<String, ReplyDraft> allDrafts = new HashMap<>(allDraftJsons.size());
+          for (Map.Entry<String, ?> entry : allDraftJsons.entrySet()) {
+            String draftEntryJson = (String) entry.getValue();
+            //Timber.i("Existing draft: %s", draftEntryJson);
+            ReplyDraft draftEntry = jsonAdapter.fromJson(draftEntryJson);
+            allDrafts.put(entry.getKey(), draftEntry);
+          }
+          recycleOldDrafts(allDrafts);
+        })
+        .toSingleDefault(DraftSaveResult.SAVED_OR_UPDATED);
   }
 
   @VisibleForTesting

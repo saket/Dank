@@ -3,6 +3,7 @@ package me.saket.dank.ui.submission.adapter;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 
+import android.content.Context;
 import android.support.annotation.CheckResult;
 import android.support.v7.widget.RecyclerView;
 import android.text.Editable;
@@ -12,6 +13,7 @@ import android.view.ViewGroup;
 import android.widget.EditText;
 import android.widget.ImageButton;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
@@ -127,6 +129,7 @@ public interface SubmissionCommentInlineReply {
         Relay<ReplyFullscreenClickEvent> replyFullscreenClickRelay,
         Relay<ReplySendClickEvent> replySendClickRelay)
     {
+      // Draft is saved in the reply field's focus change listener.
       discardButton.setOnClickListener(o -> {
         replyDiscardEventRelay.accept(ReplyDiscardClickEvent.create(uiModel.parentContributionFullname()));
       });
@@ -161,11 +164,19 @@ public interface SubmissionCommentInlineReply {
 
     private void saveDraftAsynchronouslyIfAllowed() {
       if (savingDraftsAllowed) {
+        Context appContext = replyField.getContext().getApplicationContext();
+
         // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
         // WARNING: DON'T REFERENCE VH FIELDS IN THIS CHAIN TO AVOID LEAKING MEMORY.
+
         draftStore.saveDraft(uiModel.parentContributionFullname(), replyField.getText().toString())
             .subscribeOn(Schedulers.io())
-            .subscribe();
+            .observeOn(mainThread())
+            .subscribe(draftSaveResult -> {
+              if (draftSaveResult.canShowDraftSavedToast) {
+                Toast.makeText(appContext, R.string.composereply_draft_saved, Toast.LENGTH_SHORT).show();
+              }
+            });
       }
     }
 

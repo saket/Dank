@@ -6,11 +6,13 @@ import net.dean.jraw.models.Contribution;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
+import io.reactivex.Single;
+import me.saket.dank.reply.DraftSaveResult;
 
 public interface DraftStore {
 
   @CheckResult
-  Completable saveDraft(Contribution contribution, String draftBody);
+  Single<DraftSaveResult> saveDraft(Contribution contribution, String draftBody);
 
   @CheckResult
   Observable<String> streamDrafts(Contribution contribution);

@@ -21,6 +21,7 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
+import android.widget.Toast;
 
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
@@ -49,13 +50,13 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
+import me.saket.dank.reply.PendingSyncReply;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.ComposeStartOptions;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ParentThread;
-import me.saket.dank.reply.PendingSyncReply;
-import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
@@ -331,10 +332,17 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
   }
 
   private void saveDraftAsynchronously() {
-    // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
+    // Fire-and-forget call. No need to dispose this since we're making no memory references to this Activity.
+    Context appContext = getApplicationContext();
+
     draftStore.saveDraft(privateMessage, replyField.getText().toString())
         .subscribeOn(io())
-        .subscribe();
+        .observeOn(mainThread())
+        .subscribe(draftSaveResult -> {
+          if (draftSaveResult.canShowDraftSavedToast) {
+            Toast.makeText(appContext, R.string.composereply_draft_saved, Toast.LENGTH_SHORT).show();
+          }
+        });
   }
 
   @OnClick(R.id.privatemessagethread_fullscreen)
