@@ -10,6 +10,8 @@ repositories {
 
 apply plugin: "com.android.application"
 
+apply from: "../keystores/keystore_signing.gradle"
+
 repositories {
   maven { url "https://jitpack.io" }
   maven { url "http://dl.bintray.com/novoda/maven" }
@@ -39,6 +41,7 @@ android {
     release {
       minifyEnabled false
       proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+      signingConfig signingConfigs.release
     }
   }
 
