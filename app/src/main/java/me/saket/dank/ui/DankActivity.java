@@ -9,7 +9,6 @@ import android.view.View;
 
 import butterknife.ButterKnife;
 import io.github.inflationx.viewpump.ViewPumpContextWrapper;
-import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 
@@ -44,10 +43,6 @@ public abstract class DankActivity extends LifecycleOwnerActivity {
 
   @Override
   protected void attachBaseContext(Context newBase) {
-    if (BuildConfig.DEBUG) {
-      super.attachBaseContext(ViewPumpContextWrapper.wrap(newBase));
-    } else {
-      super.attachBaseContext(newBase);
-    }
+    super.attachBaseContext(ViewPumpContextWrapper.wrap(newBase));
   }
 }
