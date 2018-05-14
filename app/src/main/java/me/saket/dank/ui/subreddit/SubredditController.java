@@ -26,6 +26,7 @@ import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.walkthrough.SubmissionGestureWalkthroughProceedEvent;
+import timber.log.Timber;
 
 public class SubredditController implements ObservableTransformer<UiEvent, UiChange<SubredditUi>> {
 
@@ -88,6 +89,7 @@ public class SubredditController implements ObservableTransformer<UiEvent, UiCha
         .switchMap(o -> userSessionRepository.get().streamSessions())
         .filter(session -> session.isPresent())
         .switchMap(session -> {
+          Timber.i("Fetching user profile for updating unread message icon");
           Observable<Integer> unreadCountsFromAccount = userProfileRepository.get()
               .loggedInUserAccounts()
               .map(account -> account.getInboxCount());

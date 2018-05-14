@@ -79,6 +79,7 @@ public class UserProfileSheetView extends FrameLayout {
   protected void onAttachedToWindow() {
     super.onAttachedToWindow();
 
+    Timber.i("Fetching user profile for user profile sheet");
     Observable<LoggedInAccount> replayedUserAccount = userProfileRepository.get()
         .loggedInUserAccounts()
         .subscribeOn(io())

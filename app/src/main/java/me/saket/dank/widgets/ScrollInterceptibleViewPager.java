@@ -41,8 +41,17 @@ public class ScrollInterceptibleViewPager extends ViewPager {
   @Override
   @SuppressLint("ClickableViewAccessibility")
   public boolean onTouchEvent(MotionEvent event) {
-    // Only handle one finger touches! otherwise, the user is trying to scale/pan
-    return event.getPointerCount() == 1 && super.onTouchEvent(event);
+    try {
+      // Only handle one finger touches! otherwise, the user is trying to scale/pan
+      return event.getPointerCount() == 1 && super.onTouchEvent(event);
+
+    } catch (IllegalArgumentException e) {
+      if (e.getMessage().contains("pointerIndex out of range")) {
+        // https://github.com/chrisbanes/PhotoView/issues/31#issuecomment-19803926
+        return false;
+      }
+      throw e;
+    }
   }
 
   // Touch events on seek-bar get delayed if it's inside a scrollable container.

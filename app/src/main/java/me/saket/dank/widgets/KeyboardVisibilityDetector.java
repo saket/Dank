@@ -10,6 +10,7 @@ import com.google.auto.value.AutoValue;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableOnSubscribe;
+import timber.log.Timber;
 
 public class KeyboardVisibilityDetector {
 
@@ -31,6 +32,12 @@ public class KeyboardVisibilityDetector {
 
   public KeyboardVisibilityDetector(Activity activity, int statusBarHeight) {
     View rootResizableLayout = getWindowRootResizableLayout(activity);
+
+    if (rootResizableLayout == null) {
+      int decorChildCount = ((ViewGroup) activity.getWindow().getDecorView()).getChildCount();
+      Timber.w("Couldn't find Activity's layout. Is Activity destroyed? %s. Decor child count: %s", activity.isDestroyed(), decorChildCount);
+    }
+
     View rootNonResizableLayout = ((View) rootResizableLayout.getParent());
 
     ObservableOnSubscribe<KeyboardVisibilityChangeEvent> subscriber = emitter -> {
