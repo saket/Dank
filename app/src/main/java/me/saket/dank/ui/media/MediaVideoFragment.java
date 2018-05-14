@@ -47,7 +47,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
   @BindView(R.id.albumviewer_video_content_flipper) ViewFlipper contentViewFlipper;
 
   @Inject Lazy<MediaHostRepository> mediaHostRepository;
-  @Inject ErrorResolver errorResolver;
+  @Inject Lazy<ErrorResolver> errorResolver;
   @Inject HttpProxyCacheServer httpProxyCacheServer;
 
   private MediaViewerVideoControlsView videoControlsView;
@@ -111,14 +111,18 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     //noinspection ConstantConditions
     ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
         .takeUntil(lifecycle().onDestroy().ignoreElements())
-        .subscribe(optionButtonsHeight -> {
-          int statusBarHeight = Views.statusBarHeight(getResources());
-          Views.setPaddingVertical(
-              contentViewFlipper,
-              contentViewFlipper.getPaddingTop() + statusBarHeight,
-              contentViewFlipper.getPaddingBottom() + optionButtonsHeight
-          );
-        });
+        .subscribe(
+            optionButtonsHeight -> {
+              int statusBarHeight = Views.statusBarHeight(getResources());
+              Views.setPaddingVertical(
+                  contentViewFlipper,
+                  contentViewFlipper.getPaddingTop() + statusBarHeight,
+                  contentViewFlipper.getPaddingBottom() + optionButtonsHeight
+              );
+            }, error -> {
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Error while trying to get option buttons' height"));
+            });
 
     exoPlayerManager = ExoPlayerManager.newInstance(videoView);
     exoPlayerManager.manageLifecycle(lifecycle())
@@ -162,25 +166,29 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
     exoPlayerManager.setOnVideoSizeChangeListener((videoWidth, videoHeight) -> {
       ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
           .takeUntil(lifecycle().onDestroyCompletable())
-          .subscribe(optionButtonsHeight -> {
-            int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
-            int deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels
-                // Not sure why, but display height doesn't include the status bar's height :S
-                + Views.statusBarHeight(getResources());
+          .subscribe(
+              optionButtonsHeight -> {
+                int deviceDisplayWidth = getResources().getDisplayMetrics().widthPixels;
+                int deviceDisplayHeight = getResources().getDisplayMetrics().heightPixels
+                    // Not sure why, but display height doesn't include the status bar's height :S
+                    + Views.statusBarHeight(getResources());
 
-            int videoControlsHeight = videoControlsView.heightOfControlButtons();
-            boolean isPortraitVideo = (videoHeight + videoControlsHeight) > videoWidth;
+                int videoControlsHeight = videoControlsView.heightOfControlButtons();
+                boolean isPortraitVideo = (videoHeight + videoControlsHeight) > videoWidth;
 
-            float resizeFactorToFillHorizontalSpace = (float) deviceDisplayWidth / videoWidth;
-            int resizedHeight = (int) (videoHeight * resizeFactorToFillHorizontalSpace) + videoControlsHeight;
+                float resizeFactorToFillHorizontalSpace = (float) deviceDisplayWidth / videoWidth;
+                int resizedHeight = (int) (videoHeight * resizeFactorToFillHorizontalSpace) + videoControlsHeight;
 
-            if (isPortraitVideo) {
-              int verticalSpaceAvailable = deviceDisplayHeight - optionButtonsHeight;
-              Views.setDimensions(videoView, deviceDisplayWidth, Math.min(resizedHeight, verticalSpaceAvailable));
-            } else {
-              Views.setDimensions(videoView, deviceDisplayWidth, resizedHeight);
-            }
-          });
+                if (isPortraitVideo) {
+                  int verticalSpaceAvailable = deviceDisplayHeight - optionButtonsHeight;
+                  Views.setDimensions(videoView, deviceDisplayWidth, Math.min(resizedHeight, verticalSpaceAvailable));
+                } else {
+                  Views.setDimensions(videoView, deviceDisplayWidth, resizedHeight);
+                }
+              }, error -> {
+                ResolvedError resolvedError = errorResolver.get().resolve(error);
+                resolvedError.ifUnknown(() -> Timber.e(error, "Error while trying to get option buttons' height"));
+              });
     });
 
     long startPositionMillis;
@@ -227,7 +235,7 @@ public class MediaVideoFragment extends BaseMediaViewerFragment {
       } else {
         moveToScreenState(ScreenState.FAILED);
 
-        ResolvedError resolvedError = errorResolver.resolve(error);
+        ResolvedError resolvedError = errorResolver.get().resolve(error);
         loadErrorStateView.applyFrom(resolvedError);
         loadErrorStateView.setOnRetryClickListener(o -> loadVideo(startPositionMillis));
 

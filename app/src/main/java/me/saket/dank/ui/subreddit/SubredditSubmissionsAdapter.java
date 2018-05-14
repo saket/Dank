@@ -1,5 +1,6 @@
 package me.saket.dank.ui.subreddit;
 
+import android.annotation.SuppressLint;
 import android.support.annotation.CheckResult;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
@@ -123,7 +124,24 @@ public class SubredditSubmissionsAdapter extends RecyclerViewArrayAdapter<Submis
 
   @Override
   public void accept(Pair<List<SubmissionRowUiModel>, DiffUtil.DiffResult> pair) {
+    findCollidingIds(pair.first());
+
     updateData(pair.first());
     pair.second().dispatchUpdatesTo(this);
+  }
+
+  /**
+   * https://app.bugsnag.com/uncommon-dot-is/dank/errors/5af7391616bc1600193754f8
+   */
+  @SuppressLint("UseSparseArrays")
+  private static void findCollidingIds(List<SubmissionRowUiModel> rows) {
+    Map<Long, SubmissionRowUiModel> ids = new HashMap<>(rows.size(), 1f);
+    for (SubmissionRowUiModel row : rows) {
+      if (ids.containsKey(row.adapterId())) {
+        SubmissionRowUiModel existing = ids.get(row.adapterId());
+        throw new AssertionError("ID collision between " + existing + " and " + row);
+      }
+      ids.put(row.adapterId(), row);
+    }
   }
 }

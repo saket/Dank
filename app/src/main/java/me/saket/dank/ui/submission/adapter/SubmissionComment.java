@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission.adapter;
 
+import android.annotation.SuppressLint;
 import android.support.annotation.CheckResult;
 import android.support.annotation.ColorInt;
 import android.support.annotation.ColorRes;
@@ -163,6 +164,7 @@ public interface SubmissionComment {
       };
     }
 
+    @SuppressLint("ClickableViewAccessibility")
     public void forwardTouchEventsToBackground(BetterLinkMovementMethod linkMovementMethod) {
       // Bug workaround: TextView with clickable spans consume all touch events. Manually
       // transfer them to the parent so that the background touch indicator shows up +

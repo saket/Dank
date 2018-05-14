@@ -5,6 +5,7 @@ import static junit.framework.Assert.assertEquals;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.PrivateMessage;
 
+import me.saket.dank.BuildConfig;
 import me.saket.dank.data.FullNameType;
 
 public enum InboxMessageType {
@@ -31,11 +32,15 @@ public enum InboxMessageType {
       FullNameType fullNameType = FullNameType.parse(parentFullName);
       switch (fullNameType) {
         case COMMENT:
-          assertEquals("comment reply", message.getSubject());
+          if (BuildConfig.DEBUG) {
+            assertEquals("comment reply", message.getSubject());
+          }
           return InboxMessageType.COMMENT_REPLY;
 
         case SUBMISSION:
-          assertEquals("post reply", message.getSubject());
+          if (BuildConfig.DEBUG) {
+            assertEquals("post reply", message.getSubject());
+          }
           return InboxMessageType.POST_REPLY;
 
         case MESSAGE:

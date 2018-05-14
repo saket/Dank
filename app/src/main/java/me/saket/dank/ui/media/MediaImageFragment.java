@@ -23,6 +23,7 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import dagger.Lazy;
 import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
@@ -56,7 +57,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
   @BindView(R.id.albumviewer_image_error) ErrorStateView loadErrorStateView;
 
   @Inject MediaHostRepository mediaHostRepository;
-  @Inject ErrorResolver errorResolver;
+  @Inject Lazy<ErrorResolver> errorResolver;
 
   private enum ScreenState {
     LOADING_IMAGE,
@@ -109,16 +110,25 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
     setupFlickGestures(flickDismissViewGroup);
 
     // Toggle immersive when the user clicks anywhere.
-    imageView.setOnClickListener(v -> ((MediaFragmentCallbacks) requireActivity()).toggleImmersiveMode());
+    imageView.setOnClickListener(v -> {
+      // https://app.bugsnag.com/uncommon-dot-is/dank/errors/5af6efaef194ec001852de34
+      if (isAdded()) {
+        ((MediaFragmentCallbacks) requireActivity()).toggleImmersiveMode();
+      }
+    });
 
     // Show title and description above the Activity option buttons.
     //noinspection ConstantConditions
     ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
         .takeUntil(lifecycle().onDestroy().ignoreElements())
-        .subscribe(optionButtonsHeight -> {
-          int defaultBottomMargin = getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_scroll_hint_bottom_margin);
-          Views.setMarginBottom(longImageScrollHint, optionButtonsHeight + defaultBottomMargin);
-        });
+        .subscribe(
+            optionButtonsHeight -> {
+              int defaultBottomMargin = getResources().getDimensionPixelSize(R.dimen.mediaalbumviewer_image_scroll_hint_bottom_margin);
+              Views.setMarginBottom(longImageScrollHint, optionButtonsHeight + defaultBottomMargin);
+            }, error -> {
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Error while trying to get option buttons' height"));
+            });
   }
 
   /**
@@ -152,30 +162,34 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
 
     ((MediaFragmentCallbacks) requireActivity()).getRedditSuppliedImages()
         .takeUntil(lifecycle().onDestroyCompletable())
-        .subscribe(redditImages -> {
-          String imageUrl;
-          if (mediaAlbumItemToShow.highDefinitionEnabled()) {
-            imageUrl = mediaAlbumItemToShow.mediaLink().highQualityUrl();
+        .subscribe(
+            redditImages -> {
+              String imageUrl;
+              if (mediaAlbumItemToShow.highDefinitionEnabled()) {
+                imageUrl = mediaAlbumItemToShow.mediaLink().highQualityUrl();
 
-          } else {
-            String lowQualityUrl = mediaAlbumItemToShow.mediaLink().lowQualityUrl();
-            if (mediaAlbumItemToShow.mediaLink().isGif()) {
-              imageUrl = lowQualityUrl;
+              } else {
+                String lowQualityUrl = mediaAlbumItemToShow.mediaLink().lowQualityUrl();
+                if (mediaAlbumItemToShow.mediaLink().isGif()) {
+                  imageUrl = lowQualityUrl;
 
 
-            } else {
-              int deviceDisplayWidth = ((MediaFragmentCallbacks) requireActivity()).getDeviceDisplayWidth();
-              ImageWithMultipleVariants imageWithMultipleVariants = ImageWithMultipleVariants.of(redditImages);
-              imageUrl = imageWithMultipleVariants.findNearestFor(deviceDisplayWidth, lowQualityUrl);
-            }
-          }
+                } else {
+                  int deviceDisplayWidth = ((MediaFragmentCallbacks) requireActivity()).getDeviceDisplayWidth();
+                  ImageWithMultipleVariants imageWithMultipleVariants = ImageWithMultipleVariants.of(redditImages);
+                  imageUrl = imageWithMultipleVariants.findNearestFor(deviceDisplayWidth, lowQualityUrl);
+                }
+              }
 
-          loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, false);
-          imageView.setOnImageTooLargeExceptionListener(e -> {
-            Timber.e("Failed to draw image: %s, url: %s", e.getMessage(), imageUrl);
-            loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, true);
-          });
-        });
+              loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, false);
+              imageView.setOnImageTooLargeExceptionListener(e -> {
+                Timber.e("Failed to draw image: %s, url: %s", e.getMessage(), imageUrl);
+                loadImage(mediaAlbumItemToShow, isFirstLoad, imageUrl, true);
+              });
+            }, error -> {
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Error while trying to get option buttons' height"));
+            });
   }
 
   private void loadImage(MediaAlbumItem mediaAlbumItemToShow, boolean isFirstLoad, String imageUrl, boolean downSampleToFixError) {
@@ -243,7 +257,7 @@ public class MediaImageFragment extends BaseMediaViewerFragment {
           public void onLoadFailed(@Nullable Exception e) {
             moveToScreenState(ScreenState.FAILED);
 
-            ResolvedError resolvedError = errorResolver.resolve(e);
+            ResolvedError resolvedError = errorResolver.get().resolve(e);
             loadErrorStateView.applyFrom(resolvedError);
             loadErrorStateView.setOnRetryClickListener(o -> calculateUrlAndLoadImage(mediaAlbumItemToShow, isFirstLoad));
 

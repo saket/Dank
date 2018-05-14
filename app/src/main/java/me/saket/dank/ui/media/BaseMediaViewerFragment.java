@@ -10,14 +10,18 @@ import android.view.ViewGroup;
 
 import javax.inject.Inject;
 
-import me.saket.dank.urlparser.ImgurLink;
-import me.saket.dank.urlparser.MediaLink;
+import dagger.Lazy;
+import me.saket.dank.data.ErrorResolver;
+import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.DankFragment;
+import me.saket.dank.urlparser.ImgurLink;
+import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.MediaAlbumViewerTitleDescriptionView;
 import me.saket.dank.widgets.binoculars.FlickGestureListener;
+import timber.log.Timber;
 
 /**
  * Includes common logic for showing title & description and dimming the image when the description is scrolled.
@@ -25,6 +29,7 @@ import me.saket.dank.widgets.binoculars.FlickGestureListener;
 public abstract class BaseMediaViewerFragment extends DankFragment {
 
   @Inject DankLinkMovementMethod linkMovementMethod;
+  @Inject Lazy<ErrorResolver> errorResolver;
 
   private MediaAlbumViewerTitleDescriptionView titleDescriptionView;
   private View imageDimmingView;
@@ -87,20 +92,24 @@ public abstract class BaseMediaViewerFragment extends DankFragment {
     // Show title and description.
     ((MediaFragmentCallbacks) getActivity()).optionButtonsHeight()
         .takeUntil(lifecycle().onDestroy().ignoreElements())
-        .subscribe(optionsHeight -> {
-          Views.setPaddingBottom(titleDescriptionView, titleDescriptionView.getPaddingBottom() + optionsHeight);
+        .subscribe(
+            optionsHeight -> {
+              Views.setPaddingBottom(titleDescriptionView, titleDescriptionView.getPaddingBottom() + optionsHeight);
 
-          if (mediaLinkToShow instanceof ImgurLink) {
-            String title = ((ImgurLink) mediaLinkToShow).title();
-            String description = ((ImgurLink) mediaLinkToShow).description();
-            titleDescriptionView.setTitleAndDescription(title, description);
+              if (mediaLinkToShow instanceof ImgurLink) {
+                String title = ((ImgurLink) mediaLinkToShow).title();
+                String description = ((ImgurLink) mediaLinkToShow).description();
+                titleDescriptionView.setTitleAndDescription(title, description);
 
-            if (description != null) {
-              titleDescriptionView.descriptionView.setMovementMethod(linkMovementMethod);
-              Linkify.addLinks(titleDescriptionView.descriptionView, Linkify.ALL);
-            }
-          }
-        });
+                if (description != null) {
+                  titleDescriptionView.descriptionView.setMovementMethod(linkMovementMethod);
+                  Linkify.addLinks(titleDescriptionView.descriptionView, Linkify.ALL);
+                }
+              }
+            }, error -> {
+              ResolvedError resolvedError = errorResolver.get().resolve(error);
+              resolvedError.ifUnknown(() -> Timber.e(error, "Error while trying to get option buttons' height"));
+            });
   }
 
   public FlickGestureListener createFlickGestureListener(FlickGestureListener.GestureCallbacks wrappedGestureCallbacks) {

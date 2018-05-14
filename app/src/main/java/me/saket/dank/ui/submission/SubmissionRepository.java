@@ -56,13 +56,13 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.reply.ReplyRepository;
-import me.saket.dank.vote.VotingManager;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
+import me.saket.dank.vote.VotingManager;
 import me.saket.dank.walkthrough.SyntheticData;
 import timber.log.Timber;
 
@@ -182,6 +182,7 @@ public class SubmissionRepository {
           } else {
             //Timber.i("Returning from memory");
 
+            // We're calling getOrFetch() again to receive a refreshing Observable.
             // This should return immediately because the store has an in-memory cache.
             return getOrFetchSubmissionWithComments(oldSubmissionRequest)
                 // There is an odd behavior where the cache store gets stuck and doesn't respond,

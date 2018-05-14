@@ -130,7 +130,11 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
 
   @Override
   public CharSequence parseSelfText(Submission submission) {
-    return getOrParse(submission.getSelftext());
+    try {
+      return getOrParse(submission.getSelftext());
+    } catch (Throwable e) {
+      throw new RuntimeException("Couldn't parse self-text in " + submission.getPermalink(), e);
+    }
   }
 
   private String stripMarkdown(String markdown) {

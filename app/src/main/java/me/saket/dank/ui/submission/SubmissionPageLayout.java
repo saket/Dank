@@ -344,10 +344,14 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           .subscribeOn(io())
           .observeOn(mainThread())
           .takeUntil(lifecycle().onDestroyFlowable())
-          .subscribe(retainedSubmission -> {
-            //noinspection ConstantConditions
-            populateUi(retainedSubmission, retainedRequest, callingSubreddit);
-          });
+          .subscribe(
+              retainedSubmission -> {
+                //noinspection ConstantConditions
+                populateUi(retainedSubmission, retainedRequest, callingSubreddit);
+              }, error -> {
+                ResolvedError resolvedError = errorResolver.get().resolve(error);
+                resolvedError.ifUnknown(() -> Timber.e(error, "Error while deserializing saved submission"));
+              });
     }
   }
 

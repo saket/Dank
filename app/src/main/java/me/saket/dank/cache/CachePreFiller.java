@@ -46,7 +46,6 @@ import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
-import timber.log.Timber;
 
 /**
  * Pre-fetches submission content and comments.
@@ -279,7 +278,7 @@ public class CachePreFiller {
                 .get();
           }
         }))
-        .doOnComplete(() -> Timber.i("Link done: %s", submission.getTitle()))
+        .doOnComplete(() -> log("Link done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.LINK_METADATA));
   }
 
@@ -296,6 +295,7 @@ public class CachePreFiller {
     return submissionRepository.submissionWithComments(request)
         .take(1)
         .ignoreElements()
+        .onErrorComplete()
         //.doOnComplete(() -> Timber.i("Comments done: %s", submission.getTitle()))
         .doOnComplete(() -> markThingAsPreFilled(submission, CachePreFillThing.COMMENTS));
   }

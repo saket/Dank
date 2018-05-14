@@ -26,9 +26,10 @@ import me.saket.dank.cache.DiskLruCachePathResolver;
 import me.saket.dank.cache.MoshiStoreJsonParser;
 import me.saket.dank.cache.StoreFilePersister;
 import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.di.Dank;
+import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.utils.Preconditions;
+import timber.log.Timber;
 
 @Singleton
 public class UserProfileRepository {
@@ -99,6 +100,8 @@ public class UserProfileRepository {
   public Observable<LoggedInAccount> loggedInUserAccounts() {
     String loggedInUserName = userSessionRepository.loggedInUserName();
     Preconditions.checkNotNull(loggedInUserName, "loggedInUserName == null");
+
+    Timber.i("Fetching logged in user account");
     return loggedInUserAccountStore.stream(loggedInUserName);
   }
 
@@ -106,6 +109,7 @@ public class UserProfileRepository {
   public Completable refreshLoggedInUserAccount() {
     String loggedInUserName = userSessionRepository.loggedInUserName();
 
+    Timber.i("Refreshing logged in user acct");
     return loggedInUserAccountStore.getWithResult(loggedInUserName)
         .filter(Result::isFromCache)
         .flatMapSingle(o -> loggedInUserAccountStore.fetch(loggedInUserName))
