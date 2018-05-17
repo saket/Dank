@@ -199,7 +199,7 @@
   <string name="submission_nsfw_content_disabled_error">NSFW \u00A0( ͡° ͜ʖ ͡°)</string>
   <string name="submission_tap_to_enable_nsfw_content">Tap to disable filtering</string>
 
-  <string name="submission_byline">r/%1$s \u00b7 %2$s \u00b7 %3$s \u00b7 %4$s comments</string> <!-- r/subreddit * author * timestamp * comments count -->
+  <string name="submission_byline">r/%1$s \u00b7 %2$s \u00b7 %3$s</string> <!-- r/subreddit * author * timestamp -->
   <string name="submission_comment_byline_item_separator">\u0020\u00b7\u0020</string>
 
   <plurals name="submission_comment_byline_item_score">

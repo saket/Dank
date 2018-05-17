@@ -10,6 +10,7 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -48,6 +49,7 @@ public interface SubmissionCommentsHeader {
     SUBMISSION_TITLE,
     SUBMISSION_BYLINE,
     SUBMISSION_SAVE_STATUS,
+    SUBMISSION_COMMENT_COUNT,
     CONTENT_LINK,
     CONTENT_LINK_THUMBNAIL,
     CONTENT_LINK_FAVICON,
@@ -68,6 +70,8 @@ public interface SubmissionCommentsHeader {
     abstract SpannableWithTextEquality title();
 
     abstract SpannableWithTextEquality byline();
+
+    abstract String commentCount();
 
     abstract Optional<SpannableWithTextEquality> optionalSelfText();
 
@@ -97,12 +101,14 @@ public interface SubmissionCommentsHeader {
 
       abstract Builder byline(SpannableWithTextEquality byline);
 
+      abstract Builder commentCount(String count);
+
       Builder title(CharSequence title, Pair<Integer, VoteDirection> votes) {
         return title(SpannableWithTextEquality.wrap(title, votes));
       }
 
-      Builder byline(CharSequence byline, Integer commentsCount) {
-        return byline(SpannableWithTextEquality.wrap(byline, commentsCount));
+      Builder byline(CharSequence byline) {
+        return byline(SpannableWithTextEquality.wrap(byline));
       }
 
       abstract Builder optionalSelfText(Optional<SpannableWithTextEquality> text);
@@ -148,6 +154,10 @@ public interface SubmissionCommentsHeader {
     private final AnimatedProgressBar contentLinkProgressView;
     private final DankLinkMovementMethod movementMethod;
     private final @ColorInt int contentLinkBackgroundColor;
+    private final TextView commentCountView;
+    private final Button commentSortingButton;
+    private final Button commentRefreshButton;
+
     private UiModel uiModel;
 
     public static ViewHolder create(
@@ -174,6 +184,10 @@ public interface SubmissionCommentsHeader {
       contentLinkTitleView = itemView.findViewById(R.id.submission_link_title);
       contentLinkBylineView = itemView.findViewById(R.id.submission_link_byline);
       contentLinkProgressView = itemView.findViewById(R.id.submission_link_progress);
+      commentCountView = itemView.findViewById(R.id.submission_comment_count);
+      commentSortingButton = itemView.findViewById(R.id.submission_comment_sorting);
+      commentRefreshButton = itemView.findViewById(R.id.submission_comment_manual_refresh);
+
       this.movementMethod = movementMethod;
 
       contentLinkView.setClipToOutline(true);
@@ -207,6 +221,7 @@ public interface SubmissionCommentsHeader {
     public void render() {
       setSubmissionTitle(uiModel);
       setSubmissionByline(uiModel);
+      setCommentCount(uiModel);
       setContentLink(uiModel, false);
 
       uiModel.optionalSelfText().ifPresent(selfText -> selfTextView.setText(selfText));
@@ -216,6 +231,10 @@ public interface SubmissionCommentsHeader {
 
     private void setSubmissionByline(UiModel uiModel) {
       bylineView.setText(uiModel.byline());
+    }
+
+    private void setCommentCount(UiModel uiModel) {
+      commentCountView.setText(uiModel.commentCount());
     }
 
     private void setSubmissionTitle(UiModel uiModel) {
@@ -238,6 +257,9 @@ public interface SubmissionCommentsHeader {
             case SUBMISSION_SAVE_STATUS:
               getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
               break;
+
+            case SUBMISSION_COMMENT_COUNT:
+              setCommentCount(uiModel);
 
             case CONTENT_LINK:
               setContentLink(uiModel, true);
@@ -384,6 +406,8 @@ public interface SubmissionCommentsHeader {
   class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
     private final DankLinkMovementMethod linkMovementMethod;
     private final SubmissionSwipeActionsProvider swipeActionsProvider;
+
+    // TODO: merge all these streams.
     final PublishRelay<Object> headerClickStream = PublishRelay.create();
     final PublishRelay<SubmissionContentLinkClickEvent> contentLinkClickStream = PublishRelay.create();
     final PublishRelay<SubmissionContentLinkClickEvent> contentLinkLongClickStream = PublishRelay.create();
