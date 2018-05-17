@@ -215,6 +215,7 @@ public class SubmissionUiConstructor {
 
     int vote = votingManager.getScoreAfterAdjustingPendingVote(submission);
     int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
+    String abbreviatedCommentCount = Strings.abbreviateScore(postedAndPendingCommentCount);
 
     Truss titleBuilder = new Truss();
 
@@ -248,14 +249,13 @@ public class SubmissionUiConstructor {
         R.string.submission_byline,
         submission.getSubredditName(),
         submission.getAuthor(),
-        Dates.createTimestamp(context.getResources(), JrawUtils.createdTimeUtc(submission)),
-        Strings.abbreviateScore(postedAndPendingCommentCount)
-    );
+        Dates.createTimestamp(context.getResources(), JrawUtils.createdTimeUtc(submission)));
 
     return SubmissionCommentsHeader.UiModel.builder()
         .adapterId(adapterId)
         .title(titleBuilder.build(), Pair.create(vote, pendingOrDefaultVote))
-        .byline(byline, postedAndPendingCommentCount)
+        .byline(byline)
+        .commentCount(abbreviatedCommentCount)
         .selfText(selfTextOptional)
         .optionalContentLinkModel(contentLinkUiModel)
         .submission(submission)
