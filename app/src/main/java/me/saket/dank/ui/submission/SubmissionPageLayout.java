@@ -133,7 +133,6 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
 import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.Views;
-import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
 import me.saket.dank.utils.lifecycle.LifecycleOwnerActivity;
 import me.saket.dank.utils.lifecycle.LifecycleStreams;
@@ -816,7 +815,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   }
 
   /**
-   * Scroll to <var>parentContribution</var>'s reply if it's not going to be visible because it's located beyond the visible window.
+   * Scroll to <var>parentContribution</var>'s reply if it's not going to
+   * be visible because it's located beyond the visible window.
    */
   @CheckResult
   private Completable scrollToNewlyAddedReplyIfHidden(Contribution parentContribution) {
@@ -1043,9 +1043,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     RxView.clicks(replyFAB)
         .takeUntil(lifecycle().onDestroy())
         .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), (o, submission) -> submission)
-        .map(submission -> InlineReplyRequestEvent.create(submission))
+        .map(InlineReplyRequestEvent::create)
         .subscribe(inlineReplyRequestStream);
 
+    // TODO: remove these leftover commented out code.
 //    sharedReplyFabClicks
 //        .filter(o -> userSessionRepository.get().isUserLoggedIn())
 //        .withLatestFrom(isUserASubredditMod, Pair::create)
@@ -1407,10 +1408,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     contentLoadProgressView.hide();
     mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.LoadFailure.create(resolvedError)));
-  }
-
-  public GlidePaddingTransformation imagePaddingTransformation() {
-    return contentImageViewHolder.get().glidePaddingTransformation;
   }
 
 // ======== EXPANDABLE PAGE CALLBACKS ======== //
