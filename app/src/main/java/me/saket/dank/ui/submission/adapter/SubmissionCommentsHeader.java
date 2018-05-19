@@ -28,6 +28,9 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.data.SwipeEvent;
+import me.saket.dank.ui.UiEvent;
+import me.saket.dank.ui.submission.events.ChangeCommentSortingClicked;
+import me.saket.dank.ui.submission.events.CommentsRefreshClicked;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
@@ -154,6 +157,7 @@ public interface SubmissionCommentsHeader {
     private final AnimatedProgressBar contentLinkProgressView;
     private final DankLinkMovementMethod movementMethod;
     private final @ColorInt int contentLinkBackgroundColor;
+    private final View commentOptionsContainerView;
     private final TextView commentCountView;
     private final Button commentSortingButton;
     private final Button commentRefreshButton;
@@ -187,6 +191,7 @@ public interface SubmissionCommentsHeader {
       commentCountView = itemView.findViewById(R.id.submission_comment_count);
       commentSortingButton = itemView.findViewById(R.id.submission_comment_sorting);
       commentRefreshButton = itemView.findViewById(R.id.submission_comment_manual_refresh);
+      commentOptionsContainerView = (View) commentSortingButton.getParent();
 
       this.movementMethod = movementMethod;
 
@@ -201,17 +206,26 @@ public interface SubmissionCommentsHeader {
       });
     }
 
-    public void setupContentLinkClickStreams(
-        Relay<SubmissionContentLinkClickEvent> clickStream,
-        Relay<SubmissionContentLinkClickEvent> longClickStream)
+    public void setupContentLinkClicks(
+        Relay<SubmissionContentLinkClickEvent> clicks,
+        Relay<SubmissionContentLinkClickEvent> longClicks)
     {
       contentLinkView.setOnClickListener(o ->
-          clickStream.accept(SubmissionContentLinkClickEvent.create(contentLinkView, uiModel.optionalContentLinkModel().get().link()))
+          clicks.accept(SubmissionContentLinkClickEvent.create(
+              contentLinkView,
+              uiModel.optionalContentLinkModel().get().link()))
       );
       contentLinkView.setOnLongClickListener(o -> {
-        longClickStream.accept(SubmissionContentLinkClickEvent.create(contentLinkView, uiModel.optionalContentLinkModel().get().link()));
+        longClicks.accept(SubmissionContentLinkClickEvent.create(
+            contentLinkView,
+            uiModel.optionalContentLinkModel().get().link()));
         return true;  // true == long click handled.
       });
+    }
+
+    public void setupCommentOptionClicks(PublishRelay<UiEvent> events) {
+      commentSortingButton.setOnClickListener(o -> events.accept(ChangeCommentSortingClicked.create(commentOptionsContainerView)));
+      commentRefreshButton.setOnClickListener(o -> events.accept(CommentsRefreshClicked.create()));
     }
 
     public void setUiModel(UiModel uiModel) {
@@ -224,7 +238,7 @@ public interface SubmissionCommentsHeader {
       setCommentCount(uiModel);
       setContentLink(uiModel, false);
 
-      uiModel.optionalSelfText().ifPresent(selfText -> selfTextView.setText(selfText));
+      uiModel.optionalSelfText().ifPresent(selfTextView::setText);
       selfTextViewContainer.setVisibility(uiModel.optionalSelfText().isPresent() ? View.VISIBLE : View.GONE);
       selfTextView.setMovementMethod(movementMethod);
     }
@@ -409,9 +423,11 @@ public interface SubmissionCommentsHeader {
 
     // TODO: merge all these streams.
     final PublishRelay<Object> headerClickStream = PublishRelay.create();
-    final PublishRelay<SubmissionContentLinkClickEvent> contentLinkClickStream = PublishRelay.create();
-    final PublishRelay<SubmissionContentLinkClickEvent> contentLinkLongClickStream = PublishRelay.create();
+    final PublishRelay<SubmissionContentLinkClickEvent> contentLinkClicks = PublishRelay.create();
+    final PublishRelay<SubmissionContentLinkClickEvent> contentLinkLongClicks = PublishRelay.create();
     final PublishRelay<Optional<SubmissionCommentsHeader.ViewHolder>> headerBindStream = PublishRelay.create();
+
+    final PublishRelay<UiEvent> events = PublishRelay.create();
 
     @Inject
     public Adapter(DankLinkMovementMethod linkMovementMethod, SubmissionSwipeActionsProvider swipeActionsProvider) {
@@ -423,7 +439,8 @@ public interface SubmissionCommentsHeader {
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
       ViewHolder holder = ViewHolder.create(inflater, parent, headerClickStream, linkMovementMethod);
       holder.setupGestures(swipeActionsProvider);
-      holder.setupContentLinkClickStreams(contentLinkClickStream, contentLinkLongClickStream);
+      holder.setupCommentOptionClicks(events);
+      holder.setupContentLinkClicks(contentLinkClicks, contentLinkLongClicks);
       return holder;
     }
 

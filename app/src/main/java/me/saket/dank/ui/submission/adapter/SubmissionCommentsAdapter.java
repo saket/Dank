@@ -17,6 +17,7 @@ import javax.inject.Inject;
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.data.SwipeEvent;
+import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
@@ -183,18 +184,23 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
+  public Relay<UiEvent> headerUiEvents() {
+    return headerAdapter.events;
+  }
+
+  @CheckResult
   public Observable<Object> streamHeaderClicks() {
     return headerAdapter.headerClickStream;
   }
 
   @CheckResult
   public Observable<SubmissionContentLinkClickEvent> streamContentLinkClicks() {
-    return headerAdapter.contentLinkClickStream;
+    return headerAdapter.contentLinkClicks;
   }
 
   @CheckResult
   public Observable<SubmissionContentLinkClickEvent> streamContentLinkLongClicks() {
-    return headerAdapter.contentLinkLongClickStream;
+    return headerAdapter.contentLinkLongClicks;
   }
 
   @CheckResult

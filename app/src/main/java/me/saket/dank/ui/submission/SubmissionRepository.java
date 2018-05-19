@@ -301,8 +301,12 @@ public class SubmissionRepository {
         )));
   }
 
+  public void clearCachedSubmissionWithComments(DankSubmissionRequest request) {
+    submissionWithCommentsStore.get().clear(request);
+  }
+
   @CheckResult
-  public Completable clearCachedSubmissionWithComments() {
+  public Completable clearAllCachedSubmissionWithComments() {
     if (!BuildConfig.DEBUG) {
       throw new AssertionError();
     }

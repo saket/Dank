@@ -13,6 +13,8 @@ import net.dean.jraw.models.CommentSort;
 
 /**
  * Because {@link SubmissionRequest} does not have a toBuilder() method. Update: Then send a PR to JRAW?
+ *
+ * TODO Kotlin: Kotlin's copy() will be sufficient. I won't need this class.
  */
 @AutoValue
 public abstract class DankSubmissionRequest implements Parcelable {
