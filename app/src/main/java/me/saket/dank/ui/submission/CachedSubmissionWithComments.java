@@ -43,9 +43,7 @@ public abstract class CachedSubmissionWithComments {
   public abstract long updateTimeMillis();
 
   public static CachedSubmissionWithComments create(DankSubmissionRequest request, Submission submission, long saveTimeMillis) {
-    if (submission.getSuggestedSort() != null && submission.getSuggestedSort() != request.commentSort()) {
-      new Exception("Suggested sort is different from request").printStackTrace();
-    }
+    // Submission's suggested sort can be different from
     return new AutoValue_CachedSubmissionWithComments(request, submission, saveTimeMillis);
   }
 

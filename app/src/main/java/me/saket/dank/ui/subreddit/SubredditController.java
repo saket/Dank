@@ -13,7 +13,6 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.ObservableTransformer;
 import io.reactivex.Single;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.ui.UiChange;
 import me.saket.dank.ui.UiEvent;
@@ -24,6 +23,7 @@ import me.saket.dank.ui.user.UserProfileRepository;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.walkthrough.SubmissionGestureWalkthroughProceedEvent;
 import timber.log.Timber;
@@ -123,7 +123,7 @@ public class SubredditController implements ObservableTransformer<UiEvent, UiCha
           Submission submission = clickEvent.submission();
 
           DankSubmissionRequest submissionRequest = DankSubmissionRequest.builder(submission.getId())
-              .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : DankRedditClient.DEFAULT_COMMENT_SORT)
+              .optionalCommentSort(Optional.ofNullable(submission.getSuggestedSort()))
               .build();
 
           return (UiChange<SubredditUi>) ui -> ui.populateSubmission(submission, submissionRequest, currentSubredditName);

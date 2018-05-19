@@ -60,6 +60,7 @@ import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.vote.VotingManager;
@@ -165,12 +166,13 @@ public class SubmissionRepository {
           // load with the wrong sort (possibly because the submission's details were unknown), reload
           // comments using the suggested sort.
           CommentSort suggestedSort = submissionWithComments.submission().getSuggestedSort();
+          Boolean useSuggestedSort = suggestedSort != null && oldSubmissionRequest.optionalCommentSort().isEmpty();
 
-          if (suggestedSort != null && suggestedSort != oldSubmissionRequest.commentSort()) {
+          if (useSuggestedSort) {
             //Timber.i("Different sort.");
 
             DankSubmissionRequest newRequest = oldSubmissionRequest.toBuilder()
-                .commentSort(suggestedSort)
+                .optionalCommentSort(Optional.of(suggestedSort))
                 .build();
             return getOrFetchSubmissionWithComments(newRequest)
                 .map(submissions -> Pair.create(newRequest, submissions))

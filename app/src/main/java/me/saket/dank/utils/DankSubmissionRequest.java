@@ -13,7 +13,7 @@ import net.dean.jraw.models.CommentSort;
 
 /**
  * Because {@link SubmissionRequest} does not have a toBuilder() method. Update: Then send a PR to JRAW?
- *
+ * <p>
  * TODO Kotlin: Kotlin's copy() will be sufficient. I won't need this class.
  */
 @AutoValue
@@ -21,7 +21,7 @@ public abstract class DankSubmissionRequest implements Parcelable {
 
   public abstract String id();
 
-  public abstract CommentSort commentSort();
+  public abstract Optional<CommentSort> optionalCommentSort();
 
   @Nullable
   public abstract String focusCommentId();
@@ -42,7 +42,7 @@ public abstract class DankSubmissionRequest implements Parcelable {
   public abstract Builder toBuilder();
 
   public DankSubmissionRequest withCommentSort(CommentSort newSort) {
-    return toBuilder().commentSort(newSort).build();
+    return toBuilder().optionalCommentSort(Optional.of(newSort)).build();
   }
 
   @AutoValue.Builder
@@ -60,7 +60,7 @@ public abstract class DankSubmissionRequest implements Parcelable {
      * Sets the sorting for the comments in the response. This will be used to request more comments using
      * {@link CommentNode#loadMoreComments}. A null value will exclude this parameter.
      */
-    public abstract Builder commentSort(CommentSort sort);
+    public abstract Builder optionalCommentSort(Optional<CommentSort> sort);
 
     /**
      * <p>Sets the number of parents shown in relation to the focused comment. For example, if the focused comment is
