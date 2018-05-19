@@ -235,6 +235,13 @@
     <item quantity="other">%d hidden</item>
   </plurals>
 
+  <string name="comment_sorting_best">Best</string>
+  <string name="comment_sorting_top">Top</string>
+  <string name="comment_sorting_new">New</string>
+  <string name="comment_sorting_controversial">Controversial</string>
+  <string name="comment_sorting_old">Old</string>
+  <string name="comment_sorting_qna">Q &amp; A</string>
+
   <!-- WebView -->
   <string name="webview_open_in_browser">Open in browser</string>
   <string name="webview_share">Share…</string>

@@ -103,6 +103,7 @@ public class SubmissionsSortingModePopupMenu extends PopupMenu {
     onSortingModeSelectListener = listener;
   }
 
+  // NOTE: Keep this in sync with CommentSortingModePopupMenu.
   public void highlightActiveSortingAndTImePeriod(SortingAndTimePeriod highlightedSortingAndTimePeriod) {
     String highlightedSorting = context.getString(highlightedSortingAndTimePeriod.getSortingDisplayTextRes());
     String highlightedTimePeriod = context.getString(highlightedSortingAndTimePeriod.getTimePeriodDisplayTextRes());

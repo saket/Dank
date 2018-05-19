@@ -104,7 +104,7 @@ public class DankRedditClient {
     // Note: context count is only null in case of "continue thread" requests.
 
     SubmissionRequest jrawSubmissionRequest = new SubmissionRequest.Builder(submissionRequest.id())
-        .sort(submissionRequest.commentSort())
+        .sort(submissionRequest.optionalCommentSort())
         .focus(submissionRequest.focusCommentId())
         .context(submissionRequest.contextCount())
         .limit(submissionRequest.commentLimit())

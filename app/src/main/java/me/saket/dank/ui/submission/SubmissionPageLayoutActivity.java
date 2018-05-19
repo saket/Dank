@@ -109,7 +109,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
     // to be different, then do another load.
     DankSubmissionRequest.Builder submissionReqBuilder = DankSubmissionRequest
         .builder(submissionLink.id())
-        .commentSort(DankRedditClient.DEFAULT_COMMENT_SORT);
+        .optionalCommentSort(DankRedditClient.DEFAULT_COMMENT_SORT);
 
     RedditCommentLink initialComment = submissionLink.initialComment();
     if (initialComment != null) {

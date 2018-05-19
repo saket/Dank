@@ -289,7 +289,7 @@ public class CachePreFiller {
     }
 
     DankSubmissionRequest request = DankSubmissionRequest.builder(submission.getId())
-        .commentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : CommentSort.TOP)
+        .optionalCommentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : CommentSort.TOP)
         .build();
 
     return submissionRepository.submissionWithComments(request)

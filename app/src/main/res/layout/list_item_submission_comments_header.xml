@@ -3,7 +3,6 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
-  android:paddingBottom="@dimen/spacing16"
   tools:background="@color/window_background"
   tools:layout_below="@+id/submission_toolbar">
 
@@ -65,6 +64,7 @@
       android:id="@+id/submission_selfpost_container"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/spacing16"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
       android:background="@drawable/background_submission_self_text"
@@ -87,6 +87,7 @@
       layout="@layout/list_item_submission_comments_header_link"
       android:layout_width="match_parent"
       android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/spacing16"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
       tools:layout_marginBottom="@dimen/spacing16" />
@@ -94,6 +95,7 @@
     <LinearLayout
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
+      android:layout_marginBottom="@dimen/spacing16"
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
       android:background="@drawable/background_submission_comment_options">
