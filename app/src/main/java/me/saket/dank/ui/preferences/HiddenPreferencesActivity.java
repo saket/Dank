@@ -115,7 +115,7 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
 
     addButton("Clear cached submission list and comments", o -> {
       submissionRepository.clearCachedSubmissionLists()
-          .andThen(submissionRepository.clearCachedSubmissionWithComments())
+          .andThen(submissionRepository.clearAllCachedSubmissionWithComments())
           .andThen(replyRepository.removeAllPendingSyncReplies())
           .subscribeOn(io()).subscribe();
     });
