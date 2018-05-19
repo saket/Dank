@@ -1,4 +1,4 @@
-package me.saket.dank.ui.submission;
+package me.saket.dank.reply;
 
 import static org.junit.Assert.assertEquals;
 import static org.mockito.Matchers.any;
@@ -32,8 +32,7 @@ import java.util.Map;
 import java.util.TimeZone;
 
 import hirondelle.date4j.DateTime;
-import me.saket.dank.reply.ReplyDraft;
-import me.saket.dank.reply.ReplyRepository;
+import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 
 public class ReplyRepositoryShould {
@@ -44,6 +43,7 @@ public class ReplyRepositoryShould {
 
   @Mock SharedPreferences sharedPrefs;
   @Mock SharedPreferences.Editor sharedPrefsEditor;
+  @Mock ErrorResolver errorResolver;
 
   @Captor ArgumentCaptor<String> stringArgCaptor;
 
@@ -52,9 +52,16 @@ public class ReplyRepositoryShould {
 
   @Before
   @SuppressLint("CommitPrefEdits")
-  public void setUp() throws Exception {
+  public void setUp() {
     Moshi moshi = new Moshi.Builder().add(AutoValueMoshiAdapterFactory.create()).build();
-    replyRepository = spy(new ReplyRepository(null, null, null, sharedPrefs, moshi, RECYCLE_DRAFTS_IN_DAYS, errorResolver));
+    replyRepository = spy(new ReplyRepository(
+        null,
+        null,
+        null,
+        sharedPrefs,
+        moshi,
+        RECYCLE_DRAFTS_IN_DAYS,
+        () -> errorResolver));
     replyDraftJsonAdapter = moshi.adapter(ReplyDraft.class);
 
     when(sharedPrefs.edit()).thenReturn(sharedPrefsEditor);
