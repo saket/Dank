@@ -74,6 +74,7 @@ import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Predicate;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
+import me.saket.dank.data.ActivityResult;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.data.OnLoginRequireListener;
@@ -369,7 +370,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     // RecyclerView automatically handles saving and restoring scroll position if the
     // adapter contents are the same once the adapter is set. So we set the adapter
-    // only once its dataset is available.
+    // only once its data-set is available.
     submissionCommentsAdapter.dataChanges()
         .filter(uiModels -> uiModels.size() >= commentRowCountBeforeActivityDestroy)
         .take(1)
@@ -572,7 +573,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     sharedVoteActions
         .filter(pair -> !pair.second().isArchived())
-        .map(pair -> pair.first())
+        .map(Pair::first)
         .flatMapCompletable(voteEvent -> voteEvent.toVote().saveAndSend(votingManager.get())
             .subscribeOn(io()))
         .ambWith(lifecycle().onDestroyCompletable())
@@ -587,7 +588,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     // Wait till the reply's View is added to the list and show keyboard.
     inlineReplyAdditionStream
         .switchMapSingle(parentContribution -> scrollToNewlyAddedReplyIfHidden(parentContribution).toSingleDefault(parentContribution))
-        .switchMap(parentContribution -> showKeyboardWhenReplyIsVisible(parentContribution))
+        .switchMap(this::showKeyboardWhenReplyIsVisible)
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
 
@@ -617,7 +618,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     // So when the activity result arrives, this Rx chain should be ready and listening.
     lifecycle().onActivityResults()
         .filter(result -> result.requestCode() == REQUEST_CODE_PICK_GIF && result.isResultOk())
-        .map(result -> result.data())
+        .map(ActivityResult::data)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(resultData -> {
           ReplyInsertGifClickEvent gifInsertClickEvent = GiphyPickerActivity.extractExtraPayload(resultData);
