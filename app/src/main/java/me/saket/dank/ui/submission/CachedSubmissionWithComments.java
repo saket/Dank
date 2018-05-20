@@ -31,7 +31,11 @@ public abstract class CachedSubmissionWithComments {
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_REQUEST_JSON + " == ?";
 
+  public static final String WHERE_REQUEST_JSON =
+      COLUMN_REQUEST_JSON + " == ?";
+
   public static final String WHERE_UPDATE_TIME_BEFORE = COLUMN_UPDATE_TIME + " < ?";
+
   public static final String SELECT_WHERE_UPDATE_TIME_BEFORE =
       "SELECT * FROM " + TABLE_NAME
           + " WHERE " + COLUMN_UPDATE_TIME + " < ?";
