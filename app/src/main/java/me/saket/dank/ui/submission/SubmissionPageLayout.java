@@ -806,7 +806,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         });
 
     // Comment sorting.
-    Observable<DankSubmissionRequest> sharedSortingChanges = commentsAdapter.headerUiEvents()
+    Observable<DankSubmissionRequest> sharedSortingChanges = commentsAdapter.commentOptionUiEvents()
         .ofType(ChangeCommentSortingClicked.class)
         .withLatestFrom(submissionRequestStream, Pair::create)
         .flatMapSingle(pair -> {
@@ -828,6 +828,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     sharedSortingChanges
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> {
+          Timber.i("Showing progress");
           contentLoadProgressView.show();
 
           submissionStream

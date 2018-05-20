@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  xmlns:tools="http://schemas.android.com/tools"
+  android:layout_width="wrap_content"
+  android:layout_height="wrap_content"
+  android:layout_marginBottom="@dimen/spacing16"
+  android:layout_marginEnd="@dimen/spacing16"
+  android:layout_marginStart="@dimen/spacing16"
+  android:animateLayoutChanges="true"
+  android:background="@drawable/background_submission_comment_options"
+  android:paddingEnd="@dimen/spacing2"
+  tools:ignore="RtlSymmetry">
+
+  <me.saket.dank.widgets.TintableCompoundDrawableTextView
+    android:id="@+id/submission_comment_count"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:background="@null"
+    android:clickable="false"
+    android:drawablePadding="@dimen/spacing8"
+    android:drawableStart="@drawable/ic_mode_comment_16dp"
+    android:gravity="center_vertical"
+    android:paddingEnd="@dimen/spacing12"
+    android:paddingStart="@dimen/spacing16"
+    android:textColor="@color/gray_400"
+    tools:text="251" />
+
+  <me.saket.dank.widgets.TintableCompoundDrawableButton
+    android:id="@+id/submission_comment_sorting"
+    style="@style/DankButton.Borderless"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:drawablePadding="@dimen/spacing8"
+    android:drawableStart="@drawable/ic_sort_20dp"
+    android:minWidth="0dp"
+    android:textAllCaps="false"
+    android:textColor="@color/gray_400"
+    tools:text="251" />
+
+  <me.saket.dank.widgets.TintableCompoundDrawableButton
+    android:id="@+id/submission_comment_manual_refresh"
+    style="@style/DankButton.Borderless"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:drawablePadding="@dimen/spacing8"
+    android:drawableStart="@drawable/ic_refresh_18dp"
+    android:minWidth="0dp"
+    android:text="@string/submission_comments_refresh"
+    android:textAllCaps="false"
+    android:textColor="@color/gray_400" />
+</LinearLayout>
+

@@ -9,7 +9,6 @@ import android.view.ViewGroup;
 
 import com.jakewharton.rxrelay2.Relay;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import javax.inject.Inject;
@@ -28,15 +27,24 @@ import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
+import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
 
+/**
+ * Steps for creating a new view type:
+ * <p>
+ * 1. Create a class with an Ui-model, a ViewHolder and an Adapter. See {@link SubmissionCommentsHeader}.
+ * 2. Update {@link SubmissionCommentRowType}.
+ * 3. Add it to this adapter's constructor.
+ */
 public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<SubmissionScreenUiModel, RecyclerView.ViewHolder>
     implements Consumer<Pair<List<SubmissionScreenUiModel>, DiffUtil.DiffResult>>
 {
 
+  public static final long ID_COMMENT_OPTIONS = -95;
   public static final long ID_VIEW_FULL_THREAD = -96;
   public static final long ID_MEDIA_CONTENT_LOAD_ERROR = -97;
   public static final long ID_COMMENTS_LOAD_PROGRESS = -98;
@@ -45,6 +53,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
 
   private final Map<SubmissionCommentRowType, SubmissionScreenUiModel.Adapter> childAdapters;
   private final SubmissionCommentsHeader.Adapter headerAdapter;
+  private final SubmissionCommentOptions.Adapter commentOptionsAdapter;
   private final SubmissionCommentsViewFullThread.Adapter viewFullThreadAdapter;
   private final SubmissionMediaContentLoadError.Adapter mediaContentLoadErrorAdapter;
   private final SubmissionCommentsLoadError.Adapter commentsLoadErrorAdapter;
@@ -55,6 +64,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @Inject
   public SubmissionCommentsAdapter(
       SubmissionCommentsHeader.Adapter headerAdapter,
+      SubmissionCommentOptions.Adapter commentOptionsAdapter,
       SubmissionMediaContentLoadError.Adapter mediaContentLoadErrorAdapter,
       SubmissionCommentsViewFullThread.Adapter viewFullThreadAdapter,
       SubmissionCommentsLoadError.Adapter commentsLoadErrorAdapter,
@@ -64,8 +74,9 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
       SubmissionCommentsLoadMore.Adapter loadMoreAdapter)
   {
     this.viewFullThreadAdapter = viewFullThreadAdapter;
-    childAdapters = new HashMap<>(11);
+    childAdapters = Arrays2.hashMap(SubmissionCommentRowType.values().length);
     childAdapters.put(SubmissionCommentRowType.SUBMISSION_HEADER, headerAdapter);
+    childAdapters.put(SubmissionCommentRowType.COMMENT_OPTIONS, commentOptionsAdapter);
     childAdapters.put(SubmissionCommentRowType.MEDIA_CONTENT_LOAD_ERROR, mediaContentLoadErrorAdapter);
     childAdapters.put(SubmissionCommentRowType.VIEW_FULL_THREAD, viewFullThreadAdapter);
     childAdapters.put(SubmissionCommentRowType.COMMENTS_LOAD_ERROR, commentsLoadErrorAdapter);
@@ -75,6 +86,7 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     childAdapters.put(SubmissionCommentRowType.LOAD_MORE_COMMENTS, loadMoreAdapter);
 
     this.headerAdapter = headerAdapter;
+    this.commentOptionsAdapter = commentOptionsAdapter;
     this.mediaContentLoadErrorAdapter = mediaContentLoadErrorAdapter;
     this.commentsLoadErrorAdapter = commentsLoadErrorAdapter;
     this.commentAdapter = commentAdapter;
@@ -184,8 +196,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
-  public Relay<UiEvent> headerUiEvents() {
-    return headerAdapter.events;
+  public Relay<UiEvent> commentOptionUiEvents() {
+    return commentOptionsAdapter.events;
   }
 
   @CheckResult

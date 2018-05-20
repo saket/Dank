@@ -104,6 +104,21 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
         }
       }
 
+      case COMMENT_OPTIONS: {
+        SubmissionCommentOptions.UiModel oldOptions = (SubmissionCommentOptions.UiModel) oldItem;
+        SubmissionCommentOptions.UiModel newOptions = (SubmissionCommentOptions.UiModel) newItem;
+
+        List<SubmissionCommentOptions.PartialChange> partialChanges = new ArrayList<>(2);
+
+        if (!oldOptions.abbreviatedCount().equals(newOptions.abbreviatedCount())) {
+          partialChanges.add(SubmissionCommentOptions.PartialChange.COMMENT_COUNT);
+        }
+        if (oldOptions.sortRes() != newOptions.sortRes()) {
+          partialChanges.add(SubmissionCommentOptions.PartialChange.SORTING_MODE);
+        }
+        return partialChanges;
+      }
+
       default:
         return null;
     }

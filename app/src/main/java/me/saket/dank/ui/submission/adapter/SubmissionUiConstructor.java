@@ -33,6 +33,7 @@ import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.utils.CombineLatestWithLog;
 import me.saket.dank.utils.CombineLatestWithLog.O;
+import me.saket.dank.utils.CommentSortUtils;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
 import me.saket.dank.utils.JrawUtils;
@@ -136,9 +137,15 @@ public class SubmissionUiConstructor {
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = CombineLatestWithLog.from(
               O.of("ext-change", externalChanges.map(o -> context)),
               O.of("submission 2", submissions.observeOn(io())),
-              O.of("pending-sync-reply-count", submissionPendingSyncReplyCounts),
               O.of("content-link", contentLinkUiModels),
               this::headerUiModel
+          );
+
+          Observable<SubmissionCommentOptions.UiModel> commentOptionsUiModels = CombineLatestWithLog.from(
+              O.of("submission 3", submissions),
+              O.of("submission requests", submissionRequests),
+              O.of("pending-sync-reply-count", submissionPendingSyncReplyCounts),
+              this::commentOptionsUiModel
           );
 
           Observable<Optional<SubmissionMediaContentLoadError.UiModel>> contentLoadErrorUiModels = mediaContentLoadErrors
@@ -174,17 +181,24 @@ public class SubmissionUiConstructor {
 
           return CombineLatestWithLog.from(
               O.of("header", headerUiModels),
+              O.of("comment options", commentOptionsUiModels),
               O.of("content-load-error", contentLoadErrorUiModels),
               O.of("view-full-thread", viewFullThreadUiModels),
               O.of("comments-load-progress", commentsLoadProgressUiModels),
               O.of("comments-load-error", commentsLoadErrorUiModels),
               O.of("comment-rows", commentRowUiModels),
-              (header, optionalContentError, viewFullThread, optionalCommentsLoadProgress, optionalCommentsLoadError, commentRowModels) -> {
-                List<SubmissionScreenUiModel> allItems = new ArrayList<>(4 + commentRowModels.size());
+              (header, commentOptions, optionalContentError, viewFullThread, optionalCommentsLoadProgress, optionalCommentsLoadError, commentModels) -> {
+                // Steps to update this list:
+                // 1. Update the initial capacity.
+                // 2. Ensure that the ordering is correct. This is
+                //    the same order in which they'll be displayed.
+                List<SubmissionScreenUiModel> allItems = new ArrayList<>(6 + commentModels.size());
+
                 allItems.add(header);
                 optionalContentError.ifPresent(allItems::add);
+                allItems.add(commentOptions);
                 viewFullThread.ifPresent(allItems::add);
-                allItems.addAll(commentRowModels);
+                allItems.addAll(commentModels);
 
                 // Comments progress and error go after comment rows
                 // so that inline reply for submission appears above them.
@@ -202,7 +216,6 @@ public class SubmissionUiConstructor {
   private SubmissionCommentsHeader.UiModel headerUiModel(
       Context context,
       Submission submission,
-      int pendingSyncReplyCount,
       Optional<SubmissionContentLinkUiModel> contentLinkUiModel)
   {
     VoteDirection pendingOrDefaultVote = votingManager.getPendingOrDefaultVote(submission, submission.getVote());
@@ -214,8 +227,6 @@ public class SubmissionUiConstructor {
         : Optional.empty();
 
     int vote = votingManager.getScoreAfterAdjustingPendingVote(submission);
-    int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
-    String abbreviatedCommentCount = Strings.abbreviateScore(postedAndPendingCommentCount);
 
     Truss titleBuilder = new Truss();
 
@@ -255,12 +266,18 @@ public class SubmissionUiConstructor {
         .adapterId(adapterId)
         .title(titleBuilder.build(), Pair.create(vote, pendingOrDefaultVote))
         .byline(byline)
-        .commentCount(abbreviatedCommentCount)
         .selfText(selfTextOptional)
         .optionalContentLinkModel(contentLinkUiModel)
         .submission(submission)
         .isSaved(bookmarksRepository.get().isSaved(submission))
         .build();
+  }
+
+  private SubmissionCommentOptions.UiModel commentOptionsUiModel(Submission submission, DankSubmissionRequest request, int pendingSyncReplyCount) {
+    int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
+    String abbreviatedCommentCount = Strings.abbreviateScore(postedAndPendingCommentCount);
+    int sortTextRes = CommentSortUtils.sortingDisplayTextRes(request.commentSort().mode());
+    return SubmissionCommentOptions.UiModel.create(abbreviatedCommentCount, sortTextRes);
   }
 
   @ColorInt

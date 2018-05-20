@@ -91,39 +91,5 @@
       android:layout_marginEnd="@dimen/spacing16"
       android:layout_marginStart="@dimen/spacing16"
       tools:layout_marginBottom="@dimen/spacing16" />
-
-    <LinearLayout
-      android:layout_width="wrap_content"
-      android:layout_height="wrap_content"
-      android:layout_marginBottom="@dimen/spacing16"
-      android:layout_marginEnd="@dimen/spacing16"
-      android:layout_marginStart="@dimen/spacing16"
-      android:background="@drawable/background_submission_comment_options">
-
-      <me.saket.dank.widgets.TintableCompoundDrawableTextView
-        android:id="@+id/submission_comment_count"
-        style="@style/DankButton.Borderless"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:clickable="false"
-        android:drawableStart="@drawable/ic_mode_comment_16dp"
-        tools:text="251" />
-
-      <me.saket.dank.widgets.TintableCompoundDrawableButton
-        android:id="@+id/submission_comment_sorting"
-        style="@style/DankButton.Borderless"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:drawableStart="@drawable/ic_sort_20dp"
-        tools:text="251" />
-
-      <me.saket.dank.widgets.TintableCompoundDrawableButton
-        android:id="@+id/submission_comment_manual_refresh"
-        style="@style/DankButton.Borderless"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:drawableStart="@drawable/ic_refresh_20dp"
-        tools:text="251" />
-    </LinearLayout>
   </LinearLayout>
 </me.saket.dank.widgets.swipe.SwipeableLayout>

@@ -241,6 +241,7 @@
   <string name="comment_sorting_controversial">Controversial</string>
   <string name="comment_sorting_old">Old</string>
   <string name="comment_sorting_qna">Q &amp; A</string>
+  <string name="submission_comments_refresh">Refresh</string>
 
   <!-- WebView -->
   <string name="webview_open_in_browser">Open in browser</string>
