@@ -68,6 +68,7 @@ public interface SubmissionMediaContentLoadError {
       iconView = itemView.findViewById(R.id.submission_link_icon);
       containerView = itemView.findViewById(R.id.submission_link_container);
 
+      titleView.setMaxLines(2);
       bylineView.setMaxLines(2);
       containerView.setClipToOutline(true);
 
