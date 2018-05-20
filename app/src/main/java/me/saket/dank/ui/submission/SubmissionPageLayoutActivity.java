@@ -19,6 +19,7 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.compose.InsertGifDialog;
 import me.saket.dank.ui.giphy.GiphyGif;
+import me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.urlparser.RedditCommentLink;
 import me.saket.dank.urlparser.RedditSubmissionLink;
@@ -105,11 +106,11 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
   }
 
   private DankSubmissionRequest defaultRequest(RedditSubmissionLink submissionLink) {
-    // We don't know the suggested sort yet. Attempt with the default sort and if it's found
-    // to be different, then do another load.
+    // We don't know the suggested sort yet. Attempt with the default
+    // sort and if it's found to be different, then do another load.
     DankSubmissionRequest.Builder submissionReqBuilder = DankSubmissionRequest
         .builder(submissionLink.id())
-        .optionalCommentSort(DankRedditClient.DEFAULT_COMMENT_SORT);
+        .commentSort(DankRedditClient.DEFAULT_COMMENT_SORT, SelectedBy.DEFAULT);
 
     RedditCommentLink initialComment = submissionLink.initialComment();
     if (initialComment != null) {

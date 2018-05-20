@@ -101,15 +101,7 @@ public class DankRedditClient {
 
   @CheckResult
   public Single<Submission> submission(DankSubmissionRequest submissionRequest) {
-    // Note: context count is only null in case of "continue thread" requests.
-
-    SubmissionRequest jrawSubmissionRequest = new SubmissionRequest.Builder(submissionRequest.id())
-        .sort(submissionRequest.optionalCommentSort())
-        .focus(submissionRequest.focusCommentId())
-        .context(submissionRequest.contextCount())
-        .limit(submissionRequest.commentLimit())
-        .build();
-
+    SubmissionRequest jrawSubmissionRequest = submissionRequest.toJraw();
     return withAuth(Single.fromCallable(() -> redditClient.getSubmission(jrawSubmissionRequest)));
   }
 
@@ -325,6 +317,8 @@ public class DankRedditClient {
 
   @CheckResult
   public Single<SubredditSearchResult> findSubreddit2(String name) {
+    // TODO: Find a better way to keep these two methods in sync.
+    // IMPORTANT: Keep them in sync with needsRemoteSubscription().
     if (name.equalsIgnoreCase("frontpage")) {
       return Single.just(SubredditSearchResult.success(Subscribeable.local("Frontpage")));
     }

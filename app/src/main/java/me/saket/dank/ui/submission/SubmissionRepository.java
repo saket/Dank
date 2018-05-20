@@ -3,6 +3,7 @@ package me.saket.dank.ui.submission;
 import static junit.framework.Assert.assertEquals;
 import static me.saket.dank.utils.Arrays2.immutable;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -56,6 +57,7 @@ import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.PaginationAnchor;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.reply.ReplyRepository;
+import me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy;
 import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
@@ -153,7 +155,9 @@ public class SubmissionRepository {
     if (oldSubmissionRequest.id().equalsIgnoreCase(syntheticData.get().SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
       return syntheticSubmissionForGesturesWalkthrough()
           .map(syntheticSubmission -> {
-            DankSubmissionRequest updatedRequest = oldSubmissionRequest.withCommentSort(syntheticSubmission.getSuggestedSort());
+            DankSubmissionRequest updatedRequest = oldSubmissionRequest.toBuilder()
+                .commentSort(syntheticSubmission.getSuggestedSort(), SelectedBy.DEFAULT)
+                .build();
             return Pair.create(updatedRequest, syntheticSubmission);
           })
           .toObservable();
@@ -166,14 +170,14 @@ public class SubmissionRepository {
           // load with the wrong sort (possibly because the submission's details were unknown), reload
           // comments using the suggested sort.
           CommentSort suggestedSort = submissionWithComments.submission().getSuggestedSort();
-          Boolean useSuggestedSort = suggestedSort != null && oldSubmissionRequest.optionalCommentSort().isEmpty();
+          Boolean useSuggestedSort = suggestedSort != null && oldSubmissionRequest.commentSort().canOverrideWithSuggestedSort();
 
           if (useSuggestedSort) {
             //Timber.i("Different sort.");
-
             DankSubmissionRequest newRequest = oldSubmissionRequest.toBuilder()
-                .optionalCommentSort(Optional.of(suggestedSort))
+                .commentSort(suggestedSort, SelectedBy.SUBMISSION_SUGGESTED)
                 .build();
+
             return getOrFetchSubmissionWithComments(newRequest)
                 .map(submissions -> Pair.create(newRequest, submissions))
                 .doAfterNext(o -> {
@@ -580,7 +584,9 @@ public class SubmissionRepository {
         Timber.i("Now time: %s", System.currentTimeMillis());
 
         Timber.i("Recycling rows before %s (%s): %s", millisBeforeNowString, dateTimeBeforeNow, rowsToBeDeleted.size());
-        rowsToBeDeleted.forEach(row -> Timber.i("%s", row.submission().getTitle()));
+        for (CachedSubmissionWithComments row : rowsToBeDeleted) {
+          Timber.i("%s", row.submission().getTitle());
+        }
       });
     } else {
       logCompletable = Completable.complete();

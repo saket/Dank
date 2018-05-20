@@ -11,6 +11,8 @@ import net.dean.jraw.http.SubmissionRequest;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.CommentSort;
 
+import me.saket.dank.ui.submission.AuditedCommentSort;
+
 /**
  * Because {@link SubmissionRequest} does not have a toBuilder() method. Update: Then send a PR to JRAW?
  * <p>
@@ -19,9 +21,10 @@ import net.dean.jraw.models.CommentSort;
 @AutoValue
 public abstract class DankSubmissionRequest implements Parcelable {
 
+  /** Submission Id */
   public abstract String id();
 
-  public abstract Optional<CommentSort> optionalCommentSort();
+  public abstract AuditedCommentSort commentSort();
 
   @Nullable
   public abstract String focusCommentId();
@@ -32,17 +35,20 @@ public abstract class DankSubmissionRequest implements Parcelable {
   @Nullable
   public abstract Integer commentLimit();
 
-  /**
-   * @param id Submission id.
-   */
-  public static Builder builder(String id) {
-    return new AutoValue_DankSubmissionRequest.Builder().id(id);
+  public static Builder builder(String submissionId) {
+    return new AutoValue_DankSubmissionRequest.Builder().id(submissionId);
   }
 
   public abstract Builder toBuilder();
 
-  public DankSubmissionRequest withCommentSort(CommentSort newSort) {
-    return toBuilder().optionalCommentSort(Optional.of(newSort)).build();
+  public SubmissionRequest toJraw() {
+    // Note: context count is only null in case of "continue thread" requests.
+    return new SubmissionRequest.Builder(id())
+        .sort(commentSort().mode())
+        .focus(focusCommentId())
+        .context(contextCount())
+        .limit(commentLimit())
+        .build();
   }
 
   @AutoValue.Builder
@@ -60,7 +66,12 @@ public abstract class DankSubmissionRequest implements Parcelable {
      * Sets the sorting for the comments in the response. This will be used to request more comments using
      * {@link CommentNode#loadMoreComments}. A null value will exclude this parameter.
      */
-    public abstract Builder optionalCommentSort(Optional<CommentSort> sort);
+    public abstract Builder commentSort(AuditedCommentSort sort);
+
+    /** See {@link #commentSort(AuditedCommentSort)}. */
+    public Builder commentSort(CommentSort sort, AuditedCommentSort.SelectedBy selectedBy) {
+      return commentSort(AuditedCommentSort.create(sort, selectedBy));
+    }
 
     /**
      * <p>Sets the number of parents shown in relation to the focused comment. For example, if the focused comment is
