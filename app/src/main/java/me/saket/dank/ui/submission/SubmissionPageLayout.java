@@ -1079,48 +1079,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), (o, submission) -> submission)
         .map(InlineReplyRequestEvent::create)
         .subscribe(inlineReplyRequestStream);
-
-    // TODO: remove these leftover commented out code.
-//    sharedReplyFabClicks
-//        .filter(o -> userSessionRepository.get().isUserLoggedIn())
-//        .withLatestFrom(isUserASubredditMod, Pair::create)
-//        .takeUntil(lifecycle().onDestroy())
-//        .subscribe(pair -> {
-//          Submission submission = pair.first();
-//          Boolean isUserMod = pair.second();
-//
-//          if (submission.isArchived()) {
-//            Pair<Intent, ActivityOptions> archivedIntent = ArchivedSubmissionDialogActivity.intentWithFabTransform(
-//                ((Activity) getContext()),
-//                replyFAB,
-//                R.color.submission_fab,
-//                R.drawable.ic_reply_white_24dp);
-//            getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
-//
-//          } else {
-//            if (submission.isLocked() && !isUserMod) {
-//              Pair<Intent, ActivityOptions> archivedIntent = LockedSubmissionDialogActivity.intentWithFabTransform(
-//                  ((Activity) getContext()),
-//                  replyFAB,
-//                  R.color.submission_fab,
-//                  R.drawable.ic_reply_white_24dp);
-//              getContext().startActivity(archivedIntent.first(), archivedIntent.second().toBundle());
-//
-//            } else {
-//              int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
-//              boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
-//
-//              if (commentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
-//                // Hide reply only if it's visible. Otherwise the user
-//                // won't understand why the reply FAB did not do anything.
-//                commentTreeUiConstructor.hideReply(submission);
-//              } else {
-//                commentTreeUiConstructor.showReply(submission);
-//                inlineReplyAdditionStream.accept(submission);
-//              }
-//            }
-//          }
-//        });
   }
 
   /**
