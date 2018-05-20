@@ -4,6 +4,7 @@ import android.app.Application;
 import android.content.Context;
 import android.content.res.Resources;
 import android.graphics.drawable.Drawable;
+import android.support.annotation.Nullable;
 import android.support.v4.content.ContextCompat;
 import android.util.Size;
 
@@ -93,12 +94,18 @@ public class SubmissionImageLoader {
         .flatMap(imageUrl -> loadImage(context, imageUrl, options));
   }
 
-  public Single<Drawable> load(Context context, MediaLink mediaLink, Thumbnails redditThumbnails, Scheduler scheduler, RequestOptions options) {
-    return load(context, mediaLink, Optional.of(redditThumbnails), Optional.of(scheduler), options);
+  public Single<Drawable> load(
+      Context context,
+      MediaLink mediaLink,
+      @Nullable Thumbnails redditSuppliedThumbnails,
+      Scheduler scheduler,
+      RequestOptions options)
+  {
+    return load(context, mediaLink, Optional.ofNullable(redditSuppliedThumbnails), Optional.of(scheduler), options);
   }
 
-  public Single<Drawable> load(Context context, MediaLink mediaLink, Thumbnails redditSuppliedThumbnails, RequestOptions options) {
-    return load(context, mediaLink, Optional.of(redditSuppliedThumbnails), Optional.empty(), options);
+  public Single<Drawable> load(Context context, MediaLink mediaLink, @Nullable Thumbnails redditSuppliedThumbnails, RequestOptions options) {
+    return load(context, mediaLink, Optional.ofNullable(redditSuppliedThumbnails), Optional.empty(), options);
   }
 
   public Single<Drawable> load(Context context, MediaLink mediaLink, RequestOptions options) {

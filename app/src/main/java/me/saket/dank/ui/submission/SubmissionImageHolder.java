@@ -9,6 +9,7 @@ import android.graphics.drawable.Animatable;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
+import android.support.annotation.Nullable;
 import android.util.Size;
 import android.view.Gravity;
 import android.view.View;
@@ -105,7 +106,7 @@ public class SubmissionImageHolder {
   }
 
   @CheckResult
-  public Completable load(MediaLink mediaLink, Thumbnails redditSuppliedThumbnails) {
+  public Completable load(MediaLink mediaLink, @Nullable Thumbnails redditSuppliedThumbnails) {
     contentLoadProgressView.setVisibility(View.VISIBLE);
 
     RequestOptions imageLoadOptions = RequestOptions.priorityOf(Priority.IMMEDIATE);
