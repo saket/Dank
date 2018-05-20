@@ -10,7 +10,6 @@ import android.support.v7.widget.RecyclerView;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -28,9 +27,6 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.data.SwipeEvent;
-import me.saket.dank.ui.UiEvent;
-import me.saket.dank.ui.submission.events.ChangeCommentSortingClicked;
-import me.saket.dank.ui.submission.events.CommentsRefreshClicked;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.ui.subreddit.SubmissionSwipeActionsProvider;
 import me.saket.dank.utils.Animations;
@@ -52,7 +48,6 @@ public interface SubmissionCommentsHeader {
     SUBMISSION_TITLE,
     SUBMISSION_BYLINE,
     SUBMISSION_SAVE_STATUS,
-    SUBMISSION_COMMENT_COUNT,
     CONTENT_LINK,
     CONTENT_LINK_THUMBNAIL,
     CONTENT_LINK_FAVICON,
@@ -73,8 +68,6 @@ public interface SubmissionCommentsHeader {
     abstract SpannableWithTextEquality title();
 
     abstract SpannableWithTextEquality byline();
-
-    abstract String commentCount();
 
     abstract Optional<SpannableWithTextEquality> optionalSelfText();
 
@@ -103,8 +96,6 @@ public interface SubmissionCommentsHeader {
       abstract Builder title(SpannableWithTextEquality title);
 
       abstract Builder byline(SpannableWithTextEquality byline);
-
-      abstract Builder commentCount(String count);
 
       Builder title(CharSequence title, Pair<Integer, VoteDirection> votes) {
         return title(SpannableWithTextEquality.wrap(title, votes));
@@ -157,10 +148,6 @@ public interface SubmissionCommentsHeader {
     private final AnimatedProgressBar contentLinkProgressView;
     private final DankLinkMovementMethod movementMethod;
     private final @ColorInt int contentLinkBackgroundColor;
-    private final View commentOptionsContainerView;
-    private final TextView commentCountView;
-    private final Button commentSortingButton;
-    private final Button commentRefreshButton;
 
     private UiModel uiModel;
 
@@ -188,10 +175,6 @@ public interface SubmissionCommentsHeader {
       contentLinkTitleView = itemView.findViewById(R.id.submission_link_title);
       contentLinkBylineView = itemView.findViewById(R.id.submission_link_byline);
       contentLinkProgressView = itemView.findViewById(R.id.submission_link_progress);
-      commentCountView = itemView.findViewById(R.id.submission_comment_count);
-      commentSortingButton = itemView.findViewById(R.id.submission_comment_sorting);
-      commentRefreshButton = itemView.findViewById(R.id.submission_comment_manual_refresh);
-      commentOptionsContainerView = (View) commentSortingButton.getParent();
 
       this.movementMethod = movementMethod;
 
@@ -223,11 +206,6 @@ public interface SubmissionCommentsHeader {
       });
     }
 
-    public void setupCommentOptionClicks(PublishRelay<UiEvent> events) {
-      commentSortingButton.setOnClickListener(o -> events.accept(ChangeCommentSortingClicked.create(commentOptionsContainerView)));
-      commentRefreshButton.setOnClickListener(o -> events.accept(CommentsRefreshClicked.create()));
-    }
-
     public void setUiModel(UiModel uiModel) {
       this.uiModel = uiModel;
     }
@@ -235,7 +213,6 @@ public interface SubmissionCommentsHeader {
     public void render() {
       setSubmissionTitle(uiModel);
       setSubmissionByline(uiModel);
-      setCommentCount(uiModel);
       setContentLink(uiModel, false);
 
       uiModel.optionalSelfText().ifPresent(selfTextView::setText);
@@ -245,10 +222,6 @@ public interface SubmissionCommentsHeader {
 
     private void setSubmissionByline(UiModel uiModel) {
       bylineView.setText(uiModel.byline());
-    }
-
-    private void setCommentCount(UiModel uiModel) {
-      commentCountView.setText(uiModel.commentCount());
     }
 
     private void setSubmissionTitle(UiModel uiModel) {
@@ -271,9 +244,6 @@ public interface SubmissionCommentsHeader {
             case SUBMISSION_SAVE_STATUS:
               getSwipeableLayout().setSwipeActions(swipeActionsProvider.actionsFor(uiModel.submission()));
               break;
-
-            case SUBMISSION_COMMENT_COUNT:
-              setCommentCount(uiModel);
 
             case CONTENT_LINK:
               setContentLink(uiModel, true);
@@ -427,8 +397,6 @@ public interface SubmissionCommentsHeader {
     final PublishRelay<SubmissionContentLinkClickEvent> contentLinkLongClicks = PublishRelay.create();
     final PublishRelay<Optional<SubmissionCommentsHeader.ViewHolder>> headerBindStream = PublishRelay.create();
 
-    final PublishRelay<UiEvent> events = PublishRelay.create();
-
     @Inject
     public Adapter(DankLinkMovementMethod linkMovementMethod, SubmissionSwipeActionsProvider swipeActionsProvider) {
       this.linkMovementMethod = linkMovementMethod;
@@ -439,7 +407,6 @@ public interface SubmissionCommentsHeader {
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
       ViewHolder holder = ViewHolder.create(inflater, parent, headerClickStream, linkMovementMethod);
       holder.setupGestures(swipeActionsProvider);
-      holder.setupCommentOptionClicks(events);
       holder.setupContentLinkClicks(contentLinkClicks, contentLinkLongClicks);
       return holder;
     }

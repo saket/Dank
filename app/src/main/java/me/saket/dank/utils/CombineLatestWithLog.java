@@ -11,9 +11,11 @@ import java.util.Map;
 
 import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
+import io.reactivex.functions.BiFunction;
+import io.reactivex.functions.Function3;
 import io.reactivex.functions.Function4;
 import io.reactivex.functions.Function5;
-import io.reactivex.functions.Function6;
+import io.reactivex.functions.Function7;
 import me.saket.dank.BuildConfig;
 import timber.log.Timber;
 
@@ -105,6 +107,21 @@ public class CombineLatestWithLog {
     return BuildConfig.DEBUG ? new DebugProfiler() : new NoOpProfiler();
   }
 
+  public static <T1, T2, R> Observable<R> from(
+      O<? extends T1> source1,
+      O<? extends T2> source2,
+      BiFunction<? super T1, ? super T2, ? extends R> combiner)
+  {
+    Profiler profiler = createVariantBasedProfiler();
+
+    return Observable
+        .combineLatest(
+            source1.observable().compose(profiler.log(source1.name())),
+            source2.observable().compose(profiler.log(source2.name())),
+            combiner)
+        .compose(profiler.print());
+  }
+
   public static <T1, T2, T3, T4, R> Observable<R> from(
       O<? extends T1> source1, O<? extends T2> source2,
       O<? extends T3> source3, O<? extends T4> source4,
@@ -118,6 +135,22 @@ public class CombineLatestWithLog {
             source2.observable().compose(profiler.log(source2.name())),
             source3.observable().compose(profiler.log(source3.name())),
             source4.observable().compose(profiler.log(source4.name())),
+            combiner)
+        .compose(profiler.print());
+  }
+
+  public static <T1, T2, T3, T4, R> Observable<R> from(
+      O<? extends T1> source1, O<? extends T2> source2,
+      O<? extends T3> source3,
+      Function3<? super T1, ? super T2, ? super T3, ? extends R> combiner)
+  {
+    Profiler profiler = createVariantBasedProfiler();
+
+    return Observable
+        .combineLatest(
+            source1.observable().compose(profiler.log(source1.name())),
+            source2.observable().compose(profiler.log(source2.name())),
+            source3.observable().compose(profiler.log(source3.name())),
             combiner)
         .compose(profiler.print());
   }
@@ -141,11 +174,12 @@ public class CombineLatestWithLog {
         .compose(profiler.print());
   }
 
-  public static <T1, T2, T3, T4, T5, T6, R> Observable<R> from(
+  public static <T1, T2, T3, T4, T5, T6, T7, R> Observable<R> from(
       O<? extends T1> source1, O<? extends T2> source2,
       O<? extends T3> source3, O<? extends T4> source4,
       O<? extends T5> source5, O<? extends T6> source6,
-      Function6<? super T1, ? super T2, ? super T3, ? super T4, ? super T5, ? super T6, ? extends R> combiner)
+      O<? extends T7> source7,
+      Function7<? super T1, ? super T2, ? super T3, ? super T4, ? super T5, ? super T6, ? super T7, ? extends R> combiner)
   {
     Profiler profiler = createVariantBasedProfiler();
 
@@ -157,6 +191,7 @@ public class CombineLatestWithLog {
             source4.observable().compose(profiler.log(source4.name())),
             source5.observable().compose(profiler.log(source5.name())),
             source6.observable().compose(profiler.log(source6.name())),
+            source7.observable().compose(profiler.log(source7.name())),
             combiner)
         .compose(profiler.print());
   }

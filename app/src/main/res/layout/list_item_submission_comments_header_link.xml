@@ -4,12 +4,13 @@
   xmlns:tools="http://schemas.android.com/tools"
   android:layout_width="match_parent"
   android:layout_height="wrap_content"
+  android:layout_marginBottom="@dimen/spacing16"
   android:layout_marginEnd="@dimen/spacing16"
   android:layout_marginStart="@dimen/spacing16"
   android:background="@drawable/background_submission_link"
+  android:elevation="2dp"
   android:foreground="?attr/selectableItemBackground"
   android:orientation="horizontal"
-  android:elevation="2dp"
   tools:visibility="visible">
   <!-- clipToOutline=true is set in code. -->
 
