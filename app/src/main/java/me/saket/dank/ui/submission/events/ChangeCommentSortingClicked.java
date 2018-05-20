@@ -8,6 +8,7 @@ import net.dean.jraw.models.CommentSort;
 
 import io.reactivex.Single;
 import me.saket.dank.ui.UiEvent;
+import me.saket.dank.ui.submission.AuditedCommentSort;
 import me.saket.dank.ui.submission.CommentSortingModePopupMenu;
 
 @AutoValue
@@ -19,10 +20,10 @@ public abstract class ChangeCommentSortingClicked implements UiEvent {
     return new AutoValue_ChangeCommentSortingClicked(buttonView);
   }
 
-  public Single<CommentSort> showSortPopup(CommentSort activeSorting) {
+  public Single<CommentSort> showSortPopup(AuditedCommentSort activeSort) {
     return Single.create(emitter -> {
       CommentSortingModePopupMenu sortingPopupMenu = new CommentSortingModePopupMenu(buttonView().getContext(), buttonView());
-      sortingPopupMenu.highlightActiveSorting(activeSorting);
+      sortingPopupMenu.highlightActiveSorting(activeSort.mode());
       sortingPopupMenu.setOnSortingModeSelectListener(selectedSorting -> emitter.onSuccess(selectedSorting));
       sortingPopupMenu.show();
     });

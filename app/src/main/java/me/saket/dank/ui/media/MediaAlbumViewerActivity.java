@@ -338,7 +338,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
               resolveErrorView.setOnRetryClickListener(o -> resolveMediaLinkAndDisplayContent(mediaLinkToDisplay));
 
               if (resolvedError.isUnknown()) {
-                Timber.e(error, "Error while loading image: %s", mediaLinkToDisplay.unparsedUrl());
+                Timber.e(error, "Error while loading media: %s", mediaLinkToDisplay.unparsedUrl());
               }
             }
         );

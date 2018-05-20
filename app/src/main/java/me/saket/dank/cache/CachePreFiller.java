@@ -10,7 +10,6 @@ import com.bumptech.glide.Priority;
 import com.bumptech.glide.request.RequestOptions;
 import com.f2prateek.rx.preferences2.Preference;
 
-import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Submission;
 
 import java.util.ArrayList;
@@ -29,9 +28,12 @@ import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.data.CachePreFillThing;
+import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.preferences.NetworkStrategy;
+import me.saket.dank.ui.submission.AuditedCommentSort;
+import me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy;
 import me.saket.dank.ui.submission.SubmissionImageLoader;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
@@ -288,8 +290,12 @@ public class CachePreFiller {
       return Completable.complete();
     }
 
+    AuditedCommentSort auditedSort = Optional.ofNullable(submission.getSuggestedSort())
+        .map(sort -> AuditedCommentSort.create(sort, SelectedBy.SUBMISSION_SUGGESTED))
+        .orElse(AuditedCommentSort.create(DankRedditClient.DEFAULT_COMMENT_SORT, SelectedBy.DEFAULT));
+
     DankSubmissionRequest request = DankSubmissionRequest.builder(submission.getId())
-        .optionalCommentSort(submission.getSuggestedSort() != null ? submission.getSuggestedSort() : CommentSort.TOP)
+        .commentSort(auditedSort)
         .build();
 
     return submissionRepository.submissionWithComments(request)

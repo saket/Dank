@@ -97,6 +97,7 @@ import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.media.MediaLinkWithStartingPosition;
 import me.saket.dank.ui.preferences.UserPreferenceGroup;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
+import me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy;
 import me.saket.dank.ui.submission.adapter.CommentsItemDiffer;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionComment;
@@ -812,10 +813,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           ChangeCommentSortingClicked event = pair.first();
           DankSubmissionRequest lastRequest = pair.second();
           return event
-              .showSortPopup(lastRequest.optionalCommentSort())
-              .map(selectedSorting -> lastRequest.toBuilder()
-                  .optionalCommentSort(selectedSorting)
-                  .build());
+              .showSortPopup(lastRequest.commentSort())
+              .map(selectedSort ->
+                  lastRequest.toBuilder()
+                      .commentSort(selectedSort, SelectedBy.USER)
+                      .build());
         })
         .share();
 
