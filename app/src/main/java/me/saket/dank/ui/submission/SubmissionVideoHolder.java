@@ -5,8 +5,6 @@ import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import android.graphics.Bitmap;
 import android.support.annotation.CheckResult;
 import android.util.Size;
-import android.view.View;
-import android.widget.ProgressBar;
 
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.devbrackets.android.exomedia.ui.widget.VideoControls;
@@ -15,6 +13,7 @@ import com.f2prateek.rx.preferences2.Preference;
 import com.jakewharton.rxbinding2.internal.Notification;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
+import com.jakewharton.rxrelay2.Relay;
 
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -26,8 +25,10 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableSource;
 import io.reactivex.Single;
 import io.reactivex.functions.Function;
-import me.saket.dank.ui.media.MediaHostRepository;
+import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.preferences.NetworkStrategy;
+import me.saket.dank.ui.submission.events.SubmissionVideoLoadStarted;
+import me.saket.dank.ui.submission.events.SubmissionVideoLoadSucceeded;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.NetworkStateListener;
@@ -45,12 +46,12 @@ public class SubmissionVideoHolder {
   private final PublishRelay<Integer> videoWidthChangeStream = PublishRelay.create();
   private final BehaviorRelay<Object> videoPreparedStream = BehaviorRelay.create();
   private final PublishRelay<SubmissionVideoClickEvent> videoClickStream = PublishRelay.create();
-  private final Lazy<MediaHostRepository> mediaHostRepository;
   private final Lazy<HttpProxyCacheServer> httpProxyCacheServer;
   private final Lazy<NetworkStateListener> networkStateListener;
   private final Lazy<Preference<NetworkStrategy>> hdMediaNetworkStrategy;
   private final Lazy<Preference<NetworkStrategy>> autoPlayVideosNetworkStrategy;
 
+  private Relay<UiEvent> uiEvents;
   private ExoPlayerManager exoPlayerManager;
   private VideoView contentVideoView;
   private ScrollingRecyclerViewSheet commentListParentSheet;
@@ -59,17 +60,14 @@ public class SubmissionVideoHolder {
   private Size deviceDisplaySize;
   private int statusBarHeight;
   private int minimumGapWithBottom;
-  private ProgressBar contentLoadProgressView;
 
   @Inject
   public SubmissionVideoHolder(
-      Lazy<MediaHostRepository> mediaHostRepository,
       Lazy<HttpProxyCacheServer> httpProxyCacheServer,
       Lazy<NetworkStateListener> networkStateListener,
       @Named("hd_media_in_submissions") Lazy<Preference<NetworkStrategy>> hdMediaNetworkStrategy,
       @Named("auto_play_videos") Lazy<Preference<NetworkStrategy>> autoPlayVideosNetworkStrategy)
   {
-    this.mediaHostRepository = mediaHostRepository;
     this.httpProxyCacheServer = httpProxyCacheServer;
     this.networkStateListener = networkStateListener;
     this.hdMediaNetworkStrategy = hdMediaNetworkStrategy;
@@ -84,20 +82,20 @@ public class SubmissionVideoHolder {
    * @param minimumGapWithBottom The difference between video's bottom and the window's bottom.
    */
   public void setup(
+      Relay<UiEvent> uiEvents,
       ExoPlayerManager exoPlayerManager,
       VideoView contentVideoView,
       ScrollingRecyclerViewSheet commentListParentSheet,
-      ProgressBar contentLoadProgressView,
       SubmissionPageLayout submissionPageLayout,
       SubmissionPageLifecycleStreams lifecycle,
       Size deviceDisplaySize,
       int statusBarHeight,
       int minimumGapWithBottom)
   {
+    this.uiEvents = uiEvents;
     this.exoPlayerManager = exoPlayerManager;
     this.contentVideoView = contentVideoView;
     this.commentListParentSheet = commentListParentSheet;
-    this.contentLoadProgressView = contentLoadProgressView;
     this.submissionPageLayout = submissionPageLayout;
     this.lifecycle = lifecycle;
     this.deviceDisplaySize = deviceDisplaySize;
@@ -108,7 +106,7 @@ public class SubmissionVideoHolder {
   @CheckResult
   public Completable load(MediaLink mediaLink) {
     // Later hidden inside loadVideo(), when the video's height becomes available.
-    contentLoadProgressView.setVisibility(View.VISIBLE);
+    uiEvents.accept(SubmissionVideoLoadStarted.create());
 
     Single<Boolean> canLoadHighQualityVideos = hdMediaNetworkStrategy.get()
         .asObservable()
@@ -172,9 +170,9 @@ public class SubmissionVideoHolder {
     return Completable.create(emitter -> {
       if (contentVideoView.getVideoControls() == null) {
         SubmissionVideoControlsView controlsView = new SubmissionVideoControlsView(contentVideoView.getContext());
-        controlsView.setOnClickListener(o -> {
-          videoClickStream.accept(SubmissionVideoClickEvent.create(exoPlayerManager.getCurrentSeekPosition()));
-        });
+        controlsView.setOnClickListener(o ->
+            videoClickStream.accept(SubmissionVideoClickEvent.create(exoPlayerManager.getCurrentSeekPosition()))
+        );
         contentVideoView.setControls(controlsView);
       }
 
@@ -202,7 +200,7 @@ public class SubmissionVideoHolder {
 
         // Wait for the height change to happen and then reveal the video.
         Views.executeOnNextLayout(contentVideoView, () -> {
-          contentLoadProgressView.setVisibility(View.GONE);
+          uiEvents.accept(SubmissionVideoLoadSucceeded.create());
 
           // Warning: Avoid getting the height from view instead of reusing heightAdjustedToFitInSpace.
           // I was seeing older values instead of the one passed to setHeight().
@@ -217,9 +215,7 @@ public class SubmissionVideoHolder {
               lifecycle.onPageExpand()
                   .take(1)
                   .takeUntil(lifecycle.onPageCollapseOrDestroy())
-                  .subscribe(o -> {
-                    commentListParentSheet.smoothScrollTo(videoHeightMinusToolbar);
-                  });
+                  .subscribe(o -> commentListParentSheet.smoothScrollTo(videoHeightMinusToolbar));
             }
           } else {
             commentListParentSheet.scrollTo(videoHeightMinusToolbar);
@@ -250,6 +246,7 @@ public class SubmissionVideoHolder {
 
   private void resetPlayIcon() {
     VideoControls controlsView = contentVideoView.getVideoControls();
+    //noinspection ConstantConditions
     controlsView.updatePlayPauseImage(false);
   }
 

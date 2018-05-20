@@ -88,6 +88,7 @@ import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.reply.RetryReplyJobService;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.ScreenSavedState;
+import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.InsertGifDialog;
@@ -115,7 +116,16 @@ import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
+import me.saket.dank.ui.submission.events.SubmissionChanged;
+import me.saket.dank.ui.submission.events.SubmissionCommentSortChanged;
+import me.saket.dank.ui.submission.events.SubmissionCommentsLoadFailed;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
+import me.saket.dank.ui.submission.events.SubmissionContentResolvingCompleted;
+import me.saket.dank.ui.submission.events.SubmissionContentResolvingFailed;
+import me.saket.dank.ui.submission.events.SubmissionContentResolvingStarted;
+import me.saket.dank.ui.submission.events.SubmissionMediaLoadFailed;
+import me.saket.dank.ui.submission.events.SubmissionNsfwContentFiltered;
+import me.saket.dank.ui.submission.events.SubmissionRequestChanged;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.subreddit.events.SubmissionOpenInNewTabSwipeEvent;
 import me.saket.dank.ui.subreddit.events.SubmissionOptionSwipeEvent;
@@ -151,7 +161,7 @@ import me.saket.dank.widgets.swipe.RecyclerSwipeListener;
 import timber.log.Timber;
 
 @SuppressLint("SetJavaScriptEnabled")
-public class SubmissionPageLayout extends ExpandablePageLayout implements ExpandablePageLayout.OnPullToCollapseIntercepter {
+public class SubmissionPageLayout extends ExpandablePageLayout implements ExpandablePageLayout.OnPullToCollapseIntercepter, SubmissionUi {
 
   private static final String KEY_WAS_PAGE_EXPANDED_OR_EXPANDING = "pageState";
   private static final String KEY_SUBMISSION_JSON = "submissionJson";
@@ -189,6 +199,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @Inject SubmissionUiConstructor submissionUiConstructor;
   @Inject SubmissionCommentsAdapter commentsAdapter;
   @Inject SubmissionCommentTreeUiConstructor commentTreeUiConstructor;
+  @Inject SubmissionController controller;
 
   @Inject @Named("show_nsfw_content") Lazy<Preference<Boolean>> showNsfwContentPreference;
   @Inject @Named("user_learned_submission_gestures") Lazy<Preference<Boolean>> hasUserLearnedGesturesPref;
@@ -218,6 +229,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private boolean isCommentSheetBeneathImage;
   private SubmissionPageLifecycleStreams lifecycleStreams;
   private int commentRowCountBeforeActivityDestroy = -1;
+
+  private Relay<UiEvent> uiEvents = PublishRelay.create();
 
   public interface Callbacks {
     // TODO: remove this now?
@@ -260,6 +273,28 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         startSmoothScroll(linearSmoothScroller);
       }
     });
+
+    uiEvents
+        .observeOn(io())
+        .compose(controller)
+        .observeOn(mainThread())
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(uiChange -> uiChange.render(this));
+
+    submissionStream
+        .map(SubmissionChanged::create)
+        .takeUntil(lifecycle().onDestroy())
+        .subscribe(uiEvents);
+  }
+
+  @Override
+  public void showProgress() {
+    contentLoadProgressView.showForReal();
+  }
+
+  @Override
+  public void hideProgress() {
+    contentLoadProgressView.hideForReal();
   }
 
   public void onViewFirstAttach() {
@@ -383,6 +418,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .observeOn(mainThread())
         //.doOnNext(o -> commentsLoadProgressVisibleStream.accept(true))
         //.doOnNext(o -> Timber.d("------------------"))
+        .doOnNext(request -> uiEvents.accept(SubmissionRequestChanged.create(request)))
         .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
             //.compose(RxUtils.doOnceOnNext(o -> Timber.d("Submission received")))
             .flatMap(pair -> {
@@ -408,6 +444,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               ResolvedError resolvedError = errorResolver.get().resolve(error);
               resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't fetch comments"));
               commentsLoadErrors.accept(Optional.of(resolvedError));
+              uiEvents.accept(SubmissionCommentsLoadFailed.create());
               return Observable.never();
             })
         )
@@ -826,16 +863,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .subscribe(submissionRequestStream);
 
     sharedSortingChanges
+        .map(selected -> selected.commentSort().mode())
+        .map(SubmissionCommentSortChanged::create)
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> {
-          Timber.i("Showing progress");
-          contentLoadProgressView.show();
-
-          submissionStream
-              .skip(1)
-              .takeUntil(lifecycle().onDestroy())
-              .subscribe(__ -> contentLoadProgressView.hide());
-        });
+        .subscribe(uiEvents);
   }
 
   public void onGifInsert(String title, GiphyGif gif, Parcelable payload) {
@@ -917,9 +948,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private void setupContentImageView(View fragmentLayout) {
     Views.setMarginBottom(contentImageView.view(), commentsSheetMinimumVisibleHeight);
     contentImageViewHolder.get().setup(
+        uiEvents,
         lifecycle(),
         fragmentLayout,
-        contentLoadProgressView,
         submissionPageLayout,
         new Size(deviceDisplayWidth, deviceDisplayHeight)
     );
@@ -945,10 +976,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .subscribe();
 
     contentVideoViewHolder.get().setup(
+        uiEvents,
         exoPlayerManager,
         contentVideoView,
         commentListParentSheet,
-        contentLoadProgressView,
         submissionPageLayout,
         lifecycle(),
         new Size(deviceDisplayWidth, deviceDisplayHeight),
@@ -1191,17 +1222,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .withLatestFrom(submissionRequestStream, (o, req) -> req)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(submissionRequestStream);
-
-    sharedRetryClicks
-        .withLatestFrom(submissionStream, (o, sub) -> sub)
-        .filter(Optional::isEmpty)
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> contentLoadProgressView.show());
-
-    commentsLoadErrors
-        .filter(Optional::isPresent)
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(o -> contentLoadProgressView.hide());
   }
 
   private void setupSubmissionContentLoadErrors() {
@@ -1269,9 +1289,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     if (submission.isPresent()) {
       // This will setup the title, byline and content immediately.
+      Timber.d("Populating submission");
       submissionStream.accept(submission);
-    } else {
-      contentLoadProgressView.show();
     }
   }
 
@@ -1287,8 +1306,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           return mediaHostRepository.get().resolveActualLinkIfNeeded(((MediaLink) parsedLink))
               .subscribeOn(io())
               .doOnSubscribe(o -> {
-                // Progress bar is later hidden in the subscribe() block.
-                contentLoadProgressView.show();
+                // Progress bar is later hidden when the link is resolved (in subscribe()).
+                uiEvents.accept(SubmissionContentResolvingStarted.create());
               })
               .map((Link resolvedLink) -> {
                 // Replace Imgur's cover image URL with reddit supplied URL, which will already be cached by Glide.
@@ -1309,6 +1328,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                 if (error instanceof ImgurApiRequestRateLimitReachedException) {
                   return Observable.just(ExternalLink.create(parsedLink.unparsedUrl()));
                 } else {
+                  uiEvents.accept(SubmissionContentResolvingFailed.create());
                   showMediaLoadError(error);
                   return Observable.never();
                 }
@@ -1316,8 +1336,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         })
         .flatMapSingle(link -> {
           if (!showNsfwContentPreference.get().get() && link instanceof MediaLink && submission.isNsfw()) {
-            contentLoadProgressView.hide();
             mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.NsfwContentDisabled.create()));
+            uiEvents.accept(SubmissionNsfwContentFiltered.create());
             return Single.never();
 
           } else {
@@ -1337,6 +1357,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .subscribe(
             resolvedLink -> {
               submissionContentStream.accept(resolvedLink);
+              uiEvents.accept(SubmissionContentResolvingCompleted.create(resolvedLink));
 
               switch (resolvedLink.type()) {
                 case SINGLE_IMAGE:
@@ -1355,7 +1376,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                   break;
 
                 case REDDIT_PAGE:
-                  contentLoadProgressView.hide();
                   if (!submission.isSelfPost()) {
                     contentLinkStream.accept(Optional.of(resolvedLink));
                   }
@@ -1363,7 +1383,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
                 case MEDIA_ALBUM:
                 case EXTERNAL:
-                  contentLoadProgressView.hide();
                   contentLinkStream.accept(Optional.of(resolvedLink));
                   break;
 
@@ -1392,15 +1411,19 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
       mediaHostRepository.get().flagLocalUrlParsingAsIncorrect(resolvedContentLink);
 
     } else {
+      uiEvents.accept(SubmissionMediaLoadFailed.create());
       showMediaLoadError(error);
     }
   }
 
   private void showMediaLoadError(Throwable error) {
     ResolvedError resolvedError = errorResolver.get().resolve(error);
-    resolvedError.ifUnknown(() -> Timber.e(error, "Media content load error: %s", submissionStream.getValue().get().getPermalink()));
+    if (resolvedError.isUnknown()) {
+      Timber.e(error, "Media content load error: %s", submissionStream.getValue().get().getPermalink());
+    } else {
+      Timber.w(error, "Media content load error: %s", submissionStream.getValue().get().getPermalink());
+    }
 
-    contentLoadProgressView.hide();
     mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.LoadFailure.create(resolvedError)));
   }
 

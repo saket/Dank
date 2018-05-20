@@ -6,6 +6,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentMessage;
+import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Contribution;
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
@@ -14,15 +16,19 @@ import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thing;
 import net.dean.jraw.models.attr.Created;
 
+import java.lang.reflect.Field;
 import java.util.Collections;
 import java.util.List;
 
+import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.R;
 import me.saket.dank.urlparser.RedditHostedVideoDashPlaylist;
 import timber.log.Timber;
 
 // TODO: Submit all these methods to JRAW.
 public class JrawUtils {
+
+  private static Field commentSortField;
 
   public static Message parseMessageJson(String json, JacksonHelper jacksonHelper) {
     JsonNode jsonNode = jacksonHelper.parseJsonNode(json);
@@ -81,8 +87,6 @@ public class JrawUtils {
     return comment.getDataNode().get("permalink").asText();
   }
 
-  // First: Playlist URL
-  // Second: Dash URL without audio.
   public static Optional<RedditHostedVideoDashPlaylist> redditVideoDashPlaylistUrl(Submission submission) {
     String playlistUrl;
     String videoWithoutAudioUrl;
@@ -110,5 +114,19 @@ public class JrawUtils {
       }
     }
     return Optional.of(RedditHostedVideoDashPlaylist.create(playlistUrl, videoWithoutAudioUrl));
+  }
+
+  public static CommentSort commentSortingOf(CommentNode commentNode) {
+    try {
+      if (commentSortField == null) {
+        //noinspection JavaReflectionMemberAccess
+        commentSortField = CommentNode.class.getDeclaredField("commentSort");
+        commentSortField.setAccessible(true);
+      }
+      return (CommentSort) commentSortField.get(commentNode);
+
+    } catch (NoSuchFieldException | IllegalAccessException e) {
+      throw Exceptions.propagate(e);
+    }
   }
 }

@@ -13,7 +13,6 @@ import android.support.annotation.Nullable;
 import android.util.Size;
 import android.view.Gravity;
 import android.view.View;
-import android.widget.ProgressBar;
 
 import com.bumptech.glide.Priority;
 import com.bumptech.glide.load.resource.gif.GifDrawable;
@@ -32,11 +31,13 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
+import me.saket.dank.ui.UiEvent;
+import me.saket.dank.ui.submission.events.SubmissionImageLoadStarted;
+import me.saket.dank.ui.submission.events.SubmissionImageLoadSucceeded;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Views;
-import me.saket.dank.utils.glide.GlidePaddingTransformation;
 import me.saket.dank.widgets.InboxUI.SimpleExpandablePageStateChangeCallbacks;
 import me.saket.dank.widgets.ScrollingRecyclerViewSheet;
 import me.saket.dank.widgets.ZoomableImageView;
@@ -52,12 +53,11 @@ public class SubmissionImageHolder {
 
   private final Lazy<SubmissionImageLoader> imageLoader;
 
+  private Relay<UiEvent> uiEvents;
   private SubmissionPageLifecycleStreams lifecycle;
   private SubmissionPageLayout submissionPageLayout;
-  private ProgressBar contentLoadProgressView;
   private Size deviceDisplaySize;
   private Relay<Drawable> imageStream = PublishRelay.create();
-  GlidePaddingTransformation glidePaddingTransformation;
   private ZoomableImageView.OnPanChangeListener imagePanListener;
 
   @Inject
@@ -70,15 +70,15 @@ public class SubmissionImageHolder {
    * <var>contentLoadProgressView</var>, so it's being manually supplied.
    */
   public void setup(
+      Relay<UiEvent> uiEvents,
       SubmissionPageLifecycleStreams lifecycleStreams,
       View submissionLayout,
-      ProgressBar contentLoadProgressView,
       SubmissionPageLayout submissionPageLayout,
       Size deviceDisplaySize)
   {
+    this.uiEvents = uiEvents;
     this.lifecycle = lifecycleStreams;
     this.submissionPageLayout = submissionPageLayout;
-    this.contentLoadProgressView = contentLoadProgressView;
     this.deviceDisplaySize = deviceDisplaySize;
 
     ButterKnife.bind(this, submissionLayout);
@@ -107,7 +107,7 @@ public class SubmissionImageHolder {
 
   @CheckResult
   public Completable load(MediaLink mediaLink, @Nullable Thumbnails redditSuppliedThumbnails) {
-    contentLoadProgressView.setVisibility(View.VISIBLE);
+    uiEvents.accept(SubmissionImageLoadStarted.create());
 
     RequestOptions imageLoadOptions = RequestOptions.priorityOf(Priority.IMMEDIATE);
 
@@ -119,7 +119,7 @@ public class SubmissionImageHolder {
             ((Animatable) drawable).start();
           }
         })
-        .doOnSuccess(drawable -> contentLoadProgressView.setVisibility(View.GONE))
+        .doOnSuccess(o -> uiEvents.accept(SubmissionImageLoadSucceeded.create()))
         .flatMap(drawable -> Views.rxWaitTillMeasured(imageView.view()).toSingleDefault(drawable))
         .doOnSuccess(drawable -> {
           float widthResizeFactor = deviceDisplaySize.getWidth() / (float) drawable.getIntrinsicWidth();
@@ -151,8 +151,6 @@ public class SubmissionImageHolder {
           });
         })
         .doOnSuccess(imageStream)
-        //.doOnError(e -> Timber.e(e, "Couldn't load image"))
-        .doOnError(e -> contentLoadProgressView.setVisibility(View.GONE))
         .toCompletable();
   }
 
