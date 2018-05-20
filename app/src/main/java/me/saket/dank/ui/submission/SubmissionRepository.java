@@ -10,6 +10,7 @@ import android.support.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
 import com.jakewharton.rxbinding2.internal.Notification;
+import com.nytimes.android.external.store3.base.Clearable;
 import com.nytimes.android.external.store3.base.Fetcher;
 import com.nytimes.android.external.store3.base.Persister;
 import com.nytimes.android.external.store3.base.impl.MemoryPolicy;
@@ -30,7 +31,6 @@ import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneId;
 
 import java.io.InterruptedIOException;
-import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -101,31 +101,13 @@ public class SubmissionRepository {
     this.syntheticData = syntheticData;
 
     submissionWithCommentsStore = SingleCheck.provider(() -> {
-      Fetcher<CachedSubmissionWithComments, DankSubmissionRequest> fetcher = request -> dankRedditClient.submission(request)
-          .flatMap(subWithComments -> replyRepository
-              .removeSyncPendingPostedReplies(ParentThread.of(subWithComments))
-              .andThen(Single.just(subWithComments)))
-          .map(subWithComments -> CachedSubmissionWithComments.create(request, subWithComments, System.currentTimeMillis()));
-
-      Persister<CachedSubmissionWithComments, DankSubmissionRequest> persister = new Persister<CachedSubmissionWithComments, DankSubmissionRequest>() {
-        @Nonnull
-        @Override
-        public Maybe<CachedSubmissionWithComments> read(DankSubmissionRequest submissionRequest) {
-          String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(submissionRequest);
-
-          return database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
-              .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
-              .firstElement()
-              .flatMap(cachedSubmissions -> cachedSubmissions.isEmpty()
-                  ? Maybe.empty()
-                  : Maybe.just(cachedSubmissions.get(0)));
-        }
-
-        @Nonnull
-        @Override
-        public Single<Boolean> write(DankSubmissionRequest submissionRequest, CachedSubmissionWithComments cachedSubmission) {
-          return saveSubmissionWithAndWithoutComments(cachedSubmission).toSingleDefault(true);
-        }
+      Fetcher<CachedSubmissionWithComments, DankSubmissionRequest> fetcher = request -> {
+        Timber.i("Fetching %s", request);
+        return dankRedditClient.submission(request)
+            .flatMap(subWithComments -> replyRepository
+                .removeSyncPendingPostedReplies(ParentThread.of(subWithComments))
+                .andThen(Single.just(subWithComments)))
+            .map(subWithComments -> CachedSubmissionWithComments.create(request, subWithComments, System.currentTimeMillis()));
       };
 
       return StoreBuilder.<DankSubmissionRequest, CachedSubmissionWithComments>key()
@@ -135,9 +117,53 @@ public class SubmissionRepository {
               .setExpireAfterWrite(24)
               .setExpireAfterTimeUnit(TimeUnit.HOURS)
               .build())
-          .persister(persister)
+          .persister(new SubmissionWithCommentsPersister(moshi, database, this))
           .open();
     });
+  }
+
+  private static class SubmissionWithCommentsPersister
+      implements Persister<CachedSubmissionWithComments, DankSubmissionRequest>,
+      Clearable<DankSubmissionRequest>
+  {
+
+    private Moshi moshi;
+    private BriteDatabase database;
+    private SubmissionRepository repository;
+
+    public SubmissionWithCommentsPersister(Moshi moshi, BriteDatabase database, SubmissionRepository repository) {
+      this.moshi = moshi;
+      this.database = database;
+      this.repository = repository;
+    }
+
+    @Override
+    public void clear(@Nonnull DankSubmissionRequest request) {
+      Timber.i("Clearing %s", request);
+      String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(request);
+      database.delete(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.WHERE_REQUEST_JSON, requestJson);
+    }
+
+    @Nonnull
+    @Override
+    public Maybe<CachedSubmissionWithComments> read(DankSubmissionRequest request) {
+      Timber.i("Reading for %s", request);
+      String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(request);
+
+      return database.createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
+          .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
+          .firstElement()
+          .flatMap(cachedSubmissions -> cachedSubmissions.isEmpty()
+              ? Maybe.empty()
+              : Maybe.just(cachedSubmissions.get(0)));
+    }
+
+    @Nonnull
+    @Override
+    public Single<Boolean> write(DankSubmissionRequest request, CachedSubmissionWithComments cachedSubmission) {
+      Timber.i("Writing to %s", request);
+      return repository.saveSubmissionWithAndWithoutComments(cachedSubmission).toSingleDefault(true);
+    }
   }
 
 // ======== SUBMISSION WITH COMMENTS ======== //
@@ -150,7 +176,8 @@ public class SubmissionRepository {
    */
   @CheckResult
   public Observable<Pair<DankSubmissionRequest, Submission>> submissionWithComments(DankSubmissionRequest oldSubmissionRequest) {
-    //Timber.i("Getting comments");
+    Timber.i("Getting comments for %s", oldSubmissionRequest);
+
     if (oldSubmissionRequest.id().equalsIgnoreCase(syntheticData.get().SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
       return syntheticSubmissionForGesturesWalkthrough()
           .map(syntheticSubmission -> {
@@ -225,16 +252,22 @@ public class SubmissionRepository {
           // saving a submission with comments. See saveSubmissionWithAndWithoutComments().
           DankSubmissionRequest updatedSubmissionRequest = pair.first();
           CachedSubmissionWithComments possiblyStaleSubWithComments = pair.second();
+
+          long targetSaveTimeMillis = possiblyStaleSubWithComments.updateTimeMillis();
+
+          Timber.i("Checking for stale-ness. %s", targetSaveTimeMillis);
+
           database
               .createQuery(
                   CachedSubmissionWithoutComments.TABLE_NAME,
                   CachedSubmissionWithoutComments.SELECT_BY_FULLNAME_AND_SAVE_TIME_NEWER_THAN,
                   possiblyStaleSubWithComments.submission().getFullName(),
-                  String.valueOf(possiblyStaleSubWithComments.updateTimeMillis())
+                  String.valueOf(targetSaveTimeMillis)
               )
               .mapToList(cursor -> CachedSubmissionWithoutComments.createFromCursor(cursor, moshi))
               .take(1)
               .flatMap(items -> items.isEmpty() ? Observable.empty() : Observable.just(items.get(0)))
+              .doOnNext(o -> Timber.i("Found one submission: %s", o.saveTimeMillis()))
               .map(optionalNewerSubWithoutComments -> CachedSubmissionWithComments.create(
                   updatedSubmissionRequest,
                   new Submission(
@@ -247,6 +280,7 @@ public class SubmissionRepository {
                   database.insert(CachedSubmissionWithComments.TABLE_NAME, newCachedSub.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE)
               ))
               // This will trigger another emission from the cache store.
+              //
               .andThen(Completable.fromAction(() -> submissionWithCommentsStore.get().clear(updatedSubmissionRequest)))
               .subscribeOn(Schedulers.io())
               .subscribe();
@@ -306,8 +340,8 @@ public class SubmissionRepository {
         )));
   }
 
-  public void clearCachedSubmissionWithComments(DankSubmissionRequest request) {
-    submissionWithCommentsStore.get().clear(request);
+  public Completable clearCachedSubmissionWithComments(DankSubmissionRequest request) {
+    return Completable.fromAction(() -> submissionWithCommentsStore.get().clear(request));
   }
 
   @CheckResult
