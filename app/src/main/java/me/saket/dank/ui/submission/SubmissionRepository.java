@@ -3,7 +3,6 @@ package me.saket.dank.ui.submission;
 import static junit.framework.Assert.assertEquals;
 import static me.saket.dank.utils.Arrays2.immutable;
 
-import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
@@ -31,6 +30,7 @@ import org.threeten.bp.LocalDateTime;
 import org.threeten.bp.ZoneId;
 
 import java.io.InterruptedIOException;
+import java.net.SocketTimeoutException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -62,7 +62,6 @@ import me.saket.dank.ui.subreddit.SubmissionPaginationResult;
 import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.DankSubmissionRequest;
-import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.vote.VotingManager;

@@ -36,4 +36,32 @@ public class SubmissionAnimatedProgressBar extends AnimatedProgressBar {
   public void setSyncScrollEnabled(boolean enabled) {
     syncScrollEnabled = enabled;
   }
+
+  public void showForReal() {
+    // This will exist until I'm sure that there are no
+    // remaining usages of show() and hide() left.
+    super.show();
+  }
+
+  public void hideForReal() {
+    super.hide();
+  }
+
+  /** @deprecated Use {@link #showForReal()} instead. */
+  @Override
+  public void show() {
+    throw new UnsupportedOperationException();
+  }
+
+  /** @deprecated Use {@link #showForReal()} instead. */
+  @Override
+  public void hide() {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void setVisibility(int visibility) {
+    super.setVisibility(visibility);
+    new Exception().printStackTrace();
+  }
 }
