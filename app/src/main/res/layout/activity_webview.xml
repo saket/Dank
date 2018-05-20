@@ -19,7 +19,7 @@
     android:fitsSystemWindows="true"
     app:navigationIcon="@drawable/ic_toolbar_close_24dp" />
 
-  <me.saket.dank.widgets.SubmissionAnimatedProgressBar
+  <me.saket.dank.widgets.AnimatedProgressBar
     android:id="@+id/webviewfallback_progress"
     style="@style/DankProgressBar.Horizontal.TopAligned"
     android:layout_below="@+id/toolbar" />
