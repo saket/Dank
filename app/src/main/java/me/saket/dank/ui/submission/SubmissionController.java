@@ -12,7 +12,7 @@ import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
 import me.saket.dank.ui.UiChange;
 import me.saket.dank.ui.UiEvent;
-import me.saket.dank.ui.submission.events.ChangeCommentSortingClicked;
+import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.SubmissionChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentSortChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentsLoadFailed;
@@ -134,7 +134,7 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         .map(event -> event.request());
 
     return events
-        .ofType(ChangeCommentSortingClicked.class)
+        .ofType(SubmissionChangeCommentSortClicked.class)
         .withLatestFrom(requestChanges, Pair::create)
         .map(pair -> (UiChange<SubmissionUi>) ui -> ui.showChangeSortPopup(pair.first(), pair.second()));
   }

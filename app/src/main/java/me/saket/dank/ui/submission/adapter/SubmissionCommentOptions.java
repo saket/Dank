@@ -19,7 +19,7 @@ import javax.inject.Inject;
 
 import me.saket.dank.R;
 import me.saket.dank.ui.UiEvent;
-import me.saket.dank.ui.submission.events.ChangeCommentSortingClicked;
+import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.SubmissionCommentsRefreshClicked;
 import me.saket.dank.utils.Animations;
 
@@ -75,7 +75,7 @@ public interface SubmissionCommentOptions {
     }
 
     public void setupCommentOptionClicks(PublishRelay<UiEvent> events) {
-      commentSortingButton.setOnClickListener(o -> events.accept(ChangeCommentSortingClicked.create(commentOptionsContainerView)));
+      commentSortingButton.setOnClickListener(o -> events.accept(SubmissionChangeCommentSortClicked.create(commentOptionsContainerView)));
       commentRefreshButton.setOnClickListener(o -> events.accept(SubmissionCommentsRefreshClicked.create()));
     }
 

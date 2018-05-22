@@ -107,7 +107,7 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.submission.adapter.SubmissionUiConstructor;
-import me.saket.dank.ui.submission.events.ChangeCommentSortingClicked;
+import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.InlineReplyRequestEvent;
@@ -303,7 +303,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   }
 
   @Override
-  public void showChangeSortPopup(ChangeCommentSortingClicked event, DankSubmissionRequest activeRequest) {
+  public void showChangeSortPopup(SubmissionChangeCommentSortClicked event, DankSubmissionRequest activeRequest) {
     CommentSortingModePopupMenu sortingPopupMenu1 = new CommentSortingModePopupMenu(event.buttonView().getContext(), event.buttonView());
     sortingPopupMenu1.highlightActiveSorting(activeRequest.commentSort().mode());
     sortingPopupMenu1.setOnSortingModeSelectListener(selectedSorting -> uiEvents.accept(SubmissionCommentSortChanged.create(selectedSorting)));
@@ -867,7 +867,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     // Comment sorting and refreshes.
     commentsAdapter.commentOptionUiEvents()
-        .ofType(ChangeCommentSortingClicked.class)
+        .ofType(SubmissionChangeCommentSortClicked.class)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(uiEvents);
 
