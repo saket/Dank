@@ -98,7 +98,6 @@ import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.media.MediaLinkWithStartingPosition;
 import me.saket.dank.ui.preferences.UserPreferenceGroup;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
-import me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy;
 import me.saket.dank.ui.submission.adapter.CommentsItemDiffer;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.ui.submission.adapter.SubmissionComment;
@@ -119,6 +118,7 @@ import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentSortChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentsLoadFailed;
+import me.saket.dank.ui.submission.events.SubmissionCommentsRefreshClicked;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingCompleted;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingFailed;
@@ -297,6 +297,24 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     contentLoadProgressView.hideForReal();
   }
 
+  @Override
+  public void acceptRequest(DankSubmissionRequest lastRequest) {
+    submissionRequestStream.accept(lastRequest);
+  }
+
+  @Override
+  public void showChangeSortPopup(ChangeCommentSortingClicked event, DankSubmissionRequest activeRequest) {
+    CommentSortingModePopupMenu sortingPopupMenu1 = new CommentSortingModePopupMenu(event.buttonView().getContext(), event.buttonView());
+    sortingPopupMenu1.highlightActiveSorting(activeRequest.commentSort().mode());
+    sortingPopupMenu1.setOnSortingModeSelectListener(selectedSorting -> uiEvents.accept(SubmissionCommentSortChanged.create(selectedSorting)));
+    sortingPopupMenu1.show();
+  }
+
+  @Override
+  public void acceptSubmission(Submission submission) {
+    submissionStream.accept(Optional.of(submission));
+  }
+
   public void onViewFirstAttach() {
     executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight()));
     //noinspection ConstantConditions
@@ -445,6 +463,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't fetch comments"));
               commentsLoadErrors.accept(Optional.of(resolvedError));
               uiEvents.accept(SubmissionCommentsLoadFailed.create());
+
+              if (submissionStream.getValue().map(submission -> submission.getComments()).isPresent()) {
+                Toast.makeText(getContext(), resolvedError.errorMessageRes(), Toast.LENGTH_SHORT).show();
+              }
+
               return Observable.never();
             })
         )
@@ -842,29 +865,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           populateUi(submissionWithoutComments, submissionRequest, callingSubreddits.getValue());
         });
 
-    // Comment sorting.
-    Observable<DankSubmissionRequest> sharedSortingChanges = commentsAdapter.commentOptionUiEvents()
+    // Comment sorting and refreshes.
+    commentsAdapter.commentOptionUiEvents()
         .ofType(ChangeCommentSortingClicked.class)
-        .withLatestFrom(submissionRequestStream, Pair::create)
-        .flatMapSingle(pair -> {
-          ChangeCommentSortingClicked event = pair.first();
-          DankSubmissionRequest lastRequest = pair.second();
-          return event
-              .showSortPopup(lastRequest.commentSort())
-              .map(selectedSort ->
-                  lastRequest.toBuilder()
-                      .commentSort(selectedSort, SelectedBy.USER)
-                      .build());
-        })
-        .share();
-
-    sharedSortingChanges
         .takeUntil(lifecycle().onDestroy())
-        .subscribe(submissionRequestStream);
+        .subscribe(uiEvents);
 
-    sharedSortingChanges
-        .map(selected -> selected.commentSort().mode())
-        .map(SubmissionCommentSortChanged::create)
+    // Comment refreshes.
+    commentsAdapter.commentOptionUiEvents()
+        .ofType(SubmissionCommentsRefreshClicked.class)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(uiEvents);
   }
@@ -1214,7 +1223,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private void setupSubmissionLoadErrors() {
     Observable<Object> sharedRetryClicks = commentsAdapter.streamCommentsLoadRetryClicks().share();
 
-    sharedRetryClicks.mergeWith(lifecycle().onPageCollapse())
+    submissionRequestStream
+        .cast(Object.class)
+        .mergeWith(lifecycle().onPageCollapse())
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> commentsLoadErrors.accept(Optional.empty()));
 

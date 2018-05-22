@@ -36,6 +36,7 @@ import me.saket.dank.cache.CachePreFiller;
 import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.ui.preferences.NetworkStrategy;
+import me.saket.dank.ui.submission.SubmissionImageLoader;
 import me.saket.dank.urlparser.LinkMetadata;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
@@ -57,6 +58,7 @@ public class CachePreFillerShould {
   @Mock LinkMetadataRepository linkMetadataRepo;
   @Mock UrlParser urlParser;
   @Mock HashMap<CachePreFillThing, Preference<NetworkStrategy>> networkStrategies;
+  @Mock SubmissionImageLoader imageLoader;
 
   private CachePreFiller cachePreFiller;
   private static final Size DISPLAY_SIZE = new Size(1280, 1920);
@@ -72,8 +74,9 @@ public class CachePreFillerShould {
         mediaHostRepo,
         linkMetadataRepo,
         () -> urlParser,
+        () -> imageLoader,
         () -> Schedulers.computation(),
-        () -> networkStrategies, submissionImageLoader);
+        () -> networkStrategies);
 
     PowerMockito.mockStatic(RxUtils.class);
     PowerMockito.when(RxUtils.errorIfMainThread()).thenReturn(o -> {

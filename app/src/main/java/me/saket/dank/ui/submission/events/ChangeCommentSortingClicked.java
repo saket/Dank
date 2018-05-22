@@ -19,13 +19,4 @@ public abstract class ChangeCommentSortingClicked implements UiEvent {
   public static ChangeCommentSortingClicked create(View buttonView) {
     return new AutoValue_ChangeCommentSortingClicked(buttonView);
   }
-
-  public Single<CommentSort> showSortPopup(AuditedCommentSort activeSort) {
-    return Single.create(emitter -> {
-      CommentSortingModePopupMenu sortingPopupMenu = new CommentSortingModePopupMenu(buttonView().getContext(), buttonView());
-      sortingPopupMenu.highlightActiveSorting(activeSort.mode());
-      sortingPopupMenu.setOnSortingModeSelectListener(selectedSorting -> emitter.onSuccess(selectedSorting));
-      sortingPopupMenu.show();
-    });
-  }
 }
