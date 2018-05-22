@@ -46,9 +46,9 @@ public abstract class CachedSubmissionWithComments {
 
   public abstract long updateTimeMillis();
 
-  public static CachedSubmissionWithComments create(DankSubmissionRequest request, Submission submission, long saveTimeMillis) {
+  public static CachedSubmissionWithComments create(DankSubmissionRequest request, Submission submission, long createTimeMillis) {
     // Submission's suggested sort can be different from
-    return new AutoValue_CachedSubmissionWithComments(request, submission, saveTimeMillis);
+    return new AutoValue_CachedSubmissionWithComments(request, submission, createTimeMillis);
   }
 
   public ContentValues toContentValues(Moshi moshi) {
