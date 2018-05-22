@@ -61,28 +61,27 @@ import timber.log.Timber;
 @Singleton
 public class SubmissionRepository {
 
-  // TODO: convert all to lazy dependencies.
-  private final BriteDatabase database;
-  private final Moshi moshi;
-  private final DankRedditClient dankRedditClient;
-  private final VotingManager votingManager;
-  private final ErrorResolver errorResolver;
-  private final SubscriptionRepository subscriptionRepository;
+  private final Lazy<Moshi> moshi;
+  private final Lazy<BriteDatabase> database;
+  private final Lazy<DankRedditClient> dankRedditClient;
+  private final Lazy<VotingManager> votingManager;
+  private final Lazy<ErrorResolver> errorResolver;
+  private final Lazy<SubscriptionRepository> subscriptionRepository;
   private final Lazy<SyntheticData> syntheticData;
-  private ReplyRepository replyRepository;
+  private final Lazy<ReplyRepository> replyRepository;
 
   private Cache<DankSubmissionRequest, CachedSubmissionWithComments> inMemoryCache;
 
   @Inject
   public SubmissionRepository(
-      BriteDatabase briteDatabase,
-      Moshi moshi,
-      DankRedditClient dankRedditClient,
-      VotingManager votingManager,
-      ErrorResolver errorResolver,
-      SubscriptionRepository subscriptionRepository,
-      Lazy<SyntheticData> syntheticData,
-      ReplyRepository replyRepository)
+      Lazy<Moshi> moshi,
+      Lazy<BriteDatabase> briteDatabase,
+      Lazy<DankRedditClient> dankRedditClient,
+      Lazy<VotingManager> votingManager,
+      Lazy<ErrorResolver> errorResolver,
+      Lazy<SubscriptionRepository> subscriptionRepository,
+      Lazy<ReplyRepository> replyRepository,
+      Lazy<SyntheticData> syntheticData)
   {
     this.database = briteDatabase;
     this.moshi = moshi;
@@ -188,14 +187,14 @@ public class SubmissionRepository {
           // happen again.
           long targetSaveTimeMillis = possiblyStaleSubWithComments.updateTimeMillis();
 
-          return database
+          return database.get()
               .createQuery(
                   CachedSubmissionWithoutComments.TABLE_NAME,
                   CachedSubmissionWithoutComments.SELECT_BY_FULLNAME_AND_SAVE_TIME_NEWER_THAN,
                   possiblyStaleSubWithComments.submission().getFullName(),
                   String.valueOf(targetSaveTimeMillis)
               )
-              .mapToList(cursor -> CachedSubmissionWithoutComments.createFromCursor(cursor, moshi))
+              .mapToList(cursor -> CachedSubmissionWithoutComments.createFromCursor(cursor, moshi.get()))
               .take(1)
               .flatMap(items -> items.isEmpty() ? Observable.empty() : Observable.just(items.get(0)))
               .doOnNext(o -> Timber.i("Found one submission: %s", o.saveTimeMillis()))
@@ -208,7 +207,10 @@ public class SubmissionRepository {
                   optionalNewerSubWithoutComments.saveTimeMillis()
               ))
               .flatMapCompletable(newCachedSub -> Completable.fromAction(() ->
-                  database.insert(CachedSubmissionWithComments.TABLE_NAME, newCachedSub.toContentValues(moshi), SQLiteDatabase.CONFLICT_REPLACE)
+                  database.get().insert(
+                      CachedSubmissionWithComments.TABLE_NAME,
+                      newCachedSub.toContentValues(moshi.get()),
+                      SQLiteDatabase.CONFLICT_REPLACE)
               ));
         })
         .andThen(Observable.empty());
@@ -223,18 +225,18 @@ public class SubmissionRepository {
   @CheckResult
   private Observable<CachedSubmissionWithComments> getFromDbOrFetchSubmissionWithComments(DankSubmissionRequest request) {
     //Timber.i("Reading for %s", request);
-    String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(request);
+    String requestJson = moshi.get().adapter(DankSubmissionRequest.class).toJson(request);
 
-    Observable<List<CachedSubmissionWithComments>> sharedDbStream = database
+    Observable<List<CachedSubmissionWithComments>> sharedDbStream = database.get()
         .createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_BY_REQUEST_JSON, requestJson)
-        .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
+        .mapToList(CachedSubmissionWithComments.cursorMapper(moshi.get()))
         .share();
 
     Observable<CachedSubmissionWithComments> fetchObservable = sharedDbStream
         .map(dbItems -> dbItems.isEmpty())
         .flatMapCompletable(isDbEmpty -> {
           if (isDbEmpty) {
-            Single<Submission> sharedSubmissionStream = dankRedditClient.submission(request);
+            Single<Submission> sharedSubmissionStream = dankRedditClient.get().submission(request);
 
             Completable saveCompletable = sharedSubmissionStream
                 .map(submission -> CachedSubmissionWithComments.create(request, submission, System.currentTimeMillis()))
@@ -243,7 +245,7 @@ public class SubmissionRepository {
             return saveCompletable
                 .mergeWith(sharedSubmissionStream
                     .map(ParentThread::of)
-                    .flatMapCompletable(replyRepository::removeSyncPendingPostedReplies));
+                    .flatMapCompletable(replyRepository.get()::removeSyncPendingPostedReplies));
 
           } else {
             return Completable.complete();
@@ -268,13 +270,13 @@ public class SubmissionRepository {
           submissionWithoutComments.getSubredditName(),
           cachedSubmission.updateTimeMillis()
       );
-      JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
+      JsonAdapter<Submission> submissionJsonAdapter = moshi.get().adapter(Submission.class);
       ContentValues valuesWithoutComments = cachedSubmissionWithoutComments.toContentValues(submissionJsonAdapter);
-      ContentValues valuesWithComments = cachedSubmission.toContentValues(moshi);
+      ContentValues valuesWithComments = cachedSubmission.toContentValues(moshi.get());
 
-      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-        database.insert(CachedSubmissionWithComments.TABLE_NAME, valuesWithComments, SQLiteDatabase.CONFLICT_REPLACE);
-        database.insert(CachedSubmissionWithoutComments.TABLE_NAME, valuesWithoutComments, SQLiteDatabase.CONFLICT_REPLACE);
+      try (BriteDatabase.Transaction transaction = database.get().newTransaction()) {
+        database.get().insert(CachedSubmissionWithComments.TABLE_NAME, valuesWithComments, SQLiteDatabase.CONFLICT_REPLACE);
+        database.get().insert(CachedSubmissionWithoutComments.TABLE_NAME, valuesWithoutComments, SQLiteDatabase.CONFLICT_REPLACE);
         transaction.markSuccessful();
       }
     });
@@ -289,7 +291,7 @@ public class SubmissionRepository {
     // JRAW inserts the new comments directly inside submission's comment tree, which we
     // do not want because we treat persistence as the single source of truth. So we'll
     // instead re-save the submission to DB and let the UI update itself.
-    return dankRedditClient.withAuth(dankRedditClient.loadMoreComments(commentNode))
+    return dankRedditClient.get().withAuth(dankRedditClient.get().loadMoreComments(commentNode))
         .toCompletable()
         .andThen(saveSubmissionWithAndWithoutComments(CachedSubmissionWithComments.create(
             submissionRequest,
@@ -301,8 +303,8 @@ public class SubmissionRepository {
   public Completable clearCachedSubmissionWithComments(DankSubmissionRequest request) {
     return Completable.fromAction(() -> {
       inMemoryCache.invalidate(request);
-      String requestJson = moshi.adapter(DankSubmissionRequest.class).toJson(request);
-      database.delete(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.WHERE_REQUEST_JSON, requestJson);
+      String requestJson = moshi.get().adapter(DankSubmissionRequest.class).toJson(request);
+      database.get().delete(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.WHERE_REQUEST_JSON, requestJson);
     });
   }
 
@@ -314,8 +316,8 @@ public class SubmissionRepository {
     return Completable.fromAction(() -> {
       inMemoryCache.invalidateAll();
 
-      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-        database.delete(CachedSubmissionWithComments.TABLE_NAME, null);
+      try (BriteDatabase.Transaction transaction = database.get().newTransaction()) {
+        database.get().delete(CachedSubmissionWithComments.TABLE_NAME, null);
         transaction.markSuccessful();
       }
     });
@@ -324,7 +326,7 @@ public class SubmissionRepository {
   @CheckResult
   public Single<Submission> syntheticSubmissionForGesturesWalkthrough() {
     return Single.fromCallable(() -> {
-      JsonAdapter<Submission> adapter = moshi.adapter(Submission.class);
+      JsonAdapter<Submission> adapter = moshi.get().adapter(Submission.class);
       return adapter.fromJson(syntheticData.get().submissionForGesturesWalkthroughJson());
     });
   }
@@ -334,10 +336,10 @@ public class SubmissionRepository {
   @CheckResult
   public Observable<List<Submission>> submissions(CachedSubmissionFolder folder) {
     List<String> tablesToListen = Arrays.asList(CachedSubmissionId.TABLE_NAME, CachedSubmissionWithoutComments.TABLE_NAME);
-    String sqlQuery = CachedSubmissionList.constructQueryToGetAll(moshi, folder.subredditName(), folder.sortingAndTimePeriod());
+    String sqlQuery = CachedSubmissionList.constructQueryToGetAll(moshi.get(), folder.subredditName(), folder.sortingAndTimePeriod());
 
-    return database.createQuery(tablesToListen, sqlQuery)
-        .mapToList(CachedSubmissionList.cursorMapper(moshi.adapter(Submission.class)))
+    return database.get().createQuery(tablesToListen, sqlQuery)
+        .mapToList(CachedSubmissionList.cursorMapper(moshi.get().adapter(Submission.class)))
         .as(immutable());
   }
 
@@ -348,7 +350,7 @@ public class SubmissionRepository {
   public Observable<SubmissionPaginationResult> loadAndSaveMoreSubmissions(CachedSubmissionFolder folder) {
     return lastPaginationAnchor(folder)
         //.doOnSuccess(anchor -> Timber.i("anchor: %s", anchor))
-        .flatMapCompletable(anchor -> dankRedditClient
+        .flatMapCompletable(anchor -> dankRedditClient.get()
             .withAuth(Single.fromCallable(() -> {
               List<Submission> distinctNewItems = new ArrayList<>();
               PaginationAnchor nextAnchor = anchor;
@@ -356,7 +358,7 @@ public class SubmissionRepository {
 
               while (true) {
                 FetchResult fetchResult = fetchSubmissionsFromRemoteWithAnchor(folder, nextAnchor);
-                votingManager.removePendingVotesForFetchedSubmissions(fetchResult.fetchedSubmissions()).subscribe();
+                votingManager.get().removePendingVotesForFetchedSubmissions(fetchResult.fetchedSubmissions()).subscribe();
                 //Timber.i("Found %s submissions on remote", fetchResult.fetchedSubmissions().size());
 
                 SaveResult saveResult = saveSubmissions(folder, fetchResult.fetchedSubmissions());
@@ -377,7 +379,7 @@ public class SubmissionRepository {
             }))
             .flatMapCompletable(savedSubmissionCount -> {
               if (savedSubmissionCount == 0 && anchor.isEmpty()) {
-                return dankRedditClient
+                return dankRedditClient.get()
                     .findSubreddit2(folder.subredditName())
                     .flatMapCompletable(searchResult -> {
                       switch (searchResult.type()) {
@@ -409,7 +411,7 @@ public class SubmissionRepository {
               }
             })
             .retryWhen(errors -> errors.flatMap(error -> {
-              Throwable actualError = errorResolver.findActualCause(error);
+              Throwable actualError = errorResolver.get().findActualCause(error);
 
               if (actualError instanceof InterruptedIOException) {
                 // I don't know why, but this chain gets occasionally gets interrupted randomly.
@@ -425,7 +427,7 @@ public class SubmissionRepository {
         .toObservable()
         .doOnError(e -> {
           if (!(e instanceof PrivateSubredditException || e instanceof SubredditNotFoundException)) {
-            ResolvedError resolvedError = errorResolver.resolve(e);
+            ResolvedError resolvedError = errorResolver.get().resolve(e);
             resolvedError.ifUnknown(() -> Timber.e(e, "Couldn't fetch submissions for %s", folder));
           }
         })
@@ -438,7 +440,7 @@ public class SubmissionRepository {
    */
   @CheckResult
   private Single<PaginationAnchor> lastPaginationAnchor(CachedSubmissionFolder folder) {
-    String sortingAndTimePeriodJson = moshi.adapter(SortingAndTimePeriod.class).toJson(folder.sortingAndTimePeriod());
+    String sortingAndTimePeriodJson = moshi.get().adapter(SortingAndTimePeriod.class).toJson(folder.sortingAndTimePeriod());
     String sqlQuery = CachedSubmissionId.constructQueryToGetLastSubmission(folder.subredditName(), sortingAndTimePeriodJson);
 
     Function<Cursor, PaginationAnchor> paginationAnchorFunction = cursor -> {
@@ -446,7 +448,7 @@ public class SubmissionRepository {
       return PaginationAnchor.create(CachedSubmissionId.SUBMISSION_FULLNAME_MAPPER.apply(cursor));
     };
 
-    return database
+    return database.get()
         .createQuery(CachedSubmissionId.TABLE_NAME, sqlQuery)
         .mapToOneOrDefault(paginationAnchorFunction, PaginationAnchor.createEmpty())
         .take(1)
@@ -455,8 +457,8 @@ public class SubmissionRepository {
 
   @CheckResult
   private FetchResult fetchSubmissionsFromRemoteWithAnchor(CachedSubmissionFolder folder, PaginationAnchor anchor) {
-    boolean isFrontpage = subscriptionRepository.isFrontpage(folder.subredditName());
-    SubredditPaginator subredditPaginator = dankRedditClient.subredditPaginator(folder.subredditName(), isFrontpage);
+    boolean isFrontpage = subscriptionRepository.get().isFrontpage(folder.subredditName());
+    SubredditPaginator subredditPaginator = dankRedditClient.get().subredditPaginator(folder.subredditName(), isFrontpage);
     if (!anchor.isEmpty()) {
       subredditPaginator.setStartAfterThing(anchor.fullName());
     }
@@ -475,8 +477,8 @@ public class SubmissionRepository {
    */
   @CheckResult
   private SaveResult saveSubmissions(CachedSubmissionFolder folder, List<Submission> submissionsToSave) {
-    JsonAdapter<SortingAndTimePeriod> andTimePeriodJsonAdapter = moshi.adapter(SortingAndTimePeriod.class);
-    JsonAdapter<Submission> submissionJsonAdapter = moshi.adapter(Submission.class);
+    JsonAdapter<SortingAndTimePeriod> andTimePeriodJsonAdapter = moshi.get().adapter(SortingAndTimePeriod.class);
+    JsonAdapter<Submission> submissionJsonAdapter = moshi.get().adapter(Submission.class);
 
     List<ContentValues> submissionIdValuesList = new ArrayList<>(submissionsToSave.size());
     List<ContentValues> submissionWithoutCommentsValuesList = new ArrayList<>(submissionsToSave.size());
@@ -514,17 +516,17 @@ public class SubmissionRepository {
     List<Submission> savedSubmissions = new ArrayList<>(submissionsToSave.size());
 
     Timber.i("save 2");
-    try (BriteDatabase.Transaction transaction = database.newTransaction()) {
+    try (BriteDatabase.Transaction transaction = database.get().newTransaction()) {
       for (int i = 0; i < submissionIdValuesList.size(); i++) {
         ContentValues submissionIdValues = submissionIdValuesList.get(i);
         ContentValues submissionWithoutCommentsValues = submissionWithoutCommentsValuesList.get(i);
 
         // Again, since Reddit does not send submissions sorted by time, it's possible to receive
         // duplicate submissions.Ignore them.
-        long insertedRowId = database.insert(CachedSubmissionId.TABLE_NAME, submissionIdValues, SQLiteDatabase.CONFLICT_IGNORE);
+        long insertedRowId = database.get().insert(CachedSubmissionId.TABLE_NAME, submissionIdValues, SQLiteDatabase.CONFLICT_IGNORE);
         if (insertedRowId != -1) {
           // CONFLICT_REPLACE: to handle updated submissions received from remote.
-          database.insert(CachedSubmissionWithoutComments.TABLE_NAME, submissionWithoutCommentsValues, SQLiteDatabase.CONFLICT_REPLACE);
+          database.get().insert(CachedSubmissionWithoutComments.TABLE_NAME, submissionWithoutCommentsValues, SQLiteDatabase.CONFLICT_REPLACE);
           Submission savedSubmission = submissionsToSave.get(i);
           assertEquals(submissionIdValues.get(CachedSubmissionId.COLUMN_SUBMISSION_FULL_NAME), savedSubmission.getFullName());
           savedSubmissions.add(savedSubmission);
@@ -540,9 +542,9 @@ public class SubmissionRepository {
 
   public Completable clearCachedSubmissionLists() {
     return Completable.fromAction(() -> {
-      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-        database.delete(CachedSubmissionId.TABLE_NAME, null);
-        database.delete(CachedSubmissionWithoutComments.TABLE_NAME, null);
+      try (BriteDatabase.Transaction transaction = database.get().newTransaction()) {
+        database.get().delete(CachedSubmissionId.TABLE_NAME, null);
+        database.get().delete(CachedSubmissionWithoutComments.TABLE_NAME, null);
         transaction.markSuccessful();
       }
     });
@@ -550,9 +552,9 @@ public class SubmissionRepository {
 
   public Completable clearCachedSubmissionLists(String subredditName) {
     return Completable.fromAction(() -> {
-      try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-        database.delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SUBREDDIT_NAME, subredditName);
-        database.delete(CachedSubmissionWithoutComments.TABLE_NAME, CachedSubmissionWithoutComments.WHERE_SUBREDDIT_NAME, subredditName);
+      try (BriteDatabase.Transaction transaction = database.get().newTransaction()) {
+        database.get().delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SUBREDDIT_NAME, subredditName);
+        database.get().delete(CachedSubmissionWithoutComments.TABLE_NAME, CachedSubmissionWithoutComments.WHERE_SUBREDDIT_NAME, subredditName);
         transaction.markSuccessful();
       }
     });
@@ -572,9 +574,9 @@ public class SubmissionRepository {
 
     if (BuildConfig.DEBUG) {
       logCompletable = Completable.fromAction(() -> {
-        List<CachedSubmissionWithComments> rowsToBeDeleted = database
+        List<CachedSubmissionWithComments> rowsToBeDeleted = database.get()
             .createQuery(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.SELECT_WHERE_UPDATE_TIME_BEFORE, millisBeforeNowString)
-            .mapToList(CachedSubmissionWithComments.cursorMapper(moshi))
+            .mapToList(CachedSubmissionWithComments.cursorMapper(moshi.get()))
             .blockingFirst();
 
         Timber.i("Now time: %s", System.currentTimeMillis());
@@ -592,14 +594,14 @@ public class SubmissionRepository {
         .andThen(Single.fromCallable(() -> {
           int totalDeletedRows = 0;
 
-          try (BriteDatabase.Transaction transaction = database.newTransaction()) {
-            totalDeletedRows += database.delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SAVE_TIME_BEFORE, millisBeforeNowString);
-            totalDeletedRows += database.delete(
+          try (BriteDatabase.Transaction transaction = database.get().newTransaction()) {
+            totalDeletedRows += database.get().delete(CachedSubmissionId.TABLE_NAME, CachedSubmissionId.WHERE_SAVE_TIME_BEFORE, millisBeforeNowString);
+            totalDeletedRows += database.get().delete(
                 CachedSubmissionWithoutComments.TABLE_NAME,
                 CachedSubmissionWithoutComments.WHERE_SAVE_TIME_BEFORE,
                 millisBeforeNowString
             );
-            totalDeletedRows += database.delete(
+            totalDeletedRows += database.get().delete(
                 CachedSubmissionWithComments.TABLE_NAME,
                 CachedSubmissionWithComments.WHERE_UPDATE_TIME_BEFORE,
                 millisBeforeNowString
