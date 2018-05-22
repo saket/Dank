@@ -196,7 +196,7 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
             .clearCachedSubmissionWithComments(lastRequest)
             .doOnComplete(() -> Timber.i("Cache cleared"))
             .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(lastRequest))));
-    
+
     return resetComments.mergeWith(fetchNewRequests);
   }
 
