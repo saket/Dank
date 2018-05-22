@@ -1,16 +1,22 @@
 package me.saket.dank.ui.submission;
 
-import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy;
+
+import net.dean.jraw.models.CommentSort;
+import net.dean.jraw.models.Submission;
 
 import javax.inject.Inject;
 
+import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
 import me.saket.dank.ui.UiChange;
 import me.saket.dank.ui.UiEvent;
+import me.saket.dank.ui.submission.events.ChangeCommentSortingClicked;
 import me.saket.dank.ui.submission.events.SubmissionChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentSortChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentsLoadFailed;
+import me.saket.dank.ui.submission.events.SubmissionCommentsRefreshClicked;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingCompleted;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingFailed;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingStarted;
@@ -21,14 +27,18 @@ import me.saket.dank.ui.submission.events.SubmissionNsfwContentFiltered;
 import me.saket.dank.ui.submission.events.SubmissionRequestChanged;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadStarted;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadSucceeded;
-import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import timber.log.Timber;
 
 public class SubmissionController implements ObservableTransformer<UiEvent, UiChange<SubmissionUi>> {
 
+  private Lazy<SubmissionRepository> submissionRepository;
+
   @Inject
-  public SubmissionController() {
+  public SubmissionController(Lazy<SubmissionRepository> submissionRepository) {
+    this.submissionRepository = submissionRepository;
   }
 
   @Override
@@ -39,10 +49,16 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
     Observable<UiEvent> replayedEvents = events.replay(1).refCount();
 
     //noinspection unchecked
-    return Observable.mergeArray(progressToggles(replayedEvents));
+    return Observable.mergeArray(
+        contentProgressToggles(replayedEvents),
+        changeSortPopupShows(replayedEvents),
+        sortModeChanges(replayedEvents),
+        manualRefreshes(replayedEvents));
   }
 
-  private Observable<UiChange<SubmissionUi>> progressToggles(Observable<UiEvent> events) {
+  // WARNING: If we ever use this progress toggle for indicating loading of submission,
+  // the calls to show() and hide() will need to be synchronized.
+  private Observable<UiChange<SubmissionUi>> contentProgressToggles(Observable<UiEvent> events) {
 //    Observable<SubmissionPageLifecycleChanged> pageCollapses = events
 //        .ofType(SubmissionPageLifecycleChanged.class)
 //        .filter(event -> event.state() == PageState.COLLAPSED);
@@ -68,15 +84,10 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         events.ofType(SubmissionVideoLoadStarted.class))
         .doOnNext(o -> log("Loading media"));
 
-    Observable<?> sortChangeStarted = events
-        .ofType(SubmissionCommentSortChanged.class)
-        .doOnNext(o -> log("Sort changed"));
-
     Observable<?> progressShows = Observable.mergeArray(
         fullSubmissionLoadStarts,
         contentResolveStarts,
-        mediaLoadStarts,
-        sortChangeStarted);
+        mediaLoadStarts);
 
     Observable<?> submissionLoadFails = events
         .ofType(SubmissionCommentsLoadFailed.class)
@@ -104,41 +115,75 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         .ofType(SubmissionNsfwContentFiltered.class)
         .doOnEach(o -> log("NSFW content filtered"));
 
-    Observable<?> sortingChangeCompleted = events
-        .ofType(SubmissionCommentSortChanged.class)
-        .map(event -> event.selectedSort())
-        .switchMap(selectedSort -> submissionChanges
-            .subscribeOn(io())
-
-            // So this should never happen, but since we unfortunately replay
-            // all events, it's possible to receive an empty Optional here.
-            .filter(event -> event.optionalSubmission().isPresent())
-
-            .map(event -> event.optionalSubmission().get())
-            .filter(submission -> submission.getComments() != null)
-            .map(submission -> submission.getComments())
-            .map(comments -> JrawUtils.commentSortingOf(comments))
-            .filter(sortMode -> sortMode == selectedSort)
-            .cast(Object.class)
-            .onErrorResumeNext(throwable -> {
-              Timber.e(throwable, "Error while getting submission's sort");
-              // The return value isn't used.
-              return Observable.just(new Object());
-            })
-        );
-
     Observable<?> progressHides = Observable.mergeArray(
         submissionLoadFails,
         contentResolveCompletes,
         contentResolveFails,
         mediaLoadSucceeds,
         mediaLoadFails,
-        nsfwContentFilters,
-        sortingChangeCompleted);
+        nsfwContentFilters);
 
     return Observable.merge(
         progressShows.map(o -> ui -> ui.showProgress()),
         progressHides.map(o1 -> ui -> ui.hideProgress()));
+  }
+
+  private Observable<UiChange<SubmissionUi>> changeSortPopupShows(Observable<UiEvent> events) {
+    Observable<DankSubmissionRequest> requestChanges = events
+        .ofType(SubmissionRequestChanged.class)
+        .map(event -> event.request());
+
+    return events
+        .ofType(ChangeCommentSortingClicked.class)
+        .withLatestFrom(requestChanges, Pair::create)
+        .map(pair -> (UiChange<SubmissionUi>) ui -> ui.showChangeSortPopup(pair.first(), pair.second()));
+  }
+
+  private Observable<UiChange<SubmissionUi>> sortModeChanges(Observable<UiEvent> events) {
+    Observable<DankSubmissionRequest> requestChanges = events
+        .ofType(SubmissionRequestChanged.class)
+        .map(event -> event.request());
+
+    Observable<UiChange<SubmissionUi>> fetchNewRequests = events
+        .ofType(SubmissionCommentSortChanged.class)
+        .map(event -> event.selectedSort())
+        .withLatestFrom(requestChanges, Pair::create)
+        .map(pair -> {
+          CommentSort selectedSort = pair.first();
+          DankSubmissionRequest lastRequest = pair.second();
+          return lastRequest.toBuilder()
+              .commentSort(selectedSort, SelectedBy.USER)
+              .build();
+        })
+        .map(newRequest -> (UiChange<SubmissionUi>) ui -> ui.acceptRequest(newRequest));
+
+    Observable<Submission> submissionChanges = events
+        .ofType(SubmissionChanged.class)
+        .map(event -> event.optionalSubmission())
+        .filter(Optional::isPresent)
+        .map(Optional::get);
+
+    Observable<UiChange<SubmissionUi>> resetComments = events
+        .ofType(SubmissionCommentSortChanged.class)
+        .withLatestFrom(submissionChanges, (__, sub) -> sub)
+        .map(submission -> new Submission(submission.getDataNode()))
+        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
+
+    return resetComments.mergeWith(fetchNewRequests);
+  }
+
+  private Observable<UiChange<SubmissionUi>> manualRefreshes(Observable<UiEvent> events) {
+    Observable<DankSubmissionRequest> requestChanges = events
+        .ofType(SubmissionRequestChanged.class)
+        .map(event -> event.request());
+
+    return events
+        .ofType(SubmissionCommentsRefreshClicked.class)
+        .withLatestFrom(requestChanges, (__, lastRequest) -> lastRequest)
+        .switchMap(lastRequest -> submissionRepository.get()
+            .clearCachedSubmissionWithComments(lastRequest)
+            .doOnComplete(() -> Timber.i("Cache cleared"))
+            .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(lastRequest))));
   }
 
   private void log(String message, Object... args) {

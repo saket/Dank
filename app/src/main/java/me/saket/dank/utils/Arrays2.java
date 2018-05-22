@@ -38,7 +38,7 @@ public class Arrays2 {
     return list -> Collections.unmodifiableList(list);
   }
 
-  public static <T> Optional<T> optionallyFirst(List<T> items) {
+  public static <T> Optional<T> firstOrEmpty(List<T> items) {
     return items.isEmpty() ? Optional.empty() : Optional.of(items.get(0));
   }
 
