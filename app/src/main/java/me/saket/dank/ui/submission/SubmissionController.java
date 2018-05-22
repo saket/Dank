@@ -109,8 +109,13 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         .map(event -> event.selectedSort())
         .switchMap(selectedSort -> submissionChanges
             .subscribeOn(io())
+
+            // So this should never happen, but since we unfortunately replay
+            // all events, it's possible to receive an empty Optional here.
             .filter(event -> event.optionalSubmission().isPresent())
+
             .map(event -> event.optionalSubmission().get())
+            .filter(submission -> submission.getComments() != null)
             .map(submission -> submission.getComments())
             .map(comments -> JrawUtils.commentSortingOf(comments))
             .filter(sortMode -> sortMode == selectedSort)
