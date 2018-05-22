@@ -177,13 +177,27 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         .ofType(SubmissionRequestChanged.class)
         .map(event -> event.request());
 
-    return events
+    Observable<Submission> submissionChanges = events
+        .ofType(SubmissionChanged.class)
+        .map(event -> event.optionalSubmission())
+        .filter(Optional::isPresent)
+        .map(Optional::get);
+
+    Observable<UiChange<SubmissionUi>> resetComments = events
+        .ofType(SubmissionCommentsRefreshClicked.class)
+        .withLatestFrom(submissionChanges, (__, sub) -> sub)
+        .map(submission -> new Submission(submission.getDataNode()))
+        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
+
+    Observable<UiChange<SubmissionUi>> fetchNewRequests = events
         .ofType(SubmissionCommentsRefreshClicked.class)
         .withLatestFrom(requestChanges, (__, lastRequest) -> lastRequest)
         .switchMap(lastRequest -> submissionRepository.get()
             .clearCachedSubmissionWithComments(lastRequest)
             .doOnComplete(() -> Timber.i("Cache cleared"))
             .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(lastRequest))));
+    
+    return resetComments.mergeWith(fetchNewRequests);
   }
 
   private void log(String message, Object... args) {
