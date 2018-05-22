@@ -20,7 +20,6 @@ import android.support.annotation.Nullable;
 import android.support.transition.TransitionManager;
 import android.support.transition.TransitionSet;
 import android.support.v7.util.DiffUtil;
-import android.util.Size;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -634,27 +633,29 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         .subscribe(toolbarRefreshVisibilityStream);
 
     // Cache pre-fill.
-    Size displaySize = new Size(getResources().getDisplayMetrics().widthPixels, getResources().getDisplayMetrics().heightPixels);
     int submissionAlbumLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(this);
 
     submissionFolderStream
-        .observeOn(single())
-        .switchMap(folder -> subscriptionRepository.isSubscribed(folder.subredditName()))
-        .filter(isSubscribed -> isSubscribed)
-        .switchMap(o -> cachedSubmissionStream
-            .filter(Optional::isPresent)
-            .map(Optional::get)
-            .switchMap(cachedSubmissions -> cachePreFiller
-                .preFillInParallelThreads(
-                    cachedSubmissions,
-                    submissionAlbumLinkThumbnailWidth
-                )
-                .doOnError(error -> {
-                  ResolvedError resolvedError = errorResolver.resolve(error);
-                  resolvedError.ifUnknown(() -> Timber.e(error, "Unknown error while pre-filling cache."));
-                })
-                .onErrorComplete()
-                .toObservable()))
+        .switchMap(folder -> subscriptionRepository.isSubscribed(folder.subredditName()).take(1))
+        .switchMap(isSubscribed -> {
+          if (!isSubscribed) {
+            return Observable.empty();
+          }
+
+          return cachedSubmissionStream
+              .subscribeOn(single())
+              .filter(Optional::isPresent)
+              .map(Optional::get)
+              .distinctUntilChanged((first, second) -> first.size() == second.size())
+              .switchMap(cachedSubmissions -> cachePreFiller
+                  .preFillInParallelThreads(cachedSubmissions, submissionAlbumLinkThumbnailWidth)
+                  .doOnError(error -> {
+                    ResolvedError resolvedError = errorResolver.resolve(error);
+                    resolvedError.ifUnknown(() -> Timber.e(error, "Unknown error while pre-filling cache."));
+                  })
+                  .onErrorComplete()
+                  .toObservable());
+        })
         .takeUntil(lifecycle().onDestroy())
         .subscribe();
   }
