@@ -1,5 +1,6 @@
 package me.saket.dank.utils;
 
+import static com.google.common.truth.Truth.assertThat;
 import static junit.framework.Assert.assertEquals;
 import static org.mockito.Matchers.any;
 import static org.mockito.Matchers.anyString;
@@ -419,18 +420,22 @@ public class UrlParserTest {
 
     for (String url : imageUrls) {
       Link parsedLink = urlParser.parse(url);
-      assertEquals(parsedLink instanceof ImgurLink, true);
-      assertEquals(parsedLink.type(), Link.Type.SINGLE_IMAGE);
+      assertThat(parsedLink).isInstanceOf(ImgurLink.class);
+      assertThat(parsedLink.type()).isEqualTo(Link.Type.SINGLE_IMAGE);
+
+      assert parsedLink instanceof ImgurLink;
+      assertThat(((ImgurLink) parsedLink).highQualityUrl()).startsWith("https://");
+      assertThat(((ImgurLink) parsedLink).lowQualityUrl()).startsWith("https://");
     }
 
     Link parsedGifLink = urlParser.parse("https://i.imgur.com/cuPUfRY.gif");
-    assertEquals(parsedGifLink instanceof ImgurLink, true);
-    assertEquals(parsedGifLink.type(), Link.Type.SINGLE_VIDEO);
+    assertThat(parsedGifLink).isInstanceOf(ImgurLink.class);
+    assertThat(parsedGifLink.type()).isEqualTo(Link.Type.SINGLE_VIDEO);
 
     // Redirects to a GIF, but Dank will recognize it as a static image.
     // Glide will eventually load a GIF though.
     Link parsedGifLinkWithoutExtension = urlParser.parse("https://imgur.com/a/qU24g");
-    assertEquals(parsedGifLinkWithoutExtension instanceof ImgurAlbumUnresolvedLink, true);
+    assertThat(parsedGifLinkWithoutExtension).isInstanceOf(ImgurAlbumUnresolvedLink.class);
   }
 
   @Test
