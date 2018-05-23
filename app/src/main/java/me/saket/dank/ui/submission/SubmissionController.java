@@ -228,18 +228,32 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         .map(submission -> new Submission(submission.getDataNode()))
         .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
 
-    // If the user is viewing a focused comment, it's highly probably that the user opened this
-    // submission from unread message inbox. In this case, the comments must have also gotten
-    // updated, so they're being force invalidated here.
+    Observable<Boolean> openedFromMessages = events
+        .ofType(MarkMessageAsReadRequested.class)
+        .map(o -> true)
+        .startWith(false);
+
     Observable<UiChange<SubmissionUi>> fetchNewRequests = viewFullThreadClicks
         .withLatestFrom(requestChanges, (__, request) -> request)
         .map(request -> request.toBuilder()
             .focusCommentId(null)
             .contextCount(null)
             .build())
-        .flatMap(updatedRequest -> submissionRepository.get()
-            .clearCachedSubmissionWithComments(updatedRequest)
-            .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(updatedRequest))));
+        .withLatestFrom(openedFromMessages, Pair::create)
+        .flatMap(pair -> {
+          DankSubmissionRequest updatedRequest = pair.first();
+          Boolean wasSubmissionOpenedFromMessages = pair.second();
+
+          // If the user is viewing a focused comment, the comments must have
+          // gotten updated, so they're being force invalidated here.
+          if (wasSubmissionOpenedFromMessages) {
+            return submissionRepository.get()
+                .clearCachedSubmissionWithComments(updatedRequest)
+                .andThen(Observable.just(ui -> ui.acceptRequest(updatedRequest)));
+          } else {
+            return Observable.just(ui -> ui.acceptRequest(updatedRequest));
+          }
+        });
 
     return resetComments.mergeWith(fetchNewRequests);
   }
