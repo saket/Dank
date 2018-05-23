@@ -196,8 +196,8 @@ public class SubmissionUiConstructor {
 
                 allItems.add(header);
                 optionalContentError.ifPresent(allItems::add);
-                allItems.add(commentOptions);
                 viewFullThread.ifPresent(allItems::add);
+                allItems.add(commentOptions);
                 allItems.addAll(commentModels);
 
                 // Comments progress and error go after comment rows
