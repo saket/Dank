@@ -296,15 +296,23 @@ public class UrlParser {
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   private Link createGiphyLink(Uri giphyURI) {
     String url = giphyURI.toString();
-    String urlPath = giphyURI.getPath();
+
+    HttpUrl httpUrl = HttpUrl.parse(giphyURI.toString());
+    String urlPath = httpUrl.encodedPath();
 
     Matcher giphyIdMatcher = config.giphyIdPattern().matcher(urlPath);
     if (giphyIdMatcher.matches()) {
       String videoId = giphyIdMatcher.group(1);
       String gifVideoUrl = giphyURI.getScheme() + "://i.giphy.com/" + videoId + ".mp4";
-      return GiphyLink.create(url, gifVideoUrl);
+
+      HttpUrl giphyUrl = httpUrl.newBuilder(urlPath + ".mp4")
+          .scheme("https")
+          .host("i.giphy.com")
+          .build();
+      return GiphyLink.create(url, giphyUrl.toString());
 
     } else {
       // Fallback.

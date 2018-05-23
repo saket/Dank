@@ -415,7 +415,7 @@ public class UrlParserTest {
     // Key: Imgur URLs to pass. Value: normalized URLs.
     String[] imageUrls = {
         "http://i.imgur.com/0Jp0l2R.jpg",
-        "http://imgur.com/sEpUFzt",
+        "https://imgur.com/sEpUFzt",
     };
 
     for (String url : imageUrls) {
@@ -441,18 +441,20 @@ public class UrlParserTest {
   @Test
   public void parseGiphyUrls() {
     String[] urls = {
-        "https://media.giphy.com/media/l2JJyLbhqCF4va86c/giphy.mp4",
-        "https://media.giphy.com/media/l2JJyLbhqCF4va86c/giphy.gif",
-        "https://giphy.com/gifs/l2JJyLbhqCF4va86c/html5",
-        "https://i.giphy.com/l2JJyLbhqCF4va86c.gif",
+        "http://media.giphy.com/media/l2JJyLbhqCF4va86c/giphy.mp4",
+        "http://media.giphy.com/media/l2JJyLbhqCF4va86c/giphy.gif",
+        "http://giphy.com/gifs/l2JJyLbhqCF4va86c/html5",
+        "http://i.giphy.com/l2JJyLbhqCF4va86c.gif",
         "https://i.giphy.com/l2JJyLbhqCF4va86c.mp4"
     };
 
     for (String url : urls) {
       Link parsedLink = urlParser.parse(url);
 
-      assertEquals(parsedLink instanceof GiphyLink, true);
-      assertEquals(parsedLink.type(), Link.Type.SINGLE_VIDEO);
+      assertThat(parsedLink).isInstanceOf(GiphyLink.class);
+      assertThat(parsedLink.type()).isEqualTo(Link.Type.SINGLE_VIDEO);
+      assertThat(((GiphyLink) parsedLink).highQualityUrl()).startsWith("https://");
+      assertThat(((GiphyLink) parsedLink).lowQualityUrl()).startsWith("https://");
     }
   }
 
@@ -463,17 +465,19 @@ public class UrlParserTest {
     gfycatUrlMap.put("https://giant.gfycat.com/MessySpryAfricancivet.gif", "https://gfycat.com/MessySpryAfricancivet");
     gfycatUrlMap.put("http://gfycat.com/MessySpryAfricancivet", "http://gfycat.com/MessySpryAfricancivet");
     gfycatUrlMap.put("https://gfycat.com/MessySpryAfricancivet", "https://gfycat.com/MessySpryAfricancivet");
-    gfycatUrlMap.put("https://thumbs.gfycat.com/MessySpryAfricancivet-size_restricted.gif", "https://gfycat.com/MessySpryAfricancivet");
-    gfycatUrlMap.put("https://zippy.gfycat.com/MessySpryAfricancivet.webm", "https://gfycat.com/MessySpryAfricancivet");
-    gfycatUrlMap.put("https://thumbs.gfycat.com/MessySpryAfricancivet-mobile.mp4", "https://gfycat.com/MessySpryAfricancivet");
+    gfycatUrlMap.put("http://thumbs.gfycat.com/MessySpryAfricancivet-size_restricted.gif", "https://gfycat.com/MessySpryAfricancivet");
+    gfycatUrlMap.put("http://zippy.gfycat.com/MessySpryAfricancivet.webm", "https://gfycat.com/MessySpryAfricancivet");
+    gfycatUrlMap.put("http://thumbs.gfycat.com/MessySpryAfricancivet-mobile.mp4", "https://gfycat.com/MessySpryAfricancivet");
     gfycatUrlMap.put("https://zippy.gfycat.com/MistySelfreliantFairybluebird.webm", "https://gfycat.com/MistySelfreliantFairybluebird");
     gfycatUrlMap.put("https://zippy.gfycat.com/CompetentRemoteBurro.webm", "https://gfycat.com/CompetentRemoteBurro");
 
     gfycatUrlMap.forEach((url, normalizedUrl) -> {
       Link parsedLink = urlParser.parse(url);
 
-      assertEquals(parsedLink instanceof GfycatLink, true);
-      assertEquals(parsedLink.type(), Link.Type.SINGLE_VIDEO);
+      assertThat(parsedLink).isInstanceOf(GfycatLink.class);
+      assertThat(parsedLink.type()).isEqualTo(Link.Type.SINGLE_VIDEO);
+      assertThat(((GfycatLink) parsedLink).highQualityUrl()).startsWith("https://");
+      assertThat(((GfycatLink) parsedLink).lowQualityUrl()).startsWith("https://");
     });
 
     List<String> urlsWithoutCapitalWords = gfycatUrlMap.keySet()
@@ -484,26 +488,24 @@ public class UrlParserTest {
     urlsWithoutCapitalWords.forEach(url -> {
       Link parsedLink = urlParser.parse(url);
 
-      assertEquals(true, parsedLink instanceof GfycatUnresolvedLink);
-      assertEquals(true, parsedLink instanceof UnresolvedMediaLink);
+      assertThat(parsedLink).isInstanceOf(GfycatUnresolvedLink.class);
+      assertThat(parsedLink).isInstanceOf(UnresolvedMediaLink.class);
 
       String path = Uri.parse(url).getPath().substring(1);
-
-      //noinspection ConstantConditions
-      assertEquals(true, path.startsWith(((GfycatUnresolvedLink) parsedLink).threeWordId()));
+      assertThat(path).startsWith(((GfycatUnresolvedLink) parsedLink).threeWordId());
     });
   }
 
   @Test
   @SuppressWarnings("ConstantConditions")
   public void parseStreamableUrl() {
-    String url = "https://streamable.com/jawcl";
+    String url = "http://streamable.com/jawcl";
 
     Link parsedLink = urlParser.parse(url);
 
-    assertEquals(parsedLink instanceof StreamableUnresolvedLink, true);
-    assertEquals(((StreamableUnresolvedLink) parsedLink).videoId(), "jawcl");
-    assertEquals(parsedLink.type(), Link.Type.SINGLE_VIDEO);
+    assertThat(parsedLink).isInstanceOf(StreamableUnresolvedLink.class);
+    assertThat(parsedLink.type()).isEqualTo(Link.Type.SINGLE_VIDEO);
+    assertThat(((StreamableUnresolvedLink) parsedLink).videoId()).isEqualTo("jawcl");
   }
 
   // TODO: Extract this into an @Rule.
