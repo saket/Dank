@@ -197,7 +197,6 @@ public class SubmissionRepository {
               .mapToList(cursor -> CachedSubmissionWithoutComments.createFromCursor(cursor, moshi.get()))
               .take(1)
               .flatMap(items -> items.isEmpty() ? Observable.empty() : Observable.just(items.get(0)))
-              .doOnNext(o -> Timber.i("Found one submission: %s", o.saveTimeMillis()))
               .map(optionalNewerSubWithoutComments -> CachedSubmissionWithComments.create(
                   updatedSubmissionRequest,
                   new Submission(

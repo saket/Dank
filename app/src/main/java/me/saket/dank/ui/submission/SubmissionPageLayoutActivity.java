@@ -9,6 +9,8 @@ import android.os.Bundle;
 import android.os.Parcelable;
 import android.support.annotation.Nullable;
 
+import net.dean.jraw.models.Message;
+
 import java.util.concurrent.TimeUnit;
 
 import butterknife.BindView;
@@ -16,6 +18,7 @@ import butterknife.ButterKnife;
 import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.data.MessageFullNameWrapper;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.compose.InsertGifDialog;
 import me.saket.dank.ui.giphy.GiphyGif;
@@ -40,8 +43,8 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
 {
 
   public static final String KEY_NEW_TAB = "createdInNewTab";
-  private static final String KEY_SUBMISSION_LINK = "submissionLink";
   private static final String KEY_SUBMISSION_REQUEST = "submission";
+  private static final String KEY_MESSAGE_TO_MARK_AS_READ = "messageToMarkAsRead";
 
   @BindView(R.id.independentsubmission_root) IndependentExpandablePageLayout contentPage;
   @BindView(R.id.independentsubmission_submission_page) SubmissionPageLayout submissionPageLayout;
@@ -49,21 +52,43 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
   /**
    * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
    */
-  public static Intent intent(Context context, RedditSubmissionLink submissionLink, @Nullable Rect expandFromShape) {
+  public static Intent intent(
+      Context context,
+      DankSubmissionRequest submissionRequest,
+      @Nullable Rect expandFromShape,
+      @Nullable Message messageToMarkAsRead)
+  {
     Intent intent = new Intent(context, SubmissionPageLayoutActivity.class);
-    intent.putExtra(KEY_SUBMISSION_LINK, submissionLink);
+
+    if (messageToMarkAsRead != null) {
+      MessageFullNameWrapper parcelableMessage = MessageFullNameWrapper.create(messageToMarkAsRead);
+      intent.putExtra(KEY_MESSAGE_TO_MARK_AS_READ, parcelableMessage);
+    }
+
+    intent.putExtra(KEY_SUBMISSION_REQUEST, submissionRequest);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
     return intent;
   }
 
-  /**
-   * @param expandFromShape The initial shape from where this Activity will begin its entry expand animation.
-   */
+  public static Intent intent(
+      Context context,
+      RedditSubmissionLink submissionLink,
+      @Nullable Rect expandFromShape,
+      @Nullable Message messageToMarkAsRead)
+  {
+    return intent(context, defaultRequest(submissionLink), expandFromShape, messageToMarkAsRead);
+  }
+
+  public static Intent intent(Context context, DankSubmissionRequest submissionRequest, @Nullable Rect expandFromShape) {
+    return intent(context, submissionRequest, expandFromShape, null);
+  }
+
+  public static Intent intent(Context context, RedditSubmissionLink submissionLink, @Nullable Rect expandFromShape) {
+    return intent(context, defaultRequest(submissionLink), expandFromShape);
+  }
+
   public static void start(Context context, DankSubmissionRequest submissionRequest, @Nullable Rect expandFromShape) {
-    Intent intent = new Intent(context, SubmissionPageLayoutActivity.class);
-    intent.putExtra(KEY_SUBMISSION_REQUEST, submissionRequest);
-    intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
-    context.startActivity(intent);
+    context.startActivity(intent(context, submissionRequest, expandFromShape));
   }
 
   @Override
@@ -85,12 +110,15 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
       DankSubmissionRequest submissionRequest;
       if (getIntent().hasExtra(KEY_SUBMISSION_REQUEST)) {
         submissionRequest = getIntent().getParcelableExtra(KEY_SUBMISSION_REQUEST);
-      } else if (getIntent().hasExtra(KEY_SUBMISSION_LINK)) {
-        submissionRequest = defaultRequest(getIntent().getParcelableExtra(KEY_SUBMISSION_LINK));
       } else {
         throw new AssertionError();
       }
       submissionPageLayout.populateUi(Optional.empty(), submissionRequest, Optional.empty());
+    }
+
+    if (getIntent().hasExtra(KEY_MESSAGE_TO_MARK_AS_READ)) {
+      Message messageToMarkAsRead = getIntent().getParcelableExtra(KEY_MESSAGE_TO_MARK_AS_READ);
+      submissionPageLayout.handleMessageToMarkAsRead(messageToMarkAsRead);
     }
   }
 
@@ -105,7 +133,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
     }
   }
 
-  private DankSubmissionRequest defaultRequest(RedditSubmissionLink submissionLink) {
+  private static DankSubmissionRequest defaultRequest(RedditSubmissionLink submissionLink) {
     // We don't know the suggested sort yet. Attempt with the default
     // sort and if it's found to be different, then do another load.
     DankSubmissionRequest.Builder submissionReqBuilder = DankSubmissionRequest

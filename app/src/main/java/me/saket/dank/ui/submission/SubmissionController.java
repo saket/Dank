@@ -3,6 +3,7 @@ package me.saket.dank.ui.submission;
 import static me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy;
 
 import net.dean.jraw.models.CommentSort;
+import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
 
 import javax.inject.Inject;
@@ -10,8 +11,10 @@ import javax.inject.Inject;
 import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.ObservableTransformer;
+import me.saket.dank.data.InboxRepository;
 import me.saket.dank.ui.UiChange;
 import me.saket.dank.ui.UiEvent;
+import me.saket.dank.ui.submission.events.MarkMessageAsReadRequested;
 import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.SubmissionChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentSortChanged;
@@ -36,10 +39,12 @@ import timber.log.Timber;
 public class SubmissionController implements ObservableTransformer<UiEvent, UiChange<SubmissionUi>> {
 
   private Lazy<SubmissionRepository> submissionRepository;
+  private Lazy<InboxRepository> inboxRepository;
 
   @Inject
-  public SubmissionController(Lazy<SubmissionRepository> submissionRepository) {
+  public SubmissionController(Lazy<SubmissionRepository> submissionRepository, Lazy<InboxRepository> inboxRepository) {
     this.submissionRepository = submissionRepository;
+    this.inboxRepository = inboxRepository;
   }
 
   @Override
@@ -55,7 +60,8 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         changeSortPopupShows(replayedEvents),
         sortModeChanges(replayedEvents),
         manualRefreshes(replayedEvents),
-        fullThreadLoads(replayedEvents));
+        fullThreadLoads(replayedEvents),
+        markMessageAsReads(replayedEvents));
   }
 
   // WARNING: If we ever use this progress toggle for indicating loading of submission,
@@ -236,6 +242,24 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
             .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(updatedRequest))));
 
     return resetComments.mergeWith(fetchNewRequests);
+  }
+
+  private Observable<UiChange<SubmissionUi>> markMessageAsReads(Observable<UiEvent> events) {
+    Observable<Message> readRequests = events
+        .ofType(MarkMessageAsReadRequested.class)
+        .map(event -> event.message());
+
+    return events
+        .ofType(SubmissionChanged.class)
+        .map(event -> event.optionalSubmission())
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        // The message for which this submission was opened will
+        // only be marked as read once the comments have been fetched.
+        .filter(submission -> submission.getComments() != null)
+        .withLatestFrom(readRequests, (__, message) -> message)
+        .flatMapCompletable(message -> inboxRepository.get().setRead(message, true))
+        .andThen(Observable.never());
   }
 
   private void log(String message, Object... args) {

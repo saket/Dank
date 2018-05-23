@@ -122,6 +122,7 @@ public class MessageNotifActionsJobService extends DankJobService {
     switch (params.getExtras().getString(KEY_ACTION)) {
       case ACTION_SEND_DIRECT_REPLY:
         String replyText = params.getExtras().getString(KEY_MESSAGE_DIRECT_REPLY);
+        //noinspection ConstantConditions
         sendDirectMessageReply(params, replyText);
         break;
 
@@ -141,6 +142,7 @@ public class MessageNotifActionsJobService extends DankJobService {
   }
 
   private void sendDirectMessageReply(JobParameters params, String replyText) {
+    //noinspection ConstantConditions
     unsubscribeOnDestroy(
         parseMessage(params.getExtras().getString(KEY_MESSAGE_JSON))
             .flatMapCompletable(replyToMessage -> dankRedditClient
@@ -156,6 +158,7 @@ public class MessageNotifActionsJobService extends DankJobService {
   }
 
   private void markMessageAsRead(JobParameters params) {
+    //noinspection ConstantConditions
     unsubscribeOnDestroy(
         parseMessageArray(params.getExtras().getString(KEY_MESSAGE_ARRAY_JSON))
             .flatMapCompletable(messages -> dankRedditClient

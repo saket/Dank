@@ -54,6 +54,7 @@ import com.squareup.moshi.Moshi;
 import net.dean.jraw.models.Comment;
 import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.Thumbnails;
 
@@ -111,6 +112,7 @@ import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.InlineReplyRequestEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
+import me.saket.dank.ui.submission.events.MarkMessageAsReadRequested;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
@@ -300,6 +302,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @Override
   public void acceptRequest(DankSubmissionRequest lastRequest) {
     submissionRequestStream.accept(lastRequest);
+  }
+
+  public void handleMessageToMarkAsRead(Message message) {
+    uiEvents.accept(MarkMessageAsReadRequested.create(message));
   }
 
   @Override
