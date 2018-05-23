@@ -19,6 +19,7 @@ import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Urls;
+import okhttp3.HttpUrl;
 
 /**
  * Parses URLs found in the wilderness of Reddit and categorizes them into {@link Link} subclasses.
@@ -224,6 +225,7 @@ public class UrlParser {
     }
   }
 
+  @SuppressWarnings("ConstantConditions")
   public ImgurLink createImgurLink(String url, @Nullable String title, @Nullable String description) {
     // Convert GIFs to MP4s that are insanely light weight in size.
     String[] gifFormats = new String[] { ".gif", ".gifv" };
@@ -233,17 +235,23 @@ public class UrlParser {
       }
     }
 
-    Uri directLinkURI = Uri.parse(url);
+    HttpUrl imageUrl = HttpUrl.parse(url)
+        .newBuilder()
+        .scheme("https")
+        .build();
 
     // Attempt to get direct links to images from Imgur submissions.
     // For example, convert 'http://imgur.com/djP1IZC' to 'http://i.imgur.com/djP1IZC.jpg'.
     if (!isImageOrGifUrlPath(url) && !url.endsWith("mp4")) {
       // If this happened to be a GIF submission, the user sadly will be forced to see it instead of its GIFV.
-      directLinkURI = Uri.parse(directLinkURI.getScheme() + "://i.imgur.com" + directLinkURI.getPath() + ".jpg");
+      imageUrl = imageUrl.newBuilder(imageUrl.encodedPath() + ".jpg")
+          .host("i.imgur.com")
+          .build();
     }
 
-    Link.Type urlType = getMediaUrlType(directLinkURI.getPath());
-    return ImgurLink.create(url, urlType, title, description, directLinkURI.toString());
+    //noinspection ConstantConditions
+    Link.Type urlType = getMediaUrlType(imageUrl.encodedPath());
+    return ImgurLink.create(url, urlType, title, description, imageUrl.toString());
   }
 
   /**
