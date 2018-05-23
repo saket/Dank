@@ -20,6 +20,7 @@ public interface SubmissionScreenUiModel {
 
   interface Adapter<T extends SubmissionScreenUiModel, VH extends RecyclerView.ViewHolder> {
 
+    // TODO: Use this for all adapter events.
     default Observable<? extends UiEvent> uiEvents() {
       return Observable.empty();
     }

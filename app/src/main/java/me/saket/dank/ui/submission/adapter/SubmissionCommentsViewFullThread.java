@@ -14,9 +14,7 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import java.util.List;
 import javax.inject.Inject;
 
-import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.submission.events.SubmissionViewFullCommentsClicked;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Truss;
@@ -64,15 +62,10 @@ public interface SubmissionCommentsViewFullThread {
   }
 
   class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
-    PublishRelay<UiEvent> viewAllCommentsClicks = PublishRelay.create();
+    PublishRelay<SubmissionViewFullCommentsClicked> viewAllCommentsClicks = PublishRelay.create();
 
     @Inject
     public Adapter() {
-    }
-
-    @Override
-    public Observable<? extends UiEvent> uiEvents() {
-      return viewAllCommentsClicks;
     }
 
     @Override
