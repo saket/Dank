@@ -107,7 +107,6 @@ import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.submission.adapter.SubmissionUiConstructor;
-import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.InlineReplyRequestEvent;
@@ -115,10 +114,10 @@ import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
+import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.SubmissionChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentSortChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentsLoadFailed;
-import me.saket.dank.ui.submission.events.SubmissionCommentsRefreshClicked;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingCompleted;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingFailed;
@@ -275,6 +274,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     });
 
     uiEvents
+        .mergeWith(commentsAdapter.uiEvents())
         .observeOn(io())
         .compose(controller)
         .observeOn(mainThread())
@@ -849,33 +849,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     commentsAdapter.streamContentLinkLongClicks()
         .takeUntil(lifecycle().onDestroy())
         .subscribe(event -> event.showOptionsPopup());
-
-    // View full thread.
-    commentsAdapter.streamViewAllCommentsClicks()
-        .takeUntil(lifecycle().onDestroy())
-        .map(request -> request.toBuilder()
-            .focusCommentId(null)
-            .contextCount(null)
-            .build())
-        .withLatestFrom(submissionStream, Pair::create)
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(pair -> {
-          DankSubmissionRequest submissionRequest = pair.first();
-          Optional<Submission> submissionWithoutComments = pair.second().map(sub -> new Submission(sub.getDataNode()));
-          populateUi(submissionWithoutComments, submissionRequest, callingSubreddits.getValue());
-        });
-
-    // Comment sorting and refreshes.
-    commentsAdapter.commentOptionUiEvents()
-        .ofType(SubmissionChangeCommentSortClicked.class)
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(uiEvents);
-
-    // Comment refreshes.
-    commentsAdapter.commentOptionUiEvents()
-        .ofType(SubmissionCommentsRefreshClicked.class)
-        .takeUntil(lifecycle().onDestroy())
-        .subscribe(uiEvents);
   }
 
   public void onGifInsert(String title, GiphyGif gif, Parcelable payload) {
