@@ -73,7 +73,6 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
       SubmissionCommentInlineReply.Adapter inlineReplyAdapter,
       SubmissionCommentsLoadMore.Adapter loadMoreAdapter)
   {
-    this.viewFullThreadAdapter = viewFullThreadAdapter;
     childAdapters = Arrays2.hashMap(SubmissionCommentRowType.values().length);
     childAdapters.put(SubmissionCommentRowType.SUBMISSION_HEADER, headerAdapter);
     childAdapters.put(SubmissionCommentRowType.COMMENT_OPTIONS, commentOptionsAdapter);
@@ -92,6 +91,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     this.commentAdapter = commentAdapter;
     this.inlineReplyAdapter = inlineReplyAdapter;
     this.loadMoreAdapter = loadMoreAdapter;
+    this.viewFullThreadAdapter = viewFullThreadAdapter;
+
     setHasStableIds(true);
   }
 
@@ -146,6 +147,13 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
+  public Observable<? extends UiEvent> uiEvents() {
+    return Observable.merge(
+        viewFullThreadAdapter.viewAllCommentsClicks,
+        commentOptionsAdapter.events);
+  }
+
+  @CheckResult
   public Observable<LoadMoreCommentsClickEvent> streamLoadMoreCommentsClicks() {
     return loadMoreAdapter.loadMoreCommentsClickStream;
   }
@@ -196,11 +204,6 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
-  public Relay<UiEvent> commentOptionUiEvents() {
-    return commentOptionsAdapter.events;
-  }
-
-  @CheckResult
   public Observable<Object> streamHeaderClicks() {
     return headerAdapter.headerClickStream;
   }
@@ -223,10 +226,5 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @CheckResult
   public Observable<Object> streamCommentsLoadRetryClicks() {
     return commentsLoadErrorAdapter.commentsLoadRetryClickStream;
-  }
-
-  @CheckResult
-  public Observable<DankSubmissionRequest> streamViewAllCommentsClicks() {
-    return viewFullThreadAdapter.viewAllCommentsClicks;
   }
 }

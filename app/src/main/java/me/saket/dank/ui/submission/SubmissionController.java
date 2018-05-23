@@ -27,6 +27,7 @@ import me.saket.dank.ui.submission.events.SubmissionNsfwContentFiltered;
 import me.saket.dank.ui.submission.events.SubmissionRequestChanged;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadStarted;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadSucceeded;
+import me.saket.dank.ui.submission.events.SubmissionViewFullCommentsClicked;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -53,7 +54,8 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         contentProgressToggles(replayedEvents),
         changeSortPopupShows(replayedEvents),
         sortModeChanges(replayedEvents),
-        manualRefreshes(replayedEvents));
+        manualRefreshes(replayedEvents),
+        fullThreadLoads(replayedEvents));
   }
 
   // WARNING: If we ever use this progress toggle for indicating loading of submission,
@@ -198,6 +200,32 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
             .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(lastRequest))));
 
     return resetComments.mergeWith(fetchNewRequests);
+  }
+
+  private Observable<UiChange<SubmissionUi>> fullThreadLoads(Observable<UiEvent> events) {
+    Observable<DankSubmissionRequest> requestChanges = events
+        .ofType(SubmissionRequestChanged.class)
+        .map(event -> event.request());
+
+    Observable<Submission> submissionChanges = events
+        .ofType(SubmissionChanged.class)
+        .map(event -> event.optionalSubmission())
+        .filter(Optional::isPresent)
+        .map(Optional::get);
+
+    return events
+        .ofType(SubmissionViewFullCommentsClicked.class)
+        .withLatestFrom(requestChanges, (__, request) -> request)
+        .map(request -> request.toBuilder()
+            .focusCommentId(null)
+            .contextCount(null)
+            .build())
+        .withLatestFrom(submissionChanges, Pair::create)
+        .map(pair -> (UiChange<SubmissionUi>) ui -> {
+          Submission submissionWithoutComments = new Submission(pair.second().getDataNode());
+          ui.acceptSubmission(submissionWithoutComments);
+          ui.acceptRequest(pair.first());
+        });
   }
 
   private void log(String message, Object... args) {
