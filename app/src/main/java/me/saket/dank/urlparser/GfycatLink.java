@@ -6,7 +6,9 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
+import me.saket.dank.BuildConfig;
 import me.saket.dank.utils.Urls;
+import timber.log.Timber;
 
 /**
  * Gfycat.com for GIFs (converted to MP4).
@@ -36,6 +38,9 @@ public abstract class GfycatLink extends MediaLink implements Parcelable {
   }
 
   public static GfycatLink create(String unparsedUrl, String threeWordId, String highQualityVideoUrl, String lowQualityVideoUrl) {
+    if (BuildConfig.DEBUG && (highQualityVideoUrl.startsWith("http://") || lowQualityVideoUrl.startsWith("http://"))) {
+      Timber.e(new Exception("Use https for Gfycat!"));
+    }
     return new AutoValue_GfycatLink(unparsedUrl, threeWordId, highQualityVideoUrl, lowQualityVideoUrl);
   }
 
