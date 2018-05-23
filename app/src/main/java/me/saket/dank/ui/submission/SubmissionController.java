@@ -185,16 +185,17 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         .filter(Optional::isPresent)
         .map(Optional::get);
 
-    Observable<UiChange<SubmissionUi>> resetComments = events
-        .ofType(SubmissionCommentsRefreshClicked.class)
+    Observable<SubmissionCommentsRefreshClicked> refreshClicks = events
+        .ofType(SubmissionCommentsRefreshClicked.class);
+
+    Observable<UiChange<SubmissionUi>> resetComments = refreshClicks
         .withLatestFrom(submissionChanges, (__, sub) -> sub)
         .map(submission -> new Submission(submission.getDataNode()))
         .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
 
-    Observable<UiChange<SubmissionUi>> fetchNewRequests = events
-        .ofType(SubmissionCommentsRefreshClicked.class)
+    Observable<UiChange<SubmissionUi>> fetchNewRequests = refreshClicks
         .withLatestFrom(requestChanges, (__, lastRequest) -> lastRequest)
-        .switchMap(lastRequest -> submissionRepository.get()
+        .flatMap(lastRequest -> submissionRepository.get()
             .clearCachedSubmissionWithComments(lastRequest)
             .doOnComplete(() -> Timber.i("Cache cleared"))
             .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(lastRequest))));
@@ -213,19 +214,28 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         .filter(Optional::isPresent)
         .map(Optional::get);
 
-    return events
-        .ofType(SubmissionViewFullCommentsClicked.class)
+    Observable<SubmissionViewFullCommentsClicked> viewFullThreadClicks = events
+        .ofType(SubmissionViewFullCommentsClicked.class);
+
+    Observable<UiChange<SubmissionUi>> resetComments = viewFullThreadClicks
+        .withLatestFrom(submissionChanges, (__, sub) -> sub)
+        .map(submission -> new Submission(submission.getDataNode()))
+        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
+
+    // If the user is viewing a focused comment, it's highly probably that the user opened this
+    // submission from unread message inbox. In this case, the comments must have also gotten
+    // updated, so they're being force invalidated here.
+    Observable<UiChange<SubmissionUi>> fetchNewRequests = viewFullThreadClicks
         .withLatestFrom(requestChanges, (__, request) -> request)
         .map(request -> request.toBuilder()
             .focusCommentId(null)
             .contextCount(null)
             .build())
-        .withLatestFrom(submissionChanges, Pair::create)
-        .map(pair -> (UiChange<SubmissionUi>) ui -> {
-          Submission submissionWithoutComments = new Submission(pair.second().getDataNode());
-          ui.acceptSubmission(submissionWithoutComments);
-          ui.acceptRequest(pair.first());
-        });
+        .flatMap(updatedRequest -> submissionRepository.get()
+            .clearCachedSubmissionWithComments(updatedRequest)
+            .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(updatedRequest))));
+
+    return resetComments.mergeWith(fetchNewRequests);
   }
 
   private void log(String message, Object... args) {
