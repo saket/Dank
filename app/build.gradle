@@ -75,6 +75,12 @@ dependencies {
   testImplementation "junit:junit:$versions.junit"
   testImplementation 'org.powermock:powermock-module-junit4:1.6.6'
   testImplementation 'org.powermock:powermock-api-mockito:1.6.6'
+  testImplementation "com.google.truth:truth:0.40"
+
+  androidTestImplementation "com.android.support:support-annotations:$versions.supportLib"
+  androidTestImplementation "com.android.support.test:runner:$versions.androidTest"
+  androidTestImplementation "com.android.support.test:rules:$versions.androidTest"
+
   implementation "com.android.support:recyclerview-v7:$versions.supportLib"
   implementation "com.android.support:support-annotations:$versions.supportLib"
   implementation "com.android.support:design:$versions.supportLib"
@@ -144,8 +150,4 @@ dependencies {
   implementation "com.nytimes.android:filesystem3:$versions.nytStore"
   implementation "com.facebook.stetho:stetho:$versions.stetho"
   implementation "com.facebook.stetho:stetho-okhttp3:$versions.stetho"
-
-  androidTestImplementation "com.android.support:support-annotations:$versions.supportLib"
-  androidTestImplementation 'com.android.support.test:runner:1.0.1'
-  androidTestImplementation 'com.android.support.test:rules:1.0.1'
 }
