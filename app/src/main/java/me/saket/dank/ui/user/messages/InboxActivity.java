@@ -48,8 +48,9 @@ import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UrlRouter;
+import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
-import me.saket.dank.urlparser.Link;
+import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.JrawUtils;
@@ -241,10 +242,8 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
     if (message.isComment()) {
       String commentUrl = "https://reddit.com" + message.getDataNode().get(DankRedditClient.CONTEXT_QUERY_PARAM).asText();
-      Link parsedLink = urlParser.get().parse(commentUrl);
-      urlRouter.forLink(parsedLink)
-          .expandFrom(messageItemViewRect)
-          .open(this);
+      RedditSubmissionLink parsedLink = (RedditSubmissionLink) urlParser.get().parse(commentUrl);
+      startActivity(SubmissionPageLayoutActivity.intent(this, parsedLink, null, message));
 
     } else {
       String secondPartyName = JrawUtils.secondPartyName(getResources(), message, userSessionRepository.loggedInUserName());

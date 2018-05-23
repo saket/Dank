@@ -25,13 +25,15 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
-import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.reply.ReplyRepository;
+import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.Strings;
+import timber.log.Timber;
 
 @Singleton
 public class InboxRepository {
@@ -263,6 +265,12 @@ public class InboxRepository {
   public Completable setRead(Message[] messages, boolean read) {
     return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setRead(read, messages[0], messages))
         .andThen(removeMessages(InboxFolder.UNREAD, messages));
+  }
+
+  @CheckResult
+  public Completable setRead(Message message, boolean read) {
+    return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setRead(read, message))
+        .andThen(removeMessages(InboxFolder.UNREAD, message));
   }
 
   @CheckResult

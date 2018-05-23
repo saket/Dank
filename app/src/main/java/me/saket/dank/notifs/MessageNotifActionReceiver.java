@@ -24,13 +24,14 @@ import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
-import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.UrlRouter;
+import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
+import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.JrawUtils;
 import timber.log.Timber;
@@ -247,9 +248,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
                 String messageUrlPath = JrawUtils.commentMessageContextUrl(((CommentMessage) message));
                 String messageUrl = "https://reddit.com" + messageUrlPath;
                 RedditSubmissionLink commentLink = (RedditSubmissionLink) urlParser.get().parse(messageUrl);
-                openIntent = urlRouter.get().forLink(commentLink)
-                    .expandFromBelowToolbar()
-                    .intent(context);
+                openIntent = SubmissionPageLayoutActivity.intent(context, commentLink, null, message);
 
                 Timber.i("messageUrl: %s", messageUrl);
                 Timber.i("commentLink: %s", commentLink);
