@@ -6,7 +6,9 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
+import me.saket.dank.BuildConfig;
 import me.saket.dank.utils.Urls;
+import timber.log.Timber;
 
 @AutoValue
 public abstract class StreamableLink extends MediaLink implements Parcelable {
@@ -31,6 +33,9 @@ public abstract class StreamableLink extends MediaLink implements Parcelable {
   }
 
   public static StreamableLink create(String unparsedUrl, String highQualityVideoUrl, String lowQualityVideoUrl) {
+    if (BuildConfig.DEBUG && (highQualityVideoUrl.startsWith("http://") || lowQualityVideoUrl.startsWith("http://"))) {
+      Timber.e(new Exception("Use https for Streamable!"));
+    }
     return new AutoValue_StreamableLink(unparsedUrl, highQualityVideoUrl, lowQualityVideoUrl);
   }
 
