@@ -271,6 +271,18 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     });
   }
 
+  @Override
+  protected void onDestroy() {
+    try {
+      super.onDestroy();
+    } catch (Exception e) {
+      if (e.getMessage() == null || !e.getMessage().contains("Cannot obtain size for recycled Bitmap")) {
+        throw e;
+      }
+      // Else, swallow.
+    }
+  }
+
   private void resolveMediaLinkAndDisplayContent(MediaLink mediaLinkToDisplay) {
     mediaHostRepository.resolveActualLinkIfNeeded(mediaLinkToDisplay)
         // TODO: Handle Imgur rate limit reached.
