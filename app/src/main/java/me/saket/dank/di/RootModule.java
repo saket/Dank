@@ -167,7 +167,7 @@ public class RootModule {
 
   @Provides
   @Singleton
-  Moshi provideMoshi(JacksonHelper jacksonHelper) {
+  public static Moshi provideMoshi(JacksonHelper jacksonHelper) {
     return new Moshi.Builder()
         .add(AutoValueMoshiAdapterFactory.create())
         .add(new MoshiMessageAdapter(jacksonHelper))
