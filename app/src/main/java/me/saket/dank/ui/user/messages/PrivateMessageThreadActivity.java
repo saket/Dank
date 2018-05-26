@@ -21,7 +21,6 @@ import android.view.View;
 import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
@@ -161,7 +160,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .streamPendingSyncReplies(ParentThread.createPrivateMessage(privateMessage.getFullName()))
         .subscribeOn(io());
 
-    Observable<Optional<Message>> dbThread = inboxRepository.get().messages(privateMessage.getFullName(), InboxFolder.PRIVATE_MESSAGES)
+    Observable<Optional<Message>> dbThread = inboxRepository.get()
+        .messages(privateMessage.getFullName(), InboxFolder.PRIVATE_MESSAGES)
         .subscribeOn(io())
         .replay(1)
         .refCount();
@@ -434,16 +434,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     }
 
     // Finally, sort the messages so that pending-sync replies are at the correct positions.
-    Collections.sort(uiModels, (first, second) -> {
-      // FIXME Wow such stupid. How about you just do subtraction?!?.
-      if (first.sentTimeMillis() < second.sentTimeMillis()) {
-        return -1;
-      } else if (first.sentTimeMillis() > second.sentTimeMillis()) {
-        return +1;
-      } else {
-        return 0;
-      }
-    });
+    Collections.sort(uiModels, (first, second) -> Long.compare(first.sentTimeMillis(), second.sentTimeMillis()));
 
     return uiModels;
   }
