@@ -39,6 +39,4 @@
   <string name="composereply_uploadimage_tap_to_retry">Tap to retry.</string>
   <string name="composereply_uploadimage_error_message_period">.</string>  <!-- Full-stop in english. -->
   <string name="composereply_uploadimage_error_file_size_too_large">¯\\_(ツ)_/¯ \n\nImgur rejected the image due to its large size. Try using an image of 10mb or lower.</string>
-
-  <string name="composereply_draft_saved">Draft saved</string>
 </resources>
