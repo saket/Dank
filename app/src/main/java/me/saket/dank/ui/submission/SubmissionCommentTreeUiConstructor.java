@@ -439,7 +439,15 @@ public class SubmissionCommentTreeUiConstructor {
     Optional<String> authorFlairText = comment.getAuthorFlair() != null ? Optional.ofNullable(comment.getAuthorFlair().getText()) : Optional.empty();
     long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
     VoteDirection pendingOrDefaultVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
+
     int commentScore = votingManager.get().getScoreAfterAdjustingPendingVote(comment);
+    Optional<Integer> commentScoreIfNotHidden;
+    if (comment.isScoreHidden()) {
+      commentScoreIfNotHidden = Optional.empty();
+    } else {
+      commentScoreIfNotHidden = Optional.of(commentScore);
+    }
+
     boolean isAuthorOP = comment.getAuthor().equalsIgnoreCase(submissionAuthor);
 
     // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
@@ -452,7 +460,7 @@ public class SubmissionCommentTreeUiConstructor {
         isAuthorOP,
         createdTimeMillis,
         pendingOrDefaultVoteDirection,
-        commentScore,
+        commentScoreIfNotHidden,
         childCommentsCount,
         isCollapsed
     );
@@ -492,7 +500,7 @@ public class SubmissionCommentTreeUiConstructor {
           true,
           pendingSyncReply.createdTimeMillis(),
           VoteDirection.UPVOTE,
-          commentScore,
+          Optional.of(commentScore),
           0,
           isReplyCollapsed
       );
@@ -566,6 +574,9 @@ public class SubmissionCommentTreeUiConstructor {
         .isFocused(isFocused);
   }
 
+  /**
+   * @param optionalCommentScore Empty when the score is hidden.
+   */
   private CharSequence constructCommentByline(
       Context context,
       String author,
@@ -573,7 +584,7 @@ public class SubmissionCommentTreeUiConstructor {
       boolean isAuthorOP,
       long createdTimeMillis,
       VoteDirection voteDirection,
-      int commentScore,
+      Optional<Integer> optionalCommentScore,
       int childCommentsCount,
       boolean isCollapsed)
   {
@@ -599,10 +610,15 @@ public class SubmissionCommentTreeUiConstructor {
       });
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
       bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, Themes.voteColor(voteDirection))));
-      bylineBuilder.append(context.getResources().getQuantityString(
-          R.plurals.submission_comment_byline_item_score,
-          commentScore,
-          Strings.abbreviateScore(commentScore)));
+
+      String scoreText = optionalCommentScore
+          .map(score -> context.getResources().getQuantityString(
+              R.plurals.submission_comment_byline_item_score,
+              score,
+              Strings.abbreviateScore(score)))
+          .orElse(context.getString(R.string.submission_comment_byline_score_hidden));
+      bylineBuilder.append(scoreText);
+
       bylineBuilder.popSpan();
       bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
       bylineBuilder.append(Dates.createTimestamp(context.getResources(), createdTimeMillis));

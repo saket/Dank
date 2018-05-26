@@ -85,7 +85,7 @@ public interface SubmissionComment {
     public abstract static class Builder {
       public abstract Builder adapterId(long id);
 
-      public Builder byline(CharSequence byline, int voteScore) {
+      public Builder byline(CharSequence byline, Object voteScore) {
         return byline(SpannableWithTextEquality.wrap(byline, voteScore));
       }
 

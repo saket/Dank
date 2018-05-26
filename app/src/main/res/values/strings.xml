@@ -206,6 +206,7 @@
     <item quantity="one">%s point</item>
     <item quantity="other">%s points</item>
   </plurals>
+  <string name="submission_comment_byline_score_hidden">[score hidden]</string>
 
   <string name="submission_comment_reply_hint">Type a reply…</string>
   <string name="cd_submission_comment_reply_send">Send reply</string>
