@@ -20,6 +20,7 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.ImmediateSchedulersRule;
+import me.saket.dank.analytics.CrashReporter;
 import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.Optional;
@@ -32,6 +33,7 @@ public class UserAuthListenerTest {
 
   @Mock SubscriptionRepository subscriptionRepository;
   @Mock UserSessionRepository userSessionRepository;
+  @Mock CrashReporter crashReporter;
   @Mock Preference<Boolean> unreadMessagesPollEnabled;
   @Mock Preference<TimeInterval> unreadMessagesPollInterval;
   @Mock Preference<NetworkStrategy> unreadMessagesPollNetworkStrategy;
@@ -43,6 +45,7 @@ public class UserAuthListenerTest {
     userAuthListener = spy(new UserAuthListener(
         () -> subscriptionRepository,
         () -> userSessionRepository,
+        () -> crashReporter,
         () -> unreadMessagesPollEnabled,
         () -> unreadMessagesPollInterval,
         () -> unreadMessagesPollNetworkStrategy));
@@ -72,7 +75,7 @@ public class UserAuthListenerTest {
         .test()
         .assertError(predicateForJobSchedulerErrors());
 
-    verify(userAuthListener).handleLoggedIn(any());
+    verify(userAuthListener).handleLoggedIn(any(), any());
     verify(subscriptionRepository).removeAll();
     verify(subscriptionRepository).refreshAndSaveSubscriptions();
   }
