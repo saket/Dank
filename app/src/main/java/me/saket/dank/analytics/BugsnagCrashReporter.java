@@ -40,6 +40,11 @@ public class BugsnagCrashReporter implements CrashReporter, BeforeNotify {
   }
 
   @Override
+  public void identifyUser(@Nullable String user) {
+    Bugsnag.setUserName(user);
+  }
+
+  @Override
   public boolean run(Error error) {
     tree.addBufferedLogs(error);
     return true;
