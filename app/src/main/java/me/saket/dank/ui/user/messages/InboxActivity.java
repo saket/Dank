@@ -150,7 +150,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
           getSupportFragmentManager()
               .beginTransaction()
               .replace(R.id.inbox_fragment_container, currentFragment)
-              .commit();
+              .commitNowAllowingStateLoss();
         });
 
     messagesRefreshStateStream
