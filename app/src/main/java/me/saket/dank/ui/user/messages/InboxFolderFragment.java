@@ -137,29 +137,26 @@ public class InboxFolderFragment extends DankFragment {
 
     populateEmptyStateView();
     trackSeenUnreadMessages();
-  }
 
-  @Override
-  public void onStart() {
-    super.onStart();
     Callbacks callbacks = (Callbacks) getActivity();
     assert callbacks != null;
 
     Observable<List<Message>> sharedMessageStream = inboxRepository.messages(folder)
         .subscribeOn(Schedulers.io())
-        .replay(1).refCount();
+        .replay(1)
+        .refCount();
 
     // Empty state.
     sharedMessageStream
         .observeOn(mainThread())
         .filter(o -> !callbacks.isFirstRefreshDone(folder))
-        .takeUntil(lifecycle().onStop())
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(messages -> emptyStateView.setVisibility(messages.isEmpty() ? View.VISIBLE : View.GONE));
 
     // Show FAB in unread folder for marking all as read.
     sharedMessageStream
         .observeOn(mainThread())
-        .takeUntil(lifecycle().onStop())
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(messages -> {
           if (folder == InboxFolder.UNREAD && !messages.isEmpty()) {
             markAllAsReadButton.show();
@@ -178,7 +175,7 @@ public class InboxFolderFragment extends DankFragment {
     sharedMessageStream
         .take(1)
         .observeOn(mainThread())
-        .takeUntil(lifecycle().onStop())
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> {
           startInfiniteScroll(false);
 
@@ -196,13 +193,13 @@ public class InboxFolderFragment extends DankFragment {
         .toFlowable(BackpressureStrategy.LATEST)
         .compose(RxDiffUtil.calculateDiff(InboxFolderScreenUiModel.ItemDiffer::new))
         .observeOn(mainThread())
-        .takeUntil(lifecycle().onStopFlowable())
+        .takeUntil(lifecycle().onDestroyFlowable())
         .subscribe(messagesAdapter.get());
 
     // FAB clicks.
     RxView.clicks(markAllAsReadButton)
         .withLatestFrom(sharedMessageStream, (o, messages) -> messages)
-        .takeUntil(lifecycle().onStop())
+        .takeUntil(lifecycle().onDestroy())
         .subscribe(messages -> ((Callbacks) getActivity()).markAllUnreadMessagesAsReadAndExit(messages));
   }
 
