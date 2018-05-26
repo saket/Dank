@@ -333,16 +333,10 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
   private void saveDraftAsynchronously() {
     // Fire-and-forget call. No need to dispose this since we're making no memory references to this Activity.
-    Context appContext = getApplicationContext();
-
     draftStore.saveDraft(privateMessage, replyField.getText().toString())
         .subscribeOn(io())
         .observeOn(mainThread())
-        .subscribe(draftSaveResult -> {
-          if (draftSaveResult.canShowDraftSavedToast) {
-            Toast.makeText(appContext, R.string.composereply_draft_saved, Toast.LENGTH_SHORT).show();
-          }
-        });
+        .subscribe();
   }
 
   @OnClick(R.id.privatemessagethread_fullscreen)
