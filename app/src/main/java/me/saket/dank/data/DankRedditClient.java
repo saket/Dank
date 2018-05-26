@@ -55,7 +55,8 @@ public class DankRedditClient {
   public static final String CONTEXT_QUERY_PARAM = "context";
   public static final int COMMENT_DEFAULT_CONTEXT_COUNT = 3;
 
-  public static final CommentSort DEFAULT_COMMENT_SORT = CommentSort.TOP;
+  // "Confidence" is now "Best".
+  public static final CommentSort DEFAULT_COMMENT_SORT = CommentSort.CONFIDENCE;
 
   private final RedditClient redditClient;
   private final AuthenticationManager redditAuthManager;
@@ -67,7 +68,11 @@ public class DankRedditClient {
   private boolean authManagerInitialized;
   private BehaviorRelay<Boolean> onRedditClientAuthenticatedRelay;
 
-  public DankRedditClient(Context context, RedditClient redditClient, AuthenticationManager redditAuthManager, UserSessionRepository userSessionRepository,
+  public DankRedditClient(
+      Context context,
+      RedditClient redditClient,
+      AuthenticationManager redditAuthManager,
+      UserSessionRepository userSessionRepository,
       UUID deviceUuid)
   {
     this.redditClient = redditClient;
