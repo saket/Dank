@@ -282,21 +282,18 @@ public class SubmissionRepository {
   }
 
   @CheckResult
-  public Completable loadMoreComments(Submission submission, DankSubmissionRequest submissionRequest, CommentNode commentNode) {
+  public Completable loadAndSaveMoreComments(Submission submission, DankSubmissionRequest submissionRequest, CommentNode commentNode) {
     if (!commentNode.getSubmissionName().equals(submission.getFullName())) {
       throw new AssertionError("CommentNode does not belong to the supplied submission");
     }
 
-    // JRAW inserts the new comments directly inside submission's comment tree, which we
-    // do not want because we treat persistence as the single source of truth. So we'll
-    // instead re-save the submission to DB and let the UI update itself.
-    return dankRedditClient.get().withAuth(dankRedditClient.get().loadMoreComments(commentNode))
-        .toCompletable()
-        .andThen(saveSubmissionWithAndWithoutComments(CachedSubmissionWithComments.create(
-            submissionRequest,
-            submission,
-            System.currentTimeMillis()
-        )));
+    return dankRedditClient.get().withAuth(dankRedditClient.get().loadMoreComments(submission, commentNode))
+        .flatMapCompletable(updatedSubmission ->
+            saveSubmissionWithAndWithoutComments(CachedSubmissionWithComments.create(
+                submissionRequest,
+                updatedSubmission,
+                System.currentTimeMillis()
+            )));
   }
 
   public Completable clearCachedSubmissionWithComments(DankSubmissionRequest request) {
