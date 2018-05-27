@@ -116,8 +116,16 @@ public class DankRedditClient {
    * @return List of new comments.
    */
   @CheckResult
-  public Single<List<CommentNode>> loadMoreComments(CommentNode commentNode) {
-    return Single.fromCallable(() -> commentNode.loadMoreComments(redditClient));
+  public Single<Submission> loadMoreComments(Submission submission, CommentNode commentNode) {
+    return Single.fromCallable(() -> {
+      commentNode.loadMoreComments(redditClient);
+
+      // JRAW inserts the new comments directly inside submission's comment tree, which we
+      // do not want because we treat persistence as the single source of truth. So we'll
+      // instead return the submission so that it gets saved to to DB and let the UI
+      // update itself.
+      return submission;
+    });
   }
 
 // ======== AUTHENTICATION ======== //

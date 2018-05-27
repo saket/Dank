@@ -827,7 +827,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               DankSubmissionRequest submissionRequest = pair.first();
               Submission submission = pair.second();
               return submissionRepository
-                  .loadMoreComments(submission, submissionRequest, loadMoreClickEvent.parentCommentNode())
+                  .loadAndSaveMoreComments(submission, submissionRequest, loadMoreClickEvent.parentCommentNode())
                   .subscribeOn(Schedulers.io());
             })
             .doOnError(e -> {
