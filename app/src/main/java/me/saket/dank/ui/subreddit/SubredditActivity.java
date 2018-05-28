@@ -35,7 +35,6 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.paginators.Sorting;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -61,6 +60,7 @@ import me.saket.dank.data.OnLoginRequireListener;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.data.UserPreferences;
 import me.saket.dank.di.Dank;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.UrlRouter;
@@ -142,6 +142,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
   @Inject SubredditSubmissionsAdapter submissionsAdapter;
   @Inject @Named("welcome_text_shown") Preference<Boolean> welcomeTextShownPref;
 
+  @Inject Lazy<Reddit> reddit;
   @Inject Lazy<UrlRouter> urlRouter;
   @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<VotingManager> votingManager;
@@ -238,12 +239,12 @@ public class SubredditActivity extends DankPullCollapsibleActivity
       //noinspection ConstantConditions
       sortingChangesStream.accept(savedState.getParcelable(KEY_SORTING_AND_TIME_PERIOD));
     } else {
-      sortingChangesStream.accept(SortingAndTimePeriod.create(Sorting.HOT));
+      sortingChangesStream.accept(SortingAndTimePeriod.create(Reddit.Companion.getDEFAULT_SUBREDDIT_SORT()));
     }
     sortingChangesStream
         .takeUntil(lifecycle().onDestroy())
         .subscribe(sortingAndTimePeriod -> {
-          if (sortingAndTimePeriod.sortOrder().requiresTimePeriod()) {
+          if (sortingAndTimePeriod.sortOrder().getRequiresTimePeriod()) {
             sortingModeButton.setText(getString(
                 R.string.subreddit_sorting_mode_with_time_period,
                 getString(sortingAndTimePeriod.getSortingDisplayTextRes()),
@@ -321,7 +322,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
 
     // Intentionally not unsubscribing from this API call on Activity destroy.
     // Treating this as a fire-n-forget call.
-    Dank.reddit().findSubreddit(subredditName)
+    reddit.get().subreddits().findOld(subredditName)
         .flatMapCompletable(subreddit -> subscriptionRepository.subscribe(subreddit))
         .subscribeOn(io())
         .subscribe(doNothingCompletable(), logError("Couldn't subscribe to %s", subredditName));
@@ -726,7 +727,7 @@ public class SubredditActivity extends DankPullCollapsibleActivity
         startActivity(UserPreferencesActivity.intent(this));
         //ComposeReplyActivity.start(this, ComposeStartOptions.builder()
         //    .secondPartyName("Test")
-        //    .parentContribution(ContributionFullNameWrapper.create("Poop"))
+        //    .parent(ContributionFullNameWrapper.create("Poop"))
         //    .build()
         //);
         return true;

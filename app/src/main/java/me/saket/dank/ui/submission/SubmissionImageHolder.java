@@ -20,7 +20,7 @@ import com.bumptech.glide.request.RequestOptions;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
-import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.SubmissionPreview;
 
 import javax.inject.Inject;
 
@@ -106,7 +106,7 @@ public class SubmissionImageHolder {
   }
 
   @CheckResult
-  public Completable load(MediaLink mediaLink, @Nullable Thumbnails redditSuppliedThumbnails) {
+  public Completable load(MediaLink mediaLink, @Nullable SubmissionPreview redditSuppliedThumbnails) {
     uiEvents.accept(SubmissionImageLoadStarted.create());
 
     RequestOptions imageLoadOptions = RequestOptions.priorityOf(Priority.IMMEDIATE);

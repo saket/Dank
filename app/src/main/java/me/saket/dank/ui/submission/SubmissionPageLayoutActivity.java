@@ -17,8 +17,7 @@ import butterknife.BindView;
 import butterknife.ButterKnife;
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.MessageFullNameWrapper;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.compose.InsertGifDialog;
 import me.saket.dank.ui.giphy.GiphyGif;
@@ -61,8 +60,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
     Intent intent = new Intent(context, SubmissionPageLayoutActivity.class);
 
     if (messageToMarkAsRead != null) {
-      MessageFullNameWrapper parcelableMessage = MessageFullNameWrapper.create(messageToMarkAsRead);
-      intent.putExtra(KEY_MESSAGE_TO_MARK_AS_READ, parcelableMessage);
+      intent.putExtra(KEY_MESSAGE_TO_MARK_AS_READ, messageToMarkAsRead);
     }
 
     intent.putExtra(KEY_SUBMISSION_REQUEST, submissionRequest);
@@ -117,7 +115,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
     }
 
     if (getIntent().hasExtra(KEY_MESSAGE_TO_MARK_AS_READ)) {
-      Message messageToMarkAsRead = getIntent().getParcelableExtra(KEY_MESSAGE_TO_MARK_AS_READ);
+      Message messageToMarkAsRead = (Message) getIntent().getSerializableExtra(KEY_MESSAGE_TO_MARK_AS_READ);
       submissionPageLayout.handleMessageToMarkAsRead(messageToMarkAsRead);
     }
   }
@@ -138,7 +136,7 @@ public class SubmissionPageLayoutActivity extends DankPullCollapsibleActivity
     // sort and if it's found to be different, then do another load.
     DankSubmissionRequest.Builder submissionReqBuilder = DankSubmissionRequest
         .builder(submissionLink.id())
-        .commentSort(DankRedditClient.DEFAULT_COMMENT_SORT, SelectedBy.DEFAULT);
+        .commentSort(Reddit.Companion.getDEFAULT_COMMENT_SORT(), SelectedBy.DEFAULT);
 
     RedditCommentLink initialComment = submissionLink.initialComment();
     if (initialComment != null) {

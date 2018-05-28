@@ -5,8 +5,6 @@ import android.app.Application;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.pm.PackageInfo;
-import android.content.pm.PackageManager;
 import android.content.pm.ShortcutManager;
 import android.graphics.Point;
 import android.net.ConnectivityManager;
@@ -19,12 +17,8 @@ import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 import com.squareup.sqlbrite2.SqlBrite;
 
-import net.dean.jraw.RedditClient;
-import net.dean.jraw.auth.AuthenticationManager;
-import net.dean.jraw.http.LoggingMode;
-import net.dean.jraw.http.UserAgent;
+import net.dean.jraw.JrawUtils;
 
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -34,25 +28,18 @@ import dagger.Provides;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.DankSqliteOpenHelper;
 import me.saket.dank.data.OnLoginRequireListener;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.authentication.LoginActivity;
 import me.saket.dank.ui.submission.DraftStore;
-import me.saket.dank.reply.ReplyRepository;
-import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import me.saket.dank.utils.DankLinkMovementMethod;
-import me.saket.dank.utils.JacksonHelper;
-import me.saket.dank.utils.MoshiAccountAdapter;
-import me.saket.dank.utils.MoshiLoggedInAccountAdapter;
-import me.saket.dank.utils.MoshiMessageAdapter;
 import me.saket.dank.utils.MoshiOptionalAdapterFactory;
-import me.saket.dank.utils.MoshiSubmissionAdapter;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -75,53 +62,6 @@ public class RootModule {
   @Provides
   Application provideAppContext() {
     return appContext;
-  }
-
-  @Provides
-  UserAgent provideRedditUserAgent() {
-    try {
-      PackageInfo packageInfo = appContext.getPackageManager().getPackageInfo(appContext.getPackageName(), 0);
-      return UserAgent.of("android", appContext.getPackageName(), packageInfo.versionName, "saketme");
-
-    } catch (PackageManager.NameNotFoundException e) {
-      throw new IllegalStateException("Couldn't get app version name");
-    }
-  }
-
-  @Provides
-  @Singleton
-  RedditClient provideRedditClient(UserAgent redditUserAgent) {
-    RedditClient redditClient = new RedditClient(redditUserAgent);
-    redditClient.setLoggingMode(LoggingMode.ALWAYS);
-    redditClient.getHttpAdapter().setConnectTimeout(NETWORK_CONNECT_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    redditClient.getHttpAdapter().setReadTimeout(NETWORK_READ_TIMEOUT_SECONDS, TimeUnit.SECONDS);
-    return redditClient;
-  }
-
-  // Already a singleton.
-  @Provides
-  AuthenticationManager provideRedditAuthManager() {
-    return AuthenticationManager.get();
-  }
-
-  @Provides
-  @Named("deviceUuid")
-  public UUID provideDeviceUuid(SharedPreferences sharedPrefs) {
-    String key = "deviceUuid";
-    if (!sharedPrefs.contains(key)) {
-      sharedPrefs.edit()
-          .putString(key, UUID.randomUUID().toString())
-          .apply();
-    }
-    return UUID.fromString(sharedPrefs.getString(key, null));
-  }
-
-  @Provides
-  @Singleton
-  DankRedditClient provideDankRedditClient(RedditClient redditClient, AuthenticationManager authManager, UserSessionRepository userSessionRepository,
-      @Named("deviceUuid") UUID deviceUuid)
-  {
-    return new DankRedditClient(appContext, redditClient, authManager, userSessionRepository, deviceUuid);
   }
 
   @Provides
@@ -167,13 +107,14 @@ public class RootModule {
 
   @Provides
   @Singleton
-  public static Moshi provideMoshi(JacksonHelper jacksonHelper) {
-    return new Moshi.Builder()
+  public static Moshi provideMoshi() {
+    return JrawUtils.moshi
+        .newBuilder()
         .add(AutoValueMoshiAdapterFactory.create())
-        .add(new MoshiMessageAdapter(jacksonHelper))
-        .add(new MoshiSubmissionAdapter(jacksonHelper))
-        .add(new MoshiAccountAdapter(jacksonHelper))
-        .add(new MoshiLoggedInAccountAdapter(jacksonHelper))
+        //.add(new MoshiMessageAdapter(jacksonHelper))
+        //.add(new MoshiSubmissionAdapter(jacksonHelper))
+        //.add(new MoshiAccountAdapter(jacksonHelper))
+        //.add(new MoshiLoggedInAccountAdapter(jacksonHelper))
         .add(new MoshiOptionalAdapterFactory())
         .build();
   }

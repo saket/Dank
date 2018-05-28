@@ -10,7 +10,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Identifiable;
 
 import java.util.HashMap;
 import java.util.List;
@@ -27,11 +27,11 @@ import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import me.saket.dank.BuildConfig;
-import me.saket.dank.data.ContributionFullNameWrapper;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.FullNameType;
 import me.saket.dank.data.ResolvedError;
+import me.saket.dank.reddit.Reddit;
+import me.saket.dank.ui.compose.SimpleIdentifiable;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -45,7 +45,7 @@ import timber.log.Timber;
 @Singleton
 public class ReplyRepository implements DraftStore {
 
-  private final DankRedditClient dankRedditClient;
+  private final Lazy<Reddit> reddit;
   private final BriteDatabase database;
   private final UserSessionRepository userSessionRepository;
   private final Moshi moshi;
@@ -56,7 +56,7 @@ public class ReplyRepository implements DraftStore {
 
   @Inject
   public ReplyRepository(
-      DankRedditClient dankRedditClient,
+      Lazy<Reddit> reddit,
       BriteDatabase database,
       UserSessionRepository userSessionRepository,
       @Named("drafts") SharedPreferences sharedPrefs,
@@ -64,7 +64,7 @@ public class ReplyRepository implements DraftStore {
       @Named("drafts_max_retain_days") int recycleDraftsOlderThanNumDays,
       Lazy<ErrorResolver> errorResolver)
   {
-    this.dankRedditClient = dankRedditClient;
+    this.reddit = reddit;
     this.database = database;
     this.userSessionRepository = userSessionRepository;
     this.sharedPrefs = sharedPrefs;
@@ -93,7 +93,7 @@ public class ReplyRepository implements DraftStore {
 
     String replyBody = pendingSyncReply.body();
     long replyCreatedTimeMillis = pendingSyncReply.createdTimeMillis();
-    ContributionFullNameWrapper parentContribution = ContributionFullNameWrapper.create(parentThreadFullName);
+    Identifiable parentContribution = SimpleIdentifiable.Companion.from(parentThreadFullName);
     return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
   }
 
@@ -102,7 +102,7 @@ public class ReplyRepository implements DraftStore {
    * @param parentThread       Root submission/message-thread.
    */
   @CheckResult
-  public Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody) {
+  public Completable sendReply(Identifiable parentContribution, ParentThread parentThread, String replyBody) {
     // Converts ¯\_(ツ)_/¯ to ¯\\_(ツ)_/¯.
     String replyWithSlashesEscaped = replyBody.replaceAll(Matcher.quoteReplacement("\\"), Matcher.quoteReplacement("\\\\"));
 
@@ -111,7 +111,7 @@ public class ReplyRepository implements DraftStore {
   }
 
   @CheckResult
-  private Completable sendReply(Contribution parentContribution, ParentThread parentThread, String replyBody, long replyCreatedTimeMillis) {
+  private Completable sendReply(Identifiable parentContribution, ParentThread parentThread, String replyBody, long replyCreatedTimeMillis) {
     return sendReply(Reply.create(parentContribution, parentThread, replyBody, replyCreatedTimeMillis));
   }
 
@@ -120,12 +120,12 @@ public class ReplyRepository implements DraftStore {
     PendingSyncReply pendingSyncReply = reply.toPendingSync(userSessionRepository, sentTimeMillis);
 
     return Completable.fromAction(() -> database.insert(PendingSyncReply.TABLE_NAME, pendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE))
-        .andThen(reply.sendToRemote(dankRedditClient))
-        .flatMapCompletable(postedReplyFullName -> Completable.fromAction(() -> {
+        .andThen(reply.sendToRemote(reddit.get()))
+        .flatMapCompletable(postedReply -> Completable.fromAction(() -> {
           PendingSyncReply updatedPendingSyncReply = pendingSyncReply
               .toBuilder()
               .state(PendingSyncReply.State.POSTED)
-              .postedFullName(postedReplyFullName)
+              .postedFullName(postedReply.getFullName())
               .build();
           database.insert(PendingSyncReply.TABLE_NAME, updatedPendingSyncReply.toValues(), SQLiteDatabase.CONFLICT_REPLACE);
         }))
@@ -185,9 +185,9 @@ public class ReplyRepository implements DraftStore {
    * @return True if the draft was saved. False otherwise.
    */
   @Override
-  public Single<DraftSaveResult> saveDraft(Contribution contribution, String draftBody) {
+  public Single<DraftSaveResult> saveDraft(Identifiable identifiable, String draftBody) {
     if (draftBody.isEmpty()) {
-      return removeDraft(contribution).toSingleDefault(DraftSaveResult.REMOVED);
+      return removeDraft(identifiable).toSingleDefault(DraftSaveResult.REMOVED);
     }
 
     return Completable
@@ -196,7 +196,7 @@ public class ReplyRepository implements DraftStore {
           ReplyDraft replyDraft = ReplyDraft.create(draftBody, draftCreatedTimeMillis);
           JsonAdapter<ReplyDraft> jsonAdapter = moshi.adapter(ReplyDraft.class);
           String replyDraftJson = jsonAdapter.toJson(replyDraft);
-          rxSharedPrefs.getString(keyForDraft(contribution)).set(replyDraftJson);
+          rxSharedPrefs.getString(keyForDraft(identifiable)).set(replyDraftJson);
           //Timber.i("Draft saved: %s", draftBody);
 
           // Recycle old drafts.
@@ -233,8 +233,8 @@ public class ReplyRepository implements DraftStore {
   }
 
   @Override
-  public Observable<String> streamDrafts(Contribution contribution) {
-    return rxSharedPrefs.getString(keyForDraft(contribution), "")
+  public Observable<String> streamDrafts(Identifiable identifiable) {
+    return rxSharedPrefs.getString(keyForDraft(identifiable), "")
         .asObservable()
         .map(replyDraftJson -> {
           if ("".equals(replyDraftJson)) {
@@ -251,7 +251,7 @@ public class ReplyRepository implements DraftStore {
   }
 
   @Override
-  public Completable removeDraft(Contribution contribution) {
+  public Completable removeDraft(Identifiable identifiable) {
     //String parent;
     //if (contribution instanceof Comment) {
     //  parent = ((Comment) contribution).getBody();
@@ -265,11 +265,11 @@ public class ReplyRepository implements DraftStore {
     //  throw new UnsupportedOperationException();
     //}
     //Timber.i("Removing draft for %s", parent);
-    return Completable.fromAction(() -> sharedPrefs.edit().remove(keyForDraft(contribution)).apply());
+    return Completable.fromAction(() -> sharedPrefs.edit().remove(keyForDraft(identifiable)).apply());
   }
 
   @VisibleForTesting
-  static String keyForDraft(Contribution contribution) {
+  static String keyForDraft(Identifiable contribution) {
     Preconditions.checkNotNull(contribution.getFullName(), "fullname");
     return "replyDraftFor_" + contribution.getFullName();
   }

@@ -7,8 +7,8 @@ import android.view.MenuItem;
 import android.view.SubMenu;
 import android.view.View;
 
-import net.dean.jraw.paginators.Sorting;
-import net.dean.jraw.paginators.TimePeriod;
+import net.dean.jraw.models.SubredditSort;
+import net.dean.jraw.models.TimePeriod;
 
 import me.saket.dank.R;
 import me.saket.dank.ui.submission.SortingAndTimePeriod;
@@ -29,63 +29,63 @@ public class SubmissionsSortingModePopupMenu extends PopupMenu {
     setOnMenuItemClickListener(menuItem -> {
       switch (menuItem.getItemId()) {
         case R.id.action_subreddit_sorting_hot:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.HOT));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.HOT));
           return true;
 
         case R.id.action_subreddit_sorting_new:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.NEW));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.NEW));
           return true;
 
         case R.id.action_subreddit_sorting_rising:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.RISING));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.RISING));
           return true;
 
         case R.id.action_subreddit_sorting_controversial_hour:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.HOUR));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.CONTROVERSIAL, TimePeriod.HOUR));
           return true;
 
         case R.id.action_subreddit_sorting_controversial_day:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.DAY));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.CONTROVERSIAL, TimePeriod.DAY));
           return true;
 
         case R.id.action_subreddit_sorting_controversial_week:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.WEEK));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.CONTROVERSIAL, TimePeriod.WEEK));
           return true;
 
         case R.id.action_subreddit_sorting_controversial_month:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.MONTH));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.CONTROVERSIAL, TimePeriod.MONTH));
           return true;
 
         case R.id.action_subreddit_sorting_controversial_year:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.YEAR));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.CONTROVERSIAL, TimePeriod.YEAR));
           return true;
 
         case R.id.action_subreddit_sorting_controversial_alltime:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.CONTROVERSIAL, TimePeriod.ALL));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.CONTROVERSIAL, TimePeriod.ALL));
           return true;
 
         case R.id.action_subreddit_sorting_top_hour:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.HOUR));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.TOP, TimePeriod.HOUR));
           return true;
 
         case R.id.action_subreddit_sorting_top_day:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.DAY));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.TOP, TimePeriod.DAY));
           return true;
 
         case R.id.action_subreddit_sorting_top_week:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.WEEK));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.TOP, TimePeriod.WEEK));
           return true;
 
         case R.id.action_subreddit_sorting_top_month:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.MONTH));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.TOP, TimePeriod.MONTH));
           return true;
 
         case R.id.action_subreddit_sorting_top_year:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.YEAR));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.TOP, TimePeriod.YEAR));
           return true;
 
         case R.id.action_subreddit_sorting_top_alltime:
-          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(Sorting.TOP, TimePeriod.ALL));
+          onSortingModeSelectListener.onSortingModeSelect(SortingAndTimePeriod.create(SubredditSort.TOP, TimePeriod.ALL));
           return true;
 
         case R.id.action_subreddit_sorting_controversial:

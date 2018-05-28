@@ -184,17 +184,17 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
 
       case ACTION_NAME_UPVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submission, submission.getVote());
-        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UP ? VoteDirection.NONE : VoteDirection.UP;
         swipeEvents.accept(ContributionVoteSwipeEvent.create(submission, newVoteDirection));
-        isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
+        isUndoAction = newVoteDirection == VoteDirection.NONE;
         break;
       }
 
       case ACTION_NAME_DOWNVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(submission, submission.getVote());
-        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWN ? VoteDirection.NONE : VoteDirection.DOWN;
         swipeEvents.accept(ContributionVoteSwipeEvent.create(submission, newVoteDirection));
-        isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
+        isUndoAction = newVoteDirection == VoteDirection.NONE;
         break;
       }
 
@@ -206,7 +206,7 @@ public class SubmissionSwipeActionsProvider implements SwipeableLayout.SwipeActi
   }
 
   private boolean needsLogin(SwipeAction swipeAction, Submission submission) {
-    if (submission.getId().equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
+    if (SyntheticData.Companion.isSynthetic(submission)) {
       return false;
     }
 

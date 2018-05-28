@@ -1,6 +1,6 @@
 package me.saket.dank.ui.submission;
 
-import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Identifiable;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -17,16 +17,16 @@ public class BookmarksRepository {
   public BookmarksRepository() {
   }
 
-  public void markAsSaved(PublicContribution contribution) {
+  public void markAsSaved(Identifiable contribution) {
     // TODO: ignore SyntheticData.ID_SUBMISSION_FOR_GESTURE_WALKTHROUGH.
     savedFullNames.add(contribution.getFullName());
   }
 
-  public void markAsUnsaved(PublicContribution contribution) {
+  public void markAsUnsaved(Identifiable contribution) {
     savedFullNames.remove(contribution.getFullName());
   }
 
-  public boolean isSaved(PublicContribution contribution) {
+  public boolean isSaved(Identifiable contribution) {
     return savedFullNames.contains(contribution.getFullName());
   }
 

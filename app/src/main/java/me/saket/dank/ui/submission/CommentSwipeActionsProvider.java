@@ -135,7 +135,7 @@ public class CommentSwipeActionsProvider {
 
     switch (swipeAction.labelRes()) {
       case ACTION_NAME_OPTIONS:
-        swipeEvents.accept(CommentOptionSwipeEvent.create(comment, swipeableLayout));
+        swipeEvents.accept(new CommentOptionSwipeEvent(comment, swipeableLayout));
         isUndoAction = false;
         break;
 
@@ -146,17 +146,17 @@ public class CommentSwipeActionsProvider {
 
       case ACTION_NAME_UPVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
-        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UPVOTE ? VoteDirection.NO_VOTE : VoteDirection.UPVOTE;
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.UP ? VoteDirection.NONE : VoteDirection.UP;
         swipeEvents.accept(ContributionVoteSwipeEvent.create(comment, newVoteDirection));
-        isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
+        isUndoAction = newVoteDirection == VoteDirection.NONE;
         break;
       }
 
       case ACTION_NAME_DOWNVOTE: {
         VoteDirection currentVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
-        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWNVOTE ? VoteDirection.NO_VOTE : VoteDirection.DOWNVOTE;
+        VoteDirection newVoteDirection = currentVoteDirection == VoteDirection.DOWN ? VoteDirection.NONE : VoteDirection.DOWN;
         swipeEvents.accept(ContributionVoteSwipeEvent.create(comment, newVoteDirection));
-        isUndoAction = newVoteDirection == VoteDirection.NO_VOTE;
+        isUndoAction = newVoteDirection == VoteDirection.NONE;
         break;
       }
 
@@ -168,8 +168,8 @@ public class CommentSwipeActionsProvider {
   }
 
   private boolean needsLogin(SwipeAction swipeAction, Comment comment) {
-    if (comment.getSubmissionId().equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
-      return false;
+    if (SyntheticData.Companion.isSynthetic(comment)) {
+     return false;
     }
 
     switch (swipeAction.labelRes()) {

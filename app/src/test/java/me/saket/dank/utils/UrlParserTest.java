@@ -15,6 +15,7 @@ import android.util.Patterns;
 
 import com.nytimes.android.external.cache3.CacheBuilder;
 
+import net.dean.jraw.models.EmbeddedMedia;
 import net.dean.jraw.models.Submission;
 
 import org.junit.Before;
@@ -312,29 +313,22 @@ public class UrlParserTest {
     };
     for (String videoUrl : videoUrls) {
       String dashPlaylistUrl = "https://v.redd.it/nwypmagtjvf01/DASHPlaylist.mpd";
-      String submissionJson = "{\n" +
-          "  \"secure_media\": {\n" +
-          "    \"reddit_video\": {\n" +
-          "      \"fallback_url\": \"https://v.redd.it/nwypmagtjvf01/DASH_4_8_M\",\n" +
-          "      \"height\": 720,\n" +
-          "      \"width\": 1280,\n" +
-          "      \"scrubber_media_url\": \"https://v.redd.it/nwypmagtjvf01/DASH_600_K\",\n" +
-          "      \"dash_url\": \"" + dashPlaylistUrl + "\",\n" +
-          "      \"duration\": 10,\n" +
-          "      \"hls_url\": \"https://v.redd.it/nwypmagtjvf01/HLSPlaylist.m3u8\",\n" +
-          "      \"is_gif\": true,\n" +
-          "      \"transcoding_status\": \"completed\"\n" +
-          "    }\n" +
-          "  }\n" +
-          "}\n";
-      JacksonHelper jacksonHelper = new JacksonHelper();
-      Submission submission = new Submission(jacksonHelper.parseJsonNode(submissionJson));
+      Submission submission = mock(Submission.class);
+      when(submission.getEmbeddedMedia()).thenReturn(embeddedMedia(dashPlaylistUrl));
 
       Link parsedLink = urlParser.parse(videoUrl, submission);
       assertEquals(true, parsedLink instanceof RedditHostedVideoLink);
       //noinspection ConstantConditions
       assertEquals(dashPlaylistUrl, ((RedditHostedVideoLink) parsedLink).highQualityUrl());
     }
+  }
+
+  private EmbeddedMedia embeddedMedia(String dashPlaylistUrl) {
+    EmbeddedMedia embeddedMedia = mock(EmbeddedMedia.class);
+    EmbeddedMedia.RedditVideo redditVideo = mock(EmbeddedMedia.RedditVideo.class);
+    when(redditVideo.getDashUrl()).thenReturn(dashPlaylistUrl);
+    when(embeddedMedia.getRedditVideo()).thenReturn(redditVideo);
+    return embeddedMedia;
   }
 
   @Test
@@ -345,28 +339,8 @@ public class UrlParserTest {
     };
     for (String videoUrl : videoUrls) {
       String dashPlaylistUrl = "https://v.redd.it/nwypmagtjvf01/DASHPlaylist.mpd";
-      String submissionJson = "{\n" +
-          "  \"secure_media\": null,\n" +
-          "  \"crosspost_parent_list\": [\n" +
-          "    {\n" +
-          "      \"secure_media\": {\n" +
-          "        \"reddit_video\": {\n" +
-          "          \"fallback_url\": \"https://v.redd.it/hmkehapuwjh01/DASH_2_4_M\",\n" +
-          "          \"height\": 480,\n" +
-          "          \"width\": 444,\n" +
-          "          \"scrubber_media_url\": \"https://v.redd.it/hmkehapuwjh01/DASH_600_K\",\n" +
-          "          \"dash_url\": \"" + dashPlaylistUrl + "\",\n" +
-          "          \"duration\": 11,\n" +
-          "          \"hls_url\": \"https://v.redd.it/hmkehapuwjh01/HLSPlaylist.m3u8\",\n" +
-          "          \"is_gif\": false,\n" +
-          "          \"transcoding_status\": \"completed\"\n" +
-          "        }\n" +
-          "      }\n" +
-          "    }\n" +
-          "  ]\n" +
-          "}\n";
-      JacksonHelper jacksonHelper = new JacksonHelper();
-      Submission submission = new Submission(jacksonHelper.parseJsonNode(submissionJson));
+      Submission submission = mock(Submission.class);
+      when(submission.getEmbeddedMedia()).thenReturn(embeddedMedia(dashPlaylistUrl));
 
       Link parsedLink = urlParser.parse(videoUrl, submission);
       assertEquals(true, parsedLink instanceof RedditHostedVideoLink);
@@ -382,12 +356,8 @@ public class UrlParserTest {
         "https://v.reddit.com/fjpqnd127wf01"
     };
     for (String videoUrl : videoUrls) {
-      String submissionJson = "{\n" +
-          "  \"secure_media\": null,\n" +
-          "  \"crosspost_parent_list\": null" +
-          "}\n";
-      JacksonHelper jacksonHelper = new JacksonHelper();
-      Submission submission = new Submission(jacksonHelper.parseJsonNode(submissionJson));
+      Submission submission = mock(Submission.class);
+      when(submission.getEmbeddedMedia()).thenReturn(null);
 
       Link parsedLink = urlParser.parse(videoUrl, submission);
       assertEquals(true, parsedLink instanceof ExternalLink);

@@ -3,7 +3,6 @@ package me.saket.dank.ui.subreddit;
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
 import static me.saket.dank.utils.RxUtils.applySchedulers;
-import static me.saket.dank.utils.RxUtils.applySchedulersCompletable;
 
 import android.content.Context;
 import android.view.View;
@@ -12,8 +11,8 @@ import android.widget.FrameLayout;
 import android.widget.ProgressBar;
 import android.widget.TextView;
 
-import net.dean.jraw.models.LoggedInAccount;
-import net.dean.jraw.paginators.Paginator;
+import net.dean.jraw.models.Account;
+import net.dean.jraw.pagination.Paginator;
 
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -32,6 +31,7 @@ import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserProfileRepository;
+import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Strings;
@@ -53,6 +53,7 @@ public class UserProfileSheetView extends FrameLayout {
   @Inject Lazy<UserProfileRepository> userProfileRepository;
   @Inject Lazy<InboxRepository> inboxRepository;
   @Inject Lazy<ErrorResolver> errorResolver;
+  @Inject Lazy<UserSessionRepository> userSessionRepository;
 
   private Disposable confirmLogoutTimer = Disposables.disposed();
   private Disposable logoutDisposable = Disposables.empty();
@@ -80,7 +81,7 @@ public class UserProfileSheetView extends FrameLayout {
     super.onAttachedToWindow();
 
     Timber.i("Fetching user profile for user profile sheet");
-    Observable<LoggedInAccount> replayedUserAccount = userProfileRepository.get()
+    Observable<Account> replayedUserAccount = userProfileRepository.get()
         .loggedInUserAccounts()
         .subscribeOn(io())
         .replay()
@@ -104,8 +105,10 @@ public class UserProfileSheetView extends FrameLayout {
         .subscribeOn(io())
         .map(unreads -> unreads.size());
 
+    // TODO JRAW
     Observable<Integer> unreadCountFromAccount = replayedUserAccount
-        .map(account -> account.getInboxCount());
+        //.map(account -> account.getInboxCount());
+        .flatMap(o -> Observable.never());
 
     unreadCountFromInbox
         .takeUntil(unreadCountFromAccount)
@@ -132,7 +135,7 @@ public class UserProfileSheetView extends FrameLayout {
         .subscribe(refreshProgressView::setVisibility);
   }
 
-  private void populateKarmaCount(LoggedInAccount loggedInUser) {
+  private void populateKarmaCount(Account loggedInUser) {
     Integer commentKarma = loggedInUser.getCommentKarma();
     Integer linkKarma = loggedInUser.getLinkKarma();
     int karmaCount = commentKarma + linkKarma;
@@ -200,8 +203,9 @@ public class UserProfileSheetView extends FrameLayout {
       logoutDisposable.dispose();
       logoutButton.setText(R.string.userprofile_logging_out);
 
-      logoutDisposable = Dank.reddit().logout()
-          .compose(applySchedulersCompletable())
+      logoutDisposable = userSessionRepository.get().logout()
+          .subscribeOn(io())
+          .observeOn(mainThread())
           .subscribe(
               () -> parentSheet.collapse(),
               error -> {

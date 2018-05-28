@@ -36,7 +36,7 @@ public abstract class SubmissionContentLinkClickEvent {
 
     } else if (link() instanceof MediaLink) {
       urlRouter.forLink(((MediaLink) link()))
-          .withRedditSuppliedImages(submission.getThumbnails())
+          .withRedditSuppliedImages(submission.getPreview())
           .open(contentLinkView().getContext());
 
     } else {

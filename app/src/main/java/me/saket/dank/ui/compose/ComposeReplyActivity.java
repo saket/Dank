@@ -323,7 +323,7 @@ public class ComposeReplyActivity extends DankPullCollapsibleActivity
     }
 
     CharSequence reply = replyField.getText();
-    ComposeResult composeResult = ComposeResult.create(startOptions.optionalParentContribution(), reply, startOptions.extras());
+    ComposeResult composeResult = ComposeResult.create(startOptions.optionalParent(), reply, startOptions.extras());
 
     Intent resultData = new Intent();
     resultData.putExtra(KEY_COMPOSE_RESULT, composeResult);

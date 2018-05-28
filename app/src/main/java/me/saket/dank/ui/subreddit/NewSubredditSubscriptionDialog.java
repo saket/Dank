@@ -30,6 +30,7 @@ import me.saket.dank.R;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.ui.DankDialogFragment;
 import me.saket.dank.utils.Keyboards;
 import timber.log.Timber;
@@ -44,6 +45,7 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
   @BindView(R.id.newsubredditdialog_progress) View progressView;
 
   @Inject Lazy<ErrorResolver> errorResolver;
+  @Inject Lazy<Reddit> reddit;
 
   public interface Callback {
     void onEnterNewSubredditForSubscription(Subscribeable newSubreddit);
@@ -127,7 +129,7 @@ public class NewSubredditSubscriptionDialog extends DankDialogFragment {
     //noinspection ConstantConditions
     Keyboards.hide(requireContext(), subredditView);
 
-    Dank.reddit().findSubreddit2(subredditName)
+    reddit.get().subreddits().find(subredditName)
         .subscribeOn(io())
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroyCompletable())

@@ -28,8 +28,8 @@ import io.reactivex.Scheduler;
 import io.reactivex.Single;
 import io.reactivex.functions.Predicate;
 import me.saket.dank.data.CachePreFillThing;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.LinkMetadataRepository;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.submission.AuditedCommentSort;
@@ -214,7 +214,7 @@ public class CachePreFiller {
 
     Observable<Drawable> singleImageLoad = replayedResolvedLinks
         .filter(resolvedLink -> resolvedLink.isImageOrGif())
-        .flatMapSingle(resolvedLink -> submissionImageLoader.get().load(appContext, resolvedLink, submission.getThumbnails(), imageLoadOptions));
+        .flatMapSingle(resolvedLink -> submissionImageLoader.get().load(appContext, resolvedLink, submission.getPreview(), imageLoadOptions));
 
     Observable<Drawable> albumImagesLoad = replayedResolvedLinks
         .filter(resolvedLink -> resolvedLink.isMediaAlbum())
@@ -223,7 +223,7 @@ public class CachePreFiller {
           ImgurLink firstImage = albumLink.images().get(0);
           Single<Drawable> firstImageLoad = submissionImageLoader.get().load(appContext, firstImage, imageLoadOptions);
 
-          ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
+          ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.Companion.of(submission.getPreview());
           String optimizedCoverImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, albumLink.coverImageUrl());
           Single<Drawable> coverImageLoad = submissionImageLoader.get().loadImage(appContext, optimizedCoverImageUrl, imageLoadOptions);
 
@@ -263,7 +263,7 @@ public class CachePreFiller {
           }
           //noinspection ConstantConditions
           if (linkMetadata.hasImage() && !UrlParser.isGifUrl(linkMetadata.imageUrl())) {
-            ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
+            ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.Companion.of(submission.getPreview());
             //noinspection ConstantConditions
             String thumbnailImageUrl = redditSuppliedImages.findNearestFor(submissionAlbumLinkThumbnailWidth, linkMetadata.imageUrl());
             imagesToDownload.add(thumbnailImageUrl);
@@ -292,7 +292,7 @@ public class CachePreFiller {
 
     AuditedCommentSort auditedSort = Optional.ofNullable(submission.getSuggestedSort())
         .map(sort -> AuditedCommentSort.create(sort, SelectedBy.SUBMISSION_SUGGESTED))
-        .orElse(AuditedCommentSort.create(DankRedditClient.DEFAULT_COMMENT_SORT, SelectedBy.DEFAULT));
+        .orElse(AuditedCommentSort.create(Reddit.Companion.getDEFAULT_COMMENT_SORT(), SelectedBy.DEFAULT));
 
     DankSubmissionRequest request = DankSubmissionRequest.builder(submission.getId())
         .commentSort(auditedSort)

@@ -7,9 +7,7 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.models.CommentMessage;
 import net.dean.jraw.models.Message;
-import net.dean.jraw.models.PrivateMessage;
 
 import java.io.IOException;
 
@@ -65,8 +63,8 @@ public abstract class CachedMessage {
   public abstract Message message();
 
   /**
-   * For {@link PrivateMessage}, this is the timestamp of the last message in the thread.
-   * For {@link CommentMessage}, this is the message's timestamp.
+   * For private messages, this is the timestamp of the last message in the thread.
+   * For comment messages, this is the message's timestamp.
    */
   public abstract long latestMessageTimestamp();
 

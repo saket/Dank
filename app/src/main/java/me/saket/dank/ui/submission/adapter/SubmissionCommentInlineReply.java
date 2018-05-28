@@ -17,6 +17,8 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import net.dean.jraw.models.Identifiable;
+
 import java.util.List;
 import javax.inject.Inject;
 
@@ -25,7 +27,6 @@ import io.reactivex.disposables.Disposable;
 import io.reactivex.disposables.Disposables;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.R;
-import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.markdownhints.MarkdownHints;
@@ -53,7 +54,7 @@ public interface SubmissionCommentInlineReply {
 
     public abstract SpannableWithTextEquality authorHint();
 
-    public abstract ContributionFullNameWrapper parentContributionFullname();
+    public abstract Identifiable parent();
 
     public abstract String parentContributionAuthor();
 
@@ -67,14 +68,14 @@ public interface SubmissionCommentInlineReply {
     public static UiModel create(
         long adapterId,
         CharSequence authorHint,
-        ContributionFullNameWrapper parentContribution,
+        Identifiable parent,
         String parentContributionAuthor,
         int indentationDepth)
     {
       return new AutoValue_SubmissionCommentInlineReply_UiModel(
           adapterId,
           SpannableWithTextEquality.wrap(authorHint),
-          parentContribution,
+          parent,
           parentContributionAuthor,
           indentationDepth
       );
@@ -129,7 +130,7 @@ public interface SubmissionCommentInlineReply {
     {
       // Draft is saved in the reply field's focus change listener.
       discardButton.setOnClickListener(o -> {
-        replyDiscardEventRelay.accept(ReplyDiscardClickEvent.create(uiModel.parentContributionFullname()));
+        replyDiscardEventRelay.accept(ReplyDiscardClickEvent.create(uiModel.parent()));
       });
 
       insertGifButton.setOnClickListener(o ->
@@ -140,14 +141,14 @@ public interface SubmissionCommentInlineReply {
         saveDraftAsynchronouslyIfAllowed();
 
         String authorNameIfComment = uiModel.parentContributionAuthor();
-        ContributionFullNameWrapper parentContribution = uiModel.parentContributionFullname();
+        Identifiable parentContribution = uiModel.parent();
         replyFullscreenClickRelay.accept(ReplyFullscreenClickEvent.create(getItemId(), parentContribution, authorNameIfComment));
       });
 
       sendButton.setOnClickListener(o -> {
         setSavingDraftsAllowed(false);
         String replyMessage = replyField.getText().toString().trim();
-        ContributionFullNameWrapper parentContribution = uiModel.parentContributionFullname();
+        Identifiable parentContribution = uiModel.parent();
         replySendClickRelay.accept(ReplySendClickEvent.create(parentContribution, replyMessage));
       });
     }
@@ -164,7 +165,7 @@ public interface SubmissionCommentInlineReply {
       if (savingDraftsAllowed) {
         // Fire-and-forget call. No need to dispose this since we're making no memory references to this VH.
         // WARNING: DON'T REFERENCE VH FIELDS IN THIS CHAIN TO AVOID LEAKING MEMORY.
-        draftStore.saveDraft(uiModel.parentContributionFullname(), replyField.getText().toString())
+        draftStore.saveDraft(uiModel.parent(), replyField.getText().toString())
             .subscribeOn(Schedulers.io())
             .observeOn(mainThread())
             .subscribe();
@@ -187,7 +188,7 @@ public interface SubmissionCommentInlineReply {
       setSavingDraftsAllowed(true);
       draftDisposable.dispose();
 
-      draftDisposable = draftStore.streamDrafts(uiModel.parentContributionFullname())
+      draftDisposable = draftStore.streamDrafts(uiModel.parent())
           .subscribeOn(io())
           .observeOn(mainThread())
           .subscribe(replyDraft -> {

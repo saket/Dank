@@ -6,9 +6,9 @@ import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Identifiable;
+import net.dean.jraw.models.PublicContribution;
 
-import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.utils.Optional;
 
 @AutoValue
@@ -18,13 +18,13 @@ public abstract class ComposeStartOptions implements Parcelable {
   public abstract String secondPartyName();
 
   @Nullable
-  abstract ContributionFullNameWrapper parentContribution();
+  abstract SimpleIdentifiable parent();
 
-  public Optional<ContributionFullNameWrapper> optionalParentContribution() {
-    return Optional.ofNullable(parentContribution());
+  public Optional<Identifiable> optionalParent() {
+    return Optional.ofNullable(parent());
   }
 
-  public abstract ContributionFullNameWrapper draftKey();
+  public abstract SimpleIdentifiable draftKey();
 
   @Nullable
   public abstract Bundle extras();
@@ -42,27 +42,35 @@ public abstract class ComposeStartOptions implements Parcelable {
     public abstract Builder secondPartyName(@Nullable String secondPartyName);
 
     /**
-     * The {@link Contribution} to which this reply is being made.
+     * The {@link PublicContribution} to which this reply is being made.
      * Sent back to calling Activity through {@link ComposeResult}.
      * Not used for anything else.
      * <p>
      * Optional only if you don't want it back in {@link ComposeResult}.
      */
-    public Builder parentContribution(Optional<ContributionFullNameWrapper> replyingTo) {
-      return parentContribution(replyingTo.orElse(null));
+    public Builder parent(Optional<Identifiable> replingTo) {
+      return parent(replingTo.map(SimpleIdentifiable.Companion::from).orElse(null));
     }
 
     /**
-     * The {@link Contribution} to which this reply is being made.
+     * The {@link PublicContribution} to which this reply is being made.
      * Sent back to calling Activity through {@link ComposeResult}.
      * Not used for anything else.
      */
-    public abstract Builder parentContribution(@Nullable ContributionFullNameWrapper replyingTo);
+    public Builder parent(@Nullable Identifiable replyingTo) {
+      return parent(replyingTo != null ? SimpleIdentifiable.Companion.from(replyingTo) : null);
+    }
+
+    abstract Builder parent(@Nullable SimpleIdentifiable replyingTo);
 
     /**
      * The ID (contribution's full-name) to use for saving and retaining drafts.
      */
-    public abstract Builder draftKey(ContributionFullNameWrapper contributionAsDraftKey);
+    public Builder draftKey(Identifiable identifiableAsDraftKey) {
+      return draftKey(SimpleIdentifiable.Companion.from(identifiableAsDraftKey));
+    }
+
+    abstract Builder draftKey(SimpleIdentifiable contributionAsDraftKey);
 
     /**
      * Delivered back with {@link ComposeResult}.

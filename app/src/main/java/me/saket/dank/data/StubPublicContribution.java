@@ -2,11 +2,8 @@ package me.saket.dank.data;
 
 import net.dean.jraw.models.PublicContribution;
 
-public abstract class StubPublicContribution extends PublicContribution {
-
-  public StubPublicContribution() {
-    super(null);
-  }
+@Deprecated
+public abstract class StubPublicContribution implements PublicContribution {
 
   @Override
   public abstract boolean equals(Object otherObject);

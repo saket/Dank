@@ -21,9 +21,12 @@ import javax.inject.Inject;
 
 import butterknife.BindView;
 import butterknife.ButterKnife;
+import dagger.Lazy;
+import io.reactivex.Completable;
 import me.saket.dank.R;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
+import me.saket.dank.reddit.Reddit;
+import me.saket.dank.reddit.jraw.UserLoginHelper;
 import me.saket.dank.ui.DankActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
 import timber.log.Timber;
@@ -35,9 +38,10 @@ public class LoginActivity extends DankActivity {
   @BindView(R.id.login_webview) WebView webView;
   @BindView(R.id.login_progress) View progressView;
 
-  @Inject UserSessionRepository userSessionRepository;
+  @Inject Lazy<UserSessionRepository> userSessionRepository;
+  @Inject Lazy<Reddit> reddit;
 
-  private DankRedditClient.UserLoginHelper userLoginHelper;
+  private UserLoginHelper userLoginHelper;
   private boolean loggedIn;
 
   @CheckResult
@@ -90,7 +94,7 @@ public class LoginActivity extends DankActivity {
     webView.clearFormData();
     webView.getSettings().setSaveFormData(false);
 
-    userLoginHelper = Dank.reddit().createUserLoginHelper();
+    userLoginHelper = reddit.get().login().loginHelper();
     webView.loadUrl(userLoginHelper.authorizationUrl());
   }
 
@@ -99,9 +103,13 @@ public class LoginActivity extends DankActivity {
 
     // TODO: 10/02/17 Test error cases here.
     userLoginHelper.parseOAuthSuccessUrl(successUrl)
+        .andThen(reddit.get().loggedInUser()
+            .about()
+            .map(account -> account.getName())
+            .flatMapCompletable(username -> Completable.fromAction(() -> userSessionRepository.get().setLoggedInUsername(username))))
         .compose(applySchedulersCompletable())
         .subscribe(() -> {
-          String loggedInUserName = userSessionRepository.loggedInUserName();
+          String loggedInUserName = userSessionRepository.get().loggedInUserName();
           Toast.makeText(LoginActivity.this, getString(R.string.login_welcome_user, loggedInUserName), Toast.LENGTH_SHORT).show();
           setResult(RESULT_OK);
           finish();

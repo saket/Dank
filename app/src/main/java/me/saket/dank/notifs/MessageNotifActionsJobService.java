@@ -17,15 +17,15 @@ import net.dean.jraw.models.Message;
 import java.util.Arrays;
 import javax.inject.Inject;
 
-import io.reactivex.Completable;
+import dagger.Lazy;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.DankJobService;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
+import me.saket.dank.reddit.Reddit;
 import timber.log.Timber;
 
 /**
@@ -47,7 +47,7 @@ public class MessageNotifActionsJobService extends DankJobService {
   @Inject ErrorResolver errorResolver;
   @Inject Moshi moshi;
   @Inject MessagesNotificationManager messagesNotifManager;
-  @Inject DankRedditClient dankRedditClient;
+  @Inject Lazy<Reddit> reddit;
 
   public static void sendDirectReply(Context context, Message replyToMessage, Moshi moshi, String replyText) {
     PersistableBundle extras = new PersistableBundle(3);
@@ -145,10 +145,10 @@ public class MessageNotifActionsJobService extends DankJobService {
     //noinspection ConstantConditions
     unsubscribeOnDestroy(
         parseMessage(params.getExtras().getString(KEY_MESSAGE_JSON))
-            .flatMapCompletable(replyToMessage -> dankRedditClient
-                .withAuth(Completable.fromAction(() -> dankRedditClient.userAccountManager().reply(replyToMessage, replyText)))
-                .andThen(messagesNotifManager.removeMessageNotifSeenStatus(replyToMessage))
-            )
+            .flatMapCompletable(replyToMessage -> reddit.get()
+                .loggedInUser().reply(replyToMessage, replyText)
+                .toCompletable()
+                .andThen(messagesNotifManager.removeMessageNotifSeenStatus(replyToMessage)))
             .compose(applySchedulersCompletable())
             .subscribe(
                 () -> jobFinished(params, false),
@@ -161,10 +161,8 @@ public class MessageNotifActionsJobService extends DankJobService {
     //noinspection ConstantConditions
     unsubscribeOnDestroy(
         parseMessageArray(params.getExtras().getString(KEY_MESSAGE_ARRAY_JSON))
-            .flatMapCompletable(messages -> dankRedditClient
-                .withAuth(inboxRepository.setRead(messages, true))
-                .andThen(messagesNotifManager.removeMessageNotifSeenStatus(messages))
-            )
+            .flatMapCompletable(messages -> inboxRepository.setRead(messages, true)
+                .andThen(messagesNotifManager.removeMessageNotifSeenStatus(messages)))
             .compose(applySchedulersCompletable())
             .subscribe(
                 () -> jobFinished(params, false),
@@ -174,7 +172,7 @@ public class MessageNotifActionsJobService extends DankJobService {
 
   private void markAllMessagesAsRead(JobParameters params) {
     unsubscribeOnDestroy(
-        dankRedditClient.withAuth(inboxRepository.setAllRead())
+        inboxRepository.setAllRead()
             .andThen(messagesNotifManager.removeAllMessageNotifSeenStatuses())
             .compose(applySchedulersCompletable())
             .subscribe(

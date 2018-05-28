@@ -7,16 +7,15 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.http.SubmissionRequest;
-import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.CommentSort;
+import net.dean.jraw.references.CommentsRequest;
 
 import me.saket.dank.ui.submission.AuditedCommentSort;
 
 /**
- * Because {@link SubmissionRequest} does not have a toBuilder() method. Update: Then send a PR to JRAW?
+ * Because {@link CommentsRequest} does not have a toBuilder() method. Update: Then send a PR to JRAW?
  * <p>
- * TODO Kotlin: Kotlin's copy() will be sufficient. I won't need this class.
+ * TODO Use CommentsRequest#copy().
  */
 @AutoValue
 public abstract class DankSubmissionRequest implements Parcelable {
@@ -41,9 +40,9 @@ public abstract class DankSubmissionRequest implements Parcelable {
 
   public abstract Builder toBuilder();
 
-  public SubmissionRequest toJraw() {
+  public CommentsRequest toJraw() {
     // Note: context count is only null in case of "continue thread" requests.
-    return new SubmissionRequest.Builder(id())
+    return new CommentsRequest.Builder()
         .sort(commentSort().mode())
         .focus(focusCommentId())
         .context(contextCount())

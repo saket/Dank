@@ -2,7 +2,6 @@ package me.saket.dank.ui.user.messages;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
-import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
@@ -27,8 +26,8 @@ import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
 
+import net.dean.jraw.models.Identifiable;
 import net.dean.jraw.models.Message;
-import net.dean.jraw.models.PrivateMessage;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -44,7 +43,6 @@ import io.reactivex.BackpressureStrategy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import me.saket.dank.R;
-import me.saket.dank.data.ContributionFullNameWrapper;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.data.ResolvedError;
@@ -54,12 +52,13 @@ import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.compose.ComposeReplyActivity;
 import me.saket.dank.ui.compose.ComposeStartOptions;
+import me.saket.dank.ui.compose.SimpleIdentifiable;
 import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.utils.Dates;
-import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
@@ -69,11 +68,11 @@ import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
-import timber.log.Timber;
 
 public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
-  private static final String KEY_MESSAGE_FULLNAME = "messageFullname";
+//  private static final String KEY_MESSAGE_FULLNAME = "messageFullname";
+  private static final String KEY_MESSAGE_IDENTIFIABLE = "messageIdentifiable";
   private static final String KEY_THREAD_SECOND_PARTY_NAME = "threadSecondPartyName";
   private static final int REQUEST_CODE_FULLSCREEN_REPLY = 99;
 
@@ -98,9 +97,9 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
   private ThreadedMessagesAdapter messagesAdapter;
   private Relay<Message> latestMessageStream = BehaviorRelay.create();
-  private ContributionFullNameWrapper privateMessage;
+  private Identifiable privateMessage;
 
-  public static Intent intent(Context context, PrivateMessage privateMessage, String threadSecondPartyName, @Nullable Rect expandFromShape) {
+  public static Intent intent(Context context, Message privateMessage, String threadSecondPartyName, @Nullable Rect expandFromShape) {
     String firstMessageFullName = privateMessage.getFirstMessage();
 
     if (firstMessageFullName == null) {
@@ -116,7 +115,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     Intent intent = new Intent(context, PrivateMessageThreadActivity.class);
     intent.putExtra(KEY_EXPAND_FROM_SHAPE, expandFromShape);
     //noinspection ConstantConditions
-    intent.putExtra(KEY_MESSAGE_FULLNAME, ContributionFullNameWrapper.create(firstMessageFullName));
+    intent.putExtra(KEY_MESSAGE_IDENTIFIABLE, SimpleIdentifiable.Companion.from(firstMessageFullName));
     intent.putExtra(KEY_THREAD_SECOND_PARTY_NAME, threadSecondPartyName);
     return intent;
   }
@@ -141,7 +140,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     // so that if full-screen reply is closed, the keyboard continues to show.
     replyField.requestFocus();
 
-    privateMessage = getIntent().getParcelableExtra(KEY_MESSAGE_FULLNAME);
+    privateMessage = getIntent().getParcelableExtra(KEY_MESSAGE_IDENTIFIABLE);
   }
 
   @Override
@@ -166,10 +165,10 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .replay(1)
         .refCount();
 
-    Observable<PrivateMessage> messageThread = dbThread
+    Observable<Message> messageThread = dbThread
         .filter(Optional::isPresent)
         .map(Optional::get)
-        .cast(PrivateMessage.class);
+        .cast(Message.class);
 
     downloadPrivateMessageIfNeeded(dbThread);
 
@@ -180,7 +179,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .subscribe(message -> {
           threadSubjectView.setText(message.getSubject());
 
-          List<Message> messageReplies = JrawUtils.messageReplies(message);
+          List<Message> messageReplies = JrawUtils2.INSTANCE.messageReplies(message);
           if (messageReplies.isEmpty()) {
             latestMessageStream.accept(message);
           } else {
@@ -192,8 +191,8 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     // Adapter data-set.
     Observable.combineLatest(messageThread, pendingSyncRepliesStream, Pair::create)
         .map(pair -> {
-          PrivateMessage parentMessage = pair.first();
-          List<Message> messageReplies = JrawUtils.messageReplies(parentMessage);
+          Message parentMessage = pair.first();
+          List<Message> messageReplies = JrawUtils2.INSTANCE.messageReplies(parentMessage);
           List<PendingSyncReply> pendingSyncReplies = pair.second();
           String loggedInUserName = userSessionRepository.loggedInUserName();
           return constructUiModels(parentMessage, messageReplies, pendingSyncReplies, loggedInUserName);
@@ -233,23 +232,26 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .takeUntil(lifecycle().onDestroy())
         .subscribe(
             pair -> {
-              CharSequence reply = pair.first();
-              Message latestMessage = pair.second();
-
-              // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
-              //noinspection ConstantConditions
-              replyRepository.removeDraft(privateMessage)
-                  .andThen(replyRepository.sendReply(latestMessage, ParentThread.createPrivateMessage(privateMessage.getFullName()), reply.toString()).toObservable())
-                  .subscribe(
-                      doNothing(),
-                      error -> {
-                        ResolvedError resolvedError = errorResolver.get().resolve(error);
-                        if (resolvedError.isUnknown()) {
-                          Timber.e(error);
-                        }
-                        // Error is stored in the DB, so we don't need to show anything else to the user.
-                      }
-                  );
+              // TODO JRAW.
+//              CharSequence reply = pair.first();
+//              Message latestMessage = pair.second();
+//
+//              // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
+//              //noinspection ConstantConditions
+//              replyRepository.removeDraft(privateMessage)
+//                  .andThen(replyRepository.sendReply(
+//                      latestMessage,
+//                      ParentThread.createPrivateMessage(privateMessage.getFullName()), reply.toString()).toObservable())
+//                  .subscribe(
+//                      doNothing(),
+//                      error -> {
+//                        ResolvedError resolvedError = errorResolver.get().resolve(error);
+//                        if (resolvedError.isUnknown()) {
+//                          Timber.e(error);
+//                        }
+//                        // Error is stored in the DB, so we don't need to show anything else to the user.
+//                      }
+//                  );
             },
             logError("Failed to send message")
         );
@@ -284,7 +286,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .filter(pendingSyncReply -> pendingSyncReply.state() == PendingSyncReply.State.FAILED)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(failedPendingSyncReply ->
-            Dank.reddit().withAuth(replyRepository.reSendReply(failedPendingSyncReply))
+            replyRepository.reSendReply(failedPendingSyncReply)
                 .subscribeOn(io())
                 .subscribe()
         );
@@ -345,7 +347,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     ComposeStartOptions composeStartOptions = ComposeStartOptions.builder()
         .secondPartyName(getIntent().getStringExtra(KEY_THREAD_SECOND_PARTY_NAME))
-        .parentContribution(Optional.empty())
+        .parent(Optional.empty())
         .draftKey(privateMessage)
         .build();
     startActivityForResult(ComposeReplyActivity.intent(this, composeStartOptions), REQUEST_CODE_FULLSCREEN_REPLY);
@@ -360,7 +362,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
     List<PrivateMessageUiModel> uiModels = new ArrayList<>(1 + threadedReplies.size() + pendingSyncReplies.size());
 
     // 1. Parent message.
-    long parentCreatedTimeMillis = JrawUtils.createdTimeUtc(parentMessage);
+    long parentCreatedTimeMillis = JrawUtils2.INSTANCE.createdTimeUtc(parentMessage);
     PrivateMessageUiModel.Direction parentDirection = loggedInUserName.equals(parentMessage.getAuthor())
         ? PrivateMessageUiModel.Direction.SENT
         : PrivateMessageUiModel.Direction.RECEIVED;
@@ -382,7 +384,7 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
     // 2. Replies.
     for (Message threadedReply : threadedReplies) {
-      long createdTimeMillis = JrawUtils.createdTimeUtc(threadedReply);
+      long createdTimeMillis = JrawUtils2.INSTANCE.createdTimeUtc(threadedReply);
       PrivateMessageUiModel.Direction direction = loggedInUserName.equals(threadedReply.getAuthor())
           ? PrivateMessageUiModel.Direction.SENT
           : PrivateMessageUiModel.Direction.RECEIVED;

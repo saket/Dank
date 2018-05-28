@@ -12,28 +12,27 @@ import com.squareup.sqlbrite2.BriteDatabase;
 
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
-import net.dean.jraw.models.PrivateMessage;
-import net.dean.jraw.paginators.InboxPaginator;
-import net.dean.jraw.paginators.Paginator;
+import net.dean.jraw.pagination.Paginator;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.user.messages.CachedMessage;
 import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.utils.Arrays2;
-import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
-import me.saket.dank.utils.Strings;
-import timber.log.Timber;
 
 @Singleton
 public class InboxRepository {
@@ -43,14 +42,14 @@ public class InboxRepository {
    */
   public static final int MESSAGES_FETCHED_PER_PAGE = Paginator.DEFAULT_LIMIT * 2;
 
-  private final DankRedditClient dankRedditClient;
+  private final Lazy<Reddit> reddit;
   private final BriteDatabase briteDatabase;
   private Moshi moshi;
   private final ReplyRepository replyRepository;
 
   @Inject
-  public InboxRepository(DankRedditClient dankRedditClient, BriteDatabase briteDatabase, Moshi moshi, ReplyRepository replyRepository) {
-    this.dankRedditClient = dankRedditClient;
+  public InboxRepository(Lazy<Reddit> reddit, BriteDatabase briteDatabase, Moshi moshi, ReplyRepository replyRepository) {
+    this.reddit = reddit;
     this.briteDatabase = briteDatabase;
     this.moshi = moshi;
     this.replyRepository = replyRepository;
@@ -127,50 +126,45 @@ public class InboxRepository {
 
   @CheckResult
   private Single<List<Message>> fetchMessagesFromAnchor(InboxFolder folder, PaginationAnchor paginationAnchor) {
-    return dankRedditClient.withAuth(Single.fromCallable(() -> {
-      InboxPaginator paginator = dankRedditClient.userMessagePaginator(folder);
-      paginator.setLimit(MESSAGES_FETCHED_PER_PAGE);
+    return reddit.get().loggedInUser()
+        .messages(folder, MESSAGES_FETCHED_PER_PAGE, paginationAnchor)
+        .map(iterator -> {
+          // Try fetching a minimum of 10 items. Useful for comment and
+          // post replies where we have to filter the messages locally.
+          List<Message> minimum10Messages = new ArrayList<>();
 
-      if (!paginationAnchor.isEmpty()) {
-        paginator.setStartAfterThing(paginationAnchor.fullName());
-      }
+          while (iterator.hasNext() && minimum10Messages.size() < 10) {
+            // iterator.next() makes an API call.
+            Listing<Message> nextSetOfMessages = iterator.next();
 
-      // Try fetching a minimum of 10 items. Useful for comment and post replies
-      // where we have to filter the messages locally.
-      List<Message> minimum10Messages = new ArrayList<>();
+            for (Message nextMessage : nextSetOfMessages) {
+              switch (folder) {
+                case UNREAD:
+                case PRIVATE_MESSAGES:
+                case USERNAME_MENTIONS:
+                  minimum10Messages.add(nextMessage);
+                  break;
 
-      while (paginator.hasNext() && minimum10Messages.size() < 10) {
-        // paginator.next() makes an API call.
-        Listing<Message> nextSetOfMessages = paginator.next();
+                case COMMENT_REPLIES:
+                  if ("comment reply".equals(nextMessage.getSubject())) {
+                    minimum10Messages.add(nextMessage);
+                  }
+                  break;
 
-        for (Message nextMessage : nextSetOfMessages) {
-          switch (folder) {
-            case UNREAD:
-            case PRIVATE_MESSAGES:
-            case USERNAME_MENTIONS:
-              minimum10Messages.add(nextMessage);
-              break;
+                case POST_REPLIES:
+                  if ("post reply".equals(nextMessage.getSubject())) {
+                    minimum10Messages.add(nextMessage);
+                  }
+                  break;
 
-            case COMMENT_REPLIES:
-              if ("comment reply".equals(nextMessage.getSubject())) {
-                minimum10Messages.add(nextMessage);
+                default:
+                  throw new UnsupportedOperationException();
               }
-              break;
-
-            case POST_REPLIES:
-              if ("post reply".equals(nextMessage.getSubject())) {
-                minimum10Messages.add(nextMessage);
-              }
-              break;
-
-            default:
-              throw new UnsupportedOperationException();
+            }
           }
-        }
-      }
 
-      return minimum10Messages;
-    }));
+          return minimum10Messages;
+        });
   }
 
   /**
@@ -178,22 +172,23 @@ public class InboxRepository {
    */
   @CheckResult
   private Single<PaginationAnchor> getPaginationAnchor(InboxFolder folder) {
-    PrivateMessage dummyPrivateMessage = new PrivateMessage(null);
-    CachedMessage dummyDefaultValue = CachedMessage.create("-1", dummyPrivateMessage, 0, InboxFolder.PRIVATE_MESSAGES);
-
     return briteDatabase.createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
-        .mapToOneOrDefault(CachedMessage.fromCursor(moshi), dummyDefaultValue)
+        .mapToList(CachedMessage.fromCursor(moshi))
+        .map(items -> items.isEmpty()
+            ? Collections.singletonList(Optional.<CachedMessage>empty())
+            : Collections.singletonList(Optional.of(items.get(0))))
+        .flatMapIterable(items -> items)
         .firstOrError()
-        .map(lastStoredMessage -> {
-          if (lastStoredMessage == dummyDefaultValue) {
+        .map(optionalLastStoredMessage -> {
+          if (optionalLastStoredMessage.isEmpty()) {
             return PaginationAnchor.createEmpty();
-
           } else {
-            Message lastMessage = lastStoredMessage.message();
+            Message lastMessage = optionalLastStoredMessage.get().message();
 
             // Private messages can have nested replies. Go through them and find the last one.
-            if (lastMessage instanceof PrivateMessage) {
-              List<Message> lastMessageReplies = JrawUtils.messageReplies((PrivateMessage) lastMessage);
+            if (!lastMessage.isComment()) {
+              List<Message> lastMessageReplies = JrawUtils2.INSTANCE.messageReplies(lastMessage);
+              //noinspection ConstantConditions
               if (!lastMessageReplies.isEmpty()) {
                 // Replies are present.
                 Message lastMessageLastReply = lastMessageReplies.get(lastMessageReplies.size() - 1);
@@ -215,11 +210,11 @@ public class InboxRepository {
       for (Message fetchedMessage : fetchedMessages) {
         long latestMessageTimestamp;
         if (fetchedMessage.isComment()) {
-          latestMessageTimestamp = JrawUtils.createdTimeUtc(fetchedMessage);
+          latestMessageTimestamp = JrawUtils2.INSTANCE.createdTimeUtc(fetchedMessage);
         } else {
-          List<Message> messageReplies = JrawUtils.messageReplies((PrivateMessage) fetchedMessage);
+          List<Message> messageReplies = JrawUtils2.INSTANCE.messageReplies(fetchedMessage);
           Message latestMessage = messageReplies.isEmpty() ? fetchedMessage : messageReplies.get(messageReplies.size() - 1);
-          latestMessageTimestamp = JrawUtils.createdTimeUtc(latestMessage);
+          latestMessageTimestamp = JrawUtils2.INSTANCE.createdTimeUtc(latestMessage);
         }
         CachedMessage cachedMessage = CachedMessage.create(fetchedMessage.getFullName(), fetchedMessage, latestMessageTimestamp, folder);
         messagesValuesToStore.add(cachedMessage.toContentValues(moshi));
@@ -263,19 +258,19 @@ public class InboxRepository {
 
   @CheckResult
   public Completable setRead(Message[] messages, boolean read) {
-    return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setRead(read, messages[0], messages))
+    return reddit.get().loggedInUser().setRead(read, messages)
         .andThen(removeMessages(InboxFolder.UNREAD, messages));
   }
 
   @CheckResult
   public Completable setRead(Message message, boolean read) {
-    return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setRead(read, message))
+    return reddit.get().loggedInUser().setRead(read, message)
         .andThen(removeMessages(InboxFolder.UNREAD, message));
   }
 
   @CheckResult
   public Completable setAllRead() {
-    return Completable.fromAction(() -> dankRedditClient.redditInboxManager().setAllRead())
+    return reddit.get().loggedInUser().setAllRead()
         .andThen(removeAllMessages(InboxFolder.UNREAD));
   }
 

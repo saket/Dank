@@ -14,7 +14,7 @@ import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.f2prateek.rx.preferences2.Preference;
 
-import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.SubmissionPreview;
 
 import javax.inject.Inject;
 import javax.inject.Named;
@@ -83,36 +83,36 @@ public class SubmissionImageLoader {
   public Single<Drawable> load(
       Context context,
       MediaLink mediaLink,
-      Optional<Thumbnails> redditSuppliedThumbnails,
+      Optional<SubmissionPreview> redditPreviews,
       Optional<Scheduler> scheduler,
       RequestOptions options)
   {
     return hdMediaNetworkStrategyPref.get().asObservable()
         .switchMap(strategy -> networkStateListener.get().streamNetworkInternetCapability(strategy, scheduler))
         .firstOrError()
-        .map(canLoadHighDef -> imageUrlSuitableForNetwork(mediaLink, redditSuppliedThumbnails, canLoadHighDef))
+        .map(canLoadHighDef -> imageUrlSuitableForNetwork(mediaLink, redditPreviews, canLoadHighDef))
         .flatMap(imageUrl -> loadImage(context, imageUrl, options));
   }
 
   public Single<Drawable> load(
       Context context,
       MediaLink mediaLink,
-      @Nullable Thumbnails redditSuppliedThumbnails,
+      @Nullable SubmissionPreview redditPreviews,
       Scheduler scheduler,
       RequestOptions options)
   {
-    return load(context, mediaLink, Optional.ofNullable(redditSuppliedThumbnails), Optional.of(scheduler), options);
+    return load(context, mediaLink, Optional.ofNullable(redditPreviews), Optional.of(scheduler), options);
   }
 
-  public Single<Drawable> load(Context context, MediaLink mediaLink, @Nullable Thumbnails redditSuppliedThumbnails, RequestOptions options) {
-    return load(context, mediaLink, Optional.ofNullable(redditSuppliedThumbnails), Optional.empty(), options);
+  public Single<Drawable> load(Context context, MediaLink mediaLink, @Nullable SubmissionPreview redditPreviews, RequestOptions options) {
+    return load(context, mediaLink, Optional.ofNullable(redditPreviews), Optional.empty(), options);
   }
 
   public Single<Drawable> load(Context context, MediaLink mediaLink, RequestOptions options) {
     return load(context, mediaLink, Optional.empty(), Optional.empty(), options);
   }
 
-  private String imageUrlSuitableForNetwork(MediaLink mediaLink, Optional<Thumbnails> redditSuppliedThumbnails, boolean canLoadHighDef) {
+  private String imageUrlSuitableForNetwork(MediaLink mediaLink, Optional<SubmissionPreview> redditPreviews, boolean canLoadHighDef) {
     if (canLoadHighDef) {
       return mediaLink.highQualityUrl();
 
@@ -121,12 +121,12 @@ public class SubmissionImageLoader {
       String defaultImageUrl = mediaLink.lowQualityUrl();
       return mediaLink.isGif()
           ? defaultImageUrl
-          : ImageWithMultipleVariants.of(redditSuppliedThumbnails).findNearestFor(deviceDisplaySize.getWidth(), defaultImageUrl);
+          : ImageWithMultipleVariants.Companion.of(redditPreviews).findNearestFor(deviceDisplaySize.getWidth(), defaultImageUrl);
     }
   }
 
   public Single<Drawable> loadImage(Context context, String imageUrl, RequestOptions options) {
-    if (syntheticData.get().SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH.equalsIgnoreCase(imageUrl)) {
+    if (syntheticData.get().getSUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH().equalsIgnoreCase(imageUrl)) {
       //noinspection ConstantConditions
       return Single.just(context.getDrawable(R.drawable.dank_cat));
     }

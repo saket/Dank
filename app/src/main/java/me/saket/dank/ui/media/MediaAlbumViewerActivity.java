@@ -35,13 +35,12 @@ import com.bumptech.glide.request.FutureTarget;
 import com.bumptech.glide.request.RequestOptions;
 import com.danikula.videocache.HttpProxyCacheServer;
 import com.f2prateek.rx.preferences2.Preference;
-import com.google.common.io.Files;
 import com.jakewharton.rxbinding2.support.v4.view.RxViewPager;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.tbruyelle.rxpermissions2.RxPermissions;
 
-import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.SubmissionPreview;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -73,8 +72,8 @@ import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
 import me.saket.dank.urlparser.ImgurAlbumLink;
 import me.saket.dank.urlparser.MediaLink;
 import me.saket.dank.utils.Animations;
+import me.saket.dank.utils.Files2;
 import me.saket.dank.utils.Intents;
-import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.NetworkStateListener;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
@@ -94,7 +93,7 @@ import timber.log.Timber;
 public class MediaAlbumViewerActivity extends DankActivity implements MediaFragmentCallbacks, FlickGestureListener.GestureCallbacks {
 
   private static final String KEY_MEDIA_LINK_TO_SHOW = "mediaLinkToShow";
-  private static final String KEY_REDDIT_SUPPLIED_IMAGE_JSON = "redditSuppliedImageJson";
+  private static final String KEY_REDDIT_SUPPLIED_IMAGE = "redditSuppliedImage";
 
   @BindView(R.id.mediaalbumviewer_root) ViewGroup rootLayout;
   @BindView(R.id.mediaalbumviewer_pager) ScrollInterceptibleViewPager mediaAlbumPager;
@@ -113,7 +112,6 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
   @Inject MediaHostRepository mediaHostRepository;
   @Inject HttpProxyCacheServer videoCacheServer;
-  @Inject JacksonHelper jacksonHelper;
   @Inject ErrorResolver errorResolver;
   @Inject UserPreferences userPreferences;
   @Inject NetworkStateListener networkStateListener;
@@ -146,12 +144,11 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
     FAILED,
   }
 
-  public static Intent intent(Context context, MediaLink mediaLink, @Nullable Thumbnails redditSuppliedImages, JacksonHelper jacksonHelper) {
+  public static Intent intent(Context context, MediaLink mediaLink, @Nullable SubmissionPreview redditPreview) {
     Intent intent = new Intent(context, MediaAlbumViewerActivity.class);
     intent.putExtra(KEY_MEDIA_LINK_TO_SHOW, mediaLink);
-    if (redditSuppliedImages != null) {
-      String redditSuppliedImageJson = jacksonHelper.toJson(redditSuppliedImages.getDataNode());
-      intent.putExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON, redditSuppliedImageJson);
+    if (redditPreview != null) {
+      intent.putExtra(KEY_REDDIT_SUPPLIED_IMAGE, redditPreview);
     }
     return intent;
   }
@@ -240,7 +237,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
           MediaAlbumItem activeMediaItem = pair.first();
-          Optional<Thumbnails> redditSuppliedImages = pair.second();
+          Optional<SubmissionPreview> redditSuppliedImages = pair.second();
 
           String highQualityUrl = activeMediaItem.mediaLink().highQualityUrl();
           String optimizedQualityUrl;
@@ -248,7 +245,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
           if (activeMediaItem.mediaLink().isGif()) {
             optimizedQualityUrl = activeMediaItem.mediaLink().lowQualityUrl();
           } else {
-            ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(redditSuppliedImages);
+            ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.Companion.of(redditSuppliedImages);
             optimizedQualityUrl = imageVariants.findNearestFor(
                 getResources().getDisplayMetrics().widthPixels,
                 activeMediaItem.mediaLink().lowQualityUrl() /* defaultValue */
@@ -429,7 +426,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
   }
 
   @Override
-  public Single<Optional<Thumbnails>> getRedditSuppliedImages() {
+  public Single<Optional<SubmissionPreview>> getRedditSuppliedImages() {
     Completable waitTillOnPostCreate;
     if (resolvedMediaLink == null || mediaAlbumAdapter == null) {
       // Bug workaround: Fragments are restored before onPostCreate() executes.
@@ -447,14 +444,14 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
           if (resolvedMediaLink instanceof ImgurAlbumLink || mediaAlbumAdapter.getCount() > 1) {
             // Child pages do not know if they're part of an album. Don't let
             // them replace imgur images with reddit-supplied album-cover image.
-            return Optional.<Thumbnails>empty();
+            return Optional.<SubmissionPreview>empty();
           }
 
-          if (getIntent().hasExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON)) {
-            String redditSuppliedImagesJson = getIntent().getStringExtra(KEY_REDDIT_SUPPLIED_IMAGE_JSON);
-            return Optional.of(new Thumbnails(jacksonHelper.parseJsonNode(redditSuppliedImagesJson)));
+          if (getIntent().hasExtra(KEY_REDDIT_SUPPLIED_IMAGE)) {
+            SubmissionPreview redditPreview = (SubmissionPreview) getIntent().getSerializableExtra(KEY_REDDIT_SUPPLIED_IMAGE);
+            return Optional.of(redditPreview);
           } else {
-            return Optional.<Thumbnails>empty();
+            return Optional.<SubmissionPreview>empty();
           }
         }))
         .observeOn(mainThread());
@@ -538,7 +535,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
                 // fail to parse images if there's no file format, so we'll have to create a copy.
                 String imageNameWithExtension = Urls.parseFileNameWithExtension(activeMediaItem.mediaLink().highQualityUrl());
                 File imageFileWithExtension = new File(imageFile.getParent(), imageNameWithExtension);
-                Files.copy(imageFile, imageFileWithExtension);
+                Files2.INSTANCE.copy(imageFile, imageFileWithExtension);
                 return imageFileWithExtension;
               })
               .compose(RxUtils.applySchedulersSingle())
@@ -637,7 +634,7 @@ public class MediaAlbumViewerActivity extends DankActivity implements MediaFragm
 
     Observable<File> optimizedResImageFileStream = getRedditSuppliedImages()
         .flatMapObservable(redditImages -> Observable.create(emitter -> {
-          ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.of(redditImages);
+          ImageWithMultipleVariants imageVariants = ImageWithMultipleVariants.Companion.of(redditImages);
           String optimizedQualityImageForDevice = imageVariants.findNearestFor(getDeviceDisplayWidth(), albumItem.mediaLink().lowQualityUrl());
 
           FutureTarget<File> optimizedResolutionImageTarget = Glide.with(this)

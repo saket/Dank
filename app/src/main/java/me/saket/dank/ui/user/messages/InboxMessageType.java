@@ -3,7 +3,6 @@ package me.saket.dank.ui.user.messages;
 import static junit.framework.Assert.assertEquals;
 
 import net.dean.jraw.models.Message;
-import net.dean.jraw.models.PrivateMessage;
 
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.FullNameType;
@@ -17,7 +16,7 @@ public enum InboxMessageType {
   UNKNOWN;
 
   public static InboxMessageType parse(Message message) {
-    if (message instanceof PrivateMessage) {
+    if (!message.isComment()) {
       return InboxMessageType.PRIVATE_MESSAGE;
     }
 

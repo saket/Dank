@@ -28,6 +28,8 @@ import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.reply.PendingSyncReply;
+import me.saket.dank.ui.submission.LocalOrRemoteComment;
+import me.saket.dank.utils.Preconditions;
 import me.saket.dank.utils.markdown.Markdown;
 import ru.noties.markwon.SpannableBuilder;
 import ru.noties.markwon.SpannableConfiguration;
@@ -131,7 +133,8 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   @Override
   public CharSequence parseSelfText(Submission submission) {
     try {
-      return getOrParse(submission.getSelftext());
+      Preconditions.checkNotNull(submission.getSelfText(), "Self text is null");
+      return getOrParse(submission.getSelfText());
     } catch (Throwable e) {
       throw new RuntimeException("Couldn't parse self-text in " + submission.getPermalink(), e);
     }
@@ -155,12 +158,13 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
    * {@inheritDoc}.
    */
   @Override
+  @Deprecated
   public String stripMarkdown(Comment comment) {
     return stripMarkdown(comment.getBody());
   }
 
   /**
-   * See {@link #stripMarkdown(Comment)}.
+   * See {@link #stripMarkdown(LocalOrRemoteComment)}.
    */
   @Override
   public String stripMarkdown(Message message) {

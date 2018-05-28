@@ -64,7 +64,7 @@ public class CommentSortingModePopupMenu extends PopupMenu {
 
   // NOTE: Keep this in sync with SubmissionsSortingModePopupMenu.
   public void highlightActiveSorting(CommentSort highlightedSorting) {
-    String highlightedSortingText = context.getString(CommentSortUtils.sortingDisplayTextRes(highlightedSorting));
+    String highlightedSortingText = context.getString(CommentSortUtils.INSTANCE.sortingDisplayTextRes(highlightedSorting));
 
     for (int i = 0; i < getMenu().size(); i++) {
       MenuItem menuItem = getMenu().getItem(i);

@@ -10,7 +10,6 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 import android.support.annotation.VisibleForTesting;
 
-import com.google.common.collect.ImmutableList;
 import com.squareup.sqlbrite2.BriteDatabase;
 
 import net.dean.jraw.models.Subreddit;
@@ -34,9 +33,8 @@ import io.reactivex.Single;
 import io.reactivex.functions.Consumer;
 import io.reactivex.functions.Function;
 import me.saket.dank.R;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.UserPreferences;
-import me.saket.dank.di.Dank;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subreddit.SubredditSearchResult.Success;
 import me.saket.dank.ui.subreddit.Subscribeable;
@@ -54,23 +52,23 @@ import timber.log.Timber;
 @Singleton
 public class SubscriptionRepository {
 
+  private Lazy<Reddit> reddit;
   private Lazy<Application> appContext;
   private Lazy<BriteDatabase> database;
-  private Lazy<DankRedditClient> dankRedditClient;
   private Lazy<UserPreferences> userPreferences;
   private Lazy<UserSessionRepository> userSessionRepository;
 
   @Inject
   public SubscriptionRepository(
+      Lazy<Reddit> reddit,
       Lazy<Application> appContext,
       Lazy<BriteDatabase> database,
-      Lazy<DankRedditClient> dankRedditClient,
       Lazy<UserPreferences> userPreferences,
       Lazy<UserSessionRepository> userSessionRepository)
   {
+    this.reddit = reddit;
     this.appContext = appContext;
     this.database = database;
-    this.dankRedditClient = dankRedditClient;
     this.userPreferences = userPreferences;
     this.userSessionRepository = userSessionRepository;
   }
@@ -167,7 +165,7 @@ public class SubscriptionRepository {
 
   @CheckResult
   public Completable subscribe(Subscribeable subscribeable) {
-    return subscribeable.subscribe(Dank.reddit())
+    return subscribeable.subscribe(reddit.get().subscriptions())
         .andThen(Single.just(SubredditSubscription.PendingState.NONE))
         .onErrorResumeNext(e -> {
           Timber.e(e, "Couldn't subscribe to %s. Will try again later.", subscribeable);
@@ -184,13 +182,13 @@ public class SubscriptionRepository {
     Completable deleteCompletable = Completable.fromAction(() ->
         database.get().delete(SubredditSubscription.TABLE_NAME, SubredditSubscription.WHERE_NAME, subscription.name()));
 
-    if (Dank.reddit().needsRemoteSubscription(subscription.name())) {
+    if (reddit.get().subscriptions().needsRemoteSubscription(subscription.name())) {
       return deleteCompletable
-          .andThen(Dank.reddit().findSubreddit2(subscription.name()))
+          .andThen(reddit.get().subreddits().find(subscription.name()))
           .flatMapCompletable(findResult -> {
             switch (findResult.type()) {
               case SUCCESS:
-                return ((Success) findResult).subscribeable().unsubscribe(Dank.reddit());
+                return ((Success) findResult).subscribeable().unsubscribe(reddit.get().subscriptions());
 
               case ERROR_PRIVATE:
                 return Completable.error(new AssertionError("Couldn't unsubscribe from a private subreddit :O"));
@@ -246,8 +244,8 @@ public class SubscriptionRepository {
         .flatMapCompletable(pendingSubscription -> {
           if (pendingSubscription.isSubscribePending()) {
             Timber.i("Subscribing to %s", pendingSubscription.name());
-            return Dank.reddit()
-                .findSubreddit(pendingSubscription.name())
+            return reddit.get().subreddits()
+                .findOld(pendingSubscription.name())
                 .flatMapCompletable(subreddit -> subscribe(subreddit));
           } else {
             Timber.i("Unsubscribing from %s", pendingSubscription.name());
@@ -294,7 +292,7 @@ public class SubscriptionRepository {
   private Single<List<SubredditSubscription>> fetchRemoteSubscriptions(List<SubredditSubscription> localSubs) {
     //Timber.w("Fetching subscriptions");
     Single<List<String>> subredditsStream = userSessionRepository.get().isUserLoggedIn()
-        ? loggedInUserSubreddits()
+        ? loggedInUserSubscriptions()
         : Single.just(loggedOutSubreddits());
     return subredditsStream
         .compose(applySchedulersSingle())
@@ -313,7 +311,7 @@ public class SubscriptionRepository {
       Set<String> remoteSubsNamesSet = new HashSet<>(remoteSubNames.size());
       remoteSubsNamesSet.addAll(remoteSubNames);
 
-      ImmutableList.Builder<SubredditSubscription> syncedListBuilder = ImmutableList.builder();
+      List<SubredditSubscription> syncedListBuilder = new ArrayList<>();
 
       // Go through the local dataset first to find items that we and/or the remote already have.
       for (SubredditSubscription localSub : localSubs) {
@@ -358,16 +356,16 @@ public class SubscriptionRepository {
         }
       }
 
-      return syncedListBuilder.build();
+      return Collections.unmodifiableList(syncedListBuilder);
     };
   }
 
-  private Single<List<String>> loggedInUserSubreddits() {
-    return dankRedditClient.get().userSubreddits()
+  private Single<List<String>> loggedInUserSubscriptions() {
+    return reddit.get().subscriptions().userSubscriptions()
         .map(remoteSubs -> {
           List<String> remoteSubNames = new ArrayList<>(remoteSubs.size());
           for (Subreddit subreddit : remoteSubs) {
-            remoteSubNames.add(subreddit.getDisplayName());
+            remoteSubNames.add(subreddit.getName());
           }
 
           // Add frontpage and /r/popular.
