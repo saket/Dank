@@ -1,47 +1,39 @@
-package me.saket.dank.walkthrough;
+package me.saket.dank.walkthrough
 
-import java.util.Locale;
-import javax.inject.Inject;
+import me.saket.dank.data.FullNameType
+import me.saket.dank.reddit.Reddit
+import net.dean.jraw.models.Comment
+import net.dean.jraw.models.Submission
+import java.util.Locale
+import javax.inject.Inject
 
-import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.FullNameType;
+class SyntheticData @Inject
+constructor() {
+  val SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH = "https://i.imgur.com/NaWfFWR.jpg"
 
-public class SyntheticData {
+  fun submissionForGesturesWalkthroughJson(): String {
+    val defaultSortStringUppercase = Reddit.DEFAULT_COMMENT_SORT.name
+    val defaultSortStringLowercase = Reddit.DEFAULT_COMMENT_SORT.name.toLowerCase(Locale.ENGLISH)
+    val subredditName = "GetDank"
+    val submissionAuthorName = "Saketme"
+    val submissionPermalink = "/r/$subredditName"
+    val createdTimeUtc = System.currentTimeMillis()
 
-  public static final String SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH = "syntheticsubmissionforgesturewalkthrough";
-  public static final String SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH = FullNameType.SUBMISSION.prefix() + "syntheticsubmissionforgesturewalkthrough";
-  public final String SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH = "https://i.imgur.com/NaWfFWR.jpg";
+    val submissionTitle = "Here's a heart-warming photo to start your journey"
 
-  @Inject
-  public SyntheticData() {
-  }
+    val commentSubredditId = "t5_3kfea"
+    val commentSubmissionId = SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH
+    val commentAuthorName = "Dank"
+    val commentCreatedTimeUtc = System.currentTimeMillis()
 
-  public String submissionForGesturesWalkthroughJson() {
-    String defaultSortStringUppercase = DankRedditClient.DEFAULT_COMMENT_SORT.name();
-    String defaultSortStringLowercase = DankRedditClient.DEFAULT_COMMENT_SORT.name().toLowerCase(Locale.ENGLISH);
-    String subredditName = "GetDank";
-    String submissionAuthorName = "Saketme";
-    String submissionPermalink = "/r/" + subredditName;
-    long createdTimeUtc = System.currentTimeMillis();
-
-    String submissionTitle = "Here's a heart-warming photo to start your journey";
-
-    String commentSubredditId = "t5_3kfea";
-    String commentSubmissionId = SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH;
-    String commentAuthorName = "Dank";
-    long commentCreatedTimeUtc = System.currentTimeMillis();
-
-    String comment1 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc.";
-    String comment1Html = comment1;
+    val comment1 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc."
 
     //String comment2 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc.";
     //String comment2Html = comment2;
 
-    String comment3 = "Comments (and their replies) can be collapsed by tapping on them.";
-    String comment3Html = comment3;
+    val comment3 = "Comments (and their replies) can be collapsed by tapping on them."
 
-    String comment4 = "Drag the cat's image downwards and release to close this tutorial.";
-    String comment4Html = comment4;
+    val comment4 = "Drag the cat's image downwards and release to close this tutorial."
 
     return "\"[{\\\"kind\\\":\\\" Listing\\\",\\\"data\\\":{\\\"children\\\":[{\\\"kind\\\":\\\"t3\\\",\\\"data\\\":{\\n" +
         "  \\\"approved_at_utc\\\" : null,\\n" +
@@ -206,7 +198,7 @@ public class SyntheticData {
         "          \\\"author_flair_richtext\\\" : null,\\n" +
         "          \\\"is_submitter\\\" : true,\\n" +
         "          \\\"collapsed_reason\\\" : null,\\n" +
-        "          \\\"body_html\\\" : \\\"" + comment3Html + "\\\",\\n" +
+        "          \\\"body_html\\\" : \\\"" + comment3 + "\\\",\\n" +
         "          \\\"spam\\\" : false,\\n" +
         "          \\\"stickied\\\" : false,\\n" +
         "          \\\"subreddit_type\\\" : \\\"private\\\",\\n" +
@@ -259,7 +251,7 @@ public class SyntheticData {
         "  \\\"author_flair_richtext\\\" : null,\\n" +
         "  \\\"is_submitter\\\" : true,\\n" +
         "  \\\"collapsed_reason\\\" : null,\\n" +
-        "  \\\"body_html\\\" : \\\"" + comment1Html + "\\\",\\n" +
+        "  \\\"body_html\\\" : \\\"" + comment1 + "\\\",\\n" +
         "  \\\"spam\\\" : false,\\n" +
         "  \\\"stickied\\\" : false,\\n" +
         "  \\\"subreddit_type\\\" : \\\"private\\\",\\n" +
@@ -319,7 +311,7 @@ public class SyntheticData {
         "  \\\"author_flair_richtext\\\" : null,\\n" +
         "  \\\"is_submitter\\\" : true,\\n" +
         "  \\\"collapsed_reason\\\" : null,\\n" +
-        "  \\\"body_html\\\" : \\\"" + comment4Html + "\\\",\\n" +
+        "  \\\"body_html\\\" : \\\"" + comment4 + "\\\",\\n" +
         "  \\\"spam\\\" : false,\\n" +
         "  \\\"stickied\\\" : false,\\n" +
         "  \\\"subreddit_type\\\" : \\\"private\\\",\\n" +
@@ -344,6 +336,21 @@ public class SyntheticData {
         "  \\\"mod_note\\\" : null,\\n" +
         "  \\\"distinguished\\\" : null\\n" +
         "}}]}},{\\\"dank_comments_sort\\\":\\\"" + defaultSortStringUppercase + "\\\"" +
-        "}]\"";
+        "}]\""
+  }
+
+  companion object {
+
+    const val SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH = "syntheticsubmissionforgesturewalkthrough"
+    val SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH = "${FullNameType.SUBMISSION.prefix()} + syntheticsubmissionforgesturewalkthrough"
+
+    fun isSynthetic(comment: Comment): Boolean {
+      return comment.submissionFullName.equals(SyntheticData.SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH, ignoreCase = true)
+    }
+
+    fun isSynthetic(submission: Submission): Boolean {
+      return submission.fullName.equals(SyntheticData.SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH, ignoreCase = true)
+    }
   }
 }
+

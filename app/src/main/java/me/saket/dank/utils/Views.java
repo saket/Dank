@@ -8,7 +8,6 @@ import android.graphics.drawable.Drawable;
 import android.support.annotation.CheckResult;
 import android.support.annotation.DrawableRes;
 import android.support.annotation.Nullable;
-import android.support.v4.content.ContextCompat;
 import android.view.Display;
 import android.view.View;
 import android.view.ViewGroup;
@@ -18,6 +17,8 @@ import android.widget.EditText;
 import android.widget.TextView;
 
 import io.reactivex.Completable;
+import okio.BufferedSource;
+import okio.Okio;
 import timber.log.Timber;
 
 /**

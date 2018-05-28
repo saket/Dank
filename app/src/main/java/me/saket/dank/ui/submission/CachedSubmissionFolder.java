@@ -2,8 +2,8 @@ package me.saket.dank.ui.submission;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.paginators.Sorting;
-import net.dean.jraw.paginators.TimePeriod;
+import net.dean.jraw.models.SubredditSort;
+import net.dean.jraw.models.TimePeriod;
 
 import java.io.Serializable;
 
@@ -20,7 +20,7 @@ public abstract class CachedSubmissionFolder implements Serializable {
 
   public abstract SortingAndTimePeriod sortingAndTimePeriod();
 
-  public static CachedSubmissionFolder create(String subredditName, Sorting sortOrder) {
+  public static CachedSubmissionFolder create(String subredditName, SubredditSort sortOrder) {
     return create(subredditName, SortingAndTimePeriod.create(sortOrder));
   }
 
@@ -38,7 +38,7 @@ public abstract class CachedSubmissionFolder implements Serializable {
   public static CachedSubmissionFolder valueOf(String serializedSrtingAndTimePeriod) {
     String[] parts = serializedSrtingAndTimePeriod.split(SEPARATOR);
     String subredditName = parts[0];
-    Sorting sorting = Sorting.valueOf(parts[1]);
+    SubredditSort sorting = SubredditSort.valueOf(parts[1]);
     TimePeriod sortTimePeriod = TimePeriod.valueOf(parts[2]);
 
     return create(subredditName, SortingAndTimePeriod.create(sorting, sortTimePeriod));

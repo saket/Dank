@@ -51,12 +51,10 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.models.Comment;
-import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Identifiable;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.SubmissionPreview;
 
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -140,11 +138,13 @@ import me.saket.dank.utils.Animations;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.ExoPlayerManager;
 import me.saket.dank.utils.Function0;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Keyboards;
 import me.saket.dank.utils.LinearSmoothScrollerWithVerticalSnapPref;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
+import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
@@ -215,11 +215,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   @Inject Lazy<MediaHostRepository> mediaHostRepository;
 
   private BehaviorRelay<DankSubmissionRequest> submissionRequestStream = BehaviorRelay.create();
-  private BehaviorRelay<Optional<Submission>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
+  private BehaviorRelay<Optional<SubmissionAndComments>> submissionStream = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Link> submissionContentStream = BehaviorRelay.create();
   private BehaviorRelay<KeyboardVisibilityChangeEvent> keyboardVisibilityChangeStream = BehaviorRelay.create();
   private PublishRelay<InlineReplyRequestEvent> inlineReplyRequestStream = PublishRelay.create();
-  private PublishRelay<Contribution> inlineReplyAdditionStream = PublishRelay.create();
+  private PublishRelay<Identifiable> inlineReplyAdditionStream = PublishRelay.create();
   private BehaviorRelay<Optional<Link>> contentLinkStream = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Optional<SubmissionContentLoadError>> mediaContentLoadErrors = BehaviorRelay.createDefault(Optional.empty());
   private BehaviorRelay<Optional<ResolvedError>> commentsLoadErrors = BehaviorRelay.createDefault(Optional.empty());
@@ -318,7 +318,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
   @Override
   public void acceptSubmission(Submission submission) {
-    submissionStream.accept(Optional.of(submission));
+    throw new UnsupportedOperationException();
+    //submissionStream.accept(Optional.of(submission));
   }
 
   public void onViewFirstAttach() {
@@ -355,17 +356,17 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   protected Parcelable onSaveInstanceState() {
     Bundle outState = new Bundle();
 
-    if (submissionRequestStream.getValue() != null) {
-      outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
-
-      Optional<Submission> optionalSubmission = submissionStream.getValue();
-      Optional<CommentNode> optionalComments = optionalSubmission.map(Submission::getComments);
-      if (optionalSubmission.isPresent() && !optionalComments.isPresent()) {
-        // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
-        // show UI on orientation change, we unfortunately will have to manually retain this submission.
-        outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(optionalSubmission.get()));
-      }
-    }
+//    if (submissionRequestStream.getValue() != null) {
+//      outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
+//
+//      Optional<Submission> optionalSubmission = submissionStream.getValue();
+//      Optional<CommentNode> optionalComments = optionalSubmission.flatMap(Submission::getComments);
+//      if (optionalSubmission.isPresent() && !optionalComments.isPresent()) {
+//        // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
+//        // show UI on orientation change, we unfortunately will have to manually retain this submission.
+//        outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(optionalSubmission.get()));
+//      }
+//    }
 
     Integer uiModelsSize = Optional.ofNullable(commentsAdapter.getData())
         .map(data -> data.size())
@@ -441,10 +442,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     submissionRequestStream
         .observeOn(mainThread())
         //.doOnNext(o -> commentsLoadProgressVisibleStream.accept(true))
-        //.doOnNext(o -> Timber.d("------------------"))
+        .doOnNext(o -> Timber.d("------------------"))
         .doOnNext(request -> uiEvents.accept(SubmissionRequestChanged.create(request)))
         .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
-            //.compose(RxUtils.doOnceOnNext(o -> Timber.d("Submission received")))
+            .compose(RxUtils.doOnceOnNext(o -> Timber.d("Submission received")))
+            .doOnNext(o -> Timber.i("%s comments", o.second().getComments().map(node -> node.totalSize())))
             .flatMap(pair -> {
               // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
               // In that case, trigger another request with the correct sort. Doing this because we need to store
@@ -470,7 +472,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               commentsLoadErrors.accept(Optional.of(resolvedError));
               uiEvents.accept(SubmissionCommentsLoadFailed.create());
 
-              if (submissionStream.getValue().map(submission -> submission.getComments()).isPresent()) {
+              if (submissionStream.getValue().flatMap(submission -> submission.getComments()).isPresent()) {
                 Toast.makeText(getContext(), resolvedError.errorMessageRes(), Toast.LENGTH_SHORT).show();
               }
 
@@ -574,12 +576,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .withLatestFrom(isUserASubredditMod, Trio::create)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(trio -> {
-          Submission submission = trio.second();
+          SubmissionAndComments submissionData = trio.second();
           Boolean isUserMod = trio.third();
-          Contribution parentContribution = trio.first().parentContribution();
+          Identifiable parentContribution = trio.first().parentContribution();
           boolean isSubmissionReply = parentContribution instanceof Submission;
 
-          if (submission.isArchived()) {
+          if (submissionData.getSubmission().isArchived()) {
             if (isSubmissionReply) {
               Pair<Intent, ActivityOptions> archivedIntent = ArchivedSubmissionDialogActivity.intentWithFabTransform(
                   ((Activity) getContext()),
@@ -592,7 +594,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
             }
 
           } else {
-            if (submission.isLocked() && !isUserMod) {
+            if (submissionData.getSubmission().isLocked() && !isUserMod) {
               if (isSubmissionReply) {
                 Pair<Intent, ActivityOptions> archivedIntent = LockedSubmissionDialogActivity.intentWithFabTransform(
                     ((Activity) getContext()),
@@ -609,23 +611,22 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                 int firstVisiblePosition = ((LinearLayoutManager) commentRecyclerView.getLayoutManager()).findFirstVisibleItemPosition();
                 boolean isSubmissionReplyVisible = firstVisiblePosition <= 1; // 1 == index of reply field.
 
-                if (commentTreeUiConstructor.isReplyActiveFor(submission) && isSubmissionReplyVisible) {
+                if (commentTreeUiConstructor.isReplyActiveFor(submissionData.getSubmission()) && isSubmissionReplyVisible) {
                   // Hide reply only if it's visible. Otherwise the user
                   // won't understand why the reply FAB did not do anything.
-                  commentTreeUiConstructor.hideReply(submission);
+                  commentTreeUiConstructor.hideReply(submissionData.getSubmission());
                 } else {
-                  commentTreeUiConstructor.showReply(submission);
-                  inlineReplyAdditionStream.accept(submission);
+                  commentTreeUiConstructor.showReply(submissionData.getSubmission());
+                  inlineReplyAdditionStream.accept(submissionData.getSubmission());
                 }
 
               } else {
-                Comment parentComment = ((Comment) parentContribution);
-                if (commentTreeUiConstructor.isCollapsed(parentComment) || !commentTreeUiConstructor.isReplyActiveFor(parentComment)) {
-                  commentTreeUiConstructor.showReplyAndExpandComments(parentComment);
-                  inlineReplyAdditionStream.accept(parentComment);
+                if (commentTreeUiConstructor.isCollapsed(parentContribution) || !commentTreeUiConstructor.isReplyActiveFor(parentContribution)) {
+                  commentTreeUiConstructor.showReplyAndExpandComments(parentContribution);
+                  inlineReplyAdditionStream.accept(parentContribution);
                 } else {
                   Keyboards.hide(getContext(), commentRecyclerView);
-                  commentTreeUiConstructor.hideReply(parentComment);
+                  commentTreeUiConstructor.hideReply(parentContribution);
                 }
               }
             }
@@ -635,7 +636,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     // Vote swipe gesture.
     Observable<Pair<ContributionVoteSwipeEvent, Submission>> sharedVoteActions = commentsAdapter.swipeEvents()
         .ofType(ContributionVoteSwipeEvent.class)
-        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), Pair::create)
+        .withLatestFrom(
+            submissionStream
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(SubmissionAndComments::getSubmission),
+            Pair::create)
         .share();
 
     sharedVoteActions
@@ -670,7 +676,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .takeUntil(lifecycle().onDestroy())
         .subscribe(discardEvent -> {
           Keyboards.hide(getContext(), commentRecyclerView);
-          commentTreeUiConstructor.hideReply(discardEvent.parentContribution());
+          commentTreeUiConstructor.hideReply(discardEvent.parent());
         });
 
     // Reply GIF clicks.
@@ -761,7 +767,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                 long createdTimeMillis = System.currentTimeMillis();
                 Reply reply = Reply.create(
                     sendClickEvent.parentContribution(),
-                    ParentThread.of(submission),
+                    ParentThread.of(submission.getSubmission()),
                     sendClickEvent.replyBody(),
                     createdTimeMillis);
 
@@ -803,7 +809,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     // Thread continuations.
     commentsAdapter.streamLoadMoreCommentsClicks()
-        .filter(loadMoreClickEvent -> loadMoreClickEvent.parentCommentNode().isThreadContinuation())
+        .filter(loadMoreClickEvent -> JrawUtils2.INSTANCE.isThreadContinuation(loadMoreClickEvent.parentCommentNode()))
         .withLatestFrom(submissionRequestStream, Pair::create)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
@@ -814,7 +820,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     // Load-more-comment clicks.
     commentsAdapter.streamLoadMoreCommentsClicks()
-        .filter(loadMoreClickEvent -> !loadMoreClickEvent.parentCommentNode().isThreadContinuation())
+        .filter(loadMoreClickEvent -> !JrawUtils2.INSTANCE.isThreadContinuation(loadMoreClickEvent.parentCommentNode()))
         // This filter() is important. Stupid JRAW inserts new comments directly into
         // the comment tree so if multiple API calls are made, it'll insert duplicate
         // items and result in a crash because RecyclerView expects stable IDs.
@@ -825,9 +831,10 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
             .take(1)
             .flatMapCompletable(pair -> {
               DankSubmissionRequest submissionRequest = pair.first();
-              Submission submission = pair.second();
+              SubmissionAndComments submissionData = pair.second();
+              //noinspection unchecked
               return submissionRepository
-                  .loadAndSaveMoreComments(submission, submissionRequest, loadMoreClickEvent.parentCommentNode())
+                  .loadAndSaveMoreComments(submissionData, submissionRequest, loadMoreClickEvent.parentCommentNode())
                   .subscribeOn(Schedulers.io());
             })
             .doOnError(e -> {
@@ -847,8 +854,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair -> {
           SubmissionContentLinkClickEvent event = pair.first();
-          Submission submission = pair.second();
-          event.openContent(submission, urlRouter);
+          SubmissionAndComments submissionData = pair.second();
+          event.openContent(submissionData.getSubmission(), urlRouter);
         });
 
     // Content link long clicks.
@@ -868,11 +875,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   }
 
   /**
-   * Scroll to <var>parentContribution</var>'s reply if it's not going to
+   * Scroll to <var>parent</var>'s reply if it's not going to
    * be visible because it's located beyond the visible window.
    */
   @CheckResult
-  private Completable scrollToNewlyAddedReplyIfHidden(Contribution parentContribution) {
+  private Completable scrollToNewlyAddedReplyIfHidden(Identifiable parentContribution) {
     return commentsAdapter.dataChanges()
         .map(newItems -> {
           for (int i = 0; i < newItems.size(); i++) {
@@ -880,7 +887,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
             SubmissionScreenUiModel commentRow = newItems.get(i);
             //noinspection ConstantConditions Parent contribution's fullname cannot be null. Replies can only be made if they're non-null.
             if (commentRow.type() == SubmissionCommentRowType.INLINE_REPLY
-                && ((SubmissionCommentInlineReply.UiModel) commentRow).parentContributionFullname().getFullName().equals(parentContribution.getFullName()))
+                && ((SubmissionCommentInlineReply.UiModel) commentRow).parent().getFullName().equals(parentContribution.getFullName()))
             {
               return i;
             }
@@ -892,14 +899,15 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .take(1)
         .flatMapCompletable(replyPosition -> Completable.fromAction(() -> {
           RecyclerView.ViewHolder parentContributionItemVH = commentRecyclerView.findViewHolderForAdapterPosition(replyPosition - 1);
-          if (parentContributionItemVH == null && submissionStream.getValue().get().getFullName().equals(parentContribution.getFullName())) {
+          Submission activeSubmission = submissionStream.getValue().get().getSubmission();
+          if (parentContributionItemVH == null && activeSubmission.getFullName().equals(parentContribution.getFullName())) {
             // Submission reply. The ViewHolder is null because the header isn't visible.
             commentRecyclerView.smoothScrollToPosition(replyPosition);
             return;
           }
 
           if (parentContributionItemVH == null) {
-            throw new AssertionError("Couldn't find reply's parent VH. Submission: " + submissionStream.getValue().get().getPermalink());
+            throw new AssertionError("Couldn't find reply's parent VH. Submission: " + activeSubmission.getPermalink());
           }
 
           int parentContributionBottom = parentContributionItemVH.itemView.getBottom() + commentListParentSheet.getTop();
@@ -916,16 +924,16 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   }
 
   /**
-   * Wait for <var>parentContribution</var>'s reply View to bind and show keyboard once it's visible.
+   * Wait for <var>parent</var>'s reply View to bind and show keyboard once it's visible.
    */
   @CheckResult
-  private Observable<ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(Contribution parentContribution) {
+  private Observable<ReplyItemViewBindEvent> showKeyboardWhenReplyIsVisible(Identifiable parentContribution) {
     return commentsAdapter.streamReplyItemViewBinds()
         .filter(replyBindEvent -> {
           // This filter exists so that the keyboard is shown only for the target reply item
           // instead of another reply item that was found while scrolling to the target reply item.
           //noinspection ConstantConditions
-          return replyBindEvent.uiModel().parentContributionFullname().getFullName().equals(parentContribution.getFullName());
+          return replyBindEvent.uiModel().parent().getFullName().equals(parentContribution.getFullName());
         })
         .take(1)
         .delay(COMMENT_LIST_ITEM_CHANGE_ANIM_DURATION, TimeUnit.MILLISECONDS)
@@ -952,7 +960,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .takeUntil(lifecycle().onDestroy())
         .subscribe(pair ->
             urlRouter.forLink(pair.first())
-                .withRedditSuppliedImages(pair.second().getThumbnails())
+                .withRedditSuppliedImages(pair.second().getSubmission().getPreview())
                 .open(getContext())
         );
   }
@@ -1095,7 +1103,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     RxView.clicks(replyFAB)
         .takeUntil(lifecycle().onDestroy())
-        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), (o, submission) -> submission)
+        .withLatestFrom(
+            submissionStream
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(SubmissionAndComments::getSubmission),
+            (o, submission) -> submission)
         .map(InlineReplyRequestEvent::create)
         .subscribe(inlineReplyRequestStream);
   }
@@ -1111,7 +1124,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           private ViewGroup contentViewGroup;
 
           @Override
-          public void accept(KeyboardVisibilityChangeEvent changeEvent) throws Exception {
+          public void accept(KeyboardVisibilityChangeEvent changeEvent) {
             if (contentViewGroup == null) {
               //noinspection ConstantConditions
               contentViewGroup = ((Activity) getContext()).findViewById(Window.ID_ANDROID_CONTENT);
@@ -1167,7 +1180,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           public ValueAnimator tintChangeAnimator;
 
           @Override
-          public void accept(StatusBarTint statusBarTint) throws Exception {
+          public void accept(StatusBarTint statusBarTint) {
             if (tintChangeAnimator != null) {
               tintChangeAnimator.cancel();
             }
@@ -1221,7 +1234,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     commentsAdapter.streamMediaContentLoadRetryClicks()
         .ofType(SubmissionContentLoadError.LoadFailure.class)
-        .withLatestFrom(submissionStream.filter(Optional::isPresent).map(Optional::get), (o, sub) -> sub)
+        .withLatestFrom(
+            submissionStream
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .map(SubmissionAndComments::getSubmission),
+            (o, sub) -> sub)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(submission -> {
           mediaContentLoadErrors.accept(Optional.empty());
@@ -1241,9 +1259,9 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               .firstOrError()
               .takeUntil(lifecycle().onPageCollapseOrDestroyCompletable())
               .subscribe(
-                  submission -> {
+                  submissionData -> {
                     mediaContentLoadErrors.accept(Optional.empty());
-                    loadSubmissionContent(submission);
+                    loadSubmissionContent(submissionData.getSubmission());
                   }, error -> {
                     ResolvedError resolvedError = errorResolver.get().resolve(error);
                     resolvedError.ifUnknown(() -> Timber.e(error, "Error while waiting for user to return from preferences"));
@@ -1257,11 +1275,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
    * <p>
    * populateUi() shouldn't be called internally because it'll reload the content every time.
    *
-   * @param submission        When empty, the UI gets populated when comments are loaded along with the submission details.
-   * @param submissionRequest Used for loading the comments of this submission.
-   * @param callingSubreddit  Subreddit name from where this submission is being open. Empty when being opened from elsewhere.
+   * @param optionalSubmission When empty, the UI gets populated when comments are loaded along with the submission details.
+   * @param submissionRequest  Used for loading the comments of this submission.
+   * @param callingSubreddit   Subreddit name from where this submission is being open. Empty when being opened from elsewhere.
    */
-  public void populateUi(Optional<Submission> submission, DankSubmissionRequest submissionRequest, Optional<String> callingSubreddit) {
+  public void populateUi(Optional<Submission> optionalSubmission, DankSubmissionRequest submissionRequest, Optional<String> callingSubreddit) {
     // This will load comments and then again update the title, byline and content.
     submissionRequestStream.accept(submissionRequest);
 
@@ -1272,15 +1290,16 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .skip(1)  // Current value.
         .filter(Optional::isPresent)
         .map(Optional::get)
+        .map(SubmissionAndComments::getSubmission)
         .filter(fetchedSubmission -> fetchedSubmission.getId().equals(submissionRequest.id()))
         .take(1)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(this::loadSubmissionContent);
 
-    if (submission.isPresent()) {
+    if (optionalSubmission.isPresent()) {
       // This will setup the title, byline and content immediately.
       Timber.d("Populating submission");
-      submissionStream.accept(submission);
+      submissionStream.accept(optionalSubmission.map(submission -> new SubmissionAndComments(submission, Optional.empty())));
     }
   }
 
@@ -1302,7 +1321,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               .map((Link resolvedLink) -> {
                 // Replace Imgur's cover image URL with reddit supplied URL, which will already be cached by Glide.
                 if (resolvedLink instanceof ImgurAlbumLink) {
-                  ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.of(submission.getThumbnails());
+                  ImageWithMultipleVariants redditSuppliedImages = ImageWithMultipleVariants.Companion.of(submission.getPreview());
                   int albumContentLinkThumbnailWidth = SubmissionCommentsHeader.getWidthForAlbumContentLinkThumbnail(getContext());
                   String albumCoverImageUrl = redditSuppliedImages.findNearestFor(
                       albumContentLinkThumbnailWidth,
@@ -1352,7 +1371,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
               switch (resolvedLink.type()) {
                 case SINGLE_IMAGE:
                 case SINGLE_GIF:
-                  Thumbnails redditSuppliedImages = submission.getThumbnails();
+                  SubmissionPreview redditSuppliedImages = submission.getPreview();
 
                   // Threading is handled internally by SubmissionImageHolder#load().
                   contentImageViewHolder.get().load((MediaLink) resolvedLink, redditSuppliedImages)
@@ -1409,9 +1428,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   private void showMediaLoadError(Throwable error) {
     ResolvedError resolvedError = errorResolver.get().resolve(error);
     if (resolvedError.isUnknown()) {
-      Timber.e(error, "Media content load error: %s", submissionStream.getValue().get().getPermalink());
-    } else {
-      Timber.w(error, "Media content load error: %s", submissionStream.getValue().get().getPermalink());
+      Timber.e(error, "Media content load error: %s", submissionStream.getValue().get().getSubmission().getPermalink());
     }
 
     mediaContentLoadErrors.accept(Optional.of(SubmissionContentLoadError.LoadFailure.create(resolvedError)));
@@ -1467,7 +1484,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         .take(1)
         .withLatestFrom(submissionStream, (o, submission) -> submission)
         .filter(optionalSubmission -> optionalSubmission
-            .map(subm -> subm.getFullName().equalsIgnoreCase(SyntheticData.SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH))
+            .map(SubmissionAndComments::getSubmission)
+            .map(submission -> SyntheticData.Companion.isSynthetic(submission))
             .orElse(false))
         .takeUntil(lifecycle().onDestroy())
         .subscribe(o -> hasUserLearnedGesturesPref.get().set(true));

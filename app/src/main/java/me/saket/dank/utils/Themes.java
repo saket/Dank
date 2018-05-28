@@ -11,12 +11,12 @@ public class Themes {
   @ColorRes
   public static int voteColor(VoteDirection voteDirection) {
     switch (voteDirection) {
-      case UPVOTE:
+      case UP:
         return R.color.vote_direction_upvote;
-      case DOWNVOTE:
+      case DOWN:
         return R.color.vote_direction_downvote;
       default:
-      case NO_VOTE:
+      case NONE:
         return R.color.vote_direction_none;
     }
   }

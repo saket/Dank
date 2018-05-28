@@ -96,7 +96,7 @@ public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
     if (startOptions.showVisitSubreddit()) {
       topLevelItems.add(MenuStructure.SingleLineItem.create(
           ID_SHOW_SUBREDDIT,
-          c.getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()),
+          c.getString(R.string.subreddit_name_r_prefix, submission.getSubreddit()),
           R.drawable.ic_subreddits_20dp
       ));
     }
@@ -151,7 +151,7 @@ public class SubmissionOptionsPopup extends NestedOptionsPopupMenu {
         break;
 
       case ID_SHOW_SUBREDDIT:
-        String subredditName = submission.getSubredditName();
+        String subredditName = submission.getSubreddit();
         urlRouter.get()
             .forLink(RedditSubredditLink.create(subredditName))
             .expandFromBelowToolbar()

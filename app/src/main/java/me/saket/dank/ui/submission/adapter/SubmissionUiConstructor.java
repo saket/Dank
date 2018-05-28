@@ -11,9 +11,9 @@ import android.support.v4.content.ContextCompat;
 import android.text.Html;
 import android.text.style.ForegroundColorSpan;
 
-import net.dean.jraw.models.CommentNode;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
+import net.dean.jraw.tree.RootCommentNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -27,6 +27,7 @@ import me.saket.dank.data.ResolvedError;
 import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.ParentThread;
+import me.saket.dank.ui.submission.SubmissionAndComments;
 import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -36,7 +37,7 @@ import me.saket.dank.utils.CombineLatestWithLog.O;
 import me.saket.dank.utils.CommentSortUtils;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
-import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
@@ -83,7 +84,7 @@ public class SubmissionUiConstructor {
   public Observable<List<SubmissionScreenUiModel>> stream(
       Context context,
       SubmissionCommentTreeUiConstructor submissionCommentTreeUiConstructor,
-      Observable<Optional<Submission>> optionalSubmissions,
+      Observable<Optional<SubmissionAndComments>> optionalSubmissions,
       Observable<DankSubmissionRequest> submissionRequests,
       Observable<Optional<Link>> contentLinks,
       Observable<Optional<SubmissionContentLoadError>> mediaContentLoadErrors,
@@ -99,7 +100,7 @@ public class SubmissionUiConstructor {
                     : Collections.emptyList());
           }
 
-          Observable<Submission> submissions = optionalSubmissions
+          Observable<SubmissionAndComments> submissionDatum = optionalSubmissions
               // Not sure why, but the parent switchMap() on submission change gets triggered
               // after this chain receives an empty submission, so adding this extra takeWhile().
               .takeWhile(optionalSub -> optionalSub.isPresent())
@@ -107,7 +108,7 @@ public class SubmissionUiConstructor {
               .startWith(optional.get());
 
           Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = Observable
-              .combineLatest(contentLinks, submissions.observeOn(io()), Pair::create)
+              .combineLatest(contentLinks, submissionDatum.observeOn(io()), Pair::create)
               .distinctUntilChanged()
               .doOnDispose(() -> contentLinkUiModelConstructor.clearGlideTargets(context))
               .switchMap(pair -> {
@@ -115,17 +116,17 @@ public class SubmissionUiConstructor {
                 if (!contentLink.isPresent()) {
                   return Observable.just(Optional.empty());
                 }
-                Submission submission = pair.second();
+                SubmissionAndComments submissionData = pair.second();
                 return contentLinkUiModelConstructor
-                    .streamLoad(context, contentLink.get(), ImageWithMultipleVariants.of(submission.getThumbnails()))
+                    .streamLoad(context, contentLink.get(), ImageWithMultipleVariants.Companion.of(submissionData.getSubmission().getPreview()))
                     .doOnError(e -> Timber.e(e, "Error while creating content link ui model"))
                     .map(Optional::of);
               });
 
-          Observable<Integer> submissionPendingSyncReplyCounts = submissions
+          Observable<Integer> submissionPendingSyncReplyCounts = submissionDatum
               .observeOn(io())
               .take(1)  // replace flatMap -> switchMap if we expect more than 1 emissions.
-              .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
+              .flatMap(submissionData -> replyRepository.streamPendingSyncReplies(ParentThread.of(submissionData.getSubmission())))
               .map(pendingSyncReplies -> pendingSyncReplies.size())
               .startWith(0);  // Stream sometimes takes too long to emit anything.
 
@@ -136,13 +137,13 @@ public class SubmissionUiConstructor {
 
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = CombineLatestWithLog.from(
               O.of("ext-change", externalChanges.map(o -> context)),
-              O.of("submission 2", submissions.observeOn(io())),
+              O.of("submission 2", submissionDatum.observeOn(io()).map(data -> data.getSubmission())),
               O.of("content-link", contentLinkUiModels),
               this::headerUiModel
           );
 
           Observable<SubmissionCommentOptions.UiModel> commentOptionsUiModels = CombineLatestWithLog.from(
-              O.of("submission 3", submissions),
+              O.of("submission 3", submissionDatum),
               O.of("submission requests", submissionRequests),
               O.of("pending-sync-reply-count", submissionPendingSyncReplyCounts),
               this::commentOptionsUiModel
@@ -160,17 +161,17 @@ public class SubmissionUiConstructor {
           Observable<List<SubmissionScreenUiModel>> commentRowUiModels = submissionCommentTreeUiConstructor
               .stream(
                   context,
-                  submissions.observeOn(io()),
+                  submissionDatum.observeOn(io()),
                   submissionRequests,
                   io())
               .startWith(Collections.<SubmissionScreenUiModel>emptyList());
 
           Observable<Optional<SubmissionCommentsLoadProgress.UiModel>> commentsLoadProgressUiModels = Observable
-              .combineLatest(submissions.observeOn(io()), commentsLoadErrors, Pair::create)
+              .combineLatest(submissionDatum.observeOn(io()), commentsLoadErrors, Pair::create)
               .map(pair -> {
-                CommentNode comments = pair.first().getComments();
+                Optional<RootCommentNode> comments = pair.first().getComments();
                 boolean commentsLoadingFailed = pair.second().isPresent();
-                return comments == null && !commentsLoadingFailed
+                return comments.isEmpty() && !commentsLoadingFailed
                     ? Optional.of(SubmissionCommentsLoadProgress.UiModel.create())
                     : Optional.<SubmissionCommentsLoadProgress.UiModel>empty();
               })
@@ -222,7 +223,8 @@ public class SubmissionUiConstructor {
     int voteDirectionColor = Themes.voteColor(pendingOrDefaultVote);
     long adapterId = submission.getFullName().hashCode();
 
-    Optional<CharSequence> selfTextOptional = submission.isSelfPost() && !submission.getSelftext().isEmpty()
+    //noinspection ConstantConditions
+    Optional<CharSequence> selfTextOptional = submission.isSelfPost() && !submission.getSelfText().isEmpty()
         ? Optional.of(markdown.parseSelfText(submission))
         : Optional.empty();
 
@@ -258,9 +260,9 @@ public class SubmissionUiConstructor {
 
     String byline = context.getString(
         R.string.submission_byline,
-        submission.getSubredditName(),
+        submission.getSubreddit(),
         submission.getAuthor(),
-        Dates.createTimestamp(context.getResources(), JrawUtils.createdTimeUtc(submission)));
+        Dates.createTimestamp(context.getResources(), JrawUtils2.INSTANCE.createdTimeUtc(submission)));
 
     return SubmissionCommentsHeader.UiModel.builder()
         .adapterId(adapterId)
@@ -273,10 +275,14 @@ public class SubmissionUiConstructor {
         .build();
   }
 
-  private SubmissionCommentOptions.UiModel commentOptionsUiModel(Submission submission, DankSubmissionRequest request, int pendingSyncReplyCount) {
-    int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
+  private SubmissionCommentOptions.UiModel commentOptionsUiModel(
+      SubmissionAndComments submissionData,
+      DankSubmissionRequest request,
+      int pendingSyncReplyCount)
+  {
+    int postedAndPendingCommentCount = submissionData.getSubmission().getCommentCount() + pendingSyncReplyCount;
     String abbreviatedCommentCount = Strings.abbreviateScore(postedAndPendingCommentCount);
-    int sortTextRes = CommentSortUtils.sortingDisplayTextRes(request.commentSort().mode());
+    int sortTextRes = CommentSortUtils.INSTANCE.sortingDisplayTextRes(request.commentSort().mode());
     return SubmissionCommentOptions.UiModel.create(abbreviatedCommentCount, sortTextRes);
   }
 

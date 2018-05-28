@@ -11,11 +11,10 @@ import javax.inject.Inject;
 
 import dagger.Lazy;
 import me.saket.dank.R;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.utils.Clipboards;
 import me.saket.dank.utils.Intents;
-import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.NestedOptionsPopupMenu;
 import me.saket.dank.utils.markdown.Markdown;
 import okhttp3.HttpUrl;
@@ -28,10 +27,10 @@ public class CommentOptionsPopup extends NestedOptionsPopupMenu {
   private static final int ID_SHARE_PERMALINK = 2;
   private static final int ID_COPY_PERMALINK = 3;
 
-  private final Comment comment;
-
   @Inject Lazy<Markdown> markdown;
   @Inject Lazy<BookmarksRepository> bookmarksRepository;
+
+  private final Comment comment;
 
   public CommentOptionsPopup(Context c, Comment comment) {
     super(c);
@@ -80,9 +79,9 @@ public class CommentOptionsPopup extends NestedOptionsPopupMenu {
   @Override
   protected void handleAction(Context c, int actionId) {
     //noinspection ConstantConditions
-    String permalinkWithContext = HttpUrl.parse("https://reddit.com" + JrawUtils.permalink(comment))
+    String permalinkWithContext = HttpUrl.parse("https://reddit.com" + comment.getPermalink())
         .newBuilder()
-        .addQueryParameter(DankRedditClient.CONTEXT_QUERY_PARAM, String.valueOf(DankRedditClient.COMMENT_DEFAULT_CONTEXT_COUNT))
+        .addQueryParameter(Reddit.CONTEXT_QUERY_PARAM, String.valueOf(Reddit.COMMENT_DEFAULT_CONTEXT_COUNT))
         .build()
         .toString();
 

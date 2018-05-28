@@ -9,15 +9,15 @@ import me.saket.dank.analytics.AnalyticsDaggerModule;
 import me.saket.dank.analytics.CrashReporter;
 import me.saket.dank.cache.CacheModule;
 import me.saket.dank.cache.DatabaseCacheRecyclerJobService;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.ErrorResolver;
-import me.saket.dank.vote.VotingManager;
 import me.saket.dank.deeplinks.DeepLinkHandlingActivity;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
 import me.saket.dank.notifs.MediaDownloadService;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.notifs.MessageNotifActionsJobService;
 import me.saket.dank.notifs.MessagesNotificationManager;
+import me.saket.dank.reddit.RedditModule;
+import me.saket.dank.reply.RetryReplyJobService;
 import me.saket.dank.ui.PlaygroundActivity;
 import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
 import me.saket.dank.ui.appshortcuts.ConfigureAppShortcutsActivity;
@@ -35,24 +35,22 @@ import me.saket.dank.ui.preferences.PreferenceGroupsScreen;
 import me.saket.dank.ui.preferences.TypefaceInflationInterceptor;
 import me.saket.dank.ui.submission.CommentOptionsPopup;
 import me.saket.dank.ui.submission.LinkOptionsPopup;
-import me.saket.dank.reply.RetryReplyJobService;
 import me.saket.dank.ui.submission.SubmissionPageLayout;
-import me.saket.dank.vote.VoteJobService;
 import me.saket.dank.ui.subreddit.NewSubredditSubscriptionDialog;
 import me.saket.dank.ui.subreddit.SubmissionOptionsPopup;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.subreddit.UserProfileSheetView;
 import me.saket.dank.ui.subscriptions.SubredditPickerSheetView;
 import me.saket.dank.ui.subscriptions.SubredditSubscriptionsSyncJob;
-import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.ui.user.UserAuthListener;
 import me.saket.dank.ui.user.UserProfilePopup;
 import me.saket.dank.ui.user.messages.InboxActivity;
 import me.saket.dank.ui.user.messages.InboxFolderFragment;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
-import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.NestedOptionsPopupMenu;
 import me.saket.dank.utils.markdown.MarkdownModule;
+import me.saket.dank.vote.VoteJobService;
+import me.saket.dank.vote.VotingManager;
 import me.saket.dank.walkthrough.WalkthroughModule;
 
 @Component(modules = {
@@ -61,18 +59,14 @@ import me.saket.dank.walkthrough.WalkthroughModule;
     CacheModule.class,
     MarkdownModule.class,
     WalkthroughModule.class,
-    AnalyticsDaggerModule.class
+    AnalyticsDaggerModule.class,
+    RedditModule.class,
+    StorageModule.class,
 })
 @Singleton
 public interface RootComponent {
 
-  DankRedditClient dankRedditClient();
-
   DankApi api();
-
-  SubscriptionRepository subredditSubscriptionRepository();
-
-  JacksonHelper jacksonHelper();
 
   ErrorResolver errorManager();
 

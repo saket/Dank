@@ -7,8 +7,9 @@ import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.paginators.Sorting;
-import net.dean.jraw.paginators.TimePeriod;
+import net.dean.jraw.models.Sorting;
+import net.dean.jraw.models.SubredditSort;
+import net.dean.jraw.models.TimePeriod;
 
 import java.io.Serializable;
 
@@ -19,23 +20,23 @@ public abstract class SortingAndTimePeriod implements Parcelable, Serializable {
 
   private static final String SEPARATOR = "____";
 
-  public abstract Sorting sortOrder();
+  public abstract SubredditSort sortOrder();
 
   public abstract TimePeriod timePeriod();
 
-  public static SortingAndTimePeriod create(Sorting sortOrder) {
-    if (sortOrder.requiresTimePeriod()) {
+  public static SortingAndTimePeriod create(SubredditSort sortOrder) {
+    if (sortOrder.getRequiresTimePeriod()) {
       throw new AssertionError(sortOrder + " requires a time-period");
     }
     return create(sortOrder, TimePeriod.DAY /* using a dummy period instead of a null */);
   }
 
-  public static SortingAndTimePeriod create(Sorting sortOrder, TimePeriod timePeriod) {
+  public static SortingAndTimePeriod create(SubredditSort sortOrder, TimePeriod timePeriod) {
     return new AutoValue_SortingAndTimePeriod(sortOrder, timePeriod);
   }
 
   public String serialize() {
-    return sortOrder().name() + SEPARATOR + timePeriod().name();
+    return sortOrder().getName() + SEPARATOR + timePeriod().name();
   }
 
   @StringRes
@@ -43,6 +44,9 @@ public abstract class SortingAndTimePeriod implements Parcelable, Serializable {
     switch (sortOrder()) {
       case HOT:
         return R.string.sorting_mode_hot;
+
+      case BEST:
+        return R.string.sorting_mode_best;
 
       case NEW:
         return R.string.sorting_mode_new;
@@ -57,7 +61,6 @@ public abstract class SortingAndTimePeriod implements Parcelable, Serializable {
         return R.string.sorting_mode_top;
 
       default:
-      case GILDED:
         throw new UnsupportedOperationException("Unknown sorting: " + sortOrder());
     }
   }

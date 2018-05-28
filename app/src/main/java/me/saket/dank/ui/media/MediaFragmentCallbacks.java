@@ -2,7 +2,7 @@ package me.saket.dank.ui.media;
 
 import android.support.annotation.CheckResult;
 
-import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.SubmissionPreview;
 
 import io.reactivex.Observable;
 import io.reactivex.Single;
@@ -14,7 +14,7 @@ public interface MediaFragmentCallbacks {
 
   int getDeviceDisplayWidth();
 
-  Single<Optional<Thumbnails>> getRedditSuppliedImages();
+  Single<Optional<SubmissionPreview>> getRedditSuppliedImages();
 
   @CheckResult
   Single<Integer> optionButtonsHeight();

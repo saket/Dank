@@ -115,6 +115,7 @@
   <string name="subreddit_sorting_mode" translatable="false">%s</string>
   <string name="subreddit_sorting_mode_with_time_period" translatable="false">%1$s (%2$s)</string>  <!-- Hot (Month) -->
 
+  <string name="sorting_mode_best">Best</string>
   <string name="sorting_mode_hot">Hot</string>
   <string name="sorting_mode_new">New</string>
   <string name="sorting_mode_rising">Rising</string>
@@ -242,6 +243,8 @@
   <string name="comment_sorting_controversial">Controversial</string>
   <string name="comment_sorting_old">Old</string>
   <string name="comment_sorting_qna">Q &amp; A</string>
+  <string name="comment_sorting_random">Random</string>
+  <string name="comment_sorting_live">Live</string>
   <string name="submission_comments_refresh">Refresh</string>
 
   <!-- WebView -->
@@ -345,6 +348,7 @@
   <string name="userprofilepopup_error_message_tap_to_retry">Tap to retry.</string>
   <string name="userprofilepopup_error_message_period">.</string>  <!-- Full-stop in english. -->
   <string name="userprofilepopup_user_not_found">Nada. This user does not exist.</string>
+  <string name="userprofilepopup_user_suspended">This user has been suspended.</string>
 
   <!-- GIPHY picker -->
   <string name="giphypicker_search_gifs">Search GIFs…</string>

@@ -50,6 +50,8 @@
       android:parentActivityName=".ui.subreddit.SubredditActivity"
       android:theme="@style/DankTheme.DialogLikeActivity"
       android:windowSoftInputMode="adjustResize" />
+    <!-- I've considered setting Login's softInputMode=adjustPan,
+         but then scrolling stops working in login web-pages. -->
 
     <activity
       android:name=".ui.preferences.UserPreferencesActivity"

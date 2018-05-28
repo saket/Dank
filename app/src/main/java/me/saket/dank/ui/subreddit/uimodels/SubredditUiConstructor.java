@@ -10,7 +10,7 @@ import android.widget.ImageView;
 import com.f2prateek.rx.preferences2.Preference;
 
 import net.dean.jraw.models.Submission;
-import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.SubmissionPreview;
 import net.dean.jraw.models.VoteDirection;
 
 import java.util.ArrayList;
@@ -26,7 +26,6 @@ import me.saket.dank.R;
 import me.saket.dank.data.EmptyState;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.ErrorState;
-import me.saket.dank.vote.VotingManager;
 import me.saket.dank.ui.submission.BookmarksRepository;
 import me.saket.dank.ui.submission.PrivateSubredditException;
 import me.saket.dank.ui.submission.SubredditNotFoundException;
@@ -38,6 +37,7 @@ import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
+import me.saket.dank.vote.VotingManager;
 import me.saket.dank.walkthrough.SubmissionGesturesWalkthrough;
 import timber.log.Timber;
 
@@ -252,7 +252,7 @@ public class SubredditUiConstructor {
 
     // Setting textAllCaps removes all spans, so I'm applying uppercase manually.
     Truss bylineBuilder = new Truss();
-    bylineBuilder.append(c.getString(R.string.subreddit_name_r_prefix, submission.getSubredditName()).toUpperCase(Locale.ENGLISH));
+    bylineBuilder.append(c.getString(R.string.subreddit_name_r_prefix, submission.getSubreddit()).toUpperCase(Locale.ENGLISH));
     bylineBuilder.append(" \u00b7 ");
     bylineBuilder.append(submission.getAuthor().toUpperCase(Locale.ENGLISH));
     if (showCommentCountInByline.get()) {
@@ -268,7 +268,7 @@ public class SubredditUiConstructor {
       bylineBuilder.popSpan();
     }
 
-    SubmissionThumbnailTypeMinusNsfw thumbnailType = SubmissionThumbnailTypeMinusNsfw.parse(submission);
+    SubmissionThumbnailTypeMinusNsfw thumbnailType = SubmissionThumbnailTypeMinusNsfw.Companion.parse(submission);
     Optional<SubredditSubmission.UiModel.Thumbnail> thumbnail;
 
     if (!showThumbnailsPref.get()) {
@@ -304,7 +304,7 @@ public class SubredditUiConstructor {
             break;
 
           case URL_REMOTE_THUMBNAIL:
-            thumbnail = Optional.of(thumbnailForRemoteImage(c, submission.getThumbnails()));
+            thumbnail = Optional.of(thumbnailForRemoteImage(c, submission.getPreview()));
             break;
 
           //noinspection ConstantConditions
@@ -369,8 +369,8 @@ public class SubredditUiConstructor {
         .backgroundRes(Optional.of(R.drawable.background_submission_self_thumbnail));
   }
 
-  private SubredditSubmission.UiModel.Thumbnail thumbnailForRemoteImage(Context c, Thumbnails submissionThumbnails) {
-    ImageWithMultipleVariants redditThumbnails = ImageWithMultipleVariants.of(submissionThumbnails);
+  private SubredditSubmission.UiModel.Thumbnail thumbnailForRemoteImage(Context c, SubmissionPreview preview) {
+    ImageWithMultipleVariants redditThumbnails = ImageWithMultipleVariants.Companion.of(preview);
     String optimizedThumbnailUrl = redditThumbnails.findNearestFor(c.getResources().getDimensionPixelSize(R.dimen.subreddit_submission_thumbnail));
 
     return SubredditSubmission.UiModel.Thumbnail.builder()

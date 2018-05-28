@@ -2,7 +2,7 @@ package me.saket.dank.ui.submission;
 
 import android.support.annotation.CheckResult;
 
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Identifiable;
 
 import io.reactivex.Completable;
 import io.reactivex.Observable;
@@ -12,11 +12,11 @@ import me.saket.dank.reply.DraftSaveResult;
 public interface DraftStore {
 
   @CheckResult
-  Single<DraftSaveResult> saveDraft(Contribution contribution, String draftBody);
+  Single<DraftSaveResult> saveDraft(Identifiable identifiable, String draftBody);
 
   @CheckResult
-  Observable<String> streamDrafts(Contribution contribution);
+  Observable<String> streamDrafts(Identifiable identifiable);
 
   @CheckResult
-  Completable removeDraft(Contribution contribution);
+  Completable removeDraft(Identifiable identifiable);
 }

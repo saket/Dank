@@ -2,9 +2,7 @@ package me.saket.dank.ui.user.messages;
 
 import android.content.Context;
 
-import net.dean.jraw.models.CommentMessage;
 import net.dean.jraw.models.Message;
-import net.dean.jraw.models.PrivateMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +13,7 @@ import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.Dates;
-import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.markdown.Markdown;
 
@@ -42,7 +40,7 @@ public class InboxFolderUiConstructor {
           String loggedInUserName = userSessionRepo.get().loggedInUserName();
           for (Message message : messages) {
             if (constructThreads) {
-              models.add(messageThreadUiModel(c, (PrivateMessage) message, loggedInUserName));
+              models.add(messageThreadUiModel(c, message, loggedInUserName));
             } else {
               models.add(individualMessageUiModel(c, message, isUnreadFolder));
             }
@@ -60,12 +58,12 @@ public class InboxFolderUiConstructor {
     String title;
     String byline;
     String senderInformation;
-    String timestamp = Dates.createTimestamp(c.getResources(), JrawUtils.createdTimeUtc(message)).toString();
+    String timestamp = Dates.createTimestamp(c.getResources(), JrawUtils2.INSTANCE.createdTimeUtc(message)).toString();
     String subredditName = c.getString(R.string.subreddit_name_r_prefix, message.getSubreddit());
 
     switch (messageType) {
       case COMMENT_REPLY:
-        title = ((CommentMessage) message).getLinkTitle();
+        title = message.getLinkTitle();
         byline = isUnreadFolder
             ? c.getString(R.string.inbox_message_byline_for_unread_folder_comment_reply, timestamp)
             : timestamp;
@@ -73,7 +71,7 @@ public class InboxFolderUiConstructor {
         break;
 
       case USERNAME_MENTION:
-        title = ((CommentMessage) message).getLinkTitle();
+        title = message.getLinkTitle();
         byline = isUnreadFolder
             ? c.getString(R.string.inbox_message_byline_for_unread_folder_username_mention, timestamp)
             : timestamp;
@@ -117,13 +115,13 @@ public class InboxFolderUiConstructor {
     return InboxIndividualMessage.UiModel.create(adapterId, title, byline, senderInformation, body, message);
   }
 
-  private InboxMessageThread.UiModel messageThreadUiModel(Context c, PrivateMessage messageThread, String loggedInUserName) {
-    List<Message> replies = JrawUtils.messageReplies(messageThread);
+  private InboxMessageThread.UiModel messageThreadUiModel(Context c, Message messageThread, String loggedInUserName) {
+    List<Message> replies = JrawUtils2.INSTANCE.messageReplies(messageThread);
     Message latestMessageInThread = replies.isEmpty()
         ? messageThread
         : replies.get(replies.size() - 1);
 
-    Optional<String> secondPartyName = Optional.ofNullable(JrawUtils.secondPartyName(
+    Optional<String> secondPartyName = Optional.ofNullable(JrawUtils2.INSTANCE.secondPartyName(
         c.getResources(),
         latestMessageInThread,
         loggedInUserName));
@@ -136,7 +134,7 @@ public class InboxFolderUiConstructor {
         : snippet;
 
     long adapterId = messageThread.getId().hashCode();
-    String timestamp = Dates.createTimestamp(c.getResources(), JrawUtils.createdTimeUtc(latestMessageInThread)).toString();
+    String timestamp = Dates.createTimestamp(c.getResources(), JrawUtils2.INSTANCE.createdTimeUtc(latestMessageInThread)).toString();
     return InboxMessageThread.UiModel.create(adapterId, secondPartyName, messageThread.getSubject(), snippet, timestamp, messageThread);
   }
 }

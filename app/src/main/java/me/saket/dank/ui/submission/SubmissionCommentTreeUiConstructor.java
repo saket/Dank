@@ -1,6 +1,5 @@
 package me.saket.dank.ui.submission;
 
-
 import static me.saket.dank.utils.Arrays2.immutable;
 
 import android.content.Context;
@@ -11,10 +10,12 @@ import android.support.v4.content.ContextCompat;
 import android.text.style.ForegroundColorSpan;
 
 import net.dean.jraw.models.Comment;
-import net.dean.jraw.models.CommentNode;
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Identifiable;
+import net.dean.jraw.models.MoreChildren;
+import net.dean.jraw.models.PublicContribution;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
+import net.dean.jraw.tree.CommentNode;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -26,11 +27,9 @@ import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import me.saket.dank.R;
-import me.saket.dank.data.ContributionFullNameWrapper;
-import me.saket.dank.data.LocallyPostedComment;
 import me.saket.dank.reply.PendingSyncReply;
 import me.saket.dank.reply.ReplyRepository;
-import me.saket.dank.vote.VotingManager;
+import me.saket.dank.ui.compose.SimpleIdentifiable;
 import me.saket.dank.ui.submission.adapter.SubmissionComment;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsLoadMore;
@@ -40,15 +39,13 @@ import me.saket.dank.utils.CombineLatestWithLog;
 import me.saket.dank.utils.CombineLatestWithLog.O;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
-import me.saket.dank.utils.JrawUtils;
 import me.saket.dank.utils.Optional;
-import me.saket.dank.utils.Preconditions;
 import me.saket.dank.utils.RxHashSet;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
-import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.utils.markdown.Markdown;
+import me.saket.dank.vote.VotingManager;
 import timber.log.Timber;
 
 /**
@@ -58,7 +55,6 @@ import timber.log.Timber;
 @SuppressWarnings("MismatchedQueryAndUpdateOfCollection")
 public class SubmissionCommentTreeUiConstructor {
 
-  private static final Object NOTHING = LifecycleStreams.NOTHING;
   private static final ActiveReplyIds ACTIVE_REPLY_IDS = new ActiveReplyIds();
   private static final CollapsedCommentIds COLLAPSED_COMMENT_IDS = new CollapsedCommentIds(50);
   private static final InFlightLoadMoreIds IN_FLIGHT_LOAD_MORE_IDS = new InFlightLoadMoreIds();
@@ -70,15 +66,15 @@ public class SubmissionCommentTreeUiConstructor {
 
   /** Contribution IDs for which inline replies are active. */
   static class ActiveReplyIds extends RxHashSet<String> {
-    public boolean isActive(Contribution parentContribution) {
+    public boolean isActive(Identifiable parentContribution) {
       return contains(keyFor(parentContribution));
     }
 
-    public void showFor(Contribution parentContribution) {
+    public void showFor(Identifiable parentContribution) {
       add(keyFor(parentContribution));
     }
 
-    public void hideFor(Contribution parentContribution) {
+    public void hideFor(Identifiable parentContribution) {
       remove(keyFor(parentContribution));
     }
   }
@@ -103,18 +99,18 @@ public class SubmissionCommentTreeUiConstructor {
           });
     }
 
-    public boolean isCollapsed(Comment comment) {
+    public boolean isCollapsed(Identifiable comment) {
       return contains(keyFor(comment));
     }
 
-    public void expand(Comment comment) {
+    public void expand(Identifiable comment) {
       boolean removed = remove(keyFor(comment));
       if (!removed) {
         throw new AssertionError("This comment isn't collapsed: " + comment);
       }
     }
 
-    public void collapse(Comment comment) {
+    public void collapse(Identifiable comment) {
       add(keyFor(comment));
     }
 
@@ -130,14 +126,14 @@ public class SubmissionCommentTreeUiConstructor {
   /** Comment IDs for which more child comments are being fetched. */
   static class InFlightLoadMoreIds extends RxHashSet<String> {
     public boolean isInFlightFor(CommentNode commentNode) {
-      return contains(keyFor(commentNode.getComment()));
+      return contains(keyFor(commentNode.getSubject()));
     }
 
-    public void showLoadMoreFor(Comment parentComment) {
+    public void showLoadMoreFor(Identifiable parentComment) {
       add(keyFor(parentComment));
     }
 
-    public void hideLoadMoreFor(Comment parentComment) {
+    public void hideLoadMoreFor(Identifiable parentComment) {
       boolean removed = remove(keyFor(parentComment));
       if (!removed) {
         throw new AssertionError("More comments weren't in flight for: " + parentComment);
@@ -156,11 +152,11 @@ public class SubmissionCommentTreeUiConstructor {
       return super.remove(key, value);
     }
 
-    public boolean hasForParent(Comment parentComment) {
+    public boolean hasForParent(PublicContribution parentComment) {
       return containsKey(parentComment.getFullName());
     }
 
-    public List<PendingSyncReply> getForParent(Comment parentComment) {
+    public List<PendingSyncReply> getForParent(PublicContribution parentComment) {
       return get(parentComment.getFullName());
     }
   }
@@ -181,13 +177,13 @@ public class SubmissionCommentTreeUiConstructor {
   @CheckResult
   public Observable<List<SubmissionScreenUiModel>> stream(
       Context context,
-      Observable<Submission> submissions,
+      Observable<SubmissionAndComments> submissionDatum,
       Observable<DankSubmissionRequest> submissionRequests,
       Scheduler scheduler)
   {
-    Observable<PendingSyncRepliesMap> pendingSyncRepliesMaps = submissions
+    Observable<PendingSyncRepliesMap> pendingSyncRepliesMaps = submissionDatum
         .distinctUntilChanged()
-        .flatMap(submission -> replyRepository.get().streamPendingSyncReplies(ParentThread.of(submission)))
+        .flatMap(submissionData -> replyRepository.get().streamPendingSyncReplies(ParentThread.of(submissionData.getSubmission())))
         // I've seen this stream very occasionally take a second to emit, so starting with a default value.
         .startWith(Collections.<PendingSyncReply>emptyList())
         .map(replyList -> createPendingSyncReplyMap(replyList));
@@ -211,29 +207,31 @@ public class SubmissionCommentTreeUiConstructor {
 
     return CombineLatestWithLog
         .from(
-            O.of("submission", submissions),
+            O.of("submission and root comments", submissionDatum),
             O.of("pendingSyncRepliesMap", pendingSyncRepliesMaps),
             O.of("focusedComment", focusedComments),
             O.of("row-visibility", rowVisibilityChanges),
             O.of("votes", voteChanges),
-            (submission, pendingSyncRepliesMap, focusedComment, o, oo) -> {
-              String submissionAuthor = submission.getAuthor();
-              return constructComments(context, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);
+            (submissionData, pendingSyncRepliesMap, focusedComment, o, oo) -> {
+              String submissionAuthor = submissionData.getSubmission().getAuthor();
+              return constructComments(context, submissionData, pendingSyncRepliesMap, submissionAuthor, focusedComment);
             })
         .as(immutable());
   }
 
-  private static String keyFor(Contribution contribution) {
+  private static String keyFor(Identifiable contribution) {
+    // We're doing an exhaustive check here just to make sure
+    // there's no unknown data model being passed.
     if (contribution instanceof Submission) {
       return contribution.getFullName();
     }
-    if (contribution instanceof ContributionFullNameWrapper) {
+    if (contribution instanceof SimpleIdentifiable) {
       return contribution.getFullName();
     }
-    if (contribution instanceof LocallyPostedComment) {
-      String key = ((LocallyPostedComment) contribution).getPostingStatusIndependentId();
-      return Preconditions.checkNotNull(key, "LocallyPostedComment#getPostingStatusIndependentId()");
-    }
+    //if (contribution instanceof LocalOrRemoteComment) {
+    //  String key = ((LocalOrRemoteComment) contribution).getPostingStatusIndependentId();
+    //  return Preconditions.checkNotNull(key, "LocallyPostedComment#getPostingStatusIndependentId()");
+    //}
     if (contribution instanceof Comment) {
       return contribution.getFullName();
     }
@@ -260,7 +258,7 @@ public class SubmissionCommentTreeUiConstructor {
   /**
    * Collapse/expand a comment.
    */
-  void toggleCollapse(Comment comment) {
+  void toggleCollapse(Identifiable comment) {
     if (COLLAPSED_COMMENT_IDS.isCollapsed(comment)) {
       COLLAPSED_COMMENT_IDS.expand(comment);
     } else {
@@ -268,7 +266,7 @@ public class SubmissionCommentTreeUiConstructor {
     }
   }
 
-  boolean isCollapsed(Comment contribution) {
+  boolean isCollapsed(Identifiable contribution) {
     return COLLAPSED_COMMENT_IDS.isCollapsed(contribution);
   }
 
@@ -277,7 +275,7 @@ public class SubmissionCommentTreeUiConstructor {
    *
    * @param parentComment for which more child nodes are being fetched.
    */
-  void setMoreCommentsLoading(Comment parentComment, boolean loading) {
+  void setMoreCommentsLoading(Identifiable parentComment, boolean loading) {
     if (loading) {
       IN_FLIGHT_LOAD_MORE_IDS.showLoadMoreFor(parentComment);
     } else {
@@ -288,7 +286,7 @@ public class SubmissionCommentTreeUiConstructor {
   /**
    * Show reply field for a comment and also expand any hidden comments.
    */
-  void showReplyAndExpandComments(Comment parentComment) {
+  void showReplyAndExpandComments(Identifiable parentComment) {
     if (COLLAPSED_COMMENT_IDS.isCollapsed(parentComment)) {
       COLLAPSED_COMMENT_IDS.pauseChangeEvents();
       COLLAPSED_COMMENT_IDS.expand(parentComment);
@@ -301,18 +299,18 @@ public class SubmissionCommentTreeUiConstructor {
   /**
    * Show reply field for the submission or a comment.
    */
-  void showReply(Contribution parentContribution) {
+  void showReply(Identifiable parentContribution) {
     ACTIVE_REPLY_IDS.showFor(parentContribution);
   }
 
   /**
    * Hide reply field for a comment.
    */
-  void hideReply(Contribution parentContribution) {
+  void hideReply(Identifiable parentContribution) {
     ACTIVE_REPLY_IDS.hideFor(parentContribution);
   }
 
-  boolean isReplyActiveFor(Contribution contribution) {
+  boolean isReplyActiveFor(Identifiable contribution) {
     return ACTIVE_REPLY_IDS.isActive(contribution);
   }
 
@@ -325,31 +323,38 @@ public class SubmissionCommentTreeUiConstructor {
    */
   private List<SubmissionScreenUiModel> constructComments(
       Context context,
-      Submission submission,
+      SubmissionAndComments submissionData,
       PendingSyncRepliesMap pendingSyncRepliesMap,
       String submissionAuthor,
       Optional<FocusedComment> focusedComment)
   {
     int totalRowsSize = 0;
-    if (ACTIVE_REPLY_IDS.isActive(submission)) {
+    if (ACTIVE_REPLY_IDS.isActive(submissionData.getSubmission())) {
       totalRowsSize += 1;
     }
 
-    CommentNode rootCommentNode = submission.getComments();
-    if (rootCommentNode != null) {
-      totalRowsSize += rootCommentNode.getTotalSize();
-    }
+    totalRowsSize += submissionData
+        .getComments()
+        .map(node -> node.totalSize())
+        .orElse(0);
 
     ArrayList<SubmissionScreenUiModel> flattenComments = new ArrayList<>(totalRowsSize);
-    if (ACTIVE_REPLY_IDS.isActive(submission)) {
+    if (ACTIVE_REPLY_IDS.isActive(submissionData.getSubmission())) {
       String loggedInUserName = userSessionRepository.get().loggedInUserName();
-      flattenComments.add(inlineReplyUiModel(context, submission, submissionAuthor, loggedInUserName, 0));
+      flattenComments.add(inlineReplyUiModel(context, submissionData.getSubmission(), submissionAuthor, loggedInUserName, 0));
     }
 
-    if (rootCommentNode == null) {
+    if (submissionData.getComments().isEmpty()) {
       return flattenComments;
     } else {
-      return constructComments(context, flattenComments, rootCommentNode, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);
+      return constructComments(
+          context,
+          flattenComments,
+          submissionData.getComments().get(),
+          submissionData.getSubmission(),
+          pendingSyncRepliesMap,
+          submissionAuthor,
+          focusedComment);
     }
   }
 
@@ -372,51 +377,53 @@ public class SubmissionCommentTreeUiConstructor {
     //  }
     //}
 
-    boolean isCommentNodeCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(nextNode.getComment());
-    boolean isReplyActive = ACTIVE_REPLY_IDS.isActive(nextNode.getComment());
+    boolean isCommentNodeCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(nextNode.getSubject());
+    boolean isReplyActive = ACTIVE_REPLY_IDS.isActive(nextNode.getSubject());
 
     if (nextNode.getDepth() != 0) {
       //Timber.i("%s(%s) %s: %s", indentation, nextNode.getComment().getFullName(), nextNode.getComment().getAuthor(), nextNode.getComment().getBody());
-      String commentFullName = nextNode.getComment().getFullName();
+      String commentFullName = nextNode.getSubject().getFullName();
       boolean isFocused = focusedComment.isPresent() && focusedComment.get().fullname().equals(commentFullName);
       flattenComments.add(syncedCommentUiModel(context, nextNode, isCommentNodeCollapsed, submissionAuthor, isFocused));
     }
 
     // Reply box.
     // Skip for root-node because we already added a reply for the submission in constructComments().
-    boolean isSubmission = nextNode.getComment().getFullName().equals(submission.getFullName());
+    boolean isSubmission = nextNode.getSubject() instanceof Submission;
     if (!isSubmission && isReplyActive && !isCommentNodeCollapsed) {
       String loggedInUserName = userSessionRepository.get().loggedInUserName();
-      String parentCommentAuthor = nextNode.getComment().getAuthor();
-      flattenComments.add(inlineReplyUiModel(context, nextNode.getComment(), parentCommentAuthor, loggedInUserName, nextNode.getDepth()));
+      String parentCommentAuthor = nextNode.getSubject().getAuthor();
+      flattenComments.add(inlineReplyUiModel(context, nextNode.getSubject(), parentCommentAuthor, loggedInUserName, nextNode.getDepth()));
     }
 
     // Pending-sync replies.
-    if (!isCommentNodeCollapsed && pendingSyncRepliesMap.hasForParent(nextNode.getComment())) {
-      List<PendingSyncReply> pendingSyncReplies = pendingSyncRepliesMap.getForParent(nextNode.getComment());
-      for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
-        LocallyPostedComment locallyPostedComment = LocallyPostedComment.create(pendingSyncReplies.get(i));
-        boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(locallyPostedComment);
-        int depth = nextNode.getDepth() + 1;
-        boolean isFocused = focusedComment.isPresent() && focusedComment.get().fullname().equals(locallyPostedComment.getFullName());
-        flattenComments.add(locallyPostedCommentUiModel(context, locallyPostedComment, isReplyCollapsed, depth, isFocused));
-      }
-    }
+    // TODO JRAW.
+//    if (!isCommentNodeCollapsed && pendingSyncRepliesMap.hasForParent(nextNode.getSubject())) {
+//      List<PendingSyncReply> pendingSyncReplies = pendingSyncRepliesMap.getForParent(nextNode.getSubject());
+//      for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
+//        LocallyPostedComment locallyPostedComment = LocallyPostedComment.create(pendingSyncReplies.get(i));
+//        boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(locallyPostedComment);
+//        int depth = nextNode.getDepth() + 1;
+//        boolean isFocused = focusedComment.isPresent() && focusedComment.get().fullname().equals(locallyPostedComment.getFullName());
+//        flattenComments.add(locallyPostedCommentUiModel(context, locallyPostedComment, isReplyCollapsed, depth, isFocused));
+//      }
+//    }
 
     // Next, the child comment tree.
-    if (nextNode.isEmpty() && !nextNode.hasMoreComments()) {
+    if (!nextNode.hasMoreChildren()) {
       return flattenComments;
 
     } else {
       // Ignore collapsed children.
       if (!isCommentNodeCollapsed) {
-        List<CommentNode> childCommentsTree = nextNode.getChildren();
+        //noinspection unchecked
+        List<CommentNode> childCommentsTree = nextNode.getReplies();
         for (int i = 0; i < childCommentsTree.size(); i++) {  // Intentionally avoiding thrashing Iterator objects.
           CommentNode node = childCommentsTree.get(i);
           constructComments(context, flattenComments, node, submission, pendingSyncRepliesMap, submissionAuthor, focusedComment);
         }
 
-        if (nextNode.hasMoreComments()) {
+        if (nextNode.hasMoreChildren()) {
           //Timber.d("%s(%s) %s has %d MORE ---------->",
           //    indentation, nextNode.getComment().getFullName(), nextNode.getComment().getAuthor(), nextNode.getMoreChildren().getCount()
           //);
@@ -435,9 +442,9 @@ public class SubmissionCommentTreeUiConstructor {
       String submissionAuthor,
       boolean isFocused)
   {
-    Comment comment = commentNode.getComment();
-    Optional<String> authorFlairText = comment.getAuthorFlair() != null ? Optional.ofNullable(comment.getAuthorFlair().getText()) : Optional.empty();
-    long createdTimeMillis = JrawUtils.createdTimeUtc(comment);
+    Comment comment = (Comment) commentNode.getSubject();
+    Optional<String> authorFlairText = comment.getAuthorFlairText() != null ? Optional.ofNullable(comment.getAuthorFlairText()) : Optional.empty();
+    long createdTimeMillis = comment.getCreated().getTime();
     VoteDirection pendingOrDefaultVoteDirection = votingManager.get().getPendingOrDefaultVote(comment, comment.getVote());
 
     int commentScore = votingManager.get().getScoreAfterAdjustingPendingVote(comment);
@@ -451,7 +458,7 @@ public class SubmissionCommentTreeUiConstructor {
     boolean isAuthorOP = comment.getAuthor().equalsIgnoreCase(submissionAuthor);
 
     // TODO: getTotalSize() is buggy. See: https://github.com/thatJavaNerd/JRAW/issues/189
-    int childCommentsCount = commentNode.getTotalSize();
+    int childCommentsCount = commentNode.totalSize();
 
     CharSequence byline = constructCommentByline(
         context,
@@ -469,9 +476,9 @@ public class SubmissionCommentTreeUiConstructor {
         ? markdown.get().stripMarkdown(comment)
         : markdown.get().parse(comment);
 
-    return commentCommonUiModelBuilder(context, commentNode.getComment().getFullName(), isCollapsed, isFocused, commentNode.getDepth())
+    return commentCommonUiModelBuilder(context, commentNode.getSubject().getFullName(), isCollapsed, isFocused, commentNode.getDepth())
         .comment(comment)
-        .optionalPendingSyncReply(Optional.empty())
+        //.optionalPendingSyncReply(Optional.empty())
         .byline(byline, commentScore)
         .body(commentBody)
         .build();
@@ -480,67 +487,67 @@ public class SubmissionCommentTreeUiConstructor {
   /**
    * Reply posted by the logged in user that hasn't synced yet or whose actual comment hasn't been fetched yet.
    */
-  private SubmissionComment.UiModel locallyPostedCommentUiModel(
-      Context context,
-      LocallyPostedComment locallyPostedComment,
-      boolean isReplyCollapsed,
-      int depth,
-      boolean isFocused)
-  {
-    PendingSyncReply pendingSyncReply = locallyPostedComment.pendingSyncReply();
-    CharSequence byline;
-    int commentScore = 1;
-
-    if (pendingSyncReply.state() == PendingSyncReply.State.POSTED) {
-      Optional<String> authorFlairText = Optional.empty();
-      byline = constructCommentByline(
-          context,
-          pendingSyncReply.author(),
-          authorFlairText,
-          true,
-          pendingSyncReply.createdTimeMillis(),
-          VoteDirection.UPVOTE,
-          Optional.of(commentScore),
-          0,
-          isReplyCollapsed
-      );
-
-    } else {
-      Truss bylineBuilder = new Truss();
-      if (isReplyCollapsed) {
-        bylineBuilder.append(pendingSyncReply.author());
-      } else {
-        bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, R.color.submission_comment_byline_author_op)));
-        bylineBuilder.append(pendingSyncReply.author());
-        bylineBuilder.popSpan();
-      }
-      bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
-
-      if (pendingSyncReply.state() == PendingSyncReply.State.POSTING) {
-        bylineBuilder.append(context.getString(R.string.submission_comment_reply_byline_posting_status));
-      } else if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
-        bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, R.color.submission_comment_byline_failed_to_post)));
-        bylineBuilder.append(context.getString(R.string.submission_comment_reply_byline_failed_status));
-        bylineBuilder.popSpan();
-      } else {
-        throw new AssertionError();
-      }
-
-      byline = bylineBuilder.build();
-    }
-
-    CharSequence processedMarkdown = markdown.get().parse(pendingSyncReply);
-    CharSequence commentBody = isReplyCollapsed
-        ? processedMarkdown.toString()  // toString() strips all spans.
-        : processedMarkdown;
-
-    return commentCommonUiModelBuilder(context, locallyPostedComment.getPostingStatusIndependentId(), isReplyCollapsed, isFocused, depth)
-        .comment(LocallyPostedComment.create(pendingSyncReply))
-        .optionalPendingSyncReply(Optional.of(pendingSyncReply))
-        .byline(byline, commentScore)
-        .body(commentBody)
-        .build();
-  }
+//  private SubmissionComment.UiModel locallyPostedCommentUiModel(
+//      Context context,
+//      LocallyPostedComment locallyPostedComment,
+//      boolean isReplyCollapsed,
+//      int depth,
+//      boolean isFocused)
+//  {
+//    PendingSyncReply pendingSyncReply = locallyPostedComment.pendingSyncReply();
+//    CharSequence byline;
+//    int commentScore = 1;
+//
+//    if (pendingSyncReply.state() == PendingSyncReply.State.POSTED) {
+//      Optional<String> authorFlairText = Optional.empty();
+//      byline = constructCommentByline(
+//          context,
+//          pendingSyncReply.author(),
+//          authorFlairText,
+//          true,
+//          pendingSyncReply.createdTimeMillis(),
+//          VoteDirection.UP,
+//          Optional.of(commentScore),
+//          0,
+//          isReplyCollapsed
+//      );
+//
+//    } else {
+//      Truss bylineBuilder = new Truss();
+//      if (isReplyCollapsed) {
+//        bylineBuilder.append(pendingSyncReply.author());
+//      } else {
+//        bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, R.color.submission_comment_byline_author_op)));
+//        bylineBuilder.append(pendingSyncReply.author());
+//        bylineBuilder.popSpan();
+//      }
+//      bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
+//
+//      if (pendingSyncReply.state() == PendingSyncReply.State.POSTING) {
+//        bylineBuilder.append(context.getString(R.string.submission_comment_reply_byline_posting_status));
+//      } else if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
+//        bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, R.color.submission_comment_byline_failed_to_post)));
+//        bylineBuilder.append(context.getString(R.string.submission_comment_reply_byline_failed_status));
+//        bylineBuilder.popSpan();
+//      } else {
+//        throw new AssertionError();
+//      }
+//
+//      byline = bylineBuilder.build();
+//    }
+//
+//    CharSequence processedMarkdown = markdown.get().parse(pendingSyncReply);
+//    CharSequence commentBody = isReplyCollapsed
+//        ? processedMarkdown.toString()  // toString() strips all spans.
+//        : processedMarkdown;
+//
+//    return commentCommonUiModelBuilder(context, locallyPostedComment.getPostingStatusIndependentId(), isReplyCollapsed, isFocused, depth)
+//        .comment(LocallyPostedComment.create(pendingSyncReply))
+//        .optionalPendingSyncReply(Optional.of(pendingSyncReply))
+//        .byline(byline, commentScore)
+//        .body(commentBody)
+//        .build();
+//  }
 
   /**
    * Builds common properties for both comments and pending-sync-replies.
@@ -628,7 +635,7 @@ public class SubmissionCommentTreeUiConstructor {
 
   private SubmissionCommentInlineReply.UiModel inlineReplyUiModel(
       Context context,
-      Contribution parentContribution,
+      PublicContribution parentContribution,
       String parentContributionReply,
       String loggedInUserName,
       int indentationDepth)
@@ -638,7 +645,7 @@ public class SubmissionCommentTreeUiConstructor {
     return SubmissionCommentInlineReply.UiModel.create(
         adapterId,
         authorHint,
-        ContributionFullNameWrapper.createFrom(parentContribution),
+        parentContribution,
         parentContributionReply,
         indentationDepth
     );
@@ -648,6 +655,8 @@ public class SubmissionCommentTreeUiConstructor {
    * For loading more replies of a comment.
    */
   private SubmissionCommentsLoadMore.UiModel loadMoreUiModel(Context context, CommentNode parentCommentNode, boolean progressVisible) {
+    boolean isThreadContinuation = parentCommentNode instanceof MoreChildren && ((MoreChildren) parentCommentNode).isThreadContinuation();
+
     boolean clickEnabled;
     String label;
     if (progressVisible) {
@@ -655,18 +664,19 @@ public class SubmissionCommentTreeUiConstructor {
       clickEnabled = false;
 
     } else {
-      label = parentCommentNode.isThreadContinuation()
+      //noinspection ConstantConditions
+      label = isThreadContinuation
           ? context.getString(R.string.submission_continue_this_thread)
-          : context.getString(R.string.submission_load_more_comments, parentCommentNode.getMoreChildren().getCount());
+          : context.getString(R.string.submission_load_more_comments, parentCommentNode.getMoreChildren().getChildrenIds().size());
       clickEnabled = true;
     }
 
-    String adapterId = parentCommentNode.getComment().getFullName() + "_loadMore";
+    String adapterId = parentCommentNode.getSubject().getFullName() + "_loadMore";
 
     return SubmissionCommentsLoadMore.UiModel.builder()
         .adapterId(adapterId.hashCode())
         .label(label)
-        .iconRes(parentCommentNode.isThreadContinuation() ? R.drawable.ic_arrow_forward_12dp : 0)
+        .iconRes(isThreadContinuation ? R.drawable.ic_arrow_forward_12dp : 0)
         .indentationDepth(parentCommentNode.getDepth())
         .parentCommentNode(parentCommentNode)
         .clickEnabled(clickEnabled)

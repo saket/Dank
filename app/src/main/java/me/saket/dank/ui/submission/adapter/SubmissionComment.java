@@ -22,15 +22,12 @@ import javax.inject.Inject;
 
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
-import me.saket.dank.data.LocallyPostedComment;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
-import me.saket.dank.reply.PendingSyncReply;
 import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.utils.DankLinkMovementMethod;
-import me.saket.dank.utils.Optional;
 import me.saket.dank.widgets.IndentedLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
@@ -63,7 +60,7 @@ public interface SubmissionComment {
     public abstract Comment comment();
 
     /** Present only for locally posted replies. Required because {@link ReplyRetrySendClickEvent} needs it. */
-    public abstract Optional<PendingSyncReply> optionalPendingSyncReply();
+//    public abstract Optional<PendingSyncReply> optionalPendingSyncReply();
 
     @ColorRes
     public abstract int backgroundColorRes();
@@ -105,7 +102,7 @@ public interface SubmissionComment {
 
       public abstract Builder bodyMaxLines(int maxLines);
 
-      public abstract Builder optionalPendingSyncReply(Optional<PendingSyncReply> optionalReply);
+      //public abstract Builder optionalPendingSyncReply(Optional<PendingSyncReply> optionalReply);
 
       public abstract Builder isCollapsed(boolean isCollapsed);
 
@@ -145,9 +142,9 @@ public interface SubmissionComment {
     public void setupGestures(CommentSwipeActionsProvider commentSwipeActionsProvider) {
       getSwipeableLayout().setSwipeActionIconProvider(commentSwipeActionsProvider.iconProvider());
       getSwipeableLayout().setSwipeActions(commentSwipeActionsProvider.actions());
-      getSwipeableLayout().setOnPerformSwipeActionListener(action -> {
-        commentSwipeActionsProvider.performSwipeAction(action, uiModel.comment(), getSwipeableLayout());
-      });
+      getSwipeableLayout().setOnPerformSwipeActionListener(action ->
+          commentSwipeActionsProvider.performSwipeAction(action, uiModel.comment(), getSwipeableLayout())
+      );
     }
 
     public void setupCollapseOnClick(Relay<CommentClickEvent> clickStream) {
@@ -157,12 +154,12 @@ public interface SubmissionComment {
       };
     }
 
-    public void setupTapToRetrySending(Relay<ReplyRetrySendClickEvent> retrySendClickStream) {
-      tapToRetryClickListener = o -> {
-        PendingSyncReply failedPendingSyncReply = uiModel.optionalPendingSyncReply().get();
-        retrySendClickStream.accept(ReplyRetrySendClickEvent.create(failedPendingSyncReply));
-      };
-    }
+//    public void setupTapToRetrySending(Relay<ReplyRetrySendClickEvent> retrySendClickStream) {
+//      tapToRetryClickListener = o -> {
+//        PendingSyncReply failedPendingSyncReply = uiModel.optionalPendingSyncReply().get();
+//        retrySendClickStream.accept(ReplyRetrySendClickEvent.create(failedPendingSyncReply));
+//      };
+//    }
 
     @SuppressLint("ClickableViewAccessibility")
     public void forwardTouchEventsToBackground(BetterLinkMovementMethod linkMovementMethod) {
@@ -190,16 +187,19 @@ public interface SubmissionComment {
 
       // Enable gestures only if it's a posted comment.
       // TODO: Add support for locally posted replies too.
-      boolean isPresentOnRemote = !(uiModel.comment() instanceof LocallyPostedComment);
-      getSwipeableLayout().setSwipeEnabled(isPresentOnRemote);
+//      boolean isPresentOnRemote = uiModel.comment() instanceof RemotePostedComment;
+//      getSwipeableLayout().setSwipeEnabled(isPresentOnRemote);
 
-      Optional<PendingSyncReply> optionalReply = uiModel.optionalPendingSyncReply();
-      boolean isFailedReply = optionalReply.isPresent() && optionalReply.get().state() == PendingSyncReply.State.FAILED;
-      if (isFailedReply) {
-        itemView.setOnClickListener(tapToRetryClickListener);
-      } else {
-        itemView.setOnClickListener(collapseOnClickListener);
-      }
+//      Optional<PendingSyncReply> optionalReply = uiModel.optionalPendingSyncReply();
+//      boolean isFailedReply = optionalReply.isPresent() && optionalReply.get().state() == PendingSyncReply.State.FAILED;
+//      if (isFailedReply) {
+//        itemView.setOnClickListener(tapToRetryClickListener);
+//      } else {
+//        itemView.setOnClickListener(collapseOnClickListener);
+//      }
+
+      getSwipeableLayout().setSwipeEnabled(true);
+      itemView.setOnClickListener(collapseOnClickListener);
     }
 
     public void renderPartialChanges(List<Object> payloads) {
@@ -242,7 +242,7 @@ public interface SubmissionComment {
       holder.setBodyLinkMovementMethod(linkMovementMethod);
       holder.setupGestures(swipeActionsProvider);
       holder.setupCollapseOnClick(commentClickStream);
-      holder.setupTapToRetrySending(replyRetrySendClickStream);
+      //holder.setupTapToRetrySending(replyRetrySendClickStream);
       holder.forwardTouchEventsToBackground(linkMovementMethod);
       return holder;
     }

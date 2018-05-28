@@ -3,30 +3,29 @@ package me.saket.dank.vote;
 import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Comment;
-import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Identifiable;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.VoteDirection;
 
 import io.reactivex.Completable;
-import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.data.VotableContributionFullNameWrapper;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.walkthrough.SyntheticData;
 import timber.log.Timber;
 
 public interface Vote {
 
-  PublicContribution contributionToVote();
+  Identifiable contributionToVote();
 
   VoteDirection direction();
 
   Completable saveAndSend(VotingManager votingManager);
 
-  static Vote create(PublicContribution contributionToVote, VoteDirection direction) {
+  static Vote create(Identifiable contributionToVote, VoteDirection direction) {
     boolean isNoOpVote;
 
     if (contributionToVote instanceof Comment) {
-      String submissionId = ((Comment) contributionToVote).getSubmissionId();
-      isNoOpVote = submissionId.equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH);
+      String submissionFullNme = ((Comment) contributionToVote).getSubmissionFullName();
+      isNoOpVote = submissionFullNme.equalsIgnoreCase(SyntheticData.Companion.getSUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH());
 
     } else if (contributionToVote instanceof Submission) {
       String submissionId = contributionToVote.getId();
@@ -42,7 +41,7 @@ public interface Vote {
     return new AutoValue_Vote_RealVote(contributionToVote, direction);
   }
 
-  Completable sendToRemote(DankRedditClient dankRedditClient);
+  Completable sendToRemote(Reddit reddit);
 
   @AutoValue
   abstract class RealVote implements Vote {
@@ -53,9 +52,8 @@ public interface Vote {
     }
 
     @Override
-    public Completable sendToRemote(DankRedditClient dankRedditClient) {
-      VotableContributionFullNameWrapper votableThing = VotableContributionFullNameWrapper.createFrom(contributionToVote());
-      return dankRedditClient.withAuth(Completable.fromAction(() -> dankRedditClient.userAccountManager().vote(votableThing, direction())));
+    public Completable sendToRemote(Reddit reddit) {
+      return reddit.loggedInUser().vote(contributionToVote(), direction());
     }
   }
 
@@ -68,7 +66,7 @@ public interface Vote {
     }
 
     @Override
-    public Completable sendToRemote(DankRedditClient dankRedditClient) {
+    public Completable sendToRemote(Reddit reddit) {
       Timber.i("Ignoring voting in synthetic-submission-for-gesture-walkthrough");
       return Completable.complete();
     }

@@ -15,8 +15,8 @@ import javax.inject.Named;
 
 import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
-import me.saket.dank.data.DankRedditClient;
-import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.reddit.Reddit;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Urls;
 import okhttp3.HttpUrl;
@@ -100,7 +100,7 @@ public class UrlParser {
           if (TextUtils.isEmpty(commentId)) {
             parsedLink = RedditSubmissionLink.create(url, submissionId, subredditName);
           } else {
-            String contextParamValue = linkURI.getQueryParameter(DankRedditClient.CONTEXT_QUERY_PARAM);
+            String contextParamValue = linkURI.getQueryParameter(Reddit.CONTEXT_QUERY_PARAM);
             int contextCount = TextUtils.isEmpty(contextParamValue) ? 0 : Integer.parseInt(contextParamValue);
             RedditCommentLink initialComment = RedditCommentLink.create(url, commentId, contextCount);
             parsedLink = RedditSubmissionLink.createWithComment(url, submissionId, subredditName, initialComment);
@@ -206,7 +206,7 @@ public class UrlParser {
 
   private static Link createRedditHostedVideoLink(String url, Optional<Submission> optionalSubmission) {
     return optionalSubmission
-        .flatMap(submission -> JrawUtils.redditVideoDashPlaylistUrl(submission))
+        .flatMap(submission -> JrawUtils2.INSTANCE.redditVideoDashPlaylistUrl(submission))
         .map(playlist -> RedditHostedVideoLink.create(url, playlist))
         // Or else, probably just a "v.redd.it" link to a submission.
         // TODO v2: treat this as an unresolved reddit video link.

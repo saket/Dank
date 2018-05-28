@@ -11,10 +11,9 @@ import com.google.auto.value.AutoValue;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
 
-import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.tree.CommentNode;
 
 import java.util.List;
-
 import javax.inject.Inject;
 
 import me.saket.dank.R;

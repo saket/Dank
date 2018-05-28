@@ -6,7 +6,8 @@ import android.view.View;
 import com.google.auto.value.AutoValue;
 
 import net.dean.jraw.models.Comment;
-import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.tree.CommentNode;
 
 import me.saket.dank.data.CommentNodeEqualsBandAid;
 import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
@@ -23,8 +24,8 @@ public abstract class LoadMoreCommentsClickEvent {
 
   abstract CommentNodeEqualsBandAid parentCommentNodeEqualsBandAid();
 
-  public Comment parentComment() {
-    return parentCommentNode().getComment();
+  public PublicContribution parentComment() {
+    return parentCommentNode().getSubject();
   }
 
   /**

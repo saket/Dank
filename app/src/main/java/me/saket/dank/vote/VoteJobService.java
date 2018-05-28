@@ -12,7 +12,7 @@ import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.http.NetworkException;
-import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Identifiable;
 import net.dean.jraw.models.VoteDirection;
 
 import javax.inject.Inject;
@@ -23,8 +23,8 @@ import io.reactivex.android.schedulers.AndroidSchedulers;
 import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ResolvedError;
-import me.saket.dank.data.VotableContributionFullNameWrapper;
 import me.saket.dank.di.Dank;
+import me.saket.dank.ui.compose.SimpleIdentifiable;
 import timber.log.Timber;
 
 /**
@@ -32,7 +32,7 @@ import timber.log.Timber;
  */
 public class VoteJobService extends DankJobService {
 
-  private static final String KEY_VOTABLE_CONTRIBUTION_JSON = "votableThingName";
+  private static final String KEY_VOTABLE_JSON = "votableJson";
   private static final String KEY_VOTE_DIRECTION = "voteDirection";
 
   @Inject Moshi moshi;
@@ -41,14 +41,13 @@ public class VoteJobService extends DankJobService {
   /**
    * Schedule a voting attempt whenever JobScheduler deems it fit.
    */
-  public static void scheduleRetry(Context context, PublicContribution votableContribution, VoteDirection voteDirection, Moshi moshi) {
+  public static void scheduleRetry(Context context, Identifiable votableContribution, VoteDirection voteDirection, Moshi moshi) {
     PersistableBundle extras = new PersistableBundle(2);
     extras.putString(KEY_VOTE_DIRECTION, voteDirection.name());
 
-    VotableContributionFullNameWrapper fauxVotableContribution = VotableContributionFullNameWrapper.createFrom(votableContribution);
-    JsonAdapter<VotableContributionFullNameWrapper> jsonAdapter = moshi.adapter(VotableContributionFullNameWrapper.class);
-    String contributionJson = jsonAdapter.toJson(fauxVotableContribution);
-    extras.putString(KEY_VOTABLE_CONTRIBUTION_JSON, contributionJson);
+    JsonAdapter<SimpleIdentifiable> adapter = moshi.adapter(SimpleIdentifiable.class);
+    String votableJson = adapter.toJson(SimpleIdentifiable.Companion.from(votableContribution));
+    extras.putString(KEY_VOTABLE_JSON, votableJson);
 
     JobInfo retryJobInfo = new JobInfo.Builder(ID_VOTE + votableContribution.hashCode(), new ComponentName(context, VoteJobService.class))
         .setMinimumLatency(5 * DateUtils.MINUTE_IN_MILLIS)
@@ -72,11 +71,11 @@ public class VoteJobService extends DankJobService {
   public JobStartCallback onStartJob2(JobParameters params) {
     VoteDirection voteDirection = VoteDirection.valueOf(params.getExtras().getString(KEY_VOTE_DIRECTION));
 
-    JsonAdapter<VotableContributionFullNameWrapper> jsonAdapter = moshi.adapter(VotableContributionFullNameWrapper.class);
-    String votableContributionJson = params.getExtras().getString(KEY_VOTABLE_CONTRIBUTION_JSON);
+    JsonAdapter<SimpleIdentifiable> jsonAdapter = moshi.adapter(SimpleIdentifiable.class);
+    String votableJson = params.getExtras().getString(KEY_VOTABLE_JSON);
 
     //noinspection ConstantConditions
-    Single.fromCallable(() -> jsonAdapter.fromJson(votableContributionJson))
+    Single.fromCallable(() -> jsonAdapter.fromJson(votableJson))
         .flatMapCompletable(votableContribution -> {
           if (!votingManager.isVotePending(votableContribution)) {
             // Looks like the pending vote was cleared upon refreshing data from remote.
@@ -118,7 +117,7 @@ public class VoteJobService extends DankJobService {
 
   private boolean isTooManyRequestsHttpError(Throwable error) {
     return error instanceof NetworkException
-        && ((NetworkException) error).getResponse().getStatusCode() == VotingManager.HTTP_CODE_TOO_MANY_REQUESTS;
+        && ((NetworkException) error).getRes().getCode() == VotingManager.HTTP_CODE_TOO_MANY_REQUESTS;
   }
 
   @Override

@@ -6,7 +6,7 @@ import android.support.annotation.Nullable;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.PublicContribution;
 
 import io.reactivex.functions.Function;
 import me.saket.dank.utils.Cursors;
@@ -71,7 +71,7 @@ public abstract class PendingSyncReply {
   public abstract String parentThreadFullName();
 
   /**
-   * Full-name of parent {@link Contribution comment/submission/message}.
+   * Full-name of parent {@link PublicContribution comment/submission/message}.
    */
   public abstract String parentContributionFullName();
 

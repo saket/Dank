@@ -2,10 +2,11 @@ package me.saket.dank.data;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.Thing;
+import net.dean.jraw.models.PublicContribution;
+
 
 /**
- * Reddit uses a {@link Thing}'s full name as the anchor for paginating listings. On every page load, it returns the last
+ * Reddit uses a {@link PublicContribution}'s full name as the anchor for paginating listings. On every page load, it returns the last
  * Thing's name in the list that can be used as the anchor for getting the next page.
  * <p>
  * This class holds the name of that anchor Thing.

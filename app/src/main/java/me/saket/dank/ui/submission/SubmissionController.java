@@ -1,11 +1,5 @@
 package me.saket.dank.ui.submission;
 
-import static me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy;
-
-import net.dean.jraw.models.CommentSort;
-import net.dean.jraw.models.Message;
-import net.dean.jraw.models.Submission;
-
 import javax.inject.Inject;
 
 import dagger.Lazy;
@@ -14,12 +8,8 @@ import io.reactivex.ObservableTransformer;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.ui.UiChange;
 import me.saket.dank.ui.UiEvent;
-import me.saket.dank.ui.submission.events.MarkMessageAsReadRequested;
-import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.SubmissionChanged;
-import me.saket.dank.ui.submission.events.SubmissionCommentSortChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentsLoadFailed;
-import me.saket.dank.ui.submission.events.SubmissionCommentsRefreshClicked;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingCompleted;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingFailed;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingStarted;
@@ -30,9 +20,6 @@ import me.saket.dank.ui.submission.events.SubmissionNsfwContentFiltered;
 import me.saket.dank.ui.submission.events.SubmissionRequestChanged;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadStarted;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadSucceeded;
-import me.saket.dank.ui.submission.events.SubmissionViewFullCommentsClicked;
-import me.saket.dank.utils.DankSubmissionRequest;
-import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import timber.log.Timber;
 
@@ -56,12 +43,13 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
 
     //noinspection unchecked
     return Observable.mergeArray(
-        contentProgressToggles(replayedEvents),
-        changeSortPopupShows(replayedEvents),
-        sortModeChanges(replayedEvents),
-        manualRefreshes(replayedEvents),
-        fullThreadLoads(replayedEvents),
-        markMessageAsReads(replayedEvents));
+        contentProgressToggles(replayedEvents)
+        //changeSortPopupShows(replayedEvents),
+        //sortModeChanges(replayedEvents),
+        //manualRefreshes(replayedEvents),
+        //fullThreadLoads(replayedEvents),
+        //markMessageAsReads(replayedEvents)
+    );
   }
 
   // WARNING: If we ever use this progress toggle for indicating loading of submission,
@@ -136,145 +124,145 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         progressHides.map(o1 -> ui -> ui.hideProgress()));
   }
 
-  private Observable<UiChange<SubmissionUi>> changeSortPopupShows(Observable<UiEvent> events) {
-    Observable<DankSubmissionRequest> requestChanges = events
-        .ofType(SubmissionRequestChanged.class)
-        .map(event -> event.request());
-
-    return events
-        .ofType(SubmissionChangeCommentSortClicked.class)
-        .withLatestFrom(requestChanges, Pair::create)
-        .map(pair -> (UiChange<SubmissionUi>) ui -> ui.showChangeSortPopup(pair.first(), pair.second()));
-  }
-
-  private Observable<UiChange<SubmissionUi>> sortModeChanges(Observable<UiEvent> events) {
-    Observable<DankSubmissionRequest> requestChanges = events
-        .ofType(SubmissionRequestChanged.class)
-        .map(event -> event.request());
-
-    Observable<UiChange<SubmissionUi>> fetchNewRequests = events
-        .ofType(SubmissionCommentSortChanged.class)
-        .map(event -> event.selectedSort())
-        .withLatestFrom(requestChanges, Pair::create)
-        .map(pair -> {
-          CommentSort selectedSort = pair.first();
-          DankSubmissionRequest lastRequest = pair.second();
-          return lastRequest.toBuilder()
-              .commentSort(selectedSort, SelectedBy.USER)
-              .build();
-        })
-        .map(newRequest -> (UiChange<SubmissionUi>) ui -> ui.acceptRequest(newRequest));
-
-    Observable<Submission> submissionChanges = events
-        .ofType(SubmissionChanged.class)
-        .map(event -> event.optionalSubmission())
-        .filter(Optional::isPresent)
-        .map(Optional::get);
-
-    Observable<UiChange<SubmissionUi>> resetComments = events
-        .ofType(SubmissionCommentSortChanged.class)
-        .withLatestFrom(submissionChanges, (__, sub) -> sub)
-        .map(submission -> new Submission(submission.getDataNode()))
-        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
-
-    return resetComments.mergeWith(fetchNewRequests);
-  }
-
-  private Observable<UiChange<SubmissionUi>> manualRefreshes(Observable<UiEvent> events) {
-    Observable<DankSubmissionRequest> requestChanges = events
-        .ofType(SubmissionRequestChanged.class)
-        .map(event -> event.request());
-
-    Observable<Submission> submissionChanges = events
-        .ofType(SubmissionChanged.class)
-        .map(event -> event.optionalSubmission())
-        .filter(Optional::isPresent)
-        .map(Optional::get);
-
-    Observable<SubmissionCommentsRefreshClicked> refreshClicks = events
-        .ofType(SubmissionCommentsRefreshClicked.class);
-
-    Observable<UiChange<SubmissionUi>> resetComments = refreshClicks
-        .withLatestFrom(submissionChanges, (__, sub) -> sub)
-        .map(submission -> new Submission(submission.getDataNode()))
-        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
-
-    Observable<UiChange<SubmissionUi>> fetchNewRequests = refreshClicks
-        .withLatestFrom(requestChanges, (__, lastRequest) -> lastRequest)
-        .flatMap(lastRequest -> submissionRepository.get()
-            .clearCachedSubmissionWithComments(lastRequest)
-            .doOnComplete(() -> Timber.i("Cache cleared"))
-            .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(lastRequest))));
-
-    return resetComments.mergeWith(fetchNewRequests);
-  }
-
-  private Observable<UiChange<SubmissionUi>> fullThreadLoads(Observable<UiEvent> events) {
-    Observable<DankSubmissionRequest> requestChanges = events
-        .ofType(SubmissionRequestChanged.class)
-        .map(event -> event.request());
-
-    Observable<Submission> submissionChanges = events
-        .ofType(SubmissionChanged.class)
-        .map(event -> event.optionalSubmission())
-        .filter(Optional::isPresent)
-        .map(Optional::get);
-
-    Observable<SubmissionViewFullCommentsClicked> viewFullThreadClicks = events
-        .ofType(SubmissionViewFullCommentsClicked.class);
-
-    Observable<UiChange<SubmissionUi>> resetComments = viewFullThreadClicks
-        .withLatestFrom(submissionChanges, (__, sub) -> sub)
-        .map(submission -> new Submission(submission.getDataNode()))
-        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
-
-    Observable<Boolean> openedFromMessages = events
-        .ofType(MarkMessageAsReadRequested.class)
-        .map(o -> true)
-        .startWith(false);
-
-    Observable<UiChange<SubmissionUi>> fetchNewRequests = viewFullThreadClicks
-        .withLatestFrom(requestChanges, (__, request) -> request)
-        .map(request -> request.toBuilder()
-            .focusCommentId(null)
-            .contextCount(null)
-            .build())
-        .withLatestFrom(openedFromMessages, Pair::create)
-        .flatMap(pair -> {
-          DankSubmissionRequest updatedRequest = pair.first();
-          Boolean wasSubmissionOpenedFromMessages = pair.second();
-
-          // If the user is viewing a focused comment, the comments must have
-          // gotten updated, so they're being force invalidated here.
-          if (wasSubmissionOpenedFromMessages) {
-            return submissionRepository.get()
-                .clearCachedSubmissionWithComments(updatedRequest)
-                .andThen(Observable.just(ui -> ui.acceptRequest(updatedRequest)));
-          } else {
-            return Observable.just(ui -> ui.acceptRequest(updatedRequest));
-          }
-        });
-
-    return resetComments.mergeWith(fetchNewRequests);
-  }
-
-  private Observable<UiChange<SubmissionUi>> markMessageAsReads(Observable<UiEvent> events) {
-    Observable<Message> readRequests = events
-        .ofType(MarkMessageAsReadRequested.class)
-        .map(event -> event.message());
-
-    return events
-        .ofType(SubmissionChanged.class)
-        .map(event -> event.optionalSubmission())
-        .filter(Optional::isPresent)
-        .map(Optional::get)
-        // The message for which this submission was opened will
-        // only be marked as read once the comments have been fetched.
-        .filter(submission -> submission.getComments() != null)
-        .withLatestFrom(readRequests, (__, message) -> message)
-        .flatMapCompletable(message -> inboxRepository.get().setRead(message, true))
-        .andThen(Observable.never());
-  }
+//  private Observable<UiChange<SubmissionUi>> changeSortPopupShows(Observable<UiEvent> events) {
+//    Observable<DankSubmissionRequest> requestChanges = events
+//        .ofType(SubmissionRequestChanged.class)
+//        .map(event -> event.request());
+//
+//    return events
+//        .ofType(SubmissionChangeCommentSortClicked.class)
+//        .withLatestFrom(requestChanges, Pair::create)
+//        .map(pair -> (UiChange<SubmissionUi>) ui -> ui.showChangeSortPopup(pair.first(), pair.second()));
+//  }
+//
+//  private Observable<UiChange<SubmissionUi>> sortModeChanges(Observable<UiEvent> events) {
+//    Observable<DankSubmissionRequest> requestChanges = events
+//        .ofType(SubmissionRequestChanged.class)
+//        .map(event -> event.request());
+//
+//    Observable<UiChange<SubmissionUi>> fetchNewRequests = events
+//        .ofType(SubmissionCommentSortChanged.class)
+//        .map(event -> event.selectedSort())
+//        .withLatestFrom(requestChanges, Pair::create)
+//        .map(pair -> {
+//          CommentSort selectedSort = pair.first();
+//          DankSubmissionRequest lastRequest = pair.second();
+//          return lastRequest.toBuilder()
+//              .commentSort(selectedSort, SelectedBy.USER)
+//              .build();
+//        })
+//        .map(newRequest -> (UiChange<SubmissionUi>) ui -> ui.acceptRequest(newRequest));
+//
+//    Observable<Submission> submissionChanges = events
+//        .ofType(SubmissionChanged.class)
+//        .map(event -> event.optionalSubmission())
+//        .filter(Optional::isPresent)
+//        .map(Optional::get);
+//
+//    Observable<UiChange<SubmissionUi>> resetComments = events
+//        .ofType(SubmissionCommentSortChanged.class)
+//        .withLatestFrom(submissionChanges, (__, sub) -> sub)
+//        .map(submission -> new Submission(submission.getDataNode()))
+//        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
+//
+//    return resetComments.mergeWith(fetchNewRequests);
+//  }
+//
+//  private Observable<UiChange<SubmissionUi>> manualRefreshes(Observable<UiEvent> events) {
+//    Observable<DankSubmissionRequest> requestChanges = events
+//        .ofType(SubmissionRequestChanged.class)
+//        .map(event -> event.request());
+//
+//    Observable<Submission> submissionChanges = events
+//        .ofType(SubmissionChanged.class)
+//        .map(event -> event.optionalSubmission())
+//        .filter(Optional::isPresent)
+//        .map(Optional::get);
+//
+//    Observable<SubmissionCommentsRefreshClicked> refreshClicks = events
+//        .ofType(SubmissionCommentsRefreshClicked.class);
+//
+//    Observable<UiChange<SubmissionUi>> resetComments = refreshClicks
+//        .withLatestFrom(submissionChanges, (__, sub) -> sub)
+//        .map(submission -> new Submission(submission.getDataNode()))
+//        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
+//
+//    Observable<UiChange<SubmissionUi>> fetchNewRequests = refreshClicks
+//        .withLatestFrom(requestChanges, (__, lastRequest) -> lastRequest)
+//        .flatMap(lastRequest -> submissionRepository.get()
+//            .clearCachedSubmissionWithComments(lastRequest)
+//            .doOnComplete(() -> Timber.i("Cache cleared"))
+//            .andThen(Observable.<UiChange<SubmissionUi>>just(ui -> ui.acceptRequest(lastRequest))));
+//
+//    return resetComments.mergeWith(fetchNewRequests);
+//  }
+//
+//  private Observable<UiChange<SubmissionUi>> fullThreadLoads(Observable<UiEvent> events) {
+//    Observable<DankSubmissionRequest> requestChanges = events
+//        .ofType(SubmissionRequestChanged.class)
+//        .map(event -> event.request());
+//
+//    Observable<Submission> submissionChanges = events
+//        .ofType(SubmissionChanged.class)
+//        .map(event -> event.optionalSubmission())
+//        .filter(Optional::isPresent)
+//        .map(Optional::get);
+//
+//    Observable<SubmissionViewFullCommentsClicked> viewFullThreadClicks = events
+//        .ofType(SubmissionViewFullCommentsClicked.class);
+//
+//    Observable<UiChange<SubmissionUi>> resetComments = viewFullThreadClicks
+//        .withLatestFrom(submissionChanges, (__, sub) -> sub)
+//        .map(submission -> new Submission(submission.getDataNode()))
+//        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
+//
+//    Observable<Boolean> openedFromMessages = events
+//        .ofType(MarkMessageAsReadRequested.class)
+//        .map(o -> true)
+//        .startWith(false);
+//
+//    Observable<UiChange<SubmissionUi>> fetchNewRequests = viewFullThreadClicks
+//        .withLatestFrom(requestChanges, (__, request) -> request)
+//        .map(request -> request.toBuilder()
+//            .focusCommentId(null)
+//            .contextCount(null)
+//            .build())
+//        .withLatestFrom(openedFromMessages, Pair::create)
+//        .flatMap(pair -> {
+//          DankSubmissionRequest updatedRequest = pair.first();
+//          Boolean wasSubmissionOpenedFromMessages = pair.second();
+//
+//          // If the user is viewing a focused comment, the comments must have
+//          // gotten updated, so they're being force invalidated here.
+//          if (wasSubmissionOpenedFromMessages) {
+//            return submissionRepository.get()
+//                .clearCachedSubmissionWithComments(updatedRequest)
+//                .andThen(Observable.just(ui -> ui.acceptRequest(updatedRequest)));
+//          } else {
+//            return Observable.just(ui -> ui.acceptRequest(updatedRequest));
+//          }
+//        });
+//
+//    return resetComments.mergeWith(fetchNewRequests);
+//  }
+//
+//  private Observable<UiChange<SubmissionUi>> markMessageAsReads(Observable<UiEvent> events) {
+//    Observable<Message> readRequests = events
+//        .ofType(MarkMessageAsReadRequested.class)
+//        .map(event -> event.message());
+//
+//    return events
+//        .ofType(SubmissionChanged.class)
+//        .map(event -> event.optionalSubmission())
+//        .filter(Optional::isPresent)
+//        .map(Optional::get)
+//        // The message for which this submission was opened will
+//        // only be marked as read once the comments have been fetched.
+//        .filter(submission -> submission.getComments() != null)
+//        .withLatestFrom(readRequests, (__, message) -> message)
+//        .flatMapCompletable(message -> inboxRepository.get().setRead(message, true))
+//        .andThen(Observable.never());
+//  }
 
   private void log(String message, Object... args) {
     //Timber.i(message, args);

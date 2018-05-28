@@ -2,7 +2,8 @@ package me.saket.dank.data;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.CommentNode;
+import net.dean.jraw.tree.CommentNode;
+
 
 /**
  * {@link CommentNode#equals(Object)}'s equals() is buggy and often results in an endless loop.
@@ -25,11 +26,11 @@ public abstract class CommentNodeEqualsBandAid {
       return false;
     }
     CommentNodeEqualsBandAid that = (CommentNodeEqualsBandAid) o;
-    return get().getComment().getFullName().equals(that.get().getComment().getFullName());
+    return get().getSubject().getFullName().equals(that.get().getSubject().getFullName());
   }
 
   @Override
   public int hashCode() {
-    return get().getComment().getFullName().hashCode();
+    return get().getSubject().getFullName().hashCode();
   }
 }

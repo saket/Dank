@@ -53,7 +53,7 @@ public class RetryReplyJobService extends DankJobService {
                     .onErrorResumeNext(error -> {
                       // A comment was made on an old submission. This shouldn't happen.
                       // Maybe our blocking of comments for old submission didn't work.
-                      if (error instanceof ApiException && ((ApiException) error).getReason().contains("TOO_OLD")) {
+                      if (error instanceof ApiException && ((ApiException) error).getExplanation().contains("TOO_OLD")) {
                         return Completable.complete();
                       } else {
                         return Completable.error(error);

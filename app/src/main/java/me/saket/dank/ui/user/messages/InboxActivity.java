@@ -27,7 +27,6 @@ import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 
 import net.dean.jraw.models.Message;
-import net.dean.jraw.models.PrivateMessage;
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -41,19 +40,16 @@ import butterknife.OnClick;
 import dagger.Lazy;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
-import me.saket.dank.notifs.MessagesNotificationManager;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
-import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.Arrays2;
-import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Views;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
@@ -70,9 +66,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @BindView(R.id.inbox_message_refresh_status_viewflipper) ViewFlipper refreshStatusViewFlipper;
   @BindView(R.id.inbox_fragment_container) ViewGroup fragmentContainer;
 
-  @Inject UrlRouter urlRouter;
   @Inject Moshi moshi;
-  @Inject MessagesNotificationManager messagesNotifManager;
   @Inject UserSessionRepository userSessionRepository;
   @Inject InboxRepository inboxRepository;
   @Inject Lazy<UrlParser> urlParser;
@@ -241,15 +235,15 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     messageItemViewRect.top = messageItemViewRect.bottom;
 
     if (message.isComment()) {
-      String commentUrl = "https://reddit.com" + message.getDataNode().get(DankRedditClient.CONTEXT_QUERY_PARAM).asText();
+      String commentUrl = "https://reddit.com" + message.getContext();
       RedditSubmissionLink parsedLink = (RedditSubmissionLink) urlParser.get().parse(commentUrl);
       startActivity(SubmissionPageLayoutActivity.intent(this, parsedLink, null, message));
 
     } else {
-      String secondPartyName = JrawUtils.secondPartyName(getResources(), message, userSessionRepository.loggedInUserName());
+      String secondPartyName = JrawUtils2.INSTANCE.secondPartyName(getResources(), message, userSessionRepository.loggedInUserName());
       //noinspection ConstantConditions
       startActivityForResult(
-          PrivateMessageThreadActivity.intent(this, (PrivateMessage) message, secondPartyName, messageItemViewRect),
+          PrivateMessageThreadActivity.intent(this, message, secondPartyName, messageItemViewRect),
           REQUESTCODE_REFRESH_MESSAGES_THREAD_ON_EXIT
       );
     }

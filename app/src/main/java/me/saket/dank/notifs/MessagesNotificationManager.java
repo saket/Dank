@@ -35,10 +35,9 @@ import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.InboxRepository;
-import me.saket.dank.di.Dank;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxMessageType;
-import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Strings;
 import me.saket.dank.utils.markdown.Markdown;
 import timber.log.Timber;
@@ -245,7 +244,7 @@ public class MessagesNotificationManager {
         Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
 
         // Direct reply action.
-        Intent directReplyIntent = MessageNotifActionReceiver.createDirectReplyIntent(context, unreadMessage, Dank.moshi(), notificationId);
+        Intent directReplyIntent = MessageNotifActionReceiver.createDirectReplyIntent(context, unreadMessage, moshi.get(), notificationId);
         PendingIntent directReplyPendingIntent = PendingIntent.getBroadcast(
             context,
             (int) System.nanoTime(),
@@ -295,7 +294,7 @@ public class MessagesNotificationManager {
             .setContentText(markdownStrippedBody)
             .setStyle(new NotificationCompat.BigTextStyle().bigText(markdownStrippedBody))
             .setShowWhen(true)
-            .setWhen(JrawUtils.createdTimeUtc(unreadMessage))
+            .setWhen(JrawUtils2.INSTANCE.createdTimeUtc(unreadMessage))
             .setSmallIcon(R.drawable.ic_status_bar_24dp)
             .setGroup(NotificationConstants.UNREAD_MESSAGE_BUNDLE_NOTIFS_GROUP_KEY)
             .setAutoCancel(true)
@@ -411,7 +410,7 @@ public class MessagesNotificationManager {
   }
 
   private PendingIntent createMarkAsReadPendingIntent(Context context, Message unreadMessage, int requestId) {
-    Intent markAsReadIntent = MessageNotifActionReceiver.createMarkAsReadIntent(context, Dank.moshi(), unreadMessage);
+    Intent markAsReadIntent = MessageNotifActionReceiver.createMarkAsReadIntent(context, moshi.get(), unreadMessage);
     return PendingIntent.getBroadcast(context, requestId, markAsReadIntent, PendingIntent.FLAG_UPDATE_CURRENT);
   }
 

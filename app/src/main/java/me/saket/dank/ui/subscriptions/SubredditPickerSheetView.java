@@ -31,10 +31,10 @@ import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.FrameLayout;
 
-import com.google.common.collect.ImmutableList;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import javax.inject.Inject;
@@ -52,8 +52,8 @@ import io.reactivex.disposables.CompositeDisposable;
 import io.reactivex.functions.Action;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.ui.subreddit.SubredditActivity;
 import me.saket.dank.ui.subreddit.Subscribeable;
 import me.saket.dank.ui.user.UserSessionRepository;
@@ -92,7 +92,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
   @BindColor(R.color.subredditpicker_subreddit_button_tint_selected) int focusedSubredditButtonTintColor;
 
   @Inject Lazy<SubscriptionRepository> subscriptionRepository;
-  @Inject Lazy<DankRedditClient> dankRedditClient;
+  @Inject Lazy<Reddit> reddit;
   @Inject Lazy<UserSessionRepository> userSessionRepository;
 
   private ViewGroup activityRootLayout;
@@ -248,10 +248,10 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
               }
 
               if (!exactSearchFound) {
-                return ImmutableList.<SubredditSubscription>builder()
-                    .addAll(filteredSubs)
-                    .add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false))
-                    .build();
+                ArrayList<SubredditSubscription> filteredSubsWithQuery = new ArrayList<>(filteredSubs.size() + 1);
+                filteredSubsWithQuery.addAll(filteredSubs);
+                filteredSubsWithQuery.add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false));
+                return Collections.unmodifiableList(filteredSubsWithQuery);
               }
             }
           }
@@ -441,7 +441,7 @@ public class SubredditPickerSheetView extends FrameLayout implements SubredditAd
     unsubscribeItem.setVisible(!subscriptionRepository.get().isFrontpage(subscription.name()));
 
     if (userSessionRepository.get().isUserLoggedIn()) {
-      boolean needsRemoteSubscription = dankRedditClient.get().needsRemoteSubscription(subscription.name());
+      boolean needsRemoteSubscription = reddit.get().subscriptions().needsRemoteSubscription(subscription.name());
       unsubscribeItem.setTitle(needsRemoteSubscription ? R.string.subredditpicker_unsubscribe : R.string.subredditpicker_remove);
     } else {
       unsubscribeItem.setTitle(R.string.subredditpicker_remove);

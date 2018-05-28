@@ -2,14 +2,14 @@ package me.saket.dank.ui.submission.events;
 
 import com.google.auto.value.AutoValue;
 
-import me.saket.dank.data.ContributionFullNameWrapper;
+import net.dean.jraw.models.Identifiable;
 
 @AutoValue
 public abstract class ReplyDiscardClickEvent {
 
-  public abstract ContributionFullNameWrapper parentContribution();
+  public abstract Identifiable parent();
 
-  public static ReplyDiscardClickEvent create(ContributionFullNameWrapper parentContribution) {
+  public static ReplyDiscardClickEvent create(Identifiable parentContribution) {
     return new AutoValue_ReplyDiscardClickEvent(parentContribution);
   }
 }

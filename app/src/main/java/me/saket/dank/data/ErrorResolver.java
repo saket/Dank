@@ -68,7 +68,7 @@ public class ErrorResolver {
           R.string.common_imgur_rate_limit_error_emoji,
           R.string.common_imgur_upload_rate_limit_error_message);
 
-    } else if (error instanceof CancellationException || error instanceof InterruptedIOException) {
+    } else if (error instanceof CancellationException || error instanceof InterruptedIOException || error instanceof InterruptedException) {
       return ResolvedError.create(
           ResolvedError.Type.CANCELATION,
           R.string.common_error_cancelation_emoji,

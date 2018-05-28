@@ -9,20 +9,21 @@ import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.Comment;
-import net.dean.jraw.models.Contribution;
-import net.dean.jraw.models.PublicContribution;
+import net.dean.jraw.models.Identifiable;
 import net.dean.jraw.models.Submission;
+import net.dean.jraw.models.Votable;
 import net.dean.jraw.models.VoteDirection;
 
 import java.util.List;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Observable;
 import me.saket.dank.BuildConfig;
-import me.saket.dank.data.DankRedditClient;
 import me.saket.dank.di.Dank;
+import me.saket.dank.reddit.Reddit;
 import timber.log.Timber;
 
 /**
@@ -39,9 +40,9 @@ public class VotingManager {
   private static final String KEY_PENDING_VOTE_ = "pendingVote_";
 
   private final Application appContext;
-  private final DankRedditClient dankRedditClient;
-  private final SharedPreferences sharedPrefs;
-  private final Moshi moshi;
+  private final Lazy<Reddit> reddit;
+  private final Lazy<SharedPreferences> sharedPrefs;
+  private final Lazy<Moshi> moshi;
 
   /**
    * @param appContext Used for scheduling {@link VoteJobService}.
@@ -49,12 +50,12 @@ public class VotingManager {
   @Inject
   public VotingManager(
       Application appContext,
-      DankRedditClient dankRedditClient,
-      @Named("votes") SharedPreferences sharedPrefs,
-      Moshi moshi)
+      Lazy<Reddit> reddit,
+      @Named("votes") Lazy<SharedPreferences> sharedPrefs,
+      Lazy<Moshi> moshi)
   {
     this.appContext = appContext;
-    this.dankRedditClient = dankRedditClient;
+    this.reddit = reddit;
     this.sharedPrefs = sharedPrefs;
     this.moshi = moshi;
   }
@@ -63,9 +64,9 @@ public class VotingManager {
   public Observable<Object> streamChanges() {
     return Observable.create(emitter -> {
       SharedPreferences.OnSharedPreferenceChangeListener changeListener = (sharedPreferences, key) -> emitter.onNext(key);
-      sharedPrefs.registerOnSharedPreferenceChangeListener(changeListener);
-      emitter.setCancellable(() -> sharedPrefs.unregisterOnSharedPreferenceChangeListener(changeListener));
-      changeListener.onSharedPreferenceChanged(sharedPrefs, "");    // Initial value.
+      sharedPrefs.get().registerOnSharedPreferenceChangeListener(changeListener);
+      emitter.setCancellable(() -> sharedPrefs.get().unregisterOnSharedPreferenceChangeListener(changeListener));
+      changeListener.onSharedPreferenceChanged(sharedPrefs.get(), "");    // Initial value.
     });
   }
 
@@ -78,7 +79,7 @@ public class VotingManager {
     // Mark the vote as pending immediately so that getPendingVote() can be used immediately after calling vote().
     markVoteAsPending(vote.contributionToVote(), vote.direction());
 
-    return vote.sendToRemote(dankRedditClient)
+    return vote.sendToRemote(reddit.get())
 //        .doOnSubscribe(o -> Timber.i("Voting for %s…", contributionToVote.fullName()()))
 //        .doOnComplete(() -> Timber.i("Voting done for %s", contributionToVote.fullName()()))
         ;
@@ -97,17 +98,17 @@ public class VotingManager {
           // TODO: Reddit replies with 400 bad request for archived submissions.
 
           boolean tooManyRequestsError = error instanceof NetworkException
-              && ((NetworkException) error).getResponse().getStatusCode() == HTTP_CODE_TOO_MANY_REQUESTS;
+              && ((NetworkException) error).getRes().getCode() == HTTP_CODE_TOO_MANY_REQUESTS;
 
           if (tooManyRequestsError || !Dank.errors().resolve(error).isUnknown()) {
             // If unknown, this will most probably be network/Reddit errors. Swallow the error and attempt retries later.
             Timber.i("Voting failed for %s. Will retry again later. Error: %s", vote.contributionToVote().getFullName(), error.getMessage());
-            VoteJobService.scheduleRetry(appContext, vote.contributionToVote(), vote.direction(), moshi);
+            VoteJobService.scheduleRetry(appContext, vote.contributionToVote(), vote.direction(), moshi.get());
             shouldComplete = true;
 
           } else {
             shouldComplete = error instanceof NetworkException
-                && ((NetworkException) error).getResponse().getStatusCode() == HTTP_CODE_CONTRIBUTION_DELETED;
+                && ((NetworkException) error).getRes().getCode() == HTTP_CODE_CONTRIBUTION_DELETED;
           }
 
           return shouldComplete;
@@ -126,7 +127,7 @@ public class VotingManager {
             "Expected to be called on a background thread but was " + Thread.currentThread().getName());
       }
 
-      SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.edit();
+      SharedPreferences.Editor sharedPrefsEditor = sharedPrefs.get().edit();
       for (Submission submission : submissionsFromRemote) {
         if (isVotePending(submission)) {
           //Timber.i("Removing stale pending vote for %s", ((Submission) submission).getTitle());
@@ -137,16 +138,20 @@ public class VotingManager {
     });
   }
 
-  public VoteDirection getPendingOrDefaultVote(Contribution votableContribution, VoteDirection defaultValue) {
-    return VoteDirection.valueOf(sharedPrefs.getString(keyFor(votableContribution), defaultValue.name()));
+  public <T extends Votable & Identifiable> VoteDirection getPendingOrDefaultVote(T votableContribution, VoteDirection defaultValue) {
+    return VoteDirection.valueOf(sharedPrefs.get().getString(keyFor(votableContribution), defaultValue.name()));
   }
 
-  public boolean isVotePending(Contribution votableContribution) {
-    return sharedPrefs.contains(keyFor(votableContribution));
+//  public boolean isVotePending(Identifiable votableContribution) {
+//    return sharedPrefs.get().contains(keyFor(votableContribution));
+//  }
+
+  public boolean isVotePending(Identifiable identifiable) {
+    return sharedPrefs.get().contains(keyFor(identifiable));
   }
 
-  private void markVoteAsPending(Contribution votableContribution, VoteDirection voteDirection) {
-    sharedPrefs.edit().putString(keyFor(votableContribution), voteDirection.name()).apply();
+  private void markVoteAsPending(Identifiable votableContribution, VoteDirection voteDirection) {
+    sharedPrefs.get().edit().putString(keyFor(votableContribution), voteDirection.name()).apply();
   }
 
   @CheckResult
@@ -157,14 +162,14 @@ public class VotingManager {
 
     return Completable.fromAction(() ->
         // VotingManager uses a dedicated shared prefs file so we can safely clear everything.
-        sharedPrefs.edit().clear().apply()
+        sharedPrefs.get().edit().clear().apply()
     );
   }
 
   /**
    * Get <var>thing</var>'s score assuming that any pending vote has been synced with remote.
    */
-  public int getScoreAfterAdjustingPendingVote(PublicContribution votableContribution) {
+  public <T extends Votable & Identifiable> int getScoreAfterAdjustingPendingVote(T votableContribution) {
     if (!isVotePending(votableContribution)) {
       return votableContribution.getScore();
     }
@@ -178,27 +183,27 @@ public class VotingManager {
 
     int resultingScore = votableContribution.getScore();
     switch (pendingVoteDirection) {
-      case UPVOTE:
+      case UP:
         resultingScore += 1;
         break;
 
-      case DOWNVOTE:
+      case DOWN:
         resultingScore -= 1;
         break;
 
       default:
-      case NO_VOTE:
+      case NONE:
         switch (votableContribution.getVote()) {
-          case UPVOTE:
+          case UP:
             resultingScore -= 1;
             break;
 
-          case DOWNVOTE:
+          case DOWN:
             resultingScore += 1;
             break;
 
           default:
-          case NO_VOTE:
+          case NONE:
             throw new AssertionError();
         }
         break;
@@ -211,7 +216,7 @@ public class VotingManager {
     return KEY_PENDING_VOTE_ + contributionFullName;
   }
 
-  private String keyFor(Contribution contribution) {
+  private String keyFor(Identifiable contribution) {
     return keyFor(contribution.getFullName());
   }
 }

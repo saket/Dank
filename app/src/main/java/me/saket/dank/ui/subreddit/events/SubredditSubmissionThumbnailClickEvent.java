@@ -40,7 +40,7 @@ public abstract class SubredditSubmissionThumbnailClickEvent {
       case MEDIA_ALBUM:
         urlRouter
             .forLink(((MediaLink) contentLink))
-            .withRedditSuppliedImages(submission.getThumbnails())
+            .withRedditSuppliedImages(submission.getPreview())
             .open(itemView().getContext());
         break;
 

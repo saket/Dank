@@ -12,9 +12,7 @@ import android.widget.Toast;
 
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.models.CommentMessage;
 import net.dean.jraw.models.Message;
-import net.dean.jraw.models.PrivateMessage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,7 +31,7 @@ import me.saket.dank.ui.user.messages.InboxFolder;
 import me.saket.dank.ui.user.messages.PrivateMessageThreadActivity;
 import me.saket.dank.urlparser.RedditSubmissionLink;
 import me.saket.dank.urlparser.UrlParser;
-import me.saket.dank.utils.JrawUtils;
+import me.saket.dank.utils.JrawUtils2;
 import timber.log.Timber;
 
 /**
@@ -50,6 +48,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
   @Inject Lazy<UserSessionRepository> userSessionRepository;
   @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<UrlRouter> urlRouter;
+  @Inject Lazy<Moshi> moshi;
 
   public enum NotificationAction {
     DIRECT_REPLY,
@@ -174,10 +173,10 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
 
                     // Send button is only enabled when the message is non-empty.
                     //noinspection ConstantConditions
-                    MessageNotifActionsJobService.sendDirectReply(context, message, Dank.moshi(), replyText);
+                    MessageNotifActionsJobService.sendDirectReply(context, message, moshi.get(), replyText);
                   })
                   .andThen(Dank.messagesNotifManager().markMessageNotifAsSeen(message))
-                  .andThen(Completable.fromAction(() -> MessageNotifActionsJobService.markAsRead(context, Dank.moshi(), message)))
+                  .andThen(Completable.fromAction(() -> MessageNotifActionsJobService.markAsRead(context, moshi.get(), message)))
                   .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.refreshNotifications(context)))
                   .andThen(Dank.messagesNotifManager().dismissNotification(context, message));
             })
@@ -194,7 +193,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
         parseMessageArray(intent.getStringExtra(INTENT_KEY_MESSAGE_ARRAY_JSON))
             .flatMapCompletable(messages -> Dank.messagesNotifManager().markMessageNotifAsSeen(messages)
                 .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.refreshNotifications(context)))
-                .andThen(Completable.fromAction(() -> MessageNotifActionsJobService.markAsRead(context, Dank.moshi(), messages)))
+                .andThen(Completable.fromAction(() -> MessageNotifActionsJobService.markAsRead(context, moshi.get(), messages)))
                 .andThen(Dank.messagesNotifManager().dismissNotification(context, messages))
             )
             .subscribe();
@@ -245,7 +244,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
               Intent openIntent;
 
               if (message.isComment()) {
-                String messageUrlPath = JrawUtils.commentMessageContextUrl(((CommentMessage) message));
+                String messageUrlPath = message.getContext();
                 String messageUrl = "https://reddit.com" + messageUrlPath;
                 RedditSubmissionLink commentLink = (RedditSubmissionLink) urlParser.get().parse(messageUrl);
                 openIntent = SubmissionPageLayoutActivity.intent(context, commentLink, null, message);
@@ -254,8 +253,8 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
                 Timber.i("commentLink: %s", commentLink);
 
               } else {
-                String secondPartyName = JrawUtils.secondPartyName(context.getResources(), message, userSessionRepository.get().loggedInUserName());
-                openIntent = PrivateMessageThreadActivity.intent(context, (PrivateMessage) message, secondPartyName, null);
+                String secondPartyName = JrawUtils2.INSTANCE.secondPartyName(context.getResources(), message, userSessionRepository.get().loggedInUserName());
+                openIntent = PrivateMessageThreadActivity.intent(context, message, secondPartyName, null);
               }
 
               openIntent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
@@ -271,11 +270,11 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
 
   @CheckResult
   private Single<Message> parseMessage(String messageJson) {
-    return Single.fromCallable(() -> Dank.moshi().adapter(Message.class).fromJson(messageJson));
+    return Single.fromCallable(() -> moshi.get().adapter(Message.class).fromJson(messageJson));
   }
 
   @CheckResult
   private Single<Message[]> parseMessageArray(String messageArrayJson) {
-    return Single.fromCallable(() -> Dank.moshi().adapter(Message[].class).fromJson(messageArrayJson));
+    return Single.fromCallable(() -> moshi.get().adapter(Message[].class).fromJson(messageArrayJson));
   }
 }

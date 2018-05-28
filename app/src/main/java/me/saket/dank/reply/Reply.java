@@ -2,11 +2,11 @@ package me.saket.dank.reply;
 
 import com.google.auto.value.AutoValue;
 
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Identifiable;
 
 import io.reactivex.Completable;
 import io.reactivex.Single;
-import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.ui.submission.ParentThread;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.walkthrough.SyntheticData;
@@ -14,7 +14,7 @@ import timber.log.Timber;
 
 public interface Reply {
 
-  Contribution parentContribution();
+  Identifiable parent();
 
   ParentThread parentThread();
 
@@ -25,27 +25,27 @@ public interface Reply {
   Completable saveAndSend(ReplyRepository replyRepository);
 
   /**
-   * @return Fullname of the posted reply.
+   * @return Full-name of the posted reply.
    */
-  Single<String> sendToRemote(DankRedditClient dankRedditClient);
+  Single<Identifiable> sendToRemote(Reddit reddit);
 
   default PendingSyncReply toPendingSync(UserSessionRepository userSessionRepository, long sentTimeMillis) {
     return PendingSyncReply.create(
         body(),
         PendingSyncReply.State.POSTING,
         parentThread().fullName(),
-        parentContribution().getFullName(),
+        parent().getFullName(),
         userSessionRepository.loggedInUserName(),
         createdTimeMillis(),
         sentTimeMillis
     );
   }
 
-  static Reply create(Contribution parentContribution, ParentThread parentThread, String body, long createdTimeMillis) {
-    if (parentThread.fullName().equalsIgnoreCase(SyntheticData.SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH)) {
-      return new AutoValue_Reply_NoOpReply(parentContribution, parentThread, body, createdTimeMillis);
+  static Reply create(Identifiable parent, ParentThread parentThread, String body, long createdTimeMillis) {
+    if (parentThread.fullName().equalsIgnoreCase(SyntheticData.Companion.getSUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH())) {
+      return new AutoValue_Reply_NoOpReply(parent, parentThread, body, createdTimeMillis);
     }
-    return new AutoValue_Reply_RealReply(parentContribution, parentThread, body, createdTimeMillis);
+    return new AutoValue_Reply_RealReply(parent, parentThread, body, createdTimeMillis);
   }
 
   @AutoValue
@@ -56,13 +56,13 @@ public interface Reply {
       return replyRepository.sendReply(this);
     }
 
-    public Single<String> sendToRemote(DankRedditClient dankRedditClient) {
-      return dankRedditClient.withAuth(Single.fromCallable(() -> {
-        String postedReplyId = dankRedditClient.userAccountManager().reply(parentContribution(), body());
-        String postedFullName = parentThread().type().fullNamePrefix() + postedReplyId;
-        Timber.i("Posted full-name: %s", postedFullName);
-        return postedFullName;
-      }));
+    public Single<Identifiable> sendToRemote(Reddit reddit) {
+      return reddit.loggedInUser()
+          .reply(parent(), body())
+          .map(postedReply -> {
+            Timber.i("Posted full-name: %s", postedReply.getFullName());
+            return postedReply;
+          });
     }
   }
 
@@ -76,7 +76,7 @@ public interface Reply {
     }
 
     @Override
-    public Single<String> sendToRemote(DankRedditClient dankRedditClient) {
+    public Single<Identifiable> sendToRemote(Reddit reddit) {
       return Single.error(new AssertionError("Shouldn't even reach here"));
     }
   }

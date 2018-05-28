@@ -6,7 +6,8 @@ import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
 
 /**
- * Thread == submission comment thread or private message thread.
+ * Thread == submission comment thread or private message thread. For a comment, this
+ * will be a submission. For a message, this will be the parent conversation thread.
  */
 @AutoValue
 public abstract class ParentThread {

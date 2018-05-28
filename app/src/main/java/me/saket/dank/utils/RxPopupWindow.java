@@ -63,6 +63,7 @@ public final class RxPopupWindow {
       public void onDismiss() {
         if (!isDisposed()) {
           observer.onNext(Notification.INSTANCE);
+          observer.onComplete();
         }
       }
 

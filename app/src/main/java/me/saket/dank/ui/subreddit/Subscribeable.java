@@ -5,15 +5,15 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.Subreddit;
 
 import io.reactivex.Completable;
-import me.saket.dank.data.DankRedditClient;
+import me.saket.dank.reddit.Reddit;
 
 public interface Subscribeable {
 
   String displayName();
 
-  Completable subscribe(DankRedditClient redditClient);
+  Completable subscribe(Reddit.Subscriptions subscriptions);
 
-  Completable unsubscribe(DankRedditClient redditClient);
+  Completable unsubscribe(Reddit.Subscriptions subscriptions);
 
   static Subscribeable create(Subreddit subreddit) {
     return RemoteSubscribeable.create(subreddit);
@@ -29,17 +29,17 @@ public interface Subscribeable {
 
     @Override
     public String displayName() {
-      return actual().getDisplayName();
+      return actual().getName();
     }
 
     @Override
-    public Completable subscribe(DankRedditClient redditClient) {
-      return redditClient.subscribeTo(actual());
+    public Completable subscribe(Reddit.Subscriptions subscriptions) {
+      return subscriptions.add(actual());
     }
 
     @Override
-    public Completable unsubscribe(DankRedditClient redditClient) {
-      return redditClient.unsubscribeFrom(actual());
+    public Completable unsubscribe(Reddit.Subscriptions subscriptions) {
+      return subscriptions.remove(actual());
     }
 
     public static RemoteSubscribeable create(Subreddit subreddit) {
@@ -52,12 +52,12 @@ public interface Subscribeable {
     @Override
     public abstract String displayName();
 
-    public Completable subscribe(DankRedditClient redditClient) {
+    public Completable subscribe(Reddit.Subscriptions subscriptions) {
       return Completable.complete();
     }
 
     @Override
-    public Completable unsubscribe(DankRedditClient redditClient) {
+    public Completable unsubscribe(Reddit.Subscriptions subscriptions) {
       return Completable.complete();
     }
 

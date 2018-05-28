@@ -51,7 +51,7 @@ public abstract class SubmissionOptionSwipeEvent implements SwipeEvent {
 
   private void showPopup(Optional<String> optionalCallingSubreddit, Point showLocation) {
     boolean showVisitSubredditOption = optionalCallingSubreddit
-        .map(name -> !submission().getSubredditName().equals(name))
+        .map(name -> !submission().getSubreddit().equals(name))
         .orElse(true);
 
     SubmissionOptionsPopup optionsMenu = SubmissionOptionsPopup.builder(itemView().getContext(), submission())

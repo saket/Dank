@@ -74,6 +74,16 @@ android {
     abortOnError false
     ignoreWarnings true
   }
+
+  androidExtensions {
+    experimental = true
+  }
+}
+
+tasks.withType(org.jetbrains.kotlin.gradle.tasks.KotlinCompile).all {
+  kotlinOptions {
+    jvmTarget = "1.8"
+  }
 }
 
 dependencies {
@@ -106,8 +116,12 @@ dependencies {
   implementation "com.jakewharton.timber:timber:$versions.timber"
   implementation "com.jakewharton:butterknife:$versions.butterKnife"
   kapt "com.jakewharton:butterknife-compiler:$versions.butterKnife"
+  implementation('com.github.JakeWharton:kotterknife:e157638df1') {
+    exclude group: 'com.android.support'
+  }
   implementation 'io.reactivex.rxjava2:rxjava:2.1.7'
   implementation 'io.reactivex.rxjava2:rxandroid:2.0.1'
+  implementation 'io.reactivex.rxjava2:rxkotlin:2.2.0'
   implementation "com.jakewharton.rxbinding2:rxbinding:$versions.rxBindings"
   implementation "com.jakewharton.rxbinding2:rxbinding-recyclerview-v7:$versions.rxBindings"
   implementation "com.jakewharton.rxbinding2:rxbinding-support-v4:$versions.rxBindings"
@@ -124,6 +138,9 @@ dependencies {
   kapt "com.github.bumptech.glide:compiler:$versions.glide"
   implementation "com.github.bumptech.glide:okhttp3-integration:$versions.glide"
   implementation 'com.squareup.sqlbrite2:sqlbrite:2.0.0'
+  implementation "android.arch.persistence.room:runtime:$versions.room"
+  kapt "android.arch.persistence.room:compiler:$versions.room"
+  implementation "android.arch.persistence.room:rxjava2:$versions.room"
   implementation 'com.google.android:flexbox:0.3.0'
   implementation 'com.github.zagum:Android-ExpandIcon:1.1.1'
   implementation 'me.saket:better-link-movement-method:2.2.0'
@@ -148,7 +165,10 @@ dependencies {
   implementation "org.threeten:threetenbp:1.3.6:no-tzdb"
   implementation "com.gabrielittner.threetenbp:lazythreetenbp:0.3.0"
 
-  implementation 'com.github.Saketme:JRAW:bd20b3e581'
+  implementation 'com.github.saket:jraw:70be7eb9c8'
+  implementation ("net.dean.jraw:JRAW-Android:1.0.0") {
+    exclude group: 'net.dean.jraw'
+  }
   implementation 'com.alexvasilkov:gesture-views:2.2.0'
   implementation 'com.github.saketme:exomedia:530dfac84c'
   implementation 'com.danikula:videocache:2.6.4'

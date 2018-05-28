@@ -8,7 +8,10 @@ import com.f2prateek.rx.preferences2.RxSharedPreferences;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import dagger.Lazy;
+import io.reactivex.Completable;
 import io.reactivex.Observable;
+import me.saket.dank.reddit.Reddit;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Preconditions;
 
@@ -20,16 +23,25 @@ public class UserSessionRepository {
   private static final String KEY_LOGGED_IN_USERNAME = "logged_in_username";
   private static final String EMPTY = "";
 
+  private Lazy<Reddit> reddit;
   private final Preference<String> loggedInUsername;
 
   @Inject
-  public UserSessionRepository(@Named("user_session") RxSharedPreferences rxSharedPreferences) {
+  public UserSessionRepository(Lazy<Reddit> reddit, @Named("user_session") RxSharedPreferences rxSharedPreferences) {
+    this.reddit = reddit;
     loggedInUsername = rxSharedPreferences.getString(KEY_LOGGED_IN_USERNAME, EMPTY);
   }
 
   public void setLoggedInUsername(String username) {
     Preconditions.checkNotNull(username, "username == null");
     loggedInUsername.set(username);
+  }
+
+  public Completable logout() {
+    return reddit.get()
+        .loggedInUser()
+        .logout()
+        .andThen(Completable.fromAction(() -> removeLoggedInUsername()));
   }
 
   public void removeLoggedInUsername() {

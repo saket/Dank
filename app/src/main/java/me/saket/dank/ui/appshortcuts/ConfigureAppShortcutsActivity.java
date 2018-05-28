@@ -25,7 +25,6 @@ import android.widget.Toast;
 import android.widget.ViewFlipper;
 
 import com.airbnb.deeplinkdispatch.DeepLink;
-import com.google.common.collect.ImmutableList;
 import com.jakewharton.rxbinding2.support.v7.widget.RxRecyclerView;
 import com.jakewharton.rxbinding2.widget.RxTextView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
@@ -352,10 +351,10 @@ public class ConfigureAppShortcutsActivity extends DankActivity {
       }
 
       if (!exactSearchFound) {
-        return ImmutableList.<SubredditSubscription>builder()
-            .addAll(filteredSubs)
-            .add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false))
-            .build();
+        ArrayList<SubredditSubscription> filteredSubsWithQuery = new ArrayList<>(filteredSubs.size() + 1);
+        filteredSubsWithQuery.addAll(filteredSubs);
+        filteredSubsWithQuery.add(SubredditSubscription.create(searchTerm, SubredditSubscription.PendingState.NONE, false));
+        return Collections.unmodifiableList(filteredSubsWithQuery);
       }
     }
     return filteredSubs;

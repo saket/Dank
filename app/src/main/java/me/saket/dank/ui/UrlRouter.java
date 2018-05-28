@@ -14,7 +14,7 @@ import android.widget.Toast;
 
 import com.f2prateek.rx.preferences2.Preference;
 
-import net.dean.jraw.models.Thumbnails;
+import net.dean.jraw.models.SubmissionPreview;
 
 import javax.inject.Inject;
 import javax.inject.Singleton;
@@ -34,21 +34,16 @@ import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.DeviceInfo;
 import me.saket.dank.utils.Intents;
-import me.saket.dank.utils.JacksonHelper;
 import me.saket.dank.utils.Optional;
 import timber.log.Timber;
 
 @Singleton
 public class UrlRouter {
 
-  private final JacksonHelper jacksonHelper;
-  private final DeviceInfo deviceInfo;
   private final Preference<DefaultWebBrowser> defaultWebBrowserPref;
 
   @Inject
-  protected UrlRouter(JacksonHelper jacksonHelper, DeviceInfo deviceInfo, Preference<DefaultWebBrowser> defaultWebBrowserPref) {
-    this.jacksonHelper = jacksonHelper;
-    this.deviceInfo = deviceInfo;
+  protected UrlRouter(DeviceInfo deviceInfo, Preference<DefaultWebBrowser> defaultWebBrowserPref) {
     this.defaultWebBrowserPref = defaultWebBrowserPref;
   }
 
@@ -57,10 +52,10 @@ public class UrlRouter {
   }
 
   /**
-   * For cases where {@link MediaIntentRouter#withRedditSuppliedImages(Thumbnails)} cab be used.
+   * For cases where {@link MediaIntentRouter#withRedditSuppliedImages(SubmissionPreview)} cab be used.
    */
   public MediaIntentRouter forLink(MediaLink mediaLink) {
-    return new MediaIntentRouter(mediaLink, jacksonHelper);
+    return new MediaIntentRouter(mediaLink);
   }
 
   public IntentRouter forLink(Link link) {
@@ -71,22 +66,18 @@ public class UrlRouter {
       Timber.w("Consider using forLink(MediaLink) instead");
       new Exception().printStackTrace();
     }
-    return new IntentRouter(link, jacksonHelper, deviceInfo, defaultWebBrowserPref);
+    return new IntentRouter(link, defaultWebBrowserPref);
   }
 
   public static class IntentRouter {
     private final Link link;
-    private final JacksonHelper jacksonHelper;
-    private final DeviceInfo deviceInfo;
     private final Preference<DefaultWebBrowser> defaultWebBrowserPref;
 
     @Nullable private Point expandFromPoint;
     @Nullable private Rect expandFromRect;
 
-    private IntentRouter(Link link, JacksonHelper jacksonHelper, DeviceInfo deviceInfo, Preference<DefaultWebBrowser> defaultWebBrowserPref) {
+    private IntentRouter(Link link, Preference<DefaultWebBrowser> defaultWebBrowserPref) {
       this.link = link;
-      this.jacksonHelper = jacksonHelper;
-      this.deviceInfo = deviceInfo;
       this.defaultWebBrowserPref = defaultWebBrowserPref;
     }
 
@@ -124,7 +115,7 @@ public class UrlRouter {
         throw new IllegalStateException("Use UserProfilePopup instead");
 
       } else if (link instanceof MediaLink) {
-        return MediaAlbumViewerActivity.intent(context, ((MediaLink) link), null, jacksonHelper);
+        return MediaAlbumViewerActivity.intent(context, ((MediaLink) link), null);
 
       } else if (link.isExternal()) {
         String url = link.unparsedUrl();
@@ -168,13 +159,11 @@ public class UrlRouter {
 
   public static class MediaIntentRouter {
 
-    @Nullable private Thumbnails redditSuppliedImages;
+    @Nullable private SubmissionPreview redditPreview;
     private final MediaLink link;
-    private final JacksonHelper jacksonHelper;
 
-    private MediaIntentRouter(MediaLink link, JacksonHelper jacksonHelper) {
+    private MediaIntentRouter(MediaLink link) {
       this.link = link;
-      this.jacksonHelper = jacksonHelper;
     }
 
     /**
@@ -182,13 +171,13 @@ public class UrlRouter {
      * as low-quality URL, but that wouldn't work. The logic for filtering reddit's images is
      * done based on the display width, which will change on config changes.
      */
-    public MediaIntentRouter withRedditSuppliedImages(@Nullable Thumbnails redditSuppliedImages) {
-      this.redditSuppliedImages = redditSuppliedImages;
+    public MediaIntentRouter withRedditSuppliedImages(@Nullable SubmissionPreview redditPreview) {
+      this.redditPreview = redditPreview;
       return this;
     }
 
     public void open(Context context) {
-      context.startActivity(MediaAlbumViewerActivity.intent(context, link, redditSuppliedImages, jacksonHelper));
+      context.startActivity(MediaAlbumViewerActivity.intent(context, link, redditPreview));
     }
   }
 
