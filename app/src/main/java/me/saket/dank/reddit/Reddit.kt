@@ -54,6 +54,8 @@ interface Reddit {
     @Deprecated(replaceWith = ReplaceWith("find()"), level = DeprecationLevel.WARNING, message = "Use find() instead")
     fun findOld(subredditName: String): Single<Subscribeable>
 
+    fun parseSubmissionPaginationError(error: Throwable): SubredditSearchResult
+
     fun submissions(
         subredditName: String,
         isFrontpage: Boolean,
