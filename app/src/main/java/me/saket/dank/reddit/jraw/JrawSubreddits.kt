@@ -5,6 +5,7 @@ import io.reactivex.Single
 import me.saket.dank.reddit.Reddit
 import me.saket.dank.ui.subreddit.SubredditSearchResult
 import me.saket.dank.ui.subreddit.Subscribeable
+import net.dean.jraw.ApiException
 import net.dean.jraw.RedditClient
 import net.dean.jraw.http.NetworkException
 import net.dean.jraw.models.Listing
@@ -43,6 +44,18 @@ class JrawSubreddits(private val clients: Observable<RedditClient>) : Reddit.Sub
         .firstOrError()
         .map { it.subreddit(subredditName).about() }
         .map { Subscribeable.create(it) }
+  }
+
+  override fun parseSubmissionPaginationError(error: Throwable): SubredditSearchResult {
+    return when {
+      error is ApiException && error.code == "403" -> SubredditSearchResult.privateError()
+      error is NetworkException && error.res.code == 404 -> SubredditSearchResult.notFound()
+      error is NullPointerException && "Null id".equals(error.message, ignoreCase = true) -> {
+        // https://github.com/mattbdean/JRAW/issues/261
+        SubredditSearchResult.notFound()
+      }
+      else -> SubredditSearchResult.unknownError(error)
+    }
   }
 
   override fun submissions(

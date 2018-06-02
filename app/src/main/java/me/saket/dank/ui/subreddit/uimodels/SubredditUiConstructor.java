@@ -39,7 +39,6 @@ import me.saket.dank.utils.Themes;
 import me.saket.dank.utils.Truss;
 import me.saket.dank.vote.VotingManager;
 import me.saket.dank.walkthrough.SubmissionGesturesWalkthrough;
-import timber.log.Timber;
 
 public class SubredditUiConstructor {
 
@@ -166,7 +165,6 @@ public class SubredditUiConstructor {
         paginationResults,
         (areSubsEmpty, paginationResult) -> {
           if (areSubsEmpty && paginationResult.isFailed()) {
-            Timber.d("Showing error");
             Throwable error = paginationResult.error();
             if (error instanceof PrivateSubredditException) {
               return Optional.of(ErrorState.create(R.string.subreddit_error_emoji, R.string.subreddit_error_private));
@@ -174,7 +172,6 @@ public class SubredditUiConstructor {
             if (error instanceof SubredditNotFoundException) {
               return Optional.of(ErrorState.create(R.string.subreddit_error_emoji, R.string.subreddit_error_not_found));
             }
-
             return Optional.of(ErrorState.from(errorResolver.resolve(error)));
           } else {
             return Optional.<ErrorState>empty();

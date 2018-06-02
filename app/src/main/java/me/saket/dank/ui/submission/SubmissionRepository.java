@@ -9,7 +9,6 @@ import com.nytimes.android.external.cache3.CacheBuilder;
 import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
-import net.dean.jraw.http.NetworkException;
 import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Submission;
@@ -320,37 +319,21 @@ public class SubmissionRepository {
               //Timber.i("Fetched %s submissions", distinctNewItems.size());
               return savedSubmissionCount;
             })
-            .flatMapCompletable(savedSubmissionCount -> {
-              if (savedSubmissionCount == 0 && anchor.isEmpty()) {
-                return reddit.get().subreddits()
-                    .find(folder.subredditName())
-                    .flatMapCompletable(searchResult -> {
-                      switch (searchResult.type()) {
-                        case SUCCESS:
-                          return Completable.<SubmissionPaginationResult>complete();
-
-                        case ERROR_PRIVATE:
-                          throw new AssertionError("Submission paginator throws an 403 for private subreddit. Should never reach here");
-
-                        case ERROR_NOT_FOUND:
-                          return Completable.error(new SubredditNotFoundException());
-
-                        case ERROR_UNKNOWN:
-                          return Completable.error(((SubredditSearchResult.UnknownError) searchResult).error());
-
-                        default:
-                          return Completable.error(new AssertionError("Unknown error getting submissions for " + folder));
-                      }
-                    });
-              } else {
-                return Completable.<SubmissionPaginationResult>complete();
-              }
-            })
+            .toCompletable()
             .onErrorResumeNext(error -> {
-              if (error instanceof NetworkException && ((NetworkException) error).getRes().getCode() == 403) {
-                return Completable.error(new PrivateSubredditException());
-              } else {
-                return Completable.error(error);
+              SubredditSearchResult result = reddit.get().subreddits().parseSubmissionPaginationError(error);
+              switch (result.type()) {
+                case ERROR_PRIVATE:
+                  return Completable.error(new PrivateSubredditException());
+
+                case ERROR_NOT_FOUND:
+                  return Completable.error(new SubredditNotFoundException());
+
+                case ERROR_UNKNOWN:
+                  return Completable.error(error);
+
+                default:
+                  throw new AssertionError("Unknown result: " + result);
               }
             })
             .retryWhen(errors -> errors.flatMap(error -> {
