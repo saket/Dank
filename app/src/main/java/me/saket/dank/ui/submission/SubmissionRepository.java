@@ -43,11 +43,10 @@ import me.saket.dank.ui.subreddit.SubredditSearchResult;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.utils.Arrays2;
 import me.saket.dank.utils.DankSubmissionRequest;
-import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.vote.VotingManager;
 import me.saket.dank.walkthrough.SyntheticData;
-import me.saket.dank.walkthrough.SyntheticSubmission;
+import me.saket.dank.walkthrough.SyntheticSubmissionAndComments;
 import timber.log.Timber;
 
 @Singleton
@@ -104,13 +103,14 @@ public class SubmissionRepository {
   @CheckResult
   public Observable<Pair<DankSubmissionRequest, SubmissionAndComments>> submissionWithComments(DankSubmissionRequest oldRequest) {
     if (oldRequest.id().equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
+      Timber.i("Returning from Synthetic.");
       return syntheticSubmissionForGesturesWalkthrough()
-          .map(syntheticSubmission -> {
+          .map(syntheticSubmissionData -> {
             //noinspection ConstantConditions
             DankSubmissionRequest updatedRequest = oldRequest.toBuilder()
-                .commentSort(syntheticSubmission.getSuggestedSort(), SelectedBy.DEFAULT)
+                .commentSort(syntheticSubmissionData.getSubmission().getSuggestedSort(), SelectedBy.DEFAULT)
                 .build();
-            return Pair.create(updatedRequest, new SubmissionAndComments(syntheticSubmission, Optional.empty()));
+            return Pair.create(updatedRequest, syntheticSubmissionData.toNonSynthetic());
           })
           .toObservable();
     }
@@ -138,7 +138,6 @@ public class SubmissionRepository {
             // We're calling getOrFetch() again to receive a refreshing Observable.
             // This should return immediately because the store has an in-memory cache.
             return getFromDbOrFetchSubmissionWithComments(oldRequest)
-                .skip(1)
                 .startWith(submissionWithComments)
                 .map(submissions -> Pair.create(oldRequest, submissions))
                 //.compose(RxUtils.doOnceOnNext(o -> Timber.i("Returned from memory")))
@@ -155,7 +154,7 @@ public class SubmissionRepository {
           }
           emitter.onComplete();
         }))
-        //.distinctUntilChanged((first, second) -> first.second().updateTimeMillis() == second.second().updateTimeMillis())
+        .distinctUntilChanged()
         .map(pair -> {
           DankSubmissionRequest request = pair.first();
           SubmissionAndComments submissionData = SubmissionAndComments.Companion.from(pair.second());
@@ -273,8 +272,8 @@ public class SubmissionRepository {
   }
 
   @CheckResult
-  public Single<Submission> syntheticSubmissionForGesturesWalkthrough() {
-    return Single.just(new SyntheticSubmission());
+  public Single<SyntheticSubmissionAndComments> syntheticSubmissionForGesturesWalkthrough() {
+    return Single.just(new SyntheticSubmissionAndComments());
   }
 
 // ======== SUBMISSION LIST (W/O COMMENTS) ======== //
