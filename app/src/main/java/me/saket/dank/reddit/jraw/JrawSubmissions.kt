@@ -9,7 +9,6 @@ import net.dean.jraw.RedditClient
 import net.dean.jraw.models.PublicContribution
 import net.dean.jraw.tree.CommentNode
 import net.dean.jraw.tree.RootCommentNode
-import timber.log.Timber
 import javax.inject.Inject
 
 class JrawSubmissions @Inject constructor(private val clients: Observable<RedditClient>) : Reddit.Submissions {
@@ -17,10 +16,7 @@ class JrawSubmissions @Inject constructor(private val clients: Observable<Reddit
   override fun fetch(request: DankSubmissionRequest): Single<RootCommentNode> {
     return clients
         .firstOrError()
-        .map {
-          Timber.i("Fetching comments")
-          it.submission(request.id()).comments(request.toJraw())
-        }
+        .map { it.submission(request.id()).comments(request.toJraw()) }
   }
 
   override fun <T : PublicContribution<*>> fetchMoreComments(
