@@ -14,6 +14,7 @@ import android.widget.TextView;
 import net.dean.jraw.models.Account;
 import net.dean.jraw.pagination.Paginator;
 
+import java.util.NoSuchElementException;
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
 
@@ -125,6 +126,10 @@ public class UserProfileSheetView extends FrameLayout {
         .refreshLoggedInUserAccount()
         .subscribeOn(io())
         .doOnError(error -> {
+          if (error instanceof NoSuchElementException) {
+            // Possibly a misconfiguration of Store.
+            return;
+          }
           ResolvedError resolvedError = errorResolver.get().resolve(error);
           resolvedError.ifUnknown(() -> Timber.e(error, "Couldn't refresh user"));
         })
