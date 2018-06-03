@@ -44,6 +44,7 @@ class JrawTokenRefresher @Inject constructor(
 
     Timber.w("Expiration date: %s", expirationDate)
     Timber.w("Time till token expiration: ${formatTime(expirationDate)}")
+    Timber.w("Username: ${tokenStore.usernames}")
     Timber.w("Time till pro-active token expiration: ${formatTime(recommendedRefreshDate)}")
 
     val refresh: Completable = when (computeTokenStatus(expirationDate, recommendedRefreshDate)) {

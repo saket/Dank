@@ -34,6 +34,7 @@ data class CachedSubmission(
 data class CachedSubmissionComments constructor(
     val submissionId: String,
 
+    @field:[Enveloped()]
     val replies: Listing<NestedIdentifiable>,
 
     @PrimaryKey
@@ -107,34 +108,22 @@ class SubmissionRoomTypeConverter {
 }
 
 class RepliesRoomTypeConverter {
-
-//  private lateinit var adapter: JsonAdapter<Listing<NestedIdentifiable>>
-//
-//  init {
-//    adapter = JrawUtils.moshi.adapter<Listing<NestedIdentifiable>>(
-//        Types.newParameterizedType(Listing::class.java, NestedIdentifiable::class.java),
-//        Enveloped::class.java
-//    ).serializeNulls()
-//  }
+  private val adapter by lazy {
+    val type = Types.newParameterizedType(Listing::class.java, NestedIdentifiable::class.java)
+    JrawUtils.moshi.adapter<Listing<NestedIdentifiable>>(type, Enveloped::class.java).serializeNulls()
+  }
 
   @TypeConverter
   fun toJson(replies: Listing<NestedIdentifiable>): String {
-    val adapter = JrawUtils.moshi.adapter<Listing<NestedIdentifiable>>(
-        Types.newParameterizedType(Listing::class.java, NestedIdentifiable::class.java),
-        Enveloped::class.java
-    ).serializeNulls()
-
     return adapter.toJson(replies)
   }
 
   @TypeConverter
   fun fromJson(json: String?): Listing<NestedIdentifiable>? {
-    val adapter = JrawUtils.moshi.adapter<Listing<NestedIdentifiable>>(
-        Types.newParameterizedType(Listing::class.java, NestedIdentifiable::class.java),
-        Enveloped::class.java
-    ).serializeNulls()
-
-    return json?.let { adapter.fromJson(it) }
+    if (json == null) {
+      return null
+    }
+    return adapter.fromJson(json) as Listing<NestedIdentifiable>
   }
 }
 
