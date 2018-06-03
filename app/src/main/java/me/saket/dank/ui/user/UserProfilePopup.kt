@@ -114,6 +114,9 @@ constructor(context: Context) : PopupWindowWithMaterialTransition(context) {
             is UserSuspended -> showUserSuspended()
             is UnexpectedError -> showUnexpectedError(result.error, userLink)
           }
+        }, { error ->
+          val resolvedError = errorResolver.get().resolve(error)
+          resolvedError.ifUnknown { Timber.e(error, "Couldn't get user profile") }
         })
   }
 
