@@ -410,7 +410,7 @@ public class SubmissionCommentTreeUiConstructor {
 //    }
 
     // Next, the child comment tree.
-    if (!nextNode.hasMoreChildren()) {
+    if (nextNode.getReplies().isEmpty()) {
       return flattenComments;
 
     } else {
