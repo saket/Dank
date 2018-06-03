@@ -4,10 +4,12 @@ import android.support.annotation.Nullable;
 
 import com.bumptech.glide.load.engine.GlideException;
 
+import java.io.FileNotFoundException;
 import java.io.InterruptedIOException;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.util.List;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import javax.inject.Inject;
@@ -82,6 +84,12 @@ public class ErrorResolver {
           R.string.common_error_known_jraw_emoji,
           R.string.common_error_known_jraw_message);
 
+    } else if (error instanceof FileNotFoundException && error.getMessage().contains("No content provider")) {
+      return ResolvedError.create(
+          ResolvedError.Type.KNOWN_BUT_IGNORED,
+          R.string.common_error_cancelation_emoji,
+          R.string.common_error_cancelation_message);
+
     } else {
       return ResolvedError.create(
           ResolvedError.Type.UNKNOWN,
@@ -96,7 +104,8 @@ public class ErrorResolver {
       error = findActualCause(error.getCause());
     }
     if (error instanceof GlideException && !((GlideException) error).getRootCauses().isEmpty()) {
-      error = ((GlideException) error).getRootCauses().get(0);
+      List<Throwable> rootCauses = ((GlideException) error).getRootCauses();
+      error = rootCauses.get(rootCauses.size() - 1);
     }
     if (error instanceof CompositeException) {
       error = findActualCause(error.getCause());

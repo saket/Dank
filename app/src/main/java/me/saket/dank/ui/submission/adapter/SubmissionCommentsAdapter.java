@@ -116,7 +116,6 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     return childAdapters.get(VIEW_TYPES[viewType]).onCreateViewHolder(inflater, parent);
   }
 
-  @SuppressLint("NewApi")
   @Override
   public void onBindViewHolder(RecyclerView.ViewHolder holder, int position, List<Object> payloads) {
     if (payloads.isEmpty()) {
