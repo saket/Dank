@@ -5,6 +5,7 @@ import android.content.SharedPreferences
 import dagger.Module
 import dagger.Provides
 import io.reactivex.subjects.BehaviorSubject
+import me.saket.dank.BuildConfig
 import me.saket.dank.R
 import net.dean.jraw.RedditClient
 import net.dean.jraw.android.AndroidHelper
@@ -15,6 +16,8 @@ import net.dean.jraw.http.UserAgent
 import net.dean.jraw.oauth.AccountHelper
 import net.dean.jraw.oauth.TokenStore
 import okhttp3.OkHttpClient
+import okhttp3.logging.HttpLoggingInterceptor
+import timber.log.Timber
 import java.util.UUID
 import javax.inject.Named
 import javax.inject.Singleton

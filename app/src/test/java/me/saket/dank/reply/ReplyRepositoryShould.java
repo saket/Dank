@@ -15,7 +15,7 @@ import android.content.SharedPreferences;
 import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
-import net.dean.jraw.models.Contribution;
+import net.dean.jraw.models.Identifiable;
 
 import org.junit.Before;
 import org.junit.Rule;
@@ -72,7 +72,7 @@ public class ReplyRepositoryShould {
   @Test
   @SuppressLint("CommitPrefEdits")
   public void onSaveDraft_shouldSaveDraft_shouldCallRecycleDrafts() throws Exception {
-    Contribution parentComment = mock(Contribution.class);
+    Identifiable parentComment = mock(Identifiable.class);
     when(parentComment.getFullName()).thenReturn("fullName");
     when(sharedPrefs.getAll()).thenReturn(Collections.emptyMap());
 
@@ -82,6 +82,7 @@ public class ReplyRepositoryShould {
     verify(sharedPrefsEditor).putString(stringArgCaptor.capture(), stringArgCaptor.capture());
     assertEquals(stringArgCaptor.getAllValues().get(0), ReplyRepository.keyForDraft(parentComment));
     ReplyDraft savedReplyDraft = replyDraftJsonAdapter.fromJson(stringArgCaptor.getAllValues().get(1));
+    //noinspection ConstantConditions
     assertEquals(savedReplyDraft.body(), "draft");
 
     verify(replyRepository).recycleOldDrafts(any());
