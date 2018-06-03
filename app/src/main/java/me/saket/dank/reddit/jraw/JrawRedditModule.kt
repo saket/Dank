@@ -4,25 +4,28 @@ import android.app.Application
 import android.content.SharedPreferences
 import dagger.Module
 import dagger.Provides
+import io.reactivex.subjects.BehaviorSubject
 import me.saket.dank.R
+import net.dean.jraw.RedditClient
 import net.dean.jraw.android.AndroidHelper
 import net.dean.jraw.android.AppInfo
 import net.dean.jraw.android.AppInfoProvider
 import net.dean.jraw.android.SharedPreferencesTokenStore
-import net.dean.jraw.http.NetworkAdapter
-import net.dean.jraw.http.OkHttpNetworkAdapter
 import net.dean.jraw.http.UserAgent
 import net.dean.jraw.oauth.AccountHelper
 import net.dean.jraw.oauth.TokenStore
+import okhttp3.OkHttpClient
 import java.util.UUID
 import javax.inject.Named
+import javax.inject.Singleton
 
 @Module
 class JrawRedditModule {
 
   @Provides
-  fun networkAdapter(userAgent: UserAgent): NetworkAdapter {
-    return OkHttpNetworkAdapter(userAgent)
+  @Singleton
+  fun redditClientStreamSubject(): BehaviorSubject<RedditClient> {
+    return BehaviorSubject.create()
   }
 
   @Provides
@@ -41,6 +44,7 @@ class JrawRedditModule {
   }
 
   @Provides
+  @Singleton
   fun sharedPrefsTokenStore(appContext: Application): SharedPreferencesTokenStore {
     val store = SharedPreferencesTokenStore(appContext)
     store.load()
@@ -66,7 +70,15 @@ class JrawRedditModule {
   }
 
   @Provides
-  fun accountHelper(appInfoProvider: AppInfoProvider, @Named("deviceUuid") deviceUUID: UUID, tokenStore: TokenStore): AccountHelper {
-    return AndroidHelper.accountHelper(appInfoProvider, deviceUUID, tokenStore)
+  fun accountHelper(
+      appInfoProvider: AppInfoProvider,
+      tokenStore: SharedPreferencesTokenStore,
+      tokenRefresher: JrawTokenRefresher,
+      @Named("deviceUuid") deviceUUID: UUID
+  ): AccountHelper {
+    val httpClient = OkHttpClient.Builder()
+        .addNetworkInterceptor(tokenRefresher)
+        .build()
+    return AndroidHelper.accountHelper(appInfoProvider, deviceUUID, tokenStore, httpClient)
   }
 }
