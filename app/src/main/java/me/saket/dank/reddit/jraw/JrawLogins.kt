@@ -19,7 +19,7 @@ class UserLoginHelper(private val helper: StatefulAuthHelper) {
         "history", "identity", "mysubreddits", "privatemessages", "read", "report", // For hiding or reporting a thread.
         "save", "submit", "subscribe", "vote", "wikiread")
 
-    return helper.getAuthorizationUrl(true, true, *scopes)
+    return helper.getAuthorizationUrl(requestRefreshToken = true, useMobileSite = true, scopes = *scopes)
   }
 
   /**
