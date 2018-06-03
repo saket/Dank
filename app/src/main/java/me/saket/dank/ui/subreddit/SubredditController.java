@@ -78,7 +78,7 @@ public class SubredditController implements ObservableTransformer<UiEvent, UiCha
             .syntheticSubmissionForGesturesWalkthrough()
             .subscribeOn(io())
             .observeOn(mainThread())
-            .map(submission -> event.toSubmissionClickEvent(submission.getSubmission()))
+            .map(submissionData -> event.toSubmissionClickEvent(submissionData.getSubmission()))
             .onErrorResumeNext(e -> {
               e.printStackTrace();
               return Single.never();
