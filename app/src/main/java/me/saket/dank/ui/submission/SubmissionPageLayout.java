@@ -49,12 +49,14 @@ import com.jakewharton.rxbinding2.view.RxView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.PublishRelay;
 import com.jakewharton.rxrelay2.Relay;
+import com.squareup.moshi.JsonAdapter;
 import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Identifiable;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.models.Submission;
 import net.dean.jraw.models.SubmissionPreview;
+import net.dean.jraw.tree.RootCommentNode;
 
 import java.util.concurrent.TimeUnit;
 import javax.inject.Inject;
@@ -165,7 +167,7 @@ import timber.log.Timber;
 public class SubmissionPageLayout extends ExpandablePageLayout implements ExpandablePageLayout.OnPullToCollapseIntercepter, SubmissionUi {
 
   private static final String KEY_WAS_PAGE_EXPANDED_OR_EXPANDING = "pageState";
-  private static final String KEY_SUBMISSION_JSON = "submissionJson";
+  private static final String KEY_SUBMISSION_DATA_JSON = "submissionDataJson";
   private static final String KEY_SUBMISSION_REQUEST = "submissionRequest";
   private static final String KEY_INLINE_REPLY_ROW_ID = "inlineReplyRowId";
   private static final String KEY_CALLING_SUBREDDIT = "immediateParentSubreddit";
@@ -356,17 +358,18 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
   protected Parcelable onSaveInstanceState() {
     Bundle outState = new Bundle();
 
-//    if (submissionRequestStream.getValue() != null) {
-//      outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
-//
-//      Optional<Submission> optionalSubmission = submissionStream.getValue();
-//      Optional<CommentNode> optionalComments = optionalSubmission.flatMap(Submission::getComments);
-//      if (optionalSubmission.isPresent() && !optionalComments.isPresent()) {
-//        // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
-//        // show UI on orientation change, we unfortunately will have to manually retain this submission.
-//        outState.putString(KEY_SUBMISSION_JSON, moshi.adapter(Submission.class).toJson(optionalSubmission.get()));
-//      }
-//    }
+    if (submissionRequestStream.getValue() != null) {
+      outState.putParcelable(KEY_SUBMISSION_REQUEST, submissionRequestStream.getValue());
+
+      Optional<SubmissionAndComments> optionalSubmission = submissionStream.getValue();
+      Optional<RootCommentNode> optionalComments = optionalSubmission.flatMap(SubmissionAndComments::getComments);
+      if (optionalSubmission.isPresent() && !optionalComments.isPresent()) {
+        // Comments haven't fetched yet == no submission cached in DB. For us to be able to immediately
+        // show UI on orientation change, we unfortunately will have to manually retain this submission.
+        JsonAdapter<SubmissionAndComments> adapter = moshi.adapter(SubmissionAndComments.class);
+        outState.putString(KEY_SUBMISSION_DATA_JSON, adapter.toJson(optionalSubmission.get()));
+      }
+    }
 
     Integer uiModelsSize = Optional.ofNullable(commentsAdapter.getData())
         .map(data -> data.size())
@@ -396,11 +399,14 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
       DankSubmissionRequest retainedRequest = restoredValues.getParcelable(KEY_SUBMISSION_REQUEST);
       Single
           .fromCallable(() -> {
-            boolean manualRestorationNeeded = restoredValues.containsKey(KEY_SUBMISSION_JSON);
-            //noinspection ConstantConditions
-            return manualRestorationNeeded
-                ? Optional.of(moshi.adapter(Submission.class).fromJson(restoredValues.getString(KEY_SUBMISSION_JSON)))
-                : Optional.<Submission>empty();
+            boolean manualRestorationNeeded = restoredValues.containsKey(KEY_SUBMISSION_DATA_JSON);
+            if (manualRestorationNeeded) {
+              JsonAdapter<SubmissionAndComments> adapter = moshi.adapter(SubmissionAndComments.class);
+              //noinspection ConstantConditions
+              return Optional.of(adapter.fromJson(restoredValues.getString(KEY_SUBMISSION_DATA_JSON)));
+            } else {
+              return Optional.<SubmissionAndComments>empty();
+            }
           })
           .subscribeOn(io())
           .observeOn(mainThread())
@@ -408,7 +414,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
           .subscribe(
               retainedSubmission -> {
                 //noinspection ConstantConditions
-                populateUi(retainedSubmission, retainedRequest, callingSubreddit);
+                populateUi(retainedSubmission.map(SubmissionAndComments::getSubmission), retainedRequest, callingSubreddit);
               }, error -> {
                 ResolvedError resolvedError = errorResolver.get().resolve(error);
                 resolvedError.ifUnknown(() -> Timber.e(error, "Error while deserializing saved submission"));
