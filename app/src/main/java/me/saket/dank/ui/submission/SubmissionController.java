@@ -1,5 +1,7 @@
 package me.saket.dank.ui.submission;
 
+import net.dean.jraw.models.Message;
+
 import javax.inject.Inject;
 
 import dagger.Lazy;
@@ -8,6 +10,8 @@ import io.reactivex.ObservableTransformer;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.ui.UiChange;
 import me.saket.dank.ui.UiEvent;
+import me.saket.dank.ui.submission.events.MarkMessageAsReadRequested;
+import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.SubmissionChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentsLoadFailed;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingCompleted;
@@ -20,6 +24,8 @@ import me.saket.dank.ui.submission.events.SubmissionNsfwContentFiltered;
 import me.saket.dank.ui.submission.events.SubmissionRequestChanged;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadStarted;
 import me.saket.dank.ui.submission.events.SubmissionVideoLoadSucceeded;
+import me.saket.dank.utils.DankSubmissionRequest;
+import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import timber.log.Timber;
 
@@ -43,12 +49,12 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
 
     //noinspection unchecked
     return Observable.mergeArray(
-        contentProgressToggles(replayedEvents)
-        //changeSortPopupShows(replayedEvents),
-        //sortModeChanges(replayedEvents),
-        //manualRefreshes(replayedEvents),
-        //fullThreadLoads(replayedEvents),
-        //markMessageAsReads(replayedEvents)
+        contentProgressToggles(replayedEvents),
+        changeSortPopupShows(replayedEvents),
+//        sortModeChanges(replayedEvents),
+//        manualRefreshes(replayedEvents),
+//        fullThreadLoads(replayedEvents),
+        markMessageAsReads(replayedEvents)
     );
   }
 
@@ -124,17 +130,17 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         progressHides.map(o1 -> ui -> ui.hideProgress()));
   }
 
-//  private Observable<UiChange<SubmissionUi>> changeSortPopupShows(Observable<UiEvent> events) {
-//    Observable<DankSubmissionRequest> requestChanges = events
-//        .ofType(SubmissionRequestChanged.class)
-//        .map(event -> event.request());
-//
-//    return events
-//        .ofType(SubmissionChangeCommentSortClicked.class)
-//        .withLatestFrom(requestChanges, Pair::create)
-//        .map(pair -> (UiChange<SubmissionUi>) ui -> ui.showChangeSortPopup(pair.first(), pair.second()));
-//  }
-//
+  private Observable<UiChange<SubmissionUi>> changeSortPopupShows(Observable<UiEvent> events) {
+    Observable<DankSubmissionRequest> requestChanges = events
+        .ofType(SubmissionRequestChanged.class)
+        .map(event -> event.request());
+
+    return events
+        .ofType(SubmissionChangeCommentSortClicked.class)
+        .withLatestFrom(requestChanges, Pair::create)
+        .map(pair -> (UiChange<SubmissionUi>) ui -> ui.showChangeSortPopup(pair.first(), pair.second()));
+  }
+
 //  private Observable<UiChange<SubmissionUi>> sortModeChanges(Observable<UiEvent> events) {
 //    Observable<DankSubmissionRequest> requestChanges = events
 //        .ofType(SubmissionRequestChanged.class)
@@ -153,7 +159,7 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
 //        })
 //        .map(newRequest -> (UiChange<SubmissionUi>) ui -> ui.acceptRequest(newRequest));
 //
-//    Observable<Submission> submissionChanges = events
+//    Observable<SubmissionAndComments> submissionChanges = events
 //        .ofType(SubmissionChanged.class)
 //        .map(event -> event.optionalSubmission())
 //        .filter(Optional::isPresent)
@@ -245,24 +251,24 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
 //
 //    return resetComments.mergeWith(fetchNewRequests);
 //  }
-//
-//  private Observable<UiChange<SubmissionUi>> markMessageAsReads(Observable<UiEvent> events) {
-//    Observable<Message> readRequests = events
-//        .ofType(MarkMessageAsReadRequested.class)
-//        .map(event -> event.message());
-//
-//    return events
-//        .ofType(SubmissionChanged.class)
-//        .map(event -> event.optionalSubmission())
-//        .filter(Optional::isPresent)
-//        .map(Optional::get)
-//        // The message for which this submission was opened will
-//        // only be marked as read once the comments have been fetched.
-//        .filter(submission -> submission.getComments() != null)
-//        .withLatestFrom(readRequests, (__, message) -> message)
-//        .flatMapCompletable(message -> inboxRepository.get().setRead(message, true))
-//        .andThen(Observable.never());
-//  }
+
+  private Observable<UiChange<SubmissionUi>> markMessageAsReads(Observable<UiEvent> events) {
+    Observable<Message> readRequests = events
+        .ofType(MarkMessageAsReadRequested.class)
+        .map(event -> event.message());
+
+    return events
+        .ofType(SubmissionChanged.class)
+        .map(event -> event.optionalSubmission())
+        .filter(Optional::isPresent)
+        .map(Optional::get)
+        // The message for which this submission was opened will
+        // only be marked as read once the comments have been fetched.
+        .filter(submission -> submission.getComments().isPresent())
+        .withLatestFrom(readRequests, (__, message) -> message)
+        .flatMapCompletable(message -> inboxRepository.get().setRead(message, true))
+        .andThen(Observable.never());
+  }
 
   private void log(String message, Object... args) {
     //Timber.i(message, args);
