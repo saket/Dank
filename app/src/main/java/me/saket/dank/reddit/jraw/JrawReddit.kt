@@ -1,6 +1,6 @@
 package me.saket.dank.reddit.jraw
 
-import com.jakewharton.rxrelay2.BehaviorRelay
+import io.reactivex.subjects.BehaviorSubject
 import me.saket.dank.reddit.Reddit
 import net.dean.jraw.RedditClient
 import net.dean.jraw.android.SharedPreferencesTokenStore
@@ -10,20 +10,18 @@ import net.dean.jraw.oauth.AccountHelper
 import timber.log.Timber
 import javax.inject.Inject
 
-
 class JrawReddit @Inject constructor(
     private val accountHelper: AccountHelper,
+    private val clientSubject: BehaviorSubject<RedditClient>,
     tokenStore: SharedPreferencesTokenStore
 ) : Reddit {
 
-  private val redditClientProvider = BehaviorRelay.create<RedditClient>()
-
   init {
-    accountHelper.onSwitch { newRedditClient -> redditClientProvider.accept(newRedditClient) }
+    accountHelper.onSwitch { newRedditClient -> clientSubject.onNext(newRedditClient) }
     Timber.i("Existing usernames: ${tokenStore.usernames}")
     when {
       tokenStore.usernames.isNotEmpty() -> {
-        Timber.i("Switching to user")
+        Timber.i("Switching to user: ${tokenStore.usernames.first()}")
         accountHelper.switchToUser(tokenStore.usernames.first())
       }
       else -> {
@@ -32,7 +30,7 @@ class JrawReddit @Inject constructor(
       }
     }
 
-    redditClientProvider
+    clientSubject
         .subscribe { client ->
           // By default, JRAW logs HTTP activity to System.out.
           val logAdapter: LogAdapter = object : LogAdapter {
@@ -45,23 +43,23 @@ class JrawReddit @Inject constructor(
   }
 
   override fun submissions(): Reddit.Submissions {
-    return JrawSubmissions(redditClientProvider)
+    return JrawSubmissions(clientSubject)
   }
 
   override fun subreddits(): Reddit.Subreddits {
-    return JrawSubreddits(redditClientProvider)
+    return JrawSubreddits(clientSubject)
   }
 
   override fun subscriptions(): Reddit.Subscriptions {
-    return JrawSubscriptions(redditClientProvider)
+    return JrawSubscriptions(clientSubject)
   }
 
   override fun loggedInUser(): Reddit.LoggedInUser {
-    return JrawLoggedInUser(redditClientProvider, accountHelper)
+    return JrawLoggedInUser(clientSubject, accountHelper)
   }
 
   override fun users(): Reddit.Users {
-    return JrawUsers(redditClientProvider)
+    return JrawUsers(clientSubject)
   }
 
   override fun login(): Reddit.Logins {
