@@ -24,6 +24,7 @@ import java.util.List;
 import javax.inject.Inject;
 
 import io.reactivex.Observable;
+import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.data.SwipeEvent;
@@ -38,6 +39,7 @@ import me.saket.dank.utils.lifecycle.LifecycleStreams;
 import me.saket.dank.widgets.AnimatedProgressBar;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
+import timber.log.Timber;
 
 public interface SubmissionCommentsHeader {
 
@@ -150,6 +152,7 @@ public interface SubmissionCommentsHeader {
     private final @ColorInt int contentLinkBackgroundColor;
 
     private UiModel uiModel;
+    private int lastTintColor = -1;
 
     public static ViewHolder create(
         LayoutInflater inflater,
@@ -351,6 +354,14 @@ public interface SubmissionCommentsHeader {
         Drawable background = contentLinkView.getBackground().mutate();
         Integer tintColor = contentLinkUiModel.backgroundTintColor().get();
 
+        if (tintColor == lastTintColor) {
+          if (BuildConfig.DEBUG) {
+            Timber.w("Ignoring duplicate tint: %s", Colors.colorIntToHex(tintColor));
+          }
+          return;
+        }
+
+        // Not sure the same tint is received when the same submission is opened again.
         if (animate) {
           ValueAnimator colorAnimator = ValueAnimator.ofArgb(contentLinkBackgroundColor, tintColor);
           colorAnimator.addUpdateListener(animation -> {
@@ -366,6 +377,7 @@ public interface SubmissionCommentsHeader {
           contentLinkThumbnailView.setColorFilter(Colors.applyAlpha(tintColor, THUMBNAIL_COLOR_TINT_OPACITY));
           background.setTint(tintColor);
         }
+        lastTintColor = tintColor;
 
       } else {
         contentLinkThumbnailView.setColorFilter(null);
