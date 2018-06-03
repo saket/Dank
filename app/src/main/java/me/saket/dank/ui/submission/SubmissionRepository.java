@@ -1,5 +1,7 @@
 package me.saket.dank.ui.submission;
 
+import static io.reactivex.schedulers.Schedulers.io;
+
 import android.support.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
@@ -136,7 +138,6 @@ public class SubmissionRepository {
           } else {
             Timber.i("Returning from DB with the same sort again");
             // We're calling getOrFetch() again to receive a refreshing Observable.
-            // This should return immediately because the store has an in-memory cache.
             return getFromDbOrFetchSubmissionWithComments(oldRequest)
                 .startWith(submissionWithComments)
                 .map(submissions -> Pair.create(oldRequest, submissions))
@@ -173,24 +174,21 @@ public class SubmissionRepository {
         .toObservable()
         .share();
 
-    Observable<CachedSubmissionAndComments> fetchStream = sharedDbStream
+    sharedDbStream
         .map(items -> Arrays2.firstOrEmpty(items))
         .filter(optionalSubmission -> {
           if (optionalSubmission.isEmpty()) {
             return true;
           }
-          Timber.i("optional submission cmnts: %s", optionalSubmission.get().comments());
           return optionalSubmission.get().comments().isEmpty();
         })
         .flatMapCompletable(o -> {
-          Timber.i("Submission or submission comments missing. Running network call.");
           Single<RootCommentNode> cachedNetworkStream = reddit.get().submissions()
               .fetch(request)
               .cache();
 
           Completable saveCompletable = cachedNetworkStream
               .map(node -> {
-                Timber.i("Fetched comment node: %s", node);
                 Submission submission = node.getSubject();
                 CachedSubmissionComments cachedComments = new CachedSubmissionComments(submission.getId(), node.getChildren(), request);
                 CachedSubmission cachedSubmission = new CachedSubmission(
@@ -209,11 +207,11 @@ public class SubmissionRepository {
 
           return saveCompletable.mergeWith(removeStaleSyncedLocalReplies);
         })
-        .andThen(Observable.empty());
+        .subscribeOn(io())
+        .subscribe();
 
     return sharedDbStream
-        .flatMap(dbItems -> dbItems.isEmpty() ? Observable.empty() : Observable.just(dbItems.get(0)))
-        .mergeWith(fetchStream);
+        .flatMap(dbItems -> dbItems.isEmpty() ? Observable.empty() : Observable.just(dbItems.get(0)));
   }
 
   private Completable saveSubmissionData(Pair<CachedSubmission, CachedSubmissionComments> submissionData) {
