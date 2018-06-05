@@ -1,9 +1,12 @@
 package me.saket.dank;
 
+import android.annotation.SuppressLint;
 import android.content.Context;
 import android.graphics.Canvas;
 import android.support.v7.widget.AppCompatImageView;
 import android.util.AttributeSet;
+
+import timber.log.Timber;
 
 /**
  * For debugging:
@@ -18,13 +21,14 @@ public class ImageViewWithStackTraceName extends AppCompatImageView {
   }
 
   @Override
+  @SuppressLint("DrawAllocation")
   protected void onDraw(Canvas canvas) {
     try {
       super.onDraw(canvas);
     } catch (RuntimeException e) {
       if (e.getMessage().contains("trying to use a recycled bitmap")) {
         String viewId = getResources().getResourceName(getId());
-        throw new RuntimeException("CAUSED HERE: " + viewId, e);
+        Timber.e(new RuntimeException("CAUSED HERE: " + viewId, e));
       } else {
         throw e;
       }
