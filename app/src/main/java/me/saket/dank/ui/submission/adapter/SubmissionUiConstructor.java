@@ -77,21 +77,18 @@ public class SubmissionUiConstructor {
     this.bookmarksRepository = bookmarksRepository;
   }
 
-  /**
-   * @param optionalSubmissions Can emit twice. Once w/o comments and once with comments.
-   */
   @CheckResult
   public Observable<List<SubmissionScreenUiModel>> stream(
       Context context,
       SubmissionCommentTreeUiConstructor submissionCommentTreeUiConstructor,
-      Observable<Optional<SubmissionAndComments>> optionalSubmissions,
+      Observable<Optional<SubmissionAndComments>> optionalSubmissionDatum,
       Observable<DankSubmissionRequest> submissionRequests,
       Observable<Optional<Link>> contentLinks,
       Observable<Optional<SubmissionContentLoadError>> mediaContentLoadErrors,
       Observable<Optional<ResolvedError>> commentsLoadErrors)
   {
-    return optionalSubmissions
-        .distinctUntilChanged() // Submission#equals() only compares IDs.
+    return optionalSubmissionDatum
+        .distinctUntilChanged((prev, next) -> prev.isPresent() == next.isPresent())
         .switchMap(optional -> {
           if (!optional.isPresent()) {
             return commentsLoadErrors
@@ -100,33 +97,35 @@ public class SubmissionUiConstructor {
                     : Collections.emptyList());
           }
 
-          Observable<SubmissionAndComments> submissionDatum = optionalSubmissions
+          Observable<SubmissionAndComments> submissionDatum = optionalSubmissionDatum
               // Not sure why, but the parent switchMap() on submission change gets triggered
               // after this chain receives an empty submission, so adding this extra takeWhile().
               .takeWhile(optionalSub -> optionalSub.isPresent())
               .map(submissionOptional -> submissionOptional.get())
               .startWith(optional.get());
 
-          Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = Observable
-              .combineLatest(contentLinks, submissionDatum.observeOn(io()), Pair::create)
+          Observable<Optional<SubmissionContentLinkUiModel>> contentLinkUiModels = contentLinks
               .distinctUntilChanged()
+              .withLatestFrom(submissionDatum.observeOn(io()).map(data -> data.getSubmission()), Pair::create)
               .doOnDispose(() -> contentLinkUiModelConstructor.clearGlideTargets(context))
               .switchMap(pair -> {
                 Optional<Link> contentLink = pair.first();
                 if (!contentLink.isPresent()) {
                   return Observable.just(Optional.empty());
                 }
-                SubmissionAndComments submissionData = pair.second();
+                Submission submission = pair.second();
                 return contentLinkUiModelConstructor
-                    .streamLoad(context, contentLink.get(), ImageWithMultipleVariants.Companion.of(submissionData.getSubmission().getPreview()))
+                    .streamLoad(context, contentLink.get(), ImageWithMultipleVariants.Companion.of(submission.getPreview()))
                     .doOnError(e -> Timber.e(e, "Error while creating content link ui model"))
+                    .distinctUntilChanged()
                     .map(Optional::of);
               });
 
           Observable<Integer> submissionPendingSyncReplyCounts = submissionDatum
+              .map(data -> data.getSubmission())
               .observeOn(io())
               .take(1)  // replace flatMap -> switchMap if we expect more than 1 emissions.
-              .flatMap(submissionData -> replyRepository.streamPendingSyncReplies(ParentThread.of(submissionData.getSubmission())))
+              .flatMap(submission -> replyRepository.streamPendingSyncReplies(ParentThread.of(submission)))
               .map(pendingSyncReplies -> pendingSyncReplies.size())
               .startWith(0);  // Stream sometimes takes too long to emit anything.
 
@@ -137,13 +136,15 @@ public class SubmissionUiConstructor {
 
           Observable<SubmissionCommentsHeader.UiModel> headerUiModels = CombineLatestWithLog.from(
               O.of("ext-change", externalChanges.map(o -> context)),
-              O.of("submission 2", submissionDatum.observeOn(io()).map(data -> data.getSubmission())),
-              O.of("content-link", contentLinkUiModels),
+              O.of("submission 2", submissionDatum.observeOn(io()).map(data -> data.getSubmission()).distinctUntilChanged()),
+              O.of("content-link", contentLinkUiModels
+                  //.doOnNext(op -> Timber.w("Link ui model changed: %s", op))
+              ),
               this::headerUiModel
           );
 
           Observable<SubmissionCommentOptions.UiModel> commentOptionsUiModels = CombineLatestWithLog.from(
-              O.of("submission 3", submissionDatum),
+              O.of("submission 3", submissionDatum.map(data -> data.getSubmission()).distinctUntilChanged()),
               O.of("submission requests", submissionRequests),
               O.of("pending-sync-reply-count", submissionPendingSyncReplyCounts),
               this::commentOptionsUiModel
@@ -200,6 +201,8 @@ public class SubmissionUiConstructor {
                 viewFullThread.ifPresent(allItems::add);
                 allItems.add(commentOptions);
                 allItems.addAll(commentModels);
+
+                //Timber.i("Received %s comment ui models", commentModels.size());
 
                 // Comments progress and error go after comment rows
                 // so that inline reply for submission appears above them.
@@ -276,11 +279,11 @@ public class SubmissionUiConstructor {
   }
 
   private SubmissionCommentOptions.UiModel commentOptionsUiModel(
-      SubmissionAndComments submissionData,
+      Submission submission,
       DankSubmissionRequest request,
       int pendingSyncReplyCount)
   {
-    int postedAndPendingCommentCount = submissionData.getSubmission().getCommentCount() + pendingSyncReplyCount;
+    int postedAndPendingCommentCount = submission.getCommentCount() + pendingSyncReplyCount;
     String abbreviatedCommentCount = Strings.abbreviateScore(postedAndPendingCommentCount);
     int sortTextRes = CommentSortUtils.INSTANCE.sortingDisplayTextRes(request.commentSort().mode());
     return SubmissionCommentOptions.UiModel.create(abbreviatedCommentCount, sortTextRes);

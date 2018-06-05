@@ -214,7 +214,9 @@ public class SubmissionCommentTreeUiConstructor {
             O.of("votes", voteChanges),
             (submissionData, pendingSyncRepliesMap, focusedComment, o, oo) -> {
               String submissionAuthor = submissionData.getSubmission().getAuthor();
-              return constructComments(context, submissionData, pendingSyncRepliesMap, submissionAuthor, focusedComment);
+              List<SubmissionScreenUiModel> comments = constructComments(context, submissionData, pendingSyncRepliesMap, submissionAuthor, focusedComment);
+              //Timber.i("Constructed %s comment ui models from %s comments", comments.size(), submissionData.getComments().map(r -> r.totalSize()));
+              return comments;
             })
         .as(immutable());
   }

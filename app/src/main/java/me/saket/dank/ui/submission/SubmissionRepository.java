@@ -105,7 +105,7 @@ public class SubmissionRepository {
   @CheckResult
   public Observable<Pair<DankSubmissionRequest, SubmissionAndComments>> submissionWithComments(DankSubmissionRequest oldRequest) {
     if (oldRequest.id().equalsIgnoreCase(SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH)) {
-      Timber.i("Returning from Synthetic.");
+      //Timber.i("Returning from Synthetic.");
       return syntheticSubmissionForGesturesWalkthrough()
           .map(syntheticSubmissionData -> {
             //noinspection ConstantConditions
@@ -127,7 +127,7 @@ public class SubmissionRepository {
           Boolean useSuggestedSort = suggestedSort != null && oldRequest.commentSort().canOverrideWithSuggestedSort();
 
           if (useSuggestedSort) {
-            Timber.i("Different sort.");
+            //Timber.i("Different sort.");
             DankSubmissionRequest newRequest = oldRequest.toBuilder()
                 .commentSort(suggestedSort, SelectedBy.SUBMISSION_SUGGESTED)
                 .build();
@@ -136,7 +136,7 @@ public class SubmissionRepository {
                 .map(submissions -> Pair.create(newRequest, submissions));
 
           } else {
-            Timber.i("Returning from DB with the same sort again");
+            //Timber.i("Returning from DB with the same sort again");
             // We're calling getOrFetch() again to receive a refreshing Observable.
             return getFromDbOrFetchSubmissionWithComments(oldRequest)
                 .startWith(submissionWithComments)
