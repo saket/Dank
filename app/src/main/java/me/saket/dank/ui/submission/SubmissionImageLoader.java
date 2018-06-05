@@ -35,7 +35,6 @@ public class SubmissionImageLoader {
 
   private final Lazy<Preference<NetworkStrategy>> hdMediaNetworkStrategyPref;
   private final Lazy<NetworkStateListener> networkStateListener;
-  private final Lazy<SyntheticData> syntheticData;
 
   private final GlidePaddingTransformation glidePaddingTransformation;
   private final Size deviceDisplaySize;
@@ -44,12 +43,10 @@ public class SubmissionImageLoader {
   public SubmissionImageLoader(
       Application appContext,
       Lazy<NetworkStateListener> networkStateListener,
-      Lazy<SyntheticData> syntheticData,
       @Named("hd_media_in_submissions") Lazy<Preference<NetworkStrategy>> hdMediaNetworkStrategyPref)
   {
     this.hdMediaNetworkStrategyPref = hdMediaNetworkStrategyPref;
     this.networkStateListener = networkStateListener;
-    this.syntheticData = syntheticData;
 
     Resources res = appContext.getResources();
     deviceDisplaySize = new Size(res.getDisplayMetrics().widthPixels, res.getDisplayMetrics().heightPixels);
@@ -126,7 +123,7 @@ public class SubmissionImageLoader {
   }
 
   public Single<Drawable> loadImage(Context context, String imageUrl, RequestOptions options) {
-    if (syntheticData.get().getSUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH().equalsIgnoreCase(imageUrl)) {
+    if (SyntheticData.Companion.getSUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH().equalsIgnoreCase(imageUrl)) {
       //noinspection ConstantConditions
       return Single.just(context.getDrawable(R.drawable.dank_cat));
     }

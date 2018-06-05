@@ -1,6 +1,5 @@
 package me.saket.dank.walkthrough
 
-import me.saket.dank.data.FullNameType
 import me.saket.dank.reddit.Reddit
 import me.saket.dank.ui.submission.SubmissionAndComments
 import me.saket.dank.utils.Optional
@@ -20,7 +19,7 @@ import java.util.Date
 
 class SyntheticSubmissionAndComments {
 
-  val submission = SyntheticSubmission()
+  val submission: Submission
   val comments: Listing<NestedIdentifiable>
 
   init {
@@ -28,11 +27,13 @@ class SyntheticSubmissionAndComments {
     val body2 = "Comments (and their replies) can be collapsed by tapping on them."
     val body3 = "Drag the cat's image downwards and release to close this tutorial."
 
+    submission = SyntheticSubmission(3)
+
     val comment2 = SyntheticComment(body2, submission)
-    val comment1 = SyntheticComment(body, submission, listOf(comment2))
+    val comment1And2 = SyntheticComment(body, submission, listOf(comment2))
     val comment3 = SyntheticComment(body3, submission)
 
-    comments = Listing.create(null, listOf(comment1, comment2, comment3))
+    comments = Listing.create(null, listOf(comment1And2, comment3))
   }
 
   fun toNonSynthetic(): SubmissionAndComments {
@@ -41,26 +42,10 @@ class SyntheticSubmissionAndComments {
   }
 }
 
-class SyntheticSubmission : Submission() {
+class SyntheticSubmission(private val commentCount: Int) : Submission() {
 
-  companion object {
-    val commentSubredditId = "t5_3kfea"
-    val commentAuthorName = "Dank"
-    val commentCreatedTimeUtc = System.currentTimeMillis()
-
-    val comment1 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc."
-
-    //String comment2 = "Both the submission title and comments can be swiped horizontally to reveal actions like upvote, options, etc.";
-    //String comment2Html = comment2;
-
-    val comment3 = "Comments (and their replies) can be collapsed by tapping on them."
-
-    val comment4 = "Drag the cat's image downwards and release to close this tutorial."
-
-    val SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH = "https://i.imgur.com/NaWfFWR.jpg"
-
-    const val SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH = "syntheticsubmissionforgesturewalkthrough"
-    val SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH = "${FullNameType.SUBMISSION.prefix()} + syntheticsubmissionforgesturewalkthrough"
+  override fun getCommentCount(): Int {
+    return commentCount
   }
 
   override fun getLinkFlairText(): String? {
@@ -112,7 +97,7 @@ class SyntheticSubmission : Submission() {
   }
 
   override fun getUrl(): String {
-    return SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH
+    return SyntheticData.SUBMISSION_IMAGE_URL_FOR_GESTURE_WALKTHROUGH
   }
 
   override fun getCrosspostParents(): MutableList<Submission>? {
@@ -121,10 +106,6 @@ class SyntheticSubmission : Submission() {
 
   override fun getPostHint(): String? {
     return "image"
-  }
-
-  override fun getCommentCount(): Int {
-    return 4
   }
 
   override fun getSuggestedSort(): CommentSort? {
@@ -207,10 +188,10 @@ class SyntheticSubmission : Submission() {
     get() = false
 
   override val fullName: String
-    get() = SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH
+    get() = SyntheticData.SUBMISSION_FULLNAME_FOR_GESTURE_WALKTHROUGH
 
   override val id: String
-    get() = SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH
+    get() = SyntheticData.SUBMISSION_ID_FOR_GESTURE_WALKTHROUGH
 
   override val score: Int
     get() = 1
@@ -293,7 +274,7 @@ class SyntheticComment(override val body: String, private val parent: Submission
     get() = "t1_$id"
 
   override val id: String
-    get() = "dyhg7y2"
+    get() = "${body.hashCode()}"
 
   override val score: Int
     get() = 1
@@ -302,5 +283,5 @@ class SyntheticComment(override val body: String, private val parent: Submission
     get() = VoteDirection.NONE
 
   override val parentFullName: String
-    get() = "t1_dyhfxah"
+    get() = "t1_parent_comment_fullname"
 }
