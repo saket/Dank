@@ -146,7 +146,6 @@ import me.saket.dank.utils.LinearSmoothScrollerWithVerticalSnapPref;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RxDiffUtil;
-import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Trio;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.itemanimators.SubmissionCommentsItemAnimator;
@@ -448,11 +447,11 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     submissionRequestStream
         .observeOn(mainThread())
         //.doOnNext(o -> commentsLoadProgressVisibleStream.accept(true))
-        .doOnNext(o -> Timber.d("------------------"))
+        //.doOnNext(o -> Timber.d("------------------"))
         .doOnNext(request -> uiEvents.accept(SubmissionRequestChanged.create(request)))
         .switchMap(submissionRequest -> submissionRepository.submissionWithComments(submissionRequest)
-            .compose(RxUtils.doOnceOnNext(o -> Timber.d("Submission received")))
-            .doOnNext(o -> Timber.i("%s comments", o.second().getComments().map(node -> node.totalSize())))
+            //.compose(RxUtils.doOnceOnNext(o -> Timber.d("Submission received")))
+            //.doOnNext(o -> Timber.i("%s comments", o.second().getComments().map(node -> node.totalSize())))
             .flatMap(pair -> {
               // It's possible for the remote to suggest a different sort than what was asked by SubredditActivity.
               // In that case, trigger another request with the correct sort. Doing this because we need to store

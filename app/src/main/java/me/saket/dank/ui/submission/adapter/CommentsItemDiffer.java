@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-import me.saket.dank.utils.SimpleDiffUtilsCallbacks;
 import me.saket.dank.utils.Optional;
+import me.saket.dank.utils.SimpleDiffUtilsCallbacks;
 
 public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScreenUiModel> {
 
@@ -55,12 +55,15 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
 
         } else if (oldContentLink.isPresent() && newContentLink.isPresent()) {
           if (!oldContentLink.get().thumbnail().isPresent() && newContentLink.get().thumbnail().isPresent()) {
+            //Timber.d("Thumb diff");
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_THUMBNAIL);
           }
           if (!oldContentLink.get().icon().equals(newContentLink.get().icon())) {
+            //Timber.d("Link favicon diff: %s vs %s", oldContentLink.get().icon(), newContentLink.get().icon());
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_FAVICON);
           }
           if (oldContentLink.get().progressVisible() != newContentLink.get().progressVisible()) {
+            //Timber.d("Link progress diff");
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_PROGRESS_VISIBILITY);
           }
           if (!oldContentLink.get().title().equals(newContentLink.get().title())
@@ -69,9 +72,11 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
               || oldContentLink.get().titleTextColorRes() != newContentLink.get().titleTextColorRes()
               || oldContentLink.get().bylineTextColorRes() != newContentLink.get().bylineTextColorRes())
           {
+            //Timber.d("Link title/byline is different");
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_TITLE_AND_BYLINE);
           }
           if (!oldContentLink.get().backgroundTintColor().equals(newContentLink.get().backgroundTintColor())) {
+            //Timber.d("Tint is different: %s vs %s", oldContentLink.get().backgroundTintColor(), newContentLink.get().backgroundTintColor());
             partialChanges.add(SubmissionCommentsHeader.PartialChange.CONTENT_LINK_TINT);
           }
         }
@@ -113,7 +118,7 @@ public class CommentsItemDiffer extends SimpleDiffUtilsCallbacks<SubmissionScree
         if (!oldOptions.abbreviatedCount().equals(newOptions.abbreviatedCount())) {
           partialChanges.add(SubmissionCommentOptions.PartialChange.COMMENT_COUNT);
         }
-        if (oldOptions.sortRes() != newOptions.sortRes()) {
+        if (!oldOptions.sortRes().equals(newOptions.sortRes())) {
           partialChanges.add(SubmissionCommentOptions.PartialChange.SORTING_MODE);
         }
         return partialChanges;
