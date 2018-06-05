@@ -73,7 +73,7 @@ public abstract class CachedMessage {
   public ContentValues toContentValues(Moshi moshi) {
     ContentValues values = new ContentValues(4);
     values.put(COLUMN_FULLNAME, fullname());
-    values.put(COLUMN_MESSAGE, moshi.adapter(Message.class).toJson(message()));
+    values.put(COLUMN_MESSAGE, moshi.adapter(Message.class).serializeNulls().toJson(message()));
     values.put(COLUMN_LATEST_MESSAGE_TIME, latestMessageTimestamp());
     values.put(COLUMN_FOLDER, folder().name());
     return values;
@@ -94,7 +94,7 @@ public abstract class CachedMessage {
 
   public static Function<Cursor, Message> messageFromCursor(Moshi moshi) {
     return cursor -> {
-      JsonAdapter<Message> adapter = moshi.adapter(Message.class);
+      JsonAdapter<Message> adapter = moshi.adapter(Message.class).serializeNulls();
       try {
         return adapter.fromJson(Cursors.string(cursor, COLUMN_MESSAGE));
       } catch (IOException e) {
