@@ -81,6 +81,13 @@ class JrawRedditModule {
   ): AccountHelper {
     val httpClient = OkHttpClient.Builder()
         .addNetworkInterceptor(tokenRefresher)
+        .apply {
+          if (BuildConfig.DEBUG) {
+            val logging = HttpLoggingInterceptor { message -> Timber.tag("OkHttp").d(message) }
+            logging.level = HttpLoggingInterceptor.Level.BODY
+            addInterceptor(logging)
+          }
+        }
         .build()
     return AndroidHelper.accountHelper(appInfoProvider, deviceUUID, tokenStore, httpClient)
   }
