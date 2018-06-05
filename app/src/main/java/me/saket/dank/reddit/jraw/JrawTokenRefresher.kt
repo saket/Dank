@@ -2,16 +2,15 @@ package me.saket.dank.reddit.jraw
 
 import android.text.format.DateUtils
 import io.reactivex.Completable
+import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers.io
 import io.reactivex.subjects.BehaviorSubject
+import me.saket.dank.BuildConfig
 import me.saket.dank.reddit.jraw.JrawTokenRefresher.TokenStatus.FRESH
 import me.saket.dank.reddit.jraw.JrawTokenRefresher.TokenStatus.REFRESH_AHEAD_OF_TIME
 import me.saket.dank.reddit.jraw.JrawTokenRefresher.TokenStatus.REFRESH_IMMEDIATELY
-import me.saket.dank.utils.Arrays2
 import net.dean.jraw.RedditClient
-import net.dean.jraw.android.SharedPreferencesTokenStore
 import net.dean.jraw.models.OAuthData
-import net.dean.jraw.models.PersistedAuthData
 import okhttp3.Interceptor
 import okhttp3.Response
 import org.threeten.bp.Instant
@@ -25,64 +24,62 @@ import javax.inject.Inject
  * This class does that + also refreshes tokens ahead of time (asynchronously) to
  * avoid making the user wait longer.
  */
-class JrawTokenRefresher @Inject constructor(
-    private val clients: BehaviorSubject<RedditClient>,
-    private val tokenStore: SharedPreferencesTokenStore
-) : Interceptor {
+class JrawTokenRefresher @Inject constructor(private val clients: BehaviorSubject<RedditClient>) : Interceptor {
 
   private var isAheadOfTimeRefreshInFlight: Boolean = false
-  private val inFlightImmediateRefreshes: MutableMap<Long, Completable> = Arrays2.hashMap(3)
+
+  fun log(msg: String) {
+    if (BuildConfig.DEBUG) {
+      Timber.w(msg)
+    }
+  }
 
   override fun intercept(chain: Interceptor.Chain): Response {
-    if (tokenStore.usernames.isEmpty()) {
-      Timber.i("Token store usernames is empty")
+    if (chain.request().url().toString().startsWith("https://www.reddit.com/api/v1/access_token")) {
       return chain.proceed(chain.request())
     }
 
-    val expirationDate = tokenExpirationDate()
-    val recommendedRefreshDate = expirationDate.minusMinutes(10)
+    val canRenew = clients
+        .take(1)
+        .map { it.authManager }
+        .map { it.canRenew() }
+        .onErrorReturnItem(false)
+        .blockingFirst()
 
-    Timber.w("Expiration date: %s", expirationDate)
-    Timber.w("Time till token expiration: ${formatTime(expirationDate)}")
-    Timber.w("Username: ${tokenStore.usernames}")
-    Timber.w("Time till pro-active token expiration: ${formatTime(recommendedRefreshDate)}")
-
-    val refresh: Completable = when (computeTokenStatus(expirationDate, recommendedRefreshDate)) {
-      REFRESH_AHEAD_OF_TIME -> refreshAheadOfTime(recommendedRefreshDate)
-      REFRESH_IMMEDIATELY -> refreshImmediately(expirationDate)
-      FRESH -> Completable.complete()
+    if (!canRenew) {
+      log("Token store usernames is empty")
+      return chain.proceed(chain.request())
     }
 
-    refresh.blockingAwait()
+    return clients
+        .take(1)
+        .flatMapCompletable { client ->
+          val expirationDate = tokenExpirationDate(client)
+          val recommendedRefreshDate = expirationDate.minusMinutes(10)
 
-    return chain.proceed(chain.request())
+          log("Expiration date: $expirationDate")
+          log("Time till token expiration: ${formatTime(expirationDate)}")
+          log("Username: ${client.authManager.currentUsername()}")
+          log("Time till pro-active token expiration: ${formatTime(recommendedRefreshDate)}")
+
+          when (computeTokenStatus(expirationDate, recommendedRefreshDate)) {
+            REFRESH_AHEAD_OF_TIME -> refreshAheadOfTime(recommendedRefreshDate)
+            REFRESH_IMMEDIATELY -> refreshImmediately()
+            FRESH -> Completable.complete()
+          }
+        }
+        .andThen(Single.fromCallable { chain.proceed(chain.request()) })
+        .blockingGet()
   }
 
-  private fun refreshImmediately(expirationDate: LocalDateTime): Completable {
-    val key = expirationDate.toEpochSecond(UTC)
-
-    Timber.w("Refreshing immediately")
-
-    if (!inFlightImmediateRefreshes.containsKey(key)) {
-      val cachedRefreshStream = clients
-          .take(1)
-          .map { it.authManager }
-          .map { it.renew() }
-          .ignoreElements()
-          .cache()
-
-      cachedRefreshStream
-          .doOnSubscribe { inFlightImmediateRefreshes[key] = cachedRefreshStream }
-          .subscribe { inFlightImmediateRefreshes.remove(key) }
-    }
-
-    return inFlightImmediateRefreshes[key]!!
+  private fun refreshImmediately(): Completable {
+    throw AssertionError("Jraw did not refresh token automatically")
   }
 
   private fun refreshAheadOfTime(recommendedRefreshDate: LocalDateTime): Completable {
-    Timber.w("Time to refresh token")
-    Timber.w("Recommended refresh date: $recommendedRefreshDate")
-    Timber.w("Now time: ${LocalDateTime.now(UTC)}")
+    log("Time to refresh token")
+    log("Recommended refresh date: $recommendedRefreshDate")
+    log("Now time: ${LocalDateTime.now(UTC)}")
 
     if (isAheadOfTimeRefreshInFlight) {
       return Completable.complete()
@@ -92,13 +89,15 @@ class JrawTokenRefresher @Inject constructor(
         .take(1)
         .map { it.authManager }
         .filter { it.canRenew() }
-        .map { it.renew() }
-        .subscribeOn(io())
-        .ignoreElements()
+        .flatMapCompletable {
+          Completable.fromAction { it.renew() }
+              .subscribeOn(io())
+              .onErrorComplete()
+        }
         .doOnSubscribe { isAheadOfTimeRefreshInFlight = true }
         .doOnComplete {
           isAheadOfTimeRefreshInFlight = false
-          Timber.w("Token refreshed")
+          log("Token refreshed")
         }
   }
 
@@ -131,10 +130,11 @@ class JrawTokenRefresher @Inject constructor(
     return FRESH
   }
 
-  private fun tokenExpirationDate(): LocalDateTime {
-    val loggedInUsername = tokenStore.usernames.first()
-    val persistedAuthData: PersistedAuthData = tokenStore.inspect(loggedInUsername)!!
-    val latestOAuthData: OAuthData = persistedAuthData.latest!!
+  private fun tokenExpirationDate(client: RedditClient): LocalDateTime {
+    val latestOAuthData: OAuthData = client.authManager.current!!
+    if (latestOAuthData.expiration.time == 0L) {
+      throw AssertionError("Expiration time is empty")
+    }
     return LocalDateTime.ofInstant(Instant.ofEpochMilli(latestOAuthData.expiration.time), UTC)
   }
 
