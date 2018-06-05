@@ -367,7 +367,7 @@ public class SubmissionRepository {
       CachedSubmissionId2 lastId = roomDatabase.get().submissionDao().lastSubmissionId(folder.subredditName(), folder.sortingAndTimePeriod());
       return lastId == null
           ? PaginationAnchor.createEmpty()
-          : PaginationAnchor.create(FullNameType.SUBMISSION + lastId.getId());
+          : PaginationAnchor.create(FullNameType.SUBMISSION.prefix() + lastId.getId());
     });
   }
 
