@@ -101,13 +101,14 @@ import me.saket.dank.ui.preferences.UserPreferenceGroup;
 import me.saket.dank.ui.preferences.UserPreferencesActivity;
 import me.saket.dank.ui.submission.adapter.CommentsItemDiffer;
 import me.saket.dank.ui.submission.adapter.ImageWithMultipleVariants;
-import me.saket.dank.ui.submission.adapter.SubmissionComment;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentRowType;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsAdapter;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsHeader;
+import me.saket.dank.ui.submission.adapter.SubmissionRemoteComment;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.submission.adapter.SubmissionUiConstructor;
+import me.saket.dank.ui.submission.events.CommentClicked;
 import me.saket.dank.ui.submission.events.CommentOptionSwipeEvent;
 import me.saket.dank.ui.submission.events.ContributionVoteSwipeEvent;
 import me.saket.dank.ui.submission.events.InlineReplyRequestEvent;
@@ -115,6 +116,7 @@ import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.MarkMessageAsReadRequested;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
+import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.SubmissionChanged;
@@ -502,7 +504,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         )
         .subscribeOn(io())
         .toFlowable(BackpressureStrategy.LATEST)
-        .compose(RxDiffUtil.calculateDiff(CommentsItemDiffer::create))
+        .compose(RxDiffUtil.calculateDiff(CommentsItemDiffer.Companion::create))
         .observeOn(mainThread())
         .takeUntil(lifecycle().onDestroyFlowable())
         .subscribe(commentsAdapter);
@@ -518,7 +520,7 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                 .flatMap(rows -> {
                   for (int i = 0; i < rows.size(); i++) {
                     SubmissionScreenUiModel row = rows.get(i);
-                    if (row instanceof SubmissionComment.UiModel && ((SubmissionComment.UiModel) row).isFocused()) {
+                    if (row instanceof SubmissionRemoteComment.UiModel && ((SubmissionRemoteComment.UiModel) row).isFocused()) {
                       return Observable.just(i);
                     }
                   }
@@ -781,13 +783,17 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
                     .andThen(reply.saveAndSend(replyRepository));
               })
               .compose(applySchedulersCompletable())
-              .doOnError(e -> Timber.e(e, "Reply send error"))
+              .doOnError(e -> {
+                ResolvedError resolvedError = errorResolver.get().resolve(e);
+                resolvedError.ifUnknown(() -> Timber.e(e, "Reply send error"));
+              })
               .onErrorComplete(scheduleAutoRetry)
               .subscribe();
         });
 
     // Reply retry-sends.
-    commentsAdapter.streamReplyRetrySendClicks()
+    commentsAdapter.uiEvents()
+        .ofType(ReplyRetrySendClickEvent.class)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(retrySendEvent -> {
           // Re-sending is not a part of the chain so that it does not get unsubscribed on destroy.
@@ -798,7 +804,8 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
         });
 
     // Toggle collapse on comment clicks.
-    commentsAdapter.streamCommentCollapseExpandEvents()
+    commentsAdapter.uiEvents()
+        .ofType(CommentClicked.class)
         .takeUntil(lifecycle().onDestroy())
         .subscribe(clickEvent -> {
           if (clickEvent.willCollapseOnClick()) {

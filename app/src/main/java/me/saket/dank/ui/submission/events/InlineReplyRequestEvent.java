@@ -5,7 +5,6 @@ import com.google.auto.value.AutoValue;
 import net.dean.jraw.models.Identifiable;
 
 import me.saket.dank.data.SwipeEvent;
-import me.saket.dank.ui.submission.LocalOrRemoteComment;
 
 @AutoValue
 public abstract class InlineReplyRequestEvent implements SwipeEvent {

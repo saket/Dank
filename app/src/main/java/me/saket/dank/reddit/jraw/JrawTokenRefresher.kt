@@ -10,6 +10,7 @@ import me.saket.dank.reddit.jraw.JrawTokenRefresher.TokenStatus.FRESH
 import me.saket.dank.reddit.jraw.JrawTokenRefresher.TokenStatus.REFRESH_AHEAD_OF_TIME
 import me.saket.dank.reddit.jraw.JrawTokenRefresher.TokenStatus.REFRESH_IMMEDIATELY
 import net.dean.jraw.RedditClient
+import net.dean.jraw.android.SharedPreferencesTokenStore
 import net.dean.jraw.models.OAuthData
 import okhttp3.Interceptor
 import okhttp3.Response
@@ -47,7 +48,11 @@ class JrawTokenRefresher @Inject constructor(private val clients: BehaviorSubjec
         .blockingFirst()
 
     if (!canRenew) {
-      log("Token store usernames is empty")
+      val usernames = clients
+          .take(1)
+          .map { (it.authManager.tokenStore as SharedPreferencesTokenStore).usernames }
+          .blockingFirst()
+      log("Cannot renew. usernames: $usernames")
       return chain.proceed(chain.request())
     }
 

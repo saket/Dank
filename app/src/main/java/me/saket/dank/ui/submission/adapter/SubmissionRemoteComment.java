@@ -20,19 +20,20 @@ import net.dean.jraw.models.Comment;
 import java.util.List;
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
 import me.saket.bettermovementmethod.BetterLinkMovementMethod;
 import me.saket.dank.R;
 import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.data.SwipeEvent;
+import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.submission.CommentSwipeActionsProvider;
-import me.saket.dank.ui.submission.events.CommentClickEvent;
-import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
+import me.saket.dank.ui.submission.events.CommentClicked;
 import me.saket.dank.utils.DankLinkMovementMethod;
 import me.saket.dank.widgets.IndentedLayout;
 import me.saket.dank.widgets.swipe.SwipeableLayout;
 import me.saket.dank.widgets.swipe.ViewHolderWithSwipeActions;
 
-public interface SubmissionComment {
+public interface SubmissionRemoteComment {
 
   enum PartialChange {
     BYLINE, // Also includes vote count changes.
@@ -59,9 +60,6 @@ public interface SubmissionComment {
 
     public abstract Comment comment();
 
-    /** Present only for locally posted replies. Required because {@link ReplyRetrySendClickEvent} needs it. */
-//    public abstract Optional<PendingSyncReply> optionalPendingSyncReply();
-
     @ColorRes
     public abstract int backgroundColorRes();
 
@@ -71,11 +69,11 @@ public interface SubmissionComment {
 
     @Override
     public SubmissionCommentRowType type() {
-      return SubmissionCommentRowType.USER_COMMENT;
+      return SubmissionCommentRowType.REMOTE_USER_COMMENT;
     }
 
     public static UiModel.Builder builder() {
-      return new AutoValue_SubmissionComment_UiModel.Builder();
+      return new AutoValue_SubmissionRemoteComment_UiModel.Builder();
     }
 
     @AutoValue.Builder
@@ -120,8 +118,6 @@ public interface SubmissionComment {
     private final IndentedLayout indentedLayout;
     private final TextView bylineView;
     private final TextView bodyView;
-    private View.OnClickListener collapseOnClickListener;
-    private View.OnClickListener tapToRetryClickListener;
     private UiModel uiModel;
 
     public static ViewHolder create(LayoutInflater inflater, ViewGroup parent) {
@@ -147,19 +143,12 @@ public interface SubmissionComment {
       );
     }
 
-    public void setupCollapseOnClick(Relay<CommentClickEvent> clickStream) {
-      collapseOnClickListener = o -> {
+    public void setupCollapseOnClick(Relay<UiEvent> uiEvents) {
+      itemView.setOnClickListener(o -> {
         boolean willCollapse = !uiModel.isCollapsed();
-        clickStream.accept(CommentClickEvent.create(uiModel.comment(), getAdapterPosition(), itemView, willCollapse));
-      };
+        uiEvents.accept(CommentClicked.create(uiModel.comment(), getAdapterPosition(), itemView, willCollapse));
+      });
     }
-
-//    public void setupTapToRetrySending(Relay<ReplyRetrySendClickEvent> retrySendClickStream) {
-//      tapToRetryClickListener = o -> {
-//        PendingSyncReply failedPendingSyncReply = uiModel.optionalPendingSyncReply().get();
-//        retrySendClickStream.accept(ReplyRetrySendClickEvent.create(failedPendingSyncReply));
-//      };
-//    }
 
     @SuppressLint("ClickableViewAccessibility")
     public void forwardTouchEventsToBackground(BetterLinkMovementMethod linkMovementMethod) {
@@ -184,22 +173,6 @@ public interface SubmissionComment {
       bodyView.setText(uiModel.body());
       bodyView.setTextColor(uiModel.bodyTextColor());
       bodyView.setMaxLines(uiModel.bodyMaxLines());
-
-      // Enable gestures only if it's a posted comment.
-      // TODO: Add support for locally posted replies too.
-//      boolean isPresentOnRemote = uiModel.comment() instanceof RemotePostedComment;
-//      getSwipeableLayout().setSwipeEnabled(isPresentOnRemote);
-
-//      Optional<PendingSyncReply> optionalReply = uiModel.optionalPendingSyncReply();
-//      boolean isFailedReply = optionalReply.isPresent() && optionalReply.get().state() == PendingSyncReply.State.FAILED;
-//      if (isFailedReply) {
-//        itemView.setOnClickListener(tapToRetryClickListener);
-//      } else {
-//        itemView.setOnClickListener(collapseOnClickListener);
-//      }
-
-      getSwipeableLayout().setSwipeEnabled(true);
-      itemView.setOnClickListener(collapseOnClickListener);
     }
 
     public void renderPartialChanges(List<Object> payloads) {
@@ -227,8 +200,7 @@ public interface SubmissionComment {
   class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
     private final DankLinkMovementMethod linkMovementMethod;
     private final CommentSwipeActionsProvider swipeActionsProvider;
-    final PublishRelay<CommentClickEvent> commentClickStream = PublishRelay.create();
-    final PublishRelay<ReplyRetrySendClickEvent> replyRetrySendClickStream = PublishRelay.create();
+    final PublishRelay<UiEvent> uiEvents = PublishRelay.create();
 
     @Inject
     public Adapter(DankLinkMovementMethod linkMovementMethod, CommentSwipeActionsProvider swipeActionsProvider) {
@@ -241,8 +213,7 @@ public interface SubmissionComment {
       ViewHolder holder = ViewHolder.create(inflater, parent);
       holder.setBodyLinkMovementMethod(linkMovementMethod);
       holder.setupGestures(swipeActionsProvider);
-      holder.setupCollapseOnClick(commentClickStream);
-      //holder.setupTapToRetrySending(replyRetrySendClickStream);
+      holder.setupCollapseOnClick(uiEvents);
       holder.forwardTouchEventsToBackground(linkMovementMethod);
       return holder;
     }
@@ -257,6 +228,11 @@ public interface SubmissionComment {
     public void onBindViewHolder(ViewHolder holder, UiModel uiModel, List<Object> payloads) {
       holder.setUiModel(uiModel);
       holder.renderPartialChanges(payloads);
+    }
+
+    @Override
+    public Observable<? extends UiEvent> uiEvents() {
+      return uiEvents;
     }
 
     @CheckResult

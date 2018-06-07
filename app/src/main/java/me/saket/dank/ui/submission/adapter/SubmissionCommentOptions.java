@@ -17,6 +17,7 @@ import com.jakewharton.rxrelay2.PublishRelay;
 import java.util.List;
 import javax.inject.Inject;
 
+import io.reactivex.Observable;
 import me.saket.dank.R;
 import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
@@ -110,16 +111,21 @@ public interface SubmissionCommentOptions {
   }
 
   class Adapter implements SubmissionScreenUiModel.Adapter<UiModel, ViewHolder> {
-    final PublishRelay<UiEvent> events = PublishRelay.create();
+    private final PublishRelay<UiEvent> uiEvents = PublishRelay.create();
 
     @Inject
     public Adapter() {
     }
 
     @Override
+    public Observable<? extends UiEvent> uiEvents() {
+      return uiEvents;
+    }
+
+    @Override
     public ViewHolder onCreateViewHolder(LayoutInflater inflater, ViewGroup parent) {
       ViewHolder holder = ViewHolder.create(inflater, parent);
-      holder.setupCommentOptionClicks(events);
+      holder.setupCommentOptionClicks(uiEvents);
       return holder;
     }
 

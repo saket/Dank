@@ -31,6 +31,7 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
+import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.vote.VotingManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
@@ -185,6 +186,10 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
       sharedPreferences.get().edit()
           .clear()
           .apply();
+    });
+
+    addButton("Reset collapsed comments", o -> {
+      SubmissionCommentTreeUiConstructor.COLLAPSED_COMMENT_IDS.clear();
     });
   }
 
