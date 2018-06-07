@@ -1,6 +1,5 @@
 package me.saket.dank.ui.submission.adapter;
 
-import android.annotation.SuppressLint;
 import android.support.annotation.CheckResult;
 import android.support.v7.util.DiffUtil;
 import android.support.v7.widget.RecyclerView;
@@ -18,17 +17,14 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.data.SwipeEvent;
 import me.saket.dank.ui.UiEvent;
 import me.saket.dank.ui.submission.SubmissionContentLoadError;
-import me.saket.dank.ui.submission.events.CommentClickEvent;
 import me.saket.dank.ui.submission.events.LoadMoreCommentsClickEvent;
 import me.saket.dank.ui.submission.events.ReplyDiscardClickEvent;
 import me.saket.dank.ui.submission.events.ReplyFullscreenClickEvent;
 import me.saket.dank.ui.submission.events.ReplyInsertGifClickEvent;
 import me.saket.dank.ui.submission.events.ReplyItemViewBindEvent;
-import me.saket.dank.ui.submission.events.ReplyRetrySendClickEvent;
 import me.saket.dank.ui.submission.events.ReplySendClickEvent;
 import me.saket.dank.ui.submission.events.SubmissionContentLinkClickEvent;
 import me.saket.dank.utils.Arrays2;
-import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.RecyclerViewArrayAdapter;
@@ -39,6 +35,7 @@ import me.saket.dank.utils.RecyclerViewArrayAdapter;
  * 1. Create a class with an Ui-model, a ViewHolder and an Adapter. See {@link SubmissionCommentsHeader}.
  * 2. Update {@link SubmissionCommentRowType}.
  * 3. Add it to this adapter's constructor.
+ * 4. Update {@link CommentsItemDiffer}.
  */
 public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<SubmissionScreenUiModel, RecyclerView.ViewHolder>
     implements Consumer<Pair<List<SubmissionScreenUiModel>, DiffUtil.DiffResult>>
@@ -57,7 +54,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   private final SubmissionCommentsViewFullThread.Adapter viewFullThreadAdapter;
   private final SubmissionMediaContentLoadError.Adapter mediaContentLoadErrorAdapter;
   private final SubmissionCommentsLoadError.Adapter commentsLoadErrorAdapter;
-  private final SubmissionComment.Adapter commentAdapter;
+  private final SubmissionRemoteComment.Adapter remoteCommentAdapter;
+  private final SubmissionLocalComment.Adapter localCommentAdapter;
   private final SubmissionCommentInlineReply.Adapter inlineReplyAdapter;
   private final SubmissionCommentsLoadMore.Adapter loadMoreAdapter;
 
@@ -69,7 +67,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
       SubmissionCommentsViewFullThread.Adapter viewFullThreadAdapter,
       SubmissionCommentsLoadError.Adapter commentsLoadErrorAdapter,
       SubmissionCommentsLoadProgress.Adapter commentsLoadProgressAdapter,
-      SubmissionComment.Adapter commentAdapter,
+      SubmissionRemoteComment.Adapter remoteCommentAdapter,
+      SubmissionLocalComment.Adapter localCommentAdapter,
       SubmissionCommentInlineReply.Adapter inlineReplyAdapter,
       SubmissionCommentsLoadMore.Adapter loadMoreAdapter)
   {
@@ -80,7 +79,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     childAdapters.put(SubmissionCommentRowType.VIEW_FULL_THREAD, viewFullThreadAdapter);
     childAdapters.put(SubmissionCommentRowType.COMMENTS_LOAD_ERROR, commentsLoadErrorAdapter);
     childAdapters.put(SubmissionCommentRowType.COMMENTS_LOAD_PROGRESS, commentsLoadProgressAdapter);
-    childAdapters.put(SubmissionCommentRowType.USER_COMMENT, commentAdapter);
+    childAdapters.put(SubmissionCommentRowType.REMOTE_USER_COMMENT, remoteCommentAdapter);
+    childAdapters.put(SubmissionCommentRowType.LOCAL_USER_COMMENT, localCommentAdapter);
     childAdapters.put(SubmissionCommentRowType.INLINE_REPLY, inlineReplyAdapter);
     childAdapters.put(SubmissionCommentRowType.LOAD_MORE_COMMENTS, loadMoreAdapter);
 
@@ -88,7 +88,8 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
     this.commentOptionsAdapter = commentOptionsAdapter;
     this.mediaContentLoadErrorAdapter = mediaContentLoadErrorAdapter;
     this.commentsLoadErrorAdapter = commentsLoadErrorAdapter;
-    this.commentAdapter = commentAdapter;
+    this.remoteCommentAdapter = remoteCommentAdapter;
+    this.localCommentAdapter = localCommentAdapter;
     this.inlineReplyAdapter = inlineReplyAdapter;
     this.loadMoreAdapter = loadMoreAdapter;
     this.viewFullThreadAdapter = viewFullThreadAdapter;
@@ -148,8 +149,10 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   @CheckResult
   public Observable<? extends UiEvent> uiEvents() {
     return Observable.merge(
-        viewFullThreadAdapter.viewAllCommentsClicks,
-        commentOptionsAdapter.events);
+        viewFullThreadAdapter.uiEvents(),
+        commentOptionsAdapter.uiEvents(),
+        remoteCommentAdapter.uiEvents(),
+        localCommentAdapter.uiEvents());
   }
 
   @CheckResult
@@ -183,18 +186,10 @@ public class SubmissionCommentsAdapter extends RecyclerViewArrayAdapter<Submissi
   }
 
   @CheckResult
-  public Observable<CommentClickEvent> streamCommentCollapseExpandEvents() {
-    return commentAdapter.commentClickStream;
-  }
-
-  @CheckResult
-  public Observable<ReplyRetrySendClickEvent> streamReplyRetrySendClicks() {
-    return commentAdapter.replyRetrySendClickStream;
-  }
-
-  @CheckResult
   public Observable<SwipeEvent> swipeEvents() {
-    return commentAdapter.swipeEvents().mergeWith(headerAdapter.swipeEvents());
+    return remoteCommentAdapter.swipeEvents()
+        .mergeWith(localCommentAdapter.swipeEvents())
+        .mergeWith(headerAdapter.swipeEvents());
   }
 
   @CheckResult

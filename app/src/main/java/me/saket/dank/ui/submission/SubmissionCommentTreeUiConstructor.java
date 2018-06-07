@@ -1,6 +1,7 @@
 package me.saket.dank.ui.submission;
 
 import static me.saket.dank.utils.Arrays2.immutable;
+import static me.saket.dank.utils.Preconditions.checkNotNull;
 
 import android.content.Context;
 import android.support.annotation.CheckResult;
@@ -27,12 +28,15 @@ import dagger.Lazy;
 import io.reactivex.Observable;
 import io.reactivex.Scheduler;
 import me.saket.dank.R;
+import me.saket.dank.data.LocallyPostedComment;
+import me.saket.dank.data.SpannableWithTextEquality;
 import me.saket.dank.reply.PendingSyncReply;
 import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.compose.SimpleIdentifiable;
-import me.saket.dank.ui.submission.adapter.SubmissionComment;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentInlineReply;
 import me.saket.dank.ui.submission.adapter.SubmissionCommentsLoadMore;
+import me.saket.dank.ui.submission.adapter.SubmissionLocalComment;
+import me.saket.dank.ui.submission.adapter.SubmissionRemoteComment;
 import me.saket.dank.ui.submission.adapter.SubmissionScreenUiModel;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.utils.CombineLatestWithLog;
@@ -56,7 +60,7 @@ import timber.log.Timber;
 public class SubmissionCommentTreeUiConstructor {
 
   private static final ActiveReplyIds ACTIVE_REPLY_IDS = new ActiveReplyIds();
-  private static final CollapsedCommentIds COLLAPSED_COMMENT_IDS = new CollapsedCommentIds(50);
+  public static final CollapsedCommentIds COLLAPSED_COMMENT_IDS = new CollapsedCommentIds(50);
   private static final InFlightLoadMoreIds IN_FLIGHT_LOAD_MORE_IDS = new InFlightLoadMoreIds();
 
   private final Lazy<ReplyRepository> replyRepository;
@@ -80,7 +84,7 @@ public class SubmissionCommentTreeUiConstructor {
   }
 
   /** Comment IDs that are collapsed. */
-  static class CollapsedCommentIds extends RxHashSet<String> {
+  public static class CollapsedCommentIds extends RxHashSet<String> {
     private boolean changeEventsEnabled = true;
 
     public CollapsedCommentIds(int initialCapacity) {
@@ -230,10 +234,10 @@ public class SubmissionCommentTreeUiConstructor {
     if (contribution instanceof SimpleIdentifiable) {
       return contribution.getFullName();
     }
-    //if (contribution instanceof LocalOrRemoteComment) {
-    //  String key = ((LocalOrRemoteComment) contribution).getPostingStatusIndependentId();
-    //  return Preconditions.checkNotNull(key, "LocallyPostedComment#getPostingStatusIndependentId()");
-    //}
+    if (contribution instanceof LocallyPostedComment) {
+      String key = ((LocallyPostedComment) contribution).getPostingStatusIndependentId();
+      return checkNotNull(key, "LocallyPostedComment#getPostingStatusIndependentId()");
+    }
     if (contribution instanceof Comment) {
       return contribution.getFullName();
     }
@@ -399,17 +403,16 @@ public class SubmissionCommentTreeUiConstructor {
     }
 
     // Pending-sync replies.
-    // TODO JRAW.
-//    if (!isCommentNodeCollapsed && pendingSyncRepliesMap.hasForParent(nextNode.getSubject())) {
-//      List<PendingSyncReply> pendingSyncReplies = pendingSyncRepliesMap.getForParent(nextNode.getSubject());
-//      for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
-//        LocallyPostedComment locallyPostedComment = LocallyPostedComment.create(pendingSyncReplies.get(i));
-//        boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(locallyPostedComment);
-//        int depth = nextNode.getDepth() + 1;
-//        boolean isFocused = focusedComment.isPresent() && focusedComment.get().fullname().equals(locallyPostedComment.getFullName());
-//        flattenComments.add(locallyPostedCommentUiModel(context, locallyPostedComment, isReplyCollapsed, depth, isFocused));
-//      }
-//    }
+    if (!isCommentNodeCollapsed && pendingSyncRepliesMap.hasForParent(nextNode.getSubject())) {
+      List<PendingSyncReply> pendingSyncReplies = pendingSyncRepliesMap.getForParent(nextNode.getSubject());
+      for (int i = 0; i < pendingSyncReplies.size(); i++) {     // Intentionally avoiding thrashing Iterator objects.
+        LocallyPostedComment locallyPostedComment = new LocallyPostedComment(pendingSyncReplies.get(i));
+        boolean isReplyCollapsed = COLLAPSED_COMMENT_IDS.isCollapsed(locallyPostedComment);
+        int depth = nextNode.getDepth() + 1;
+        boolean isFocused = focusedComment.isPresent() && focusedComment.get().fullname().equals(locallyPostedComment.getFullName());
+        flattenComments.add(locallyPostedCommentUiModel(context, locallyPostedComment, isReplyCollapsed, depth, isFocused));
+      }
+    }
 
     // Next, the child comment tree.
     if (nextNode.getReplies().isEmpty()) {
@@ -437,7 +440,7 @@ public class SubmissionCommentTreeUiConstructor {
     }
   }
 
-  private SubmissionComment.UiModel syncedCommentUiModel(
+  private SubmissionRemoteComment.UiModel syncedCommentUiModel(
       Context context,
       CommentNode commentNode,
       boolean isCollapsed,
@@ -478,95 +481,12 @@ public class SubmissionCommentTreeUiConstructor {
         ? markdown.get().stripMarkdown(comment)
         : markdown.get().parse(comment);
 
-    return commentCommonUiModelBuilder(context, commentNode.getSubject().getFullName(), isCollapsed, isFocused, commentNode.getDepth())
-        .comment(comment)
-        //.optionalPendingSyncReply(Optional.empty())
-        .byline(byline, commentScore)
-        .body(commentBody)
-        .build();
-  }
-
-  /**
-   * Reply posted by the logged in user that hasn't synced yet or whose actual comment hasn't been fetched yet.
-   */
-//  private SubmissionComment.UiModel locallyPostedCommentUiModel(
-//      Context context,
-//      LocallyPostedComment locallyPostedComment,
-//      boolean isReplyCollapsed,
-//      int depth,
-//      boolean isFocused)
-//  {
-//    PendingSyncReply pendingSyncReply = locallyPostedComment.pendingSyncReply();
-//    CharSequence byline;
-//    int commentScore = 1;
-//
-//    if (pendingSyncReply.state() == PendingSyncReply.State.POSTED) {
-//      Optional<String> authorFlairText = Optional.empty();
-//      byline = constructCommentByline(
-//          context,
-//          pendingSyncReply.author(),
-//          authorFlairText,
-//          true,
-//          pendingSyncReply.createdTimeMillis(),
-//          VoteDirection.UP,
-//          Optional.of(commentScore),
-//          0,
-//          isReplyCollapsed
-//      );
-//
-//    } else {
-//      Truss bylineBuilder = new Truss();
-//      if (isReplyCollapsed) {
-//        bylineBuilder.append(pendingSyncReply.author());
-//      } else {
-//        bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, R.color.submission_comment_byline_author_op)));
-//        bylineBuilder.append(pendingSyncReply.author());
-//        bylineBuilder.popSpan();
-//      }
-//      bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
-//
-//      if (pendingSyncReply.state() == PendingSyncReply.State.POSTING) {
-//        bylineBuilder.append(context.getString(R.string.submission_comment_reply_byline_posting_status));
-//      } else if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
-//        bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, R.color.submission_comment_byline_failed_to_post)));
-//        bylineBuilder.append(context.getString(R.string.submission_comment_reply_byline_failed_status));
-//        bylineBuilder.popSpan();
-//      } else {
-//        throw new AssertionError();
-//      }
-//
-//      byline = bylineBuilder.build();
-//    }
-//
-//    CharSequence processedMarkdown = markdown.get().parse(pendingSyncReply);
-//    CharSequence commentBody = isReplyCollapsed
-//        ? processedMarkdown.toString()  // toString() strips all spans.
-//        : processedMarkdown;
-//
-//    return commentCommonUiModelBuilder(context, locallyPostedComment.getPostingStatusIndependentId(), isReplyCollapsed, isFocused, depth)
-//        .comment(LocallyPostedComment.create(pendingSyncReply))
-//        .optionalPendingSyncReply(Optional.of(pendingSyncReply))
-//        .byline(byline, commentScore)
-//        .body(commentBody)
-//        .build();
-//  }
-
-  /**
-   * Builds common properties for both comments and pending-sync-replies.
-   */
-  private SubmissionComment.UiModel.Builder commentCommonUiModelBuilder(
-      Context context,
-      String adapterId,
-      boolean isCollapsed,
-      boolean isFocused,
-      int depth)
-  {
     @ColorRes int backgroundColorRes = isFocused
         ? R.color.submission_comment_background_focused
         : R.color.submission_comment_background;
 
-    return SubmissionComment.UiModel.builder()
-        .adapterId(adapterId.hashCode())
+    return SubmissionRemoteComment.UiModel.builder()
+        .adapterId(commentNode.getSubject().getFullName().hashCode())
         .bylineTextColor(color(context,
             isCollapsed
                 ? R.color.submission_comment_body_collapsed
@@ -576,11 +496,95 @@ public class SubmissionCommentTreeUiConstructor {
             ? R.color.submission_comment_body_collapsed
             : R.color.submission_comment_body_expanded
         ))
-        .indentationDepth(depth - 1)  // TODO: Why are we subtracting 1 here?
+        .indentationDepth(commentNode.getDepth() - 1)  // TODO: Why are we subtracting 1 here?
         .bodyMaxLines(isCollapsed ? 1 : Integer.MAX_VALUE)
         .isCollapsed(isCollapsed)
         .backgroundColorRes(backgroundColorRes)
-        .isFocused(isFocused);
+        .isFocused(isFocused)
+        .comment(comment)
+        .byline(byline, commentScore)
+        .body(commentBody)
+        .build();
+  }
+
+  /**
+   * Reply posted by the logged in user that hasn't synced yet or whose actual comment hasn't been fetched yet.
+   */
+  private SubmissionScreenUiModel locallyPostedCommentUiModel(
+      Context context,
+      LocallyPostedComment locallyPostedComment,
+      boolean isCollapsed,
+      int depth,
+      boolean isFocused)
+  {
+    PendingSyncReply pendingSyncReply = locallyPostedComment.getPendingSyncReply();
+    CharSequence byline;
+    int commentScore = 1;
+
+    if (pendingSyncReply.state() == PendingSyncReply.State.POSTED) {
+      Optional<String> authorFlairText = Optional.empty();
+      byline = constructCommentByline(
+          context,
+          pendingSyncReply.author(),
+          authorFlairText,
+          true,
+          pendingSyncReply.createdTimeMillis(),
+          VoteDirection.UP,
+          Optional.of(commentScore),
+          0,
+          isCollapsed
+      );
+
+    } else {
+      Truss bylineBuilder = new Truss();
+      if (isCollapsed) {
+        bylineBuilder.append(pendingSyncReply.author());
+      } else {
+        bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, R.color.submission_comment_byline_author_op)));
+        bylineBuilder.append(pendingSyncReply.author());
+        bylineBuilder.popSpan();
+      }
+      bylineBuilder.append(context.getString(R.string.submission_comment_byline_item_separator));
+
+      if (pendingSyncReply.state() == PendingSyncReply.State.POSTING) {
+        bylineBuilder.append(context.getString(R.string.submission_comment_reply_byline_posting_status));
+      } else if (pendingSyncReply.state() == PendingSyncReply.State.FAILED) {
+        bylineBuilder.pushSpan(new ForegroundColorSpan(color(context, R.color.submission_comment_byline_failed_to_post)));
+        bylineBuilder.append(context.getString(R.string.submission_comment_reply_byline_failed_status));
+        bylineBuilder.popSpan();
+      } else {
+        throw new AssertionError();
+      }
+
+      byline = bylineBuilder.build();
+    }
+
+    CharSequence processedMarkdown = markdown.get().parse(pendingSyncReply);
+    CharSequence commentBody = isCollapsed
+        ? processedMarkdown.toString()  // toString() strips all spans.
+        : processedMarkdown;
+
+    return new SubmissionLocalComment.UiModel(
+        locallyPostedComment.getPostingStatusIndependentId().hashCode(),
+        SpannableWithTextEquality.wrap(byline, commentScore),
+        SpannableWithTextEquality.wrap(commentBody),
+        color(context,
+            isCollapsed
+                ? R.color.submission_comment_body_collapsed
+                : R.color.submission_comment_byline_default_color
+        ),
+        color(context, isCollapsed
+            ? R.color.submission_comment_body_collapsed
+            : R.color.submission_comment_body_expanded
+        ),
+        isCollapsed ? 1 : Integer.MAX_VALUE,
+        depth - 1,    // TODO: Why are we subtracting 1 here?
+        locallyPostedComment,
+        isFocused
+            ? R.color.submission_comment_background_focused
+            : R.color.submission_comment_background,
+        isCollapsed
+    );
   }
 
   /**

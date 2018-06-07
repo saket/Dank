@@ -28,7 +28,6 @@ import io.reactivex.exceptions.Exceptions;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.markdownhints.MarkdownHintOptions;
 import me.saket.dank.reply.PendingSyncReply;
-import me.saket.dank.ui.submission.LocalOrRemoteComment;
 import me.saket.dank.utils.Preconditions;
 import me.saket.dank.utils.markdown.Markdown;
 import ru.noties.markwon.SpannableBuilder;
@@ -164,7 +163,7 @@ public class MarkwonBasedMarkdownRenderer implements Markdown {
   }
 
   /**
-   * See {@link #stripMarkdown(LocalOrRemoteComment)}.
+   * See {@link #stripMarkdown(Comment)}.
    */
   @Override
   public String stripMarkdown(Message message) {

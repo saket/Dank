@@ -4,6 +4,10 @@ import io.reactivex.Completable
 import io.reactivex.Observable
 import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers.io
+import me.saket.dank.data.FullNameType.COMMENT
+import me.saket.dank.data.FullNameType.MESSAGE
+import me.saket.dank.data.FullNameType.SUBMISSION
+import me.saket.dank.data.FullNameType.parse
 import me.saket.dank.data.PaginationAnchor
 import me.saket.dank.reddit.Reddit
 import me.saket.dank.ui.user.messages.InboxFolder
@@ -44,10 +48,11 @@ class JrawLoggedInUser(private val clients: Observable<RedditClient>, private va
     return clients
         .firstOrError()
         .map<Identifiable> {
-          when (parent) {
-            is Comment -> it.comment(parent.id).reply(body)
-            is Submission -> it.submission(parent.id).reply(body)
-            is Message -> it.me().inbox().replyTo(parent.fullName, body)
+          val fullNameType = parse(parent.fullName)
+          when (fullNameType) {
+            COMMENT -> it.comment(parent.id).reply(body)
+            SUBMISSION -> it.submission(parent.id).reply(body)
+            MESSAGE -> it.me().inbox().replyTo(parent.fullName, body)
             else -> throw AssertionError("Unknown contribution for reply: $parent")
           }
         }

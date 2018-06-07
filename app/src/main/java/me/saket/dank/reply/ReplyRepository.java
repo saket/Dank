@@ -93,7 +93,7 @@ public class ReplyRepository implements DraftStore {
 
     String replyBody = pendingSyncReply.body();
     long replyCreatedTimeMillis = pendingSyncReply.createdTimeMillis();
-    Identifiable parentContribution = SimpleIdentifiable.Companion.from(parentThreadFullName);
+    Identifiable parentContribution = SimpleIdentifiable.Companion.from(pendingSyncReply.parentContributionFullName());
     return sendReply(parentContribution, parentThread, replyBody, replyCreatedTimeMillis);
   }
 
