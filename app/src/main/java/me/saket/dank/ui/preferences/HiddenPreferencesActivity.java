@@ -31,14 +31,13 @@ import io.reactivex.schedulers.Schedulers;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.R;
 import me.saket.dank.data.LinkMetadataRepository;
-import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
-import me.saket.dank.vote.VotingManager;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.CheckUnreadMessagesJobService;
+import me.saket.dank.reply.ReplyRepository;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
 import me.saket.dank.ui.appshortcuts.AppShortcutRepository;
 import me.saket.dank.ui.media.MediaHostRepository;
-import me.saket.dank.reply.ReplyRepository;
+import me.saket.dank.ui.submission.SubmissionCommentTreeUiConstructor;
 import me.saket.dank.ui.submission.SubmissionRepository;
 import me.saket.dank.ui.subscriptions.SubscriptionRepository;
 import me.saket.dank.ui.user.messages.CachedMessage;
@@ -46,6 +45,7 @@ import me.saket.dank.urlparser.UrlParser;
 import me.saket.dank.utils.RxUtils;
 import me.saket.dank.utils.Views;
 import me.saket.dank.utils.markdown.Markdown;
+import me.saket.dank.vote.VotingManager;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
 import timber.log.Timber;
 
@@ -114,9 +114,13 @@ public class HiddenPreferencesActivity extends DankPullCollapsibleActivity {
           });
     });
 
-    addButton("Clear cached submission list and comments", o -> {
+    addButton("Clear cached submission list", o -> {
       submissionRepository.clearCachedSubmissionLists()
-          .andThen(submissionRepository.clearAllCachedSubmissionWithComments())
+          .subscribeOn(io()).subscribe();
+    });
+
+    addButton("Clear cached submission comments", o -> {
+      submissionRepository.clearAllCachedSubmissionComments()
           .andThen(replyRepository.removeAllPendingSyncReplies())
           .subscribeOn(io()).subscribe();
     });

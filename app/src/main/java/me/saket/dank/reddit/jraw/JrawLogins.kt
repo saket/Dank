@@ -15,10 +15,20 @@ class JrawLogins(private val accountHelper: AccountHelper) : Reddit.Logins {
 class UserLoginHelper(private val helper: StatefulAuthHelper) {
 
   fun authorizationUrl(): String {
-    val scopes = arrayOf("account", "edit", // For editing comments and submissions
-        "history", "identity", "mysubreddits", "privatemessages", "read", "report", // For hiding or reporting a thread.
-        "save", "submit", "subscribe", "vote", "wikiread")
-
+    val scopes = arrayOf(
+        "account",
+        "edit", // For editing comments and submissions
+        "history",
+        "identity",
+        "mysubreddits",
+        "privatemessages",
+        "read",
+        "report", // For hiding or reporting a thread.
+        "save",
+        "submit",
+        "subscribe",
+        "vote",
+        "wikiread")
     return helper.getAuthorizationUrl(requestRefreshToken = true, useMobileSite = true, scopes = *scopes)
   }
 
