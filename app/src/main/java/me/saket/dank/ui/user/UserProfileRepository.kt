@@ -85,7 +85,7 @@ class UserProfileRepository @Inject constructor(
 
   @CheckResult
   fun loggedInUserAccounts(): Observable<Account> {
-    val loggedInUserName = userSessionRepository.loggedInUserName()
+    val loggedInUserName = userSessionRepository.loggedInUserName()!!
     Preconditions.checkNotNull(loggedInUserName, "loggedInUserName == null")
 
     Timber.i("Fetching logged in user account")
@@ -94,7 +94,7 @@ class UserProfileRepository @Inject constructor(
 
   @CheckResult
   fun refreshLoggedInUserAccount(): Completable {
-    val loggedInUserName = userSessionRepository.loggedInUserName()
+    val loggedInUserName = userSessionRepository.loggedInUserName()!!
 
     Timber.i("Refreshing logged in user acct")
     return loggedInUserAccountStore.getWithResult(loggedInUserName)

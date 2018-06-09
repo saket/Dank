@@ -2,16 +2,15 @@ package me.saket.dank.reddit.jraw
 
 import android.text.format.DateUtils
 import io.reactivex.Completable
-import io.reactivex.Single
 import io.reactivex.schedulers.Schedulers.io
 import io.reactivex.subjects.BehaviorSubject
 import me.saket.dank.BuildConfig
 import me.saket.dank.reddit.jraw.JrawTokenRefresher.TokenStatus.FRESH
 import me.saket.dank.reddit.jraw.JrawTokenRefresher.TokenStatus.REFRESH_AHEAD_OF_TIME
-import me.saket.dank.reddit.jraw.JrawTokenRefresher.TokenStatus.REFRESH_IMMEDIATELY
 import net.dean.jraw.RedditClient
 import net.dean.jraw.android.SharedPreferencesTokenStore
 import net.dean.jraw.models.OAuthData
+import net.dean.jraw.oauth.AuthMethod
 import okhttp3.Interceptor
 import okhttp3.Response
 import org.threeten.bp.Instant
@@ -40,48 +39,74 @@ class JrawTokenRefresher @Inject constructor(private val clients: BehaviorSubjec
       return chain.proceed(chain.request())
     }
 
-    val canRenew = clients
+    clients
         .take(1)
-        .map { it.authManager }
-        .map { it.canRenew() }
-        .onErrorReturnItem(false)
-        .blockingFirst()
+        .flatMapCompletable {
+          fixRefreshToken(it)
+              .andThen(renewIfNeeded(it))
+        }
+        .onErrorComplete()
+        .subscribe()
 
-    if (!canRenew) {
-      val usernames = clients
-          .take(1)
-          .map { (it.authManager.tokenStore as SharedPreferencesTokenStore).usernames }
-          .blockingFirst()
-      log("Cannot renew. usernames: $usernames")
-      return chain.proceed(chain.request())
+    return chain.proceed(chain.request())
+  }
+
+  /**
+   * https://github.com/mattbdean/JRAW/issues/264
+   */
+  private fun fixRefreshToken(client: RedditClient): Completable {
+    if (client.authMethod != AuthMethod.APP) {
+      return Completable.complete()
     }
 
-    return clients
-        .take(1)
-        .flatMapCompletable { client ->
-          val expirationDate = tokenExpirationDate(client)
-          val recommendedRefreshDate = expirationDate.minusMinutes(10)
+    return Completable.fromAction {
+      val authManager = client.authManager
+      val tokenStore = authManager.tokenStore
+      val currentUsername = client.authManager.currentUsername()
 
-          log("Expiration date: $expirationDate")
-          log("Time till token expiration: ${formatTime(expirationDate)}")
-          log("Username: ${client.authManager.currentUsername()}")
-          log("Time till pro-active token expiration: ${formatTime(recommendedRefreshDate)}")
+      val storedAuthData: OAuthData? = tokenStore.fetchLatest(currentUsername)
+      val storedRefreshToken = tokenStore.fetchRefreshToken(currentUsername)
 
-          when (computeTokenStatus(expirationDate, recommendedRefreshDate)) {
-            REFRESH_AHEAD_OF_TIME -> refreshAheadOfTime(recommendedRefreshDate)
-            REFRESH_IMMEDIATELY -> refreshImmediately()
-            FRESH -> Completable.complete()
-          }
-        }
-        .andThen(Single.fromCallable { chain.proceed(chain.request()) })
-        .blockingGet()
+      val isJrawPotentiallyFuckingUp = storedAuthData != null
+          && storedAuthData.refreshToken == null
+          && storedRefreshToken != null
+
+      if (isJrawPotentiallyFuckingUp) {
+        Timber.w("JRAW is fucking up. Fixing refresh token.")
+
+        tokenStore.storeLatest(
+            currentUsername,
+            OAuthData.create(
+                storedAuthData!!.accessToken,
+                storedAuthData.scopes,
+                storedRefreshToken,
+                storedAuthData.expiration))
+      }
+    }
   }
 
-  private fun refreshImmediately(): Completable {
-    throw AssertionError("Jraw did not refresh token automatically")
+  private fun renewIfNeeded(client: RedditClient): Completable {
+    if (client.authMethod != AuthMethod.APP || !client.authManager.canRenew()) {
+      val usernames = (client.authManager.tokenStore as SharedPreferencesTokenStore).usernames
+      log("Cannot renew. usernames: $usernames")
+      return Completable.complete()
+    }
+
+    val expirationDate = tokenExpirationDate(client)
+    val recommendedRefreshDate = expirationDate.minusMinutes(10)
+
+    log("Expiration date: $expirationDate")
+    log("Time till token expiration: ${formatTime(expirationDate)}")
+    log("Username: ${client.authManager.currentUsername()}")
+    log("Time till pro-active token expiration: ${formatTime(recommendedRefreshDate)}")
+
+    return when (computeTokenStatus(client, expirationDate, recommendedRefreshDate)) {
+      REFRESH_AHEAD_OF_TIME -> refreshAheadOfTime(client, recommendedRefreshDate)
+      FRESH -> Completable.complete()
+    }
   }
 
-  private fun refreshAheadOfTime(recommendedRefreshDate: LocalDateTime): Completable {
+  private fun refreshAheadOfTime(client: RedditClient, recommendedRefreshDate: LocalDateTime): Completable {
     log("Time to refresh token")
     log("Recommended refresh date: $recommendedRefreshDate")
     log("Now time: ${LocalDateTime.now(UTC)}")
@@ -90,15 +115,8 @@ class JrawTokenRefresher @Inject constructor(private val clients: BehaviorSubjec
       return Completable.complete()
     }
 
-    return clients
-        .take(1)
-        .map { it.authManager }
-        .filter { it.canRenew() }
-        .flatMapCompletable {
-          Completable.fromAction { it.renew() }
-              .subscribeOn(io())
-              .onErrorComplete()
-        }
+    return Completable.fromAction { client.authManager.renew() }
+        .subscribeOn(io())
         .doOnSubscribe { isAheadOfTimeRefreshInFlight = true }
         .doOnComplete {
           isAheadOfTimeRefreshInFlight = false
@@ -108,11 +126,10 @@ class JrawTokenRefresher @Inject constructor(private val clients: BehaviorSubjec
 
   enum class TokenStatus {
     REFRESH_AHEAD_OF_TIME,
-    REFRESH_IMMEDIATELY,
     FRESH
   }
 
-  private fun computeTokenStatus(expirationDate: LocalDateTime, recommendedRefreshDate: LocalDateTime): TokenStatus {
+  private fun computeTokenStatus(client: RedditClient, expirationDate: LocalDateTime, recommendedRefreshDate: LocalDateTime): TokenStatus {
     val now = LocalDateTime.now(UTC)
 
     if (now > recommendedRefreshDate && now < expirationDate) {
@@ -120,14 +137,10 @@ class JrawTokenRefresher @Inject constructor(private val clients: BehaviorSubjec
     }
 
     if (now >= expirationDate) {
-      return REFRESH_IMMEDIATELY
+      throw AssertionError("Jraw did not refresh token automatically")
     }
 
-    val needsRefresh = clients
-        .take(1)
-        .map { it.authManager }
-        .map { it.needsRenewing() }
-        .blockingFirst()
+    val needsRefresh = client.authManager.needsRenewing()
     if (needsRefresh) {
       throw AssertionError("JRAW says token needs refreshing")
     }
