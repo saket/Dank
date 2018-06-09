@@ -21,7 +21,7 @@ import me.saket.dank.utils.Preconditions;
  */
 public class UserSessionRepository {
 
-  private static final String KEY_LOGGED_IN_USERNAME = "logged_in_username";
+  private static final String KEY_LOGGED_IN_USERNAME = "logged_in_username_v0.6.1";
   private static final String EMPTY = "";
 
   private Lazy<Reddit> reddit;

@@ -27,7 +27,7 @@ class JrawReddit @Inject constructor(
         val loggedInUserName = userSessionRepository.loggedInUserName()!!
 
         if (!tokenStore.usernames.contains(loggedInUserName)) {
-          Timber.e(AssertionError("Logged-in username ($loggedInUserName) in session repository is not contained in JRAW's store"))
+          throw AssertionError("Logged-in username ($loggedInUserName) in session repository is not contained in JRAW's store")
         }
 
         Timber.i("Switching to user: $loggedInUserName")
