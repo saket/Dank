@@ -31,6 +31,7 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
+import io.reactivex.disposables.Disposable;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.AppDatabase;
 import me.saket.dank.data.ErrorResolver;
@@ -174,7 +175,7 @@ public class SubmissionRepository {
         .submissionWithComments(request.id(), request)
         .toObservable();
 
-    dbStream
+    Disposable disposable = dbStream
         .observeOn(io())
         .map(Arrays2::firstOrEmpty)
         .filter(optionalSubmission -> optionalSubmission.isEmpty() || optionalSubmission.get().comments().isEmpty())
@@ -206,6 +207,7 @@ public class SubmissionRepository {
         .subscribe();
 
     return dbStream
+        .doOnDispose(() -> disposable.dispose())
         .flatMap(dbItems -> dbItems.isEmpty() ? Observable.empty() : Observable.just(dbItems.get(0)));
   }
 
