@@ -85,7 +85,7 @@ class JrawLoggedInUser(private val clients: Observable<RedditClient>, private va
         }
   }
 
-  override fun setRead(read: Boolean, vararg messages: Message): Completable {
+  override fun setMessagesRead(read: Boolean, vararg messages: Identifiable): Completable {
     val firstMessageFullName = messages.first().fullName
 
     val otherMessageFullNames = messages
@@ -98,7 +98,7 @@ class JrawLoggedInUser(private val clients: Observable<RedditClient>, private va
         .flatMapCompletable { Completable.fromAction { it.me().inbox().markRead(read, firstMessageFullName, *otherMessageFullNames) } }
   }
 
-  override fun setAllRead(): Completable {
+  override fun setAllMessagesRead(): Completable {
     return clients
         .firstOrError()
         .flatMapCompletable { Completable.fromAction { it.me().inbox().markAllRead() } }

@@ -5,13 +5,13 @@ import android.database.Cursor;
 
 import com.google.auto.value.AutoValue;
 import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.Moshi;
 
 import net.dean.jraw.models.Message;
 
 import java.io.IOException;
 
 import io.reactivex.functions.Function;
+import me.saket.dank.data.MoshiAdapter;
 import me.saket.dank.utils.Cursors;
 import me.saket.dank.utils.Optional;
 
@@ -70,31 +70,35 @@ public abstract class CachedMessage {
 
   public abstract InboxFolder folder();
 
-  public ContentValues toContentValues(Moshi moshi) {
+  public ContentValues toContentValues(MoshiAdapter moshiAdapter) {
     ContentValues values = new ContentValues(4);
     values.put(COLUMN_FULLNAME, fullname());
-    values.put(COLUMN_MESSAGE, moshi.adapter(Message.class).serializeNulls().toJson(message()));
+    String json = moshiAdapter.create(Message.class).toJson(message());
+    if (!json.contains("distinguished")) {
+      throw new AssertionError("Invalid json serialization");
+    }
+    values.put(COLUMN_MESSAGE, json);
     values.put(COLUMN_LATEST_MESSAGE_TIME, latestMessageTimestamp());
     values.put(COLUMN_FOLDER, folder().name());
     return values;
   }
 
-  public static Function<Cursor, CachedMessage> fromCursor(Moshi moshi) {
+  public static Function<Cursor, CachedMessage> fromCursor(MoshiAdapter moshiAdapter) {
     return cursor -> {
-      Message message = messageFromCursor(moshi).apply(cursor);
+      Message message = messageFromCursor(moshiAdapter).apply(cursor);
       long latestMessageTimestamp = Cursors.longg(cursor, COLUMN_LATEST_MESSAGE_TIME);
       InboxFolder folder = InboxFolder.valueOf(Cursors.string(cursor, COLUMN_FOLDER));
       return create(message.getFullName(), message, latestMessageTimestamp, folder);
     };
   }
 
-  public static Function<Cursor, Optional<Message>> optionalMessageFromCursor(Moshi moshi) {
-    return cursor -> Optional.of(messageFromCursor(moshi).apply(cursor));
+  public static Function<Cursor, Optional<Message>> optionalMessageFromCursor(MoshiAdapter moshiAdapter) {
+    return cursor -> Optional.of(messageFromCursor(moshiAdapter).apply(cursor));
   }
 
-  public static Function<Cursor, Message> messageFromCursor(Moshi moshi) {
+  public static Function<Cursor, Message> messageFromCursor(MoshiAdapter moshiAdapter) {
     return cursor -> {
-      JsonAdapter<Message> adapter = moshi.adapter(Message.class).serializeNulls();
+      JsonAdapter<Message> adapter = moshiAdapter.create(Message.class);
       try {
         return adapter.fromJson(Cursors.string(cursor, COLUMN_MESSAGE));
       } catch (IOException e) {
@@ -103,7 +107,7 @@ public abstract class CachedMessage {
     };
   }
 
-  public static CachedMessage create(String fullname, Message message, long latestMessageTimestamp, InboxFolder folder) {
-    return new AutoValue_CachedMessage(fullname, message, latestMessageTimestamp, folder);
+  public static CachedMessage create(String fullName, Message message, long latestMessageTimestamp, InboxFolder folder) {
+    return new AutoValue_CachedMessage(fullName, message, latestMessageTimestamp, folder);
   }
 }

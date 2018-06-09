@@ -18,27 +18,23 @@ public class InboxPagerAdapter extends FragmentStatePagerAdapter {
     this.resources = resources;
   }
 
-  public InboxFolder getFolder(int position) {
-    return InboxFolder.ALL[position];
-  }
-
   public int getPosition(InboxFolder folder) {
-    return Arrays.binarySearch(InboxFolder.ALL, folder);
+    return Arrays.binarySearch(InboxFolder.getALL(), folder);
   }
 
   @Override
   public Fragment getItem(int position) {
-    return InboxFolderFragment.create(InboxFolder.ALL[position]);
+    return InboxFolderFragment.create(InboxFolder.getALL()[position]);
   }
 
   @Override
   public int getCount() {
-    return InboxFolder.ALL.length;
+    return InboxFolder.getALL().length;
   }
 
   @Override
   public CharSequence getPageTitle(int position) {
-    return resources.getString(InboxFolder.ALL[position].titleRes());
+    return resources.getString(InboxFolder.getALL()[position].titleRes());
   }
 
   @Override

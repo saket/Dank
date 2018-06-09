@@ -10,8 +10,6 @@ import android.content.Context;
 import android.os.PersistableBundle;
 import android.support.annotation.CheckResult;
 
-import com.squareup.moshi.Moshi;
-
 import net.dean.jraw.models.Message;
 
 import java.util.Arrays;
@@ -23,6 +21,7 @@ import io.reactivex.functions.Consumer;
 import me.saket.dank.DankJobService;
 import me.saket.dank.data.ErrorResolver;
 import me.saket.dank.data.InboxRepository;
+import me.saket.dank.data.MoshiAdapter;
 import me.saket.dank.data.ResolvedError;
 import me.saket.dank.di.Dank;
 import me.saket.dank.reddit.Reddit;
@@ -45,13 +44,13 @@ public class MessageNotifActionsJobService extends DankJobService {
 
   @Inject InboxRepository inboxRepository;
   @Inject ErrorResolver errorResolver;
-  @Inject Moshi moshi;
+  @Inject Lazy<MoshiAdapter> moshiAdapter;
   @Inject MessagesNotificationManager messagesNotifManager;
   @Inject Lazy<Reddit> reddit;
 
-  public static void sendDirectReply(Context context, Message replyToMessage, Moshi moshi, String replyText) {
+  public static void sendDirectReply(Context context, Message replyToMessage, MoshiAdapter moshiAdapter, String replyText) {
     PersistableBundle extras = new PersistableBundle(3);
-    extras.putString(KEY_MESSAGE_JSON, moshi.adapter(Message.class).toJson(replyToMessage));
+    extras.putString(KEY_MESSAGE_JSON, moshiAdapter.create(Message.class).toJson(replyToMessage));
     extras.putString(KEY_MESSAGE_DIRECT_REPLY, replyText);
     extras.putString(KEY_ACTION, ACTION_SEND_DIRECT_REPLY);
 
@@ -72,10 +71,10 @@ public class MessageNotifActionsJobService extends DankJobService {
     jobScheduler.schedule(markAsReadJob);
   }
 
-  public static void markAsRead(Context context, Moshi moshi, Message... messages) {
+  public static void markAsRead(Context context, MoshiAdapter moshiAdapter, Message... messages) {
     PersistableBundle extras = new PersistableBundle(2);
     extras.putString(KEY_ACTION, ACTION_MARK_MESSAGE_AS_READ);
-    extras.putString(KEY_MESSAGE_ARRAY_JSON, moshi.adapter(Message[].class).toJson(messages));
+    extras.putString(KEY_MESSAGE_ARRAY_JSON, moshiAdapter.create(Message[].class).toJson(messages));
 
     int jobId = ID_MARK_MESSAGE_AS_READ + Arrays.hashCode(messages);
 
@@ -202,12 +201,12 @@ public class MessageNotifActionsJobService extends DankJobService {
 
   @CheckResult
   private Single<Message> parseMessage(String messageJson) {
-    return Single.fromCallable(() -> moshi.adapter(Message.class).fromJson(messageJson));
+    return Single.fromCallable(() -> moshiAdapter.get().create(Message.class).fromJson(messageJson));
   }
 
   @CheckResult
   private Single<Message[]> parseMessageArray(String messageArrayJson) {
-    return Single.fromCallable(() -> moshi.adapter(Message[].class).fromJson(messageArrayJson));
+    return Single.fromCallable(() -> moshiAdapter.get().create(Message[].class).fromJson(messageArrayJson));
   }
 
 }

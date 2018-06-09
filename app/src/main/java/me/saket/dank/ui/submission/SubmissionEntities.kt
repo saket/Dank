@@ -10,7 +10,7 @@ import android.arch.persistence.room.TypeConverter
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Types
 import io.reactivex.Flowable
-import me.saket.dank.di.RootModule
+import me.saket.dank.di.StorageModule
 import me.saket.dank.utils.DankSubmissionRequest
 import me.saket.dank.utils.Optional
 import net.dean.jraw.JrawUtils
@@ -139,7 +139,9 @@ class SortingAndTimePeriodRoomTypeConverter : MoshiBasedRoomTypeConverter<Sortin
 
 open class MoshiBasedRoomTypeConverter<T>(private val klass: Class<T>) {
 
-  private val adapter: JsonAdapter<T> by lazy { RootModule.provideMoshi().adapter(klass) }
+  private val adapter: JsonAdapter<T> by lazy {
+    StorageModule().provideMoshi().adapter(klass)
+  }
 
   @TypeConverter
   fun toJson(request: T): String {

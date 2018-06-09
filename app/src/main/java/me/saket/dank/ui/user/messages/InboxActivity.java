@@ -23,7 +23,6 @@ import com.jakewharton.rxbinding2.widget.RxAdapterView;
 import com.jakewharton.rxrelay2.BehaviorRelay;
 import com.jakewharton.rxrelay2.Relay;
 import com.squareup.moshi.JsonAdapter;
-import com.squareup.moshi.Moshi;
 import com.squareup.moshi.Types;
 
 import net.dean.jraw.models.Message;
@@ -41,6 +40,7 @@ import dagger.Lazy;
 import io.reactivex.functions.Consumer;
 import me.saket.dank.R;
 import me.saket.dank.data.InboxRepository;
+import me.saket.dank.data.MoshiAdapter;
 import me.saket.dank.di.Dank;
 import me.saket.dank.notifs.MessageNotifActionReceiver;
 import me.saket.dank.ui.DankPullCollapsibleActivity;
@@ -66,12 +66,12 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   @BindView(R.id.inbox_message_refresh_status_viewflipper) ViewFlipper refreshStatusViewFlipper;
   @BindView(R.id.inbox_fragment_container) ViewGroup fragmentContainer;
 
-  @Inject Moshi moshi;
   @Inject UserSessionRepository userSessionRepository;
   @Inject InboxRepository inboxRepository;
+  @Inject Lazy<MoshiAdapter> moshiAdapter;
   @Inject Lazy<UrlParser> urlParser;
 
-  private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.ALL.length);
+  private Set<InboxFolder> firstRefreshDoneForFolders = new HashSet<>(InboxFolder.getALL().length);
   private InboxPagerAdapter inboxPagerAdapter;
   private Set<Message> seenUnreadMessages = new HashSet<>();
   private Relay<MessagesRefreshState> messagesRefreshStateStream = BehaviorRelay.create();
@@ -107,7 +107,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     });
 
     // Only Unread is supported as the initial tab right now.
-    if (getIntent().getSerializableExtra(KEY_INITIAL_FOLDER) != InboxFolder.ALL[0]) {
+    if (getIntent().getSerializableExtra(KEY_INITIAL_FOLDER) != InboxFolder.getALL()[0]) {
       throw new UnsupportedOperationException("Hey, when did we start supporting non-Unread folders?");
     }
   }
@@ -180,7 +180,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
   @Override
   public void onSaveInstanceState(Bundle outState) {
-    JsonAdapter<Set<Message>> jsonAdapter = moshi.adapter(Types.newParameterizedType(Set.class, Message.class));
+    JsonAdapter<Set<Message>> jsonAdapter = moshiAdapter.get().create(Types.newParameterizedType(Set.class, Message.class));
     outState.putString(KEY_SEEN_UNREAD_MESSAGES, jsonAdapter.toJson(seenUnreadMessages));
 
     // ViewPager is supposed to handle restoring page index on its own, but that
@@ -193,7 +193,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
   public void onRestoreInstanceState(Bundle inState) {
     if (inState != null) {
       final long startTime = System.currentTimeMillis();
-      JsonAdapter<Set<Message>> jsonAdapter = moshi.adapter(Types.newParameterizedType(Set.class, Message.class));
+      JsonAdapter<Set<Message>> jsonAdapter = moshiAdapter.get().create(Types.newParameterizedType(Set.class, Message.class));
       String seenUnreadMessagesJson = inState.getString(KEY_SEEN_UNREAD_MESSAGES);
       try {
         //noinspection ConstantConditions
@@ -270,7 +270,7 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
     }
 
     Message[] seenMessagesArray = Arrays2.toArray(seenUnreadMessages, Message.class);
-    sendBroadcast(MessageNotifActionReceiver.createMarkAsReadIntent(this, moshi, seenMessagesArray));
+    sendBroadcast(MessageNotifActionReceiver.createMarkAsReadIntent(this, moshiAdapter.get(), seenMessagesArray));
 
     // Marking messages as read happens on the UI thread so we can immediately refresh messages after that.
     // Though this is dangerous in case the implementation of MessageNotifActionReceiver is ever changed in the future.
