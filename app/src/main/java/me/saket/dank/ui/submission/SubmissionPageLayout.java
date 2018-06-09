@@ -319,12 +319,6 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
     sortingPopupMenu1.show();
   }
 
-  @Override
-  public void acceptSubmission(Submission submission) {
-    throw new UnsupportedOperationException();
-    //submissionStream.accept(Optional.of(submission));
-  }
-
   public void onViewFirstAttach() {
     executeOnMeasure(toolbar, () -> setHeight(toolbarBackground, toolbar.getHeight()));
     //noinspection ConstantConditions
