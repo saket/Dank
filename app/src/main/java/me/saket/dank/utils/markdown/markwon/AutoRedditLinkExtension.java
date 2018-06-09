@@ -17,7 +17,6 @@ import javax.inject.Inject;
 
 import me.saket.dank.urlparser.UrlParserConfig;
 import me.saket.dank.utils.Optional;
-import timber.log.Timber;
 
 /**
  * Extension for automatically turning "r/subreddit" and "u/user" URLs into links.
@@ -130,7 +129,7 @@ public class AutoRedditLinkExtension implements Parser.ParserExtension {
           try {
             linkify(text);
           } catch (Exception e) {
-            Timber.e("Couldn't auto-linkify reddit link: %s", text);
+            //Timber.e("Couldn't auto-linkify reddit link: %s", text);
           }
         }
       }

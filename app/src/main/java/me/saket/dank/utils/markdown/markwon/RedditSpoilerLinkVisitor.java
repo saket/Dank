@@ -11,7 +11,6 @@ import me.saket.dank.markdownhints.MarkdownHintOptions;
 import ru.noties.markwon.SpannableBuilder;
 import ru.noties.markwon.SpannableConfiguration;
 import ru.noties.markwon.renderer.SpannableMarkdownVisitor;
-import timber.log.Timber;
 
 class RedditSpoilerLinkVisitor extends SpannableMarkdownVisitor {
 
@@ -65,7 +64,7 @@ class RedditSpoilerLinkVisitor extends SpannableMarkdownVisitor {
         setSpan(labelStart, contentEnd, new SpoilerRevealClickListenerSpan(labelSpan, contentSpan));
 
       } catch (Exception e) {
-        Timber.e(e, "Couldn't parse spoiler link: " + link);
+        //Timber.e(e, "Couldn't parse spoiler link: " + link);
         super.visit(link);
       }
 
