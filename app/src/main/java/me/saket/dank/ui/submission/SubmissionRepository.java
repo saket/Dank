@@ -31,7 +31,6 @@ import io.reactivex.Completable;
 import io.reactivex.Flowable;
 import io.reactivex.Observable;
 import io.reactivex.Single;
-import io.reactivex.disposables.Disposable;
 import me.saket.dank.BuildConfig;
 import me.saket.dank.data.AppDatabase;
 import me.saket.dank.data.ErrorResolver;
@@ -175,7 +174,7 @@ public class SubmissionRepository {
         .submissionWithComments(request.id(), request)
         .toObservable();
 
-    Disposable disposable = dbStream
+    Completable refreshCompletable = dbStream
         .observeOn(io())
         .map(Arrays2::firstOrEmpty)
         .filter(optionalSubmission -> optionalSubmission.isEmpty() || optionalSubmission.get().comments().isEmpty())
@@ -203,12 +202,11 @@ public class SubmissionRepository {
               .flatMapCompletable(replyRepository.get()::removeSyncPendingPostedReplies);
 
           return saveCompletable.mergeWith(removeStaleSyncedLocalReplies);
-        })
-        .subscribe();
+        });
 
     return dbStream
-        .doOnDispose(() -> disposable.dispose())
-        .flatMap(dbItems -> dbItems.isEmpty() ? Observable.empty() : Observable.just(dbItems.get(0)));
+        .flatMap(dbItems -> dbItems.isEmpty() ? Observable.empty() : Observable.just(dbItems.get(0)))
+        .mergeWith(refreshCompletable.toObservable());
   }
 
   private Completable saveSubmissionData(Pair<CachedSubmission, CachedSubmissionComments> submissionData) {
