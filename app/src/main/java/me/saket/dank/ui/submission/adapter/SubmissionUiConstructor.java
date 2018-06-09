@@ -37,7 +37,6 @@ import me.saket.dank.utils.CombineLatestWithLog.O;
 import me.saket.dank.utils.CommentSortUtils;
 import me.saket.dank.utils.DankSubmissionRequest;
 import me.saket.dank.utils.Dates;
-import me.saket.dank.utils.JrawUtils2;
 import me.saket.dank.utils.Optional;
 import me.saket.dank.utils.Pair;
 import me.saket.dank.utils.Strings;
@@ -267,7 +266,7 @@ public class SubmissionUiConstructor {
         R.string.submission_byline,
         submission.getSubreddit(),
         submission.getAuthor(),
-        Dates.createTimestamp(context.getResources(), JrawUtils2.INSTANCE.createdTimeUtc(submission)));
+        Dates.createTimestamp(context.getResources(), submission.getCreated().getTime()));
 
     return SubmissionCommentsHeader.UiModel.builder()
         .adapterId(adapterId)

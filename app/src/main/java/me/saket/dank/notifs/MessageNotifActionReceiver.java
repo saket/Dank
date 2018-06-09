@@ -253,7 +253,11 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
                 Timber.i("commentLink: %s", commentLink);
 
               } else {
-                String secondPartyName = JrawUtils2.INSTANCE.secondPartyName(context.getResources(), message, userSessionRepository.get().loggedInUserName());
+                String secondPartyName = JrawUtils2.secondPartyName(
+                    context.getResources(),
+                    message,
+                    userSessionRepository.get().loggedInUserName());
+                //noinspection ConstantConditions
                 openIntent = PrivateMessageThreadActivity.intent(context, message, secondPartyName, null);
               }
 

@@ -4,9 +4,7 @@ import android.content.res.Resources
 import me.saket.dank.R
 import me.saket.dank.urlparser.RedditHostedVideoDashPlaylist
 import net.dean.jraw.JrawUtils
-import net.dean.jraw.models.Created
 import net.dean.jraw.models.Message
-import net.dean.jraw.models.MoreChildren
 import net.dean.jraw.models.Submission
 import net.dean.jraw.tree.CommentNode
 import timber.log.Timber
@@ -16,40 +14,35 @@ import timber.log.Timber
  */
 object JrawUtils2 {
 
-  @Deprecated(message = "Inline instead", replaceWith = ReplaceWith("comment.created.time"))
-  fun createdTimeUtc(comment: Created): Long {
-    return comment.created.time
-  }
-
+  @JvmStatic
   fun isThreadContinuation(commentNode: CommentNode<*>): Boolean {
-    return commentNode is MoreChildren && (commentNode as MoreChildren).isThreadContinuation
+    return commentNode.moreChildren?.isThreadContinuation ?: false
   }
 
-  fun messageReplies(message: Message): List<Message>? {
+  @JvmStatic
+  fun messageReplies(message: Message): List<Message> {
     return if (message.replies != null) {
-      message.replies
+      message.replies!!
     } else {
       emptyList()
     }
   }
 
+  @JvmStatic
   fun secondPartyName(resources: Resources, message: Message, loggedInUserName: String): String? {
     val destination = message.dest
 
-    return if (destination.startsWith("#")) {
-      resources.getString(R.string.subreddit_name_r_prefix, message.subreddit)
-
-    } else if (destination.equals(loggedInUserName, ignoreCase = true)) {
-      if (message.author == null)
-        resources.getString(R.string.subreddit_name_r_prefix, message.subreddit)
-      else
-        message.author
-
-    } else {
-      destination
+    return when {
+      destination.startsWith("#") -> resources.getString(R.string.subreddit_name_r_prefix, message.subreddit)
+      destination.equals(loggedInUserName, ignoreCase = true) -> when {
+        message.author == null -> resources.getString(R.string.subreddit_name_r_prefix, message.subreddit)!!
+        else -> message.author
+      }
+      else -> destination
     }
   }
 
+  @JvmStatic
   fun redditVideoDashPlaylistUrl(submission: Submission): Optional<RedditHostedVideoDashPlaylist> {
     val playlistUrl: String
     val videoWithoutAudioUrl: String
