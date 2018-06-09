@@ -1,5 +1,6 @@
 package me.saket.dank.ui.submission;
 
+import net.dean.jraw.models.CommentSort;
 import net.dean.jraw.models.Message;
 
 import javax.inject.Inject;
@@ -10,9 +11,11 @@ import io.reactivex.ObservableTransformer;
 import me.saket.dank.data.InboxRepository;
 import me.saket.dank.ui.UiChange;
 import me.saket.dank.ui.UiEvent;
+import me.saket.dank.ui.submission.AuditedCommentSort.SelectedBy;
 import me.saket.dank.ui.submission.events.MarkMessageAsReadRequested;
 import me.saket.dank.ui.submission.events.SubmissionChangeCommentSortClicked;
 import me.saket.dank.ui.submission.events.SubmissionChanged;
+import me.saket.dank.ui.submission.events.SubmissionCommentSortChanged;
 import me.saket.dank.ui.submission.events.SubmissionCommentsLoadFailed;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingCompleted;
 import me.saket.dank.ui.submission.events.SubmissionContentResolvingFailed;
@@ -51,7 +54,7 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
     return Observable.mergeArray(
         contentProgressToggles(replayedEvents),
         changeSortPopupShows(replayedEvents),
-//        sortModeChanges(replayedEvents),
+        sortModeChanges(replayedEvents),
 //        manualRefreshes(replayedEvents),
 //        fullThreadLoads(replayedEvents),
         markMessageAsReads(replayedEvents)
@@ -141,38 +144,24 @@ public class SubmissionController implements ObservableTransformer<UiEvent, UiCh
         .map(pair -> (UiChange<SubmissionUi>) ui -> ui.showChangeSortPopup(pair.first(), pair.second()));
   }
 
-//  private Observable<UiChange<SubmissionUi>> sortModeChanges(Observable<UiEvent> events) {
-//    Observable<DankSubmissionRequest> requestChanges = events
-//        .ofType(SubmissionRequestChanged.class)
-//        .map(event -> event.request());
-//
-//    Observable<UiChange<SubmissionUi>> fetchNewRequests = events
-//        .ofType(SubmissionCommentSortChanged.class)
-//        .map(event -> event.selectedSort())
-//        .withLatestFrom(requestChanges, Pair::create)
-//        .map(pair -> {
-//          CommentSort selectedSort = pair.first();
-//          DankSubmissionRequest lastRequest = pair.second();
-//          return lastRequest.toBuilder()
-//              .commentSort(selectedSort, SelectedBy.USER)
-//              .build();
-//        })
-//        .map(newRequest -> (UiChange<SubmissionUi>) ui -> ui.acceptRequest(newRequest));
-//
-//    Observable<SubmissionAndComments> submissionChanges = events
-//        .ofType(SubmissionChanged.class)
-//        .map(event -> event.optionalSubmission())
-//        .filter(Optional::isPresent)
-//        .map(Optional::get);
-//
-//    Observable<UiChange<SubmissionUi>> resetComments = events
-//        .ofType(SubmissionCommentSortChanged.class)
-//        .withLatestFrom(submissionChanges, (__, sub) -> sub)
-//        .map(submission -> new Submission(submission.getDataNode()))
-//        .map(submissionWithoutComments -> (UiChange<SubmissionUi>) ui -> ui.acceptSubmission(submissionWithoutComments));
-//
-//    return resetComments.mergeWith(fetchNewRequests);
-//  }
+  private Observable<UiChange<SubmissionUi>> sortModeChanges(Observable<UiEvent> events) {
+    Observable<DankSubmissionRequest> requests = events
+        .ofType(SubmissionRequestChanged.class)
+        .map(event -> event.request());
+
+    return events
+        .ofType(SubmissionCommentSortChanged.class)
+        .map(event -> event.selectedSort())
+        .withLatestFrom(requests, Pair::create)
+        .map(pair -> {
+          CommentSort selectedSort = pair.first();
+          DankSubmissionRequest lastRequest = pair.second();
+          return lastRequest.toBuilder()
+              .commentSort(selectedSort, SelectedBy.USER)
+              .build();
+        })
+        .map(newRequest -> (UiChange<SubmissionUi>) ui -> ui.acceptRequest(newRequest));
+  }
 //
 //  private Observable<UiChange<SubmissionUi>> manualRefreshes(Observable<UiEvent> events) {
 //    Observable<DankSubmissionRequest> requestChanges = events

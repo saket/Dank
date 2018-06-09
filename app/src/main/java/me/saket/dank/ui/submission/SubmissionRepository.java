@@ -168,20 +168,16 @@ public class SubmissionRepository {
    */
   @CheckResult
   private Observable<CachedSubmissionAndComments> getFromDbOrFetchSubmissionWithComments(DankSubmissionRequest request) {
-    Observable<List<CachedSubmissionAndComments>> sharedDbStream = roomDatabase.get()
+    // This stream is intentionally not shared. I don't know why, but the network call was blocking the DB stream.
+    Observable<List<CachedSubmissionAndComments>> dbStream = roomDatabase.get()
         .submissionDao()
         .submissionWithComments(request.id(), request)
-        .toObservable()
-        .share();
+        .toObservable();
 
-    sharedDbStream
-        .map(items -> Arrays2.firstOrEmpty(items))
-        .filter(optionalSubmission -> {
-          if (optionalSubmission.isEmpty()) {
-            return true;
-          }
-          return optionalSubmission.get().comments().isEmpty();
-        })
+    dbStream
+        .observeOn(io())
+        .map(Arrays2::firstOrEmpty)
+        .filter(optionalSubmission -> optionalSubmission.isEmpty() || optionalSubmission.get().comments().isEmpty())
         .flatMapCompletable(o -> {
           Single<RootCommentNode> cachedNetworkStream = reddit.get().submissions()
               .fetch(request)
@@ -207,10 +203,9 @@ public class SubmissionRepository {
 
           return saveCompletable.mergeWith(removeStaleSyncedLocalReplies);
         })
-        .subscribeOn(io())
         .subscribe();
 
-    return sharedDbStream
+    return dbStream
         .flatMap(dbItems -> dbItems.isEmpty() ? Observable.empty() : Observable.just(dbItems.get(0)));
   }
 
@@ -255,17 +250,13 @@ public class SubmissionRepository {
 //  }
 
   @CheckResult
-  public Completable clearAllCachedSubmissionWithComments() {
+  public Completable clearAllCachedSubmissionComments() {
     if (!BuildConfig.DEBUG) {
       throw new AssertionError();
     }
     return Completable.fromAction(() -> {
-      //inMemoryCache.invalidateAll();
-
-      //try (BriteDatabase.Transaction transaction = database.get().newTransaction()) {
-      //  database.get().delete(CachedSubmissionWithComments.TABLE_NAME, null);
-      //  transaction.markSuccessful();
-      //}
+      inMemoryCache.invalidateAll();
+      roomDatabase.get().submissionDao().deleteAllComments();
     });
   }
 

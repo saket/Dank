@@ -85,8 +85,11 @@ interface CachedSubmissionDao {
   @Query("DELETE FROM cachedsubmissionid2 WHERE subredditName = :subreddit")
   fun deleteSubmissionIdsInSubredit(subreddit: String)
 
-  @Query("""DELETE FROM cachedsubmissionid2""")
+  @Query("DELETE FROM cachedsubmissionid2")
   fun deleteAllSubmissionIds()
+
+  @Query("DELETE FROM cachedsubmissioncomments")
+  fun deleteAllComments()
 
   @Query("SELECT S.submission FROM cachedsubmissionid2 ID\nINNER JOIN cachedsubmission S\nON ID.id = S.id\nWHERE ID.subredditName = :subredditName AND ID.sortingAndTimePeriod = :sortingAndTimePeriod\nORDER BY ID.saveTimeMillis ASC")
   fun submissionsInFolderAsc(subredditName: String, sortingAndTimePeriod: SortingAndTimePeriod): Flowable<List<Submission>>
