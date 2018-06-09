@@ -108,7 +108,8 @@ public class InboxActivity extends DankPullCollapsibleActivity implements InboxF
 
     // Only Unread is supported as the initial tab right now.
     if (getIntent().getSerializableExtra(KEY_INITIAL_FOLDER) != InboxFolder.getALL()[0]) {
-      throw new UnsupportedOperationException("Hey, when did we start supporting non-Unread folders?");
+      throw new UnsupportedOperationException("Hey, when did we start supporting a non-unread folder: "
+          + getIntent().getSerializableExtra(KEY_INITIAL_FOLDER) + "?");
     }
   }
 
