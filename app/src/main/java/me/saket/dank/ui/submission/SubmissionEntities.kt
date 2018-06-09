@@ -88,6 +88,9 @@ interface CachedSubmissionDao {
   @Query("DELETE FROM cachedsubmissionid2")
   fun deleteAllSubmissionIds()
 
+  @Query("DELETE FROM cachedsubmissioncomments WHERE request = :request")
+  fun deleteComments(request: DankSubmissionRequest)
+
   @Query("DELETE FROM cachedsubmissioncomments")
   fun deleteAllComments()
 

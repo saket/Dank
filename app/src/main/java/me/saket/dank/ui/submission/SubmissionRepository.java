@@ -241,13 +241,12 @@ public class SubmissionRepository {
         .flatMapCompletable(updatedSubmissionData -> saveSubmissionComments(updatedSubmissionData, request));
   }
 
-//  public Completable clearCachedSubmissionWithComments(DankSubmissionRequest request) {
-//    return Completable.fromAction(() -> {
-//      inMemoryCache.invalidate(request);
-//      String requestJson = moshi.get().adapter(DankSubmissionRequest.class).toJson(request);
-//      database.get().delete(CachedSubmissionWithComments.TABLE_NAME, CachedSubmissionWithComments.WHERE_REQUEST_JSON, requestJson);
-//    });
-//  }
+  public Completable clearCachedSubmissionComments(DankSubmissionRequest request) {
+    return Completable.fromAction(() -> {
+      inMemoryCache.invalidate(request);
+      roomDatabase.get().submissionDao().deleteComments(request);
+    });
+  }
 
   @CheckResult
   public Completable clearAllCachedSubmissionComments() {
