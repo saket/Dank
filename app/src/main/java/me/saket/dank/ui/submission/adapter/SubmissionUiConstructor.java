@@ -90,6 +90,8 @@ public class SubmissionUiConstructor {
     return optionalSubmissionDatum
         .distinctUntilChanged((prev, next) -> prev.isPresent() == next.isPresent())
         .switchMap(optional -> {
+          Timber.i("Constructing submission: %s", optional.map(data -> data.getSubmission().getTitle()));
+
           if (!optional.isPresent()) {
             return commentsLoadErrors
                 .map(optionalError -> optionalError.isPresent()
@@ -202,7 +204,7 @@ public class SubmissionUiConstructor {
                 allItems.add(commentOptions);
                 allItems.addAll(commentModels);
 
-                //Timber.i("Received %s comment ui models", commentModels.size());
+                Timber.i("Received %s comment ui models", commentModels.size());
 
                 // Comments progress and error go after comment rows
                 // so that inline reply for submission appears above them.
