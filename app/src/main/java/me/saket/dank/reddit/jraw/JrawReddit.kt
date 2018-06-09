@@ -20,6 +20,7 @@ class JrawReddit @Inject constructor(
 
   init {
     accountHelper.onSwitch { newRedditClient -> clientSubject.onNext(newRedditClient) }
+
     Timber.i("Existing usernames: ${tokenStore.usernames}")
     when {
       tokenStore.usernames.isNotEmpty() -> {
