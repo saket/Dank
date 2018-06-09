@@ -84,7 +84,7 @@ class JrawRedditModule {
         .apply {
           if (BuildConfig.DEBUG) {
             val logging = HttpLoggingInterceptor { message -> Timber.tag("OkHttp").d(message) }
-            logging.level = HttpLoggingInterceptor.Level.BODY
+            logging.level = HttpLoggingInterceptor.Level.BASIC
             addInterceptor(logging)
           }
         }
