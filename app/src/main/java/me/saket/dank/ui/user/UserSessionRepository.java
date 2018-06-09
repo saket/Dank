@@ -1,6 +1,7 @@
 package me.saket.dank.ui.user;
 
 import android.support.annotation.CheckResult;
+import android.support.annotation.Nullable;
 
 import com.f2prateek.rx.preferences2.Preference;
 import com.f2prateek.rx.preferences2.RxSharedPreferences;
@@ -49,9 +50,11 @@ public class UserSessionRepository {
   }
 
   public boolean isUserLoggedIn() {
+    //noinspection ConstantConditions
     return loggedInUserName() != null && !loggedInUserName().equals(EMPTY);
   }
 
+  @Nullable
   public String loggedInUserName() {
     return loggedInUsername.get();
   }
