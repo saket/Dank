@@ -73,6 +73,7 @@ class JrawRedditModule {
   }
 
   @Provides
+  @Singleton
   fun accountHelper(
       appInfoProvider: AppInfoProvider,
       tokenStore: SharedPreferencesTokenStore,
