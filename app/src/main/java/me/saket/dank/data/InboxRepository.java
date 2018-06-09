@@ -7,9 +7,9 @@ import android.database.sqlite.SQLiteDatabase;
 import android.support.annotation.CheckResult;
 
 import com.google.auto.value.AutoValue;
-import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 
+import net.dean.jraw.models.Identifiable;
 import net.dean.jraw.models.Listing;
 import net.dean.jraw.models.Message;
 import net.dean.jraw.pagination.Paginator;
@@ -44,14 +44,14 @@ public class InboxRepository {
 
   private final Lazy<Reddit> reddit;
   private final BriteDatabase briteDatabase;
-  private Moshi moshi;
+  private final Lazy<MoshiAdapter> moshiAdapter;
   private final ReplyRepository replyRepository;
 
   @Inject
-  public InboxRepository(Lazy<Reddit> reddit, BriteDatabase briteDatabase, Moshi moshi, ReplyRepository replyRepository) {
+  public InboxRepository(Lazy<Reddit> reddit, BriteDatabase briteDatabase, Lazy<MoshiAdapter> moshiAdapter, ReplyRepository replyRepository) {
     this.reddit = reddit;
     this.briteDatabase = briteDatabase;
-    this.moshi = moshi;
+    this.moshiAdapter = moshiAdapter;
     this.replyRepository = replyRepository;
   }
 
@@ -62,7 +62,7 @@ public class InboxRepository {
   public Observable<List<Message>> messages(InboxFolder folder) {
     return briteDatabase
         .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_ALL_IN_FOLDER, folder.name())
-        .mapToList(CachedMessage.messageFromCursor(moshi))
+        .mapToList(CachedMessage.messageFromCursor(moshiAdapter.get()))
         .as(Arrays2.immutable());
   }
 
@@ -78,7 +78,7 @@ public class InboxRepository {
   public Observable<Optional<Message>> messages(String fullname, InboxFolder folder) {
     return briteDatabase
         .createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_SINGLE, fullname, folder.name())
-        .mapToOneOrDefault(CachedMessage.optionalMessageFromCursor(moshi), Optional.empty());
+        .mapToOneOrDefault(CachedMessage.optionalMessageFromCursor(moshiAdapter.get()), Optional.empty());
   }
 
   /**
@@ -173,7 +173,7 @@ public class InboxRepository {
   @CheckResult
   private Single<PaginationAnchor> getPaginationAnchor(InboxFolder folder) {
     return briteDatabase.createQuery(CachedMessage.TABLE_NAME, CachedMessage.QUERY_GET_LAST_IN_FOLDER, folder.name())
-        .mapToList(CachedMessage.fromCursor(moshi))
+        .mapToList(CachedMessage.fromCursor(moshiAdapter.get()))
         .map(items -> items.isEmpty()
             ? Collections.singletonList(Optional.<CachedMessage>empty())
             : Collections.singletonList(Optional.of(items.get(0))))
@@ -217,7 +217,7 @@ public class InboxRepository {
           latestMessageTimestamp = latestMessage.getCreated().getTime();
         }
         CachedMessage cachedMessage = CachedMessage.create(fetchedMessage.getFullName(), fetchedMessage, latestMessageTimestamp, folder);
-        messagesValuesToStore.add(cachedMessage.toContentValues(moshi));
+        messagesValuesToStore.add(cachedMessage.toContentValues(moshiAdapter.get()));
       }
 
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
@@ -233,10 +233,10 @@ public class InboxRepository {
   }
 
   @CheckResult
-  private Completable removeMessages(InboxFolder folder, Message... messages) {
+  private Completable removeMessages(InboxFolder folder, Identifiable... messages) {
     return Completable.fromAction(() -> {
       try (BriteDatabase.Transaction transaction = briteDatabase.newTransaction()) {
-        for (Message message : messages) {
+        for (Identifiable message : messages) {
           briteDatabase.delete(CachedMessage.TABLE_NAME, CachedMessage.WHERE_FOLDER_AND_FULLNAME, folder.name(), message.getFullName());
         }
         transaction.markSuccessful();
@@ -257,20 +257,20 @@ public class InboxRepository {
 // ======== READ STATUS ======== //
 
   @CheckResult
-  public Completable setRead(Message[] messages, boolean read) {
-    return reddit.get().loggedInUser().setRead(read, messages)
+  public Completable setRead(Identifiable[] messages, boolean read) {
+    return reddit.get().loggedInUser().setMessagesRead(read, messages)
         .andThen(removeMessages(InboxFolder.UNREAD, messages));
   }
 
   @CheckResult
-  public Completable setRead(Message message, boolean read) {
-    return reddit.get().loggedInUser().setRead(read, message)
+  public Completable setRead(Identifiable message, boolean read) {
+    return reddit.get().loggedInUser().setMessagesRead(read, message)
         .andThen(removeMessages(InboxFolder.UNREAD, message));
   }
 
   @CheckResult
   public Completable setAllRead() {
-    return reddit.get().loggedInUser().setAllRead()
+    return reddit.get().loggedInUser().setAllMessagesRead()
         .andThen(removeAllMessages(InboxFolder.UNREAD));
   }
 

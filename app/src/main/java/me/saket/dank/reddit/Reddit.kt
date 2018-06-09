@@ -104,9 +104,9 @@ interface Reddit {
 
     fun messages(folder: InboxFolder, limit: Int, paginationAnchor: PaginationAnchor): Single<Iterator<Listing<Message>>>
 
-    fun setRead(read: Boolean, vararg messages: Message): Completable
+    fun setMessagesRead(read: Boolean, vararg messages: Identifiable): Completable
 
-    fun setAllRead(): Completable
+    fun setAllMessagesRead(): Completable
   }
 
   interface Users {

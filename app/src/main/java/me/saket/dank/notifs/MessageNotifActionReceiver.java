@@ -10,8 +10,6 @@ import android.support.annotation.CheckResult;
 import android.support.v4.app.RemoteInput;
 import android.widget.Toast;
 
-import com.squareup.moshi.Moshi;
-
 import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
@@ -22,6 +20,7 @@ import dagger.Lazy;
 import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
+import me.saket.dank.data.MoshiAdapter;
 import me.saket.dank.di.Dank;
 import me.saket.dank.ui.UrlRouter;
 import me.saket.dank.ui.submission.SubmissionPageLayoutActivity;
@@ -48,7 +47,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
   @Inject Lazy<UserSessionRepository> userSessionRepository;
   @Inject Lazy<UrlParser> urlParser;
   @Inject Lazy<UrlRouter> urlRouter;
-  @Inject Lazy<Moshi> moshi;
+  @Inject Lazy<MoshiAdapter> moshiAdapter;
 
   public enum NotificationAction {
     DIRECT_REPLY,
@@ -60,26 +59,26 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
   }
 
   @CheckResult
-  public static Intent createDirectReplyIntent(Context context, Message replyToMessage, Moshi moshi, int notificationId) {
+  public static Intent createDirectReplyIntent(Context context, Message replyToMessage, MoshiAdapter moshiAdapter, int notificationId) {
     if (notificationId == -1) {
       throw new AssertionError();
     }
 
     Intent intent = new Intent(context, MessageNotifActionReceiver.class);
     intent.setAction(NotificationAction.DIRECT_REPLY.name());
-    intent.putExtra(INTENT_KEY_MESSAGE_JSON, moshi.adapter(Message.class).toJson(replyToMessage));
+    intent.putExtra(INTENT_KEY_MESSAGE_JSON, moshiAdapter.create(Message.class).toJson(replyToMessage));
     return intent;
   }
 
   @CheckResult
-  public static Intent createMarkAsReadIntent(Context context, Moshi moshi, Message... messages) {
+  public static Intent createMarkAsReadIntent(Context context, MoshiAdapter moshiAdapter, Message... messages) {
     if (messages.length == 0) {
       throw new AssertionError();
     }
 
     Intent intent = new Intent(context, MessageNotifActionReceiver.class);
     intent.setAction(NotificationAction.MARK_AS_READ.name());
-    intent.putExtra(INTENT_KEY_MESSAGE_ARRAY_JSON, moshi.adapter(Message[].class).toJson(messages));
+    intent.putExtra(INTENT_KEY_MESSAGE_ARRAY_JSON, moshiAdapter.create(Message[].class).toJson(messages));
     return intent;
   }
 
@@ -146,10 +145,10 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
    * Mark <var>unreadMessage</var> as seen and then open the message.
    */
   @CheckResult
-  public static Intent createMarkAsSeenAndOpenMessageIntent(Context context, Message unreadMessage, Moshi moshi) {
+  public static Intent createMarkAsSeenAndOpenMessageIntent(Context context, Message unreadMessage, MoshiAdapter moshiAdapter) {
     return new Intent(context, MessageNotifActionReceiver.class)
         .setAction(NotificationAction.MARK_AS_SEEN_AND_OPEN_MESSAGE.name())
-        .putExtra(INTENT_KEY_MESSAGE_JSON, moshi.adapter(Message.class).toJson(unreadMessage));
+        .putExtra(INTENT_KEY_MESSAGE_JSON, moshiAdapter.create(Message.class).toJson(unreadMessage));
   }
 
   @Override
@@ -173,10 +172,10 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
 
                     // Send button is only enabled when the message is non-empty.
                     //noinspection ConstantConditions
-                    MessageNotifActionsJobService.sendDirectReply(context, message, moshi.get(), replyText);
+                    MessageNotifActionsJobService.sendDirectReply(context, message, moshiAdapter.get(), replyText);
                   })
                   .andThen(Dank.messagesNotifManager().markMessageNotifAsSeen(message))
-                  .andThen(Completable.fromAction(() -> MessageNotifActionsJobService.markAsRead(context, moshi.get(), message)))
+                  .andThen(Completable.fromAction(() -> MessageNotifActionsJobService.markAsRead(context, moshiAdapter.get(), message)))
                   .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.refreshNotifications(context)))
                   .andThen(Dank.messagesNotifManager().dismissNotification(context, message));
             })
@@ -193,7 +192,7 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
         parseMessageArray(intent.getStringExtra(INTENT_KEY_MESSAGE_ARRAY_JSON))
             .flatMapCompletable(messages -> Dank.messagesNotifManager().markMessageNotifAsSeen(messages)
                 .andThen(Completable.fromAction(() -> CheckUnreadMessagesJobService.refreshNotifications(context)))
-                .andThen(Completable.fromAction(() -> MessageNotifActionsJobService.markAsRead(context, moshi.get(), messages)))
+                .andThen(Completable.fromAction(() -> MessageNotifActionsJobService.markAsRead(context, moshiAdapter.get(), messages)))
                 .andThen(Dank.messagesNotifManager().dismissNotification(context, messages))
             )
             .subscribe();
@@ -274,11 +273,11 @@ public class MessageNotifActionReceiver extends BroadcastReceiver {
 
   @CheckResult
   private Single<Message> parseMessage(String messageJson) {
-    return Single.fromCallable(() -> moshi.get().adapter(Message.class).fromJson(messageJson));
+    return Single.fromCallable(() -> moshiAdapter.get().create(Message.class).fromJson(messageJson));
   }
 
   @CheckResult
   private Single<Message[]> parseMessageArray(String messageArrayJson) {
-    return Single.fromCallable(() -> moshi.get().adapter(Message[].class).fromJson(messageArrayJson));
+    return Single.fromCallable(() -> moshiAdapter.get().create(Message[].class).fromJson(messageArrayJson));
   }
 }

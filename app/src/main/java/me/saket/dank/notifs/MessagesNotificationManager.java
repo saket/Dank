@@ -16,8 +16,6 @@ import android.support.v4.app.RemoteInput;
 import android.support.v4.content.ContextCompat;
 import android.text.Html;
 
-import com.squareup.moshi.Moshi;
-
 import net.dean.jraw.models.Message;
 
 import java.util.ArrayList;
@@ -35,6 +33,7 @@ import io.reactivex.Completable;
 import io.reactivex.Single;
 import me.saket.dank.R;
 import me.saket.dank.data.InboxRepository;
+import me.saket.dank.data.MoshiAdapter;
 import me.saket.dank.ui.user.UserSessionRepository;
 import me.saket.dank.ui.user.messages.InboxMessageType;
 import me.saket.dank.utils.Strings;
@@ -50,19 +49,19 @@ public class MessagesNotificationManager {
   private final SeenUnreadMessagesIdStore seenMessageIdsStore;
   private final Lazy<UserSessionRepository> userSessionRepository;
   private final Lazy<Markdown> markdown;
-  private final Lazy<Moshi> moshi;
+  private final Lazy<MoshiAdapter> moshiAdapter;
 
   @Inject
   public MessagesNotificationManager(
       SeenUnreadMessagesIdStore seenMessageIdsStore,
       Lazy<UserSessionRepository> userSessionRepository,
       Lazy<Markdown> markdown,
-      Lazy<Moshi> moshi)
+      Lazy<MoshiAdapter> moshiAdapter)
   {
     this.seenMessageIdsStore = seenMessageIdsStore;
     this.userSessionRepository = userSessionRepository;
     this.markdown = markdown;
-    this.moshi = moshi;
+    this.moshiAdapter = moshiAdapter;
   }
 
   /**
@@ -243,7 +242,7 @@ public class MessagesNotificationManager {
         Action markAsReadAction = new Action.Builder(0, context.getString(R.string.messagenotification_mark_as_read), markAsReadPendingIntent).build();
 
         // Direct reply action.
-        Intent directReplyIntent = MessageNotifActionReceiver.createDirectReplyIntent(context, unreadMessage, moshi.get(), notificationId);
+        Intent directReplyIntent = MessageNotifActionReceiver.createDirectReplyIntent(context, unreadMessage, moshiAdapter.get(), notificationId);
         PendingIntent directReplyPendingIntent = PendingIntent.getBroadcast(
             context,
             (int) System.nanoTime(),
@@ -264,7 +263,7 @@ public class MessagesNotificationManager {
         PendingIntent onClickPendingIntent = PendingIntent.getBroadcast(
             context,
             (int) System.nanoTime(),
-            MessageNotifActionReceiver.createMarkAsSeenAndOpenMessageIntent(context, unreadMessage, moshi.get()),
+            MessageNotifActionReceiver.createMarkAsSeenAndOpenMessageIntent(context, unreadMessage, moshiAdapter.get()),
             PendingIntent.FLAG_UPDATE_CURRENT
         );
 
@@ -409,7 +408,7 @@ public class MessagesNotificationManager {
   }
 
   private PendingIntent createMarkAsReadPendingIntent(Context context, Message unreadMessage, int requestId) {
-    Intent markAsReadIntent = MessageNotifActionReceiver.createMarkAsReadIntent(context, moshi.get(), unreadMessage);
+    Intent markAsReadIntent = MessageNotifActionReceiver.createMarkAsReadIntent(context, moshiAdapter.get(), unreadMessage);
     return PendingIntent.getBroadcast(context, requestId, markAsReadIntent, PendingIntent.FLAG_UPDATE_CURRENT);
   }
 

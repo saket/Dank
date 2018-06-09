@@ -17,8 +17,6 @@ import com.squareup.moshi.Moshi;
 import com.squareup.sqlbrite2.BriteDatabase;
 import com.squareup.sqlbrite2.SqlBrite;
 
-import net.dean.jraw.JrawUtils;
-
 import java.util.concurrent.TimeUnit;
 import javax.inject.Named;
 import javax.inject.Singleton;
@@ -37,9 +35,7 @@ import me.saket.dank.ui.submission.DraftStore;
 import me.saket.dank.urlparser.Link;
 import me.saket.dank.urlparser.RedditUserLink;
 import me.saket.dank.urlparser.UrlParser;
-import me.saket.dank.utils.AutoValueMoshiAdapterFactory;
 import me.saket.dank.utils.DankLinkMovementMethod;
-import me.saket.dank.utils.MoshiOptionalAdapterFactory;
 import me.saket.dank.utils.OkHttpWholesomeAuthIntercepter;
 import okhttp3.OkHttpClient;
 import okhttp3.logging.HttpLoggingInterceptor;
@@ -103,20 +99,6 @@ public class RootModule {
     builder.addNetworkInterceptor(new OkHttpWholesomeAuthIntercepter());
 
     return builder.build();
-  }
-
-  @Provides
-  @Singleton
-  public static Moshi provideMoshi() {
-    return JrawUtils.moshi
-        .newBuilder()
-        .add(AutoValueMoshiAdapterFactory.create())
-        //.add(new MoshiMessageAdapter(jacksonHelper))
-        //.add(new MoshiSubmissionAdapter(jacksonHelper))
-        //.add(new MoshiAccountAdapter(jacksonHelper))
-        //.add(new MoshiLoggedInAccountAdapter(jacksonHelper))
-        .add(new MoshiOptionalAdapterFactory())
-        .build();
   }
 
   @Provides
