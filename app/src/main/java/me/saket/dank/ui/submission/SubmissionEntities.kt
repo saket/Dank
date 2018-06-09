@@ -6,6 +6,7 @@ import android.arch.persistence.room.Insert
 import android.arch.persistence.room.OnConflictStrategy
 import android.arch.persistence.room.PrimaryKey
 import android.arch.persistence.room.Query
+import android.arch.persistence.room.Transaction
 import android.arch.persistence.room.TypeConverter
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Types
@@ -31,14 +32,16 @@ data class CachedSubmission(
 )
 
 @Entity
-data class CachedSubmissionComments constructor(
+data class CachedSubmissionComments(
     val submissionId: String,
 
     @field:[Enveloped()]
     val replies: Listing<NestedIdentifiable>,
 
     @PrimaryKey
-    val request: DankSubmissionRequest
+    val request: DankSubmissionRequest,
+
+    val saveTimeMillis: Long
 )
 
 data class CachedSubmissionAndComments(
@@ -76,6 +79,9 @@ interface CachedSubmissionDao {
   @Insert(onConflict = OnConflictStrategy.REPLACE)
   fun saveComments(comments: CachedSubmissionComments)
 
+  @Query("SELECT * FROM cachedsubmissioncomments WHERE saveTimeMillis < :savedBeforeMillis")
+  fun countOfSubmissionWithComments(savedBeforeMillis: Long): Flowable<List<CachedSubmissionComments>>
+
   @Insert(onConflict = OnConflictStrategy.IGNORE)
   fun saveSubmissionIdIfNew(cachedSubmissionId: CachedSubmissionId2): Long
 
@@ -93,6 +99,24 @@ interface CachedSubmissionDao {
 
   @Query("DELETE FROM cachedsubmissioncomments")
   fun deleteAllComments()
+
+  @Query("DELETE FROM cachedsubmissionid2 WHERE saveTimeMillis < :savedBeforeMillis")
+  fun deleteSubmissionIdsBefore(savedBeforeMillis: Long): Int
+
+  @Query("DELETE FROM cachedsubmission WHERE saveTimeMillis < :savedBeforeMillis")
+  fun deleteSubmissionsBefore(savedBeforeMillis: Long): Int
+
+  @Query("DELETE FROM cachedsubmissioncomments WHERE saveTimeMillis < :savedBeforeMillis")
+  fun deleteSubmissionCommentsBefore(savedBeforeMillis: Long): Int
+
+  @Transaction
+  fun deleteAllSubmissionRelatedRows(savedBeforeMillis: Long): Int {
+    var deletedRowCount = 0
+    deletedRowCount += deleteSubmissionIdsBefore(savedBeforeMillis)
+    deletedRowCount += deleteSubmissionsBefore(savedBeforeMillis)
+    deletedRowCount += deleteSubmissionCommentsBefore(savedBeforeMillis)
+    return deletedRowCount
+  }
 
   @Query("SELECT S.submission FROM cachedsubmissionid2 ID\nINNER JOIN cachedsubmission S\nON ID.id = S.id\nWHERE ID.subredditName = :subredditName AND ID.sortingAndTimePeriod = :sortingAndTimePeriod\nORDER BY ID.saveTimeMillis ASC")
   fun submissionsInFolderAsc(subredditName: String, sortingAndTimePeriod: SortingAndTimePeriod): Flowable<List<Submission>>

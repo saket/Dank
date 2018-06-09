@@ -50,7 +50,7 @@ public class DatabaseCacheRecyclerJobService extends DankJobService {
 
   @Override
   public JobStartCallback onStartJob2(JobParameters params) {
-    int durationFromNow = BuildConfig.DEBUG ? 0 : 30;
+    int durationFromNow = BuildConfig.DEBUG ? 0 : 5;
     TimeUnit durationTimeUnit = TimeUnit.DAYS;
 
     displayDebugNotification(
