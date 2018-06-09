@@ -80,6 +80,7 @@ public class MessagesNotificationManagerTest {
     for (int i = 3; i < 5; i++) {
       Message mockedMessage = mock(Message.class);
       when(mockedMessage.getId()).thenReturn(String.valueOf(i));
+      when(mockedMessage.getBody()).thenReturn(String.valueOf(i));
       unreadMessages.add(mockedMessage);
     }
 

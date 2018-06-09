@@ -121,6 +121,8 @@ public class CachePreFiller {
             // Cannot use filter() instead here so that switchMap() gets called and cancels the previous call.
             // Observable.empty() is also important so that the stream completes and the network state change
             // listener is freed.
+            // Update: We're using never() and not empty() because otherwise caching never proceeds if
+            // canPreFill is false on first attempt.
             //Timber.w("Cannot pre-fill images");
             return Observable.never();
           }

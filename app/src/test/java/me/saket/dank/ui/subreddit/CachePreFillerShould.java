@@ -37,6 +37,7 @@ import me.saket.dank.data.CachePreFillThing;
 import me.saket.dank.data.LinkMetadataRepository;
 import me.saket.dank.ui.preferences.NetworkStrategy;
 import me.saket.dank.ui.submission.SubmissionImageLoader;
+import me.saket.dank.urlparser.ExternalLink;
 import me.saket.dank.urlparser.LinkMetadata;
 import me.saket.dank.ui.media.MediaHostRepository;
 import me.saket.dank.ui.submission.SubmissionRepository;
@@ -103,7 +104,7 @@ public class CachePreFillerShould {
         .assertSubscribed()
         .assertNoValues()
         .assertNoErrors()
-        .assertComplete();
+        .assertNotComplete();
 
     verify(mediaHostRepo, never()).resolveActualLinkIfNeeded(any());
     verify(linkMetadataRepo, never()).unfurl(any());
@@ -130,6 +131,8 @@ public class CachePreFillerShould {
     when(networkStateListener.streamNetworkInternetCapability(NetworkStrategy.WIFI_ONLY, Optional.empty())).thenReturn(Observable.just(true));
 
     when(linkMetadataRepo.unfurl(any())).thenReturn(Single.just(mock(LinkMetadata.class)));
+
+    when(urlParser.parse(any(), any())).thenReturn(ExternalLink.create(url));
 
     //noinspection ConstantConditions
     cachePreFiller.preFillInParallelThreads(submissions, 160)

@@ -60,6 +60,6 @@ public class DiskLruCachePathResolverTest {
     //noinspection ConstantConditions
     String path = pathResolver.resolve(null);
     assertEquals(true, path.length() <= 64);
-    assertEquals("6f5d650d34567ee21995d1e75f1ca880", path);
+    assertEquals("248f29bdc98078c71c3d38c537817e13", path);
   }
 }
