@@ -124,7 +124,7 @@ public class InboxFolderUiConstructor {
 
     Optional<String> secondPartyName = Optional.ofNullable(JrawUtils2.secondPartyName(
         c.getResources(),
-        latestMessageInThread,
+        messageThread,
         loggedInUserName));
 
     String snippet = markdown.get().stripMarkdown(latestMessageInThread).replace("\n", " ");
