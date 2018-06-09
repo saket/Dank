@@ -2,6 +2,7 @@ package me.saket.dank.ui.user.messages;
 
 import static io.reactivex.android.schedulers.AndroidSchedulers.mainThread;
 import static io.reactivex.schedulers.Schedulers.io;
+import static me.saket.dank.utils.RxUtils.doNothing;
 import static me.saket.dank.utils.RxUtils.logError;
 import static me.saket.dank.utils.Views.touchLiesOn;
 
@@ -68,6 +69,7 @@ import me.saket.dank.utils.markdown.Markdown;
 import me.saket.dank.widgets.ErrorStateView;
 import me.saket.dank.widgets.ImageButtonWithDisabledTint;
 import me.saket.dank.widgets.InboxUI.IndependentExpandablePageLayout;
+import timber.log.Timber;
 
 public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
 
@@ -233,25 +235,25 @@ public class PrivateMessageThreadActivity extends DankPullCollapsibleActivity {
         .subscribe(
             pair -> {
               // TODO JRAW.
-//              CharSequence reply = pair.first();
-//              Message latestMessage = pair.second();
-//
-//              // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
-//              //noinspection ConstantConditions
-//              replyRepository.removeDraft(privateMessage)
-//                  .andThen(replyRepository.sendReply(
-//                      latestMessage,
-//                      ParentThread.createPrivateMessage(privateMessage.getFullName()), reply.toString()).toObservable())
-//                  .subscribe(
-//                      doNothing(),
-//                      error -> {
-//                        ResolvedError resolvedError = errorResolver.get().resolve(error);
-//                        if (resolvedError.isUnknown()) {
-//                          Timber.e(error);
-//                        }
-//                        // Error is stored in the DB, so we don't need to show anything else to the user.
-//                      }
-//                  );
+              CharSequence reply = pair.first();
+              Message latestMessage = pair.second();
+
+              // Message sending is not a part of the chain so that it does not get unsubscribed on destroy.
+              //noinspection ConstantConditions
+              replyRepository.removeDraft(privateMessage)
+                  .andThen(replyRepository.sendReply(
+                      latestMessage,
+                      ParentThread.createPrivateMessage(privateMessage.getFullName()), reply.toString()).toObservable())
+                  .subscribe(
+                      doNothing(),
+                      error -> {
+                        ResolvedError resolvedError = errorResolver.get().resolve(error);
+                        if (resolvedError.isUnknown()) {
+                          Timber.e(error);
+                        }
+                        // Error is stored in the DB, so we don't need to show anything else to the user.
+                      }
+                  );
             },
             logError("Failed to send message")
         );
