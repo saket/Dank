@@ -1518,6 +1518,12 @@ public class SubmissionPageLayout extends ExpandablePageLayout implements Expand
 
     submissionStream.accept(Optional.empty());
     contentLinkStream.accept(Optional.empty());
+
+    // Bug workaround: Setting of adapter fails occasionally because the number
+    // of rows do not match before and after state restoration, resulting in
+    // submissions never loading anymore. I'm yet to understand why, but this
+    // will ensure that this only happens until a submission is collapsed.
+    commentRowCountBeforeActivityDestroy = -1;
   }
 
   public SubmissionPageLifecycleStreams lifecycle() {
